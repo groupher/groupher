@@ -95,6 +95,19 @@ describe('composeThemePresetCssVars', () => {
 
     expect(lightVars['--color-page-custom-bg']).toBe('#ffffff')
   })
+
+  it('omits the derived page background when the source color is empty', () => {
+    const darkVars = composeThemePresetCssVars(
+      {
+        ...tokens,
+        dark: { ...tokens.dark, pageBg: '' },
+      },
+      'dark',
+    )
+
+    expect(darkVars['--color-page-custom']).toBe('')
+    expect(darkVars).not.toHaveProperty('--color-page-custom-bg')
+  })
 })
 
 describe('serializeCommunityThemePresetCss', () => {

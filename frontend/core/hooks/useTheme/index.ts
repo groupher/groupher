@@ -1,4 +1,5 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
+import { resolveSystemTheme } from '~/lib/themeRuntime'
 import type { TThemeMode, TThemeName } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'
 import { removeThemeFirstPaintVars } from '~/utils/themeFirstPaint'
@@ -20,11 +21,6 @@ type TApplyRuntimeThemeOptions = {
 
 export default function useTheme(): TRet {
   const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useThemeDomain()
-
-  const resolveSystemTheme = () => {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    return isDark ? THEME.DARK : THEME.LIGHT
-  }
 
   const applyTheme = (t: TThemeName) => {
     changeTheme(t)

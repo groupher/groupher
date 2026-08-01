@@ -45,13 +45,13 @@ export const composeThemePresetCssVars = (
   const normalizedPageBgBlur = Number.isNaN(pageBgBlur)
     ? 100
     : Math.min(Math.max(pageBgBlur, 0), 100)
-  const pageBg = blurRGB(active.pageBg, normalizedPageBgBlur)
+  const pageBg = active.pageBg ? blurRGB(active.pageBg, normalizedPageBgBlur) : ''
 
   return {
     '--color-primary-custom': active.primaryColor,
     '--color-accent-custom': active.accentColor,
     '--color-page-custom': active.pageBg,
-    '--color-page-custom-bg': pageBg,
+    ...(pageBg ? { '--color-page-custom-bg': pageBg } : {}),
     '--color-title': active.textTitle,
     '--color-digest': active.textDigest,
     '--color-card': active.cardColor,

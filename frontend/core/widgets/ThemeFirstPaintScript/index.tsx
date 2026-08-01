@@ -1,8 +1,10 @@
 'use client'
 
 import { useServerInsertedHTML } from 'next/navigation'
+import { useEffect } from 'react'
 
 import { THEME_FIRST_PAINT_VARS_SCRIPT } from '~/utils/ssr/script'
+import { scheduleRemoveThemeFirstPaintVars } from '~/utils/themeFirstPaint'
 
 export default function ThemeFirstPaintScript() {
   useServerInsertedHTML(() => (
@@ -11,6 +13,8 @@ export default function ThemeFirstPaintScript() {
       dangerouslySetInnerHTML={{ __html: THEME_FIRST_PAINT_VARS_SCRIPT }}
     />
   ))
+
+  useEffect(() => scheduleRemoveThemeFirstPaintVars(), [])
 
   return null
 }

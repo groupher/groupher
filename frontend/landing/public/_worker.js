@@ -23,6 +23,7 @@ const HOP_BY_HOP_HEADERS = [
 const LANDING_PATHS = ['/', '/pricing', '/book-demo']
 const DASHBOARD_ASSET_PREFIX = '/dashboard/_next/'
 const LANDING_STATIC_ASSET_PREFIXES = [
+  '/landing/',
   '/landing/_next/static/',
   '/avatars/',
   '/icons/',

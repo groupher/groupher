@@ -128,8 +128,9 @@ Do not inline this id at call sites.
 
 ## Variable Source Of Truth
 
-`frontend/core/tailwind/tokens/color.css` is the source of truth for default
-theme CSS variable names and values.
+`frontend/core/tailwind/tokens/color.css` and
+`frontend/core/tailwind/tokens/shadow.css` are the source of truth for default
+first-paint CSS variable names and values.
 
 `color.css` must stay in the synchronous global CSS import chain. Today that
 chain is:
@@ -138,6 +139,7 @@ chain is:
 frontend/core/tailwind/global.css
   -> frontend/core/tailwind/tokens/index.css
   -> frontend/core/tailwind/tokens/color.css
+  -> frontend/core/tailwind/tokens/shadow.css
 ```
 
 Every sub-app root should import `global.css` as global CSS, not lazy-load
@@ -151,13 +153,14 @@ Do not maintain a hand-written variable allowlist such as:
 const VARS = ['--color-title', '--color-card']
 ```
 
-That becomes a second source of truth and will drift from `color.css`.
+That becomes a second source of truth and will drift from the token CSS files.
 
-Instead, generate the first-paint variable-name list from `color.css` at build or
-dev time:
+Instead, generate the first-paint variable-name list from `color.css` and
+`shadow.css` at build or dev time:
 
 ```text
 frontend/core/tailwind/tokens/color.css
+frontend/core/tailwind/tokens/shadow.css
   -> scripts/generate-theme-first-paint-vars
   -> frontend/core/constant/theme-first-paint.generated.ts
 ```
@@ -331,9 +334,10 @@ injectThemeFirstPaintVars()
   embeds JSON.stringify(THEME_FIRST_PAINT_VAR_NAMES) into returned script text
 ```
 
-Do not read `color.css` from the request path, and do not rely on a client bundle
+Do not read token CSS from the request path, and do not rely on a client bundle
 import to provide the variable list. The generated TS file is the server-render
-input; `check:theme-first-paint-vars` is what keeps it in sync with `color.css`.
+input; `check:theme-first-paint-vars` is what keeps it in sync with `color.css`
+and `shadow.css`.
 
 `injectThemeFirstPaintVars()` should not be emitted as a raw route body script. A
 raw body script becomes part of the React hydration tree and can cause warnings
@@ -451,17 +455,16 @@ The practical order is:
 
 ```text
 1. prePaintThemeDetectScript() sets html[data-theme] before first paint
-2. ThemeFirstPaintScript installs a fallback snapshot for default color.css vars
-3. optional community preset CSS is emitted
-4. community preset snapshot overwrites the same temporary style
-5. React/Next hydration starts
-6. ThemeMonitor applies runtime theme and cleans temporary vars
+2. optional community preset CSS is emitted
+3. ThemeFirstPaintScript snapshots the available color/shadow/community vars
+4. React/Next hydration starts
+5. ThemeFirstPaintScript or ThemeMonitor cleans temporary vars
 ```
 
 The key requirement is that the temporary first-paint vars are installed before
 hydration can produce a visible light-frame fallback. Community routes with
-complete ThemePreset CSS must emit the preset CSS and matching snapshot in the
-same server-inserted fragment, in that order.
+complete ThemePreset CSS must emit the preset CSS before the single
+`ThemeFirstPaintScript` snapshot runs.
 
 Full timing flow:
 
@@ -472,14 +475,13 @@ RootLayoutShell
   emits early head script:
     prePaintThemeDetectScript()
 
-ThemeFirstPaintScript
-  server-inserts:
-    <script>fallback snapshot</script>
-
 CommunityThemePresetStyle, only when cssText exists
   server-inserts:
     <style>community theme preset CSS</style>
-    <script>community preset snapshot</script>
+
+ThemeFirstPaintScript
+  server-inserts:
+    <script>theme snapshot</script>
 
 
 Browser parses HTML
@@ -488,17 +490,12 @@ head script: prePaintThemeDetectScript()
   localStorage / matchMedia -> html[data-theme]
   documentElement.style.colorScheme = theme
 
-head script: fallback snapshot
-  read computed vars from color.css
-  write style#groupher-theme-first-paint
-
 head style: community theme preset CSS
   add current community preset values to the cascade
 
-head script: community preset snapshot
-  temporarily disable style#groupher-theme-first-paint
-  read computed vars from color.css + community preset CSS
-  overwrite style#groupher-theme-first-paint
+head script: theme snapshot
+  read computed vars from color.css + shadow.css + community preset CSS
+  write style#groupher-theme-first-paint
 
 body content parses
   first visible frame already has protected theme vars
@@ -555,7 +552,7 @@ and then defensively remove first-paint vars, so a failed or delayed
 ## Generated File Integration
 
 The generated first-paint variable list should be committed, but it must not be
-allowed to drift from `color.css`.
+allowed to drift from `color.css` or `shadow.css`.
 
 Use two scripts:
 
@@ -567,7 +564,8 @@ yarn check:theme-first-paint-vars
 Expected behavior:
 
 - `gen:theme-first-paint-vars` parses
-  `frontend/core/tailwind/tokens/color.css` and writes
+  `frontend/core/tailwind/tokens/color.css` and
+  `frontend/core/tailwind/tokens/shadow.css`, then writes
   `frontend/core/constant/theme-first-paint.generated.ts`.
 - `check:theme-first-paint-vars` regenerates in memory or in a temp file and
   fails when the checked-in generated file is stale.

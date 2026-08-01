@@ -153,11 +153,22 @@ describe('landing Cloudflare worker', () => {
     expect(env.fetcher).not.toHaveBeenCalled()
   })
 
+  it('serves bundled landing media from Pages assets', async () => {
+    const response = await worker.fetch(
+      new Request('https://groupher.test/landing/products/github.png'),
+      env,
+    )
+
+    expect(await response.text()).toBe('asset')
+    expect(env.ASSETS.fetch).toHaveBeenCalledOnce()
+    expect(env.fetcher).not.toHaveBeenCalled()
+  })
+
   it('keeps product paths under /landing routed through the product router', () => {
-    const target = resolveCloudflareTarget({ pathname: '/landing/community/guide' }, env)
+    const target = resolveCloudflareTarget({ pathname: '/landing-community/guide' }, env)
 
     expect(target.kind).toBe('main')
-    expect(target.url.toString()).toBe('https://main.test/landing/community/guide')
+    expect(target.url.toString()).toBe('https://main.test/landing-community/guide')
   })
 
   it('keeps double-slash paths on the configured Groupher origin', () => {

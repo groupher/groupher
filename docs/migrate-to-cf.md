@@ -166,10 +166,10 @@ The Cloudflare architecture only stays attractive if static assets bypass
 Functions wherever possible.
 
 Pages `_routes.json` or the equivalent Pages Functions routing controls are the
-real boundary that decides whether a request invokes `_worker.js`.
-`env.ASSETS.fetch(request)` does not decide whether routing is needed; it only
-fetches from Pages static assets after a request has already entered the
-Function.
+real boundary in standard Pages Functions mode. In advanced `_worker.js` mode,
+the worker must still route static hits to `env.ASSETS.fetch(request)` itself and
+production validation must confirm whether `_routes.json` is honored for
+invocation bypass.
 
 Use route include/exclude rules so hashed static assets do not invoke
 `_worker.js`:
@@ -177,8 +177,20 @@ Use route include/exclude rules so hashed static assets do not invoke
 ```text
 exclude from Function when possible:
   /landing/_next/static/*
+  /landing/*
+  /avatars/*
+  /icons/*
+  /locales/*
+  /pattern/*
+  /pwa/*
   /images/*
   /fonts/*
+  /*.ico
+  /*.json
+  /*.png
+  /*.txt
+  /*.webp
+  /*.xml
   /favicon.ico
   /robots.txt
   /sitemap.xml

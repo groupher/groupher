@@ -5,19 +5,12 @@ import { useEffect, useRef } from 'react'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import useMount from '~/hooks/useMount'
 import useTheme from '~/hooks/useTheme'
+import { resolveRuntimeTheme } from '~/lib/themeRuntime'
 import type { TThemeMode, TThemeName } from '~/spec'
 import {
   removeThemeFirstPaintVars,
   scheduleRemoveThemeFirstPaintVars,
 } from '~/utils/themeFirstPaint'
-
-const resolveRuntimeTheme = (mode: TThemeMode): TThemeName => {
-  if (mode === THEME_MODE.LIGHT) return THEME.LIGHT
-  if (mode === THEME_MODE.DARK) return THEME.DARK
-
-  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  return isDark ? THEME.DARK : THEME.LIGHT
-}
 
 export default function ThemeMonitor() {
   const { theme, changeMode } = useTheme()

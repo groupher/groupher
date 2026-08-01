@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     wrapper: cn('column-align-both absolute top-0 left-0 s-full z-50', bg('card')),
     iconWrapper: 'column-align-both mb-8 mt-10 relative',
-    title: cn('row text-xl bold', fg('digest')),
+    title: cn('row gap-1 text-xl bold', fg('digest')),
     desc: cn('w-full px-8 text-center text-sm leading-6 min-h-12', fg('digest')),
     sideLogo: cn('absolute -bottom-3 -right-4 z-20', shadow('xl')),
     icon: 'size-10',

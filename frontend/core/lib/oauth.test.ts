@@ -6,7 +6,9 @@ describe('signIn', () => {
   afterEach(() => {
     document.body.innerHTML = ''
     vi.clearAllMocks()
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('preserves the current subdomain in the OAuth callback URL', async () => {
@@ -40,12 +42,37 @@ describe('signIn', () => {
 
     await expect(signIn('github')).rejects.toThrow('Auth CSRF request returned an invalid token.')
   })
+
+  it('normalizes configured Auth endpoints before building OAuth URLs', async () => {
+    vi.resetModules()
+    vi.stubEnv('NEXT_PUBLIC_AUTH_ENDPOINT', 'https://auth.groupher.test/')
+    const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => undefined)
+    const fetchMock = vi.fn(async () => Response.json({ csrfToken: 'csrf-token' }))
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubGlobal('window', {
+      location: {
+        href: 'https://dashboard.groupher.localhost/home/dashboard',
+      },
+    })
+    const { signIn: configuredSignIn } = await import('./oauth')
+
+    await configuredSignIn('github')
+
+    const form = document.querySelector('form')
+    expect(fetchMock).toHaveBeenCalledWith('https://auth.groupher.test/csrf', {
+      credentials: 'include',
+    })
+    expect(form?.getAttribute('action')).toBe('https://auth.groupher.test/signin/github')
+    expect(submit).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('signOut', () => {
   afterEach(() => {
     vi.clearAllMocks()
+    vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('clears Auth and Phoenix cookies through the unified endpoint', async () => {
@@ -65,5 +92,20 @@ describe('signOut', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(signOut()).rejects.toThrow('Auth logout failed with status 500.')
+  })
+
+  it('normalizes configured Auth endpoints before logout', async () => {
+    vi.resetModules()
+    vi.stubEnv('NEXT_PUBLIC_AUTH_ENDPOINT', 'https://auth.groupher.test/')
+    const fetchMock = vi.fn(async () => Response.json({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock)
+    const { signOut: configuredSignOut } = await import('./oauth')
+
+    await configuredSignOut()
+
+    expect(fetchMock).toHaveBeenCalledWith('https://auth.groupher.test/logout', {
+      credentials: 'include',
+      method: 'POST',
+    })
   })
 })
