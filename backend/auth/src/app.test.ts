@@ -31,6 +31,21 @@ describe('Auth Hono application', () => {
     expect(forwardedRequest && new URL(forwardedRequest.url).pathname).toBe('/api/auth/providers')
   })
 
+  it('applies Auth CORS to the Auth.js base path', async () => {
+    const response = await createApp().request('/api/auth', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://dashboard.groupher.com',
+        'access-control-request-method': 'POST',
+      },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBe(
+      'https://dashboard.groupher.com',
+    )
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true')
+  })
+
   it('clears Phoenix and Auth cookies through the custom logout endpoint', async () => {
     const response = await createApp().request('/api/auth/logout', {
       method: 'POST',

@@ -20,7 +20,7 @@ DATABASE_URL="$DATABASE_URL" \
 SECRET_KEY_BASE="$SECRET_KEY_BASE" \
 PHX_JWT_SECRET="$PHX_JWT_SECRET" \
 DB_POOL_SIZE="$DB_POOL_SIZE" \
-mix ecto.drop
+mix ecto.drop --force
 
 PGHOST='' \
 MIX_ENV=seed_prod \

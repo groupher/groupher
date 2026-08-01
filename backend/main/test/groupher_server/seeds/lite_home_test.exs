@@ -22,19 +22,31 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       assert count(Doc, community.id) == 0
 
       kanban_posts =
-        Repo.all(from(p in Post, where: p.community_id == ^community.id and not is_nil(p.status)))
+        Repo.all(
+          from(p in Post,
+            join: community in assoc(p, :communities),
+            where: community.id == ^community.id and not is_nil(p.status)
+          )
+        )
 
       assert length(kanban_posts) == 4
       assert Enum.sort(Enum.map(kanban_posts, & &1.status)) == [:backlog, :done, :todo, :wip]
 
       assert {:ok, %{todo: %{entries: [_ | _]}}} = CMS.Articles.grouped_kanban(community)
+
+      {:ok, _community} = LiteHome.seed()
+
+      assert count(Post, community.id) == 4
+      assert count(Changelog, community.id) == 3
+      assert count(Doc, community.id) == 0
     end
   end
 
   defp count(schema, community_id) do
     {:ok, total_count} =
       schema
-      |> where([item], item.community_id == ^community_id)
+      |> join(:inner, [item], community in assoc(item, :communities))
+      |> where([_item, community], community.id == ^community_id)
       |> ORM.count()
 
     total_count
