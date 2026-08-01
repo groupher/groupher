@@ -21,6 +21,7 @@ const HOP_BY_HOP_HEADERS = [
 ]
 
 const LANDING_PATHS = ['/', '/pricing', '/book-demo']
+const DASHBOARD_ASSET_PREFIX = '/dashboard/_next/'
 
 const json = (body, init = {}) =>
   Response.json(body, {
@@ -58,13 +59,20 @@ const siteUrl = (env, name) => {
   return value.endsWith('/') ? value : `${value}/`
 }
 
-export const isLandingPath = (pathname) => LANDING_PATHS.includes(pathname)
+const normalizeExplicitPath = (pathname) => {
+  const normalized = pathname.replace(/\/+$/, '')
+  return normalized || '/'
+}
 
-const isAuthRoute = (pathname) => pathname.startsWith('/api/auth/')
+export const isLandingPath = (pathname) => LANDING_PATHS.includes(normalizeExplicitPath(pathname))
+
+const isAuthRoute = (pathname) => pathname === '/api/auth' || pathname.startsWith('/api/auth/')
 
 const isGraphqlRoute = (pathname) => pathname === '/api/graphql'
 
 const isDashboardRoute = (pathname) => {
+  if (pathname.startsWith(DASHBOARD_ASSET_PREFIX)) return true
+
   const parts = pathname.split('/').filter(Boolean)
   return parts.length >= 2 && parts[1] === 'dashboard'
 }

@@ -26,6 +26,14 @@ describe('landing Cloudflare worker', () => {
     expect(env.fetcher).not.toHaveBeenCalled()
   })
 
+  it('serves explicit landing paths with trailing slash from Pages assets', async () => {
+    const response = await worker.fetch(new Request('https://groupher.test/book-demo/'), env)
+
+    expect(await response.text()).toBe('asset')
+    expect(env.ASSETS.fetch).toHaveBeenCalledOnce()
+    expect(env.fetcher).not.toHaveBeenCalled()
+  })
+
   it('routes dashboard paths to the dashboard origin without trimming dashboard segment', () => {
     const target = resolveCloudflareTarget(
       { pathname: '/home/dashboard/appearance', search: '?tab=theme' },
@@ -34,6 +42,25 @@ describe('landing Cloudflare worker', () => {
 
     expect(target.kind).toBe('dashboard')
     expect(target.url.toString()).toBe('https://dashboard.test/home/dashboard/appearance?tab=theme')
+  })
+
+  it('routes dashboard static chunks to the dashboard origin', () => {
+    const target = resolveCloudflareTarget(
+      { pathname: '/dashboard/_next/static/chunks/app/home.js' },
+      env,
+    )
+
+    expect(target.kind).toBe('dashboard')
+    expect(target.url.toString()).toBe(
+      'https://dashboard.test/dashboard/_next/static/chunks/app/home.js',
+    )
+  })
+
+  it('routes the Auth.js base path to the auth origin', () => {
+    const target = resolveCloudflareTarget({ pathname: '/api/auth' }, env)
+
+    expect(target.kind).toBe('auth')
+    expect(target.url.toString()).toBe('https://auth.test/api/auth')
   })
 
   it('routes GraphQL facade to Phoenix GraphQL origin', () => {

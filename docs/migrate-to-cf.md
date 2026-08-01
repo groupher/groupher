@@ -184,12 +184,14 @@ include in Function:
   /book-demo
   /api/graphql
   /api/auth/*
-  /:community/*
+  /*
 ```
 
 Exact include/exclude patterns must be validated against the final Landing
 export output. The goal is not to route every request through `_worker.js`; the
-goal is to route only the paths that need HTTP-level decisions.
+goal is to route only the paths that need HTTP-level decisions. Cloudflare
+`_routes.json` patterns are globs, not named parameters; keep `/:community/...`
+as prose for Groupher's public contract, not as a literal config pattern.
 
 ## Routing Contract
 
@@ -414,12 +416,12 @@ frontend rewrite.
 
 Possible later options:
 
-| Option | Fit | Tradeoff |
-| --- | --- | --- |
-| Next export | Lowest change. Already matches Landing's static shape. | Keeps Next build/tooling for a static marketing app. |
-| Vinext | Worth evaluating if the goal is Cloudflare/Vite-aligned Next compatibility. | Requires compatibility checks for current Landing APIs and build output. |
-| TanStack Router/Start | Could make Landing lighter if it becomes a Vite-first app. | More rewrite work across routing, metadata, i18n, and app conventions. |
-| Astro/Vite static app | Strong fit for marketing/docs-style static content. | Full framework migration; not needed for the first cutover. |
+| Option                | Fit                                                                         | Tradeoff                                                                 |
+| --------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Next export           | Lowest change. Already matches Landing's static shape.                      | Keeps Next build/tooling for a static marketing app.                     |
+| Vinext                | Worth evaluating if the goal is Cloudflare/Vite-aligned Next compatibility. | Requires compatibility checks for current Landing APIs and build output. |
+| TanStack Router/Start | Could make Landing lighter if it becomes a Vite-first app.                  | More rewrite work across routing, metadata, i18n, and app conventions.   |
+| Astro/Vite static app | Strong fit for marketing/docs-style static content.                         | Full framework migration; not needed for the first cutover.              |
 
 Framework migration should be treated as a later project after Cloudflare entry
 routing has passed production smoke tests.
