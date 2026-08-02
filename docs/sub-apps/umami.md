@@ -8,16 +8,20 @@
 
 ## 定位
 
-Umami 提供社区访问统计。Groupher 自托管一个受版本控制的 Umami 实例，并为每个
-community 建立独立 website mapping，而不是为每个社区部署一个 Umami 实例。
+Umami 提供社区访问统计。Groupher 自托管一个受版本控制的 Umami 实例，作为内置
+Web Analysis 的底层采集和查询引擎。
 
 Umami 是 vendor deployment，不需要为了符合 Groupher Context 结构而 fork 或重写
-其内部领域模型。Groupher 只维护必要的映射、权限和展示适配。
+其内部领域模型。Groupher 只维护必要的查询边界、权限和展示适配。
+
+当前 v1 计划以 `docs/web-analysis/v1.md` 为准：先使用一个 `groupher.com` 全站
+Umami website，通过社区 path scope 过滤 Dashboard 查询。每社区一个 Umami website
+不是 v1 默认方案，只有 path 过滤无法满足隔离、性能、删除/导出或分享需求时再评估。
 
 ## 提供的能力
 
 - Page view、访客、来源、设备、地区和自定义事件统计。
-- 每个 community 独立 website identity。
+- 一个 `groupher.com` 全站 website identity，按 community path scope 查询。
 - Main/社区站点的统计脚本和事件上报。
 - Dashboard 中按社区查看统计摘要。
 - 通过 Umami API 获取时间范围内的聚合数据。
@@ -29,8 +33,9 @@ Dashboard。
 
 Phoenix 负责：
 
-- community 与 Umami website ID 的映射。
-- 哪些社区启用统计，以及管理员查看权限。
+- 全局 Umami website ID 的服务端配置。
+- community 到公开 path scope 的解析。
+- 管理员查看权限。
 - 套餐、保留策略或高级分析功能的产品配置。
 - Dashboard 可见的配置状态。
 
@@ -56,8 +61,8 @@ sequenceDiagram
   V->>M: 访问社区页面
   M->>U: 上报 page view / custom event
   D->>P: 请求当前 community 的统计
-  P->>P: 校验社区管理员权限并解析 website mapping
-  P->>U: 使用服务端 credential 查询聚合
+  P->>P: 校验社区管理员权限并解析 path scope
+  P->>U: 使用服务端 credential 和 path filter 查询聚合
   U-->>P: 时间范围内统计
   P-->>D: 有界 Dashboard DTO
 ```
@@ -68,6 +73,8 @@ adapter；不要把 Umami admin credential 发送到浏览器。
 ## 与其他子应用的边界
 
 - `Integrations` 是 Dashboard 中配置 Analytics 的入口，不是服务。
+- `Integrations / Third-party / Analytics` 面向用户自带的外部分析服务，不承载
+  Groupher 内置 Web Analysis 的持久模型。
 - Analytics event 不通过 `posthouse`；`posthouse` 处理消息和投递协议。
 - 周报中需要统计摘要时，`ai` 或 `content-press` 读取经过权限校验的聚合 DTO，
   不能直接访问 Umami 数据库。
@@ -85,5 +92,6 @@ adapter；不要把 Umami admin credential 发送到浏览器。
 
 - 默认不向 Umami 发送正文、邮箱、用户名或其他直接 PII。
 - 自定义事件属性使用稳定的业务类别，不包含用户输入原文。
-- 根据社区配置、地区要求和 consent 策略决定是否加载统计脚本。
+- v1 不提供社区级统计开关；脚本加载和采集细节由平台隐私策略、地区要求、
+  consent 策略和 staff/internal exclusion 策略决定。
 - 明确保留周期、删除流程和社区停用后的数据处理方式。
