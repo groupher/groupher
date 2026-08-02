@@ -105,8 +105,8 @@ const LANDING_CHAIN_POLICY = {
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'gateway',
-    name: 'Gateway',
-    description: 'Routing and edge application',
+    name: 'Dev Gateway',
+    description: 'Local-only routing entry',
     group: 'backend',
     monogram: 'GW',
     technologies: ['hono', 'nodejs', 'typescript', 'routing'],
