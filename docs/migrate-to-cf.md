@@ -335,7 +335,7 @@ Keep the request credential boundary:
 
 - delete browser `authorization`
 - delete the original `cookie`
-- forward only `groupher-auth.token` as a Cookie when present
+- forward verified `groupher-auth.token` as `Authorization: Bearer <token>` when present
 
 Do not switch browser code directly to `https://api.groupher.com/graphiql`
 unless CORS, credentials, cookie domain, and CSRF behavior are intentionally
@@ -345,12 +345,11 @@ the current security shape.
 Production frontend envs should be normalized as:
 
 ```text
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=/api/graphql
 GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
 ```
 
-`NEXT_PUBLIC_GRAPHQL_ENDPOINT` is for browser code. `GRAPHQL_ENDPOINT` is for
-server-side Next/RSC/route handler code.
+Browser code always calls same-origin `/api/graphql`. `GRAPHQL_ENDPOINT` is only
+for server-side Next/RSC/route handler code.
 
 Landing should not depend on browser GraphQL in the Cloudflare static path.
 

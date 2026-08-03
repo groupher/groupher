@@ -37,8 +37,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["avatar"] == user.avatar
     end
 
-    test "guest user can not get any profile", ~m(guest_conn)a do
-      assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
+    test "guest user gets null current profile", ~m(guest_conn)a do
+      assert guest_conn |> gq_query(@query, %{}) == nil
     end
 
     @query S.Account.q(:user)

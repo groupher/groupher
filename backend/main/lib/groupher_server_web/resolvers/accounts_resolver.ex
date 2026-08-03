@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias Helper.PermissionRegistry
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
+  def me(_root, _args, _info), do: {:ok, nil}
 
   def user(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
     Accounts.Profiles.read_user(user, cur_user)
