@@ -5,10 +5,11 @@ import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
 import { Portal } from '~/unit/DashboardThread'
 
-import type { TWebAnalysisSummary } from './helper'
+import TrendChart from './components/TrendChart'
+import type { TAnalysisWebMetric, TAnalysisWebOverview } from './helper'
 
 type TProps = {
-  data: TWebAnalysisSummary
+  data: TAnalysisWebOverview
 }
 
 const formatDuration = (seconds: number): string => {
@@ -25,22 +26,29 @@ const formatDuration = (seconds: number): string => {
 }
 
 const summaryItems = (
-  data: TWebAnalysisSummary,
+  data: TAnalysisWebOverview,
 ): { key: string; label: TTransKey; value: string }[] => [
-  { key: 'pageviews', label: 'dsb.analysis.pageviews', value: prettyNum(data.summary.pageviews) },
-  { key: 'visitors', label: 'dsb.analysis.visitors', value: prettyNum(data.summary.visitors) },
-  { key: 'visits', label: 'dsb.analysis.visits', value: prettyNum(data.summary.visits) },
-  { key: 'bounces', label: 'dsb.analysis.bounces', value: prettyNum(data.summary.bounces) },
+  {
+    key: 'pageviews',
+    label: 'dsb.analysis.pageviews',
+    value: formatMetric(data.summary.pageviews),
+  },
+  { key: 'visitors', label: 'dsb.analysis.visitors', value: formatMetric(data.summary.visitors) },
+  { key: 'visits', label: 'dsb.analysis.visits', value: formatMetric(data.summary.visits) },
+  { key: 'bounces', label: 'dsb.analysis.bounces', value: formatPercent(data.summary.bounceRate) },
   {
     key: 'totalTime',
     label: 'dsb.analysis.total_time',
-    value: formatDuration(data.summary.totalTime),
+    value: formatDuration(data.summary.visitDuration.value),
   },
 ]
 
-export default function WebAnalysisClient({ data }: TProps) {
+const formatMetric = (metric: TAnalysisWebMetric): string => prettyNum(metric.value)
+const formatPercent = (metric: TAnalysisWebMetric): string => `${Math.round(metric.value * 100)}%`
+
+export default function AnalysisWebClient({ data }: TProps) {
   const { t } = useTrans()
-  const isUnavailable = data.status !== 'ready'
+  const isUnavailable = data.status === 'unavailable'
 
   return (
     <div className='column w-3/5'>
@@ -70,15 +78,26 @@ export default function WebAnalysisClient({ data }: TProps) {
         ))}
       </section>
 
+      <section className='mt-5'>
+        <TrendChart
+          emptyLabel={t('dsb.analysis.empty')}
+          peakLabel=''
+          points={data.timeseries.points}
+          title={t('dsb.menu.analysis')}
+          viewsLabel={t('dsb.analysis.pageviews')}
+          visitsLabel={t('dsb.analysis.visits')}
+        />
+      </section>
+
       <section className='mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2'>
         <div className='border-alphathin rounded-md border p-4'>
           <h3 className='text-title text-base'>{t('dsb.analysis.top_pages')}</h3>
           <div className='column mt-4 gap-y-3'>
-            {data.topPages.length > 0 ? (
-              data.topPages.map((page) => (
-                <div key={page.path} className='row-between gap-x-4 text-sm'>
-                  <div className='text-digest min-w-0 truncate'>{page.path}</div>
-                  <div className='text-title shrink-0'>{prettyNum(page.pageviews)}</div>
+            {data.pages.path.length > 0 ? (
+              data.pages.path.map((page) => (
+                <div key={page.value} className='row-between gap-x-4 text-sm'>
+                  <div className='text-digest min-w-0 truncate'>{page.value}</div>
+                  <div className='text-title shrink-0'>{prettyNum(page.metrics.views)}</div>
                 </div>
               ))
             ) : (
@@ -90,11 +109,11 @@ export default function WebAnalysisClient({ data }: TProps) {
         <div className='border-alphathin rounded-md border p-4'>
           <h3 className='text-title text-base'>{t('dsb.analysis.referrers')}</h3>
           <div className='column mt-4 gap-y-3'>
-            {data.topReferrers.length > 0 ? (
-              data.topReferrers.map((referrer) => (
-                <div key={referrer.referrer} className='row-between gap-x-4 text-sm'>
-                  <div className='text-digest min-w-0 truncate'>{referrer.referrer}</div>
-                  <div className='text-title shrink-0'>{prettyNum(referrer.visitors)}</div>
+            {data.sources.referrer.length > 0 ? (
+              data.sources.referrer.map((referrer) => (
+                <div key={referrer.value} className='row-between gap-x-4 text-sm'>
+                  <div className='text-digest min-w-0 truncate'>{referrer.label}</div>
+                  <div className='text-title shrink-0'>{prettyNum(referrer.metrics.visitors)}</div>
                 </div>
               ))
             ) : (

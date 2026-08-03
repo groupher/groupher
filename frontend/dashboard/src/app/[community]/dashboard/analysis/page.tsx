@@ -1,9 +1,9 @@
-import WebAnalysisClient from './Client'
-import { fetchWebAnalysisSummary } from './helper'
+import AnalysisWebClient from './Client'
+import { fetchAnalysisWebOverview } from './helper'
 
 export default async function AnalysisPage({ params }) {
   const { community } = await params
-  const data = await fetchWebAnalysisSummary(community)
+  const data = await fetchAnalysisWebOverview(community)
 
-  return <WebAnalysisClient data={data} />
+  return <AnalysisWebClient data={data} />
 }

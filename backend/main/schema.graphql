@@ -64,15 +64,6 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
 
-  "list cities geo info"
-  citiesGeoInfo: PagedGeoInfos
-
-  "basic online status"
-  onlineStatus(freshkey: String): OnlineStatusInfo
-
-  "basic site info in total counts format"
-  countStatus: CountStatusInfo
-
   "Current Article Trash memberships"
   trashedArticles(community: String!, thread: Thread!, filter: TrashFilter): PagedTrashedArticles
 
@@ -81,6 +72,12 @@ type RootQueryType {
 
   "Append-only CMS audit log"
   cmsAuditLogs(community: String!, filter: AuditLogFilter): PagedAuditLogs
+
+  "Built-in community Web Analysis summary"
+  analysisWebSummary(community: String!, days: Int): AnalysisWebSummary
+
+  "Built-in community Web Analysis overview"
+  analysisWebOverview(community: String!, days: Int): AnalysisWebOverview
 
   "dashboard theme preset registry"
   themePresets: [DsbThemePresetOption!]!
@@ -720,6 +717,7 @@ type RootMutationType {
   "update media reports in dashboard"
   updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
 
+
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
 
@@ -985,6 +983,173 @@ type ContentImportBodyStageResult {
   progress: Json!
   failedItems: Json!
   skipped: Json!
+}
+
+type AnalysisWebRange {
+  days: Int
+  startAt: BigInt
+  endAt: BigInt
+  bucket: String
+}
+
+type AnalysisWebMetric {
+  value: Float
+  previousValue: Float
+  changeRate: Float
+}
+
+type AnalysisWebOverviewSummary {
+  pageviews: AnalysisWebMetric
+  visitors: AnalysisWebMetric
+  visits: AnalysisWebMetric
+  bounceRate: AnalysisWebMetric
+  visitDuration: AnalysisWebMetric
+}
+
+type AnalysisWebMetricValues {
+  visitors: Int
+  visits: Int
+  views: Int
+  bounceRate: Float
+  visitDuration: Float
+}
+
+type AnalysisWebCountMetricValues {
+  visitors: Int
+  visits: Int
+  views: Int
+}
+
+type AnalysisWebPageDimensionMetric {
+  value: String
+  label: String
+  metrics: AnalysisWebMetricValues
+}
+
+type AnalysisWebCountDimensionMetric {
+  value: String
+  label: String
+  metrics: AnalysisWebCountMetricValues
+}
+
+type AnalysisWebPagesSection {
+  status: String
+  path: [AnalysisWebPageDimensionMetric]
+  url: [AnalysisWebPageDimensionMetric]
+  entry: [AnalysisWebCountDimensionMetric]
+  exit: [AnalysisWebCountDimensionMetric]
+  title: [AnalysisWebPageDimensionMetric]
+  query: [AnalysisWebCountDimensionMetric]
+}
+
+type AnalysisWebSourceDimensionMetric {
+  value: String
+  label: String
+  metrics: AnalysisWebCountMetricValues
+}
+
+type AnalysisWebSourcesSection {
+  status: String
+  referrer: [AnalysisWebSourceDimensionMetric]
+  channel: [AnalysisWebSourceDimensionMetric]
+  domain: [AnalysisWebSourceDimensionMetric]
+}
+
+type AnalysisWebEmptySection {
+  status: String
+  items: [String]
+}
+
+type AnalysisWebTrafficCell {
+  weekday: Int
+  hour: Int
+  visitors: Int
+  visits: Int
+  views: Int
+}
+
+type AnalysisWebTrafficSection {
+  status: String
+  timezone: String
+  cells: [AnalysisWebTrafficCell]
+}
+
+type AnalysisWebTimeseriesV2Point {
+  bucket: String
+  timestamp: BigInt
+  visitors: Int
+  visits: Int
+  views: Int
+}
+
+type AnalysisWebTimeseriesSection {
+  status: String
+  bucket: String
+  points: [AnalysisWebTimeseriesV2Point]
+}
+
+type AnalysisWebError {
+  code: String
+  message: String
+  section: String
+  providerStatus: String
+}
+
+type AnalysisWebCountSummary {
+  pageviews: Int
+  visitors: Int
+  visits: Int
+  bounces: Int
+  totalTime: Int
+}
+
+type AnalysisWebTimeseriesPoint {
+  date: String
+  pageviews: Int
+  visits: Int
+}
+
+type AnalysisWebPageMetric {
+  path: String
+  title: String
+  pageviews: Int
+  visitors: Int
+  visits: Int
+  bounces: Int
+  totalTime: Int
+}
+
+type AnalysisWebReferrerMetric {
+  referrer: String
+  visitors: Int
+}
+
+type AnalysisWebSummary {
+  status: String
+  provider: String
+  pathScope: String
+  range: AnalysisWebRange
+  summary: AnalysisWebCountSummary
+  timeseries: [AnalysisWebTimeseriesPoint]
+  topPages: [AnalysisWebPageMetric]
+  topReferrers: [AnalysisWebReferrerMetric]
+  error: String
+}
+
+type AnalysisWebOverview {
+  status: String
+  provider: String
+  pathScope: String
+  range: AnalysisWebRange
+  filters: String
+  summary: AnalysisWebOverviewSummary
+  timeseries: AnalysisWebTimeseriesSection
+  pages: AnalysisWebPagesSection
+  sources: AnalysisWebSourcesSection
+  environment: AnalysisWebEmptySection
+  location: AnalysisWebEmptySection
+  traffic: AnalysisWebTrafficSection
+  errors: [AnalysisWebError]
 }
 
 type CheckState {
@@ -3154,19 +3319,6 @@ enum DsbRssFeedType {
   FULL
 }
 
-type OnlineStatusInfo {
-  realtimeVisitors: Int
-}
-
-type CountStatusInfo {
-  communitiesCount: Int
-  postsCount: Int
-  changelogsCount: Int
-  blogsCount: Int
-  categoriesCount: Int
-  communityTagsCount: Int
-}
-
 type SessionState {
   user: User
   isValid: Boolean
@@ -3444,21 +3596,6 @@ scalar BigInt
 
 type Done {
   done: Boolean
-}
-
-type GeoInfo {
-  city: String
-  value: Int
-  long: Float
-  lant: Float
-}
-
-type PagedGeoInfos {
-  entries: [GeoInfo]
-  totalCount: Int
-  pageSize: Int
-  totalPages: Int
-  pageNumber: Int
 }
 
 """

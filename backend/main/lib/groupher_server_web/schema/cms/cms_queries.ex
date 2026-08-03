@@ -51,14 +51,25 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "Built-in community Web Analysis summary"
-    field :web_analysis_summary, :web_analysis_summary do
+    field :analysis_web_summary, :analysis_web_summary do
       arg(:community, non_null(:string))
       arg(:days, :integer, default_value: 7)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "web_analysis.read")
+      middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.web_analysis_summary/3)
+      resolve(&R.CMS.analysis_web_summary/3)
+    end
+
+    @desc "Built-in community Web Analysis overview"
+    field :analysis_web_overview, :analysis_web_overview do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_web_overview/3)
     end
 
     @desc "dashboard theme preset registry"

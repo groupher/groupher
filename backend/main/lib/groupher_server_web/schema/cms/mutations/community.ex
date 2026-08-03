@@ -20,7 +20,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Passport, action: "community.create")
 
       resolve(&R.CMS.create_community/3)
-      middleware(M.Statistics.MakeContribute, for: [:user])
+      middleware(M.Analysis.MakeContribution, for: [:user])
     end
 
     @desc "update a community"

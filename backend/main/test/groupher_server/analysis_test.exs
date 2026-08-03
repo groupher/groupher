@@ -1,11 +1,45 @@
-defmodule GroupherServer.AnalysisTest do
+defmodule GroupherServer.Analysis.WebTest do
   @moduledoc false
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Analysis
-  alias GroupherServer.Analysis.Provider.Umami
+  alias GroupherServer.Analysis.Web
+  alias GroupherServer.Analysis.Web.Config
+  alias GroupherServer.Analysis.Web.Provider.Umami
   alias GroupherServer.CMS.Model.Community
+
+  describe "config" do
+    test "returns static base config without reading runtime env" do
+      config = Config.base()
+
+      assert %Config{} = config
+      assert config.provider == Umami
+      assert config.origin == "https://analysis.groupher.com"
+      assert config.default_days == 7
+      assert config.max_days == 90
+    end
+
+    test "returns runtime overrides only" do
+      previous = Application.get_env(:groupher_server, :web_analysis)
+
+      Application.put_env(:groupher_server, :web_analysis,
+        website_id: "test",
+        api_token: "token",
+        timeout: -1
+      )
+
+      on_exit(fn ->
+        Application.put_env(:groupher_server, :web_analysis, previous)
+      end)
+
+      config = Config.runtime()
+
+      assert %Config.Runtime{} = config
+      assert config.website_id == "test"
+      assert config.api_token == "token"
+      refute Map.has_key?(config, :timeout)
+    end
+  end
 
   describe "Umami path metric projection" do
     test "aggregates only paths under the community prefix" do
@@ -82,12 +116,33 @@ defmodule GroupherServer.AnalysisTest do
         Application.put_env(:groupher_server, :web_analysis, previous)
       end)
 
-      {:ok, result} = Analysis.summary(%Community{slug: "home"})
+      {:ok, result} = Web.summary(%Community{slug: "home"})
 
       assert result.status == "unavailable"
       assert result.path_scope == "/home"
       assert result.summary.pageviews == 0
       assert result.top_pages == []
+    end
+
+    test "returns unavailable overview DTO when Umami is not configured" do
+      previous = Application.get_env(:groupher_server, :web_analysis)
+      Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+
+      on_exit(fn ->
+        Application.put_env(:groupher_server, :web_analysis, previous)
+      end)
+
+      {:ok, result} = Web.overview(%Community{slug: "home"})
+
+      assert result.status == "unavailable"
+      assert result.path_scope == "/home"
+      assert result.range.bucket == "day"
+      assert result.summary.pageviews.value == 0
+      assert result.summary.pageviews.previous_value == 0
+      assert result.summary.pageviews.change_rate == nil
+      assert result.timeseries.points == []
+      assert result.pages.path == []
+      assert [%{code: "not_configured", section: "overview"}] = result.errors
     end
   end
 end

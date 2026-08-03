@@ -3,7 +3,7 @@ defmodule Helper.PermissionConfig do
   Centralized permission configuration for CMS authorization.
   """
 
-    @contexts ["cms"]
+  @contexts ["cms"]
   @article_ops [
     "pin",
     "undo_pin",
@@ -132,7 +132,6 @@ defmodule Helper.PermissionConfig do
       "community.apply.approve" => %{scope: :global, grant: "community.apply.approve"},
       "community.apply.deny" => %{scope: :global, grant: "community.apply.deny"},
       "billing.state.update" => %{scope: :global, grant: "system_accountant"},
-      "status.count" => %{scope: :global, grant: "god"},
       "article.mirror_home" => %{scope: :global, grant: "homemirror"},
       "article.move_blackhole" => %{scope: :global, grant: "blackeye"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},

@@ -5,111 +5,205 @@ import { GRAPHQL_ENDPOINT } from '~/config'
 type TGraphQLError = { message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
 
-export type TWebAnalysisSummary = {
+export type TAnalysisWebMetric = {
+  value: number
+  previousValue: number | null
+  changeRate: number | null
+}
+
+export type TAnalysisWebCountMetrics = {
+  visitors: number
+  visits: number
+  views: number
+}
+
+export type TAnalysisWebPageMetrics = TAnalysisWebCountMetrics & {
+  bounceRate: number
+  visitDuration: number
+}
+
+export type TAnalysisWebDimension<TMetrics> = {
+  value: string
+  label: string
+  metrics: TMetrics
+}
+
+export type TAnalysisWebOverview = {
   status: string
   provider: string
   pathScope: string
-  error: string | null
   range: {
     days: number
     startAt: string
     endAt: string
+    bucket: string
   }
   summary: {
-    pageviews: number
-    visitors: number
-    visits: number
-    bounces: number
-    totalTime: number
+    pageviews: TAnalysisWebMetric
+    visitors: TAnalysisWebMetric
+    visits: TAnalysisWebMetric
+    bounceRate: TAnalysisWebMetric
+    visitDuration: TAnalysisWebMetric
   }
   timeseries: {
-    date: string
-    pageviews: number
-    visits: number
-  }[]
-  topPages: {
-    path: string
-    title: string | null
-    pageviews: number
-    visitors: number
-    visits: number
-    bounces: number
-    totalTime: number
-  }[]
-  topReferrers: {
-    referrer: string
-    visitors: number
+    status: string
+    bucket: string
+    points: {
+      bucket: string
+      timestamp: string
+      visitors: number
+      visits: number
+      views: number
+    }[]
+  }
+  pages: {
+    status: string
+    path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  }
+  sources: {
+    status: string
+    referrer: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+  }
+  errors: {
+    code: string
+    message: string
+    section: string
+    providerStatus: string | null
   }[]
 }
 
-type TWebAnalysisQueryData = {
-  webAnalysisSummary: TWebAnalysisSummary | null
+type TAnalysisWebQueryData = {
+  analysisWebOverview: TAnalysisWebOverview | null
 }
 
-const WEB_ANALYSIS_SUMMARY_QUERY = `
-  query WebAnalysisSummary($community: String!, $days: Int) {
-    webAnalysisSummary(community: $community, days: $days) {
+const ANALYSIS_WEB_OVERVIEW_QUERY = `
+  query AnalysisWebOverview($community: String!, $days: Int) {
+    analysisWebOverview(community: $community, days: $days) {
       status
       provider
       pathScope
-      error
       range {
         days
         startAt
         endAt
+        bucket
       }
       summary {
-        pageviews
-        visitors
-        visits
-        bounces
-        totalTime
+        pageviews {
+          value
+          previousValue
+          changeRate
+        }
+        visitors {
+          value
+          previousValue
+          changeRate
+        }
+        visits {
+          value
+          previousValue
+          changeRate
+        }
+        bounceRate {
+          value
+          previousValue
+          changeRate
+        }
+        visitDuration {
+          value
+          previousValue
+          changeRate
+        }
       }
       timeseries {
-        date
-        pageviews
-        visits
+        status
+        bucket
+        points {
+          bucket
+          timestamp
+          visitors
+          visits
+          views
+        }
       }
-      topPages {
-        path
-        title
-        pageviews
-        visitors
-        visits
-        bounces
-        totalTime
+      pages {
+        status
+        path {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            bounceRate
+            visitDuration
+          }
+        }
       }
-      topReferrers {
-        referrer
-        visitors
+      sources {
+        status
+        referrer {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
+      }
+      errors {
+        code
+        message
+        section
+        providerStatus
       }
     }
   }
 `
 
-const emptySummary = (community: string): TWebAnalysisSummary => ({
+const emptyMetric = (): TAnalysisWebMetric => ({
+  value: 0,
+  previousValue: null,
+  changeRate: null,
+})
+
+const emptyOverview = (community: string): TAnalysisWebOverview => ({
   status: 'unavailable',
   provider: 'umami',
   pathScope: `/${community}`,
-  error: 'web analysis is unavailable',
   range: {
     days: 7,
     startAt: '0',
     endAt: '0',
+    bucket: 'day',
   },
   summary: {
-    pageviews: 0,
-    visitors: 0,
-    visits: 0,
-    bounces: 0,
-    totalTime: 0,
+    pageviews: emptyMetric(),
+    visitors: emptyMetric(),
+    visits: emptyMetric(),
+    bounceRate: emptyMetric(),
+    visitDuration: emptyMetric(),
   },
-  timeseries: [],
-  topPages: [],
-  topReferrers: [],
+  timeseries: {
+    status: 'unavailable',
+    bucket: 'day',
+    points: [],
+  },
+  pages: {
+    status: 'unavailable',
+    path: [],
+  },
+  sources: {
+    status: 'unavailable',
+    referrer: [],
+  },
+  errors: [],
 })
 
-export const fetchWebAnalysisSummary = async (community: string): Promise<TWebAnalysisSummary> => {
+export const fetchAnalysisWebOverview = async (
+  community: string,
+): Promise<TAnalysisWebOverview> => {
   try {
     const headerStore = await headers()
     const cookie = headerStore.get('cookie')
@@ -124,19 +218,19 @@ export const fetchWebAnalysisSummary = async (community: string): Promise<TWebAn
         ...(authorization ? { authorization } : {}),
       },
       body: JSON.stringify({
-        query: WEB_ANALYSIS_SUMMARY_QUERY,
+        query: ANALYSIS_WEB_OVERVIEW_QUERY,
         variables: { community, days: 7 },
       }),
     })
 
-    if (!response.ok) return emptySummary(community)
+    if (!response.ok) return emptyOverview(community)
 
-    const payload = (await response.json()) as TGraphQLPayload<TWebAnalysisQueryData>
-    if (payload.errors || !payload.data?.webAnalysisSummary) return emptySummary(community)
+    const payload = (await response.json()) as TGraphQLPayload<TAnalysisWebQueryData>
+    if (payload.errors || !payload.data?.analysisWebOverview) return emptyOverview(community)
 
-    return payload.data.webAnalysisSummary
+    return payload.data.analysisWebOverview
   } catch (error) {
     console.error('## web analysis ssr error: ', error)
-    return emptySummary(community)
+    return emptyOverview(community)
   }
 }

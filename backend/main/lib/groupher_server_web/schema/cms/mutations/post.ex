@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.create_post/3)
-      middleware(M.Statistics.MakeContribute, for: [:user, :community])
+      middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 
     @desc "save a new post as a draft"
@@ -95,7 +95,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       middleware(M.FrontDesk, {:article_editor, thread: :post})
       middleware(M.Passport, action: "post.draft.publish")
       resolve(&R.CMS.publish_post_draft/3)
-      middleware(M.Statistics.MakeContribute, for: [:user, :community])
+      middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 
     @desc "set cat for a post"

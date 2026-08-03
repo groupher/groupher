@@ -14,7 +14,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
           |
           +--> CMS.Communities / CMS.Articles / CMS.DocTree
           +--> CMS.DocCover / CMS.Dashboard / CMS.Comments
-          +--> Analysis
+          +--> Analysis.Web
 
   The resolver layer is also where public API terms such as article/comment
   paths are translated into backend calls. Keep internal database ids and public
@@ -24,7 +24,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, Analysis, CMS, FrontDesk}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServer.Analysis.Web, as: AnalysisWeb
 
   alias Accounts.Model.User
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
@@ -712,8 +713,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Audit.list(community, Map.get(args, :filter) || %{})
   end
 
-  def web_analysis_summary(_root, %{community: %Community{} = community} = args, _info) do
-    Analysis.summary(community, args)
+  def analysis_web_summary(_root, %{community: %Community{} = community} = args, _info) do
+    AnalysisWeb.summary(community, args)
+  end
+
+  def analysis_web_overview(_root, %{community: %Community{} = community} = args, _info) do
+    AnalysisWeb.overview(community, args)
   end
 
   def trashed_article_mentioned_by(item, args, _info) do
