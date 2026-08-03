@@ -22,16 +22,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-  import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.{Artiment.Threads, FrontDesk}
+  alias CMS.{Artiment.Threads, ArtimentMentions.Config, FrontDesk}
   alias CMS.Model.Comment
 
-  @site_host get_config(:general, :site_host)
-  @threads get_config(:article, :threads)
-  @valid_article_prefix Enum.map(@threads, &"#{@site_host}/#{&1}/")
+  @threads Config.threads()
+  @valid_article_prefix Config.valid_article_prefixes()
   @href_regex ~r/<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
   @url_regex ~r/https?:\/\/[^\s<>"']+/u
 
@@ -376,7 +374,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     |> resolved_internal_mention(%{
       type: :user,
       id: user.id,
-      url: "#{@site_host}/u/#{user.login}",
+      url: Config.user_url(user.login),
       artiment: user
     })
   end
@@ -544,7 +542,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
-  defp article_url(thread, id), do: "#{@site_host}/#{thread}/#{id}"
+  defp article_url(thread, id), do: Config.article_url(thread, id)
 
   defp hash_url(url) do
     :sha256

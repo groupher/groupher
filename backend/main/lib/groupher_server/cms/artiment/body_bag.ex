@@ -22,8 +22,8 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
 
+  alias GroupherServer.CMS.Artiment.Config
   alias GroupherServer.CMS.Model.ArticleDocument
 
   @primary_key false
@@ -37,8 +37,8 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   @max_depth 64
   @max_toc_items 500
   @max_digest_length 500
-  @min_plain_text_length get_config(:article, :min_length)
-  @max_plain_text_length get_config(:article, :max_length)
+  @min_plain_text_length Config.min_length()
+  @max_plain_text_length Config.max_length()
   @empty_doc_attrs %{
     json: ~S([{"children":[{"text":""}],"type":"p"}]),
     markdown: "\u200B\n",
