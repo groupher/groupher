@@ -3,11 +3,11 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Statistics
+  alias GroupherServer.CMS
 
-  @throttle_interval get_config(:general, :publish_throttle_interval_minutes)
-  @hour_limit get_config(:general, :publish_throttle_hour_limit)
-  @day_total get_config(:general, :publish_throttle_day_limit)
+  @throttle_interval GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
+  @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit
+  @day_total GroupherServer.CMS.Policy.Config.publish_throttle().day_limit
 
   setup do
     guest_conn = simu_conn(:guest)
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -@throttle_interval
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     created = rule_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -(@throttle_interval - 1)
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
              ecode(:throttle_interval)
            )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -(@throttle_interval - 1)
@@ -113,13 +113,13 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -@throttle_interval
     )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :hour_count,
       %User{id: user.id},
       count: @hour_limit
@@ -143,13 +143,13 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -@throttle_interval
     )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :hour_count,
       %User{id: user.id},
       count: @hour_limit
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
              ecode(:throttle_hour)
            )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :publish_hour,
       %User{id: user.id},
       hours: -1
@@ -185,13 +185,13 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -@throttle_interval
     )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :date_count,
       %User{id: user.id},
       count: @day_total
@@ -215,13 +215,13 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
 
     assert created |> Map.has_key?("innerId")
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :last_publish_time,
       %User{id: user.id},
       minutes: -@throttle_interval
     )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :date_count,
       %User{id: user.id},
       count: @day_total
@@ -234,7 +234,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
              ecode(:throttle_day)
            )
 
-    Statistics.mock_throttle_attr(
+    CMS.Policy.mock_publish_throttle_attr(
       :publish_date,
       %User{id: user.id},
       days: -2

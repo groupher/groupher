@@ -290,7 +290,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
           "children" => [
             %{
               "text" =>
-                ~s(<a href="#{get_config(:general, :site_host)}/blog/#{target.id}">target</a>)
+                ~s(<a href="#{GroupherServer.CMS.ArtimentMentions.Config.site_host()}/blog/#{target.id}">target</a>)
             }
           ]
         }

@@ -16,17 +16,14 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
-  @threads Application.compile_env(:groupher_server, :article, [])
-           |> Keyword.get(:threads, [])
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, [])
-                                  |> Keyword.get(:max_upvoted_users_count, 10)
+  @max_latest_upvoted_users_count GroupherServer.CMS.Artiment.Config.max_upvoted_users_count() ||
+                                    10
 
   @max_latest_emotion_users_count 4
-  @supported_emotions Application.compile_env(:groupher_server, :article, [])
-                      |> Keyword.get(:emotions, [])
-  @supported_comment_emotions Application.compile_env(:groupher_server, :article, [])
-                              |> Keyword.get(:comment_emotions, [])
+  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @supported_comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
   def community(slug) when is_binary(slug) do

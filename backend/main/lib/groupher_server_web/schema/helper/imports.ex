@@ -3,11 +3,9 @@ defmodule GroupherServerWeb.Schema.Helper.Imports do
   helper for import cms article related fields
   """
 
-  import Helper.Utils, only: [get_config: 2]
+    alias GroupherServerWeb.Schema.CMS
 
-  alias GroupherServerWeb.Schema.CMS
-
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @doc """
   import article fields based on @threads
   e.g:

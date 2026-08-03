@@ -34,14 +34,14 @@ defmodule GroupherServer.CMS.CanCan.Communities do
       {:error, :emotion_not_allowed}
   """
 
-  import Helper.Utils, only: [get_config: 2, done: 1]
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Artiment.Threads
 
-  @threads get_config(:article, :threads)
-  @emotions_whitelist get_config(:article, :emotions_whitelist)
-  @default_thread_emotions get_config(:article, :default_thread_emotions)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
+  @default_thread_emotions GroupherServer.CMS.Artiment.Config.default_thread_emotions()
 
   @type scope :: :article | :comment
 

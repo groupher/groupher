@@ -7,11 +7,10 @@ defmodule GroupherServer.Application do
   Cachex, and Rihanna workers; test environments only skip Rihanna-backed jobs.
   """
   use Application
-  import Helper.Utils, only: [get_config: 2]
 
   alias Helper.Cache
 
-  @cache_pool get_config(:cache, :pool)
+  @cache_pool Helper.Cache.Config.pool()
 
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications

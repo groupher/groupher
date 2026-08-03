@@ -28,13 +28,11 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   use Accessible
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-
-  @threads get_config(:article, :threads)
-  @emotions_whitelist get_config(:article, :emotions_whitelist)
-  @article_emotions get_config(:article, :emotions)
-  @comment_emotions get_config(:article, :comment_emotions)
-  @default_thread_emotions get_config(:article, :default_thread_emotions)
+    @threads GroupherServer.CMS.Artiment.Config.threads()
+  @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
+  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @default_thread_emotions GroupherServer.CMS.Artiment.Config.default_thread_emotions()
 
   @comment_thread_fields Enum.map(@threads, &:"#{&1}_comment")
   @thread_fields @threads ++ @comment_thread_fields

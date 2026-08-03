@@ -2,12 +2,12 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   @moduledoc """
   common fields
   """
-  import Helper.Utils, only: [get_config: 2, plural: 1, past_verb: 1]
+  import Helper.Utils, only: [plural: 1, past_verb: 1]
 
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   # user published articles
   defmacro published_article_queries do

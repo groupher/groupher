@@ -6,9 +6,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros do
     field(:has_post, :boolean, default: false)
     field(:post_count, :integer, default: 0)
   """
-  import Helper.Utils, only: [get_config: 2]
-
-  @threads get_config(:article, :threads)
+    @threads GroupherServer.CMS.Artiment.Config.threads()
 
   defmacro threads_fields do
     @threads
@@ -28,9 +26,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
   use Ecto.Schema
   import Ecto.Changeset
   import GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros
-  import Helper.Utils, only: [get_config: 2]
-
-  @threads get_config(:article, :threads)
+    @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @optional_fields Enum.map(@threads, &:"#{&1}_count") ++
                      Enum.map(@threads, &:"has_#{&1}")

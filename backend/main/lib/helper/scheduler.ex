@@ -5,14 +5,13 @@ defmodule Helper.Scheduler do
   use Quantum, otp_app: :groupher_server
 
   # import Config
-  import Helper.Utils, only: [get_config: 2, done: 1]
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.CMS
-  alias Helper.Plausible
 
   alias GroupherServer.CMS.Events
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
   clear all the cache in Cachex
@@ -62,12 +61,6 @@ defmodule Helper.Scheduler do
         Process.sleep(500)
       end)
       |> done
-    end
-  end
-
-  def gather_online_status do
-    with true <- System.get_env("MIX_ENV") != "test" do
-      Plausible.realtime_visitors()
     end
   end
 end

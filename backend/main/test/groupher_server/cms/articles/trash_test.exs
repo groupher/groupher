@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   alias CMS.Model.{ArtimentMention, AuditLog, Comment, Post, TrashAction, TrashedArticle}
 
-  @site_host get_config(:general, :site_host)
+  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 
   test "Trash hides, lists and restores one logical Article without deleting content" do
     {community, post, _attrs, user} = mock_article(:post)

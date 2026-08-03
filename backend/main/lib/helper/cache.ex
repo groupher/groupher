@@ -3,9 +3,8 @@ defmodule Helper.Cache do
   memory cache using cachex https://github.com/whitfin/cachex
   """
   import Cachex.Spec
-  import Helper.Utils, only: [get_config: 2]
 
-  @cache_pool get_config(:cache, :pool)
+  @cache_pool Helper.Cache.Config.pool()
 
   def config(pool_name) do
     pool_config =

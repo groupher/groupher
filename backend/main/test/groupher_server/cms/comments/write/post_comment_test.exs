@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   @article_cat Constant.CMS.article_cat()
   @article_status Constant.CMS.article_status()
 
-  @active_period get_config(:article, :active_period_days)
+  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
 
   @delete_hint Comment.delete_hint()
   @report_threshold_for_fold Comment.report_threshold_for_fold()

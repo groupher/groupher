@@ -8,11 +8,11 @@ defmodule GroupherServer.Test.AssertHelper do
 
   import Helper.ErrorCode, only: [ecode: 1]
   import Phoenix.ConnTest
-  import Helper.Utils, only: [map_key_stringify: 1, get_config: 2]
+  import Helper.Utils, only: [map_key_stringify: 1]
 
   @endpoint GroupherServerWeb.Endpoint
 
-  @inner_page_size get_config(:general, :inner_page_size)
+  @inner_page_size GroupherServerWeb.Config.inner_page_size()
 
   @doc """
   used for non exist id

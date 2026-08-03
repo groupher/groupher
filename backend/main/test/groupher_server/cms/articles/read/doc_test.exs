@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   alias CMS.FrontDesk
   alias CMS.Model.ArticleDocument
-  @article_digest_length get_config(:article, :digest_length)
+  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, doc_attrs, user} = mock_article(:doc)

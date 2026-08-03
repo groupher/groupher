@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
   use GroupherServer.TestMate
 
   @total_count 35
-  @page_size get_config(:general, :page_size)
+  @page_size GroupherServerWeb.Config.page_size()
 
   @audit_illegal Constant.CMS.pending(:illegal)
 

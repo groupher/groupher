@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
   @moduledoc false
   use GroupherServer.TestMate
 
-  @archive_threshold get_config(:article, :archive_threshold)
+  @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
   @blog_archive_threshold Datetime.shift(
                             @now,
                             @archive_threshold[:blog] || @archive_threshold[:default]

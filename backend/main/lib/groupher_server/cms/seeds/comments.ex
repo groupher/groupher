@@ -7,9 +7,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   """
 
   import GroupherServer.Support.Factory
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
+    alias GroupherServer.CMS
   alias GroupherServer.Support.FakeData
 
   alias CMS.Model.{Comment, Community}
@@ -17,7 +15,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   alias Helper.{ORM, T}
 
-  @comment_emotions get_config(:article, :comment_emotions)
+  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
   @comment_count_range Config.comment_count_range()
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()

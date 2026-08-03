@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Statistics do
   alias Helper.Cache
   alias Statistics.Model.{CommunityContribute, UserContribute}
 
-  @community_contribute_days get_config(:general, :community_contribute_days)
+  @community_contribute_days GroupherServer.Statistics.Config.community_contribute_days()
 
   setup do
     {:ok, user} = db_insert(:user)

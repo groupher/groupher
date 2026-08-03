@@ -5,8 +5,7 @@ defmodule GroupherServer.CMS.Helper.Constraints do
   """
   import Ecto.Changeset
 
-  @threads Application.compile_env(:groupher_server, :article, [])
-                   |> Keyword.get(:threads, [])
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @doc """

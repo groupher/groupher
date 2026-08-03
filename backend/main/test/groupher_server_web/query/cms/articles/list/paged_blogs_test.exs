@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
   use GroupherServer.TestMate
 
-  @page_size get_config(:general, :page_size)
+  @page_size GroupherServerWeb.Config.page_size()
 
   @today_count 3
   @last_week_count 1

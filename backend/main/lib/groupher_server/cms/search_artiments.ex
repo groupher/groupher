@@ -1,7 +1,7 @@
 defmodule GroupherServer.CMS.SearchArtiments do
   @moduledoc "Public facade for platform-neutral Artiment search and indexing."
 
-  alias __MODULE__.{Artiment, Query, Result}
+  alias __MODULE__.{Artiment, Config, Query, Result}
 
   @spec search(map() | Query.t()) :: {:ok, Result.t()} | {:error, term()}
   def search(%Query{} = query), do: platform().search(query)
@@ -23,16 +23,8 @@ defmodule GroupherServer.CMS.SearchArtiments do
   def update_metrics(updates) when is_list(updates), do: platform().update_metrics(updates)
 
   @spec platform() :: module()
-  def platform do
-    :groupher_server
-    |> Application.fetch_env!(:search_artiments)
-    |> Keyword.fetch!(:platform)
-  end
+  def platform, do: Config.platform()
 
   @spec queue() :: module()
-  def queue do
-    :groupher_server
-    |> Application.fetch_env!(:search_artiments)
-    |> Keyword.fetch!(:queue)
-  end
+  def queue, do: Config.queue()
 end

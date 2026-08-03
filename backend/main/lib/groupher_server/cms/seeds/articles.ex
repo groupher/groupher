@@ -7,16 +7,14 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   """
 
   import GroupherServer.Support.Factory
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
+    alias GroupherServer.CMS
 
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   alias GroupherServer.CMS.Seeds.{Comments, Config, Tags}
 
-  @article_emotions get_config(:article, :emotions)
+  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @article_count_range {Config.article_count_per_thread(), Config.article_count_per_thread()}
   @article_upvotes_range Config.article_upvotes_range()
   @comment_count_range Config.comment_count_range()

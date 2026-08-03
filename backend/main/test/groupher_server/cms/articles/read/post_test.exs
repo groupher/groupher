@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   alias CMS.Model.ArticleDocument
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
-  @article_digest_length get_config(:article, :digest_length)
+  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, post_attrs, user} = mock_article(:post)

@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   alias CMS.Model.CommunitySubscriber
 
-  @default_subscribed_communities get_config(:general, :default_subscribed_communities)
+  @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
   defp create_community!(user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community, attrs)

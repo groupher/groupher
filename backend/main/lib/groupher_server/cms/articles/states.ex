@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Articles.States do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{CMS, Repo}
 
@@ -18,8 +18,8 @@ defmodule GroupherServer.CMS.Articles.States do
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}
 
-  @active_period get_config(:article, :active_period_days)
-  @archive_threshold get_config(:article, :archive_threshold)
+  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
+  @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
   @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()

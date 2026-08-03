@@ -4,7 +4,7 @@ defmodule GroupherServer.Accounts.Upvotes do
   """
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
   import ShortMaps
 
   alias GroupherServer.Accounts.Model.User
@@ -13,7 +13,7 @@ defmodule GroupherServer.Accounts.Upvotes do
   alias CMS.Model.ArticleUpvote
   alias Helper.{ORM, QueryBuilder}
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   def paged_articles(%User{id: user_id}, %{thread: thread} = filter) when is_atom(thread) do
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)

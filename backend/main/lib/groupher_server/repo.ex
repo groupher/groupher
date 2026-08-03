@@ -6,10 +6,9 @@ defmodule GroupherServer.Repo do
   query execution for contexts such as accounts, CMS content, and statistics, and
   provides pagination defaults through `Scrivener`.
   """
-  import Helper.Utils, only: [get_config: 2]
 
   use Ecto.Repo, otp_app: :groupher_server, adapter: Ecto.Adapters.Postgres
-  use Scrivener, page_size: get_config(:general, :page_size)
+  use Scrivener, page_size: GroupherServerWeb.Config.page_size()
 
   @dialyzer {:nowarn_function, rollback: 1}
 

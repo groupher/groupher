@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
-
   @moduledoc """
   Macro helpers for config-driven fields in `CommunityMeta`.
 
@@ -7,9 +6,9 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
   new thread types do not require hand-editing this embed.
   """
 
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   defmacro thread_count_fields do
     @threads
@@ -40,10 +39,10 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   use Accessible
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
   import GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @general_options %{
     moderators_ids: [],

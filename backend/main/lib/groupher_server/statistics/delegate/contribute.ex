@@ -14,8 +14,8 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   alias Statistics.Model.{CommunityContribute, UserContribute}
   alias Helper.{Multi, Cache, Datetime, Later, ORM, QueryBuilder}
 
-  @community_contribute_days get_config(:general, :community_contribute_days)
-  @user_contribute_months get_config(:general, :user_contribute_months)
+  @community_contribute_days GroupherServer.Statistics.Config.community_contribute_days()
+  @user_contribute_months GroupherServer.Statistics.Config.user_contribute_months()
 
   @doc """
   update user's contributes record

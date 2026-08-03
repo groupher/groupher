@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   Count helpers for communities.
   """
   import Ecto.Query, only: [from: 2, where: 3]
-  import Helper.Utils, only: [get_config: 2, plural: 1, strip_struct: 1]
+  import Helper.Utils, only: [plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Constant, ORM, T, Transaction}
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
   update community_tags_count / thread / article_count / subscribers_count of a community

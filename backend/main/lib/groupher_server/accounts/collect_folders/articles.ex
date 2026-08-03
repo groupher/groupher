@@ -8,13 +8,13 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   """
 
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.Accounts.Model.{CollectFolder, User}
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter) do

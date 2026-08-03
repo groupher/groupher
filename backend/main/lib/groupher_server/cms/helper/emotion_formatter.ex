@@ -26,10 +26,8 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
   set of active reactions instead of every supported reaction type.
   """
 
-  import Helper.Utils, only: [get_config: 2]
-
-  @article_emotions get_config(:article, :emotions)
-  @comment_emotions get_config(:article, :comment_emotions)
+    @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
   @all_emotions (@article_emotions ++ @comment_emotions) |> Enum.uniq()
 
   @spec format(map() | nil, :article | :comment | nil) :: [map()]
