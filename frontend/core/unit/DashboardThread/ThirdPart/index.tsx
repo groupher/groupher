@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 
-import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
+import { getIntegrationIconSrc, INTEGRATE_ANALYSIS_TOOLS } from './constant'
 import useSalon, { cn } from './salon'
 import SettingModal from './SettingModal'
 import type { TIntegrateAnalysisTool } from './spec'
@@ -37,7 +37,7 @@ const ThirdPart: FC = () => {
           >
             <div className={s.iconBox}>
               <Image
-                src={`/integrations/${item.key}.png`}
+                src={getIntegrationIconSrc(item.key)}
                 alt={`${t(item.title)} icon`}
                 width={28}
                 height={28}

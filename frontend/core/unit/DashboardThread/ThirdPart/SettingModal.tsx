@@ -7,6 +7,7 @@ import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 
+import { getIntegrationIconSrc } from './constant'
 import useSalon, { cn } from './salon/setting_modal'
 import type { TIntegrateAnalysisTool } from './spec'
 
@@ -29,7 +30,7 @@ const SettingModal = ({ show, onClose, service }: TProps) => {
         <div className={s.header}>
           <div className={s.iconBox}>
             <Image
-              src={`/integrations/${service.key}.png`}
+              src={getIntegrationIconSrc(service.key)}
               alt={`${service.title} icon`}
               width={28}
               height={28}
