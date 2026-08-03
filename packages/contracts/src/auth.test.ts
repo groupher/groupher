@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { GROUPHER_AUTH_TOKEN_COOKIE, getAuthCookieNames, getAuthSessionCookieName } from './auth'
+import {
+  GROUPHER_AUTH_SIGNED_IN_COOKIE,
+  GROUPHER_AUTH_TOKEN_COOKIE,
+  getAuthCookieNames,
+  getAuthSessionCookieName,
+} from './auth'
 
 describe('Auth cookie contract', () => {
   it('uses a Groupher-specific namespace for secure shared cookies', () => {
@@ -21,5 +26,9 @@ describe('Auth cookie contract', () => {
 
   it('uses the canonical Groupher auth token cookie', () => {
     expect(GROUPHER_AUTH_TOKEN_COOKIE).toBe('groupher-auth.token')
+  })
+
+  it('uses a non-sensitive signed-in hint cookie', () => {
+    expect(GROUPHER_AUTH_SIGNED_IN_COOKIE).toBe('groupher-auth.signed-in')
   })
 })

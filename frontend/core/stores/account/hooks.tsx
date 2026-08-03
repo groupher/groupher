@@ -1,6 +1,6 @@
 'use client'
 
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
 import { useEffect } from 'react'
 
 import EVENT from '~/const/event'
@@ -18,19 +18,21 @@ type TMeQuery = {
   me?: TUser | null
 }
 
-const hasAuthTokenCookie = (): boolean => {
+// This reads only the non-sensitive hint cookie. The real Phoenix token remains
+// HttpOnly and is consumed by the same-origin GraphQL proxy when `me` is sent.
+const hasSignedInHintCookie = (): boolean => {
   if (typeof document === 'undefined') return false
 
   return document.cookie
     .split(';')
     .map((item) => item.trim())
-    .some((item) => item.startsWith(`${GROUPHER_AUTH_TOKEN_COOKIE}=`))
+    .some((item) => item === `${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1`)
 }
 
 export default function Hooks() {
   const storeHook = useBaseStore()
   const store = storeHook.live$
-  const shouldFetchMe = hasAuthTokenCookie()
+  const shouldFetchMe = hasSignedInHintCookie()
 
   const { data, loading, error } = useQuery<TMeQuery>(me, {}, { pause: !shouldFetchMe })
 

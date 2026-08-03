@@ -9,6 +9,18 @@ const AUTH_COOKIE_BASENAME = {
 } as const
 
 export const GROUPHER_AUTH_TOKEN_COOKIE = 'groupher-auth.token'
+/**
+ * Readable browser hint that tells frontend account stores they may probe
+ * the current session with `me`.
+ *
+ * This cookie is intentionally not an auth credential. The Phoenix token stays
+ * in `GROUPHER_AUTH_TOKEN_COOKIE` as HttpOnly, and API requests are still
+ * authenticated by the server-side GraphQL proxy.
+ *
+ * @example
+ * document.cookie.includes(`${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1`)
+ */
+export const GROUPHER_AUTH_SIGNED_IN_COOKIE = 'groupher-auth.signed-in'
 
 export const getAuthCookieNames = (secure: boolean) => {
   const prefix = secure ? '__Secure-' : ''
