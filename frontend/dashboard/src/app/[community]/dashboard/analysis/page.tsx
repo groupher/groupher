@@ -1,18 +1,9 @@
-'use client'
+import WebAnalysisClient from './Client'
+import { fetchWebAnalysisSummary } from './helper'
 
-import useTrans from '~/hooks/useTrans'
-import DsbCovers from '~/unit/DashboardCovers'
+export default async function AnalysisPage({ params }) {
+  const { community } = await params
+  const data = await fetchWebAnalysisSummary(community)
 
-export default function AnalysisCoversPage() {
-  const { t } = useTrans()
-
-  return (
-    <DsbCovers
-      config={{
-        title: t('dsb.menu.analysis'),
-        desc: t('dsb.covers.analysis.desc'),
-        items: [],
-      }}
-    />
-  )
+  return <WebAnalysisClient data={data} />
 }

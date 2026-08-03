@@ -4,7 +4,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   This module keeps GraphQL concerns at the edge: it unpacks typed arguments,
   reads authenticated viewer context when present, and delegates domain work to
-  `GroupherServer.CMS` modules. It should not own persistence rules.
+  `GroupherServer.CMS` and adjacent platform contexts. It should not own
+  persistence rules.
 
       GraphQL field
           |
@@ -13,6 +14,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
           |
           +--> CMS.Communities / CMS.Articles / CMS.DocTree
           +--> CMS.DocCover / CMS.Dashboard / CMS.Comments
+          +--> Analysis
 
   The resolver layer is also where public API terms such as article/comment
   paths are translated into backend calls. Keep internal database ids and public
@@ -22,7 +24,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServer.{Accounts, Analysis, CMS, FrontDesk}
 
   alias Accounts.Model.User
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
@@ -708,6 +710,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def cms_audit_logs(_root, %{community: %Community{} = community} = args, _info) do
     CMS.Audit.list(community, Map.get(args, :filter) || %{})
+  end
+
+  def web_analysis_summary(_root, %{community: %Community{} = community} = args, _info) do
+    Analysis.summary(community, args)
   end
 
   def trashed_article_mentioned_by(item, args, _info) do

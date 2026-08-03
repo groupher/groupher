@@ -10,6 +10,11 @@ config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 config :groupher_server, :server_trust, secret: nil
 
+config :groupher_server, :web_analysis,
+  website_id: nil,
+  api_token: nil,
+  timeout: 4000
+
 config :groupher_server, GroupherServer.Repo,
   after_connect: {Postgrex, :query!, ["SET TIME ZONE 'UTC'", []]},
   migration_timestamps: [type: :timestamptz]

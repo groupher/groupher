@@ -6,6 +6,13 @@ if secret = System.get_env("GROUPHER_SERVER_TRUST_SECRET") do
   config :groupher_server, :server_trust, secret: secret
 end
 
+if System.get_env("WEB_ANALYSIS_WEBSITE_ID") do
+  config :groupher_server, :web_analysis,
+    website_id: System.get_env("WEB_ANALYSIS_WEBSITE_ID"),
+    api_token: System.get_env("WEB_ANALYSIS_API_TOKEN"),
+    timeout: String.to_integer(System.get_env("WEB_ANALYSIS_TIMEOUT") || "4000")
+end
+
 # ## Using releases
 #
 # If you use `mix release`, you need to explicitly enable the server

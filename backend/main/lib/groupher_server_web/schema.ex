@@ -6,7 +6,7 @@ defmodule GroupherServerWeb.Schema do
   import GroupherServerWeb.Schema.Helper.Imports
 
   alias GroupherServerWeb.Middleware, as: M
-  alias GroupherServerWeb.Schema.{Account, CMS, Helper, Statistics}
+  alias GroupherServerWeb.Schema.{Account, Analysis, CMS, Helper, Statistics}
 
   import_types(Absinthe.Type.Custom)
 
@@ -24,6 +24,7 @@ defmodule GroupherServerWeb.Schema do
 
   # cms
   import_types(CMS.Types)
+  import_types(Analysis.Types)
   import_types(CMS.ContentImport.Types)
   import_types(CMS.Queries)
   import_types(CMS.ContentImport)

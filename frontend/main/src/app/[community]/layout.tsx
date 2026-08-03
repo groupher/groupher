@@ -10,6 +10,7 @@ import { getMetadata } from '~/utils/ssr'
 import CommunityThemePresetStyle from '~/widgets/CommunityThemePresetStyle'
 
 import Client from './Client'
+import WebAnalysisScript from './WebAnalysisScript'
 
 export async function generateMetadata({ params }): Promise<Metadata> {
   const params$ = await params
@@ -43,6 +44,7 @@ export default async ({ children, params }) => {
       >
         <GraphQLProvider>
           <GlobalProvider>
+            <WebAnalysisScript />
             <Client>{children}</Client>
           </GlobalProvider>
         </GraphQLProvider>
