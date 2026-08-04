@@ -1,5 +1,3 @@
-import { headers } from 'next/headers'
-
 import { GRAPHQL_ENDPOINT } from '~/config'
 import type {
   TAnalysisWebMetric,
@@ -15,7 +13,7 @@ type TAnalysisWebQueryData = {
 
 const ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS = 8_000
 
-const ANALYSIS_WEB_OVERVIEW_QUERY = `
+export const ANALYSIS_WEB_OVERVIEW_QUERY = `
   query AnalysisWebOverview($community: String!, $days: Int) {
     analysisWebOverview(community: $community, days: $days) {
       status
@@ -274,7 +272,7 @@ const emptyMetric = (): TAnalysisWebMetric => ({
   changeRate: null,
 })
 
-const emptyOverview = (community: string): TAnalysisWebOverview => ({
+export const emptyOverview = (community: string): TAnalysisWebOverview => ({
   status: 'unavailable',
   provider: 'umami',
   pathScope: `/${community}`,
@@ -340,18 +338,12 @@ export const fetchAnalysisWebOverview = async (
   const timeout = setTimeout(() => controller.abort(), ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS)
 
   try {
-    const headerStore = await headers()
-    const cookie = headerStore.get('cookie')
-    const authorization = headerStore.get('authorization')
-
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       cache: 'no-store',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        ...(cookie ? { cookie } : {}),
-        ...(authorization ? { authorization } : {}),
       },
       body: JSON.stringify({
         query: ANALYSIS_WEB_OVERVIEW_QUERY,

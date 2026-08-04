@@ -1,0 +1,11 @@
+.next
+.next/
+node_modules
+node_modules/
+.swc
+.tmp
+.vercel
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
