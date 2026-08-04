@@ -1,6 +1,6 @@
 import { prettyNum } from '~/fmt'
 
-import { CHART_GRID_RATIOS, CHART_SIZE, DEMO_POINTS } from '../constant'
+import { CHART_GRID_RATIOS, CHART_SIZE } from '../constant'
 import {
   formatTimestamp,
   pointsToAreaPath,
@@ -21,21 +21,21 @@ type TProps = {
 
 export default function TrendChart({ emptyLabel, points, title, viewsLabel, visitsLabel }: TProps) {
   const s = useSalon()
-  const usingDemoData = points.length === 0
-  const chartPoints = usingDemoData ? DEMO_POINTS : points
+  const hasData = points.length > 0
+  const chartPoints = points
   const views = chartPoints.map((point) => point.views)
   const visits = chartPoints.map((point) => point.visits)
   const max = Math.max(...views, ...visits, 1)
-  const tickIndexes = tickIndexesFor(chartPoints.length)
+  const tickIndexes = hasData ? tickIndexesFor(chartPoints.length) : []
 
   return (
     <div className={s.wrapper}>
       <div className={s.head}>
         <div>
           <h3 className={s.title}>{title}</h3>
-          <p className={s.subtitle}>{usingDemoData ? emptyLabel : prettyNum(max)}</p>
+          <p className={s.subtitle}>{hasData ? prettyNum(max) : emptyLabel}</p>
         </div>
-        <div className={s.maxValue}>{prettyNum(max)}</div>
+        {hasData && <div className={s.maxValue}>{prettyNum(max)}</div>}
       </div>
 
       <svg viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`} className={s.svg} role='img'>
@@ -69,28 +69,20 @@ export default function TrendChart({ emptyLabel, points, title, viewsLabel, visi
           />
         ))}
 
-        <path
-          d={pointsToAreaPath(views, max)}
-          fill='url(#trendViewsFill)'
-          opacity={usingDemoData ? 0.8 : 1}
-        />
-        <path
-          d={pointsToAreaPath(visits, max)}
-          fill='url(#trendVisitsFill)'
-          opacity={usingDemoData ? 0.72 : 1}
-        />
+        <path d={pointsToAreaPath(views, max)} fill='url(#trendViewsFill)' opacity='1' />
+        <path d={pointsToAreaPath(visits, max)} fill='url(#trendVisitsFill)' opacity='1' />
         <path
           d={pointsToPath(views, max)}
           fill='none'
           stroke='var(--color-primary-custom)'
-          strokeOpacity={usingDemoData ? 0.74 : 1}
+          strokeOpacity='1'
           strokeWidth='3'
         />
         <path
           d={pointsToPath(visits, max)}
           fill='none'
           stroke='var(--color-primary-custom)'
-          strokeOpacity={usingDemoData ? 0.42 : 0.58}
+          strokeOpacity='0.58'
           strokeWidth='2.5'
         />
         {tickIndexes.map((index) => (
