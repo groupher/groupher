@@ -16,8 +16,6 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
 
     @desc "get cur user"
     field :me, :user do
-      middleware(M.Authorize, :login)
-
       resolve(&R.Accounts.me/3)
     end
 

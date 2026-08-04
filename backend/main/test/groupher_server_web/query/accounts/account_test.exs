@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   alias CMS.Model.CommunitySubscriber
 
-  @default_subscribed_communities get_config(:general, :default_subscribed_communities)
+  @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
   defp create_community!(user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community, attrs)
@@ -37,8 +37,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["avatar"] == user.avatar
     end
 
-    test "guest user can not get any profile", ~m(guest_conn)a do
-      assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
+    test "guest user gets null current profile", ~m(guest_conn)a do
+      assert guest_conn |> gq_query(@query, %{}) == nil
     end
 
     @query S.Account.q(:user)

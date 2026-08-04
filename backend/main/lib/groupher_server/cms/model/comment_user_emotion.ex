@@ -8,15 +8,14 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
+    import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @supported_emotions get_config(:article, :comment_emotions)
+  @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
   @required_fields ~w(comment_id user_id received_user_id emotion)a
 

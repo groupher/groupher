@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   @article_cat Constant.CMS.article_cat()
   @article_status Constant.CMS.article_status()
 
-  @page_size get_config(:general, :page_size)
+  @page_size GroupherServerWeb.Config.page_size()
 
   @today_count 3
   @last_week_count 1

@@ -6,6 +6,8 @@ import { CACHE_TAG } from '~/const/cache'
 import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import { THREAD } from '~/const/thread'
+import { extractQueryName } from '~/graphql/document'
+import { gqFetch } from '~/graphql/server'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
 import type {
@@ -18,8 +20,6 @@ import type {
   TThread,
 } from '~/spec'
 import { FIELDS } from '~/stores/dashboard/constant'
-import { gqFetch } from '~/utils/api'
-import { extractQueryName } from '~/utils/graphql'
 
 type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
 
@@ -99,6 +99,8 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerLinks,
     footerOnelineLinks,
     mediaReports,
+    thirdPartyAnalytics,
+    enabledThirdPartyAnalytics,
   } = dashboard
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
@@ -114,6 +116,8 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerOnelineLinks,
     moderators,
     mediaReports,
+    thirdPartyAnalytics,
+    enabledThirdPartyAnalytics,
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {

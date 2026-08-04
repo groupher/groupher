@@ -23,7 +23,7 @@ defmodule Helper.ORM do
     `extract_and_assign_article/1`, `extract_articles/2`
   """
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1]
   import ShortMaps
 
   import Helper.ErrorHandler
@@ -34,7 +34,7 @@ defmodule Helper.ORM do
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
   Safely updates JSONB `meta` fields and returns the updated struct.
@@ -529,7 +529,8 @@ defmodule Helper.ORM do
              :footer_oneline_links,
              :name_alias,
              :social_links,
-             :media_reports
+             :media_reports,
+             :third_party_analytics
            ] do
     community_dashboard
     |> Ecto.Changeset.change(%{})

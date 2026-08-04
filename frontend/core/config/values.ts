@@ -1,5 +1,4 @@
 const readPublicEnv = (name: string, fallback: string): string => process.env[name] ?? fallback
-const publicGraphQLEndpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT
 const privateGraphQLEndpoint = process.env.GRAPHQL_ENDPOINT
 
 export const PAGE_SIZE = {
@@ -25,8 +24,7 @@ export const ASSETS_HUB_READ_ENDPOINT = readPublicEnv(
 export const ICON = readPublicEnv('NEXT_PUBLIC_ICON', 'https://static.groupher.com/icons/static')
 export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.groupher.com/icons')
 export const GRAPHQL_ENDPOINT =
-  (typeof window === 'undefined' ? privateGraphQLEndpoint : publicGraphQLEndpoint) ??
-  publicGraphQLEndpoint ??
+  (typeof window === 'undefined' ? privateGraphQLEndpoint : '/api/graphql') ??
   (() => {
     return 'http://localhost:4001/graphiql'
   })()

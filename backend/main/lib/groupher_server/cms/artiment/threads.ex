@@ -9,8 +9,9 @@ defmodule GroupherServer.CMS.Artiment.Threads do
   same lowercase atoms automatically.
   """
 
-  @article_values Application.compile_env(:groupher_server, :article, [])
-                  |> Keyword.get(:threads, [])
+  alias GroupherServer.CMS.Artiment.Config
+
+  @article_values Config.threads()
 
   @values (@article_values ++ [:kanban, :account, :about, :dashboard, :user])
           |> Enum.uniq()

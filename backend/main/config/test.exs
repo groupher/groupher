@@ -57,6 +57,3 @@ config :groupher_server, :search_artiments,
     index_name: "groupher_artiments_test",
     max_plain_text_bytes: 7_000
   ]
-
-config :groupher_server, :plausible,
-  token: "tDsEjaIBqmfVpkKByebYgrCs1Kl1V3N3prFACyFJq33eeEumg8hAFgm-3ZQamwAq"

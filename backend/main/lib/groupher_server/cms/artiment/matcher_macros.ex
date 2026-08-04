@@ -3,11 +3,11 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   generate match functions
   """
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Artiment.Config
 
   alias CMS.Model.Embeds
 
-  @threads Application.compile_env(:groupher_server, :article, [])
-                   |> Keyword.get(:threads, [])
+  @threads Config.threads()
 
   @doc """
   match basic threads

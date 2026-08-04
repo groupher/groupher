@@ -2,9 +2,9 @@ defmodule GroupherServerWeb.Schema.Helper.Objects do
   @moduledoc """
   general fields used in schema definition
   """
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
   paged articles helper

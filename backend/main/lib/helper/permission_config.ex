@@ -3,8 +3,6 @@ defmodule Helper.PermissionConfig do
   Centralized permission configuration for CMS authorization.
   """
 
-  import Helper.Utils, only: [get_config: 2]
-
   @contexts ["cms"]
   @article_ops [
     "pin",
@@ -26,7 +24,7 @@ defmodule Helper.PermissionConfig do
   @doc """
   Returns configured article thread slugs.
   """
-  def threads, do: get_config(:article, :threads) |> Enum.map(&to_string/1)
+  def threads, do: GroupherServer.CMS.Artiment.Config.threads() |> Enum.map(&to_string/1)
 
   @doc """
   Returns valid system-level grants.
@@ -134,7 +132,6 @@ defmodule Helper.PermissionConfig do
       "community.apply.approve" => %{scope: :global, grant: "community.apply.approve"},
       "community.apply.deny" => %{scope: :global, grant: "community.apply.deny"},
       "billing.state.update" => %{scope: :global, grant: "system_accountant"},
-      "status.count" => %{scope: :global, grant: "god"},
       "article.mirror_home" => %{scope: :global, grant: "homemirror"},
       "article.move_blackhole" => %{scope: :global, grant: "blackeye"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
@@ -176,6 +173,7 @@ defmodule Helper.PermissionConfig do
       "moderator.unset" => %{scope: :context, context: :cms, grant: "moderator.unset"},
       "moderator.update" => %{scope: :context, context: :cms, grant: "moderator.update"},
       "asset.upload" => %{scope: :context, context: :cms, grant: "asset.upload"},
+      "analysis.web.read" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "community_tag.create" => %{

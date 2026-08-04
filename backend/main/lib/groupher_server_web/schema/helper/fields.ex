@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @moduledoc """
   general fields used in GraphQL schema definition
   """
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.CMS
@@ -10,12 +10,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   alias CMS.Dashboard.Fields, as: Dashboard
   alias CMS.Dashboard.KanbanBoards
 
-  @page_size get_config(:general, :page_size)
+  @page_size GroupherServerWeb.Config.page_size()
 
-  @emotions get_config(:article, :emotions)
-  @comment_emotions get_config(:article, :comment_emotions)
+  @emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
   @all_emotions (@emotions ++ @comment_emotions) |> Enum.uniq()
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do

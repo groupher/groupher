@@ -4,18 +4,18 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   """
 
   @behaviour Absinthe.Middleware
-  import Helper.Utils, only: [handle_absinthe_error: 3, get_config: 2]
+  import Helper.Utils, only: [handle_absinthe_error: 3]
   import Helper.ErrorCode
 
   alias Helper.Datetime
-  alias GroupherServer.{Accounts, Statistics}
+  alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias Statistics.Model.PublishThrottle
+  alias CMS.Policy.Model.PublishThrottle
 
-  @interval_minutes get_config(:general, :publish_throttle_interval_minutes)
-  @hour_limit get_config(:general, :publish_throttle_hour_limit)
-  @day_total get_config(:general, :publish_throttle_day_limit)
+  @interval_minutes GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
+  @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit
+  @day_total GroupherServer.CMS.Policy.Config.publish_throttle().day_limit
 
   def call(
         %{context: %{cur_user: %{cur_passport: %{"global" => %{"god" => true}}}}} = resolution,
@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   end
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
-    with {:ok, record} <- Statistics.load_throttle_record(%User{id: cur_user.id}),
+    with {:ok, record} <- CMS.Policy.load_publish_throttle(%User{id: cur_user.id}),
          {:ok, _} <- interval_check(record, opt),
          {:ok, _} <- hour_limit_check(record, opt),
          {:ok, _} <- day_limit_check(record, opt) do

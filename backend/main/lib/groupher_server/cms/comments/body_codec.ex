@@ -8,11 +8,9 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   It deliberately does not generate Markdown, TOC, XML, RSS, or Article hashes.
   """
 
-  import Helper.Utils, only: [get_config: 2]
+    alias GroupherServer.CMS.Artiment.PlateJSON
 
-  alias GroupherServer.CMS.Artiment.PlateJSON
-
-  @digest_length get_config(:article, :digest_length)
+  @digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   @type payload :: %{json: String.t(), html: String.t(), digest: String.t()}
 

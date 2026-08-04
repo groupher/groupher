@@ -16,7 +16,7 @@ export default function useSalon() {
     groupTitle: cn('text-base', fg('title')),
 
     content: cn('grid w-full gap-4', 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 -ml-0.5'),
-    block: cn('column group relative h-36 w-full rounded-md p-4', hoverBr()),
+    block: cn('column group relative h-36 w-full rounded-md p-4', bg('card'), hoverBr()),
 
     title: cn('text-base', fg('title')),
     desc: cn('text-xs', fg('digest')),

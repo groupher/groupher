@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   buildAuthConfig,
   buildPhoenixTokenCookie,
+  buildSignedInHintCookie,
   createAuthRequestHandler,
   toCanonicalAuthRequest,
 } from './auth'
@@ -49,6 +50,14 @@ describe('Auth core integration', () => {
 
   it('serializes the canonical Phoenix token cookie', () => {
     expect(buildPhoenixTokenCookie('phoenix-token')).toContain('groupher-auth.token=phoenix-token')
+    expect(buildPhoenixTokenCookie('phoenix-token')).toContain('HttpOnly')
+  })
+
+  it('serializes a readable signed-in hint cookie without exposing the token', () => {
+    const cookie = buildSignedInHintCookie()
+
+    expect(cookie).toContain('groupher-auth.signed-in=1')
+    expect(cookie).not.toContain('HttpOnly')
   })
 
   it('adds the Phoenix token only after Auth.js issues its Session cookie', async () => {
@@ -89,6 +98,7 @@ describe('Auth core integration', () => {
 
     expect(cookie).toContain('__Secure-groupher-auth.session-token=auth-session')
     expect(cookie).toContain('groupher-auth.token=phoenix-token')
+    expect(cookie).toContain('groupher-auth.signed-in=1')
   })
 
   it('does not create a half-login state when Auth.js fails to issue a Session', async () => {

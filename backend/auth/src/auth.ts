@@ -1,6 +1,7 @@
 import { Auth, type AuthConfig, setEnvDefaults } from '@auth/core'
 import GitHub from '@auth/core/providers/github'
 import {
+  GROUPHER_AUTH_SIGNED_IN_COOKIE,
   GROUPHER_AUTH_TOKEN_COOKIE,
   getAuthCookieNames,
   getAuthSessionCookieName,
@@ -156,6 +157,29 @@ export const buildPhoenixTokenCookie = (token: string, maxAge = SESSION_MAX_AGE)
     secure: useSecureCookies,
   })
 
+/**
+ * Builds a non-sensitive browser-readable login hint.
+ *
+ * The frontend cannot read `GROUPHER_AUTH_TOKEN_COOKIE` because it is HttpOnly,
+ * and reading cookies from Next.js layouts would make the route dynamic on
+ * Vercel. This hint lets client code decide whether to call `me` without
+ * exposing the actual Phoenix token or changing route caching behavior.
+ *
+ * @example
+ * response.headers.append('set-cookie', buildSignedInHintCookie())
+ */
+export const buildSignedInHintCookie = (maxAge = SESSION_MAX_AGE): string =>
+  serialize(GROUPHER_AUTH_SIGNED_IN_COOKIE, '1', {
+    domain: process.env.AUTH_COOKIE_DOMAIN?.trim(),
+    httpOnly: false,
+    maxAge,
+    path: '/',
+    sameSite: 'lax',
+    secure: useSecureCookies,
+  })
+
+// Auth.js may split session/csrf cookies into chunks. Clearing uses the current
+// request cookie names as a fallback so logout also removes chunked variants.
 const buildExpiredCookie = (name: string): string =>
   serialize(name, '', {
     domain: process.env.AUTH_COOKIE_DOMAIN?.trim(),
@@ -186,6 +210,7 @@ export const buildAuthCookieClearingHeaders = (request: Request): string[] => {
   const requestCookieNames = getRequestCookieNames(request)
   const cookiesToClear = new Set([
     GROUPHER_AUTH_TOKEN_COOKIE,
+    GROUPHER_AUTH_SIGNED_IN_COOKIE,
     ...authCookieNames,
     ...requestCookieNames.filter((name) =>
       authCookieNames.some(
@@ -215,6 +240,7 @@ export const toCanonicalAuthRequest = (request: Request): Request => {
 const appendPhoenixTokenCookie = (response: Response, token: string): Response => {
   const headers = new Headers(response.headers)
   headers.append('set-cookie', buildPhoenixTokenCookie(token))
+  headers.append('set-cookie', buildSignedInHintCookie())
 
   return new Response(response.body, {
     headers,

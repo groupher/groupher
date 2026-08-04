@@ -13,7 +13,7 @@ defmodule Helper.TestFakes.SiteFavicon do
         {:ok, url, %{body: kr36_html()}}
 
       _ ->
-        {:error, %HTTPoison.Error{reason: :timeout, id: nil}}
+        {:error, %Req.TransportError{reason: :timeout}}
     end
   end
 

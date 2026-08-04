@@ -6,6 +6,12 @@ if secret = System.get_env("GROUPHER_SERVER_TRUST_SECRET") do
   config :groupher_server, :server_trust, secret: secret
 end
 
+if System.get_env("WEB_ANALYSIS_WEBSITE_ID") do
+  config :groupher_server, :web_analysis,
+    website_id: System.get_env("WEB_ANALYSIS_WEBSITE_ID"),
+    api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
+end
+
 # ## Using releases
 #
 # If you use `mix release`, you need to explicitly enable the server
@@ -146,12 +152,11 @@ if config_env() in [:prod, :seed_prod] do
     client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET"),
     redirect_uri: System.get_env("OAUTH_GITHUB_REDIRECT_URI")
 
-  config :groupher_server, :plausible, token: System.get_env("PLAUSIBLE_TOKEN")
   config :groupher_server, :audit, token: System.get_env("AUDIT_TOKEN")
 
   config :groupher_server, :search_artiments,
     platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
-    queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+    queue: GroupherServer.CMS.SearchArtiments.Queues.Oban,
     algolia: [
       application_id: System.get_env("ALGOLIA_APPLICATION_ID"),
       search_api_key: System.get_env("ALGOLIA_SEARCH_API_KEY"),

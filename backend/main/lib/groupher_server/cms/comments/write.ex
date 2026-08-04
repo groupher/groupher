@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   import Ecto.Query, warn: false
 
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
   import Helper.ErrorCode
 
   import GroupherServer.CMS.Artiment.Matcher
@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @delete_hint Comment.delete_hint()
 
-  @archive_threshold get_config(:article, :archive_threshold)
+  @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
   @max_parent_replies_count Comment.max_parent_replies_count()
   @default_emotions Embeds.CommentEmotion.default_emotions()
   @default_comment_meta Embeds.CommentMeta.default_meta()

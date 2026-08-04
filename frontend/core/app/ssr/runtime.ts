@@ -3,6 +3,7 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { TAG_THREADS, THREAD } from '~/const/thread'
+import { gqFetch } from '~/graphql/server'
 import type { TI18nNamespace } from '~/i18n'
 import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
@@ -23,7 +24,6 @@ import type {
   TThemePresetsQuery,
   TThread,
 } from '~/spec'
-import { gqFetch } from '~/utils/api'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
 
 const getCommunity = async (community: string): Promise<TCommunityInfo> => {

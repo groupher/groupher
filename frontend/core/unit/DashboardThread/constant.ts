@@ -103,6 +103,7 @@ export const FIELD = {
   CITY: 'city',
   TECHSTACK: 'techstack',
   MEDIA_REPORTS: 'mediaReports',
+  THIRD_PARTY_ANALYTICS: 'thirdPartyAnalytics',
   SEO: 'seo',
   SOCIAL_LINKS: 'socialLinks',
   HEADER_LINKS: 'headerLinks',

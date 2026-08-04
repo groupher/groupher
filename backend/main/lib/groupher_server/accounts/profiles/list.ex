@@ -7,7 +7,7 @@ defmodule GroupherServer.Accounts.Profiles.List do
   """
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
@@ -17,7 +17,7 @@ defmodule GroupherServer.Accounts.Profiles.List do
   alias CMS.Model.{Community, CommunitySubscriber}
   alias Helper.{ORM, QueryBuilder}
 
-  @default_subscribed_communities get_config(:general, :default_subscribed_communities)
+  @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
   def paged_users(filter, %User{} = user) do
     ORM.find_all(User, filter) |> Fans.mark_viewer_follow_status(user) |> done

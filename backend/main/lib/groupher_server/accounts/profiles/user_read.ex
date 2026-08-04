@@ -7,7 +7,7 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
   the optional social record and user page cache in sync.
   """
 
-  alias GroupherServer.{Accounts, FrontDesk, Repo, Statistics}
+  alias GroupherServer.{Accounts, Analysis, FrontDesk, Repo}
 
   alias Accounts.Model.{Embeds, Social, User}
   alias Helper.ORM
@@ -78,7 +78,7 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
   defp update_social_ifneed(changeset, _user, _attrs), do: changeset
 
   defp assign_default_contributes(%User{} = user) do
-    {:ok, contributes} = Statistics.list_contributes_digest(%User{id: user.id})
+    {:ok, contributes} = Analysis.list_contributions_digest(%User{id: user.id})
 
     user
     |> ORM.update_embed(:contributes, contributes)

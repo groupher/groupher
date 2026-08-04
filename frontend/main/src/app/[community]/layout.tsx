@@ -5,6 +5,7 @@ import { getCachedInitialNow, getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import { I18N_NS } from '~/i18n/namespaces'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
+import ThirdPartyAnalyticsScripts from '~/lib/thirdPartyAnalytics/ThirdPartyAnalyticsScripts'
 import MainProvider from '~/stores/provider'
 import { getMetadata } from '~/utils/ssr'
 import CommunityThemePresetStyle from '~/widgets/CommunityThemePresetStyle'
@@ -34,6 +35,7 @@ export default async ({ children, params }) => {
       <CommunityThemePresetStyle
         cssText={serializeCommunityThemePresetCss(dashboard.themeTokens)}
       />
+      <ThirdPartyAnalyticsScripts configs={dashboard.enabledThirdPartyAnalytics} />
 
       <MainProvider
         initData={{ community, dashboard, wallpaper }}

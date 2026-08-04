@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Messaging.Notification do
 
   alias GroupherServer.Messaging
 
-  @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
+  @notify_group_interval_hour GroupherServer.Messaging.Config.notify_group_interval_hour()
 
   setup do
     {:ok, post} = db_insert(:post)

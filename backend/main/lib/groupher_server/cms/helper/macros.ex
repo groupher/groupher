@@ -2,8 +2,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   @moduledoc """
   macros for define article related fields in CMS models
   """
-  import Helper.Utils, only: [get_config: 2]
-  import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
+    import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
@@ -22,7 +21,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Embeds
   }
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
   generate base schema type with shared fields for artiments

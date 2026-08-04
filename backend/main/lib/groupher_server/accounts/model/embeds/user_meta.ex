@@ -6,9 +6,9 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
   instead of hard-coding post/blog/changelog/doc field definitions.
   """
 
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   defmacro published_article_count_fields do
     @threads
@@ -29,9 +29,9 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
 
   import Ecto.Changeset
   import GroupherServer.Accounts.Model.Embeds.UserMeta.Macro
-  import Helper.Utils, only: [get_config: 2, plural: 1]
+  import Helper.Utils, only: [plural: 1]
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @general_options %{
     is_maker: false,

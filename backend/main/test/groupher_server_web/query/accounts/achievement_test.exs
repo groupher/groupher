@@ -3,9 +3,9 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
 
   use GroupherServer.TestMate
 
-  @follow_weight get_config(:general, :user_achieve_follow_weight)
-  @collect_weight get_config(:general, :user_achieve_collect_weight)
-  # @upvote_weight get_config(:general, :user_achieve_upvote_weight)
+  @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
+  @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
+  # @upvote_weight GroupherServer.Accounts.Config.achieve_upvote_weight()
 
   setup do
     {:ok, user} = db_insert(:user)

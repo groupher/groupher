@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   require Logger
 
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Query, Result}
+  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Query, Result}
 
   @timeout 5_000
   @task_poll_interval 100
@@ -384,9 +384,5 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   defp index_name, do: Keyword.fetch!(config(), :index_name)
 
-  defp config do
-    :groupher_server
-    |> Application.fetch_env!(:search_artiments)
-    |> Keyword.fetch!(:algolia)
-  end
+  defp config, do: Config.algolia()
 end

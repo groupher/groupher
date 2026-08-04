@@ -2,11 +2,11 @@ import { useEffect, useRef } from 'react'
 
 import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
+import { GRAPHQL_FETCH_OPTIONS } from '~/graphql/client'
 import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
-import { FETCH_OPTIONS } from '~/utils/graphql'
 
 import useDocsEditor from '../../store/hooks'
 import { composeLoadedDraftSession } from '../helper'
@@ -55,7 +55,7 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     query<{ docDraft?: TDocDraftDTO }>(
       S.docDraft,
       { community, id: activePage.docId },
-      { fetchOptions: { ...FETCH_OPTIONS(), signal: abortController.signal } },
+      { fetchOptions: { ...GRAPHQL_FETCH_OPTIONS(), signal: abortController.signal } },
     )
       .then((data) => {
         if (loadIdRef.current !== loadId) return

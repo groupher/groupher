@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   use GroupherServer.TestMate
 
   alias CMS.Model.ArticleDocument
-  @article_digest_length get_config(:article, :digest_length)
+  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, changelog_attrs, user} = mock_article(:changelog)

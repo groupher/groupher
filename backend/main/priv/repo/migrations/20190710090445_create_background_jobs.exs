@@ -1,3 +1,5 @@
 defmodule GroupherServer.Repo.Migrations.CreateBackgroundJobs do
-  use Rihanna.Migration
+  use Ecto.Migration
+
+  def change, do: :ok
 end

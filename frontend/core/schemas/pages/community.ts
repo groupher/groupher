@@ -54,6 +54,24 @@ export const community = `
           favicon
           index
         }
+        thirdPartyAnalytics {
+          provider
+          enabled
+          measurementId
+          containerId
+          projectId
+          domain
+          siteId
+        }
+        enabledThirdPartyAnalytics {
+          provider
+          enabled
+          measurementId
+          containerId
+          projectId
+          domain
+          siteId
+        }
         docFaq {
           title
           desc

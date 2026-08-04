@@ -3,20 +3,22 @@ import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
 const app = process.env.E2E_APP ?? 'main'
+const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
+const mockGraphQLEndpoint = `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/graphiql`
 
 const appConfig = {
   main: {
-    cmd: 'cross-env PORT=3100 yarn workspace @groupher/frontend-main dev',
+    cmd: `yarn exec cross-env PORT=3100 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-main dev`,
     url: 'http://localhost:3100',
     testDir: path.resolve('frontend/e2e/tests/main'),
   },
   dashboard: {
-    cmd: 'cross-env PORT=3101 yarn workspace @groupher/frontend-dashboard dev',
+    cmd: `yarn exec cross-env PORT=3101 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-dashboard dev`,
     url: 'http://localhost:3101',
     testDir: path.resolve('frontend/e2e/tests/dashboard'),
   },
   landing: {
-    cmd: 'cross-env PORT=3102 yarn workspace @groupher/frontend-landing dev',
+    cmd: 'yarn exec cross-env PORT=3102 yarn workspace @groupher/frontend-landing dev',
     url: 'http://localhost:3102',
     testDir: path.resolve('frontend/e2e/tests/landing'),
   },
@@ -61,7 +63,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(useSystemChrome ? { channel: 'chrome' } : {}),
+      },
     },
   ],
 })

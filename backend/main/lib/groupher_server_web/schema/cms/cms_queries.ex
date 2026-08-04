@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
   use Helper.GqlSchemaSuite
 
-  alias GroupherServer.CMS.Dashboard.ThemePreset
+  alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
     @desc "Current Article Trash memberships"
@@ -50,9 +50,37 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.cms_audit_logs/3)
     end
 
+    @desc "Built-in community Web Analysis summary"
+    field :analysis_web_summary, :analysis_web_summary do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_web_summary/3)
+    end
+
+    @desc "Built-in community Web Analysis overview"
+    field :analysis_web_overview, :analysis_web_overview do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_web_overview/3)
+    end
+
     @desc "dashboard theme preset registry"
     field :theme_presets, non_null(list_of(non_null(:dsb_theme_preset_option))) do
       resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
+    end
+
+    @desc "dashboard third-party analytics provider registry"
+    field :third_party_analytics_providers,
+          non_null(list_of(non_null(:dsb_third_party_analytics_provider))) do
+      resolve(fn _, _, _ -> {:ok, ThirdPartyAnalytics.providers()} end)
     end
 
     @desc "community docs side tree"

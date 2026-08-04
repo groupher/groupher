@@ -231,6 +231,16 @@ export default function useMutation(): TRet {
       return
     }
 
+    if (field === FIELD.THIRD_PARTY_ANALYTICS) {
+      const { thirdPartyAnalytics } = storeRef.current
+
+      handleMutation(S.updateDashboardThirdPartyAnalytics, {
+        community,
+        thirdPartyAnalytics,
+      })
+      return
+    }
+
     if (field === FIELD.HEADER_LINKS) {
       const { headerLinks } = storeRef.current
 

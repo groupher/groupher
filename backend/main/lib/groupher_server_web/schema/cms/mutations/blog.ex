@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.create_blog/3)
-      middleware(M.Statistics.MakeContribute, for: [:user, :community])
+      middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 
     @desc "save a new blog as a draft"
@@ -95,7 +95,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       middleware(M.FrontDesk, {:article_editor, thread: :blog})
       middleware(M.Passport, action: "blog.draft.publish")
       resolve(&R.CMS.publish_blog_draft/3)
-      middleware(M.Statistics.MakeContribute, for: [:user, :community])
+      middleware(M.Analysis.MakeContribution, for: [:user, :community])
     end
 
     article_react_mutations(:blog, [

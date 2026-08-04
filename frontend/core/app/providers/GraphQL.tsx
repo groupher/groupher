@@ -5,7 +5,7 @@ import { type FC, type ReactNode, useMemo } from 'react'
 import { cacheExchange, createClient, fetchExchange, Provider } from 'urql'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { FETCH_OPTIONS, RETRY_OPTIONS } from '~/utils/graphql'
+import { GRAPHQL_FETCH_OPTIONS, GRAPHQL_RETRY_OPTIONS } from '~/graphql/client'
 
 type TProps = { children: ReactNode }
 
@@ -13,9 +13,9 @@ const GraphQLProvider: FC<TProps> = ({ children }) => {
   const client = useMemo(() => {
     return createClient({
       url: GRAPHQL_ENDPOINT,
-      exchanges: [cacheExchange, retryExchange(RETRY_OPTIONS), fetchExchange],
+      exchanges: [cacheExchange, retryExchange(GRAPHQL_RETRY_OPTIONS), fetchExchange],
       suspense: false,
-      fetchOptions: FETCH_OPTIONS,
+      fetchOptions: GRAPHQL_FETCH_OPTIONS,
     })
   }, [])
 

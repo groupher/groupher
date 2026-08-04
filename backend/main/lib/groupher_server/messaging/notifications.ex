@@ -20,8 +20,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   import Ecto.Query, warn: false
 
-  import Helper.Utils,
-    only: [get_config: 2, done: 1]
+  import Helper.Utils, only: [done: 1]
 
   import ShortMaps
 
@@ -32,8 +31,8 @@ defmodule GroupherServer.Messaging.Notifications do
   alias GroupherServer.Messaging.Model.Notification
   alias Helper.{Datetime, Multi, ORM}
 
-  @notify_actions get_config(:general, :nofity_actions)
-  @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
+  @notify_actions GroupherServer.Messaging.Config.notify_actions()
+  @notify_group_interval_hour GroupherServer.Messaging.Config.notify_group_interval_hour()
   @cut_from_users_count 3
 
   def send(%{action: action, user_id: user_id} = attrs, %User{} = from_user) do

@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Macros
+    import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [
@@ -28,7 +27,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
 
   @schema_prefix DBPrefix.cms()
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @required_fields ~w(user_id)a
   @optional_fields ~w(thread)a

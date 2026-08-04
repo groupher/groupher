@@ -31,7 +31,8 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     :footer_oneline_links,
     :name_alias,
     :social_links,
-    :media_reports
+    :media_reports,
+    :third_party_analytics
   ]
 
   # embeds_one sections are incrementally updated, so we validate the merged
@@ -111,6 +112,25 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
       {:error, {:custom, "invalid dashboard links"}}
     end
   end
+
+  # Third-party analytics is a replace-style list section, but unlike ordinary
+  # link arrays it must pass provider registry validation before `put_embed`.
+  # This keeps unsupported providers and malformed tracking identities out of
+  # the persisted dashboard config.
+  def prepare(%CommunityDashboard{}, :third_party_analytics, args) when is_list(args) do
+    changeset =
+      %CommunityDashboard{}
+      |> CommunityDashboard.changeset(%{community_id: 0, third_party_analytics: args})
+
+    if changeset.valid? do
+      {:ok, Ecto.Changeset.get_change(changeset, :third_party_analytics, [])}
+    else
+      {:error, changeset}
+    end
+  end
+
+  def prepare(%CommunityDashboard{}, :third_party_analytics, _args),
+    do: {:error, {:custom, "invalid third-party analytics config"}}
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}

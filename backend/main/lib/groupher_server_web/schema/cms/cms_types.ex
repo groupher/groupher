@@ -890,6 +890,46 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object(:dsb_social_link, do: dsb_gq_fields(:social_link))
   object(:dsb_media_report, do: dsb_gq_fields(:media_report))
 
+  object :dsb_third_party_analytics_provider_field do
+    field(:key, :string)
+    field(:label, :string)
+    field(:desc, :string)
+    field(:placeholder, :string)
+    field(:required_when_enabled, :boolean)
+    field(:pattern, :string)
+  end
+
+  object :dsb_third_party_analytics_provider do
+    field(:provider, :string)
+    field(:title, :string)
+    field(:desc, :string)
+    field(:detail, :string)
+    field(:docs_url, :string)
+    field(:icon, :string)
+    field(:identity_field, :string)
+    field(:config_fields, list_of(:dsb_third_party_analytics_provider_field))
+  end
+
+  object :dsb_third_party_analytics do
+    field(:provider, :string)
+    field(:enabled, :boolean)
+    field(:measurement_id, :string)
+    field(:container_id, :string)
+    field(:project_id, :string)
+    field(:domain, :string)
+    field(:site_id, :string)
+  end
+
+  input_object :dsb_third_party_analytics_input do
+    field(:provider, :string)
+    field(:enabled, :boolean)
+    field(:measurement_id, :string)
+    field(:container_id, :string)
+    field(:project_id, :string)
+    field(:domain, :string)
+    field(:site_id, :string)
+  end
+
   object :dsb_doc_faq_item do
     field(:id, :id)
     field(:title, :string)
@@ -949,6 +989,16 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:social_links, list_of(:dsb_social_link))
     field(:media_reports, list_of(:dsb_media_report))
     field(:doc_faq, :dsb_doc_faq)
+    field(:third_party_analytics, list_of(:dsb_third_party_analytics))
+
+    field :enabled_third_party_analytics, list_of(:dsb_third_party_analytics) do
+      resolve(fn dashboard, _, _ ->
+        {:ok,
+         GroupherServer.CMS.Dashboard.ThirdPartyAnalytics.enabled_valid_configs(
+           dashboard.third_party_analytics
+         )}
+      end)
+    end
   end
 
   object :community_moderator do

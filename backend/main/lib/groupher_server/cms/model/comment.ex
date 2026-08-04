@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   use Accessible
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Macros
+    import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [
@@ -32,7 +31,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   @schema_prefix DBPrefix.cms()
 
   # alias Helper.HTML
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @required_fields ~w(body author_id)a
   @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded is_deleted inner_id floor is_article_author thread is_for_question is_solution pending)a

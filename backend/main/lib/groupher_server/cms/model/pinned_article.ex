@@ -10,8 +10,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Macros
+    import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias GroupherServer.CMS
@@ -21,7 +20,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @required_fields ~w(community_id thread)a
   # @optional_fields ~w(post_id job_id repo_id)a

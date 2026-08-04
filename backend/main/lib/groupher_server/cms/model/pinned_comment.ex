@@ -11,8 +11,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   use Accessible
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Macros
+    import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
@@ -24,7 +23,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @required_fields ~w(comment_id)a
   # @optional_fields ~w(post_id job_id repo_id)a

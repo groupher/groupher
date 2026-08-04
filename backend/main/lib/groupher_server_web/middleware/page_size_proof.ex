@@ -9,11 +9,11 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3, get_config: 2]
+  import Helper.Utils, only: [handle_absinthe_error: 3]
   import Helper.ErrorCode
 
-  @max_page_size get_config(:general, :page_size)
-  @inner_page_size get_config(:general, :inner_page_size)
+  @max_page_size GroupherServerWeb.Config.page_size()
+  @inner_page_size GroupherServerWeb.Config.inner_page_size()
 
   # 1. if has filter:first and filter:size -> makesure it not too large
   # 2. if not has filter: marge to default first: 5

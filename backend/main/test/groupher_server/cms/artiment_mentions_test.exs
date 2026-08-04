@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   alias CMS.ArtimentMentions
   alias CMS.Model.ArtimentMention
 
-  @site_host get_config(:general, :site_host)
+  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post, preload: [author: :user])

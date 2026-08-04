@@ -8,13 +8,11 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
     field(:viewer_has_beered, :boolean, default: false, virtual: true)
     embeds_many(:latest_beer_users, Embeds.User, on_replace: :delete)
   """
-  import Helper.Utils, only: [get_config: 2]
-
-  alias GroupherServer.CMS
+    alias GroupherServer.CMS
 
   alias CMS.Model.Embeds
 
-  @supported_emotions get_config(:article, :emotions)
+  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
 
   defmacro emotion_fields do
     @supported_emotions
@@ -40,9 +38,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros
-  import Helper.Utils, only: [get_config: 2]
-
-  @supported_emotions get_config(:article, :emotions)
+    @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
 
   @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count") ++
                      Enum.map(@supported_emotions, &:"#{&1}_user_logins")

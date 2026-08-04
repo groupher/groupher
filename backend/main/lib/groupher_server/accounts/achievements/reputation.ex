@@ -6,15 +6,14 @@ defmodule GroupherServer.Accounts.Achievements.Reputation do
   weighted reputation total under a per-user lock.
   """
 
-  import Helper.Utils, only: [get_config: 2]
-  import ShortMaps
+    import ShortMaps
 
   alias GroupherServer.Accounts.Model.{Achievement, User}
   alias Helper.{ORM, Transaction}
 
-  @collect_weight get_config(:general, :user_achieve_collect_weight)
-  @upvote_weight get_config(:general, :user_achieve_upvote_weight)
-  @follow_weight get_config(:general, :user_achieve_follow_weight)
+  @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
+  @upvote_weight GroupherServer.Accounts.Config.achieve_upvote_weight()
+  @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
 
   def achieve(%User{id: user_id}, :inc, :follow) do
     update_achievement_counter(user_id, fn achievement ->

@@ -1,5 +1,5 @@
 defmodule GroupherServer.CMS.SearchArtiments.Indexer do
-  @moduledoc "Persistent, idempotent Article indexing entrypoints used by Rihanna jobs."
+  @moduledoc "Persistent, idempotent Article indexing entrypoints used by background jobs."
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   @spec enqueue_delete(Artiment.thread(), Ecto.UUID.t()) :: {:ok, :pass}
   def enqueue_delete(thread, article_hash_id) do
-    enqueue({__MODULE__, :delete_article, [thread, article_hash_id]})
+    enqueue(:delete_article, thread, article_hash_id)
   end
 
   @doc "Reloads one Article before projection so jobs never depend on stale structs."
@@ -104,7 +104,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     |> Repo.one()
   end
 
-  defp enqueue(job), do: SearchArtiments.queue().enqueue(job)
+  defp enqueue(action, thread, ref), do: SearchArtiments.queue().enqueue({action, thread, ref})
+
+  defp enqueue({__MODULE__, :upsert_article, [thread, article_id]}) do
+    enqueue(:upsert_article, thread, article_id)
+  end
+
+  defp enqueue({__MODULE__, :sync_article_metrics, [thread, article_id]}) do
+    enqueue(:sync_article_metrics, thread, article_id)
+  end
 
   defp reindex_thread(thread, after_id) do
     with {:ok, info} <- match(thread) do

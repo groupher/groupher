@@ -18,20 +18,20 @@
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "dependencies": {
-    "@babel/parser": "7.29.0",
+    "@babel/parser": "8.0.4",
     "@groupher/frontend-core": "1.0.0",
     "@vercel/blob": "2.6.1",
-    "files-sdk": "2.2.0",
+    "files-sdk": "2.2.3",
     "mdast-util-from-markdown": "2.0.3",
     "mdast-util-mdx": "3.0.0",
     "mdast-util-to-string": "4.0.0",
     "micromark-extension-mdxjs": "3.0.0",
-    "next": "16.3.0-preview.6",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "next": "16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "tar-stream": "3.2.0",
-    "undici": "^7.25.0",
-    "workflow": "4.6.0",
+    "undici": "^8.10.0",
+    "workflow": "4.8.0",
     "yaml": "2.8.2"
   },
   "devDependencies": {

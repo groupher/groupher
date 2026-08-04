@@ -13,7 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, {:article, preload: [[author: :user], :community]})
       resolve(&R.CMS.create_comment/3)
-      middleware(M.Statistics.MakeContribute, for: :user)
+      middleware(M.Analysis.MakeContribution, for: :user)
     end
 
     @desc "update a comment"
@@ -47,7 +47,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
       resolve(&R.CMS.reply_comment/3)
-      middleware(M.Statistics.MakeContribute, for: :user)
+      middleware(M.Analysis.MakeContribution, for: :user)
     end
 
     @desc "upvote to a comment"

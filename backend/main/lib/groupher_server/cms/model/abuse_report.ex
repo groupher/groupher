@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   use Accessible
 
   import Ecto.Changeset
-  import Helper.Utils, only: [get_config: 2]
-  import GroupherServer.CMS.Helper.Macros
+    import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_at_most_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
@@ -26,7 +25,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
   @schema_prefix DBPrefix.cms()
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   # @required_fields ~w(comment_id user_id received_user_id)a
   @optional_fields ~w(comment_id account_id operate_user_id deal_with report_cases_count)a

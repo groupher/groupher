@@ -115,6 +115,8 @@ export const FIELDS: TDsbFieldMap = {
   // social
   socialLinks: [],
   mediaReports: [EMPTY_MEDIA_REPORT],
+  thirdPartyAnalytics: [],
+  enabledThirdPartyAnalytics: [],
 
   // page
   themePreset: DEFAULT_THEME_PRESET,

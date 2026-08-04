@@ -15,8 +15,8 @@ export default function useSalon() {
     desc: cn('text-sm', fg('digest')),
     br: cn('my-6', sexyBorder()),
     link: cn('hover:underline text-sm', fg('link')),
-    iconBox: 'align-both size-12 mr-1 -ml-2',
-    icon: 'size-7',
+    iconBox: 'align-both size-12 mr-1 -ml-2 overflow-hidden',
+    icon: 'block size-7 object-contain',
 
     footer: 'row-between',
   }

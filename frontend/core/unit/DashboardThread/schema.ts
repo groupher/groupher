@@ -48,6 +48,28 @@ const communitySocialLinks = gql`
   }
 `
 
+const thirdPartyAnalyticsProviders = gql`
+  query {
+    thirdPartyAnalyticsProviders {
+      provider
+      title
+      desc
+      detail
+      docsUrl
+      icon
+      identityField
+      configFields {
+        key
+        label
+        desc
+        placeholder
+        requiredWhenEnabled
+        pattern
+      }
+    }
+  }
+`
+
 const updateDashboardBaseInfo = gql`
   mutation (
     $community: String!
@@ -93,6 +115,32 @@ const updateDashboardMediaReports = gql`
         url
         favicon
         siteName
+      }
+    }
+  }
+`
+
+const thirdPartyAnalyticsFields = `
+  provider
+  enabled
+  measurementId
+  containerId
+  projectId
+  domain
+  siteId
+`
+
+const updateDashboardThirdPartyAnalytics = gql`
+  mutation (
+    $community: String!
+    $thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
+  ) {
+    updateDashboardThirdPartyAnalytics(
+      community: $community
+      thirdPartyAnalytics: $thirdPartyAnalytics
+    ) {
+      thirdPartyAnalytics {
+        ${thirdPartyAnalyticsFields}
       }
     }
   }
@@ -1237,9 +1285,11 @@ const deleteCommunityAsset = gql`
 const schema = {
   communityBaseInfo,
   communitySocialLinks,
+  thirdPartyAnalyticsProviders,
 
   updateDashboardBaseInfo,
   updateDashboardMediaReports,
+  updateDashboardThirdPartyAnalytics,
   updateDashboardSeo,
   communityTagGroups,
   updateDashboardEnable,

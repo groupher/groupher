@@ -2,9 +2,11 @@ import Image from 'next/image'
 import type { FC } from 'react'
 import { useState } from 'react'
 
+import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
+import S from '~/unit/DashboardThread/schema'
 
-import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
+import { getIntegrationIconSrc } from './constant'
 import useSalon, { cn } from './salon'
 import SettingModal from './SettingModal'
 import type { TIntegrateAnalysisTool } from './spec'
@@ -15,6 +17,11 @@ const ThirdPart: FC = () => {
 
   const s = useSalon()
   const { t } = useTrans()
+  const { data } = useQuery<{ thirdPartyAnalyticsProviders: TIntegrateAnalysisTool[] }>(
+    S.thirdPartyAnalyticsProviders,
+    {},
+  )
+  const providers = data?.thirdPartyAnalyticsProviders ?? []
 
   return (
     <div className={s.wrapper}>
@@ -25,10 +32,10 @@ const ThirdPart: FC = () => {
       />
 
       <div className={s.inner}>
-        {INTEGRATE_ANALYSIS_TOOLS.map((item) => (
+        {providers.map((item) => (
           <button
             type='button'
-            key={item.key}
+            key={item.provider}
             className={s.block}
             onClick={() => {
               setSelectedService(item)
@@ -37,15 +44,11 @@ const ThirdPart: FC = () => {
           >
             <div className={s.iconBox}>
               <Image
-                src={`/integrations/${item.key}.png`}
+                src={getIntegrationIconSrc(item.provider)}
                 alt={`${t(item.title)} icon`}
                 width={28}
                 height={28}
-                className={cn(
-                  s.icon,
-                  item.key === 'hotjar' && 'w-14 h-auto',
-                  item.key === 'gtm' && 'w-12 h-auto',
-                )}
+                className={cn(s.icon, item.provider === 'gtm' && 'w-12 h-auto')}
                 priority={false}
                 unoptimized
               />

@@ -16,6 +16,7 @@ const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 const documents = {
   updateDashboardBaseInfo: dashboardSchema.updateDashboardBaseInfo,
   updateDashboardMediaReports: dashboardSchema.updateDashboardMediaReports,
+  updateDashboardThirdPartyAnalytics: dashboardSchema.updateDashboardThirdPartyAnalytics,
   updateDashboardSeo: dashboardSchema.updateDashboardSeo,
   updateDashboardEnable: dashboardSchema.updateDashboardEnable,
   updateDashboardLayout: dashboardSchema.updateDashboardLayout,

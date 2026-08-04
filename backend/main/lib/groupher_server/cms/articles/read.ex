@@ -7,11 +7,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.ErrorCode
 
-  import Helper.Utils,
-    only: [
-      done: 1,
-      get_config: 2
-    ]
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
@@ -20,8 +16,8 @@ defmodule GroupherServer.CMS.Articles.Read do
   alias CMS.Model.{Community, PinnedArticle}
   alias Helper.{Multi, Constant, Datetime, ORM, T}
 
-  @active_period get_config(:article, :active_period_days)
-  @threads get_config(:article, :threads)
+  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)

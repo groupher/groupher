@@ -64,26 +64,22 @@ export const buildFooterColumns = (links: readonly TLinkItem[]): TFooterColumn[]
       id: group.id,
       title: group.title,
       sourceIndex,
-      links: group.links.map(
-        (link): TFooterDraftLink => ({
-          ...link,
-          dndId: toDndId(group.id, link),
-        }),
-      ),
+      links: group.links.map((link): TFooterDraftLink => ({
+        ...link,
+        dndId: toDndId(group.id, link),
+      })),
     }))
 }
 
 // Serializes footer DnD columns back to the backend shape and strips the
 // per-group dndId used only to disambiguate duplicate child ids across groups.
 export const flattenFooterColumns = (columns: readonly TFooterColumn[]): TLinkItem[] => {
-  return columns.map(
-    (column): TLinkItem => ({
-      id: column.id,
-      type: DASHBOARD_LINK_TYPE.GROUP,
-      title: column.title,
-      links: column.links.map(({ dndId: _dndId, ...link }) => link),
-    }),
-  )
+  return columns.map((column): TLinkItem => ({
+    id: column.id,
+    type: DASHBOARD_LINK_TYPE.GROUP,
+    title: column.title,
+    links: column.links.map(({ dndId: _dndId, ...link }) => link),
+  }))
 }
 
 export const sameFooterLinks = (left: readonly TLinkItem[], right: readonly TLinkItem[]): boolean =>

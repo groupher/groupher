@@ -5,6 +5,8 @@ import '@groupher/rich-editor/style.css'
 
 import RootLayoutShell from '~/widgets/RootLayoutShell'
 
+import WebAnalysisScript from './WebAnalysisScript'
+
 import '~/tailwind/global.css'
 
 export const metadata: Metadata = {
@@ -19,6 +21,7 @@ export default function Layout({ children }) {
         <DevHubReporter serviceId='main' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
       ) : null}
       {children}
+      <WebAnalysisScript />
     </RootLayoutShell>
   )
 }

@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   alias CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, QueryBuilder, T}
 
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  import Helper.Utils, only: [done: 1]
 
-  @threads get_config(:article, :threads)
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @export_author_keys [:id, :login, :nickname, :avatar]
   @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :views]
