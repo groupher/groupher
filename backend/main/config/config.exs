@@ -151,7 +151,7 @@ config :groupher_server, :open_graph_adapter, OpenGraph
 
 config :groupher_server, :search_artiments,
   platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
-  queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+  queue: GroupherServer.CMS.SearchArtiments.Queues.Oban,
   algolia: [
     application_id: nil,
     search_api_key: nil,
@@ -208,13 +208,17 @@ config :groupher_server, Helper.Scheduler,
   ]
 
 config :tesla,
-  adapter: Tesla.Adapter.Hackney,
+  adapter: {Tesla.Adapter.Finch, name: GroupherServer.Finch},
   disable_deprecated_builder_warning: true
 
-# handle background jobs
-config :rihanna,
-  jobs_table_name: "background_jobs",
-  producer_postgres_connection: {Ecto, GroupherServer.Repo}
+config :groupher_server, Oban,
+  engine: Oban.Engines.Basic,
+  repo: GroupherServer.Repo,
+  queues: [
+    default: 10,
+    search: 5,
+    snapshot: 5
+  ]
 
 import_config "#{config_env()}.exs"
 

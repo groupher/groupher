@@ -21,7 +21,16 @@ defmodule Helper.TestFakes.SearchArtimentsQueue do
   def drain do
     jobs = jobs()
     reset()
-    Enum.map(jobs, fn {module, function, args} -> apply(module, function, args) end)
+    Enum.map(jobs, fn
+      {:upsert_article, thread, article_id} ->
+        GroupherServer.CMS.SearchArtiments.Indexer.upsert_article(thread, article_id)
+
+      {:sync_article_metrics, thread, article_id} ->
+        GroupherServer.CMS.SearchArtiments.Indexer.sync_article_metrics(thread, article_id)
+
+      {:delete_article, thread, article_hash_id} ->
+        GroupherServer.CMS.SearchArtiments.Indexer.delete_article(thread, article_hash_id)
+    end)
   end
 
   def reset do

@@ -38,10 +38,10 @@ defmodule Helper.OgInfo do
       {:error, :unsafe_url} ->
         {:error, "unsafe url blocked"}
 
-      {:error, %HTTPoison.Error{reason: :nxdomain, id: nil}} ->
+      {:error, %Req.TransportError{reason: :nxdomain}} ->
         {:error, "get url page error"}
 
-      {:error, %HTTPoison.Error{reason: :timeout, id: nil}} ->
+      {:error, %Req.TransportError{reason: :timeout}} ->
         {:error, "get url page timeout"}
 
       # {:error, false} ->

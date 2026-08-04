@@ -251,11 +251,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'next-env',
-      root: fromRoot('local/inspire-me'),
+      root: fromRoot('backend/inspire-me'),
       environment: 'development',
     },
     command: 'yarn',
-    args: ['workspace', '@groupher/local-inspire-me', 'dev', '-p', '3010'],
+    args: ['workspace', '@groupher/inspire-me', 'dev', '-p', '3010'],
     port: 3010,
     url: 'http://127.0.0.1:3010/health',
     appUrl: 'http://127.0.0.1:3010/',

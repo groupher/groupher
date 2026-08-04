@@ -9,5 +9,5 @@
   "trailingComma": "all",
   "sortImports": true,
   "sortTailwindcss": true,
-  "ignorePatterns": ["**/*.d.ts", "**/*.tsbuildinfo", "**/next-env.d.ts", "**/.next/**"]
+  "ignorePatterns": ["**/*.d.ts", "**/*.tsbuildinfo", "**/dist/**"]
 }

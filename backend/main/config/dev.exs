@@ -61,7 +61,7 @@ config :groupher_server, :github_oauth,
 
 config :groupher_server, :search_artiments,
   platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
-  queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+  queue: GroupherServer.CMS.SearchArtiments.Queues.Oban,
   algolia: [
     application_id: System.get_env("ALGOLIA_APPLICATION_ID"),
     search_api_key: System.get_env("ALGOLIA_SEARCH_API_KEY"),

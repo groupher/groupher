@@ -152,7 +152,7 @@ test('service configuration roots stay scoped to each runtime', () => {
   assert.match(configByService.landing?.root || '', /frontend\/landing$/)
   assert.match(configByService.gateway?.root || '', /backend\/gateway$/)
   assert.match(configByService.auth?.root || '', /backend\/auth$/)
-  assert.match(configByService['inspire-me']?.root || '', /local\/inspire-me$/)
+  assert.match(configByService['inspire-me']?.root || '', /backend\/inspire-me$/)
   assert.match(configByService['content-import']?.root || '', /backend\/content-import$/)
   assert.equal(configByService.phoenix?.kind, 'elixir-config')
   assert.match(configByService.phoenix?.root || '', /backend\/main\/config$/)

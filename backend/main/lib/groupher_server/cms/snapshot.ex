@@ -190,7 +190,7 @@ defmodule GroupherServer.CMS.Snapshot do
 
   This function is intentionally best-effort. It refreshes cache summaries for
   later requests and never changes the caller's relation set. In test and seed
-  environments it returns without enqueueing because Rihanna workers are not
+  environments it returns without enqueueing because background workers are not
   running there.
 
   ## Examples
@@ -207,14 +207,14 @@ defmodule GroupherServer.CMS.Snapshot do
     if Application.get_env(:groupher_server, :env) in [:test, :seed_prod] do
       {:ok, :pass}
     else
-      enqueue({__MODULE__, :perform_refresh, [kind, refs, opts]})
+      enqueue(kind, refs, opts)
     end
   end
 
   @doc """
   Performs a batch refresh immediately and stores summaries in the snapshot cache.
 
-  This is the job entrypoint executed by Rihanna. Normal read paths should use
+  This is the job entrypoint executed by background jobs. Normal read paths should use
   `users/2`, `articles/3`, `comments/3`, or their `*_in` variants; event paths
   should use `refresh_async/3`.
 
@@ -472,8 +472,8 @@ defmodule GroupherServer.CMS.Snapshot do
   defp cache_key(:article, thread, id), do: "snapshot:article:#{thread}:#{id}"
   defp cache_key(:comment, thread, id), do: "snapshot:comment:#{thread}:#{id}"
 
-  defp enqueue(job) do
-    case Rihanna.enqueue(job) do
+  defp enqueue(kind, refs, opts) do
+    case GroupherServer.Jobs.snapshot_refresh(kind, refs, opts) do
       {:ok, _job} -> {:ok, :pass}
       {:error, _reason} -> {:ok, :pass}
     end

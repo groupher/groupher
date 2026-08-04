@@ -1,9 +1,11 @@
-defmodule GroupherServer.CMS.SearchArtiments.Queues.Rihanna do
-  @moduledoc "Rihanna-backed persistent queue for Search Artiments indexing jobs."
+defmodule GroupherServer.CMS.SearchArtiments.Queues.Oban do
+  @moduledoc "Oban-backed persistent queue for Search Artiments indexing jobs."
 
   @behaviour GroupherServer.CMS.SearchArtiments.QueueAdapter
 
   require Logger
+
+  alias GroupherServer.Jobs
 
   @impl true
   def enqueue(job) do
@@ -14,8 +16,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Queues.Rihanna do
     end
   end
 
-  defp enqueue_safely(job) do
-    case Rihanna.enqueue(job) do
+  defp enqueue_safely({action, thread, ref} = job) do
+    case Jobs.search_index(action, thread, ref) do
       {:ok, _job} ->
         {:ok, :pass}
 
@@ -33,11 +35,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Queues.Rihanna do
       {:ok, :pass}
   end
 
-  defp report_failure({module, function, _args}, reason) do
+  defp report_failure({action, thread, ref}, reason) do
     metadata = %{
-      queue: :rihanna,
-      module: inspect(module),
-      function: function,
+      queue: :search,
+      action: action,
+      thread: thread,
+      ref: ref,
       reason: inspect(reason)
     }
 

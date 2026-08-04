@@ -16,11 +16,11 @@ fe.serve.landing:
 # inspire-me
 fe.dev.inspire:
 	(sleep 2 && open http://localhost:3010/canny) &
-	yarn workspace @groupher/local-inspire-me dev -p 3010
+	yarn workspace @groupher/inspire-me dev --port 3010
 
 fe.inspire-me.deploy:
-	@yarn workspace @groupher/local-inspire-me exec wrangler whoami >/dev/null 2>&1 || yarn workspace @groupher/local-inspire-me exec wrangler login
-	yarn workspace @groupher/local-inspire-me deploy:vinext
+	@yarn workspace @groupher/inspire-me exec wrangler whoami >/dev/null 2>&1 || yarn workspace @groupher/inspire-me exec wrangler login
+	yarn workspace @groupher/inspire-me deploy
 
 inspire: fe.dev.inspire
 

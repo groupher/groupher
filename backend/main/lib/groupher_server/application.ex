@@ -3,8 +3,8 @@ defmodule GroupherServer.Application do
   OTP application entrypoint for the Groupher backend.
 
   It assembles runtime workers for Phoenix, Repo, PubSub, DNS clustering,
-  Rihanna jobs, and Cachex pools. Seed environments skip DNS, endpoint,
-  Cachex, and Rihanna workers; test environments only skip Rihanna-backed jobs.
+  Oban jobs, and Cachex pools. Seed environments skip DNS, endpoint,
+  Cachex, and Oban workers; test environments only skip Oban-backed jobs.
   """
   use Application
 
@@ -22,7 +22,8 @@ defmodule GroupherServer.Application do
         GroupherServer.Repo
       ] ++
         maybe_dns_cluster_worker() ++
-        maybe_endpoint_worker() ++ maybe_rihanna_worker() ++ maybe_cache_workers()
+        maybe_endpoint_worker() ++
+        maybe_finch_worker() ++ maybe_oban_worker() ++ maybe_cache_workers()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -62,11 +63,15 @@ defmodule GroupherServer.Application do
     if seed_env?(), do: [], else: cache_workers()
   end
 
-  defp maybe_rihanna_worker do
+  defp maybe_finch_worker do
+    if seed_env?(), do: [], else: [{Finch, name: GroupherServer.Finch}]
+  end
+
+  defp maybe_oban_worker do
     if test_env?() or seed_env?() do
       []
     else
-      [{Rihanna.Supervisor, [postgrex: GroupherServer.Repo.config()]}]
+      [{Oban, Application.fetch_env!(:groupher_server, Oban)}]
     end
   end
 

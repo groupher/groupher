@@ -3,8 +3,6 @@ defmodule Helper.SiteFavicon do
   this lib coming from https://github.com/ikeikeikeike/exfavicon/blob/master/lib/exfavicon/finder.ex
   fix edge case at line:60
   """
-  use HTTPoison.Base
-
   alias Helper.UrlSafety
 
   def find_page(url) do
@@ -52,11 +50,11 @@ defmodule Helper.SiteFavicon do
     with {:ok, resp} <- get(url) do
       headers =
         resp.headers
-        |> Enum.map(fn {k, v} -> {k |> String.downcase(), v} end)
+        |> normalize_headers()
 
       case List.keyfind(headers, "location", 0) do
         {"location", location} ->
-          merged_location = merge_location(url, location)
+          merged_location = merge_location(url, header_value(location))
 
           with {:ok, safe_location} <- UrlSafety.validate_http_url(merged_location) do
             req(safe_location)
@@ -69,6 +67,9 @@ defmodule Helper.SiteFavicon do
       end
     end
   end
+
+  defp get(url), do: Req.get(url, redirect: false, receive_timeout: 10_000)
+  defp head(url), do: Req.head(url, redirect: false, receive_timeout: 10_000)
 
   defp merge_location(base_url, location) do
     base_uri = URI.parse(base_url)
@@ -127,7 +128,7 @@ defmodule Helper.SiteFavicon do
   defp get_header(headers, key) do
     ctype =
       headers
-      |> Enum.map(fn {k, v} -> {k |> String.downcase(), v} end)
+      |> normalize_headers()
       |> Enum.filter(fn {k, _} -> k == key |> String.downcase() end)
 
     case ctype do
@@ -135,9 +136,20 @@ defmodule Helper.SiteFavicon do
         ""
 
       _ ->
-        ctype |> hd |> elem(1)
+        ctype |> hd |> elem(1) |> header_value()
     end
   end
+
+  defp normalize_headers(headers) when is_map(headers) do
+    Enum.map(headers, fn {k, v} -> {String.downcase(to_string(k)), v} end)
+  end
+
+  defp normalize_headers(headers) when is_list(headers) do
+    Enum.map(headers, fn {k, v} -> {String.downcase(to_string(k)), v} end)
+  end
+
+  defp header_value([value | _]), do: value
+  defp header_value(value), do: value
 
   defp default_path(url) do
     %{URI.parse(url) | path: "/favicon.ico", query: nil, fragment: nil}

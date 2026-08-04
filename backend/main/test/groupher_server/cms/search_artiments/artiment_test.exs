@@ -87,8 +87,8 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
     assert {:ok, :pass} = Indexer.enqueue_metrics(article)
 
     assert SearchArtimentsQueue.jobs() == [
-             {Indexer, :upsert_article, [:post, 42]},
-             {Indexer, :sync_article_metrics, [:post, 42]}
+             {:upsert_article, :post, 42},
+             {:sync_article_metrics, :post, 42}
            ]
   end
 

@@ -205,9 +205,8 @@ defmodule GroupherServer.Test.Analysis.Contribution do
       assert contributes == cached_contributes
     end
 
-    test "Rihanna should work in test sandbox" do
-      _res = Rihanna.enqueue({IO, :puts, ["Work, work, work, work, work."]})
-      Process.sleep(1000)
+    test "background jobs should be skipped in test sandbox" do
+      assert {:ok, :pass} = Helper.Later.run({IO, :puts, ["Work, work, work, work, work."]})
     end
 
     test "cache should be update after make contributes", ~m(community)a do

@@ -31,9 +31,9 @@
     "hono": "^4.12.31",
     "lucide-react": "^1.25.0",
     "motion": "^12.38.0",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-is": "^19.2.5",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-is": "^19.2.8",
     "recharts": "^3.10.0",
     "simple-icons": "16.27.0",
     "tailwind-merge": "^3.6.0"
