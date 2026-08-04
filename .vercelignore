@@ -1,3 +1,132 @@
+# Keep Vercel CLI uploads focused on source files. The repo root is shared by
+# several Vercel projects, so local build outputs and backend deps can otherwise
+# make manual deployments exceed Vercel's request-size limit.
+
+# Build outputs
+.next
+.next/
+**/.next/
+frontend/main/.next
+frontend/main/.next/
+frontend/dashboard/.next
+frontend/dashboard/.next/
+frontend/landing/.next
+frontend/landing/.next/
+build
+frontend/**/out/
+local/**/dist/
+backend/**/dist/
+local/**/.data/
+**/target/
+**/*.app/
+local/dev-hub/src-tauri/gen/schemas/
+coverage/
+tools/reports
+
+# Playwright
+.playwright/
+.playwright-cli/
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# Dependencies
+node_modules
+node_modules/
+**/node_modules/
+frontend/**/node_modules/
+backend/**/node_modules/
+local/**/node_modules/
+packages/**/node_modules/
+.yalc/
+yalc.lock
+bun.lockb
+npm-debug.log
+yarn-error.log
+
+# Yarn Berry
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Python build and test artifacts
+**/__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+
+# Environment variables and local runtime state
+**/.env.local
+**/.env.*.local
+.env
+.env.*
+.dev.vars
+**/.dev.vars
+.wrangler/
+**/.wrangler/
+output/
+backend/assets-hub/src/worker-configuration.d.ts
+
+# Logs / OS
+**/.DS_Store
+.coveralls.yml
+
+# Cypress
+cypress/integration/examples/
+cypress/videos/*
+
+# TypeScript / build artifacts
+**/next-env.d.ts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+.VSCodeCounter/
+.deepseekrc
+
+# Frontend generated assets
+frontend/**/public/workbox-*.js
+frontend/**/public/sw.js
+frontend/**/public/sw.js.map
+frontend/**/public/worker-*.js
+frontend/**/public/fallback-*.js
+frontend/**/public/*.js.map
+frontend/**/public/icons/fa/
+frontend/**/public/icons/lucide/
+frontend/**/public/icons/heroicons/
+frontend/**/public/icons/phosphor/
+frontend/**/public/icons/providers/
+frontend/**/public/icons/*.sprite.svg
+frontend/core/assets/icons/generated/
+frontend/main/public/wallpaper/
+frontend/dashboard/public/wallpaper/
+frontend/landing/public/wallpaper/
+frontend/core/assets/wallpaper/pattern-bak/
+frontend/main/graphql/schema.graphql
+frontend/dashboard/graphql/schema.graphql
+
+# Backend local build and dependency output
+backend/main/_build
+backend/main/_build/
+backend/main/deps
+backend/main/.elixir_ls/
+backend/main/db/
+backend/main/deps/
+backend/main/*.ez
+backend/main/erl_crash.dump
+backend/main/config/*.secret.exs
+backend/main/config/_tmp.exs
+backend/main/_tuts/
+backend/main/docs/draft.ex
+backend/main/cover/excoveralls.html
+
+# Local agent/tool state
+.agents/
 .codegraph/
 .codex/
-.playwright/
+.cursor/
+.github/skills/
+.trae/
+.windsurf/
+skills-lock.json

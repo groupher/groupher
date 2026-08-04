@@ -127,6 +127,20 @@ defmodule GroupherServer.Analysis.WebTest do
     end
   end
 
+  describe "Umami weekly sessions projection" do
+    test "accepts Umami weekly rows returned as 24 hourly scalar values" do
+      rows = [
+        List.duplicate(0, 24),
+        List.replace_at(List.duplicate(0, 24), 9, 3)
+      ]
+
+      result = Umami.normalize_weekly_cells(rows)
+
+      assert length(result) == 48
+      assert %{weekday: 1, hour: 9, visitors: 3, visits: 3, views: 0} in result
+    end
+  end
+
   describe "summary fallback" do
     test "returns unavailable DTO when Umami is not configured" do
       previous = Application.get_env(:groupher_server, :web_analysis)

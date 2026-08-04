@@ -13,6 +13,8 @@ type TAnalysisWebQueryData = {
   analysisWebOverview: TAnalysisWebOverview | null
 }
 
+const ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS = 8_000
+
 const ANALYSIS_WEB_OVERVIEW_QUERY = `
   query AnalysisWebOverview($community: String!, $days: Int) {
     analysisWebOverview(community: $community, days: $days) {
@@ -334,6 +336,9 @@ const emptyOverview = (community: string): TAnalysisWebOverview => ({
 export const fetchAnalysisWebOverview = async (
   community: string,
 ): Promise<TAnalysisWebOverview> => {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS)
+
   try {
     const headerStore = await headers()
     const cookie = headerStore.get('cookie')
@@ -342,6 +347,7 @@ export const fetchAnalysisWebOverview = async (
     const response = await fetch(GRAPHQL_ENDPOINT, {
       method: 'POST',
       cache: 'no-store',
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...(cookie ? { cookie } : {}),
@@ -362,5 +368,7 @@ export const fetchAnalysisWebOverview = async (
   } catch (error) {
     console.error('## web analysis ssr error: ', error)
     return emptyOverview(community)
+  } finally {
+    clearTimeout(timeout)
   }
 }

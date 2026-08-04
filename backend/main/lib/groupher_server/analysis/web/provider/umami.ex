@@ -496,13 +496,16 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end)
   end
 
-  defp normalize_weekly_cells(rows) when is_list(rows) do
+  @doc false
+  @spec normalize_weekly_cells(list()) :: list(map())
+  def normalize_weekly_cells(rows) when is_list(rows) do
     rows
-    |> Enum.flat_map(&normalize_weekly_row/1)
+    |> Enum.with_index()
+    |> Enum.flat_map(fn {row, weekday} -> normalize_weekly_row(row, weekday) end)
     |> Enum.filter(fn cell -> cell.weekday in 0..6 and cell.hour in 0..23 end)
   end
 
-  defp normalize_weekly_row(row) when is_map(row) do
+  defp normalize_weekly_row(row, _weekday_index) when is_map(row) do
     cond do
       is_integer(Map.get(row, "weekday")) and is_integer(Map.get(row, "hour")) ->
         [weekly_cell(row, Map.get(row, "weekday"), Map.get(row, "hour"))]
@@ -520,6 +523,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end
   end
 
+  defp normalize_weekly_row(hour_values, weekday) when is_list(hour_values) do
+    hour_values
+    |> Enum.with_index()
+    |> Enum.map(fn {value, hour} -> weekly_scalar_cell(value, weekday, hour) end)
+  end
+
+  defp normalize_weekly_row(_row, _weekday_index), do: []
+
   defp weekly_cell(row, weekday, hour) do
     %{
       weekday: weekday,
@@ -527,6 +538,18 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       visitors: read_int(row, "visitors"),
       visits: read_int(row, "visits"),
       views: read_int(row, "pageviews")
+    }
+  end
+
+  defp weekly_scalar_cell(value, weekday, hour) do
+    count = read_scalar_int(value)
+
+    %{
+      weekday: weekday,
+      hour: hour,
+      visitors: count,
+      visits: count,
+      views: 0
     }
   end
 
@@ -570,6 +593,18 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         0
     end
   end
+
+  defp read_scalar_int(value) when is_integer(value), do: value
+  defp read_scalar_int(value) when is_float(value), do: trunc(value)
+
+  defp read_scalar_int(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} -> int
+      _ -> 0
+    end
+  end
+
+  defp read_scalar_int(_value), do: 0
 
   defp read_first_int(map, keys) do
     keys
