@@ -16,7 +16,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   require Logger
 
   @config Config.base()
-  @page_dimensions [:url, :entry, :exit, :title, :query]
+  @page_dimensions [:entry, :exit, :title, :query]
   @source_dimensions [:referrer, :channel, :domain]
   @environment_dimensions [:browser, :os, :device, :language, :screen]
   @location_dimensions [:country, :region, :city]
