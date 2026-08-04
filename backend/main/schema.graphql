@@ -82,6 +82,9 @@ type RootQueryType {
   "dashboard theme preset registry"
   themePresets: [DsbThemePresetOption!]!
 
+  "dashboard third-party analytics provider registry"
+  thirdPartyAnalyticsProviders: [DsbThirdPartyAnalyticsProvider!]!
+
   "community docs side tree"
   docTree(community: String!): DocTree
 
@@ -717,6 +720,10 @@ type RootMutationType {
   "update media reports in dashboard"
   updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
 
+  "update third-party analytics integrations in dashboard"
+  updateDashboardThirdPartyAnalytics(
+    community: String!, dsbSection: DsbSection, thirdPartyAnalytics: [DsbThirdPartyAnalyticsInput]
+  ): Dsb
 
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
@@ -2231,6 +2238,46 @@ type DsbMediaReport {
   url: String
 }
 
+type DsbThirdPartyAnalyticsProviderField {
+  key: String
+  label: String
+  desc: String
+  placeholder: String
+  requiredWhenEnabled: Boolean
+  pattern: String
+}
+
+type DsbThirdPartyAnalyticsProvider {
+  provider: String
+  title: String
+  desc: String
+  detail: String
+  docsUrl: String
+  icon: String
+  identityField: String
+  configFields: [DsbThirdPartyAnalyticsProviderField]
+}
+
+type DsbThirdPartyAnalytics {
+  provider: String
+  enabled: Boolean
+  measurementId: String
+  containerId: String
+  projectId: String
+  domain: String
+  siteId: String
+}
+
+input DsbThirdPartyAnalyticsInput {
+  provider: String
+  enabled: Boolean
+  measurementId: String
+  containerId: String
+  projectId: String
+  domain: String
+  siteId: String
+}
+
 type DsbDocFaqItem {
   id: ID
   title: String
@@ -2290,6 +2337,8 @@ type Dsb {
   socialLinks: [DsbSocialLink]
   mediaReports: [DsbMediaReport]
   docFaq: DsbDocFaq
+  thirdPartyAnalytics: [DsbThirdPartyAnalytics]
+  enabledThirdPartyAnalytics: [DsbThirdPartyAnalytics]
 }
 
 type CommunityModerator {
@@ -3209,6 +3258,7 @@ enum DsbSection {
   SOCIAL_LINKS
   MEDIA_REPORTS
   DOC_FAQ
+  THIRD_PARTY_ANALYTICS
 }
 
 enum DsbLinkType {

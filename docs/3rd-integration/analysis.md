@@ -1,6 +1,6 @@
 # Third-party Analytics Integration
 
-> Status: planning.
+> Status: v1 implemented; v2 follow-up tracked below.
 >
 > Scope: community-admin configured third-party analytics scripts for public
 > community pages.
@@ -72,6 +72,16 @@ cdn.usefathom.com
 
 Keep the exact CSP directives close to the deployment/header implementation.
 This document only records the provider domains that must be considered.
+
+GTD status:
+
+- `Waiting`: confirm whether production currently sets CSP in application code,
+  Vercel, Cloudflare, or another reverse proxy.
+- `Next`: if CSP exists, add the provider domains above to the relevant
+  `script-src` and `connect-src` directives before enabling third-party
+  analytics in production.
+- `Later`: if production has no CSP today, keep this as a deployment checklist
+  item for the first CSP rollout.
 
 ## Loading Rules
 
@@ -414,6 +424,8 @@ basic load path is proven.
 - No compatibility migration is required because the unsupported providers were
   never shipped as a public feature.
 
+GTD status: `Done`.
+
 ### Phase 2: Backend Provider Registry
 
 - Add a backend provider registry module for v1 analytics providers.
@@ -421,6 +433,8 @@ basic load path is proven.
 - Move provider titles, descriptions, docs URLs, config field names,
   placeholders, and validation hints out of frontend constants.
 - Use the same backend registry for Dashboard save validation.
+
+GTD status: `Done`.
 
 ### Phase 3: Persistence and GraphQL Contract
 
@@ -432,6 +446,8 @@ basic load path is proven.
 - Add a public GraphQL field such as `enabledThirdPartyAnalytics` so community
   SSR can receive only enabled and valid configs.
 
+GTD status: `Done`.
+
 ### Phase 4: Script Registry
 
 - Add the centralized frontend script renderer registry.
@@ -439,12 +455,26 @@ basic load path is proven.
 - Add `ThirdPartyAnalyticsScripts`.
 - Wire it into `frontend/main/src/app/[community]/layout.tsx`.
 
+GTD status: `Done`.
+
 ### Phase 5: Dashboard Settings
 
 - Query backend provider definitions.
 - Wire provider cards to persisted config.
 - Replace the placeholder modal action with real save behavior.
 - Show enabled/disabled/invalid status on cards.
+
+GTD status: `Partial`.
+
+Done:
+
+- Provider cards are loaded from the backend registry.
+- Settings modal reads and saves the persisted dashboard config.
+- Public page rendering uses the enabled-and-valid public config.
+
+Next:
+
+- Add visible card-level status for `Enabled`, `Disabled`, and `Invalid`.
 
 ### Phase 6: Verification
 
@@ -478,6 +508,49 @@ production CSP
 Use Playwright network assertions for public community pages. For visual
 Dashboard checks, use the `/home` community because local dashboard test data is
 available there.
+
+GTD status: `Done` for local automated E2E; `Waiting` for production CSP
+confirmation.
+
+Local E2E can be done now. It should validate DOM and network behavior only:
+
+- Use local Dashboard to save provider configs for the `/home` community.
+- Open the public `/home` community page in Playwright.
+- Assert script tags are absent/present by stable script IDs.
+- Assert provider network requests are absent/present by host.
+- Do not assert third-party vendor dashboard reporting; that is an external
+  integration check, not a local E2E requirement.
+
+Local automated coverage:
+
+```text
+MOCK_GRAPHQL_PORT=4101 PLAYWRIGHT_USE_SYSTEM_CHROME=1 E2E_APP=main \
+  playwright test -c frontend/e2e/playwright.config.ts \
+  frontend/e2e/tests/main/third-party-analytics.spec.ts
+```
+
+### Phase 7: Dashboard Feedback Polish
+
+- Show provider-specific validation errors instead of generic placeholder
+  toasts.
+- Keep errors tied to the backend registry field definitions so Dashboard does
+  not invent separate validation copy.
+- Prefer actionable examples, such as hostname-only Plausible domains and
+  `G-`/`GTM-` prefixes for Google providers.
+
+GTD status: `Later`.
+
+### Phase 8: Provider Extension Policy
+
+- Keep unknown providers skipped in the public script renderer.
+- Decide whether Dashboard should hide unsupported providers or show an
+  unsupported state if the backend registry ships a provider before the
+  frontend renderer exists.
+- Treat self-hosted Plausible, custom Umami, PostHog, consent mode, custom
+  script origins, and event mapping as separate provider-extension work, not as
+  part of the base v1/v2 launch hardening.
+
+GTD status: `Later`.
 
 ## Non-goals
 

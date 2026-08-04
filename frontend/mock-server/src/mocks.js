@@ -65,6 +65,58 @@ const DEFAULT_THEME_TOKENS = {
 
 const makeThemeTokens = () => JSON.parse(JSON.stringify(DEFAULT_THEME_TOKENS))
 
+const THIRD_PARTY_ANALYTICS_SCENARIOS = {
+  none: {
+    persisted: [],
+    enabled: [],
+  },
+  disabled: {
+    persisted: [{ provider: 'ga', enabled: false, measurementId: 'G-E2E1234' }],
+    enabled: [],
+  },
+  invalid: {
+    persisted: [{ provider: 'ga', enabled: true, measurementId: 'not-a-ga-id' }],
+    enabled: [],
+  },
+  ga: {
+    persisted: [{ provider: 'ga', enabled: true, measurementId: 'G-E2E1234' }],
+    enabled: [{ provider: 'ga', enabled: true, measurementId: 'G-E2E1234' }],
+  },
+  multiple: {
+    persisted: [
+      { provider: 'ga', enabled: true, measurementId: 'G-E2E1234' },
+      { provider: 'fathom', enabled: true, siteId: 'FATHOME2E' },
+    ],
+    enabled: [
+      { provider: 'ga', enabled: true, measurementId: 'G-E2E1234' },
+      { provider: 'fathom', enabled: true, siteId: 'FATHOME2E' },
+    ],
+  },
+}
+
+let thirdPartyAnalyticsScenario = 'none'
+
+const scenarioFromSlug = (slug) => {
+  if (slug.endsWith('-analytics-none')) return 'none'
+  if (slug.endsWith('-analytics-disabled')) return 'disabled'
+  if (slug.endsWith('-analytics-invalid')) return 'invalid'
+  if (slug.endsWith('-analytics-ga')) return 'ga'
+  if (slug.endsWith('-analytics-multiple')) return 'multiple'
+  return thirdPartyAnalyticsScenario
+}
+
+export const setThirdPartyAnalyticsScenario = (scenario) => {
+  if (!Object.hasOwn(THIRD_PARTY_ANALYTICS_SCENARIOS, scenario)) {
+    throw new Error(`Unknown third-party analytics scenario: ${scenario}`)
+  }
+
+  thirdPartyAnalyticsScenario = scenario
+}
+
+const getThirdPartyAnalyticsScenario = (slug) => THIRD_PARTY_ANALYTICS_SCENARIOS[scenarioFromSlug(slug)]
+
+const copyAnalyticsConfigs = (configs) => configs.map((config) => ({ ...config }))
+
 const makeWallpaperTheme = (overrides = {}) => ({
   type: WALLPAPER_TYPE.GRADIENT,
   source: DEFAULT_WALLPAPER_SOURCE,
@@ -224,6 +276,8 @@ const makeDashboard = (slug = 'home') => {
     ],
     socialLinks: [],
     mediaReports: [],
+    thirdPartyAnalytics: copyAnalyticsConfigs(getThirdPartyAnalyticsScenario(slug).persisted),
+    enabledThirdPartyAnalytics: copyAnalyticsConfigs(getThirdPartyAnalyticsScenario(slug).enabled),
     docFaq: {
       title: 'FAQ',
       desc: 'Common questions about docs',
@@ -293,15 +347,8 @@ const HOME_PAGED_POSTS = {
   pageNumber: 1,
 }
 
-export const mocks = {
-  // Avoid @graphql-tools/mock default "Hello World" everywhere.
-  // Also reduces duplicate React keys when some list uses string fields as keys.
-  String: () => nextMockString(),
-  DateTime: () => nowISO(),
-  Date: () => todayISO(),
-  Json: () => ({}),
-
-  RootQueryType: () => ({
+export const resolvers = {
+  RootQueryType: {
     me: () => makeUser(),
     sessionState: () => ({ isValid: true, user: makeUser() }),
 
@@ -336,5 +383,14 @@ export const mocks = {
       totalPages: 0,
       pageNumber: 1,
     }),
-  }),
+  },
+}
+
+export const mocks = {
+  // Avoid @graphql-tools/mock default "Hello World" everywhere.
+  // Also reduces duplicate React keys when some list uses string fields as keys.
+  String: () => nextMockString(),
+  DateTime: () => nowISO(),
+  Date: () => todayISO(),
+  Json: () => ({}),
 }

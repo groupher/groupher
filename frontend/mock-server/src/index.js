@@ -7,7 +7,7 @@ import { addMocksToSchema } from '@graphql-tools/mock'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { createHandler } from 'graphql-http/lib/use/http'
 
-import { mocks } from './mocks.js'
+import { mocks, resolvers, setThirdPartyAnalyticsScenario } from './mocks.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -27,8 +27,8 @@ const schemaPath = (() => {
 })()
 
 const typeDefs = readFileSync(schemaPath, 'utf8')
-const schema = makeExecutableSchema({ typeDefs })
-const mockedSchema = addMocksToSchema({ schema, mocks })
+const schema = makeExecutableSchema({ typeDefs, resolvers })
+const mockedSchema = addMocksToSchema({ schema, mocks, preserveResolvers: true })
 
 const handler = createHandler({
   schema: mockedSchema,
@@ -147,6 +147,25 @@ const setCORS = (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
 }
 
+const readJsonBody = (req) =>
+  new Promise((resolve, reject) => {
+    let body = ''
+
+    req.on('data', (chunk) => {
+      body += chunk
+    })
+
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {})
+      } catch (error) {
+        reject(error)
+      }
+    })
+
+    req.on('error', reject)
+  })
+
 createServer((req, res) => {
   setCORS(req, res)
 
@@ -160,6 +179,22 @@ createServer((req, res) => {
     res.statusCode = 200
     res.setHeader('content-type', 'application/json; charset=utf-8')
     res.end(JSON.stringify({ ok: true }))
+    return
+  }
+
+  if (req.method === 'POST' && req.url === '/__e2e/third-party-analytics') {
+    readJsonBody(req)
+      .then((body) => {
+        setThirdPartyAnalyticsScenario(body?.scenario ?? 'none')
+        res.statusCode = 200
+        res.setHeader('content-type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ ok: true, scenario: body?.scenario ?? 'none' }))
+      })
+      .catch((error) => {
+        res.statusCode = 400
+        res.setHeader('content-type', 'application/json; charset=utf-8')
+        res.end(JSON.stringify({ ok: false, error: error.message }))
+      })
     return
   }
 
