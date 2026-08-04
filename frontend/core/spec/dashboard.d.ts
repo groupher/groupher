@@ -19,6 +19,7 @@ import type {
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { KANBAN_BOARD } from '~/const/thread'
+import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import type { TConstValues } from '~/spec'
 import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 
@@ -139,6 +140,8 @@ export type TDsb = {
     homepage?: string
   }
   mediaReports?: readonly TMediaReport[]
+  thirdPartyAnalytics?: readonly TThirdPartyAnalyticsConfig[]
+  enabledThirdPartyAnalytics?: readonly TThirdPartyAnalyticsConfig[]
 }
 
 export type TParseDashboard = TDsbFieldMap & {

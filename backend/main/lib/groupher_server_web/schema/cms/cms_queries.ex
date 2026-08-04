@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
   use Helper.GqlSchemaSuite
 
-  alias GroupherServer.CMS.Dashboard.ThemePreset
+  alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
     @desc "Current Article Trash memberships"
@@ -75,6 +75,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "dashboard theme preset registry"
     field :theme_presets, non_null(list_of(non_null(:dsb_theme_preset_option))) do
       resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
+    end
+
+    @desc "dashboard third-party analytics provider registry"
+    field :third_party_analytics_providers,
+          non_null(list_of(non_null(:dsb_third_party_analytics_provider))) do
+      resolve(fn _, _, _ -> {:ok, ThirdPartyAnalytics.providers()} end)
     end
 
     @desc "community docs side tree"

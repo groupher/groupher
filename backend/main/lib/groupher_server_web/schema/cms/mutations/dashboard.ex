@@ -241,6 +241,19 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       resolve(&R.CMS.update_dashboard/3)
     end
 
+    @desc "update third-party analytics integrations in dashboard"
+    field :update_dashboard_third_party_analytics, :dsb do
+      arg(:community, non_null(:string))
+      arg(:dsb_section, :dsb_section, default_value: :third_party_analytics)
+      arg(:third_party_analytics, list_of(:dsb_third_party_analytics_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.update_dashboard/3)
+    end
+
     @desc "update docs FAQ in dashboard"
     field :update_dashboard_doc_faq, :dsb do
       arg(:community, non_null(:string))

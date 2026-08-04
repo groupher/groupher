@@ -1152,21 +1152,6 @@ export default {
   'dsb.third_part.gtm.track_label': '添加 Tag Manager ID',
   'dsb.third_part.gtm.track_desc': '可在你的 Google Tag Manager 账户中找到对应的容器 ID。',
   'dsb.third_part.gtm.placeholder': 'GTM-ABC1234',
-  'dsb.third_part.fb_pixel.title': 'Facebook Pixel ID',
-  'dsb.third_part.fb_pixel.desc': '广告访问、转化事件与受众数据回传。',
-  'dsb.third_part.fb_pixel.detail':
-    '通过添加 Facebook Pixel ID，你可以追踪用户访问文档时的页面浏览行为，并将相关事件回传至 Meta 广告系统，用于转化分析与受众构建。',
-  'dsb.third_part.fb_pixel.track_label': 'Pixel ID',
-  'dsb.third_part.fb_pixel.track_desc':
-    '当用户访问文档时，将触发 PageViewLoggedIn 与 PageViewLoggedOut 事件，用于区分登录与未登录访问。',
-  'dsb.third_part.fb_pixel.placeholder': '366164530432366',
-  'dsb.third_part.hotjar.title': 'Hotjar Site ID',
-  'dsb.third_part.hotjar.desc': '页面点击与滚动热力图，以及用户会话回放。',
-  'dsb.third_part.hotjar.detail':
-    'Hotjar Site ID 用于将 Hotjar 的行为分析与反馈工具接入到你的文档中，帮助你分析用户点击、滚动行为以及完整的会话回放。',
-  'dsb.third_part.hotjar.track_label': 'Hotjar Site ID',
-  'dsb.third_part.hotjar.track_desc': '可在 Hotjar 后台的站点设置中找到对应的 Site ID。',
-  'dsb.third_part.hotjar.placeholder': '2038495',
   'dsb.third_part.clarity.title': 'MS Clarity',
   'dsb.third_part.clarity.desc': '用户会话回放、点击与滚动热力图。',
   'dsb.third_part.clarity.detail':
@@ -1182,27 +1167,13 @@ export default {
   'dsb.third_part.plausible.track_desc':
     '填写你在 Plausible 中配置并用于统计的站点域名，无需包含协议或路径。',
   'dsb.third_part.plausible.placeholder': 'docs.example.com',
-  'dsb.third_part.fathom.title': 'Fathom Analytics Site ID',
+  'dsb.third_part.fathom.title': 'Fathom Analytics',
   'dsb.third_part.fathom.desc': '页面访问量与事件统计，支持无 Cookie 追踪。',
   'dsb.third_part.fathom.detail':
     'Fathom Analytics 提供无 Cookie 的页面访问与事件统计能力，适用于需要简化分析流程并减少隐私负担的文档场景。',
   'dsb.third_part.fathom.track_label': 'Fathom Site ID',
   'dsb.third_part.fathom.track_desc': '可在 Fathom Analytics 后台的站点设置中找到对应的 Site ID。',
   'dsb.third_part.fathom.placeholder': 'ABCDE',
-  'dsb.third_part.umami.title': 'Umami Analytics',
-  'dsb.third_part.umami.desc': '页面访问量、事件与来源数据，支持自托管部署。',
-  'dsb.third_part.umami.detail':
-    'Umami Analytics 支持自托管部署，可用于收集文档页面的访问量、事件与来源数据，适合需要完全掌控数据存储与分析流程的团队。',
-  'dsb.third_part.umami.track_label': 'Website ID',
-  'dsb.third_part.umami.track_desc': '填写你在 Umami 中创建站点后生成的 Website ID。',
-  'dsb.third_part.umami.placeholder': 'b3e2a1f4-9c7d-4e6b-8a12-2c4f6e9d1234',
-  'dsb.third_part.matomo.title': 'Matomo Analytics',
-  'dsb.third_part.matomo.desc': '访问量、事件、目标、用户路径与自定义报表分析。',
-  'dsb.third_part.matomo.detail':
-    'Matomo 提供完整的访问分析、事件追踪与用户路径分析能力，并支持自定义报表与自托管部署，适合对数据控制要求较高的文档平台。',
-  'dsb.third_part.matomo.track_label': 'Site ID',
-  'dsb.third_part.matomo.track_desc': '填写你在 Matomo 管理后台为站点分配的数字 Site ID。',
-  'dsb.third_part.matomo.placeholder': '1',
   'dsb.community_brief.back_home': '返回官网',
   'dsb.community_brief.github': 'Github',
   'dsb.community_brief.new_community': '新社区',

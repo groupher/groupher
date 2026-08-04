@@ -40,6 +40,7 @@ import type {
   TResolvedThemePreset,
   TThread,
   TUser,
+  TThirdPartyAnalyticsConfig,
 } from '~/spec'
 
 type TFile = {
@@ -72,6 +73,8 @@ export type TDsbFieldMap = {
   // social
   socialLinks: readonly TSocialItem[]
   mediaReports: readonly TMediaReport[]
+  thirdPartyAnalytics: readonly TThirdPartyAnalyticsConfig[]
+  enabledThirdPartyAnalytics: readonly TThirdPartyAnalyticsConfig[]
 
   // page
   themePreset: TThemePreset

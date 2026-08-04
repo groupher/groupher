@@ -99,6 +99,8 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerLinks,
     footerOnelineLinks,
     mediaReports,
+    thirdPartyAnalytics,
+    enabledThirdPartyAnalytics,
   } = dashboard
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
@@ -114,6 +116,8 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerOnelineLinks,
     moderators,
     mediaReports,
+    thirdPartyAnalytics,
+    enabledThirdPartyAnalytics,
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {
