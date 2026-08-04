@@ -27,16 +27,16 @@ export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
   const { locale } = useLocale()
   const initialNow = useInitialNow()
 
-  const [now, setNow] = useState<number | null>(() => initialNow ?? getRuntimeInitialNow())
+  const [now, setNow] = useState<number | null>(() => initialNow ?? null)
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())
 
-    updateNow()
+    setNow(initialNow ?? getRuntimeInitialNow() ?? Date.now())
     const id = setInterval(updateNow, tickInterval)
 
     return () => clearInterval(id)
-  }, [tickInterval])
+  }, [initialNow, tickInterval])
 
   const dateTime = datetime instanceof Date ? datetime.toISOString() : datetime
   if (now === null) return <time dateTime={dateTime} />

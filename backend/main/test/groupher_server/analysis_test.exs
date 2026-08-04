@@ -95,6 +95,26 @@ defmodule GroupherServer.Analysis.WebTest do
       assert Enum.map(result.top_pages, & &1.path) == ["/home"]
     end
 
+    test "summarizes all scoped rows before limiting top pages" do
+      rows =
+        1..12
+        |> Enum.map(fn index ->
+          %{
+            "name" => "/home/post/#{index}",
+            "pageviews" => 1,
+            "visitors" => 1,
+            "visits" => 1
+          }
+        end)
+
+      result = Umami.aggregate_path_metrics(rows, "/home")
+
+      assert result.summary.pageviews == 12
+      assert result.summary.visitors == 12
+      assert result.summary.visits == 12
+      assert length(result.top_pages) == 10
+    end
+
     test "reads one total time value from supported Umami field names" do
       rows = [
         %{"name" => "/home", "pageviews" => 1, "totaltime" => 60, "totalTime" => 60},

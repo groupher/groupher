@@ -103,15 +103,13 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   def aggregate_path_metrics(rows, path_prefix) when is_list(rows) and is_binary(path_prefix) do
     prefix = normalize_path_prefix(path_prefix)
 
-    pages =
+    scoped_pages =
       rows
       |> Enum.map(&normalize_path_metric/1)
       |> Enum.filter(fn row -> path_in_scope?(row.path, prefix) end)
-      |> Enum.sort_by(& &1.pageviews, :desc)
-      |> Enum.take(10)
 
     summary =
-      Enum.reduce(pages, empty_summary(), fn row, acc ->
+      Enum.reduce(scoped_pages, empty_summary(), fn row, acc ->
         %{
           pageviews: acc.pageviews + row.pageviews,
           visitors: acc.visitors + row.visitors,
@@ -121,10 +119,15 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         }
       end)
 
+    top_pages =
+      scoped_pages
+      |> Enum.sort_by(& &1.pageviews, :desc)
+      |> Enum.take(10)
+
     %{
       summary: summary,
       timeseries: [],
-      top_pages: pages,
+      top_pages: top_pages,
       top_referrers: []
     }
   end
@@ -145,7 +148,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> parse_rows()
   end
 
-  defp dimension_metrics(%{client: client, website_id: website_id}, range, path_prefix, type) do
+  defp dimension_metrics_for_path(%{client: client, website_id: website_id}, range, path, type) do
     client
     |> Tesla.get("/api/websites/#{website_id}/metrics/expanded",
       query: [
@@ -153,13 +156,13 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         endAt: Map.fetch!(range, :end_at),
         type: Atom.to_string(type),
         limit: @config.metrics_limit,
-        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+        filters: Jason.encode!(%{path: path})
       ]
     )
     |> parse_rows()
   end
 
-  defp pageviews(%{client: client, website_id: website_id}, range, path_prefix) do
+  defp pageviews_for_path(%{client: client, website_id: website_id}, range, path) do
     client
     |> Tesla.get("/api/websites/#{website_id}/pageviews",
       query: [
@@ -167,23 +170,82 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         endAt: Map.fetch!(range, :end_at),
         unit: Map.get(range, :bucket, "day"),
         timezone: "UTC",
-        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+        filters: Jason.encode!(%{path: path})
       ]
     )
     |> parse_timeseries_rows()
   end
 
-  defp weekly_sessions(%{client: client, website_id: website_id}, range, path_prefix) do
+  defp weekly_sessions_for_path(%{client: client, website_id: website_id}, range, path) do
     client
     |> Tesla.get("/api/websites/#{website_id}/sessions/weekly",
       query: [
         startAt: Map.fetch!(range, :start_at),
         endAt: Map.fetch!(range, :end_at),
         timezone: "UTC",
-        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+        filters: Jason.encode!(%{path: path})
       ]
     )
     |> parse_rows()
+  end
+
+  defp scoped_paths(request, range, path_prefix) do
+    prefix = normalize_path_prefix(path_prefix)
+
+    with {:ok, rows} <- path_metrics(request, range) do
+      paths =
+        rows
+        |> Enum.map(&normalize_path_metric/1)
+        |> Enum.filter(fn row -> path_in_scope?(row.path, prefix) end)
+        |> Enum.sort_by(& &1.pageviews, :desc)
+        |> Enum.map(& &1.path)
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.uniq()
+
+      {:ok, paths}
+    end
+  end
+
+  defp scoped_dimension_metrics(request, range, path_prefix, type) do
+    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
+      paths
+      |> Enum.flat_map(fn path ->
+        case dimension_metrics_for_path(request, range, path, type) do
+          {:ok, rows} -> rows
+          {:error, _reason} -> []
+        end
+      end)
+      |> merge_metric_rows()
+      |> then(&{:ok, &1})
+    end
+  end
+
+  defp scoped_pageviews(request, range, path_prefix) do
+    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
+      paths
+      |> Enum.flat_map(fn path ->
+        case pageviews_for_path(request, range, path) do
+          {:ok, rows} -> rows
+          {:error, _reason} -> []
+        end
+      end)
+      |> merge_timeseries_rows()
+      |> then(&{:ok, &1})
+    end
+  end
+
+  defp scoped_weekly_sessions(request, range, path_prefix) do
+    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
+      paths
+      |> Enum.flat_map(fn path ->
+        case weekly_sessions_for_path(request, range, path) do
+          {:ok, rows} -> rows
+          {:error, _reason} -> []
+        end
+      end)
+      |> merge_weekly_rows()
+      |> then(&{:ok, &1})
+    end
   end
 
   defp dimension_group(request, range, path_prefix, dimensions) do
@@ -199,14 +261,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   defp request_page_dimension(request, range, path_prefix, dimension) do
-    case dimension_metrics(request, range, path_prefix, dimension) do
+    case scoped_dimension_metrics(request, range, path_prefix, dimension) do
       {:ok, rows} -> normalize_page_dimension_rows(rows, dimension)
       {:error, _reason} -> []
     end
   end
 
   defp timeseries(request, range, path_prefix) do
-    case pageviews(request, range, path_prefix) do
+    case scoped_pageviews(request, range, path_prefix) do
       {:ok, rows} -> normalize_timeseries_rows(rows, Map.get(range, :bucket, "day"))
       {:error, _reason} -> []
     end
@@ -221,7 +283,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   defp request_dimension(request, range, path_prefix, dimension) do
-    case dimension_metrics(request, range, path_prefix, dimension) do
+    case scoped_dimension_metrics(request, range, path_prefix, dimension) do
       {:ok, rows} -> normalize_dimension_rows(rows, dimension)
       {:error, _reason} -> []
     end
@@ -229,7 +291,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   defp traffic_heatmap(request, range, path_prefix) do
     cells =
-      case weekly_sessions(request, range, path_prefix) do
+      case scoped_weekly_sessions(request, range, path_prefix) do
         {:ok, rows} -> normalize_weekly_cells(rows)
         {:error, _reason} -> []
       end
@@ -383,6 +445,54 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         "pageviews" => read_first_int(row, ["y", "pageviews"]),
         "visits" => Map.get(sessions_by_timestamp, timestamp, 0)
       }
+    end)
+  end
+
+  defp merge_metric_rows(rows) do
+    rows
+    |> Enum.group_by(&(read_string(&1, "name") || read_string(&1, :name) || ""))
+    |> Enum.map(fn {name, rows} ->
+      Enum.reduce(rows, %{"name" => name}, fn row, acc ->
+        Map.merge(acc, %{
+          "pageviews" => Map.get(acc, "pageviews", 0) + read_int(row, "pageviews"),
+          "visitors" => Map.get(acc, "visitors", 0) + read_int(row, "visitors"),
+          "visits" => Map.get(acc, "visits", 0) + read_int(row, "visits"),
+          "bounces" => Map.get(acc, "bounces", 0) + read_int(row, "bounces"),
+          "totaltime" =>
+            Map.get(acc, "totaltime", 0) +
+              read_first_int(row, ["totaltime", :totaltime, "totalTime"])
+        })
+      end)
+    end)
+  end
+
+  defp merge_timeseries_rows(rows) do
+    rows
+    |> Enum.group_by(&read_timestamp/1)
+    |> Enum.map(fn {timestamp, rows} ->
+      Enum.reduce(rows, %{"timestamp" => timestamp}, fn row, acc ->
+        Map.merge(acc, %{
+          "pageviews" =>
+            Map.get(acc, "pageviews", 0) + read_first_int(row, ["pageviews", "views", "y"]),
+          "visits" => Map.get(acc, "visits", 0) + read_first_int(row, ["visits", "sessions"]),
+          "visitors" => Map.get(acc, "visitors", 0) + read_int(row, "visitors")
+        })
+      end)
+    end)
+  end
+
+  defp merge_weekly_rows(rows) do
+    rows
+    |> normalize_weekly_cells()
+    |> Enum.group_by(&{&1.weekday, &1.hour})
+    |> Enum.map(fn {{weekday, hour}, cells} ->
+      Enum.reduce(cells, %{"weekday" => weekday, "hour" => hour}, fn cell, acc ->
+        Map.merge(acc, %{
+          "pageviews" => Map.get(acc, "pageviews", 0) + cell.views,
+          "visitors" => Map.get(acc, "visitors", 0) + cell.visitors,
+          "visits" => Map.get(acc, "visits", 0) + cell.visits
+        })
+      end)
     end)
   end
 
