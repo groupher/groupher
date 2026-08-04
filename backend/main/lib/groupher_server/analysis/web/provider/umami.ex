@@ -13,6 +13,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   alias GroupherServer.Analysis.Web.Config
   alias GroupherServer.Analysis.Web.Community
+  require Logger
 
   @config Config.base()
   @page_dimensions [:url, :entry, :exit, :title, :query]
@@ -108,6 +109,19 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       |> Enum.map(&normalize_path_metric/1)
       |> Enum.filter(fn row -> path_in_scope?(row.path, prefix) end)
 
+    if rows != [] and scoped_pages == [] do
+      rows
+      |> Enum.map(&normalize_path_metric/1)
+      |> Enum.map(& &1.path)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.take(5)
+      |> then(fn sample_paths ->
+        Logger.warning(
+          "Umami path metrics returned no scoped rows for prefix=#{prefix}; sample_paths=#{inspect(sample_paths)}"
+        )
+      end)
+    end
+
     summary =
       Enum.reduce(scoped_pages, empty_summary(), fn row, acc ->
         %{
@@ -145,7 +159,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         limit: @config.metrics_limit
       ]
     )
-    |> parse_rows()
+    |> parse_rows("metrics/expanded type=path")
   end
 
   defp dimension_metrics_for_path(%{client: client, website_id: website_id}, range, path, type) do
@@ -159,7 +173,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         filters: Jason.encode!(%{path: path})
       ]
     )
-    |> parse_rows()
+    |> parse_rows("metrics/expanded type=#{type}")
   end
 
   defp pageviews_for_path(%{client: client, website_id: website_id}, range, path) do
@@ -186,7 +200,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         filters: Jason.encode!(%{path: path})
       ]
     )
-    |> parse_rows()
+    |> parse_rows("sessions/weekly")
   end
 
   defp scoped_paths(request, range, path_prefix) do
@@ -316,7 +330,12 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       client =
         Tesla.client([
           {Tesla.Middleware.BaseUrl, @config.origin},
-          {Tesla.Middleware.Headers, [{"Authorization", "Bearer #{api_token}"}]},
+          {Tesla.Middleware.Headers,
+           [
+             {"Accept", "application/json"},
+             {"Authorization", "Bearer #{api_token}"},
+             {"x-umami-api-key", api_token}
+           ]},
           {Tesla.Middleware.Retry, delay: @config.retry_delay, max_retries: @config.retry_count},
           {Tesla.Middleware.Timeout, timeout: @config.timeout},
           {Tesla.Middleware.JSON, engine: Jason}
@@ -333,12 +352,29 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end
   end
 
-  defp parse_rows({:ok, %Tesla.Env{status: status, body: body}}) when status in 200..299 do
-    if is_list(body), do: {:ok, body}, else: {:ok, []}
+  defp parse_rows({:ok, %Tesla.Env{status: status, body: body}}, label) when status in 200..299 do
+    cond do
+      is_list(body) ->
+        {:ok, body}
+
+      is_list(Map.get(body, "data")) ->
+        {:ok, Map.get(body, "data")}
+
+      is_list(Map.get(body, :data)) ->
+        {:ok, Map.get(body, :data)}
+
+      true ->
+        Logger.warning("Umami #{label} returned unexpected rows body: #{inspect_body(body)}")
+        {:error, {:unexpected_body, body_kind(body)}}
+    end
   end
 
-  defp parse_rows({:ok, %Tesla.Env{status: status}}), do: {:error, {:http_error, status}}
-  defp parse_rows({:error, reason}), do: {:error, reason}
+  defp parse_rows({:ok, %Tesla.Env{status: status, body: body}}, label) do
+    Logger.warning("Umami #{label} returned HTTP #{status}: #{inspect_body(body)}")
+    {:error, {:http_error, status}}
+  end
+
+  defp parse_rows({:error, reason}, _label), do: {:error, reason}
 
   defp parse_timeseries_rows({:ok, %Tesla.Env{status: status, body: body}})
        when status in 200..299 do
@@ -615,6 +651,25 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   defp read_timestamp(map) do
     read_first_int(map, ["x", :x, "t", :t, "date", :date, "timestamp", :timestamp])
   end
+
+  defp body_kind(body) when is_list(body), do: :list
+  defp body_kind(body) when is_map(body), do: :map
+  defp body_kind(body) when is_binary(body), do: :string
+  defp body_kind(_body), do: :unknown
+
+  defp inspect_body(body) when is_map(body) do
+    body
+    |> Map.drop(["token", :token, "password", :password])
+    |> inspect(limit: 10, printable_limit: 500)
+  end
+
+  defp inspect_body(body) when is_binary(body) do
+    body
+    |> String.slice(0, 500)
+    |> inspect()
+  end
+
+  defp inspect_body(body), do: inspect(body, limit: 10, printable_limit: 500)
 
   defp normalize_dimension_value("", :referrer), do: "direct"
   defp normalize_dimension_value(value, _dimension), do: value
