@@ -23,6 +23,14 @@ export const prePaintThemeDetectScript = () => `
 })();
 `
 
+export const prePaintRuntimeSeedScript = () => `
+(function() {
+  try {
+    window.__GROUPHER_INITIAL_NOW__ = Date.now();
+  } catch (e) {}
+})();
+`
+
 /**
  * Build a hydration-safe first-paint CSS variable snapshot.
  *

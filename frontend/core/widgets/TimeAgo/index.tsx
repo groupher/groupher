@@ -11,11 +11,23 @@ type TProps = {
   tickInterval?: number // auto refresh in every min
 }
 
+type TInitialNowWindow = Window & {
+  __GROUPHER_INITIAL_NOW__?: number
+}
+
+const getRuntimeInitialNow = (): number | null => {
+  if (typeof window === 'undefined') return null
+
+  const initialNow = (window as TInitialNowWindow).__GROUPHER_INITIAL_NOW__
+
+  return typeof initialNow === 'number' && Number.isFinite(initialNow) ? initialNow : null
+}
+
 export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
   const { locale } = useLocale()
   const initialNow = useInitialNow()
 
-  const [now, setNow] = useState<number | null>(initialNow ?? null)
+  const [now, setNow] = useState<number | null>(() => initialNow ?? getRuntimeInitialNow())
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())

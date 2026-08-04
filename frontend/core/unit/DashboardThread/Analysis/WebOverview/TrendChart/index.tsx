@@ -38,11 +38,7 @@ export default function TrendChart({ emptyLabel, points, title, viewsLabel, visi
         <div className={s.maxValue}>{prettyNum(max)}</div>
       </div>
 
-      <svg
-        viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`}
-        className={s.svg}
-        role='img'
-      >
+      <svg viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`} className={s.svg} role='img'>
         <title>{title}</title>
         <defs>
           <linearGradient id='trendViewsFill' x1='0' x2='0' y1='0' y2='1'>

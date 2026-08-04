@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 
-import useSalon from './salon'
 import type { TSummaryMetricItem } from '../../spec'
+import useSalon from './salon'
 
 type TProps = {
   item: TSummaryMetricItem

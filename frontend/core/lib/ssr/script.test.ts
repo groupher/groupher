@@ -3,6 +3,7 @@ import { THEME_FIRST_PAINT_VAR_NAMES } from '~/const/theme-first-paint.generated
 
 import {
   injectThemeFirstPaintVars,
+  prePaintRuntimeSeedScript,
   prePaintThemeDetectScript,
   THEME_FIRST_PAINT_VARS_SCRIPT,
 } from './script'
@@ -46,6 +47,18 @@ describe('prePaintThemeDetectScript', () => {
 
     expect(document.documentElement.getAttribute('data-theme')).toBe(THEME_MODE.DARK)
     expect(document.documentElement.style.colorScheme).toBe(THEME_MODE.DARK)
+  })
+})
+
+describe('prePaintRuntimeSeedScript', () => {
+  it('captures a browser-side initial timestamp before hydration', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(123456)
+
+    runInlineScript(prePaintRuntimeSeedScript())
+
+    expect(
+      (window as Window & { __GROUPHER_INITIAL_NOW__?: number }).__GROUPHER_INITIAL_NOW__,
+    ).toBe(123456)
   })
 })
 

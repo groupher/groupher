@@ -136,11 +136,23 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
     ],
     entry: [
       { value: '/home', label: '/home', metrics: { visitors: 352, visits: 468, views: 860 } },
-      { value: '/home/post', label: '/home/post', metrics: { visitors: 194, visits: 260, views: 488 } },
+      {
+        value: '/home/post',
+        label: '/home/post',
+        metrics: { visitors: 194, visits: 260, views: 488 },
+      },
     ],
     exit: [
-      { value: '/home/post', label: '/home/post', metrics: { visitors: 176, visits: 242, views: 420 } },
-      { value: '/home/docs', label: '/home/docs', metrics: { visitors: 118, visits: 172, views: 304 } },
+      {
+        value: '/home/post',
+        label: '/home/post',
+        metrics: { visitors: 176, visits: 242, views: 420 },
+      },
+      {
+        value: '/home/docs',
+        label: '/home/docs',
+        metrics: { visitors: 118, visits: 172, views: 304 },
+      },
     ],
     title: [
       {
@@ -155,7 +167,11 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
       },
     ],
     query: [
-      { value: 'source=github', label: 'source=github', metrics: { visitors: 82, visits: 118, views: 236 } },
+      {
+        value: 'source=github',
+        label: 'source=github',
+        metrics: { visitors: 82, visits: 118, views: 236 },
+      },
       { value: 'ref=docs', label: 'ref=docs', metrics: { visitors: 56, visits: 78, views: 144 } },
     ],
   },
@@ -172,51 +188,150 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
       { value: 'social', label: 'Social', metrics: { visitors: 128, visits: 182, views: 344 } },
     ],
     domain: [
-      { value: 'groupher.com', label: 'groupher.com', metrics: { visitors: 286, visits: 388, views: 712 } },
-      { value: 'github.com', label: 'github.com', metrics: { visitors: 128, visits: 182, views: 344 } },
-      { value: 'google.com', label: 'google.com', metrics: { visitors: 96, visits: 124, views: 226 } },
+      {
+        value: 'groupher.com',
+        label: 'groupher.com',
+        metrics: { visitors: 286, visits: 388, views: 712 },
+      },
+      {
+        value: 'github.com',
+        label: 'github.com',
+        metrics: { visitors: 128, visits: 182, views: 344 },
+      },
+      {
+        value: 'google.com',
+        label: 'google.com',
+        metrics: { visitors: 96, visits: 124, views: 226 },
+      },
     ],
   },
   environment: {
     status: 'ok',
     browser: [
-      { value: 'Chrome', label: 'Chrome', metrics: { visitors: 536, visits: 724, views: 1388, percentage: 0.65 } },
-      { value: 'Safari', label: 'Safari', metrics: { visitors: 188, visits: 246, views: 472, percentage: 0.23 } },
-      { value: 'Firefox', label: 'Firefox', metrics: { visitors: 64, visits: 92, views: 188, percentage: 0.08 } },
+      {
+        value: 'Chrome',
+        label: 'Chrome',
+        metrics: { visitors: 536, visits: 724, views: 1388, percentage: 0.65 },
+      },
+      {
+        value: 'Safari',
+        label: 'Safari',
+        metrics: { visitors: 188, visits: 246, views: 472, percentage: 0.23 },
+      },
+      {
+        value: 'Firefox',
+        label: 'Firefox',
+        metrics: { visitors: 64, visits: 92, views: 188, percentage: 0.08 },
+      },
     ],
     os: [
-      { value: 'macOS', label: 'macOS', metrics: { visitors: 412, visits: 568, views: 1086, percentage: 0.5 } },
-      { value: 'iOS', label: 'iOS', metrics: { visitors: 218, visits: 282, views: 514, percentage: 0.26 } },
-      { value: 'Windows', label: 'Windows', metrics: { visitors: 126, visits: 174, views: 332, percentage: 0.15 } },
+      {
+        value: 'macOS',
+        label: 'macOS',
+        metrics: { visitors: 412, visits: 568, views: 1086, percentage: 0.5 },
+      },
+      {
+        value: 'iOS',
+        label: 'iOS',
+        metrics: { visitors: 218, visits: 282, views: 514, percentage: 0.26 },
+      },
+      {
+        value: 'Windows',
+        label: 'Windows',
+        metrics: { visitors: 126, visits: 174, views: 332, percentage: 0.15 },
+      },
     ],
     device: [
-      { value: 'desktop', label: 'Desktop', metrics: { visitors: 558, visits: 754, views: 1442, percentage: 0.68 } },
-      { value: 'mobile', label: 'Mobile', metrics: { visitors: 242, visits: 334, views: 642, percentage: 0.29 } },
-      { value: 'tablet', label: 'Tablet', metrics: { visitors: 24, visits: 50, views: 72, percentage: 0.03 } },
+      {
+        value: 'desktop',
+        label: 'Desktop',
+        metrics: { visitors: 558, visits: 754, views: 1442, percentage: 0.68 },
+      },
+      {
+        value: 'mobile',
+        label: 'Mobile',
+        metrics: { visitors: 242, visits: 334, views: 642, percentage: 0.29 },
+      },
+      {
+        value: 'tablet',
+        label: 'Tablet',
+        metrics: { visitors: 24, visits: 50, views: 72, percentage: 0.03 },
+      },
     ],
     language: [
-      { value: 'en-US', label: 'English', metrics: { visitors: 482, visits: 650, views: 1236, percentage: 0.58 } },
-      { value: 'zh-CN', label: 'Chinese', metrics: { visitors: 266, visits: 374, views: 718, percentage: 0.32 } },
+      {
+        value: 'en-US',
+        label: 'English',
+        metrics: { visitors: 482, visits: 650, views: 1236, percentage: 0.58 },
+      },
+      {
+        value: 'zh-CN',
+        label: 'Chinese',
+        metrics: { visitors: 266, visits: 374, views: 718, percentage: 0.32 },
+      },
     ],
     screen: [
-      { value: '1512x982', label: '1512x982', metrics: { visitors: 218, visits: 312, views: 596, percentage: 0.26 } },
-      { value: '390x844', label: '390x844', metrics: { visitors: 176, visits: 238, views: 456, percentage: 0.21 } },
+      {
+        value: '1512x982',
+        label: '1512x982',
+        metrics: { visitors: 218, visits: 312, views: 596, percentage: 0.26 },
+      },
+      {
+        value: '390x844',
+        label: '390x844',
+        metrics: { visitors: 176, visits: 238, views: 456, percentage: 0.21 },
+      },
     ],
   },
   location: {
     status: 'ok',
     country: [
-      { value: 'US', label: 'United States', code: 'US', metrics: { visitors: 318, visits: 438, views: 846, percentage: 0.39 } },
-      { value: 'CN', label: 'China', code: 'CN', metrics: { visitors: 266, visits: 374, views: 718, percentage: 0.32 } },
-      { value: 'JP', label: 'Japan', code: 'JP', metrics: { visitors: 84, visits: 112, views: 226, percentage: 0.1 } },
+      {
+        value: 'US',
+        label: 'United States',
+        code: 'US',
+        metrics: { visitors: 318, visits: 438, views: 846, percentage: 0.39 },
+      },
+      {
+        value: 'CN',
+        label: 'China',
+        code: 'CN',
+        metrics: { visitors: 266, visits: 374, views: 718, percentage: 0.32 },
+      },
+      {
+        value: 'JP',
+        label: 'Japan',
+        code: 'JP',
+        metrics: { visitors: 84, visits: 112, views: 226, percentage: 0.1 },
+      },
     ],
     region: [
-      { value: 'California', label: 'California', code: null, metrics: { visitors: 164, visits: 224, views: 432, percentage: 0.2 } },
-      { value: 'Shanghai', label: 'Shanghai', code: null, metrics: { visitors: 132, visits: 188, views: 356, percentage: 0.16 } },
+      {
+        value: 'California',
+        label: 'California',
+        code: null,
+        metrics: { visitors: 164, visits: 224, views: 432, percentage: 0.2 },
+      },
+      {
+        value: 'Shanghai',
+        label: 'Shanghai',
+        code: null,
+        metrics: { visitors: 132, visits: 188, views: 356, percentage: 0.16 },
+      },
     ],
     city: [
-      { value: 'San Francisco', label: 'San Francisco', code: null, metrics: { visitors: 96, visits: 138, views: 268, percentage: 0.12 } },
-      { value: 'Shanghai', label: 'Shanghai', code: null, metrics: { visitors: 92, visits: 128, views: 246, percentage: 0.11 } },
+      {
+        value: 'San Francisco',
+        label: 'San Francisco',
+        code: null,
+        metrics: { visitors: 96, visits: 138, views: 268, percentage: 0.12 },
+      },
+      {
+        value: 'Shanghai',
+        label: 'Shanghai',
+        code: null,
+        metrics: { visitors: 92, visits: 128, views: 246, percentage: 0.11 },
+      },
     ],
   },
   traffic: {
