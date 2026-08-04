@@ -40,6 +40,10 @@ defmodule GroupherServer.Test.Query.Analysis do
       assert result["summary"]["pageviews"]["value"] == 0
       assert result["timeseries"]["points"] == []
       assert result["pages"]["path"] == []
+      assert result["environment"]["browser"] == []
+      assert result["location"]["country"] == []
+      assert result["traffic"]["cells"] == []
+      assert result["traffic"]["timezone"] == "UTC"
       assert [%{"code" => "not_configured", "section" => "overview"}] = result["errors"]
     end
 

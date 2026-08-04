@@ -15,6 +15,10 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   alias GroupherServer.Analysis.Web.Community
 
   @config Config.base()
+  @page_dimensions [:url, :entry, :exit, :title, :query]
+  @source_dimensions [:referrer, :channel, :domain]
+  @environment_dimensions [:browser, :os, :device, :language, :screen]
+  @location_dimensions [:country, :region, :city]
 
   plug(Tesla.Middleware.JSON, engine: Jason)
 
@@ -51,7 +55,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       community = %GroupherServer.Analysis.Web.Community{community: "home", path_prefix: "/home"}
 
       overview(community, range)
-      #=> {:ok, %{summary: summary, previous_summary: previous_summary, timeseries: [], top_referrers: []}}
+      #=> {:ok, %{summary: summary, previous_summary: previous_summary, timeseries: points, top_referrers: []}}
 
   """
   @impl true
@@ -68,8 +72,18 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
          :previous_summary,
          previous_summary
        )
-       |> Map.put(:timeseries, [])
-       |> Map.put(:top_referrers, [])}
+       |> Map.put(:timeseries, timeseries(request, range, community.path_prefix))
+       |> Map.put(:pages, page_group(request, range, community.path_prefix))
+       |> Map.put(
+         :sources,
+         dimension_group(request, range, community.path_prefix, @source_dimensions)
+       )
+       |> Map.put(
+         :environment,
+         dimension_group(request, range, community.path_prefix, @environment_dimensions)
+       )
+       |> Map.put(:location, location_group(request, range, community.path_prefix))
+       |> Map.put(:traffic, traffic_heatmap(request, range, community.path_prefix))}
     end
   end
 
@@ -131,6 +145,98 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> parse_rows()
   end
 
+  defp dimension_metrics(%{client: client, website_id: website_id}, range, path_prefix, type) do
+    client
+    |> Tesla.get("/api/websites/#{website_id}/metrics/expanded",
+      query: [
+        startAt: Map.fetch!(range, :start_at),
+        endAt: Map.fetch!(range, :end_at),
+        type: Atom.to_string(type),
+        limit: @config.metrics_limit,
+        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+      ]
+    )
+    |> parse_rows()
+  end
+
+  defp pageviews(%{client: client, website_id: website_id}, range, path_prefix) do
+    client
+    |> Tesla.get("/api/websites/#{website_id}/pageviews",
+      query: [
+        startAt: Map.fetch!(range, :start_at),
+        endAt: Map.fetch!(range, :end_at),
+        unit: Map.get(range, :bucket, "day"),
+        timezone: "UTC",
+        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+      ]
+    )
+    |> parse_timeseries_rows()
+  end
+
+  defp weekly_sessions(%{client: client, website_id: website_id}, range, path_prefix) do
+    client
+    |> Tesla.get("/api/websites/#{website_id}/sessions/weekly",
+      query: [
+        startAt: Map.fetch!(range, :start_at),
+        endAt: Map.fetch!(range, :end_at),
+        timezone: "UTC",
+        filters: Jason.encode!(%{path: normalize_path_prefix(path_prefix)})
+      ]
+    )
+    |> parse_rows()
+  end
+
+  defp dimension_group(request, range, path_prefix, dimensions) do
+    Enum.reduce(dimensions, %{}, fn dimension, acc ->
+      Map.put(acc, dimension, request_dimension(request, range, path_prefix, dimension))
+    end)
+  end
+
+  defp page_group(request, range, path_prefix) do
+    Enum.reduce(@page_dimensions, %{}, fn dimension, acc ->
+      Map.put(acc, dimension, request_page_dimension(request, range, path_prefix, dimension))
+    end)
+  end
+
+  defp request_page_dimension(request, range, path_prefix, dimension) do
+    case dimension_metrics(request, range, path_prefix, dimension) do
+      {:ok, rows} -> normalize_page_dimension_rows(rows, dimension)
+      {:error, _reason} -> []
+    end
+  end
+
+  defp timeseries(request, range, path_prefix) do
+    case pageviews(request, range, path_prefix) do
+      {:ok, rows} -> normalize_timeseries_rows(rows, Map.get(range, :bucket, "day"))
+      {:error, _reason} -> []
+    end
+  end
+
+  defp location_group(request, range, path_prefix) do
+    request
+    |> dimension_group(range, path_prefix, @location_dimensions)
+    |> Map.update(:country, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, &1.value)) end)
+    |> Map.update(:region, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, nil)) end)
+    |> Map.update(:city, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, nil)) end)
+  end
+
+  defp request_dimension(request, range, path_prefix, dimension) do
+    case dimension_metrics(request, range, path_prefix, dimension) do
+      {:ok, rows} -> normalize_dimension_rows(rows, dimension)
+      {:error, _reason} -> []
+    end
+  end
+
+  defp traffic_heatmap(request, range, path_prefix) do
+    cells =
+      case weekly_sessions(request, range, path_prefix) do
+        {:ok, rows} -> normalize_weekly_cells(rows)
+        {:error, _reason} -> []
+      end
+
+    %{timezone: "UTC", cells: cells}
+  end
+
   defp previous_range(%{start_at: start_at, end_at: end_at}) do
     duration = end_at - start_at
 
@@ -172,6 +278,21 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   defp parse_rows({:ok, %Tesla.Env{status: status}}), do: {:error, {:http_error, status}}
   defp parse_rows({:error, reason}), do: {:error, reason}
 
+  defp parse_timeseries_rows({:ok, %Tesla.Env{status: status, body: body}})
+       when status in 200..299 do
+    cond do
+      is_list(body) -> {:ok, body}
+      is_list(Map.get(body, "pageviews")) -> {:ok, merge_timeseries_body(body)}
+      is_list(Map.get(body, :pageviews)) -> {:ok, merge_timeseries_body(body)}
+      true -> {:ok, []}
+    end
+  end
+
+  defp parse_timeseries_rows({:ok, %Tesla.Env{status: status}}),
+    do: {:error, {:http_error, status}}
+
+  defp parse_timeseries_rows({:error, reason}), do: {:error, reason}
+
   defp normalize_path_metric(row) when is_map(row) do
     %{
       path: read_string(row, "name") || read_string(row, :name) || "",
@@ -181,6 +302,121 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       visits: read_int(row, "visits"),
       bounces: read_int(row, "bounces"),
       total_time: read_first_int(row, ["totaltime", :totaltime, "totalTime"])
+    }
+  end
+
+  defp normalize_dimension_rows(rows, dimension) when is_list(rows) do
+    total_visitors =
+      rows
+      |> Enum.map(&read_int(&1, "visitors"))
+      |> Enum.sum()
+
+    rows
+    |> Enum.map(fn row ->
+      value = read_string(row, "name") || read_string(row, :name) || ""
+      visitors = read_int(row, "visitors")
+
+      %{
+        value: normalize_dimension_value(value, dimension),
+        label: normalize_dimension_label(value, dimension),
+        metrics: %{
+          visitors: visitors,
+          visits: read_int(row, "visits"),
+          views: read_int(row, "pageviews"),
+          percentage: percentage(visitors, total_visitors)
+        }
+      }
+    end)
+    |> Enum.reject(&(&1.value == ""))
+  end
+
+  defp normalize_page_dimension_rows(rows, dimension) when is_list(rows) do
+    rows
+    |> Enum.map(fn row ->
+      value = read_string(row, "name") || read_string(row, :name) || ""
+
+      %{
+        value: value,
+        label: normalize_page_dimension_label(value, dimension),
+        metrics: %{
+          visitors: read_int(row, "visitors"),
+          visits: read_int(row, "visits"),
+          views: read_int(row, "pageviews"),
+          bounce_rate: rate(read_int(row, "bounces"), read_int(row, "visits")),
+          visit_duration:
+            rate(
+              read_first_int(row, ["totaltime", :totaltime, "totalTime"]),
+              read_int(row, "visits")
+            )
+        }
+      }
+    end)
+    |> Enum.reject(&(&1.value == ""))
+  end
+
+  defp normalize_timeseries_rows(rows, bucket) when is_list(rows) do
+    rows
+    |> Enum.map(fn row ->
+      %{
+        bucket: bucket,
+        timestamp: read_timestamp(row),
+        visitors: read_int(row, "visitors"),
+        visits: read_first_int(row, ["visits", "sessions"]),
+        views: read_first_int(row, ["pageviews", "views", "y"])
+      }
+    end)
+    |> Enum.reject(&(&1.timestamp == 0))
+  end
+
+  defp merge_timeseries_body(body) do
+    pageviews = Map.get(body, "pageviews") || Map.get(body, :pageviews) || []
+    sessions = Map.get(body, "sessions") || Map.get(body, :sessions) || []
+
+    sessions_by_timestamp =
+      Map.new(sessions, &{read_timestamp(&1), read_first_int(&1, ["y", "sessions"])})
+
+    Enum.map(pageviews, fn row ->
+      timestamp = read_timestamp(row)
+
+      %{
+        "timestamp" => timestamp,
+        "pageviews" => read_first_int(row, ["y", "pageviews"]),
+        "visits" => Map.get(sessions_by_timestamp, timestamp, 0)
+      }
+    end)
+  end
+
+  defp normalize_weekly_cells(rows) when is_list(rows) do
+    rows
+    |> Enum.flat_map(&normalize_weekly_row/1)
+    |> Enum.filter(fn cell -> cell.weekday in 0..6 and cell.hour in 0..23 end)
+  end
+
+  defp normalize_weekly_row(row) when is_map(row) do
+    cond do
+      is_integer(Map.get(row, "weekday")) and is_integer(Map.get(row, "hour")) ->
+        [weekly_cell(row, Map.get(row, "weekday"), Map.get(row, "hour"))]
+
+      is_list(Map.get(row, "hours")) ->
+        weekday = read_int(row, "weekday")
+
+        row
+        |> Map.get("hours")
+        |> Enum.with_index()
+        |> Enum.map(fn {hour_row, hour} -> weekly_cell(hour_row, weekday, hour) end)
+
+      true ->
+        []
+    end
+  end
+
+  defp weekly_cell(row, weekday, hour) do
+    %{
+      weekday: weekday,
+      hour: hour,
+      visitors: read_int(row, "visitors"),
+      visits: read_int(row, "visits"),
+      views: read_int(row, "pageviews")
     }
   end
 
@@ -230,4 +466,22 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> Enum.map(&read_int(map, &1))
     |> Enum.find(0, &(&1 > 0))
   end
+
+  defp read_timestamp(map) do
+    read_first_int(map, ["x", :x, "t", :t, "date", :date, "timestamp", :timestamp])
+  end
+
+  defp normalize_dimension_value("", :referrer), do: "direct"
+  defp normalize_dimension_value(value, _dimension), do: value
+
+  defp normalize_dimension_label("", :referrer), do: "Direct"
+  defp normalize_dimension_label(value, _dimension), do: value
+
+  defp normalize_page_dimension_label(value, :url), do: URI.parse(value).path || value
+  defp normalize_page_dimension_label(value, _dimension), do: value
+
+  defp percentage(_value, 0), do: 0.0
+  defp percentage(value, total), do: Float.round(value / total, 4)
+  defp rate(_value, 0), do: 0.0
+  defp rate(value, total), do: Float.round(value / total, 2)
 end

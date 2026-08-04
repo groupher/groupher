@@ -1020,6 +1020,13 @@ type AnalysisWebCountMetricValues {
   views: Int
 }
 
+type AnalysisWebDimensionMetricValues {
+  visitors: Int
+  visits: Int
+  views: Int
+  percentage: Float
+}
+
 type AnalysisWebPageDimensionMetric {
   value: String
   label: String
@@ -1055,9 +1062,33 @@ type AnalysisWebSourcesSection {
   domain: [AnalysisWebSourceDimensionMetric]
 }
 
-type AnalysisWebEmptySection {
+type AnalysisWebDimensionMetric {
+  value: String
+  label: String
+  metrics: AnalysisWebDimensionMetricValues
+}
+
+type AnalysisWebLocationMetric {
+  value: String
+  label: String
+  code: String
+  metrics: AnalysisWebDimensionMetricValues
+}
+
+type AnalysisWebEnvironmentSection {
   status: String
-  items: [String]
+  browser: [AnalysisWebDimensionMetric]
+  os: [AnalysisWebDimensionMetric]
+  device: [AnalysisWebDimensionMetric]
+  language: [AnalysisWebDimensionMetric]
+  screen: [AnalysisWebDimensionMetric]
+}
+
+type AnalysisWebLocationSection {
+  status: String
+  country: [AnalysisWebLocationMetric]
+  region: [AnalysisWebLocationMetric]
+  city: [AnalysisWebLocationMetric]
 }
 
 type AnalysisWebTrafficCell {
@@ -1146,8 +1177,8 @@ type AnalysisWebOverview {
   timeseries: AnalysisWebTimeseriesSection
   pages: AnalysisWebPagesSection
   sources: AnalysisWebSourcesSection
-  environment: AnalysisWebEmptySection
-  location: AnalysisWebEmptySection
+  environment: AnalysisWebEnvironmentSection
+  location: AnalysisWebLocationSection
   traffic: AnalysisWebTrafficSection
   errors: [AnalysisWebError]
 }

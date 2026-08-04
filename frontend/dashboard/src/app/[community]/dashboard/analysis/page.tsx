@@ -1,9 +1,39 @@
-import AnalysisWebClient from './Client'
-import { fetchAnalysisWebOverview } from './helper'
+'use client'
 
-export default async function AnalysisPage({ params }) {
-  const { community } = await params
-  const data = await fetchAnalysisWebOverview(community)
+import { DSB_ROUTE } from '~/const/route'
+import useTrans from '~/hooks/useTrans'
+import LogSVG from '~/icons/dsb/Log'
+import TrendSVG from '~/icons/dsb/Trend'
+import DsbCovers from '~/unit/DashboardCovers'
 
-  return <AnalysisWebClient data={data} />
+export default function AnalysisCoversPage() {
+  const { t } = useTrans()
+
+  return (
+    <DsbCovers
+      config={{
+        title: t('dsb.menu.analysis'),
+        desc: t('dsb.covers.analysis.desc'),
+        items: [
+          {
+            groupTitle: t('dsb.menu.analysis'),
+            items: [
+              {
+                title: t('dsb.menu.trend'),
+                desc: t('dsb.covers.item.trend.desc'),
+                seg: DSB_ROUTE.TREND,
+                Icon: TrendSVG,
+              },
+              {
+                title: t('dsb.menu.log'),
+                desc: t('dsb.covers.item.log.desc'),
+                seg: DSB_ROUTE.LOG,
+                Icon: LogSVG,
+              },
+            ],
+          },
+        ],
+      }}
+    />
+  )
 }

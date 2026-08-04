@@ -1,76 +1,13 @@
 import { headers } from 'next/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
+import type {
+  TAnalysisWebMetric,
+  TAnalysisWebOverview,
+} from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
 type TGraphQLError = { message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
-
-export type TAnalysisWebMetric = {
-  value: number
-  previousValue: number | null
-  changeRate: number | null
-}
-
-export type TAnalysisWebCountMetrics = {
-  visitors: number
-  visits: number
-  views: number
-}
-
-export type TAnalysisWebPageMetrics = TAnalysisWebCountMetrics & {
-  bounceRate: number
-  visitDuration: number
-}
-
-export type TAnalysisWebDimension<TMetrics> = {
-  value: string
-  label: string
-  metrics: TMetrics
-}
-
-export type TAnalysisWebOverview = {
-  status: string
-  provider: string
-  pathScope: string
-  range: {
-    days: number
-    startAt: string
-    endAt: string
-    bucket: string
-  }
-  summary: {
-    pageviews: TAnalysisWebMetric
-    visitors: TAnalysisWebMetric
-    visits: TAnalysisWebMetric
-    bounceRate: TAnalysisWebMetric
-    visitDuration: TAnalysisWebMetric
-  }
-  timeseries: {
-    status: string
-    bucket: string
-    points: {
-      bucket: string
-      timestamp: string
-      visitors: number
-      visits: number
-      views: number
-    }[]
-  }
-  pages: {
-    status: string
-    path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
-  }
-  sources: {
-    status: string
-    referrer: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-  }
-  errors: {
-    code: string
-    message: string
-    section: string
-    providerStatus: string | null
-  }[]
-}
 
 type TAnalysisWebQueryData = {
   analysisWebOverview: TAnalysisWebOverview | null
@@ -139,6 +76,55 @@ const ANALYSIS_WEB_OVERVIEW_QUERY = `
             visitDuration
           }
         }
+        url {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            bounceRate
+            visitDuration
+          }
+        }
+        entry {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
+        exit {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
+        title {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            bounceRate
+            visitDuration
+          }
+        }
+        query {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
       }
       sources {
         status
@@ -150,6 +136,124 @@ const ANALYSIS_WEB_OVERVIEW_QUERY = `
             visits
             views
           }
+        }
+        channel {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
+        domain {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+          }
+        }
+      }
+      environment {
+        status
+        browser {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        os {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        device {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        language {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        screen {
+          value
+          label
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+      }
+      location {
+        status
+        country {
+          value
+          label
+          code
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        region {
+          value
+          label
+          code
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+        city {
+          value
+          label
+          code
+          metrics {
+            visitors
+            visits
+            views
+            percentage
+          }
+        }
+      }
+      traffic {
+        status
+        timezone
+        cells {
+          weekday
+          hour
+          visitors
+          visits
+          views
         }
       }
       errors {
@@ -193,10 +297,36 @@ const emptyOverview = (community: string): TAnalysisWebOverview => ({
   pages: {
     status: 'unavailable',
     path: [],
+    url: [],
+    entry: [],
+    exit: [],
+    title: [],
+    query: [],
   },
   sources: {
     status: 'unavailable',
     referrer: [],
+    channel: [],
+    domain: [],
+  },
+  environment: {
+    status: 'unavailable',
+    browser: [],
+    os: [],
+    device: [],
+    language: [],
+    screen: [],
+  },
+  location: {
+    status: 'unavailable',
+    country: [],
+    region: [],
+    city: [],
+  },
+  traffic: {
+    status: 'unavailable',
+    timezone: 'UTC',
+    cells: [],
   },
   errors: [],
 })

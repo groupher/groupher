@@ -40,6 +40,13 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:views, :integer)
   end
 
+  object :analysis_web_dimension_metric_values do
+    field(:visitors, :integer)
+    field(:visits, :integer)
+    field(:views, :integer)
+    field(:percentage, :float)
+  end
+
   object :analysis_web_page_dimension_metric do
     field(:value, :string)
     field(:label, :string)
@@ -75,9 +82,33 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:domain, list_of(:analysis_web_source_dimension_metric))
   end
 
-  object :analysis_web_empty_section do
+  object :analysis_web_dimension_metric do
+    field(:value, :string)
+    field(:label, :string)
+    field(:metrics, :analysis_web_dimension_metric_values)
+  end
+
+  object :analysis_web_location_metric do
+    field(:value, :string)
+    field(:label, :string)
+    field(:code, :string)
+    field(:metrics, :analysis_web_dimension_metric_values)
+  end
+
+  object :analysis_web_environment_section do
     field(:status, :string)
-    field(:items, list_of(:string))
+    field(:browser, list_of(:analysis_web_dimension_metric))
+    field(:os, list_of(:analysis_web_dimension_metric))
+    field(:device, list_of(:analysis_web_dimension_metric))
+    field(:language, list_of(:analysis_web_dimension_metric))
+    field(:screen, list_of(:analysis_web_dimension_metric))
+  end
+
+  object :analysis_web_location_section do
+    field(:status, :string)
+    field(:country, list_of(:analysis_web_location_metric))
+    field(:region, list_of(:analysis_web_location_metric))
+    field(:city, list_of(:analysis_web_location_metric))
   end
 
   object :analysis_web_traffic_cell do
@@ -166,8 +197,8 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:timeseries, :analysis_web_timeseries_section)
     field(:pages, :analysis_web_pages_section)
     field(:sources, :analysis_web_sources_section)
-    field(:environment, :analysis_web_empty_section)
-    field(:location, :analysis_web_empty_section)
+    field(:environment, :analysis_web_environment_section)
+    field(:location, :analysis_web_location_section)
     field(:traffic, :analysis_web_traffic_section)
     field(:errors, list_of(:analysis_web_error))
   end

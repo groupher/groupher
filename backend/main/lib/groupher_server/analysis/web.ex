@@ -115,15 +115,11 @@ defmodule GroupherServer.Analysis.Web do
       filters: nil,
       summary: overview_summary(summary, previous_summary),
       timeseries: timeseries_section(Map.get(payload, :timeseries, []), range),
-      pages: pages_section(Map.get(payload, :top_pages, [])),
-      sources: sources_section(Map.get(payload, :top_referrers, [])),
-      environment: empty_section("environment"),
-      location: empty_section("location"),
-      traffic: %{
-        status: "unavailable",
-        timezone: "UTC",
-        cells: []
-      },
+      pages: pages_section(payload),
+      sources: sources_section(payload),
+      environment: environment_section(Map.get(payload, :environment, %{})),
+      location: location_section(Map.get(payload, :location, %{})),
+      traffic: traffic_section(Map.get(payload, :traffic, %{})),
       errors: overview_errors(payload)
     }
   end
@@ -137,17 +133,25 @@ defmodule GroupherServer.Analysis.Web do
       filters: nil,
       summary: overview_summary(empty_summary(), empty_summary()),
       timeseries: timeseries_section([], range, "unavailable"),
-      pages: pages_section([], "unavailable"),
-      sources: sources_section([], "unavailable"),
-      environment: empty_section("environment", "unavailable"),
-      location: empty_section("location", "unavailable"),
-      traffic: %{status: "unavailable", timezone: "UTC", cells: []},
+      pages: pages_section(%{}, "unavailable"),
+      sources: sources_section(%{}, "unavailable"),
+      environment: environment_section(%{}, "unavailable"),
+      location: location_section(%{}, "unavailable"),
+      traffic: traffic_section(%{}, "unavailable"),
       errors: [error_payload(reason, "overview")]
     }
   end
 
   defp overview_status(payload) do
-    if Map.get(payload, :timeseries, []) == [] or Map.get(payload, :top_referrers, []) == [] do
+    required_sections = [
+      Map.get(payload, :timeseries, []),
+      get_in(payload, [:sources, :referrer]) || Map.get(payload, :top_referrers, []),
+      get_in(payload, [:environment, :browser]),
+      get_in(payload, [:location, :country]),
+      get_in(payload, [:traffic, :cells])
+    ]
+
+    if Enum.any?(required_sections, &blank?/1) do
       "partial"
     else
       "ok"
@@ -157,10 +161,13 @@ defmodule GroupherServer.Analysis.Web do
   defp overview_errors(payload) do
     []
     |> maybe_add_empty_error(Map.get(payload, :timeseries, []), "timeseries")
-    |> maybe_add_empty_error(Map.get(payload, :top_referrers, []), "sources")
+    |> maybe_add_empty_error(get_in(payload, [:sources, :referrer]), "sources")
+    |> maybe_add_empty_error(get_in(payload, [:environment, :browser]), "environment")
+    |> maybe_add_empty_error(get_in(payload, [:location, :country]), "location")
+    |> maybe_add_empty_error(get_in(payload, [:traffic, :cells]), "traffic")
   end
 
-  defp maybe_add_empty_error(errors, [], section) do
+  defp maybe_add_empty_error(errors, value, section) when value in [nil, []] do
     [error_payload(:not_available_for_path_scope, section) | errors]
   end
 
@@ -208,33 +215,90 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp pages_section(items, status \\ "ok") do
+  defp pages_section(payload, status \\ "ok") when is_map(payload) do
+    items = Map.get(payload, :top_pages, [])
+    pages = Map.get(payload, :pages, %{})
+    path = Enum.map(items, &page_metric/1)
+    url = Map.get(pages, :url, [])
+    entry = Map.get(pages, :entry, [])
+    exit = Map.get(pages, :exit, [])
+    title = Map.get(pages, :title, [])
+    query = Map.get(pages, :query, [])
+
     %{
-      status: section_status(items, status),
-      path: Enum.map(items, &page_metric/1),
-      url: [],
-      entry: [],
-      exit: [],
-      title: [],
-      query: []
+      status: multi_section_status([path, url, entry, exit, title, query], status),
+      path: path,
+      url: url,
+      entry: entry,
+      exit: exit,
+      title: title,
+      query: query
     }
   end
 
-  defp sources_section(items, status \\ "ok") do
+  defp sources_section(payload, status \\ "ok") do
+    items = Map.get(payload, :top_referrers, [])
+    sources = Map.get(payload, :sources, %{})
+    referrer = Map.get(sources, :referrer, items)
+    channel = Map.get(sources, :channel, [])
+    domain = Map.get(sources, :domain, [])
+
     %{
-      status: section_status(items, status),
-      referrer: items,
-      channel: [],
-      domain: []
+      status: multi_section_status([referrer, channel, domain], status),
+      referrer: referrer,
+      channel: channel,
+      domain: domain
     }
   end
 
-  defp empty_section(_section, status \\ "unavailable") do
-    %{status: status, items: []}
+  defp environment_section(items, status \\ "ok") do
+    browser = Map.get(items, :browser, [])
+    os = Map.get(items, :os, [])
+    device = Map.get(items, :device, [])
+    language = Map.get(items, :language, [])
+    screen = Map.get(items, :screen, [])
+
+    %{
+      status: multi_section_status([browser, os, device, language, screen], status),
+      browser: browser,
+      os: os,
+      device: device,
+      language: language,
+      screen: screen
+    }
+  end
+
+  defp location_section(items, status \\ "ok") do
+    country = Map.get(items, :country, [])
+    region = Map.get(items, :region, [])
+    city = Map.get(items, :city, [])
+
+    %{
+      status: multi_section_status([country, region, city], status),
+      country: country,
+      region: region,
+      city: city
+    }
+  end
+
+  defp traffic_section(items, status \\ "ok") do
+    cells = Map.get(items, :cells, [])
+
+    %{
+      status: section_status(cells, status),
+      timezone: Map.get(items, :timezone, "UTC"),
+      cells: cells
+    }
   end
 
   defp section_status([], _status), do: "unavailable"
   defp section_status(_items, status), do: status
+
+  defp multi_section_status(groups, status) do
+    if Enum.any?(groups, &(not blank?(&1))), do: status, else: "unavailable"
+  end
+
+  defp blank?(value), do: value in [nil, []]
 
   defp page_metric(page) do
     %{

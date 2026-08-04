@@ -90,6 +90,56 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
             }
           }
         }
+        environment {
+          status
+          browser {
+            value
+            label
+            metrics {
+              visitors
+              visits
+              views
+              percentage
+            }
+          }
+          os {
+            value
+          }
+          device {
+            value
+          }
+        }
+        location {
+          status
+          country {
+            value
+            label
+            code
+            metrics {
+              visitors
+              visits
+              views
+              percentage
+            }
+          }
+          region {
+            value
+          }
+          city {
+            value
+          }
+        }
+        traffic {
+          status
+          timezone
+          cells {
+            weekday
+            hour
+            visitors
+            visits
+            views
+          }
+        }
         errors {
           code
           section
