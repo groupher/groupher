@@ -15,6 +15,7 @@ defmodule GroupherServer.Analysis.Web.Config do
           max_days: pos_integer(),
           timeout: pos_integer(),
           metrics_limit: pos_integer(),
+          concurrency: pos_integer(),
           retry_delay: non_neg_integer(),
           retry_count: non_neg_integer()
         }
@@ -25,8 +26,9 @@ defmodule GroupherServer.Analysis.Web.Config do
             max_days: 90,
             timeout: 4_000,
             metrics_limit: 500,
+            concurrency: 3,
             retry_delay: 200,
-            retry_count: 2
+            retry_count: 1
 
   defmodule Runtime do
     @moduledoc """
@@ -34,11 +36,10 @@ defmodule GroupherServer.Analysis.Web.Config do
     """
 
     @type t :: %__MODULE__{
-            website_id: String.t() | nil,
             api_token: String.t() | nil
           }
 
-    defstruct website_id: nil, api_token: nil
+    defstruct api_token: nil
   end
 
   @doc """
@@ -64,11 +65,10 @@ defmodule GroupherServer.Analysis.Web.Config do
   ## Example
 
       config :groupher_server, :web_analysis,
-        website_id: "website-id",
         api_token: "token"
 
       GroupherServer.Analysis.Web.Config.runtime()
-      #=> %GroupherServer.Analysis.Web.Config.Runtime{website_id: "website-id", api_token: "token"}
+      #=> %GroupherServer.Analysis.Web.Config.Runtime{api_token: "token"}
 
   """
   @spec runtime() :: Runtime.t()
@@ -79,7 +79,6 @@ defmodule GroupherServer.Analysis.Web.Config do
       |> Enum.into(%{})
 
     struct!(Runtime, %{
-      website_id: Map.get(config, :website_id),
       api_token: Map.get(config, :api_token)
     })
   end

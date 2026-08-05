@@ -5,6 +5,7 @@ defmodule GroupherServer.Test.Query.Analysis do
 
   @overview_query S.Analysis.q(:overview)
   @summary_query S.Analysis.q(:summary)
+  @tracking_query S.Analysis.q(:tracking_website_id)
 
   setup do
     {community, _post, _attrs, _user} = mock_article(:post)
@@ -12,7 +13,7 @@ defmodule GroupherServer.Test.Query.Analysis do
     guest_conn = simu_conn(:guest)
     previous = Application.get_env(:groupher_server, :web_analysis)
 
-    Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+    Application.put_env(:groupher_server, :web_analysis, [])
 
     on_exit(fn ->
       Application.put_env(:groupher_server, :web_analysis, previous)
@@ -63,6 +64,12 @@ defmodule GroupherServer.Test.Query.Analysis do
                %{community: community.slug, days: 7},
                ecode(:account_login)
              )
+    end
+
+    test "guest can query public tracking website id fallback", ~m(guest_conn community)a do
+      result = guest_conn |> gq_query(@tracking_query, %{community: community.slug})
+
+      assert is_nil(result)
     end
   end
 end

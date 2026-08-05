@@ -2,9 +2,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   @moduledoc """
   Umami adapter for Groupher Web Analysis.
 
-  v1 uses one global Umami website and derives community isolation from URL
-  paths. Since Umami path filters are exact-value filters, this adapter queries
-  path metrics and applies prefix filtering before returning the Dashboard DTO.
+  v2 uses one Umami website per community. Groupher stores the Umami-generated
+  website UUID on `community_dashboards.umami_website_id`; this adapter only
+  talks to that website and never performs community isolation by path prefix.
   """
 
   @behaviour GroupherServer.Analysis.Web.Provider
@@ -37,9 +37,9 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   """
   @impl true
   def summary(%Community{} = community, range) do
-    with {:ok, request} <- request_config(),
+    with {:ok, request} <- request_config(community.umami_website_id),
          {:ok, rows} <- path_metrics(request, range) do
-      {:ok, aggregate_path_metrics(rows, community.path_prefix)}
+      {:ok, aggregate_path_metrics(rows)}
     end
   end
 
@@ -61,30 +61,63 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   """
   @impl true
   def overview(%Community{} = community, range) do
-    with {:ok, request} <- request_config(),
+    with {:ok, request} <- request_config(community.umami_website_id),
          {:ok, current_rows} <- path_metrics(request, range),
          {:ok, previous_rows} <- path_metrics(request, previous_range(range)) do
-      current_metrics = aggregate_path_metrics(current_rows, community.path_prefix)
-      previous_summary = aggregate_path_metrics(previous_rows, community.path_prefix).summary
+      current_metrics = aggregate_path_metrics(current_rows)
+      previous_summary = aggregate_path_metrics(previous_rows).summary
+
+      {:ok, sections, errors} = overview_sections(request, range)
 
       {:ok,
        current_metrics
-       |> Map.put(
-         :previous_summary,
-         previous_summary
-       )
-       |> Map.put(:timeseries, timeseries(request, range, community.path_prefix))
-       |> Map.put(:pages, page_group(request, range, community.path_prefix))
-       |> Map.put(
-         :sources,
-         dimension_group(request, range, community.path_prefix, @source_dimensions)
-       )
-       |> Map.put(
-         :environment,
-         dimension_group(request, range, community.path_prefix, @environment_dimensions)
-       )
-       |> Map.put(:location, location_group(request, range, community.path_prefix))
-       |> Map.put(:traffic, traffic_heatmap(request, range, community.path_prefix))}
+       |> Map.put(:previous_summary, previous_summary)
+       |> Map.merge(sections)
+       |> Map.put(:errors, errors)}
+    end
+  end
+
+  @impl true
+  def create_website(%Community{community: slug}) do
+    with {:ok, request} <- request_config(nil) do
+      case find_existing_website_id(request, slug, "groupher.com") do
+        {:ok, website_id} -> {:ok, website_id}
+        {:error, :not_found} -> post_website(request, slug, "groupher.com")
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  end
+
+  defp find_existing_website_id(%{client: client}, name, domain) do
+    case client |> Tesla.get("/api/websites") |> parse_website_rows() do
+      {:ok, rows} ->
+        rows
+        |> Enum.find(fn row ->
+          (read_string(row, "name") || read_string(row, :name)) == name and
+            (read_string(row, "domain") || read_string(row, :domain)) == domain
+        end)
+        |> case do
+          nil -> {:error, :not_found}
+          row -> parse_website_id(row)
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp post_website(%{client: client}, name, domain) do
+    with {:ok, %Tesla.Env{status: status, body: body}} when status in 200..299 <-
+           Tesla.post(client, "/api/websites", %{name: name, domain: domain}),
+         {:ok, website_id} <- parse_website_id(body) do
+      {:ok, website_id}
+    else
+      {:ok, %Tesla.Env{status: status, body: body}} ->
+        Logger.warning("Umami create website returned HTTP #{status}: #{inspect_body(body)}")
+        {:error, {:http_error, status}}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -146,6 +179,37 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     }
   end
 
+  @spec aggregate_path_metrics(list()) :: map()
+  def aggregate_path_metrics(rows) when is_list(rows) do
+    scoped_pages =
+      rows
+      |> Enum.map(&normalize_path_metric/1)
+      |> Enum.reject(&(&1.path == ""))
+
+    summary =
+      Enum.reduce(scoped_pages, empty_summary(), fn row, acc ->
+        %{
+          pageviews: acc.pageviews + row.pageviews,
+          visitors: acc.visitors + row.visitors,
+          visits: acc.visits + row.visits,
+          bounces: acc.bounces + row.bounces,
+          total_time: acc.total_time + row.total_time
+        }
+      end)
+
+    top_pages =
+      scoped_pages
+      |> Enum.sort_by(& &1.pageviews, :desc)
+      |> Enum.take(10)
+
+    %{
+      summary: summary,
+      timeseries: [],
+      top_pages: top_pages,
+      top_referrers: []
+    }
+  end
+
   defp path_metrics(
          %{client: client, website_id: website_id},
          range
@@ -162,155 +226,144 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> parse_rows("metrics/expanded type=path")
   end
 
-  defp dimension_metrics_for_path(%{client: client, website_id: website_id}, range, path, type) do
+  defp dimension_metrics(%{client: client, website_id: website_id}, range, type) do
     client
     |> Tesla.get("/api/websites/#{website_id}/metrics/expanded",
       query: [
         startAt: Map.fetch!(range, :start_at),
         endAt: Map.fetch!(range, :end_at),
         type: Atom.to_string(type),
-        limit: @config.metrics_limit,
-        filters: Jason.encode!(%{path: path})
+        limit: @config.metrics_limit
       ]
     )
     |> parse_rows("metrics/expanded type=#{type}")
   end
 
-  defp pageviews_for_path(%{client: client, website_id: website_id}, range, path) do
+  defp pageviews(%{client: client, website_id: website_id}, range) do
     client
     |> Tesla.get("/api/websites/#{website_id}/pageviews",
       query: [
         startAt: Map.fetch!(range, :start_at),
         endAt: Map.fetch!(range, :end_at),
         unit: Map.get(range, :bucket, "day"),
-        timezone: "UTC",
-        filters: Jason.encode!(%{path: path})
+        timezone: "UTC"
       ]
     )
     |> parse_timeseries_rows()
   end
 
-  defp weekly_sessions_for_path(%{client: client, website_id: website_id}, range, path) do
+  defp weekly_sessions(%{client: client, website_id: website_id}, range) do
     client
     |> Tesla.get("/api/websites/#{website_id}/sessions/weekly",
       query: [
         startAt: Map.fetch!(range, :start_at),
         endAt: Map.fetch!(range, :end_at),
-        timezone: "UTC",
-        filters: Jason.encode!(%{path: path})
+        timezone: "UTC"
       ]
     )
     |> parse_rows("sessions/weekly")
   end
 
-  defp scoped_paths(request, range, path_prefix) do
-    prefix = normalize_path_prefix(path_prefix)
+  defp overview_sections(request, range) do
+    [
+      timeseries: fn -> timeseries(request, range) end,
+      pages: fn -> page_group(request, range) end,
+      sources: fn -> dimension_group(request, range, @source_dimensions) end,
+      environment: fn -> dimension_group(request, range, @environment_dimensions) end,
+      location: fn -> location_group(request, range) end,
+      traffic: fn -> traffic_heatmap(request, range) end
+    ]
+    |> Task.async_stream(
+      fn {section, fun} -> {section, fun.()} end,
+      max_concurrency: @config.concurrency,
+      timeout: @config.timeout + 1_000
+    )
+    |> Enum.reduce({%{}, []}, fn
+      {:ok, {section, {:ok, value}}}, {sections, errors} ->
+        {Map.put(sections, section, value), errors}
 
-    with {:ok, rows} <- path_metrics(request, range) do
-      paths =
-        rows
-        |> Enum.map(&normalize_path_metric/1)
-        |> Enum.filter(fn row -> path_in_scope?(row.path, prefix) end)
-        |> Enum.sort_by(& &1.pageviews, :desc)
-        |> Enum.map(& &1.path)
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.uniq()
+      {:ok, {section, {:error, {value, section_errors}}}}, {sections, errors} ->
+        {Map.put(sections, section, value), section_errors(section, section_errors) ++ errors}
 
-      {:ok, paths}
-    end
-  end
+      {:ok, {section, {:error, reason}}}, {sections, errors} ->
+        {sections, [{section, reason} | errors]}
 
-  defp scoped_dimension_metrics(request, range, path_prefix, type) do
-    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
-      paths
-      |> Enum.flat_map(fn path ->
-        case dimension_metrics_for_path(request, range, path, type) do
-          {:ok, rows} -> rows
-          {:error, _reason} -> []
-        end
-      end)
-      |> merge_metric_rows()
-      |> then(&{:ok, &1})
-    end
-  end
-
-  defp scoped_pageviews(request, range, path_prefix) do
-    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
-      paths
-      |> Enum.flat_map(fn path ->
-        case pageviews_for_path(request, range, path) do
-          {:ok, rows} -> rows
-          {:error, _reason} -> []
-        end
-      end)
-      |> merge_timeseries_rows()
-      |> then(&{:ok, &1})
-    end
-  end
-
-  defp scoped_weekly_sessions(request, range, path_prefix) do
-    with {:ok, paths} <- scoped_paths(request, range, path_prefix) do
-      paths
-      |> Enum.flat_map(fn path ->
-        case weekly_sessions_for_path(request, range, path) do
-          {:ok, rows} -> rows
-          {:error, _reason} -> []
-        end
-      end)
-      |> merge_weekly_rows()
-      |> then(&{:ok, &1})
-    end
-  end
-
-  defp dimension_group(request, range, path_prefix, dimensions) do
-    Enum.reduce(dimensions, %{}, fn dimension, acc ->
-      Map.put(acc, dimension, request_dimension(request, range, path_prefix, dimension))
+      {:exit, reason}, {sections, errors} ->
+        {sections, [{:overview, reason} | errors]}
     end)
+    |> then(fn {sections, errors} -> {:ok, sections, Enum.reverse(errors)} end)
   end
 
-  defp page_group(request, range, path_prefix) do
-    Enum.reduce(@page_dimensions, %{}, fn dimension, acc ->
-      Map.put(acc, dimension, request_page_dimension(request, range, path_prefix, dimension))
+  defp metric_group(request, range, dimensions, normalize) do
+    dimensions
+    |> Task.async_stream(
+      fn dimension ->
+        {dimension, request_metric_dimension(request, range, dimension, normalize)}
+      end,
+      max_concurrency: @config.concurrency,
+      timeout: @config.timeout + 1_000
+    )
+    |> Enum.reduce({%{}, []}, fn
+      {:ok, {dimension, {:ok, rows}}}, {items, errors} ->
+        {Map.put(items, dimension, rows), errors}
+
+      {:ok, {dimension, {:error, reason}}}, {items, errors} ->
+        {Map.put(items, dimension, []), [{dimension, reason} | errors]}
+
+      {:exit, reason}, {items, errors} ->
+        {items, [{:dimension, reason} | errors]}
     end)
-  end
-
-  defp request_page_dimension(request, range, path_prefix, dimension) do
-    case scoped_dimension_metrics(request, range, path_prefix, dimension) do
-      {:ok, rows} -> normalize_page_dimension_rows(rows, dimension)
-      {:error, _reason} -> []
+    |> case do
+      {items, []} -> {:ok, items}
+      {items, errors} -> {:error, {items, Enum.reverse(errors)}}
     end
   end
 
-  defp timeseries(request, range, path_prefix) do
-    case scoped_pageviews(request, range, path_prefix) do
-      {:ok, rows} -> normalize_timeseries_rows(rows, Map.get(range, :bucket, "day"))
-      {:error, _reason} -> []
+  defp dimension_group(request, range, dimensions) do
+    metric_group(request, range, dimensions, &normalize_dimension_rows/2)
+  end
+
+  defp page_group(request, range) do
+    metric_group(request, range, @page_dimensions, &normalize_page_dimension_rows/2)
+  end
+
+  defp timeseries(request, range) do
+    case pageviews(request, range) do
+      {:ok, rows} -> {:ok, normalize_timeseries_rows(rows, Map.get(range, :bucket, "day"))}
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  defp location_group(request, range, path_prefix) do
-    request
-    |> dimension_group(range, path_prefix, @location_dimensions)
+  defp location_group(request, range) do
+    case dimension_group(request, range, @location_dimensions) do
+      {:ok, items} -> {:ok, normalize_location_group(items)}
+      {:error, {items, errors}} -> {:error, {normalize_location_group(items), errors}}
+    end
+  end
+
+  defp request_metric_dimension(request, range, dimension, normalize) do
+    case dimension_metrics(request, range, dimension) do
+      {:ok, rows} -> {:ok, normalize.(rows, dimension)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp traffic_heatmap(request, range) do
+    case weekly_sessions(request, range) do
+      {:ok, rows} -> {:ok, %{timezone: "UTC", cells: normalize_weekly_cells(rows)}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp normalize_location_group(items) do
+    items
     |> Map.update(:country, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, &1.value)) end)
     |> Map.update(:region, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, nil)) end)
     |> Map.update(:city, [], fn rows -> Enum.map(rows, &Map.put(&1, :code, nil)) end)
   end
 
-  defp request_dimension(request, range, path_prefix, dimension) do
-    case scoped_dimension_metrics(request, range, path_prefix, dimension) do
-      {:ok, rows} -> normalize_dimension_rows(rows, dimension)
-      {:error, _reason} -> []
-    end
-  end
-
-  defp traffic_heatmap(request, range, path_prefix) do
-    cells =
-      case scoped_weekly_sessions(request, range, path_prefix) do
-        {:ok, rows} -> normalize_weekly_cells(rows)
-        {:error, _reason} -> []
-      end
-
-    %{timezone: "UTC", cells: cells}
+  defp section_errors(section, errors) do
+    Enum.map(errors, fn {_dimension, reason} -> {section, reason} end)
   end
 
   defp previous_range(%{start_at: start_at, end_at: end_at}) do
@@ -322,11 +375,10 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     }
   end
 
-  defp request_config do
+  defp request_config(website_id) do
     runtime = Config.runtime()
 
-    with {:ok, website_id} <- fetch_required_config(runtime.website_id),
-         {:ok, api_token} <- fetch_required_config(runtime.api_token) do
+    with {:ok, api_token} <- fetch_required_config(runtime.api_token) do
       client =
         Tesla.client([
           {Tesla.Middleware.BaseUrl, @config.origin},
@@ -351,6 +403,32 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       _ -> {:error, :not_configured}
     end
   end
+
+  defp parse_website_id(body) when is_map(body) do
+    case read_string(body, "id") || read_string(body, :id) do
+      id when is_binary(id) and id != "" -> {:ok, id}
+      _ -> {:error, {:unexpected_body, body_kind(body)}}
+    end
+  end
+
+  defp parse_website_id(body), do: {:error, {:unexpected_body, body_kind(body)}}
+
+  defp parse_website_rows({:ok, %Tesla.Env{status: status, body: body}})
+       when status in 200..299 do
+    cond do
+      is_list(body) -> {:ok, body}
+      is_list(Map.get(body, "data")) -> {:ok, Map.get(body, "data")}
+      is_list(Map.get(body, :data)) -> {:ok, Map.get(body, :data)}
+      true -> {:error, {:unexpected_body, body_kind(body)}}
+    end
+  end
+
+  defp parse_website_rows({:ok, %Tesla.Env{status: status, body: body}}) do
+    Logger.warning("Umami websites returned HTTP #{status}: #{inspect_body(body)}")
+    {:error, {:http_error, status}}
+  end
+
+  defp parse_website_rows({:error, reason}), do: {:error, reason}
 
   defp parse_rows({:ok, %Tesla.Env{status: status, body: body}}, label) when status in 200..299 do
     cond do
@@ -481,54 +559,6 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         "pageviews" => read_first_int(row, ["y", "pageviews"]),
         "visits" => Map.get(sessions_by_timestamp, timestamp, 0)
       }
-    end)
-  end
-
-  defp merge_metric_rows(rows) do
-    rows
-    |> Enum.group_by(&(read_string(&1, "name") || read_string(&1, :name) || ""))
-    |> Enum.map(fn {name, rows} ->
-      Enum.reduce(rows, %{"name" => name}, fn row, acc ->
-        Map.merge(acc, %{
-          "pageviews" => Map.get(acc, "pageviews", 0) + read_int(row, "pageviews"),
-          "visitors" => Map.get(acc, "visitors", 0) + read_int(row, "visitors"),
-          "visits" => Map.get(acc, "visits", 0) + read_int(row, "visits"),
-          "bounces" => Map.get(acc, "bounces", 0) + read_int(row, "bounces"),
-          "totaltime" =>
-            Map.get(acc, "totaltime", 0) +
-              read_first_int(row, ["totaltime", :totaltime, "totalTime"])
-        })
-      end)
-    end)
-  end
-
-  defp merge_timeseries_rows(rows) do
-    rows
-    |> Enum.group_by(&read_timestamp/1)
-    |> Enum.map(fn {timestamp, rows} ->
-      Enum.reduce(rows, %{"timestamp" => timestamp}, fn row, acc ->
-        Map.merge(acc, %{
-          "pageviews" =>
-            Map.get(acc, "pageviews", 0) + read_first_int(row, ["pageviews", "views", "y"]),
-          "visits" => Map.get(acc, "visits", 0) + read_first_int(row, ["visits", "sessions"]),
-          "visitors" => Map.get(acc, "visitors", 0) + read_int(row, "visitors")
-        })
-      end)
-    end)
-  end
-
-  defp merge_weekly_rows(rows) do
-    rows
-    |> normalize_weekly_cells()
-    |> Enum.group_by(&{&1.weekday, &1.hour})
-    |> Enum.map(fn {{weekday, hour}, cells} ->
-      Enum.reduce(cells, %{"weekday" => weekday, "hour" => hour}, fn cell, acc ->
-        Map.merge(acc, %{
-          "pageviews" => Map.get(acc, "pageviews", 0) + cell.views,
-          "visitors" => Map.get(acc, "visitors", 0) + cell.visitors,
-          "visits" => Map.get(acc, "visits", 0) + cell.visits
-        })
-      end)
     end)
   end
 

@@ -717,7 +717,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     AnalysisWeb.summary(community, args)
   end
 
-  def analysis_web_overview(_root, %{community: %Community{} = community} = args, _info) do
+  def analysis_tracking_website_id(_root, %{community: %Community{} = community}, _info) do
+    AnalysisWeb.tracking_website_id(community)
+  end
+
+  def analysis_trends(_root, %{community: %Community{} = community} = args, _info) do
     AnalysisWeb.overview(community, args)
   end
 

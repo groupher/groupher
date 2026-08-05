@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
   def q(:overview) do
     """
     query($community: String!, $days: Int) {
-      analysisWebOverview(community: $community, days: $days) {
+      analysisTrends(community: $community, days: $days) {
         status
         provider
         pathScope
@@ -145,6 +145,14 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
           section
         }
       }
+    }
+    """
+  end
+
+  def q(:tracking_website_id) do
+    """
+    query($community: String!) {
+      analysisTrackingWebsiteId(community: $community)
     }
     """
   end

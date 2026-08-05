@@ -61,15 +61,23 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.analysis_web_summary/3)
     end
 
-    @desc "Built-in community Web Analysis overview"
-    field :analysis_web_overview, :analysis_web_overview do
+    @desc "Public Umami website id for built-in community Analysis tracking"
+    field :analysis_tracking_website_id, :string do
+      arg(:community, non_null(:string))
+
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_tracking_website_id/3)
+    end
+
+    @desc "Built-in community Analysis trends"
+    field :analysis_trends, :analysis_web_overview do
       arg(:community, non_null(:string))
       arg(:days, :integer, default_value: 7)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_web_overview/3)
+      resolve(&R.CMS.analysis_trends/3)
     end
 
     @desc "dashboard theme preset registry"

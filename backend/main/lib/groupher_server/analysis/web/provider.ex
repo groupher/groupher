@@ -23,4 +23,9 @@ defmodule GroupherServer.Analysis.Web.Provider do
   and error fields.
   """
   @callback overview(Community.t(), map()) :: {:ok, map()} | {:error, term()}
+
+  @doc """
+  Creates the provider website backing one community.
+  """
+  @callback create_website(Community.t()) :: {:ok, String.t()} | {:error, term()}
 end

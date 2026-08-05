@@ -6,10 +6,12 @@ defmodule GroupherServer.Analysis.Web do
   dimension under `GroupherServer.Analysis`, not the whole analysis domain.
   """
 
-  alias __MODULE__.Community, as: AnalysisCommunity
   alias __MODULE__.Config
-  alias GroupherServer.CMS.Model.Community
+  alias __MODULE__.Community, as: AnalysisCommunity
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias __MODULE__.Provider.Umami
+  alias Helper.Transaction
 
   @config Config.base()
 
@@ -27,13 +29,18 @@ defmodule GroupherServer.Analysis.Web do
   """
   @spec summary(Community.t(), map()) :: {:ok, map()}
   def summary(%Community{} = community, args \\ %{}) do
-    community_analysis = AnalysisCommunity.from_community(community)
     range = resolve_range(args, @config)
     provider = @config.provider || Umami
 
-    case provider.summary(community_analysis, range) do
-      {:ok, payload} -> {:ok, ready_payload(payload, community_analysis, range)}
-      {:error, reason} -> {:ok, unavailable_payload(community_analysis, range, reason)}
+    with {:ok, community_analysis} <- prepare_community(community, provider) do
+      case provider.summary(community_analysis, range) do
+        {:ok, payload} -> {:ok, ready_payload(payload, community_analysis, range)}
+        {:error, reason} -> {:ok, unavailable_payload(community_analysis, range, reason)}
+      end
+    else
+      {:error, reason} ->
+        community_analysis = AnalysisCommunity.from_community(community)
+        {:ok, unavailable_payload(community_analysis, range, reason)}
     end
   end
 
@@ -52,13 +59,91 @@ defmodule GroupherServer.Analysis.Web do
   """
   @spec overview(Community.t(), map()) :: {:ok, map()}
   def overview(%Community{} = community, args \\ %{}) do
-    community_analysis = AnalysisCommunity.from_community(community)
     range = resolve_range(args, @config)
     provider = @config.provider || Umami
 
-    case provider.overview(community_analysis, range) do
-      {:ok, payload} -> {:ok, overview_payload(payload, community_analysis, range)}
-      {:error, reason} -> {:ok, unavailable_overview_payload(community_analysis, range, reason)}
+    with {:ok, community_analysis} <- prepare_community(community, provider) do
+      case provider.overview(community_analysis, range) do
+        {:ok, payload} -> {:ok, overview_payload(payload, community_analysis, range)}
+        {:error, reason} -> {:ok, unavailable_overview_payload(community_analysis, range, reason)}
+      end
+    else
+      {:error, reason} ->
+        community_analysis = AnalysisCommunity.from_community(community)
+        {:ok, unavailable_overview_payload(community_analysis, range, reason)}
+    end
+  end
+
+  @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
+  def tracking_website_id(%Community{} = community) do
+    provider = @config.provider || Umami
+
+    with {:ok, community_analysis} <- prepare_community(community, provider) do
+      {:ok, community_analysis.umami_website_id}
+    else
+      {:error, _reason} -> {:ok, nil}
+    end
+  end
+
+  defp prepare_community(%Community{} = community, provider) do
+    with :ok <- ensure_runtime_configured(),
+         :ok <- ensure_persisted_community(community),
+         {:ok, dashboard} <- CMS.Dashboard.Write.ensure_exist(community),
+         {:ok, website_id} <- ensure_umami_website_id(community, dashboard, provider) do
+      {:ok, AnalysisCommunity.from_community(community, website_id)}
+    end
+  end
+
+  defp ensure_runtime_configured do
+    case Config.runtime().api_token do
+      token when is_binary(token) and token != "" -> :ok
+      _ -> {:error, :not_configured}
+    end
+  end
+
+  defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: :ok
+  defp ensure_persisted_community(%Community{}), do: {:error, :community_not_persisted}
+
+  defp ensure_umami_website_id(
+         %Community{} = community,
+         %CommunityDashboard{umami_website_id: nil} = dashboard,
+         provider
+       ) do
+    Transaction.lock_global("community_dashboard:umami_website:#{community.id}", fn ->
+      with {:ok, dashboard} <- reload_dashboard(dashboard) do
+        case dashboard.umami_website_id do
+          website_id when is_binary(website_id) -> {:ok, website_id}
+          nil -> create_umami_website(community, dashboard, provider)
+        end
+      end
+    end)
+  end
+
+  defp ensure_umami_website_id(
+         _community,
+         %CommunityDashboard{umami_website_id: website_id},
+         _provider
+       )
+       when is_binary(website_id) do
+    {:ok, website_id}
+  end
+
+  defp reload_dashboard(%CommunityDashboard{id: id}) do
+    case Repo.get(CommunityDashboard, id) do
+      %CommunityDashboard{} = dashboard -> {:ok, dashboard}
+      nil -> {:error, :dashboard_not_found}
+    end
+  end
+
+  defp create_umami_website(%Community{} = community, dashboard, provider) do
+    community_analysis = AnalysisCommunity.from_community(community)
+
+    with {:ok, website_id} <- provider.create_website(community_analysis),
+         {:ok, _dashboard} <-
+           dashboard
+           |> CommunityDashboard.update_changeset(%{umami_website_id: website_id})
+           |> Repo.update() do
+      {:ok, website_id}
     end
   end
 
@@ -143,35 +228,37 @@ defmodule GroupherServer.Analysis.Web do
   end
 
   defp overview_status(payload) do
-    required_sections = [
-      Map.get(payload, :timeseries, []),
-      get_in(payload, [:sources, :referrer]) || Map.get(payload, :top_referrers, []),
-      get_in(payload, [:environment, :browser]),
-      get_in(payload, [:location, :country]),
-      get_in(payload, [:traffic, :cells])
-    ]
+    errors = Map.get(payload, :errors, [])
 
-    if Enum.any?(required_sections, &blank?/1) do
-      "partial"
-    else
-      "ok"
+    cond do
+      errors == [] ->
+        "ok"
+
+      all_sections_failed?(errors) ->
+        "unavailable"
+
+      true ->
+        "partial"
     end
   end
 
   defp overview_errors(payload) do
-    []
-    |> maybe_add_empty_error(Map.get(payload, :timeseries, []), "timeseries")
-    |> maybe_add_empty_error(get_in(payload, [:sources, :referrer]), "sources")
-    |> maybe_add_empty_error(get_in(payload, [:environment, :browser]), "environment")
-    |> maybe_add_empty_error(get_in(payload, [:location, :country]), "location")
-    |> maybe_add_empty_error(get_in(payload, [:traffic, :cells]), "traffic")
+    payload
+    |> Map.get(:errors, [])
+    |> Enum.map(fn {section, reason} -> error_payload(reason, Atom.to_string(section)) end)
   end
 
-  defp maybe_add_empty_error(errors, value, section) when value in [nil, []] do
-    [error_payload(:not_available_for_path_scope, section) | errors]
-  end
+  defp all_sections_failed?(errors) do
+    failed_sections =
+      errors
+      |> Enum.map(fn {section, _reason} -> section end)
+      |> MapSet.new()
 
-  defp maybe_add_empty_error(errors, _items, _section), do: errors
+    MapSet.subset?(
+      MapSet.new([:summary, :timeseries, :pages, :sources, :environment, :location, :traffic]),
+      failed_sections
+    )
+  end
 
   defp overview_summary(summary, previous_summary) do
     %{
@@ -291,11 +378,12 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp section_status([], _status), do: "unavailable"
+  defp section_status([], "ok"), do: "ok"
+  defp section_status([], status), do: status
   defp section_status(_items, status), do: status
 
   defp multi_section_status(groups, status) do
-    if Enum.any?(groups, &(not blank?(&1))), do: status, else: "unavailable"
+    if Enum.any?(groups, &(not blank?(&1))), do: status, else: section_status([], status)
   end
 
   defp blank?(value), do: value in [nil, []]
@@ -323,7 +411,6 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp error_code(:not_available_for_path_scope), do: "not_available_for_path_scope"
   defp error_code(:not_configured), do: "not_configured"
   defp error_code({:http_error, _}), do: "provider_http_error"
   defp error_code(_), do: "provider_error"
@@ -333,9 +420,6 @@ defmodule GroupherServer.Analysis.Web do
   end
 
   defp error_message(:not_configured), do: "web analysis is not configured"
-
-  defp error_message(:not_available_for_path_scope),
-    do: "data is not available for path-scoped queries"
 
   defp error_message({:http_error, status}), do: "umami returned HTTP #{status}"
   defp error_message(reason), do: inspect(reason)

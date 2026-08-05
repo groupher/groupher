@@ -23,7 +23,6 @@ defmodule GroupherServer.Analysis.WebTest do
       previous = Application.get_env(:groupher_server, :web_analysis)
 
       Application.put_env(:groupher_server, :web_analysis,
-        website_id: "test",
         api_token: "token",
         timeout: -1
       )
@@ -35,7 +34,6 @@ defmodule GroupherServer.Analysis.WebTest do
       config = Config.runtime()
 
       assert %Config.Runtime{} = config
-      assert config.website_id == "test"
       assert config.api_token == "token"
       refute Map.has_key?(config, :timeout)
     end
@@ -144,7 +142,7 @@ defmodule GroupherServer.Analysis.WebTest do
   describe "summary fallback" do
     test "returns unavailable DTO when Umami is not configured" do
       previous = Application.get_env(:groupher_server, :web_analysis)
-      Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+      Application.put_env(:groupher_server, :web_analysis, [])
 
       on_exit(fn ->
         Application.put_env(:groupher_server, :web_analysis, previous)
@@ -160,7 +158,7 @@ defmodule GroupherServer.Analysis.WebTest do
 
     test "returns unavailable overview DTO when Umami is not configured" do
       previous = Application.get_env(:groupher_server, :web_analysis)
-      Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+      Application.put_env(:groupher_server, :web_analysis, [])
 
       on_exit(fn ->
         Application.put_env(:groupher_server, :web_analysis, previous)

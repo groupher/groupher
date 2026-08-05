@@ -3,9 +3,9 @@ import type {
   TAnalysisWebOverview,
 } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
-export const ANALYSIS_WEB_OVERVIEW_QUERY = `
-  query AnalysisWebOverview($community: String!, $days: Int) {
-    analysisWebOverview(community: $community, days: $days) {
+export const ANALYSIS_TRENDS_QUERY = `
+  query AnalysisTrends($community: String!, $days: Int) {
+    analysisTrends(community: $community, days: $days) {
       status
       provider
       pathScope
