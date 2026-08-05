@@ -1,46 +1,59 @@
-import { gqFetch } from '~/graphql/server'
-import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
-import type { TAnalysisWebOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
+import { connection } from 'next/server'
 
-import { ANALYSIS_TRENDS_QUERY, emptyOverview } from './helper'
+import { gqAuthFetch } from '~/graphql/server'
+import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
+import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
+
+import {
+  ANALYSIS_TRENDS_OVERVIEW_QUERY,
+  unavailableOverview as buildUnavailableOverview,
+} from './helper'
 
 type TGraphQLError = { message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
 
 type TAnalysisTrendsQueryData = {
-  analysisTrends: TAnalysisWebOverview | null
+  analysisTrendsOverview: TAnalysisTrendsOverview | null
 }
 
-const unavailableOverview = (
-  community: string,
-  errors: TGraphQLError[] = [],
-): TAnalysisWebOverview => ({
-  ...emptyOverview(community),
-  errors: errors.map((error) => ({
-    code: 'graphql_error',
-    message: typeof error.message === 'string' ? error.message : 'GraphQL request failed',
-    section: 'overview',
-    providerStatus: null,
-  })),
-})
+const unavailableOverview = (errors: TGraphQLError[] = []): TAnalysisTrendsOverview =>
+  buildUnavailableOverview(
+    errors.map((error) => ({
+      code: 'graphql_error',
+      message: typeof error.message === 'string' ? error.message : 'GraphQL request failed',
+      section: 'overview',
+      providerStatus: null,
+    })),
+  )
 
 export default async function TrendPage({ params }) {
   const { community } = await params
+  // This page forwards the current user's auth cookie to Phoenix, so it must
+  // render per request rather than as a shared dashboard shell.
+  await connection()
 
   try {
-    const response = await gqFetch(ANALYSIS_TRENDS_QUERY, {
+    const response = await gqAuthFetch(ANALYSIS_TRENDS_OVERVIEW_QUERY, {
       community,
       days: 7,
     })
     const payload = (await response.json()) as TGraphQLPayload<TAnalysisTrendsQueryData>
-    if (payload.errors) return <WebOverview data={unavailableOverview(community, payload.errors)} />
+    if (payload.errors) {
+      return <WebOverview community={community} data={unavailableOverview(payload.errors)} />
+    }
 
-    return <WebOverview data={payload.data?.analysisTrends ?? unavailableOverview(community)} />
+    return (
+      <WebOverview
+        community={community}
+        data={payload.data?.analysisTrendsOverview ?? unavailableOverview()}
+      />
+    )
   } catch (err) {
     console.error('## analysis trends ssr error: ', err)
     return (
       <WebOverview
-        data={unavailableOverview(community, [
+        community={community}
+        data={unavailableOverview([
           { message: err instanceof Error ? err.message : 'GraphQL request failed' },
         ])}
       />

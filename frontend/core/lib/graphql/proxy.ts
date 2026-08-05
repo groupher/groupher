@@ -1,4 +1,4 @@
-import { getPhoenixToken } from '~/app/phoenix-token'
+import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -36,15 +36,33 @@ const requestBody = async (request: Request): Promise<ArrayBuffer | undefined> =
   return request.arrayBuffer()
 }
 
+const readCookie = (headers: Headers, name: string): string | null => {
+  const cookieHeader = headers.get('cookie')
+  if (!cookieHeader) return null
+
+  for (const cookie of cookieHeader.split(';')) {
+    const [rawName, ...rawValue] = cookie.trim().split('=')
+    if (rawName === name) return rawValue.join('=')
+  }
+
+  return null
+}
+
 const proxyHeaders = (request: Request): Headers => {
-  const headers = new Headers(request.headers)
+  // Do not relay platform/client forwarding metadata to Phoenix. On Vercel,
+  // forwarding every incoming header can exceed the upstream header limit and
+  // turn an otherwise valid GraphQL request into HTTP 431.
+  const headers = new Headers()
+  const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
 
-  for (const header of HOP_BY_HOP_HEADERS) headers.delete(header)
-  headers.delete('cookie')
-  headers.delete('host')
+  for (const name of ['accept', 'content-type']) {
+    const value = request.headers.get(name)
+    if (value) headers.set(name, value)
+  }
 
-  const token = getPhoenixToken(request)
-  if (token) headers.set('authorization', `Bearer ${token}`)
+  if (authToken) {
+    headers.set('cookie', `${GROUPHER_AUTH_TOKEN_COOKIE}=${authToken}`)
+  }
 
   return headers
 }
@@ -52,6 +70,10 @@ const proxyHeaders = (request: Request): Headers => {
 const responseHeaders = (headers: Headers): Headers => {
   const nextHeaders = new Headers(headers)
   for (const header of HOP_BY_HOP_HEADERS) nextHeaders.delete(header)
+  // Fetch transparently decodes an upstream compressed response before its body
+  // reaches this route handler. Forwarding the original encoding would make the
+  // browser attempt a second decode and fail the GraphQL request.
+  nextHeaders.delete('content-encoding')
   return nextHeaders
 }
 
@@ -59,9 +81,9 @@ const responseHeaders = (headers: Headers): Headers => {
  * Proxies same-origin browser GraphQL requests to Phoenix.
  *
  * App route handlers in `frontend/main` and `frontend/dashboard` delegate to
- * this helper from `/api/graphql`. It strips browser cookies before forwarding,
- * verifies the canonical Groupher Phoenix token when present, and forwards that
- * token as `Authorization: Bearer <token>`. Anonymous requests remain anonymous.
+ * this helper from `/api/graphql`. It strips browser credentials before
+ * forwarding, then only forwards the canonical Groupher Phoenix token as the
+ * same cookie Phoenix reads. Anonymous requests remain anonymous.
  *
  * @example
  * ```ts

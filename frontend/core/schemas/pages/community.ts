@@ -72,6 +72,7 @@ export const community = `
           domain
           siteId
         }
+        umamiWebsiteId
         docFaq {
           title
           desc

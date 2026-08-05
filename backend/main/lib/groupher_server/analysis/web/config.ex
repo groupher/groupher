@@ -24,8 +24,8 @@ defmodule GroupherServer.Analysis.Web.Config do
             origin: "https://analysis.groupher.com",
             default_days: 7,
             max_days: 90,
-            timeout: 4_000,
-            metrics_limit: 500,
+            timeout: 5_000,
+            metrics_limit: 20,
             concurrency: 3,
             retry_delay: 200,
             retry_count: 1

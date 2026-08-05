@@ -1,7 +1,7 @@
+import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 import { print, type DocumentNode } from 'graphql'
 import { headers } from 'next/headers'
 
-import { getPhoenixToken } from '~/app/phoenix-token'
 import { GRAPHQL_ENDPOINT } from '~/config'
 
 const schemaToString = (schema: string | DocumentNode): string => {
@@ -10,13 +10,44 @@ const schemaToString = (schema: string | DocumentNode): string => {
   return print(schema)
 }
 
+const readCookie = (headerStore: Headers, name: string): string | null => {
+  const cookieHeader = headerStore.get('cookie')
+  if (!cookieHeader) return null
+
+  for (const cookie of cookieHeader.split(';')) {
+    const [rawName, ...rawValue] = cookie.trim().split('=')
+    if (rawName === name) return rawValue.join('=')
+  }
+
+  return null
+}
+
+const requestHeaders = (authToken?: string | null): HeadersInit => ({
+  'Content-Type': 'application/json',
+  ...(authToken ? { cookie: `${GROUPHER_AUTH_TOKEN_COOKIE}=${authToken}` } : {}),
+})
+
+const postGraphQL = async (
+  query: string | DocumentNode,
+  variables?: Record<string, unknown>,
+  authToken?: string | null,
+): Promise<Response> => {
+  return await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    cache: 'no-store',
+    headers: requestHeaders(authToken),
+    body: JSON.stringify({
+      query: schemaToString(query),
+      variables,
+    }),
+  })
+}
+
 /**
  * Sends a server-side GraphQL POST to Phoenix.
  *
- * Server-side calls use the current request cookies when available, verify the
- * Phoenix token, and forward it as `Authorization: Bearer <token>`. Requests
- * without a valid auth cookie remain anonymous. Browser code should use the urql
- * client configured with `/api/graphql` instead.
+ * This default variant is anonymous and never reads request headers or cookies,
+ * so it is safe for public SSR data and `"use cache"` scopes.
  *
  * @example
  * ```ts
@@ -31,21 +62,22 @@ export const gqFetch = async (
   query: string | DocumentNode,
   variables?: Record<string, unknown>,
 ): Promise<Response> => {
-  const headerStore = await headers()
-  const token = getPhoenixToken(
-    new Request('https://groupher.local/graphql', { headers: headerStore }),
-  )
+  return postGraphQL(query, variables)
+}
 
-  return await fetch(GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    cache: 'no-store',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({
-      query: schemaToString(query),
-      variables,
-    }),
-  })
+/**
+ * Sends a request-aware server-side GraphQL POST to Phoenix.
+ *
+ * User-specific SSR calls use the current request cookies when available and
+ * forward only the canonical Groupher auth token cookie to Phoenix. Do not call
+ * this from `"use cache"` scopes.
+ */
+export const gqAuthFetch = async (
+  query: string | DocumentNode,
+  variables?: Record<string, unknown>,
+): Promise<Response> => {
+  const headerStore = await headers()
+  const token = readCookie(headerStore, GROUPHER_AUTH_TOKEN_COOKIE)
+
+  return postGraphQL(query, variables, token)
 }

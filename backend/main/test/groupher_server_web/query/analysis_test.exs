@@ -4,6 +4,11 @@ defmodule GroupherServer.Test.Query.Analysis do
   use GroupherServer.TestMate
 
   @overview_query S.Analysis.q(:overview)
+  @pages_query S.Analysis.q(:pages)
+  @sources_query S.Analysis.q(:sources)
+  @environment_query S.Analysis.q(:environment)
+  @location_query S.Analysis.q(:location)
+  @traffic_query S.Analysis.q(:traffic)
   @summary_query S.Analysis.q(:summary)
   @tracking_query S.Analysis.q(:tracking_website_id)
 
@@ -36,16 +41,38 @@ defmodule GroupherServer.Test.Query.Analysis do
       result = conn |> gq_query(@overview_query, %{community: community.slug, days: 7})
 
       assert result["status"] == "unavailable"
-      assert result["pathScope"] == "/#{community.slug}"
       assert result["range"]["bucket"] == "day"
       assert result["summary"]["pageviews"]["value"] == 0
-      assert result["timeseries"]["points"] == []
-      assert result["pages"]["path"] == []
-      assert result["environment"]["browser"] == []
-      assert result["location"]["country"] == []
-      assert result["traffic"]["cells"] == []
-      assert result["traffic"]["timezone"] == "UTC"
+      assert result["chart"]["points"] == []
       assert [%{"code" => "not_configured", "section" => "overview"}] = result["errors"]
+    end
+
+    test "community admin can query unavailable Trends sections", ~m(conn community)a do
+      variables = %{community: community.slug, days: 7}
+
+      pages = conn |> gq_query(@pages_query, Map.put(variables, :dimension, "PATH"))
+      sources = conn |> gq_query(@sources_query, Map.put(variables, :dimension, "REFERRER"))
+
+      environment =
+        conn |> gq_query(@environment_query, Map.put(variables, :dimension, "BROWSER"))
+
+      location = conn |> gq_query(@location_query, Map.put(variables, :dimension, "COUNTRY"))
+      traffic = conn |> gq_query(@traffic_query, variables)
+
+      assert %{"status" => "unavailable", "items" => [], "error" => %{"section" => "pages"}} =
+               pages
+
+      assert %{"status" => "unavailable", "items" => [], "error" => %{"section" => "sources"}} =
+               sources
+
+      assert %{"status" => "unavailable", "items" => [], "error" => %{"section" => "environment"}} =
+               environment
+
+      assert %{"status" => "unavailable", "items" => [], "error" => %{"section" => "location"}} =
+               location
+
+      assert %{"status" => "unavailable", "cells" => [], "error" => %{"section" => "traffic"}} =
+               traffic
     end
 
     test "guest cannot query dashboard web analysis", ~m(guest_conn community)a do

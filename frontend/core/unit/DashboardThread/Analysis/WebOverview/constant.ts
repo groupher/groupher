@@ -1,4 +1,4 @@
-import type { TAnalysisWebMetric, TAnalysisWebOverview } from './spec'
+import type { TAnalysisTrendsOverview, TAnalysisWebMetric, TAnalysisWebOverview } from './spec'
 import type { TSummaryMetricSpec } from './spec'
 
 export const CHART_SIZE = {
@@ -17,6 +17,7 @@ export const DIMENSION_ROW_LIMIT = 4
 
 export const WEB_OVERVIEW_TRANS = {
   empty: 'dsb.analysis.empty',
+  unavailable: 'dsb.analysis.unavailable',
   trend: 'dsb.menu.trend',
   pageviews: 'dsb.analysis.pageviews',
   visits: 'dsb.analysis.visits',
@@ -64,7 +65,7 @@ const metric = (
 
 const demoTimestamp = (month: number, day: number): string => String(Date.UTC(2026, month, day))
 
-export const DEMO_POINTS = [
+export const DEMO_POINTS: TAnalysisTrendsOverview['chart']['points'] = [
   { bucket: 'day', timestamp: demoTimestamp(3, 5), visitors: 18, visits: 24, views: 42 },
   { bucket: 'day', timestamp: demoTimestamp(3, 10), visitors: 24, visits: 31, views: 58 },
   { bucket: 'day', timestamp: demoTimestamp(3, 15), visitors: 21, visits: 28, views: 46 },
@@ -102,7 +103,7 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
     bounceRate: metric(0.34, 0.39, -12.8),
     visitDuration: metric(246, 218, 12.8),
   },
-  timeseries: { status: 'ok', bucket: 'day', points: DEMO_POINTS },
+  chart: { bucket: 'day', points: DEMO_POINTS },
   pages: {
     status: 'ok',
     path: [

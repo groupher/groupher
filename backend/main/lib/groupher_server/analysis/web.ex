@@ -1,98 +1,191 @@
 defmodule GroupherServer.Analysis.Web do
   @moduledoc """
-  Web analysis dimension for the platform analysis context.
+  Groupher-owned Web Analysis context.
 
-  This module owns Groupher's built-in traffic analysis surface. It is one
-  dimension under `GroupherServer.Analysis`, not the whole analysis domain.
+  This context resolves the trusted community analytics identity before it
+  delegates to the vendor adapter. It returns Dashboard DTOs only: Umami
+  credentials, raw response shapes, and website IDs never cross this boundary.
   """
 
   alias __MODULE__.Config
   alias __MODULE__.Community, as: AnalysisCommunity
+  alias __MODULE__.Provider.Umami
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias __MODULE__.Provider.Umami
   alias Helper.Transaction
 
   @config Config.base()
 
+  @type page_dimension :: :path | :entry | :exit | :title | :query
+  @type source_dimension :: :referrer | :channel | :domain
+  @type environment_dimension :: :browser | :os | :device | :language | :screen
+  @type location_dimension :: :country | :region | :city
+
+  @page_dimensions [:path, :entry, :exit, :title, :query]
+  @source_dimensions [:referrer, :channel, :domain]
+  @environment_dimensions [:browser, :os, :device, :language, :screen]
+  @location_dimensions [:country, :region, :city]
+
   @doc """
-  Returns the legacy path-scoped Web Analysis summary for one community.
+  Returns the legacy count-only summary DTO.
 
-  The result is a Groupher-owned DTO. Provider credentials and raw provider
-  response fields never cross this boundary.
-
-  ## Example
-
-      Analysis.Web.summary(%Community{slug: "home"}, %{days: 7})
-      #=> {:ok, %{status: "ready", path_scope: "/home", summary: %{...}}}
-
+  `analysisWebSummary` remains available while existing clients migrate to the
+  section-oriented Trends contract.
   """
   @spec summary(Community.t(), map()) :: {:ok, map()}
   def summary(%Community{} = community, args \\ %{}) do
-    range = resolve_range(args, @config)
-    provider = @config.provider || Umami
+    range = resolve_range(args)
+    provider = provider()
 
     with {:ok, community_analysis} <- prepare_community(community, provider) do
       case provider.summary(community_analysis, range) do
-        {:ok, payload} -> {:ok, ready_payload(payload, community_analysis, range)}
-        {:error, reason} -> {:ok, unavailable_payload(community_analysis, range, reason)}
+        {:ok, payload} -> {:ok, ready_summary_payload(payload, community_analysis, range)}
+        {:error, reason} -> {:ok, unavailable_summary_payload(community_analysis, range, reason)}
       end
     else
       {:error, reason} ->
-        community_analysis = AnalysisCommunity.from_community(community)
-        {:ok, unavailable_payload(community_analysis, range, reason)}
+        {:ok,
+         unavailable_summary_payload(AnalysisCommunity.from_community(community), range, reason)}
     end
   end
 
   @doc """
-  Returns the v2 Web Analysis overview DTO for one community.
-
-  The overview contains section-level status and errors so Dashboard can render
-  partial data when a provider dimension is unavailable for path-scoped queries.
-  The community path scope is derived server-side from the `Community` struct.
-
-  ## Example
-
-      Analysis.Web.overview(%Community{slug: "home"}, %{days: 7})
-      #=> {:ok, %{status: "partial", path_scope: "/home", summary: %{...}, pages: %{...}}}
-
+  Returns the SSR-sized Trends overview: summary metrics and the chart only.
   """
-  @spec overview(Community.t(), map()) :: {:ok, map()}
-  def overview(%Community{} = community, args \\ %{}) do
-    range = resolve_range(args, @config)
-    provider = @config.provider || Umami
+  @spec trends_overview(Community.t(), map()) :: {:ok, map()}
+  def trends_overview(%Community{} = community, args \\ %{}) do
+    range = resolve_range(args)
+    provider = provider()
 
     with {:ok, community_analysis} <- prepare_community(community, provider) do
       case provider.overview(community_analysis, range) do
-        {:ok, payload} -> {:ok, overview_payload(payload, community_analysis, range)}
-        {:error, reason} -> {:ok, unavailable_overview_payload(community_analysis, range, reason)}
+        {:ok, payload} -> {:ok, trends_overview_payload(payload, range)}
+        {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
       end
     else
-      {:error, reason} ->
-        community_analysis = AnalysisCommunity.from_community(community)
-        {:ok, unavailable_overview_payload(community_analysis, range, reason)}
+      {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
+    end
+  end
+
+  @doc """
+  Returns one selected page breakdown dimension.
+  """
+  @spec trend_pages(Community.t(), map(), page_dimension()) :: {:ok, map()}
+  def trend_pages(%Community{} = community, args, dimension) when dimension in @page_dimensions do
+    trend_items(community, args, :pages, fn community_analysis, range ->
+      provider().pages(community_analysis, range, dimension)
+    end)
+  end
+
+  @doc """
+  Returns one selected source breakdown dimension.
+  """
+  @spec trend_sources(Community.t(), map(), source_dimension()) :: {:ok, map()}
+  def trend_sources(%Community{} = community, args, dimension)
+      when dimension in @source_dimensions do
+    trend_items(community, args, :sources, fn community_analysis, range ->
+      provider().sources(community_analysis, range, dimension)
+    end)
+  end
+
+  @doc """
+  Returns one selected environment breakdown dimension.
+  """
+  @spec trend_environment(Community.t(), map(), environment_dimension()) :: {:ok, map()}
+  def trend_environment(%Community{} = community, args, dimension)
+      when dimension in @environment_dimensions do
+    trend_items(community, args, :environment, fn community_analysis, range ->
+      provider().environment(community_analysis, range, dimension)
+    end)
+  end
+
+  @doc """
+  Returns one selected location breakdown dimension.
+  """
+  @spec trend_location(Community.t(), map(), location_dimension()) :: {:ok, map()}
+  def trend_location(%Community{} = community, args, dimension)
+      when dimension in @location_dimensions do
+    trend_items(community, args, :location, fn community_analysis, range ->
+      provider().location(community_analysis, range, dimension)
+    end)
+  end
+
+  @doc """
+  Returns the UTC weekly traffic heatmap.
+  """
+  @spec trend_traffic(Community.t(), map()) :: {:ok, map()}
+  def trend_traffic(%Community{} = community, args \\ %{}) do
+    range = resolve_range(args)
+    provider = provider()
+
+    with {:ok, community_analysis} <- prepare_community(community, provider) do
+      case provider.traffic(community_analysis, range) do
+        {:ok, traffic} ->
+          {:ok,
+           %{
+             status: "ok",
+             timezone: Map.get(traffic, :timezone, "UTC"),
+             cells: Map.get(traffic, :cells, []),
+             error: nil
+           }}
+
+        {:error, reason} ->
+          {:ok, unavailable_traffic_payload(reason)}
+      end
+    else
+      {:error, reason} -> {:ok, unavailable_traffic_payload(reason)}
     end
   end
 
   @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
   def tracking_website_id(%Community{} = community) do
-    provider = @config.provider || Umami
-
-    with {:ok, community_analysis} <- prepare_community(community, provider) do
-      {:ok, community_analysis.umami_website_id}
+    with {:ok, dashboard} <- dashboard_for(community) do
+      {:ok, dashboard.umami_website_id}
     else
       {:error, _reason} -> {:ok, nil}
     end
   end
 
+  @doc """
+  Ensures a persisted community has its provider website identity.
+
+  Community creation invokes this once its local records are ready. Query
+  paths also call the same idempotent preparation flow, so a transient provider
+  outage can recover without creating a duplicate website.
+  """
+  @spec provision_community(Community.t()) :: {:ok, String.t()} | {:error, term()}
+  def provision_community(%Community{} = community) do
+    with {:ok, community_analysis} <- prepare_community(community, provider()) do
+      {:ok, community_analysis.umami_website_id}
+    end
+  end
+
+  defp trend_items(community, args, section, query) do
+    range = resolve_range(args)
+    provider = provider()
+
+    with {:ok, community_analysis} <- prepare_community(community, provider) do
+      case query.(community_analysis, range) do
+        {:ok, items} -> {:ok, %{status: "ok", items: items, error: nil}}
+        {:error, reason} -> {:ok, unavailable_items_payload(section, reason)}
+      end
+    else
+      {:error, reason} -> {:ok, unavailable_items_payload(section, reason)}
+    end
+  end
+
+  defp provider, do: @config.provider || Umami
+
   defp prepare_community(%Community{} = community, provider) do
     with :ok <- ensure_runtime_configured(),
          :ok <- ensure_persisted_community(community),
-         {:ok, dashboard} <- CMS.Dashboard.Write.ensure_exist(community),
+         {:ok, dashboard} <- dashboard_for(community),
          {:ok, website_id} <- ensure_umami_website_id(community, dashboard, provider) do
       {:ok, AnalysisCommunity.from_community(community, website_id)}
     end
   end
+
+  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Write.ensure_exist(community)
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
@@ -124,9 +217,8 @@ defmodule GroupherServer.Analysis.Web do
          %CommunityDashboard{umami_website_id: website_id},
          _provider
        )
-       when is_binary(website_id) do
-    {:ok, website_id}
-  end
+       when is_binary(website_id),
+       do: {:ok, website_id}
 
   defp reload_dashboard(%CommunityDashboard{id: id}) do
     case Repo.get(CommunityDashboard, id) do
@@ -147,20 +239,24 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp resolve_range(args, config) do
-    days = args |> Map.get(:days, config.default_days) |> clamp_days(config)
+  defp resolve_range(args) do
+    days = args |> Map.get(:days, @config.default_days) |> clamp_days()
     end_at = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
-    start_at = end_at - days * 24 * 60 * 60 * 1000
 
-    %{days: days, start_at: start_at, end_at: end_at, bucket: bucket(days)}
+    %{
+      days: days,
+      start_at: end_at - days * 24 * 60 * 60 * 1000,
+      end_at: end_at,
+      bucket: bucket(days)
+    }
   end
 
-  defp clamp_days(days, config) when is_integer(days), do: days |> max(1) |> min(config.max_days)
-  defp clamp_days(_, config), do: config.default_days
+  defp clamp_days(days) when is_integer(days), do: days |> max(1) |> min(@config.max_days)
+  defp clamp_days(_days), do: @config.default_days
   defp bucket(days) when days <= 2, do: "hour"
-  defp bucket(_), do: "day"
+  defp bucket(_days), do: "day"
 
-  defp ready_payload(payload, scope, range) do
+  defp ready_summary_payload(payload, scope, range) do
     %{
       status: "ready",
       provider: "umami",
@@ -174,7 +270,7 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp unavailable_payload(scope, range, reason) do
+  defp unavailable_summary_payload(scope, range, reason) do
     %{
       status: "unavailable",
       provider: "umami",
@@ -188,76 +284,49 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp overview_payload(payload, scope, range) do
+  defp trends_overview_payload(payload, range) do
+    errors = Map.get(payload, :errors, [])
     summary = Map.get(payload, :summary, empty_summary())
     previous_summary = Map.get(payload, :previous_summary, empty_summary())
 
     %{
-      status: overview_status(payload),
+      status: overview_status(errors),
       provider: "umami",
-      path_scope: scope.path_prefix,
       range: range,
-      filters: nil,
       summary: overview_summary(summary, previous_summary),
-      timeseries: timeseries_section(Map.get(payload, :timeseries, []), range),
-      pages: pages_section(payload),
-      sources: sources_section(payload),
-      environment: environment_section(Map.get(payload, :environment, %{})),
-      location: location_section(Map.get(payload, :location, %{})),
-      traffic: traffic_section(Map.get(payload, :traffic, %{})),
-      errors: overview_errors(payload)
+      chart: %{bucket: range.bucket, points: Map.get(payload, :chart, [])},
+      errors:
+        Enum.map(errors, fn {section, reason} ->
+          error_payload(reason, Atom.to_string(section))
+        end)
     }
   end
 
-  defp unavailable_overview_payload(scope, range, reason) do
+  defp unavailable_overview_payload(range, reason) do
     %{
       status: "unavailable",
       provider: "umami",
-      path_scope: scope.path_prefix,
       range: range,
-      filters: nil,
       summary: overview_summary(empty_summary(), empty_summary()),
-      timeseries: timeseries_section([], range, "unavailable"),
-      pages: pages_section(%{}, "unavailable"),
-      sources: sources_section(%{}, "unavailable"),
-      environment: environment_section(%{}, "unavailable"),
-      location: location_section(%{}, "unavailable"),
-      traffic: traffic_section(%{}, "unavailable"),
+      chart: %{bucket: range.bucket, points: []},
       errors: [error_payload(reason, "overview")]
     }
   end
 
-  defp overview_status(payload) do
-    errors = Map.get(payload, :errors, [])
-
-    cond do
-      errors == [] ->
-        "ok"
-
-      all_sections_failed?(errors) ->
-        "unavailable"
-
-      true ->
-        "partial"
-    end
+  defp unavailable_items_payload(section, reason) do
+    %{status: "unavailable", items: [], error: error_payload(reason, Atom.to_string(section))}
   end
 
-  defp overview_errors(payload) do
-    payload
-    |> Map.get(:errors, [])
-    |> Enum.map(fn {section, reason} -> error_payload(reason, Atom.to_string(section)) end)
+  defp unavailable_traffic_payload(reason) do
+    %{status: "unavailable", timezone: "UTC", cells: [], error: error_payload(reason, "traffic")}
   end
 
-  defp all_sections_failed?(errors) do
-    failed_sections =
-      errors
-      |> Enum.map(fn {section, _reason} -> section end)
-      |> MapSet.new()
+  defp overview_status([]), do: "ok"
 
-    MapSet.subset?(
-      MapSet.new([:summary, :timeseries, :pages, :sources, :environment, :location, :traffic]),
-      failed_sections
-    )
+  defp overview_status(errors) do
+    sections = errors |> Enum.map(&elem(&1, 0)) |> MapSet.new()
+
+    if MapSet.equal?(sections, MapSet.new([:summary, :chart])), do: "unavailable", else: "partial"
   end
 
   defp overview_summary(summary, previous_summary) do
@@ -278,13 +347,12 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp metric(value, previous_value) do
-    %{
+  defp metric(value, previous_value),
+    do: %{
       value: value,
       previous_value: previous_value,
       change_rate: change_rate(value, previous_value)
     }
-  end
 
   defp change_rate(_value, previous_value) when previous_value in [0, 0.0], do: nil
 
@@ -294,133 +362,23 @@ defmodule GroupherServer.Analysis.Web do
   defp rate(_value, 0), do: 0.0
   defp rate(value, total), do: Float.round(value / total, 2)
 
-  defp timeseries_section(points, range, status \\ "ok") do
-    %{
-      status: section_status(points, status),
-      bucket: range.bucket,
-      points: points
-    }
-  end
-
-  defp pages_section(payload, status \\ "ok") when is_map(payload) do
-    items = Map.get(payload, :top_pages, [])
-    pages = Map.get(payload, :pages, %{})
-    path = Enum.map(items, &page_metric/1)
-    url = Map.get(pages, :url, [])
-    entry = Map.get(pages, :entry, [])
-    exit = Map.get(pages, :exit, [])
-    title = Map.get(pages, :title, [])
-    query = Map.get(pages, :query, [])
-
-    %{
-      status: multi_section_status([path, url, entry, exit, title, query], status),
-      path: path,
-      url: url,
-      entry: entry,
-      exit: exit,
-      title: title,
-      query: query
-    }
-  end
-
-  defp sources_section(payload, status \\ "ok") do
-    items = Map.get(payload, :top_referrers, [])
-    sources = Map.get(payload, :sources, %{})
-    referrer = Map.get(sources, :referrer, items)
-    channel = Map.get(sources, :channel, [])
-    domain = Map.get(sources, :domain, [])
-
-    %{
-      status: multi_section_status([referrer, channel, domain], status),
-      referrer: referrer,
-      channel: channel,
-      domain: domain
-    }
-  end
-
-  defp environment_section(items, status \\ "ok") do
-    browser = Map.get(items, :browser, [])
-    os = Map.get(items, :os, [])
-    device = Map.get(items, :device, [])
-    language = Map.get(items, :language, [])
-    screen = Map.get(items, :screen, [])
-
-    %{
-      status: multi_section_status([browser, os, device, language, screen], status),
-      browser: browser,
-      os: os,
-      device: device,
-      language: language,
-      screen: screen
-    }
-  end
-
-  defp location_section(items, status \\ "ok") do
-    country = Map.get(items, :country, [])
-    region = Map.get(items, :region, [])
-    city = Map.get(items, :city, [])
-
-    %{
-      status: multi_section_status([country, region, city], status),
-      country: country,
-      region: region,
-      city: city
-    }
-  end
-
-  defp traffic_section(items, status \\ "ok") do
-    cells = Map.get(items, :cells, [])
-
-    %{
-      status: section_status(cells, status),
-      timezone: Map.get(items, :timezone, "UTC"),
-      cells: cells
-    }
-  end
-
-  defp section_status([], "ok"), do: "ok"
-  defp section_status([], status), do: status
-  defp section_status(_items, status), do: status
-
-  defp multi_section_status(groups, status) do
-    if Enum.any?(groups, &(not blank?(&1))), do: status, else: section_status([], status)
-  end
-
-  defp blank?(value), do: value in [nil, []]
-
-  defp page_metric(page) do
-    %{
-      value: page.path,
-      label: page.title || page.path,
-      metrics: %{
-        visitors: page.visitors,
-        visits: page.visits,
-        views: page.pageviews,
-        bounce_rate: rate(page.bounces, page.visits),
-        visit_duration: rate(page.total_time, page.visits)
-      }
-    }
-  end
+  defp empty_summary, do: %{pageviews: 0, visitors: 0, visits: 0, bounces: 0, total_time: 0}
 
   defp error_payload(reason, section) do
     %{
       code: error_code(reason),
       message: error_message(reason),
       section: section,
-      provider_status: nil
+      provider_status: provider_status(reason)
     }
   end
 
   defp error_code(:not_configured), do: "not_configured"
-  defp error_code({:http_error, _}), do: "provider_http_error"
-  defp error_code(_), do: "provider_error"
-
-  defp empty_summary do
-    %{pageviews: 0, visitors: 0, visits: 0, bounces: 0, total_time: 0}
-  end
-
+  defp error_code({:http_error, _status}), do: "provider_http_error"
+  defp error_code(_reason), do: "provider_error"
+  defp provider_status({:http_error, status}), do: Integer.to_string(status)
+  defp provider_status(_reason), do: nil
   defp error_message(:not_configured), do: "web analysis is not configured"
-
   defp error_message({:http_error, status}), do: "umami returned HTTP #{status}"
   defp error_message(reason), do: inspect(reason)
 end

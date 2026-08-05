@@ -5,6 +5,34 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
 
   use Absinthe.Schema.Notation
 
+  enum :analysis_trend_pages_dimension do
+    value(:path)
+    value(:entry)
+    value(:exit)
+    value(:title)
+    value(:query)
+  end
+
+  enum :analysis_trend_sources_dimension do
+    value(:referrer)
+    value(:channel)
+    value(:domain)
+  end
+
+  enum :analysis_trend_environment_dimension do
+    value(:browser)
+    value(:os)
+    value(:device)
+    value(:language)
+    value(:screen)
+  end
+
+  enum :analysis_trend_location_dimension do
+    value(:country)
+    value(:region)
+    value(:city)
+  end
+
   object :analysis_web_range do
     field(:days, :integer)
     field(:start_at, :big_int)
@@ -144,6 +172,57 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:message, :string)
     field(:section, :string)
     field(:provider_status, :string)
+  end
+
+  object :analysis_trend_chart_point do
+    field(:timestamp, :big_int)
+    field(:views, :integer)
+    field(:visits, :integer)
+  end
+
+  object :analysis_trend_chart do
+    field(:bucket, :string)
+    field(:points, list_of(:analysis_trend_chart_point))
+  end
+
+  object :analysis_trends_overview do
+    field(:status, :string)
+    field(:provider, :string)
+    field(:range, :analysis_web_range)
+    field(:summary, :analysis_web_overview_summary)
+    field(:chart, :analysis_trend_chart)
+    field(:errors, list_of(:analysis_web_error))
+  end
+
+  object :analysis_trend_pages_section do
+    field(:status, :string)
+    field(:items, list_of(:analysis_web_page_dimension_metric))
+    field(:error, :analysis_web_error)
+  end
+
+  object :analysis_trend_sources_section do
+    field(:status, :string)
+    field(:items, list_of(:analysis_web_source_dimension_metric))
+    field(:error, :analysis_web_error)
+  end
+
+  object :analysis_trend_environment_section do
+    field(:status, :string)
+    field(:items, list_of(:analysis_web_dimension_metric))
+    field(:error, :analysis_web_error)
+  end
+
+  object :analysis_trend_location_section do
+    field(:status, :string)
+    field(:items, list_of(:analysis_web_location_metric))
+    field(:error, :analysis_web_error)
+  end
+
+  object :analysis_trend_traffic_section do
+    field(:status, :string)
+    field(:timezone, :string)
+    field(:cells, list_of(:analysis_web_traffic_cell))
+    field(:error, :analysis_web_error)
   end
 
   object :analysis_web_count_summary do

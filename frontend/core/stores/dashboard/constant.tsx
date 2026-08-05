@@ -117,6 +117,7 @@ export const FIELDS: TDsbFieldMap = {
   mediaReports: [EMPTY_MEDIA_REPORT],
   thirdPartyAnalytics: [],
   enabledThirdPartyAnalytics: [],
+  umamiWebsiteId: '',
 
   // page
   themePreset: DEFAULT_THEME_PRESET,

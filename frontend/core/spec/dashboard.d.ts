@@ -142,6 +142,7 @@ export type TDsb = {
   mediaReports?: readonly TMediaReport[]
   thirdPartyAnalytics?: readonly TThirdPartyAnalyticsConfig[]
   enabledThirdPartyAnalytics?: readonly TThirdPartyAnalyticsConfig[]
+  umamiWebsiteId?: string | null
 }
 
 export type TParseDashboard = TDsbFieldMap & {
