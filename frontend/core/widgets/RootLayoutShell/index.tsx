@@ -1,6 +1,6 @@
 import { type ReactNode, Suspense } from 'react'
 
-import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '~/utils/ssr/script'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 import ThemeFirstPaintScript from '~/widgets/ThemeFirstPaintScript'
 
 type TProps = {
@@ -21,7 +21,7 @@ export default function RootLayoutShell({ children, lang = 'en' }: TProps) {
           <script
             // oxlint-disable-next-line react/no-danger -- Inline pre-paint script is required before hydration to avoid theme flicker.
             dangerouslySetInnerHTML={{
-              __html: `${prePaintThemeDetectScript()}\n${prePaintRuntimeSeedScript()}`,
+              __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
             }}
           />
         </head>
