@@ -1,17 +1,7 @@
-import { GRAPHQL_ENDPOINT } from '~/config'
 import type {
   TAnalysisWebMetric,
   TAnalysisWebOverview,
 } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
-
-type TGraphQLError = { message?: unknown }
-type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
-
-type TAnalysisWebQueryData = {
-  analysisWebOverview: TAnalysisWebOverview | null
-}
-
-const ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS = 8_000
 
 export const ANALYSIS_WEB_OVERVIEW_QUERY = `
   query AnalysisWebOverview($community: String!, $days: Int) {
@@ -330,37 +320,3 @@ export const emptyOverview = (community: string): TAnalysisWebOverview => ({
   },
   errors: [],
 })
-
-export const fetchAnalysisWebOverview = async (
-  community: string,
-): Promise<TAnalysisWebOverview> => {
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), ANALYSIS_WEB_OVERVIEW_TIMEOUT_MS)
-
-  try {
-    const response = await fetch(GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      cache: 'no-store',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: ANALYSIS_WEB_OVERVIEW_QUERY,
-        variables: { community, days: 7 },
-      }),
-    })
-
-    if (!response.ok) return emptyOverview(community)
-
-    const payload = (await response.json()) as TGraphQLPayload<TAnalysisWebQueryData>
-    if (payload.errors || !payload.data?.analysisWebOverview) return emptyOverview(community)
-
-    return payload.data.analysisWebOverview
-  } catch (error) {
-    console.error('## web analysis ssr error: ', error)
-    return emptyOverview(community)
-  } finally {
-    clearTimeout(timeout)
-  }
-}
