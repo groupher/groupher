@@ -1,6 +1,6 @@
 import { INLINE_TAG_LAYOUT } from '~/const/layout'
 import type { TColorName, TInlineTagLayout, TTag } from '~/spec'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon from './salon/tag_item'
 

@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import type { TEditMode, TSubmitState } from '~/spec'
-import SubmitButton from '~/widgets/Buttons/SubmitButton'
-import WordsCounter from '~/widgets/WordsCounter'
+import SubmitButton from '~/ui/Buttons/SubmitButton'
+import WordsCounter from '~/ui/WordsCounter'
 
 import useSalon from './salon/footer'
 import type { TEditData } from './spec'

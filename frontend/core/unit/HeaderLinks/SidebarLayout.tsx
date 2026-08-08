@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { type FC, Fragment, useState } from 'react'
 
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
@@ -8,8 +7,9 @@ import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import MoreSVG from '~/icons/menu/MoreL'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import {
   filterVisibleHeaderLinks,

@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 import useTrans from '~/hooks/useTrans'
 import type { TThemePresetOption } from '~/spec'
 import useThemePreset from '~/stores/ThemePreset/hooks'
-import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
+import ThemeSwitchPreview from '~/ui/ThemeSwitch/Preview'
 
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'

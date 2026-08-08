@@ -4,7 +4,7 @@ import { HEADER_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TLinkItem } from '~/spec'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import { FIELD } from '../../constant'
 import useHeader from '../../logic/useHeader'

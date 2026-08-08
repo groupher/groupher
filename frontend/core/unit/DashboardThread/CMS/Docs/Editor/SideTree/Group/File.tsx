@@ -1,7 +1,7 @@
 import { type FC, type KeyboardEvent, type MouseEvent, useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import MarkerPicker from '~/widgets/MarkerPicker'
+import MarkerPicker from '~/ui/MarkerPicker'
 
 import {
   DEFAULT_PAGE_MARKER,

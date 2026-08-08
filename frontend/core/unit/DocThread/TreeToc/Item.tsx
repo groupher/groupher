@@ -1,10 +1,10 @@
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import type { FC, ReactNode } from 'react'
 
 import FileTextSVG from '~/icons/FileText'
 import LinkOutSVG from '~/icons/LinkOut'
-import MarkerRender from '~/widgets/MarkerRender'
+import { Link } from '~/platform'
+import { usePathname } from '~/platform'
+import MarkerRender from '~/render/MarkerRender'
 
 import { getNodeHref, getNodeMarker, isActiveHref, isExternalHref } from '../Tree/helper'
 import useSalon from './salon/item'

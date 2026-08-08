@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { COLOR } from '~/const/colors'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon, {
   cn,

@@ -6,7 +6,7 @@ import { ARTICLE_CAT } from '~/const/gtd'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import { isWordsCountValid } from '~/widgets/WordsCounter/helper'
+import { isWordsCountValid } from '~/ui/WordsCounter/helper'
 
 import S from './schema'
 import type { TEditData, TStore } from './spec'

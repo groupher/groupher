@@ -1,4 +1,4 @@
-import RangeInput from '~/widgets/RangeInput'
+import RangeInput from '~/ui/RangeInput'
 
 import { COVER_SHADOW_COLOR_MODE, COVER_SHADOW_RANGE } from '../../../../constant'
 import { useImageDraftContext } from '../../../../imageDraftContext'

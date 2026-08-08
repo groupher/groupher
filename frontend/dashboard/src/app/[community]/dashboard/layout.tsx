@@ -6,10 +6,10 @@ import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { I18N_NS } from '~/i18n/namespaces'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
+import CommunityThemePresetStyle from '~/shell/CommunityThemePresetStyle'
 import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
-import CommunityThemePresetStyle from '~/widgets/CommunityThemePresetStyle'
 
 import Client from './Client'
 

@@ -9,7 +9,7 @@ import { type FC, useRef, useState } from 'react'
 import useTrans from '~/hooks/useTrans'
 import SettingSVG from '~/icons/Setting'
 import type { TSpace } from '~/spec'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import Menu from './Menu'
 import useSalon, { cn } from './salon'

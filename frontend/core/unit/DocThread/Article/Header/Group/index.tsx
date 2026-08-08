@@ -1,6 +1,6 @@
-import { usePathname } from 'next/navigation'
 import type { FC } from 'react'
 
+import { usePathname } from '~/platform'
 import type { TDoc, TDocPublicTree, TDocPublicTreeGroup } from '~/spec'
 
 import { findCurrentGroup } from '../helper'

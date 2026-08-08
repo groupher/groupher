@@ -12,7 +12,7 @@ vi.mock('~/hooks/useTrans', () => ({
   }),
 }))
 
-vi.mock('~/widgets/Buttons/Button', () => ({
+vi.mock('~/ui/Buttons/Button', () => ({
   default: ({
     children,
     loading: _loading,
@@ -32,7 +32,7 @@ vi.mock('~/widgets/Buttons/Button', () => ({
   ),
 }))
 
-vi.mock('~/widgets/Modal', () => ({
+vi.mock('~/ui/Modal', () => ({
   default: ({ children, show }: { children: ReactNode; show: boolean }) =>
     show ? <div data-testid='modal'>{children}</div> : null,
 }))

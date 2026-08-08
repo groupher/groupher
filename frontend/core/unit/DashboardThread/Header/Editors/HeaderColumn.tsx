@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import LinkEditor from '../../LinkEditor'
 import SortableColumn from '../../LinkEditor/Dnd/SortableColumn'

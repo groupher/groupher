@@ -1,22 +1,22 @@
-import Link from 'next/link'
 import { type FC, lazy, Suspense } from 'react'
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
+import { Link } from '~/platform'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
+import TimeAgo from '~/ui/TimeAgo'
+import Tooltip from '~/ui/Tooltip'
 import CommentsCount from '~/unit/CommentsCount'
 import TagsList from '~/unit/TagsList'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import TimeAgo from '~/widgets/TimeAgo'
-import Tooltip from '~/widgets/Tooltip'
 
 import ArticleReadLabel from '../../ArticleReadLabel'
 import useSalon from '../salon/quora_layout/header'
 
-const UserCard = lazy(() => import('~/widgets/Cards/UserCard'))
+const UserCard = lazy(() => import('~/ui/Cards/UserCard'))
 
 type TProps = {
   article: TPost

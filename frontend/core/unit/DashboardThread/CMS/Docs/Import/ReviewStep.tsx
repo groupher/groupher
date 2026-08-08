@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react'
 
 import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
+import Button from '~/ui/Buttons/Button'
 import { MARKDOWN_PLATFORMS } from '~/unit/DashboardThread/CMS/Docs/markdown_platforms'
-import Button from '~/widgets/Buttons/Button'
 
 import useSalon from './salon/review_step'
 import SourceTree from './SourceTree'

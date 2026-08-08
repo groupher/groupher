@@ -6,7 +6,7 @@ import SpinSVG from '~/icons/Spin'
 import UnPinSVG from '~/icons/UnPin'
 import { updateViewingArticle } from '~/signal'
 import useArticle from '~/stores/article/hooks'
-import { toast } from '~/widgets/Toaster'
+import { toast } from '~/ui/Toaster'
 
 import S from '../schema'
 import useSalon from './salon'

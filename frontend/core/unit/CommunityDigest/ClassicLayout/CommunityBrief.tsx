@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 
 import useHover from '~/hooks/useHover'
@@ -8,10 +7,11 @@ import GithubSVG from '~/icons/Github8'
 import OptionArrowSVG from '~/icons/OptionArrow'
 import PlusSVG from '~/icons/PlusCircle'
 import GlobalSVG from '~/icons/social/Global'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import Tooltip from '~/ui/Tooltip'
 import CommunityBrand from '~/unit/CommunityBrand'
-import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/classic_layout/community_brief'
 

@@ -2,8 +2,8 @@ import { type FC, memo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TSubmitState } from '~/spec'
-import CustomScroller from '~/widgets/CustomScroller'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import CustomScroller from '~/ui/CustomScroller'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useActions from '../useLogic/useActions'
 import BodyEditor from './BodyEditor'

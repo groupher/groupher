@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
-import Button from '~/widgets/Buttons/Button'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import Button from '~/ui/Buttons/Button'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 type TProps = {
   loading?: boolean

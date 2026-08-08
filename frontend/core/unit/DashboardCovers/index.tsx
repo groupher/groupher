@@ -1,10 +1,9 @@
 'use client'
 
-import Link from 'next/link'
-
 import { DSB_SEG } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import PinSVG from '~/icons/Pin'
+import { Link } from '~/platform'
 import type { TDsbCoversConfig } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { Portal } from '~/unit/DashboardThread'

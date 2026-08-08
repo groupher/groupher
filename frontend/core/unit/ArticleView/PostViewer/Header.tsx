@@ -1,9 +1,9 @@
 import { type FC, Fragment } from 'react'
 
 import type { TPost } from '~/spec'
+import DotDivider from '~/ui/DotDivider'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
-import DotDivider from '~/widgets/DotDivider'
 
 import useSalon from './salon/header'
 

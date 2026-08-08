@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC } f
 
 import { DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import { needsPublishAttention } from '../../SideTree/helper'
 import type { TDocTreeNodePublishState } from '../../SideTree/spec'

@@ -870,6 +870,16 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
+)[data-service-id='dash'] {
+  --service-monogram-background: oklch(38.1% 0.176 304.987);
+  --service-monogram-foreground: #fbf4ff;
+}
+
+:is(
+  .service-card,
+  .terminal-panel,
+  .metrics-drawer-popup,
+  .config-drawer-popup
 )[data-service-id='landing'] {
   --service-monogram-background: #765f43;
   --service-monogram-foreground: #f3ebdd;

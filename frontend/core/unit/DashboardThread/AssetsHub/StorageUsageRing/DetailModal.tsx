@@ -1,6 +1,6 @@
 'use client'
 
-import Modal from '~/widgets/Modal'
+import Modal from '~/ui/Modal'
 
 import { formatAssetSize } from '../helper'
 import { STORAGE_RING_CIRCUMFERENCE, STORAGE_RING_RADIUS } from './constant'

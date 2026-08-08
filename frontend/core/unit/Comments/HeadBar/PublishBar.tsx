@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import EditPublishSVG from '~/icons/EditPublish'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon from './salon/publish_bar'
 

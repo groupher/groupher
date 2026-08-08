@@ -1,5 +1,5 @@
 import SettingSVG from '~/icons/Setting'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { IMAGE_SIZE_RANGE } from '../../../../constant'
 import { getImageShadow, normalizeCoverShadow } from '../../../../helper'

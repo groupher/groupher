@@ -1,11 +1,14 @@
 import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 
-import RootLayoutShell from '~/widgets/RootLayoutShell'
+import RootLayoutShell from '~/shell/RootLayoutShell'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
 import '@groupher/rich-editor/style.css'
 import '~/tailwind/global.css'
 import './domain.css'
+import NextPlatformBoundary from '../platform/NextPlatformBoundary'
 
 export const metadata: Metadata = {
   title: 'Groupher | 让你的产品听见用户的声音',
@@ -15,10 +18,19 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <RootLayoutShell>
-      {process.env.NODE_ENV === 'development' ? (
-        <DevHubReporter serviceId='dashboard' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
-      ) : null}
-      {children}
+      <Script
+        id='groupher-pre-paint'
+        strategy='beforeInteractive'
+        dangerouslySetInnerHTML={{
+          __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
+        }}
+      />
+      <NextPlatformBoundary>
+        {process.env.NODE_ENV === 'development' ? (
+          <DevHubReporter serviceId='dashboard' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+        ) : null}
+        {children}
+      </NextPlatformBoundary>
     </RootLayoutShell>
   )
 }

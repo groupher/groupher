@@ -8,20 +8,22 @@ import { getArticleRowId } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
 import type { TArticle } from '~/spec'
 
-import useCMSInfo from '../../hooks/useCMSInfo'
 import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
 import CmsDataTable from '../Table/CmsDataTable'
 import CmsTableToolbar from '../Table/CmsTableToolbar'
 import useCmsTableController from '../Table/useCmsTableController'
+import useCmsArticles from '../useCmsArticles'
 import useSalon, { cn } from './salon'
 
 export default function Changelogs() {
-  const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()
+  const { pagedArticles: pagedChangelogs, loading, loadArticles } = useCmsArticles('changelog')
   const s = useSalon({ loading })
   const { t } = useTrans()
   const table = useCmsTableController()
 
-  useMount(loadChangelogs)
+  useMount(() => {
+    if (!pagedChangelogs.entries?.length) loadArticles()
+  })
 
   const data = (pagedChangelogs.entries ?? []) as TArticle[]
 

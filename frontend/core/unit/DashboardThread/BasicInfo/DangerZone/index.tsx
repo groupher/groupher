@@ -2,7 +2,7 @@ import { type FC, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import InfoSVG from '~/icons/Info'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon, { cn } from '../salon/danger_zone'
 import ArchiveModal from './ArchiveModal'

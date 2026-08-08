@@ -1,5 +1,5 @@
 import useTrans from '~/hooks/useTrans'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
 
 import useEnable from '../logic/useEnable'
 import SectionLabel from '../SectionLabel'

@@ -4,7 +4,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TArticle } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
-// import ArticleBaseStats from '~/widgets/ArticleBaseStats'
+// import ArticleBaseStats from '~/ui/ArticleBaseStats'
 
 import useSalon from './salon/fixed_header'
 

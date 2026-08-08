@@ -23,7 +23,7 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: 'home' }),
 }))
 
-vi.mock('~/widgets/Toaster', () => ({ toast: mocks.toast }))
+vi.mock('~/ui/Toaster', () => ({ toast: mocks.toast }))
 
 const page = {
   entries: [

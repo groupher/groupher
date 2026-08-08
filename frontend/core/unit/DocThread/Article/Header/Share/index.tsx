@@ -1,6 +1,6 @@
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import ShareNetworkSVG from '~/icons/ShareNetwork'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { SHARE_ACTIONS } from '../constant'
 import MenuItem from '../MenuItem'

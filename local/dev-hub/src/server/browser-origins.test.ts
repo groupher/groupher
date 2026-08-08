@@ -13,14 +13,17 @@ const originsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
 test('browser metrics accept raw-port and Portless origins for browser-facing services', () => {
   assert.deepEqual(Array.from(originsByService.get('dashboard') || []).sort(), [
     'http://127.0.0.1:3001',
+    'http://groupher.localhost:3003',
     'http://localhost:3001',
     'https://dashboard.groupher.localhost',
+    'https://groupher.localhost',
   ])
 
   const allOrigins = collectBrowserOrigins(originsByService)
   assert.equal(allOrigins.has('https://groupher.localhost'), true)
   assert.equal(allOrigins.has('https://main.groupher.localhost'), true)
   assert.equal(allOrigins.has('https://dashboard.groupher.localhost'), true)
+  assert.equal(allOrigins.has('https://dash.groupher.localhost'), true)
   assert.equal(allOrigins.has('https://auth.groupher.localhost'), true)
 })
 
@@ -43,6 +46,16 @@ test('browser metric reports must match both the service and page origin', () =>
       reportUrl: 'https://dashboard.groupher.localhost/home/dashboard',
     }),
     false,
+  )
+
+  assert.equal(
+    isBrowserMetricOriginAllowed({
+      originsByService,
+      serviceId: 'dashboard',
+      requestOrigin: 'https://groupher.localhost',
+      reportUrl: 'https://groupher.localhost/home/dashboard',
+    }),
+    true,
   )
 
   assert.equal(

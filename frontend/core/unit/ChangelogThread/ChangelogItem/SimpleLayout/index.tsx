@@ -4,18 +4,18 @@
  *
  */
 
-import Link from 'next/link'
 import { type FC, memo } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
+import { Link } from '~/platform'
 import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import ReadableDate from '~/ui/ReadableDate'
 import CommentsCount from '~/unit/CommentsCount'
 import EmotionSelector from '~/unit/EmotionSelector'
 import TagsList from '~/unit/TagsList'
-import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoEmotion, demoTags } from '../constant'
 import useSalon from './salon/article_layout'

@@ -1,4 +1,4 @@
-import AngleField from '~/widgets/TuningFields/AngleField'
+import AngleField from '~/ui/TuningFields/AngleField'
 
 import useLogic from '../../useLogic'
 

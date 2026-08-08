@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
 
-import CopyButton from '~/widgets/Buttons/CopyButton'
-import Input from '~/widgets/Input'
+import CopyButton from '~/ui/Buttons/CopyButton'
+import Input from '~/ui/Input'
 
 import useSalon from './salon/iframe_board'
 

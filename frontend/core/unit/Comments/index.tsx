@@ -7,7 +7,7 @@
 import { type FC, useEffect } from 'react'
 
 import { ANCHOR } from '~/const/dom'
-// import NoticeBar from '~/widgets/NoticeBar'
+// import NoticeBar from '~/ui/NoticeBar'
 
 import { API_MODE } from './constant'
 import Editor from './Editor'

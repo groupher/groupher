@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
 
 import useSalon from './salon/top_info'
 

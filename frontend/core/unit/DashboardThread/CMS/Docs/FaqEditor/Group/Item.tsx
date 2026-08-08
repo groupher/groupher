@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 import useDocFaqActions from '~/stores/dashboard/docFaq/actions'
-import MarkdownEditor from '~/widgets/MarkdownEditor'
+import MarkdownEditor from '~/ui/MarkdownEditor'
 
 import { FIELD } from '../../../../constant'
 import SavingBar from '../../../../SavingBar'

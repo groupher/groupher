@@ -1,6 +1,6 @@
 import KanbanSVG from '~/icons/Kanban'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile'
+import Facepile from '~/ui/Facepile'
 
 import useSalon from './salon/actions'
 

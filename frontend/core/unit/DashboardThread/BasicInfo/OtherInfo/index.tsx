@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import CitySelector from '~/widgets/CitySelector'
-import Input from '~/widgets/Input'
+import CitySelector from '~/ui/CitySelector'
+import Input from '~/ui/Input'
 
 import { FIELD } from '../../constant'
 import useBaseInfo from '../../logic/useBaseInfo'

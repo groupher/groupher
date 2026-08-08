@@ -1,6 +1,6 @@
-import AccountUnit from '~/widgets/AccountUnit'
-import HomeLogo from '~/widgets/HomeLogo'
-import ThemeSwitch from '~/widgets/ThemeSwitch'
+import AccountUnit from '~/ui/AccountUnit'
+import HomeLogo from '~/ui/HomeLogo'
+import ThemeSwitch from '~/ui/ThemeSwitch'
 
 import useLogic from '../useLogic'
 import useSalon from './salon'

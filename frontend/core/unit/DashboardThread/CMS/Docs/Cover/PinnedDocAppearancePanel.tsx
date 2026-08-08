@@ -8,9 +8,9 @@ import {
 } from '~/const/wallpaper'
 import type { TBgConfig } from '~/lib/bg'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
+import Input from '~/ui/Input'
+import ThemeSwitch from '~/ui/ThemeSwitch'
 import type { TDocCoverPinnedDoc, TDocCoverPinnedDocAppearance } from '~/unit/DocCovers/spec'
-import Input from '~/widgets/Input'
-import ThemeSwitch from '~/widgets/ThemeSwitch'
 
 type TProps = {
   doc: TDocCoverPinnedDoc

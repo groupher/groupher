@@ -1,8 +1,8 @@
-import { useRouter } from 'next/navigation'
 import { lazy, Suspense } from 'react'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
+import { useRouter } from '~/platform'
 import ArticleSettingMenu from '~/unit/ArticleSettingMenu'
 
 import ArticleNavi from './ArticleNavi'

@@ -1,7 +1,6 @@
-import { useRouter } from 'next/navigation'
-
 import useNaviArticle from '~/hooks/useNaviArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
+import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import { thread2Path } from '~/utils/thread'
 

@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import Sticky from '~/widgets/Sticky'
+import Sticky from '~/ui/Sticky'
 
 import FaqLayout from '../FaqLayout'
 import FeedbackFooter from '../FeedbackFooter'

@@ -1,0 +1,37 @@
+'use client'
+
+import { useCallback } from 'react'
+
+import { adaptWallpaperBgRenderSpec, useWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
+import { subscribeWallpaperPreview } from '~/lib/wallpaperPreview'
+import BgRenderer from '~/render/BgRenderer'
+import type { TBgPreviewSubscriber } from '~/render/BgRenderer/spec'
+
+import type { TProps } from './spec'
+
+export default function WallpaperRenderer({
+  className,
+  patternSize = 'auto',
+  positioned = true,
+  textureScale = 1,
+}: TProps) {
+  const renderSpec = useWallpaperBgRenderSpec()
+  const previewSubscriber = useCallback<TBgPreviewSubscriber>(
+    (listener) =>
+      subscribeWallpaperPreview((state) => {
+        listener(state ? adaptWallpaperBgRenderSpec(state) : null)
+      }),
+    [],
+  )
+
+  return (
+    <BgRenderer
+      className={className}
+      renderSpec={renderSpec}
+      patternSize={patternSize}
+      positioned={positioned}
+      previewSubscriber={previewSubscriber}
+      textureScale={textureScale}
+    />
+  )
+}

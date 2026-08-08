@@ -1,6 +1,6 @@
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/compare_dev/fans'
 

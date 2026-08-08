@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import { fmtFileSize } from '~/lib/fmt'
-import Checker from '~/widgets/Checker'
+import Checker from '~/ui/Checker'
 
 import useSalon from './salon/source_tree'
 import { pageIdsFromNodes, totalPageSize, type TImportPageMeta } from './sourceTreeSelection'

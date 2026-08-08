@@ -8,7 +8,6 @@
  *
  */
 
-import Link from 'next/link'
 import { lazy, Suspense } from 'react'
 
 import useActiveTag from '~/hooks/useActiveTag'
@@ -17,12 +16,13 @@ import useTrans from '~/hooks/useTrans'
 import LinkSVG from '~/icons/Link'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
+import { Link } from '~/platform'
 import { callGEditor, callSyncSelector, listUsers } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
+import PublishButton from '~/ui/Buttons/PublishButton'
+import ImgFallback from '~/ui/ImgFallback'
 import GetMe from '~/unit/GetMe'
 import TagsBar from '~/unit/TagsBar'
-import PublishButton from '~/widgets/Buttons/PublishButton'
-import ImgFallback from '~/widgets/ImgFallback'
 
 import SocialBanner from '../SocialBanner'
 import CommunityBrief from './CommunityBrief'

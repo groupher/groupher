@@ -5,7 +5,7 @@ import { aliasGTDDoneStatus, toGTDLabelKey } from '~/fmt'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import type { TTooltipPlacement } from '~/spec'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import type { TProps as TArticleStatusBadgeProps } from '.'
 import useSalon, { Icon } from './salon/status'

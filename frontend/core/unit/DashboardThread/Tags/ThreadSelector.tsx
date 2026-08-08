@@ -1,7 +1,7 @@
 import { THREAD, THREAD_PATH } from '~/const/thread'
 import type { TTabItem, TTransKey } from '~/spec'
+import Tabs from '~/ui/Switcher/Tabs'
 import { path2Thread } from '~/utils/thread'
-import Tabs from '~/widgets/Switcher/Tabs'
 
 import useTags from '../logic/useTags'
 import useSalon from './salon/thread_selector'

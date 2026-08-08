@@ -3,6 +3,7 @@
 # =====================
 **/.next/
 build
+frontend/**/dist/
 frontend/**/out/
 local/**/dist/
 backend/**/dist/
@@ -105,12 +106,16 @@ frontend/**/public/icons/*.sprite.svg
 frontend/core/assets/icons/generated/
 frontend/main/public/wallpaper/
 frontend/dashboard/public/wallpaper/
+frontend/dash/public/wallpaper/
 frontend/landing/public/wallpaper/
 frontend/core/assets/wallpaper/pattern-bak/
 
 # Frontend schema snapshots are generated from backend/main/schema.graphql when needed.
 frontend/main/graphql/schema.graphql
 frontend/dashboard/graphql/schema.graphql
+
+# TanStack Router generated output
+frontend/dash/src/routeTree.gen.ts
 
 # =====================
 # Backend (Elixir / BEAM)

@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
+import { Link } from '~/platform'
 import type { TDocPublicTreeGroup, TDocPublicTreeNavigationNode, TDocPublicTreeTab } from '~/spec'
 
 import useSalon, { cn } from './salon'

@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
-import ImgFallback from '~/widgets/ImgFallback'
+import ImgFallback from '~/ui/ImgFallback'
 
 import useSalon, { cn } from '../salon/activities'
 import GtdItem from './GtdItem'

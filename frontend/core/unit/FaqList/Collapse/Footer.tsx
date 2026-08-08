@@ -2,7 +2,7 @@ import { type FC, memo } from 'react'
 
 import BookSVG from '~/icons/Book'
 import PeopleSVG from '~/icons/People'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon from './salon/footer'
 

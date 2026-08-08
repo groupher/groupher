@@ -18,7 +18,7 @@ vi.mock('~/stores/community/hooks', () => ({
   default: () => ({ slug: 'home' }),
 }))
 
-vi.mock('~/widgets/Buttons/Button', () => ({
+vi.mock('~/ui/Buttons/Button', () => ({
   default: ({ children }: { children: ReactNode }) => <button type='button'>{children}</button>,
 }))
 

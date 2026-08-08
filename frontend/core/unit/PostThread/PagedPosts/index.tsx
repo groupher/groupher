@@ -10,7 +10,7 @@ import { type FC, memo } from 'react'
 
 import EVENT from '~/const/event'
 import { send } from '~/signal'
-import Pagi from '~/widgets/Pagi'
+import Pagi from '~/ui/Pagi'
 
 import PostList from './PostList'
 import useSalon from './salon'

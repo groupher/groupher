@@ -8,8 +8,10 @@ import type { TPagedPosts, TTagGroup } from '~/spec'
 
 let mockSearchParams = new URLSearchParams()
 
-vi.mock('next/navigation', () => {
+vi.mock('~/platform', async () => {
+  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
   return {
+    ...actual,
     useSearchParams: () => mockSearchParams,
   }
 })

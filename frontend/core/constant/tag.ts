@@ -1,5 +1,5 @@
 import type { TMarkerValue } from '~/spec'
-import { getIconFilePath } from '~/widgets/IconHub/sprite'
+import { getIconFilePath } from '~/ui/IconHub/sprite'
 
 import { MARKER } from './marker'
 

@@ -3,7 +3,7 @@
 import { useParams, useSelectedLayoutSegment } from 'next/navigation'
 import { Fragment, type ReactNode, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 
-import Drawer from '~/widgets/@Drawer'
+import Drawer from '~/ui/@Drawer'
 
 import type { TPreviewPhase } from './constant'
 import { PREVIEW_PHASE } from './constant'

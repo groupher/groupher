@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import Modal from '~/widgets/Modal'
+import Modal from '~/ui/Modal'
 
 import PriceWall from '.'
 

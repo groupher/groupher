@@ -1,16 +1,16 @@
-import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import Img from '~/Img'
 import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import { isValidThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import useDashboard from '~/stores/dashboard/hooks'
-import ArrowLinker from '~/widgets/ArrowLinker'
-import Button from '~/widgets/Buttons/Button'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import Input from '~/widgets/Input'
-import Modal from '~/widgets/Modal'
-import { toast } from '~/widgets/Toaster'
+import ArrowLinker from '~/ui/ArrowLinker'
+import Button from '~/ui/Buttons/Button'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
+import Input from '~/ui/Input'
+import Modal from '~/ui/Modal'
+import { toast } from '~/ui/Toaster'
 
 import { FIELD } from '../constant'
 import useHelper from '../logic/useHelper'
@@ -90,14 +90,10 @@ const SettingModal = ({ show, onClose, service }: TProps) => {
       <div className={s.wrapper}>
         <div className={s.header}>
           <div className={s.iconBox}>
-            <Image
+            <Img
               src={getIntegrationIconSrc(service.provider)}
               alt={`${service.title} icon`}
-              width={28}
-              height={28}
               className={cn(s.icon, service.provider === 'gtm' && 'w-8 h-auto')}
-              priority={false}
-              unoptimized
             />
           </div>
           <h1 className={s.title}>{t(service.title)}</h1>

@@ -14,11 +14,11 @@
  * @see docs/bulk-import/bulk-import.md
  * @see docs/bulk-import/import-process-log.md
  */
-import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
+import { usePlatform } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import { decodeImportProcess } from '../../ContentImport/ProcessLog/decoder'
@@ -80,7 +80,8 @@ export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
   const { query } = useGraphQLClient()
   const { t } = useTrans()
-  const searchParams = useSearchParams()
+  const { navi } = usePlatform()
+  const searchParams = navi.location.searchParams
   const initialJobRef = searchParams.get('job')
   const initialPreviewRef = searchParams.get('preview') || ''
   const [previewRef, setPreviewRef] = useState(initialPreviewRef)

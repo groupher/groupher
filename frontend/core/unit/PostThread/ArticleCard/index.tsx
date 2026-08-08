@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
+import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 

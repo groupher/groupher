@@ -1,7 +1,7 @@
 import type { MARKER } from '~/const/marker'
-import type { TIconName } from '~/widgets/IconHub/icons'
-import type { TMarkerIconProvider } from '~/widgets/IconHub/sprite'
-import type { TDevLogo } from '~/widgets/MarkerPicker/constant/dev_logo'
+import type { TIconName } from '~/ui/IconHub/icons'
+import type { TMarkerIconProvider } from '~/ui/IconHub/sprite'
+import type { TDevLogo } from '~/ui/MarkerPicker/constant/dev_logo'
 
 export type TMarkerThemeAppearance = {
   color?: string

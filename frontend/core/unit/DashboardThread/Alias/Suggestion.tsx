@@ -2,7 +2,7 @@ import { isEmpty } from 'ramda'
 import { type FC, memo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon from './salon/suggestion'
 

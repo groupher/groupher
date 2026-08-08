@@ -3,8 +3,8 @@ import { type FC, useState } from 'react'
 import useTrans from '~/hooks/useTrans'
 import SettingSVG from '~/icons/Setting'
 import type { TSpace, TUser } from '~/spec'
-import Drawer from '~/widgets/Drawer'
-import Facepile from '~/widgets/Facepile'
+import Drawer from '~/ui/Drawer'
+import Facepile from '~/ui/Facepile'
 
 import useSalon from './salon'
 

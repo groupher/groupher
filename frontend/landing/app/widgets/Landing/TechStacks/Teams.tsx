@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import useSalon from '../salon/tech_stacks/teams'
 

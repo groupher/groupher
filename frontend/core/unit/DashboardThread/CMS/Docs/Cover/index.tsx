@@ -1,10 +1,10 @@
 import { type FC, useEffect, useState } from 'react'
 
 import TYPE from '~/const/type'
+import Drawer from '~/ui/Drawer'
+import { toast } from '~/ui/Toaster'
 import DocCovers from '~/unit/DocCovers'
 import type { TDocCoverCard, TDocCoverPinnedDoc } from '~/unit/DocCovers/spec'
-import Drawer from '~/widgets/Drawer'
-import { toast } from '~/widgets/Toaster'
 
 import GroupSettingPanel from './GroupSettingPanel'
 import PinnedDocAppearancePanel from './PinnedDocAppearancePanel'

@@ -9,8 +9,8 @@ import { type FC, lazy, memo, Suspense } from 'react'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import CloseSVG from '~/icons/CloseLight'
 import { closeDrawer } from '~/signal'
-import Input from '~/widgets/Input'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import Input from '~/ui/Input'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useSalon from './salon'
 

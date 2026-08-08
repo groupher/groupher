@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
-import Img from '~/widgets/Img'
-import ImgFallback from '~/widgets/ImgFallback'
+import Img from '~/ui/Img'
+import ImgFallback from '~/ui/ImgFallback'
 
 import type { TDocDraftAuthor } from '../../Editor/store/spec'
 import useSalon from '../salon/doc_info/author'

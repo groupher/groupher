@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import ArrowSVG from '~/icons/ArrowUpRight'
@@ -22,9 +21,9 @@ const MediaPreview: FC<TProps> = ({ item }) => {
         <div className={s.siteName}>{siteName}</div>
       </div>
 
-      <Link className={s.title} href={url} target='_blank'>
+      <a className={s.title} href={url} target='_blank' rel='noreferrer'>
         {title}
-      </Link>
+      </a>
       <div className={s.arrowBox}>
         <ArrowSVG className={s.arrow} />
       </div>

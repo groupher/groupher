@@ -1,7 +1,7 @@
 import { AnimatePresence, domAnimation, LazyMotion } from 'motion/react'
-import { usePathname } from 'next/navigation'
 import { useMemo, useState } from 'react'
 
+import { usePathname } from '~/platform'
 import type { TDocPublicTreeGroup } from '~/spec'
 
 import { isActiveHref } from '../Tree/helper'

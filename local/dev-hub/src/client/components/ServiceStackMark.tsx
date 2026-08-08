@@ -9,6 +9,7 @@ import {
   siOpenid,
   siPhoenixframework,
   siReact,
+  siTanstack,
   siTailwindcss,
   siTypescript,
 } from 'simple-icons'
@@ -121,6 +122,10 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIcon
     path: ROUTING_PATH,
     viewBox: SIMPLE_ICON_VIEWBOX,
     color: '#f5f7fb',
+  },
+  'tanstack-start': {
+    ...fromSimpleIcon(siTanstack),
+    title: 'TanStack Start',
   },
   tailwindcss: fromSimpleIcon(siTailwindcss),
   typescript: {

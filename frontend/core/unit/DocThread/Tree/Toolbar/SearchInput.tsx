@@ -2,7 +2,7 @@ import { type ChangeEvent, type FC } from 'react'
 
 import CloseSVG from '~/icons/CloseLight'
 import MagnifyingGlassSVG from '~/icons/MagnifyingGlass'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import { DOC_PUBLIC_TREE_LABEL, DOC_PUBLIC_TREE_SEARCH_INPUT_TESTID } from '../constant'
 import useSalon from './salon/search_input'

@@ -5,15 +5,16 @@ import { useState } from 'react'
 import { ASSETS_HUB_LIST_VIEW } from './constant'
 import List from './List'
 import useSalon from './salon'
+import type { TPagedAssets } from './spec'
 import type { TAssetListViewMode } from './spec'
 import Toolbar from './Toolbar'
 import UploadButton from './Toolbar/UploadButton'
 import UploadStatus from './UploadStatus'
 import useAssetsHub from './useAssetsHub'
 
-export default function AssetsHub() {
+export default function AssetsHub({ initialData }: { initialData?: TPagedAssets | null }) {
   const s = useSalon()
-  const logic = useAssetsHub()
+  const logic = useAssetsHub(initialData)
   const [viewMode, setViewMode] = useState<TAssetListViewMode>(ASSETS_HUB_LIST_VIEW.SINGLE)
 
   return (

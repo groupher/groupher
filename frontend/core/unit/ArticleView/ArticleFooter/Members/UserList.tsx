@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import Img from '~/Img'
 import type { TUser } from '~/spec'
-import ImgFallback from '~/widgets/ImgFallback'
+import ImgFallback from '~/ui/ImgFallback'
 
 import useSalon from '../salon/user_list'
 

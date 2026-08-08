@@ -3,7 +3,7 @@ import { type FC, memo, useCallback } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSolid'
 import type { TFAQSection, TMenuOption } from '~/spec'
-import MenuButton from '~/widgets/Buttons/MenuButton'
+import MenuButton from '~/ui/Buttons/MenuButton'
 
 import useSalon from './salon/banner'
 

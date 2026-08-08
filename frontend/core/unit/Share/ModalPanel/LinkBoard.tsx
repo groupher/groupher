@@ -1,7 +1,7 @@
 import { type FC, memo, useState } from 'react'
 
-import CopyButton from '~/widgets/Buttons/CopyButton'
-import Input from '~/widgets/Input'
+import CopyButton from '~/ui/Buttons/CopyButton'
+import Input from '~/ui/Input'
 
 import type { TLinksData } from '../spec'
 import useSalon, { cn } from './salon/link_board'

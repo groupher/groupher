@@ -48,7 +48,7 @@ vi.mock('~/hooks/useTrans', () => ({
 
 vi.mock('~/lib/signal', () => ({ send: vi.fn() }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
-vi.mock('~/widgets/Toaster', () => ({ toast: vi.fn() }))
+vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../helper', () => ({ reloadDocPublishChecklist: vi.fn() }))
 
 vi.mock('./useDocEditorUrl', () => ({

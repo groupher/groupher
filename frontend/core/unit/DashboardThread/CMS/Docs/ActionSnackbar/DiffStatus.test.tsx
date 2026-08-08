@@ -59,11 +59,11 @@ describe('DiffStatus revision loading', () => {
     render(<DiffStatus />)
 
     await waitFor(() => expect(mocks.query).toHaveBeenCalledTimes(2))
-    expect(screen.getByTestId('revision-drawer')).toHaveTextContent('false')
+    expect(screen.queryByTestId('revision-drawer')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'dsb.doc.action.version_history' }))
 
-    expect(screen.getByTestId('revision-drawer')).toHaveTextContent('true')
+    expect(await screen.findByTestId('revision-drawer')).toHaveTextContent('true')
     expect(mocks.query).toHaveBeenCalledTimes(2)
   })
 })
