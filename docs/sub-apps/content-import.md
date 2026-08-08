@@ -106,4 +106,4 @@ sequenceDiagram
 - 调用 `document-converter` 完成非 Markdown 文档转换。
 - 后续导入资源时，通过 `assets-hub` 上传并建立资源引用。
 - 可把来源 URL、域名和文件 hash 交给 `risk-center` 做预检查。
-- 导入完成后的静态输出由 `content-press` 负责，不由导入流程生成。
+- 导入完成后的公开派生输出由 `Press` 负责，不由导入流程生成。

@@ -95,7 +95,7 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 | [`assets-hub`](./assets-hub.md)                 | Node/Hono                 | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 规划中                           |
 | [`apply`](./apply.md)                           | 独立 Next.js 前端         | 独立 UI                | 社区申请与创建流程                 | 规划中                           |
 | [`auth`](./auth.md)                             | Node/Hono + Auth.js       | 独立系统 UI            | OAuth、登录和统一会话入口          | 已建立独立应用并由 Gateway 接入  |
-| [`content-press`](./content-press.md)           | Node/Hono                 | Dashboard 配置         | 单向、静态、官方内容输出           | 规划中                           |
+| [`Press`](../press/v1.md)                       | Node/Hono                 | Dashboard 配置         | 单向、缓存友好的官方内容输出       | 设计中                           |
 | [`posthouse`](./posthouse.md)                   | Node/Hono                 | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
 | [`ai`](./ai.md)                                 | Node/Hono                 | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |
 | [`risk-center`](./risk-center.md)               | Node/Hono                 | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                           |
@@ -157,7 +157,7 @@ flowchart LR
 4. 建立 `posthouse`，从 outbound webhook 和 Phoenix Outbox 开始。
 5. 建立 `risk-center` 的最小查询接口和 Phoenix `Blackhole` 规则快照。
 6. 建立统一的 `ai` 应用，再按实际运行差异决定是否细拆。
-7. 在独立 `Apply` 前建立统一的 `auth` 边界；按产品需求推进 `content-press` 和
+7. 在独立 `Apply` 前建立统一的 `auth` 边界；按产品需求推进 `Press` 和
    Umami 部署。
 
 实施顺序不是调用依赖顺序。每个子应用都应以可独立部署、可回滚且不改变 Phoenix
