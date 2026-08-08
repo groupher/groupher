@@ -4,7 +4,6 @@ import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
-import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
@@ -19,7 +18,6 @@ type TProps = {
     community: TCommunity
     dashboard: TParseDashboard
     wallpaper?: TWallpaperInit
-    account?: TAccountInit
   }
   locale?: TLocale
   localeData?: string
@@ -29,14 +27,9 @@ type TProps = {
 
 const AccountWrapper: FC<{
   children: React.ReactNode
-  initData?: TAccountInit
   noAccount: boolean
-}> = ({
-  children,
-  initData,
-  noAccount,
-}) =>
-  noAccount ? children : <AccountStoreProvider initData={initData}>{children}</AccountStoreProvider>
+}> = ({ children, noAccount }) =>
+  noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>
 
 const MainProvider: FC<TProps> = ({
   children,
@@ -46,12 +39,12 @@ const MainProvider: FC<TProps> = ({
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
-  const { account, dashboard, community, wallpaper } = initData
+  const { dashboard, community, wallpaper } = initData
 
   return (
     <ThemeStoreProvider>
       <LocaleStoreProvider initData={{ locale, localeData }}>
-        <AccountWrapper initData={account} noAccount={noAccount}>
+        <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric }}>
               <ThemePresetStoreProvider initData={dashboard}>

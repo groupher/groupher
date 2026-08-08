@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Model.Community do
     CommunityCategory,
     CommunityDashboard,
     CommunityModerator,
+    PressConfig,
     CommunitySubscriber,
     CommunityAsset,
     CommunityTagGroup,
@@ -65,6 +66,7 @@ defmodule GroupherServer.CMS.Model.Community do
     has_many(:moderators, {"communities_moderators", CommunityModerator})
 
     has_one(:dashboard, CommunityDashboard)
+    has_one(:press_config, PressConfig)
     has_many(:tag_groups, CommunityTagGroup)
     has_many(:assets, CommunityAsset)
 

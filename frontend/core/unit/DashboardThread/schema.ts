@@ -48,6 +48,38 @@ const communitySocialLinks = gql`
   }
 `
 
+const pressConfig = gql`
+  query ($community: String!) {
+    pressConfig(community: $community) {
+      markdownEnabled
+      feedEnabled
+      feedType
+      feedCount
+      feedThreads
+      llmsEnabled
+      sitemapEnabled
+      revision
+    }
+  }
+`
+
+const updatePressConfig = gql`
+  mutation ($input: UpdatePressConfigInput!) {
+    updatePressConfig(input: $input) {
+      config {
+        markdownEnabled
+        feedEnabled
+        feedType
+        feedCount
+        feedThreads
+        llmsEnabled
+        sitemapEnabled
+        revision
+      }
+    }
+  }
+`
+
 const thirdPartyAnalyticsProviders = gql`
   query {
     thirdPartyAnalyticsProviders {
@@ -1285,6 +1317,8 @@ const deleteCommunityAsset = gql`
 const schema = {
   communityBaseInfo,
   communitySocialLinks,
+  pressConfig,
+  updatePressConfig,
   thirdPartyAnalyticsProviders,
 
   updateDashboardBaseInfo,

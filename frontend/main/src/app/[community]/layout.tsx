@@ -16,7 +16,19 @@ import Client from './Client'
 export async function generateMetadata({ params }): Promise<Metadata> {
   const params$ = await params
   const { dashboard } = await getCommunityInfo(params$.community)
-  return getMetadata(dashboard)
+  const metadata = getMetadata(dashboard)
+
+  return {
+    ...metadata,
+    alternates: {
+      ...metadata.alternates,
+      types: {
+        'application/rss+xml': `/${params$.community}/feed.xml`,
+        'application/atom+xml': `/${params$.community}/feed.atom`,
+        'application/feed+json': `/${params$.community}/feed.json`,
+      },
+    },
+  }
 }
 
 export default async ({ children, params }) => {

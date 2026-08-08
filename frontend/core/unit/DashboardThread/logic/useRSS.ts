@@ -1,60 +1,115 @@
 import { pick } from 'ramda'
+import { useEffect, useRef, useState } from 'react'
 
+import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useQuery from '~/hooks/useQuery'
 import type { TEditFunc } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../constant'
+import S from '../schema'
 import useHelper from './useHelper'
 
-type TRet = {
+type TOutputField = 'feedEnabled' | 'markdownEnabled' | 'llmsEnabled' | 'sitemapEnabled'
+type TOptions = Record<TOutputField, boolean> & { feedThreads: string[] }
+
+type TRet = TOptions & {
   rssFeedType: string
   rssFeedCount: number
   saving: boolean
   isTouched: boolean
+  canSave: boolean
   edit: TEditFunc
+  toggleOutput: (field: TOutputField, value: boolean) => void
+  toggleThread: (thread: string, value: boolean) => void
   rssOnSave: () => void
   rssOnCancel: () => void
 }
 
+const DEFAULT_OPTIONS: TOptions = {
+  feedEnabled: false,
+  markdownEnabled: true,
+  llmsEnabled: true,
+  sitemapEnabled: true,
+  feedThreads: [],
+}
+
 export default function useRSS(): TRet {
   const dsb$ = useDashboard()
+  const { slug: community } = useCommunity()
+  const { mutate } = useGraphQLClient()
   const { edit, isChanged } = useHelper()
+  const { data } = useQuery(S.pressConfig, { community })
+  const [options, setOptions] = useState<TOptions>(DEFAULT_OPTIONS)
+  const original = useRef<TOptions>(DEFAULT_OPTIONS)
 
-  const isTouched = isChanged(FIELD.RSS_FEED_TYPE) || isChanged(FIELD.RSS_FEED_COUNT)
+  useEffect(() => {
+    if (!data?.pressConfig) return
+    const config = data.pressConfig
+    const next = {
+      feedEnabled: config.feedEnabled,
+      markdownEnabled: config.markdownEnabled,
+      llmsEnabled: config.llmsEnabled,
+      sitemapEnabled: config.sitemapEnabled,
+      feedThreads: config.feedThreads.map((thread) => thread.toLowerCase()),
+    }
+    setOptions(next)
+    original.current = next
+    dsb$.commit({
+      rssFeedType: config.feedType.toLowerCase(),
+      rssFeedCount: config.feedCount,
+      original: {
+        ...dsb$.original,
+        rssFeedType: config.feedType.toLowerCase(),
+        rssFeedCount: config.feedCount,
+      },
+    })
+  }, [data?.pressConfig])
+
+  const isTouched =
+    isChanged(FIELD.RSS_FEED_TYPE) ||
+    isChanged(FIELD.RSS_FEED_COUNT) ||
+    JSON.stringify(options) !== JSON.stringify(original.current)
 
   const rssOnSave = (): void => {
     dsb$.commit({ saving: true })
-    console.log('## rssOnSave')
-    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
-
-    // dsb$.onSave(RSS_FEED_TYPE)
-    // dsb$.onSave(RSS_FEED_COUNT)
-
-    // setTimeout(() => {
-    //   store.mark({ saving: false })
-
-    //   const original = {
-    //     ...store.original,
-    //     [RSS_FEED_TYPE]: toJS(store[RSS_FEED_TYPE]),
-    //     [RSS_FEED_COUNT]: toJS(store[RSS_FEED_COUNT]),
-    //   }
-
-    //   store.mark({ original })
-    // }, 1200)
+    void mutate(S.updatePressConfig, {
+      input: {
+        community,
+        feedType: dsb$.rssFeedType.toUpperCase(),
+        feedCount: dsb$.rssFeedCount,
+        ...options,
+        feedThreads: options.feedThreads.map((thread) => thread.toUpperCase()),
+      },
+    })
+      .then(() => {
+        original.current = options
+        dsb$.markFieldsToOriginal([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])
+      })
+      .catch((error) => console.error('Failed to update Press config', error))
+      .finally(() => dsb$.commit({ saving: false }))
   }
 
   const rssOnCancel = (): void => {
-    console.log('## rssOnCancel')
-    // const { RSS_FEED_TYPE, RSS_FEED_COUNT } = FIELD
-
-    // store.rollbackEdit(RSS_FEED_TYPE)
-    // store.rollbackEdit(RSS_FEED_COUNT)
+    setOptions(original.current)
+    dsb$.rollbackFields([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])
   }
 
   return {
     edit,
     ...pick(['rssFeedType', 'rssFeedCount', 'saving'], dsb$),
+    ...options,
     isTouched,
+    canSave: !options.feedEnabled || options.feedThreads.length > 0,
+    toggleOutput: (field, value) => setOptions((current) => ({ ...current, [field]: value })),
+    toggleThread: (thread, value) =>
+      setOptions((current) => ({
+        ...current,
+        feedThreads: value
+          ? Array.from(new Set([...current.feedThreads, thread]))
+          : current.feedThreads.filter((item) => item !== thread),
+      })),
     rssOnSave,
     rssOnCancel,
   }
