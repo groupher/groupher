@@ -169,6 +169,7 @@ describe('Press HTTP app', () => {
   })
 
   it('validates community-scoped internal invalidation requests', async () => {
+    vi.stubEnv('PRESS_INTERNAL_TOKEN', 'test-token')
     const cache = createOutputCache(null)
     const invalidate = vi.spyOn(cache, 'invalidate')
     const app = createApp({ origin, cache, recorder: { record: vi.fn() } })
@@ -178,7 +179,10 @@ describe('Press HTTP app', () => {
         await app.request('https://press.test/internal/invalidate', {
           method: 'POST',
           body: JSON.stringify({ community: '../cms' }),
-          headers: { 'content-type': 'application/json' },
+          headers: {
+            'content-type': 'application/json',
+            'x-press-internal-token': 'test-token',
+          },
         })
       ).status,
     ).toBe(400)
@@ -188,11 +192,25 @@ describe('Press HTTP app', () => {
         await app.request('https://press.test/internal/invalidate', {
           method: 'POST',
           body: JSON.stringify({ community: 'home' }),
-          headers: { 'content-type': 'application/json' },
+          headers: {
+            'content-type': 'application/json',
+            'x-press-internal-token': 'test-token',
+          },
         })
       ).status,
     ).toBe(200)
     expect(invalidate).toHaveBeenCalledWith('pointer:home:')
+
+    expect(
+      (
+        await app.request('https://press.test/internal/invalidate', {
+          method: 'POST',
+          body: JSON.stringify({ community: 'home' }),
+          headers: { 'content-type': 'application/json' },
+        })
+      ).status,
+    ).toBe(401)
+    vi.unstubAllEnvs()
   })
 
   it('uses the same handler for Docs Markdown routes', async () => {

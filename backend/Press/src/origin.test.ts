@@ -53,4 +53,17 @@ describe('Phoenix Press origin client', () => {
       expect.objectContaining<Partial<OriginError>>({ status: 503 }),
     )
   })
+
+  it('maps Phoenix NOT_EXIST errors to 404 even when the message is a domain label', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(Response.json({ errors: [{ message: 'Press Article', code: 4003 }] }))
+    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher)
+
+    await expect(
+      origin.article({ community: 'home', thread: 'post', innerId: '1' }),
+    ).rejects.toEqual(
+      expect.objectContaining<Partial<OriginError>>({ status: 404, message: 'Press Article' }),
+    )
+  })
 })

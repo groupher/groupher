@@ -1,6 +1,9 @@
 import type { PressArticle, PressConfig, RSSFeed, SiteManifest, Thread } from './types'
 
-type GraphQLResponse<T> = { data?: T; errors?: Array<{ message: string }> }
+type GraphQLError = { message: string; code?: number | string }
+type GraphQLResponse<T> = { data?: T; errors?: GraphQLError[] }
+
+const NOT_EXIST_CODES = new Set([4003, '4003', 'NOT_EXIST', 'not_exist'])
 
 const normalizeThread = (thread: string): Thread => thread.toLowerCase() as Thread
 
@@ -96,7 +99,10 @@ export const createPhoenixOrigin = (
     const payload = (await response.json()) as GraphQLResponse<T>
     if (payload.errors?.length) {
       const message = payload.errors.map((error) => error.message).join('; ')
-      const status = /not exist|disabled|not found/i.test(message) ? 404 : 502
+      const isNotFound = payload.errors.some(
+        (error) => error.code !== undefined && NOT_EXIST_CODES.has(error.code),
+      )
+      const status = isNotFound || /not exist|disabled|not found/i.test(message) ? 404 : 502
       throw new OriginError(message, status)
     }
     if (!payload.data) throw new OriginError('Phoenix returned no data', 502)

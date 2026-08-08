@@ -133,9 +133,16 @@ export const createApp = (dependencies: Dependencies = {}) => {
       response = responseFrom(request, output)
     } catch (error) {
       const status = error instanceof OriginError ? error.status : 500
+      const message = error instanceof Error ? error.message : ''
+      const body =
+        status === 404
+          ? 'Not found\n'
+          : message === 'Press output exceeds size limit'
+            ? 'Press output rendering failed\n'
+            : 'Press origin unavailable\n'
       const output: CachedOutput = {
         status,
-        body: status === 404 ? 'Not found\n' : 'Press origin unavailable\n',
+        body,
         headers: {
           'content-type': 'text/plain; charset=utf-8',
           'cache-control': status === 404 ? 'public, max-age=15' : 'no-store',
@@ -293,6 +300,11 @@ export const createApp = (dependencies: Dependencies = {}) => {
   app.get('/:community/sitemap.xml', (c) => site(c.req.raw, c.req.param('community'), 'sitemap'))
 
   app.post('/internal/invalidate', async (context) => {
+    const expectedToken = process.env.PRESS_INTERNAL_TOKEN?.trim()
+    const providedToken = context.req.header('x-press-internal-token')
+    if (!expectedToken || providedToken !== expectedToken)
+      return context.json({ error: 'unauthorized' }, 401)
+
     const body = await context.req
       .json<{ community?: string }>()
       .catch((): { community?: string } => ({}))

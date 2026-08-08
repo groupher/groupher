@@ -386,7 +386,8 @@ defmodule GroupherServer.CMS.Press do
     do: "/#{community}/#{thread}/#{article.inner_id}"
 
   defp article_revision(article) do
-    article.body_hash || article.document.body_hash || DateTime.to_iso8601(article.updated_at)
+    body_revision = article.body_hash || article.document.body_hash || "no-body-hash"
+    "#{body_revision}:#{DateTime.to_iso8601(article.updated_at)}"
   end
 
   defp revision(items, config_revision) do
