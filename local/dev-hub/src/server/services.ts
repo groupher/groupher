@@ -354,7 +354,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('backend/Press'),
+      root: fromRoot('backend/press'),
       environment: 'development',
     },
     command: 'make',

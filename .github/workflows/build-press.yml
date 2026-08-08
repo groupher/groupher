@@ -3,7 +3,7 @@ name: Build backend Press
 on:
   pull_request:
     paths:
-      - 'backend/Press/**'
+      - 'backend/press/**'
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
@@ -11,7 +11,7 @@ on:
       - 'Makefile'
   push:
     paths:
-      - 'backend/Press/**'
+      - 'backend/press/**'
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
