@@ -25,6 +25,8 @@ const HUB_PORT: u16 = 4310;
 const HUB_URL: &str = "http://127.0.0.1:4310";
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
 const HEALTH_POLL_INTERVAL: Duration = Duration::from_millis(250);
+const SHUTDOWN_REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
+const PROCESS_EXIT_TIMEOUT: Duration = Duration::from_secs(2);
 const MAIN_WIDTH: f64 = 1280.0;
 const MAIN_HEIGHT: f64 = 820.0;
 const MAIN_MIN_WIDTH: f64 = 960.0;
@@ -289,13 +291,17 @@ fn terminate_owned_hub(app: &tauri::AppHandle) {
     };
 
     let process_group = -(child.id() as i32);
+    let _ = request_hub_shutdown();
+
     unsafe {
         libc::kill(process_group, libc::SIGTERM);
     }
 
-    let deadline = Instant::now() + Duration::from_secs(2);
+    let deadline = Instant::now() + PROCESS_EXIT_TIMEOUT;
     while Instant::now() < deadline {
-        if matches!(child.try_wait(), Ok(Some(_))) {
+        let _ = child.try_wait();
+        if !process_group_exists(process_group) {
+            let _ = child.wait();
             return;
         }
         thread::sleep(Duration::from_millis(50));
@@ -305,6 +311,54 @@ fn terminate_owned_hub(app: &tauri::AppHandle) {
         libc::kill(process_group, libc::SIGKILL);
     }
     let _ = child.wait();
+}
+
+fn request_hub_shutdown() -> bool {
+    let address = match (HUB_HOST, HUB_PORT).to_socket_addrs() {
+        Ok(mut addresses) => match addresses.next() {
+            Some(address) => address,
+            None => return false,
+        },
+        Err(_) => return false,
+    };
+
+    let mut stream = match TcpStream::connect_timeout(&address, Duration::from_millis(300)) {
+        Ok(stream) => stream,
+        Err(_) => return false,
+    };
+    let timeout = Some(SHUTDOWN_REQUEST_TIMEOUT);
+    let _ = stream.set_read_timeout(timeout);
+    let _ = stream.set_write_timeout(timeout);
+
+    if stream
+        .write_all(
+            b"POST /api/shutdown HTTP/1.1\r\nHost: 127.0.0.1:4310\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
+        )
+        .is_err()
+    {
+        return false;
+    }
+
+    let mut response = Vec::with_capacity(1024);
+    if stream.read_to_end(&mut response).is_err() {
+        return false;
+    }
+    is_hub_shutdown_response(&response)
+}
+
+fn is_hub_shutdown_response(response: &[u8]) -> bool {
+    let response = String::from_utf8_lossy(response);
+    let success = response.starts_with("HTTP/1.1 200") || response.starts_with("HTTP/1.0 200");
+    success && response.contains("\"shutdown\":\"complete\"")
+}
+
+fn process_group_exists(process_group: i32) -> bool {
+    let result = unsafe { libc::kill(process_group, 0) };
+    if result == 0 {
+        return true;
+    }
+
+    std::io::Error::last_os_error().raw_os_error() != Some(libc::ESRCH)
 }
 
 fn open_hub(app: &tauri::AppHandle) {
@@ -388,7 +442,7 @@ fn eval_launcher(app: &tauri::AppHandle, method: &str, message: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::is_hub_health_response;
+    use super::{is_hub_health_response, is_hub_shutdown_response};
 
     #[test]
     fn accepts_a_dev_hub_snapshot() {
@@ -411,5 +465,20 @@ mod tests {
             b"HTTP/1.1 503 Service Unavailable\r\n\r\n{\"services\":[],\"relations\":[]}";
 
         assert!(!is_hub_health_response(response));
+    }
+
+    #[test]
+    fn accepts_a_completed_shutdown_response() {
+        let response =
+            b"HTTP/1.1 200 OK\r\ncontent-type: application/json\r\n\r\n{\"shutdown\":\"complete\"}";
+
+        assert!(is_hub_shutdown_response(response));
+    }
+
+    #[test]
+    fn rejects_an_unconfirmed_shutdown_response() {
+        let response = b"HTTP/1.1 202 Accepted\r\ncontent-type: application/json\r\n\r\n{}";
+
+        assert!(!is_hub_shutdown_response(response));
     }
 }

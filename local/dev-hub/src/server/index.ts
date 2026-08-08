@@ -268,17 +268,38 @@ if (!apiOnly && process.env.DEV_HUB_OPEN_BROWSER !== 'false') {
   opener.unref()
 }
 
-let closing = false
-const shutdown = async () => {
-  if (closing) return
-  closing = true
-  processMetricsMonitor.close()
-  gitMonitor.close()
-  await manager.shutdown()
-  await metricsStore.close()
+let shutdownPreparation: Promise<void> | null = null
+let exitScheduled = false
+
+const prepareShutdown = (): Promise<void> => {
+  if (shutdownPreparation) return shutdownPreparation
+
+  shutdownPreparation = (async () => {
+    processMetricsMonitor.close()
+    gitMonitor.close()
+    await manager.shutdown()
+    await metricsStore.close()
+  })()
+  return shutdownPreparation
+}
+
+const finishShutdown = () => {
+  if (exitScheduled) return
+  exitScheduled = true
   server.close(() => process.exit(0))
   setTimeout(() => process.exit(0), 1_500).unref()
 }
+
+const shutdown = async () => {
+  await prepareShutdown()
+  finishShutdown()
+}
+
+app.post('/api/shutdown', async (context) => {
+  await prepareShutdown()
+  setTimeout(finishShutdown, 0).unref()
+  return context.json({ shutdown: 'complete' })
+})
 
 process.on('SIGINT', () => void shutdown())
 process.on('SIGTERM', () => void shutdown())
