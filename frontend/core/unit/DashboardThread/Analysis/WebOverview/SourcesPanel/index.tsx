@@ -6,13 +6,13 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_SOURCES_QUERY } from '../schema'
-import type { TAnalysisTrendSourcesSection, TAnalysisWebOverviewDemo } from '../spec'
+import type { TAnalysisTrendSourcesSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
-  demoData?: TAnalysisWebOverviewDemo
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
 type TData = {
@@ -21,7 +21,7 @@ type TData = {
 
 type TDemoDimension = 'REFERRER' | 'CHANNEL' | 'DOMAIN'
 
-const sourceItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDemoDimension) => {
+const sourceItemsFromDemo = (demoData: TAnalysisTrendsOverviewDemo, dimension: TDemoDimension) => {
   const keyByDimension = {
     REFERRER: 'referrer',
     CHANNEL: 'channel',
@@ -35,7 +35,7 @@ const sourceItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDem
 
 const demoSourcesSection = (
   dimension: TDemoDimension,
-  demoData: TAnalysisWebOverviewDemo,
+  demoData: TAnalysisTrendsOverviewDemo,
 ): TAnalysisTrendSourcesSection => ({
   status: 'ok',
   items: sourceItemsFromDemo(demoData, dimension),

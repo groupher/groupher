@@ -375,10 +375,12 @@ defmodule GroupherServer.Analysis.Web do
 
   defp error_code(:not_configured), do: "not_configured"
   defp error_code({:http_error, _status}), do: "provider_http_error"
+  defp error_code(:timeout), do: "provider_timeout"
   defp error_code(_reason), do: "provider_error"
   defp provider_status({:http_error, status}), do: Integer.to_string(status)
   defp provider_status(_reason), do: nil
   defp error_message(:not_configured), do: "web analysis is not configured"
   defp error_message({:http_error, status}), do: "umami returned HTTP #{status}"
+  defp error_message(:timeout), do: "umami analysis request timed out"
   defp error_message(reason), do: inspect(reason)
 end

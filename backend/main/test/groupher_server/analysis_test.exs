@@ -139,6 +139,46 @@ defmodule GroupherServer.Analysis.WebTest do
     end
   end
 
+  describe "Umami section concurrency" do
+    test "marks timed out section tasks as timeout errors" do
+      {results, errors} =
+        Umami.run_sections_for_test(
+          [
+            summary: fn ->
+              {:ok, :summary}
+            end,
+            slow: fn ->
+              Process.sleep(200)
+              {:ok, :slow}
+            end
+          ],
+          50
+        )
+
+      assert %{summary: :summary} = results
+      assert [slow: :timeout] = errors
+    end
+
+    test "collects timeout errors from each section independently" do
+      {_results, errors} =
+        Umami.run_sections_for_test(
+          [
+            first: fn ->
+              Process.sleep(200)
+              {:ok, :first}
+            end,
+            second: fn ->
+              Process.sleep(200)
+              {:ok, :second}
+            end
+          ],
+          50
+        )
+
+      assert [first: :timeout, second: :timeout] = errors
+    end
+  end
+
   describe "Umami stats projection" do
     test "uses the provider comparison payload without a second stats query" do
       {current, previous} =

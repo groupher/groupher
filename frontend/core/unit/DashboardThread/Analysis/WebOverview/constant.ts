@@ -1,4 +1,8 @@
-import type { TAnalysisTrendsOverview, TAnalysisWebMetric, TAnalysisWebOverviewDemo } from './spec'
+import type {
+  TAnalysisTrendsOverview,
+  TAnalysisTrendsOverviewDemo,
+  TAnalysisWebMetric,
+} from './spec'
 import type { TSummaryMetricSpec } from './spec'
 
 export const CHART_SIZE = {
@@ -86,10 +90,9 @@ export const DEMO_POINTS: TAnalysisTrendsOverview['chart']['points'] = [
   { bucket: 'day', timestamp: demoTimestamp(5, 30), visits: 96, views: 198 },
 ]
 
-export const DEMO_OVERVIEW: TAnalysisWebOverviewDemo = {
+export const DEMO_OVERVIEW: TAnalysisTrendsOverviewDemo = {
   status: 'ok',
   provider: 'demo',
-  pathScope: '/home',
   range: {
     days: 90,
     startAt: demoTimestamp(3, 1),

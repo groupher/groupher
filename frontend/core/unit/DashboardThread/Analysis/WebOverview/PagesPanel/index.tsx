@@ -6,13 +6,13 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_PAGES_QUERY } from '../schema'
-import type { TAnalysisTrendPagesSection, TAnalysisWebOverviewDemo } from '../spec'
+import type { TAnalysisTrendPagesSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
-  demoData?: TAnalysisWebOverviewDemo
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
 type TData = {
@@ -21,7 +21,7 @@ type TData = {
 
 type TDemoDimension = 'PATH' | 'URL' | 'ENTRY' | 'EXIT' | 'TITLE' | 'QUERY'
 
-const pageItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDemoDimension) => {
+const pageItemsFromDemo = (demoData: TAnalysisTrendsOverviewDemo, dimension: TDemoDimension) => {
   const keyByDimension = {
     PATH: 'path',
     URL: 'url',
@@ -38,7 +38,7 @@ const pageItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDemoD
 
 const demoPagesSection = (
   dimension: TDemoDimension,
-  demoData: TAnalysisWebOverviewDemo,
+  demoData: TAnalysisTrendsOverviewDemo,
 ): TAnalysisTrendPagesSection => {
   return {
     status: 'ok',

@@ -11,7 +11,7 @@ type TProps = {
 export default function TrendRoutePage({ overview }: TProps) {
   return (
     <TrendLayout>
-      <WebOverview data={overview.data} />
+      <WebOverview community={overview.community} data={overview.data} />
     </TrendLayout>
   )
 }

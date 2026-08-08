@@ -115,7 +115,6 @@ export type TAnalysisTrendTrafficSection = {
 
 // Temporary development fixture shape. Production Trends receives only the
 // SSR overview above; lower panels load their own section DTOs after hydration.
-export type TAnalysisWebOverview = TAnalysisTrendsOverview & Record<string, unknown>
 
 export type TAnalysisDemoPages = {
   path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
@@ -159,7 +158,7 @@ export type TAnalysisDemoTraffic = {
   error: TAnalysisWebError | null
 }
 
-export type TAnalysisWebOverviewDemo = TAnalysisWebOverview & {
+export type TAnalysisTrendsOverviewDemo = TAnalysisTrendsOverview & {
   pages: TAnalysisDemoPages
   sources: TAnalysisDemoSources
   environment: TAnalysisDemoEnvironment

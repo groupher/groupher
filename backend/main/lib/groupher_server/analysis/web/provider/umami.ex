@@ -168,25 +168,64 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     }
   end
 
-  defp run_sections(sections) do
+  if Mix.env() == :test do
+    def run_sections_for_test(sections, timeout \\ (@config.timeout + 1_000)),
+      do: run_sections(sections, timeout)
+  end
+
+  defp run_sections(sections, timeout \\ (@config.timeout + 1_000)) do
+
     sections
-    |> Task.async_stream(
-      fn {section, fun} -> {section, fun.()} end,
-      max_concurrency: @config.concurrency,
-      timeout: @config.timeout + 1_000,
-      ordered: false
-    )
+    |> Enum.map(fn {section, fun} ->
+      {section, Task.async(fn -> run_section(fun) end)}
+    end)
+    |> Enum.map(fn {section, task} ->
+      result =
+        case Task.yield(task, timeout) do
+          {:exit, :timeout} ->
+            :timeout
+
+          nil ->
+            Task.shutdown(task, :brutal_kill)
+            :timeout
+
+          other_result ->
+            other_result
+        end
+
+      {section, task, result}
+    end)
     |> Enum.reduce({%{}, []}, fn
-      {:ok, {section, {:ok, value}}}, {results, errors} ->
+      {section, _task, {:ok, {:ok, value}}}, {results, errors} ->
         {Map.put(results, section, value), errors}
 
-      {:ok, {section, {:error, reason}}}, {results, errors} ->
+      {section, _task, {:ok, {:error, reason}}}, {results, errors} ->
         {results, [{section, reason} | errors]}
 
-      {:exit, reason}, {results, errors} ->
-        {results, [{:overview, reason} | errors]}
+      {section, _task, :timeout}, {results, errors} ->
+        {results, [{section, :timeout} | errors]}
+
+      {section, _task, nil}, {results, errors} ->
+        {results, [{section, :timeout} | errors]}
+
+      {section, _task, {:exit, reason}}, {results, errors} ->
+        {results, [{section, reason} | errors]}
+
+      {section, _task, unexpected}, {results, errors} ->
+        {results, [{section, {:unexpected_task_result, unexpected}} | errors]}
     end)
     |> then(fn {results, errors} -> {results, Enum.reverse(errors)} end)
+  end
+
+  defp run_section(fun) do
+    try do
+      fun.()
+    rescue
+      error -> {:error, {:exception, Exception.message(error)}}
+    catch
+      :exit, reason -> {:error, {:exit, reason}}
+      _kind, reason -> {:error, {:throw, reason}}
+    end
   end
 
   defp stats(%{client: client, website_id: website_id}, range) do

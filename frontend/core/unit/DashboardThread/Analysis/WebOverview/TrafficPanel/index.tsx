@@ -11,20 +11,22 @@ import {
 } from '../constant'
 import { hourLabel } from '../helper'
 import { ANALYSIS_TREND_TRAFFIC_QUERY } from '../schema'
-import type { TAnalysisTrendTrafficSection, TAnalysisWebOverviewDemo } from '../spec'
+import type { TAnalysisTrendTrafficSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
-  demoData?: TAnalysisWebOverviewDemo
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
 type TData = {
   analysisTrendTraffic: TAnalysisTrendTrafficSection | null
 }
 
-const demoTrafficSection = (demoData: TAnalysisWebOverviewDemo): TAnalysisTrendTrafficSection => ({
+const demoTrafficSection = (
+  demoData: TAnalysisTrendsOverviewDemo,
+): TAnalysisTrendTrafficSection => ({
   status: demoData.traffic.status,
   timezone: demoData.traffic.timezone,
   cells: demoData.traffic.cells ?? [],

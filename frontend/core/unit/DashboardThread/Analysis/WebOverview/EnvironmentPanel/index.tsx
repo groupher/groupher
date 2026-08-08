@@ -6,13 +6,13 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_ENVIRONMENT_QUERY } from '../schema'
-import type { TAnalysisTrendEnvironmentSection, TAnalysisWebOverviewDemo } from '../spec'
+import type { TAnalysisTrendEnvironmentSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
-  demoData?: TAnalysisWebOverviewDemo
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
 type TData = {
@@ -22,7 +22,7 @@ type TData = {
 type TDemoDimension = 'BROWSER' | 'OS' | 'DEVICE' | 'LANGUAGE' | 'SCREEN'
 
 const environmentItemsFromDemo = (
-  demoData: TAnalysisWebOverviewDemo,
+  demoData: TAnalysisTrendsOverviewDemo,
   dimension: TDemoDimension,
 ) => {
   const keyByDimension = {
@@ -40,7 +40,7 @@ const environmentItemsFromDemo = (
 
 const demoEnvironmentSection = (
   dimension: TDemoDimension,
-  demoData: TAnalysisWebOverviewDemo,
+  demoData: TAnalysisTrendsOverviewDemo,
 ): TAnalysisTrendEnvironmentSection => ({
   status: 'ok',
   items: environmentItemsFromDemo(demoData, dimension),

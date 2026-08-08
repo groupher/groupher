@@ -6,13 +6,13 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_LOCATION_QUERY } from '../schema'
-import type { TAnalysisTrendLocationSection, TAnalysisWebOverviewDemo } from '../spec'
+import type { TAnalysisTrendLocationSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
-  demoData?: TAnalysisWebOverviewDemo
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
 type TData = {
@@ -21,7 +21,10 @@ type TData = {
 
 type TDemoDimension = 'COUNTRY' | 'REGION' | 'CITY'
 
-const locationItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDemoDimension) => {
+const locationItemsFromDemo = (
+  demoData: TAnalysisTrendsOverviewDemo,
+  dimension: TDemoDimension,
+) => {
   const keyByDimension = {
     COUNTRY: 'country',
     REGION: 'region',
@@ -35,7 +38,7 @@ const locationItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TD
 
 const demoLocationSection = (
   dimension: TDemoDimension,
-  demoData: TAnalysisWebOverviewDemo,
+  demoData: TAnalysisTrendsOverviewDemo,
 ): TAnalysisTrendLocationSection => ({
   status: 'ok',
   items: locationItemsFromDemo(demoData, dimension),

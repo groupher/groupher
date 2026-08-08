@@ -6,9 +6,8 @@ if secret = System.get_env("GROUPHER_SERVER_TRUST_SECRET") do
   config :groupher_server, :server_trust, secret: secret
 end
 
-if System.get_env("WEB_ANALYSIS_WEBSITE_ID") do
+if System.get_env("WEB_ANALYSIS_API_TOKEN") do
   config :groupher_server, :web_analysis,
-    website_id: System.get_env("WEB_ANALYSIS_WEBSITE_ID"),
     api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
 end
 
