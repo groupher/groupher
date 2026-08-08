@@ -669,8 +669,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:markdown_toc, :json)
     field(:thumbnail, :json)
     field(:html, :string)
-    field(:xml, :string)
-    field(:rss, :string)
     field(:plain_text, :string)
     field(:digest, :string)
     field(:body_hash, :string)

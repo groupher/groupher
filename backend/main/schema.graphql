@@ -1970,8 +1970,6 @@ type ArticleDocument {
   markdownToc: Json
   thumbnail: Json
   html: String
-  xml: String
-  rss: String
   plainText: String
   digest: String
   bodyHash: String

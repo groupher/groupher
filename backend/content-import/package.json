@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@babel/parser": "8.0.4",
+    "@groupher/artiment-publisher": "1.0.0",
     "@groupher/contracts": "1.0.0",
     "@groupher/rich-editor": "0.0.35",
     "@groupher/service": "1.0.0",
@@ -29,7 +30,6 @@
     "micromark-extension-mdxjs": "3.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "sanitize-html": "^2.17.3",
     "tar-stream": "3.2.0",
     "undici": "^8.10.0",
     "workflow": "4.8.0",
@@ -37,7 +37,6 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "@types/sanitize-html": "^2.16.1",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "rimraf": "^6.1.3",

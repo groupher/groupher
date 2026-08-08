@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./health": "./src/health.ts",
-    "./http": "./src/http.ts"
+    "./health": "./health/index.ts",
+    "./http": "./http/index.ts"
   },
   "scripts": {
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
-    "lint": "../../node_modules/.bin/oxlint src --threads=1",
-    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.json *.md",
-    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.json *.md",
+    "lint": "../../node_modules/.bin/oxlint health http --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json health http *.json *.md",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check health http *.json *.md",
     "build": "echo 'skip build'"
   },
   "dependencies": {

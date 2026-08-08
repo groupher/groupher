@@ -7,11 +7,14 @@
  *
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
-import { ArtimentPublisherError } from './error'
+import {
+  ARTIMENT_MAX_INPUT_BYTES,
+  ArtimentPublisherError,
+  publishArtiment,
+  type TArtimentPublisherErrorPayload,
+} from '@groupher/artiment-publisher'
+
 import { updateDocDraftWithBodyBag, type TUpdateDocDraftVariables } from './graphql'
-import { publishArtiment } from './index'
-import type { TArtimentPublisherErrorPayload } from './types'
-import { ARTIMENT_MAX_INPUT_BYTES } from './validate'
 
 type TRequestPayload = {
   action?: unknown

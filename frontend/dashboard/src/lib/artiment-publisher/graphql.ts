@@ -1,9 +1,7 @@
+import { ArtimentPublisherError, type TArtimentBodyBag } from '@groupher/artiment-publisher'
 import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
-
-import { ArtimentPublisherError } from './error'
-import type { TArtimentBodyBag } from './types'
 
 export type TUpdateDocDraftVariables = {
   community: string

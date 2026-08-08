@@ -1,0 +1,31 @@
+{
+  "name": "@groupher/artiment-publisher",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
+    "lint": "../../node_modules/.bin/oxlint . --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json *.ts *.json *.md *.mts",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check *.ts *.json *.md *.mts",
+    "build": "echo 'skip build'"
+  },
+  "dependencies": {
+    "@groupher/rich-editor": "0.0.35",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "sanitize-html": "^2.17.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/sanitize-html": "^2.16.1",
+    "vitest": "^4.1.10"
+  },
+  "lint-staged": {
+    "**/*.ts": "tsc-files --noEmit --project ./tsconfig.json"
+  }
+}

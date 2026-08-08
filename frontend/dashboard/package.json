@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@babel/parser": "8.0.4",
+    "@groupher/artiment-publisher": "1.0.0",
     "@groupher/frontend-core": "1.0.0",
     "@vercel/blob": "2.6.1",
     "files-sdk": "2.2.3",

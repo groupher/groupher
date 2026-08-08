@@ -2530,6 +2530,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@groupher/artiment-publisher@npm:1.0.0, @groupher/artiment-publisher@workspace:packages/artiment-publisher":
+  version: 0.0.0-use.local
+  resolution: "@groupher/artiment-publisher@workspace:packages/artiment-publisher"
+  dependencies:
+    "@groupher/rich-editor": "npm:0.0.35"
+    "@types/node": "npm:^24.0.0"
+    "@types/sanitize-html": "npm:^2.16.1"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    sanitize-html: "npm:^2.17.3"
+    vitest: "npm:^4.1.10"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/assets-hub@workspace:backend/assets-hub":
   version: 0.0.0-use.local
   resolution: "@groupher/assets-hub@workspace:backend/assets-hub"
@@ -2572,12 +2586,12 @@ __metadata:
   resolution: "@groupher/backend-content-import@workspace:backend/content-import"
   dependencies:
     "@babel/parser": "npm:8.0.4"
+    "@groupher/artiment-publisher": "npm:1.0.0"
     "@groupher/contracts": "npm:1.0.0"
     "@groupher/rich-editor": "npm:0.0.35"
     "@groupher/service": "npm:1.0.0"
     "@hono/node-server": "npm:^2.0.11"
     "@types/node": "npm:^24.0.0"
-    "@types/sanitize-html": "npm:^2.16.1"
     cross-env: "npm:^10.1.0"
     dotenv: "npm:^17.4.2"
     esbuild: "npm:^0.28.1"
@@ -2590,7 +2604,6 @@ __metadata:
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     rimraf: "npm:^6.1.3"
-    sanitize-html: "npm:^2.17.3"
     tar-stream: "npm:3.2.0"
     tsx: "npm:^4.23.5"
     undici: "npm:^8.10.0"
@@ -2642,6 +2655,7 @@ __metadata:
   resolution: "@groupher/frontend-dashboard@workspace:frontend/dashboard"
   dependencies:
     "@babel/parser": "npm:8.0.4"
+    "@groupher/artiment-publisher": "npm:1.0.0"
     "@groupher/frontend-core": "npm:1.0.0"
     "@types/tar-stream": "npm:^3"
     "@vercel/blob": "npm:2.6.1"

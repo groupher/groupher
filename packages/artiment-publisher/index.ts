@@ -54,4 +54,15 @@ export const publishArtiment = async (value: unknown): Promise<TArtimentBodyBag>
   }
 }
 
-export type { TArtimentBodyBag } from './types'
+export { ArtimentPublisherError } from './error'
+export type {
+  TArtimentBodyBag,
+  TArtimentPublisherErrorCode,
+  TArtimentPublisherErrorPayload,
+} from './types'
+export {
+  ARTIMENT_MAX_INPUT_BYTES,
+  ARTIMENT_MAX_NODE_COUNT,
+  ARTIMENT_MAX_VALUE_DEPTH,
+  assertValidArtimentValue,
+} from './validate'

@@ -23,8 +23,6 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
           markdown
           markdownToc
           html
-          xml
-          rss
         }
       }
     }
@@ -111,8 +109,6 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
           markdown
           markdownToc
           html
-          xml
-          rss
         }
       }
     }
