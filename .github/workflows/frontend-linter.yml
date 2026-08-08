@@ -3,7 +3,7 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
@@ -13,7 +13,7 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
@@ -46,6 +46,8 @@ jobs:
               - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             dashboard:
               - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+            dash:
+              - 'frontend/dash/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             gateway:
@@ -64,6 +66,7 @@ jobs:
         env:
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
+          DASH_CHANGED: ${{ steps.filter.outputs.dash }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
           GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
           SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
@@ -86,6 +89,10 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
             add_target '{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}'
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$DASH_CHANGED" = "true" ]; then
+            add_target '{"target":"dash","workspace":"@groupher/frontend-dash"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then

@@ -5,6 +5,7 @@ on:
     paths:
       - 'frontend/main/**'
       - 'frontend/dashboard/**'
+      - 'frontend/dash/**'
       - 'frontend/landing/**'
       - 'frontend/core/**'
       - 'frontend/mock-server/**'
@@ -16,6 +17,7 @@ on:
     paths:
       - 'frontend/main/**'
       - 'frontend/dashboard/**'
+      - 'frontend/dash/**'
       - 'frontend/landing/**'
       - 'frontend/core/**'
       - 'frontend/mock-server/**'
@@ -34,6 +36,7 @@ jobs:
     outputs:
       main: ${{ steps.filter.outputs.main }}
       dashboard: ${{ steps.filter.outputs.dashboard }}
+      dash: ${{ steps.filter.outputs.dash }}
       landing: ${{ steps.filter.outputs.landing }}
       shared: ${{ steps.filter.outputs.shared }}
     steps:
@@ -46,6 +49,8 @@ jobs:
               - 'frontend/main/**'
             dashboard:
               - 'frontend/dashboard/**'
+            dash:
+              - 'frontend/dash/**'
             landing:
               - 'frontend/landing/**'
             shared:
@@ -121,6 +126,41 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report-dashboard
+          path: |
+            playwright-report
+            test-results
+
+  e2e-dash:
+    name: playwright (dash)
+    needs: changes
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    timeout-minutes: 30
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dash == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Run e2e
+        env:
+          CI: true
+        run: yarn test:e2e:dash
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-dash
           path: |
             playwright-report
             test-results

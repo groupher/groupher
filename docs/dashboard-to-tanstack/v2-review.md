@@ -48,6 +48,9 @@ guarantees specified by V2.
 - Theme and TimeAgo use the same request seed for SSR and first hydration.
 - Shared aliases come from `frontend/tsconfig.paths.json`; application-local
   aliases remain local.
+- GitHub Actions treats Dash as a first-class application: production build,
+  type-check, Oxlint, Oxfmt, React Doctor, and a dedicated Playwright overview
+  smoke test run for Dash changes; shared Core changes also select Dash.
 
 ## Local acceptance evidence
 
@@ -76,6 +79,11 @@ were exercised. The external mock image
 `https://assets.groupher.com/communities/groupher-alpha.png` may be unavailable
 on a local network; it is fixture/environment data, not an application import
 or routing dependency.
+
+The repository Playwright suite also has an isolated TanStack Dash target. It
+starts mock GraphQL plus the Dash Vite server and asserts that
+`/home/dash/overview` renders the shared Dashboard overview title. This prevents
+the CI matrix from appearing green while silently omitting the new application.
 
 ## Explicit blockers and follow-up contract
 
