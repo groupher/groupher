@@ -58,7 +58,6 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     mediaReports,
     thirdPartyAnalytics,
     enabledThirdPartyAnalytics,
-    umamiWebsiteId,
   } = dashboard
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
@@ -76,7 +75,6 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     mediaReports,
     thirdPartyAnalytics,
     enabledThirdPartyAnalytics,
-    umamiWebsiteId,
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {

@@ -83,8 +83,7 @@ export const isLandingStaticRoute = (pathname: string): boolean =>
 export const isDashboardStaticRoute = (pathname: string): boolean =>
   pathname.startsWith(DASHBOARD_STATIC_SIGN)
 
-const isDashboardNextRoute = (pathname: string): boolean =>
-  pathname.startsWith(DASHBOARD_NEXT_SIGN)
+const isDashboardNextRoute = (pathname: string): boolean => pathname.startsWith(DASHBOARD_NEXT_SIGN)
 
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
   if (isAppHost(host, APP.DASHBOARD)) {

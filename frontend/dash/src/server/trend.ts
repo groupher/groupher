@@ -1,20 +1,20 @@
 import { createServerFn } from '@tanstack/react-start'
 
 import {
-  ANALYSIS_TRENDS_OVERVIEW_QUERY,
+  ANALYSIS_WEB_OVERVIEW_QUERY,
   unavailableOverview,
 } from '~/unit/DashboardThread/Analysis/WebOverview/server'
-import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
+import type { TAnalysisWebOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 
-type TAnalysisTrendsQueryData = {
-  analysisTrendsOverview: TAnalysisTrendsOverview | null
+type TAnalysisWebQueryData = {
+  analysisWebOverview: TAnalysisWebOverview | null
 }
 
 export type TDashTrendOverview = {
   community: string
-  data: TAnalysisTrendsOverview
+  data: TAnalysisWebOverview
 }
 
 export const loadTrendOverview = createServerFn({ method: 'GET', strict: false })
@@ -24,8 +24,8 @@ export const loadTrendOverview = createServerFn({ method: 'GET', strict: false }
     setPrivateCacheHeader()
 
     try {
-      const result = await fetchGraphQL<TAnalysisTrendsQueryData>(
-        ANALYSIS_TRENDS_OVERVIEW_QUERY,
+      const result = await fetchGraphQL<TAnalysisWebQueryData>(
+        ANALYSIS_WEB_OVERVIEW_QUERY,
         { community: data.community, days: 7 },
         token,
       )
@@ -34,8 +34,9 @@ export const loadTrendOverview = createServerFn({ method: 'GET', strict: false }
       return {
         community: data.community,
         data:
-          result.data?.analysisTrendsOverview ||
+          result.data?.analysisWebOverview ||
           unavailableOverview(
+            data.community,
             errors.map((error) => ({
               code: 'graphql_error',
               message: error.message || 'GraphQL request failed',
@@ -47,7 +48,7 @@ export const loadTrendOverview = createServerFn({ method: 'GET', strict: false }
     } catch (error) {
       return {
         community: data.community,
-        data: unavailableOverview([
+        data: unavailableOverview(data.community, [
           {
             code: 'graphql_error',
             message: error instanceof Error ? error.message : 'GraphQL request failed',

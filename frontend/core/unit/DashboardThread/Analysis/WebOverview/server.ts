@@ -1,10 +1,11 @@
-import type { TAnalysisTrendsOverview, TAnalysisWebMetric } from './spec'
+import type { TAnalysisWebMetric, TAnalysisWebOverview } from './spec'
 
-export const ANALYSIS_TRENDS_OVERVIEW_QUERY = `
-  query AnalysisTrendsOverview($community: String!, $days: Int) {
-    analysisTrendsOverview(community: $community, days: $days) {
+export const ANALYSIS_WEB_OVERVIEW_QUERY = `
+  query AnalysisWebOverview($community: String!, $days: Int) {
+    analysisWebOverview(community: $community, days: $days) {
       status
       provider
+      pathScope
       range { days startAt endAt bucket }
       summary {
         pageviews { value previousValue changeRate }
@@ -13,7 +14,45 @@ export const ANALYSIS_TRENDS_OVERVIEW_QUERY = `
         bounceRate { value previousValue changeRate }
         visitDuration { value previousValue changeRate }
       }
-      chart { bucket points { timestamp visits views } }
+      timeseries {
+        status
+        bucket
+        points { bucket timestamp visitors visits views }
+      }
+      pages {
+        status
+        path { value label metrics { visitors visits views bounceRate visitDuration } }
+        url { value label metrics { visitors visits views bounceRate visitDuration } }
+        entry { value label metrics { visitors visits views } }
+        exit { value label metrics { visitors visits views } }
+        title { value label metrics { visitors visits views bounceRate visitDuration } }
+        query { value label metrics { visitors visits views } }
+      }
+      sources {
+        status
+        referrer { value label metrics { visitors visits views } }
+        channel { value label metrics { visitors visits views } }
+        domain { value label metrics { visitors visits views } }
+      }
+      environment {
+        status
+        browser { value label metrics { visitors visits views percentage } }
+        os { value label metrics { visitors visits views percentage } }
+        device { value label metrics { visitors visits views percentage } }
+        language { value label metrics { visitors visits views percentage } }
+        screen { value label metrics { visitors visits views percentage } }
+      }
+      location {
+        status
+        country { value label code metrics { visitors visits views percentage } }
+        region { value label code metrics { visitors visits views percentage } }
+        city { value label code metrics { visitors visits views percentage } }
+      }
+      traffic {
+        status
+        timezone
+        cells { weekday hour visitors visits views }
+      }
       errors { code message section providerStatus }
     }
   }
@@ -26,10 +65,12 @@ const unavailableMetric = (): TAnalysisWebMetric => ({
 })
 
 export const unavailableOverview = (
-  errors: TAnalysisTrendsOverview['errors'] = [],
-): TAnalysisTrendsOverview => ({
+  community: string,
+  errors: TAnalysisWebOverview['errors'] = [],
+): TAnalysisWebOverview => ({
   status: 'unavailable',
   provider: 'umami',
+  pathScope: `/${community}`,
   range: { days: 7, startAt: '0', endAt: '0', bucket: 'day' },
   summary: {
     pageviews: unavailableMetric(),
@@ -38,6 +79,18 @@ export const unavailableOverview = (
     bounceRate: unavailableMetric(),
     visitDuration: unavailableMetric(),
   },
-  chart: { bucket: 'day', points: [] },
+  timeseries: { status: 'unavailable', bucket: 'day', points: [] },
+  pages: { status: 'unavailable', path: [], url: [], entry: [], exit: [], title: [], query: [] },
+  sources: { status: 'unavailable', referrer: [], channel: [], domain: [] },
+  environment: {
+    status: 'unavailable',
+    browser: [],
+    os: [],
+    device: [],
+    language: [],
+    screen: [],
+  },
+  location: { status: 'unavailable', country: [], region: [], city: [] },
+  traffic: { status: 'unavailable', timezone: 'UTC', cells: [] },
   errors,
 })
