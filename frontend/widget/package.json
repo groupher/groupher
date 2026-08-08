@@ -1,0 +1,26 @@
+{
+  "name": "@groupher/widget",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && vite build && node scripts/verify-build.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json src test vite.config.ts",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check src test vite.config.ts",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "verify:build": "node scripts/verify-build.mjs"
+  },
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "jsdom": "^29.0.2",
+    "typescript": "7.0.2",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Groupher Widget host demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #f1f5f9;
+        color: #312e81;
+        font-family: Georgia, serif;
+      }
+
+      button {
+        border: 4px dashed #e11d48;
+        border-radius: 0;
+        background: #fef2f2;
+        color: #be123c;
+        font: inherit;
+      }
+
+      main {
+        width: min(720px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 96px 0;
+      }
+
+      .demo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .demo-actions button {
+        min-height: 44px;
+        padding: 8px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>External customer page</p>
+      <h1>Host CSS should not leak into Groupher Widget</h1>
+      <p>
+        This page deliberately uses global button and typography styles. The embedded UI remains
+        isolated inside its ShadowRoot.
+      </p>
+      <div class="demo-actions">
+        <button type="button" data-widget-view="posts">Open Posts</button>
+        <button type="button" data-widget-view="changelog">Open Changelog</button>
+        <button type="button" data-widget-view="docs">Open Docs</button>
+        <button type="button" data-widget-view="feedback">Open Feedback</button>
+        <button type="button" data-widget-command="shutdown">Shutdown</button>
+        <button type="button" data-widget-command="boot">Boot again</button>
+      </div>
+    </main>
+
+    <script
+      async
+      src="../v1.js"
+      data-widget-key="widget_public_home_demo"
+      data-position="bottom-right"
+      data-mock="true"
+    ></script>
+    <script>
+      window.GroupherWidget =
+        window.GroupherWidget ||
+        function () {
+          ;(window.GroupherWidget.q = window.GroupherWidget.q || []).push(arguments)
+        }
+
+      document.querySelectorAll('[data-widget-view]').forEach((button) => {
+        button.addEventListener('click', () => {
+          window.GroupherWidget('open', { view: button.dataset.widgetView })
+        })
+      })
+
+      document.querySelector('[data-widget-command="shutdown"]').addEventListener('click', () => {
+        window.GroupherWidget('shutdown')
+      })
+
+      document.querySelector('[data-widget-command="boot"]').addEventListener('click', () => {
+        window.GroupherWidget('boot', { widgetKey: 'widget_public_home_demo', mock: true })
+      })
+    </script>
+  </body>
+</html>
