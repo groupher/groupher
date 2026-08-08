@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   use Accessible
 
   import Ecto.Changeset
-    alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Model.ArticleDocumentAssetRef
   alias Helper.Constant.DBPrefix
 
