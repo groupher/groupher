@@ -5,7 +5,7 @@ import Script from 'next/script'
 import '@groupher/rich-editor/style.css'
 
 import RootLayoutShell from '~/shell/RootLayoutShell'
-import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '~/utils/ssr/script'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
 import NextPlatformBoundary from '../platform/NextPlatformBoundary'
 import WebAnalysisScript from './WebAnalysisScript'
@@ -24,7 +24,7 @@ export default function Layout({ children }) {
         id='groupher-pre-paint'
         strategy='beforeInteractive'
         dangerouslySetInnerHTML={{
-          __html: `${prePaintThemeDetectScript()}\n${prePaintRuntimeSeedScript()}`,
+          __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
         }}
       />
       <NextPlatformBoundary>

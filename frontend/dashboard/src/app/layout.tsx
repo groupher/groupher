@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 
 import RootLayoutShell from '~/shell/RootLayoutShell'
-import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '~/utils/ssr/script'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
 import '@groupher/rich-editor/style.css'
 import '~/tailwind/global.css'
@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         id='groupher-pre-paint'
         strategy='beforeInteractive'
         dangerouslySetInnerHTML={{
-          __html: `${prePaintThemeDetectScript()}\n${prePaintRuntimeSeedScript()}`,
+          __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
         }}
       />
       <NextPlatformBoundary>

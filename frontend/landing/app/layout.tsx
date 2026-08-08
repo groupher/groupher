@@ -13,7 +13,7 @@ import landingMessages from '~/i18n/en/landing'
 import { I18N_NS } from '~/i18n/namespaces'
 import RootLayoutShell from '~/shell/RootLayoutShell'
 import MainProvider from '~/stores/provider'
-import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '~/utils/ssr/script'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
 import NextPlatformProvider from './platform/NextPlatformProvider'
 import Main from './widgets/Main'
@@ -46,7 +46,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
         id='groupher-pre-paint'
         strategy='beforeInteractive'
         dangerouslySetInnerHTML={{
-          __html: `${prePaintThemeDetectScript()}\n${prePaintRuntimeSeedScript()}`,
+          __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
         }}
       />
       <NextPlatformProvider>
