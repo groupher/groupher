@@ -47,7 +47,7 @@ vi.mock('../../../SectionLabel', () => ({
   ),
 }))
 
-vi.mock('~/widgets/CheckLabel', () => ({
+vi.mock('~/ui/CheckLabel', () => ({
   default: ({ title, active }: { title: string; active: boolean }) => (
     <span data-active={active}>{title}</span>
   ),

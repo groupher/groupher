@@ -1,10 +1,10 @@
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
-import { usePathname } from 'next/navigation'
 import type { FC, KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { usePathname } from '~/platform'
 import type { TDocPublicTree, TDocPublicTreeGroup, TDocPublicTreeNavigationNode } from '~/spec'
-import ArticleToc from '~/widgets/ArticleToc'
+import ArticleToc from '~/ui/ArticleToc'
 
 import Tabs from '../Tabs'
 import Tree from '../Tree'

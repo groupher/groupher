@@ -1,4 +1,4 @@
-import RangeInput from '~/widgets/RangeInput'
+import RangeInput from '~/ui/RangeInput'
 
 import { IMAGE_SIZE_RANGE } from '../../../../constant'
 import { useImageDraftContext } from '../../../../imageDraftContext'

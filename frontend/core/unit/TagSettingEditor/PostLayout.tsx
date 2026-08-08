@@ -3,6 +3,7 @@ import { type FC, memo } from 'react'
 import { POST_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import type { TPostLayout } from '~/spec'
+import CheckLabel from '~/ui/CheckLabel'
 import {
   ClassicPreview,
   CoverPreview,
@@ -10,7 +11,6 @@ import {
   MinimalPreview,
   ThreeColumnPreview,
 } from '~/unit/DashboardThread/Appearance/PostLayout'
-import CheckLabel from '~/widgets/CheckLabel'
 
 import useSalon from './salon/post_layout'
 

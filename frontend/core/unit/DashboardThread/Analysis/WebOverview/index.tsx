@@ -22,7 +22,9 @@ type TProps = {
 export default function WebOverview({ community, data }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-  const displayData = shouldUseDemoData(data) ? DEMO_OVERVIEW : data
+  const isDemoData = shouldUseDemoData(data)
+  const displayData = isDemoData ? DEMO_OVERVIEW : data
+  const demoData = isDemoData ? DEMO_OVERVIEW : undefined
 
   return (
     <div className={s.wrapper}>
@@ -38,22 +40,26 @@ export default function WebOverview({ community, data }: TProps) {
         />
       </section>
 
-      {data.errors.length > 0 && (
+      {!isDemoData && data.errors.length > 0 && (
         <p className={s.error}>{data.errors[0]?.message || t(WEB_OVERVIEW_TRANS.unavailable)}</p>
       )}
 
       <section className={s.panels}>
         <div className={s.panelGrid}>
-          <PagesPanel community={community} days={displayData.range.days} />
-          <SourcesPanel community={community} days={displayData.range.days} />
+          <PagesPanel community={community} days={displayData.range.days} demoData={demoData} />
+          <SourcesPanel community={community} days={displayData.range.days} demoData={demoData} />
         </div>
 
         <div className={s.panelGrid}>
-          <EnvironmentPanel community={community} days={displayData.range.days} />
-          <LocationPanel community={community} days={displayData.range.days} />
+          <EnvironmentPanel
+            community={community}
+            days={displayData.range.days}
+            demoData={demoData}
+          />
+          <LocationPanel community={community} days={displayData.range.days} demoData={demoData} />
         </div>
 
-        <TrafficPanel community={community} days={displayData.range.days} />
+        <TrafficPanel community={community} days={displayData.range.days} demoData={demoData} />
       </section>
     </div>
   )

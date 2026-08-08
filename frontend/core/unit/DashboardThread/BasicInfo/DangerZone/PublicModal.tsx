@@ -2,15 +2,15 @@ import { type FC, useState } from 'react'
 
 import VIEW from '~/const/view'
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
-import Input from '~/widgets/Input'
-import Modal from '~/widgets/Modal'
-import NoticeBar from '~/widgets/NoticeBar'
-import Tabs from '~/widgets/Switcher/Tabs'
+import Button from '~/ui/Buttons/Button'
+import Input from '~/ui/Input'
+import Modal from '~/ui/Modal'
+import NoticeBar from '~/ui/NoticeBar'
+import Tabs from '~/ui/Switcher/Tabs'
 
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../salon/danger_zone/modal'
-// import from '~/widgets/Alert'
+// import from '~/ui/Alert'
 import List from './List'
 
 type TProps = {

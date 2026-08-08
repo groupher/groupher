@@ -3,8 +3,8 @@ import { CSS } from '@dnd-kit/utilities'
 import { type FC, type KeyboardEvent, useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import IconHub from '~/ui/IconHub'
 import SavingBar from '~/unit/DashboardThread/SavingBar'
-import IconHub from '~/widgets/IconHub'
 
 import type { TSideTreeTab } from '../../SideTree/spec'
 import useSalon, { cn } from './salon'

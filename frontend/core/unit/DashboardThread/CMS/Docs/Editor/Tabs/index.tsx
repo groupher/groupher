@@ -1,8 +1,8 @@
 import { type FC, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import IconHub from '~/widgets/IconHub'
-import SwitcherTabs from '~/widgets/Switcher/Tabs'
+import IconHub from '~/ui/IconHub'
+import SwitcherTabs from '~/ui/Switcher/Tabs'
 
 import type { TSideTreeController } from '../SideTree/spec'
 import useSalon from './salon'

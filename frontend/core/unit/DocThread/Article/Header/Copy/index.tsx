@@ -1,6 +1,6 @@
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import CopySVG from '~/icons/Copy'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { COPY_ACTIONS } from '../constant'
 import MenuItem from '../MenuItem'

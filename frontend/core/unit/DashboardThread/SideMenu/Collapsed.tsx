@@ -1,12 +1,9 @@
 'use client'
 
-import Link from 'next/link'
-
-import { DSB_ROUTE } from '~/const/route'
 import { cnMerge } from '~/css'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
+import { dsbRoutes, usePlatform } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import { MENU_VIEW } from '../constant'
@@ -36,11 +33,10 @@ export default function Collapsed({
 }: TProps) {
   const { slug: community } = useCommunity()
   const { subTab } = useDsbTab()
-  const searchString = useURLSearchParams()
   const { t } = useTrans()
+  const { navi } = usePlatform()
+  const currentCommunity = community
   const s = useSalon()
-  const dashboardBase = `/${community}/${DSB_ROUTE.OVERVIEW}`
-  const sectionBase = `${dashboardBase}/${baseRoute}`
   const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
 
   return (
@@ -57,15 +53,19 @@ export default function Collapsed({
 
         <div className={s.group}>
           {items.map((item) => {
-            const path = item.path ? `/${item.path}` : ''
             const isActive = item.slug === activeSlug
             const title = t(item.title)
+            const section = item.path ? `${baseRoute}/${item.path}` : baseRoute
+            const target = dsbRoutes.section({
+              community: currentCommunity,
+              section,
+            })
 
             return (
-              <Link
+              <button
                 key={item.slug}
+                type='button'
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`${sectionBase}${path}${searchString}`}
                 title={title}
                 aria-label={title}
                 aria-current={isActive ? 'page' : undefined}
@@ -74,10 +74,13 @@ export default function Collapsed({
                     subTab: item.slug,
                     view,
                   })
+                  navi.to(target, {
+                    preserveSearch: true,
+                  })
                 }}
               >
                 <DsbMenuIcon type={item.icon} className={s.icon} />
-              </Link>
+              </button>
             )
           })}
         </div>

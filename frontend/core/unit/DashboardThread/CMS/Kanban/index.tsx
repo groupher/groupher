@@ -28,6 +28,8 @@ function KanbanContent() {
   const { query } = useGraphQLClient()
 
   useEffect(() => {
+    if (articleList$.backlog?.entries?.length) return
+
     let canceled = false
 
     query<TGroupedKanbanPostsRes>(S.groupedKanbanPosts, { community })
@@ -47,9 +49,9 @@ function KanbanContent() {
   return <KanbanThread />
 }
 
-export default function Kanban() {
+export default function Kanban({ initialData }: { initialData?: TGroupedKanbanPosts | null }) {
   return (
-    <ArticleListStoreProvider>
+    <ArticleListStoreProvider initData={initialData || {}}>
       <KanbanContent />
     </ArticleListStoreProvider>
   )

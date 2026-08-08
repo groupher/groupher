@@ -1,8 +1,7 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-
 import { DSB_ROUTE } from '~/const/route'
+import { parseDsbPathname, usePlatform } from '~/platform'
 
 export type TDsbTabState = {
   mainTab: string
@@ -10,22 +9,20 @@ export type TDsbTabState = {
 }
 
 export default function useDsbTab(): TDsbTabState {
-  const pathname = usePathname()
+  const { navi } = usePlatform()
+  const meta = parseDsbPathname(navi.location.pathname)
+  const segments = meta ? meta.segments : []
 
-  // /xxx/dashboard/<mainTab>/<subTab>
-  const segments = pathname.split('/').filter(Boolean)
-
-  const dashboardIdx = segments.indexOf('dashboard')
-
-  if (dashboardIdx === -1) {
+  if (!meta) {
     return {
       mainTab: DSB_ROUTE.OVERVIEW,
       subTab: null,
     }
   }
 
-  const mainTab = segments[dashboardIdx + 1] ?? DSB_ROUTE.OVERVIEW
-  const subTab = segments[dashboardIdx + 2] ?? null
+  const rawMainTab = segments[0] ?? DSB_ROUTE.OVERVIEW
+  const mainTab = rawMainTab
+  const subTab = segments[1] ?? null
 
   return { mainTab, subTab }
 }

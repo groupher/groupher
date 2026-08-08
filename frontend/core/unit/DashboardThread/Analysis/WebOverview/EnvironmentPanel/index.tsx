@@ -6,17 +6,46 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_ENVIRONMENT_QUERY } from '../schema'
-import type { TAnalysisTrendEnvironmentSection } from '../spec'
+import type { TAnalysisTrendEnvironmentSection, TAnalysisWebOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
+  demoData?: TAnalysisWebOverviewDemo
 }
 
 type TData = {
   analysisTrendEnvironment: TAnalysisTrendEnvironmentSection | null
 }
+
+type TDemoDimension = 'BROWSER' | 'OS' | 'DEVICE' | 'LANGUAGE' | 'SCREEN'
+
+const environmentItemsFromDemo = (
+  demoData: TAnalysisWebOverviewDemo,
+  dimension: TDemoDimension,
+) => {
+  const keyByDimension = {
+    BROWSER: 'browser',
+    OS: 'os',
+    DEVICE: 'device',
+    LANGUAGE: 'language',
+    SCREEN: 'screen',
+  } as const
+
+  const key = keyByDimension[dimension]
+
+  return key ? (demoData.environment[key] ?? []) : []
+}
+
+const demoEnvironmentSection = (
+  dimension: TDemoDimension,
+  demoData: TAnalysisWebOverviewDemo,
+): TAnalysisTrendEnvironmentSection => ({
+  status: 'ok',
+  items: environmentItemsFromDemo(demoData, dimension),
+  error: null,
+})
 
 const TABS = [
   { key: 'BROWSER', label: WEB_OVERVIEW_TEXT.browsers },
@@ -26,27 +55,36 @@ const TABS = [
   { key: 'SCREEN', label: 'Screen' },
 ]
 
-export default function EnvironmentPanel({ community, days }: TProps) {
+export default function EnvironmentPanel({ community, days, demoData }: TProps) {
   const s = useSalon()
-  const [dimension, setDimension] = useState(TABS[0].key)
+  const [dimension, setDimension] = useState<TDemoDimension>(TABS[0].key as TDemoDimension)
+  const isDemo = Boolean(demoData)
+
   const [result] = useQuery<TData>({
     query: ANALYSIS_TREND_ENVIRONMENT_QUERY,
     variables: { community, days, dimension },
+    pause: isDemo,
     requestPolicy: 'cache-and-network',
   })
-  const section = result.data?.analysisTrendEnvironment
+  const section =
+    isDemo && demoData
+      ? demoEnvironmentSection(dimension, demoData)
+      : result.data?.analysisTrendEnvironment
+
+  const loading = isDemo ? false : result.fetching && !section
+  const error = isDemo ? null : (result.error?.message ?? section?.error?.message)
 
   return (
     <div className={s.wrapper}>
       <DimensionPanel
         activeKey={dimension}
         emptyLabel={WEB_OVERVIEW_TEXT.empty}
-        error={result.error?.message ?? section?.error?.message}
+        error={error}
         items={section?.items ?? []}
-        loading={result.fetching && !section}
+        loading={loading}
         tabs={TABS}
         title={WEB_OVERVIEW_TEXT.environment}
-        onTabChange={setDimension}
+        onTabChange={(key) => setDimension(key as TDemoDimension)}
       />
     </div>
   )

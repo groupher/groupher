@@ -1,8 +1,8 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 
+import { usePathname } from '~/platform'
 import type { TThreadPath } from '~/spec'
 
 type TRouteMatch = {

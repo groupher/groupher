@@ -1,11 +1,11 @@
 import { useMotionValueEvent, useScroll } from 'motion/react'
-import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
 import { ROUTE } from '~/const/route'
 import DemoSVG from '~/icons/DemoTV'
-import Button from '~/widgets/Buttons/Button'
-import ThemeSwitch from '~/widgets/ThemeSwitch'
+import { Link } from '~/platform'
+import Button from '~/ui/Buttons/Button'
+import ThemeSwitch from '~/ui/ThemeSwitch'
 
 import IntroLinks from './IntroLinks'
 import Panel from './Panel'

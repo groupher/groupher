@@ -3,11 +3,12 @@
 import type { SortingState } from '@tanstack/react-table'
 import { useCallback, useState } from 'react'
 
-import Pagi from '~/widgets/Pagi'
+import Pagi from '~/ui/Pagi'
 
 import CmsDataTable from '../Table/CmsDataTable'
 import ConfirmPermanentDeleteModal from './ConfirmPermanentDeleteModal'
 import EmptyState from './EmptyState'
+import type { TPagedTrashedPosts } from './spec'
 import type { TTrashedPost } from './spec'
 import TrashToolbar from './TrashToolbar'
 import useColumns from './useColumns'
@@ -15,9 +16,9 @@ import useTrashedPosts from './useTrashedPosts'
 
 const getTrashRowId = (item: TTrashedPost): string => item.id
 
-export default function PostTrash() {
+export default function PostTrash({ initialData }: { initialData?: TPagedTrashedPosts | null }) {
   const { activeActionId, loading, pagedPosts, permanentlyDelete, restore, setPage } =
-    useTrashedPosts()
+    useTrashedPosts(initialData)
   const [sorting, setSorting] = useState<SortingState>([])
   const [deleteCandidate, setDeleteCandidate] = useState<TTrashedPost | null>(null)
   const requestPermanentDelete = useCallback((item: TTrashedPost) => {

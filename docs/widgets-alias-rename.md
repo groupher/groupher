@@ -1,19 +1,14 @@
-# Shared Frontend Alias Rename
+# 共享前端别名重命名
 
-> Status: implemented.
+> 状态：已实现。
 >
-> Scope: rename the shared `frontend/core/widgets` namespace to `ui`, move
-> application shell components to `shell`, move rendering components to
-> `render`, and update the corresponding TypeScript aliases and imports.
+> 范围：将共享的`frontend/core/widgets`命名空间重命名为`ui`，将应用外壳组件移动到`shell`，将渲染组件移动到`render`，并更新对应的 TypeScript 别名和导入。
 
-## Motivation
+## 动机
 
-The current `~/widgets` alias points to the shared frontend component
-collection under `frontend/core/widgets`. The collection contains mostly UI
-and interaction components, but its name now conflicts with the product
-concept **Groupher Widget**.
+当前的`~/widgets`别名指向`frontend/core/widgets`下的共享前端组件集合。这个集合主要包含 UI 和交互组件，但它的名称现在与产品概念 **Groupher Widget** 发生了冲突。
 
-The same word currently describes two different things:
+同一个词目前描述了两种不同的东西：
 
 ```text
 ~/widgets/Tooltip
@@ -25,7 +20,7 @@ frontend/widget
   external product runtime
 ```
 
-The rename makes the distinction explicit:
+这次重命名让这种区别变得明确：
 
 ```text
 ~/ui/Tooltip
@@ -35,12 +30,9 @@ frontend/widget
   Groupher Widget product
 ```
 
-The current snapshot contains approximately 423 files under
-`frontend/core/widgets` and approximately 508 frontend files importing
-`~/widgets`. These counts are planning estimates; the migration must use the
-actual import graph at implementation time.
+当前快照中，`frontend/core/widgets`下大约有 423 个文件，约 508 个前端文件正在导入`~/widgets`。这些计数只是规划估算；迁移必须在实施时使用实际的导入图。
 
-## Target Namespaces
+## 目标命名空间
 
 ```text
 frontend/core/ui/
@@ -56,17 +48,15 @@ frontend/core/render/
   content, background, and visual rendering components
 ```
 
-The namespaces are all part of `@groupher/frontend-core`. They are import
-organization boundaries, not separate packages.
+这些命名空间都属于`@groupher/frontend-core`。它们是导入组织边界，不是独立包。
 
-## Ownership Rules
+## 所有权规则
 
 ### `ui`
 
-`ui` owns reusable presentation and interaction components that can be
-consumed by Main, Dashboard, Dash, Landing, or another frontend surface.
+`ui`负责可复用的展示和交互组件，这些组件可以被 Main、Dashboard、Dash、Landing 或其他前端界面消费。
 
-Examples:
+示例：
 
 ```text
 Buttons
@@ -96,16 +86,13 @@ UserList
 WordsCounter
 ```
 
-`ui` does not need to be a strict design-system package in this migration.
-Components with small Groupher-specific assumptions may remain here when they
-are still shared presentation or interaction primitives.
+在这次迁移中，`ui`不需要成为一个严格的设计系统包。带有少量 Groupher 特定假设的组件，只要仍然是共享的展示或交互原语，也可以保留在这里。
 
 ### `shell`
 
-`shell` owns components responsible for the application root, global layout,
-critical theme initialization, and server-inserted styles.
+`shell`负责应用根、全局布局、关键主题初始化，以及服务端注入样式的组件。
 
-Initial candidates:
+初始候选项：
 
 ```text
 GlobalLayout
@@ -116,15 +103,13 @@ ResolvedThemeStyle
 CommunityThemePresetStyle
 ```
 
-These components are not ordinary controls. Their placement should communicate
-that they participate in application startup and document-level rendering.
+这些组件不是普通控件。它们的位置应该传达出它们参与了应用启动和文档级渲染。
 
 ### `render`
 
-`render` owns components that turn content or rendering specifications into
-visual output.
+`render`负责将内容或渲染规范转换为视觉输出的组件。
 
-Initial candidates:
+初始候选项：
 
 ```text
 ArtimentBody
@@ -134,7 +119,7 @@ WallpaperRenderer
 MarkerRender
 ```
 
-The following remain outside `render`:
+以下组件仍保留在`render`之外：
 
 ```text
 MarkdownEditor
@@ -144,11 +129,11 @@ MarkerPicker
   user interaction, keep under ui
 ```
 
-The split is based on responsibility, not merely on component names.
+这个拆分依据的是职责，而不仅仅是组件名称。
 
-## Explicitly Out Of Scope
+## 明确不在范围内
 
-This migration must not rename or move the following:
+这次迁移不得重命名或移动以下内容：
 
 ```text
 frontend/landing/app/widgets
@@ -163,16 +148,13 @@ frontend/widget
   Groupher Widget product runtime
 ```
 
-`frontend/landing/app/widgets` is an application-local directory and is
-unrelated to the shared Core alias. `/dashboard/widgets` is a product route
-and must continue to use the plural `Widgets` label.
+`frontend/landing/app/widgets`是应用本地目录，与共享 Core 别名无关。`/dashboard/widgets`是产品路由，必须继续使用复数的`Widgets`标签。
 
-This migration also does not split every domain-specific shared component into
-new packages or introduce a design-system package.
+这次迁移也不会把每个领域特定的共享组件拆分到新包中，也不会引入设计系统包。
 
-## Alias Changes
+## 别名变更
 
-Current aliases:
+当前别名：
 
 ```json
 {
@@ -181,7 +163,7 @@ Current aliases:
 }
 ```
 
-Target aliases:
+目标别名：
 
 ```json
 {
@@ -194,8 +176,7 @@ Target aliases:
 }
 ```
 
-The exact relative path is adjusted per consumer configuration. At minimum,
-review:
+确切的相对路径会根据各自的 consumer 配置进行调整。至少需要检查：
 
 ```text
 frontend/core/tsconfig.json
@@ -204,17 +185,13 @@ frontend/core/jsconfig.json
 frontend/dash/tsconfig.json
 ```
 
-The application configurations that consume Core aliases must also resolve the
-new paths through their existing Core/Dash configuration mechanism.
+消费 Core 别名的应用配置也必须通过它们现有的 Core/Dash 配置机制解析这些新路径。
 
-The old `~/widgets` alias should be removed after all imports have migrated.
-Do not keep a permanent compatibility alias. A monorepo-wide migration can
-update all consumers in one change, and retaining the old alias would allow
-new ambiguous imports to reappear.
+在所有导入迁移完成后，应移除旧的`~/widgets`别名。不要保留永久兼容别名。一次 monorepo 级别的迁移可以在一个变更中更新所有 consumer，保留旧别名会让新的歧义导入重新出现。
 
-## Migration Shape
+## 迁移形态
 
-The intended final structure is:
+最终期望结构为：
 
 ```text
 frontend/core/
@@ -224,10 +201,9 @@ frontend/core/
   unit/
 ```
 
-The migration should preserve component internals and behavior. It is a path
-and ownership refactor, not a visual or runtime redesign.
+迁移应保留组件内部实现和行为。这是一次路径和所有权重构，不是视觉或运行时重设计。
 
-Recommended sequence:
+建议顺序：
 
 ```text
 1. inventory current imports and path aliases
@@ -240,20 +216,20 @@ Recommended sequence:
 8. run focused validation
 ```
 
-Do not use a broad text replacement without checking the following cases:
+不要在未检查以下情况时进行大范围文本替换：
 
-- imports inside a moved directory;
-- type-only imports;
-- dynamic imports;
-- test and story/demo files;
-- comments that document a real path;
-- aliases in Dash and application-specific configs;
-- files under `frontend/landing/app/widgets` that must remain unchanged;
-- `/dashboard/widgets` route and product naming.
+- 移动目录内部的导入；
+- 类型导入；
+- 动态导入；
+- 测试和 story/demo 文件；
+- 记录真实路径的注释；
+- Dash 和应用特定配置中的别名；
+- 必须保持不变的`frontend/landing/app/widgets`下的文件；
+- `/dashboard/widgets`路由和产品命名。
 
-## Verification
+## 验证
 
-Required checks for the rename:
+重命名所需检查：
 
 ```text
 rg -n "from ['\"]~/widgets|import\\(['\"]~/widgets" frontend
@@ -267,26 +243,22 @@ frontend/dashboard type-check
 git diff --check
 ```
 
-The first search should return no active `~/widgets` imports after migration.
-References to `frontend/landing/app/widgets` and `/dashboard/widgets` are
-expected and should remain intentional.
+第一条搜索在迁移后应不返回任何活跃的`~/widgets`导入。对`frontend/landing/app/widgets`和`/dashboard/widgets`的引用是预期存在的，并且应保持为有意为之。
 
-Validation must prove:
+验证必须证明：
 
-- Core resolves `~/ui`, `~/shell`, and `~/render`;
-- Dash resolves the shared aliases;
-- Main and Dashboard retain their existing root and loading shells;
-- shared components retain their exports and behavior;
-- no Groupher Widget product path was renamed accidentally;
-- no stale `frontend/core/widgets` path remains.
+- Core 能解析`~/ui`、`~/shell`和`~/render`；
+- Dash 能解析共享别名；
+- Main 和 Dashboard 保持现有的 root 和 loading shells；
+- 共享组件保留其导出和行为；
+- 没有意外重命名 Groupher Widget 产品路径；
+- 不再存在陈旧的`frontend/core/widgets`路径。
 
-## Commit Boundary
+## 提交边界
 
-This should be a standalone frontend refactor commit. It must not be combined
-with Groupher Widget feature implementation, backend API work, or unrelated UI
-changes.
+这应该是一个独立的前端重构提交。它不能与 Groupher Widget 功能实现、后端 API 工作或无关 UI 更改混在一起。
 
-Suggested commit title:
+建议的提交标题：
 
 ```text
 refactor(fe): rename shared widgets aliases to ui

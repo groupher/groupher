@@ -1,7 +1,7 @@
 import type { ChangeEvent, FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import useSalon from './salon/subtitle'
 

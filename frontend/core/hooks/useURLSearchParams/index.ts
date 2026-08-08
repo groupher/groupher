@@ -1,7 +1,8 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
+
+import { useSearchParams } from '~/platform'
 
 export const ALLOWED_QUERY_KEYS = ['mode', 'other'] as const
 

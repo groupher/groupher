@@ -10,11 +10,11 @@ import useTrans from '~/hooks/useTrans'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import { toast } from '~/ui/Toaster'
 import S from '~/unit/DashboardThread/schema'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { slugify } from '~/utils/slug'
-import { toast } from '~/widgets/Toaster'
 
 import {
   BASEINFO_BASIC_KEYS,

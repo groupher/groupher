@@ -1,9 +1,8 @@
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { type MouseEvent, useRef } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
+import { dsbRoutes, parseDsbPathname, toDsbTargetFromPath, usePlatform } from '~/platform'
 
 import { MENU_VIEW } from '../constant'
 import { runBeforeDashboardBack } from './beforeBack'
@@ -26,7 +25,9 @@ export default function SubMenuBack({
   title = 'dsb.menu.doc.back',
 }: TProps) {
   const { t } = useTrans()
-  const router = useRouter()
+  const { navi } = usePlatform()
+  const meta = parseDsbPathname(navi.location.pathname)
+  const community = meta?.community ?? ''
   const s = useSalon()
   const navigating = useRef(false)
   const isValidReturn = returnTo?.startsWith(dashboardBase) && !returnTo.startsWith(currentBase)
@@ -39,9 +40,7 @@ export default function SubMenuBack({
     })
   }
 
-  const handleBack = async (event: MouseEvent<HTMLAnchorElement>): Promise<void> => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-      return
+  const handleBack = async (event: MouseEvent<HTMLButtonElement>): Promise<void> => {
     event.preventDefault()
     if (navigating.current) return
 
@@ -53,13 +52,19 @@ export default function SubMenuBack({
     }
 
     switchToMainMenu()
-    router.push(backHref)
+    const target = toDsbTargetFromPath(backHref)
+    if (target) {
+      navi.to(target)
+    } else if (community) {
+      navi.to(dsbRoutes.overview({ community }))
+    }
+    navigating.current = false
   }
 
   return (
-    <Link className={s.wrapper} href={backHref} onClick={handleBack}>
+    <button type='button' className={s.wrapper} onClick={handleBack} aria-label={t(title)}>
       <ArrowSVG className={s.backIcon} />
       <div className={s.title}>{t(title)}</div>
-    </Link>
+    </button>
   )
 }

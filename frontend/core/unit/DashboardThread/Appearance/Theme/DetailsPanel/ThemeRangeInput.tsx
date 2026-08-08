@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { PRESET_FIELD } from '~/const/theme_preset'
 import useTheme from '~/hooks/useTheme'
-import RangeInput from '~/widgets/RangeInput'
+import RangeInput from '~/ui/RangeInput'
 
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 

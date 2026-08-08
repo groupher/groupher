@@ -1,11 +1,9 @@
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
 import SidebarIcon from '~/icons/dsb/Sidebar'
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import ActiveMark from './ActiveMark'
@@ -35,15 +33,29 @@ export default function SubMenu({
   scope,
 }: TProps) {
   const { slug: community } = useCommunity()
+  const { navi } = usePlatform()
   const { subTab } = useDsbTab()
-  const searchString = useURLSearchParams()
+  const meta = parseDsbPathname(navi.location.pathname)
+  const currentCommunity = meta?.community ?? community
+  const rootSegment = meta?.rootSegment ?? 'dashboard'
   const { t } = useTrans()
   const s = useSalon()
 
   const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
-  const dashboardBase = `/${community}/${DSB_ROUTE.OVERVIEW}`
-  const sectionBase = `${dashboardBase}/${baseRoute}`
-  const fallbackBackHref = `${dashboardBase}${searchString}`
+  const dashboardBase = resolveDsbRoute(dsbRoutes.overview({ community: currentCommunity }), {
+    rootSegment,
+    currentSearch: navi.location.searchParams,
+    preserveSearch: true,
+  })
+  const sectionBase = resolveDsbRoute(
+    dsbRoutes.section({ community: currentCommunity, section: baseRoute }),
+    {
+      rootSegment,
+      currentSearch: navi.location.searchParams,
+      preserveSearch: true,
+    },
+  )
+  const fallbackBackHref = sectionBase
 
   return (
     <div className={s.wrapper}>
@@ -67,14 +79,23 @@ export default function SubMenu({
       <div className={s.menu}>
         {items.map((item) => {
           const isActive = item.slug === activeSlug
-          const path = item.path ? `/${item.path}` : ''
+          const section = item.path ? `${baseRoute}/${item.path}` : baseRoute
+          const target = dsbRoutes.section({
+            community: currentCommunity,
+            section,
+          })
           const endSlot = endSlots?.[item.slug]
 
           return (
-            <Link
+            <button
+              type='button'
               key={item.slug}
               className={cn(s.item, isActive && s.itemActive)}
-              href={`${sectionBase}${path}${searchString}`}
+              onClick={() =>
+                navi.to(target, {
+                  preserveSearch: true,
+                })
+              }
             >
               {isActive && (
                 <ActiveMark
@@ -87,7 +108,7 @@ export default function SubMenu({
               {endSlot !== undefined && endSlot !== null && (
                 <span className={s.itemEnd}>{endSlot}</span>
               )}
-            </Link>
+            </button>
           )
         })}
       </div>

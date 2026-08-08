@@ -1,12 +1,11 @@
-import Link from 'next/link'
-
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import LinkSVG from '~/icons/ArrowUpRight'
 import ReportSVG from '~/icons/Report'
 import SettingSVG from '~/icons/Setting'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import HomeLogo from '~/widgets/HomeLogo'
+import HomeLogo from '~/ui/HomeLogo'
 
 import MenuBar from './MenuBar'
 import useSalon from './salon/more_panel'

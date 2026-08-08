@@ -12,3 +12,7 @@ export type TStore = {
   // actions
   commit: (patch: Partial<TStore>) => void
 }
+
+export type TInit = Partial<
+  Pick<TStore, 'user' | 'loading' | 'userSubscribedCommunities' | 'isModerator'>
+>

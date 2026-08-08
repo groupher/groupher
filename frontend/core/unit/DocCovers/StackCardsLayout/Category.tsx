@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import { type FC, useState } from 'react'
 
 import { mockUsers } from '~/mock'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import Facepile from '~/widgets/Facepile'
+import { Link } from '~/platform'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
+import Facepile from '~/ui/Facepile'
 
 import GroupSettingButton from '../GroupSettingButton'
 import type { TDocCoverCard } from '../spec'

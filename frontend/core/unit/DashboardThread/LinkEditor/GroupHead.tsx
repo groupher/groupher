@@ -4,7 +4,7 @@ import { cn } from '~/css'
 import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import DeleteMenu from './DeleteMenu'
 import GroupInputer from './GroupInputer'

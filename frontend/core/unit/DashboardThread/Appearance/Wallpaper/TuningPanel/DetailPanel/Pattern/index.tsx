@@ -1,8 +1,8 @@
 import { WALLPAPER_PATTERN_TONE } from '~/const/wallpaper'
 import useTrans from '~/hooks/useTrans'
 import type { TBgPattern } from '~/lib/bg'
-import PatternIntensityField from '~/widgets/TuningFields/PatternIntensityField'
-import ToggleField from '~/widgets/TuningFields/ToggleField'
+import PatternIntensityField from '~/ui/TuningFields/PatternIntensityField'
+import ToggleField from '~/ui/TuningFields/ToggleField'
 
 import useSalon from '../../salon/detail_panel/pattern'
 import GroupTitle from '../GroupTitle'

@@ -1,7 +1,6 @@
-import Link from 'next/link'
-
 import METRIC from '~/const/metric'
 import useMetric from '~/hooks/useMetric'
+import { Link } from '~/platform'
 
 import useSalon from './salon/powerby_info'
 

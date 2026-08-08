@@ -5,9 +5,9 @@
  */
 
 import useTrans from '~/hooks/useTrans'
+import Markdown from '~/render/Markdown'
 import type { TColorName, TSpace } from '~/spec'
-import Markdown from '~/widgets/Markdown'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon from './salon'
 import useLogic from './useLogic'

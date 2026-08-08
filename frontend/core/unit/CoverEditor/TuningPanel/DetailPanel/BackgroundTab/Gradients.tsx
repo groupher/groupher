@@ -2,7 +2,7 @@ import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import CheckedSVG from '~/icons/CheckBold'
 import type { TBgConfig } from '~/lib/bg'
-import ColorsPresetBall, { COLORS_PRESET_BALL_LAYOUT } from '~/widgets/ColorsPresetBall'
+import ColorsPresetBall, { COLORS_PRESET_BALL_LAYOUT } from '~/ui/ColorsPresetBall'
 
 import { COVER_GRADIENT_PALETTE } from '../../../background'
 import useLogic from '../../../useLogic'

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { saveDocDraft } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
-import { toast } from '~/widgets/Toaster'
+import { toast } from '~/ui/Toaster'
 
 import { reloadDocPublishChecklist } from '../../helper'
 import type { TSideTreeChild } from '../../SideTree/spec'

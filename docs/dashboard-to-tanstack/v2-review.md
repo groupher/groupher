@@ -1,0 +1,128 @@
+# Dashboard TanStack V2 Implementation Review
+
+> Review date: 2026-08-08
+>
+> Scope: `frontend/dash`, `frontend/dashboard`, shared Dashboard surfaces in
+> `frontend/core`, and the local Gateway routes that expose both applications.
+
+## Release conclusion
+
+The native TanStack migration, PlatformProvider client boundary, app isolation,
+SSR/provider lifecycle, theme/time hydration, pending/error shell, static
+assets, and local dual-app routing are implemented and validated.
+
+V2 as a whole must not yet be labelled complete. Phase 3 remains blocked by a
+backend domain prerequisite: the canonical Community payload does not expose a
+single monotonic version covering profile, Dashboard, theme, wallpaper,
+navigation, aliases, threads, tags, SEO, and related configuration tables.
+Without that contract, `syncFromServer`, the focus version probe, and the
+idempotent cross-cloud Main revalidation request cannot implement the ordering
+guarantees specified by V2.
+
+## Verified implementation
+
+- `frontend/dash/src/adapters` has no runtime files or aliases.
+- Dash and Dashboard are separate workspace applications and have no static
+  imports of each other.
+- Shared client navigation, Link, Image, Script, pathname, search parameters,
+  and router operations resolve through `PlatformProvider`.
+- Next-only cache, headers, proxy, and server-insertion modules remain in
+  Next-owned server import graphs; the Dash bundle consumes the pure SSR parser.
+- Both public route families remain intact:
+  `/:community/dashboard/*` and `/:community/dash/*`.
+- Gateway forwarding preserves both canonical pathnames. Dashboard development
+  assets/HMR use `/dashboard/_next/*`; Dash Vite HMR uses `__dash_hmr`.
+- Dash owns its own public directory and generated icon, wallpaper, and revision
+  worker outputs. It does not read `frontend/dashboard/public`.
+- Community and Dashboard providers are request/route scoped. Leaf article list
+  providers are initialized from loader data without render-time commits.
+- Parent Community/Dashboard shell remains mounted during Dash leaf navigation.
+- Route errors render inside the stable shell and no longer turn operational
+  GraphQL errors into empty data.
+- Anonymous Doc Editor requests render an explicit sign-in-required state
+  instead of an HTTP 500. Public Community information remains anonymous, per
+  product policy; authenticated editor data still forwards the canonical
+  `groupher-auth.token` cookie.
+- Clipboard is a framework-neutral browser hook and no longer imports the
+  CommonJS `react-use` clipboard hook during Vite SSR.
+- Theme and TimeAgo use the same request seed for SSR and first hydration.
+- Shared aliases come from `frontend/tsconfig.paths.json`; application-local
+  aliases remain local.
+
+## Local acceptance evidence
+
+Validated through the local Gateway and real browser:
+
+```text
+http://groupher.localhost:3003/home/dash
+  -> redirects to /home/dash/overview
+
+http://groupher.localhost:3003/home/dash/post/content
+http://groupher.localhost:3003/home/dash/appearance/theme
+http://groupher.localhost:3003/home/dash/trend
+  -> native TanStack routes render real local GraphQL data
+
+http://groupher.localhost:3003/home/dash/doc/editor
+  -> anonymous session renders Sign in required inside the stable shell
+
+http://groupher.localhost:3003/home/dashboard/post/content
+http://groupher.localhost:3003/home/dashboard/doc/editor
+  -> existing Next Dashboard routes render through the Gateway
+```
+
+The Post list, Appearance, Trend, nested navigation, redirects, shell
+persistence, error boundary, static icons/wallpapers, and Dashboard CMS provider
+were exercised. The external mock image
+`https://assets.groupher.com/communities/groupher-alpha.png` may be unavailable
+on a local network; it is fixture/environment data, not an application import
+or routing dependency.
+
+## Explicit blockers and follow-up contract
+
+### 1. Aggregate Community version
+
+Backend must own and advance one monotonic version for every configuration
+mutation in V2 scope. A Community row timestamp alone is insufficient because
+many settings are stored in related Dashboard, theme, wallpaper, tag, thread,
+alias, and SEO resources.
+
+After that field exists:
+
+1. Add `version` to the canonical Community GraphQL fragment and `TCommunity`.
+2. Implement version-aware `community$.syncFromServer()`.
+3. Add `reloadDsbCommunity()` in both apps.
+4. In Dash, invalidate only the `$community` route match.
+5. Add the no-store, single-flight, 60-second focus/visibility version probe.
+
+### 2. Cross-cloud Main revalidation
+
+The current `/api/revalidate/community` endpoint is a compatibility path using
+the browser Phoenix cookie. It is not the V2 server-to-server contract.
+
+After aggregate version and service credentials exist:
+
+1. Add `POST /api/dsb/cache/revalidate` to Main.
+2. Sign requests from the Dash server layer; do not call it from Core/browser
+   mutation code.
+3. Include community identity, aggregate version, and domain scopes.
+4. Add timestamp/replay validation, idempotency, bounded retry, and structured
+   operational logging.
+5. Replace the compatibility browser call only after both applications use the
+   canonical reload lifecycle.
+
+### 3. Shared Auth refresh lifecycle
+
+Dash does not define a second token lifecycle. The target refresh/session
+consumer remains governed by `docs/auth/v1.md` and depends on its Auth endpoint
+work. Until then, protected anonymous entry shows the canonical sign-in flow;
+public Community loaders remain public and authenticated loaders forward the
+existing cookie without locally decoding or extending it.
+
+## Release gates
+
+- Do not mark V2 Phase 3 complete until blockers 1 and 2 are implemented and
+  mutation/focus concurrency tests pass.
+- Do not remove the Next Dashboard route family as part of this migration.
+- Do not add fake `next/*` aliases or app-to-app imports to solve shared UI
+  issues; extend a framework-neutral Core contract or keep server behavior in
+  the owning application.

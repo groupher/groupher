@@ -3,6 +3,21 @@ import type { TUser } from '~/spec'
 import setupStore from '..'
 
 describe('stores/account', () => {
+  it('accepts SSR account data without a client-side loading state', () => {
+    const user: TUser = {
+      login: 'server_viewer',
+      nickname: 'Server Viewer',
+      bio: '',
+      avatar: '',
+    }
+    const store = setupStore({ user, loading: false, isModerator: true })
+
+    expect(store.user?.login).toBe('server_viewer')
+    expect(store.loading).toBe(false)
+    expect(store.isModerator).toBe(true)
+    expect(store.isLogin).toBe(true)
+  })
+
   it('defaults to logged-out state and updates derived views after commit', () => {
     const store = setupStore()
 

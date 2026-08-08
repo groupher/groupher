@@ -1,5 +1,5 @@
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -12,7 +12,7 @@ const optimizedSourceDir = path.join(assetsRoot, 'generated/optimized')
 const spriteSourceDir = path.join(assetsRoot, 'generated/sprites')
 const providerLogoSourceDir = path.join(assetsRoot, 'raw/providers')
 const providers = ['fa', 'lucide', 'heroicons', 'phosphor']
-const allowedApps = ['main', 'dashboard', 'landing']
+const allowedApps = ['main', 'dashboard', 'dash', 'landing']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 
@@ -44,9 +44,7 @@ if (!existsSync(spriteSourceDir)) {
 
 for (const app of targetApps) {
   if (!allowedApps.includes(app)) {
-    throw new Error(
-      `Unsupported target app "${app}". Allowed values: ${allowedApps.join(', ')}`,
-    )
+    throw new Error(`Unsupported target app "${app}". Allowed values: ${allowedApps.join(', ')}`)
   }
 
   const targetRoot = path.join(repoRoot, `frontend/${app}/public/icons`)

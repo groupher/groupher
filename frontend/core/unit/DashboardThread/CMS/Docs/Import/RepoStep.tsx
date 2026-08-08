@@ -1,10 +1,10 @@
 import type { FormEvent } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import Button from '~/ui/Buttons/Button'
+import Input from '~/ui/Input'
+import LogoList from '~/ui/LogoList'
 import { MARKDOWN_PLATFORMS } from '~/unit/DashboardThread/CMS/Docs/markdown_platforms'
-import Button from '~/widgets/Buttons/Button'
-import Input from '~/widgets/Input'
-import LogoList from '~/widgets/LogoList'
 
 import useSalon from './salon/repo_step'
 

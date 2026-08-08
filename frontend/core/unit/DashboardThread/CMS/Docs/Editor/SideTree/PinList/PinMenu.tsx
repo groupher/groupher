@@ -4,8 +4,8 @@ import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/menu/MoreL'
 import EditSVG from '~/icons/PencilSimple'
 import DeleteSVG from '~/icons/Trash'
-import OverflowMarqueeText from '~/widgets/OverflowMarqueeText'
-import Tooltip from '~/widgets/Tooltip'
+import OverflowMarqueeText from '~/ui/OverflowMarqueeText'
+import Tooltip from '~/ui/Tooltip'
 
 import useSalon from '../salon/pin_menu'
 

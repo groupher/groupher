@@ -4,7 +4,7 @@ import { THEME_PRESET } from '~/const/theme_preset'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTransKey } from '~/spec'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import type { TThemePresetOption } from '../spec'
 import useSalon from './salon/reset_to_preset_menu'

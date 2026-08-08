@@ -1,34 +1,16 @@
-import dynamic from 'next/dynamic'
-import type { ComponentType } from 'react'
+import { lazy, Suspense } from 'react'
 
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import GithubSVG from '~/icons/social/Github'
-import ArrowLinker from '~/widgets/ArrowLinker'
+import ArrowLinker from '~/ui/ArrowLinker'
+import ClientOnly from '~/ui/ClientOnly'
 
 import useSalon, { cn } from '../salon/tech_stacks/github_card'
 import LangBars from './LangBars'
 import Teams from './Teams'
 
-type TTrendProps = {
-  smooth?: boolean
-  autoDraw?: boolean
-  autoDrawDuration?: number
-  autoDrawEasing?: string
-  width?: number
-  height?: number
-  padding?: number
-  radius?: number
-  gradient?: string[]
-  data: number[]
-  stroke?: string
-  strokeWidth?: number
-  strokeLinecap?: 'butt' | 'round' | 'square'
-}
-
-const Trend = dynamic(() => import('react-trend'), {
-  ssr: false,
-}) as ComponentType<TTrendProps>
+const Trend = lazy(() => import('react-trend'))
 
 export default function GithubCard() {
   const s = useSalon()
@@ -62,16 +44,20 @@ export default function GithubCard() {
       <div className={cn(s.row, 'items-center mb-3 mt-5')}>
         <div className={s.label}>{t('landing.tech.github.activity')}</div>
         <div className={s.trend}>
-          <Trend
-            smooth
-            width={100}
-            height={50}
-            data={[2, 3, 6, 0, 2, 10, 8, 8, 22, 33, 2, 3, 4, 5, 6]}
-            gradient={['#E3B18B', '#C48BC2']}
-            radius={15}
-            strokeWidth={1}
-            strokeLinecap='round'
-          />
+          <ClientOnly>
+            <Suspense fallback={null}>
+              <Trend
+                smooth
+                width={100}
+                height={50}
+                data={[2, 3, 6, 0, 2, 10, 8, 8, 22, 33, 2, 3, 4, 5, 6]}
+                gradient={['#E3B18B', '#C48BC2']}
+                radius={15}
+                strokeWidth={1}
+                strokeLinecap='round'
+              />
+            </Suspense>
+          </ClientOnly>
         </div>
       </div>
 

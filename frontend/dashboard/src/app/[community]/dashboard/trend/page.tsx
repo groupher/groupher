@@ -2,12 +2,11 @@ import { connection } from 'next/server'
 
 import { gqAuthFetch } from '~/graphql/server'
 import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
-import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
-
 import {
   ANALYSIS_TRENDS_OVERVIEW_QUERY,
   unavailableOverview as buildUnavailableOverview,
-} from './helper'
+} from '~/unit/DashboardThread/Analysis/WebOverview/server'
+import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
 type TGraphQLError = { message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }

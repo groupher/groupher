@@ -1,10 +1,10 @@
 import ApplySVG from '~/icons/Apply'
 import UploadSVG from '~/icons/Upload'
 import Img from '~/Img'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
+import Input from '~/ui/Input'
+import OSSUploader from '~/ui/OSSUploader'
 import { nilOrEmpty } from '~/validator'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import Input from '~/widgets/Input'
-import OSSUploader from '~/widgets/OSSUploader'
 
 import useLogic from '../useLogic'
 import NextStepButton from './NextStepButton'

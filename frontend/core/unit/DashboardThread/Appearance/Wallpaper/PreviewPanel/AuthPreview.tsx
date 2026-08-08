@@ -1,4 +1,4 @@
-import WallpaperRenderer from '~/widgets/WallpaperRenderer'
+import WallpaperRenderer from '~/render/WallpaperRenderer'
 
 import useSalon, { cnMerge } from './salon/auth_preview'
 

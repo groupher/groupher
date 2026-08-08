@@ -4,8 +4,10 @@ import useURLSearchParams, { ALLOWED_QUERY_KEYS } from '~/hooks/useURLSearchPara
 
 let mockSearchParams: URLSearchParams | null = null
 
-vi.mock('next/navigation', () => {
+vi.mock('~/platform', async () => {
+  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
   return {
+    ...actual,
     useSearchParams: () => mockSearchParams,
   }
 })

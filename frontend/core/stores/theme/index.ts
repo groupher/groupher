@@ -6,12 +6,20 @@ import type { TThemeMode, TThemeName } from '~/spec'
 import type { TInit, TStore } from './spec'
 
 export default function ThemeStore(
-  themeMode: TThemeMode = THEME_MODE.SYSTEM,
-  theme: TInit = THEME.LIGHT,
+  initOrMode: TInit | TThemeMode = THEME_MODE.SYSTEM,
+  legacyTheme: TThemeName = THEME.LIGHT,
 ): TStore {
+  const initial =
+    typeof initOrMode === 'object'
+      ? initOrMode
+      : {
+          themeMode: initOrMode,
+          theme: legacyTheme,
+        }
+
   const store = proxy({
-    theme,
-    themeMode,
+    theme: initial.theme,
+    themeMode: initial.themeMode,
 
     // actions
     change: (theme: TThemeName): void => {

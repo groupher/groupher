@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 
 import { THREAD } from '~/const/thread'
-import PreviewDrawerLoading from '~/widgets/Loading/Preview/Post'
+import PreviewDrawerLoading from '~/ui/Loading/Preview/Post'
 
 import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TChangelogPreviewCacheEntry } from './buildPreviewCacheEntry'

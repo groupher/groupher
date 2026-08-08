@@ -5,8 +5,8 @@
 import { type FC, useState } from 'react'
 
 import type { TGroupedTags, TTag } from '~/spec'
-import DropdownButton from '~/widgets/Buttons/DropdownButton'
-import Tooltip from '~/widgets/Tooltip'
+import DropdownButton from '~/ui/Buttons/DropdownButton'
+import Tooltip from '~/ui/Tooltip'
 
 import ActiveTag from './ActiveTag'
 import FilterPanel from './FilterPanel'

@@ -2,7 +2,7 @@ import { keys } from 'ramda'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TWallpaperPic } from '~/spec'
-import SelectableCard from '~/widgets/SelectableCard'
+import SelectableCard from '~/ui/SelectableCard'
 
 import { isActiveWallpaperSource } from '../helper'
 import useLogic from '../useLogic'

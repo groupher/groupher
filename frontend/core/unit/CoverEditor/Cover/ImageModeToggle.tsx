@@ -2,7 +2,7 @@ import type { FC, SVGProps } from 'react'
 
 import ArrowsOutCardinalSVG from '~/icons/ArrowsOutCardinal'
 import ResizeSVG from '~/icons/Resize'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { IMAGE_EDIT_MODE, IMAGE_EDIT_MODE_LABEL } from '../constant'
 import type { TImageEditMode } from '../spec'

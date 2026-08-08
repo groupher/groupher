@@ -1,8 +1,8 @@
-import { useRouter } from 'next/navigation'
 import { lazy, Suspense } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import ArrowSVG from '~/icons/Arrow'
+import { useRouter } from '~/platform'
 import useArticle from '~/stores/article/hooks'
 
 import useSalon from './salon/header'

@@ -1,7 +1,7 @@
 import { memo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useTags from '../logic/useTags'
 import useSalon, { cn } from './salon/group_selector'

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-import { SegmentTab } from '~/widgets/Switcher'
-import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
+import { SegmentTab } from '~/ui/Switcher'
+import ThemeSwitchPreview from '~/ui/ThemeSwitch/Preview'
 
 import type { TCoverImageWhich, TTuningSetting } from '../../spec'
 import BackgroundTab from './BackgroundTab'

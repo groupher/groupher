@@ -1,5 +1,5 @@
-import ArrowLinker from '~/widgets/ArrowLinker'
-import Button from '~/widgets/Buttons/Button'
+import ArrowLinker from '~/ui/ArrowLinker'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/side_intros'
 import INTROS from '../constant'

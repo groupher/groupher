@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperContentShadow } from '~/stores/wallpaper/spec'
-import ToggleField from '~/widgets/TuningFields/ToggleField'
+import ToggleField from '~/ui/TuningFields/ToggleField'
 
 import useSalon from '../../salon/detail_panel/content'
 import GroupTitle from '../GroupTitle'

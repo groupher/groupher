@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import useSalon from './salon/title_input'
 

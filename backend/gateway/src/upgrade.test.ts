@@ -43,6 +43,70 @@ describe('gateway/upgrade', () => {
     expect(targetUrl.pathname).toBe('/_next/hmr')
   })
 
+  it('routes unprefixed dashboard HMR by the page referer', () => {
+    const targetUrl = buildUpgradeTargetUrl(
+      makeRequest({
+        headers: {
+          connection: 'Upgrade',
+          host: 'groupher.localhost',
+          referer: 'https://groupher.localhost/home/dashboard/doc/editor',
+          upgrade: 'websocket',
+        },
+      }),
+    )
+
+    expect(targetUrl.origin).toBe(new URL(SITE.DASHBOARD).origin)
+    expect(targetUrl.pathname).toBe('/_next/hmr')
+  })
+
+  it('routes namespaced dashboard HMR without a referer', () => {
+    const targetUrl = buildUpgradeTargetUrl(
+      makeRequest({
+        url: '/dashboard/_next/hmr?id=dashboard',
+        headers: {
+          connection: 'Upgrade',
+          host: 'groupher.localhost',
+          upgrade: 'websocket',
+        },
+      }),
+    )
+
+    expect(targetUrl.origin).toBe(new URL(SITE.DASHBOARD).origin)
+    expect(targetUrl.pathname).toBe('/dashboard/_next/hmr')
+  })
+
+  it('routes dash subdomain websocket upgrades to Dash upstream', () => {
+    const targetUrl = buildUpgradeTargetUrl(
+      makeRequest({
+        headers: {
+          connection: 'Upgrade',
+          host: 'dash.groupher.localhost',
+          upgrade: 'websocket',
+        },
+      }),
+    )
+
+    expect(targetUrl.origin).toBe(new URL(SITE.DASH).origin)
+    expect(targetUrl.pathname).toBe('/_next/hmr')
+  })
+
+  it('routes the Dash Vite websocket path to Dash on the canonical host', () => {
+    const targetUrl = buildUpgradeTargetUrl(
+      makeRequest({
+        url: '/__dash_hmr?token=dev',
+        headers: {
+          connection: 'Upgrade',
+          host: 'groupher.localhost',
+          upgrade: 'websocket',
+        },
+      }),
+    )
+
+    expect(targetUrl.origin).toBe(new URL(SITE.DASH).origin)
+    expect(targetUrl.pathname).toBe('/__dash_hmr')
+    expect(targetUrl.search).toBe('?token=dev')
+  })
+
   it('rewrites the upstream Host header without losing websocket headers', () => {
     const lines = buildUpgradeHeaderLines(
       {

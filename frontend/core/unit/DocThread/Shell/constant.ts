@@ -1,4 +1,4 @@
-import type { TArticleTocItem } from '~/widgets/ArticleToc'
+import type { TArticleTocItem } from '~/ui/ArticleToc'
 
 export const DOC_ARTICLE_TOC_ACTIVE_ID = 'toc'
 

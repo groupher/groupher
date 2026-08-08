@@ -71,7 +71,6 @@ export type TAnalysisTrendsOverview = {
     points: {
       bucket?: 'hour' | 'day'
       timestamp: string
-      visitors?: number
       visits: number
       views: number
     }[]
@@ -117,3 +116,53 @@ export type TAnalysisTrendTrafficSection = {
 // Temporary development fixture shape. Production Trends receives only the
 // SSR overview above; lower panels load their own section DTOs after hydration.
 export type TAnalysisWebOverview = TAnalysisTrendsOverview & Record<string, unknown>
+
+export type TAnalysisDemoPages = {
+  path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  url: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  entry: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  exit: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  title: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  query: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+}
+
+export type TAnalysisDemoSources = {
+  referrer: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+  channel: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+  domain: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+}
+
+export type TAnalysisDemoEnvironment = {
+  browser: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  os: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  device: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  language: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  screen: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+}
+
+export type TAnalysisDemoLocation = {
+  country: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+  region: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+  city: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+}
+
+export type TAnalysisDemoTraffic = {
+  status: 'ok' | 'unavailable'
+  timezone: string
+  cells: {
+    weekday: number
+    hour: number
+    visitors: number
+    visits: number
+    views: number
+  }[]
+  error: TAnalysisWebError | null
+}
+
+export type TAnalysisWebOverviewDemo = TAnalysisWebOverview & {
+  pages: TAnalysisDemoPages
+  sources: TAnalysisDemoSources
+  environment: TAnalysisDemoEnvironment
+  location: TAnalysisDemoLocation
+  traffic: TAnalysisDemoTraffic
+}

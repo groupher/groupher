@@ -1,5 +1,5 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import { resolveSystemTheme } from '~/lib/themeRuntime'
+import { persistThemeCookies, resolveSystemTheme } from '~/lib/themeRuntime'
 import type { TThemeMode, TThemeName } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'
 import { removeThemeFirstPaintVars } from '~/utils/themeFirstPaint'
@@ -43,18 +43,26 @@ export default function useTheme(): TRet {
       localStorage.setItem(LOCAL_THEME_KEY, mode)
     } catch {}
 
-    if (mode === THEME_MODE.LIGHT) applyRuntimeTheme(THEME.LIGHT, options)
-    else if (mode === THEME_MODE.DARK) applyRuntimeTheme(THEME.DARK, options)
-    else applyRuntimeTheme(resolveSystemTheme(), options) // SYSTEM 模式
+    const runtimeTheme =
+      mode === THEME_MODE.LIGHT
+        ? THEME.LIGHT
+        : mode === THEME_MODE.DARK
+          ? THEME.DARK
+          : resolveSystemTheme()
+
+    applyRuntimeTheme(runtimeTheme, options)
+    persistThemeCookies(mode, runtimeTheme)
   }
 
   const toggle = () => {
     if (theme === THEME.DARK) {
       applyRuntimeTheme(THEME.LIGHT)
+      persistThemeCookies(themeMode, THEME.LIGHT)
       return
     }
 
     applyRuntimeTheme(THEME.DARK)
+    persistThemeCookies(themeMode, THEME.DARK)
   }
 
   return {

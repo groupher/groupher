@@ -31,11 +31,7 @@ const AccountWrapper: FC<{
   children: React.ReactNode
   initData?: TAccountInit
   noAccount: boolean
-}> = ({
-  children,
-  initData,
-  noAccount,
-}) =>
+}> = ({ children, initData, noAccount }) =>
   noAccount ? children : <AccountStoreProvider initData={initData}>{children}</AccountStoreProvider>
 
 const MainProvider: FC<TProps> = ({

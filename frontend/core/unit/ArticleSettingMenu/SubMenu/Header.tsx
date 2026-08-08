@@ -5,7 +5,7 @@ import EditSVG from '~/icons/EditPen'
 import WipSVG from '~/icons/GtdWip'
 import InfoSVG from '~/icons/Info'
 import SlugSVG from '~/icons/Slug'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import { SUB_MENU } from '../constant'
 import type { TSubMenu } from '../spec'

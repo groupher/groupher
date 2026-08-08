@@ -1,29 +1,70 @@
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback } from 'react'
+'use client'
+
+import { useCallback, useMemo } from 'react'
+
+import { parseDsbPathname, usePlatform } from '~/platform'
 
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
-import { buildDocEditorUrl } from './helper'
+
+const buildSearchObject = (searchParams: URLSearchParams): Record<string, string> => {
+  const search: Record<string, string> = {}
+
+  searchParams.forEach((value, key) => {
+    search[key] = value
+  })
+
+  return search
+}
 
 export default function useDocEditorUrl(): {
   currentDocId: string | null
   syncDocIdToUrl: (docId: string | null) => void
 } {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const searchString = searchParams.toString()
-  const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
+  const { navi } = usePlatform()
+  const routeMeta = useMemo(
+    () => parseDsbPathname(navi.location.pathname),
+    [navi.location.pathname],
+  )
+  const currentDocId = navi.location.searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
 
   const syncDocIdToUrl = useCallback(
     (docId: string | null): void => {
-      const nextUrl = buildDocEditorUrl(pathname, searchString, docId)
-      const currentUrl = searchString ? `${pathname}?${searchString}` : pathname
+      if (!routeMeta) return
+
+      const nextPath = `/${routeMeta.community}/${routeMeta.rootSegment}${
+        routeMeta.segments.length ? `/${routeMeta.segments.join('/')}` : ''
+      }`
+
+      const nextSearch = buildSearchObject(
+        new URLSearchParams(navi.location.searchParams.toString()),
+      )
+
+      if (docId) {
+        nextSearch[DOC_EDITOR_QUERY_PARAM.DOC_ID] = docId
+      } else {
+        delete nextSearch[DOC_EDITOR_QUERY_PARAM.DOC_ID]
+      }
+
+      const nextSearchParams = new URLSearchParams(nextSearch)
+      const nextSearchString = nextSearchParams.toString()
+      const nextUrl = nextSearchString ? `${nextPath}?${nextSearchString}` : nextPath
+      const currentUrl = navi.location.search
+        ? `${navi.location.pathname}${navi.location.search}`
+        : navi.location.pathname
 
       if (nextUrl === currentUrl) return
 
-      router.replace(nextUrl, { scroll: false })
+      navi.to(
+        {
+          app: 'dsb',
+          community: routeMeta.community,
+          path: routeMeta.segments.join('/'),
+          search: nextSearch,
+        },
+        { replace: true },
+      )
     },
-    [pathname, router, searchString],
+    [routeMeta, navi],
   )
 
   return { currentDocId, syncDocIdToUrl }

@@ -1,5 +1,6 @@
-import Script from 'next/script'
 import { Fragment, type ReactNode } from 'react'
+
+import { Script } from '~/platform'
 
 import { getRenderableThirdPartyAnalyticsConfigs, getThirdPartyAnalyticsValue } from './index'
 import type { TThirdPartyAnalyticsConfig, TThirdPartyAnalyticsProvider } from './types'

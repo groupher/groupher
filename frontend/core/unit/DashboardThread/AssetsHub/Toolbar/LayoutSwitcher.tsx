@@ -5,7 +5,7 @@ import type { ComponentType, SVGProps } from 'react'
 import LayoutDashboardIcon from '~/icons/LayoutDashboard'
 import LayoutMenuIcon from '~/icons/LayoutMenu'
 import LayoutTableIcon from '~/icons/LayoutTable'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { ASSETS_HUB_LIST_VIEW, ASSETS_HUB_LIST_VIEW_OPTIONS } from '../constant'
 import type { TAssetListViewMode } from '../spec'

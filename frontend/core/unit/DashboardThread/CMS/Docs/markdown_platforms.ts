@@ -1,4 +1,4 @@
-import type { TLogoListItem } from '~/widgets/LogoList/spec'
+import type { TLogoListItem } from '~/ui/LogoList/spec'
 
 export const MARKDOWN_PLATFORMS = [
   {

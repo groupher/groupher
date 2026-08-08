@@ -8,6 +8,13 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const baseConfig = {
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
+  allowedDevOrigins: [
+    '127.0.0.1',
+    'groupher.localhost',
+    'main.groupher.localhost',
+    'dashboard.groupher.localhost',
+    'landing.groupher.localhost',
+  ],
   cacheComponents: true,
   experimental: {
     useTypeScriptCli: true,

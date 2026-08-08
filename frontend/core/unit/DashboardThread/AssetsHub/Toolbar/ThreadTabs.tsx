@@ -4,9 +4,9 @@ import { useMemo } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePublicThreads from '~/hooks/usePublicThreads'
+import Tabs from '~/ui/Switcher/Tabs'
+import type { TTabItem } from '~/ui/Switcher/Tabs/spec'
 import { path2Thread } from '~/utils/thread'
-import Tabs from '~/widgets/Switcher/Tabs'
-import type { TTabItem } from '~/widgets/Switcher/Tabs/spec'
 
 import { ASSETS_HUB_THREAD_FILTER } from '../constant'
 import type { TAssetThreadFilter } from '../spec'

@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { type FC, memo } from 'react'
 
 import SIZE from '~/const/size'
+import { Link } from '~/platform'
 import type { TSizeTSM, TSocialItem, TSpace } from '~/spec'
 
 import useSalon, { cn, Icon } from './salon'

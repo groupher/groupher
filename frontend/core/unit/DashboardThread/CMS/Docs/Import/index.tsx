@@ -4,8 +4,8 @@ import { useEffect } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
+import Button from '~/ui/Buttons/Button'
 import { registerBeforeDashboardBack } from '~/unit/DashboardThread/SideMenu/beforeBack'
-import Button from '~/widgets/Buttons/Button'
 
 import AnalyzingStep from './AnalyzingStep'
 import CompletedStep from './CompletedStep'

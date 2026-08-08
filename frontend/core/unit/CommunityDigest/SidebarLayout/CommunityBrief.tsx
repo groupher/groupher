@@ -1,6 +1,3 @@
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-
 import { COMMUNITY_LAYOUT, BRAND_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
 import { prettyURL } from '~/fmt'
@@ -9,9 +6,11 @@ import useLayout from '~/hooks/useLayout'
 import useViewingThread from '~/hooks/useViewingThread'
 import LinkSVG from '~/icons/Link'
 import Img from '~/Img'
+import { Link } from '~/platform'
+import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import ImgFallback from '~/widgets/ImgFallback'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
+import ImgFallback from '~/ui/ImgFallback'
 
 import useSalon from '../salon/sidebar_layout/community_brief'
 

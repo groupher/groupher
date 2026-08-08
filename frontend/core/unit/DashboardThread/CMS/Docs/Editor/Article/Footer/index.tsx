@@ -4,7 +4,7 @@ import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { type FC, useCallback, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import FeedbackSpectrum from '~/widgets/FeedbackSpectrum'
+import FeedbackSpectrum from '~/ui/FeedbackSpectrum'
 
 import ActionButton from './ActionButton'
 import { FOOTER_ACTIONS, FOOTER_TITLE_I18N_KEY } from './constant'

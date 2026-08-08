@@ -2,8 +2,8 @@ import type { FC, ReactNode } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
+import ThemeSwitchPreview from '~/ui/ThemeSwitch/Preview'
 
 import useSalon, { cnMerge } from './salon'
 

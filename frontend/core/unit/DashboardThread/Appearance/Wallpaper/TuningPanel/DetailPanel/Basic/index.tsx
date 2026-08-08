@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
-import BlurField from '~/widgets/TuningFields/BlurField'
-import BrightnessField from '~/widgets/TuningFields/BrightnessField'
-import SaturationField from '~/widgets/TuningFields/SaturationField'
+import BlurField from '~/ui/TuningFields/BlurField'
+import BrightnessField from '~/ui/TuningFields/BrightnessField'
+import SaturationField from '~/ui/TuningFields/SaturationField'
 
 import useSalon from '../../salon/detail_panel/basic'
 import GroupTitle from '../GroupTitle'

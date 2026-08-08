@@ -11,29 +11,40 @@ import {
 } from '../constant'
 import { hourLabel } from '../helper'
 import { ANALYSIS_TREND_TRAFFIC_QUERY } from '../schema'
-import type { TAnalysisTrendTrafficSection } from '../spec'
+import type { TAnalysisTrendTrafficSection, TAnalysisWebOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
+  demoData?: TAnalysisWebOverviewDemo
 }
 
 type TData = {
   analysisTrendTraffic: TAnalysisTrendTrafficSection | null
 }
 
-export default function TrafficPanel({ community, days }: TProps) {
+const demoTrafficSection = (demoData: TAnalysisWebOverviewDemo): TAnalysisTrendTrafficSection => ({
+  status: demoData.traffic.status,
+  timezone: demoData.traffic.timezone,
+  cells: demoData.traffic.cells ?? [],
+  error: demoData.traffic.error,
+})
+
+export default function TrafficPanel({ community, days, demoData }: TProps) {
   const s = useSalon()
   const ref = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
+  const isDemo = Boolean(demoData)
+
   const [result] = useQuery<TData>({
     query: ANALYSIS_TREND_TRAFFIC_QUERY,
     variables: { community, days },
-    pause: !visible,
+    pause: !visible || isDemo,
     requestPolicy: 'cache-and-network',
   })
-  const section = result.data?.analysisTrendTraffic
+  const section =
+    isDemo && demoData ? demoTrafficSection(demoData) : result.data?.analysisTrendTraffic
   const cells = section?.cells ?? []
   const max = Math.max(...cells.map((cell) => cell.visitors), 1)
   const cellsByKey = useMemo(
@@ -66,10 +77,12 @@ export default function TrafficPanel({ community, days }: TProps) {
     <section ref={ref} className={s.wrapper}>
       <h3 className={s.title}>{WEB_OVERVIEW_TEXT.traffic}</h3>
 
-      {!visible || (result.fetching && !section) ? (
+      {!isDemo && (!visible || (result.fetching && !section)) ? (
         <div className={s.state}>Loading analytics…</div>
-      ) : result.error || section?.error ? (
-        <div className={s.error}>{result.error?.message ?? section?.error?.message}</div>
+      ) : !isDemo && result.error ? (
+        <div className={s.error}>{result.error?.message}</div>
+      ) : section?.error ? (
+        <div className={s.error}>{section.error.message}</div>
       ) : cells.length === 0 ? (
         <div className={s.state}>{WEB_OVERVIEW_TEXT.empty}</div>
       ) : (

@@ -17,6 +17,7 @@ export type TTechnology =
   | 'react'
   | 'routing'
   | 'tailwindcss'
+  | 'tanstack-start'
   | 'typescript'
   | 'uvicorn'
 

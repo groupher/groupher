@@ -3,8 +3,8 @@ import type { FC } from 'react'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import type { TComment } from '~/spec'
-import ImgFallback from '~/widgets/ImgFallback'
-import TimeAgo from '~/widgets/TimeAgo'
+import ImgFallback from '~/ui/ImgFallback'
+import TimeAgo from '~/ui/TimeAgo'
 
 import useSalon from '../salon/header/article'
 

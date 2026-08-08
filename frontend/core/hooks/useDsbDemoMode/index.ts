@@ -1,7 +1,6 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
-
+import { useSearchParams } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 

@@ -1,4 +1,4 @@
-import { gqFetch } from '~/graphql/server'
+import { gqAuthFetch } from '~/graphql/server'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import S from '~/unit/DashboardThread/schema'
 
@@ -78,7 +78,7 @@ export const getDocEditorInitialData = async (
   docId: string | null,
 ): Promise<TDocEditorInitialDataResult> => {
   try {
-    const treeResponse = await gqFetch(S.docTree, { community })
+    const treeResponse = await gqAuthFetch(S.docTree, { community })
     const treePayload = (await treeResponse.json()) as TGraphQLResult<TDocTreeQueryData>
     const treeData = treePayload.data ?? null
     const docTree = treeData?.docTree ?? null
@@ -90,7 +90,7 @@ export const getDocEditorInitialData = async (
 
     if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }
 
-    const draftResponse = await gqFetch(S.docDraft, {
+    const draftResponse = await gqAuthFetch(S.docDraft, {
       community,
       id: activeDocId,
     })

@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import Input from '~/widgets/Input'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
+import Input from '~/ui/Input'
 
 import useSEO from '../logic/useSEO'
 import SectionLabel from '../SectionLabel'

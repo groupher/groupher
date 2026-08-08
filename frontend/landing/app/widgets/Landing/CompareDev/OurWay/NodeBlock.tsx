@@ -14,7 +14,7 @@ import ToolSVG from '~/icons/Tool'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import type { TArticleCat, TColorName } from '~/spec'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/compare_dev/our_way/node_block'
 import { getMetricMap } from '../constant'

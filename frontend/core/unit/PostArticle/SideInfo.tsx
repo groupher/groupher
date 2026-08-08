@@ -2,10 +2,10 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import Img from '~/Img'
 import { upvoteArticle } from '~/signal'
 import useArticle from '~/stores/article/hooks'
+import ReadableDate from '~/ui/ReadableDate'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
-import ReadableDate from '~/widgets/ReadableDate'
 
 import useSalon from './salon/side_info'
 

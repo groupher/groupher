@@ -31,7 +31,7 @@ vi.mock('~/lib/documentImport', () => ({
   importDocumentationPlatform: mocks.importDocumentationPlatform,
 }))
 
-vi.mock('~/widgets/Drawer', () => ({
+vi.mock('~/ui/Drawer', () => ({
   default: ({ children, show, wide }) =>
     show ? (
       <div data-testid='import-drawer' data-wide={String(!!wide)}>
@@ -40,14 +40,14 @@ vi.mock('~/widgets/Drawer', () => ({
     ) : null,
 }))
 
-vi.mock('~/widgets/Toaster', () => ({ toast: mocks.toast }))
+vi.mock('~/ui/Toaster', () => ({ toast: mocks.toast }))
 
-vi.mock('~/widgets/LogoList/salon', () => ({
+vi.mock('~/ui/LogoList/salon', () => ({
   default: () =>
     new Proxy({ link: 'hover:underline' }, { get: (target, key: string) => target[key] ?? key }),
 }))
 
-vi.mock('~/widgets/Tooltip', () => ({
+vi.mock('~/ui/Tooltip', () => ({
   default: ({ children, content }) => (
     <div>
       {children}

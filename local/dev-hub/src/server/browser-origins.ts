@@ -2,6 +2,7 @@ type TBrowserService = {
   group: string
   id: string
   browserMetrics?: boolean
+  browserMetricOrigins?: readonly string[]
   port?: number
   appUrl?: string
   portlessUrl?: string
@@ -30,6 +31,9 @@ export const buildBrowserOriginsByService = (
         }
         if (service.portlessAppUrl) {
           origins.add(new URL(service.portlessAppUrl).origin)
+        }
+        for (const origin of service.browserMetricOrigins ?? []) {
+          origins.add(new URL(origin).origin)
         }
 
         return [service.id, origins] as const

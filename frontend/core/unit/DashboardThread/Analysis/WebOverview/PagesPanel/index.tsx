@@ -6,16 +6,45 @@ import { useQuery } from 'urql'
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
 import { ANALYSIS_TREND_PAGES_QUERY } from '../schema'
-import type { TAnalysisTrendPagesSection } from '../spec'
+import type { TAnalysisTrendPagesSection, TAnalysisWebOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   community: string
   days: number
+  demoData?: TAnalysisWebOverviewDemo
 }
 
 type TData = {
   analysisTrendPages: TAnalysisTrendPagesSection | null
+}
+
+type TDemoDimension = 'PATH' | 'URL' | 'ENTRY' | 'EXIT' | 'TITLE' | 'QUERY'
+
+const pageItemsFromDemo = (demoData: TAnalysisWebOverviewDemo, dimension: TDemoDimension) => {
+  const keyByDimension = {
+    PATH: 'path',
+    URL: 'url',
+    ENTRY: 'entry',
+    EXIT: 'exit',
+    TITLE: 'title',
+    QUERY: 'query',
+  } as const
+
+  const key = keyByDimension[dimension]
+
+  return key ? (demoData.pages[key] ?? []) : []
+}
+
+const demoPagesSection = (
+  dimension: TDemoDimension,
+  demoData: TAnalysisWebOverviewDemo,
+): TAnalysisTrendPagesSection => {
+  return {
+    status: 'ok',
+    items: pageItemsFromDemo(demoData, dimension),
+    error: null,
+  }
 }
 
 const TABS = [
@@ -26,28 +55,35 @@ const TABS = [
   { key: 'QUERY', label: 'Query' },
 ]
 
-export default function PagesPanel({ community, days }: TProps) {
+export default function PagesPanel({ community, days, demoData }: TProps) {
   const s = useSalon()
-  const [dimension, setDimension] = useState(TABS[0].key)
+  const [dimension, setDimension] = useState<TDemoDimension>(TABS[0].key as TDemoDimension)
+  const isDemo = Boolean(demoData)
+
   const [result] = useQuery<TData>({
     query: ANALYSIS_TREND_PAGES_QUERY,
     variables: { community, days, dimension },
+    pause: isDemo,
     requestPolicy: 'cache-and-network',
   })
-  const section = result.data?.analysisTrendPages
+  const section =
+    isDemo && demoData ? demoPagesSection(dimension, demoData) : result.data?.analysisTrendPages
+
+  const loading = isDemo ? false : result.fetching && !section
+  const error = isDemo ? null : (result.error?.message ?? section?.error?.message)
 
   return (
     <div className={s.wrapper}>
       <DimensionPanel
         activeKey={dimension}
         emptyLabel={WEB_OVERVIEW_TEXT.empty}
-        error={result.error?.message ?? section?.error?.message}
+        error={error}
         items={section?.items ?? []}
-        loading={result.fetching && !section}
+        loading={loading}
         metricKey='visitors'
         tabs={TABS}
         title={WEB_OVERVIEW_TEXT.pages}
-        onTabChange={setDimension}
+        onTabChange={(key) => setDimension(key as TDemoDimension)}
       />
     </div>
   )

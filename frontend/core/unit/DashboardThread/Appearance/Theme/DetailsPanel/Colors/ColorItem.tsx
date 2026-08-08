@@ -3,7 +3,7 @@ import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import { mapToPresetColorHex } from '~/lib/color'
 import type { TColorName } from '~/spec'
-import ColorSelector from '~/widgets/ColorSelector'
+import ColorSelector from '~/ui/ColorSelector'
 
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../../spec'
 import useSalon from '../salon/colors/color_item'

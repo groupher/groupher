@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import TimeAgo from '~/widgets/TimeAgo'
+import TimeAgo from '~/ui/TimeAgo'
 
 import useSalon from './salon'
 import type { TTrashedPost } from './spec'
