@@ -1,24 +1,23 @@
-# Third-party Analytics Integration
+# 第三方分析集成
 
-> Status: v1 implemented; v2 follow-up tracked below.
+> 状态：v1 已实现；v2 后续工作见下文。
 >
-> Scope: community-admin configured third-party analytics scripts for public
-> community pages.
+> 范围：社区管理员为公开社区页面配置的第三方分析脚本。
 
-## Product Boundary
+## 产品边界
 
-This document covers Dashboard `Integrations / Third-party / Analytics` only.
-It does not define or change Groupher's built-in Web Analysis implementation.
+本文档只覆盖 Dashboard 的 `Integrations / Third-party / Analytics`。它不定义
+也不改变 Groupher 内置的 Web Analysis 实现。
 
-Third-party analytics is a community-owned integration surface:
+第三方分析是社区自有的集成入口：
 
-- Community admins choose a supported analytics provider.
-- Community admins enter the provider's normal public tracking identity, such as
-  a Google Analytics measurement ID or a Fathom site ID.
-- Groupher stores the configuration and injects the provider script only on that
-  community's public pages when the configuration is enabled and valid.
+- 社区管理员选择一个受支持的分析 provider。
+- 社区管理员输入 provider 正常的公共追踪身份，例如 Google Analytics 的
+  measurement ID 或 Fathom 的 site ID。
+- Groupher 存储配置，并在配置启用且有效时，仅在该社区的公开页面上注入
+  provider 脚本。
 
-The v1 provider set is:
+v1 的 provider 集合：
 
 - Google Analytics
 - Google Tag Manager
@@ -26,20 +25,17 @@ The v1 provider set is:
 - Plausible
 - Fathom
 
-Do not include Umami in the default v1 provider list. If user-owned Umami is
-needed later, expose it as an advanced "custom Umami" integration instead of
-mixing it into the default analytics choices.
+不要把 Umami 加入默认的 v1 provider 列表。如果以后需要支持用户自有的 Umami，应
+作为高级“custom Umami”集成开放，而不是混入默认分析选项。
 
-Provider availability and config-field definitions should come from the
-backend. Treat them like editor templates: Dashboard asks the backend which
-analytics providers are supported, which fields each provider needs, and which
-validation hints should be shown. Avoid maintaining the same provider list in
-Dashboard UI, backend validation, and public script loading separately.
+Provider 可用性和配置字段定义应来自后端。把它们当作编辑器模板：Dashboard 向
+后端询问支持哪些分析 provider、每个 provider 需要哪些字段、应该展示哪些校验
+提示。避免在 Dashboard UI、后端校验和公开脚本加载三处分别维护同一份 provider
+列表。
 
-## Runtime Scope
+## 运行时范围
 
-Third-party analytics scripts should be injected from the public community
-layout:
+第三方分析脚本应从公开 community 布局注入：
 
 ```text
 frontend/main/src/app/[community]/layout.tsx
@@ -47,19 +43,17 @@ frontend/main/src/app/[community]/layout.tsx
   -> Client
 ```
 
-Do not inject these scripts from Dashboard layouts. Dashboard is the management
-surface where integrations are configured; it should not be tracked by a
-community admin's third-party analytics account.
+不要从 Dashboard 布局注入这些脚本。Dashboard 是集成配置的管理面，不应被社区
+管理员的第三方分析账号追踪。
 
-Do not put third-party analytics in the root `frontend/main/src/app/layout.tsx`
-for v1. The feature is community-scoped, and `[community]/layout.tsx` already
-has the community dashboard data needed to decide which scripts may be rendered.
+v1 不要把第三方分析放到根 `frontend/main/src/app/layout.tsx`。该特性是
+community 维度的，`[community]/layout.tsx` 已经拥有决定哪些脚本可被渲染所
+需的 community dashboard 数据。
 
-### Content Security Policy
+### 内容安全策略（CSP）
 
-If Groupher sends a CSP header in production, the third-party analytics rollout
-must update it before enabling the feature. At minimum, check script/connect
-permissions for the v1 provider hosts:
+如果生产中由 Groupher 发送 CSP 头，第三方分析的上线必须先更新它，才能正式启用。
+至少需要检查 v1 provider 域名的 script/connect 权限：
 
 ```text
 www.googletagmanager.com
@@ -70,56 +64,52 @@ plausible.io
 cdn.usefathom.com
 ```
 
-Keep the exact CSP directives close to the deployment/header implementation.
-This document only records the provider domains that must be considered.
+保持具体的 CSP 指令靠近部署/header 实现。本文只记录需要考虑的 provider 域名。
 
-GTD status:
+GTD 状态：
 
-- `Waiting`: confirm whether production currently sets CSP in application code,
-  Vercel, Cloudflare, or another reverse proxy.
-- `Next`: if CSP exists, add the provider domains above to the relevant
-  `script-src` and `connect-src` directives before enabling third-party
-  analytics in production.
-- `Later`: if production has no CSP today, keep this as a deployment checklist
-  item for the first CSP rollout.
+- `Waiting`：确认生产当前是否在应用代码、Vercel、Cloudflare 或其他反向代理中
+  设置 CSP。
+- `Next`：如果存在 CSP，在启用第三方分析之前，把上述 provider 域名加到相关
+  `script-src` 和 `connect-src` 指令。
+- `Later`：如果生产目前没有 CSP，把它列为第一次 CSP 推出时的部署清单项。
 
-## Loading Rules
+## 加载规则
 
-Scripts must be conditional and provider-specific.
+脚本必须按 provider 条件加载。
 
 ```text
-community has no third-party analytics config
-  -> render nothing
+community 没有第三方分析配置
+  -> 不渲染
 
-provider config exists but enabled is false
-  -> render nothing
+provider 配置存在但 enabled 为 false
+  -> 不渲染
 
-provider config is enabled but invalid
-  -> render nothing
+provider 配置 enabled 但无效
+  -> 不渲染
 
-provider config is enabled and valid
-  -> render only that provider's script
+provider 配置 enabled 且有效
+  -> 只渲染该 provider 的脚本
 ```
 
-Supporting five providers must not make every community download five analytics
-libraries. Do not use third-party npm SDKs for v1. Render small Next `Script`
-tags and inline bootstraps only when a provider is enabled.
+支持五个 provider 不应让每个 community 都下载五个分析库。v1 不要使用第三方
+npm SDK。仅在某个 provider 启用时，渲染精简的 Next `Script` 标签和内联引导。
 
-The intended no-config path is:
+预期的无配置路径：
 
 ```text
 SSR community layout
-  -> no valid enabled third-party analytics configs
-  -> <ThirdPartyAnalyticsScripts /> returns null
-  -> no third-party analytics network requests
+  -> 没有有效且启用的第三方分析配置
+  -> <ThirdPartyAnalyticsScripts /> 返回 null
+  -> 没有第三方分析网络请求
 ```
 
-## Provider Identities
+## Provider 身份
 
-These values are not secrets. They are normal public tracking identities that
-analytics providers expect websites to place in browser-visible scripts.
+这些值不是 secret。它们是分析 provider 期望网站放在浏览器可见脚本中的常规
+公共追踪身份。
 
-| Provider | User-provided value | Example |
+| Provider | 用户提供的值 | 示例 |
 | --- | --- | --- |
 | Google Analytics | Measurement ID | `G-1234567` |
 | Google Tag Manager | Container ID | `GTM-ABC1234` |
@@ -127,16 +117,15 @@ analytics providers expect websites to place in browser-visible scripts.
 | Plausible | Site domain | `docs.example.com` |
 | Fathom | Site ID | `ABCDE` |
 
-Do not store or expose provider admin credentials, API tokens, OAuth secrets, or
-server-side access keys in this integration model. v1 only needs the browser
-tracking identities above.
+不要在这种集成模型中存储或暴露 provider 管理凭据、API token、OAuth secret 或
+服务端访问密钥。v1 只需要上述浏览器追踪身份。
 
 ## Provider Registry
 
-The backend owns the provider registry. It should expose a GraphQL query that
-Dashboard can use to render cards and settings forms.
+后端拥有 provider registry。它应暴露一个 GraphQL 查询，供 Dashboard 渲染卡片
+和设置表单。
 
-Suggested shape:
+建议形态：
 
 ```text
 thirdPartyAnalyticsProviders: [
@@ -159,38 +148,34 @@ thirdPartyAnalyticsProviders: [
 ]
 ```
 
-Backend registry responsibilities:
+后端 registry 职责：
 
-- Own the supported provider keys for v1.
-- Own provider card metadata that does not depend on frontend runtime behavior.
-- Own config field definitions and validation hints.
-- Reuse the same registry for Dashboard save validation.
+- 拥有 v1 支持的 provider key。
+- 拥有不依赖前端运行时行为的 provider 卡片元数据。
+- 拥有 config 字段定义和校验提示。
+- 在 Dashboard 保存校验时复用同一 registry。
 
-Frontend responsibilities:
+前端职责：
 
-- Render Dashboard cards and forms from the backend provider registry.
-- Keep provider icons under `frontend/dashboard/public/integrations` when the
-  icon is only used by Dashboard.
-- Keep script-rendering implementation in frontend code because it depends on
-  Next `Script`, CSP/runtime behavior, and avoiding backend-delivered
-  executable script strings.
+- 从后端 provider registry 渲染 Dashboard 卡片和表单。
+- 如果图标只被 Dashboard 使用，将其放在 `frontend/dashboard/public/integrations`。
+- 脚本渲染实现保留在前端代码，因为它依赖 Next `Script`、CSP/运行时行为，并
+  且要避免后端下发可执行脚本字符串。
 
-If the backend registry contains a provider whose script renderer is not yet
-implemented in the frontend, public pages must skip script injection for that
-provider. Dashboard may show it as unsupported by the current frontend renderer,
-or the backend may avoid returning it until the renderer ships.
+如果后端 registry 包含某个 provider，但前端还没实现对应的脚本渲染器，则公开
+页面必须跳过该 provider 的脚本注入。Dashboard 可以显示为当前前端渲染器不支持，
+或后端在该渲染器上线前不要返回它。
 
-## Data Model
+## 数据模型
 
-Add a community dashboard section dedicated to third-party analytics. Keep it
-separate from built-in analysis configuration.
+为第三方分析添加一个专属的 community dashboard section。把它和内置分析配置
+分开。
 
-Persist the config as part of `community_dashboards`, not on the `communities`
-table and not as a separate v1 table. It belongs to the community Dashboard
-configuration surface and should follow the same replace-style dashboard
-section update path.
+配置以 `community_dashboards` 一部分持久化，而不是放在 `communities` 表，也不
+作为独立的 v1 表。它属于 community Dashboard 配置面，应沿用相同的 replace-style
+dashboard section 更新路径。
 
-Suggested persisted shape:
+建议的持久化形态：
 
 ```text
 third_party_analytics: [
@@ -204,8 +189,8 @@ third_party_analytics: [
 ]
 ```
 
-Use provider-specific config keys rather than a single generic `id` everywhere.
-This keeps validation and future UI labels clear:
+使用 provider 专属的 config key，而不是到处都使用一个泛化的 `id`。这样能让
+校验和未来的 UI 标签更清晰：
 
 | Provider | Config field |
 | --- | --- |
@@ -215,11 +200,10 @@ This keeps validation and future UI labels clear:
 | `plausible` | `domain` |
 | `fathom` | `site_id` |
 
-The persisted shape uses snake_case because it is stored and validated by the
-backend. GraphQL and frontend public shapes use camelCase through the normal
-Absinthe field conversion boundary.
+持久化形态使用 snake_case，因为它由后端存储和校验。GraphQL 和前端公开形态通过
+Absinthe 常规的字段转换边界使用 camelCase。
 
-The public page renderer should receive only normalized, loadable configs:
+公开页面渲染器应只接收标准化、可加载的 config：
 
 ```text
 enabledThirdPartyAnalytics: [
@@ -228,20 +212,18 @@ enabledThirdPartyAnalytics: [
 ]
 ```
 
-Disabled, invalid, and draft values should stay in Dashboard configuration
-responses and should not be rendered into public page HTML.
+禁用、无效和草稿值应保留在 Dashboard 配置响应中，不应被渲染进公开页面 HTML。
 
-Prefer a backend-resolved public field such as `enabledThirdPartyAnalytics` for
-`[community]/layout.tsx`. It should return only enabled and valid configs, and
-the frontend script renderer should still defensively validate before rendering.
+为 `[community]/layout.tsx` 优先使用后端解析后的公开字段，如
+`enabledThirdPartyAnalytics`。它应只返回启用且有效的 config，前端脚本渲染器仍
+应在渲染前做防御性校验。
 
-## Script Registry
+## 脚本注册
 
-Centralize script rendering in one frontend registry. The layout should not
-contain provider-specific branches, and the frontend should not duplicate
-provider metadata already returned by the backend registry.
+脚本渲染集中到一个前端 registry。布局不应包含 provider 专属分支，前端也不应
+重复已经由后端 registry 返回的 provider 元数据。
 
-Suggested location:
+建议位置：
 
 ```text
 frontend/core/lib/thirdPartyAnalytics/
@@ -249,16 +231,14 @@ frontend/core/lib/thirdPartyAnalytics/
   ThirdPartyAnalyticsScripts.tsx
 ```
 
-Responsibilities:
+职责：
 
-- `validators.ts` defensively validates persisted configs before rendering.
-- `ThirdPartyAnalyticsScripts.tsx` receives normalized configs and renders the
-  enabled scripts.
-- A local `SCRIPT_RENDERERS` const maps provider keys to renderer functions.
-  This is intentionally frontend-owned; do not let the backend send executable
-  script strings.
+- `validators.ts` 在渲染前对持久化 config 做防御性校验。
+- `ThirdPartyAnalyticsScripts.tsx` 接收标准化 config 并渲染已启用的脚本。
+- 本地一个 `SCRIPT_RENDERERS` 常量把 provider key 映射到渲染函数。这有意归前端
+  拥有；不允许后端下发可执行脚本字符串。
 
-High-level shape:
+高层形态：
 
 ```tsx
 const SCRIPT_RENDERERS = {
@@ -278,7 +258,7 @@ export function ThirdPartyAnalyticsScripts({ configs }) {
 }
 ```
 
-Provider scripts should have stable IDs so duplicate injection is avoided:
+Provider 脚本应有稳定的 ID，避免重复注入：
 
 ```text
 third-party-analytics-ga-loader
@@ -289,23 +269,23 @@ third-party-analytics-plausible
 third-party-analytics-fathom
 ```
 
-Recommended Next `Script` strategy:
+推荐的 Next `Script` 策略：
 
-| Provider | Strategy | Reason |
+| Provider | Strategy | 原因 |
 | --- | --- | --- |
-| Google Analytics | `afterInteractive` | Standard analytics bootstrap without blocking first paint. |
-| Google Tag Manager | `afterInteractive` | Avoid making the community page critical path heavier in v1. |
-| Microsoft Clarity | `afterInteractive` | Session tooling should start after hydration is available. |
-| Plausible | `lazyOnload` | Lightweight page analytics can wait until browser idle. |
-| Fathom | `lazyOnload` | Lightweight page analytics can wait until browser idle. |
+| Google Analytics | `afterInteractive` | 标准分析引导，不阻塞首次绘制。 |
+| Google Tag Manager | `afterInteractive` | v1 中避免让 community 页面关键路径变重。 |
+| Microsoft Clarity | `afterInteractive` | session 工具应在 hydration 完成后启动。 |
+| Plausible | `lazyOnload` | 轻量页面分析可以等浏览器空闲。 |
+| Fathom | `lazyOnload` | 轻量页面分析可以等浏览器空闲。 |
 
-## Provider Rendering Notes
+## Provider 渲染说明
 
 ### Google Analytics
 
-Render `gtag.js` only when `measurement_id` is valid.
+仅在 `measurement_id` 有效时渲染 `gtag.js`。
 
-Expected browser-visible output:
+预期的浏览器可见输出：
 
 ```html
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1234567"></script>
@@ -319,9 +299,9 @@ Expected browser-visible output:
 
 ### Google Tag Manager
 
-Render the GTM bootstrap only when `container_id` is valid.
+仅在 `container_id` 有效时渲染 GTM bootstrap。
 
-Expected browser-visible output:
+预期的浏览器可见输出：
 
 ```html
 <script>
@@ -329,15 +309,15 @@ Expected browser-visible output:
 </script>
 ```
 
-v1 intentionally skips the GTM `noscript` iframe because Groupher public
-community pages rely on JavaScript for the normal runtime path. If a noscript
-fallback is required later, add it deliberately in the public body surface.
+v1 故意省略 GTM 的 `noscript` iframe，因为 Groupher 公开 community 页面依赖
+JavaScript 走正常运行时路径。如果以后需要 noscript 兜底，应在公开 body 区域
+里刻意添加。
 
 ### Microsoft Clarity
 
-Render the Clarity bootstrap only when `project_id` is valid.
+仅在 `project_id` 有效时渲染 Clarity bootstrap。
 
-Expected browser-visible output:
+预期的浏览器可见输出：
 
 ```html
 <script>
@@ -347,181 +327,170 @@ Expected browser-visible output:
 
 ### Plausible
 
-Render the Plausible script only when `domain` is valid.
+仅在 `domain` 有效时渲染 Plausible 脚本。
 
-Expected browser-visible output:
+预期的浏览器可见输出：
 
 ```html
 <script defer data-domain="docs.example.com" src="https://plausible.io/js/script.js"></script>
 ```
 
-For self-hosted Plausible support, add an advanced origin field later. Do not
-include a custom script origin in v1 unless there is a concrete product need.
+如需支持自托管 Plausible，以后再添加一个高级 origin 字段。除非有明确的产品需
+要，否则 v1 不要加入自定义脚本 origin。
 
 ### Fathom
 
-Render the Fathom script only when `site_id` is valid.
+仅在 `site_id` 有效时渲染 Fathom 脚本。
 
-Expected browser-visible output:
+预期的浏览器可见输出：
 
 ```html
 <script src="https://cdn.usefathom.com/script.js" data-site="ABCDE" defer></script>
 ```
 
-## Validation
+## 校验
 
-Use strict-enough validation to avoid accidental script injection while keeping
-the product simple.
+使用足够严格的校验以避免意外脚本注入，同时保持产品简单。
 
-Suggested validation:
+建议的校验：
 
-| Provider | Validation |
+| Provider | 校验 |
 | --- | --- |
-| Google Analytics | `measurement_id` matches `/^G-[A-Za-z0-9-]+$/` |
-| Google Tag Manager | `container_id` matches `/^GTM-[A-Za-z0-9-]+$/` |
-| Microsoft Clarity | `project_id` is non-empty and contains only letters, numbers, underscores, and hyphens |
-| Plausible | `domain` matches `/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$/` |
-| Fathom | `site_id` is non-empty and contains only letters, numbers, underscores, and hyphens |
+| Google Analytics | `measurement_id` 匹配 `/^G-[A-Za-z0-9-]+$/` |
+| Google Tag Manager | `container_id` 匹配 `/^GTM-[A-Za-z0-9-]+$/` |
+| Microsoft Clarity | `project_id` 非空，且只包含字母、数字、下划线和连字符 |
+| Plausible | `domain` 匹配 `/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$/` |
+| Fathom | `site_id` 非空，且只包含字母、数字、下划线和连字符 |
 
-All user-provided provider values should have a practical max length. Use 255
-characters for provider identity fields and domains unless a provider has a
-stricter documented limit. Provider keys should be much shorter, for example 32
-or 64 characters.
+所有用户输入的 provider 值应有一个实际的最大长度。除非某个 provider 有更严
+格的文档限制，否则 provider 身份字段和域名使用 255 字符。provider key 应更短，
+例如 32 或 64 字符。
 
-Validation should run in two places:
+校验应在两处执行：
 
-- Dashboard save path: reject invalid enabled config and show a useful field
-  error.
-- Public render path: defensively skip invalid configs even if bad data already
-  exists.
+- Dashboard 保存路径：拒绝无效的启用 config 并展示有用的字段错误。
+- 公开渲染路径：即使已有错误数据，也要防御性地跳过无效 config。
 
 ## Dashboard UX
 
-Each provider card opens a settings modal with:
+每个 provider 卡片打开一个设置 modal，包含：
 
-- Enable switch.
-- One required provider identity field.
-- Provider-specific help text and docs link.
-- Save button.
-- Current status: enabled, disabled, or invalid.
+- 启用开关。
+- 一个必填的 provider 身份字段。
+- provider 专属帮助文本和文档链接。
+- 保存按钮。
+- 当前状态：已启用、已禁用或无效。
 
-For v1, use one config field per provider. Avoid advanced event mapping,
-consent-mode settings, custom domains, or provider API validation until the
-basic load path is proven.
+v1 阶段每个 provider 使用一个 config 字段。在基础加载路径证明可行前，避免加入
+高级事件映射、consent-mode 设置、自定义域名或 provider API 校验。
 
-## Implementation Phases
+## 实施阶段
 
-### Phase 1: Provider List Cleanup
+### Phase 1: Provider 列表清理
 
-- Remove Umami, Matomo, Hotjar, and Facebook Pixel from the default Analytics
-  provider list.
-- Keep Google Analytics, Google Tag Manager, Microsoft Clarity, Plausible, and
-  Fathom.
-- Remove or stop referencing the unused provider i18n keys, settings metadata,
-  and Dashboard icons for removed providers in the same implementation slice.
-- Keep provider icons under `frontend/dashboard/public/integrations` only for
-  providers still rendered by Dashboard.
-- No compatibility migration is required because the unsupported providers were
-  never shipped as a public feature.
+- 从默认 Analytics provider 列表移除 Umami、Matomo、Hotjar 和 Facebook Pixel。
+- 保留 Google Analytics、Google Tag Manager、Microsoft Clarity、Plausible 和
+  Fathom。
+- 同一实现切片内，移除或停止引用被移除 provider 的 i18n key、设置元数据和
+  Dashboard 图标。
+- 只为 Dashboard 仍渲染的 provider 把图标保留在
+  `frontend/dashboard/public/integrations`。
+- 不需要兼容性迁移，因为这些不支持的 provider 从未作为公开特性发布。
 
-GTD status: `Done`.
+GTD 状态：`Done`。
 
-### Phase 2: Backend Provider Registry
+### Phase 2: 后端 Provider Registry
 
-- Add a backend provider registry module for v1 analytics providers.
-- Add GraphQL types/query for Dashboard provider definitions.
-- Move provider titles, descriptions, docs URLs, config field names,
-  placeholders, and validation hints out of frontend constants.
-- Use the same backend registry for Dashboard save validation.
+- 为 v1 analytics provider 新增后端 provider registry 模块。
+- 新增 GraphQL types/query 用于 Dashboard provider 定义。
+- 把 provider 标题、描述、文档 URL、config 字段名、placeholder 和校验提示从
+  前端常量中移出。
+- Dashboard 保存校验时使用同一个后端 registry。
 
-GTD status: `Done`.
+GTD 状态：`Done`。
 
-### Phase 3: Persistence and GraphQL Contract
+### Phase 3: 持久化和 GraphQL Contract
 
-- Add a `third_party_analytics` dashboard section or equivalent persisted
-  community dashboard config.
-- Add provider-specific input types or a normalized input shape aligned with the
-  backend provider registry.
-- Add GraphQL fields/mutations for Dashboard read/write.
-- Add a public GraphQL field such as `enabledThirdPartyAnalytics` so community
-  SSR can receive only enabled and valid configs.
+- 新增 `third_party_analytics` dashboard section 或等价的持久化 community
+  dashboard 配置。
+- 新增 provider 专属的 input 类型或与后端 provider registry 对齐的标准化 input
+  形态。
+- 为 Dashboard 读/写新增 GraphQL 字段/mutation。
+- 新增公开 GraphQL 字段如 `enabledThirdPartyAnalytics`，使 community SSR 只
+  接收启用且有效的 config。
 
-GTD status: `Done`.
+GTD 状态：`Done`。
 
-### Phase 4: Script Registry
+### Phase 4: 脚本注册
 
-- Add the centralized frontend script renderer registry.
-- Add validators.
-- Add `ThirdPartyAnalyticsScripts`.
-- Wire it into `frontend/main/src/app/[community]/layout.tsx`.
+- 新增集中式的前端脚本渲染器 registry。
+- 新增 validators。
+- 新增 `ThirdPartyAnalyticsScripts`。
+- 把它接入 `frontend/main/src/app/[community]/layout.tsx`。
 
-GTD status: `Done`.
+GTD 状态：`Done`。
 
-### Phase 5: Dashboard Settings
+### Phase 5: Dashboard 设置
 
-- Query backend provider definitions.
-- Wire provider cards to persisted config.
-- Replace the placeholder modal action with real save behavior.
-- Show enabled/disabled/invalid status on cards.
+- 查询后端 provider 定义。
+- 把 provider 卡片连到持久化 config。
+- 用真实保存行为替换占位 modal 行为。
+- 在卡片上展示已启用/已禁用/无效状态。
 
-GTD status: `Partial`.
+GTD 状态：`Partial`。
 
-Done:
+已完成：
 
-- Provider cards are loaded from the backend registry.
-- Settings modal reads and saves the persisted dashboard config.
-- Public page rendering uses the enabled-and-valid public config.
+- Provider 卡片从后端 registry 加载。
+- 设置 modal 读取和保存持久化 dashboard 配置。
+- 公开页面渲染使用启用且有效的公开 config。
 
-Next:
+接下来：
 
-- Add visible card-level status for `Enabled`, `Disabled`, and `Invalid`.
+- 在卡片层面显示 `Enabled`、`Disabled` 和 `Invalid` 状态。
 
-### Phase 6: Verification
+### Phase 6: 验证
 
-Local verification should prove script-loading behavior, not third-party
-dashboard reporting.
+本地验证应证明脚本加载行为，而不是第三方分析后台报告。
 
-Required checks:
+必需的检查：
 
 ```text
-disabled provider
-  -> no provider script in HTML
-  -> no provider network request
+禁用的 provider
+  -> HTML 中没有该 provider 脚本
+  -> 没有该 provider 网络请求
 
-invalid enabled provider
-  -> no provider script in HTML
-  -> Dashboard shows validation error on save
+启用但无效的 provider
+  -> HTML 中没有该 provider 脚本
+  -> Dashboard 在保存时显示校验错误
 
-valid enabled provider
-  -> correct provider script is rendered
-  -> only that provider's network request appears
+启用且有效的 provider
+  -> 正确渲染该 provider 的脚本
+  -> 仅出现该 provider 的网络请求
 
-multiple valid providers
-  -> each enabled provider renders once
-  -> disabled providers render nothing
+多个有效 provider
+  -> 每个启用的 provider 渲染一次
+  -> 禁用的 provider 不渲染
 
-production CSP
-  -> required provider hosts are allowed
-  -> no browser CSP violations for enabled providers
+生产 CSP
+  -> 必需的 provider host 被允许
+  -> 启用的 provider 没有浏览器 CSP 违规
 ```
 
-Use Playwright network assertions for public community pages. For visual
-Dashboard checks, use the `/home` community because local dashboard test data is
-available there.
+使用 Playwright 网络断言验证公开 community 页面。Dashboard 可视化检查使用
+`/home` community，因为那里有可用的本地 dashboard 测试数据。
 
-GTD status: `Done` for local automated E2E; `Waiting` for production CSP
-confirmation.
+GTD 状态：本地自动化 E2E `Done`；生产 CSP 确认 `Waiting`。
 
-Local E2E can be done now. It should validate DOM and network behavior only:
+本地 E2E 现在可以执行。它只应验证 DOM 和网络行为：
 
-- Use local Dashboard to save provider configs for the `/home` community.
-- Open the public `/home` community page in Playwright.
-- Assert script tags are absent/present by stable script IDs.
-- Assert provider network requests are absent/present by host.
-- Do not assert third-party vendor dashboard reporting; that is an external
-  integration check, not a local E2E requirement.
+- 使用本地 Dashboard 为 `/home` community 保存 provider config。
+- 在 Playwright 中打开公开的 `/home` community 页面。
+- 按稳定的 script ID 断言 script 标签存在/缺失。
+- 按 host 断言 provider 网络请求存在/缺失。
+- 不要断言第三方厂商后台报告；那是外部集成检查，不是本地 E2E 要求。
 
-Local automated coverage:
+本地自动化覆盖：
 
 ```text
 MOCK_GRAPHQL_PORT=4101 PLAYWRIGHT_USE_SYSTEM_CHROME=1 E2E_APP=main \
@@ -529,36 +498,32 @@ MOCK_GRAPHQL_PORT=4101 PLAYWRIGHT_USE_SYSTEM_CHROME=1 E2E_APP=main \
   frontend/e2e/tests/main/third-party-analytics.spec.ts
 ```
 
-### Phase 7: Dashboard Feedback Polish
+### Phase 7: Dashboard 反馈打磨
 
-- Show provider-specific validation errors instead of generic placeholder
-  toasts.
-- Keep errors tied to the backend registry field definitions so Dashboard does
-  not invent separate validation copy.
-- Prefer actionable examples, such as hostname-only Plausible domains and
-  `G-`/`GTM-` prefixes for Google providers.
+- 展示 provider 专属的校验错误，而不是泛化的占位 toast。
+- 错误和后端 registry 字段定义保持绑定，让 Dashboard 不发明独立的校验文案。
+- 优先使用可操作的示例，例如 Plausible 域名仅使用 hostname、Google provider
+  使用 `G-`/`GTM-` 前缀。
 
-GTD status: `Later`.
+GTD 状态：`Later`。
 
-### Phase 8: Provider Extension Policy
+### Phase 8: Provider 扩展策略
 
-- Keep unknown providers skipped in the public script renderer.
-- Decide whether Dashboard should hide unsupported providers or show an
-  unsupported state if the backend registry ships a provider before the
-  frontend renderer exists.
-- Treat self-hosted Plausible, custom Umami, PostHog, consent mode, custom
-  script origins, and event mapping as separate provider-extension work, not as
-  part of the base v1/v2 launch hardening.
+- 公开脚本渲染器中跳过未知的 provider。
+- 如果后端 registry 在前端渲染器实现前发布了一个 provider，决定 Dashboard
+  是隐藏这些不受支持的 provider，还是显示为不支持。
+- 把自托管 Plausible、自定义 Umami、PostHog、consent mode、自定义脚本 origin
+  和事件映射视为单独的 provider 扩展工作，而不是 v1/v2 基础硬化的一部分。
 
-GTD status: `Later`.
+GTD 状态：`Later`。
 
-## Non-goals
+## 非目标
 
-- Do not change built-in Web Analysis.
-- Do not load community third-party analytics scripts in Dashboard.
-- Do not add provider API calls or provider credential storage in v1.
-- Do not add consent-management UI in v1.
-- Do not support custom script origins in v1.
-- Do not add event mapping or conversion configuration in v1.
-- Do not add concurrency conflict detection in v1.
-- Do not add dashboard config audit logs in v1.
+- 不要改变内置 Web Analysis。
+- 不要在 Dashboard 加载 community 第三方分析脚本。
+- v1 不要加入 provider API 调用或 provider credential 存储。
+- v1 不要加入 consent 管理 UI。
+- v1 不要支持自定义脚本 origin。
+- v1 不要加入事件映射或转化配置。
+- v1 不要加入并发冲突检测。
+- v1 不要加入 dashboard config 审计日志。

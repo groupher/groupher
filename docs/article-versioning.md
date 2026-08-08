@@ -1,90 +1,90 @@
-# Article Versioning Architecture
+# 文章版本控制架构
 
-> Status: accepted for implementation. The project is not live yet, so the
-> implementation may use a direct one-time data migration where needed. Runtime
-> compatibility branches, legacy aliases, dual-read paths, and dual-write paths
-> are explicitly forbidden.
+> 状态：已接受实施。该项目尚未上线，因此
+> 如果需要，实施可以使用直接的一次性数据迁移。运行时
+> 兼容性分支、旧别名、双读路径和双写路径
+> 被明确禁止。
 
-## 1. Goals
+## 1. 目标
 
-Provide one shared foundation for every Article thread:
+为每个文章线程提供一个共享基础：
 
-- stable logical identity;
-- draft and public content;
-- preview branches;
-- immutable snapshots and revision history;
-- diff and restore;
-- Article-level TimeMachine;
-- product extensions such as the Docs Tree and whole-site Docs releases.
+- 稳定的逻辑同一性；
+- 草稿和公开内容；
+- 预览分支；
+- 不可变的快照和修订历史记录；
+- 差异和恢复；
+- 文章级时间机器；
+- 产品扩展，例如文档树和全站点文档版本。
 
-The foundation must not merge the product domains. `Post`, `Blog`,
-`Changelog`, and `Doc` keep their own tables, APIs, permissions, fields, and
-publish side effects.
+基金会不得合并产品领域。`Post`,`Blog`,
+`Changelog`和`Doc`保留自己的表、API、权限、字段和
+公布副作用。
 
-## 2. Non-goals
+## 2. 非目标
 
-- Do not introduce an `ArticleWorkspace` table.
-- Do not merge all Article products into one content table.
-- Do not make Tree, Release, or Docs site state mandatory for other threads.
-- Do not introduce event sourcing or persist pairwise Diff results.
-- Do not expose internal database ids through the public GraphQL contract.
-- Do not keep runtime compatibility logic. Existing local data may be migrated
-  once into the target model.
+- 不要引入`ArticleWorkspace`表。
+- 不要将所有文章产品合并到一个内容表中。
+- 不要让其他线程强制使用 Tree、Release 或 Docs 站点状态。
+- 不要引入事件溯源或保留成对 Diff 结果。
+- 不要通过公共 GraphQL 合约公开内部数据库 ID。
+- 不要保留运行时兼容性逻辑。现有的本地数据可以迁移
+  一旦进入目标模型。
 
-## 3. Terminology
+## 3. 术语
 
-| Term                | Meaning                                                                                   |
+|术语 |意义|
 | ------------------- | ----------------------------------------------------------------------------------------- |
-| physical `id`       | Internal row primary key. Draft and public rows have different ids.                       |
-| `article_hash_id`   | Stable UUID of one logical Article across branches, stages, and revisions.                |
-| Snapshot `hash_id`  | Public UUID used to fetch, fork, and restore a Revision without exposing its physical id. |
-| `branch_id`         | The branch containing the current Article row or Snapshot.                                |
-| `stage`             | Current row role: `draft` or `public`.                                                    |
-| Snapshot            | Immutable stored copy of the complete versioned Article state.                            |
-| Revision            | A Snapshot shown in an ordered history timeline. It is not a separate table.              |
-| Diff                | A transient comparison between two current states or Snapshots.                           |
-| TimeMachine         | Snapshot history + Diff + Restore + Branch fork. It is not a separate storage model.      |
-| `DocPublishRelease` | Docs-only aggregate that binds Article Snapshots to a Tree Snapshot.                      |
+|物理`id`|内部行主键。草稿行和公共行具有不同的 id。                       |
+|`article_hash_id`|跨分支、阶段和修订的一篇逻辑文章的稳定 UUID。                |
+|快照`hash_id`|公共 UUID 用于获取、分叉和恢复修订版，而无需公开其物理 ID。 |
+|`branch_id`|包含当前文章行或快照的分支。                                |
+|`stage`|当前行角色：`draft`或`public`。                                                    |
+|快照 |完整版本化文章状态的不可变存储副本。                            |
+|修订|在有序历史时间轴中显示的快照。它不是一个单独的表。              |
+|差异|两个当前状态或快照之间的瞬时比较。                           |
+|时间机器 |快照历史+差异+恢复+分支分叉。它不是一个单独的存储模型。      |
+|`DocPublishRelease`|将文章快照绑定到树快照的纯文档聚合。                      |
 
-`v1`, `v2`, and similar labels are not Article fields. The only numeric Article
-history field is `ArticleSnapshot.revision_number`. Docs release numbering is a
-separate Docs-only concept.
+`v1`、`v2`和类似标签不是文章字段。唯一的数字文章
+历史字段是`ArticleSnapshot.revision_number`。文档版本编号是
+单独的仅文档概念。
 
-## 4. Core invariants
+## 4. 核心不变量
 
-1. `article_hash_id` is a random, stable UUID. It is never derived from content.
-2. `body_hash` identifies one canonical BodyBag; `version_hash` identifies the
-   complete versioned Article state and changes when any versioned field,
-   relation, or BodyBag content changes.
-3. Public traffic reads only `main` branch + `public` stage.
-4. A preview branch contains draft state only. It never owns a public Article row.
-5. A public row never moves back to draft. Editing public content creates a draft copy.
-6. After the first publish, the main public physical row is the permanent runtime anchor.
-7. Publish copies only versioned fields; it preserves public runtime fields and relations.
-8. Article Snapshots are append-only. Restore never deletes later history.
-9. Core lifecycle operations always use the full coordinate:
+1. `article_hash_id`是一个随机的、稳定的 UUID。它从来不是从内容中衍生出来的。
+2. `body_hash`识别一种规范的 BodyBag；`version_hash`识别
+   完整的版本化文章状态以及任何版本化字段发生变化时，
+   关系，或 BodyBag 内容发生变化。
+3. 公共交通只读取`main`分支+`public`阶段。
+4. 预览分支仅包含草稿状态。它从不拥有公共文章行。
+5. 公开争吵永远不会回到草案。编辑公共内容会创建草稿副本。
+6. 第一次发布后，主要的公共物理行是永久运行时锚点。
+7. 仅发布版本化字段的副本；它保留公共运行时字段和关系。
+8. 文章快照仅供追加。恢复永远不会删除以后的历史记录。
+9. 核心生命周期操作始终使用完整坐标：
 
    ```text
    thread + article_hash_id + branch_id + stage
    ```
 
-10. Branch defaults are resolved at the product boundary. Core Draft, Publish,
-    Snapshot, Diff, and Restore functions receive an explicit branch.
-11. Migration is one-way: after existing data is moved to the target fields and
-    tables, application code reads and writes only the new model.
-12. Except for test modules, every new or changed module has a meaningful
-    `@moduledoc`; public functions have `@doc`; lifecycle modules include the
-    necessary ASCII flow.
-13. Enums and semantic constants are centralized and connected across the
-    database, Ecto, `CMS.Const`, GraphQL, and frontend constants/types.
-14. Shared behavior is covered once at its owning module and again through
-    separate Post, Blog, Changelog, and Doc integration tests. Equal thread
-    behavior is not collapsed into one parameterized product test.
-15. Every mutation for one logical Article uses the same branch-independent
-    lifecycle lock: `community + thread + article_hash_id`. Cross-branch
-    Promote/Fork must serialize with Draft autosave, Snapshot, and Publish.
+10. 分支默认值在产品边界处解决。核心草案、发布、
+    快照、差异和恢复函数接收显式分支。
+11. 迁移是单向的：将现有数据移动到目标字段并
+    表，应用程序代码仅读取和写入新模型。
+12. 除了测试模块之外，每个新的或更改的模块都有一个有意义的
+    `@moduledoc`;公共职能有`@doc`；生命周期模块包括
+    必要的 ASCII 流。
+13. 枚举和语义常量是集中的并且跨域连接
+    数据库、Ecto、`CMS.Const`、GraphQL 和前端常量/类型。
+14. 共享行为在其所属模块中覆盖一次，然后通过
+    单独的帖子、博客、变更日志和文档集成测试。等径螺纹
+    行为不会合并到一项参数化产品测试中。
+15. 一个逻辑文章的每个突变都使用相同的独立于分支的
+    生命周期锁：`community + thread + article_hash_id`。跨分行
+    升级/分叉必须使用草稿自动保存、快照和发布进行序列化。
 
-## 5. Mental model
+## 5. 心智模型
 
 ```text
                           official public traffic
@@ -101,16 +101,16 @@ preview-a/draft -------- promote -------> main/draft
 Snapshot ---------------- restore ------> target branch draft
 ```
 
-Arrows mean copying versioned content. They do not mean moving the same physical
-row between branches or repeatedly changing one row between draft and public.
+箭头表示复制版本化内容。它们并不意味着移动相同的物理实体
+分支之间的行或在草稿和公共之间重复更改一行。
 
-This mental model also appears in the shared Draft/Preview lifecycle module
-`@moduledoc` diagrams.
+此心智模型也出现在共享草稿/预览生命周期模块中
+`@moduledoc`图。
 
-## 6. ArticleBranch
+## 6. 文章分支
 
-`ArticleBranch` is shared infrastructure. It scopes Article draft state without
-owning any product-specific content.
+`ArticleBranch`是共享基础设施。它的范围是文章草案状态，没有
+拥有任何特定于产品的内容。
 
 ```text
 ArticleBranch
@@ -127,22 +127,22 @@ ArticleBranch
 └─ updated_at
 ```
 
-The field is named `type`, never `kind`.
+该字段被命名为`type`，而不是`kind`。
 
-Required constraints:
+所需的约束：
 
 ```text
 UNIQUE (community_id, thread, slug)
 UNIQUE (community_id, thread) WHERE type = 'main'
 ```
 
-One branch belongs to a Community and one Article thread. A branch may contain
-one or many changed Articles. Branch creation is lazy: it does not copy every
-Article in the Community.
+一个分支属于一个社区和一个文章线程。一个分支可能包含
+一篇或多篇已更改的文章。分支创建是惰性的：它不会复制每个分支
+社区中的文章。
 
-### 6.1 Enum and constant chain
+### 6.1 枚举和常量链
 
-Branch type must be defined consistently across the full stack:
+分支类型必须在整个堆栈中一致定义：
 
 ```text
 Database check constraint
@@ -160,10 +160,10 @@ GraphQL ArticleBranchType
 frontend ARTICLE_BRANCH_TYPE
 ```
 
-No business module should contain scattered raw `"main"` or `"preview"`
-strings.
+任何业务模块不应包含分散的原始`"main"`或`"preview"`
+字符串。
 
-Suggested values:
+建议值：
 
 ```text
 Backend atoms:   :main | :preview
@@ -172,12 +172,12 @@ GraphQL values:  MAIN  | PREVIEW
 Frontend values: ARTICLE_BRANCH_TYPE.MAIN | ARTICLE_BRANCH_TYPE.PREVIEW
 ```
 
-The same full-chain rule applies to `stage`, branch `status`, and Snapshot
-actions.
+相同的全链规则适用于`stage`、分支`status`和 Snapshot
+行动。
 
-## 7. Product Article rows
+## 7. 产品文章行
 
-Every product table participating in the lifecycle adds the same routing fields:
+参与生命周期的每个产品表都添加相同的路由字段：
 
 ```text
 article_hash_id
@@ -185,7 +185,7 @@ branch_id
 stage             draft | public
 ```
 
-Example current state:
+当前状态示例：
 
 ```text
 Changelog(article_hash_id=A, branch=main,      stage=public)
@@ -193,26 +193,26 @@ Changelog(article_hash_id=A, branch=main,      stage=draft)
 Changelog(article_hash_id=A, branch=preview-a, stage=draft)
 ```
 
-There must never be:
+绝对不能有：
 
 ```text
 Changelog(article_hash_id=A, branch=preview-a, stage=public)
 ```
 
-Row uniqueness:
+行唯一性：
 
 ```text
 UNIQUE (branch_id, article_hash_id, stage)
 ```
 
-The Branch service and product changesets must also validate that the Branch
-belongs to the same Community and thread as the Article model.
+Branch 服务和产品变更集还必须验证 Branch
+与文章模型属于同一社区和线程。
 
-## 8. Field ownership
+## 8. 田地所有权
 
-Article fields are divided into four responsibilities.
+文章字段分为四个职责。
 
-### 8.1 Routing fields
+### 8.1 路由字段
 
 ```text
 physical id
@@ -221,14 +221,14 @@ branch_id
 stage
 ```
 
-These identify a row. They are not copied as editable content and do not
-participate in content Diff.
+这些标识一行。它们不会被复制为可编辑内容，并且不会
+参与内容差异。
 
-### 8.2 Versioned fields
+### 8.2 版本化字段
 
-These fields move through Draft, Publish, Snapshot, Diff, Restore, and Promote.
+这些字段通过草稿、发布、快照、差异、恢复和升级进行移动。
 
-Common examples:
+常见示例：
 
 ```text
 title
@@ -239,7 +239,7 @@ cover
 tags
 ```
 
-Product examples:
+产品示例：
 
 ```text
 Doc:       subtitle, slug, template_key
@@ -248,12 +248,12 @@ Changelog: copyright, release metadata
 Blog:      blog-specific publishable configuration
 ```
 
-Each product model must explicitly declare its versioned fields. Publish must
-never rely on copying an entire Ecto struct.
+每个产品模型必须显式声明其版本化字段。发布必须
+永远不要依赖于复制整个 Ecto 结构。
 
-### 8.3 Derived fields
+### 8.3 派生字段
 
-These are generated from versioned content:
+这些是从版本化内容生成的：
 
 ```text
 markdown
@@ -266,12 +266,12 @@ body_hash
 document asset refs
 ```
 
-Restore writes versioned source content and reruns the content pipeline. Derived
-fields are regenerated rather than treated as independent user-owned state.
+恢复写入版本化源内容并重新运行内容管道。衍生的
+字段被重新生成，而不是被视为独立的用户拥有的状态。
 
-### 8.4 Runtime fields
+### 8.4 运行时字段
 
-These belong only to the official main/public runtime row:
+这些仅属于官方主/公共运行时行：
 
 ```text
 inner_id
@@ -285,28 +285,28 @@ published counters
 runtime moderation and notification state
 ```
 
-Runtime fields are not copied to Draft or Preview, are not restored from an
-Article Snapshot, and are preserved across republish.
+运行时字段不会复制到草稿或预览，也不会从
+文章快照，并在重新发布时保留。
 
-### 8.5 Field flow matrix
+### 8.5 场流矩阵
 
-| Operation                 | Routing fields                        | Versioned fields                     | Derived fields          | Runtime fields                  |
+|运营|路由字段 |版本化字段 |派生字段 |运行时字段 |
 | ------------------------- | ------------------------------------- | ------------------------------------ | ----------------------- | ------------------------------- |
-| Start editing main/public | Create main/draft coordinate          | Copy public to draft                 | Regenerate/copy cache   | Do not copy                     |
-| Autosave draft            | Unchanged                             | Update draft                         | Regenerate              | Unchanged/unused                |
-| First main publish        | Draft becomes first public            | Keep draft values                    | Regenerate              | Initialize public runtime       |
-| Republish                 | Keep existing main/public coordinate  | Draft overwrites public              | Regenerate public cache | Preserve existing public values |
-| Create preview            | Create preview/draft coordinate       | Copy selected source Snapshot/public | Regenerate              | Do not copy                     |
-| Promote preview           | Create/update main/draft coordinate   | Preview draft overwrites main draft  | Regenerate              | Do not copy                     |
-| Restore Snapshot          | Create/update target draft coordinate | Snapshot overwrites target draft     | Regenerate              | Do not copy                     |
+|开始编辑 main/public |创建主/拔模坐标 |将公众复制到草稿|重新生成/复制缓存 |请勿复制|
+|自动保存草稿 |不变 |更新草稿 |再生 |未更改/未使用 |
+|第一次主要发布 |草案首次公开|保留草稿值 |再生 |初始化公共运行时 |
+|重新发布 |保留现有的主要/公共坐标 |草稿覆盖公共|重新生成公共缓存 |维护现有的公共价值观|
+|创建预览 |创建预览/草稿坐标 |复制选定的源快照/公共|再生 |请勿复制|
+|推广预览 |创建/更新主/草稿坐标 |预览草稿覆盖主草稿 |再生 |请勿复制|
+|恢复快照 |创建/更新目标拔模坐标 |快照覆盖目标草稿 |再生 |请勿复制|
 
-Versioned relations such as tags and covers belong to their Draft row while
-editing. Publish replaces the public versioned relations, while comments,
-reactions, and other runtime relations stay attached to the main/public row.
+版本化关系（例如标签和封面）属于其草稿行，而
+编辑。发布取代了公共版本关系，而评论，
+反应和其他运行时关系保持附加到主/公共行。
 
-## 9. Lifecycle flows
+## 9. 生命周期流程
 
-### 9.1 New Article
+### 9.1 新文章
 
 ```text
 Docs Dashboard                       direct-publish products
@@ -321,23 +321,23 @@ main/draft                         create main/draft inside transaction
 main/public + Snapshot             main/public + Snapshot
 ```
 
-The first publish may promote the first draft row because no runtime public row
-exists yet. From that point forward, its physical id becomes the permanent
-runtime anchor. The temporary Draft used by a direct-publish command is an
-internal transaction step and is never observable after a successful commit.
+第一次发布可能会提升第一个草稿行，因为没有运行时公共行
+还存在。从那时起，它的物理 ID 就成为永久的
+运行时锚点。直接发布命令使用的临时草稿是
+内部事务步骤，并且在成功提交后永远无法观察到。
 
-Product APIs express intent with separate commands rather than accepting a raw
-client-controlled `stage`:
+产品 API 使用单独的命令表达意图，而不是接受原始命令
+客户端控制的`stage`：
 
 ```text
 Docs:                  create/update Draft -> publishDocChanges
 Post/Blog/Changelog:   createX (publish now) | createXDraft -> publishXDraft
 ```
 
-Core does not infer these defaults from `thread`; product resolvers choose an
-explicit shared command.
+内核不会从`thread`推断出这些默认值；产品解析者选择一个
+显式共享命令。
 
-### 9.2 Edit and republish
+### 9.2 编辑和重新发布
 
 ```text
 main/public
@@ -354,7 +354,7 @@ main/public -- preserve runtime fields
   +--> delete main/draft and its derived caches/relations
 ```
 
-### 9.3 Preview branch
+### 9.3 预览分支
 
 ```text
 main/public or selected Snapshot
@@ -364,10 +364,10 @@ main/public or selected Snapshot
 preview/draft -- edit/autosave --> preview/draft
 ```
 
-A Preview URL reads the explicit preview branch's draft. Preview does not create
-a public row or trigger official publish side effects.
+预览 URL 读取显式预览分支的草稿。预览不创建
+公开争吵或引发官方发布副作用。
 
-### 9.4 Promote preview to main
+### 9.4 将预览提升为主
 
 ```text
 preview/draft
@@ -381,14 +381,14 @@ main/draft
 main/public
 ```
 
-Promote never changes the Preview row's `branch_id`. It copies versioned fields
-into main/draft so official publish has exactly one path.
+升级永远不会更改预览行的`branch_id`。它复制版本化字段
+进入主/草稿，因此正式发布只有一条路径。
 
-If main/public changed after the Preview fork point, Promote must report a
-conflict by comparing the Preview base Snapshot with the current main/public
-Snapshot. Automatic three-way merge is not required by this foundation.
+如果主/公共在预览分叉点之后发生更改，则升级必须报告
+通过将预览基础快照与当前主/公共快照进行比较来解决冲突
+快照。该基础不需要自动三路合并。
 
-### 9.5 Restore
+### 9.5 恢复
 
 ```text
 Snapshot r3
@@ -398,12 +398,12 @@ Snapshot r3
 target branch draft
 ```
 
-Restore never writes directly to main/public. An official change still requires
-an explicit main publish.
+恢复从不直接写入 main/public。仍需官方修改
+明确的主要发布。
 
-## 10. ArticleSnapshot and Revision
+## 10. 文章快照和修订
 
-`ArticleSnapshot` is the single immutable Article history table.
+`ArticleSnapshot`是单个不可变的文章历史记录表。
 
 ```text
 ArticleSnapshot
@@ -430,31 +430,31 @@ ArticleSnapshot
 └─ inserted_at
 ```
 
-Suggested Snapshot actions:
+建议的快照操作：
 
 ```text
 checkpoint | publish | fork | promote | restore
 ```
 
-`revision_number` increases within:
+`revision_number`在以下范围内增加：
 
 ```text
 thread + article_hash_id + branch_id
 ```
 
-Draft and public Snapshots share one revision sequence. They do not maintain
-separate draft/public numbering.
+草稿和公共快照共享一个修订序列。他们不维护
+单独的草稿/公共编号。
 
-### 10.1 Snapshot data
+### 10.1 快照数据
 
-There is no separate `payload` domain model. Snapshot storage is split into:
+没有单独的`payload`域模型。快照存储分为：
 
-- explicit common columns such as title, digest, document JSON, restorable
-  `body_bag`, and the complete-state `version_hash`;
-- `data`, which stores product-specific versioned fields and restorable
-  versioned relations.
+- 显式公共列，例如标题、摘要、文档 JSON、可恢复
+  `body_bag`和完整状态`version_hash`；
+- `data`，存储特定于产品的版本字段和可恢复字段
+  版本化关系。
 
-Example Changelog Snapshot data:
+变更日志快照数据示例：
 
 ```json
 {
@@ -468,16 +468,16 @@ Example Changelog Snapshot data:
 }
 ```
 
-Snapshot `data` contains only versioned state. It never stores views, comments,
-upvotes, or other runtime state.
+快照`data`仅包含版本化状态。它从不存储观点、评论、
+赞成票或其他运行时状态。
 
-`data` is optional in changeset input because an Article may have no
-product-specific fields. Its persisted value is always a non-null map with
-database and Ecto defaults of `%{}`.
+`data`在变更集输入中是可选的，因为文章可能没有
+产品特定领域。它的持久值始终是一个非空映射
+数据库和 Ecto 默认为`%{}`。
 
-### 10.2 Append-only history
+### 10.2 仅追加历史记录
 
-Snapshots must not be updated or deleted by Restore.
+不得通过还原更新或删除快照。
 
 ```text
 r1 -> r2 -> r3 -> r4
@@ -487,14 +487,14 @@ r1 -> r2 -> r3 -> r4
                   r5(action=restore, source_snapshot_id=r2)
 ```
 
-`r3` and `r4` remain available. Restore creates new history instead of trimming
-the old timeline.
+`r3`和`r4`仍然可用。恢复创建新历史而不是修剪
+旧的时间线。
 
-## 11. Diff and TimeMachine
+## 11. 差异和时间机器
 
-Diff is a pure, on-demand comparison. It owns no source-of-truth storage.
+Diff 是纯粹的按需比较。它不拥有真实来源存储。
 
-Supported comparisons:
+支持的比较：
 
 ```text
 current draft      <-> latest main/public Snapshot
@@ -504,17 +504,17 @@ preview draft      <-> current main/public Snapshot
 Doc release N      <-> Doc release N-1
 ```
 
-Comparison order:
+比较顺序：
 
-1. compare canonical `version_hash`;
-2. compare ordinary versioned fields;
-3. compare versioned relations;
-4. run editor AST Diff only when document JSON changed.
+1. 比较规范的`version_hash`；
+2. 比较普通版本化字段；
+3. 比较版本关系；
+4. 仅当文档 JSON 更改时才运行编辑器 AST Diff。
 
-Do not persist every pairwise Diff. With `R` revisions, stored Snapshot history
-must remain `O(R)`, not `O(R^2)`.
+不要坚持每个成对的差异。使用`R`修订版，存储快照历史记录
+必须保留`O(R)`，而不是`O(R^2)`。
 
-Article TimeMachine is a use-case facade over:
+文章 TimeMachine 是一个用例外观：
 
 ```text
 Snapshot.list/get
@@ -523,14 +523,14 @@ Restore.apply
 Branch.fork
 ```
 
-It does not require an `article_time_machines` table.
+它不需要`article_time_machines`表。
 
-Current Article rows are normalized into the same transient comparable state as
-Snapshots. Reading a current Diff never inserts a checkpoint or changes history.
+当前文章行被标准化为与以下相同的瞬态可比较状态
+快照。读取当前的 Diff 永远不会插入检查点或更改历史记录。
 
-### 11.1 Frontend Revision Diff pipeline
+### 11.1 前端修订 Diff 管道
 
-The frontend has one editor Diff engine:
+前端有一个编辑器 Diff 引擎：
 
 ```text
 Groupher                              @groupher/rich-editor
@@ -543,13 +543,13 @@ render Revision product UI            render diffValue
 restore a Snapshot
 ```
 
-Groupher must not implement LCS, Myers, LIS, block signatures, inline segments,
-or a second Revision Diff renderer. There is no compatibility path for the old
-Groupher-specific Diff model.
+Groupher 不得实现 LCS、Myers、LIS、块签名、内联段、
+或第二个修订差异渲染器。旧版没有兼容路径
+Groupher 特定的 Diff 模型。
 
-#### Button and history have different comparison semantics
+#### 按钮和历史记录具有不同的比较语义
 
-The action button answers one product question:
+操作按钮回答一个产品问题：
 
 ```text
 "How much has the current document changed since the latest publish?"
@@ -564,8 +564,8 @@ latest public Snapshot
           `-- hasChanges --> button state
 ```
 
-It never adds the stats of intermediate draft Snapshots. Summing adjacent
-history entries does not produce a net Diff:
+它从不添加中间草稿快照的统计数据。相邻求和
+历史条目不会产生净差异：
 
 ```text
 published -> r1     +1/-0
@@ -575,8 +575,8 @@ summed history      +1/-1    wrong answer for net change
 direct comparison   +0/-0    current equals published
 ```
 
-The Revision drawer answers a different question: what changed between two
-adjacent checkpoints?
+修订抽屉回答了一个不同的问题：两个之间发生了什么变化
+邻近的检查站？
 
 ```text
 current body  <-> latest draft Snapshot       "Now"
@@ -587,12 +587,12 @@ public p3     <-> public p2
 public p2     <-> public p1
 ```
 
-These two semantics remain separate. The button uses one direct publish pair;
-the drawer uses an ordered timeline of adjacent pairs.
+这两种语义仍然是分开的。该按钮使用一对直接发布；
+抽屉使用相邻对的有序时间线。
 
-#### History is lazy
+#### 历史是懒惰的
 
-Entering the editor does not calculate every historical pair:
+进入编辑器并不会计算每个历史对：
 
 ```text
 Editor mounted
@@ -610,7 +610,7 @@ Drawer closed
       `-- no historical Diff calculation
 ```
 
-History work starts only when the user opens the drawer:
+仅当用户打开抽屉时历史记录工作才开始：
 
 ```text
 Open Drawer
@@ -625,9 +625,9 @@ construct ordered pairs
 calculate stats needed by the active tab
 ```
 
-While the staged tab remains open, only its live `Now` pair follows editor
-input. It shares the same debounce window as the publish pair; immutable
-Snapshot pairs are not restarted on every keystroke:
+当暂存选项卡保持打开状态时，只有其实时`Now`对跟随编辑器
+输入。它与发布对共享相同的去抖窗口；不可变的
+快照对不会在每次击键时重新启动：
 
 ```text
 bodyValue changed
@@ -645,7 +645,7 @@ historical Snapshot pairs
       `-- unchanged; keep cached results
 ```
 
-Selecting an entry requests its complete result:
+选择一个条目请求其完整结果：
 
 ```text
 Select Revision pair
@@ -667,14 +667,14 @@ RevisionDiffClient.getOrCompute(pair)
        RichEditorDiff(diffValue)
 ```
 
-Cache eviction is an optimization detail, never a visible state. A miss always
-recomputes from the pair's `before` and `after` values; it must not render a
-silently empty Diff.
+缓存驱逐是一个优化细节，而不是一个可见的状态。总是怀念
+根据该对的`before`和`after`值重新计算；它不得呈现
+默默地空Diff。
 
-#### Worker and cache boundary
+#### 工作线程和缓存边界
 
-Complete Plate Diff calculation stays off the main thread because large block
-sets and large text replacement can exceed one frame budget.
+由于大块，完整的板差异计算不会在主线程中进行
+集和大型文本替换可能会超出一帧预算。
 
 ```text
 Main thread                            Worker
@@ -686,7 +686,7 @@ cache result
 update UI
 ```
 
-The Worker is stateless. It has one operation:
+Worker 是无国籍的。它有一个操作：
 
 ```text
 compute(before, after)
@@ -699,16 +699,16 @@ compute(before, after)
 }
 ```
 
-The main-thread client owns the single bounded result cache. Current-body keys
-replace their previous value; immutable Snapshot pairs use stable version-hash
-keys. A cache miss follows the same compute path, so eviction cannot change
-behavior.
+主线程客户端拥有单个有界结果缓存。当前实体键
+替换它们以前的值；不可变的快照对使用稳定的版本哈希
+键。缓存未命中遵循相同的计算路径，因此驱逐无法更改
+行为。
 
-When no draft Snapshot exists, the button and `Now` have the same baseline.
-They use one live-pair key, so in-flight work and the cached complete result are
-shared instead of running the same Plate Diff twice.
+当不存在草稿快照时，按钮和`Now`具有相同的基线。
+他们使用一对实时密钥，因此正在进行的工作和缓存的完整结果是
+共享而不是运行相同的板差异两次。
 
-Every current-body request has a monotonically increasing id:
+每个当前主体请求都有一个单调递增的 id：
 
 ```text
 input A ---- request 41 --------------------------x stale
@@ -716,13 +716,13 @@ input B ------- request 42 -------------------x stale
 input C ---------- request 43 ---------------> accepted
 ```
 
-Only the latest response may update current button state. Worker scheduling,
-debounce, cache lifetime, and stale-response handling belong to Groupher; they
-do not change the rich-editor Diff contract.
+只有最新的响应才可以更新当前按钮状态。工人调度，
+反跳、缓存生命周期和过时响应处理属于 Groupher；他们
+不要更改 rich-editor Diff 合约。
 
-#### Stats are not change detection
+#### 统计数据不是变化检测
 
-`stats` is presentational data. Revision visibility uses `hasChanges`:
+`stats`是表示数据。修订可见性使用`hasChanges`：
 
 ```text
 mark change           stats=+0/-0   hasChanges=true
@@ -730,7 +730,7 @@ link attribute change stats=+0/-0   hasChanges=true
 empty block insertion stats=+0/-0   hasChanges=true
 ```
 
-The final output routing is:
+最终的输出路由为：
 
 ```text
 computeRichEditorDiff(before, after)
@@ -740,11 +740,11 @@ computeRichEditorDiff(before, after)
       `-- diffValue ----------------> RichEditorDiff renderer
 ```
 
-#### Temporary Worker build adapter
+#### 临时工人构建适配器
 
-The current Dashboard Turbopack build copies a `new URL(...worker.ts)` target as
-raw TypeScript instead of producing an executable Worker bundle. Until the
-bundler handles this entry correctly, the Dashboard uses an isolated adapter:
+当前的 Dashboard Turbopack 版本将`new URL(...worker.ts)`目标复制为
+原始 TypeScript，而不是生成可执行的 Worker 包。直到
+捆绑程序正确处理此条目，仪表板使用隔离适配器：
 
 ```text
 diff.worker.ts
@@ -757,16 +757,16 @@ public/worker-revision-diff.js
 Dashboard Worker URL
 ```
 
-This adapter is build infrastructure only. It must not own Diff behavior or
-cache policy, and should be deleted when the Dashboard bundler can emit the
-Worker directly. The generated JavaScript is not committed.
+该适配器仅用于构建基础设施。它不能拥有 Diff 行为或
+缓存策略，当仪表板捆绑器可以发出
+直接工人。生成的 JavaScript 未提交。
 
-## 12. Snapshot growth policy
+## 12. 快照增长政策
 
-Autosave updates the mutable Draft row; it does not create a Snapshot every few
-seconds.
+自动保存更新可变草稿行；它不会每隔几次创建一个快照
+秒。
 
-Snapshots are created for meaningful events:
+快照是为有意义的事件创建的：
 
 ```text
 explicit checkpoint
@@ -777,27 +777,27 @@ restore
 session/inactivity checkpoint under a bounded policy
 ```
 
-Ordinary checkpoints are deduplicated by canonical `version_hash`. Publish and
-other explicit product events may still create an audit entry when required.
+普通检查点通过规范`version_hash`进行重复数据删除。发布并
+其他显式产品事件仍可能在需要时创建审核条目。
 
-Retention categories:
+保留类别：
 
-| Snapshot category                 | Retention                                              |
+|快照类别|保留|
 | --------------------------------- | ------------------------------------------------------ |
-| Main public publish               | Permanent                                              |
-| Referenced by `DocPublishRelease` | Permanent                                              |
-| Fork/restore source               | Protected while referenced                             |
-| Explicit user checkpoint          | Long-term                                              |
-| Automatic draft checkpoint        | May be thinned by age/count                            |
-| Abandoned preview history         | May be removed after branch archival when unreferenced |
+|主要公开发布|永久|
+|引用自`DocPublishRelease`|永久|
+|分叉/恢复源 |引用时受到保护 |
+|显式用户检查点 |长期|
+|自动吃水检查点|可能会因年龄/人数而变薄 |
+|废弃的预览历史记录 |当未引用时，分支存档后可能会被删除 |
 
-The foundation is a version checkpoint system, not keystroke-level CRDT/oplog
-history.
+基础是版本检查点系统，而不是击键级别的 CRDT/oplog
+历史。
 
-## 13. Doc extension
+## 13. 文档扩展名
 
-Docs reuse the Article foundation without moving Tree concepts into Article
-Core.
+文档重用文章基础，而不将树概念移至文章中
+核。
 
 ```text
 ArticleBranch(thread=doc)
@@ -810,7 +810,7 @@ ArticleBranch(thread=doc)
 └─ DocPublishRelease
 ```
 
-The Docs product keeps two independent history lines:
+Docs 产品保留两条独立的历史记录线：
 
 ```text
 Article content line
@@ -820,7 +820,7 @@ Tree line
 DocTreeNode/Event -> DocTreeSnapshot
 ```
 
-`DocPublishRelease` aggregates them:
+`DocPublishRelease`聚合它们：
 
 ```text
 DocPublishRelease
@@ -832,25 +832,25 @@ DocPublishRelease
 └─ published TreeEvent[]
 ```
 
-`DocPublishRelease` is Docs-only. A normal Post, Blog, or Changelog publish
-creates an Article Snapshot but does not create a Release wrapper.
+`DocPublishRelease`仅限文档。正常的帖子、博客或变更日志发布
+创建文章快照但不创建发布包装器。
 
-`DocPublishRelease` includes a module-level ASCII flow describing this aggregate
-boundary.
+`DocPublishRelease`包括描述此聚合的模块级 ASCII 流
+边界。
 
-### 13.1 Docs preview
+### 13.1 文档预览
 
-A Docs preview branch contains draft Docs and a draft Tree. Preview rendering
-reads that explicit branch directly.
+文档预览分支包含草稿文档和草稿树。预览渲染
+直接读取该显式分支。
 
-Promote copies the selected preview Article and Tree draft state into main draft
-state. Official publication then follows the single main publish path and
-creates a new `DocPublishRelease`.
+升级将选定的预览文章和树草稿状态复制到主草稿中
+状态。然后，正式发布遵循单一主要发布路径，并且
+创建一个新的`DocPublishRelease`。
 
-### 13.2 Docs TimeMachine
+### 13.2 文档时间机器
 
-An Article Snapshot restores one Doc's versioned content. A
-`DocPublishRelease` restores the whole Docs site composition:
+文章快照恢复一个文档的版本化内容。一个
+`DocPublishRelease`恢复整个文档站点组成：
 
 ```text
 selected DocPublishRelease
@@ -864,11 +864,11 @@ selected DocPublishRelease
                 new DocPublishRelease
 ```
 
-Old releases and Snapshots remain immutable.
+旧版本和快照保持不变。
 
-## 14. Proposed module boundaries
+## 14. 建议的模块边界
 
-Shared Article foundation:
+共享文章基础：
 
 ```text
 CMS.Articles.Branch
@@ -882,7 +882,7 @@ CMS.Model.ArticleBranch
 CMS.Model.ArticleSnapshot
 ```
 
-Docs extension:
+文档扩展名：
 
 ```text
 CMS.DocPublishRelease
@@ -892,13 +892,13 @@ CMS.Model.DocPublishReleaseTreeEvent
 CMS.DocTree.*
 ```
 
-The shared modules may use `Artiment.Matcher`, per-thread version-field lists,
-and a small number of explicit thread cases. This proposal does not require a
-protocol, behaviour, adapter registry, or dynamic plugin system.
+共享模块可以使用`Artiment.Matcher`，每线程版本字段列表，
+以及少量显式线程情况。该提案不需要
+协议、行为、适配器注册表或动态插件系统。
 
-## 15. Transaction boundary
+## 15. 交易边界
 
-Single-Article products use the normal lifecycle entry:
+单件产品使用正常的生命周期条目：
 
 ```text
 Publish.publish / Publish.create
@@ -911,12 +911,12 @@ Publish.publish / Publish.create
 └─ run official main-publish effects
 ```
 
-`Snapshot` owns immutable checkpoint construction and history operations.
-`Publish` owns the orchestration and is the only public transition into
-`main/public`; there is no public apply-without-Snapshot entry.
+`Snapshot`拥有不可变的检查点构建和历史操作。
+`Publish`拥有编排权，并且是唯一公开过渡到
+`main/public`;没有公共的 apply-without-Snapshot 条目。
 
-Docs requires a composable inner entry because Article and Tree publication must
-be atomic:
+文档需要可组合的内部条目，因为文章和树发布必须
+是原子的：
 
 ```text
 Doc publish transaction
@@ -927,12 +927,12 @@ Doc publish transaction
 └─ update DocsSiteState
 ```
 
-Any failure rolls back the whole Docs publish.
+任何失败都会回滚整个文档发布。
 
-## 16. Public API language
+## 16. 公共API语言
 
-The infrastructure name `article_hash_id` does not force every product API to
-expose `articleHashId`.
+基础设施名称`article_hash_id`并不强制每个产品 API
+暴露`articleHashId`。
 
 ```text
 Article Core: article_hash_id
@@ -942,26 +942,26 @@ Post:         post path
 Blog:         blog path
 ```
 
-Resolvers translate product language into the internal lifecycle coordinate.
-GraphQL must continue to avoid exposing raw physical database ids.
+解析器将产品语言转换为内部生命周期坐标。
+GraphQL 必须继续避免暴露原始物理数据库 ID。
 
-Docs exposes no Main content create/update mutation. Dashboard Tree/Doc Draft
-mutations are the only editing surface, and `publishDocChanges` is the only
-official Docs publication entry. Post, Blog, and Changelog keep immediate
-publish mutations while exposing separate Draft commands for an explicit
-"save as draft" choice.
+文档没有公开主要内容创建/更新突变。仪表板树/文档草稿
+突变是唯一的编辑表面，`publishDocChanges`是唯一的
+官方文档发布条目。帖子、博客和变更日志保持即时
+发布突变，同时公开单独的草稿命令以进行显式
+“另存为草稿”选择。
 
-## 17. Implementation checklist
+## 17. 实施清单
 
-1. Model, enum, constant, and module naming are centralized and locked.
-2. `ArticleBranch` provides explicit per-thread main/preview coordinates.
-3. Shared Article identity is `article_hash_id`; Docs translates it to `doc_id`
-   only at its product boundary.
-4. `ArticleSnapshot` is branch-aware and append-only with one revision timeline.
-5. Scalar fields, versioned relations, derived content, and runtime state have
-   separate owners.
-6. Draft, Publish, Preview, Diff, and Restore work across all Article threads.
-7. Docs-only release composition is named `DocPublishRelease` throughout.
-8. DocTree remains a Docs extension attached to the shared Branch coordinate.
-9. Post, Blog, Changelog, and Doc each have independent lifecycle tests, with
-   additional relation, conflict, migration, GraphQL, and frontend checks.
+1. 模型、枚举、常量和模块命名是集中和锁定的。
+2. `ArticleBranch`提供显式的每线程主/预览坐标。
+3. 共享文章标识为`article_hash_id`；文档将其翻译为`doc_id`
+   仅在其产品边界。
+4. `ArticleSnapshot`是分支感知型且仅附加的，具有一个修订时间表。
+5. 标量字段、版本化关系、派生内容和运行时状态
+   不同的所有者。
+6. 草稿、发布、预览、比较和恢复可在所有文章线程中工作。
+7. 仅文档版本组合在整个过程中被命名为`DocPublishRelease`。
+8. DocTree 仍然是附加到共享分支坐标的文档扩展。
+9. 帖子、博客、变更日志和文档都有独立的生命周期测试，
+   其他关系、冲突、迁移、GraphQL 和前端检查。

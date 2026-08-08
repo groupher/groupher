@@ -1,7 +1,7 @@
 # Search Artiments 重构方案
 
-> Status: Phase 0 tooling and Phase 1 Article search implemented; Phase 2 Comment
-> search and Phase 4 AI search remain planned.
+> 状态：Phase 0 工具链和 Phase 1 Article 搜索已实现；Phase 2 Comment
+> 搜索和 Phase 4 AI 搜索仍在规划中。
 >
 > 本方案建立 Article 与 Comment 的统一搜索投影，并通过平台无关的适配层接入
 > Algolia、语义搜索服务或未来的 Native Search。搜索索引是可重建的派生数据，
