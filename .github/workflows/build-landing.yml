@@ -5,6 +5,10 @@ on:
     paths:
       - 'frontend/landing/**' # only trigger when this dir changes
       - '!frontend/landing/vercel.json'
+  pull_request:
+    paths:
+      - 'frontend/landing/**'
+      - '!frontend/landing/vercel.json'
 
 jobs:
   build:
@@ -39,3 +43,6 @@ jobs:
 
       - name: Build Project
         run: yarn run build:prod:landing
+
+      - name: Test Cloudflare Worker routing
+        run: yarn vitest --config frontend/core/vitest.config.mts run frontend/landing/app/cloudflare-worker.test.ts

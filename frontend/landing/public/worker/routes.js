@@ -24,7 +24,8 @@ export const isLandingStaticAssetPath = (pathname) =>
   LANDING_STATIC_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
   LANDING_ROOT_STATIC_ASSET_RE.test(pathname)
 
-export const isAuthRoute = (pathname) => pathname === '/api/auth' || pathname.startsWith('/api/auth/')
+export const isAuthRoute = (pathname) =>
+  pathname === '/api/auth' || pathname.startsWith('/api/auth/')
 
 export const isGraphqlRoute = (pathname) => pathname === '/api/graphql'
 
@@ -39,6 +40,17 @@ export const isDashboardRoute = (pathname) => {
   return parts.length >= 2 && parts[1] === 'dashboard'
 }
 
+const PRESS_MARKDOWN_RE = /^\/[^/]+\/(?:doc\/[^/]+\/.+\.md|(?:post|blog|changelog|doc)\/.+\.md)$/
+const PRESS_FEED_RE = /^\/[^/]+\/feed\.(?:xml|atom|json)$/
+const PRESS_THREAD_FEED_RE = /^\/[^/]+\/(?:post|blog|changelog|doc)\/feed\.xml$/
+const PRESS_SITE_RE = /^\/[^/]+\/(?:llms\.txt|sitemap\.xml)$/
+
+export const isPressRoute = (pathname) =>
+  PRESS_MARKDOWN_RE.test(pathname) ||
+  PRESS_FEED_RE.test(pathname) ||
+  PRESS_THREAD_FEED_RE.test(pathname) ||
+  PRESS_SITE_RE.test(pathname)
+
 const targetUrl = (base, pathname, search = '') => {
   const url = new URL(base)
   url.pathname = pathname
@@ -47,6 +59,14 @@ const targetUrl = (base, pathname, search = '') => {
 }
 
 export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
+  if (isPressRoute(pathname)) {
+    return {
+      kind: 'press',
+      url: targetUrl(siteUrl(env, 'PRESS'), pathname, search),
+      requestHeaderPolicy: 'public-output',
+    }
+  }
+
   if (isGraphqlRoute(pathname)) {
     return {
       kind: 'phoenix',

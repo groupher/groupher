@@ -5,6 +5,7 @@ export const DEFAULT_SITE = {
   DASHBOARD: 'https://dashboard.groupher.com',
   AUTH: 'https://auth.groupher.com',
   API: 'https://api.groupher.com',
+  PRESS: 'http://127.0.0.1:8003',
 }
 
 export const HOP_BY_HOP_HEADERS = [
@@ -32,5 +33,9 @@ export const LANDING_STATIC_ASSET_PREFIXES = [
   '/pwa/',
 ]
 export const LANDING_ROOT_STATIC_ASSET_RE = /^\/[^/]+\.(?:ico|json|png|txt|webp|xml)$/
-export const DASHBOARD_API_PREFIXES = ['/api/artiment/', '/api/docs/import/', '/api/internal/docs-import/']
+export const DASHBOARD_API_PREFIXES = [
+  '/api/artiment/',
+  '/api/docs/import/',
+  '/api/internal/docs-import/',
+]
 export const DASHBOARD_API_PATHS = ['/api/revalidate/community', '/api/utils/slugify']

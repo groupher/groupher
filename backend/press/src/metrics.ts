@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import { isbot } from 'isbot'
 
 import type { PressDatabase } from './db/client'
-import { pressMetricEvents } from './db/schema'
+import { pressMetricEvents, pressMetricHourly } from './db/schema'
 import type { OutputKind, Thread } from './types'
 
 export type BotFamily = 'googlebot' | 'bingbot' | 'openai' | 'anthropic' | 'others' | 'unknown'
@@ -70,18 +70,36 @@ export const persistMetric = async (db: PressDatabase, event: MetricEvent): Prom
   const hour = new Date(event.requestTimeUtc)
   hour.setUTCMinutes(0, 0, 0)
 
-  await db.execute(sql`
-    INSERT INTO analysis.press_metric_hourly (
-      hour_bucket, community_ref, thread, content_ref, output_kind, status_code,
-      cache_status, bot_family, requests_total, response_bytes_total, duration_ms_total
-    ) VALUES (
-      ${hour}, ${event.communityRef}, ${event.thread || ''}, ${event.contentRef || ''},
-      ${event.outputKind}, ${event.statusCode}, ${event.cacheStatus}, ${event.botFamily},
-      1, ${event.responseBytes}, ${event.durationMs}
-    )
-    ON CONFLICT ON CONSTRAINT press_metric_hourly_pk DO UPDATE SET
-      requests_total = analysis.press_metric_hourly.requests_total + 1,
-      response_bytes_total = analysis.press_metric_hourly.response_bytes_total + EXCLUDED.response_bytes_total,
-      duration_ms_total = analysis.press_metric_hourly.duration_ms_total + EXCLUDED.duration_ms_total
-  `)
+  await db
+    .insert(pressMetricHourly)
+    .values({
+      hourBucket: hour,
+      communityRef: event.communityRef,
+      thread: event.thread || '',
+      contentRef: event.contentRef || '',
+      outputKind: event.outputKind,
+      statusCode: event.statusCode,
+      cacheStatus: event.cacheStatus,
+      botFamily: event.botFamily,
+      requestsTotal: 1,
+      responseBytesTotal: event.responseBytes,
+      durationMsTotal: event.durationMs,
+    })
+    .onConflictDoUpdate({
+      target: [
+        pressMetricHourly.hourBucket,
+        pressMetricHourly.communityRef,
+        pressMetricHourly.thread,
+        pressMetricHourly.contentRef,
+        pressMetricHourly.outputKind,
+        pressMetricHourly.statusCode,
+        pressMetricHourly.cacheStatus,
+        pressMetricHourly.botFamily,
+      ],
+      set: {
+        requestsTotal: sql`${pressMetricHourly.requestsTotal} + 1`,
+        responseBytesTotal: sql`${pressMetricHourly.responseBytesTotal} + ${event.responseBytes}`,
+        durationMsTotal: sql`${pressMetricHourly.durationMsTotal} + ${event.durationMs}`,
+      },
+    })
 }

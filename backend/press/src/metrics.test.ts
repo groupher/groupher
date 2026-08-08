@@ -18,11 +18,9 @@ describe('machine traffic classification', () => {
   })
 
   it('writes one raw event and its hourly rollup through the Press ORM boundary', async () => {
-    const values = vi.fn(async () => undefined)
-    const execute = vi.fn(async () => undefined)
+    const values = vi.fn(() => ({ onConflictDoUpdate: vi.fn(async () => undefined) }))
     const database = {
       insert: vi.fn(() => ({ values })),
-      execute,
     } as unknown as PressDatabase
     const event = {
       requestTimeUtc: new Date('2026-08-08T12:34:56Z'),
@@ -41,6 +39,6 @@ describe('machine traffic classification', () => {
     await persistMetric(database, event)
 
     expect(values).toHaveBeenCalledWith(event)
-    expect(execute).toHaveBeenCalledTimes(1)
+    expect(values).toHaveBeenCalledTimes(2)
   })
 })

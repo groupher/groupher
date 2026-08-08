@@ -9,10 +9,7 @@
     "/pattern/*",
     "/pwa/*",
     "/*.ico",
-    "/*.json",
     "/*.png",
-    "/*.txt",
-    "/*.webp",
-    "/*.xml"
+    "/*.webp"
   ]
 }

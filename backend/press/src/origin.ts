@@ -58,7 +58,7 @@ const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
 
 const FEED_FIELDS = `community { publicRef slug title description locale canonicalOrigin canonicalPath }
   config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
-  thread configRevision feedRevision
+  configRevision feedRevision
   items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
 
 const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
@@ -66,7 +66,10 @@ const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $inp
 }`
 
 const THREAD_FEED_QUERY = `query PressThreadFeed($community: String!, $thread: Thread!, $input: PressThreadRSSFeedInput!) {
-  pressThreadRSSFeed: pressThreadRssFeed(community: $community, thread: $thread, input: $input) { ${FEED_FIELDS} }
+  pressThreadRSSFeed: pressThreadRssFeed(community: $community, thread: $thread, input: $input) {
+    ${FEED_FIELDS}
+    thread
+  }
 }`
 
 const SITE_QUERY = `query PressSite($community: String!) {

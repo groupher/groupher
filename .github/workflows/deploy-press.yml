@@ -1,0 +1,33 @@
+name: Deploy Press to Fly.io
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'backend/press/**'
+      - 'packages/service/**'
+      - 'packages/contracts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.yarn/**'
+      - '.yarnrc.yml'
+
+jobs:
+  deploy:
+    name: Deploy Press
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-press-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --config backend/press/fly.toml --dockerfile backend/press/Dockerfile --remote-only .
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
