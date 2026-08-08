@@ -208,6 +208,10 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp fetch_community_slug(%{arguments: %{community: community}}) when is_binary(community),
     do: {:ok, community}
 
+  defp fetch_community_slug(%{arguments: %{input: %{community: community}}})
+       when is_binary(community),
+       do: {:ok, community}
+
   defp fetch_community_slug(_), do: {:error, :missing_community}
 
   defp has_global_permission?(passport, permission) do

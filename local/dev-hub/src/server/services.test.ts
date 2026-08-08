@@ -45,7 +45,7 @@ test('backend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'backend').map(
       (definition) => definition.id,
     ),
-    ['gateway', 'auth', 'phoenix', 'content-import', 'assets-hub', 'document-converter'],
+    ['gateway', 'auth', 'phoenix', 'content-import', 'press', 'assets-hub', 'document-converter'],
   )
 })
 
@@ -68,6 +68,8 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'auth', target: 'dashboard', label: '/:community/dashboard/*' },
       { source: 'gateway', target: 'dash', label: '/:community/dash/*' },
       { source: 'gateway', target: 'main', label: 'all other routes' },
+      { source: 'gateway', target: 'press', label: '*.md, feed.*, llms.txt, sitemap.xml' },
+      { source: 'press', target: 'phoenix', label: 'CMS.Press GraphQL projection' },
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'content-import', label: '/api/docs/import/*' },

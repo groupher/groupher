@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 
 import { buildHealthResponse } from './health.js'
 import { proxyRequest } from './proxy.js'
-import { resolveGatewayTarget } from './routing.js'
+import { isPlatformRootHost, resolveGatewayTarget } from './routing.js'
 import { getPublicFile, readPublicFile } from './static.js'
 
 type TOptions = {
@@ -15,6 +15,19 @@ export const createApp = ({ fetcher }: TOptions = {}) => {
   app.get('/health', (context) => context.json(buildHealthResponse()))
 
   app.get('/:file{robots\\.txt|sitemap\\.xml|manifest\\.json|favicon\\.ico}', async (context) => {
+    const url = new URL(context.req.url)
+    const routingHost = context.req.header('x-forwarded-host')?.split(',')[0]?.trim() || url.host
+    if (!isPlatformRootHost(routingHost)) {
+      const target = resolveGatewayTarget({
+        pathname: url.pathname,
+        search: url.search,
+        method: context.req.method,
+        host: url.host,
+        forwardedHost: context.req.header('x-forwarded-host'),
+      })
+      return proxyRequest(context.req.raw, target, { fetcher })
+    }
+
     const publicFile = getPublicFile(new URL(context.req.url).pathname)
 
     if (!publicFile) {

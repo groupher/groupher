@@ -1,0 +1,38 @@
+{
+  "name": "@groupher/press",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",
+    "start": "cross-env NODE_ENV=production node dist/server.js",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json *.mts",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.ts *.json *.mts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@groupher/service": "1.0.0",
+    "@hono/node-server": "^2.0.11",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.13.0",
+    "isbot": "^5.1.35",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "cross-env": "^10.1.0",
+    "drizzle-kit": "^0.31.8",
+    "esbuild": "^0.28.1",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

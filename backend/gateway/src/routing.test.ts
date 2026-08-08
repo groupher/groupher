@@ -12,6 +12,8 @@ import {
   isLandingHost,
   isLandingStaticRoute,
   isMainHost,
+  isPlatformRootHost,
+  isPressRoute,
   resolveGatewayTarget,
   SITE,
 } from './routing'
@@ -81,6 +83,12 @@ describe('gateway/routing', () => {
   })
 
   describe('static route predicates', () => {
+    it('keeps platform root files separate from custom domains', () => {
+      expect(isPlatformRootHost('groupher.com')).toBe(true)
+      expect(isPlatformRootHost('docs.example.com')).toBe(false)
+      expect(isPressRoute('/home/post/1.md')).toBe(true)
+      expect(isPressRoute('/home/sitemap.xml')).toBe(true)
+    })
     it('detects landing static routes', () => {
       expect(isLandingStaticRoute('/landing/_next/static/chunks/app.js')).toBe(true)
       expect(isLandingStaticRoute('/dashboard/_next/static/chunks/app.js')).toBe(false)
@@ -202,6 +210,25 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.search).toBe('?query=%7Bme%7Blogin%7D%7D')
       expect(target.requestHeaderPolicy).toBe('graphql-browser-clean')
       expect(target.requiresBodyProxy).toBe(true)
+    })
+
+    it('routes community Press outputs before Main', () => {
+      expect(resolve('/home/post/1.md', 'groupher.com').targetKind).toBe('press')
+      expect(resolve('/home/feed.xml', 'groupher.com').targetKind).toBe('press')
+      expect(resolve('/home/llms.txt', 'groupher.com').targetKind).toBe('press')
+    })
+
+    it('injects community scope for custom-domain Press routes', () => {
+      process.env.CUSTOM_DOMAIN_COMMUNITIES = JSON.stringify({ 'docs.example.com': 'home' })
+
+      expect(resolve('/post/feed.xml', 'docs.example.com').targetUrl.pathname).toBe(
+        '/home/post/feed.xml',
+      )
+      expect(resolve('/doc/8/start.md', 'docs.example.com').targetUrl.pathname).toBe(
+        '/home/doc/8/start.md',
+      )
+
+      delete process.env.CUSTOM_DOMAIN_COMMUNITIES
     })
 
     it('routes explicit Main and Landing subdomains before canonical path rules', () => {

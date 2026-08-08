@@ -22,6 +22,7 @@ const CORE_TOP_ROW_Y = 118
 const CORE_TOP_TO_APP_GAP = 136
 const CORE_APP_TO_BACKEND_GAP = 96
 const CORE_COLUMN_X = {
+  farLeft: -516,
   left: 24,
   center: 564,
   right: 1104,
@@ -54,6 +55,7 @@ const getCoreServicePositions = (
     landing: { x: CORE_COLUMN_X.left, y: appRowY },
     main: { x: CORE_COLUMN_X.center, y: appRowY },
     dashboard: { x: CORE_COLUMN_X.right, y: appRowY },
+    press: { x: CORE_COLUMN_X.farLeft, y: backendRowY },
     'assets-hub': { x: CORE_COLUMN_X.left, y: backendRowY },
     phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
     'content-import': { x: CORE_COLUMN_X.right, y: backendRowY },

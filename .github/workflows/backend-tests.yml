@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - 'backend/main/**' # only trigger when this dir changes
+  pull_request:
+    paths:
+      - 'backend/main/**'
 
 jobs:
   setup:
