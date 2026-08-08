@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 
-import { THREAD_PATH } from '~/constant/thread'
 import { getDocPublicTree, getPagedChangelogs, getPagedPosts } from '~/app/ssr'
+import { THREAD_PATH } from '~/constant/thread'
 
 const DEFAULT_LIMIT = 6
 const DEFAULT_COMMUNITY = 'groupher'
@@ -53,7 +53,10 @@ const normalizeDocHref = (community: string, href?: string | null): string => {
   const normalized = trimmed.replace(/^\//, '')
 
   if (normalized.startsWith(`${community}/`)) {
-    return `/${normalized.startsWith(`${community}/docs/`) ? normalized.replace(`${community}/docs/`, `${community}/doc/`) : normalized}`
+    const path = normalized.startsWith(`${community}/docs/`)
+      ? normalized.replace(`${community}/docs/`, `${community}/doc/`)
+      : normalized
+    return `/${path}`
   }
 
   if (normalized.startsWith('doc/')) {
@@ -84,9 +87,12 @@ const mapArticleItems = (
   const threadPath = view === 'posts' ? THREAD_PATH.POST : THREAD_PATH.CHANGELOG
   const item = (entry: Record<string, unknown>) => {
     const innerId = (entry.innerId || entry.id || Date.now()).toString()
-    const rawTitle = typeof entry.title === 'string' && entry.title.trim() ? entry.title.trim() : 'Untitled'
+    const rawTitle =
+      typeof entry.title === 'string' && entry.title.trim() ? entry.title.trim() : 'Untitled'
     const linkAddr =
-      typeof entry.linkAddr === 'string' && entry.linkAddr.trim() ? (entry.linkAddr as string) : undefined
+      typeof entry.linkAddr === 'string' && entry.linkAddr.trim()
+        ? (entry.linkAddr as string)
+        : undefined
     const digest = typeof entry.digest === 'string' ? entry.digest : undefined
     const updatedAt = typeof entry.insertedAt === 'string' ? entry.insertedAt : undefined
 
@@ -101,9 +107,7 @@ const mapArticleItems = (
     }
   }
 
-  return (entries || [])
-    .filter(Boolean)
-    .map((value) => item(value as Record<string, unknown>))
+  return (entries || []).filter(Boolean).map((value) => item(value as Record<string, unknown>))
 }
 
 const collectDocNodes = (
@@ -117,7 +121,8 @@ const collectDocNodes = (
   for (const node of nodes) {
     if (!node) continue
     const type = String(node.type || '').toLowerCase()
-    const title = typeof node.title === 'string' && node.title.trim() ? node.title.trim() : 'Untitled'
+    const title =
+      typeof node.title === 'string' && node.title.trim() ? node.title.trim() : 'Untitled'
     const id = typeof node.id === 'string' ? node.id : Math.random().toString(36).slice(2)
 
     if (type === 'page') {
@@ -131,7 +136,12 @@ const collectDocNodes = (
     }
 
     if (Array.isArray(node.pages)) {
-      collectDocNodes(community, baseUrl, node.pages as ReadonlyArray<Record<string, unknown> | null>, out)
+      collectDocNodes(
+        community,
+        baseUrl,
+        node.pages as ReadonlyArray<Record<string, unknown> | null>,
+        out,
+      )
     }
   }
 }
@@ -160,14 +170,18 @@ export const GET = async (req: NextRequest) => {
 
     for (const tab of tabs) {
       if (!tab) continue
-      const pins = Array.isArray(tab.pins) ? (tab.pins as ReadonlyArray<Record<string, unknown> | null>) : []
-      const groups = Array.isArray(tab.groups) ? (tab.groups as ReadonlyArray<Record<string, unknown> | null>) : []
+      const pins = Array.isArray(tab.pins)
+        ? (tab.pins as ReadonlyArray<Record<string, unknown> | null>)
+        : []
+      const groups = Array.isArray(tab.groups)
+        ? (tab.groups as ReadonlyArray<Record<string, unknown> | null>)
+        : []
 
       collectDocNodes(community, baseUrl, pins, docEntries)
       collectDocNodes(community, baseUrl, groups, docEntries)
     }
 
-      return Response.json({
+    return Response.json({
       ok: true,
       data: {
         view,
@@ -188,7 +202,9 @@ export const GET = async (req: NextRequest) => {
       data: {
         view,
         community,
-        items: posts ? mapArticleItems(community, baseUrl, 'posts', posts.entries as readonly unknown[]) : [],
+        items: posts
+          ? mapArticleItems(community, baseUrl, 'posts', posts.entries as readonly unknown[])
+          : [],
       },
     })
   }
@@ -201,7 +217,12 @@ export const GET = async (req: NextRequest) => {
         view,
         community,
         items: changelogs
-          ? mapArticleItems(community, baseUrl, 'changelog', changelogs.entries as readonly unknown[])
+          ? mapArticleItems(
+              community,
+              baseUrl,
+              'changelog',
+              changelogs.entries as readonly unknown[],
+            )
           : [],
       },
     })
@@ -215,13 +236,15 @@ export const GET = async (req: NextRequest) => {
     collectDocNodes(
       community,
       baseUrl,
-      ((tab as Record<string, unknown>).pins as ReadonlyArray<Record<string, unknown> | null>) || [],
+      ((tab as Record<string, unknown>).pins as ReadonlyArray<Record<string, unknown> | null>) ||
+        [],
       items,
     )
     collectDocNodes(
       community,
       baseUrl,
-      ((tab as Record<string, unknown>).groups as ReadonlyArray<Record<string, unknown> | null>) || [],
+      ((tab as Record<string, unknown>).groups as ReadonlyArray<Record<string, unknown> | null>) ||
+        [],
       items,
     )
   }
@@ -242,7 +265,12 @@ export const POST = async (req: NextRequest) => {
     return Response.json({ ok: false, error: 'invalid payload' }, { status: 400 })
   }
 
-  const { widgetKey, title, body, community: rawCommunity } = payload as {
+  const {
+    widgetKey,
+    title,
+    body,
+    community: rawCommunity,
+  } = payload as {
     widgetKey?: unknown
     title?: unknown
     body?: unknown
