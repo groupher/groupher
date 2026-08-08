@@ -14,7 +14,9 @@ defmodule GroupherServer.CMS.Press do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Model.{ArticleBranch, Community, Doc, DocPublishRelease, DocTreeNode, PressConfig}
-  alias Helper.Constant
+  alias Helper.{Constant, Later}
+
+  require Logger
 
   require CMS.Const
 
@@ -79,10 +81,49 @@ defmodule GroupherServer.CMS.Press do
       end)
       |> Repo.transaction()
       |> case do
-        {:ok, %{config: config}} -> {:ok, config}
-        {:error, _step, reason, _changes} -> {:error, reason}
+        {:ok, %{config: config}} ->
+          Later.run({__MODULE__, :invalidate, [community.slug]})
+          {:ok, config}
+
+        {:error, _step, reason, _changes} ->
+          {:error, reason}
       end
     end
+  end
+
+  @doc """
+  Best-effort notification to Press after a Phoenix-owned public projection changes.
+
+  The HTTP call is intentionally outside the business transaction. Press keeps a
+  short pointer TTL as the correctness fallback when the service is unavailable.
+  """
+  @spec invalidate(Community.t() | String.t() | integer()) :: :ok
+  def invalidate(%Community{slug: slug}), do: invalidate(slug)
+
+  def invalidate(community_id) when is_integer(community_id) do
+    case Repo.get(Community, community_id) do
+      %Community{slug: slug} -> invalidate(slug)
+      _ -> :ok
+    end
+  end
+
+  def invalidate(slug) when is_binary(slug) do
+    endpoint = System.get_env("PRESS_INTERNAL_URL")
+    token = System.get_env("PRESS_INTERNAL_TOKEN")
+
+    if is_binary(endpoint) and endpoint != "" and is_binary(token) and token != "" do
+      case Req.post("#{String.trim_trailing(endpoint, "/")}/internal/invalidate",
+             json: %{community: slug},
+             headers: [{"x-press-internal-token", token}],
+             receive_timeout: 5_000
+           ) do
+        {:ok, %{status: status}} when status in 200..299 -> :ok
+        {:ok, %{status: status}} -> Logger.warning("Press invalidation returned HTTP #{status}")
+        {:error, reason} -> Logger.warning("Press invalidation failed: #{inspect(reason)}")
+      end
+    end
+
+    :ok
   end
 
   @spec article(map()) :: {:ok, map()} | {:error, term()}

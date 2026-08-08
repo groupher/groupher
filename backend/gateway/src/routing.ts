@@ -1,4 +1,11 @@
-export type GatewayTargetKind = 'main' | 'dashboard' | 'dash' | 'landing' | 'auth' | 'phoenix'
+export type GatewayTargetKind =
+  | 'main'
+  | 'dashboard'
+  | 'dash'
+  | 'landing'
+  | 'auth'
+  | 'phoenix'
+  | 'press'
 
 export type TRequestHeaderPolicy = 'pass-through' | 'graphql-browser-clean'
 export type TResponsePolicy = 'pass-through'
@@ -40,6 +47,7 @@ export const SITE = {
   API:
     process.env.API_SITE ||
     (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:4001' : 'https://api.groupher.com'),
+  PRESS: process.env.PRESS_SITE || 'http://127.0.0.1:8003',
 }
 
 export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
@@ -73,6 +81,48 @@ export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LAND
 
 export const isDashHost = (host: string): boolean => isAppHost(host, APP.DASH)
 
+export const isPlatformRootHost = (host: string): boolean => {
+  const hostname = host.split(':')[0].toLowerCase()
+  return [
+    'groupher.com',
+    'www.groupher.com',
+    'groupher.localhost',
+    'localhost',
+    '127.0.0.1',
+  ].includes(hostname)
+}
+
+export const isPressRoute = (pathname: string): boolean =>
+  /^\/[^/]+\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) ||
+  /^\/[^/]+\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) ||
+  /^\/[^/]+\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname) ||
+  /^\/[^/]+\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname)
+
+const customDomainCommunity = (host: string): string | null => {
+  try {
+    const mapping = JSON.parse(process.env.CUSTOM_DOMAIN_COMMUNITIES || '{}') as Record<
+      string,
+      string
+    >
+    const community = mapping[host.split(':')[0].toLowerCase()]
+    return community && /^[a-z0-9][a-z0-9-]*$/.test(community) ? community : null
+  } catch {
+    return null
+  }
+}
+
+const customDomainPressPath = (pathname: string, host: string): string | null => {
+  if (
+    !/^\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) &&
+    !/^\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname) &&
+    !/^\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) &&
+    !/^\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname)
+  )
+    return null
+  const community = customDomainCommunity(host)
+  return community ? `/${community}${pathname}` : null
+}
+
 const LANDING_STATIC_SIGN = `/${APP.LANDING}/_next/static`
 const DASHBOARD_STATIC_SIGN = `/${APP.DASHBOARD}/_next/static`
 const DASHBOARD_NEXT_SIGN = `/${APP.DASHBOARD}/_next/`
@@ -83,8 +133,7 @@ export const isLandingStaticRoute = (pathname: string): boolean =>
 export const isDashboardStaticRoute = (pathname: string): boolean =>
   pathname.startsWith(DASHBOARD_STATIC_SIGN)
 
-const isDashboardNextRoute = (pathname: string): boolean =>
-  pathname.startsWith(DASHBOARD_NEXT_SIGN)
+const isDashboardNextRoute = (pathname: string): boolean => pathname.startsWith(DASHBOARD_NEXT_SIGN)
 
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
   if (isAppHost(host, APP.DASHBOARD)) {
@@ -164,6 +213,16 @@ export const resolveGatewayTarget = ({
       method,
       'graphql-browser-clean',
     )
+  }
+
+  const customPressPath = customDomainPressPath(pathname, routingHost)
+  if (customPressPath) return target('press', new URL(customPressPath + search, SITE.PRESS), method)
+
+  if (isPressRoute(pathname)) {
+    if (pathname === '/sitemap.xml' && isPlatformRootHost(routingHost)) {
+      return target('main', new URL(fullPath, SITE.MAIN), method)
+    }
+    return target('press', new URL(fullPath, SITE.PRESS), method)
   }
 
   if (isMainHost(routingHost)) {
