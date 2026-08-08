@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
-import MarkerRender from '~/widgets/MarkerRender'
+import { Link } from '~/platform'
+import MarkerRender from '~/render/MarkerRender'
 
 import { DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER, DOC_COVER_NODE_TYPE } from '../constant'
 import GroupSettingButton from '../GroupSettingButton'

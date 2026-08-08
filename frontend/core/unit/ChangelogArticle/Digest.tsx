@@ -2,20 +2,20 @@
  * PostLayout
  */
 
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { lazy, Suspense } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import ArrowSVG from '~/icons/Arrow'
 import Img from '~/Img'
+import { Link } from '~/platform'
+import { useRouter } from '~/platform'
 import type { TChangelog } from '~/spec'
-// import ArchivedSign from '~/widgets/ArchivedSign'
+// import ArchivedSign from '~/ui/ArchivedSign'
 import useArticle from '~/stores/article/hooks'
+import ImgFallback from '~/ui/ImgFallback'
 import ArticleSettingMenu from '~/unit/ArticleSettingMenu'
 import ArticleBaseStats from '~/unit/ArticleView/ArticleBaseStats'
 import ArticlePinLabel from '~/unit/PostThread/ArticlePinLabel'
-import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon/digest'
 

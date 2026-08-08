@@ -65,7 +65,7 @@ vi.mock('../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid='saving-bar'>{field}</div>,
 }))
 
-vi.mock('~/widgets/Checker', () => ({
+vi.mock('~/ui/Checker', () => ({
   default: () => null,
 }))
 

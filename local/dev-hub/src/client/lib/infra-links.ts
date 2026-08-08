@@ -124,7 +124,10 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
         id: 'fly',
         name: INFRA_PLATFORM_META.fly.name,
         icon: INFRA_PLATFORM_META.fly.icon,
-        links: [{ label: 'API', url: 'https://fly.io/apps/groupher-api' }],
+        links: [
+          { label: 'API', url: 'https://fly.io/apps/groupher-api' },
+          { label: 'Press', url: 'https://fly.io/apps/groupher-press' },
+        ],
       },
     ],
   },
@@ -156,7 +159,11 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'cloudflare',
     'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
   ),
-  landing: deploymentTarget('landing', 'vercel', 'https://vercel.com/groupher/landing'),
+  landing: deploymentTarget(
+    'landing',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
+  ),
   main: deploymentTarget('main', 'vercel', 'https://vercel.com/groupher/main'),
   dashboard: deploymentTarget('dashboard', 'vercel', 'https://vercel.com/groupher/dashboard'),
   'inspire-me': deploymentTarget(
@@ -165,6 +172,7 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'https://dash.cloudflare.com/groupher/workers',
   ),
   phoenix: deploymentTarget('phoenix', 'fly', 'https://fly.io/apps/groupher-api'),
+  press: deploymentTarget('press', 'fly', 'https://fly.io/apps/groupher-press'),
   'content-import': deploymentTarget(
     'content-import',
     'vercel',

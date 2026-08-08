@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
+import { Link } from '~/platform'
 import CommunityBrand from '~/unit/CommunityBrand'
 
 import { HEAD_MENU } from './constant'

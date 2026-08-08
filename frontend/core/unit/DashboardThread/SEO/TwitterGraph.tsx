@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import type { TSelectOption } from '~/spec'
-import Input from '~/widgets/Input'
-import Select from '~/widgets/Select'
+import Input from '~/ui/Input'
+import Select from '~/ui/Select'
 
 import { TW_CARD_OPTIONS } from '../constant'
 import useSEO from '../logic/useSEO'

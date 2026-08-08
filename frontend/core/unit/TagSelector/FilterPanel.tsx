@@ -3,7 +3,7 @@ import type { FC } from 'react'
 
 import { createKeyboardClick } from '~/lib/a11y'
 import type { TColorName, TGroupedTags, TTag } from '~/spec'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon from './salon/filter_panel'
 

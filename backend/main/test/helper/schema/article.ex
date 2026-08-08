@@ -402,8 +402,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           markdown
           markdownToc
           html
-          xml
-          rss
         }
       }
     }
@@ -421,8 +419,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           markdown
           markdownToc
           html
-          xml
-          rss
         }
       }
     }
@@ -796,8 +792,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           markdown
           markdownToc
           html
-          xml
-          rss
         }
       }
     }

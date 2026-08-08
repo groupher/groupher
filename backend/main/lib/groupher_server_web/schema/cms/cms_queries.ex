@@ -61,15 +61,82 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.analysis_web_summary/3)
     end
 
-    @desc "Built-in community Web Analysis overview"
-    field :analysis_web_overview, :analysis_web_overview do
+    @desc "Public Umami website id for built-in community Analysis tracking"
+    field :analysis_tracking_website_id, :string do
+      arg(:community, non_null(:string))
+
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_tracking_website_id/3)
+    end
+
+    @desc "Built-in community Analysis Trends summary and chart"
+    field :analysis_trends_overview, :analysis_trends_overview do
       arg(:community, non_null(:string))
       arg(:days, :integer, default_value: 7)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "analysis.web.read")
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.analysis_web_overview/3)
+      resolve(&R.CMS.analysis_trends_overview/3)
+    end
+
+    @desc "One built-in community Analysis page dimension"
+    field :analysis_trend_pages, :analysis_trend_pages_section do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+      arg(:dimension, non_null(:analysis_trend_pages_dimension))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_trend_pages/3)
+    end
+
+    @desc "One built-in community Analysis source dimension"
+    field :analysis_trend_sources, :analysis_trend_sources_section do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+      arg(:dimension, non_null(:analysis_trend_sources_dimension))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_trend_sources/3)
+    end
+
+    @desc "One built-in community Analysis environment dimension"
+    field :analysis_trend_environment, :analysis_trend_environment_section do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+      arg(:dimension, non_null(:analysis_trend_environment_dimension))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_trend_environment/3)
+    end
+
+    @desc "One built-in community Analysis location dimension"
+    field :analysis_trend_location, :analysis_trend_location_section do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+      arg(:dimension, non_null(:analysis_trend_location_dimension))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_trend_location/3)
+    end
+
+    @desc "UTC weekly traffic cells for built-in community Analysis"
+    field :analysis_trend_traffic, :analysis_trend_traffic_section do
+      arg(:community, non_null(:string))
+      arg(:days, :integer, default_value: 7)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_trend_traffic/3)
     end
 
     @desc "dashboard theme preset registry"

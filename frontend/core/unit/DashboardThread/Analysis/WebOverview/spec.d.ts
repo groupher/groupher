@@ -1,5 +1,12 @@
 import type { TTransKey } from '~/spec'
 
+export type TAnalysisWebRange = {
+  days: number
+  startAt: string
+  endAt: string
+  bucket: 'hour' | 'day'
+}
+
 export type TAnalysisWebMetric = {
   value: number
   previousValue: number | null
@@ -7,11 +14,12 @@ export type TAnalysisWebMetric = {
 }
 
 export type TSummaryMetricSpec = {
-  key: keyof TAnalysisWebOverview['summary']
+  key: keyof TAnalysisTrendsOverview['summary']
   label: TTransKey
 }
 
 export type TSummaryMetricItem = TSummaryMetricSpec & {
+  changeRate: number | null
   value: string
 }
 
@@ -26,8 +34,8 @@ export type TAnalysisWebDimensionMetrics = TAnalysisWebCountMetrics & {
 }
 
 export type TAnalysisWebPageMetrics = TAnalysisWebCountMetrics & {
-  bounceRate: number
-  visitDuration: number
+  bounceRate: number | null
+  visitDuration: number | null
 }
 
 export type TAnalysisWebDimension<TMetrics> = {
@@ -40,16 +48,17 @@ export type TAnalysisWebLocationDimension<TMetrics> = TAnalysisWebDimension<TMet
   code: string | null
 }
 
-export type TAnalysisWebOverview = {
-  status: string
+export type TAnalysisWebError = {
+  code: string
+  message: string
+  section: string
+  providerStatus: string | null
+}
+
+export type TAnalysisTrendsOverview = {
+  status: 'ok' | 'partial' | 'unavailable'
   provider: string
-  pathScope: string
-  range: {
-    days: number
-    startAt: string
-    endAt: string
-    bucket: string
-  }
+  range: TAnalysisWebRange
   summary: {
     pageviews: TAnalysisWebMetric
     visitors: TAnalysisWebMetric
@@ -57,61 +66,102 @@ export type TAnalysisWebOverview = {
     bounceRate: TAnalysisWebMetric
     visitDuration: TAnalysisWebMetric
   }
-  timeseries: {
-    status: string
-    bucket: string
+  chart: {
+    bucket: 'hour' | 'day'
     points: {
-      bucket: string
+      bucket?: 'hour' | 'day'
       timestamp: string
-      visitors: number
       visits: number
       views: number
     }[]
   }
-  pages: {
-    status: string
-    path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
-    url: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
-    entry: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-    exit: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-    title: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
-    query: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-  }
-  sources: {
-    status: string
-    referrer: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-    channel: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-    domain: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
-  }
-  environment: {
-    status: string
-    browser: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
-    os: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
-    device: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
-    language: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
-    screen: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
-  }
-  location: {
-    status: string
-    country: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
-    region: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
-    city: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
-  }
-  traffic: {
-    status: string
-    timezone: string
-    cells: {
-      weekday: number
-      hour: number
-      visitors: number
-      visits: number
-      views: number
-    }[]
-  }
-  errors: {
-    code: string
-    message: string
-    section: string
-    providerStatus: string | null
+  errors: TAnalysisWebError[]
+}
+
+export type TAnalysisTrendSection<TItem> = {
+  status: 'ok' | 'unavailable'
+  items: TItem[]
+  error: TAnalysisWebError | null
+}
+
+export type TAnalysisTrendPagesSection = TAnalysisTrendSection<
+  TAnalysisWebDimension<TAnalysisWebPageMetrics>
+>
+
+export type TAnalysisTrendSourcesSection = TAnalysisTrendSection<
+  TAnalysisWebDimension<TAnalysisWebCountMetrics>
+>
+
+export type TAnalysisTrendEnvironmentSection = TAnalysisTrendSection<
+  TAnalysisWebDimension<TAnalysisWebDimensionMetrics>
+>
+
+export type TAnalysisTrendLocationSection = TAnalysisTrendSection<
+  TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>
+>
+
+export type TAnalysisTrendTrafficSection = {
+  status: 'ok' | 'unavailable'
+  timezone: string
+  cells: {
+    weekday: number
+    hour: number
+    visitors: number
+    visits: number
+    views: number
   }[]
+  error: TAnalysisWebError | null
+}
+
+// Temporary development fixture shape. Production Trends receives only the
+// SSR overview above; lower panels load their own section DTOs after hydration.
+
+export type TAnalysisDemoPages = {
+  path: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  url: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  entry: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  exit: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  title: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+  query: TAnalysisWebDimension<TAnalysisWebPageMetrics>[]
+}
+
+export type TAnalysisDemoSources = {
+  referrer: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+  channel: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+  domain: TAnalysisWebDimension<TAnalysisWebCountMetrics>[]
+}
+
+export type TAnalysisDemoEnvironment = {
+  browser: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  os: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  device: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  language: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+  screen: TAnalysisWebDimension<TAnalysisWebDimensionMetrics>[]
+}
+
+export type TAnalysisDemoLocation = {
+  country: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+  region: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+  city: TAnalysisWebLocationDimension<TAnalysisWebDimensionMetrics>[]
+}
+
+export type TAnalysisDemoTraffic = {
+  status: 'ok' | 'unavailable'
+  timezone: string
+  cells: {
+    weekday: number
+    hour: number
+    visitors: number
+    visits: number
+    views: number
+  }[]
+  error: TAnalysisWebError | null
+}
+
+export type TAnalysisTrendsOverviewDemo = TAnalysisTrendsOverview & {
+  pages: TAnalysisDemoPages
+  sources: TAnalysisDemoSources
+  environment: TAnalysisDemoEnvironment
+  location: TAnalysisDemoLocation
+  traffic: TAnalysisDemoTraffic
 }

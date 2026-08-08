@@ -4,6 +4,7 @@ const { withWorkflow } = require('workflow/next')
 
 module.exports = withWorkflow(
   withBaseConfig({
-    assetPrefix: process.env.NODE_ENV === 'production' ? '/dashboard' : '',
+    // Keep Dashboard assets/HMR namespaced when Main and Dashboard share the Gateway host.
+    assetPrefix: '/dashboard',
   }),
 )

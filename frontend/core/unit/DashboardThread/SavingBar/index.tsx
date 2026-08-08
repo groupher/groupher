@@ -6,7 +6,7 @@ import RevertSVG from '~/icons/Back'
 import SaveSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useHelper from '../logic/useHelper'
 import type { TDsbFieldKey } from '../spec.d'

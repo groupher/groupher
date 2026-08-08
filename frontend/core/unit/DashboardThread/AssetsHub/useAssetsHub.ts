@@ -6,8 +6,8 @@ import { ASSETS_HUB_ENDPOINT } from '~/config'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
+import { toast } from '~/ui/Toaster'
 import S from '~/unit/DashboardThread/schema'
-import { toast } from '~/widgets/Toaster'
 
 import {
   ASSETS_HUB_DEBUG_UPLOAD_THREAD,
@@ -48,7 +48,7 @@ const EMPTY_REFS_STATE: TReferencesState = {
   totalCount: 0,
 }
 
-export default function useAssetsHub(): TAssetsHubLogic {
+export default function useAssetsHub(initialData?: TPagedAssets | null): TAssetsHubLogic {
   const { slug: community } = useCommunity()
   const { mutate, query } = useGraphQLClient()
   const [status, setStatus] = useState<string>(ASSETS_HUB_UPLOAD_STATUS.IDLE)
@@ -92,7 +92,10 @@ export default function useAssetsHub(): TAssetsHubLogic {
     filter: assetFilter,
   })
 
-  const assets = useMemo(() => data?.pagedCommunityAssets?.entries ?? [], [data])
+  const assets = useMemo(
+    () => data?.pagedCommunityAssets?.entries ?? initialData?.entries ?? [],
+    [data, initialData],
+  )
   const totalCount = data?.pagedCommunityAssets?.totalCount ?? 0
   const assetsErrorMessage = error ? extractErrorMessage(error) : null
   const stats = statsData?.communityAssetStats ?? null
@@ -368,7 +371,7 @@ export default function useAssetsHub(): TAssetsHubLogic {
     copyPublicReadUrl,
     deleteAsset,
     deletingAssetId,
-    loadingAssets: loading,
+    loadingAssets: loading && !initialData,
     openPublicReadPreview,
     references,
     selectAsset,

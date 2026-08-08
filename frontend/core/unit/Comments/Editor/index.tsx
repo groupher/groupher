@@ -1,6 +1,6 @@
 import { type FC, Fragment } from 'react'
 
-import Modal from '~/widgets/Modal'
+import Modal from '~/ui/Modal'
 
 import type { TEditState } from '../spec'
 import useActions from '../useLogic/useActions'

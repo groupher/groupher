@@ -1,14 +1,12 @@
-# SSR Theme First Paint
+# SSR 首次绘制主题
 
-> Status: design note and implementation guide. Wallpaper/renderSpec is out of
-> scope here and should be handled separately.
+> 状态：设计说明和实现指南。 Wallpaper/renderSpec 不在此范围内，应单独处理。
 
-## Problem
+## 问题
 
-Groupher uses CSS variables for theme colors, but dark mode can still flash during
-SSR hydration.
+Groupher 使用 CSS 变量来定义主题颜色，但在 SSR hydration 期间，暗色模式仍然可能闪烁。
 
-The important finding from debugging is:
+调试中的关键发现是：
 
 ```text
 prePaintThemeDetectScript sets html[data-theme='dark']
@@ -18,20 +16,17 @@ html[data-theme] becomes missing/light for a short window
 ThemeMonitor mounts and writes dark again
 ```
 
-That produces the visible sequence:
+这会产生可见的序列：
 
 ```text
 dark -> light/null -> dark
 ```
 
-This is not the same as "SSR has no dark CSS". The dark CSS is present. The
-problem is that the root selector used by that CSS can become unstable during the
-hydration window.
+这不等同于“SSR 没有暗色 CSS”。暗色 CSS 是存在的。问题在于，承载这些 CSS 的根选择器在 hydration 窗口内可能变得不稳定。
 
-## Why Early Inline Script Usually Works
+## 为什么提前内联脚本通常有效
 
-Static documentation sites such as Rspress and VitePress avoid theme flicker by
-running a small inline script very early in `<head>`:
+Rspress 和 VitePress 这类静态文档站，会在`<head>`中很早执行一个很小的内联脚本来避免主题闪烁：
 
 ```html
 <script>
@@ -39,11 +34,9 @@ running a small inline script very early in `<head>`:
 </script>
 ```
 
-A normal inline classic script blocks parsing while it executes. If it is early
-enough, the first style calculation and first paint already see `html.dark` or
-`html[data-theme='dark']`.
+普通的内联经典脚本在执行时会阻塞解析。如果它足够早执行，那么第一次样式计算和首次绘制已经能看到`html.dark`或`html[data-theme='dark']`。
 
-So the browser timing is:
+因此浏览器时序是：
 
 ```text
 parse <head>
@@ -53,24 +46,19 @@ calculate styles
 first paint
 ```
 
-Groupher follows the same first-paint direction, but Next hydration adds another
-phase after first paint. During that phase, React can reconcile the root `<html>`
-attributes and briefly remove the script-written `data-theme`.
+Groupher 采用相同的首次绘制方向，但 Next hydration 在首次绘制之后又增加了一个阶段。在这个阶段里，React 可能会协调根`<html>`属性，并短暂移除脚本写入的`data-theme`。
 
-## Constraints
+## 约束
 
-- Do not use cookies as the source of truth for theme.
-- Keep theme values CSS-driven.
-- Do not initialize ThemeStore from `document.documentElement.dataset.theme`
-  during the client first render. That makes the client tree differ from the
-  server tree and can cause hydration mismatch.
-- Do not fix this by making individual widgets own hydration-window hacks.
-- Do not treat this as a Dashboard-only issue. Main, Dashboard, Landing, and
-  future sub-apps share the same root theme problem.
+- 不要用 cookie 作为主题的事实来源。
+- 主题值保持由 CSS 驱动。
+- 不要在客户端首次渲染期间从`document.documentElement.dataset.theme`初始化`ThemeStore`。这会让客户端树与服务端树不同，并可能引发 hydration mismatch。
+- 不要通过让单个`ui`组件各自承担 hydration 窗口补丁来修复。
+- 不要把它当成仅 Dashboard 的问题。 Main、Dashboard、Landing 以及未来的子应用共享同一个根主题问题。
 
-## Target Model
+## 目标模型
 
-Use one app-level first-paint mechanism:
+使用一个应用级的首次绘制机制：
 
 ```text
 color.css
@@ -101,14 +89,13 @@ ThemeMonitor
   removes the temporary first-paint style after runtime state has taken over
 ```
 
-The goal is not to create a second theme system. The temporary style only keeps
-computed theme variables stable while React may be reconciling `<html>`.
+目标不是创建第二套主题系统。临时样式只是在 React 可能协调`<html>`时，维持已计算主题变量的稳定。
 
-## Naming
+## 命名
 
-Use generic names. Avoid `Dsb`, `Dashboard`, or `bootstrap` in this layer.
+使用通用名称。避免在这一层使用`Dsb`、`Dashboard`或`bootstrap`。
 
-Recommended names:
+推荐名称：
 
 ```ts
 prePaintThemeDetectScript()
@@ -118,22 +105,20 @@ THEME_FIRST_PAINT_STYLE_ID
 THEME_FIRST_PAINT_VAR_NAMES
 ```
 
-The style id must be const-ized:
+样式 id 必须以常量形式定义：
 
 ```ts
 export const THEME_FIRST_PAINT_STYLE_ID = 'groupher-theme-first-paint'
 ```
 
-Do not inline this id at call sites.
+不要在调用点内联这个 id。
 
-## Variable Source Of Truth
+## 变量事实来源
 
-`frontend/core/tailwind/tokens/color.css` and
-`frontend/core/tailwind/tokens/shadow.css` are the source of truth for default
-first-paint CSS variable names and values.
+`frontend/core/tailwind/tokens/color.css`和
+`frontend/core/tailwind/tokens/shadow.css`是默认首次绘制 CSS 变量名和值的事实来源。
 
-`color.css` must stay in the synchronous global CSS import chain. Today that
-chain is:
+`color.css`必须保持在同步的全局 CSS import 链中。当前链路是：
 
 ```text
 frontend/core/tailwind/global.css
@@ -142,21 +127,17 @@ frontend/core/tailwind/global.css
   -> frontend/core/tailwind/tokens/shadow.css
 ```
 
-Every sub-app root should import `global.css` as global CSS, not lazy-load
-`color.css`, inject it through `next/head`, or add it from client-side CSS-in-JS
-after hydration. `injectThemeFirstPaintVars()` depends on the default theme vars
-already being in the cascade before protected body content is parsed.
+每个子应用根都应该把`global.css`作为全局 CSS 导入，不要懒加载`color.css`、通过`next/head`注入它，或者在 hydration 之后再通过客户端 CSS-in-JS 引入它。`injectThemeFirstPaintVars()`依赖默认主题变量在受保护的 body 内容被解析之前已经进入级联。
 
-Do not maintain a hand-written variable allowlist such as:
+不要维护手写的变量白名单，例如：
 
 ```ts
 const VARS = ['--color-title', '--color-card']
 ```
 
-That becomes a second source of truth and will drift from the token CSS files.
+这会变成第二个事实来源，并且会与 token CSS 文件漂移。
 
-Instead, generate the first-paint variable-name list from `color.css` and
-`shadow.css` at build or dev time:
+相反，在构建期或开发期从`color.css`和`shadow.css`生成首次绘制变量名列表：
 
 ```text
 frontend/core/tailwind/tokens/color.css
@@ -165,7 +146,7 @@ frontend/core/tailwind/tokens/shadow.css
   -> frontend/core/constant/theme-first-paint.generated.ts
 ```
 
-Generated output shape:
+生成输出形状：
 
 ```ts
 export const THEME_FIRST_PAINT_VAR_NAMES = [
@@ -177,10 +158,9 @@ export const THEME_FIRST_PAINT_VAR_NAMES = [
 ] as const
 ```
 
-The generator should parse source CSS with PostCSS or a structured CSS parser.
-Do not parse compiled runtime CSS in the browser.
+生成器应该使用 PostCSS 或结构化 CSS 解析器解析源 CSS。不要在浏览器里解析编译后的运行时 CSS。
 
-The first-paint script then snapshots final computed values:
+然后首次绘制脚本会快照最终计算值：
 
 ```js
 var computed = getComputedStyle(document.documentElement)
@@ -195,40 +175,33 @@ for (var i = 0; i < THEME_FIRST_PAINT_VAR_NAMES.length; i += 1) {
 css += '}'
 ```
 
-This means:
+这意味着：
 
-- `color.css` owns default token values.
-- community theme preset CSS can override those vars before the snapshot.
-- `injectThemeFirstPaintVars()` does not know or duplicate token values.
-- maintaining first-paint coverage means keeping the generated file up to date.
+- `color.css`负责默认 token 值。
+- community theme preset CSS 可以在快照之前覆盖这些变量。
+- `injectThemeFirstPaintVars()`不知道也不会重复 token 值。
+- 维护首次绘制覆盖面意味着保持生成文件及时更新。
 
-## Community ThemePreset Tokens
+## 社区主题预设代币
 
-Community routes may receive effective ThemePreset tokens from SSR community
-data. These tokens are the current community's final theme result, not the raw
-Custom overwrite itself. They may come from a built-in preset, a Custom preset,
-or Custom overwrite merged on the backend.
+community 路由可能从 SSR community 数据中获得有效的 ThemePreset tokens。这些 token 是当前 community 的最终主题结果，而不是原始 Custom overwrite 本身。它们可能来自内置 preset、Custom preset，或者后端合并后的 Custom overwrite。
 
-They are still exposed through global CSS var names. "Community" describes
-where the values come from, not where the variables may be used.
+它们仍然通过全局 CSS 变量名暴露。 “Community”描述的是值从哪里来，而不是这些变量能在哪里使用。
 
-In the current app, this CSS is generated from:
+在当前应用中，这段 CSS 由以下内容生成：
 
 ```ts
 serializeCommunityThemePresetCss(dashboard.themeTokens)
 ```
 
-Current callers:
+当前调用方：
 
 - `frontend/main/src/app/[community]/layout.tsx`
 - `frontend/dashboard/src/app/[community]/dashboard/layout.tsx`
 
-The route gets `dashboard.themeTokens` from the SSR dashboard/community payload
-and converts the current community's effective ThemePreset tokens into
-long-lived CSS custom properties. This is not the source `color.css` token table;
-it is the per-community theme layer on top of `color.css`.
+路由通过 SSR dashboard/community payload 获取`dashboard.themeTokens`，并把当前 community 的有效 ThemePreset tokens 转换为长生命周期的 CSS 自定义属性。这不是`color.css`中的源 token 表；它是在`color.css`之上的 per-community 主题层。
 
-Example resolved shape:
+示例解析后的形状：
 
 ```ts
 type TResolvedThemePreset = {
@@ -262,7 +235,7 @@ type TResolvedThemePreset = {
 }
 ```
 
-The long-lived community preset CSS should still emit both theme branches:
+长生命周期的 community preset CSS 仍然应该输出两个主题分支：
 
 ```css
 :root {
@@ -274,7 +247,7 @@ The long-lived community preset CSS should still emit both theme branches:
 }
 ```
 
-The emitted vars are the subset currently represented by resolved preset tokens:
+输出的变量是当前由解析后的 preset token 表示的子集：
 
 ```text
 --color-primary-custom
@@ -287,20 +260,15 @@ The emitted vars are the subset currently represented by resolved preset tokens:
 --color-divider
 ```
 
-`--color-page-custom-bg` already includes the resolved `gaussBlur` effect for
-the page background. Other first-paint-visible values such as glow/filter should
-be moved to CSS vars before this mechanism can protect them.
+`--color-page-custom-bg`已经包含了页面背景上解析后的`gaussBlur`效果。其他在首次绘制阶段可见的值，例如 glow/filter，必须先移入 CSS 变量，这个机制才能保护它们。
 
-`injectThemeFirstPaintVars()` does not need to know where a variable came from.
-It reads the computed value after `prePaintThemeDetectScript()` has selected the
-real theme. Therefore it outputs only the current theme's concrete values.
+`injectThemeFirstPaintVars()`不需要知道变量来自哪里。它在`prePaintThemeDetectScript()`选择了真实主题后读取计算值。因此它只输出当前主题的具体值。
 
-## Script Injection
+## 脚本注入
 
-Both first-paint scripts must be inline classic scripts. Do not make them
-`type="module"`, `defer`, `async`, or client-bundle imports.
+这两个首次绘制脚本都必须是内联经典脚本。不要把它们做成`type="module"`、`defer`、`async`，也不要做成客户端 bundle 导入。
 
-`prePaintThemeDetectScript()` should be emitted in `<head>` as early as possible:
+`prePaintThemeDetectScript()`应该尽早在`<head>`中输出：
 
 ```html
 <script>
@@ -310,10 +278,7 @@ Both first-paint scripts must be inline classic scripts. Do not make them
 </script>
 ```
 
-`injectThemeFirstPaintVars()` is also an inline head script, but it needs
-`THEME_FIRST_PAINT_VAR_NAMES` serialized into the script text at build/server
-render time. It cannot import the generated TS file from a browser bundle after
-hydration:
+`injectThemeFirstPaintVars()`也应该是一个内联 head 脚本，但它需要在构建或服务端渲染时把`THEME_FIRST_PAINT_VAR_NAMES`序列化进脚本文本里。它不能在 hydration 之后从浏览器 bundle 中导入生成的 TS 文件：
 
 ```html
 <script>
@@ -323,7 +288,7 @@ hydration:
 </script>
 ```
 
-The intended implementation path is:
+预期的实现路径是：
 
 ```text
 theme-first-paint.generated.ts
@@ -334,32 +299,23 @@ injectThemeFirstPaintVars()
   embeds JSON.stringify(THEME_FIRST_PAINT_VAR_NAMES) into returned script text
 ```
 
-Do not read token CSS from the request path, and do not rely on a client bundle
-import to provide the variable list. The generated TS file is the server-render
-input; `check:theme-first-paint-vars` is what keeps it in sync with `color.css`
-and `shadow.css`.
+不要从请求路径读取 token CSS，也不要依赖客户端 bundle 导入来提供变量列表。生成的 TS 文件是服务端渲染输入；`check:theme-first-paint-vars`负责让它与`color.css`和`shadow.css`保持同步。
 
-`injectThemeFirstPaintVars()` should not be emitted as a raw route body script. A
-raw body script becomes part of the React hydration tree and can cause warnings
-or mismatches. Emit it through `useServerInsertedHTML`, so the real HTML lands in
-`<head>` before `<body>`.
+`injectThemeFirstPaintVars()`不应该作为原始 route body script 输出。原始 body script 会成为 React hydration tree 的一部分，并可能引发警告或 mismatch。应该通过`useServerInsertedHTML`输出它，这样真实 HTML 会在`<body>`之前进入`<head>`。
 
-Community layouts should emit long-lived community preset CSS:
+community 布局应该输出长生命周期的 community preset CSS：
 
 ```tsx
 <CommunityThemePresetStyle cssText={serializeCommunityThemePresetCss(dashboard.themeTokens)} />
 ```
 
-`CommunityThemePresetStyle` intentionally emits only the long-lived community
-preset CSS:
+`CommunityThemePresetStyle`只刻意输出长生命周期的 community preset CSS：
 
 ```text
 <style>community preset CSS</style>
 ```
 
-This is the CSS-in-JS-style helper used here. It is not runtime client CSS-in-JS.
-It uses Next `useServerInsertedHTML()` to place CSS in `<head>` during server
-rendering:
+这里使用的是 CSS-in-JS 风格的 helper。它不是运行时客户端 CSS-in-JS。它通过 Next 的`useServerInsertedHTML()`在服务端渲染期间把 CSS 放入`<head>`：
 
 ```text
 React component tree
@@ -386,10 +342,9 @@ body
   React content
 ```
 
-The important detail is that the helper's returned `<style>` and `<script>` are
-not left at the JSX call site in `<body>`. Next inserts them into `<head>`.
+关键细节是，helper 返回的`<style>`和`<script>`不会留在`<body>`中的 JSX 调用点。 Next 会把它们插入到`<head>`。
 
-This ordering was validated in the rendered dashboard HTML:
+这个顺序已经在渲染出的 dashboard HTML 中得到验证：
 
 ```text
 prePaintThemeDetectScript()
@@ -399,36 +354,30 @@ ThemeFirstPaintScript first-paint snapshot
 ThemePresetScope runtime style
 ```
 
-The single snapshot runs after community preset CSS is in the cascade, but still
-before body content is parsed. It also protects pages that do not have community
-preset CSS, because the computed values fall back to the global theme variables.
+这次单次快照发生在 community preset CSS 已经进入级联之后，但仍然在 body 内容解析之前。它也保护没有 community preset CSS 的页面，因为计算值会回退到全局主题变量。
 
-The snapshot script itself stays simple:
+快照脚本本身保持简单：
 
-- it reads computed custom properties once;
-- it writes them to `style#groupher-theme-first-paint`;
-- it writes `!important` temporary custom properties so later SSR/runtime styles
-  cannot expose a light-frame fallback while React reconciles `html[data-theme]`.
+- 只读取一次计算后的自定义属性；
+- 把它们写入`style#groupher-theme-first-paint`；
+- 写入带`!important`的临时自定义属性，这样在 React 协调`html[data-theme]`时，后续的 SSR/runtime 样式就不会暴露 light-frame 回退。
 
-## Color Scheme
+## 配色方案
 
-Root theme selection should also update browser color-scheme:
+根主题选择还应该更新浏览器的 color-scheme：
 
 ```js
 document.documentElement.setAttribute('data-theme', theme)
 document.documentElement.style.colorScheme = theme
 ```
 
-This does not replace app CSS variables. It only tells the browser how to render
-native surfaces such as scrollbars, form controls, and built-in backgrounds.
+这不会替代应用 CSS 变量。它只是告诉浏览器如何渲染原生表面，例如滚动条、表单控件和内置背景。
 
-`<meta name="color-scheme" content="light dark">` can declare both supported
-schemes, but the pre-paint script should still set the current `colorScheme`
-when the user has a resolved light/dark preference.
+`<meta name="color-scheme" content="light dark">`可以声明两种受支持的 scheme，但当用户已经有明确的明暗偏好时，pre-paint 脚本仍然应该设置当前的`colorScheme`。
 
-## Script Order
+## 脚本顺序
 
-There are two timing requirements:
+有两个时序要求：
 
 ```text
 prePaintThemeDetectScript()
@@ -442,7 +391,7 @@ injectThemeFirstPaintVars()
   reads computed CSS variables for the already-selected theme
 ```
 
-The practical order is:
+实际顺序是：
 
 ```text
 1. prePaintThemeDetectScript() sets html[data-theme] before first paint
@@ -452,12 +401,9 @@ The practical order is:
 5. ThemeFirstPaintScript or ThemeMonitor cleans temporary vars
 ```
 
-The key requirement is that the temporary first-paint vars are installed before
-hydration can produce a visible light-frame fallback. Community routes with
-complete ThemePreset CSS must emit the preset CSS before the single
-`ThemeFirstPaintScript` snapshot runs.
+关键要求是，临时首次绘制变量必须在 hydration 可能产生可见的 light-frame 回退之前安装完成。拥有完整 ThemePreset CSS 的 community 路由，必须在单次`ThemeFirstPaintScript`快照运行之前输出 preset CSS。
 
-Full timing flow:
+完整时序流程：
 
 ```text
 Server render
@@ -502,12 +448,11 @@ ThemeMonitor
   removes style#groupher-theme-first-paint on handoff
 ```
 
-## Cleanup
+## 清理
 
-First Paint Vars are temporary. Runtime theme state must take ownership after
-hydration.
+首次绘制变量是临时的。运行时主题状态必须在 hydration 之后接管。
 
-Cleanup should be centralized:
+清理应该集中处理：
 
 ```ts
 export const removeThemeFirstPaintVars = () => {
@@ -515,7 +460,7 @@ export const removeThemeFirstPaintVars = () => {
 }
 ```
 
-`ThemeMonitor` should:
+`ThemeMonitor`应该：
 
 ```text
 1. read persisted/system mode
@@ -524,72 +469,59 @@ export const removeThemeFirstPaintVars = () => {
 4. remove first-paint style on a next-paint handoff
 ```
 
-Prefer deleting on the next `requestAnimationFrame`:
+优先在下一次`requestAnimationFrame`中删除：
 
 ```ts
 changeMode(mode, { keepFirstPaintVars: true })
 scheduleRemoveThemeFirstPaintVars()
 ```
 
-This avoids a same-task cascade gap where temporary vars are removed before
-React/Valtio consumers have rerendered from the SSR-safe light store state to
-the resolved runtime dark state.
+这可以避免同一任务中的级联空窗，即在 React/Valtio consumer 从 SSR 安全的 light store 状态 rerender 到解析后的 runtime dark 状态之前，就把临时变量删除了。
 
-Runtime theme-changing actions should apply `data-theme` / `color-scheme` first
-and then defensively remove first-paint vars, so a failed or delayed
-`ThemeMonitor` cannot pin the initial theme forever. Only the initial
-`ThemeMonitor` handoff should pass `keepFirstPaintVars: true`.
+运行时的主题切换动作应该先应用`data-theme`/`color-scheme`，然后再防御性地删除首次绘制变量，这样即使`ThemeMonitor`失败或延迟，也不会把初始主题永久锁住。只有初始的`ThemeMonitor`交接应该传入`keepFirstPaintVars: true`。
 
-## Generated File Integration
+## 生成文件集成
 
-The generated first-paint variable list should be committed, but it must not be
-allowed to drift from `color.css` or `shadow.css`.
+生成的首次绘制变量列表应该提交入仓，但不能允许它偏离`color.css`或`shadow.css`。
 
-Use two scripts:
+使用两个脚本：
 
 ```text
 yarn gen:theme-first-paint-vars
 yarn check:theme-first-paint-vars
 ```
 
-Expected behavior:
+预期行为：
 
-- `gen:theme-first-paint-vars` parses
-  `frontend/core/tailwind/tokens/color.css` and
-  `frontend/core/tailwind/tokens/shadow.css`, then writes
-  `frontend/core/constant/theme-first-paint.generated.ts`.
-- `check:theme-first-paint-vars` regenerates in memory or in a temp file and
-  fails when the checked-in generated file is stale.
-- The implementation lives in `scripts/generate-theme-first-paint-vars.mjs`.
-- CI should run `yarn check:theme-first-paint-vars` before this is considered
-  fully enforced.
+- `gen:theme-first-paint-vars`分析
+  `frontend/core/tailwind/tokens/color.css`和
+  `frontend/core/tailwind/tokens/shadow.css`，然后写入
+  `frontend/core/constant/theme-first-paint.generated.ts`。
+- `check:theme-first-paint-vars`在内存中或临时文件中重新生成，并在检查中的生成文件过旧时失败。
+- 实现位于`scripts/generate-theme-first-paint-vars.mjs`。
+- CI 应在这里完全强制之前运行`yarn check:theme-first-paint-vars`。
 
-If a sub-app uses runtime CSS-in-JS that injects theme variables only after its JS
-bundle loads, those values cannot be protected by first-paint vars. First-paint
-visible theme CSS must be emitted as static CSS or a server-inserted `<style>`
-before the relevant snapshot script runs.
+如果某个子应用使用运行时 CSS-in-JS，并且只有在 JS bundle 加载后才注入主题变量，那么这些值无法被首次绘制变量保护。首次绘制可见的主题 CSS 必须以静态 CSS 或在相关快照脚本运行之前通过服务端插入的`<style>`输出。
 
-## What This Covers
+## 这覆盖了什么
 
-This mechanism covers values that are expressed as CSS variables:
+这个机制覆盖所有通过 CSS 变量表达的值：
 
-- foreground colors such as title and digest
-- card, divider, border, fill, and surface colors
-- page background variables, including `--color-page-custom-bg`, the final page
-  background after `gaussBlur` has been applied
-- community ThemePreset color overrides
-- any future theme-dependent visual value that is moved into CSS vars
+- 前景色，例如 title 和 digest
+- card、divider、border、fill 和 surface 颜色
+- 页面背景变量，包括`--color-page-custom-bg`，也就是`gaussBlur`应用后的最终页面背景
+- community ThemePreset 颜色覆盖
+- 未来任何迁移到 CSS 变量中的、依赖主题的视觉值
 
-It does not automatically cover:
+它不会自动覆盖：
 
-- React markup branches based on `useTheme()`
-- inline styles computed from ThemeStore during the first render
-- `dark:*` utility classes that are not represented by CSS vars
-- wallpaper/renderSpec and image-resource selection
-- glow/filter values while they are still computed through React hooks instead
-  of CSS vars
+- 基于`useTheme()`的 React 标记分支
+- 第一次渲染时从 ThemeStore 计算出来的内联样式
+- 没有通过 CSS 变量表示的`dark:*`工具类
+- wallpaper/renderSpec 和图像资源选择
+- 仍然通过 React hooks 而不是 CSS 变量计算的 glow/filter 值
 
-For those areas, the rule is:
+对于这些区域，规则是：
 
 ```text
 first-paint visible theme-dependent values should be CSS-var consumers;
@@ -597,22 +529,20 @@ React store should not decide SSR/client first-render structure or critical
 inline styles.
 ```
 
-## Remaining Work
+## 剩余工作
 
-1. Wire `yarn check:theme-first-paint-vars` into CI.
-2. Move first-paint-visible glow/filter values to CSS vars before expecting this
-   mechanism to cover them.
-3. Audit `dark:*` usage:
-   - colors should move to semantic CSS vars;
-   - visual corrections such as brightness, saturation, and opacity should become
-     semantic filter/opacity vars if they are visible during first paint.
-4. Handle wallpaper/renderSpec separately.
+1. 把`yarn check:theme-first-paint-vars`接入 CI。
+2. 在期望这个机制覆盖之前，先把首次绘制可见的 glow/filter 值迁移到 CSS 变量。
+3. 审计`dark:*`的使用：
+   - 颜色应该迁移到语义化 CSS 变量；
+   - 如果亮度、饱和度和不透明度的视觉修正会在首次绘制期间可见，就应该变成语义化的 filter/opacity 变量。
+4. 单独处理 wallpaper/renderSpec。
 
-## Validation
+## 验证
 
-Use browser timeline sampling, not only static tests.
+使用浏览器时间线采样，而不只是静态测试。
 
-Track at least:
+至少跟踪这些项：
 
 ```js
 document.documentElement.getAttribute('data-theme')
@@ -624,7 +554,7 @@ getComputedStyle(document.querySelector('main')?.firstElementChild).getPropertyV
 getComputedStyle(document.documentElement).getPropertyValue('color-scheme')
 ```
 
-Expected result:
+预期结果：
 
 ```text
 data-theme may briefly become missing/light during hydration

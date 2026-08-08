@@ -1,44 +1,26 @@
-import { createHmac } from 'node:crypto'
-
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { proxyGraphQLRequest } from './proxy'
 
-const base64UrlEncode = (value: unknown): string =>
-  Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64url')
-
-const signedToken = (
-  payload: Record<string, unknown> = {},
-  secret = 'phoenix-jwt-secret',
-): string => {
-  const header = base64UrlEncode({ alg: 'HS512', typ: 'JWT' })
-  const body = base64UrlEncode({
-    exp: Math.floor(Date.now() / 1000) + 60,
-    iss: 'groupher_server',
-    sub: '42',
-    ...payload,
-  })
-  const signature = createHmac('sha512', secret).update(`${header}.${body}`).digest('base64url')
-
-  return `${header}.${body}.${signature}`
-}
-
 describe('proxyGraphQLRequest', () => {
   beforeEach(() => {
     vi.stubEnv('GRAPHQL_ENDPOINT', 'https://api.groupher.test/graphiql')
-    vi.stubEnv('PHX_JWT_SECRET', 'phoenix-jwt-secret')
   })
 
   afterEach(() => {
     vi.unstubAllEnvs()
   })
 
-  it('forwards GraphQL requests to the server endpoint with bearer auth', async () => {
-    const token = signedToken()
+  it('forwards GraphQL requests to the server endpoint with only the Groupher auth cookie', async () => {
+    const token = 'phoenix token'
     const fetcher = vi.fn(async () => Response.json({ data: { me: { login: 'dev' } } }))
     const request = new Request('https://groupher.test/api/graphql?query=%7Bme%7Blogin%7D%7D', {
       headers: {
+        accept: 'application/json',
+        authorization: 'Bearer browser-token',
         cookie: `theme=dark; groupher-auth.token=${encodeURIComponent(token)}`,
+        'x-forwarded-for': '203.0.113.2',
+        'x-vercel-id': 'sfo1::edge::request',
       },
     })
 
@@ -52,8 +34,11 @@ describe('proxyGraphQLRequest', () => {
     const headers = init.headers as Headers
 
     expect(String(url)).toBe('https://api.groupher.test/graphiql?query=%7Bme%7Blogin%7D%7D')
-    expect(headers.get('authorization')).toBe(`Bearer ${token}`)
-    expect(headers.has('cookie')).toBe(false)
+    expect(headers.has('authorization')).toBe(false)
+    expect(headers.get('cookie')).toBe('groupher-auth.token=phoenix%20token')
+    expect(headers.get('accept')).toBe('application/json')
+    expect(headers.has('x-forwarded-for')).toBe(false)
+    expect(headers.has('x-vercel-id')).toBe(false)
   })
 
   it('keeps anonymous GraphQL requests anonymous', async () => {
@@ -70,8 +55,31 @@ describe('proxyGraphQLRequest', () => {
     const headers = init.headers as Headers
 
     expect(init.method).toBe('POST')
+    expect(headers.get('content-type')).toBe('application/json')
     expect(headers.has('authorization')).toBe(false)
     expect(headers.has('cookie')).toBe(false)
     expect(await new Response(init.body).text()).toBe('{"query":"{ me { login } }"}')
+  })
+
+  it('does not forward compression metadata after fetch decodes the body', async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ data: { me: null } }), {
+          headers: {
+            'content-encoding': 'gzip',
+            'content-length': '22',
+            'content-type': 'application/json',
+          },
+        }),
+    )
+
+    const response = await proxyGraphQLRequest(
+      new Request('https://groupher.test/api/graphql?query=%7Bme%7D'),
+      fetcher,
+    )
+
+    expect(response.headers.has('content-encoding')).toBe(false)
+    expect(response.headers.has('content-length')).toBe(false)
+    expect(await response.json()).toEqual({ data: { me: null } })
   })
 })

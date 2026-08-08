@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
-import Input from '~/widgets/Input'
+import Button from '~/ui/Buttons/Button'
+import Input from '~/ui/Input'
 
 import useSalon from '../salon/custom/domain_adder'
 

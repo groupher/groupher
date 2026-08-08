@@ -21,8 +21,8 @@ import {
   importDocumentationPlatform,
   type TDocumentImportResult,
 } from '~/lib/documentImport'
-import BaseDrawer from '~/widgets/Drawer'
-import { toast } from '~/widgets/Toaster'
+import BaseDrawer from '~/ui/Drawer'
+import { toast } from '~/ui/Toaster'
 
 import InsertAction from './InsertAction'
 import LocalFilePicker from './LocalFilePicker'

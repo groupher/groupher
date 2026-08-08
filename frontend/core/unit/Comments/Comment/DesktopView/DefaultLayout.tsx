@@ -1,10 +1,10 @@
 import { type FC, Fragment } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-// import Tooltip from '~/widgets/Tooltip'
+// import Tooltip from '~/ui/Tooltip'
 import PinSVG from '~/icons/Pin'
+import ArtimentBody from '~/render/ArtimentBody'
 import type { TComment } from '~/spec'
-import ArtimentBody from '~/widgets/ArtimentBody'
 
 import type { TAPIMode } from '../../spec'
 import useActions from '../../useLogic/useActions'

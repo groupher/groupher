@@ -4,7 +4,7 @@ import { type FC, type ReactNode, useState } from 'react'
 import useTrans from '~/hooks/useTrans'
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import Img from '~/Img'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import { REVISION_LABEL_KEY } from '../constant'
 import {

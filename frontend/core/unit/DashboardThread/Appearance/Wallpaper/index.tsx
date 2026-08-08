@@ -4,8 +4,8 @@ import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 
 import useMount from '~/hooks/useMount'
 import useTrans from '~/hooks/useTrans'
-import { SegmentTabs } from '~/widgets/Switcher'
-import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
+import { SegmentTabs } from '~/ui/Switcher'
+import ThemeSwitchPreview from '~/ui/ThemeSwitch/Preview'
 
 import SectionLabel from '../../SectionLabel'
 import { TAB, TAB_OPTIONS } from './constant'

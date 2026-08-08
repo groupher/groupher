@@ -5,7 +5,7 @@ import { WALLPAPER_PATTERN } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData, TWallpaperPattern } from '~/spec'
-import SelectableCard from '~/widgets/SelectableCard'
+import SelectableCard from '~/ui/SelectableCard'
 
 import { isGradientWallpaper } from '../helper'
 import useSalon from './salon/pattern_cards'

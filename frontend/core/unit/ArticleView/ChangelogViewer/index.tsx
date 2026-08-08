@@ -4,10 +4,10 @@
 
 import { useEffect, useState } from 'react'
 
-import ArticleBody from '~/widgets/ArtimentBody'
-import GotoTop from '~/widgets/GotoTop'
-import { ArticleContentLoading } from '~/widgets/Loading'
-import ViewportTracker from '~/widgets/ViewportTracker'
+import ArticleBody from '~/render/ArtimentBody'
+import GotoTop from '~/ui/GotoTop'
+import { ArticleContentLoading } from '~/ui/Loading'
+import ViewportTracker from '~/ui/ViewportTracker'
 
 import ArticleFooter from '../ArticleFooter'
 import useLogic from '../useLogic'

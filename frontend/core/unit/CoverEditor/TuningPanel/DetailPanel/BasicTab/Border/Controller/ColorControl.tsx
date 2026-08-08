@@ -8,7 +8,7 @@ import {
 } from 'react-aria-components'
 
 import SettingSVG from '~/icons/Setting'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { BORDER_HIGHLIGHT_DEFAULT, BORDER_HIGHLIGHT_MODE } from '../../../../../constant'
 import {

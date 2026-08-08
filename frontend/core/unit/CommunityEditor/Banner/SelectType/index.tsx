@@ -5,8 +5,8 @@
  */
 
 import useAccount from '~/stores/account/hooks'
-import ArrowLinker from '~/widgets/ArrowLinker'
-import Checker from '~/widgets/Checker'
+import ArrowLinker from '~/ui/ArrowLinker'
+import Checker from '~/ui/Checker'
 
 import useLogic from '../../useLogic'
 import NextStepButton from '../NextStepButton'

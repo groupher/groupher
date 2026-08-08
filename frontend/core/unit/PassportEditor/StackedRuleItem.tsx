@@ -1,8 +1,8 @@
 import { includes } from 'ramda'
 import { useState } from 'react'
 
-import Checker from '~/widgets/Checker'
-import Tooltip from '~/widgets/Tooltip'
+import Checker from '~/ui/Checker'
+import Tooltip from '~/ui/Tooltip'
 
 import { PASSPORT_SCOPE } from './constant'
 import RuleItem from './RuleItem'

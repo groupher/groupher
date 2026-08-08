@@ -1,7 +1,7 @@
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import type { TCommunityLayout } from '~/spec'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import SearchBox from '~/widgets/SearchBox'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
+import SearchBox from '~/ui/SearchBox'
 
 import useSalon from './salon/search_box_view'
 

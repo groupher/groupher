@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
-import { toast } from '~/widgets/Toaster'
+import { toast } from '~/ui/Toaster'
 
 import { reloadDocPublishChecklist } from '../helper'
 import { formatMutationError } from './helper'

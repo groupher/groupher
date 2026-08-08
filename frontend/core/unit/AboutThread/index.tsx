@@ -8,8 +8,8 @@ import type { FC } from 'react'
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
+import Markdown from '~/render/Markdown'
 import useCommunity from '~/stores/community/hooks'
-import Markdown from '~/widgets/Markdown'
 
 import BasicStates from './BasicStates'
 import ExtraInfo from './ExtraInfo'

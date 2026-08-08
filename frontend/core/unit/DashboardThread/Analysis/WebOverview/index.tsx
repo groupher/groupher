@@ -6,23 +6,25 @@ import { DEMO_OVERVIEW, WEB_OVERVIEW_TRANS } from './constant'
 import EnvironmentPanel from './EnvironmentPanel'
 import { shouldUseDemoData } from './helper'
 import LocationPanel from './LocationPanel'
-import MapPanel from './MapPanel'
 import PagesPanel from './PagesPanel'
 import useSalon from './salon'
 import SourcesPanel from './SourcesPanel'
-import type { TAnalysisWebOverview } from './spec'
+import type { TAnalysisTrendsOverview } from './spec'
 import SummaryGrid from './SummaryGrid'
 import TrafficPanel from './TrafficPanel'
 import TrendChart from './TrendChart'
 
 type TProps = {
-  data: TAnalysisWebOverview
+  community: string
+  data: TAnalysisTrendsOverview
 }
 
-export default function WebOverview({ data }: TProps) {
+export default function WebOverview({ community, data }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-  const displayData = shouldUseDemoData(data) ? DEMO_OVERVIEW : data
+  const isDemoData = shouldUseDemoData(data)
+  const displayData = isDemoData ? DEMO_OVERVIEW : data
+  const demoData = isDemoData ? DEMO_OVERVIEW : undefined
 
   return (
     <div className={s.wrapper}>
@@ -31,28 +33,33 @@ export default function WebOverview({ data }: TProps) {
       <section className={s.chartSection}>
         <TrendChart
           emptyLabel={t(WEB_OVERVIEW_TRANS.empty)}
-          points={displayData.timeseries.points}
+          points={displayData.chart.points}
           title={t(WEB_OVERVIEW_TRANS.trend)}
           viewsLabel={t(WEB_OVERVIEW_TRANS.pageviews)}
           visitsLabel={t(WEB_OVERVIEW_TRANS.visits)}
         />
       </section>
 
+      {!isDemoData && data.errors.length > 0 && (
+        <p className={s.error}>{data.errors[0]?.message || t(WEB_OVERVIEW_TRANS.unavailable)}</p>
+      )}
+
       <section className={s.panels}>
         <div className={s.panelGrid}>
-          <PagesPanel data={displayData.pages} />
-          <SourcesPanel data={displayData.sources} />
+          <PagesPanel community={community} days={displayData.range.days} demoData={demoData} />
+          <SourcesPanel community={community} days={displayData.range.days} demoData={demoData} />
         </div>
 
         <div className={s.panelGrid}>
-          <EnvironmentPanel data={displayData.environment} />
-          <LocationPanel data={displayData.location} />
+          <EnvironmentPanel
+            community={community}
+            days={displayData.range.days}
+            demoData={demoData}
+          />
+          <LocationPanel community={community} days={displayData.range.days} demoData={demoData} />
         </div>
 
-        <div className={s.panelGrid}>
-          <MapPanel countries={displayData.location.country} />
-          <TrafficPanel cells={displayData.traffic.cells} />
-        </div>
+        <TrafficPanel community={community} days={displayData.range.days} demoData={demoData} />
       </section>
     </div>
   )

@@ -1,8 +1,8 @@
 import { isEmpty } from 'ramda'
 
 import useAboutInfo from '~/hooks/useAboutInfo'
+import Linker from '~/ui/Linker'
 import SocialList from '~/unit/SocialList'
-import Linker from '~/widgets/Linker'
 
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'

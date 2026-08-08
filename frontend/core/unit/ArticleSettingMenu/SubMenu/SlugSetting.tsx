@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import Footer from './Footer'
 import useSalon from './salon/slug_setting'

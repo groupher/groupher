@@ -1,12 +1,12 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
 import useEvent from '~/hooks/useEvent'
+import { useSearchParams } from '~/platform'
 import type { TResState } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'

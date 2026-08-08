@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import CopyButton from '~/widgets/Buttons/CopyButton'
+import CopyButton from '~/ui/Buttons/CopyButton'
 
 import useSalon from './salon/code_area'
 

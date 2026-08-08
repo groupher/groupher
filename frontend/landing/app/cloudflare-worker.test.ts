@@ -10,6 +10,7 @@ const env = {
   DASHBOARD_SITE: 'https://dashboard.test',
   AUTH_SITE: 'https://auth.test',
   API_SITE: 'https://api.test',
+  PRESS_SITE: 'https://press.test',
   fetcher: vi.fn(async (_url: URL, _init: RequestInit) => new Response('origin')),
 }
 
@@ -81,6 +82,44 @@ describe('landing Cloudflare worker', () => {
     expect(target.kind).toBe('phoenix')
     expect(target.url.toString()).toBe('https://api.test/graphiql')
     expect(target.requestHeaderPolicy).toBe('graphql-browser-clean')
+  })
+
+  it.each([
+    ['/home/post/1.md', 'https://press.test/home/post/1.md'],
+    ['/home/doc/8/getting-started.md', 'https://press.test/home/doc/8/getting-started.md'],
+    ['/home/feed.xml', 'https://press.test/home/feed.xml'],
+    ['/home/feed.atom', 'https://press.test/home/feed.atom'],
+    ['/home/feed.json', 'https://press.test/home/feed.json'],
+    ['/home/post/feed.xml', 'https://press.test/home/post/feed.xml'],
+    ['/home/llms.txt', 'https://press.test/home/llms.txt'],
+    ['/home/sitemap.xml', 'https://press.test/home/sitemap.xml'],
+  ])('routes Press output %s to the Press origin', (pathname, expected) => {
+    const target = resolveCloudflareTarget({ pathname }, env)
+
+    expect(target.kind).toBe('press')
+    expect(target.url.toString()).toBe(expected)
+  })
+
+  it('does not forward browser credentials to Press public output', () => {
+    const request = new Request('https://groupher.test/home/feed.xml', {
+      headers: {
+        authorization: 'Bearer browser-token',
+        cookie: 'groupher-auth.token=browser-token',
+      },
+    })
+    const target = resolveCloudflareTarget({ pathname: '/home/feed.xml' }, env)
+    const headers = buildProxyHeaders(request, target)
+
+    expect(headers.has('authorization')).toBe(false)
+    expect(headers.has('cookie')).toBe(false)
+  })
+
+  it('keeps the platform root sitemap on Pages assets', async () => {
+    const response = await worker.fetch(new Request('https://groupher.test/sitemap.xml'), env)
+
+    expect(await response.text()).toBe('asset')
+    expect(env.ASSETS.fetch).toHaveBeenCalledOnce()
+    expect(env.fetcher).not.toHaveBeenCalled()
   })
 
   it('cleans browser GraphQL credentials and forwards only Groupher auth token', () => {

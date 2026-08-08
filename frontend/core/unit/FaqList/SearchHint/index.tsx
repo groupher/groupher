@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import { mockHelpCats } from '~/mock'
 import useCommunity from '~/stores/community/hooks'
-import ArrowLinker from '~/widgets/ArrowLinker'
+import ArrowLinker from '~/ui/ArrowLinker'
 
 import type { TProps as TIndex } from '..'
 import CatSection from './CatSection'

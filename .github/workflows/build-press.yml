@@ -1,0 +1,57 @@
+name: Build backend Press
+
+on:
+  pull_request:
+    paths:
+      - 'backend/press/**'
+      - 'packages/service/**'
+      - 'packages/contracts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'Makefile'
+  push:
+    paths:
+      - 'backend/press/**'
+      - 'packages/service/**'
+      - 'packages/contracts/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'Makefile'
+
+jobs:
+  build:
+    name: Build and test Press
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Validate Drizzle migrations
+        run: yarn workspace @groupher/press exec drizzle-kit check
+
+      - name: Check formatting
+        run: yarn workspace @groupher/press format:check
+
+      - name: Run lint
+        run: yarn workspace @groupher/press lint
+
+      - name: Run type-check
+        run: yarn workspace @groupher/press type-check
+
+      - name: Run unit tests
+        run: yarn workspace @groupher/press test
+
+      - name: Build
+        run: yarn workspace @groupher/press build

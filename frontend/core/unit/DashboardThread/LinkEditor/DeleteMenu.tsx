@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import MENU from '~/const/menu'
 import useTrans from '~/hooks/useTrans'
-import MenuItem from '~/widgets/MenuItem'
+import MenuItem from '~/ui/MenuItem'
 
 import useSalon from './salon/delete_menu'
 import type { TDeleteMenuProps } from './spec'

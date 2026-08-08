@@ -1,4 +1,4 @@
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
 
 import useLogic from '../useLogic'
 import HeadAction from './HeadAction'

@@ -2,7 +2,7 @@
 
 import type { FC, ReactNode } from 'react'
 
-import GlobalLayout from '~/widgets/GlobalLayout'
+import GlobalLayout from '~/shell/GlobalLayout'
 
 type TProps = {
   mainBlock?: FC<{ children: ReactNode }>

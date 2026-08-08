@@ -65,7 +65,7 @@ vi.mock('../../../../SavingBar', () => ({
   default: ({ field }: { field: string }) => <div data-testid={`saving-bar-${field}`}>{field}</div>,
 }))
 
-vi.mock('~/widgets/ColorSelector', () => ({
+vi.mock('~/ui/ColorSelector', () => ({
   default: ({ activeColor, children }: { activeColor: string; children: ReactNode }) => (
     <div data-testid='color-selector' data-color={activeColor}>
       {children}

@@ -4,13 +4,14 @@ defmodule GroupherServer.CMS.Communities.Write do
   """
   import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, Analysis, CMS}
   alias GroupherServer.CMS.Communities.{Moderator, Read}
   alias GroupherServer.CMS.Dashboard.BaseInfo
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
+  require Logger
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -23,8 +24,10 @@ defmodule GroupherServer.CMS.Communities.Write do
   def create(args, %User{} = user) do
     with {:ok, community} <- do_create(args, user),
          {:ok, _} <- init_community_root(community, user),
-         {:ok, _} <- CMS.DocTree.initialize(community) do
-      Read.read(community.slug, inc_views: false)
+         {:ok, _} <- CMS.DocTree.initialize(community),
+         {:ok, community} <- Read.read(community.slug, inc_views: false) do
+      provision_web_analysis(community)
+      {:ok, community}
     end
   end
 
@@ -69,5 +72,24 @@ defmodule GroupherServer.CMS.Communities.Write do
 
   defp init_community_root(%Community{} = community, %User{} = user) do
     Moderator.add_root(community, user)
+  end
+
+  defp provision_web_analysis(%Community{} = community) do
+    case Analysis.Web.provision_community(community) do
+      {:ok, _website_id} ->
+        :ok
+
+      {:error, :not_configured} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.warning(
+          "Community web analysis provisioning failed; query-side provisioning will retry",
+          community_id: community.id,
+          reason: inspect(reason)
+        )
+
+        :ok
+    end
   end
 end

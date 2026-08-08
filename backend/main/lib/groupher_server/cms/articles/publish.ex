@@ -241,6 +241,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
   defp run_after_publish(public_article, first_publish?) do
     Indexer.enqueue_upsert(public_article)
+    Later.run({CMS.Press, :invalidate, [public_article.community_id]})
     Later.run({Events, :emit, [:sync_mentions, %{artiment: public_article}]})
     Later.run({Events, :emit, [:audition, %{artiment: public_article}]})
 

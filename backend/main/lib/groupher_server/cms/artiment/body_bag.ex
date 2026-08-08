@@ -164,9 +164,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
       plain_text: body_bag.plain_text,
       digest: body_bag.digest,
       body_hash: body_bag.body_hash,
-      schema_version: body_bag.schema_version,
-      xml: nil,
-      rss: nil
+      schema_version: body_bag.schema_version
     }
   end
 

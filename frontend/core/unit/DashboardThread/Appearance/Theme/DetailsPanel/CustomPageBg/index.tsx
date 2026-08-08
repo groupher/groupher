@@ -2,9 +2,9 @@ import { ColorSlider, ColorThumb, parseColor, SliderTrack } from 'react-aria-com
 
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
-import Checker from '~/widgets/Checker'
-import RangeInput from '~/widgets/RangeInput'
-import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
+import Checker from '~/ui/Checker'
+import RangeInput from '~/ui/RangeInput'
+import ThemeSwitchPreview from '~/ui/ThemeSwitch/Preview'
 
 import { type TPageBgDraft, useCustomPageBgControls } from './hooks'
 import useSalon from './salon'

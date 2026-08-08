@@ -10,7 +10,7 @@ import SIZE from '~/const/size'
 import AdminStarSVG from '~/icons/AdminStar'
 import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
-import ImgFallback from '~/widgets/ImgFallback'
+import ImgFallback from '~/ui/ImgFallback'
 
 import useSalon from './salon'
 

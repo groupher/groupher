@@ -4,10 +4,11 @@ import { json } from './worker/response.js'
 import {
   isLandingPath,
   isLandingStaticAssetPath,
+  isPressRoute,
   resolveCloudflareTarget,
 } from './worker/routes.js'
 
-export { buildProxyHeaders, proxyRequest, readCookie, resolveCloudflareTarget }
+export { buildProxyHeaders, isPressRoute, proxyRequest, readCookie, resolveCloudflareTarget }
 
 export default {
   async fetch(request, env) {

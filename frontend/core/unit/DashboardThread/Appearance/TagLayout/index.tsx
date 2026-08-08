@@ -2,7 +2,7 @@ import { TAG_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import HashTagSVG from '~/icons/HashTag'
 import TagSVG from '~/icons/Tag'
-import CheckLabel from '~/widgets/CheckLabel'
+import CheckLabel from '~/ui/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useTags from '../../logic/useTags'

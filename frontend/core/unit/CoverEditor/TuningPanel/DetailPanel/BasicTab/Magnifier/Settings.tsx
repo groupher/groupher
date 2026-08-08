@@ -1,8 +1,8 @@
 import { type PointerEvent, useRef } from 'react'
 
 import SettingSVG from '~/icons/Setting'
-import RangeInput from '~/widgets/RangeInput'
-import Tooltip from '~/widgets/Tooltip'
+import RangeInput from '~/ui/RangeInput'
+import Tooltip from '~/ui/Tooltip'
 
 import {
   MAGNIFIER_APPEARANCE_DEFAULT,

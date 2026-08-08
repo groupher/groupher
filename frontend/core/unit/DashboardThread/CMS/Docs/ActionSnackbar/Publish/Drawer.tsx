@@ -4,7 +4,7 @@ import TYPE from '~/const/type'
 import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
 import SettingSVG from '~/icons/Setting'
-import BaseDrawer from '~/widgets/Drawer'
+import BaseDrawer from '~/ui/Drawer'
 
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import ChecklistSection from './ChecklistSection'

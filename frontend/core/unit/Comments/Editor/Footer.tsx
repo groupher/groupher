@@ -2,9 +2,9 @@ import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TSubmitState } from '~/spec'
-import SubmitButton from '~/widgets/Buttons/SubmitButton'
-import WordsCounter from '~/widgets/WordsCounter'
-import { isWordsCountValid } from '~/widgets/WordsCounter/helper'
+import SubmitButton from '~/ui/Buttons/SubmitButton'
+import WordsCounter from '~/ui/WordsCounter'
+import { isWordsCountValid } from '~/ui/WordsCounter/helper'
 
 import useSalon from './salon/footer'
 

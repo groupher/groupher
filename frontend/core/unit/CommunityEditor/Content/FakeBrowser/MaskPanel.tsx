@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import CheckSVG from '~/icons/Check'
-import ArrowLinker from '~/widgets/ArrowLinker'
+import ArrowLinker from '~/ui/ArrowLinker'
 
 import { STEP } from '../../constant'
 import type { TStep } from '../../spec'

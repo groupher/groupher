@@ -1,4 +1,8 @@
-import type { TAnalysisWebMetric, TAnalysisWebOverview } from './spec'
+import type {
+  TAnalysisTrendsOverview,
+  TAnalysisTrendsOverviewDemo,
+  TAnalysisWebMetric,
+} from './spec'
 import type { TSummaryMetricSpec } from './spec'
 
 export const CHART_SIZE = {
@@ -17,6 +21,7 @@ export const DIMENSION_ROW_LIMIT = 4
 
 export const WEB_OVERVIEW_TRANS = {
   empty: 'dsb.analysis.empty',
+  unavailable: 'dsb.analysis.unavailable',
   trend: 'dsb.menu.trend',
   pageviews: 'dsb.analysis.pageviews',
   visits: 'dsb.analysis.visits',
@@ -64,31 +69,30 @@ const metric = (
 
 const demoTimestamp = (month: number, day: number): string => String(Date.UTC(2026, month, day))
 
-export const DEMO_POINTS = [
-  { bucket: 'day', timestamp: demoTimestamp(3, 5), visitors: 18, visits: 24, views: 42 },
-  { bucket: 'day', timestamp: demoTimestamp(3, 10), visitors: 24, visits: 31, views: 58 },
-  { bucket: 'day', timestamp: demoTimestamp(3, 15), visitors: 21, visits: 28, views: 46 },
-  { bucket: 'day', timestamp: demoTimestamp(3, 20), visitors: 35, visits: 43, views: 82 },
-  { bucket: 'day', timestamp: demoTimestamp(3, 25), visitors: 29, visits: 39, views: 64 },
-  { bucket: 'day', timestamp: demoTimestamp(3, 30), visitors: 42, visits: 51, views: 96 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 5), visitors: 38, visits: 48, views: 86 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 10), visitors: 49, visits: 58, views: 118 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 15), visitors: 40, visits: 52, views: 92 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 20), visitors: 34, visits: 44, views: 76 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 25), visitors: 52, visits: 67, views: 136 },
-  { bucket: 'day', timestamp: demoTimestamp(4, 30), visitors: 47, visits: 61, views: 121 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 5), visitors: 56, visits: 74, views: 148 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 10), visitors: 61, visits: 82, views: 166 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 15), visitors: 54, visits: 71, views: 139 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 20), visitors: 69, visits: 88, views: 184 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 25), visitors: 63, visits: 84, views: 172 },
-  { bucket: 'day', timestamp: demoTimestamp(5, 30), visitors: 72, visits: 96, views: 198 },
+export const DEMO_POINTS: TAnalysisTrendsOverview['chart']['points'] = [
+  { bucket: 'day', timestamp: demoTimestamp(3, 5), visits: 24, views: 42 },
+  { bucket: 'day', timestamp: demoTimestamp(3, 10), visits: 31, views: 58 },
+  { bucket: 'day', timestamp: demoTimestamp(3, 15), visits: 28, views: 46 },
+  { bucket: 'day', timestamp: demoTimestamp(3, 20), visits: 43, views: 82 },
+  { bucket: 'day', timestamp: demoTimestamp(3, 25), visits: 39, views: 64 },
+  { bucket: 'day', timestamp: demoTimestamp(3, 30), visits: 51, views: 96 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 5), visits: 48, views: 86 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 10), visits: 58, views: 118 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 15), visits: 52, views: 92 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 20), visits: 44, views: 76 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 25), visits: 67, views: 136 },
+  { bucket: 'day', timestamp: demoTimestamp(4, 30), visits: 61, views: 121 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 5), visits: 74, views: 148 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 10), visits: 82, views: 166 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 15), visits: 71, views: 139 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 20), visits: 88, views: 184 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 25), visits: 84, views: 172 },
+  { bucket: 'day', timestamp: demoTimestamp(5, 30), visits: 96, views: 198 },
 ]
 
-export const DEMO_OVERVIEW: TAnalysisWebOverview = {
+export const DEMO_OVERVIEW: TAnalysisTrendsOverviewDemo = {
   status: 'ok',
   provider: 'demo',
-  pathScope: '/home',
   range: {
     days: 90,
     startAt: demoTimestamp(3, 1),
@@ -102,9 +106,8 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
     bounceRate: metric(0.34, 0.39, -12.8),
     visitDuration: metric(246, 218, 12.8),
   },
-  timeseries: { status: 'ok', bucket: 'day', points: DEMO_POINTS },
+  chart: { bucket: 'day', points: DEMO_POINTS },
   pages: {
-    status: 'ok',
     path: [
       {
         value: '/home/post',
@@ -135,23 +138,27 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
       },
     ],
     entry: [
-      { value: '/home', label: '/home', metrics: { visitors: 352, visits: 468, views: 860 } },
+      {
+        value: '/home',
+        label: '/home',
+        metrics: { visitors: 352, visits: 468, views: 860, bounceRate: 0.27, visitDuration: 298 },
+      },
       {
         value: '/home/post',
         label: '/home/post',
-        metrics: { visitors: 194, visits: 260, views: 488 },
+        metrics: { visitors: 194, visits: 260, views: 488, bounceRate: 0.33, visitDuration: 281 },
       },
     ],
     exit: [
       {
         value: '/home/post',
         label: '/home/post',
-        metrics: { visitors: 176, visits: 242, views: 420 },
+        metrics: { visitors: 176, visits: 242, views: 420, bounceRate: 0.26, visitDuration: 236 },
       },
       {
         value: '/home/docs',
         label: '/home/docs',
-        metrics: { visitors: 118, visits: 172, views: 304 },
+        metrics: { visitors: 118, visits: 172, views: 304, bounceRate: 0.31, visitDuration: 205 },
       },
     ],
     title: [
@@ -170,13 +177,16 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
       {
         value: 'source=github',
         label: 'source=github',
-        metrics: { visitors: 82, visits: 118, views: 236 },
+        metrics: { visitors: 82, visits: 118, views: 236, bounceRate: 0.29, visitDuration: 201 },
       },
-      { value: 'ref=docs', label: 'ref=docs', metrics: { visitors: 56, visits: 78, views: 144 } },
+      {
+        value: 'ref=docs',
+        label: 'ref=docs',
+        metrics: { visitors: 56, visits: 78, views: 144, bounceRate: 0.34, visitDuration: 189 },
+      },
     ],
   },
   sources: {
-    status: 'ok',
     referrer: [
       { value: 'direct', label: 'Direct', metrics: { visitors: 356, visits: 492, views: 940 } },
       { value: 'google', label: 'Google', metrics: { visitors: 214, visits: 288, views: 536 } },
@@ -206,7 +216,6 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
     ],
   },
   environment: {
-    status: 'ok',
     browser: [
       {
         value: 'Chrome',
@@ -284,7 +293,6 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
     ],
   },
   location: {
-    status: 'ok',
     country: [
       {
         value: 'US',
@@ -337,6 +345,7 @@ export const DEMO_OVERVIEW: TAnalysisWebOverview = {
   traffic: {
     status: 'ok',
     timezone: 'UTC',
+    error: null,
     cells: Array.from({ length: 7 * 24 }, (_, index) => {
       const weekday = index % 7
       const hour = Math.floor(index / 7)

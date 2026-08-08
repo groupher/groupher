@@ -1,4 +1,4 @@
-import Checker from '~/widgets/Checker'
+import Checker from '~/ui/Checker'
 
 import useSalon from './salon/rule_item'
 

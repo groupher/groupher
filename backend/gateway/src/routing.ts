@@ -1,4 +1,11 @@
-export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'phoenix'
+export type GatewayTargetKind =
+  | 'main'
+  | 'dashboard'
+  | 'dash'
+  | 'landing'
+  | 'auth'
+  | 'phoenix'
+  | 'press'
 
 export type TRequestHeaderPolicy = 'pass-through' | 'graphql-browser-clean'
 export type TResponsePolicy = 'pass-through'
@@ -25,6 +32,7 @@ type TResolveGatewayTargetInput = {
 const APP = {
   LANDING: 'landing',
   DASHBOARD: 'dashboard',
+  DASH: 'dash',
   MAIN: 'main',
 } as const
 
@@ -34,15 +42,36 @@ export const SITE = {
   LANDING: process.env.LANDING_SITE || `https://${APP.LANDING}.groupher.com`,
   MAIN: process.env.MAIN_SITE || `https://${APP.MAIN}.groupher.com`,
   DASHBOARD: process.env.DASHBOARD_SITE || `https://${APP.DASHBOARD}.groupher.com`,
+  DASH: process.env.DASH_SITE || `https://${APP.DASH}.groupher.com`,
   AUTH: process.env.AUTH_SITE || 'https://auth.groupher.com',
   API:
     process.env.API_SITE ||
     (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:4001' : 'https://api.groupher.com'),
+  PRESS: process.env.PRESS_SITE || 'http://127.0.0.1:8003',
 }
 
 export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
 export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
 const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
+const isDashViteAssetRoute = (pathname: string): boolean =>
+  pathname.startsWith('/__dash_hmr') ||
+  pathname.startsWith('/@fs/') ||
+  pathname.startsWith('/@id/') ||
+  pathname.startsWith('/@react-refresh') ||
+  pathname.startsWith('/@tanstack-start/') ||
+  pathname.startsWith('/@vite/') ||
+  pathname.startsWith('/node_modules/.vite/') ||
+  pathname.startsWith('/src/') ||
+  pathname.startsWith('/_vite/')
+const isTanStackServerFnRoute = (pathname: string): boolean => pathname.startsWith('/_serverFn/')
+const isUnprefixedDevAssetRoute = (pathname: string): boolean =>
+  isNextStaticRoute(pathname) || pathname.startsWith('/_next/hmr')
+const isUnprefixedStaticAssetRoute = (pathname: string): boolean =>
+  /\.(?:avif|css|gif|ico|jpe?g|js|json|png|svg|webp|woff2?)$/i.test(pathname)
+const isSharedCoreAssetRoute = (pathname: string): boolean =>
+  pathname.startsWith('/fa/') ||
+  pathname.startsWith('/icons/') ||
+  pathname.startsWith('/wallpaper/')
 
 const isAppHost = (host: string, app: string): boolean => host.startsWith(`${app}.`)
 
@@ -50,19 +79,61 @@ export const isMainHost = (host: string): boolean => isAppHost(host, APP.MAIN)
 
 export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LANDING)
 
-const getNextStaticSign = (url: string): string => {
-  const subdomain = new URL(url).hostname.split('.')[0]
-  return `/${subdomain}/_next/static`
+export const isDashHost = (host: string): boolean => isAppHost(host, APP.DASH)
+
+export const isPlatformRootHost = (host: string): boolean => {
+  const hostname = host.split(':')[0].toLowerCase()
+  return [
+    'groupher.com',
+    'www.groupher.com',
+    'groupher.localhost',
+    'localhost',
+    '127.0.0.1',
+  ].includes(hostname)
 }
 
-const LANDING_STATIC_SIGN = getNextStaticSign(SITE.LANDING)
-const DASHBOARD_STATIC_SIGN = getNextStaticSign(SITE.DASHBOARD)
+export const isPressRoute = (pathname: string): boolean =>
+  /^\/[^/]+\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) ||
+  /^\/[^/]+\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) ||
+  /^\/[^/]+\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname) ||
+  /^\/[^/]+\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname)
+
+const customDomainCommunity = (host: string): string | null => {
+  try {
+    const mapping = JSON.parse(process.env.CUSTOM_DOMAIN_COMMUNITIES || '{}') as Record<
+      string,
+      string
+    >
+    const community = mapping[host.split(':')[0].toLowerCase()]
+    return community && /^[a-z0-9][a-z0-9-]*$/.test(community) ? community : null
+  } catch {
+    return null
+  }
+}
+
+const customDomainPressPath = (pathname: string, host: string): string | null => {
+  if (
+    !/^\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) &&
+    !/^\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname) &&
+    !/^\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) &&
+    !/^\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname)
+  )
+    return null
+  const community = customDomainCommunity(host)
+  return community ? `/${community}${pathname}` : null
+}
+
+const LANDING_STATIC_SIGN = `/${APP.LANDING}/_next/static`
+const DASHBOARD_STATIC_SIGN = `/${APP.DASHBOARD}/_next/static`
+const DASHBOARD_NEXT_SIGN = `/${APP.DASHBOARD}/_next/`
 
 export const isLandingStaticRoute = (pathname: string): boolean =>
   pathname.startsWith(LANDING_STATIC_SIGN)
 
 export const isDashboardStaticRoute = (pathname: string): boolean =>
   pathname.startsWith(DASHBOARD_STATIC_SIGN)
+
+const isDashboardNextRoute = (pathname: string): boolean => pathname.startsWith(DASHBOARD_NEXT_SIGN)
 
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
   if (isAppHost(host, APP.DASHBOARD)) {
@@ -73,19 +144,21 @@ export const isDashboardRoute = (pathname: string, host: string): boolean => {
   return pathParts.length >= 2 && pathParts[1] === 'dashboard'
 }
 
-export const getDashboardUrl = (pathname: string, host: string, search = ''): URL => {
-  if (isAppHost(host, APP.DASHBOARD)) {
-    return new URL(pathname + search, SITE.DASHBOARD)
+export const isDashRoute = (pathname: string, host: string): boolean => {
+  if (isDashHost(host)) {
+    return true
   }
 
   const pathParts = pathname.split('/').filter(Boolean)
-  if (pathParts.length >= 2) {
-    const dashboardPath = `/${pathParts[0]}${pathParts.length > 2 ? `/${pathParts.slice(2).join('/')}` : ''}`
-    return new URL(dashboardPath + search, SITE.DASHBOARD)
-  }
-
-  return new URL('/', SITE.DASHBOARD)
+  return pathParts.length >= 2 && pathParts[1] === 'dash'
 }
+
+export const getDashboardUrl = (pathname: string, host: string, search = ''): URL => {
+  return new URL(pathname + search, SITE.DASHBOARD)
+}
+
+export const getDashUrl = (pathname: string, _host: string, search = ''): URL =>
+  new URL(pathname + search, SITE.DASH)
 
 const firstForwardedHost = (forwardedHost?: string | null): string | null =>
   forwardedHost?.split(',')[0]?.trim() || null
@@ -142,6 +215,16 @@ export const resolveGatewayTarget = ({
     )
   }
 
+  const customPressPath = customDomainPressPath(pathname, routingHost)
+  if (customPressPath) return target('press', new URL(customPressPath + search, SITE.PRESS), method)
+
+  if (isPressRoute(pathname)) {
+    if (pathname === '/sitemap.xml' && isPlatformRootHost(routingHost)) {
+      return target('main', new URL(fullPath, SITE.MAIN), method)
+    }
+    return target('press', new URL(fullPath, SITE.PRESS), method)
+  }
+
   if (isMainHost(routingHost)) {
     return target('main', new URL(fullPath, SITE.MAIN), method)
   }
@@ -150,7 +233,31 @@ export const resolveGatewayTarget = ({
     return target('landing', new URL(fullPath, SITE.LANDING), method)
   }
 
-  if (isNextStaticRoute(pathname) && refererUrl) {
+  if (isDashHost(routingHost)) {
+    return target('dash', getDashUrl(pathname, routingHost, search), method)
+  }
+
+  // Dash is the only Vite application. Its module dependency graph uses virtual
+  // root URLs whose downstream requests no longer retain the original page URL.
+  if (isDashViteAssetRoute(pathname)) {
+    return target('dash', new URL(fullPath, SITE.DASH), method)
+  }
+
+  if (isDashboardNextRoute(pathname)) {
+    return target('dashboard', new URL(fullPath, SITE.DASHBOARD), method)
+  }
+
+  if (
+    (isUnprefixedDevAssetRoute(pathname) ||
+      isUnprefixedStaticAssetRoute(pathname) ||
+      isSharedCoreAssetRoute(pathname) ||
+      isTanStackServerFnRoute(pathname)) &&
+    refererUrl
+  ) {
+    if (isDashRoute(refererUrl.pathname, refererUrl.host)) {
+      return target('dash', new URL(fullPath, SITE.DASH), method)
+    }
+
     if (isDashboardRoute(refererUrl.pathname, refererUrl.host)) {
       return target('dashboard', new URL(fullPath, SITE.DASHBOARD), method)
     }
@@ -162,6 +269,10 @@ export const resolveGatewayTarget = ({
 
   if (isDashboardRoute(pathname, routingHost)) {
     return target('dashboard', getDashboardUrl(pathname, routingHost, search), method)
+  }
+
+  if (isDashRoute(pathname, routingHost)) {
+    return target('dash', getDashUrl(pathname, routingHost, search), method)
   }
 
   if (isDashboardStaticRoute(pathname)) {

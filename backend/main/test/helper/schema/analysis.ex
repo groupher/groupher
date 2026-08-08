@@ -33,10 +33,9 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
   def q(:overview) do
     """
     query($community: String!, $days: Int) {
-      analysisWebOverview(community: $community, days: $days) {
+      analysisTrendsOverview(community: $community, days: $days) {
         status
         provider
-        pathScope
         range {
           days
           startAt
@@ -55,8 +54,7 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
             changeRate
           }
         }
-        timeseries {
-          status
+        chart {
           bucket
           points {
             timestamp
@@ -64,87 +62,80 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
             visits
           }
         }
-        pages {
-          status
-          path {
-            value
-            label
-            metrics {
-              views
-              visitors
-              visits
-              bounceRate
-              visitDuration
-            }
-          }
-        }
-        sources {
-          status
-          referrer {
-            value
-            label
-            metrics {
-              visitors
-              visits
-              views
-            }
-          }
-        }
-        environment {
-          status
-          browser {
-            value
-            label
-            metrics {
-              visitors
-              visits
-              views
-              percentage
-            }
-          }
-          os {
-            value
-          }
-          device {
-            value
-          }
-        }
-        location {
-          status
-          country {
-            value
-            label
-            code
-            metrics {
-              visitors
-              visits
-              views
-              percentage
-            }
-          }
-          region {
-            value
-          }
-          city {
-            value
-          }
-        }
-        traffic {
-          status
-          timezone
-          cells {
-            weekday
-            hour
-            visitors
-            visits
-            views
-          }
-        }
         errors {
           code
           section
         }
       }
+    }
+    """
+  end
+
+  def q(:pages) do
+    """
+    query($community: String!, $days: Int, $dimension: AnalysisTrendPagesDimension!) {
+      analysisTrendPages(community: $community, days: $days, dimension: $dimension) {
+        status
+        items { value }
+        error { code section }
+      }
+    }
+    """
+  end
+
+  def q(:sources) do
+    """
+    query($community: String!, $days: Int, $dimension: AnalysisTrendSourcesDimension!) {
+      analysisTrendSources(community: $community, days: $days, dimension: $dimension) {
+        status
+        items { value }
+        error { code section }
+      }
+    }
+    """
+  end
+
+  def q(:environment) do
+    """
+    query($community: String!, $days: Int, $dimension: AnalysisTrendEnvironmentDimension!) {
+      analysisTrendEnvironment(community: $community, days: $days, dimension: $dimension) {
+        status
+        items { value }
+        error { code section }
+      }
+    }
+    """
+  end
+
+  def q(:location) do
+    """
+    query($community: String!, $days: Int, $dimension: AnalysisTrendLocationDimension!) {
+      analysisTrendLocation(community: $community, days: $days, dimension: $dimension) {
+        status
+        items { value }
+        error { code section }
+      }
+    }
+    """
+  end
+
+  def q(:traffic) do
+    """
+    query($community: String!, $days: Int) {
+      analysisTrendTraffic(community: $community, days: $days) {
+        status
+        timezone
+        cells { weekday hour }
+        error { code section }
+      }
+    }
+    """
+  end
+
+  def q(:tracking_website_id) do
+    """
+    query($community: String!) {
+      analysisTrackingWebsiteId(community: $community)
     }
     """
   end

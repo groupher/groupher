@@ -4,10 +4,10 @@ import CurveLineSVG from '~/icons/CurveLine'
 import PostSVG from '~/icons/Post'
 import WebhookSVG from '~/icons/Webhook'
 import { mockUsers } from '~/mock'
+import Checker from '~/ui/Checker'
+import Facepile from '~/ui/Facepile/LandingPage'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import CommentsCount from '~/unit/CommentsCount'
-import Checker from '~/widgets/Checker'
-import Facepile from '~/widgets/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/content_card'
 

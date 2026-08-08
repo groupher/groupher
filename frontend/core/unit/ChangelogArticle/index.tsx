@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 
-// import Header from '~/widgets/CommunityDigest/ClassicLayout'
-import ViewportTracker from '~/widgets/ViewportTracker'
+// import Header from '~/ui/CommunityDigest/ClassicLayout'
+import ViewportTracker from '~/ui/ViewportTracker'
 
 import Content from './Content'
 import Digest from './Digest'

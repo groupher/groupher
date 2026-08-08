@@ -12,7 +12,7 @@ import { SELECT_COL_ID, useScrollStuck, useStickyColumns } from '~/hooks/useTanT
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
-import TableLoading from '~/widgets/Loading/Table'
+import TableLoading from '~/ui/Loading/Table'
 
 import useSalon, { cn, cnMerge } from './salon'
 import type { TCmsDataTableProps } from './types'

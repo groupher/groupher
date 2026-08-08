@@ -4,10 +4,10 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { upvoteArticle } from '~/signal'
 import type { TArticle } from '~/spec'
+import DotDivider from '~/ui/DotDivider'
+import TimeAgo from '~/ui/TimeAgo'
 import CommentsCount from '~/unit/CommentsCount'
 import Upvote from '~/unit/Upvote'
-import DotDivider from '~/widgets/DotDivider'
-import TimeAgo from '~/widgets/TimeAgo'
 
 import useSalon from './salon/footer'
 

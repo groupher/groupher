@@ -4,7 +4,7 @@ import { type FC, useState } from 'react'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
 import ChevronDownSVG from '~/icons/ChevronDown'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import useSalon from './salon/insert_action'
 import type { TImportTarget } from './spec'

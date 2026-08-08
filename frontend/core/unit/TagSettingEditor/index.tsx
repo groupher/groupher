@@ -3,7 +3,6 @@
  *
  */
 
-import Link from 'next/link'
 import { type FC, useEffect } from 'react'
 
 import { COLOR } from '~/const/colors'
@@ -14,13 +13,14 @@ import { CHANGE_MODE } from '~/const/mode'
 import { ROUTE } from '~/const/route'
 import { DEFAULT_TAG_MARKER } from '~/const/tag'
 import useTrans from '~/hooks/useTrans'
+import { Link } from '~/platform'
 import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
-import ColorSelector from '~/widgets/ColorSelector'
-import CustomScroller from '~/widgets/CustomScroller'
-import Input from '~/widgets/Input'
-import MarkdownEditor from '~/widgets/MarkdownEditor'
-import MarkerPicker from '~/widgets/MarkerPicker'
-import Select from '~/widgets/Select'
+import ColorSelector from '~/ui/ColorSelector'
+import CustomScroller from '~/ui/CustomScroller'
+import Input from '~/ui/Input'
+import MarkdownEditor from '~/ui/MarkdownEditor'
+import MarkerPicker from '~/ui/MarkerPicker'
+import Select from '~/ui/Select'
 
 import Footer from './Footer'
 import PostLayout from './PostLayout'

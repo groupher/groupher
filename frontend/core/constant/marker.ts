@@ -1,5 +1,5 @@
 import type { TMarkerValue } from '~/spec'
-import { getIconFilePath } from '~/widgets/IconHub/sprite'
+import { getIconFilePath } from '~/ui/IconHub/sprite'
 
 import { COLOR, RAINBOW_COLOR_HEX, RAINBOW_LITE_COLOR_HEX } from './colors'
 import THEME from './theme'

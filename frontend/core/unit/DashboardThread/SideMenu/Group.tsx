@@ -1,14 +1,13 @@
-import Link from 'next/link'
 import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
 import ArrowSVG from '~/icons/ArrowSimple'
 import BindSVG from '~/icons/Bind'
 import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
+import { dsbRoutes, parseDsbPathname, usePlatform } from '~/platform'
 import type { TDsbPath } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -26,7 +25,9 @@ type TProps = {
 
 const Group: FC<TProps> = ({ activeMainTab, group }) => {
   const { slug: community } = useCommunity()
-  const searchString = useURLSearchParams()
+  const { navi } = usePlatform()
+  const routeMeta = parseDsbPathname(navi.location.pathname)
+  const currentCommunity = routeMeta?.community ?? community
   const [foldState, setFoldState] = useState<boolean | null>(null)
   const fold = foldState ?? group.initFold
   const { t } = useTrans()
@@ -36,9 +37,20 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.folder}>
-        <Link
+        <button
+          type='button'
           className={s.folderLink}
-          href={`/${community}/${DSB_ROUTE.OVERVIEW}/${group.overviewSlug}${searchString}`}
+          onClick={() =>
+            navi.to(
+              dsbRoutes.section({
+                community: currentCommunity,
+                section: group.overviewSlug,
+              }),
+              {
+                preserveSearch: true,
+              },
+            )
+          }
         >
           <div className={s.iconBox}>
             {group.icon === DSB_MENU_ICON.BASIC && <InfoSVG className={s.menuIcon} />}
@@ -49,7 +61,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
             {group.icon === DSB_MENU_ICON.BIND && <BindSVG className={s.menuIcon} />}
           </div>
           <h3 className={s.title}>{t(group.title)}</h3>
-        </Link>
+        </button>
         <button
           type='button'
           className={s.foldBtn}
@@ -69,17 +81,21 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
             const submenuConfig = submenuView ? SUBMENU_CONFIG[submenuView] : null
             const itemPath = submenuConfig?.entryPath ?? subPath
             const isActive = item.slug === activeMainTab
+            const itemRoute = dsbRoutes.section({
+              community: currentCommunity,
+              section: itemPath,
+            })
 
             return (
-              <Link
+              <button
                 key={item.slug}
+                type='button'
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${itemPath}${searchString}`}
                 onClick={() => {
                   if (submenuConfig) {
                     dispatchMenuView({
                       subTab: submenuConfig.entrySlug,
-                      returnTo: `${window.location.pathname}${searchString}`,
+                      returnTo: `${navi.location.pathname}${navi.location.search}`,
                       view: submenuView as TMenuView,
                     })
                   } else {
@@ -88,6 +104,10 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                       view: MENU_VIEW.MAIN,
                     })
                   }
+
+                  navi.to(itemRoute, {
+                    preserveSearch: true,
+                  })
                 }}
               >
                 {isActive && (
@@ -99,7 +119,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                 )}
 
                 <span className={s.itemLabel}>{t(item.title)}</span>
-              </Link>
+              </button>
             )
           })}
         </div>

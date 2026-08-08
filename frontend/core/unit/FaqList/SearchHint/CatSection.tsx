@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
+import { Link } from '~/platform'
 import type { TArticle, TColorName } from '~/spec'
 
 import useSalon from './salon/cat_section'

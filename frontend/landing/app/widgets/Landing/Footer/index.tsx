@@ -1,7 +1,7 @@
 import { ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
-import BorderButton from '~/widgets/Buttons/BorderButton'
+import BorderButton from '~/ui/Buttons/BorderButton'
 
 import useSalon from '../salon/footer'
 

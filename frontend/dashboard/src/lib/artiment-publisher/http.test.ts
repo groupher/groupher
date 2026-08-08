@@ -1,8 +1,8 @@
+import { ARTIMENT_MAX_INPUT_BYTES } from '@groupher/artiment-publisher'
 import { RICH_EDITOR_SCHEMA_VERSION } from '@groupher/rich-editor/node'
 import { describe, expect, it, vi } from 'vitest'
 
 import { handleArtimentPublishRequest } from './http'
-import { ARTIMENT_MAX_INPUT_BYTES } from './validate'
 
 const request = (body: string, headers: HeadersInit = { 'Content-Type': 'application/json' }) =>
   new Request('http://localhost/api/artiment/publish', {

@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import AnimatedCount from '~/widgets/AnimatedCount'
+import AnimatedCount from '~/ui/AnimatedCount'
 
 import useSalon, { cn } from '../../salon/battery_bento/statistics/chart_card'
 

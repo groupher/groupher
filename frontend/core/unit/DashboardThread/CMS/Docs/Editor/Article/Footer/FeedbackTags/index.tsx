@@ -3,7 +3,7 @@ import { type ChangeEvent, type FC, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import { FEEDBACK_NOTE_PLACEHOLDER_I18N_KEY, FEEDBACK_TAGS_TITLE_I18N_KEY } from '../constant'
 import { getFeedbackTagsByScore, toggleFeedbackTag } from '../helper'

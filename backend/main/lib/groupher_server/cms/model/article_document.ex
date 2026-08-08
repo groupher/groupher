@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   use Accessible
 
   import Ecto.Changeset
-    alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Model.ArticleDocumentAssetRef
   alias Helper.Constant.DBPrefix
 
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   @min_body_length GroupherServer.CMS.Artiment.Config.min_length()
 
   @required_fields ~w(thread title article_id json)a
-  @optional_fields ~w(markdown markdown_toc thumbnail html xml rss plain_text digest body_hash schema_version)a
+  @optional_fields ~w(markdown markdown_toc thumbnail html plain_text digest body_hash schema_version)a
 
   @type t :: %ArticleDocument{}
   schema "article_documents" do
@@ -32,8 +32,6 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     field(:markdown_toc, :map)
     field(:thumbnail, :map)
     field(:html, :string)
-    field(:xml, :string)
-    field(:rss, :string)
     field(:plain_text, :string)
     field(:digest, :string)
     field(:body_hash, :string)

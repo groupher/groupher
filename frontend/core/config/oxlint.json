@@ -8,8 +8,6 @@
     "**/*.min.js",
     "**/next-env.d.ts",
     "**/node_modules/**",
-    "backend/main/priv/static/**",
-    "../../../backend/main/priv/static/**",
     "**/.next/**",
     "**/out/**",
     "**/dist/**",

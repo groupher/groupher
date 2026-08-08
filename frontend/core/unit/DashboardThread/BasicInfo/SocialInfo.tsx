@@ -1,4 +1,4 @@
-import SocialEditor from '~/widgets/SocialEditor'
+import SocialEditor from '~/ui/SocialEditor'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'

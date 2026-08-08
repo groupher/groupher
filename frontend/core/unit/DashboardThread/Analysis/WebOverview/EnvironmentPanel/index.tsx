@@ -1,25 +1,90 @@
+'use client'
+
+import { useState } from 'react'
+import { useQuery } from 'urql'
+
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
-import type { TAnalysisWebOverview } from '../spec'
+import { ANALYSIS_TREND_ENVIRONMENT_QUERY } from '../schema'
+import type { TAnalysisTrendEnvironmentSection, TAnalysisTrendsOverviewDemo } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
-  data: TAnalysisWebOverview['environment']
+  community: string
+  days: number
+  demoData?: TAnalysisTrendsOverviewDemo
 }
 
-export default function EnvironmentPanel({ data }: TProps) {
+type TData = {
+  analysisTrendEnvironment: TAnalysisTrendEnvironmentSection | null
+}
+
+type TDemoDimension = 'BROWSER' | 'OS' | 'DEVICE' | 'LANGUAGE' | 'SCREEN'
+
+const environmentItemsFromDemo = (
+  demoData: TAnalysisTrendsOverviewDemo,
+  dimension: TDemoDimension,
+) => {
+  const keyByDimension = {
+    BROWSER: 'browser',
+    OS: 'os',
+    DEVICE: 'device',
+    LANGUAGE: 'language',
+    SCREEN: 'screen',
+  } as const
+
+  const key = keyByDimension[dimension]
+
+  return key ? (demoData.environment[key] ?? []) : []
+}
+
+const demoEnvironmentSection = (
+  dimension: TDemoDimension,
+  demoData: TAnalysisTrendsOverviewDemo,
+): TAnalysisTrendEnvironmentSection => ({
+  status: 'ok',
+  items: environmentItemsFromDemo(demoData, dimension),
+  error: null,
+})
+
+const TABS = [
+  { key: 'BROWSER', label: WEB_OVERVIEW_TEXT.browsers },
+  { key: 'OS', label: WEB_OVERVIEW_TEXT.os },
+  { key: 'DEVICE', label: WEB_OVERVIEW_TEXT.devices },
+  { key: 'LANGUAGE', label: 'Language' },
+  { key: 'SCREEN', label: 'Screen' },
+]
+
+export default function EnvironmentPanel({ community, days, demoData }: TProps) {
   const s = useSalon()
+  const [dimension, setDimension] = useState<TDemoDimension>(TABS[0].key as TDemoDimension)
+  const isDemo = Boolean(demoData)
+
+  const [result] = useQuery<TData>({
+    query: ANALYSIS_TREND_ENVIRONMENT_QUERY,
+    variables: { community, days, dimension },
+    pause: isDemo,
+    requestPolicy: 'cache-and-network',
+  })
+  const section =
+    isDemo && demoData
+      ? demoEnvironmentSection(dimension, demoData)
+      : result.data?.analysisTrendEnvironment
+
+  const loading = isDemo ? false : result.fetching && !section
+  const error = isDemo ? null : (result.error?.message ?? section?.error?.message)
 
   return (
     <div className={s.wrapper}>
       <DimensionPanel
+        activeKey={dimension}
         emptyLabel={WEB_OVERVIEW_TEXT.empty}
-        tabs={[
-          { key: 'browser', label: WEB_OVERVIEW_TEXT.browsers, items: data.browser },
-          { key: 'os', label: WEB_OVERVIEW_TEXT.os, items: data.os },
-          { key: 'device', label: WEB_OVERVIEW_TEXT.devices, items: data.device },
-        ]}
+        error={error}
+        items={section?.items ?? []}
+        loading={loading}
+        tabs={TABS}
         title={WEB_OVERVIEW_TEXT.environment}
+        onTabChange={(key) => setDimension(key as TDemoDimension)}
       />
     </div>
   )

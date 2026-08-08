@@ -4,7 +4,7 @@ import type { FC } from 'react'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TColorName } from '~/spec'
 import useArticle from '~/stores/article/hooks'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon, { cn } from './salon/tags_item'
 

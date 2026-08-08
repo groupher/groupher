@@ -3,7 +3,7 @@ import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { updateViewingArticle } from '~/signal'
-import { toast } from '~/widgets/Toaster'
+import { toast } from '~/ui/Toaster'
 
 import S from '../schema'
 import useTouched from '../useTouched'

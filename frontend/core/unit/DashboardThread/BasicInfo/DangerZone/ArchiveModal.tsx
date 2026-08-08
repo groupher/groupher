@@ -1,13 +1,13 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
-import Modal from '~/widgets/Modal'
-import NoticeBar from '~/widgets/NoticeBar'
+import Button from '~/ui/Buttons/Button'
+import Modal from '~/ui/Modal'
+import NoticeBar from '~/ui/NoticeBar'
 
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../salon/danger_zone/modal'
-// import from '~/widgets/Alert'
+// import from '~/ui/Alert'
 import List from './List'
 
 type TProps = {

@@ -1,10 +1,13 @@
 import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 
 import '@groupher/rich-editor/style.css'
 
-import RootLayoutShell from '~/widgets/RootLayoutShell'
+import RootLayoutShell from '~/shell/RootLayoutShell'
+import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
+import NextPlatformBoundary from '../platform/NextPlatformBoundary'
 import WebAnalysisScript from './WebAnalysisScript'
 
 import '~/tailwind/global.css'
@@ -17,11 +20,20 @@ export const metadata: Metadata = {
 export default function Layout({ children }) {
   return (
     <RootLayoutShell>
-      {process.env.NODE_ENV === 'development' ? (
-        <DevHubReporter serviceId='main' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
-      ) : null}
-      {children}
-      <WebAnalysisScript />
+      <Script
+        id='groupher-pre-paint'
+        strategy='beforeInteractive'
+        dangerouslySetInnerHTML={{
+          __html: `${prePaintThemeDetectScript()}\n${prePaintInitTime()}`,
+        }}
+      />
+      <NextPlatformBoundary>
+        {process.env.NODE_ENV === 'development' ? (
+          <DevHubReporter serviceId='main' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+        ) : null}
+        {children}
+        <WebAnalysisScript />
+      </NextPlatformBoundary>
     </RootLayoutShell>
   )
 }

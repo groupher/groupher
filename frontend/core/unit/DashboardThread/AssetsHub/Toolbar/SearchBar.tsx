@@ -4,8 +4,8 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 
 import MagnifyingGlassIcon from '~/icons/MagnifyingGlass'
-import Input from '~/widgets/Input'
-import Tooltip from '~/widgets/Tooltip'
+import Input from '~/ui/Input'
+import Tooltip from '~/ui/Tooltip'
 
 import { ASSETS_HUB_LABEL } from '../constant'
 import useSalon from './salon/search_bar'

@@ -9,7 +9,7 @@ import type { FC } from 'react'
 import { COLOR } from '~/const'
 import BroadcastSVG from '~/icons/Broadcast'
 import type { TColorName, TSpace } from '~/spec'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
 
 import useSalon, { cn } from './salon'
 

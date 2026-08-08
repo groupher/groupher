@@ -6,7 +6,7 @@ import usePageLock from '~/hooks/usePageLock'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import { normalizeSignedAngle } from '~/lib/angle'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
-import BgRenderer from '~/widgets/BgRenderer'
+import BgRenderer from '~/render/BgRenderer'
 
 import { adaptCoverBgRenderSpec } from '../background'
 import {

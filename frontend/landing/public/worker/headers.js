@@ -51,5 +51,10 @@ export const buildProxyHeaders = (request, target) => {
     }
   }
 
+  if (target.requestHeaderPolicy === 'public-output') {
+    headers.delete('authorization')
+    headers.delete('cookie')
+  }
+
   return headers
 }

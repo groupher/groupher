@@ -6,7 +6,7 @@
 import { useState } from 'react'
 
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import Tabs from '~/widgets/Switcher/Tabs'
+import Tabs from '~/ui/Switcher/Tabs'
 
 import ChangelogItem from '../ChangelogItem'
 import { TABS_MODE_OPTIONS } from '../constant'

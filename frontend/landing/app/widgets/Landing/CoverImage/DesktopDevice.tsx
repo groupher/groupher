@@ -1,7 +1,7 @@
 import Typewriter from 'typewriter-effect'
 
 import LockSVG from '~/icons/Lock'
-import WallpaperRenderer from '~/widgets/WallpaperRenderer'
+import WallpaperRenderer from '~/render/WallpaperRenderer'
 
 import useSalon from '../salon/cover_image/desktop_device'
 import ImageSlider from './ImageSlider'

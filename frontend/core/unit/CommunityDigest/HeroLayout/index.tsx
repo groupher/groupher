@@ -1,13 +1,12 @@
-import { useRouter } from 'next/navigation'
-
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
+import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
+import TabBar from '~/ui/TabBar'
+import ViewportTracker from '~/ui/ViewportTracker'
 import CustomHeaderLinks from '~/unit/HeaderLinks'
-import TabBar from '~/widgets/TabBar'
-import ViewportTracker from '~/widgets/ViewportTracker'
 
 import useSalon from '../salon/hero_layout'
 import CommunityBrief from './CommunityBrief'

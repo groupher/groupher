@@ -7,7 +7,7 @@
 import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
-import NoticeBar from '~/widgets/NoticeBar'
+import NoticeBar from '~/ui/NoticeBar'
 
 type TProps = {
   date?: string

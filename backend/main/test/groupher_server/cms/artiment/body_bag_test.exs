@@ -18,9 +18,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
              json: @json,
              markdown_toc: %{items: []},
              body_hash: body_hash,
-             schema_version: 2,
-             xml: nil,
-             rss: nil
+             schema_version: 2
            } = BodyBag.to_document_attrs(body_bag)
 
     assert body_hash == String.duplicate("a", 64)

@@ -17,7 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('~/lib/artimentPublisher', () => ({ saveDocDraft: mocks.saveDocDraft }))
 vi.mock('~/lib/slug', () => ({ slugify: vi.fn(async () => 'guide') }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
-vi.mock('~/widgets/Toaster', () => ({ toast: vi.fn() }))
+vi.mock('~/ui/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../../helper', () => ({ reloadDocPublishChecklist: vi.fn() }))
 vi.mock('../../store/hooks', () => ({
   default: () => ({ attachSaveDocDraft: mocks.attachSaveDocDraft }),

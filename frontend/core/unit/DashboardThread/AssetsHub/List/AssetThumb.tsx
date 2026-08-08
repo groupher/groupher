@@ -1,6 +1,6 @@
 'use client'
 
-import IconHub from '~/widgets/IconHub'
+import IconHub from '~/ui/IconHub'
 
 import { ASSETS_HUB_LABEL } from '../constant'
 import { assetLabel, assetPublicReadUrl, isPreviewableImage } from '../helper'

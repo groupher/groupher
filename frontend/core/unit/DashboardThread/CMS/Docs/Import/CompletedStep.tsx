@@ -1,5 +1,5 @@
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import ImportIssues from './ImportIssues'
 import useSalon from './salon/completed_step'

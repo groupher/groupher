@@ -1,4 +1,4 @@
-import WallpaperRenderer from '~/widgets/WallpaperRenderer'
+import WallpaperRenderer from '~/render/WallpaperRenderer'
 
 import useSalon from '../../salon/dashboard_intros/layout_tab/wallpaper_card'
 import WallpaperBar from './WallpaperBar'

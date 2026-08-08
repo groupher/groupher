@@ -4,7 +4,7 @@ import { useEffect, useReducer, useRef } from 'react'
 import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
-import ArrowLinker from '~/widgets/ArrowLinker'
+import ArrowLinker from '~/ui/ArrowLinker'
 
 import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'

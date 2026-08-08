@@ -1,7 +1,6 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FC, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
@@ -18,7 +17,7 @@ import type { TArticleSnapshot, TDocDraftSnapshotsPayload } from './RevisionDraw
 import useRevisionDiffModel from './RevisionDrawer/useRevisionDiffModel'
 import useSalon, { cn } from './salon/diff_status'
 
-const RevisionDrawer = dynamic(() => import('./RevisionDrawer'), { ssr: false })
+const RevisionDrawer = lazy(() => import('./RevisionDrawer'))
 
 const DiffStatus: FC = () => {
   const s = useSalon()
@@ -116,16 +115,20 @@ const DiffStatus: FC = () => {
         )}
       </button>
 
-      <RevisionDrawer
-        show={visible}
-        loading={loading}
-        error={error}
-        revisionDiffModel={revisionDiffModel}
-        loadDiffResult={loadDiffResult}
-        startHistoryDiff={startHistoryDiff}
-        onClose={() => setVisible(false)}
-        onReload={loadRevisions}
-      />
+      {visible && (
+        <Suspense fallback={null}>
+          <RevisionDrawer
+            show={visible}
+            loading={loading}
+            error={error}
+            revisionDiffModel={revisionDiffModel}
+            loadDiffResult={loadDiffResult}
+            startHistoryDiff={startHistoryDiff}
+            onClose={() => setVisible(false)}
+            onReload={loadRevisions}
+          />
+        </Suspense>
+      )}
     </>
   )
 }

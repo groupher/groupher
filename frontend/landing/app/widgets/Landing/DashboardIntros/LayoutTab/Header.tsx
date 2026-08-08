@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import type { TColorName } from '~/spec'
-import ColorSelector from '~/widgets/ColorSelector'
+import ColorSelector from '~/ui/ColorSelector'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/layout_tab/header'
 

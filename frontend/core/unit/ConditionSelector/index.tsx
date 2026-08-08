@@ -4,8 +4,8 @@ import { type FC, useRef, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TButtonPrefix, TConditionMode, TSpace, TTooltipPlacement } from '~/spec'
-import DropdownButton from '~/widgets/Buttons/DropdownButton'
-import Menu from '~/widgets/Menu'
+import DropdownButton from '~/ui/Buttons/DropdownButton'
+import Menu from '~/ui/Menu'
 
 import ActiveLabel from './ActiveLabel'
 import { getActiveMenuItem, getMenuItems, getTitle } from './helper'

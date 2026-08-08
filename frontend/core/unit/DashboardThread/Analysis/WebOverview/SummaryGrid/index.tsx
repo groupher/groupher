@@ -1,14 +1,14 @@
 import { SUMMARY_ITEMS } from '../constant'
 import { formatDuration, formatMetric, formatPercent } from '../helper'
-import type { TAnalysisWebOverview, TSummaryMetricItem } from '../spec'
+import type { TAnalysisTrendsOverview, TSummaryMetricItem } from '../spec'
 import MetricItem from './MetricItem'
 import useSalon from './salon'
 
 type TProps = {
-  data: TAnalysisWebOverview
+  data: TAnalysisTrendsOverview
 }
 
-const summaryItems = (data: TAnalysisWebOverview): TSummaryMetricItem[] =>
+const summaryItems = (data: TAnalysisTrendsOverview): TSummaryMetricItem[] =>
   SUMMARY_ITEMS.map((item) => {
     const metric = data.summary[item.key]
     const value =
@@ -18,16 +18,21 @@ const summaryItems = (data: TAnalysisWebOverview): TSummaryMetricItem[] =>
           ? formatDuration(metric.value)
           : formatMetric(metric)
 
-    return { ...item, value }
+    return { ...item, changeRate: metric.changeRate, value }
   })
 
 export default function SummaryGrid({ data }: TProps) {
   const s = useSalon()
+  const items = summaryItems(data)
 
   return (
     <section className={s.wrapper}>
-      {summaryItems(data).map((item) => (
-        <MetricItem key={item.key} item={item} />
+      {items.map((item, index) => (
+        <MetricItem
+          align={index === 0 ? 'start' : index === items.length - 1 ? 'end' : 'center'}
+          key={item.key}
+          item={item}
+        />
       ))}
     </section>
   )

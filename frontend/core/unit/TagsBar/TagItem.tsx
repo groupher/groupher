@@ -5,7 +5,7 @@ import { cutRest } from '~/fmt'
 import CheckVG from '~/icons/CheckBold'
 import CloseSVG from '~/icons/CloseLight'
 import type { TColorName, TTag } from '~/spec'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon from './salon/tag_item'
 

@@ -11,7 +11,7 @@ import useLayout from '~/hooks/useLayout'
 import useFetchPagedPosts from '~/hooks/usePagedPosts/useFetchPagedPosts'
 
 import ArticlesFilter from './ArticlesFilter'
-// import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+// import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 import PagedPosts from './PagedPosts'
 import useSalon from './salon'
 import TagNote from './TagNote'

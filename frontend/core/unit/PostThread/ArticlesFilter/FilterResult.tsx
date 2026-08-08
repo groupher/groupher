@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react'
 
-import DotDivider from '~/widgets/DotDivider'
+import DotDivider from '~/ui/DotDivider'
 
 import useSalon from './salon/filter_result'
 

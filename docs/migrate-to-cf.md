@@ -1,13 +1,13 @@
-# Migrate Groupher Entry To Cloudflare
+# 将 Groupher 入口迁移到 Cloudflare
 
-> Status: proposal
+> 状态：提案
 >
-> Goal: move the public `groupher.com` entry and static Landing delivery to
-> Cloudflare, while preserving Groupher's path-first URL contract.
+> 目标：将公共 `groupher.com` 入口和静态 Landing 交付迁移到
+> Cloudflare，同时保留 Groupher 的 path-first URL 合约。
 
-## Background
+## 背景
 
-Groupher's public product model is path-first:
+Groupher 的公共产品模型是 path-first：
 
 ```text
 groupher.com/                         Landing
@@ -19,12 +19,11 @@ groupher.com/api/graphql              same-origin browser GraphQL facade
 api.groupher.com/graphiql             Phoenix GraphQL origin
 ```
 
-DNS cannot route by pathname. Whichever service receives `groupher.com` must be
-the HTTP path router for Landing, Main, Dashboard, Auth, and GraphQL.
+DNS 不能按 pathname 路由。无论哪个服务接收 `groupher.com`，它都必须
+充当 Landing、Main、Dashboard、Auth 和 GraphQL 的 HTTP 路由器。
 
-Today that routing responsibility lives in `backend/gateway`. The current
-Gateway is a Hono/Node reverse proxy deployed on Vercel. It routes browser
-requests to these origins:
+目前这个路由职责在 `backend/gateway` 中。当前 Gateway 是部署在 Vercel 上的
+Hono/Node 反向代理。它将浏览器请求路由到这些源站：
 
 ```text
 landing.groupher.com
@@ -34,12 +33,12 @@ auth.groupher.com
 api.groupher.com
 ```
 
-Landing is a static-exported Next app and does not need API or DB access for its
-first paint. Serving it from Cloudflare Pages is a better fit than keeping it
-behind Vercel Gateway for every `groupher.com/` request.
+Landing 是静态导出的 Next 应用，首屏不需要 API 或数据库访问。将其从
+Cloudflare Pages 提供，比继续把每个 `groupher.com/` 请求都放在 Vercel Gateway
+后面更合适。
 
-The recommended Cloudflare target is not a standalone Worker project at first.
-Use Cloudflare Pages advanced `_worker.js` mode for the Landing Pages project:
+推荐的 Cloudflare 目标起步时不是一个独立的 Worker 项目。对 Landing Pages
+项目使用 Cloudflare Pages advanced `_worker.js` 模式：
 
 ```text
 Cloudflare Pages project: landing
@@ -47,27 +46,27 @@ Cloudflare Pages project: landing
   _worker.js: public HTTP path router for paths that need routing
 ```
 
-This keeps Landing assets and the public entry in one Cloudflare project, while
-still allowing programmable routing for non-Landing paths.
+这样可以把 Landing 资产和公共入口放在同一个 Cloudflare 项目中，同时仍然允许
+对非 Landing 路径进行可编程路由。
 
-Treat static asset bypass as a validation gate for this target. Before relying
-on `_routes.json` or equivalent Pages routing controls for cost assumptions,
-verify against the final Pages deployment that hashed Landing assets bypass the
-router path and that product, API, and Auth requests still reach `_worker.js`.
+对这个目标来说，应把静态资源绕过作为验证门槛。在依赖 `_routes.json` 或
+等效的 Pages 路由控制来做成本假设之前，先用最终 Pages 部署验证：带哈希的
+Landing 资源是否绕过 router 路径，以及产品、API 和 Auth 请求是否仍然进入
+`_worker.js`。
 
-## Migration Principles
+## 迁移原则
 
-- Move hosting and routing first; evaluate frontend framework changes later.
-- Add the Cloudflare router alongside the existing Vercel/Hono Gateway during
-  migration. Do not delete `backend/gateway` as part of the first cutover.
-- Keep `gateway.groupher.com` available as rollback, comparison target, and
-  local development entry until Cloudflare routing is proven.
-- Preserve the same-origin browser `/api/graphql` facade. Do not redesign
-  GraphQL CORS or cookie behavior during the hosting migration.
-- Keep Main, Dashboard, Auth, and Phoenix on their existing origins during the
-  first Cloudflare cutover.
+- 先迁移主机和路由；前端框架变更留到后面评估。
+- 迁移期间，将 Cloudflare router 与现有的 Vercel/Hono Gateway 并行引入。
+  不要在第一次切换时删除 `backend/gateway`。
+- 保持 `gateway.groupher.com` 可用，作为回滚、对比目标和本地开发入口，直到
+  Cloudflare 路由被证明可用。
+- 保留同源浏览器 `/api/graphql` facade。不要在托管迁移期间重新设计 GraphQL
+  CORS 或 cookie 行为。
+- 在第一次 Cloudflare 切换中，保持 Main、Dashboard、Auth 和 Phoenix 继续使用
+ 现有源站。
 
-## Target Topology
+## 目标拓扑
 
 ```text
 groupher.com / www.groupher.com
@@ -90,22 +89,20 @@ auth.groupher.com
   -> existing app origins
 ```
 
-OAuth provider callback configuration follows the Auth origin, not the public
-Landing entry. For production GitHub OAuth, the callback allowlist must contain
-`https://auth.groupher.com/api/auth/callback/github`; `groupher.com/api/auth/*`
-remains a browser-facing stable entry that the router forwards to Auth.
+OAuth provider 回调配置跟随 Auth 源站，而不是公共 Landing 入口。对于生产环境的
+GitHub OAuth，回调 allowlist 必须包含
+`https://auth.groupher.com/api/auth/callback/github`；`groupher.com/api/auth/*`
+仍然是一个面向浏览器的稳定入口，由 router 转发到 Auth。
 
-`gateway.groupher.com` can remain during migration as a rollback or comparison
-target. Once the Cloudflare path router passes production smoke tests, the
-Vercel Gateway no longer needs to sit in the primary `groupher.com` request
-path.
+`gateway.groupher.com` 可以在迁移期间保留，作为回滚或对比目标。一旦 Cloudflare
+路径 router 通过生产烟雾测试，Vercel Gateway 就不再需要处在主
+`groupher.com` 请求路径中。
 
-## Platform Limits And Cost
+## 平台限制与成本
 
-Cloudflare Pages static asset delivery and Pages Functions have different cost
-and limit profiles.
+Cloudflare Pages 的静态资源交付和 Pages Functions 有不同的成本与限制模型。
 
-Pages static assets are the cheap path:
+Pages 静态资源是便宜路径：
 
 ```text
 static asset request
@@ -113,11 +110,10 @@ static asset request
   -> no Pages Function invocation
 ```
 
-Cloudflare lists Pages static asset requests and bandwidth as unlimited on both
-free and paid Pages plans. Pages Functions are different: they are billed and
-limited as Workers.
+Cloudflare 将 Pages 静态资源请求和带宽列为免费和付费 Pages 计划中的无限量。
+Pages Functions 则不同：它们按 Workers 计费并受限。
 
-Current public Cloudflare limits/pricing to account for:
+当前需要考虑的公开 Cloudflare 限制/定价：
 
 ```text
 Workers Free:
@@ -132,7 +128,7 @@ Workers Paid:
   no separate egress/bandwidth charge for Workers
 ```
 
-The router is viable because it should not fan out:
+这个 router 是可行的，因为它不应该做 fan-out：
 
 ```text
 Landing static asset hit -> 0 Function invocations when excluded by routes
@@ -140,11 +136,11 @@ Explicit Landing page    -> 1 Function invocation, usually 1 env.ASSETS.fetch
 Main/Dashboard/Auth/API  -> 1 Function invocation, 1 origin fetch
 ```
 
-Do not add multi-origin fan-out, upstream probing, API aggregation, or auth
-lookups inside `_worker.js` during the first cutover. Those would turn a routing
-layer into an edge BFF and make subrequest/CPU/cost behavior harder to predict.
+在第一次切换中，不要在 `_worker.js` 里加入多源站 fan-out、上游探测、API 聚合或
+auth 查询。这些会把一个路由层变成 edge BFF，使 subrequest/CPU/cost 行为更难
+预测。
 
-For cost comparison, the relevant Vercel Pro included usage is:
+用于成本对比时，相关的 Vercel Pro 包含用量是：
 
 ```text
 Vercel Pro:
@@ -155,24 +151,20 @@ Vercel Pro:
   4h Function active CPU/month included
 ```
 
-This means Vercel Pro can already handle moderate cached/static traffic. The
-Cloudflare move is still attractive because Landing static assets and bandwidth
-can avoid both Vercel Gateway execution and Vercel transfer pressure, while
-product paths can be moved gradually.
+这意味着 Vercel Pro 其实已经能够承载中等规模的缓存/静态流量。Cloudflare 迁移
+仍然有吸引力，因为 Landing 静态资源和带宽可以避开 Vercel Gateway 执行和
+Vercel 传输压力，而产品路径可以逐步迁移。
 
-## Function Invocation Routing
+## Function 调用路由
 
-The Cloudflare architecture only stays attractive if static assets bypass
-Functions wherever possible.
+只有当静态资源尽可能绕过 Functions 时，Cloudflare 架构才依然有吸引力。
 
-Pages `_routes.json` or the equivalent Pages Functions routing controls are the
-real boundary in standard Pages Functions mode. In advanced `_worker.js` mode,
-the worker must still route static hits to `env.ASSETS.fetch(request)` itself and
-production validation must confirm whether `_routes.json` is honored for
-invocation bypass.
+在标准 Pages Functions 模式下，Pages `_routes.json` 或等效的路由控制才是
+真实边界。在 advanced `_worker.js` 模式中，worker 仍然必须自己把静态命中路由到
+`env.ASSETS.fetch(request)`，并且生产验证必须确认 `_routes.json` 是否会被用于
+绕过调用。
 
-Use route include/exclude rules so hashed static assets do not invoke
-`_worker.js`:
+使用 route include/exclude 规则，让带哈希的静态资源不要调用 `_worker.js`：
 
 ```text
 exclude from Function when possible:
@@ -204,20 +196,19 @@ include in Function:
   /*
 ```
 
-Exact include/exclude patterns must be validated against the final Landing
-export output. The goal is not to route every request through `_worker.js`; the
-goal is to route only the paths that need HTTP-level decisions. Cloudflare
-`_routes.json` patterns are globs, not named parameters; keep `/:community/...`
-as prose for Groupher's public contract, not as a literal config pattern.
+精确的 include/exclude 模式必须根据最终的 Landing 导出结果进行验证。目标不是让
+每个请求都经过 `_worker.js`；目标是只对那些需要 HTTP 层决策的路径进行路由。
+Cloudflare `_routes.json` 模式是 glob，不是命名参数；`/:community/...` 应该保留为
+Groupher 公共合约的说明，而不是字面配置模式。
 
-## Routing Contract
+## 路由合约
 
-The Cloudflare `_worker.js` should preserve the current public contract, but not
-blindly copy every historical Gateway rewrite.
+Cloudflare `_worker.js` 应保留当前的公共合约，但不要机械地照搬所有历史 Gateway
+rewrite。
 
 ### Landing
 
-Serve these from Cloudflare Pages assets:
+以下内容应由 Cloudflare Pages 资源提供：
 
 ```text
 /
@@ -230,7 +221,7 @@ Serve these from Cloudflare Pages assets:
 /favicon.ico
 ```
 
-Implementation shape for explicit Landing paths:
+显式 Landing 路径的实现形态：
 
 ```ts
 if (isLandingPath(url.pathname)) {
@@ -238,62 +229,60 @@ if (isLandingPath(url.pathname)) {
 }
 ```
 
-Do not use a global "ASSETS 404 -> Main" fallback. Explicit Landing paths should
-return Landing assets or Landing 404s. Product paths should be routed by their
-own path rules.
+不要使用全局的 “ASSETS 404 -> Main” 回退。显式 Landing 路径应返回 Landing 资源
+或 Landing 404。产品路径应由它们自己的路径规则路由。
 
 ### Main
 
-Default non-Landing, non-Dashboard product paths should go to Main:
+默认的、非 Landing 且非 Dashboard 的产品路径应进入 Main：
 
 ```text
 /:community/...
 ```
 
-The public path should be preserved when forwarding to the Main origin.
+向 Main 源站转发时，应保留公共路径。
 
 ### Dashboard
 
-Dashboard routing needs a fresh verification before implementation.
+Dashboard 路由在实现前需要重新验证。
 
-The existing Gateway docs describe this historical behavior:
+现有 Gateway 文档描述了这个历史行为：
 
 ```text
 groupher.com/cps/dashboard/appearance
   -> dashboard origin /cps/appearance
 ```
 
-However the current dashboard app source contains real App Router paths under:
+不过当前 dashboard 应用源码里，确实存在位于以下位置的 App Router 路径：
 
 ```text
 frontend/dashboard/src/app/[community]/dashboard/...
 ```
 
-and `frontend/dashboard/next.config.js` configures `assetPrefix: '/dashboard'`,
-not `basePath: '/dashboard'`.
+并且 `frontend/dashboard/next.config.js` 配置的是 `assetPrefix: '/dashboard'`，
+而不是 `basePath: '/dashboard'`。
 
-That suggests `/dashboard` is mainly an external path marker and static asset
-marker for the unified host, not necessarily a segment that should be removed
-when directly proxying to the Dashboard origin.
+这表明 `/dashboard` 主要是统一主机的外部路径标记和静态资源标记，而不一定是
+在直接代理到 Dashboard 源站时应删除的 segment。
 
-Before cutting over, verify the real Dashboard origin with both paths:
+在切换前，请用这两个路径验证真实的 Dashboard 源站：
 
 ```text
 https://dashboard.groupher.com/cps/dashboard
 https://dashboard.groupher.com/cps/dashboard/appearance
 ```
 
-If those work, Cloudflare should forward Dashboard paths unchanged:
+如果这些可用，Cloudflare 应当保持 Dashboard 路径不变地转发：
 
 ```text
 groupher.com/:community/dashboard/*
   -> dashboard origin /:community/dashboard/*
 ```
 
-Only keep the old "trim dashboard segment" behavior if the deployed Dashboard
-origin still requires it.
+只有在已部署的 Dashboard 源站仍然需要时，才保留旧的“trim dashboard segment”
+行为。
 
-Dashboard static assets must continue to route to Dashboard:
+Dashboard 静态资源必须继续路由到 Dashboard：
 
 ```text
 /dashboard/_next/static/*
@@ -301,89 +290,86 @@ Dashboard static assets must continue to route to Dashboard:
 
 ### Auth
 
-Keep Auth as an origin service:
+将 Auth 继续作为源站服务：
 
 ```text
 /api/auth/* -> https://auth.groupher.com/api/auth/*
 ```
 
-The router should preserve redirects from Auth instead of following them inside
-the proxy. OAuth callback and logout flows need the browser to observe upstream
-`30x` responses.
+router 应保留来自 Auth 的重定向，而不是在 proxy 内部跟随它们。OAuth 回调和
+logout 流程需要浏览器看到上游的 `30x` 响应。
 
 ### GraphQL
 
-Phoenix's real GraphQL endpoint is:
+Phoenix 真实的 GraphQL 端点是：
 
 ```text
 https://api.groupher.com/graphiql
 ```
 
-The browser-facing endpoint should remain same-origin:
+面向浏览器的端点应保持同源：
 
 ```text
 https://groupher.com/api/graphql
 ```
 
-Cloudflare should replace the current Gateway behavior:
+Cloudflare 应替换当前 Gateway 行为：
 
 ```text
 /api/graphql -> https://api.groupher.com/graphiql
 ```
 
-Keep the request credential boundary:
+保持请求凭据边界：
 
-- delete browser `authorization`
-- delete the original `cookie`
-- forward verified `groupher-auth.token` as `Authorization: Bearer <token>` when present
+- 删除浏览器 `authorization`
+- 删除原始 `cookie`
+- 仅在存在时，将 `groupher-auth.token` 作为同名 cookie 转发
 
-Do not switch browser code directly to `https://api.groupher.com/graphiql`
-unless CORS, credentials, cookie domain, and CSRF behavior are intentionally
-redesigned. The same-origin facade keeps frontend changes small and preserves
-the current security shape.
+除非有意重新设计 CORS、credentials、cookie domain 和 CSRF 行为，否则不要让浏览器
+代码直接切换到 `https://api.groupher.com/graphiql`。同源 facade 能保持前端改动
+最小，并保留当前安全形态。
 
-Production frontend envs should be normalized as:
+生产前端 env 应规范为：
 
 ```text
 GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
 ```
 
-Browser code always calls same-origin `/api/graphql`. `GRAPHQL_ENDPOINT` is only
-for server-side Next/RSC/route handler code.
+浏览器代码始终调用同源的 `/api/graphql`。`GRAPHQL_ENDPOINT` 只用于服务器端的
+Next/RSC/route handler 代码。
 
-Landing should not depend on browser GraphQL in the Cloudflare static path.
+Landing 在 Cloudflare 静态路径中不应依赖浏览器 GraphQL。
 
-## Proxy Policies
+## Proxy 策略
 
-The Cloudflare router still needs basic reverse-proxy hygiene.
+Cloudflare router 仍然需要基本的反向代理卫生措施。
 
-Keep:
+保留：
 
-- preserve request method
-- forward request body for non-GET/HEAD requests
-- use manual redirect behavior
-- remove or avoid hop-by-hop headers such as `connection`, `host`,
-  `keep-alive`, `te`, `transfer-encoding`, and `upgrade`
-- set `x-forwarded-host` and `x-forwarded-proto`
-- keep the GraphQL cookie-cleaning policy
+- 保留请求方法
+- 对非 GET/HEAD 请求转发 request body
+- 使用手动 redirect 行为
+- 移除或避免 hop-by-hop headers，例如 `connection`、`host`、
+  `keep-alive`、`te`、`transfer-encoding` 和 `upgrade`
+- 设置 `x-forwarded-host` 和 `x-forwarded-proto`
+- 保持 GraphQL 的 cookie 清理策略
 
-Do not copy Node-only details:
+不要复制 Node 专用细节：
 
-- `duplex: 'half'` is only for Node fetch request body streaming
-- Node `fs` static file reads should become `env.ASSETS.fetch(request)`
-- Node `net`/`tls` WebSocket upgrade proxy cannot be copied directly
+- `duplex: 'half'` 只适用于 Node fetch 请求体流式传输
+- Node `fs` 静态文件读取应改为 `env.ASSETS.fetch(request)`
+- Node `net`/`tls` WebSocket upgrade proxy 不能直接照搬
 
-The current Node Gateway deletes `content-encoding` and `content-length` from
-proxied responses because Node fetch may auto-decode upstream bodies. Cloudflare
-Workers may not need that exact workaround. Add it only if smoke tests show
-browser decoding or body length errors.
+当前 Node Gateway 会从被代理的响应中删除 `content-encoding` 和
+`content-length`，因为 Node fetch 可能会自动解码上游 body。Cloudflare Workers
+可能不需要这个精确的 workaround。只有在烟雾测试显示浏览器解码或 body length
+错误时，再添加它。
 
-## Local Development
+## 本地开发
 
-Adding a Pages advanced `_worker.js` does not have to replace local Gateway
-development immediately.
+引入 Pages advanced `_worker.js` 不一定要立即替代本地 Gateway 开发。
 
-During migration, keep two local modes:
+迁移期间，保留两种本地模式：
 
 ```text
 default local app development
@@ -393,11 +379,10 @@ Cloudflare routing development
   -> wrangler Pages dev / Pages preview running Landing assets + _worker.js
 ```
 
-This avoids blocking daily Main/Dashboard/Auth/Phoenix work on Wrangler, local
-HTTPS, cookie domain, or Portless changes.
+这可以避免把日常的 Main/Dashboard/Auth/Phoenix 开发阻塞在 Wrangler、本地 HTTPS、
+cookie domain 或 Portless 变更上。
 
-After production traffic moves to Cloudflare, choose the long-term local model
-explicitly:
+当生产流量迁移到 Cloudflare 后，需要显式选择长期本地模型：
 
 ```text
 Option A: keep backend/gateway as local-only router
@@ -409,16 +394,14 @@ Option B: use wrangler Pages dev as the local unified entry
   requires Dev Hub, local ports, HTTPS, and cookie domains to be aligned
 ```
 
-The recommended path is Option A during cutover, then evaluate Option B after
-Cloudflare production behavior is stable.
+推荐的路径是在切换期间采用 Option A，然后在 Cloudflare 生产行为稳定后再评估
+Option B。
 
-`backend/gateway` should remain in the repo until both production rollback needs
-and local routing needs are resolved.
+`backend/gateway` 应保留在仓库中，直到生产回滚需求和本地路由需求都得到解决。
 
-## Future Framework Options
+## 未来的框架选项
 
-`frontend/landing` is currently Next.js-based, but it is configured for static
-export:
+`frontend/landing` 目前基于 Next.js，但它配置为静态导出：
 
 ```js
 output: 'export'
@@ -426,75 +409,68 @@ assetPrefix: process.env.NODE_ENV === 'production' ? '/landing' : ''
 cacheComponents: false
 ```
 
-That is compatible with Cloudflare Pages static hosting. The first migration
-should keep Landing on Next export to avoid mixing hosting migration with a
-frontend rewrite.
+这与 Cloudflare Pages 的静态托管兼容。第一次迁移应继续让 Landing 保持 Next
+export，避免把托管迁移和前端重写混在一起。
 
-Possible later options:
+后续可能的选项：
 
-| Option                | Fit                                                                         | Tradeoff                                                                 |
-| --------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Next export           | Lowest change. Already matches Landing's static shape.                      | Keeps Next build/tooling for a static marketing app.                     |
-| Vinext                | Worth evaluating if the goal is Cloudflare/Vite-aligned Next compatibility. | Requires compatibility checks for current Landing APIs and build output. |
-| TanStack Router/Start | Could make Landing lighter if it becomes a Vite-first app.                  | More rewrite work across routing, metadata, i18n, and app conventions.   |
-| Astro/Vite static app | Strong fit for marketing/docs-style static content.                         | Full framework migration; not needed for the first cutover.              |
+| 选项                  | 适配性                                                                      | 取舍                                                                    |
+| --------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Next export           | 改动最小。已经符合 Landing 的静态形态。                                     | 对静态营销应用来说，继续保留 Next 构建/工具链。                         |
+| Vinext                | 如果目标是与 Cloudflare/Vite 对齐的 Next 兼容性，值得评估。                 | 需要检查当前 Landing API 和构建产物的兼容性。                          |
+| TanStack Router/Start | 如果 Landing 变成 Vite-first 应用，这可能让它更轻量。                        | 需要在路由、元数据、i18n 和应用约定上做更多重写。                      |
+| Astro/Vite static app | 对营销/文档类静态内容是很强的匹配。                                         | 完整的框架迁移；第一次切换不需要。                                     |
 
-Framework migration should be treated as a later project after Cloudflare entry
-routing has passed production smoke tests.
+框架迁移应被视为后续项目，等 Cloudflare 入口路由通过生产烟雾测试之后再做。
 
-## Migration Steps
+## 迁移步骤
 
-### Phase 1: Prepare Landing For Cloudflare Pages
+### Phase 1: 为 Cloudflare Pages 准备 Landing
 
-1. Use `yarn workspace @groupher/frontend-landing build:cloudflare` as the
-   Cloudflare Pages build command.
-2. Ensure `frontend/landing` does not require runtime GraphQL for initial
-   rendering.
-3. Keep Landing on Next export for the first cutover. Do not rewrite it to
-   Vinext, TanStack, Astro, or another framework during the hosting migration.
-4. Keep production `assetPrefix: '/landing'` unless the Pages build strategy is
-   intentionally redesigned.
-5. Keep the Pages output directory as `frontend/landing/out`. Because the
-   current production Next build emits HTML that references
-   `/landing/_next/static/...`, `build:cloudflare` must prepare
-   `out/landing/_next` from `out/_next` before deployment.
-6. Add a Pages advanced `_worker.js` entry in the Landing output path.
-7. Implement only these responses first:
+1. 使用 `yarn workspace @groupher/frontend-landing build:cloudflare` 作为
+   Cloudflare Pages 的构建命令。
+2. 确保 `frontend/landing` 在初始渲染时不依赖运行时 GraphQL。
+3. 第一次切换时继续让 Landing 使用 Next export。不要在托管迁移期间把它重写为
+   Vinext、TanStack、Astro 或其他框架。
+4. 保持生产环境的 `assetPrefix: '/landing'`，除非 Pages 构建策略被有意重新设计。
+5. 保持 Pages 输出目录为 `frontend/landing/out`。因为当前生产 Next 构建输出的 HTML
+   引用了 `/landing/_next/static/...`，所以 `build:cloudflare` 在部署前必须先把
+   `out/_next` 复制为 `out/landing/_next`。
+6. 在 Landing 输出路径中添加 Pages advanced `_worker.js` 入口。
+7. 先只实现这些响应：
    - `/health`
-   - explicit Landing pages via `env.ASSETS.fetch(request)`
-   - `/api/graphql` proxy to Phoenix with cookie cleaning
-8. Add Function route include/exclude rules so hashed static assets avoid
-   Function invocation where possible.
+   - 通过 `env.ASSETS.fetch(request)` 提供显式 Landing 页面
+   - `/api/graphql` 代理到 Phoenix，并清理 cookie
+8. 添加 Function 路由 include/exclude 规则，让带哈希的静态资源尽可能避免
+   Function 调用。
 
-### Phase 2: Add Product Path Routing
+### Phase 2: 添加产品路径路由
 
-1. Add explicit Main routing for default community paths.
-2. Add Dashboard path routing after verifying whether the Dashboard origin needs
-   `/dashboard` preserved or trimmed.
-3. Add `/api/auth/*` proxy to Auth with manual redirects.
-4. Add static asset ownership for `/landing/_next/static/*` and
-   `/dashboard/_next/static/*`.
-5. Keep `gateway.groupher.com` available for comparison.
-6. Keep `backend/gateway` deployed and functional. The Cloudflare router is
-   additive in this phase.
-7. Confirm each dynamic request produces at most one origin fetch. Do not add
-   fan-out or origin probing in this phase.
+1. 为默认社区路径添加显式的 Main 路由。
+2. 在验证 Dashboard 源站是否需要保留或裁剪 `/dashboard` 之后，再添加 Dashboard
+   路由。
+3. 添加 `/api/auth/*` 到 Auth 的代理，并使用手动重定向。
+4. 为 `/landing/_next/static/*` 和 `/dashboard/_next/static/*` 添加静态资源归属。
+5. 保持 `gateway.groupher.com` 可用于对比。
+6. 保持 `backend/gateway` 已部署且可用。这个阶段里 Cloudflare router 是增量添加的。
+7. 确认每个动态请求最多只产生一次 origin fetch。这个阶段不要加入 fan-out 或
+   origin probing。
 
-### Phase 3: Bind Domains
+### Phase 3: 绑定域名
 
-1. Add `groupher.com` to the Cloudflare Pages Landing project's Custom Domains.
-2. Add `www.groupher.com` to the same Pages project, or configure a Cloudflare
-   redirect between apex and `www` based on the desired canonical host.
-3. Remove `groupher.com` and `www.groupher.com` from the Vercel Gateway project
-   after Cloudflare validation.
-4. Keep origin domains such as `main.groupher.com`, `dashboard.groupher.com`,
-   `auth.groupher.com`, and `api.groupher.com` stable.
-5. Do not delete the Vercel/Hono Gateway code after domain binding. Keep it for
-   rollback and local routing until a separate retirement decision is made.
+1. 将 `groupher.com` 添加到 Cloudflare Pages Landing 项目的 Custom Domains。
+2. 将 `www.groupher.com` 添加到同一个 Pages 项目，或者根据所需的 canonical host
+   配置 Cloudflare 在 apex 与 `www` 之间跳转。
+3. 在 Cloudflare 验证完成后，从 Vercel Gateway 项目中移除 `groupher.com` 和
+   `www.groupher.com`。
+4. 保持 `main.groupher.com`、`dashboard.groupher.com`、`auth.groupher.com`
+   和 `api.groupher.com` 这些 origin 域名稳定。
+5. 不要在域名绑定后删除 Vercel/Hono Gateway 代码。将其保留用于回滚和本地路由，
+   直到另行决定退役。
 
-### Phase 4: Validate And Retire Vercel Gateway
+### Phase 4: 验证并退役 Vercel Gateway
 
-Run smoke tests against the Cloudflare entry:
+对 Cloudflare 入口运行烟雾测试：
 
 ```text
 GET  /
@@ -509,55 +485,48 @@ GET  /landing/_next/static/...
 GET  /dashboard/_next/static/...
 ```
 
-Validate:
+验证：
 
-- Landing loads from Cloudflare assets
-- hashed Landing static assets do not invoke Pages Functions when excluded by
-  routing rules
-- Main RSC/page responses load correctly
-- Dashboard routes and chunks load correctly
-- Auth redirects are visible to the browser
-- `/api/graphql` works from browser code without CORS changes
-- cookies sent to Phoenix are limited to `groupher-auth.token`
-- no content decoding errors appear in the browser
-- direct `gateway.groupher.com` and Cloudflare-routed `groupher.com` have
-  acceptable TTFB and behavior parity
-- Pages Functions invocation volume matches expectations:
-  - static assets should be near zero invocations
-  - product/API/auth paths should be one invocation per browser request
-- Cloudflare Workers CPU and subrequest metrics stay comfortably below limits
+- Landing 从 Cloudflare 资源加载
+- 被哈希的 Landing 静态资源在被路由规则排除时不会调用 Pages Functions
+- Main 的 RSC/page 响应正确加载
+- Dashboard 路由和 chunk 正确加载
+- Auth 重定向对浏览器可见
+- 浏览器代码中的 `/api/graphql` 在不修改 CORS 的情况下可用
+- 发往 Phoenix 的 cookie 只限于 `groupher-auth.token`
+- 浏览器中没有出现内容解码错误
+- 直接访问 `gateway.groupher.com` 与 Cloudflare 路由的 `groupher.com`
+  在 TTFB 和行为上都足够接近
+- Pages Functions 调用量符合预期：
+  - 静态资源应接近零次调用
+  - 产品/API/auth 路径应是每个浏览器请求一次调用
+- Cloudflare Workers 的 CPU 和 subrequest 指标稳定低于限制
 
-After this passes, remove Vercel Gateway from the production `groupher.com`
-request path. Keep the code until rollback confidence is acceptable, then decide
-whether to delete or archive `backend/gateway`.
+通过后，将 Vercel Gateway 从生产 `groupher.com` 请求路径中移除。保留代码，直到
+回滚信心足够，再决定是否删除或归档 `backend/gateway`。
 
-## Open Questions
+## 开放问题
 
-- Does the deployed Dashboard origin currently require `/dashboard` to be
-  preserved or trimmed?
-- Should canonical host be apex `groupher.com` or `www.groupher.com` after Pages
-  cutover?
-- Does Auth rely on host-specific callback URLs that need Cloudflare-specific
-  environment updates?
-- Should `api.groupher.com` stay DNS-only to Phoenix, or should it later move
-  behind Cloudflare WAF/Worker as a separate API edge project?
-- What is the measured monthly request and bandwidth split between Landing
-  static assets, product page requests, API requests, and auth requests?
-- Do any future real-time features need WebSocket upgrade through the public
-  entry? Current frontend source does not show business WebSocket usage, but this
-  should remain a release checklist item.
+- 已部署的 Dashboard 源站当前是否需要保留或裁剪 `/dashboard`？
+- Pages 切换后，canonical host 应该是 apex `groupher.com` 还是 `www.groupher.com`？
+- Auth 是否依赖需要 Cloudflare 特定环境更新的 host-specific 回调 URL？
+- `api.groupher.com` 应该继续 DNS-only 指向 Phoenix，还是未来应作为单独的 API edge
+  项目放到 Cloudflare WAF/Worker 后面？
+- Landing 静态资源、产品页面请求、API 请求和 auth 请求之间的月请求量与带宽拆分的
+  实测数据是多少？
+- 未来是否有实时功能需要通过公共入口进行 WebSocket upgrade？当前前端源码没有
+  显示业务 WebSocket 使用，但这仍应保留为发布检查项。
 
-## Recommendation
+## 建议
 
-This migration is worth doing.
+这个迁移值得做。
 
-The first production target should be:
+首个生产目标应是：
 
 ```text
 groupher.com -> Cloudflare Pages Landing advanced _worker.js
 ```
 
-This gives the static Landing path the shortest route while preserving the
-path-first product model and same-origin `/api/graphql` contract. It also lets
-the Vercel Gateway leave the primary production path without forcing Main,
-Dashboard, Auth, or Phoenix to move at the same time.
+这样可以让静态 Landing 路径走最短路径，同时保留 path-first 的产品模型和同源
+`/api/graphql` 合约。它也允许 Vercel Gateway 脱离主生产路径，而不强迫 Main、
+Dashboard、Auth 或 Phoenix 同时迁移。

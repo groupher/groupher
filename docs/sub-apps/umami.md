@@ -76,7 +76,7 @@ adapter；不要把 Umami admin credential 发送到浏览器。
 - `Integrations / Third-party / Analytics` 面向用户自带的外部分析服务，不承载
   Groupher 内置 Web Analysis 的持久模型。
 - Analytics event 不通过 `posthouse`；`posthouse` 处理消息和投递协议。
-- 周报中需要统计摘要时，`ai` 或 `content-press` 读取经过权限校验的聚合 DTO，
+- 周报中需要统计摘要时，`ai` 或 `Press` 读取经过权限校验的聚合 DTO，
   不能直接访问 Umami 数据库。
 - 风控行为统计若需要 Umami 信号，应先形成有界投影，再交给 `risk-center`。
 

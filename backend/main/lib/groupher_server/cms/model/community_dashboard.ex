@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a
-  @optional_fields ~w(base_info wallpaper seo layout enable thread_emotions rss header_links footer_links footer_oneline_links social_links doc_faq third_party_analytics)a
+  @optional_fields ~w(base_info wallpaper seo layout enable thread_emotions rss header_links footer_links footer_oneline_links social_links doc_faq third_party_analytics umami_website_id)a
 
   def default do
     %{
@@ -47,6 +47,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
 
   schema "community_dashboards" do
     belongs_to(:community, Community)
+    field(:umami_website_id, Ecto.UUID)
     embeds_one(:base_info, Embeds.Dashboard.BaseInfo, on_replace: :delete)
     embeds_one(:wallpaper, Embeds.Dashboard.Wallpaper, on_replace: :delete)
     embeds_one(:seo, Embeds.Dashboard.SEO, on_replace: :delete)

@@ -1,9 +1,9 @@
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
 import useActiveTag from '~/hooks/useActiveTag'
+import { usePathname, useRouter, useSearchParams } from '~/platform'
 import type { TGroupedTags, TResState, TTag } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 

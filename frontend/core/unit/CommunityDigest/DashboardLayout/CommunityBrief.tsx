@@ -1,5 +1,3 @@
-import Link from 'next/link'
-
 import { BRAND_LAYOUT } from '~/const/layout'
 import { APPLY_COMMUNITY } from '~/const/route'
 import { THREAD_PATH } from '~/const/thread'
@@ -19,10 +17,11 @@ import SettingSVG from '~/icons/Setting'
 import GlobalSVG from '~/icons/social/Global'
 import ChangelogSVG from '~/icons/TadaRaw'
 import Img from '~/Img'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import ImgFallback from '~/widgets/ImgFallback'
-import Tooltip from '~/widgets/Tooltip'
+import ImgFallback from '~/ui/ImgFallback'
+import Tooltip from '~/ui/Tooltip'
 
 import useSalon, { cn, cnMerge } from '../salon/dashboard_layout/community_brief'
 

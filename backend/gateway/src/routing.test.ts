@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getDashboardUrl,
+  getDashUrl,
   isAuthRoute,
+  isDashHost,
+  isDashRoute,
   isDashboardRoute,
   isDashboardStaticRoute,
   isGraphqlRoute,
   isLandingHost,
   isLandingStaticRoute,
   isMainHost,
+  isPlatformRootHost,
+  isPressRoute,
   resolveGatewayTarget,
   SITE,
 } from './routing'
@@ -37,6 +42,7 @@ describe('gateway/routing', () => {
       expect(isMainHost('dashboard.groupher.localhost')).toBe(false)
       expect(isLandingHost('landing.groupher.localhost')).toBe(true)
       expect(isLandingHost('groupher.localhost')).toBe(false)
+      expect(isDashHost('dash.groupher.localhost')).toBe(true)
     })
   })
 
@@ -59,7 +65,30 @@ describe('gateway/routing', () => {
     })
   })
 
+  describe('isDashRoute', () => {
+    it('returns true for dash subdomain', () => {
+      expect(isDashRoute('/home/overview', 'dash.groupher.com')).toBe(true)
+    })
+
+    it('returns true for /xxx/dash pattern', () => {
+      expect(isDashRoute('/home/dash', 'www.groupher.com')).toBe(true)
+      expect(isDashRoute('/home/dash/overview', 'www.groupher.com')).toBe(true)
+    })
+
+    it('returns false for non-dash route', () => {
+      expect(isDashRoute('/organizations/settings/dash', 'www.groupher.com')).toBe(false)
+      expect(isDashRoute('/foo/bar/dash', 'www.groupher.com')).toBe(false)
+      expect(isDashRoute('/home/dashboard', 'www.groupher.com')).toBe(false)
+    })
+  })
+
   describe('static route predicates', () => {
+    it('keeps platform root files separate from custom domains', () => {
+      expect(isPlatformRootHost('groupher.com')).toBe(true)
+      expect(isPlatformRootHost('docs.example.com')).toBe(false)
+      expect(isPressRoute('/home/post/1.md')).toBe(true)
+      expect(isPressRoute('/home/sitemap.xml')).toBe(true)
+    })
     it('detects landing static routes', () => {
       expect(isLandingStaticRoute('/landing/_next/static/chunks/app.js')).toBe(true)
       expect(isLandingStaticRoute('/dashboard/_next/static/chunks/app.js')).toBe(false)
@@ -71,6 +100,29 @@ describe('gateway/routing', () => {
     })
   })
 
+  describe('getDashUrl', () => {
+    it('keeps pathname/search for dash subdomain', () => {
+      const url = getDashUrl('/home/overview', 'dash.groupher.com', '?tab=a')
+      expect(url.origin).toBe(new URL(SITE.DASH).origin)
+      expect(url.pathname).toBe('/home/overview')
+      expect(url.search).toBe('?tab=a')
+    })
+
+    it('preserves the public /xxx/dash path', () => {
+      const url = getDashUrl('/home/dash', 'www.groupher.com', '?page=2')
+      expect(url.origin).toBe(new URL(SITE.DASH).origin)
+      expect(url.pathname).toBe('/home/dash')
+      expect(url.search).toBe('?page=2')
+    })
+
+    it('preserves nested public dash route segments', () => {
+      const url = getDashUrl('/home/dash/overview', 'www.groupher.com', '?tab=preview')
+      expect(url.origin).toBe(new URL(SITE.DASH).origin)
+      expect(url.pathname).toBe('/home/dash/overview')
+      expect(url.search).toBe('?tab=preview')
+    })
+  })
+
   describe('getDashboardUrl', () => {
     it('keeps pathname/search for dashboard subdomain', () => {
       const url = getDashboardUrl('/cps', 'dashboard.groupher.com', '?page=1&tab=a')
@@ -79,10 +131,10 @@ describe('gateway/routing', () => {
       expect(url.search).toBe('?page=1&tab=a')
     })
 
-    it('rewrites /xxx/dashboard to /xxx', () => {
+    it('preserves the canonical /xxx/dashboard route', () => {
       const url = getDashboardUrl('/cps/dashboard', 'www.groupher.com', '?page=2')
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps')
+      expect(url.pathname).toBe('/cps/dashboard')
       expect(url.search).toBe('?page=2')
     })
 
@@ -93,7 +145,7 @@ describe('gateway/routing', () => {
         '?tab=preview',
       )
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps/appearance/kanban')
+      expect(url.pathname).toBe('/cps/dashboard/appearance/kanban')
       expect(url.search).toBe('?tab=preview')
     })
 
@@ -108,10 +160,10 @@ describe('gateway/routing', () => {
       expect(url.search).toBe('?tab=preview')
     })
 
-    it('falls back to dashboard home for unexpected path', () => {
+    it('preserves unexpected paths for the dashboard app to handle', () => {
       const url = getDashboardUrl('/dashboard', 'www.groupher.com', '')
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/')
+      expect(url.pathname).toBe('/dashboard')
       expect(url.search).toBe('')
     })
   })
@@ -160,22 +212,56 @@ describe('gateway/routing', () => {
       expect(target.requiresBodyProxy).toBe(true)
     })
 
+    it('routes community Press outputs before Main', () => {
+      expect(resolve('/home/post/1.md', 'groupher.com').targetKind).toBe('press')
+      expect(resolve('/home/feed.xml', 'groupher.com').targetKind).toBe('press')
+      expect(resolve('/home/llms.txt', 'groupher.com').targetKind).toBe('press')
+    })
+
+    it('injects community scope for custom-domain Press routes', () => {
+      process.env.CUSTOM_DOMAIN_COMMUNITIES = JSON.stringify({ 'docs.example.com': 'home' })
+
+      expect(resolve('/post/feed.xml', 'docs.example.com').targetUrl.pathname).toBe(
+        '/home/post/feed.xml',
+      )
+      expect(resolve('/doc/8/start.md', 'docs.example.com').targetUrl.pathname).toBe(
+        '/home/doc/8/start.md',
+      )
+
+      delete process.env.CUSTOM_DOMAIN_COMMUNITIES
+    })
+
     it('routes explicit Main and Landing subdomains before canonical path rules', () => {
       expect(resolve('/', 'main.groupher.localhost').targetKind).toBe('main')
       expect(resolve('/unknown', 'landing.groupher.localhost').targetKind).toBe('landing')
+      expect(resolve('/home/overview', 'dash.groupher.localhost').targetKind).toBe('dash')
     })
 
-    it('rewrites dashboard route to dashboard site and trims /dashboard suffix', () => {
+    it('routes the canonical dashboard path to the dashboard app unchanged', () => {
       const target = resolve('/cps/dashboard', 'www.groupher.com', '?page=1')
       expect(target.targetKind).toBe('dashboard')
-      expect(target.targetUrl.pathname).toBe('/cps')
+      expect(target.targetUrl.pathname).toBe('/cps/dashboard')
       expect(target.targetUrl.search).toBe('?page=1')
+    })
+
+    it('routes dash route to dash site with its public path intact', () => {
+      const target = resolve('/home/dash', 'www.groupher.com', '?page=1')
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/home/dash')
+      expect(target.targetUrl.search).toBe('?page=1')
+    })
+
+    it('routes nested dash route with its public path intact', () => {
+      const target = resolve('/home/dash/overview', 'www.groupher.com', '?tab=preview')
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/home/dash/overview')
+      expect(target.targetUrl.search).toBe('?tab=preview')
     })
 
     it('rewrites nested dashboard route and keeps real route segments', () => {
       const target = resolve('/cps/dashboard/appearance/kanban', 'www.groupher.com', '?tab=preview')
       expect(target.targetKind).toBe('dashboard')
-      expect(target.targetUrl.pathname).toBe('/cps/appearance/kanban')
+      expect(target.targetUrl.pathname).toBe('/cps/dashboard/appearance/kanban')
       expect(target.targetUrl.search).toBe('?tab=preview')
     })
 
@@ -197,6 +283,12 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.pathname).toBe('/home/dashboard')
     })
 
+    it('uses the original Portless host for dash requests', () => {
+      const target = resolve('/home/overview', '127.0.0.1:3003', '', 'dash.groupher.localhost')
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/home/overview')
+    })
+
     it('routes static assets to the owning sub-application', () => {
       expect(resolve('/dashboard/_next/static/chunks/app.js', 'www.groupher.com').targetKind).toBe(
         'dashboard',
@@ -204,6 +296,14 @@ describe('gateway/routing', () => {
       expect(resolve('/landing/_next/static/chunks/app.js', 'www.groupher.com').targetKind).toBe(
         'landing',
       )
+    })
+
+    it('routes namespaced Dashboard HMR to Dashboard without a referer', () => {
+      const target = resolve('/dashboard/_next/hmr', 'groupher.localhost', '?id=dev')
+
+      expect(target.targetKind).toBe('dashboard')
+      expect(target.targetUrl.pathname).toBe('/dashboard/_next/hmr')
+      expect(target.targetUrl.search).toBe('?id=dev')
     })
 
     it('routes unprefixed development chunks by the dashboard referer', () => {
@@ -218,6 +318,121 @@ describe('gateway/routing', () => {
 
       expect(target.targetKind).toBe('dashboard')
       expect(target.targetUrl.pathname).toBe('/_next/static/chunks/app.js')
+    })
+
+    it('routes unprefixed development chunks by the dash referer', () => {
+      const target = resolve(
+        '/_vite/client',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dash/overview',
+      )
+
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/_vite/client')
+    })
+
+    it('routes Dash Vite development assets without requiring a page referer', () => {
+      const moduleTarget = resolve(
+        '/@id/virtual:tanstack-start-dev-client-entry',
+        'groupher.localhost',
+        '',
+        undefined,
+      )
+      const stylesheetTarget = resolve(
+        '/@tanstack-start/styles.css',
+        'groupher.localhost',
+        '?routes=__root__',
+        undefined,
+      )
+      const refreshTarget = resolve('/@react-refresh', 'groupher.localhost', '', undefined)
+      const fsTarget = resolve(
+        '/@fs/Users/xieyiming/code/groupher/groupher/node_modules/vite/dist/client/env.mjs',
+        'groupher.localhost',
+        '',
+        undefined,
+      )
+      const dependencyTarget = resolve(
+        '/node_modules/.vite/deps/react.js',
+        'groupher.localhost',
+        '',
+        undefined,
+      )
+      const hmrTarget = resolve('/__dash_hmr', 'groupher.localhost', '', undefined)
+      const sourceTarget = resolve('/src/router.tsx', 'groupher.localhost', '', undefined)
+
+      expect(moduleTarget.targetKind).toBe('dash')
+      expect(moduleTarget.targetUrl.pathname).toBe('/@id/virtual:tanstack-start-dev-client-entry')
+      expect(stylesheetTarget.targetKind).toBe('dash')
+      expect(stylesheetTarget.targetUrl.pathname).toBe('/@tanstack-start/styles.css')
+      expect(stylesheetTarget.targetUrl.search).toBe('?routes=__root__')
+      expect(refreshTarget.targetKind).toBe('dash')
+      expect(refreshTarget.targetUrl.pathname).toBe('/@react-refresh')
+      expect(fsTarget.targetKind).toBe('dash')
+      expect(fsTarget.targetUrl.pathname).toBe(
+        '/@fs/Users/xieyiming/code/groupher/groupher/node_modules/vite/dist/client/env.mjs',
+      )
+      expect(dependencyTarget.targetKind).toBe('dash')
+      expect(dependencyTarget.targetUrl.pathname).toBe('/node_modules/.vite/deps/react.js')
+      expect(hmrTarget.targetKind).toBe('dash')
+      expect(hmrTarget.targetUrl.pathname).toBe('/__dash_hmr')
+      expect(sourceTarget.targetKind).toBe('dash')
+      expect(sourceTarget.targetUrl.pathname).toBe('/src/router.tsx')
+    })
+
+    it('routes shared core static assets by the dash page referer', () => {
+      const wallpaperTarget = resolve(
+        '/wallpaper/picture/travel.webp',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dash/overview',
+      )
+      const iconTarget = resolve(
+        '/icons/lucide/tag.svg',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dash/appearance',
+      )
+
+      expect(wallpaperTarget.targetKind).toBe('dash')
+      expect(wallpaperTarget.targetUrl.pathname).toBe('/wallpaper/picture/travel.webp')
+      expect(iconTarget.targetKind).toBe('dash')
+      expect(iconTarget.targetUrl.pathname).toBe('/icons/lucide/tag.svg')
+    })
+
+    it('routes unprefixed app assets by the dash page referer', () => {
+      const avatarTarget = resolve(
+        '/avatars/2-purple.png',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dash/post/content',
+      )
+
+      expect(avatarTarget.targetKind).toBe('dash')
+      expect(avatarTarget.targetUrl.pathname).toBe('/avatars/2-purple.png')
+    })
+
+    it('routes TanStack server functions by the dash page referer', () => {
+      const target = resolve(
+        '/_serverFn/load-paged-posts',
+        'groupher.localhost',
+        '?payload=encoded',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dash/post/content',
+      )
+
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/_serverFn/load-paged-posts')
+      expect(target.targetUrl.search).toBe('?payload=encoded')
     })
 
     it('routes unprefixed development chunks by the landing referer', () => {

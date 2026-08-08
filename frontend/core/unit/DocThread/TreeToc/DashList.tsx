@@ -1,8 +1,8 @@
 import { m } from 'motion/react'
-import Link from 'next/link'
 
 import { cn } from '~/css'
 import SidebarIcon from '~/icons/dsb/Sidebar'
+import { Link } from '~/platform'
 import type { TDocPublicTreeGroup } from '~/spec'
 
 import { getNodeHref, isExternalHref } from '../Tree/helper'

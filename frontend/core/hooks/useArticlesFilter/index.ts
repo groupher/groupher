@@ -1,8 +1,7 @@
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS, CAT, ORDER, STATUS } from '~/const/gtd'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
+import { usePathname, useRouter, useSearchParams } from '~/platform'
 import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus, TResState } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 

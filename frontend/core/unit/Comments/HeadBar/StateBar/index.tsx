@@ -2,8 +2,8 @@ import { type FC, memo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import EditPenSVG from '~/icons/EditPen'
-import Button from '~/widgets/Buttons/Button'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import Button from '~/ui/Buttons/Button'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import type { TProps as TBase } from '..'
 import useSalon from '../salon/state_bar'

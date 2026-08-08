@@ -4,8 +4,8 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import CheckerSVG from '~/icons/Checker'
 import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import type { TWallpaperData } from '~/spec'
-import ColorsPresetBall from '~/widgets/ColorsPresetBall'
-import TextureSwatchPreview from '~/widgets/TuningFields/TextureSwatchPreview'
+import ColorsPresetBall from '~/ui/ColorsPresetBall'
+import TextureSwatchPreview from '~/ui/TuningFields/TextureSwatchPreview'
 
 import useSalon from '../salon/hud_panel'
 

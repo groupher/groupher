@@ -1,9 +1,9 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import { sortByIndex } from '~/helper'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import Img from '~/Img'
+import { Link } from '~/platform'
 import type { TMediaReport } from '~/spec'
 
 import useSalon from './salon/media_reports'

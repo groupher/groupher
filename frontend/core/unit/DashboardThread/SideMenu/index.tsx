@@ -8,7 +8,7 @@ import { DSB_POST_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import type { TDsbPath } from '~/spec'
 import useDashboardStore from '~/stores/dashboard/hooks'
-import Sticky from '~/widgets/Sticky'
+import Sticky from '~/ui/Sticky'
 
 import { DASHBOARD_SIDE_MENU_STICKY_OFFSET, MENU, MENU_VIEW } from '../constant'
 import { getMenuDirection, menuVariants, type TMenuDirection } from './animation'

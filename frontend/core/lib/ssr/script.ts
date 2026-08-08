@@ -4,10 +4,16 @@ import { THEME_FIRST_PAINT_VAR_NAMES } from '~/const/theme-first-paint.generated
 const serializeForInlineScript = (value: unknown): string =>
   JSON.stringify(value).replace(/</g, '\\u003c')
 
-export const prePaintThemeDetectScript = () => `
+const withTryCatch = (script: string): string => `
 (function() {
   try {
-    var stored = localStorage.getItem('${LOCAL_THEME_KEY}');
+${script}
+  } catch (e) {}
+})();
+`
+
+export const prePaintThemeDetectScript = () =>
+  withTryCatch(`    var stored = localStorage.getItem('${LOCAL_THEME_KEY}');
     var theme = '${THEME_MODE.LIGHT}';
 
     if (stored === '${THEME_MODE.DARK}' || stored === '${THEME_MODE.LIGHT}') {
@@ -19,17 +25,10 @@ export const prePaintThemeDetectScript = () => `
 
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.colorScheme = theme;
-  } catch (e) {}
-})();
-`
+`)
 
-export const prePaintRuntimeSeedScript = () => `
-(function() {
-  try {
-    window.__GROUPHER_INITIAL_NOW__ = Date.now();
-  } catch (e) {}
-})();
-`
+export const prePaintInitTime = () =>
+  withTryCatch(`    window.__GROUPHER_INITIAL_NOW__ = Date.now();`)
 
 /**
  * Build a hydration-safe first-paint CSS variable snapshot.
@@ -43,10 +42,7 @@ export const injectThemeFirstPaintVars = (): string => {
   const names = serializeForInlineScript(THEME_FIRST_PAINT_VAR_NAMES)
   const styleId = serializeForInlineScript(THEME_FIRST_PAINT_STYLE_ID)
 
-  return `
-(function() {
-  try {
-    var names = ${names};
+  return withTryCatch(`    var names = ${names};
     var styleId = ${styleId};
     var root = document.documentElement;
     var style = document.getElementById(styleId);
@@ -92,9 +88,7 @@ export const injectThemeFirstPaintVars = (): string => {
     }
 
     style.textContent = css;
-  } catch (e) {}
-})();
-`
+`)
 }
 
 export const THEME_FIRST_PAINT_VARS_SCRIPT = injectThemeFirstPaintVars()

@@ -12,7 +12,7 @@
     "./oxlint": "./config/oxlint.json",
     "./next.config": "./next.config.js",
     "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
-    "./dev-hub-reporter/react": "./widgets/DevHubReporter/index.tsx"
+    "./dev-hub-reporter/react": "./ui/DevHubReporter/index.tsx"
   },
   "scripts": {
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.app.json",

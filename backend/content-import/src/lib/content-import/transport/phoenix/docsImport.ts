@@ -12,7 +12,8 @@
  * @see docs/bulk-import/content-import-architecture.md
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
-import type { TArtimentBodyBag } from '../../../artiment-publisher/types'
+import type { TArtimentBodyBag } from '@groupher/artiment-publisher'
+
 import {
   requestGroupherGraphQL,
   type TGroupherGraphQLOptions as TRequestOptions,

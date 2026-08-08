@@ -403,7 +403,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert public_article_document.json == @plate_body_updated
 
       document_payload_fields =
-        ~w(json markdown markdown_toc html xml rss plain_text digest body_hash schema_version)a
+        ~w(json markdown markdown_toc html plain_text digest body_hash schema_version)a
 
       assert Map.take(public_article_document, document_payload_fields) ==
                Map.take(draft_document_before_second_publish, document_payload_fields)

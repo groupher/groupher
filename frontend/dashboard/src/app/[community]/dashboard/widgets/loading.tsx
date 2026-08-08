@@ -1,6 +1,6 @@
 'use client'
 
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 const Loading = () => {
   return <LavaLampLoading />
