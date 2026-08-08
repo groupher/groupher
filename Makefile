@@ -108,6 +108,15 @@ be.content-import.build:
 be.content-import.test:
 	yarn workspace @groupher/backend-content-import test
 
+be.press.start:
+	yarn workspace @groupher/press db:migrate && yarn run dev:press
+
+be.press.build:
+	yarn run build:prod:press
+
+be.press.test:
+	yarn workspace @groupher/press test
+
 # assets hub
 fe.assets-hub.deploy:
 	yarn workspace @groupher/assets-hub deploy:worker

@@ -1,6 +1,6 @@
 export default function useSalon() {
   return {
-    wrapper: 'rounded-md p-5',
+    wrapper: 'rounded-md py-5',
     head: 'row-between mb-5',
     title: 'text-title text-base',
     subtitle: 'text-digest mt-1 text-xs',

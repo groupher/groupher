@@ -8,12 +8,12 @@ import {
   tickIndexesFor,
   xForIndex,
 } from '../helper'
-import type { TAnalysisWebOverview } from '../spec'
+import type { TAnalysisTrendsOverview } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
   emptyLabel: string
-  points: TAnalysisWebOverview['timeseries']['points']
+  points: TAnalysisTrendsOverview['chart']['points']
   title: string
   viewsLabel: string
   visitsLabel: string
@@ -38,7 +38,12 @@ export default function TrendChart({ emptyLabel, points, title, viewsLabel, visi
         <div className={s.maxValue}>{hasPoints ? prettyNum(max) : null}</div>
       </div>
 
-      <svg viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`} className={s.svg} role='img'>
+      <svg
+        viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`}
+        className={s.svg}
+        preserveAspectRatio='none'
+        role='img'
+      >
         <title>{title}</title>
         <defs>
           <linearGradient id='trendViewsFill' x1='0' x2='0' y1='0' y2='1'>

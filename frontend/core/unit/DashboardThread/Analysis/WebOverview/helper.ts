@@ -2,10 +2,10 @@ import { prettyNum } from '~/fmt'
 
 import { CHART_SIZE } from './constant'
 import type {
+  TAnalysisTrendsOverview,
   TAnalysisWebCountMetrics,
   TAnalysisWebDimensionMetrics,
   TAnalysisWebMetric,
-  TAnalysisWebOverview,
 } from './spec'
 
 const dateFormatter = new Intl.DateTimeFormat('en', {
@@ -14,15 +14,10 @@ const dateFormatter = new Intl.DateTimeFormat('en', {
   timeZone: 'UTC',
 })
 
-export const shouldUseDemoData = (data: TAnalysisWebOverview): boolean => {
+export const shouldUseDemoData = (data: TAnalysisTrendsOverview): boolean => {
   if (process.env.NODE_ENV === 'production') return false
 
-  return (
-    data.status === 'unavailable' ||
-    (data.timeseries.points.length === 0 &&
-      data.pages.path.length === 0 &&
-      data.sources.referrer.length === 0)
-  )
+  return data.status === 'unavailable' || data.chart.points.length === 0
 }
 
 export const formatMetric = (metric: TAnalysisWebMetric): string => prettyNum(metric.value)

@@ -23,7 +23,6 @@ defmodule GroupherServer.Analysis.WebTest do
       previous = Application.get_env(:groupher_server, :web_analysis)
 
       Application.put_env(:groupher_server, :web_analysis,
-        website_id: "test",
         api_token: "token",
         timeout: -1
       )
@@ -35,7 +34,6 @@ defmodule GroupherServer.Analysis.WebTest do
       config = Config.runtime()
 
       assert %Config.Runtime{} = config
-      assert config.website_id == "test"
       assert config.api_token == "token"
       refute Map.has_key?(config, :timeout)
     end
@@ -141,10 +139,44 @@ defmodule GroupherServer.Analysis.WebTest do
     end
   end
 
+  describe "Umami stats projection" do
+    test "uses the provider comparison payload without a second stats query" do
+      {current, previous} =
+        Umami.normalize_stats(%{
+          "pageviews" => 100,
+          "visitors" => 40,
+          "visits" => 50,
+          "bounces" => 10,
+          "totaltime" => 600,
+          "comparison" => %{
+            "pageviews" => 80,
+            "visitors" => 30,
+            "visits" => 40,
+            "bounces" => 8,
+            "totaltime" => 400
+          }
+        })
+
+      assert current == %{pageviews: 100, visitors: 40, visits: 50, bounces: 10, total_time: 600}
+      assert previous == %{pageviews: 80, visitors: 30, visits: 40, bounces: 8, total_time: 400}
+    end
+  end
+
   describe "summary fallback" do
+    test "does not provision an analytics website when Umami is not configured" do
+      previous = Application.get_env(:groupher_server, :web_analysis)
+      Application.put_env(:groupher_server, :web_analysis, [])
+
+      on_exit(fn ->
+        Application.put_env(:groupher_server, :web_analysis, previous)
+      end)
+
+      assert {:error, :not_configured} = Web.provision_community(%Community{slug: "home"})
+    end
+
     test "returns unavailable DTO when Umami is not configured" do
       previous = Application.get_env(:groupher_server, :web_analysis)
-      Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+      Application.put_env(:groupher_server, :web_analysis, [])
 
       on_exit(fn ->
         Application.put_env(:groupher_server, :web_analysis, previous)
@@ -160,27 +192,38 @@ defmodule GroupherServer.Analysis.WebTest do
 
     test "returns unavailable overview DTO when Umami is not configured" do
       previous = Application.get_env(:groupher_server, :web_analysis)
-      Application.put_env(:groupher_server, :web_analysis, website_id: "test")
+      Application.put_env(:groupher_server, :web_analysis, [])
 
       on_exit(fn ->
         Application.put_env(:groupher_server, :web_analysis, previous)
       end)
 
-      {:ok, result} = Web.overview(%Community{slug: "home"})
+      {:ok, result} = Web.trends_overview(%Community{slug: "home"})
 
       assert result.status == "unavailable"
-      assert result.path_scope == "/home"
       assert result.range.bucket == "day"
       assert result.summary.pageviews.value == 0
       assert result.summary.pageviews.previous_value == 0
       assert result.summary.pageviews.change_rate == nil
-      assert result.timeseries.points == []
-      assert result.pages.path == []
-      assert result.environment.browser == []
-      assert result.location.country == []
-      assert result.traffic.cells == []
-      assert result.traffic.timezone == "UTC"
+      assert result.chart.points == []
       assert [%{code: "not_configured", section: "overview"}] = result.errors
+    end
+
+    test "returns an explicit unavailable section when Umami is not configured" do
+      previous = Application.get_env(:groupher_server, :web_analysis)
+      Application.put_env(:groupher_server, :web_analysis, [])
+
+      on_exit(fn ->
+        Application.put_env(:groupher_server, :web_analysis, previous)
+      end)
+
+      {:ok, pages} = Web.trend_pages(%Community{slug: "home"}, %{}, :path)
+      {:ok, traffic} = Web.trend_traffic(%Community{slug: "home"})
+
+      assert %{status: "unavailable", items: [], error: %{section: "pages"}} = pages
+
+      assert %{status: "unavailable", cells: [], timezone: "UTC", error: %{section: "traffic"}} =
+               traffic
     end
   end
 end

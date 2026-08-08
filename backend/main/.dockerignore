@@ -1,0 +1,9 @@
+.git
+.elixir_ls
+_build
+cover
+deps
+test
+erl_crash.dump
+.env
+.env.*

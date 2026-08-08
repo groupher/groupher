@@ -1,0 +1,143 @@
+import type { PressArticle, PressConfig, RSSFeed, SiteManifest, Thread } from './types'
+
+type GraphQLResponse<T> = { data?: T; errors?: Array<{ message: string }> }
+
+const normalizeThread = (thread: string): Thread => thread.toLowerCase() as Thread
+
+const normalizeConfig = (config: PressConfig): PressConfig => ({
+  ...config,
+  feedType: String(config.feedType).toLowerCase() as PressConfig['feedType'],
+  feedThreads: config.feedThreads.map((thread) => normalizeThread(thread)),
+})
+
+const normalizeArticle = (article: PressArticle): PressArticle => ({
+  ...article,
+  thread: normalizeThread(article.thread),
+})
+
+const normalizeFeed = (feed: RSSFeed): RSSFeed => ({
+  ...feed,
+  config: normalizeConfig(feed.config),
+  thread: feed.thread ? normalizeThread(feed.thread) : undefined,
+  items: feed.items.map((item) => ({ ...item, thread: normalizeThread(item.thread) })),
+})
+
+const normalizeSiteManifest = (manifest: SiteManifest): SiteManifest => ({
+  ...manifest,
+  config: normalizeConfig(manifest.config),
+  threads: manifest.threads.map(normalizeThread),
+  items: manifest.items.map((item) => ({ ...item, thread: normalizeThread(item.thread) })),
+})
+
+export class OriginError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message)
+  }
+}
+
+export type Origin = {
+  article(input: { community: string; thread: Thread; innerId: string }): Promise<PressArticle>
+  communityFeed(community: string): Promise<RSSFeed>
+  threadFeed(community: string, thread: Thread): Promise<RSSFeed>
+  siteManifest(community: string): Promise<SiteManifest>
+}
+
+const ARTICLE_QUERY = `query PressArticle($article: ArticlePathInput!) {
+  pressArticle(article: $article) {
+    communityRef articleRef articleRevision thread canonicalPath canonicalOrigin canonicalUrl
+    title subtitle markdown html digest bodyHash publishedAt updatedAt visibility
+    author { login name avatar } tags { slug title }
+  }
+}`
+
+const FEED_FIELDS = `community { publicRef slug title description locale canonicalOrigin canonicalPath }
+  config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
+  thread configRevision feedRevision
+  items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }`
+
+const COMMUNITY_FEED_QUERY = `query PressCommunityFeed($community: String!, $input: PressCommunityRSSFeedInput!) {
+  pressCommunityRSSFeed: pressCommunityRssFeed(community: $community, input: $input) { ${FEED_FIELDS} }
+}`
+
+const THREAD_FEED_QUERY = `query PressThreadFeed($community: String!, $thread: Thread!, $input: PressThreadRSSFeedInput!) {
+  pressThreadRSSFeed: pressThreadRssFeed(community: $community, thread: $thread, input: $input) { ${FEED_FIELDS} }
+}`
+
+const SITE_QUERY = `query PressSite($community: String!) {
+  pressSiteManifest(community: $community) {
+    community { publicRef slug title description locale canonicalOrigin canonicalPath }
+    config { markdownEnabled feedEnabled feedType feedCount feedThreads llmsEnabled sitemapEnabled revision }
+    siteRevision threads
+    items { articleRef articleRevision thread title digest html canonicalUrl publishedAt updatedAt author { login name avatar } tags { slug title } }
+  }
+}`
+
+export const createPhoenixOrigin = (
+  endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql',
+  fetcher: typeof fetch = fetch,
+): Origin => {
+  const query = async <T>(document: string, variables: Record<string, unknown>): Promise<T> => {
+    let response: Response
+    try {
+      response = await fetcher(endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-groupher-client': 'press-v1' },
+        body: JSON.stringify({ query: document, variables }),
+        signal: AbortSignal.timeout(5_000),
+      })
+    } catch (error) {
+      throw new OriginError(error instanceof Error ? error.message : 'Phoenix unavailable', 503)
+    }
+
+    if (!response.ok) throw new OriginError(`Phoenix returned ${response.status}`, 502)
+    const payload = (await response.json()) as GraphQLResponse<T>
+    if (payload.errors?.length) {
+      const message = payload.errors.map((error) => error.message).join('; ')
+      const status = /not exist|disabled|not found/i.test(message) ? 404 : 502
+      throw new OriginError(message, status)
+    }
+    if (!payload.data) throw new OriginError('Phoenix returned no data', 502)
+    return payload.data
+  }
+
+  return {
+    async article(input) {
+      const data = await query<{ pressArticle: PressArticle | null }>(ARTICLE_QUERY, {
+        article: {
+          community: input.community,
+          thread: input.thread.toUpperCase(),
+          innerId: input.innerId,
+        },
+      })
+      if (!data.pressArticle) throw new OriginError('Press Article not found', 404)
+      return normalizeArticle(data.pressArticle)
+    },
+    async communityFeed(community) {
+      const data = await query<{ pressCommunityRSSFeed: RSSFeed | null }>(COMMUNITY_FEED_QUERY, {
+        community,
+        input: {},
+      })
+      if (!data.pressCommunityRSSFeed) throw new OriginError('Press Feed not found', 404)
+      return normalizeFeed(data.pressCommunityRSSFeed)
+    },
+    async threadFeed(community, thread) {
+      const data = await query<{ pressThreadRSSFeed: RSSFeed | null }>(THREAD_FEED_QUERY, {
+        community,
+        thread: thread.toUpperCase(),
+        input: {},
+      })
+      if (!data.pressThreadRSSFeed) throw new OriginError('Press Feed not found', 404)
+      return normalizeFeed(data.pressThreadRSSFeed)
+    },
+    async siteManifest(community) {
+      const data = await query<{ pressSiteManifest: SiteManifest | null }>(SITE_QUERY, {
+        community,
+      })
+      if (!data.pressSiteManifest) throw new OriginError('Press Site not found', 404)
+      return normalizeSiteManifest(data.pressSiteManifest)
+    },
+  }
+}

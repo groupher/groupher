@@ -3,7 +3,7 @@ import { THEME_FIRST_PAINT_VAR_NAMES } from '~/const/theme-first-paint.generated
 
 import {
   injectThemeFirstPaintVars,
-  prePaintRuntimeSeedScript,
+  prePaintInitTime,
   prePaintThemeDetectScript,
   THEME_FIRST_PAINT_VARS_SCRIPT,
 } from './script'
@@ -50,11 +50,11 @@ describe('prePaintThemeDetectScript', () => {
   })
 })
 
-describe('prePaintRuntimeSeedScript', () => {
+describe('prePaintInitTime', () => {
   it('captures a browser-side initial timestamp before hydration', () => {
     vi.spyOn(Date, 'now').mockReturnValue(123456)
 
-    runInlineScript(prePaintRuntimeSeedScript())
+    runInlineScript(prePaintInitTime())
 
     expect(
       (window as Window & { __GROUPHER_INITIAL_NOW__?: number }).__GROUPHER_INITIAL_NOW__,

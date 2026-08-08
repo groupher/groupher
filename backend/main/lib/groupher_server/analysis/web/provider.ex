@@ -16,11 +16,31 @@ defmodule GroupherServer.Analysis.Web.Provider do
   @callback summary(Community.t(), map()) :: {:ok, map()} | {:error, term()}
 
   @doc """
-  Returns the v2 overview DTO seed for one community and time range.
-
-  Providers may return partial data. The `GroupherServer.Analysis.Web` context is
-  responsible for wrapping provider data into Dashboard-facing section status
-  and error fields.
+  Returns the SSR-sized v2 overview DTO seed for one community and time range.
   """
   @callback overview(Community.t(), map()) :: {:ok, map()} | {:error, term()}
+
+  @doc "Returns one normalized page breakdown dimension."
+  @callback pages(Community.t(), map(), :path | :entry | :exit | :title | :query) ::
+              {:ok, list(map())} | {:error, term()}
+
+  @doc "Returns one normalized source breakdown dimension."
+  @callback sources(Community.t(), map(), :referrer | :channel | :domain) ::
+              {:ok, list(map())} | {:error, term()}
+
+  @doc "Returns one normalized environment breakdown dimension."
+  @callback environment(Community.t(), map(), :browser | :os | :device | :language | :screen) ::
+              {:ok, list(map())} | {:error, term()}
+
+  @doc "Returns one normalized location breakdown dimension."
+  @callback location(Community.t(), map(), :country | :region | :city) ::
+              {:ok, list(map())} | {:error, term()}
+
+  @doc "Returns normalized UTC weekly traffic cells."
+  @callback traffic(Community.t(), map()) :: {:ok, map()} | {:error, term()}
+
+  @doc """
+  Creates the provider website backing one community.
+  """
+  @callback create_website(Community.t()) :: {:ok, String.t()} | {:error, term()}
 end

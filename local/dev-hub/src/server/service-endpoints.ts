@@ -9,6 +9,7 @@ export const LOCAL_SERVICE_ENDPOINTS = {
   landing: 'http://127.0.0.1:3002',
   main: 'http://127.0.0.1:3000',
   phoenix: 'http://127.0.0.1:4001',
+  press: 'http://127.0.0.1:8003',
 } as const
 
 export const LOCAL_SERVICE_GRAPHQL_ENDPOINTS = {

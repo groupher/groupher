@@ -29,6 +29,7 @@ export const CORE_SERVICE_IDS = [
   'main',
   'dashboard',
   'assets-hub',
+  'press',
   'content-import',
   'phoenix',
   'document-converter',
@@ -47,6 +48,9 @@ export const CORE_RELATION_SPECS = {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '50%' } },
   },
+  'gateway-press': {
+    route: 'safe-lane',
+  },
   'gateway-landing': {
     route: 'safe-lane',
   },
@@ -60,6 +64,11 @@ export const CORE_RELATION_SPECS = {
   'main-phoenix': {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '50%' } },
+  },
+  'press-phoenix': {
+    source: { side: 'right', style: { top: '50%' } },
+    target: { side: 'left', style: { top: '28%' } },
+    route: 'safe-lane',
   },
   'dashboard-phoenix': {
     source: { side: 'bottom', style: { left: '50%' } },
@@ -103,9 +112,11 @@ export const CORE_REQUIRED_RELATION_IDS = [
   'gateway-auth',
   'gateway-landing',
   'gateway-main',
+  'gateway-press',
   'auth-main',
   'auth-dashboard',
   'main-phoenix',
+  'press-phoenix',
   'dashboard-phoenix',
   'dashboard-assets-hub',
   'assets-hub-phoenix',

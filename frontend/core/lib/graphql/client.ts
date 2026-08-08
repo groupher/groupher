@@ -4,7 +4,7 @@ import type { CombinedError } from 'urql'
  * Browser-side fetch options shared by urql clients and imperative GraphQL
  * calls. Browser code always talks to the same-origin `/api/graphql` facade;
  * cookies are still included so the Next route handler can read the Groupher
- * auth token and forward it to Phoenix.
+ * auth token cookie and forward only that cookie to Phoenix.
  *
  * @example
  * ```ts

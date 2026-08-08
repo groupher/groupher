@@ -117,6 +117,7 @@ export const FIELDS: TDsbFieldMap = {
   mediaReports: [EMPTY_MEDIA_REPORT],
   thirdPartyAnalytics: [],
   enabledThirdPartyAnalytics: [],
+  umamiWebsiteId: '',
 
   // page
   themePreset: DEFAULT_THEME_PRESET,
@@ -190,7 +191,7 @@ export const FIELDS: TDsbFieldMap = {
 
   docFaq: DEFAULT_DOC_FAQ,
   rssFeedType: RSS_TYPE.DIGEST,
-  rssFeedCount: 5,
+  rssFeedCount: 20,
 
   headerLayout: HEADER_LAYOUT.CENTER,
   footerLayout: FOOTER_LAYOUT.GROUP,

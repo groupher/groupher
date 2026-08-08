@@ -37,6 +37,37 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community ..
   # #######################
+  def press_config(_root, %{community: community}, _info), do: CMS.Press.config(community)
+
+  def update_press_config(_root, %{input: %{community: community} = input}, %{
+        context: %{cur_user: actor}
+      }) do
+    input = Map.delete(input, :community)
+
+    with {:ok, config} <- CMS.Press.update_config(community, input, actor) do
+      {:ok, %{config: config}}
+    end
+  end
+
+  def press_article(_root, %{article: article_path}, _info) do
+    with {:ok, article_path} <- ArticlePath.parse(article_path) do
+      CMS.Press.article(article_path)
+    end
+  end
+
+  def press_community_rss_feed(_root, %{community: community, input: input}, _info),
+    do: CMS.Press.community_rss_feed(community, input)
+
+  def press_thread_rss_feed(
+        _root,
+        %{community: community, thread: thread, input: input},
+        _info
+      ),
+      do: CMS.Press.thread_rss_feed(community, thread, input)
+
+  def press_site_manifest(_root, %{community: community}, _info),
+    do: CMS.Press.site_manifest(community)
+
   def community(_root, %{slug: slug, inc_views: inc_views}, %{context: %{cur_user: user}}) do
     CMS.Communities.read(slug, user, inc_views: inc_views)
   end
@@ -717,8 +748,48 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     AnalysisWeb.summary(community, args)
   end
 
-  def analysis_web_overview(_root, %{community: %Community{} = community} = args, _info) do
-    AnalysisWeb.overview(community, args)
+  def analysis_tracking_website_id(_root, %{community: %Community{} = community}, _info) do
+    AnalysisWeb.tracking_website_id(community)
+  end
+
+  def analysis_trends_overview(_root, %{community: %Community{} = community} = args, _info) do
+    AnalysisWeb.trends_overview(community, args)
+  end
+
+  def analysis_trend_pages(
+        _root,
+        %{community: %Community{} = community, dimension: dimension} = args,
+        _info
+      ) do
+    AnalysisWeb.trend_pages(community, args, dimension)
+  end
+
+  def analysis_trend_sources(
+        _root,
+        %{community: %Community{} = community, dimension: dimension} = args,
+        _info
+      ) do
+    AnalysisWeb.trend_sources(community, args, dimension)
+  end
+
+  def analysis_trend_environment(
+        _root,
+        %{community: %Community{} = community, dimension: dimension} = args,
+        _info
+      ) do
+    AnalysisWeb.trend_environment(community, args, dimension)
+  end
+
+  def analysis_trend_location(
+        _root,
+        %{community: %Community{} = community, dimension: dimension} = args,
+        _info
+      ) do
+    AnalysisWeb.trend_location(community, args, dimension)
+  end
+
+  def analysis_trend_traffic(_root, %{community: %Community{} = community} = args, _info) do
+    AnalysisWeb.trend_traffic(community, args)
   end
 
   def trashed_article_mentioned_by(item, args, _info) do

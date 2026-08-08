@@ -75,6 +75,7 @@ export type TDsbFieldMap = {
   mediaReports: readonly TMediaReport[]
   thirdPartyAnalytics: readonly TThirdPartyAnalyticsConfig[]
   enabledThirdPartyAnalytics: readonly TThirdPartyAnalyticsConfig[]
+  umamiWebsiteId: string
 
   // page
   themePreset: TThemePreset

@@ -20,6 +20,9 @@ defmodule GroupherServerWeb.Schema do
 
   # cms
   import_types(CMS.Types)
+  import_types(CMS.Press.Types)
+  import_types(CMS.Press.Queries)
+  import_types(CMS.Press.Mutations)
   import_types(Analysis.Types)
   import_types(CMS.ContentImport.Types)
   import_types(CMS.Queries)
@@ -36,6 +39,7 @@ defmodule GroupherServerWeb.Schema do
   query do
     import_fields(:account_queries)
     import_fields(:cms_queries)
+    import_fields(:cms_press_queries)
     import_fields(:cms_content_import_queries)
   end
 
@@ -50,6 +54,7 @@ defmodule GroupherServerWeb.Schema do
 
     import_fields(:cms_comment_mutations)
     import_fields(:cms_dsb_mutations)
+    import_fields(:cms_press_mutations)
     import_fields(:cms_doc_tree_mutations)
     import_fields(:cms_content_import_mutations)
   end

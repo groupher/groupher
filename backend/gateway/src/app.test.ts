@@ -44,4 +44,17 @@ describe('gateway/app', () => {
     expect(url).toEqual(new URL('/home/dashboard', SITE.DASHBOARD))
     expect(init?.redirect).toBe('manual')
   })
+
+  it('does not serve the platform sitemap for a configured custom domain', async () => {
+    process.env.CUSTOM_DOMAIN_COMMUNITIES = JSON.stringify({ 'docs.example.com': 'home' })
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('community sitemap'))
+    const app = createApp({ fetcher })
+    const response = await app.request('http://127.0.0.1:3003/sitemap.xml', {
+      headers: { 'x-forwarded-host': 'docs.example.com' },
+    })
+
+    expect(await response.text()).toBe('community sitemap')
+    expect(fetcher.mock.calls[0][0]).toEqual(new URL('/home/sitemap.xml', SITE.PRESS))
+    delete process.env.CUSTOM_DOMAIN_COMMUNITIES
+  })
 })
