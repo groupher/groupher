@@ -2,7 +2,7 @@ import { BRAND_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import BrandSVG from '~/icons/Brand'
 import useCommunity from '~/stores/community/hooks'
-import CheckLabel from '~/widgets/CheckLabel'
+import CheckLabel from '~/ui/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useBrand from '../../logic/useBrand'

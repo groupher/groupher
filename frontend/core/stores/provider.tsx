@@ -5,6 +5,7 @@ import METRIC from '~/const/metric'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
+import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
@@ -15,7 +16,12 @@ import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
 type TProps = {
   children: React.ReactNode
-  initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TWallpaperInit }
+  initData: {
+    community: TCommunity
+    dashboard: TParseDashboard
+    wallpaper?: TWallpaperInit
+    account?: TAccountInit
+  }
   locale?: TLocale
   localeData?: string
   initialNow?: number
@@ -23,10 +29,12 @@ type TProps = {
   metric?: TMetric
 }
 
-const AccountWrapper: FC<{ children: React.ReactNode; noAccount: boolean }> = ({
-  children,
-  noAccount,
-}) => (noAccount ? children : <AccountStoreProvider>{children}</AccountStoreProvider>)
+const AccountWrapper: FC<{
+  children: React.ReactNode
+  initData?: TAccountInit
+  noAccount: boolean
+}> = ({ children, initData, noAccount }) =>
+  noAccount ? children : <AccountStoreProvider initData={initData}>{children}</AccountStoreProvider>
 
 const MainProvider: FC<TProps> = ({
   children,
@@ -37,13 +45,13 @@ const MainProvider: FC<TProps> = ({
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
-  const { dashboard, community, wallpaper } = initData
+  const { account, dashboard, community, wallpaper } = initData
 
   return (
     <ThemeStoreProvider>
       <InitialNowProvider initialNow={initialNow}>
         <LocaleStoreProvider initData={{ locale, localeData }}>
-          <AccountWrapper noAccount={noAccount}>
+          <AccountWrapper initData={account} noAccount={noAccount}>
             <CommunityStoreProvider initData={community}>
               <DashboardStoreProvider initData={{ ...dashboard, metric }}>
                 <ThemePresetStoreProvider initData={dashboard}>

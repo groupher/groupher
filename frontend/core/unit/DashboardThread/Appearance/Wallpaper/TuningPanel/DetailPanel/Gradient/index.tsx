@@ -17,10 +17,10 @@ import {
   type TGradientRenderer,
 } from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
-import FocalPointControl, { type TPoint } from '~/widgets/FocalPointControl'
-import ColorsField from '~/widgets/TuningFields/ColorsField'
-import RendererField from '~/widgets/TuningFields/RendererField'
-import SpreadField from '~/widgets/TuningFields/SpreadField'
+import FocalPointControl, { type TPoint } from '~/ui/FocalPointControl'
+import ColorsField from '~/ui/TuningFields/ColorsField'
+import RendererField from '~/ui/TuningFields/RendererField'
+import SpreadField from '~/ui/TuningFields/SpreadField'
 
 import useLogic from '../../../useLogic'
 import useSalon from '../../salon/detail_panel/gradient'

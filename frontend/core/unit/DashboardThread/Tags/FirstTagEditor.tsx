@@ -1,8 +1,8 @@
 import useTrans from '~/hooks/useTrans'
 import type { TColorName } from '~/spec'
-import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
-import ColorSelector from '~/widgets/ColorSelector'
-import Input from '~/widgets/Input'
+import YesOrNoButtons from '~/ui/Buttons/YesOrNoButtons'
+import ColorSelector from '~/ui/ColorSelector'
+import Input from '~/ui/Input'
 
 import useSalon, { cn } from './salon/group_block'
 

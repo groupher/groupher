@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
-import CheckLabel from '~/widgets/CheckLabel'
-import ColorSelector from '~/widgets/ColorSelector'
+import CheckLabel from '~/ui/CheckLabel'
+import ColorSelector from '~/ui/ColorSelector'
 
 import { FIELD } from '../../constant'
 import useCommunityLayout from '../../logic/useCommunityLayout'

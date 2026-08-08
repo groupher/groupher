@@ -1,5 +1,5 @@
 import useTrans from '~/hooks/useTrans'
-import CheckLabel from '~/widgets/CheckLabel'
+import CheckLabel from '~/ui/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useOverlayDark from '../../logic/useOverlayDark'

@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import type { TColorName, TTag } from '~/spec'
-import TagNode from '~/widgets/TagNode'
+import TagNode from '~/ui/TagNode'
 
 import useSalon from './salon/active_tag'
 

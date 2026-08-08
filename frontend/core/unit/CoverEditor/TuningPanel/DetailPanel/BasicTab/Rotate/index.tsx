@@ -1,4 +1,4 @@
-import AngleWheel from '~/widgets/AngleWheel'
+import AngleWheel from '~/ui/AngleWheel'
 
 import { useImageDraftContext } from '../../../../imageDraftContext'
 import type { TCoverImageWhich } from '../../../../spec'

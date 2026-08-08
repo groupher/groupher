@@ -1,4 +1,4 @@
-import PreviewDrawerLoading from '~/widgets/Loading/Preview/Post'
+import PreviewDrawerLoading from '~/ui/Loading/Preview/Post'
 
 export default function Loading() {
   return <PreviewDrawerLoading />

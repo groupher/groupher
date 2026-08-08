@@ -1,13 +1,12 @@
-import Link from 'next/link'
-
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { DEME_SOCIALS } from '~/const/social'
 import { assetSrc } from '~/helper'
 import useFooterLinks from '~/hooks/useFooterLinks'
 import Img from '~/Img'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
+import ImgFallback from '~/ui/ImgFallback'
 import SocialList from '~/unit/SocialList'
-import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon/group_layout'
 

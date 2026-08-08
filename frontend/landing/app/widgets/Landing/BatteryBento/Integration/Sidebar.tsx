@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { mockUsers } from '~/mock'
-import Img from '~/widgets/Img'
+import Img from '~/ui/Img'
 
 import useSalon, { cn } from '../../salon/battery_bento/integration/sidebar'
 

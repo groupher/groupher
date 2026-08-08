@@ -1,12 +1,11 @@
-import Image from 'next/image'
-
 import APP from '~/const/app'
 import ArtSVG from '~/icons/Art'
 import MusicSVG from '~/icons/Music'
 import RocketSVG from '~/icons/Rocket'
 import UniverseSVG from '~/icons/Universe'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import { Image } from '~/platform'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import { COMMUNITY_TYPE } from '../../constant'
 import type { TCommunityType } from '../../spec'

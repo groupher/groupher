@@ -1,16 +1,16 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import * as React from 'react'
 
 import PulseSVG from '~/icons/Pulse'
 import Img from '~/Img'
+import { usePlatform } from '~/platform'
 import type { TArticle, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import TimeAgo from '~/ui/TimeAgo'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import { thread2Path } from '~/utils/thread'
-import TimeAgo from '~/widgets/TimeAgo'
 
 import useSalon, { cn } from './salon'
 
@@ -31,7 +31,7 @@ export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData:
 
 export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { push } = useRouter()
+  const { navi } = usePlatform()
   const { slug } = useCommunity()
 
   return (
@@ -40,8 +40,10 @@ export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowDat
         type='button'
         className={cn(s.articleTitle, 'truncate w-full text-left')}
         onClick={() =>
-          push(`/${slug}/${thread2Path(rowData.meta.thread)}/${rowData.innerId}`, {
-            scroll: false,
+          navi.to({
+            app: 'dsb',
+            community: slug,
+            path: `${thread2Path(rowData.meta.thread)}/${rowData.innerId}`,
           })
         }
       >

@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { BROADCAST_LAYOUT } from '~/const/layout'
 import ArrowSVG from '~/icons/ArrowSimple'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useBroadcast from '../../../logic/useBroadcast'
 import useSalon, { cn } from '../../salon/templates/global'

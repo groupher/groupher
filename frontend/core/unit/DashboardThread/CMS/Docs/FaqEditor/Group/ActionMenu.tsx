@@ -3,7 +3,7 @@ import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
 import PlusSVG from '~/icons/Plus'
 import DeleteSVG from '~/icons/Trash'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import useSalon from '../salon/group/action_menu'
 import type { TMenuItem } from './menuItems'

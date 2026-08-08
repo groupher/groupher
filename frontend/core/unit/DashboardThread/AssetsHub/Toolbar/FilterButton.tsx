@@ -1,7 +1,7 @@
 'use client'
 
 import SlidersHorizontalIcon from '~/icons/SlidersHorizontal'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import { ASSETS_HUB_LABEL } from '../constant'
 import useSalon from './salon/filter_button'

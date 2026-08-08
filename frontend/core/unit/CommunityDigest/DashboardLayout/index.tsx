@@ -1,9 +1,9 @@
 import { ANCHOR } from '~/const/dom'
 import { DOCS, FEEDBACK } from '~/const/route'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
-import AccountUnit from '~/widgets/AccountUnit'
-import ArrowLinker from '~/widgets/ArrowLinker'
-import ViewportTracker from '~/widgets/ViewportTracker'
+import AccountUnit from '~/ui/AccountUnit'
+import ArrowLinker from '~/ui/ArrowLinker'
+import ViewportTracker from '~/ui/ViewportTracker'
 
 import useSalon from '../salon/dashboard_layout'
 import CommunityBrief from './CommunityBrief'

@@ -1,9 +1,8 @@
-import Link from 'next/link'
-
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
+import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import CustomHeaderLinks from '~/unit/HeaderLinks'
 import { path2Thread } from '~/utils/thread'

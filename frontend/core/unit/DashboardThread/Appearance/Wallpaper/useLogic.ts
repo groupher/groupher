@@ -25,8 +25,8 @@ import {
 } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TWallpaperPatch, TWallpaperThemeState } from '~/stores/wallpaper/spec'
+import { toast } from '~/ui/Toaster'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
-import { toast } from '~/widgets/Toaster'
 
 import { TAB } from './constant'
 import S from './schema'

@@ -4,7 +4,7 @@
 import type { FC } from 'react'
 
 import DownloadSVG from '~/icons/DownloadCircle'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import Panel from './Panel'
 import useSalon from './salon'

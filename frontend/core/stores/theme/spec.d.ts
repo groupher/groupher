@@ -8,4 +8,7 @@ export type TStore = {
   changeMode: (theme: TThemeMode) => void
 }
 
-export type TInit = TThemeName
+export type TInit = {
+  theme: TThemeName
+  themeMode: TThemeMode
+}

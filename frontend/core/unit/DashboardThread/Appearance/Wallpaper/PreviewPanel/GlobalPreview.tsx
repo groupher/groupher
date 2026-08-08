@@ -2,7 +2,7 @@ import { PAGE_BG_CSS_KEY } from '~/const/colors'
 import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
-import WallpaperRenderer from '~/widgets/WallpaperRenderer'
+import WallpaperRenderer from '~/render/WallpaperRenderer'
 
 import useSalon, { cnMerge } from './salon/global_preview'
 

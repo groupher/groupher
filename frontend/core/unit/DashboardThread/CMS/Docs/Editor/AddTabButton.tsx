@@ -2,7 +2,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useTrans from '~/hooks/useTrans'
 import TabsAddSVG from '~/icons/TabsAdd'
 import { send } from '~/lib/signal'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 type TProps = {
   placement?: 'breadcrumb' | 'drawer'

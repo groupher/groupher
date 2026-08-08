@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import type { TInput } from '~/spec'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import useSalon from './salon/input_box'
 

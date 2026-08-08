@@ -3,7 +3,7 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/banner'
 

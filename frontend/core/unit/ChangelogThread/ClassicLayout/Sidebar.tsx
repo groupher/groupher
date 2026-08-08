@@ -1,9 +1,9 @@
 import { type FC, memo } from 'react'
 
 import VIEW from '~/const/view'
+import Sticky from '~/ui/Sticky'
+import Tabs from '~/ui/Switcher/Tabs'
 import TagsBar from '~/unit/TagsBar'
-import Sticky from '~/widgets/Sticky'
-import Tabs from '~/widgets/Switcher/Tabs'
 
 import { TABS_MODE_OPTIONS } from '../constant'
 import { tagsModeChange } from '../logic'

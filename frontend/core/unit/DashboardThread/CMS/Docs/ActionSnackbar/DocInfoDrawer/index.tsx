@@ -4,7 +4,7 @@ import TYPE from '~/const/type'
 import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
 import InfoSVG from '~/icons/Info'
-import Drawer from '~/widgets/Drawer'
+import Drawer from '~/ui/Drawer'
 
 import { DOC_INFO_LABEL_KEY } from '../constant'
 import DocInfoPanel from '../DocInfo/Panel'

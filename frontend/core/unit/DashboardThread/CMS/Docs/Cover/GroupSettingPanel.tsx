@@ -6,12 +6,12 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TDocCoverLayout, TMarkerValue } from '~/spec'
+import MarkerPicker from '~/ui/MarkerPicker'
+import { toast } from '~/ui/Toaster'
 import SavingBar from '~/unit/DashboardThread/SavingBar'
 import S from '~/unit/DashboardThread/schema'
 import { DEFAULT_GROUP_MARKER } from '~/unit/DocCovers/constant'
 import type { TDocCoverCardAppearance, TDocCoverCard } from '~/unit/DocCovers/spec'
-import MarkerPicker from '~/widgets/MarkerPicker'
-import { toast } from '~/widgets/Toaster'
 
 type TProps = {
   section: TDocCoverCard

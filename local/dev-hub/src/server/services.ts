@@ -65,6 +65,7 @@ export type TServiceDefinition = {
   unavailableReason?: string
   metrics: TMetricThresholds
   browserMetrics?: boolean
+  browserMetricOrigins?: readonly string[]
   startPolicy?: Partial<TServiceStartPolicy>
 }
 
@@ -124,6 +125,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
       MAIN_SITE: LOCAL_SERVICE_ENDPOINTS.main,
       DASHBOARD_SITE: LOCAL_SERVICE_ENDPOINTS.dashboard,
+      DASH_SITE: LOCAL_SERVICE_ENDPOINTS.dash,
       AUTH_SITE: LOCAL_SERVICE_ENDPOINTS.auth,
       API_SITE: LOCAL_SERVICE_ENDPOINTS.phoenix,
     },
@@ -238,6 +240,36 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessName: 'dashboard',
     portlessUrl: 'https://dashboard.groupher.localhost/health',
     portlessAppUrl: 'https://dashboard.groupher.localhost/home/dashboard',
+    browserMetricOrigins: ['http://groupher.localhost:3003', 'https://groupher.localhost'],
+    metrics: FRONTEND_METRICS,
+    startPolicy: DASHBOARD_CHAIN_POLICY,
+  },
+  {
+    id: 'dash',
+    name: 'Dash',
+    description: 'TanStack Start community administration workspace',
+    group: 'frontend',
+    monogram: 'DX',
+    technologies: ['tanstack-start', 'react', 'typescript', 'tailwindcss'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'env-files',
+      root: fromRoot('frontend/dash'),
+      environment: 'development',
+    },
+    command: 'make',
+    args: ['fe.dev.dash'],
+    env: {
+      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
+      NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
+      CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
+    },
+    port: 3005,
+    url: 'http://127.0.0.1:3005/health',
+    appUrl: 'http://127.0.0.1:3003/home/dash/overview',
+    portlessName: 'dash',
+    portlessUrl: 'https://dash.groupher.localhost/health',
+    portlessAppUrl: 'https://groupher.localhost/home/dash/overview',
     metrics: FRONTEND_METRICS,
     startPolicy: DASHBOARD_CHAIN_POLICY,
   },
@@ -424,6 +456,13 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: '/:community/dashboard/*',
   },
   {
+    id: 'gateway-dash',
+    source: 'gateway',
+    target: 'dash',
+    kind: 'route',
+    label: '/:community/dash/*',
+  },
+  {
     id: 'gateway-main',
     source: 'gateway',
     target: 'main',
@@ -459,6 +498,27 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: 'asset upload flow',
   },
   {
+    id: 'dash-phoenix',
+    source: 'dash',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'GraphQL',
+  },
+  {
+    id: 'dash-content-import',
+    source: 'dash',
+    target: 'content-import',
+    kind: 'api',
+    label: '/api/docs/import/*',
+  },
+  {
+    id: 'dash-assets-hub',
+    source: 'dash',
+    target: 'assets-hub',
+    kind: 'api',
+    label: 'asset upload flow',
+  },
+  {
     id: 'assets-hub-phoenix',
     source: 'assets-hub',
     target: 'phoenix',
@@ -489,6 +549,13 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
   {
     id: 'dashboard-document-converter',
     source: 'dashboard',
+    target: 'document-converter',
+    kind: 'api',
+    label: '/api/artiment/import -> /convert',
+  },
+  {
+    id: 'dash-document-converter',
+    source: 'dash',
     target: 'document-converter',
     kind: 'api',
     label: '/api/artiment/import -> /convert',

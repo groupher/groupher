@@ -12,9 +12,13 @@ const mocks = vi.hoisted(() => ({
   t: (key: string) => key,
 }))
 
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => new URLSearchParams(mocks.searchParams),
-}))
+vi.mock('~/platform', async () => {
+  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
+  return {
+    ...actual,
+    useSearchParams: () => new URLSearchParams(mocks.searchParams),
+  }
+})
 
 vi.mock('~/hooks/useGraphQLClient', () => ({
   default: () => ({ query: mocks.query }),

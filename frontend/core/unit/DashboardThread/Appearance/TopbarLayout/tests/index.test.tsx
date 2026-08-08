@@ -70,7 +70,7 @@ vi.mock('../../../SectionLabel', () => ({
   ),
 }))
 
-vi.mock('~/widgets/CheckLabel', () => ({
+vi.mock('~/ui/CheckLabel', () => ({
   default: ({ title, active }: { title: string; active: boolean }) => (
     <span data-active={active}>{title}</span>
   ),
@@ -85,7 +85,7 @@ vi.mock('../../../SavingBar', () => ({
   ),
 }))
 
-vi.mock('~/widgets/ColorSelector', () => ({
+vi.mock('~/ui/ColorSelector', () => ({
   default: ({
     activeColor,
     onChange,

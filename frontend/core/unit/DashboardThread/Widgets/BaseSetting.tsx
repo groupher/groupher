@@ -2,8 +2,8 @@ import { includes } from 'ramda'
 
 import { THREAD } from '~/const/thread'
 import useTrans from '~/hooks/useTrans'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import ColorSelector from '~/widgets/ColorSelector'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
+import ColorSelector from '~/ui/ColorSelector'
 
 import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'

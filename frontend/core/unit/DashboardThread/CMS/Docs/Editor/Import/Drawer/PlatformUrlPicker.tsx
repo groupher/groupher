@@ -1,8 +1,8 @@
 import { useState, type FC, type FormEvent } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import LogoList from '~/ui/LogoList'
 import { MARKDOWN_PLATFORMS } from '~/unit/DashboardThread/CMS/Docs/markdown_platforms'
-import LogoList from '~/widgets/LogoList'
 
 import useSalon from './salon/platform_url_picker'
 

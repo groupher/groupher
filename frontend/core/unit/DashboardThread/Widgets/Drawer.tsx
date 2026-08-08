@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
-import Input from '~/widgets/Input'
-import Radio from '~/widgets/Switcher/Radio'
+import Input from '~/ui/Input'
+import Radio from '~/ui/Switcher/Radio'
 
 import CodeArea from './CodeArea'
 import useSalon from './salon'

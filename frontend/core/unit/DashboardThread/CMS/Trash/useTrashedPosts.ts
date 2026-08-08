@@ -5,8 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
+import { toast } from '~/ui/Toaster'
 import S from '~/unit/DashboardThread/schema'
-import { toast } from '~/widgets/Toaster'
 
 import type {
   TPagedTrashedPosts,
@@ -24,15 +24,15 @@ const EMPTY_PAGE: TPagedTrashedPosts = {
   totalPages: 0,
 }
 
-export default function useTrashedPosts() {
+export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null) {
   const { slug: community } = useCommunity()
   const { query, mutate } = useGraphQLClient()
   const { t } = useTrans()
   const requestSequence = useRef(0)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialData)
   const [activeActionId, setActiveActionId] = useState<string | null>(null)
-  const [pagedPosts, setPagedPosts] = useState<TPagedTrashedPosts>(EMPTY_PAGE)
+  const [pagedPosts, setPagedPosts] = useState<TPagedTrashedPosts>(initialData ?? EMPTY_PAGE)
 
   const loadPage = useCallback(
     async (targetPage: number): Promise<void> => {
@@ -58,9 +58,13 @@ export default function useTrashedPosts() {
     [community, query],
   )
 
+  const hasInitialData = Boolean(initialData)
+
   useEffect(() => {
+    if (hasInitialData && page === 1) return
+
     void loadPage(page)
-  }, [loadPage, page])
+  }, [hasInitialData, loadPage, page])
 
   const refreshAfterRemoval = useCallback(async (): Promise<void> => {
     if (pagedPosts.entries.length === 1 && page > 1) {

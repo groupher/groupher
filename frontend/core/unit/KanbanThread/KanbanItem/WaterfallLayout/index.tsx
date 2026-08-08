@@ -4,13 +4,13 @@
  *
  */
 
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockUsers } from '~/mock'
+import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'

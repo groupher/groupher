@@ -10,7 +10,7 @@ import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
 import { updateViewingArticle } from '~/signal'
-import { toast } from '~/widgets/Toaster'
+import { toast } from '~/ui/Toaster'
 
 import { ICON } from '../constant'
 import { getGTDColor } from '../helper'

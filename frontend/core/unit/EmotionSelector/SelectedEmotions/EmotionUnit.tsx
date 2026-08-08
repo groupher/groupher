@@ -5,8 +5,8 @@
 import { type FC, memo } from 'react'
 
 import type { TEmotion, TEmotionType, TSimpleUser } from '~/spec'
-import AnimatedCount from '~/widgets/AnimatedCount'
-import Tooltip from '~/widgets/Tooltip'
+import AnimatedCount from '~/ui/AnimatedCount'
+import Tooltip from '~/ui/Tooltip'
 
 import { getEmotionName } from '../helper'
 import EmotionIcon from './EmotionIcon'

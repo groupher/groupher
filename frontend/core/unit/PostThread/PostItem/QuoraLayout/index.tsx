@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
+import { Link } from '~/platform'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 

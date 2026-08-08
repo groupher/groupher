@@ -2,14 +2,16 @@ import { proxy } from 'valtio'
 
 import type { TAccount } from '~/spec'
 
-import type { TStore } from './spec'
+import type { TInit, TStore } from './spec'
 
-export default function AccountStore(): TStore {
+export default function AccountStore(init: TInit = {}): TStore {
   const store = proxy({
     user: null,
     loading: true,
     userSubscribedCommunities: null,
     isModerator: false,
+
+    ...init,
 
     // views
     get isLogin(): boolean {

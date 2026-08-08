@@ -6,7 +6,7 @@ import MoreSVG from '~/icons/menu/More'
 import { authWarn } from '~/signal'
 import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
-import MenuButton from '~/widgets/Buttons/MenuButton'
+import MenuButton from '~/ui/Buttons/MenuButton'
 
 import useActions from '../useLogic/useActions'
 import useSalon from './salon/actions'

@@ -21,7 +21,7 @@ vi.mock('../logic/useHelper', () => ({
 }))
 vi.mock('~/icons/Back', () => ({ default: () => <span data-testid='revert-icon' /> }))
 vi.mock('~/icons/Save', () => ({ default: () => <span data-testid='save-icon' /> }))
-vi.mock('~/widgets/Buttons/Button', () => ({
+vi.mock('~/ui/Buttons/Button', () => ({
   default: ({
     ariaLabel,
     children,

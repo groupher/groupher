@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import useSalon, { cn } from '../salon/custom/dns_setup'
 import { DNS_RECORDS } from './constant'

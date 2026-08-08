@@ -3,7 +3,7 @@
 import { lazy, type ReactNode, Suspense } from 'react'
 
 import { THREAD } from '~/const/thread'
-import PreviewDrawerLoading from '~/widgets/Loading/Preview/Post'
+import PreviewDrawerLoading from '~/ui/Loading/Preview/Post'
 
 import { getPreviewCacheKey, PreviewHost, type TPreviewPhase } from '../_preview'
 import type { TPostPreviewCacheEntry } from './buildPreviewCacheEntry'

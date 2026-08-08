@@ -8,8 +8,8 @@
 
 import Img from '~/Img'
 import useCommunity from '~/stores/community/hooks'
+import ImgFallback from '~/ui/ImgFallback'
 import { assetSrc } from '~/utils/helper'
-import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon/community_brief'
 

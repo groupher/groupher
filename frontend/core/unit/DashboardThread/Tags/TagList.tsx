@@ -26,7 +26,7 @@ import { createPortal } from 'react-dom'
 import { THREAD } from '~/const/thread'
 import useMount from '~/hooks/useMount'
 import type { TTag } from '~/spec'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useTags from '../logic/useTags'
 import GroupBlock from './GroupBlock'
@@ -177,7 +177,9 @@ export default function TagList({
     }
   }, [])
 
-  useMount(loadTags)
+  useMount(() => {
+    if (!tagGroups?.length) loadTags()
+  })
   const currentThread = activeTagThread || THREAD.POST
   const { cancelDrag, commitGroupDrag, commitTagDrag, groups, groupNames, moveTagDrag, startDrag } =
     useTagDragDraft({

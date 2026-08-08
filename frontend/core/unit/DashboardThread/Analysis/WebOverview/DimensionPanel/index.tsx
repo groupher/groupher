@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 
 import VIEW from '~/const/view'
-import Tabs from '~/widgets/Switcher/Tabs'
+import Tabs from '~/ui/Switcher/Tabs'
 
 import { DIMENSION_ROW_LIMIT } from '../constant'
 import type { TAnalysisWebCountMetrics } from '../spec'

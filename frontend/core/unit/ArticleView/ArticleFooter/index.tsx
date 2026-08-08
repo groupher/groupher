@@ -6,7 +6,7 @@
 
 import { useState } from 'react'
 
-import Tabs from '~/widgets/Switcher/Tabs'
+import Tabs from '~/ui/Switcher/Tabs'
 
 import Activities from './Activities'
 import { TAB_ACTIVITIES, TAB_ITEMS, TAB_MEMBERS } from './constant'

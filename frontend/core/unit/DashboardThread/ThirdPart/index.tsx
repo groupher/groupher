@@ -1,9 +1,9 @@
-import Image from 'next/image'
 import type { FC } from 'react'
 import { useState } from 'react'
 
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
+import Img from '~/Img'
 import S from '~/unit/DashboardThread/schema'
 
 import { getIntegrationIconSrc } from './constant'
@@ -43,14 +43,10 @@ const ThirdPart: FC = () => {
             }}
           >
             <div className={s.iconBox}>
-              <Image
+              <Img
                 src={getIntegrationIconSrc(item.provider)}
                 alt={`${t(item.title)} icon`}
-                width={28}
-                height={28}
                 className={cn(s.icon, item.provider === 'gtm' && 'w-12 h-auto')}
-                priority={false}
-                unoptimized
               />
             </div>
 

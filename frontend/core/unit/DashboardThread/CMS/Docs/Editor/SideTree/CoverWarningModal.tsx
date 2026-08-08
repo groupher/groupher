@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import { Button } from '~/widgets/Buttons'
-import Modal from '~/widgets/Modal'
+import { Button } from '~/ui/Buttons'
+import Modal from '~/ui/Modal'
 
 import useSalon from './salon/cover_warning_modal'
 

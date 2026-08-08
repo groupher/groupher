@@ -1,7 +1,6 @@
-import Link from 'next/link'
-
 import { DEME_SOCIALS } from '~/const/social'
 import useFooterLinks from '~/hooks/useFooterLinks'
+import { Link } from '~/platform'
 import SocialList from '~/unit/SocialList'
 
 import useSalon from './salon/oneline_layout'

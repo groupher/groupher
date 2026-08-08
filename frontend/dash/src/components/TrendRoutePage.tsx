@@ -1,0 +1,17 @@
+import type { TDashTrendOverview } from '@dash/server/trend'
+
+import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
+
+import TrendLayout from './layouts/TrendLayout'
+
+type TProps = {
+  overview: TDashTrendOverview
+}
+
+export default function TrendRoutePage({ overview }: TProps) {
+  return (
+    <TrendLayout>
+      <WebOverview data={overview.data} />
+    </TrendLayout>
+  )
+}

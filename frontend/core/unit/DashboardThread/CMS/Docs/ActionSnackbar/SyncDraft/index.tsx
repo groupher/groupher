@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import useTrans from '~/hooks/useTrans'
 import FileCheckSVG from '~/icons/FileCheck'
 import RefreshCwSVG from '~/icons/RefreshCw'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import useDocsEditor from '../../Editor/store/hooks'
 import { SAVE_ACTION_LABEL_KEY, SAVE_STATUS_LABEL } from '../constant'

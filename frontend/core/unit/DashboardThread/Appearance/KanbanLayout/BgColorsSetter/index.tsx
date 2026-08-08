@@ -9,7 +9,7 @@ import useTrans from '~/hooks/useTrans'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
 import type { TColorName } from '~/spec'
-import ColorSelector from '~/widgets/ColorSelector'
+import ColorSelector from '~/ui/ColorSelector'
 
 import { FIELD } from '../../../constant'
 import useKanban from '../../../logic/useKanban'

@@ -6,7 +6,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 
-import { toast } from '~/widgets/Toaster/store'
+import { toast } from '~/ui/Toaster/store'
 
 import { COVER_IMAGE_WHICH } from './constant'
 import Cover from './Cover'

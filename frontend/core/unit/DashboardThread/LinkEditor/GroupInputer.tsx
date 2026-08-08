@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import SavingBar from '../SavingBar'
 import useSalon from './salon/group_inputer'

@@ -1,12 +1,8 @@
 'use client'
+import { useMemo, useRef } from 'react'
 
-import { usePathname } from 'next/navigation'
-import { useMemo } from 'react'
-
-import { DSB_SEG } from '~/const/route'
-import useURLSearchParams from '~/hooks/useURLSearchParams'
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
 import type { TBreadcrumbItem, TTransKey } from '~/spec'
-import useCommunity from '~/stores/community/hooks'
 
 export type TDsbCrumbNode = {
   title: TTransKey
@@ -26,13 +22,6 @@ export type TDsbCrumbNode = {
 
   children?: TDsbCrumbNode[]
 }
-
-const joinPath = (...parts: string[]) =>
-  '/' +
-  parts
-    .filter(Boolean)
-    .map((p) => p.replace(/^\/+|\/+$/g, ''))
-    .join('/')
 
 const matchSeg = (relative: string, seg: string): boolean => {
   const prefix = `/${seg}`
@@ -72,18 +61,19 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
  * move under different dashboard URLs.
  */
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
-  const pathname = usePathname()
-  const { slug } = useCommunity()
-  const searchString = useURLSearchParams()
+  const { navi } = usePlatform()
+  const routeMeta = parseDsbPathname(navi.location.pathname)
+  const community = routeMeta?.community ?? ''
+  const search = navi.location.searchParams
+  const rootSegment = routeMeta?.rootSegment ?? 'dashboard'
+  const routeSegmentsKey = routeMeta?.segments.join('/') ?? ''
+  const crumbCacheRef = useRef<TBreadcrumbItem[]>([])
+  const lastCommunityRef = useRef<string | undefined>(undefined)
 
-  return useMemo(() => {
-    if (!pathname || !slug) return []
+  const computed = useMemo(() => {
+    if (!routeMeta || !community) return []
 
-    const idx = pathname.indexOf(`/${DSB_SEG}`)
-    if (idx === -1) return []
-
-    const fromDashboard = pathname.slice(idx) // /dashboard/xxx
-    const relative = fromDashboard.slice(`/${DSB_SEG}`.length) || '/' // /third-part/xxx
+    const relative = routeMeta.segments.length ? `/${routeMeta.segments.join('/')}` : '/'
 
     if (!matchSeg(relative, root.seg)) return []
 
@@ -93,12 +83,30 @@ export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[]
     const effectiveRelative = isOnRoot && firstChildSeg ? `/${firstChildSeg}` : relative
 
     const chain = buildActiveChain(effectiveRelative, root)
-
     return chain.map((node, i) => {
       const to = node.toSeg ?? node.seg
-      const full = `${joinPath(slug, DSB_SEG, to)}${searchString}`
+      const target = dsbRoutes.section({
+        community,
+        section: to,
+      })
+      const full = resolveDsbRoute(target, {
+        rootSegment,
+        currentSearch: search,
+        preserveSearch: true,
+      })
       const isLast = i === chain.length - 1
       return { title: node.title, path: isLast ? '' : full }
     })
-  }, [pathname, slug, root, searchString])
+  }, [community, root, rootSegment, routeSegmentsKey, search.toString()])
+
+  if (community !== lastCommunityRef.current) {
+    crumbCacheRef.current = []
+    lastCommunityRef.current = community
+  }
+
+  if (computed.length > 0) {
+    crumbCacheRef.current = computed
+  }
+
+  return computed.length > 0 ? computed : crumbCacheRef.current
 }

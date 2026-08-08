@@ -4,7 +4,7 @@ import SVG from '~/const/svg'
 import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/menu/More'
 import UploadSVG from '~/icons/Upload'
-import MenuButton from '~/widgets/Buttons/MenuButton'
+import MenuButton from '~/ui/Buttons/MenuButton'
 
 import useSalon from './salon/upload_box'
 

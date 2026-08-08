@@ -4,7 +4,7 @@
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
 import { useCallback, useRef, useState } from 'react'
 
-import Checker from '~/widgets/Checker'
+import Checker from '~/ui/Checker'
 
 export const SELECT_COL_ID = 'select'
 export const SELECT_COL_WIDTH = 34

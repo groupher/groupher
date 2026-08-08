@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 
 import ImageSVG from '~/icons/Image'
 import { createKeyboardClick } from '~/lib/a11y'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useSalon from './salon/article_cover'
 

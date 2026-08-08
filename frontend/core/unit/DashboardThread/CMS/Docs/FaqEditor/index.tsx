@@ -4,8 +4,8 @@ import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 
 import PlusSVG from '~/icons/Plus'
 import useDocFaqActions from '~/stores/dashboard/docFaq/actions'
-import Button from '~/widgets/Buttons/Button'
-import SegmentTab from '~/widgets/Switcher/SegmentTab'
+import Button from '~/ui/Buttons/Button'
+import SegmentTab from '~/ui/Switcher/SegmentTab'
 
 import { FIELD } from '../../../constant'
 import SavingBar from '../../../SavingBar'

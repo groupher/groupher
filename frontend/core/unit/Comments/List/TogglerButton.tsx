@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useSalon from './salon/toggler_button'
 

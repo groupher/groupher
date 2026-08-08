@@ -1,29 +1,15 @@
-import dynamic from 'next/dynamic'
-import { type ComponentType, type FC, memo } from 'react'
+import { type FC, lazy, memo, Suspense } from 'react'
 
 import CommentSVG from '~/icons/Comment'
 import EmojiSVG from '~/icons/Heart'
 import PostSVG from '~/icons/Post'
 import PulseSVG from '~/icons/Pulse'
 import UserSVG from '~/icons/Users'
+import ClientOnly from '~/ui/ClientOnly'
 
 import useSalon, { cn } from './salon'
 
-type TTrendProps = {
-  smooth?: boolean
-  width?: number
-  height?: number
-  data: number[]
-  gradient?: string[]
-  radius?: number
-  strokeWidth?: number
-  strokeLinecap?: 'butt' | 'round' | 'square'
-}
-
-const Trend = dynamic<TTrendProps>(
-  () => import('react-trend').then((mod) => mod.default as ComponentType<TTrendProps>),
-  { ssr: false },
-)
+const Trend = lazy(() => import('react-trend'))
 
 const BasicStates: FC = () => {
   const s = useSalon()
@@ -37,16 +23,20 @@ const BasicStates: FC = () => {
         <h4 className={s.title}>活跃度</h4>
         <div className={s.desc}>最近 30 天</div>
         <div className={s.trendChart}>
-          <Trend
-            smooth
-            width={80}
-            height={30}
-            data={[2, 3, 6, 0, 2, 10, 8, 8, 22, 33, 2, 3, 4, 5, 6]}
-            gradient={['yellowgreen', 'green']}
-            radius={15}
-            strokeWidth={1}
-            strokeLinecap='round'
-          />
+          <ClientOnly>
+            <Suspense fallback={null}>
+              <Trend
+                smooth
+                width={80}
+                height={30}
+                data={[2, 3, 6, 0, 2, 10, 8, 8, 22, 33, 2, 3, 4, 5, 6]}
+                gradient={['yellowgreen', 'green']}
+                radius={15}
+                strokeWidth={1}
+                strokeLinecap='round'
+              />
+            </Suspense>
+          </ClientOnly>
         </div>
       </div>
       <div className={cn(s.block, 'pl-3')}>

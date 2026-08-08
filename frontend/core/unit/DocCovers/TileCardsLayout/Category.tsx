@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
+import { Link } from '~/platform'
+import MarkerRender from '~/render/MarkerRender'
 import type { TColorName } from '~/spec'
-import MarkerRender from '~/widgets/MarkerRender'
 
 import { DEFAULT_GROUP_MARKER } from '../constant'
 import GroupSettingButton from '../GroupSettingButton'

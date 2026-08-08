@@ -1,0 +1,66 @@
+'use client'
+
+import { type FC, Fragment } from 'react'
+
+import { ANCHOR } from '~/const/dom'
+import { BROADCAST_LAYOUT } from '~/const/layout'
+import useBroadcast from '~/hooks/useBroadcast'
+import useTrans from '~/hooks/useTrans'
+import ArrowSVG from '~/icons/Arrow'
+import CrossSVG from '~/icons/CloseCross'
+import NotifySVG from '~/icons/Trumpet'
+import { toast } from '~/ui/Toaster'
+
+import useSalon, { cn } from './salon'
+
+type TProps = {
+  testid?: string
+}
+
+const DETAIL_TEXT =
+  'Groupher.com, 为中小产品团队提供社区反馈服务，如果你对此有兴趣，欢迎加 v(mydearxym) 详聊。'
+const showDetail = () => toast(DETAIL_TEXT)
+
+const Broadcast: FC<TProps> = ({ testid: _testid = 'banner-notify' }) => {
+  const s = useSalon()
+  const { t } = useTrans()
+
+  const { broadcastBg: bg, broadcastLayout: layout, broadcastEnable: enabled } = useBroadcast()
+
+  if (!enabled) return null
+
+  return (
+    <div id={ANCHOR.GLOBAL_CLASSIC_ID} className={cn(s.wrapper, s.rainbow(bg, 'bg'))}>
+      <div className={cn(s.inner, layout === BROADCAST_LAYOUT.CENTER && 'justify-center')}>
+        <div className='row'>
+          <NotifySVG className={s.icon} />
+          <div className={s.desc}>站点开发重构中，服务暂不可用。</div>
+        </div>
+
+        <div className='row'>
+          {layout === BROADCAST_LAYOUT.DEFAULT ? (
+            <Fragment>
+              <button
+                type='button'
+                className={cn(s.linkBtn, s.rainbow(bg, 'bg'))}
+                onClick={showDetail}
+              >
+                {t('common.view_detail')}
+              </button>
+              <CrossSVG className={s.icon} />
+            </Fragment>
+          ) : (
+            <Fragment>
+              <button type='button' className={s.linkText} onClick={showDetail}>
+                {t('common.view_detail')}
+              </button>
+              <ArrowSVG className={s.icon} />
+            </Fragment>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Broadcast

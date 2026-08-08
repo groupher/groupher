@@ -1,11 +1,10 @@
-import Link from 'next/link'
-
 import useTheme from '~/hooks/useTheme'
 import GrabDotsSVG from '~/icons/GrabDots'
 import SettingSVG from '~/icons/Setting'
 import TrashSVG from '~/icons/Trash'
+import { Link } from '~/platform'
+import BgRenderer from '~/render/BgRenderer'
 import ContentThumbnail from '~/unit/ArticleDocument/ContentThumbnail'
-import BgRenderer from '~/widgets/BgRenderer'
 
 import type { TDocCoverPinnedDoc } from '../spec'
 import { pinnedDocBackground } from './helper'

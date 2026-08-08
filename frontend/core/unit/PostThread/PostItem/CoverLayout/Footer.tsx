@@ -2,8 +2,8 @@ import type { FC } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TPost } from '~/spec'
+import TimeAgo from '~/ui/TimeAgo'
 import Upvote from '~/unit/Upvote'
-import TimeAgo from '~/widgets/TimeAgo'
 
 import useSalon from '../salon/cover_layout/footer'
 

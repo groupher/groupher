@@ -8,8 +8,8 @@ import { type FC, memo } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TUser } from '~/spec'
-import AnimatedCount from '~/widgets/AnimatedCount'
-import Facepile from '~/widgets/Facepile'
+import AnimatedCount from '~/ui/AnimatedCount'
+import Facepile from '~/ui/Facepile'
 
 import useSalon from './salon/sticker_layout'
 import UpvoteBtn from './UpvoteBtn'

@@ -1,0 +1,58 @@
+/*
+ *
+ * Menu
+ *
+ */
+
+import { type FC, memo, type ReactNode } from 'react'
+
+import type { TTooltipPlacement } from '~/spec'
+import Tooltip from '~/ui/Tooltip'
+
+import List from './List'
+import useSalon from './salon'
+import type { TMenuItem } from './spec'
+
+type TProps = {
+  activeKey?: string
+  items?: TMenuItem[]
+  onSelect?: (item: TMenuItem) => void
+  children?: ReactNode
+  offset?: [number, number]
+  placement?: TTooltipPlacement
+  onShow?: () => void
+  onHide?: () => void
+  popWidth?: number
+}
+
+const DEFAULT_ITEMS: TMenuItem[] = []
+
+const Menu: FC<TProps> = ({
+  activeKey = '',
+  onSelect = console.log,
+  items = DEFAULT_ITEMS,
+  children = 'menu',
+  onShow = console.log,
+  onHide = console.log,
+  placement = 'bottom',
+  offset = [-5, 5],
+  popWidth = 40,
+}) => {
+  const s = useSalon()
+
+  return (
+    <Tooltip
+      placement={placement}
+      trigger='click'
+      onShow={() => onShow?.()}
+      onHide={() => onHide?.()}
+      offset={offset as [number, number]}
+      content={<List items={items} activeKey={activeKey} onSelect={onSelect} popWidth={popWidth} />}
+      noPadding
+    >
+      <div className={s.wrapper}>{children}</div>
+    </Tooltip>
+  )
+}
+
+export default memo(Menu)

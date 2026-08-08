@@ -3,7 +3,7 @@ import { type FC, useState } from 'react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import { FIELD } from '../../constant'
 import useFooter from '../../logic/useFooter'

@@ -7,11 +7,11 @@ import useViewingThread from '~/hooks/useViewingThread'
 
 let mockPathname = '/'
 
-vi.mock('next/navigation', () => {
+vi.mock('~/platform', async () => {
+  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
   return {
+    ...actual,
     usePathname: () => mockPathname,
-    useSearchParams: () => new URLSearchParams(),
-    useSelectedLayoutSegments: () => [],
   }
 })
 

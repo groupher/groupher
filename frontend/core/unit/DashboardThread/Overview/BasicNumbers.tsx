@@ -1,6 +1,6 @@
 import { prettyNum } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
-import NoteTip from '~/widgets/NoteTip'
+import NoteTip from '~/ui/NoteTip'
 
 import useOverview from '../logic/useOverview'
 import useSalon from './salon/basic_numbers'

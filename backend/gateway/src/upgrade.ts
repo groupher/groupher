@@ -20,6 +20,7 @@ export const buildUpgradeTargetUrl = (request: IncomingMessage): URL => {
     method: request.method,
     host: request.headers.host || '',
     forwardedHost: firstHeaderValue(request.headers['x-forwarded-host']),
+    referer: firstHeaderValue(request.headers.referer),
   })
 
   return target.targetUrl

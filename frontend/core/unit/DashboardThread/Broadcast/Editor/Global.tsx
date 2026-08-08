@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import ColorSelector from '~/widgets/ColorSelector'
-import Input from '~/widgets/Input'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
+import ColorSelector from '~/ui/ColorSelector'
+import Input from '~/ui/Input'
 
 import useBroadcast from '../../logic/useBroadcast'
 import SavingBar from '../../SavingBar'

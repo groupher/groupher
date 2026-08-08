@@ -8,8 +8,10 @@ import useArticlesFilter from '~/hooks/useArticlesFilter'
 let mockSearchParams = new URLSearchParams()
 const mockPush = vi.fn()
 
-vi.mock('next/navigation', () => {
+vi.mock('~/platform', async () => {
+  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
   return {
+    ...actual,
     usePathname: () => '/demo/post',
     useRouter: () => ({ push: mockPush }),
     useSearchParams: () => mockSearchParams,

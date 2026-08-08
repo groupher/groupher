@@ -1,12 +1,14 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import { lazy, Suspense } from 'react'
+
+import ClientOnly from '~/ui/ClientOnly'
 
 import type { TDocCoverPinnedDoc } from '../spec'
 import PinnedDocCard from './PinnedDocCard'
 import useSalon from './salon'
 
-const EditablePinnedDocsRow = dynamic(() => import('./EditablePinnedDocsRow'), { ssr: false })
+const EditablePinnedDocsRow = lazy(() => import('./EditablePinnedDocsRow'))
 
 type TProps = {
   docs: readonly TDocCoverPinnedDoc[]
@@ -32,13 +34,17 @@ export default function PinnedDocsRow({
   return (
     <section className={s.wrapper} aria-label='Pinned docs'>
       {editable ? (
-        <EditablePinnedDocsRow
-          docs={docs}
-          onAdd={onAdd}
-          onEdit={onEdit}
-          onUnpin={onUnpin}
-          onReorder={onReorder}
-        />
+        <ClientOnly>
+          <Suspense fallback={null}>
+            <EditablePinnedDocsRow
+              docs={docs}
+              onAdd={onAdd}
+              onEdit={onEdit}
+              onUnpin={onUnpin}
+              onReorder={onReorder}
+            />
+          </Suspense>
+        </ClientOnly>
       ) : (
         <div className={s.scroller}>
           {docs.map((doc) => (

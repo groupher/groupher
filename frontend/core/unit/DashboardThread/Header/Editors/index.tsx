@@ -5,7 +5,7 @@ import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import Button from '~/widgets/Buttons/Button'
+import Button from '~/ui/Buttons/Button'
 
 import SortableDndContext from '../../LinkEditor/Dnd/SortableDndContext'
 import GroupInputer from '../../LinkEditor/GroupInputer'

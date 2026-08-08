@@ -2,7 +2,7 @@ import { type FC, memo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TEnableConf } from '~/spec'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import ToggleSwitch from '~/ui/Buttons/ToggleSwitch'
 
 import useEnable from '../logic/useEnable'
 import useSalon from './salon/doc_thread'

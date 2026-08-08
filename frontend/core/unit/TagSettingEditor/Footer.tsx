@@ -1,7 +1,7 @@
 import { CHANGE_MODE } from '~/const/mode'
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+import Button from '~/ui/Buttons/Button'
+import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 
 import useSalon from './salon/footer'
 import useLogic from './useLogic'

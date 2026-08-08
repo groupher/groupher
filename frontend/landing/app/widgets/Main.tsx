@@ -5,10 +5,10 @@ import { type FC, type ReactNode, useEffect, useRef } from 'react'
 import { cn } from '~/css'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
+import GlowBackground from '~/shell/GlobalLayout/GlowBackground'
+import useSalon from '~/shell/GlobalLayout/salon/main'
 import HomeHeader from '~/unit/HomeHeader'
 import Footer from '~/unit/SiteFooter'
-import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
-import useSalon from '~/widgets/GlobalLayout/salon/main'
 
 const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420

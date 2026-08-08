@@ -22,17 +22,17 @@ vi.mock('~/hooks/useTrans', () => ({
   }),
 }))
 
-vi.mock('~/widgets/Drawer', () => ({
+vi.mock('~/ui/Drawer', () => ({
   default: ({ children, show }: { children: ReactNode; show: boolean }) =>
     show ? <aside aria-label='Tab settings drawer'>{children}</aside> : null,
 }))
 
-vi.mock('~/widgets/Modal', () => ({
+vi.mock('~/ui/Modal', () => ({
   default: ({ children, show }: { children: ReactNode; show: boolean }) =>
     show ? <div role='dialog'>{children}</div> : null,
 }))
 
-vi.mock('~/widgets/Buttons/Button', () => ({
+vi.mock('~/ui/Buttons/Button', () => ({
   default: ({
     ariaLabel,
     children,
@@ -48,7 +48,7 @@ vi.mock('~/widgets/Buttons/Button', () => ({
   ),
 }))
 
-vi.mock('~/widgets/IconHub', () => ({ default: () => null }))
+vi.mock('~/ui/IconHub', () => ({ default: () => null }))
 
 vi.mock('~/unit/DashboardThread/SavingBar', () => ({
   default: ({ children, disabled, isTouched, onCancel, onConfirm }) => {
@@ -82,7 +82,7 @@ vi.mock('./SettingsDrawer/salon', () => ({
   default: () => new Proxy<Record<string, string>>({}, { get: () => '' }),
 }))
 
-vi.mock('~/widgets/Switcher/Tabs', () => ({
+vi.mock('~/ui/Switcher/Tabs', () => ({
   default: ({ activeKey, items, onChange }) => (
     <nav aria-label='Switcher tabs'>
       {items.map((item) => (

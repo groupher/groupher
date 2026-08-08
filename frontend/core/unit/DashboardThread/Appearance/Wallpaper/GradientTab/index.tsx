@@ -2,8 +2,8 @@ import { keys } from 'ramda'
 
 import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import ColorsPresetBall from '~/widgets/ColorsPresetBall'
-import SelectableCard from '~/widgets/SelectableCard'
+import ColorsPresetBall from '~/ui/ColorsPresetBall'
+import SelectableCard from '~/ui/SelectableCard'
 
 import { isActiveWallpaperSource } from '../helper'
 import useLogic from '../useLogic'

@@ -2,7 +2,7 @@ import type { FC, ReactNode } from 'react'
 
 import type { TBreadcrumbItem, TSpace } from '~/spec'
 import useDashboardStore from '~/stores/dashboard/hooks'
-import Breadcrumbs from '~/widgets/Breadcrumbs'
+import Breadcrumbs from '~/ui/Breadcrumbs'
 
 import useSalon from './salon'
 

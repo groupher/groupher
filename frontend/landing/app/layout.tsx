@@ -2,6 +2,7 @@ import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
+import Script from 'next/script'
 
 import { GlobalProvider } from '~/app/providers'
 import { LOCALE } from '~/const/i18n'
@@ -10,9 +11,11 @@ import { LANDING_INIT_DATA } from '~/const/name'
 import { loadLocaleFile } from '~/i18n'
 import landingMessages from '~/i18n/en/landing'
 import { I18N_NS } from '~/i18n/namespaces'
+import RootLayoutShell from '~/shell/RootLayoutShell'
 import MainProvider from '~/stores/provider'
-import RootLayoutShell from '~/widgets/RootLayoutShell'
+import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
+import NextPlatformProvider from './platform/NextPlatformProvider'
 import Main from './widgets/Main'
 
 import '~/tailwind/global.css'
@@ -39,18 +42,27 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   return (
     <RootLayoutShell>
-      {process.env.NODE_ENV === 'development' ? (
-        <DevHubReporter serviceId='landing' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
-      ) : null}
-      <MainProvider
-        initData={LANDING_INIT_DATA}
-        noAccount
-        metric={METRIC.LANDING}
-        locale={locale}
-        localeData={JSON.stringify(localeData)}
-      >
-        <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
-      </MainProvider>
+      <Script
+        id='groupher-pre-paint'
+        strategy='beforeInteractive'
+        dangerouslySetInnerHTML={{
+          __html: `${prePaintThemeDetectScript()}\n${prePaintRuntimeSeedScript()}`,
+        }}
+      />
+      <NextPlatformProvider>
+        {process.env.NODE_ENV === 'development' ? (
+          <DevHubReporter serviceId='landing' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+        ) : null}
+        <MainProvider
+          initData={LANDING_INIT_DATA}
+          noAccount
+          metric={METRIC.LANDING}
+          locale={locale}
+          localeData={JSON.stringify(localeData)}
+        >
+          <GlobalProvider mainBlock={Main}>{children}</GlobalProvider>
+        </MainProvider>
+      </NextPlatformProvider>
       <Analytics />
       <SpeedInsights />
     </RootLayoutShell>

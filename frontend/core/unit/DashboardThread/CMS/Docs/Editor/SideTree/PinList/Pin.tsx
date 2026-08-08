@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import MarkerPicker from '~/widgets/MarkerPicker'
+import MarkerPicker from '~/ui/MarkerPicker'
 
 import { DEFAULT_PIN_MARKER, SIDE_TREE_NODE_TYPE, UNTITLED_TITLE_I18N_KEY } from '../constant'
 import LinkInlineEditor from '../Group/LinkInlineEditor'

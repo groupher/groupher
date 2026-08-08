@@ -1,25 +1,13 @@
 import type { Metadata } from 'next'
 import { cacheLife, cacheTag } from 'next/cache'
-import { includes, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
-import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
-import { BUILTIN_ALIAS } from '~/const/name'
 import { THREAD } from '~/const/thread'
 import { extractQueryName } from '~/graphql/document'
 import { gqFetch } from '~/graphql/server'
-import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
-import type {
-  TCommunity,
-  TNameAlias,
-  TPagedArticles,
-  TPagedArticlesParams,
-  TParseDashboard,
-  TParsedWallpaper,
-  TThread,
-} from '~/spec'
-import { FIELDS } from '~/stores/dashboard/constant'
+import type { TPagedArticles, TPagedArticlesParams, TParseDashboard, TThread } from '~/spec'
+export { parseDashboard, parseWallpaper } from './parse'
 
 type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
 
@@ -41,108 +29,6 @@ type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
 
 //   return mergeRight(ARTICLES_FILTER, filter)
 // }
-
-export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {
-  // NOTE: if the backend is not ready, return default config
-  if (!community) return {}
-
-  const { dashboard } = community
-  const { wallpaper } = dashboard
-
-  return {
-    ...wallpaper,
-    initWallpaper: {
-      ...wallpaper,
-    },
-  }
-}
-
-const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
-  const changedAliasKeys = nameAlias.map((item) => item.original)
-  const unChangedAlias = reject(
-    (item: TNameAlias) => includes(item.original, changedAliasKeys),
-    BUILTIN_ALIAS,
-  )
-
-  return reject((item: TNameAlias) => item.slug === '', [...nameAlias, ...unChangedAlias])
-}
-
-export const parseDashboard = (community: TCommunity): TParseDashboard => {
-  if (!community) {
-    const defaultFields = { ...FIELDS }
-    return {
-      ...defaultFields,
-      original: defaultFields,
-    }
-  }
-
-  const { dashboard, moderators } = community
-
-  if (!dashboard || Object.keys(dashboard).length === 0) {
-    const defaultFields = { ...FIELDS }
-    return {
-      ...defaultFields,
-      original: defaultFields,
-    }
-  }
-
-  const {
-    enable,
-    nameAlias,
-    socialLinks,
-    docFaq,
-    seo,
-    layout,
-    rss,
-    baseInfo,
-    headerLinks,
-    footerLinks,
-    footerOnelineLinks,
-    mediaReports,
-    thirdPartyAnalytics,
-    enabledThirdPartyAnalytics,
-  } = dashboard
-  const fieldsObj = removeEmptyValuesFromObject({
-    enable,
-    nameAlias: parseDashboardAlias([...nameAlias]),
-    socialLinks,
-    docFaq,
-    ...baseInfo,
-    ...seo,
-    ...layout,
-    ...rss,
-    headerLinks,
-    footerLinks,
-    footerOnelineLinks,
-    moderators,
-    mediaReports,
-    thirdPartyAnalytics,
-    enabledThirdPartyAnalytics,
-  }) as Partial<TParseDashboard>
-
-  if (layout?.kanbanBoards?.length) {
-    fieldsObj.kanbanBoards = normalizeKanbanBoards(layout.kanbanBoards)
-  } else if (!fieldsObj.kanbanBoards?.length) {
-    fieldsObj.kanbanBoards = INIT_KANBAN_BOARDS
-  }
-
-  // If fieldsObj is empty, return default config
-  if (Object.keys(fieldsObj).length === 0) {
-    const defaultFields = { ...FIELDS }
-    return {
-      ...defaultFields,
-      original: defaultFields,
-    }
-  }
-
-  // Merge with default fields to ensure all required properties exist
-  const mergedFields = { ...FIELDS, ...fieldsObj }
-
-  return {
-    ...mergedFields,
-    original: mergedFields,
-  }
-}
 
 // used in server/api
 

@@ -6,7 +6,7 @@ import FilePlusSVG from '~/icons/FilePlus'
 import FolderPlusSVG from '~/icons/FolderPlus'
 import MagnifyingGlassSVG from '~/icons/MagnifyingGlass'
 import MapPinPlusSVG from '~/icons/MapPinPlus'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import useSalon from '../salon/toolbar'
 

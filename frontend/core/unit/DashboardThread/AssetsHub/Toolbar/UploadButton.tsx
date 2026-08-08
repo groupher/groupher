@@ -2,8 +2,8 @@
 
 import { useRef } from 'react'
 
-import Button from '~/widgets/Buttons/Button'
-import IconHub from '~/widgets/IconHub'
+import Button from '~/ui/Buttons/Button'
+import IconHub from '~/ui/IconHub'
 
 import { ASSETS_HUB_ACCEPT_MIME, ASSETS_HUB_LABEL } from '../constant'
 import useSalon from './salon/upload_button'

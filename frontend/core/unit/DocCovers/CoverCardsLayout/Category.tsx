@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import { mockImage } from '~/mock'
+import { Link } from '~/platform'
 
 import GroupSettingButton from '../GroupSettingButton'
 import type { TDocCoverCard } from '../spec'

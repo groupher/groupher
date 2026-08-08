@@ -1,0 +1,10 @@
+{
+  "extends": "../core/tsconfig.app.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "strictNullChecks": false,
+    "types": ["vite/client"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".output"]
+}

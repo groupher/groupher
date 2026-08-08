@@ -6,7 +6,7 @@ import useLayout from '~/hooks/useLayout'
 import Img from '~/Img'
 import type { TSpace } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import ImgFallback from '~/widgets/ImgFallback'
+import ImgFallback from '~/ui/ImgFallback'
 
 import useSalon from './salon'
 

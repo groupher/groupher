@@ -1,7 +1,7 @@
 import ApplySVG from '~/icons/Apply'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import CitySelector from '~/widgets/CitySelector'
-import Input from '~/widgets/Input'
+import ArrowButton from '~/ui/Buttons/ArrowButton'
+import CitySelector from '~/ui/CitySelector'
+import Input from '~/ui/Input'
 
 import { SOURCE_OPTIONS } from '../constant'
 import useLogic from '../useLogic'

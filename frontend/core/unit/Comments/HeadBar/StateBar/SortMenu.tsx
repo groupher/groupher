@@ -6,7 +6,7 @@ import ReplyModeSVG from '~/icons/CommentReplyMode'
 import TimelineModeSVG from '~/icons/CommentTimelineMode'
 import ExpandSVG from '~/icons/Expand'
 import FoldSVG from '~/icons/Fold'
-import Tooltip from '~/widgets/Tooltip'
+import Tooltip from '~/ui/Tooltip'
 
 import type { TProps as TBase } from '..'
 import { MODE } from '../../constant'

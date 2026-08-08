@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import CheckSVG from '~/icons/Check'
-import Input from '~/widgets/Input'
+import Input from '~/ui/Input'
 
 import type { TCoverDocOption } from './useLogic'
 

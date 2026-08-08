@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
-import RangeSlider from '~/widgets/RangeSlider'
-import Radio from '~/widgets/Switcher/Radio'
+import RangeSlider from '~/ui/RangeSlider'
+import Radio from '~/ui/Switcher/Radio'
 
 import useRSS from '../logic/useRSS'
 import Portal from '../Portal'

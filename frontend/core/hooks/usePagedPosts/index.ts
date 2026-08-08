@@ -1,6 +1,5 @@
-import { useSearchParams } from 'next/navigation'
-
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
+import { useSearchParams } from '~/platform'
 import type { TPagedPosts, TResState, TTagGroup } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'

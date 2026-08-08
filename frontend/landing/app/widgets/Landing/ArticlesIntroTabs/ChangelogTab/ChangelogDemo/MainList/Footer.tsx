@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import UpvoteSVG from '~/icons/Upvote'
 import { mockUsers } from '~/mock'
-import Facepile from '~/widgets/Facepile/LandingPage'
+import Facepile from '~/ui/Facepile/LandingPage'
 
 import useSalon from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/main_list/footer'
 

@@ -6,10 +6,10 @@
 
 import { useRef } from 'react'
 
+// import ViewportTracker from '~/ui/ViewportTracker'
+import ArtimentBody from '~/render/ArtimentBody'
 import useArticle from '~/stores/article/hooks'
 import Comments from '~/unit/Comments'
-// import ViewportTracker from '~/widgets/ViewportTracker'
-import ArtimentBody from '~/widgets/ArtimentBody'
 
 import useSalon from './salon/content'
 

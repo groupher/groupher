@@ -5,8 +5,8 @@
 import { type FC, memo } from 'react'
 
 import type { TEmotion, TEmotionType } from '~/spec'
-import IconButton from '~/widgets/Buttons/IconButton'
-import Tooltip from '~/widgets/Tooltip'
+import IconButton from '~/ui/Buttons/IconButton'
+import Tooltip from '~/ui/Tooltip'
 
 import { ensureEmotion, visibleEmotions } from './helper'
 import Panel from './Panel'
