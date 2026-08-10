@@ -1130,14 +1130,6 @@ type AnalysisWebLocationMetric {
   metrics: AnalysisWebDimensionMetricValues
 }
 
-type AnalysisWebTrafficCell {
-  weekday: Int
-  hour: Int
-  visitors: Int
-  visits: Int
-  views: Int
-}
-
 type AnalysisWebError {
   code: String
   message: String
@@ -1154,6 +1146,14 @@ type AnalysisTrendChartPoint {
 type AnalysisTrendChart {
   bucket: String
   points: [AnalysisTrendChartPoint]
+}
+
+type AnalysisWebTrafficCell {
+  weekday: Int
+  hour: Int
+  visitors: Int
+  visits: Int
+  views: Int
 }
 
 type AnalysisTrendsOverview {
