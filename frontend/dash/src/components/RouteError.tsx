@@ -1,6 +1,27 @@
+import { readGraphQLErrorCode, readGraphQLErrorMessage } from '@dash/utils/graphql-error'
 import { Link, type ErrorComponentProps } from '@tanstack/react-router'
 
+import { resolveAuthFailure } from '~/auth'
+
+import AuthRequired from './AuthRequired'
+import AuthRouteRecovery from './AuthRouteRecovery'
+
 export default function RouteError({ error, reset }: ErrorComponentProps) {
+  const routeError = error as Error & { code?: string; status?: number }
+  // TanStack's SSR boundary always serializes Error.message, while custom fields such as
+  // `code` are not a stable transport contract. The server adds a deliberate prefix fallback.
+  const code = readGraphQLErrorCode(routeError)
+  const { status } = routeError
+  const authAction = resolveAuthFailure({ code, status })
+
+  if (authAction === 'refresh') {
+    return <AuthRouteRecovery />
+  }
+
+  if (authAction === 'login') {
+    return <AuthRequired action='continue to the dashboard' />
+  }
+
   return (
     <div className='column-center min-h-80 w-full justify-center px-6 py-12'>
       <div className='column w-full max-w-md items-start rounded-xl bg-white p-6 shadow-sm dark:bg-neutral-900'>
@@ -8,7 +29,7 @@ export default function RouteError({ error, reset }: ErrorComponentProps) {
           This dashboard section could not be loaded
         </h1>
         <p className='mt-2 text-sm leading-6 text-pretty text-neutral-500 dark:text-neutral-400'>
-          {error.message || 'An unexpected route error occurred.'}
+          {readGraphQLErrorMessage(error.message) || 'An unexpected route error occurred.'}
         </p>
 
         <div className='row mt-6 gap-3'>

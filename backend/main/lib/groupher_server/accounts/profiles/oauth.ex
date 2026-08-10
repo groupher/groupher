@@ -22,6 +22,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
+  alias Accounts.Profiles.BrowserSessions
   alias Helper.{Multi, Guardian, ORM}
 
   def link_oauth(login, provider) do
@@ -57,15 +58,15 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     end
   end
 
-  def signin_oauth(provider) do
+  def signin_oauth(provider, browser_session_metadata \\ %{}) do
     provider = normalize_oauth_provider(provider)
 
     case find_oauth_provider(provider) do
       {:ok, oauth_provider} ->
-        gen_token(oauth_provider.user)
+        BrowserSessions.create(oauth_provider.user, browser_session_metadata)
 
       {:error, _} ->
-        register_oauth_user(provider)
+        register_oauth_user(provider, browser_session_metadata)
     end
   end
 
@@ -121,7 +122,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     end
   end
 
-  defp register_oauth_user(oauth_profile) do
+  defp register_oauth_user(oauth_profile, browser_session_metadata) do
     Multi.new()
     |> Multi.run(:create_user, fn _, _ ->
       create_user(oauth_profile)
@@ -137,6 +138,10 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     end)
     |> Repo.transaction()
     |> register_oauth_result()
+    |> case do
+      {:ok, user} -> BrowserSessions.create(user, browser_session_metadata)
+      error -> error
+    end
   end
 
   defp gen_token(%User{} = user) do
@@ -177,25 +182,23 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     {:ok, user} =
       FrontDesk.live_user(create_user.login, preload: :oauth_providers, fill_meta: false)
 
-    with {:ok, result} <- gen_token(user) do
-      RootFrontDesk.revalidate().user(user.login)
+    RootFrontDesk.revalidate().user(user.login)
 
-      Messaging.notify(:welcome_new_register, %{
-        user_id: user.id,
-        login: user.login,
-        nickname: user.nickname,
-        email: user.email
-      })
+    Messaging.notify(:welcome_new_register, %{
+      user_id: user.id,
+      login: user.login,
+      nickname: user.nickname,
+      email: user.email
+    })
 
-      Messaging.notify(:notify_admin_new_register, %{
-        user_id: user.id,
-        login: user.login,
-        nickname: user.nickname,
-        email: user.email
-      })
+    Messaging.notify(:notify_admin_new_register, %{
+      user_id: user.id,
+      login: user.login,
+      nickname: user.nickname,
+      email: user.email
+    })
 
-      {:ok, result}
-    end
+    {:ok, user}
   end
 
   defp register_oauth_result({:error, :create_user, %Ecto.Changeset{} = result, _steps}),

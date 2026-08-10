@@ -47,9 +47,67 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     Accounts.Profiles.update_profile(cur_user, profile)
   end
 
-  def signin_oauth(_root, %{provider: provider}, _info) do
-    Accounts.Profiles.signin_oauth(provider)
+  def signin_oauth(_root, %{provider: provider} = args, _info) do
+    Accounts.Profiles.signin_oauth(provider, Map.get(args, :browser_session, %{}))
   end
+
+  def refresh_browser_session(_root, %{browser_session_ref: ref}, _info) do
+    ref |> Accounts.Profiles.refresh_browser_session() |> browser_session_result()
+  end
+
+  def revoke_browser_session(_root, %{browser_session_ref: ref}, _info) do
+    with {:ok, _result} <- Accounts.Profiles.revoke_browser_session(ref),
+         do: {:ok, %{done: true}}
+  end
+
+  def browser_sessions(_root, %{browser_session_ref: ref}, _info) do
+    ref |> Accounts.Profiles.browser_sessions_for_ref() |> browser_session_result()
+  end
+
+  def revoke_browser_session_public(
+        _root,
+        %{browser_session_ref: ref, public_ref: public_ref},
+        _info
+      ) do
+    ref
+    |> Accounts.Profiles.revoke_browser_session_public(public_ref)
+    |> browser_session_result()
+  end
+
+  def revoke_other_browser_sessions(_root, %{browser_session_ref: ref}, _info) do
+    with {:ok, _result} <-
+           ref
+           |> Accounts.Profiles.revoke_other_browser_sessions_for_ref()
+           |> browser_session_result(),
+         do: {:ok, %{done: true}}
+  end
+
+  defp browser_session_result({:error, reason}) do
+    {message, code} =
+      case reason do
+        :session_expired ->
+          {"Browser Session expired.", "SESSION_EXPIRED"}
+
+        :session_revoked ->
+          {"Browser Session revoked.", "SESSION_REVOKED"}
+
+        :session_not_found ->
+          {"Browser Session no longer exists.", "SESSION_REVOKED"}
+
+        :current_session ->
+          {"The current Browser Session cannot be revoked here.", "SESSION_CONFLICT"}
+
+        :account_blocked ->
+          {"Account is blocked.", "ACCOUNT_BLOCKED"}
+
+        _ ->
+          {"Browser Session operation failed.", "SESSION_UNAVAILABLE"}
+      end
+
+    {:error, [message: message, code: code]}
+  end
+
+  defp browser_session_result(result), do: result
 
   def link_oauth(_root, %{provider: provider}, %{context: %{cur_user: cur_user}}) do
     Accounts.Profiles.link_oauth(cur_user.login, provider)

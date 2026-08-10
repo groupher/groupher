@@ -32,7 +32,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
-      assert ret["user"]["login"] == @valid_github_profile.login
+      assert is_binary(ret["accessToken"])
+      assert is_binary(ret["browserSessionRef"])
 
       oauth_provider =
         Repo.get_by(OauthProvider,
@@ -48,7 +49,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
-      assert ret["user"]["login"] == @valid_google_profile.login
+      assert is_binary(ret["accessToken"])
+      assert is_binary(ret["browserSessionRef"])
 
       oauth_provider =
         Repo.get_by(OauthProvider,
@@ -129,6 +131,43 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+    end
+  end
+
+  describe "[browser session refresh]" do
+    test "returns a stable terminal code for a missing or remotely revoked session",
+         ~m(guest_conn)a do
+      query = """
+      mutation($browserSessionRef: String!) {
+        refreshBrowserSession(browserSessionRef: $browserSessionRef) {
+          accessToken
+        }
+      }
+      """
+
+      response =
+        guest_conn
+        |> post("/graphiql", query: query, variables: %{"browserSessionRef" => "bs_missing"})
+        |> json_response(200)
+
+      assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==
+               "SESSION_REVOKED"
+    end
+
+    test "returns a machine auth failure for an invalid browser cookie", ~m(guest_conn)a do
+      query = "mutation { updateProfile(profile: {}) { login } }"
+
+      response =
+        guest_conn
+        |> Plug.Conn.put_req_header("cookie", "groupher-auth.token=invalid-token")
+        |> Plug.Conn.put_req_header("content-type", "application/json")
+        |> Plug.Conn.put_req_header("origin", "https://dashboard.groupher.localhost")
+        |> Plug.Conn.put_req_header("x-groupher-csrf", "1")
+        |> post("/graphiql", query: query, variables: %{})
+        |> json_response(200)
+
+      assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==
+               "TOKEN_INVALID"
     end
   end
 

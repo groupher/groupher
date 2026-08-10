@@ -35,6 +35,8 @@
       "~/fmt/*": ["./core/lib/fmt/*"],
       "~/oauth": ["./core/lib/oauth"],
       "~/oauth/*": ["./core/lib/oauth/*"],
+      "~/auth": ["./core/lib/auth"],
+      "~/auth/*": ["./core/lib/auth/*"],
       "~/helper": ["./core/lib/helper"],
       "~/helper/*": ["./core/lib/helper/*"],
       "~/i18n": ["./core/lib/i18n"],

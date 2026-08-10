@@ -5,10 +5,10 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
     """
     mutation($provider: OauthProviderInput!) {
           signinOauth(provider: $provider) {
-            token
-            user {
-              login
-            }
+            accessToken
+            accessExpiresAt
+            browserSessionRef
+            sessionAbsoluteExpiresAt
           }
         }
     """

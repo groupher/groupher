@@ -13,6 +13,13 @@ defmodule GroupherServerWeb.Middleware.Authorize do
 
   def call(%{context: %{cur_user: _}} = resolution, _info), do: resolution
 
+  def call(%{context: %{auth_failure: code}} = resolution, _info) do
+    Absinthe.Resolution.put_result(
+      resolution,
+      {:error, [message: "Authorize: browser token is invalid", code: code]}
+    )
+  end
+
   def call(resolution, _) do
     resolution
     |> handle_absinthe_error("Authorize: need login", ecode(:account_login))

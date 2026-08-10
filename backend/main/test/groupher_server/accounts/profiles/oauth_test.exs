@@ -42,15 +42,17 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert oauth_provider.raw["login"] == @valid_github_profile["login"]
       assert oauth_provider.raw["avatar_url"] == @valid_github_profile["avatar"]
 
-      assert signin_res |> Map.has_key?(:user)
-      assert signin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:access_token)
+      assert signin_res |> Map.has_key?(:access_expires_at)
+      assert signin_res |> Map.has_key?(:browser_session_ref)
+      assert signin_res |> Map.has_key?(:session_absolute_expires_at)
     end
 
     test "existing user can signin" do
       {:ok, signin_res} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
-      assert signin_res |> Map.has_key?(:user)
-      assert signin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:access_token)
+      assert signin_res |> Map.has_key?(:browser_session_ref)
     end
 
     test "existing user can signin multiple times" do
@@ -67,7 +69,10 @@ defmodule GroupherServer.Test.Accounts.Oauth do
         Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       {:error, _res} =
-        Accounts.Profiles.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
+        Accounts.Profiles.signin_oauth(%{
+          @valid_github_profile
+          | "provider_id" => "non-existing-id"
+        })
     end
 
     test "can link oauth provider to existing user" do

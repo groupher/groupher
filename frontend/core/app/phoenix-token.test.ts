@@ -14,8 +14,10 @@ const signedToken = (
   const header = base64UrlEncode({ alg: 'HS512', typ: 'JWT' })
   const body = base64UrlEncode({
     exp: Math.floor(Date.now() / 1000) + 60,
-    iss: 'groupher_server',
+    aud: 'phoenix:browser-api',
+    iss: 'groupher:phoenix',
     sub: '42',
+    typ: 'browser_access',
     ...payload,
   })
   const signature = createHmac('sha512', secret).update(`${header}.${body}`).digest('base64url')
@@ -67,6 +69,26 @@ describe('getPhoenixToken', () => {
     const request = new Request('https://dashboard.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken({ iss: 'other' })}`,
+      },
+    })
+
+    expect(getPhoenixToken(request)).toBeNull()
+  })
+
+  it('rejects tokens outside the browser API audience', () => {
+    const request = new Request('https://dashboard.groupher.localhost', {
+      headers: {
+        cookie: `groupher-auth.token=${signedToken({ aud: 'another-service' })}`,
+      },
+    })
+
+    expect(getPhoenixToken(request)).toBeNull()
+  })
+
+  it('rejects non-browser Phoenix tokens', () => {
+    const request = new Request('https://dashboard.groupher.localhost', {
+      headers: {
+        cookie: `groupher-auth.token=${signedToken({ typ: 'service' })}`,
       },
     })
 

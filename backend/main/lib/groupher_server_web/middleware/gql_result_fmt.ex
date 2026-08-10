@@ -13,8 +13,12 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
 
   def call(%{errors: [error]} = resolution, _) do
     if formattable_domain_error?(error) do
-      {:error, [message: _, code: _]} = gq_error = Helper.GQL.result({:error, error})
-      Absinthe.Resolution.put_result(resolution, gq_error)
+      {:error, [message: message, code: code]} = Helper.GQL.result({:error, error})
+
+      Absinthe.Resolution.put_result(
+        resolution,
+        {:error, [message: message, extensions: %{code: code}]}
+      )
     else
       resolution
     end
@@ -26,7 +30,8 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
   defp formattable_domain_error?({reason, _meta}) when is_atom(reason), do: true
 
   defp formattable_domain_error?(reason) when is_list(reason) do
-    Keyword.keyword?(reason) and Keyword.has_key?(reason, :message) and Keyword.has_key?(reason, :code)
+    Keyword.keyword?(reason) and Keyword.has_key?(reason, :message) and
+      Keyword.has_key?(reason, :code)
   end
 
   defp formattable_domain_error?(_), do: false

@@ -10,6 +10,9 @@ const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
 
 export default defineConfig({
+  define: {
+    'process.env.NEXT_PUBLIC_AUTH_ENDPOINT': JSON.stringify(process.env.NEXT_PUBLIC_AUTH_ENDPOINT),
+  },
   publicDir: path.join(dashRoot, 'public'),
   resolve: {
     tsconfigPaths: true,

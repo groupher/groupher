@@ -1,4 +1,8 @@
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import {
+  GROUPHER_AUTH_CSRF_HEADER,
+  GROUPHER_AUTH_CSRF_VALUE,
+  GROUPHER_AUTH_TOKEN_COOKIE,
+} from '@groupher/contracts/auth'
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -55,7 +59,7 @@ const proxyHeaders = (request: Request): Headers => {
   const headers = new Headers()
   const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
 
-  for (const name of ['accept', 'content-type']) {
+  for (const name of ['accept', 'content-type', 'origin', GROUPHER_AUTH_CSRF_HEADER]) {
     const value = request.headers.get(name)
     if (value) headers.set(name, value)
   }
@@ -97,6 +101,22 @@ export const proxyGraphQLRequest = async (
   request: Request,
   fetcher: typeof fetch = fetch,
 ): Promise<Response> => {
+  if (request.method === 'POST') {
+    const contentType = request.headers.get('content-type') || ''
+    if (!contentType.startsWith('application/json')) {
+      return Response.json(
+        { errors: [{ extensions: { code: 'INVALID_REQUEST' }, message: 'JSON is required.' }] },
+        { status: 400 },
+      )
+    }
+    if (request.headers.get(GROUPHER_AUTH_CSRF_HEADER) !== GROUPHER_AUTH_CSRF_VALUE) {
+      return Response.json(
+        { errors: [{ extensions: { code: 'INVALID_CSRF' }, message: 'CSRF proof is required.' }] },
+        { status: 400 },
+      )
+    }
+  }
+
   const endpoint = configuredGraphQLEndpoint()
   if (endpoint instanceof Response) return endpoint
 

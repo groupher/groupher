@@ -9,6 +9,8 @@ const AUTH_COOKIE_BASENAME = {
 } as const
 
 export const GROUPHER_AUTH_TOKEN_COOKIE = 'groupher-auth.token'
+export const GROUPHER_AUTH_CSRF_HEADER = 'X-Groupher-CSRF'
+export const GROUPHER_AUTH_CSRF_VALUE = '1'
 /**
  * Readable browser hint that tells frontend account stores they may probe
  * the current session with `me`.
@@ -23,7 +25,9 @@ export const GROUPHER_AUTH_TOKEN_COOKIE = 'groupher-auth.token'
 export const GROUPHER_AUTH_SIGNED_IN_COOKIE = 'groupher-auth.signed-in'
 
 export const getAuthCookieNames = (secure: boolean) => {
-  const prefix = secure ? '__Secure-' : ''
+  // `__Host-` requires Secure, Path=/, and no Domain. Auth is the only origin
+  // that receives this long-lived browser Session and OAuth protocol state.
+  const prefix = secure ? '__Host-' : ''
 
   return {
     callbackUrl: `${prefix}${AUTH_COOKIE_BASENAME.callbackUrl}`,

@@ -17,6 +17,16 @@
     "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
     "NODE_ENV": "production"
   },
+  "ratelimits": [
+    {
+      "name": "AUTH_REFRESH_RATE_LIMITER",
+      "namespace_id": "9001001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ],
   "secrets": {
     "required": [
       "AUTH_GITHUB_ID",

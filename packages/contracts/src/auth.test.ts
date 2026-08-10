@@ -8,15 +8,15 @@ import {
 } from './auth'
 
 describe('Auth cookie contract', () => {
-  it('uses a Groupher-specific namespace for secure shared cookies', () => {
+  it('uses host-only Cookie names for secure Auth Session and OAuth state', () => {
     expect(getAuthCookieNames(true)).toEqual({
-      callbackUrl: '__Secure-groupher-auth.callback-url',
-      csrfToken: '__Secure-groupher-auth.csrf-token',
-      nonce: '__Secure-groupher-auth.nonce',
-      pkceCodeVerifier: '__Secure-groupher-auth.pkce.code_verifier',
-      sessionToken: '__Secure-groupher-auth.session-token',
-      state: '__Secure-groupher-auth.state',
-      webauthnChallenge: '__Secure-groupher-auth.challenge',
+      callbackUrl: '__Host-groupher-auth.callback-url',
+      csrfToken: '__Host-groupher-auth.csrf-token',
+      nonce: '__Host-groupher-auth.nonce',
+      pkceCodeVerifier: '__Host-groupher-auth.pkce.code_verifier',
+      sessionToken: '__Host-groupher-auth.session-token',
+      state: '__Host-groupher-auth.state',
+      webauthnChallenge: '__Host-groupher-auth.challenge',
     })
   })
 

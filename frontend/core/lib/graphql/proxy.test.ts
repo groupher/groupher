@@ -45,7 +45,10 @@ describe('proxyGraphQLRequest', () => {
     const fetcher = vi.fn(async () => Response.json({ data: { me: null } }))
     const request = new Request('https://groupher.test/api/graphql', {
       body: JSON.stringify({ query: '{ me { login } }' }),
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        'x-groupher-csrf': '1',
+      },
       method: 'POST',
     })
 

@@ -213,6 +213,41 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     field(:user, :user)
   end
 
+  object :browser_signin_result do
+    field(:access_token, :string)
+    field(:access_expires_at, :datetime)
+    field(:browser_session_ref, :string)
+    field(:session_absolute_expires_at, :datetime)
+  end
+
+  object :browser_session do
+    field(:public_ref, :string)
+    field(:is_current, :boolean)
+    field(:status, :string)
+    field(:browser_family, :string)
+    field(:os_family, :string)
+    field(:device_family, :string)
+    field(:user_agent_summary, :string)
+    field(:created_country, :string)
+    field(:created_region, :string)
+    field(:created_city, :string)
+    field(:last_seen_country, :string)
+    field(:last_seen_region, :string)
+    field(:last_seen_city, :string)
+    field(:inserted_at, :datetime)
+    field(:last_seen_at, :datetime)
+  end
+
+  input_object :browser_session_metadata_input do
+    field(:browser_family, :string)
+    field(:os_family, :string)
+    field(:device_family, :string)
+    field(:user_agent_summary, :string)
+    field(:created_country, :string)
+    field(:created_region, :string)
+    field(:created_city, :string)
+  end
+
   object :rules do
     field(:cms, :json)
   end

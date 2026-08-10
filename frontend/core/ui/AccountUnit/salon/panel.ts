@@ -1,4 +1,3 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import DiscordSVG from '~/icons/social/Discord'
 import FacebookSVG from '~/icons/social/Facebook'
 import GithubSVG from '~/icons/social/Github'
@@ -10,28 +9,18 @@ import TwitchSVG from '~/icons/social/Twitch'
 import TwitterSVG from '~/icons/social/Twitter'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, linkable } = useTwBelt()
-
   return {
     wrapper: 'column px-5 py-2.5 text-sm min-h-64 relative',
-    header: cn('text-base mt-2.5 ml-0.5 z-1', fg('title')),
+    header: 'text-base mt-2.5 ml-0.5 z-1 text-title',
     body: 'row wrap gap-x-4 gap-y-3 mt-8 min-h-32 mb-5 z-10',
-    socialItem: cn(
-      'row-center h-9 px-2 rounded-lg border',
-      fg('digest'),
-      br('divider'),
-      'font-medium',
-      `hover:${bg('hoverBg')}`,
-      `hover:${fg('title')}`,
-      'pointer',
-      // hover('bg')
-    ),
+    socialItem:
+      'row-center h-9 rounded-lg border border-divider px-2 font-medium text-digest pointer hover:bg-hoverBg hover:text-title',
     iconBox: 'align-both size-8',
     //
     icon: 'size-5 -mt-0.5',
-    footer: cn('row-between mt-4 ml-0.5 text-sm', fg('digest')),
+    footer: 'row-between mt-4 ml-0.5 text-sm text-digest',
     //
-    link: cn(linkable(), fg('digest'), `hover:${fg('title')}`),
+    link: 'no-underline pointer text-digest hover:text-title hover:underline',
   }
 }
 

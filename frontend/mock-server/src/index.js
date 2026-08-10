@@ -7,6 +7,12 @@ import { addMocksToSchema } from '@graphql-tools/mock'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 import { createHandler } from 'graphql-http/lib/use/http'
 
+import {
+  expireAccessTokens,
+  getAuthState,
+  recordProtectedRequest,
+  resetAuthState,
+} from './auth-state.js'
 import { mocks, resolvers, setThirdPartyAnalyticsScenario } from './mocks.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -14,6 +20,7 @@ const __dirname = path.dirname(__filename)
 
 const PORT = Number(process.env.MOCK_GRAPHQL_PORT ?? process.env.PORT ?? 4001)
 const GRAPHQL_PATH = process.env.MOCK_GRAPHQL_PATH ?? '/graphiql'
+const AUTH_E2E_ENABLED = process.env.E2E_AUTH_STACK === '1'
 
 const schemaPath = (() => {
   const envPath = process.env.SCHEMA_PATH
@@ -198,6 +205,29 @@ createServer((req, res) => {
     return
   }
 
+  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/reset') {
+    resetAuthState()
+    res.statusCode = 200
+    res.setHeader('content-type', 'application/json; charset=utf-8')
+    res.end(JSON.stringify({ ok: true }))
+    return
+  }
+
+  if (AUTH_E2E_ENABLED && req.method === 'GET' && req.url === '/__e2e/auth/state') {
+    res.statusCode = 200
+    res.setHeader('content-type', 'application/json; charset=utf-8')
+    res.end(JSON.stringify(getAuthState()))
+    return
+  }
+
+  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/__e2e/auth/expire-access') {
+    expireAccessTokens()
+    res.statusCode = 200
+    res.setHeader('content-type', 'application/json; charset=utf-8')
+    res.end(JSON.stringify({ ok: true }))
+    return
+  }
+
   if (req.url?.startsWith(GRAPHQL_PATH)) {
     const url = new URL(req.url, `http://${req.headers.host ?? `localhost:${PORT}`}`)
 
@@ -208,6 +238,20 @@ createServer((req, res) => {
       res.setHeader('content-type', 'text/html; charset=utf-8')
       res.end(renderGraphiQL(GRAPHQL_PATH))
       return
+    }
+
+    if (AUTH_E2E_ENABLED && req.method === 'POST') {
+      const trusted =
+        req.headers['x-groupher-server-trust'] === process.env.GROUPHER_SERVER_TRUST_SECRET
+      if (!trusted) {
+        const code = recordProtectedRequest(req.headers.cookie)
+        if (code) {
+          res.statusCode = 200
+          res.setHeader('content-type', 'application/json; charset=utf-8')
+          res.end(JSON.stringify({ errors: [{ extensions: { code }, message: code }] }))
+          return
+        }
+      }
     }
 
     handler(req, res)

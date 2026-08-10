@@ -1,3 +1,4 @@
+import { requestLogin, type TLoginRequest } from '~/auth/login-request'
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import type { TArticle, TArticlePubSelector } from '~/spec'
@@ -87,7 +88,7 @@ export const callSyncSelector = (data: TArticlePubSelector): void => {
   send(EVENT.ARTICLE_SELECTOR, { data })
 }
 
-export const authWarn = (option = {}): void => send(EVENT.AUTH_WARNING, option)
+export const authWarn = (option: TLoginRequest = {}): void => requestLogin(option)
 
 /**
  * open search panel

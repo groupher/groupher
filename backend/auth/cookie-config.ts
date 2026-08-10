@@ -2,15 +2,22 @@ import type { AuthConfig } from '@auth/core'
 import { getAuthCookieNames } from '@groupher/contracts/auth'
 
 type TOptions = {
-  domain?: string
   secure: boolean
 }
 
-export const buildSharedAuthCookies = ({ domain, secure }: TOptions): AuthConfig['cookies'] => {
-  if (!domain) return undefined
-
+/**
+ * Keep Auth.js Session and OAuth protocol cookies host-only on canonical Auth.
+ * The shared parent domain is reserved for the short-lived Phoenix access
+ * cookie written by Auth after a completed sign-in or refresh.
+ */
+export const buildHostOnlyAuthCookies = ({ secure }: TOptions): AuthConfig['cookies'] => {
   const names = getAuthCookieNames(secure)
-  const options = { domain }
+  const options = {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'lax' as const,
+    secure,
+  }
 
   return {
     sessionToken: {

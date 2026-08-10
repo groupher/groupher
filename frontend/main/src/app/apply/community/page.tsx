@@ -7,6 +7,7 @@ import METRIC from '~/const/metric'
 import { COMMUNITY_THREADS } from '~/const/thread'
 import type { TCommunity, TParseDashboard } from '~/spec'
 import MainProvider from '~/stores/provider'
+import AuthLoginModal from '~/ui/AuthLoginModal'
 import CommunityEditor from '~/unit/CommunityEditor'
 
 const initData = {
@@ -24,6 +25,7 @@ const ApplyCommunity = () => {
         <GraphQLProvider>
           <CommunityEditor />
         </GraphQLProvider>
+        <AuthLoginModal />
       </MainProvider>
     </Suspense>
   )

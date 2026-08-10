@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import '../styles/global.css'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
 import ThemeStoreProvider from '~/stores/theme/provider'
+import AuthLoginModal from '~/ui/AuthLoginModal'
 
 import { TanStackPlatformProvider } from '../platform/tanStackPlatform'
 
@@ -42,6 +43,7 @@ function RootComponent() {
       <ThemeStoreProvider initData={theme}>
         <TanStackPlatformProvider>
           <Outlet />
+          <AuthLoginModal />
         </TanStackPlatformProvider>
       </ThemeStoreProvider>
     </InitialNowProvider>

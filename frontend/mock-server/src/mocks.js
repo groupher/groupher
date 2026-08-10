@@ -1,5 +1,14 @@
 import { MockList } from '@graphql-tools/mock'
 
+import {
+  createAuthSession,
+  listAuthSessions,
+  refreshAuthSession,
+  revokeAuthSession,
+  revokeAuthSessionPublic,
+  revokeOtherAuthSessions,
+} from './auth-state.js'
+
 const nowISO = () => new Date().toISOString()
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
@@ -113,7 +122,8 @@ export const setThirdPartyAnalyticsScenario = (scenario) => {
   thirdPartyAnalyticsScenario = scenario
 }
 
-const getThirdPartyAnalyticsScenario = (slug) => THIRD_PARTY_ANALYTICS_SCENARIOS[scenarioFromSlug(slug)]
+const getThirdPartyAnalyticsScenario = (slug) =>
+  THIRD_PARTY_ANALYTICS_SCENARIOS[scenarioFromSlug(slug)]
 
 const copyAnalyticsConfigs = (configs) => configs.map((config) => ({ ...config }))
 
@@ -349,6 +359,7 @@ const HOME_PAGED_POSTS = {
 
 export const resolvers = {
   RootQueryType: {
+    browserSessions: (_parent, args) => listAuthSessions(args.browserSessionRef),
     me: () => makeUser(),
     sessionState: () => ({ isValid: true, user: makeUser() }),
 
@@ -383,6 +394,14 @@ export const resolvers = {
       totalPages: 0,
       pageNumber: 1,
     }),
+  },
+  RootMutationType: {
+    refreshBrowserSession: (_parent, args) => refreshAuthSession(args.browserSessionRef),
+    revokeBrowserSession: (_parent, args) => revokeAuthSession(args.browserSessionRef),
+    revokeBrowserSessionPublic: (_parent, args) =>
+      revokeAuthSessionPublic(args.browserSessionRef, args.publicRef),
+    revokeOtherBrowserSessions: (_parent, args) => revokeOtherAuthSessions(args.browserSessionRef),
+    signinOauth: (_parent, args) => createAuthSession(args.provider, args.browserSession),
   },
 }
 

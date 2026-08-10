@@ -1,31 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildSharedAuthCookies } from './cookie-config'
+import { buildHostOnlyAuthCookies } from './cookie-config'
 
-describe('buildSharedAuthCookies', () => {
-  it('keeps Auth.js defaults when no shared domain is configured', () => {
-    expect(buildSharedAuthCookies({ secure: true })).toBeUndefined()
-  })
+describe('buildHostOnlyAuthCookies', () => {
+  it('keeps secure OAuth and Session cookies host-only on canonical Auth', () => {
+    const cookies = buildHostOnlyAuthCookies({ secure: true })
 
-  it('shares secure OAuth and Session cookies across Groupher subdomains', () => {
-    const cookies = buildSharedAuthCookies({
-      domain: '.groupher.localhost',
-      secure: true,
-    })
-
-    expect(cookies?.sessionToken?.name).toBe('__Secure-groupher-auth.session-token')
-    expect(cookies?.csrfToken?.name).toBe('__Secure-groupher-auth.csrf-token')
+    expect(cookies?.sessionToken?.name).toBe('__Host-groupher-auth.session-token')
+    expect(cookies?.csrfToken?.name).toBe('__Host-groupher-auth.csrf-token')
 
     for (const cookie of Object.values(cookies || {})) {
-      expect(cookie.options?.domain).toBe('.groupher.localhost')
+      expect(cookie.options?.domain).toBeUndefined()
+      expect(cookie.options?.path).toBe('/')
+      expect(cookie.options?.secure).toBe(true)
     }
   })
 
   it('does not use secure prefixes for an HTTP environment', () => {
-    const cookies = buildSharedAuthCookies({
-      domain: '.groupher.localhost',
-      secure: false,
-    })
+    const cookies = buildHostOnlyAuthCookies({ secure: false })
 
     expect(cookies?.sessionToken?.name).toBe('groupher-auth.session-token')
     expect(cookies?.csrfToken?.name).toBe('groupher-auth.csrf-token')
