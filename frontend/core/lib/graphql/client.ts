@@ -89,12 +89,18 @@ const responseAuthFailure = async (
 ): Promise<{ code?: string; status?: number }> => {
   try {
     const payload = (await response.clone().json()) as {
+      data?: { sessionState?: { isValid?: unknown } }
       errors?: Array<{ extensions?: { code?: unknown } }>
     }
     const rawCode = payload.errors
       ?.map((error) => error.extensions?.code)
       .find((value) => value !== undefined)
     const code = normalizeAuthCode(rawCode)
+    // `sessionState` is the explicit authenticated probe. The public nullable
+    // `me` field must never be used as a refresh signal.
+    if (!code && payload.data?.sessionState?.isValid === false && hasSignedInHint()) {
+      return { code: 'TOKEN_MISSING', status: response.status }
+    }
     return { code, status: response.status }
   } catch {
     return { status: response.status }

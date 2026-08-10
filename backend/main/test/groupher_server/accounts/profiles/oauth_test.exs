@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
   use GroupherServer.TestMate
   import Helper.Utils
 
-  alias Accounts.Model.OauthProvider
+  alias Accounts.Model.{BrowserSession, OauthProvider}
 
   # @valid_user mock_attrs(:user)
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"}) |> map_key_stringify
@@ -62,6 +62,16 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       {:ok, _} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       assert {:ok, 1} == ORM.count(OauthProvider)
+    end
+
+    test "bounds browser-session user-agent metadata at the persistence boundary" do
+      {:ok, signin_res} =
+        Accounts.Profiles.signin_oauth(@valid_github_profile, %{
+          user_agent_summary: String.duplicate("u", 512)
+        })
+
+      assert {:ok, session} = ORM.find_by(BrowserSession, ref: signin_res.browser_session_ref)
+      assert String.length(session.user_agent_summary) == 255
     end
 
     test "existing non-existing user fails" do

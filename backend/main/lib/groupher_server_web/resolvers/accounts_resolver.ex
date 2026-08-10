@@ -26,6 +26,10 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   def paged_users(_root, ~m(filter)a, _info), do: Accounts.Profiles.paged_users(filter)
 
+  def session_state(_root, _args, %{context: %{auth_failure: code}}) do
+    {:error, [message: "Authorize: browser token is invalid", code: code]}
+  end
+
   def session_state(_root, _args, %{context: %{cur_user: cur_user}}) do
     CMS.Communities.subscribe_default_ifnot(cur_user)
     {:ok, %{is_valid: true, user: cur_user}}

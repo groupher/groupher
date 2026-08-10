@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   ACCESS_TOKEN_MAX_AGE,
   BROWSER_SESSION_MAX_AGE,
+  BROWSER_SESSION_USER_AGENT_MAX_LENGTH,
   buildAuthConfig,
   buildPhoenixTokenCookie,
   buildSignedInHintCookie,
@@ -144,6 +145,7 @@ describe('Auth core integration', () => {
   })
 
   it('does not create a half-login state when Auth.js fails to issue a Session', async () => {
+    const revokeBrowserSession = vi.fn(async () => undefined)
     const authCore = vi.fn(
       async (_request: Request, config: ReturnType<typeof buildAuthConfig>) => {
         const jwt = config.callbacks?.jwt
@@ -168,11 +170,51 @@ describe('Auth core integration', () => {
     )
     const handler = createAuthRequestHandler({
       authCore,
+      revokeBrowserSession,
       signinOauth: async () => browserSession,
     })
 
     const response = await handler(new Request('http://127.0.0.1:3004/api/auth/callback/github'))
 
     expect(response.headers.get('set-cookie')).toBeNull()
+    expect(revokeBrowserSession).toHaveBeenCalledWith(browserSession.browserSessionRef)
+  })
+
+  it('bounds persisted user-agent metadata to the browser-session column length', async () => {
+    const signin = vi.fn(
+      async (_provider: Record<string, unknown>, metadata?: { userAgentSummary?: string }) => {
+        void metadata
+        return browserSession
+      },
+    )
+    const authCore = vi.fn(
+      async (_request: Request, config: ReturnType<typeof buildAuthConfig>) => {
+        const jwt = config.callbacks?.jwt
+        if (!jwt) throw new Error('JWT callback is required.')
+        await jwt({
+          token: { name: 'octocat' },
+          account: { provider: 'github', providerAccountId: '42', type: 'oauth' },
+          profile: { id: '42', login: 'octocat' },
+          trigger: 'signIn',
+          user: { id: '42' },
+        })
+        return new Response(null, {
+          headers: {
+            'set-cookie': '__Host-groupher-auth.session-token=auth-session; Path=/; Secure',
+          },
+          status: 302,
+        })
+      },
+    )
+    const handler = createAuthRequestHandler({ authCore, signinOauth: signin })
+
+    await handler(
+      new Request('http://127.0.0.1:3004/api/auth/callback/github', {
+        headers: { 'user-agent': 'u'.repeat(BROWSER_SESSION_USER_AGENT_MAX_LENGTH + 100) },
+      }),
+    )
+
+    const metadata = signin.mock.calls[0]?.[1]
+    expect(metadata?.userAgentSummary).toHaveLength(BROWSER_SESSION_USER_AGENT_MAX_LENGTH)
   })
 })

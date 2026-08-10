@@ -84,4 +84,33 @@ describe('createAuthFetch', () => {
     expect(refreshSession).toHaveBeenCalledTimes(1)
     expect(fetcher).toHaveBeenCalledTimes(2)
   })
+
+  it('refreshes when the explicit session probe reports an invalid session', async () => {
+    document.cookie = 'groupher-auth.signed-in=1; Path=/'
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ data: { sessionState: { isValid: false } } }))
+      .mockResolvedValueOnce(
+        Response.json({ data: { sessionState: { isValid: true, user: { id: '42' } } } }),
+      )
+
+    const response = await createAuthFetch(fetcher)('/api/graphql', { method: 'POST' })
+
+    await expect(response.json()).resolves.toEqual({
+      data: { sessionState: { isValid: true, user: { id: '42' } } },
+    })
+    expect(refreshSession).toHaveBeenCalledTimes(1)
+    expect(fetcher).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not refresh a nullable public me result', async () => {
+    document.cookie = 'groupher-auth.signed-in=1; Path=/'
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ data: { me: null } }))
+
+    const response = await createAuthFetch(fetcher)('/api/graphql', { method: 'POST' })
+
+    await expect(response.json()).resolves.toEqual({ data: { me: null } })
+    expect(refreshSession).not.toHaveBeenCalled()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
 })

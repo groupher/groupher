@@ -2,7 +2,12 @@ import { encode } from '@auth/core/jwt'
 import { getAuthSessionCookieName } from '@groupher/contracts/auth'
 import { serialize } from 'hono/utils/cookie'
 
-import { appendPhoenixTokenCookie, BROWSER_SESSION_MAX_AGE, signinOauth } from '../auth'
+import {
+  appendPhoenixTokenCookie,
+  BROWSER_SESSION_MAX_AGE,
+  BROWSER_SESSION_USER_AGENT_MAX_LENGTH,
+  signinOauth,
+} from '../auth'
 
 const sessionMaxAge = (expiresAt: string): number =>
   Math.max(
@@ -30,7 +35,9 @@ export const testLogin = async (request: Request): Promise<Response> => {
       raw: JSON.stringify({ login }),
     },
     {
-      userAgentSummary: request.headers.get('user-agent')?.slice(0, 512) || undefined,
+      userAgentSummary:
+        request.headers.get('user-agent')?.slice(0, BROWSER_SESSION_USER_AGENT_MAX_LENGTH) ||
+        undefined,
     },
   )
   const cookieName = getAuthSessionCookieName(true)

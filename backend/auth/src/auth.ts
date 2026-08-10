@@ -16,6 +16,7 @@ import { resolveAuthRedirect } from '../redirect-url'
 const AUTH_BASE_PATH = '/api/auth'
 export const ACCESS_TOKEN_MAX_AGE = 60 * 30
 export const BROWSER_SESSION_MAX_AGE = 60 * 60 * 24 * 90
+export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
 const PHOENIX_GRAPHQL_ENDPOINT =
   process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || 'http://127.0.0.1:4001/graphiql'
 
@@ -82,6 +83,7 @@ type TAuthCore = (request: Request, config: AuthConfig) => Promise<Response>
 type TAuthRequestDependencies = {
   authCore?: TAuthCore
   signinOauth?: TAuthDependencies['signinOauth']
+  revokeBrowserSession?: (ref: string) => Promise<void>
 }
 
 export type TBrowserAuthSession = {
@@ -530,6 +532,7 @@ const issuedAuthSession = (response: Response): boolean => {
 export const createAuthRequestHandler = ({
   authCore = callAuthCore,
   signinOauth: exchangeIdentity = signinOauth,
+  revokeBrowserSession: revokeSession = revokeBrowserSession,
 }: TAuthRequestDependencies = {}) => {
   return async (request: Request): Promise<Response> => {
     let browserSession: TBrowserSigninResult | undefined
@@ -539,14 +542,27 @@ export const createAuthRequestHandler = ({
       },
       signinOauth: (provider) =>
         exchangeIdentity(provider, {
-          userAgentSummary: request.headers.get('user-agent')?.slice(0, 512) || undefined,
+          userAgentSummary:
+            request.headers.get('user-agent')?.slice(0, BROWSER_SESSION_USER_AGENT_MAX_LENGTH) ||
+            undefined,
         }),
     })
-    const response = await authCore(toCanonicalAuthRequest(request), config)
+    let response: Response
+    try {
+      response = await authCore(toCanonicalAuthRequest(request), config)
+    } catch (error) {
+      if (browserSession) {
+        await revokeSession(browserSession.browserSessionRef).catch(() => undefined)
+      }
+      throw error
+    }
 
-    return browserSession && issuedAuthSession(response)
-      ? appendPhoenixTokenCookie(response, browserSession)
-      : response
+    if (browserSession && !issuedAuthSession(response)) {
+      await revokeSession(browserSession.browserSessionRef).catch(() => undefined)
+      return response
+    }
+
+    return browserSession ? appendPhoenixTokenCookie(response, browserSession) : response
   }
 }
 

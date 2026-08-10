@@ -16,6 +16,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
   alias Helper.Guardian.BrowserAccess
 
   @absolute_ttl_seconds 90 * 24 * 60 * 60
+  @user_agent_summary_max_length 255
 
   @type metadata :: map()
 
@@ -26,6 +27,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
     attrs =
       metadata
       |> Map.take(metadata_fields())
+      |> normalize_metadata()
       |> Map.merge(%{
         ref: opaque_ref("bs_"),
         public_ref: opaque_ref("bsp_"),
@@ -170,6 +172,12 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
       created_country created_region created_city
       last_seen_country last_seen_region last_seen_city
     )a
+  end
+
+  defp normalize_metadata(metadata) do
+    Map.update(metadata, :user_agent_summary, nil, fn value ->
+      if is_binary(value), do: String.slice(value, 0, @user_agent_summary_max_length), else: value
+    end)
   end
 
   defp opaque_ref(prefix) do

@@ -8,14 +8,17 @@ import useEvent from '~/hooks/useEvent'
 import useQuery from '~/hooks/useQuery'
 import type { TUser } from '~/spec'
 
-import { me } from '../../schemas/pages/user'
+import { sessionState } from '../../schemas/pages/user'
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './context'
 
 const useBaseStore = createStoreHook(StoreContext)
 
-type TMeQuery = {
-  me?: TUser | null
+type TSessionStateQuery = {
+  sessionState?: {
+    isValid?: boolean | null
+    user?: TUser | null
+  } | null
 }
 
 // This reads only the non-sensitive hint cookie. The real Phoenix token remains
@@ -34,7 +37,11 @@ export default function Hooks() {
   const store = storeHook.live$
   const shouldFetchMe = hasSignedInHintCookie()
 
-  const { data, loading, error } = useQuery<TMeQuery>(me, {}, { pause: !shouldFetchMe })
+  const { data, loading, error } = useQuery<TSessionStateQuery>(
+    sessionState,
+    {},
+    { pause: !shouldFetchMe },
+  )
 
   // Keep client state in sync during logout before the next refresh lands.
   // Without this, auth-sensitive widgets can briefly render the old login state.
@@ -60,7 +67,9 @@ export default function Hooks() {
     store.commit({ loading })
 
     if (!loading) {
-      store.commit({ user: data?.me })
+      store.commit({
+        user: data?.sessionState?.isValid ? data.sessionState.user : null,
+      })
     }
   }, [shouldFetchMe, loading, error, data, store])
 
