@@ -72,6 +72,10 @@ config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
   secret_key: System.get_env("PHX_JWT_SECRET")
 
+config :groupher_server, Helper.Guardian.BrowserAccess,
+  issuer: "groupher:phoenix",
+  secret_key: System.get_env("PHX_JWT_SECRET")
+
 config :groupher_server, :github_oauth,
   client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),
   client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET"),

@@ -45,6 +45,10 @@ config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
   secret_key: System.get_env("PHX_JWT_SECRET")
 
+config :groupher_server, Helper.Guardian.BrowserAccess,
+  issuer: "groupher:phoenix",
+  secret_key: System.get_env("PHX_JWT_SECRET")
+
 # should use RDS 内网地址
 config :groupher_server, GroupherServer.Repo,
   adapter: Ecto.Adapters.Postgres,

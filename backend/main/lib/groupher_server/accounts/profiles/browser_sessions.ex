@@ -13,7 +13,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
   alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.{BrowserSession, User}
-  alias Helper.Guardian
+  alias Helper.Guardian.BrowserAccess
 
   @absolute_ttl_seconds 90 * 24 * 60 * 60
 
@@ -38,7 +38,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
     with {:ok, session} <- %BrowserSession{} |> BrowserSession.changeset(attrs) |> Repo.insert(),
          {:ok, token, _claims} <-
-           Guardian.jwt_encode_browser(user, session.ref, absolute_expires_at, now) do
+           BrowserAccess.encode(user, session.ref, absolute_expires_at, now) do
       {:ok, browser_signin_result(token, session)}
     end
   end
@@ -48,7 +48,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
     with {:ok, %BrowserSession{} = session} <- active_session(ref, now),
          {:ok, token, _claims} <-
-           Guardian.jwt_encode_browser(
+           BrowserAccess.encode(
              session.user,
              session.ref,
              session.absolute_expires_at,
@@ -154,7 +154,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
   defp browser_signin_result(token, session) do
     %{
-      access_expires_at: Guardian.browser_access_expires_at(session.absolute_expires_at),
+      access_expires_at: BrowserAccess.expires_at(session.absolute_expires_at),
       access_token: token,
       browser_session_ref: session.ref,
       session_absolute_expires_at: session.absolute_expires_at

@@ -37,6 +37,24 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["avatar"] == user.avatar
     end
 
+    test "browser access cookie resolves the current user", ~m(user)a do
+      session_expires_at = DateTime.add(DateTime.utc_now(), 3600, :second)
+
+      {:ok, token, _claims} =
+        Helper.Guardian.BrowserAccess.encode(
+          user,
+          Ecto.UUID.generate(),
+          session_expires_at
+        )
+
+      results =
+        simu_conn(:guest)
+        |> Plug.Test.put_req_cookie("groupher-auth.token", token)
+        |> gq_query(@query, %{})
+
+      assert results["login"] == user.login
+    end
+
     test "guest user gets null current profile", ~m(guest_conn)a do
       assert guest_conn |> gq_query(@query, %{}) == nil
     end

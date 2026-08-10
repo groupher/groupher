@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Context do
 
   alias Accounts.Model.User
   alias Helper.{Guardian, ORM}
+  alias Helper.Guardian.BrowserAccess
 
   def init(opts), do: opts
 
@@ -82,14 +83,11 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp authorize({:browser, token}) do
-    case Guardian.jwt_decode(token) do
-      {:ok, claims, _info} ->
-        if Guardian.valid_browser_access_claims?(claims),
-          do: load_user(claims),
-          else: {:error, :invalid_browser_access_token}
-
-      {:error, reason} ->
-        {:error, reason}
+    with {:ok, claims} <- BrowserAccess.decode_claims(token),
+         {:ok, resource} <- BrowserAccess.resource_from_claims(claims) do
+      load_user(resource)
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
 
