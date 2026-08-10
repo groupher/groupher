@@ -6,7 +6,7 @@
   "scripts": {
     "build:revision-worker": "yarn --cwd ../.. exec vite build --config frontend/dash/vite.worker.config.mts",
     "dev": "yarn --cwd ../.. sync:assets:dash && yarn build:revision-worker && vite --config app.config.ts --host 127.0.0.1",
-    "build": "yarn --cwd ../.. sync:assets:dash && yarn build:revision-worker && vite build --config app.config.ts",
+    "build": "yarn --cwd ../.. sync:assets:dash && yarn build:revision-worker && CLOUDFLARE_ENV=production vite build --config app.config.ts",
     "preview": "vite preview --config app.config.ts",
     "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --config dist/server/wrangler.json",
     "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --dry-run --config dist/server/wrangler.json",
