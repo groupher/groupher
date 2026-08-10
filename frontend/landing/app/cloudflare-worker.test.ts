@@ -8,6 +8,7 @@ const env = {
   },
   MAIN_SITE: 'https://main.test',
   DASHBOARD_SITE: 'https://dashboard.test',
+  DASH_SITE: 'https://dash.test',
   AUTH_SITE: 'https://auth.test',
   API_SITE: 'https://api.test',
   PRESS_SITE: 'https://press.test',
@@ -67,6 +68,39 @@ describe('landing Cloudflare worker', () => {
     expect(target.url.toString()).toBe(
       'https://dashboard.test/api/docs/import/previews?community=home',
     )
+  })
+
+  it('routes Dash paths to the Dash Cloudflare origin', () => {
+    const target = resolveCloudflareTarget(
+      { pathname: '/home/dash/appearance', search: '?tab=theme' },
+      env,
+    )
+
+    expect(target.kind).toBe('dash')
+    expect(target.url.toString()).toBe('https://dash.test/home/dash/appearance?tab=theme')
+  })
+
+  it('routes the public Dash health chain to the Dash health endpoint', () => {
+    const target = resolveCloudflareTarget({ pathname: '/health/dash' }, env)
+
+    expect(target.kind).toBe('dash')
+    expect(target.url.toString()).toBe('https://dash.test/health')
+  })
+
+  it('returns a conformant Edge Router health response', async () => {
+    const response = await worker.fetch(new Request('https://groupher.test/health'), env)
+    const payload = await response.json()
+
+    expect(payload).toMatchObject({
+      schemaVersion: 'health.v1',
+      status: 'ok',
+      service: 'edge-router',
+      version: 'dev',
+      environment: 'production',
+      checks: [],
+    })
+    expect(payload.timestamp).toEqual(expect.any(String))
+    expect(payload.uptimeMs).toEqual(expect.any(Number))
   })
 
   it('routes the Auth.js base path to the auth origin', () => {

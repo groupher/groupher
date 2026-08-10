@@ -23,6 +23,7 @@ const supportedStorageProviders = new Set(['r2'])
 const corsHeaders = {
   'access-control-allow-origin': '*',
 }
+const startedAt = Date.now()
 
 const json = (input: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(input), {
@@ -254,11 +255,14 @@ export default {
 
     if (url.pathname === '/health') {
       return json({
-        ok: true,
         schemaVersion: 'health.v1',
-        service: 'assets-hub',
         status: 'ok',
-        target: 'cloudflare-worker',
+        service: 'assets-hub',
+        version: env.VERSION || 'dev',
+        environment: env.ENVIRONMENT || 'production',
+        timestamp: new Date().toISOString(),
+        uptimeMs: Date.now() - startedAt,
+        checks: [],
       })
     }
 

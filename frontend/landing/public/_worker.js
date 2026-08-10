@@ -10,6 +10,8 @@ import {
 
 export { buildProxyHeaders, isPressRoute, proxyRequest, readCookie, resolveCloudflareTarget }
 
+const startedAt = Date.now()
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
@@ -18,9 +20,11 @@ export default {
       return json({
         schemaVersion: 'health.v1',
         status: 'ok',
-        service: 'landing-cloudflare-router',
+        service: 'edge-router',
+        version: env.CF_PAGES_COMMIT_SHA || 'dev',
         environment: env.ENVIRONMENT || 'production',
         timestamp: new Date().toISOString(),
+        uptimeMs: Date.now() - startedAt,
         checks: [],
       })
     }

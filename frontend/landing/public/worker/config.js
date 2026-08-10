@@ -3,6 +3,7 @@ export const GROUPHER_AUTH_TOKEN_COOKIE = 'groupher-auth.token'
 export const DEFAULT_SITE = {
   MAIN: 'https://main.groupher.com',
   DASHBOARD: 'https://dashboard.groupher.com',
+  DASH: 'https://dash.groupher.com',
   AUTH: 'https://auth.groupher.com',
   API: 'https://api.groupher.com',
   PRESS: 'http://127.0.0.1:8003',

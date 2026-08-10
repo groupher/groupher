@@ -7,7 +7,10 @@
     "build:revision-worker": "yarn --cwd ../.. exec vite build --config frontend/dash/vite.worker.config.mts",
     "dev": "yarn --cwd ../.. sync:assets:dash && yarn build:revision-worker && vite --config app.config.ts --host 127.0.0.1",
     "build": "yarn --cwd ../.. sync:assets:dash && yarn build:revision-worker && vite build --config app.config.ts",
-    "start": "node .output/server/index.mjs",
+    "preview": "vite preview --config app.config.ts",
+    "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --dry-run --config dist/server/wrangler.json",
+    "cf-typegen": "wrangler types --config wrangler.jsonc worker-configuration.d.ts",
     "generate:routes": "node ./scripts/generate-route-tree.mjs",
     "type-check": "yarn generate:routes && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "lint": "../../node_modules/.bin/oxlint src --threads=1",
@@ -24,12 +27,14 @@
     "valtio": "2.3.2"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.50.0",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/router-generator": "1.167.24",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
     "rimraf": "^6.1.3",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "wrangler": "^4.118.0"
   }
 }

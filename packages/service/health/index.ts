@@ -2,13 +2,14 @@ import {
   SERVICE_HEALTH_SCHEMA_VERSION,
   type TServiceHealthCheck,
   type TServiceHealthResponseV1,
+  type TServiceHealthService,
   type TServiceHealthStatus,
 } from '@groupher/contracts/health'
 
 type TCreateHealthResponseOptions = {
   checks?: TServiceHealthCheck[]
   environment?: string
-  service: string
+  service: TServiceHealthService
   status?: TServiceHealthStatus
   version?: string
 }

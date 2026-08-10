@@ -28,6 +28,8 @@ interface Env {
   ASSET_DELETE_QUEUE: Queue
   ASSETS_BUCKET: R2Bucket
   ASSETS_PUBLIC_ENDPOINT?: string
+  ENVIRONMENT?: string
   GROUPHER_SERVER_TRUST_SECRET?: string
   PHOENIX_GRAPHQL_ENDPOINT?: string
+  VERSION?: string
 }

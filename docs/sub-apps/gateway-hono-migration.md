@@ -183,6 +183,10 @@ Build Command: yarn build
 Output Directory: N/A
 ```
 
+这段记录只保留 `backend/gateway` 的 Vercel 部署能力。当前 `groupher.com` 生产流量由
+`frontend/landing/public/_worker.js` 的 Cloudflare Public Edge Router 承接；Hono Gateway
+不属于生产 Status 监控目标。
+
 这是 Vercel serverless/function 形态，不是长期运行 `node dist/server.js` 的常驻 Node
 进程。`src/server.ts` 和 `dist/server.js` 保留给本地 Dev Hub 或普通 Node host；
 Vercel Hono preset 以 `src/app.ts` 为应用入口；根部 `app.js` / `index.js` 只是 build

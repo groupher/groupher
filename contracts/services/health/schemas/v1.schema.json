@@ -26,12 +26,17 @@
       "type": "string",
       "enum": [
         "gateway",
+        "edge-router",
         "auth",
         "landing",
         "main",
         "dashboard",
+        "dash",
         "inspire-me",
         "phoenix",
+        "press",
+        "assets-hub",
+        "content-import",
         "document-converter"
       ]
     },
