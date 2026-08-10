@@ -4,6 +4,9 @@ schema {
 }
 
 type RootQueryType {
+  "List Browser Sessions for canonical Auth through trusted transport only."
+  browserSessions(browserSessionRef: String!): [BrowserSession!]!
+
   "get all users"
   pagedUsers(filter: PagedUsersFilter!): PagedUsers!
 
@@ -266,7 +269,17 @@ type RootMutationType {
   updateProfile(profile: UserProfileInput!, social: SocialInput): User
 
   "Sign in with an OAuth provider and return token info."
-  signinOauth(provider: OauthProviderInput!): TokenInfo
+  signinOauth(provider: OauthProviderInput!, browserSession: BrowserSessionMetadataInput): BrowserSigninResult
+
+  "Refresh a persisted Browser Session for canonical Auth only."
+  refreshBrowserSession(browserSessionRef: String!): BrowserSigninResult
+
+  "Revoke the current persisted Browser Session for canonical Auth only."
+  revokeBrowserSession(browserSessionRef: String!): Done
+
+  revokeBrowserSessionPublic(browserSessionRef: String!, publicRef: String!): Done
+
+  revokeOtherBrowserSessions(browserSessionRef: String!): Done
 
   "Link an OAuth provider to the current account."
   linkOauth(provider: OauthProviderInput!): TokenInfo
@@ -1117,14 +1130,6 @@ type AnalysisWebLocationMetric {
   metrics: AnalysisWebDimensionMetricValues
 }
 
-type AnalysisWebTrafficCell {
-  weekday: Int
-  hour: Int
-  visitors: Int
-  visits: Int
-  views: Int
-}
-
 type AnalysisWebError {
   code: String
   message: String
@@ -1141,6 +1146,14 @@ type AnalysisTrendChartPoint {
 type AnalysisTrendChart {
   bucket: String
   points: [AnalysisTrendChartPoint]
+}
+
+type AnalysisWebTrafficCell {
+  weekday: Int
+  hour: Int
+  visitors: Int
+  visits: Int
+  views: Int
 }
 
 type AnalysisTrendsOverview {
@@ -3724,6 +3737,41 @@ type Achievement {
 type TokenInfo {
   token: String
   user: User
+}
+
+type BrowserSigninResult {
+  accessToken: String
+  accessExpiresAt: DateTime
+  browserSessionRef: String
+  sessionAbsoluteExpiresAt: DateTime
+}
+
+type BrowserSession {
+  publicRef: String
+  isCurrent: Boolean
+  status: String
+  browserFamily: String
+  osFamily: String
+  deviceFamily: String
+  userAgentSummary: String
+  createdCountry: String
+  createdRegion: String
+  createdCity: String
+  lastSeenCountry: String
+  lastSeenRegion: String
+  lastSeenCity: String
+  insertedAt: DateTime
+  lastSeenAt: DateTime
+}
+
+input BrowserSessionMetadataInput {
+  browserFamily: String
+  osFamily: String
+  deviceFamily: String
+  userAgentSummary: String
+  createdCountry: String
+  createdRegion: String
+  createdCity: String
 }
 
 type Rules {

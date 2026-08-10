@@ -37,6 +37,24 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["avatar"] == user.avatar
     end
 
+    test "browser access cookie resolves the current user", ~m(user)a do
+      session_expires_at = DateTime.add(DateTime.utc_now(), 3600, :second)
+
+      {:ok, token, _claims} =
+        Helper.Guardian.BrowserAccess.encode(
+          user,
+          Ecto.UUID.generate(),
+          session_expires_at
+        )
+
+      results =
+        simu_conn(:guest)
+        |> Plug.Test.put_req_cookie("groupher-auth.token", token)
+        |> gq_query(@query, %{})
+
+      assert results["login"] == user.login
+    end
+
     test "guest user gets null current profile", ~m(guest_conn)a do
       assert guest_conn |> gq_query(@query, %{}) == nil
     end
@@ -224,12 +242,17 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["user"] |> Map.get("login") == user.login
     end
 
-    test "user with invalid token get false sessionState" do
-      user_conn = simu_conn(:invalid_token)
-      results = user_conn |> gq_query(@query)
+    test "user with invalid token gets a machine-readable auth failure" do
+      user_conn =
+        Plug.Test.put_req_cookie(simu_conn(:guest), "groupher-auth.token", "invalid_token")
 
-      assert results["isValid"] == false
-      assert results["user"] == nil
+      response =
+        user_conn
+        |> post("/graphiql", query: @query, variables: %{})
+        |> json_response(200)
+
+      assert get_in(response, ["errors", Access.at(0), "extensions", "code"]) ==
+               "TOKEN_INVALID"
     end
 
     test "user should subscribe home community if not subscribed before", ~m(user)a do

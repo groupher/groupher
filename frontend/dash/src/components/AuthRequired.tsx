@@ -1,25 +1,10 @@
-import { useState } from 'react'
-
-import { SOCIAL } from '~/const/oauth'
-import { signIn } from '~/oauth'
+import { requestLogin } from '~/auth'
 
 type TProps = {
   action: string
 }
 
 export default function AuthRequired({ action }: TProps) {
-  const [pending, setPending] = useState(false)
-
-  const handleSignIn = async (): Promise<void> => {
-    setPending(true)
-    try {
-      await signIn(SOCIAL.GITHUB)
-    } catch (error) {
-      console.error('## dashboard sign in error: ', error)
-      setPending(false)
-    }
-  }
-
   return (
     <div className='column-center min-h-80 w-full justify-center px-6 py-12'>
       <div className='column w-full max-w-md items-start rounded-xl bg-white p-6 shadow-sm dark:bg-neutral-900'>
@@ -31,11 +16,10 @@ export default function AuthRequired({ action }: TProps) {
         </p>
         <button
           type='button'
-          disabled={pending}
-          className='mt-6 min-h-10 rounded-lg bg-neutral-900 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:cursor-wait disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white'
-          onClick={handleSignIn}
+          className='mt-6 min-h-10 rounded-lg bg-neutral-900 px-4 text-sm font-medium text-white transition-colors hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white'
+          onClick={() => requestLogin({ returnTo: window.location.href })}
         >
-          {pending ? 'Redirecting…' : 'Continue with GitHub'}
+          Sign in to continue
         </button>
       </div>
     </div>

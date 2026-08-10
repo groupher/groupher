@@ -1,4 +1,7 @@
 type TWorkerEnv = {
+  AUTH_REFRESH_RATE_LIMITER?: {
+    limit(input: { key: string }): Promise<{ success: boolean }>
+  }
   AUTH_COOKIE_DOMAIN?: string
   AUTH_GITHUB_ID?: string
   AUTH_GITHUB_SECRET?: string
@@ -16,7 +19,9 @@ type TExecutionContext = {
 
 const bindEnvToProcess = (env: TWorkerEnv): void => {
   globalThis.process ??= { env: {} } as NodeJS.Process
-  Object.assign(process.env, env)
+  for (const [name, value] of Object.entries(env)) {
+    if (typeof value === 'string') process.env[name] = value
+  }
 }
 
 export default {

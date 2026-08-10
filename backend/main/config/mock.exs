@@ -17,6 +17,10 @@ config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
   secret_key: "hello"
 
+config :groupher_server, Helper.Guardian.BrowserAccess,
+  issuer: "groupher:phoenix",
+  secret_key: "hello"
+
 config :logger, :console, format: "[$level] $message\n"
 
 config :phoenix, :stacktrace_depth, 20

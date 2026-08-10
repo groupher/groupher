@@ -1,3 +1,4 @@
+import { GROUPHER_AUTH_CSRF_HEADER, GROUPHER_AUTH_CSRF_VALUE } from '@groupher/contracts/auth'
 import { Hono } from 'hono'
 
 import { buildHealthResponse } from './health.js'
@@ -7,6 +8,24 @@ import { getPublicFile, readPublicFile } from './static.js'
 
 type TOptions = {
   fetcher?: typeof fetch
+}
+
+const invalidGraphQLRequest = (message: string) =>
+  Response.json({ errors: [{ extensions: { code: 'INVALID_CSRF' }, message }] }, { status: 400 })
+
+const validateBrowserGraphQLRequest = (
+  request: Request,
+  target: ReturnType<typeof resolveGatewayTarget>,
+) => {
+  if (target.requestHeaderPolicy !== 'graphql-browser-clean' || request.method !== 'POST')
+    return null
+  if (!request.headers.get('content-type')?.startsWith('application/json')) {
+    return invalidGraphQLRequest('JSON is required.')
+  }
+  if (request.headers.get(GROUPHER_AUTH_CSRF_HEADER) !== GROUPHER_AUTH_CSRF_VALUE) {
+    return invalidGraphQLRequest('CSRF proof is required.')
+  }
+  return null
 }
 
 export const createApp = ({ fetcher }: TOptions = {}) => {
@@ -54,7 +73,8 @@ export const createApp = ({ fetcher }: TOptions = {}) => {
       referer: context.req.header('referer'),
     })
 
-    return proxyRequest(context.req.raw, target, { fetcher })
+    const invalidRequest = validateBrowserGraphQLRequest(context.req.raw, target)
+    return invalidRequest || proxyRequest(context.req.raw, target, { fetcher })
   })
 
   return app

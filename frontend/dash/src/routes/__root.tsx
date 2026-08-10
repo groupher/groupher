@@ -1,3 +1,4 @@
+import { loadLocale } from '@dash/server/locale'
 import { loadThemeSeed } from '@dash/server/theme'
 import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '@dash/utils/first-paint'
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
@@ -5,15 +6,17 @@ import type { ReactNode } from 'react'
 
 import '../styles/global.css'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
+import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
+import AuthLoginModal from '~/ui/AuthLoginModal'
 
 import { TanStackPlatformProvider } from '../platform/tanStackPlatform'
 
 export const Route = createRootRoute({
-  loader: async () => ({
-    renderedAt: Date.now(),
-    theme: await loadThemeSeed(),
-  }),
+  loader: async () => {
+    const [locale, theme] = await Promise.all([loadLocale({ data: {} }), loadThemeSeed()])
+    return { locale, renderedAt: Date.now(), theme }
+  },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -35,15 +38,18 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const { renderedAt, theme } = Route.useLoaderData()
+  const { locale, renderedAt, theme } = Route.useLoaderData()
 
   return (
     <InitialNowProvider initialNow={renderedAt}>
-      <ThemeStoreProvider initData={theme}>
-        <TanStackPlatformProvider>
-          <Outlet />
-        </TanStackPlatformProvider>
-      </ThemeStoreProvider>
+      <LocaleStoreProvider initData={locale}>
+        <ThemeStoreProvider initData={theme}>
+          <TanStackPlatformProvider>
+            <Outlet />
+            <AuthLoginModal />
+          </TanStackPlatformProvider>
+        </ThemeStoreProvider>
+      </LocaleStoreProvider>
     </InitialNowProvider>
   )
 }

@@ -27,13 +27,22 @@ GET /health
 当前覆盖目标：
 
 - `gateway`
+- `edge-router`
 - `auth`
 - `landing`
 - `main`
 - `dashboard`
+- `dash`
 - `inspire-me`
 - `phoenix`
+- `press`
+- `assets-hub`
+- `content-import`
 - `document-converter`
+
+`edge-router` 是当前承接 `groupher.com` 生产流量的 Cloudflare Public Edge Router。
+`gateway` 保留给可在 Vercel 或本地 Node runtime 运行的 Hono Gateway；两者不是同一个
+producer，也不能共享 service id。
 
 纯库、构建脚本、离线 worker 和没有 HTTP server 的模块不需要提供 `/health`。如果
 后续 worker 变成常驻服务，应通过它自己的控制面或 supervisor 暴露等价健康状态。

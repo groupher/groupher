@@ -1,4 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
+import { cn } from '~/css'
+import { cachedMargin } from '~/hooks/useTwBelt/constant'
 import type { TSpace } from '~/spec'
 
 type TProps = {
@@ -6,10 +7,8 @@ type TProps = {
 } & TSpace
 
 export default function useSalon({ size, ...spacing }: TProps) {
-  const { cn, zise, margin } = useTwBelt()
-
   return {
-    logo: cn(zise(size), margin(spacing)),
+    logo: cn(`size-${size}`, cachedMargin(spacing)),
     //
   }
 }

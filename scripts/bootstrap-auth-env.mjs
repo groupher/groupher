@@ -2,10 +2,10 @@ import { chmod, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 const root = process.cwd()
-const targetPath = path.join(root, 'frontend/auth/.env.local')
+const targetPath = path.join(root, 'backend/auth/.env.local')
 const sourcePaths = [
-  path.join(root, 'frontend/main/.env.local'),
-  path.join(root, 'frontend/main/.env.development.local'),
+  path.join(root, 'frontend/auth/.env.local'),
+  path.join(root, 'frontend/auth/.env.development.local'),
 ]
 const requiredKeys = [
   'AUTH_GITHUB_ID',
@@ -28,11 +28,20 @@ const parseEnv = (source) => {
 }
 
 const values = new Map()
+try {
+  const target = await readFile(targetPath, 'utf8')
+  for (const [key, value] of parseEnv(target)) {
+    if (requiredKeys.includes(key) && value) values.set(key, value)
+  }
+} catch (cause) {
+  if (cause?.code !== 'ENOENT') throw cause
+}
+
 for (const sourcePath of sourcePaths) {
   try {
     const source = await readFile(sourcePath, 'utf8')
     for (const [key, value] of parseEnv(source)) {
-      if (requiredKeys.includes(key) && value) values.set(key, value)
+      if (requiredKeys.includes(key) && value && !values.has(key)) values.set(key, value)
     }
   } catch (cause) {
     if (cause?.code !== 'ENOENT') throw cause
@@ -47,4 +56,4 @@ if (missingKeys.length) {
 const content = `${requiredKeys.map((key) => `${key}=${values.get(key)}`).join('\n')}\n`
 await writeFile(targetPath, content, { encoding: 'utf8', mode: 0o600 })
 await chmod(targetPath, 0o600)
-console.log('Bootstrapped frontend/auth/.env.local from existing ignored local Auth values.')
+console.log('Bootstrapped missing backend/auth/.env.local values from legacy frontend/auth files.')

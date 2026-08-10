@@ -216,7 +216,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   defp has_error_code?(resp, code) when is_integer(code) do
     case resp do
-      %{"errors" => [first | _]} -> Map.get(first, "code") == code
+      %{"errors" => [first | _]} -> get_in(first, ["extensions", "code"]) == code
       _ -> false
     end
   end

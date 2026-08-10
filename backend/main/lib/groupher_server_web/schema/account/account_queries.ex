@@ -6,6 +6,14 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
   use Helper.GqlSchemaSuite
 
   object :account_queries do
+    @desc "List Browser Sessions for canonical Auth through trusted transport only."
+    field :browser_sessions, non_null(list_of(non_null(:browser_session))) do
+      arg(:browser_session_ref, non_null(:string))
+
+      middleware(M.ServerTrust)
+      resolve(&R.Accounts.browser_sessions/3)
+    end
+
     @desc "get all users"
     field :paged_users, non_null(:paged_users) do
       arg(:filter, non_null(:paged_users_filter))

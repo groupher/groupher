@@ -34,6 +34,7 @@ defmodule GroupherServerWeb.Router do
 
   pipeline :api do
     plug(:accepts, ["json"])
+    plug(GroupherServerWeb.Middleware.BrowserCsrf)
     plug(GroupherServerWeb.Context)
   end
 

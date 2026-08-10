@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Context do
 
   alias Accounts.Model.User
   alias Helper.{Guardian, ORM}
+  alias Helper.Guardian.BrowserAccess
 
   def init(opts), do: opts
 
@@ -31,13 +32,24 @@ defmodule GroupherServerWeb.Context do
   def build_context(conn) do
     context = %{server_trusted: server_trusted?(conn)}
 
-    with token when not is_nil(token) <- get_token_from(conn),
-         {:ok, cur_user} <- authorize(token) do
-      Map.put(context, :cur_user, cur_user)
-    else
-      _ -> context
+    case get_token_from(conn) do
+      nil ->
+        context
+
+      token ->
+        case authorize(token) do
+          {:ok, cur_user} -> Map.put(context, :cur_user, cur_user)
+          {:error, reason} -> maybe_put_browser_auth_failure(context, token, reason)
+        end
     end
   end
+
+  defp maybe_put_browser_auth_failure(context, {:browser, _token}, reason) do
+    code = if reason == :token_expired, do: "TOKEN_EXPIRED", else: "TOKEN_INVALID"
+    Map.put(context, :auth_failure, code)
+  end
+
+  defp maybe_put_browser_auth_failure(context, _token, _reason), do: context
 
   defp server_trusted?(conn) do
     expected =
@@ -57,28 +69,41 @@ defmodule GroupherServerWeb.Context do
   end
 
   # --------------------------------------------------
-  # Fetch the browser token from the canonical Groupher cookie, then fall back
-  # to the Authorization header used by external API clients.
+  # Browser cookies must satisfy the V1 issuer/audience/type/session claims.
+  # External bearer-token contracts retain their own Guardian verification path.
   # --------------------------------------------------
-  defp get_token_from(%Plug.Conn{cookies: %{"groupher-auth.token" => token}}), do: token
+  defp get_token_from(%Plug.Conn{cookies: %{"groupher-auth.token" => token}}),
+    do: {:browser, token}
 
   defp get_token_from(%Plug.Conn{} = conn) do
     case get_req_header(conn, "authorization") do
-      ["Bearer " <> token] -> token
+      ["Bearer " <> token] -> {:bearer, token}
       _ -> nil
     end
   end
 
-  defp authorize(token) do
-    with {:ok, claims, _info} <- Guardian.jwt_decode(token) do
-      case ORM.find(User, claims.id) do
-        {:ok, user} ->
-          check_passport(user)
+  defp authorize({:browser, token}) do
+    with {:ok, claims} <- BrowserAccess.decode_claims(token),
+         {:ok, resource} <- BrowserAccess.resource_from_claims(claims) do
+      load_user(resource)
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-        {:error, _} ->
-          {:error,
-           "user is not exist, try revoke token, or if you in dev env run the seeds first."}
-      end
+  defp authorize({:bearer, token}) do
+    with {:ok, claims, _info} <- Guardian.jwt_decode(token) do
+      load_user(claims)
+    end
+  end
+
+  defp load_user(claims) do
+    case ORM.find(User, claims.id) do
+      {:ok, user} ->
+        check_passport(user)
+
+      {:error, _} ->
+        {:error, "user is not exist, try revoke token, or if you in dev env run the seeds first."}
     end
   end
 

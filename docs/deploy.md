@@ -12,6 +12,7 @@ groupher.com/pricing                  Landing
 groupher.com/book-demo                Landing
 groupher.com/:community/...           Main / Press（按路径分流）
 groupher.com/:community/dashboard/... Dashboard
+groupher.com/:community/dash/...      Dash
 groupher.com/api/graphql              同源浏览器 GraphQL facade
 api.groupher.com/graphiql             Phoenix GraphQL origin
 press.groupher.com                    Press 服务 origin
@@ -48,6 +49,9 @@ Cloudflare Pages
       www.groupher.com
 
 Cloudflare Workers
+  groupher-dash
+    prod route:
+      dash.groupher.com/*
   auth
     prod route:
       auth.groupher.com/*
@@ -83,14 +87,14 @@ metrics 和 retention timer。Fly 可以原样承载该模型，也与 Phoenix �
 
 代码、基础设施和域名使用不同命名空间：
 
-| 层级                  | 名称                      |
-| --------------------- | ------------------------- |
-| 产品                  | `Press`                   |
-| Workspace package     | `@groupher/press`         |
-| 代码目录              | `backend/press`           |
-| Dev Hub service id    | `press`                   |
-| Fly app id            | `groupher-press`          |
-| Production origin     | `press.groupher.com`      |
+| 层级                  | 名称                     |
+| --------------------- | ------------------------ |
+| 产品                  | `Press`                  |
+| Workspace package     | `@groupher/press`        |
+| 代码目录              | `backend/press`          |
+| Dev Hub service id    | `press`                  |
+| Fly app id            | `groupher-press`         |
+| Production origin     | `press.groupher.com`     |
 | Fly diagnostic origin | `groupher-press.fly.dev` |
 
 `groupher-press.fly.dev` 只用于平台诊断，正式配置统一使用 `press.groupher.com`。
@@ -176,7 +180,22 @@ curl -i https://www.groupher.com/home/dashboard
 curl -i https://www.groupher.com/home/dashboard/appearance
 ```
 
-health 端点应从 Cloudflare 返回 `service: "landing-cloudflare-router"`。
+health 端点应从 Cloudflare 返回 `service: "edge-router"`。
+
+构建并部署 TanStack Start Dash Worker：
+
+```bash
+yarn workspace @groupher/frontend-dash deploy
+```
+
+部署完成后验证 direct origin，再部署 Landing Pages 将公共路径接入 Dash：
+
+```bash
+curl -i https://dash.groupher.com/health
+curl -i https://dash.groupher.com/home/dash/overview
+curl -i https://groupher.com/health/dash
+curl -i https://groupher.com/home/dash/overview
+```
 
 ## Press 部署与切换
 

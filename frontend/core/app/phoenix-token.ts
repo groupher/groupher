@@ -8,9 +8,11 @@ type TJwtHeader = {
 }
 
 type TJwtPayload = {
+  aud?: unknown
   exp?: unknown
   iss?: unknown
   nbf?: unknown
+  typ?: unknown
 }
 
 const SUPPORTED_ALGORITHMS = {
@@ -19,7 +21,9 @@ const SUPPORTED_ALGORITHMS = {
   HS512: 'sha512',
 } as const
 
-const PHOENIX_TOKEN_ISSUER = process.env.PHOENIX_TOKEN_ISSUER || 'groupher_server'
+const PHOENIX_TOKEN_ISSUER = process.env.PHOENIX_TOKEN_ISSUER || 'groupher:phoenix'
+const PHOENIX_TOKEN_AUDIENCE = 'phoenix:browser-api'
+const PHOENIX_TOKEN_TYPE = 'browser_access'
 
 const base64UrlDecode = (value: string): Buffer => {
   const base64 = value.replaceAll('-', '+').replaceAll('_', '/')
@@ -61,7 +65,9 @@ const isVerifiedPhoenixToken = (token: string, now = new Date()): boolean => {
   if (
     typeof algorithm !== 'string' ||
     !(algorithm in SUPPORTED_ALGORITHMS) ||
-    payload.iss !== PHOENIX_TOKEN_ISSUER
+    payload.iss !== PHOENIX_TOKEN_ISSUER ||
+    payload.aud !== PHOENIX_TOKEN_AUDIENCE ||
+    payload.typ !== PHOENIX_TOKEN_TYPE
   ) {
     return false
   }

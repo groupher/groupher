@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
   use GroupherServer.TestMate
   import Helper.Utils
 
-  alias Accounts.Model.OauthProvider
+  alias Accounts.Model.{BrowserSession, OauthProvider}
 
   # @valid_user mock_attrs(:user)
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"}) |> map_key_stringify
@@ -42,15 +42,17 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert oauth_provider.raw["login"] == @valid_github_profile["login"]
       assert oauth_provider.raw["avatar_url"] == @valid_github_profile["avatar"]
 
-      assert signin_res |> Map.has_key?(:user)
-      assert signin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:access_token)
+      assert signin_res |> Map.has_key?(:access_expires_at)
+      assert signin_res |> Map.has_key?(:browser_session_ref)
+      assert signin_res |> Map.has_key?(:session_absolute_expires_at)
     end
 
     test "existing user can signin" do
       {:ok, signin_res} = Accounts.Profiles.signin_oauth(@valid_github_profile)
 
-      assert signin_res |> Map.has_key?(:user)
-      assert signin_res |> Map.has_key?(:token)
+      assert signin_res |> Map.has_key?(:access_token)
+      assert signin_res |> Map.has_key?(:browser_session_ref)
     end
 
     test "existing user can signin multiple times" do
@@ -62,12 +64,25 @@ defmodule GroupherServer.Test.Accounts.Oauth do
       assert {:ok, 1} == ORM.count(OauthProvider)
     end
 
+    test "bounds browser-session user-agent metadata at the persistence boundary" do
+      {:ok, signin_res} =
+        Accounts.Profiles.signin_oauth(@valid_github_profile, %{
+          user_agent_summary: String.duplicate("u", 512)
+        })
+
+      assert {:ok, session} = ORM.find_by(BrowserSession, ref: signin_res.browser_session_ref)
+      assert String.length(session.user_agent_summary) == 255
+    end
+
     test "existing non-existing user fails" do
       {:ok, _signin_res} =
         Accounts.Profiles.signin_oauth(@valid_github_profile)
 
       {:error, _res} =
-        Accounts.Profiles.signin_oauth(%{@valid_github_profile | "provider_id" => "non-existing-id"})
+        Accounts.Profiles.signin_oauth(%{
+          @valid_github_profile
+          | "provider_id" => "non-existing-id"
+        })
     end
 
     test "can link oauth provider to existing user" do

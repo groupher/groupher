@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { dismissLoginRequest, getLoginRequest } from './auth/login-request'
 import PubSub from './pubsub'
-import { send, sendAsync } from './signal'
+import { authWarn, send, sendAsync } from './signal'
 
 describe('signal', () => {
   afterEach(() => {
+    dismissLoginRequest()
     PubSub.clearAllSubscriptions()
     vi.useRealTimers()
   })
@@ -28,5 +30,11 @@ describe('signal', () => {
 
     vi.runAllTimers()
     expect(subscriber).toHaveBeenCalledWith('signal.async', { value: 1 })
+  })
+
+  it('forwards legacy auth warnings to the shared Login Modal request', () => {
+    authWarn({ returnTo: '/home/dashboard' })
+
+    expect(getLoginRequest()).toEqual({ returnTo: '/home/dashboard' })
   })
 })

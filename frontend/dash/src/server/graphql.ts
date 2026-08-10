@@ -1,15 +1,24 @@
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import { serializeGraphQLError } from '@dash/utils/graphql-error'
+import {
+  GROUPHER_AUTH_SIGNED_IN_COOKIE,
+  GROUPHER_AUTH_TOKEN_COOKIE,
+} from '@groupher/contracts/auth'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 
 export type TGraphQLResponse<TData> = {
   data?: TData
-  errors?: Array<{ message?: string }>
+  errors?: Array<{ extensions?: { code?: unknown }; message?: string }>
 }
 
 export class GraphQLRequestError extends Error {
-  constructor(message: string) {
+  readonly code?: string
+  readonly status?: number
+
+  constructor(message: string, options: { code?: string; status?: number } = {}) {
     super(message)
     this.name = 'GraphQLRequestError'
+    this.code = options.code
+    this.status = options.status
   }
 }
 
@@ -25,6 +34,13 @@ export const readAuthToken = (cookieHeader: string | null): string | null => {
 }
 
 export const getAuthToken = (): string | null => readAuthToken(getRequest().headers.get('cookie'))
+
+const hasSignedInHint = (): boolean => {
+  const cookieHeader = getRequest().headers.get('cookie')
+  return Boolean(
+    cookieHeader?.split(';').some((item) => item.trim() === `${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1`),
+  )
+}
 
 // Dashboard HTML and loader data are scoped to the current session.
 export const setPrivateCacheHeader = (): void => {
@@ -49,13 +65,28 @@ export const fetchGraphQL = async <TData>(
   })
 
   if (!response.ok) {
-    throw new GraphQLRequestError(`GraphQL request failed with HTTP ${response.status}.`)
+    throw new GraphQLRequestError(`GraphQL request failed with HTTP ${response.status}.`, {
+      status: response.status,
+    })
   }
 
   const payload = (await response.json()) as TGraphQLResponse<TData>
   if (payload.errors?.length) {
+    const rawCode = payload.errors
+      .map((error) => error.extensions?.code)
+      .find((value) => value !== undefined)
+    const code =
+      typeof rawCode === 'string'
+        ? rawCode
+        : rawCode === 4301 && hasSignedInHint()
+          ? 'TOKEN_MISSING'
+          : undefined
     throw new GraphQLRequestError(
-      payload.errors.map(({ message }) => message || 'GraphQL request failed.').join('; '),
+      serializeGraphQLError(
+        payload.errors.map(({ message }) => message || 'GraphQL request failed.').join('; '),
+        code,
+      ),
+      { code, status: response.status },
     )
   }
 

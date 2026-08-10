@@ -83,6 +83,7 @@ describe('signOut', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', {
       credentials: 'include',
+      headers: { 'X-Groupher-CSRF': '1' },
       method: 'POST',
     })
   })
@@ -105,6 +106,7 @@ describe('signOut', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://auth.groupher.test/logout', {
       credentials: 'include',
+      headers: { 'X-Groupher-CSRF': '1' },
       method: 'POST',
     })
   })

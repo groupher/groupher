@@ -6,7 +6,7 @@ defmodule GroupherServer.Accounts.Profiles do
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
 
-  alias __MODULE__.{List, Oauth, Subscribe, UserRead}
+  alias __MODULE__.{BrowserSessions, List, Oauth, Subscribe, UserRead}
 
   @spec read_user(User.t()) :: T.domain_res(User.t())
   def read_user(%User{} = user), do: UserRead.read_user(user)
@@ -26,8 +26,23 @@ defmodule GroupherServer.Accounts.Profiles do
   @spec update_subscribe_state(User.t()) :: T.domain_res(User.t())
   def update_subscribe_state(%User{} = user), do: Subscribe.update_subscribe_state(user)
 
-  @spec signin_oauth(map()) :: T.domain_res(User.t())
-  def signin_oauth(provider), do: Oauth.signin_oauth(provider)
+  @spec signin_oauth(map(), map()) :: T.domain_res(map())
+  def signin_oauth(provider, browser_session_metadata \\ %{}),
+    do: Oauth.signin_oauth(provider, browser_session_metadata)
+
+  def refresh_browser_session(ref), do: BrowserSessions.refresh(ref)
+  def revoke_browser_session(ref), do: BrowserSessions.revoke_current(ref)
+  def browser_sessions(%User{} = user, current_ref), do: BrowserSessions.list(user, current_ref)
+  def browser_sessions_for_ref(current_ref), do: BrowserSessions.list_for_ref(current_ref)
+
+  def revoke_browser_session_public(current_ref, public_ref),
+    do: BrowserSessions.revoke_public_for_ref(current_ref, public_ref)
+
+  def revoke_other_browser_sessions(%User{} = user, current_ref),
+    do: BrowserSessions.revoke_other_sessions(user, current_ref)
+
+  def revoke_other_browser_sessions_for_ref(current_ref),
+    do: BrowserSessions.revoke_other_for_ref(current_ref)
 
   @spec link_oauth(String.t(), map()) :: T.domain_res(User.t())
   def link_oauth(login, provider), do: Oauth.link_oauth(login, provider)
@@ -39,5 +54,6 @@ defmodule GroupherServer.Accounts.Profiles do
   def default_subscribed_communities(filter), do: List.default_subscribed_communities(filter)
 
   @spec subscribed_communities(User.t(), map()) :: T.domain_res(T.paged_data())
-  def subscribed_communities(%User{} = user, filter), do: List.subscribed_communities(user, filter)
+  def subscribed_communities(%User{} = user, filter),
+    do: List.subscribed_communities(user, filter)
 end

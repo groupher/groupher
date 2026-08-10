@@ -1,10 +1,14 @@
 # Apply
 
-> 运行形态：独立 Next.js 前端
+> 运行形态：独立 TanStack Start 前端
 >
 > UI：独立于 Dashboard
 >
-> 当前状态：规划中；后端继续使用 Phoenix
+> 当前状态：V1 目标合同已确认；后端继续使用 Phoenix
+
+详细实现合同见 [`docs/apply/v1.md`](../apply/v1.md)。本文只保留稳定的部署定位和
+子应用边界；前端运行时、Phoenix Application 模型、Community Creation/Setup、
+迁移顺序和验收标准以 V1 文档为准。
 
 ## 定位
 
@@ -21,10 +25,11 @@ bundle。
 - 社区类型、名称、slug/domain 和基础信息填写。
 - 创建资格、名称和域名可用性检查。
 - 申请状态、审核状态和失败恢复。
+- 有全局权限的审核人员使用的审核队列、决策和失败重试；与申请人 Flow 分离 bundle。
 - 创建完成后的首次引导及跳转。
 
-具体业务字段和审批模型继续由 Phoenix 的现有 Context 定义，`Apply` 不建立独立
-业务后端。
+具体业务字段和审批模型由 Phoenix 的 `CMS.CommunityApplications` Context 定义，
+`Apply` 不建立独立业务后端。
 
 ## URL 与部署
 
@@ -37,7 +42,19 @@ https://groupher.com/apply
 Gateway 将该路径 rewrite 到独立部署。相比 `apply.groupher.com`，同站路径更容易
 保持现有 cookie、OAuth callback 和登录态语义，也不会让用户感知内部部署边界。
 
-独立应用必须正确处理 `/apply` base path 下的静态资源、客户端导航和回调地址。
+`/apply` 是独立 Apply 应用的公开 basepath，不是另一个前端项目中的父 route。Apply 源码
+route tree 从 app-local `/` 开始；TanStack Router `basepath` 负责公开 URL 与内部 route 的
+双向映射，Gateway 保持 pathname 转发：
+
+```text
+Apply /          <-> public /apply
+Apply /status/*  <-> public /apply/status/*
+Apply /review/*  <-> public /apply/review/*
+```
+
+同一规则覆盖静态资源、SSR data、Server Function 和 HMR。独立应用必须拥有自己的
+package、app config、router、SSR server、public assets、env、listener 和 health check；
+不得把 route、proxy adapter、Provider 或 build output 放回 Main/Dashboard/Dash。
 
 ## 基本流程
 
@@ -55,7 +72,7 @@ sequenceDiagram
   U->>A: 填写并确认社区信息
   A->>P: 提交申请或创建请求
   P->>P: 权限校验和领域事务
-  P-->>A: pending、approved 或 created
+  P-->>A: submitted、reviewing、setting_up 或 created
   A-->>U: 展示状态或跳转 Main/Dashboard
 ```
 
@@ -74,8 +91,7 @@ Phoenix 负责：
 - slug/domain 冲突校验。
 - 审计和通知。
 
-`Apply` 不直接连接数据库，不复制社区创建逻辑，也不演变成通用
-“Provisioning Service”。
+`Apply` 不直接连接数据库，不复制社区创建逻辑，也不演变成通用社区初始化服务。
 
 ## 关键约束
 

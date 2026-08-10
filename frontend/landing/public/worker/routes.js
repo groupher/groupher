@@ -40,6 +40,11 @@ export const isDashboardRoute = (pathname) => {
   return parts.length >= 2 && parts[1] === 'dashboard'
 }
 
+export const isDashRoute = (pathname) => {
+  const parts = pathname.split('/').filter(Boolean)
+  return parts.length >= 2 && parts[1] === 'dash'
+}
+
 const PRESS_MARKDOWN_RE = /^\/[^/]+\/(?:doc\/[^/]+\/.+\.md|(?:post|blog|changelog|doc)\/.+\.md)$/
 const PRESS_FEED_RE = /^\/[^/]+\/feed\.(?:xml|atom|json)$/
 const PRESS_THREAD_FEED_RE = /^\/[^/]+\/(?:post|blog|changelog|doc)\/feed\.xml$/
@@ -59,6 +64,14 @@ const targetUrl = (base, pathname, search = '') => {
 }
 
 export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
+  if (pathname === '/health/dash') {
+    return {
+      kind: 'dash',
+      url: targetUrl(siteUrl(env, 'DASH'), '/health', search),
+      requestHeaderPolicy: 'pass-through',
+    }
+  }
+
   if (isPressRoute(pathname)) {
     return {
       kind: 'press',
@@ -95,6 +108,14 @@ export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
     return {
       kind: 'dashboard',
       url: targetUrl(siteUrl(env, 'DASHBOARD'), pathname, search),
+      requestHeaderPolicy: 'pass-through',
+    }
+  }
+
+  if (isDashRoute(pathname)) {
+    return {
+      kind: 'dash',
+      url: targetUrl(siteUrl(env, 'DASH'), pathname, search),
       requestHeaderPolicy: 'pass-through',
     }
   }

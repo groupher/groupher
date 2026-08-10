@@ -130,6 +130,10 @@ if config_env() in [:prod, :seed_prod] do
     issuer: "groupher_server",
     secret_key: System.get_env("PHX_JWT_SECRET")
 
+  config :groupher_server, Helper.Guardian.BrowserAccess,
+    issuer: "groupher:phoenix",
+    secret_key: System.get_env("PHX_JWT_SECRET")
+
   # You can generate a new secret by running:
   # mix phx.gen.secret
   # should use RDS 内网地址

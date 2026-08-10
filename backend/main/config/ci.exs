@@ -13,6 +13,10 @@ config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
   secret_key: "kSTPDbCUSRhiEmv86eYMUplL7xI5fDa/+6MWKzK2VYGxjwL0XGHHVJiSPNPe9hJe"
 
+config :groupher_server, Helper.Guardian.BrowserAccess,
+  issuer: "groupher:phoenix",
+  secret_key: "kSTPDbCUSRhiEmv86eYMUplL7xI5fDa/+6MWKzK2VYGxjwL0XGHHVJiSPNPe9hJe"
+
 config :phoenix, :stacktrace_depth, 20
 
 # Configure your database
