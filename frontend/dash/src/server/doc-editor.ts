@@ -4,7 +4,7 @@ import { print } from 'graphql'
 import type { TDocDraftInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/Article/spec'
 import type { TDocTreeInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import DashboardSchema from '~/unit/DashboardThread/schema'
+import DashboardDocsSchema from '~/unit/DashboardThread/schema/docs'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 
@@ -50,7 +50,7 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
     }
 
     const treeResult = await fetchGraphQL<TDocTreeQueryData>(
-      print(DashboardSchema.docTree),
+      print(DashboardDocsSchema.docTree),
       { community: data.community },
       token,
     )
@@ -64,7 +64,7 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
     }
 
     const draftResult = await fetchGraphQL<TDocDraftQueryData>(
-      print(DashboardSchema.docDraft),
+      print(DashboardDocsSchema.docDraft),
       { community: data.community, id: activeDocId },
       token,
     )

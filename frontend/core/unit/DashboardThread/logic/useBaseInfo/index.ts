@@ -1,12 +1,13 @@
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { isEmpty, pick } from 'ramda'
 import { useEffect } from 'react'
 
 import useQuery from '~/hooks/useQuery'
-import type { TCommunity, TEditFunc } from '~/spec'
+import type { TEditFunc } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/shell'
 
 import { BASEINFO_KEYS } from '../../constant'
 import useHelper from '../useHelper'
@@ -26,6 +27,8 @@ type TRet = TUseInfo &
     edit: TEditFunc
   }
 
+type TCommunityBaseInfo = NonNullable<ResultOf<typeof S.communityBaseInfo>['community']>
+
 export default function useBaseInfo(): TRet {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()
@@ -42,7 +45,7 @@ export default function useBaseInfo(): TRet {
     incViews: false,
   })
 
-  const updateBaseInfo = (community: TCommunity): void => {
+  const updateBaseInfo = (community: TCommunityBaseInfo): void => {
     const { dashboard: dashboard$ } = community
     const { baseInfo, mediaReports } = dashboard$
 

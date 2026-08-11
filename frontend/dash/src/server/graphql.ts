@@ -4,6 +4,7 @@ import {
   GROUPHER_AUTH_TOKEN_COOKIE,
 } from '@groupher/contracts/auth'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
+import { print, type DocumentNode } from 'graphql'
 
 export type TGraphQLResponse<TData> = {
   data?: TData
@@ -48,7 +49,7 @@ export const setPrivateCacheHeader = (): void => {
 }
 
 export const fetchGraphQL = async <TData>(
-  query: string,
+  query: string | DocumentNode,
   variables: Record<string, unknown>,
   token: string | null,
 ): Promise<TGraphQLResponse<TData>> => {
@@ -61,7 +62,7 @@ export const fetchGraphQL = async <TData>(
       'Content-Type': 'application/json',
       ...(token ? { cookie: `${GROUPHER_AUTH_TOKEN_COOKIE}=${token}` } : {}),
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: typeof query === 'string' ? query : print(query), variables }),
   })
 
   if (!response.ok) {

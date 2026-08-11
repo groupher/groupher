@@ -1,26 +1,62 @@
+import { graphql } from '~/graphql/authoring'
+
 import type { TAnalysisTrendsOverview, TAnalysisWebMetric } from './spec'
 
-export const ANALYSIS_TRENDS_OVERVIEW_QUERY = `
+export const ANALYSIS_TRENDS_OVERVIEW_QUERY = graphql(`
   query AnalysisTrendsOverview($community: String!, $days: Int) {
     analysisTrendsOverview(community: $community, days: $days) {
       status
       provider
-      range { days startAt endAt bucket }
+      range {
+        days
+        startAt
+        endAt
+        bucket
+      }
       summary {
-        pageviews { value previousValue changeRate }
-        visitors { value previousValue changeRate }
-        visits { value previousValue changeRate }
-        bounceRate { value previousValue changeRate }
-        visitDuration { value previousValue changeRate }
+        pageviews {
+          value
+          previousValue
+          changeRate
+        }
+        visitors {
+          value
+          previousValue
+          changeRate
+        }
+        visits {
+          value
+          previousValue
+          changeRate
+        }
+        bounceRate {
+          value
+          previousValue
+          changeRate
+        }
+        visitDuration {
+          value
+          previousValue
+          changeRate
+        }
       }
       chart {
         bucket
-        points { timestamp visits views }
+        points {
+          timestamp
+          visits
+          views
+        }
       }
-      errors { code message section providerStatus }
+      errors {
+        code
+        message
+        section
+        providerStatus
+      }
     }
   }
-`
+`)
 
 const unavailableMetric = (): TAnalysisWebMetric => ({
   value: 0,

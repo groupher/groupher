@@ -10,7 +10,7 @@ import useCommunity from '~/stores/community/hooks'
 import Drawer from '~/ui/Drawer'
 import { SegmentTab } from '~/ui/Switcher'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 import RichEditorDiff from '~/unit/RichEditor/Diff'
 
 import useDocsEditor from '../../Editor/store/hooks'

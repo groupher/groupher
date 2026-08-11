@@ -1,19 +1,15 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-import { F } from '~/schemas'
-
-const updateDashboardWallpaper = gql`
-  mutation ($community: String!, $wallpaper: DsbWallpaperInput!) {
+const updateDashboardWallpaper = graphql(`
+  mutation UpdateDashboardWallpaper($community: String!, $wallpaper: DsbWallpaperInput!) {
     updateDashboardWallpaper(community: $community, wallpaper: $wallpaper) {
       wallpaper {
-        ${F.wallpaper}
+        ...DashboardWallpaperFields
       }
     }
   }
-`
+`)
 
-const schema = {
+export default {
   updateDashboardWallpaper,
 }
-
-export default schema

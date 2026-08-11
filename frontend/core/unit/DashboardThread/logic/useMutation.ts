@@ -11,10 +11,15 @@ import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import AppearanceSchema from '~/unit/DashboardThread/schema/appearance'
+import IntegrationsSchema from '~/unit/DashboardThread/schema/integrations'
+import SettingsSchema from '~/unit/DashboardThread/schema/settings'
+import TagsSchema from '~/unit/DashboardThread/schema/tags'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { slugify } from '~/utils/slug'
+
+const S = { ...AppearanceSchema, ...IntegrationsSchema, ...SettingsSchema, ...TagsSchema }
 
 import {
   BASEINFO_BASIC_KEYS,

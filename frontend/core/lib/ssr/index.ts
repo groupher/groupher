@@ -3,9 +3,10 @@ import { cacheLife, cacheTag } from 'next/cache'
 
 import { CACHE_TAG } from '~/const/cache'
 import { THREAD } from '~/const/thread'
-import { extractQueryName } from '~/graphql/document'
+import { extractRootResponseKey } from '~/graphql/document'
 import { gqFetch } from '~/graphql/server'
-import { P } from '~/schemas'
+import { pagedChangelogs } from '~/schemas/pages/changelog'
+import { pagedPosts } from '~/schemas/pages/post'
 import type { TPagedArticles, TPagedArticlesParams, TParseDashboard, TThread } from '~/spec'
 export { parseDashboard, parseWallpaper } from './parse'
 
@@ -45,12 +46,12 @@ const getPagedQuery = (
 ) => {
   switch (thread) {
     case THREAD.CHANGELOG: {
-      return { schema: P.pagedChangelogs, variables: { filter, userHasLogin: false } }
+      return { schema: pagedChangelogs, variables: { filter, userHasLogin: false } }
     }
-    // P.groupedKanbanPosts
+    // groupedKanbanPosts remains outside this article-list selector.
 
     default: {
-      return { schema: P.pagedPosts, variables: { filter, userHasLogin: false } }
+      return { schema: pagedPosts, variables: { filter, userHasLogin: false } }
     }
   }
 }
@@ -83,7 +84,8 @@ const fetchPagedArticles = async (
     return null
   }
 
-  return data[extractQueryName(schema)]
+  const responseKey = extractRootResponseKey(schema)
+  return responseKey ? data[responseKey] : null
 }
 
 const getCachedPagedArticles = async (

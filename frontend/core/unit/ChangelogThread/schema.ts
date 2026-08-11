@@ -1,22 +1,14 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-const simpleMutation = gql`
-  mutation ($article: ArticlePathInput!) {
+const simpleQuery = graphql(`
+  query ChangelogSimpleQuery($article: ArticlePathInput!) {
     post(article: $article) {
       innerId
     }
   }
-`
-const simpleQuery = gql`
-  query ($article: ArticlePathInput!) {
-    post(article: $article) {
-      innerId
-    }
-  }
-`
+`)
 
 const schema = {
-  simpleMutation,
   simpleQuery,
 }
 

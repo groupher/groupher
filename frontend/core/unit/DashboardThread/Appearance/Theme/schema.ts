@@ -1,7 +1,7 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-export const saveCustomThemePreset = gql`
-  mutation (
+export const saveCustomThemePreset = graphql(`
+  mutation SaveCustomThemePreset(
     $community: String!
     $themePreset: DsbThemePreset!
     $themePresetBase: DsbThemePreset!
@@ -24,10 +24,10 @@ export const saveCustomThemePreset = gql`
       }
     }
   }
-`
+`)
 
-export const selectThemePreset = gql`
-  mutation ($community: String!, $themePreset: DsbThemePreset!) {
+export const selectThemePreset = graphql(`
+  mutation SelectThemePreset($community: String!, $themePreset: DsbThemePreset!) {
     selectThemePreset(community: $community, themePreset: $themePreset) {
       layout {
         themePreset
@@ -40,4 +40,4 @@ export const selectThemePreset = gql`
       }
     }
   }
-`
+`)

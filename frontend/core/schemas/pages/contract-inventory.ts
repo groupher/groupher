@@ -3,45 +3,40 @@ import { changelog, pagedChangelogs } from './changelog'
 import { pagedComments } from './comment'
 import { community, pagedCommunities, subscribedCommunities } from './community'
 import { doc, docPublicTree, pagedDocs } from './doc'
-import { mentions } from './mail'
 import { communityTagGroups, communityTagStats, pagedCategories, themePresets } from './misc'
 import { groupedKanbanPosts, pagedPosts, pagedPublishedPosts, post } from './post'
 import { me, sessionState, user } from './user'
 
-const P = {
+/**
+ * Explicit Pages contract inventory for schema tests only.
+ *
+ * This is intentionally not exported from `~/schemas` and is not a runtime
+ * lookup registry. Production callers import the operation they need directly
+ * from its owning page module.
+ */
+export const pageDocuments = {
   community,
   subscribedCommunities,
   pagedCommunities,
   groupedKanbanPosts,
-  // comment
   pagedComments,
-  // misc
   pagedCategories,
   themePresets,
   communityTagGroups,
   communityTagStats,
-  // post
   pagedPosts,
   pagedPublishedPosts,
   post,
-  // changelog
   pagedChangelogs,
   changelog,
-  // doc
   pagedDocs,
   doc,
   docPublicTree,
-  // user
   me,
   user,
   sessionState,
-  // action
-  // mentions
-  mentions,
   setTag,
   unsetTag,
   follow,
   undoFollow,
-}
-
-export default P
+} as const

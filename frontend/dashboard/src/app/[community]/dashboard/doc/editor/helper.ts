@@ -1,6 +1,6 @@
 import { gqAuthFetch } from '~/graphql/server'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import type {
   TDocDraftQueryData,

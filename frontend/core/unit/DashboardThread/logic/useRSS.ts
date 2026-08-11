@@ -1,21 +1,24 @@
+import type { VariablesOf } from '@graphql-typed-document-node/core'
 import { pick } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
-import type { TEditFunc } from '~/spec'
+import type { TEditFunc, TRSSType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../constant'
-import S from '../schema'
+import S from '../schema/integrations'
 import useHelper from './useHelper'
+
+type TUpdatePressConfigInput = NonNullable<VariablesOf<typeof S.updatePressConfig>['input']>
 
 type TOutputField = 'feedEnabled' | 'markdownEnabled' | 'llmsEnabled' | 'sitemapEnabled'
 type TOptions = Record<TOutputField, boolean> & { feedThreads: string[] }
 
 type TRet = TOptions & {
-  rssFeedType: string
+  rssFeedType: TRSSType
   rssFeedCount: number
   saving: boolean
   isTouched: boolean
@@ -57,11 +60,11 @@ export default function useRSS(): TRet {
     setOptions(next)
     original.current = next
     dsb$.commit({
-      rssFeedType: config.feedType.toLowerCase(),
+      rssFeedType: config.feedType.toLowerCase() as TRSSType,
       rssFeedCount: config.feedCount,
       original: {
         ...dsb$.original,
-        rssFeedType: config.feedType.toLowerCase(),
+        rssFeedType: config.feedType.toLowerCase() as TRSSType,
         rssFeedCount: config.feedCount,
       },
     })
@@ -77,10 +80,12 @@ export default function useRSS(): TRet {
     void mutate(S.updatePressConfig, {
       input: {
         community,
-        feedType: dsb$.rssFeedType.toUpperCase(),
+        feedType: dsb$.rssFeedType.toUpperCase() as TUpdatePressConfigInput['feedType'],
         feedCount: dsb$.rssFeedCount,
         ...options,
-        feedThreads: options.feedThreads.map((thread) => thread.toUpperCase()),
+        feedThreads: options.feedThreads.map(
+          (thread) => thread.toUpperCase() as TUpdatePressConfigInput['feedThreads'][number],
+        ),
       },
     })
       .then(() => {

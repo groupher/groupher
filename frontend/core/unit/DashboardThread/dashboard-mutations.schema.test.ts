@@ -7,25 +7,26 @@ import { describe, expect, it } from 'vitest'
 
 import * as themeSchema from './Appearance/Theme/schema'
 import wallpaperSchema from './Appearance/Wallpaper/schema'
-import dashboardSchema from './schema'
+import dashboardAppearanceSchema from './schema/appearance'
+import dashboardSettingsSchema from './schema/settings'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const schemaPath = path.join(__dirname, '../../../..', 'backend/main/schema.graphql')
 const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 
 const documents = {
-  updateDashboardBaseInfo: dashboardSchema.updateDashboardBaseInfo,
-  updateDashboardMediaReports: dashboardSchema.updateDashboardMediaReports,
-  updateDashboardThirdPartyAnalytics: dashboardSchema.updateDashboardThirdPartyAnalytics,
-  updateDashboardSeo: dashboardSchema.updateDashboardSeo,
-  updateDashboardEnable: dashboardSchema.updateDashboardEnable,
-  updateDashboardLayout: dashboardSchema.updateDashboardLayout,
-  updateDashboardSocialLinks: dashboardSchema.updateDashboardSocialLinks,
-  updateDashboardNameAlias: dashboardSchema.updateDashboardNameAlias,
-  updateDashboardDocFaq: dashboardSchema.updateDashboardDocFaq,
-  updateDashboardHeaderLinks: dashboardSchema.updateDashboardHeaderLinks,
-  updateDashboardFooterLinks: dashboardSchema.updateDashboardFooterLinks,
-  updateDashboardFooterOnelineLinks: dashboardSchema.updateDashboardFooterOnelineLinks,
+  updateDashboardBaseInfo: dashboardSettingsSchema.updateDashboardBaseInfo,
+  updateDashboardMediaReports: dashboardSettingsSchema.updateDashboardMediaReports,
+  updateDashboardThirdPartyAnalytics: dashboardSettingsSchema.updateDashboardThirdPartyAnalytics,
+  updateDashboardSeo: dashboardSettingsSchema.updateDashboardSeo,
+  updateDashboardEnable: dashboardSettingsSchema.updateDashboardEnable,
+  updateDashboardLayout: dashboardAppearanceSchema.updateDashboardLayout,
+  updateDashboardSocialLinks: dashboardSettingsSchema.updateDashboardSocialLinks,
+  updateDashboardNameAlias: dashboardSettingsSchema.updateDashboardNameAlias,
+  updateDashboardDocFaq: dashboardSettingsSchema.updateDashboardDocFaq,
+  updateDashboardHeaderLinks: dashboardSettingsSchema.updateDashboardHeaderLinks,
+  updateDashboardFooterLinks: dashboardSettingsSchema.updateDashboardFooterLinks,
+  updateDashboardFooterOnelineLinks: dashboardSettingsSchema.updateDashboardFooterOnelineLinks,
   updateDashboardWallpaper: wallpaperSchema.updateDashboardWallpaper,
   saveCustomThemePreset: themeSchema.saveCustomThemePreset,
   selectThemePreset: themeSchema.selectThemePreset,

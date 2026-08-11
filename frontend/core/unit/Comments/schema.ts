@@ -1,50 +1,47 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-import { F } from '~/schemas'
-
-// viewerHasLiked @include(if: $userHasLogin)
-// viewerHasDisliked @include(if: $userHasLogin)
-
-const pagedComments = gql`
-  query pagedComments(
-    $article: ArticlePathInput!
-    $mode: CommentsMode,
-    $filter: CommentsFilter!
-  ) {
+const pagedComments = graphql(`
+  query PagedComments($article: ArticlePathInput!, $mode: CommentsMode, $filter: CommentsFilter!) {
     pagedComments(article: $article, mode: $mode, filter: $filter) {
       entries {
-        ${F.comment}
-      }
-      ${F.pagi}
-    }
-  }
-`
-
-const pagedCommentReplies = gql`
-  query($comment: CommentPathInput!, $filter: CommentsFilter!) {
-    pagedCommentReplies(comment: $comment, filter: $filter) {
-      entries {
-        ${F.commentFields}
-
+        ...CommentFields
         replyToComment {
-          ${F.commentFields}
+          ...CommentFields
+        }
+        replies {
+          ...CommentReplyFields
         }
       }
-      ${F.pagi}
+      ...CommentPageFields
     }
   }
-`
+`)
 
-const createComment = gql`
-  mutation ($article: ArticlePathInput!, $body: String!) {
+const pagedCommentReplies = graphql(`
+  query PagedCommentReplies($comment: CommentPathInput!, $filter: CommentsFilter!) {
+    pagedCommentReplies(comment: $comment, filter: $filter) {
+      entries {
+        ...CommentReplyFields
+      }
+      totalPages
+      totalCount
+      pageSize
+      pageNumber
+    }
+  }
+`)
+
+const createComment = graphql(`
+  mutation CreateComment($article: ArticlePathInput!, $body: String!) {
     createComment(article: $article, body: $body) {
       innerId
       bodyHtml
     }
   }
-`
-const updateComment = gql`
-  mutation ($comment: CommentPathInput!, $body: String!) {
+`)
+
+const updateComment = graphql(`
+  mutation UpdateComment($comment: CommentPathInput!, $body: String!) {
     updateComment(comment: $comment, body: $body) {
       innerId
       bodyHtml
@@ -53,14 +50,14 @@ const updateComment = gql`
       }
     }
   }
-`
-const commentsState = gql`
-  query ($article: ArticlePathInput!, $freshkey: String) {
+`)
+
+const commentsState = graphql(`
+  query CommentsState($article: ArticlePathInput!, $freshkey: String) {
     commentsState(article: $article, freshkey: $freshkey) {
       totalCount
       isViewerJoined
       participantsCount
-
       participants {
         login
         nickname
@@ -68,34 +65,36 @@ const commentsState = gql`
       }
     }
   }
-`
-const oneComment = gql`
-  query ($comment: CommentPathInput!) {
+`)
+
+const oneComment = graphql(`
+  query OneComment($comment: CommentPathInput!) {
     oneComment(comment: $comment) {
       innerId
       body
     }
   }
-`
+`)
 
-const replyComment = gql`
-  mutation ($comment: CommentPathInput!, $body: String!) {
+const replyComment = graphql(`
+  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {
     replyComment(comment: $comment, body: $body) {
       innerId
       bodyHtml
     }
   }
-`
-const deleteComment = gql`
-  mutation ($comment: CommentPathInput!) {
+`)
+
+const deleteComment = graphql(`
+  mutation DeleteComment($comment: CommentPathInput!) {
     deleteComment(comment: $comment) {
       innerId
     }
   }
-`
+`)
 
-const upvoteComment = gql`
-  mutation ($comment: CommentPathInput!) {
+const upvoteComment = graphql(`
+  mutation UpvoteComment($comment: CommentPathInput!) {
     upvoteComment(comment: $comment) {
       innerId
       meta {
@@ -108,9 +107,10 @@ const upvoteComment = gql`
       }
     }
   }
-`
-const undoUpvoteComment = gql`
-  mutation ($comment: CommentPathInput!) {
+`)
+
+const undoUpvoteComment = graphql(`
+  mutation UndoUpvoteComment($comment: CommentPathInput!) {
     undoUpvoteComment(comment: $comment) {
       innerId
       meta {
@@ -123,9 +123,10 @@ const undoUpvoteComment = gql`
       }
     }
   }
-`
-const reportComment = gql`
-  mutation ($comment: CommentPathInput!, $reason: String!, $attr: String) {
+`)
+
+const reportComment = graphql(`
+  mutation ReportComment($comment: CommentPathInput!, $reason: String!, $attr: String) {
     reportComment(comment: $comment, reason: $reason, attr: $attr) {
       innerId
       viewerHasReported
@@ -134,9 +135,10 @@ const reportComment = gql`
       }
     }
   }
-`
-const undoReportComment = gql`
-  mutation ($comment: CommentPathInput!) {
+`)
+
+const undoReportComment = graphql(`
+  mutation UndoReportComment($comment: CommentPathInput!) {
     undoReportComment(comment: $comment) {
       innerId
       viewerHasReported
@@ -145,53 +147,51 @@ const undoReportComment = gql`
       }
     }
   }
-`
-const emotionToComment = gql`
-  mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+`)
+
+const emotionToComment = graphql(`
+  mutation EmotionToComment($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     emotionToComment(comment: $comment, emotion: $emotion) {
       innerId
       replyToComment {
         innerId
       }
       emotions {
-        ${F.emotionQuery}
+        ...CommentEmotionFields
       }
     }
   }
-`
-const undoEmotionToComment = gql`
-  mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+`)
+
+const undoEmotionToComment = graphql(`
+  mutation UndoEmotionToComment($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     undoEmotionToComment(comment: $comment, emotion: $emotion) {
       innerId
       replyToComment {
         innerId
       }
       emotions {
-        ${F.emotionQuery}
+        ...CommentEmotionFields
       }
     }
   }
-`
+`)
 
-const searchUsers = gql`
-  query($name: String!) {
+const searchUsers = graphql(`
+  query SearchUsers($name: String!) {
     searchUsers(name: $name) {
       entries {
-        ${F.author}
+        ...CommentAuthorFields
       }
     }
   }
-`
+`)
 
-const pagedPublishedComments = gql`
-  query pagedPublishedComments(
-    $login: String!
-    $thread: Thread,
-    $filter: PagiFilter!
-  ) {
+const pagedPublishedComments = graphql(`
+  query PagedPublishedComments($login: String!, $thread: Thread, $filter: PagiFilter!) {
     pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
       entries {
-        ${F.comment}
+        ...CommentFields
         article {
           innerId
           title
@@ -202,12 +202,12 @@ const pagedPublishedComments = gql`
           }
         }
       }
-      ${F.pagi}
+      ...CommentPageFields
     }
   }
-`
+`)
 
-const schema = {
+export default {
   pagedComments,
   pagedCommentReplies,
   createComment,
@@ -225,5 +225,3 @@ const schema = {
   undoEmotionToComment,
   pagedPublishedComments,
 }
-
-export default schema

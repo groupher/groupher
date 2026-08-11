@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
-import { P } from '~/schemas'
+import { community as communityQuery } from '~/schemas/pages/community'
 import type { TCommunity, TParseDashboard } from '~/spec'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 
@@ -46,7 +46,7 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
     setPrivateCacheHeader()
 
     const communityResult = await fetchGraphQL<{ community?: TCommunity }>(
-      P.community,
+      communityQuery,
       { incViews: false, slug: data.community, userHasLogin },
       token,
     )

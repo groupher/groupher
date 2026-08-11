@@ -8,7 +8,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import MergeSVG from '~/icons/Merge'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import useDocsEditor from '../Editor/store/hooks'
 import { DOC_ACTION_LABEL_KEY } from './constant'

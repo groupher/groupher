@@ -1,5 +1,6 @@
 'use client'
 
+import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ASSETS_HUB_ENDPOINT } from '~/config'
@@ -7,7 +8,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/assets'
 
 import {
   ASSETS_HUB_DEBUG_UPLOAD_THREAD,
@@ -32,13 +33,15 @@ import type {
   TDeleteResult,
   TFinalizeResult,
   THubUploadResult,
-  TIntentResult,
   TPagedAssetRefs,
   TPagedAssets,
   TReferencesState,
   TTiming,
   TUploadProgress,
 } from './spec'
+
+type TCreateAssetUploadIntent = ResultOf<typeof S.createCommunityAssetUploadIntent>
+type TCreateAssetUploadVariables = VariablesOf<typeof S.createCommunityAssetUploadIntent>
 
 const EMPTY_REFS_STATE: TReferencesState = {
   assetId: null,
@@ -203,17 +206,20 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
       try {
         const digest = await runStage(ASSETS_HUB_UPLOAD_STATUS.CHECKSUM, () => checksumSha256(file))
         const intent = await runStage(ASSETS_HUB_UPLOAD_STATUS.INTENT, () =>
-          mutate<TIntentResult>(S.createCommunityAssetUploadIntent, {
-            community,
-            file: {
-              assetType: assetTypeFromMime(file.type),
-              checksumSha256: digest,
-              filename: file.name,
-              mimeType: file.type,
-              sizeBytes: file.size,
-              thread: ASSETS_HUB_DEBUG_UPLOAD_THREAD,
+          mutate<TCreateAssetUploadIntent, TCreateAssetUploadVariables>(
+            S.createCommunityAssetUploadIntent,
+            {
+              community,
+              file: {
+                assetType: assetTypeFromMime(file.type),
+                checksumSha256: digest,
+                filename: file.name,
+                mimeType: file.type,
+                sizeBytes: file.size,
+                thread: ASSETS_HUB_DEBUG_UPLOAD_THREAD,
+              },
             },
-          }),
+          ),
         )
         const capability = intent.createCommunityAssetUploadIntent.capability
         const presignJson = await runStage(ASSETS_HUB_UPLOAD_STATUS.PRESIGN, async () => {

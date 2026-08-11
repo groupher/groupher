@@ -1,11 +1,16 @@
+import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
+
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/tags'
 import { slugify } from '~/utils/slug'
+
+type TCommunityTagGroupsResult = ResultOf<typeof S.communityTagGroups>
+type TUpdateCommunityTagVariables = VariablesOf<typeof S.updateCommunityTag>
 
 type TRet = {
   loadTags: (thread?: TThread) => void
@@ -31,7 +36,13 @@ export default function useUtils(): TRet {
 
     dsb$.commit({ loading: true })
     query(S.communityTagGroups, params).then((data) => {
-      const tagGroups = data.communityTagGroups
+      const tagGroups = (data.communityTagGroups ?? []).map((group) => ({
+        ...group,
+        tags: (group.tags ?? []).map((tag) => ({
+          ...tag,
+          thread: tag.thread as TThread,
+        })),
+      })) as TCommunityTagGroupsResult['communityTagGroups'] as TTagGroup[]
       dsb$.commit({ tagGroups, original: { ...original, tagGroups }, loading: false })
     })
   }
@@ -100,10 +111,11 @@ export default function useUtils(): TRet {
       const slug = await slugify(title)
       const nextTag = { ...tag, title, slug }
 
-      await mutate(S.updateCommunityTag, {
+      await mutate<unknown, TUpdateCommunityTagVariables>(S.updateCommunityTag, {
         ...nextTag,
+        id: tag.id,
         community: community$.slug,
-      })
+      } as TUpdateCommunityTagVariables)
 
       const updatedTagGroups = dsb$.tagGroups.map((group) => ({
         ...group,

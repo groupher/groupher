@@ -1,6 +1,9 @@
 import type { TArticleStage } from '../article'
 
-export const DOC_TREE_MAX_DEPTH = 32
+// The recursive selector counts the current node as depth 0. A value of 2
+// therefore allows three visible levels: root, child, and grandchild.
+/** The public and Dashboard tree documents intentionally expose three levels. */
+export const DOC_TREE_MAX_VISIBLE_LEVELS = 3
 
 export const DSB_DOC_EVENT = {
   ADD_TAB: 'DSB_DOC_ADD_TAB',

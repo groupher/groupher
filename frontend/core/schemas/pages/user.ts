@@ -1,7 +1,7 @@
-import F from '../fragments'
+import { graphql } from '~/graphql/authoring'
 
-export const me = `
-  query {
+export const me = graphql(`
+  query Me {
     me {
       login
       nickname
@@ -10,37 +10,28 @@ export const me = `
       passport
     }
   }
-`
+`)
 
-export const user = `
-  query user($login: String!, $userHasLogin: Boolean!) {
+export const user = graphql(`
+  query User($login: String!, $userHasLogin: Boolean!) {
     user(login: $login) {
-      ${F.author}
+      ...UserAuthorFields
       views
       sex
       location
       social {
-        ${F.userSocial}
+        ...UserSocialFields
       }
       meta {
         isMaker
         publishedPostsCount
-        publishedJobsCount
         publishedBlogsCount
-        publishedWorksCount
-        publishedRadarsCount
-        publishedMeetupsCount
       }
       followersCount
       followingsCount
       viewerHasFollowed @include(if: $userHasLogin)
       achievement {
-        ${F.achievement}
-      }
-      fromGithub
-      githubProfile {
-        htmlUrl
-        login
+        ...UserAchievementFields
       }
       contributes {
         records {
@@ -57,31 +48,25 @@ export const user = `
       insertedAt
     }
   }
-`
+`)
 
-export const sessionState = `
-  query {
+export const sessionState = graphql(`
+  query SessionState {
     sessionState {
       isValid
       user {
-        ${F.author}
+        ...UserAuthorFields
         geoCity
-        bio
-        fromGithub
         location
         social {
-          ${F.userSocial}
+          ...UserSocialFields
         }
         passport
         subscribedCommunitiesCount
-        githubProfile {
-          htmlUrl
-          login
-        }
         achievement {
-          ${F.achievement}
+          ...UserAchievementFields
         }
       }
     }
   }
-`
+`)

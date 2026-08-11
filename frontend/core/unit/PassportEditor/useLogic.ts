@@ -242,7 +242,9 @@ export default function useLogic(): TRet {
     setLoading(true)
     query(S.allPassportRules)
       .then((res) => {
-        const { cms } = res.allPassportRulesString
+        const { cms } = res.allPassportRulesString as {
+          cms: { general?: unknown; community?: unknown }
+        }
         const { general, community } = cms
 
         dsb$.commit({
@@ -296,8 +298,8 @@ export default function useLogic(): TRet {
     })
       .then(async (res) => {
         const remoteModerators = (res.updateModeratorPassport?.moderators ?? []).filter(
-          (moderator): moderator is TModerator => Boolean(moderator.user?.login),
-        )
+          (moderator) => Boolean(moderator.user?.login),
+        ) as TModerator[]
         const savedModeratorPatch = {
           passportItemCount: enabledRuleCount(innerRules),
           rules: innerRules,

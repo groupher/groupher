@@ -8,7 +8,7 @@ import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import { reloadDocPublishChecklist } from '../helper'
 import {

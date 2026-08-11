@@ -1,10 +1,13 @@
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { useEffect } from 'react'
 
 import useQuery from '~/hooks/useQuery'
-import type { TCommunity, TOverview } from '~/spec'
+import type { TOverview } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/shell'
+
+type TCommunityOverview = NonNullable<ResultOf<typeof S.communityOverview>['community']>
 
 export default function useOverview(): TOverview {
   const dsb$ = useDashboard()
@@ -16,11 +19,10 @@ export default function useOverview(): TOverview {
     incViews: false,
   })
 
-  const updateOverview = (community: TCommunity): void => {
+  const updateOverview = (community: TCommunityOverview): void => {
     const { meta, views, subscribersCount } = community
 
     dsb$.commit({
-      // @ts-expect-error
       overview: {
         views,
         subscribersCount,

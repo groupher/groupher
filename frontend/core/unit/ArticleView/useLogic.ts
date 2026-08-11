@@ -62,7 +62,7 @@ export default function useLogic(): TRet {
 
     setLoading(true)
     // query(S.getArticle(meta.thread), params).then((res) => {
-    query(S.getArticle(thread), params).then((res) => {
+    query<{ post: TArticle }>(S.getArticle(thread), params).then((res) => {
       handleArticleLoaded(res.post)
     })
   }

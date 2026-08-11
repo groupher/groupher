@@ -1,33 +1,34 @@
-import F from '../fragments'
+import { graphql } from '~/graphql/authoring'
 
-export const changelog = `
-  query changelog($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+export const changelog = graphql(`
+  query Changelog($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     changelog(article: $article) {
-      ${F.article}
-      ${F.articleDetail}
+      ...PageChangelogFields
+      ...PageChangelogDetailFields
     }
   }
-`
-export const pagedChangelogs = `
-  query pagedChangelogs($filter: PagedChangelogsFilter!, $userHasLogin: Boolean!) {
+`)
+
+export const pagedChangelogs = graphql(`
+  query PagedChangelogs($filter: PagedChangelogsFilter!, $userHasLogin: Boolean!) {
     pagedChangelogs(filter: $filter) {
       entries {
-        ${F.article}        
+        ...PageChangelogFields
         meta {
           thread
           latestUpvotedUsers {
-            ${F.author}
+            ...PageCommonUserFields
           }
         }
         digest
         linkAddr
         commentsParticipants {
-          ${F.author}
+          ...PageAuthorFields
         }
         viewerHasViewed @include(if: $userHasLogin)
         viewerHasUpvoted @include(if: $userHasLogin)
       }
-      ${F.pagi}
+      ...PageChangelogPageInfo
     }
   }
-`
+`)

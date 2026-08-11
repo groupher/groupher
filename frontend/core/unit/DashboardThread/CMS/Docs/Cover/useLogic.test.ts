@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { TDocCoverPinnedDocAppearance } from '~/unit/DocCovers/spec'
 
-import DashboardSchema from '../../../schema'
+import DashboardSchema from '../../../schema/docs'
 import useLogic from './useLogic'
 
 const mocks = vi.hoisted(() => ({

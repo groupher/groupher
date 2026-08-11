@@ -1,7 +1,7 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-const userPassport = gql`
-  query ($login: String!) {
+const userPassport = graphql(`
+  query UserPassport($login: String!) {
     user(login: $login) {
       passportString
       social {
@@ -11,18 +11,18 @@ const userPassport = gql`
       }
     }
   }
-`
+`)
 
-const allPassportRules = gql`
-  query {
+const allPassportRules = graphql(`
+  query AllPassportRules {
     allPassportRulesString {
       cms
     }
   }
-`
+`)
 
-const updateModeratorPassport = gql`
-  mutation ($community: String!, $user: String!, $rules: Json!) {
+const updateModeratorPassport = graphql(`
+  mutation UpdateModeratorPassport($community: String!, $user: String!, $rules: Json!) {
     updateModeratorPassport(community: $community, user: $user, rules: $rules) {
       slug
       moderators {
@@ -37,10 +37,10 @@ const updateModeratorPassport = gql`
       }
     }
   }
-`
+`)
 
-const removeModerator = gql`
-  mutation ($community: String!, $user: String!) {
+const removeModerator = graphql(`
+  mutation RemoveModerator($community: String!, $user: String!) {
     removeModerator(community: $community, user: $user) {
       slug
       moderators {
@@ -55,7 +55,7 @@ const removeModerator = gql`
       }
     }
   }
-`
+`)
 
 const schema = {
   userPassport,

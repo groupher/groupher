@@ -1,16 +1,5 @@
-import F from '../fragments'
+import commentsSchema from '../../unit/Comments/schema'
 
-export const pagedComments = `
-  query pagedComments(
-    $article: ArticlePathInput!
-    $mode: CommentsMode
-    $filter: CommentsFilter!
-  ) {
-    pagedComments(article: $article, mode: $mode, filter: $filter) {
-      entries {
-        ${F.comment}
-      }
-      ${F.pagi}
-    }
-  }
-`
+// The page registry keeps the same typed document used by the Comments feature.
+// This avoids creating a second operation definition for the identical contract.
+export const pagedComments = commentsSchema.pagedComments

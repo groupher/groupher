@@ -4,7 +4,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import useDocsEditor from '../../Editor/store/hooks'
 import {

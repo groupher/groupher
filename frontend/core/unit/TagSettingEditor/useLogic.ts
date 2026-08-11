@@ -5,7 +5,7 @@ import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
-import type { TChangeMode, TEditValue, TSelectOption, TTag } from '~/spec'
+import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { slugify } from '~/utils/slug'
@@ -136,10 +136,15 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     }
 
     mutate(S.updateCommunityTag, {
-      ...editingTag,
+      id: editingTag.id ?? '',
+      color: editingTag.color as TColorName,
+      title: editingTag.title,
+      layout: editingTag.layout,
+      desc: editingTag.desc,
       slug: validateSlug(editingTag.slug).value,
       community: community$.slug,
-      thread: activeTagThread,
+      groupId: editingTag.groupId,
+      marker: editingTag.marker,
     })
       .then((res) => {
         console.log('## updateCommunityTag: ', res)
@@ -162,12 +167,15 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     }
 
     const params = {
-      ...editingTag,
-      slug: validateSlug(editingTag.slug).value,
-      community: community$.slug,
       thread: activeTagThread,
+      title: editingTag.title ?? '',
+      slug: validateSlug(editingTag.slug).value,
+      layout: editingTag.layout,
+      color: (editingTag.color ?? '') as TColorName,
+      groupId: editingTag.groupId ?? '',
+      community: community$.slug,
+      marker: editingTag.marker,
     }
-    delete params.desc
 
     mutate(S.createCommunityTag, params)
       .then((res) => {

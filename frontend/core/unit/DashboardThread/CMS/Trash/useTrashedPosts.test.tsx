@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/content'
 
 import useTrashedPosts from './useTrashedPosts'
 

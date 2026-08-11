@@ -2,11 +2,13 @@ import { createServerFn } from '@tanstack/react-start'
 import { print, type DocumentNode } from 'graphql'
 
 import { THREAD } from '~/const/thread'
-import { P } from '~/schemas'
+import { themePresets } from '~/schemas/pages/misc'
 import type { TPagedArticles, TTagGroup, TThemePresetOption, TThemePresetsQuery } from '~/spec'
 import type { TPagedAssets } from '~/unit/DashboardThread/AssetsHub/spec'
 import type { TPagedTrashedPosts, TTrashedPost } from '~/unit/DashboardThread/CMS/Trash/spec'
-import DashboardSchema from '~/unit/DashboardThread/schema'
+import DashboardAssetsSchema from '~/unit/DashboardThread/schema/assets'
+import DashboardContentSchema from '~/unit/DashboardThread/schema/content'
+import DashboardTagsSchema from '~/unit/DashboardThread/schema/tags'
 import KanbanSchema from '~/unit/KanbanThread/schema'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
@@ -63,7 +65,7 @@ export type TPagedPostsInput = {
 export const loadPagedPosts = createServerFn({ method: 'GET', strict: false })
   .validator((data: TPagedPostsInput) => data)
   .handler(async ({ data }): Promise<TPagedArticles | null> => {
-    const payload = await fetchPaged(toQuery(DashboardSchema.pagedPosts), {
+    const payload = await fetchPaged(toQuery(DashboardContentSchema.pagedPosts), {
       filter: { page: data.page || 1, size: 20, community: data.community },
       userHasLogin: false,
     })
@@ -74,7 +76,7 @@ export const loadPagedPosts = createServerFn({ method: 'GET', strict: false })
 export const loadPagedChangelogs = createServerFn({ method: 'GET', strict: false })
   .validator((data: TPagedPostsInput) => data)
   .handler(async ({ data }): Promise<TPagedArticles | null> => {
-    const payload = await fetchPaged(toQuery(DashboardSchema.pagedChangelogs), {
+    const payload = await fetchPaged(toQuery(DashboardContentSchema.pagedChangelogs), {
       filter: { page: data.page || 1, size: 20, community: data.community },
       userHasLogin: false,
     })
@@ -113,7 +115,7 @@ export const loadTagGroups = createServerFn({ method: 'GET', strict: false })
     setPrivateCacheHeader()
 
     const result = await fetchGraphQL<TTagGroupsQuery>(
-      toQuery(DashboardSchema.communityTagGroups),
+      toQuery(DashboardTagsSchema.communityTagGroups),
       { community: data.community, thread: data.thread || THREAD.POST },
       token,
     )
@@ -133,7 +135,7 @@ export const loadTrash = createServerFn({ method: 'GET', strict: false })
     setPrivateCacheHeader()
 
     const result = await fetchGraphQL<TTrashedPostsQuery>(
-      toQuery(DashboardSchema.trashedPosts),
+      toQuery(DashboardContentSchema.trashedPosts),
       { community: data.community, page: data.page || 1, size: 20 },
       token,
     )
@@ -162,7 +164,7 @@ export const loadAssets = createServerFn({ method: 'GET', strict: false })
     setPrivateCacheHeader()
 
     const result = await fetchGraphQL<TPagedAssetsQuery>(
-      toQuery(DashboardSchema.pagedCommunityAssets),
+      toQuery(DashboardAssetsSchema.pagedCommunityAssets),
       { community: data.community, filter: { page: data.page || 1, size: 20 } },
       token,
     )
@@ -176,7 +178,7 @@ export const loadThemePresets = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TThemePresetsQuery>(toQuery(P.themePresets), {}, token)
+    const result = await fetchGraphQL<TThemePresetsQuery>(toQuery(themePresets), {}, token)
     const presets = result.data?.themePresets || []
 
     return presets.map((preset) => ({
