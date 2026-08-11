@@ -28,7 +28,7 @@ endpoints:
   - name: Public Edge Router
     group: Core services
     url: https://groupher.com/health
-    interval: 30s
+    interval: 1m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -51,7 +51,7 @@ endpoints:
   - name: API
     group: Core services
     url: https://api.groupher.com/health
-    interval: 30s
+    interval: 1m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -74,7 +74,7 @@ endpoints:
   - name: Authentication
     group: Core services
     url: https://auth.groupher.com/health
-    interval: 30s
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -97,7 +97,7 @@ endpoints:
   - name: Main App
     group: Product services
     url: https://main.groupher.com/health
-    interval: 30s
+    interval: 5m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -120,7 +120,7 @@ endpoints:
   - name: Dashboard
     group: Product services
     url: https://dashboard.groupher.com/health
-    interval: 30s
+    interval: 5m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -143,7 +143,7 @@ endpoints:
   - name: Dash
     group: Product services
     url: https://dash.groupher.com/health
-    interval: 30s
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -166,7 +166,7 @@ endpoints:
   - name: Content Delivery
     group: Product services
     url: https://press.groupher.com/health
-    interval: 30s
+    interval: 1m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -189,7 +189,7 @@ endpoints:
   - name: Asset Delivery
     group: Product services
     url: https://assets.groupher.com/health
-    interval: 30s
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
@@ -212,7 +212,7 @@ endpoints:
   - name: Public Website
     group: Public paths
     url: https://groupher.com/
-    interval: 60s
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[RESPONSE_TIME] < 10000"
@@ -232,7 +232,7 @@ endpoints:
   - name: Dash Public Route
     group: Public paths
     url: https://groupher.com/health/dash
-    interval: 60s
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
