@@ -6,6 +6,7 @@ import type {
   TMetricThresholds,
   TServiceGroup,
   TServiceRelation,
+  TServiceReadiness,
   TServiceStartPolicy,
   TTechnologyStack,
 } from '../shared/contracts.ts'
@@ -49,6 +50,7 @@ export type TServiceDefinition = {
   port?: number
   url?: string
   appUrl?: string
+  readiness?: TServiceReadiness
   portlessName?: string
   portlessUrl?: string
   portlessAppUrl?: string
@@ -459,6 +461,24 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       ...BACKEND_METRICS,
       serverRssBytes: 1_024 * MB,
     },
+  },
+  {
+    id: 'gatus',
+    name: 'Groupher Status',
+    description: 'Local service availability dashboard',
+    group: 'infra',
+    monogram: 'ST',
+    cwd: REPO_ROOT,
+    command: 'bash',
+    args: ['ops/status/start-local.sh'],
+    port: 8080,
+    url: 'http://127.0.0.1:8080/health',
+    appUrl: 'http://127.0.0.1:8080/',
+    portlessName: 'gatus',
+    portlessUrl: 'https://gatus.groupher.localhost/health',
+    portlessAppUrl: 'https://gatus.groupher.localhost/',
+    readiness: 'http-status',
+    metrics: BACKEND_METRICS,
   },
 ]
 

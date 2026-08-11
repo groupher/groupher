@@ -189,6 +189,22 @@ export function App() {
               onOpenConfig={openConfig}
               onOpenDependencies={openDependencies}
             />
+            <ServiceSection
+              title='Infrastructure'
+              description='Local tools that observe or support the application services.'
+              group='infra'
+              services={services}
+              metricsByService={metricsByService}
+              expandedIds={expandedIds}
+              pendingIds={pendingIds}
+              onToggleService={handleToggleService}
+              onStartService={handleStartService}
+              onRestartService={handleRestartService}
+              onToggleTerminal={toggleTerminal}
+              onOpenMetrics={openMetrics}
+              onOpenConfig={openConfig}
+              onOpenDependencies={openDependencies}
+            />
           </>
         ) : (
           <ErrorBoundary

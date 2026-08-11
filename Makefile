@@ -200,6 +200,9 @@ be.rollback.dev:
 be.deploy:
 	cd ./backend/main && flyctl deploy && cd -
 
+be.status.deploy:
+	cd ./ops/status && flyctl deploy --config fly.toml --remote-only && cd -
+
 be.status:
 	flyctl status -a groupher-api
 

@@ -6,8 +6,16 @@ import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts
 
 test('standalone services declare a four-item technology stack', () => {
   for (const service of SERVICE_DEFINITIONS) {
+    if (service.id === 'gatus') continue
     assert.equal(service.technologies?.length, 4, service.name)
   }
+})
+
+test('Gatus is an infra service with HTTP readiness', () => {
+  const gatus = SERVICE_DEFINITIONS.find((definition) => definition.id === 'gatus')
+  assert.equal(gatus?.group, 'infra')
+  assert.equal(gatus?.readiness, 'http-status')
+  assert.deepEqual(gatus?.args, ['ops/status/start-local.sh'])
 })
 
 test('frontend and Phoenix stacks match their runtime boundaries', () => {

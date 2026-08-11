@@ -690,6 +690,15 @@ async function isHealthReady(url: string, serviceId: string): Promise<boolean> {
   }
 }
 
+async function isHttpReady(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_000) })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 async function isDefinitionReady(
   definition: TServiceDefinition,
   portProbe: (port: number) => Promise<boolean>,
@@ -703,6 +712,9 @@ async function isDefinitionReady(
   }
 
   const { port, url, id } = definition
+  if (definition.readiness === 'http-status' && url) return isHttpReady(url)
+  if (definition.readiness === 'health-v1' && url) return isHealthReady(url, id)
+  if (definition.readiness === 'port' && port) return portProbe(port)
   if (url) return isHealthReady(url, id)
   if (port) return portProbe(port)
   return true

@@ -1,0 +1,253 @@
+web:
+  address: 0.0.0.0
+  port: 8080
+
+ui:
+  title: Groupher Status
+  header: Groupher Status
+  dashboard-heading: Groupher services
+  dashboard-subheading: Current availability of Groupher product capabilities
+  description: Groupher public service status
+  dark-mode: true
+  default-sort-by: group
+  buttons:
+    - name: Groupher
+      link: https://groupher.com/
+
+storage:
+  type: sqlite
+  path: /data/gatus.db
+
+# The webhook is injected with `fly secrets set`. Until it is configured,
+# Gatus keeps monitoring and simply skips Discord delivery.
+alerting:
+  discord:
+    webhook-url: "${GATUS_DISCORD_WEBHOOK_URL}"
+
+endpoints:
+  - name: Public Edge Router
+    group: Core services
+    url: https://groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == edge-router"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: API
+    group: Core services
+    url: https://api.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == phoenix"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Authentication
+    group: Core services
+    url: https://auth.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == auth"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Main App
+    group: Product services
+    url: https://main.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == main"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Dashboard
+    group: Product services
+    url: https://dashboard.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == dashboard"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Dash
+    group: Product services
+    url: https://dash.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == dash"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Content Delivery
+    group: Product services
+    url: https://press.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == press"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Asset Delivery
+    group: Product services
+    url: https://assets.groupher.com/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == assets-hub"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 15000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Public Website
+    group: Public paths
+    url: https://groupher.com/
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 10000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Dash Public Route
+    group: Public paths
+    url: https://groupher.com/health/dash
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == dash"
+      - "[BODY].status == ok"
+      - "[RESPONSE_TIME] < 10000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true

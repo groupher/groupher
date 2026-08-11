@@ -127,6 +127,9 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
         links: [
           { label: 'API', url: 'https://fly.io/apps/groupher-api' },
           { label: 'Press', url: 'https://fly.io/apps/groupher-press' },
+          { label: 'Status app', url: 'https://fly.io/apps/groupher-status' },
+          { label: 'Status (production)', url: 'https://status.groupher.com' },
+          { label: 'Status (local)', url: 'http://127.0.0.1:8080/' },
         ],
       },
     ],
@@ -188,4 +191,5 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'vercel',
     'https://vercel.com/groupher/document-converter',
   ),
+  gatus: deploymentTarget('gatus', 'fly', 'https://fly.io/apps/groupher-status'),
 }

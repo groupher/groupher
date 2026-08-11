@@ -1,4 +1,4 @@
-export type TServiceGroup = 'frontend' | 'backend'
+export type TServiceGroup = 'frontend' | 'backend' | 'infra'
 
 export type TTechnology =
   | 'absinthe'
@@ -39,6 +39,8 @@ export type TServiceStartPolicy = {
   requiredDependencies: string[]
   optionalDependencies: string[]
 }
+
+export type TServiceReadiness = 'health-v1' | 'http-status' | 'port'
 
 export type TServiceEndpoint = {
   id: string
