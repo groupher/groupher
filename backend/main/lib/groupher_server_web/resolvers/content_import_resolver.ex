@@ -14,7 +14,7 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
   alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
   alias GroupherServer.CMS.Model.Community
-  alias Helper.PermissionRegistry
+  alias GroupherServer.CMS.Gate.Passport.Registry
 
   @doc "Checks one registered community Passport action for the current caller."
   def check_passport(
@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
         %{community: community, action: action},
         %{context: %{cur_user: %{cur_passport: passport}}}
       ) do
-    case PermissionRegistry.allowed?(passport, community, action) do
+    case Registry.allowed?(passport, community, action) do
       {:ok, allowed} -> {:ok, allowed}
       {:error, :unknown_action} -> {:error, "unknown Passport action #{action}"}
       {:error, :community_required} -> {:error, "community is required for action #{action}"}

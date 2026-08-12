@@ -706,8 +706,8 @@ Comment 暂不迁移，因此 Article cutover 后采用以下边界：
 
 - 已增加 `CMS.Artiment.BodyBag` typed contract，校验 schema、字段大小、Plate JSON root、节点数、深度和正文长度；Elixir 不重新生成任何派生格式。
 - Post、Blog、Changelog、Doc 的 Article mutation 已从 raw `body` 一次性切换到 `bodyBag`；Comment mutation 保持原样。
-- DSB Docs autosave 已改走同源 `POST /api/artiment/publish`：Node 生成 BodyBag 后携带当前用户 Bearer token 与通用的 `X-Groupher-Server-Trust` 调用 Elixir GraphQL。
-- Next server → Phoenix 的内部信任已统一为 `GROUPHER_SERVER_TRUST_SECRET` / `X-Groupher-Server-Trust`；OAuth 不再把 trust code 放进 GraphQL variables，BodyBag 与 OAuth 共用服务身份凭证、分别保留自己的授权 middleware。
+- DSB Docs autosave 已改走同源 `POST /api/artiment/publish`：Node 生成 BodyBag 后携带 Dashboard 的 scoped service token，并通过 `X-Groupher-User-Authorization` 转发当前用户 access credential。
+- Next server → Phoenix 使用 `sub=service:dashboard`、`aud=phoenix:dashboard-api`、`scope=dashboard:body-bag:write`；Phoenix 将验证后的 service/user actor 绑定为 `delegated_actor`，BodyBag 与 OAuth 分别保留自己的 operation middleware。
 - Phase 3 的“全量切换”指后端 Article/GraphQL contract；当前 DSB HTTP consumer 只覆盖 Docs Draft。未来启用 Post/Blog/Changelog 正文编辑时，应增加显式服务端 action/adapter，不开放浏览器可指定任意 mutation 的通用 GraphQL 代理。
 - metadata-only Article update 不要求 publisher proof；任何携带 BodyBag 的 GraphQL mutation 都要求内部服务证明。
 - Article 行和 `ArticleDocument` 的正文 hash 已明确为 `bodyHash`，Snapshot 的完整版本 hash 已明确为 `versionHash`，并由单向 migration 完成列名切换。

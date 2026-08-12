@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { getPhoenixToken } from '~/app/phoenix-token'
 
@@ -40,11 +40,6 @@ describe('/api/artiment/publish', () => {
   beforeEach(() => {
     mockedGetPhoenixToken.mockReset()
     mockedHandleRequest.mockClear()
-    process.env.GROUPHER_SERVER_TRUST_SECRET = 'server-trust-secret'
-  })
-
-  afterEach(() => {
-    delete process.env.GROUPHER_SERVER_TRUST_SECRET
   })
 
   it('requires an authenticated Groupher session', async () => {
@@ -76,26 +71,7 @@ describe('/api/artiment/publish', () => {
       expect.any(Request),
       expect.objectContaining({
         backendToken: 'backend-token',
-        serverTrustSecret: 'server-trust-secret',
       }),
     )
-  })
-
-  it('requires the Groupher server trust secret', async () => {
-    mockedGetPhoenixToken.mockReturnValue('backend-token')
-    delete process.env.GROUPHER_SERVER_TRUST_SECRET
-
-    const response = await POST(request())
-    const payload = await response.json()
-
-    expect(response.status).toBe(500)
-    expect(payload).toEqual({
-      error: {
-        code: 'server_trust_not_configured',
-        message: 'Groupher server trust is not configured.',
-      },
-      ok: false,
-    })
-    expect(mockedHandleRequest).not.toHaveBeenCalled()
   })
 })

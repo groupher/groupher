@@ -1,4 +1,8 @@
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
+import {
+  createServiceTokenProviderFromEnv,
+  type TServiceTokenProvider,
+} from '@groupher/service/auth'
 
 type TGraphQLError = { code?: unknown; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
@@ -17,8 +21,35 @@ export type TGroupherGraphQLOptions = {
   backendToken?: string
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
-  serverTrustSecret?: string
+  serviceIdentity?: string
+  serviceScope?: string
 }
+
+export const resolveDelegationSubject = async (backendToken: string): Promise<string | null> => {
+  const data = await requestGroupherGraphQL<{
+    sessionState?: { delegationSubject?: string | null; isValid?: boolean | null } | null
+  }>(
+    `query ResolveDelegationSubject {
+      sessionState {
+        delegationSubject
+        isValid
+      }
+    }`,
+    {},
+    {
+      backendToken,
+      serviceIdentity: 'service:content-import',
+      serviceScope: 'content-import:write',
+    },
+  )
+
+  const subject = data.sessionState?.delegationSubject
+  return data.sessionState?.isValid && typeof subject === 'string' && subject.startsWith('user:')
+    ? subject
+    : null
+}
+
+let serviceTokenProvider: TServiceTokenProvider | undefined
 
 const configuredGraphQLEndpoint = (): string => {
   const endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim()
@@ -56,9 +87,14 @@ export const requestGroupherGraphQL = async <T>(
   options: TGroupherGraphQLOptions,
 ): Promise<T> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (options.backendToken) headers.Authorization = `Bearer ${options.backendToken}`
-  if (options.serverTrustSecret) {
-    headers[GROUPHER_SERVER_TRUST_HEADER] = options.serverTrustSecret
+  if (options.backendToken && options.serviceIdentity) {
+    serviceTokenProvider ??= createServiceTokenProviderFromEnv()
+    const token = await serviceTokenProvider.getToken({
+      resource: 'https://api.groupher.com/content-import',
+      scopes: [options.serviceScope || 'content-import:write'],
+    })
+    headers.Authorization = `Bearer ${token}`
+    headers[GROUPHER_USER_AUTHORIZATION_HEADER] = `Bearer ${options.backendToken}`
   }
   const response = await (options.fetchImpl ?? fetch)(
     options.graphqlEndpoint ?? configuredGraphQLEndpoint(),

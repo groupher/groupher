@@ -53,7 +53,7 @@ export const previewDocImportTarget = async (
   community: string,
   sourceInfo: TSourceInfo,
   analysis: TSourceAnalysis,
-  options: TRequestOptions & { serverTrustSecret: string },
+  options: TRequestOptions & { serviceIdentity: string },
 ): Promise<TTargetPreview> => {
   const data = await requestGroupherGraphQL<{ previewDocContentImportTarget: TTargetPreview }>(
     `query PreviewDocContentImportTarget(
@@ -125,7 +125,7 @@ export const startDocImport = async (
   preview: TDocImportPreview,
   analysis: TSourceAnalysis,
   datasetRef: string,
-  options: TRequestOptions & { backendToken: string; serverTrustSecret: string },
+  options: TRequestOptions & { backendToken: string; serviceIdentity: string },
 ): Promise<TStartedImportJob> => {
   const documents = analysis.documents.map((document) => ({
     contentHash: document.contentHash,
@@ -221,7 +221,7 @@ export const stageDocImportBodies = async (
   community: string,
   jobRef: string,
   items: TDocImportStageItem[],
-  options: TRequestOptions & { serverTrustSecret: string },
+  options: TRequestOptions & { serviceIdentity: string },
 ): Promise<TDocImportBodyStageResult> => {
   const data = await requestGroupherGraphQL<{
     stageDocContentImportBodies: TDocImportBodyStageResult
@@ -233,7 +233,7 @@ export const stageDocImportBodies = async (
 export const applyDocImport = async (
   community: string,
   jobRef: string,
-  options: TRequestOptions & { serverTrustSecret: string },
+  options: TRequestOptions & { serviceIdentity: string },
 ): Promise<TDocImportApplyResult> => {
   const data = await requestGroupherGraphQL<{ applyDocContentImport: TDocImportApplyResult }>(
     APPLY_DOC_IMPORT,
@@ -249,7 +249,7 @@ export const failDocImport = async (
   jobRef: string,
   code: string,
   message: string,
-  options: TRequestOptions & { serverTrustSecret: string },
+  options: TRequestOptions & { serviceIdentity: string },
 ): Promise<void> => {
   await requestGroupherGraphQL(
     `mutation FailDocContentImport(
@@ -274,7 +274,7 @@ export const failDocImport = async (
 export const cancelDocImport = async (
   community: string,
   jobRef: string,
-  options: TRequestOptions & { serverTrustSecret: string },
+  options: TRequestOptions & { serviceIdentity: string },
 ): Promise<void> => {
   await requestGroupherGraphQL(
     `mutation CancelDocContentImport($community: String!, $jobRef: ID!) {

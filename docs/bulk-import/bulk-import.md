@@ -682,7 +682,8 @@ Content-Type: application/json
 4. 只有允许后，Dashboard Node 才生成服务端 idempotency key。若全局上限由共享 semaphore 实现，必须在启动 Workflow 前获取名额，失败时返回稳定的可重试错误。
 5. Node 调用 Workflow SDK `start(...)`，把 `previewRef` 与 Workflow run reference 绑定并立即返回 `202`；若全局上限由 Workflow 对应 Queue/consumer 承载，超过运行上限的任务保持 queued。Route Handler 不等待分析完成，queued 不等于已经占用分析执行名额，超限任务也不能提前下载 archive。
 6. 首版不实现“每社区同时最多一个”的独立 lease。全局名额优先由 Workflow 所使用的 Queue/consumer 显式配置最大并发；如果当前 Workflow 接口不能提供该配置，才使用共享 semaphore，并由成功、失败、取消和超时路径释放。不能把 Vercel 自动扩容误认为并发上限。
-7. `GROUPHER_SERVER_TRUST_SECRET` 只证明请求来自受信任 Dashboard 服务，不能替代用户身份和社区权限检查。
+7. Dashboard 使用 audience/scope 受限的 Service Identity，并同时转发当前用户 access
+   credential；Phoenix 必须验证两者并继续执行社区 Passport，service token 不能替代用户权限。
 
 ```graphql
 query CheckPassport($community: String, $action: String!) {
@@ -861,7 +862,7 @@ Vercel Private Blob 是类似 S3 的对象存储，不是关系型数据库，�
 
 ### 18.2 架构与迁移
 
-- [x] 创建 Preview 前调用 Phoenix `checkPassport(community, "doc.import")`；正式 Job create/start mutation 使用同一 action 的 Passport middleware 再次强制校验，后续 stage/apply 仅接受 server-trusted continuation。
+- [x] 创建 Preview 前调用 Phoenix `checkPassport(community, "doc.import")`；正式 Job create/start mutation 使用同一 action 的 Passport middleware 再次强制校验，后续 stage/apply 仅接受 `service:content-import` 的 operation-scoped continuation。
 - [x] Dashboard Node 流式下载固定 commit 的 archive，不把完整压缩包或解压结果放入进程内存。
 - [x] 用户确认前，Phoenix 不创建正式 ContentImport Job，不接收 archive、解压文件或正文集合。
 - [x] Node 只把 versioned SourceTree/sourceInfo 发送给 Phoenix；Phoenix 只读返回 TargetTree、conflicts 和 targetRevision。
@@ -1168,7 +1169,7 @@ GitHub/codeload rate limit 只是上游失败保护，不是 admission 或成本
 
 ## 21. 联调前提
 
-1. Phoenix 与 Dashboard 使用相同的 `GROUPHER_SERVER_TRUST_SECRET`。
+1. Auth 为 Dashboard、Content Import、Phoenix 和 Scheduler 分别配置独立 client；各调用方配置 `SERVICE_AUTH_TOKEN_ENDPOINT`、自己的 client id/secret，接收方配置 issuer/JWKS。
 2. 正式 ContentImport Job 使用 PostgreSQL JobItem/BodyBag staging；确认前 DocsDataset 使用 Files SDK 后的 Vercel Private Blob。Phoenix 不再配置 PayloadStore。
 3. 在 Vercel Team/Project 下创建一个 private Blob store 并连接 Dashboard 项目；它是对象存储，不是数据库，也不按社区分别创建。
 4. Workflow SDK 随 Dashboard 部署；本地使用 Local World，Preview/Production 自动使用 Vercel Workflow，不需要单独部署队列或 Worker。

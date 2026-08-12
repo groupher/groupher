@@ -1,5 +1,11 @@
 import { createHash } from 'node:crypto'
 
+import {
+  bearerToken,
+  createServiceTokenVerifier,
+  serviceTokenErrorStatus,
+  type TServiceTokenVerifier,
+} from '@groupher/service/auth'
 import { createHealthResponse } from '@groupher/service/health'
 import { Hono } from 'hono'
 
@@ -30,6 +36,7 @@ type Dependencies = {
   origin?: Origin
   cache?: OutputCache
   recorder?: ReturnType<typeof createMetricRecorder>
+  serviceTokenVerifier?: TServiceTokenVerifier
 }
 
 type Rendered = {
@@ -68,6 +75,14 @@ export const createApp = (dependencies: Dependencies = {}) => {
   const origin = dependencies.origin || createPhoenixOrigin()
   const cache = dependencies.cache || createOutputCache(database)
   const recorder = dependencies.recorder || createMetricRecorder(database)
+  const serviceTokenVerifier =
+    dependencies.serviceTokenVerifier ||
+    createServiceTokenVerifier({
+      audience: 'press:internal-api',
+      issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
+      jwksUrl:
+        process.env.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
+    })
   const app = new Hono()
 
   app.get('/health', (context) => context.json(createHealthResponse({ service: 'press' })))
@@ -300,10 +315,16 @@ export const createApp = (dependencies: Dependencies = {}) => {
   app.get('/:community/sitemap.xml', (c) => site(c.req.raw, c.req.param('community'), 'sitemap'))
 
   app.post('/internal/invalidate', async (context) => {
-    const expectedToken = process.env.PRESS_INTERNAL_TOKEN?.trim()
-    const providedToken = context.req.header('x-press-internal-token')
-    if (!expectedToken || providedToken !== expectedToken)
-      return context.json({ error: 'unauthorized' }, 401)
+    const token = bearerToken(context.req.header('authorization'))
+    if (!token) return context.json({ error: 'unauthorized' }, 401)
+
+    try {
+      const actor = await serviceTokenVerifier.verify(token, 'press:cache:invalidate')
+      if (actor.subject !== 'service:phoenix') return context.json({ error: 'forbidden' }, 403)
+    } catch (error) {
+      const status = serviceTokenErrorStatus(error)
+      return context.json({ error: status === 403 ? 'forbidden' : 'unauthorized' }, status)
+    }
 
     const body = await context.req
       .json<{ community?: string }>()

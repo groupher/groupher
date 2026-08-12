@@ -1,3 +1,8 @@
+import {
+  createServiceTokenProviderFromEnv,
+  type TServiceTokenProvider,
+} from '@groupher/service/auth'
+
 import type { PressArticle, PressConfig, RSSFeed, SiteManifest, Thread } from './types'
 
 type GraphQLError = { message: string; code?: number | string }
@@ -84,13 +89,28 @@ const SITE_QUERY = `query PressSite($community: String!) {
 export const createPhoenixOrigin = (
   endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql',
   fetcher: typeof fetch = fetch,
+  tokenProvider?: TServiceTokenProvider,
 ): Origin => {
-  const query = async <T>(document: string, variables: Record<string, unknown>): Promise<T> => {
+  let activeTokenProvider = tokenProvider
+  const query = async <T>(
+    document: string,
+    variables: Record<string, unknown>,
+    scope: string,
+  ): Promise<T> => {
     let response: Response
     try {
+      activeTokenProvider ??= createServiceTokenProviderFromEnv(process.env, fetcher)
+      const token = await activeTokenProvider.getToken({
+        resource: process.env.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
+        scopes: [scope],
+      })
       response = await fetcher(endpoint, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-groupher-client': 'press-v1' },
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'application/json',
+          'x-groupher-client': 'press-v2',
+        },
         body: JSON.stringify({ query: document, variables }),
         signal: AbortSignal.timeout(5_000),
       })
@@ -114,37 +134,44 @@ export const createPhoenixOrigin = (
 
   return {
     async article(input) {
-      const data = await query<{ pressArticle: PressArticle | null }>(ARTICLE_QUERY, {
-        article: {
-          community: input.community,
-          thread: input.thread.toUpperCase(),
-          innerId: input.innerId,
+      const data = await query<{ pressArticle: PressArticle | null }>(
+        ARTICLE_QUERY,
+        {
+          article: {
+            community: input.community,
+            thread: input.thread.toUpperCase(),
+            innerId: input.innerId,
+          },
         },
-      })
+        'press:article:read',
+      )
       if (!data.pressArticle) throw new OriginError('Press Article not found', 404)
       return normalizeArticle(data.pressArticle)
     },
     async communityFeed(community) {
-      const data = await query<{ pressCommunityRSSFeed: RSSFeed | null }>(COMMUNITY_FEED_QUERY, {
-        community,
-        input: {},
-      })
+      const data = await query<{ pressCommunityRSSFeed: RSSFeed | null }>(
+        COMMUNITY_FEED_QUERY,
+        { community, input: {} },
+        'press:rss-feed:read',
+      )
       if (!data.pressCommunityRSSFeed) throw new OriginError('Press Feed not found', 404)
       return normalizeFeed(data.pressCommunityRSSFeed)
     },
     async threadFeed(community, thread) {
-      const data = await query<{ pressThreadRSSFeed: RSSFeed | null }>(THREAD_FEED_QUERY, {
-        community,
-        thread: thread.toUpperCase(),
-        input: {},
-      })
+      const data = await query<{ pressThreadRSSFeed: RSSFeed | null }>(
+        THREAD_FEED_QUERY,
+        { community, input: {}, thread: thread.toUpperCase() },
+        'press:rss-feed:read',
+      )
       if (!data.pressThreadRSSFeed) throw new OriginError('Press Feed not found', 404)
       return normalizeFeed(data.pressThreadRSSFeed)
     },
     async siteManifest(community) {
-      const data = await query<{ pressSiteManifest: SiteManifest | null }>(SITE_QUERY, {
-        community,
-      })
+      const data = await query<{ pressSiteManifest: SiteManifest | null }>(
+        SITE_QUERY,
+        { community },
+        'press:site:read',
+      )
       if (!data.pressSiteManifest) throw new OriginError('Press Site not found', 404)
       return normalizeSiteManifest(data.pressSiteManifest)
     },

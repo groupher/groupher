@@ -19,28 +19,13 @@ const unauthorizedResponse = (): Response =>
     },
   )
 
-/** Supplies user authorization and server trust to the allowlisted publish handler. */
+/** Supplies user authorization and Dashboard service identity to the allowlisted handler. */
 export const POST = async (request: Request): Promise<Response> => {
   const phoenixToken = getPhoenixToken(request)
 
   if (!phoenixToken) return unauthorizedResponse()
 
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (!serverTrustSecret) {
-    return Response.json(
-      {
-        error: {
-          code: 'server_trust_not_configured',
-          message: 'Groupher server trust is not configured.',
-        },
-        ok: false,
-      },
-      { status: 500 },
-    )
-  }
-
   return handleArtimentPublishRequest(request, {
     backendToken: phoenixToken,
-    serverTrustSecret,
   })
 }

@@ -1,7 +1,15 @@
+import {
+  bearerToken,
+  createServiceTokenVerifier,
+  serviceTokenErrorStatus,
+} from '@groupher/service/auth'
+
+import { dashboardToContentImportHeaders } from '../../../../../lib/serviceIdentity'
+
 /**
  * Cron-only cleanup boundary for expired PreviewStore prefixes.
  *
- * Cron secret -> content-import service -> expired prefix deletion
+ * Scheduler service JWT -> Dashboard service JWT -> expired prefix deletion
  *
  * @see docs/bulk-import/content-import-architecture.md
  */
@@ -22,19 +30,32 @@ const contentImportUrl = (): URL | Response => {
   }
 }
 
-/** Proxies expired Preview cleanup to content-import after validating the cron secret. */
+/** Proxies cleanup only for the scoped scheduler service identity. */
 export const POST = async (request: Request): Promise<Response> => {
-  const secret = process.env.CRON_SECRET?.trim()
-  if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`) {
-    return Response.json({ ok: false }, { status: 401 })
+  const token = bearerToken(request.headers.get('authorization') || undefined)
+  if (!token) return Response.json({ ok: false }, { status: 401 })
+  try {
+    const verifier = createServiceTokenVerifier({
+      audience: 'dashboard:scheduler-api',
+      issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
+      jwksUrl:
+        process.env.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
+    })
+    const actor = await verifier.verify(token, 'scheduler:docs-import:sweep')
+    if (actor.subject !== 'service:scheduler') {
+      return Response.json({ ok: false }, { status: 403 })
+    }
+  } catch (error) {
+    return Response.json({ ok: false }, { status: serviceTokenErrorStatus(error) })
   }
 
   const baseUrl = contentImportUrl()
   if (baseUrl instanceof Response) return baseUrl
 
+  const headers = await dashboardToContentImportHeaders(null, 'docs:import:sweep')
   return fetch(new URL('/api/internal/docs-import/sweep', baseUrl), {
     cache: 'no-store',
-    headers: { Authorization: `Bearer ${secret}` },
+    headers,
     method: 'POST',
   })
 }

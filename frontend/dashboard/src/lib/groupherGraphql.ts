@@ -1,6 +1,6 @@
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
-
 import { GRAPHQL_ENDPOINT } from '~/config'
+
+import { dashboardToPhoenixHeaders } from './serviceIdentity'
 
 type TGraphQLError = { code?: unknown; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
@@ -19,7 +19,7 @@ export type TGroupherGraphQLOptions = {
   backendToken?: string
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
-  serverTrustSecret?: string
+  serviceScope?: string
 }
 
 const formatGraphQLErrorMessage = (value: unknown): string | null => {
@@ -52,9 +52,11 @@ export const requestGroupherGraphQL = async <T>(
   options: TGroupherGraphQLOptions,
 ): Promise<T> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (options.backendToken) headers.Authorization = `Bearer ${options.backendToken}`
-  if (options.serverTrustSecret) {
-    headers[GROUPHER_SERVER_TRUST_HEADER] = options.serverTrustSecret
+  if (options.backendToken && options.serviceScope) {
+    Object.assign(
+      headers,
+      await dashboardToPhoenixHeaders(options.backendToken, options.serviceScope),
+    )
   }
   const response = await (options.fetchImpl ?? fetch)(options.graphqlEndpoint ?? GRAPHQL_ENDPOINT, {
     body: JSON.stringify({ query, variables }),

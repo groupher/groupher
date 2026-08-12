@@ -1,3 +1,4 @@
+import { ServiceTokenAuthorizationError } from '@groupher/service/auth'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from './app'
@@ -63,6 +64,15 @@ const feed = {
 }
 
 describe('Press HTTP app', () => {
+  const serviceTokenVerifier = {
+    verify: vi.fn().mockResolvedValue({
+      audience: 'press:internal-api',
+      scopes: new Set(['press:cache:invalidate']),
+      subject: 'service:phoenix',
+      tokenId: 'test-token-id',
+    }),
+  }
+
   it('exposes the shared backend health contract', async () => {
     const app = createApp({ origin, cache: createOutputCache(null), recorder: { record: vi.fn() } })
     const response = await app.request('https://press.test/health')
@@ -169,10 +179,9 @@ describe('Press HTTP app', () => {
   })
 
   it('validates community-scoped internal invalidation requests', async () => {
-    vi.stubEnv('PRESS_INTERNAL_TOKEN', 'test-token')
     const cache = createOutputCache(null)
     const invalidate = vi.spyOn(cache, 'invalidate')
-    const app = createApp({ origin, cache, recorder: { record: vi.fn() } })
+    const app = createApp({ origin, cache, recorder: { record: vi.fn() }, serviceTokenVerifier })
 
     expect(
       (
@@ -181,7 +190,7 @@ describe('Press HTTP app', () => {
           body: JSON.stringify({ community: '../cms' }),
           headers: {
             'content-type': 'application/json',
-            'x-press-internal-token': 'test-token',
+            authorization: 'Bearer test-token',
           },
         })
       ).status,
@@ -194,7 +203,7 @@ describe('Press HTTP app', () => {
           body: JSON.stringify({ community: 'home' }),
           headers: {
             'content-type': 'application/json',
-            'x-press-internal-token': 'test-token',
+            authorization: 'Bearer test-token',
           },
         })
       ).status,
@@ -211,6 +220,26 @@ describe('Press HTTP app', () => {
       ).status,
     ).toBe(401)
     vi.unstubAllEnvs()
+  })
+
+  it('returns 403 when a valid service token lacks the invalidation scope', async () => {
+    const app = createApp({
+      origin,
+      cache: createOutputCache(null),
+      recorder: { record: vi.fn() },
+      serviceTokenVerifier: {
+        verify: vi.fn().mockRejectedValue(new ServiceTokenAuthorizationError('scope', 403)),
+      },
+    })
+
+    const response = await app.request('https://press.test/internal/invalidate', {
+      body: JSON.stringify({ community: 'home' }),
+      headers: { authorization: 'Bearer valid-token-without-scope' },
+      method: 'POST',
+    })
+
+    expect(response.status).toBe(403)
+    await expect(response.json()).resolves.toEqual({ error: 'forbidden' })
   })
 
   it('uses the same handler for Docs Markdown routes', async () => {

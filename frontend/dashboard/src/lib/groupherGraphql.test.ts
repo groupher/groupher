@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('~/config', () => ({ GRAPHQL_ENDPOINT: 'https://example.test/graphql' }))
-vi.mock('@groupher/contracts/headers', () => ({ GROUPHER_SERVER_TRUST_HEADER: 'x-server-trust' }))
-
 import { requestGroupherGraphQL } from './groupherGraphql'
 
 describe('requestGroupherGraphQL', () => {

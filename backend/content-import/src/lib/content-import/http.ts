@@ -47,7 +47,7 @@ import {
 type TAuthenticatedOptions = {
   backendToken: string
   previewSecret: string
-  serverTrustSecret: string
+  serviceIdentity: string
   userRef: string
 }
 
@@ -101,7 +101,7 @@ const requiredStringArray = (value: unknown, name: string, maxItems: number): st
 const discardPreview = async (
   store: PreviewStore,
   record: TPreviewRecord,
-  options: Pick<TAuthenticatedOptions, 'serverTrustSecret'>,
+  options: Pick<TAuthenticatedOptions, 'serviceIdentity'>,
 ): Promise<void> => {
   const [analysisRun, applyRun] = await Promise.all([
     store.getAnalysisRun(record.previewRef),
@@ -126,7 +126,7 @@ const assertActivePreview = async (
   store: PreviewStore,
   record: TPreviewRecord,
   owner: Pick<TPreviewRecord, 'community' | 'userRef'> &
-    Pick<TAuthenticatedOptions, 'serverTrustSecret'>,
+    Pick<TAuthenticatedOptions, 'serviceIdentity'>,
 ): Promise<void> => {
   assertPreviewOwner(record, owner)
   try {
@@ -229,7 +229,7 @@ export const handleCreateDocImportPreview = async (
 export const handleGetDocImportPreview = async (
   previewRef: string,
   community: string,
-  owner: Pick<TAuthenticatedOptions, 'serverTrustSecret' | 'userRef'>,
+  owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
 ): Promise<Response> => {
   try {
     const store = getPreviewStore()
@@ -239,7 +239,7 @@ export const handleGetDocImportPreview = async (
     }
     await assertActivePreview(store, record, {
       community,
-      serverTrustSecret: owner.serverTrustSecret,
+      serviceIdentity: owner.serviceIdentity,
       userRef: owner.userRef,
     })
     const { error, process, status } = await projectPreviewProcess(store, record)
@@ -264,7 +264,7 @@ export const handleGetDocImportPreview = async (
 export const handleCancelDocImportPreview = async (
   previewRef: string,
   community: string,
-  owner: Pick<TAuthenticatedOptions, 'serverTrustSecret' | 'userRef'>,
+  owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
 ): Promise<Response> => {
   try {
     const store = getPreviewStore()
@@ -299,7 +299,7 @@ export const handleApplyDocImportPreview = async (
     }
     await assertActivePreview(store, record, {
       community,
-      serverTrustSecret: options.serverTrustSecret,
+      serviceIdentity: options.serviceIdentity,
       userRef: options.userRef,
     })
     const [ready, preview, analysis] = await Promise.all([

@@ -1,6 +1,6 @@
 import { ARTIMENT_MAX_INPUT_BYTES } from '@groupher/artiment-publisher'
 import { RICH_EDITOR_SCHEMA_VERSION } from '@groupher/rich-editor/node'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { handleArtimentPublishRequest } from './http'
 
@@ -29,10 +29,30 @@ const options = () => ({
     Response.json({ data: { updateDocDraft: { docId: 'doc-id', title: 'Introduction' } } }),
   ),
   graphqlEndpoint: 'http://backend.test/graphql',
-  serverTrustSecret: 'server-trust-secret',
 })
 
 describe('handleArtimentPublishRequest', () => {
+  beforeEach(() => {
+    vi.stubEnv('SERVICE_AUTH_CLIENT_ID', 'dashboard-test')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', 'dashboard-secret')
+    vi.stubEnv('SERVICE_AUTH_TOKEN_ENDPOINT', 'https://auth.test/oauth2/token')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          access_token: 'dashboard-service-token',
+          expires_in: 600,
+          token_type: 'Bearer',
+        }),
+      ),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
+  })
+
   it('returns a BodyBag for a valid request', async () => {
     const requestOptions = options()
     const response = await handleArtimentPublishRequest(
@@ -56,8 +76,8 @@ describe('handleArtimentPublishRequest', () => {
       'http://backend.test/graphql',
       expect.objectContaining({
         headers: expect.objectContaining({
-          Authorization: 'Bearer backend-token',
-          'X-Groupher-Server-Trust': 'server-trust-secret',
+          Authorization: 'Bearer dashboard-service-token',
+          'X-Groupher-User-Authorization': 'Bearer backend-token',
         }),
       }),
     )

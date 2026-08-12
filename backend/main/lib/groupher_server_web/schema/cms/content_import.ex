@@ -9,7 +9,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
            |
            +-- user request ----> Authorize + Passport
            |
-           +-- internal request -> ServerTrust
+           +-- internal request -> scoped Service Identity
            |
            v
       ContentImport resolver
@@ -35,7 +35,11 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:source_info, non_null(:content_import_source_preview_input))
       arg(:tree, non_null(:json))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.preview_target/3)
     end
@@ -66,7 +70,12 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "doc.import")
-      middleware(M.ServerTrust)
+
+      middleware(M.DelegatedScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
       resolve(&R.ContentImport.start/3)
@@ -78,7 +87,11 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:job_ref, non_null(:id))
       arg(:items, non_null(list_of(non_null(:content_import_body_input))))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.stage/3)
     end
@@ -88,7 +101,11 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:community, non_null(:string))
       arg(:job_ref, non_null(:id))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.apply/3)
     end
@@ -100,7 +117,11 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:code, non_null(:string))
       arg(:message, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.fail/3)
     end
@@ -110,7 +131,11 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport do
       arg(:community, non_null(:string))
       arg(:job_ref, non_null(:id))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:content-import-api",
+        scope: "content-import:write"
+      )
+
       middleware(M.FrontDesk, :community)
       resolve(&R.ContentImport.cancel/3)
     end

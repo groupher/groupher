@@ -2,12 +2,31 @@ import assert from 'node:assert/strict'
 
 import { test } from 'vitest'
 
-import { createApp } from './app'
+import { createApp as createContentImportApp } from './app'
 
 const environment = {
   CONTENT_IMPORT_PREVIEW_SECRET: 'preview-secret',
-  GROUPHER_SERVER_TRUST_SECRET: 'server-trust',
 }
+
+const userToken = `header.${Buffer.from(JSON.stringify({ sub: '42' })).toString('base64url')}.signature`
+const userRef = 'user:test-subject'
+
+const serviceTokenVerifier = {
+  verify: async (_token: string, scope: string) => ({
+    audience: 'content-import:internal-api',
+    scopes: new Set([scope]),
+    subject: 'service:dashboard',
+    tokenId: 'test-token',
+  }),
+}
+
+const createApp = (options: Parameters<typeof createContentImportApp>[0] = {}) =>
+  createContentImportApp({
+    environment,
+    resolveDelegationSubject: async () => 'user:test-subject',
+    serviceTokenVerifier,
+    ...options,
+  })
 
 test('health response identifies the content-import service', async () => {
   const app = createApp({ environment })
@@ -28,10 +47,26 @@ test('preview routes require an authenticated backend token', async () => {
   })
 })
 
+test('preview routes reject a delegated credential without a stable user subject', async () => {
+  const appWithoutSubject = createApp({ resolveDelegationSubject: async () => null })
+  const subjectResponse = await appWithoutSubject.request('/api/docs/import/previews', {
+    headers: {
+      Authorization: 'Bearer dashboard-service-token',
+      'X-Groupher-User-Authorization': 'Bearer any-token',
+    },
+    method: 'POST',
+  })
+
+  assert.equal(subjectResponse.status, 401)
+  assert.deepEqual(await subjectResponse.json(), {
+    error: { code: 'unauthorized', message: 'The delegated user credential is invalid.' },
+    ok: false,
+  })
+})
+
 test('preview creation passes stable auth options to the migrated handler', async () => {
   const calls: unknown[] = []
   const app = createApp({
-    environment,
     handlers: {
       createPreview: async (_request, options) => {
         calls.push(options)
@@ -43,9 +78,9 @@ test('preview creation passes stable auth options to the migrated handler', asyn
   const response = await app.request('/api/docs/import/previews', {
     body: JSON.stringify({ community: 'home', repoUrl: 'https://github.com/acme/docs' }),
     headers: {
-      Authorization: 'Bearer backend-token',
+      Authorization: 'Bearer dashboard-service-token',
       'Content-Type': 'application/json',
-      'X-Groupher-Server-Trust': 'server-trust',
+      'X-Groupher-User-Authorization': `Bearer ${userToken}`,
       'x-groupher-user-ref': 'user-1',
     },
     method: 'POST',
@@ -54,10 +89,10 @@ test('preview creation passes stable auth options to the migrated handler', asyn
   assert.equal(response.status, 202)
   assert.deepEqual(calls, [
     {
-      backendToken: 'backend-token',
+      backendToken: userToken,
       previewSecret: 'preview-secret',
-      serverTrustSecret: 'server-trust',
-      userRef: 'user-1',
+      serviceIdentity: 'service:dashboard',
+      userRef,
     },
   ])
 })
@@ -65,7 +100,6 @@ test('preview creation passes stable auth options to the migrated handler', asyn
 test('direct preview requests cannot spoof owner with the user-ref header', async () => {
   const calls: unknown[] = []
   const app = createApp({
-    environment,
     handlers: {
       createPreview: async (_request, options) => {
         calls.push(options)
@@ -77,21 +111,21 @@ test('direct preview requests cannot spoof owner with the user-ref header', asyn
   const response = await app.request('/api/docs/import/previews', {
     body: JSON.stringify({ community: 'home', repoUrl: 'https://github.com/acme/docs' }),
     headers: {
-      Authorization: 'Bearer backend-token',
+      Authorization: 'Bearer dashboard-service-token',
       'Content-Type': 'application/json',
+      'X-Groupher-User-Authorization': `Bearer ${userToken}`,
       'x-groupher-user-ref': 'spoofed-user',
     },
     method: 'POST',
   })
 
   assert.equal(response.status, 202)
-  assert.notEqual((calls[0] as { userRef: string }).userRef, 'spoofed-user')
+  assert.equal((calls[0] as { userRef: string }).userRef, userRef)
 })
 
 test('preview read and delete pass path params and owner scope', async () => {
   const calls: unknown[] = []
   const app = createApp({
-    environment,
     handlers: {
       cancelPreview: async (previewRef, community, owner) => {
         calls.push(['cancel', previewRef, community, owner])
@@ -104,8 +138,8 @@ test('preview read and delete pass path params and owner scope', async () => {
     },
   })
   const headers = {
-    Authorization: 'Bearer backend-token',
-    'X-Groupher-Server-Trust': 'server-trust',
+    Authorization: 'Bearer dashboard-service-token',
+    'X-Groupher-User-Authorization': `Bearer ${userToken}`,
     'x-groupher-user-ref': 'user-1',
   }
 
@@ -129,15 +163,14 @@ test('preview read and delete pass path params and owner scope', async () => {
   )
 
   assert.deepEqual(calls, [
-    ['get', 'prv_123', 'home', { serverTrustSecret: 'server-trust', userRef: 'user-1' }],
-    ['cancel', 'prv_123', 'home', { serverTrustSecret: 'server-trust', userRef: 'user-1' }],
+    ['get', 'prv_123', 'home', { serviceIdentity: 'service:dashboard', userRef }],
+    ['cancel', 'prv_123', 'home', { serviceIdentity: 'service:dashboard', userRef }],
   ])
 })
 
 test('apply route passes the preview ref and full auth options', async () => {
   const calls: unknown[] = []
   const app = createApp({
-    environment,
     handlers: {
       applyPreview: async (_request, previewRef, options) => {
         calls.push([previewRef, options])
@@ -149,9 +182,9 @@ test('apply route passes the preview ref and full auth options', async () => {
   const response = await app.request('/api/docs/import/previews/prv_123/apply', {
     body: JSON.stringify({ community: 'home', selectedSourceIds: ['source-1'] }),
     headers: {
-      Authorization: 'Bearer backend-token',
+      Authorization: 'Bearer dashboard-service-token',
       'Content-Type': 'application/json',
-      'X-Groupher-Server-Trust': 'server-trust',
+      'X-Groupher-User-Authorization': `Bearer ${userToken}`,
       'x-groupher-user-ref': 'user-1',
     },
     method: 'POST',
@@ -162,19 +195,18 @@ test('apply route passes the preview ref and full auth options', async () => {
     [
       'prv_123',
       {
-        backendToken: 'backend-token',
+        backendToken: userToken,
         previewSecret: 'preview-secret',
-        serverTrustSecret: 'server-trust',
-        userRef: 'user-1',
+        serviceIdentity: 'service:dashboard',
+        userRef,
       },
     ],
   ])
 })
 
-test('internal sweep route requires the cron secret and deletes expired previews', async () => {
+test('internal sweep route requires Dashboard service identity and deletes expired previews', async () => {
   const calls: string[] = []
   const app = createApp({
-    environment: { ...environment, CRON_SECRET: 'cron-secret' },
     handlers: {
       sweepExpiredPreviews: async () => {
         calls.push('sweep')
@@ -189,7 +221,7 @@ test('internal sweep route requires the cron secret and deletes expired previews
   )
 
   const response = await app.request('/api/internal/docs-import/sweep', {
-    headers: { Authorization: 'Bearer cron-secret' },
+    headers: { Authorization: 'Bearer dashboard-service-token' },
     method: 'POST',
   })
 
