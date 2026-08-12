@@ -38,6 +38,7 @@ type TProps = {
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
   onOpenDependencies: (id: string) => void
+  onOpenExternal: (id: string) => void
 }
 
 const STATUS_LABEL: Record<TPublicService['status'], string> = {
@@ -72,6 +73,7 @@ export function ServiceCard({
   onOpenMetrics,
   onOpenConfig,
   onOpenDependencies,
+  onOpenExternal,
 }: TProps) {
   const displayStatus =
     pending && (service.status === 'stopped' || service.status === 'unavailable')
@@ -106,6 +108,7 @@ export function ServiceCard({
   const openUrl = getServiceOpenUrl(service, metrics)
   const showAddress = service.status === 'running' || Boolean(browserUrl)
   const deploymentTarget = SERVICE_DEPLOYMENT_TARGETS[service.id]
+  const externalDetailsAvailable = service.status === 'external' && Boolean(service.externalProcess)
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -151,20 +154,36 @@ export function ServiceCard({
               }`}
             >
               {!compact || !service.canStart ? (
-                <span
-                  className={`service-status-label service-status-label--${displayStatus}`}
-                  aria-label={`${service.name} is ${STATUS_LABEL[displayStatus]}`}
-                >
-                  <span className={`status-dot status-dot--${displayStatus}`} aria-hidden='true'>
-                    {displayStatus === 'running' ? (
-                      <>
-                        <span className='status-dot-ping' />
-                        <span className='status-dot-core' />
-                      </>
-                    ) : null}
+                externalDetailsAvailable ? (
+                  <button
+                    type='button'
+                    className={`service-status-label service-status-label--${displayStatus}`}
+                    aria-label={`Inspect the external process for ${service.name}`}
+                    aria-haspopup='dialog'
+                    onClick={() => onOpenExternal(service.id)}
+                  >
+                    <span
+                      className={`status-dot status-dot--${displayStatus}`}
+                      aria-hidden='true'
+                    />
+                    {STATUS_LABEL[displayStatus]}
+                  </button>
+                ) : (
+                  <span
+                    className={`service-status-label service-status-label--${displayStatus}`}
+                    aria-label={`${service.name} is ${STATUS_LABEL[displayStatus]}`}
+                  >
+                    <span className={`status-dot status-dot--${displayStatus}`} aria-hidden='true'>
+                      {displayStatus === 'running' ? (
+                        <>
+                          <span className='status-dot-ping' />
+                          <span className='status-dot-core' />
+                        </>
+                      ) : null}
+                    </span>
+                    {STATUS_LABEL[displayStatus]}
                   </span>
-                  {STATUS_LABEL[displayStatus]}
-                </span>
+                )
               ) : null}
               {compact && service.canStart ? (
                 <span className='service-inline-start-wrap'>

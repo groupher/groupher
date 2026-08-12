@@ -1,9 +1,11 @@
-import { spawn, type ChildProcess } from 'node:child_process'
+import { execFile, spawn, type ChildProcess } from 'node:child_process'
 import net from 'node:net'
+import { promisify } from 'node:util'
 
 import type {
   THubEvent,
   TLogStream,
+  TExternalProcessInfo,
   TPublicService,
   TServiceLog,
   TServiceStartMode,
@@ -20,6 +22,7 @@ const RESTART_PORT_RELEASE_TIMEOUT_MS = 5_000
 const START_DEPENDENCY_READY_POLL_MS = 500
 const START_DEPENDENCY_READY_TIMEOUT_MS = 45_000
 const STOP_GRACE_MS = 750
+const execFileAsync = promisify(execFile)
 const SELF_START_POLICY: TServiceStartPolicy = {
   defaultMode: 'self',
   requiredDependencies: [],
@@ -35,6 +38,8 @@ type TRuntimeService = {
   endedAt: number | null
   exitCode: number | null
   runId: string | null
+  externalProcessGroups: number[]
+  externalProcess: TExternalProcessInfo | null
   stopRequested: boolean
   logs: TServiceLog[]
   logChars: number
@@ -43,6 +48,11 @@ type TRuntimeService = {
 }
 
 type THubSubscriber = (event: THubEvent) => void
+
+type TExternalProcessControls = {
+  findProcessGroups: (definition: TServiceDefinition) => Promise<readonly number[]>
+  terminateProcessGroup: (pgid: number) => Promise<void>
+}
 
 export type TManagedProcessTarget = {
   serviceId: string
@@ -69,6 +79,10 @@ export class ServiceManager {
     definitions: TServiceDefinition[],
     devHubOrigin: string | null = null,
     private readonly portProbe: (port: number) => Promise<boolean> = isPortListening,
+    private readonly externalProcessControls: TExternalProcessControls = {
+      findProcessGroups: findExternalProcessGroups,
+      terminateProcessGroup: terminateExternalProcessGroup,
+    },
   ) {
     this.devHubOrigin = devHubOrigin
     for (const definition of definitions) {
@@ -81,6 +95,8 @@ export class ServiceManager {
         endedAt: null,
         exitCode: null,
         runId: null,
+        externalProcessGroups: [],
+        externalProcess: null,
         stopRequested: false,
         logs: [],
         logChars: 0,
@@ -97,6 +113,25 @@ export class ServiceManager {
 
   async initialize(): Promise<void> {
     await this.refreshExternalStates()
+
+    const externalServiceIds = Array.from(this.runtimes.values())
+      .filter(
+        (runtime) => runtime.status === 'external' && runtime.externalProcessGroups.length > 0,
+      )
+      .map((runtime) => runtime.definition.id)
+
+    for (const serviceId of externalServiceIds) {
+      const runtime = this.getRuntime(serviceId)
+      try {
+        await this.startWithMode(serviceId)
+      } catch (error) {
+        this.appendLog(
+          runtime,
+          'system',
+          `\r\n\u001b[31mCould not restart required dependencies: ${error instanceof Error ? error.message : 'Unknown error.'}\u001b[0m\r\n`,
+        )
+      }
+    }
   }
 
   listServices(): TPublicService[] {
@@ -143,12 +178,21 @@ export class ServiceManager {
 
     const occupiedPorts = await getListeningDefinitionPorts(definition, this.portProbe)
     if (occupiedPorts.length > 0) {
-      runtime.status = 'external'
-      this.emitStatus(runtime)
-      throw new ServiceManagerError(
-        `Ports ${occupiedPorts.join(', ')} are already owned by unmanaged processes.`,
-        409,
-      )
+      const processGroups = await this.externalProcessControls.findProcessGroups(definition)
+      if (processGroups.length > 0) {
+        runtime.externalProcessGroups = [...processGroups]
+        runtime.externalProcess = await inspectExternalProcess(definition, processGroups)
+        await this.stopExternalProcesses(runtime)
+        await this.waitForPortRelease(runtime)
+      } else {
+        runtime.status = 'external'
+        runtime.externalProcess = await inspectExternalProcess(definition, processGroups)
+        this.emitStatus(runtime)
+        throw new ServiceManagerError(
+          `Ports ${occupiedPorts.join(', ')} are already owned by unmanaged processes.`,
+          409,
+        )
+      }
     }
 
     this.resetRun(runtime)
@@ -247,6 +291,12 @@ export class ServiceManager {
   async stop(id: string): Promise<TPublicService> {
     const runtime = this.getRuntime(id)
 
+    if (runtime.externalProcessGroups.length > 0 && !runtime.child) {
+      await this.stopExternalProcesses(runtime)
+      await this.waitForPortRelease(runtime)
+      return this.toPublicService(runtime)
+    }
+
     if (runtime.status === 'external') {
       throw new ServiceManagerError(
         'Unmanaged processes must be stopped from their own terminal.',
@@ -273,7 +323,9 @@ export class ServiceManager {
       throw new ServiceManagerError(`${runtime.definition.name} is already stopping.`, 409)
     }
 
-    await this.stop(id)
+    const hasManagedProcess = Boolean(runtime.child && runtime.pid)
+    if (hasManagedProcess) await this.stop(id)
+    else await this.stopExternalProcesses(runtime)
     await this.waitForPortRelease(runtime)
     return this.start(id, 'restart')
   }
@@ -454,6 +506,8 @@ export class ServiceManager {
     runtime.logChars = 0
     runtime.logSeq = 0
     runtime.runId = `${runtime.definition.id}-${Date.now().toString(36)}`
+    runtime.externalProcessGroups = []
+    runtime.externalProcess = null
     runtime.endedAt = null
     runtime.exitCode = null
   }
@@ -559,6 +613,44 @@ export class ServiceManager {
     }
   }
 
+  private async stopExternalProcesses(runtime: TRuntimeService): Promise<void> {
+    const ports = getDefinitionPorts(runtime.definition)
+    if (ports.length === 0 || !(await anyPortListening(ports, this.portProbe))) {
+      runtime.externalProcessGroups = []
+      runtime.externalProcess = null
+      return
+    }
+
+    const processGroups = await this.externalProcessControls.findProcessGroups(runtime.definition)
+    if (processGroups.length === 0) {
+      throw new ServiceManagerError(
+        `${runtime.definition.name} has an unmanaged process on port ${ports.join(', ')} that Dev Hub could not safely identify. Stop it from its own terminal before restarting.`,
+        409,
+      )
+    }
+
+    runtime.stopRequested = true
+    runtime.status = 'stopping'
+    this.emitStatus(runtime)
+    this.appendLog(
+      runtime,
+      'system',
+      '\r\n\u001b[38;5;214mStopping the matching external process…\u001b[0m\r\n',
+    )
+
+    await Promise.all(
+      processGroups.map((pgid) => this.externalProcessControls.terminateProcessGroup(pgid)),
+    )
+
+    runtime.pid = null
+    runtime.externalProcessGroups = []
+    runtime.externalProcess = null
+    runtime.endedAt = Date.now()
+    runtime.status = 'stopped'
+    runtime.stopRequested = false
+    this.emitStatus(runtime)
+  }
+
   private async waitForRuntimeReady(runtime: TRuntimeService): Promise<void> {
     const deadline = Date.now() + START_DEPENDENCY_READY_TIMEOUT_MS
 
@@ -576,6 +668,7 @@ export class ServiceManager {
 
   private async isRuntimeReady(runtime: TRuntimeService): Promise<boolean> {
     if (!['running', 'external'].includes(runtime.status)) return false
+    if (runtime.externalProcessGroups.length > 0) return false
 
     return isDefinitionReady(runtime.definition, this.portProbe)
   }
@@ -587,19 +680,28 @@ export class ServiceManager {
           runtime.child ||
           !runtime.definition.command ||
           !runtime.definition.port ||
-          !['stopped', 'external'].includes(runtime.status)
+          !['stopped', 'external', 'error', 'running'].includes(runtime.status)
         ) {
           return
         }
 
-        const nextStatus: TServiceStatus = (await isDefinitionReady(
-          runtime.definition,
-          this.portProbe,
-        ))
-          ? 'external'
-          : 'stopped'
+        const ready = await isDefinitionReady(runtime.definition, this.portProbe)
+        const processGroups = ready
+          ? await this.externalProcessControls.findProcessGroups(runtime.definition)
+          : []
+        const externalProcess = ready
+          ? await inspectExternalProcess(runtime.definition, processGroups)
+          : null
+        const nextStatus: TServiceStatus = ready ? 'external' : 'stopped'
 
-        if (nextStatus !== runtime.status) {
+        runtime.externalProcessGroups = [...processGroups]
+        const externalProcessChanged = !sameExternalProcess(
+          runtime.externalProcess,
+          externalProcess,
+        )
+        runtime.externalProcess = externalProcess
+
+        if (nextStatus !== runtime.status || externalProcessChanged) {
           runtime.status = nextStatus
           this.emitStatus(runtime)
         }
@@ -649,6 +751,7 @@ export class ServiceManager {
       startedAt: runtime.startedAt,
       endedAt: runtime.endedAt,
       exitCode: runtime.exitCode,
+      externalProcess: runtime.externalProcess,
       canStart: Boolean(definition.command),
       unavailableReason: definition.unavailableReason ?? null,
       metricThresholds: definition.metrics,
@@ -783,6 +886,191 @@ function killProcessGroup(child: ChildProcess, pid: number, signal: NodeJS.Signa
   } catch (error) {
     const code = error instanceof Error && 'code' in error ? error.code : null
     if (code !== 'ESRCH') child.kill(signal)
+  }
+}
+
+async function findExternalProcessGroups(
+  definition: TServiceDefinition,
+): Promise<readonly number[]> {
+  if (process.platform === 'win32') return []
+
+  const listenerPids = new Set<number>()
+  for (const port of getDefinitionPorts(definition)) {
+    for (const pid of await listListeningProcessIds(port)) listenerPids.add(pid)
+  }
+
+  const processGroups = new Set<number>()
+  for (const pid of listenerPids) {
+    const process = await readProcessInfo(pid)
+    if (!process) continue
+
+    const groupCommands = await readProcessGroupCommands(process.pgid)
+    if (!matchesExternalProcess(definition, process, groupCommands)) continue
+    processGroups.add(process.pgid)
+  }
+
+  return [...processGroups]
+}
+
+async function inspectExternalProcess(
+  definition: TServiceDefinition,
+  safeProcessGroups: readonly number[],
+): Promise<TExternalProcessInfo | null> {
+  if (process.platform === 'win32') return null
+
+  const ports = getDefinitionPorts(definition)
+  const processIds = new Set<number>()
+  for (const port of ports) {
+    for (const pid of await listListeningProcessIds(port)) processIds.add(pid)
+  }
+
+  if (processIds.size === 0) return null
+
+  const processInfos = await Promise.all(
+    [...processIds].map(async (pid) => {
+      const info = await readProcessInfo(pid)
+      return info ? { pid, ...info } : null
+    }),
+  )
+  const readableProcesses = processInfos.filter(
+    (info): info is { pid: number; pgid: number; cwd: string; command: string } => info !== null,
+  )
+
+  return {
+    ports,
+    processIds: readableProcesses.map(({ pid }) => pid),
+    processGroups: [...new Set(readableProcesses.map(({ pgid }) => pgid))],
+    commands: [...new Set(readableProcesses.map(({ command }) => command))],
+    workingDirectories: [...new Set(readableProcesses.map(({ cwd }) => cwd))],
+    canStop: safeProcessGroups.length > 0,
+  }
+}
+
+function sameExternalProcess(
+  current: TExternalProcessInfo | null,
+  next: TExternalProcessInfo | null,
+): boolean {
+  return JSON.stringify(current) === JSON.stringify(next)
+}
+
+async function listListeningProcessIds(port: number): Promise<readonly number[]> {
+  try {
+    const { stdout } = await execFileAsync(getLsofCommand(), [
+      '-nP',
+      '-a',
+      '-t',
+      `-iTCP:${port}`,
+      '-sTCP:LISTEN',
+    ])
+    return stdout
+      .split(/\s+/)
+      .map((value) => Number(value))
+      .filter((pid) => Number.isInteger(pid) && pid > 0)
+  } catch {
+    return []
+  }
+}
+
+async function readProcessInfo(
+  pid: number,
+): Promise<{ pgid: number; cwd: string; command: string } | null> {
+  try {
+    const [{ stdout: processOutput }, { stdout: cwdOutput }] = await Promise.all([
+      execFileAsync('ps', ['-o', 'pid=,pgid=,command=', '-p', String(pid)]),
+      execFileAsync(getLsofCommand(), ['-a', '-p', String(pid), '-d', 'cwd', '-Fn']),
+    ])
+    const processMatch = processOutput.trim().match(/^(\d+)\s+(\d+)\s+(.*)$/)
+    const cwd = cwdOutput
+      .split('\n')
+      .find((line) => line.startsWith('n'))
+      ?.slice(1)
+      .trim()
+
+    if (!processMatch) return null
+    return { pgid: Number(processMatch[2]), cwd: cwd || 'Unavailable', command: processMatch[3] }
+  } catch {
+    return null
+  }
+}
+
+async function readProcessGroupCommands(pgid: number): Promise<readonly string[]> {
+  try {
+    const { stdout } = await execFileAsync('ps', ['-axo', 'pid=,pgid=,command='])
+    return stdout
+      .split('\n')
+      .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/))
+      .filter((match): match is RegExpMatchArray => match !== null && Number(match[2]) === pgid)
+      .map((match) => match[3])
+  } catch {
+    return []
+  }
+}
+
+function matchesExternalProcess(
+  definition: TServiceDefinition,
+  process: { cwd: string; command: string },
+  groupCommands: readonly string[],
+): boolean {
+  const hasScopedRuntime = Boolean(
+    definition.config?.root === process.cwd && isRecognizedRuntimeCommand(process.command),
+  )
+  if (hasScopedRuntime) return true
+
+  const launchTokens = [definition.command, ...(definition.args || [])].filter(
+    (token): token is string => Boolean(token && token.length > 1),
+  )
+  if (launchTokens.length === 0) return false
+
+  return groupCommands.some((command) => launchTokens.every((token) => command.includes(token)))
+}
+
+function isRecognizedRuntimeCommand(command: string): boolean {
+  return /\b(node|vite|next|yarn|npm|pnpm|bun|make|mix|elixir|beam|python|uvicorn|cargo|go)\b/i.test(
+    command,
+  )
+}
+
+function getLsofCommand(): string {
+  return process.platform === 'darwin' ? '/usr/sbin/lsof' : 'lsof'
+}
+
+async function terminateExternalProcessGroup(pgid: number): Promise<void> {
+  if (process.platform === 'win32') return
+
+  killProcessGroupById(pgid, 'SIGTERM')
+  const exited = await waitForProcessGroupExit(pgid, STOP_GRACE_MS)
+  if (exited) return
+
+  killProcessGroupById(pgid, 'SIGKILL')
+  await waitForProcessGroupExit(pgid, STOP_GRACE_MS)
+}
+
+function killProcessGroupById(pgid: number, signal: NodeJS.Signals): void {
+  try {
+    process.kill(-pgid, signal)
+  } catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : null
+    if (code !== 'ESRCH') throw error
+  }
+}
+
+async function waitForProcessGroupExit(pgid: number, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (!isProcessGroupAlive(pgid)) return true
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
+  return !isProcessGroupAlive(pgid)
+}
+
+function isProcessGroupAlive(pgid: number): boolean {
+  try {
+    process.kill(-pgid, 0)
+    return true
+  } catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : null
+    if (code === 'EPERM') return true
+    return false
   }
 }
 

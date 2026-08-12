@@ -26,6 +26,7 @@ type TProps = {
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
   onOpenDependencies: (id: string) => void
+  onOpenExternal: (id: string) => void
 }
 
 const WIDE_SERVICES_PER_ROW = 3
@@ -83,6 +84,7 @@ export function ServiceSection({
   onOpenMetrics,
   onOpenConfig,
   onOpenDependencies,
+  onOpenExternal,
 }: TProps) {
   const servicesPerRow = useServicesPerRow()
   const serviceViewModel = useMemo(() => buildServiceViewModel(services), [services])
@@ -150,6 +152,7 @@ export function ServiceSection({
                       onOpenMetrics={onOpenMetrics}
                       onOpenConfig={onOpenConfig}
                       onOpenDependencies={onOpenDependencies}
+                      onOpenExternal={onOpenExternal}
                     />
                   )
                 })(),

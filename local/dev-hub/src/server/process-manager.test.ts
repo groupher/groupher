@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { ServiceManager } from './process-manager.ts'
+import { ServiceManager, ServiceManagerError } from './process-manager.ts'
 import type { TServiceDefinition } from './services.ts'
 
 const FIXTURE_SERVICE: TServiceDefinition = {
@@ -43,6 +43,17 @@ const PORT_FIXTURE_SERVICE: TServiceDefinition = {
   port: 65_534,
 }
 
+const EXTERNAL_FIXTURE_SERVICE: TServiceDefinition = {
+  ...PORT_FIXTURE_SERVICE,
+  id: 'external-restart-fixture',
+  name: 'External Restart Fixture',
+  config: {
+    kind: 'env-files',
+    root: process.cwd(),
+    environment: 'development',
+  },
+}
+
 const CHAIN_DEPENDENCY_SERVICE: TServiceDefinition = {
   ...FIXTURE_SERVICE,
   id: 'chain-dependency',
@@ -66,6 +77,17 @@ const CHAIN_TARGET_SERVICE: TServiceDefinition = {
     defaultMode: 'chain',
     requiredDependencies: [CHAIN_DEPENDENCY_SERVICE.id],
     optionalDependencies: [OPTIONAL_DEPENDENCY_SERVICE.id],
+  },
+}
+
+const ADOPTED_TARGET_SERVICE: TServiceDefinition = {
+  ...EXTERNAL_FIXTURE_SERVICE,
+  id: 'adopted-target',
+  name: 'Adopted Target',
+  startPolicy: {
+    defaultMode: 'chain',
+    requiredDependencies: [CHAIN_DEPENDENCY_SERVICE.id],
+    optionalDependencies: [],
   },
 }
 
@@ -233,6 +255,80 @@ test('restart waits for the managed port to be released before starting a replac
   assert.equal(restarted.status, 'starting')
   assert.notEqual(restarted.pid, started.pid)
   assert.equal(portChecks, 5)
+})
+
+test('restart safely takes over a matching external process group', async (t) => {
+  let listening = true
+  const terminatedGroups: number[] = []
+  const manager = new ServiceManager([EXTERNAL_FIXTURE_SERVICE], null, async () => listening, {
+    findProcessGroups: async () => [65_432],
+    terminateProcessGroup: async (pgid) => {
+      terminatedGroups.push(pgid)
+      listening = false
+    },
+  })
+  t.after(async () => manager.shutdown())
+
+  await manager.initialize()
+  assert.equal(manager.listServices()[0]?.status, 'starting')
+  assert.notEqual(manager.listServices()[0]?.pid, null)
+
+  const restarted = await manager.restart(EXTERNAL_FIXTURE_SERVICE.id)
+
+  assert.equal(restarted.status, 'starting')
+  assert.deepEqual(terminatedGroups, [65_432])
+})
+
+test('restart refuses to kill an unverified external process', async (t) => {
+  let terminateCalls = 0
+  const manager = new ServiceManager([EXTERNAL_FIXTURE_SERVICE], null, async () => true, {
+    findProcessGroups: async () => [],
+    terminateProcessGroup: async () => {
+      terminateCalls += 1
+    },
+  })
+  t.after(async () => manager.shutdown())
+
+  await manager.initialize()
+
+  await assert.rejects(
+    manager.restart(EXTERNAL_FIXTURE_SERVICE.id),
+    (error: unknown) =>
+      error instanceof ServiceManagerError &&
+      error.statusCode === 409 &&
+      error.message.includes('could not safely identify'),
+  )
+  assert.equal(terminateCalls, 0)
+})
+
+test('initialize starts required dependencies for an adopted service', async (t) => {
+  let listening = true
+  const terminatedGroups: number[] = []
+  const manager = new ServiceManager(
+    [CHAIN_DEPENDENCY_SERVICE, ADOPTED_TARGET_SERVICE],
+    null,
+    async () => listening,
+    {
+      findProcessGroups: async (definition) =>
+        definition.id === ADOPTED_TARGET_SERVICE.id ? [65_432] : [],
+      terminateProcessGroup: async (pgid) => {
+        terminatedGroups.push(pgid)
+        listening = false
+      },
+    },
+  )
+  t.after(async () => manager.shutdown())
+
+  await manager.initialize()
+
+  assert.deepEqual(
+    manager.listServices().map((service) => [service.id, service.status]),
+    [
+      [CHAIN_DEPENDENCY_SERVICE.id, 'running'],
+      [ADOPTED_TARGET_SERVICE.id, 'starting'],
+    ],
+  )
+  assert.deepEqual(terminatedGroups, [65_432])
 })
 
 test('default start mode starts required dependencies before the target service', async (t) => {

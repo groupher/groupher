@@ -21,6 +21,9 @@ const DependencyDrawer = lazy(() =>
     default: module.DependencyDrawer,
   })),
 )
+const ExternalDrawer = lazy(() =>
+  import('@/components/ExternalDrawer').then((module) => ({ default: module.ExternalDrawer })),
+)
 const InfraDrawer = lazy(() =>
   import('@/components/InfraDrawer').then((module) => ({ default: module.InfraDrawer })),
 )
@@ -44,6 +47,7 @@ export function App() {
     error,
     toggleService,
     startService,
+    stopService,
     restartService,
     dismissError,
   } = useServiceHub()
@@ -60,6 +64,10 @@ export function App() {
       : null
   const dependencyService =
     activeDrawer?.kind === 'dependencies'
+      ? services.find((service) => service.id === activeDrawer.serviceId) || null
+      : null
+  const externalService =
+    activeDrawer?.kind === 'external'
       ? services.find((service) => service.id === activeDrawer.serviceId) || null
       : null
   const diffScope = activeDrawer?.kind === 'git' ? activeDrawer.scope : null
@@ -117,6 +125,16 @@ export function App() {
     (serviceId: string) => setActiveDrawer({ kind: 'dependencies', serviceId }),
     [],
   )
+  const openExternal = useCallback(
+    (serviceId: string) => setActiveDrawer({ kind: 'external', serviceId }),
+    [],
+  )
+  const handleStopExternal = useCallback(
+    (service: TPublicService) => {
+      void stopService(service)
+    },
+    [stopService],
+  )
   const closeDrawer = useCallback(() => setActiveDrawer(null), [])
 
   const handleViewModeChange = useCallback((mode: THubViewMode) => {
@@ -172,6 +190,7 @@ export function App() {
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
               onOpenDependencies={openDependencies}
+              onOpenExternal={openExternal}
             />
             <ServiceSection
               title='Backend'
@@ -188,6 +207,7 @@ export function App() {
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
               onOpenDependencies={openDependencies}
+              onOpenExternal={openExternal}
             />
             <ServiceSection
               title='Infrastructure'
@@ -204,6 +224,7 @@ export function App() {
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
               onOpenDependencies={openDependencies}
+              onOpenExternal={openExternal}
             />
           </>
         ) : (
@@ -228,6 +249,7 @@ export function App() {
                 onOpenMetrics={openMetrics}
                 onOpenConfig={openConfig}
                 onOpenDependencies={openDependencies}
+                onOpenExternal={openExternal}
               />
             </Suspense>
           </ErrorBoundary>
@@ -271,6 +293,16 @@ export function App() {
               service={dependencyService}
               services={services}
               onClose={closeDrawer}
+            />
+          </Suspense>
+        ) : null}
+        {externalService ? (
+          <Suspense fallback={null}>
+            <ExternalDrawer
+              service={externalService}
+              pending={pendingIds.has(externalService.id)}
+              onClose={closeDrawer}
+              onStop={handleStopExternal}
             />
           </Suspense>
         ) : null}

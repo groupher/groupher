@@ -27,6 +27,7 @@ type TServiceHub = {
   error: string | null
   toggleService: (service: TPublicService, mode?: TServiceStartMode | 'default') => Promise<void>
   startService: (service: TPublicService, mode?: TServiceStartMode | 'default') => Promise<void>
+  stopService: (service: TPublicService) => Promise<void>
   restartService: (service: TPublicService) => Promise<void>
   dismissError: () => void
 }
@@ -146,6 +147,10 @@ export function useServiceHub(): TServiceHub {
     (service: TPublicService) => runServiceAction(service, 'restart'),
     [runServiceAction],
   )
+  const stopService = useCallback(
+    (service: TPublicService) => runServiceAction(service, 'stop'),
+    [runServiceAction],
+  )
 
   return {
     services,
@@ -159,6 +164,7 @@ export function useServiceHub(): TServiceHub {
     error,
     toggleService,
     startService,
+    stopService,
     restartService,
     dismissError: () => setError(null),
   }

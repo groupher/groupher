@@ -73,6 +73,15 @@ export type TServiceLog = {
   chunk: string
 }
 
+export type TExternalProcessInfo = {
+  ports: number[]
+  processIds: number[]
+  processGroups: number[]
+  commands: string[]
+  workingDirectories: string[]
+  canStop: boolean
+}
+
 export type TMetricThresholds = {
   serverCpuPercent: number
   serverRssBytes: number
@@ -99,6 +108,7 @@ export type TPublicService = {
   startedAt: number | null
   endedAt: number | null
   exitCode: number | null
+  externalProcess?: TExternalProcessInfo | null
   canStart: boolean
   unavailableReason: string | null
   metricThresholds: TMetricThresholds
