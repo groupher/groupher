@@ -4,6 +4,12 @@ defmodule GroupherServerWeb.Context do
   @moduledoc """
   entry for all api
   """
+
+  @allow_test_service_identity Application.compile_env(
+                                 :groupher_server,
+                                 :allow_test_service_identity,
+                                 false
+                               )
   @behaviour Plug
 
   import Plug.Conn
@@ -12,8 +18,10 @@ defmodule GroupherServerWeb.Context do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias Accounts.Profiles.BrowserSessions
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
+  alias GroupherServerWeb.ServiceIdentity
 
   def init(opts), do: opts
 
@@ -30,17 +38,95 @@ defmodule GroupherServerWeb.Context do
   external API bearer token.
   """
   def build_context(conn) do
-    context = %{server_trusted: server_trusted?(conn)}
+    context = maybe_put_test_service_actor(%{}, conn)
 
     case get_token_from(conn) do
       nil ->
         context
 
       token ->
-        case authorize(token) do
-          {:ok, cur_user} -> Map.put(context, :cur_user, cur_user)
-          {:error, reason} -> maybe_put_browser_auth_failure(context, token, reason)
+        context
+        |> authorize_context(token, conn)
+        |> maybe_bind_delegated_actor()
+    end
+  end
+
+  defp authorize_context(context, {:bearer, token} = credential, conn) do
+    if ServiceIdentity.service_token?(token) do
+      case ServiceIdentity.verify(token) do
+        {:ok, actor} ->
+          context
+          |> Map.put(:service_actor, actor)
+          |> maybe_put_delegated_user(conn)
+
+        {:error, _reason} ->
+          Map.put(context, :auth_failure, "SERVICE_TOKEN_INVALID")
+      end
+    else
+      authorize_user_context(context, credential)
+    end
+  end
+
+  defp authorize_context(context, credential, _conn),
+    do: authorize_user_context(context, credential)
+
+  defp maybe_bind_delegated_actor(%{service_actor: service, cur_user: user} = context) do
+    Map.put_new(context, :delegated_actor, %{service_actor: service, user_actor: user})
+  end
+
+  defp maybe_bind_delegated_actor(context), do: context
+
+  defp maybe_put_test_service_actor(context, conn) do
+    if @allow_test_service_identity and
+         Application.get_env(:groupher_server, :env) == :test and
+         get_req_header(conn, "x-groupher-test-service-identity") == ["enabled"] do
+      Map.put(context, :service_actor, %{
+        audience: "test:any",
+        scopes: MapSet.new(["*"]),
+        subject: "service:test-suite",
+        token_id: "test-suite"
+      })
+    else
+      context
+    end
+  end
+
+  defp maybe_put_delegated_user(context, conn) do
+    case get_req_header(conn, "x-groupher-user-authorization") do
+      ["Bearer " <> token] ->
+        case authorize_delegated_browser_token(token) do
+          {:ok, cur_user} ->
+            context
+            |> Map.put(:cur_user, cur_user)
+            |> Map.put(:delegated_actor, %{
+              service_actor: context.service_actor,
+              user_actor: cur_user
+            })
+
+          {:error, reason} ->
+            maybe_put_browser_auth_failure(context, {:bearer, token}, reason)
         end
+
+      _ ->
+        context
+    end
+  end
+
+  defp authorize_delegated_browser_token(token) do
+    with {:ok, claims} <- BrowserAccess.decode_claims(token),
+         {:ok, cur_user} <- load_user(%{"id" => claims["sub"]}),
+         true <- BrowserSessions.active_for_user?(cur_user.id, claims["sid"]) do
+      {:ok, cur_user}
+    else
+      false -> {:error, :session_revoked}
+      error -> error
+    end
+  end
+
+  defp authorize_user_context(context, credential) do
+    case authorize(credential) do
+      {:ok, cur_user} -> Map.put(context, :cur_user, cur_user)
+      {:error, reason} -> maybe_put_browser_auth_failure(context, credential, reason)
     end
   end
 
@@ -50,23 +136,6 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp maybe_put_browser_auth_failure(context, _token, _reason), do: context
-
-  defp server_trusted?(conn) do
-    expected =
-      :groupher_server
-      |> Application.get_env(:server_trust, [])
-      |> Keyword.get(:secret)
-
-    case {expected, get_req_header(conn, "x-groupher-server-trust")} do
-      {expected, [provided]}
-      when is_binary(expected) and byte_size(expected) > 0 and
-             byte_size(expected) == byte_size(provided) ->
-        Plug.Crypto.secure_compare(expected, provided)
-
-      _ ->
-        false
-    end
-  end
 
   # --------------------------------------------------
   # Browser cookies must satisfy the V1 issuer/audience/type/session claims.

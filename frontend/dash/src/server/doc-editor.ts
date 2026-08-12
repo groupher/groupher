@@ -1,20 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
-import { print } from 'graphql'
 
 import type { TDocDraftInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/Article/spec'
 import type { TDocTreeInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import DashboardSchema from '~/unit/DashboardThread/schema'
+import DashboardDocsSchema from '~/unit/DashboardThread/schema/docs'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
-
-type TDocTreeQueryData = {
-  docTree?: TDocTreeInitialData | null
-}
-
-type TDocDraftQueryData = {
-  docDraft?: TDocDraftInitialData | null
-}
 
 export type TDocEditorInitialData = {
   activeDocId: string | null
@@ -49,12 +40,12 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
       return { activeDocId: null, authRequired: true, docDraft: null, docTree: null }
     }
 
-    const treeResult = await fetchGraphQL<TDocTreeQueryData>(
-      print(DashboardSchema.docTree),
+    const treeResult = await fetchGraphQL(
+      DashboardDocsSchema.docTree,
       { community: data.community },
       token,
     )
-    const docTree = treeResult.data?.docTree || null
+    const docTree = (treeResult.data?.docTree as unknown as TDocTreeInitialData | null) || null
     const nodes = docTree?.tabs?.flatMap((tab) => tab.groups ?? []) ?? []
     const activePage = findDocPage(nodes, data.docId) || findDocPage(nodes, null)
     const activeDocId = activePage?.docId ? String(activePage.docId) : null
@@ -63,16 +54,17 @@ export const loadDocEditorData = createServerFn({ method: 'GET', strict: false }
       return { activeDocId: null, authRequired: false, docDraft: null, docTree }
     }
 
-    const draftResult = await fetchGraphQL<TDocDraftQueryData>(
-      print(DashboardSchema.docDraft),
+    const draftResult = await fetchGraphQL(
+      DashboardDocsSchema.docDraft,
       { community: data.community, id: activeDocId },
       token,
     )
+    const docDraft = (draftResult.data?.docDraft as unknown as TDocDraftInitialData | null) || null
 
     return {
       activeDocId,
       authRequired: false,
-      docDraft: draftResult.data?.docDraft || null,
+      docDraft,
       docTree,
     }
   })

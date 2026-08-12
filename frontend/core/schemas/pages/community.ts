@@ -1,22 +1,34 @@
-import F from '../fragments'
+import { graphql } from '~/graphql/authoring'
 
-// contributesDigest
-export const subscribedCommunities = `
-  query subscribedCommunities($login: String, $filter: PagiFilter!) {
+export const subscribedCommunities = graphql(`
+  query PageSubscribedCommunities($login: String, $filter: PagiFilter!) {
     subscribedCommunities(login: $login, filter: $filter) {
       entries {
-        ${F.community}
+        ...PageCommunityFields
         contributesDigest
       }
-      ${F.pagi}
+      ...PageCommunityPageInfo
     }
   }
-`
+`)
 
-export const community = `
-  query community($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
+// Keep the dashboard's large selection inline so it remains one static document
+// while the list/detail-independent operations share generated fragments.
+export const community = graphql(`
+  query PageCommunity($slug: String!, $userHasLogin: Boolean!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
-      ${F.community}
+      title
+      slug
+      index
+      desc
+      logo
+      subscribersCount
+      homepage
+      articlesCount
+      views
+      pending
+      insertedAt
+      updatedAt
       viewerHasSubscribed @include(if: $userHasLogin)
       contributesDigest
       moderatorsCount
@@ -96,23 +108,71 @@ export const community = `
           }
         }
         wallpaper {
-          ${F.wallpaper}
+          light {
+            type
+            source
+            gradient
+            pattern
+            contentShadow
+            effect
+            texture
+          }
+          dark {
+            type
+            source
+            gradient
+            pattern
+            contentShadow
+            effect
+            texture
+          }
         }
         headerLinks {
-          ${F.headerLink}
+          id
+          type
+          title
+          url
+          links {
+            id
+            title
+            url
+          }
         }
         footerLinks {
-          ${F.headerLink}
+          id
+          type
+          title
+          url
+          links {
+            id
+            title
+            url
+          }
         }
         footerOnelineLinks {
-          ${F.footerOnelineLink}
+          id
+          title
+          url
         }
         socialLinks {
           type
           link
         }
         seo {
-          ${F.seo}
+          seoEnable
+          ogSiteName
+          ogTitle
+          ogDescription
+          ogUrl
+          ogImage
+          twTitle
+          twDescription
+          twUrl
+          twCard
+          twSite
+          twImage
+          twImageWidth
+          twImageHeight
         }
         nameAlias {
           slug
@@ -154,13 +214,7 @@ export const community = `
           footerLayout
           overlayDark
           broadcastEnable
-        } 
-
-        rss {
-          rssFeedType
-          rssFeedCount
         }
-
         enable {
           post
           kanban
@@ -171,16 +225,17 @@ export const community = `
       }
     }
   }
-`
-export const pagedCommunities = `
-  query($filter: CommunitiesFilter!, $userHasLogin: Boolean!) {
+`)
+
+export const pagedCommunities = graphql(`
+  query PagePagedCommunities($filter: CommunitiesFilter!, $userHasLogin: Boolean!) {
     pagedCommunities(filter: $filter) {
       entries {
-        ${F.community}
+        ...PageCommunityFields
         contributesDigest
         viewerHasSubscribed @include(if: $userHasLogin)
       }
-      ${F.pagi}
+      ...PageCommunityPageInfo
     }
   }
-`
+`)

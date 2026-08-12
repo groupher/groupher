@@ -264,16 +264,21 @@ Auth 只有在 `@auth/core` 的 callback response 确实签发 Session Cookie �
 
 ## 环境变量
 
-| 名称                                    | 说明                                                  |
-| --------------------------------------- | ----------------------------------------------------- |
-| `AUTH_URL`                              | canonical 用户入口，例如 `https://groupher.localhost` |
-| `AUTH_COOKIE_DOMAIN`                    | Cookie 父域，例如 `.groupher.localhost`               |
-| `NEXTAUTH_SECRET`                       | Auth.js JWT Session 的签名和加密密钥                  |
-| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | GitHub OAuth App credential                           |
-| `GROUPHER_SERVER_TRUST_SECRET`          | Auth 调 Phoenix identity exchange 的服务信任凭证      |
-| `PHOENIX_GRAPHQL_ENDPOINT`              | Phoenix GraphQL 内部地址                              |
-| `AUTH_COOKIE_SECURE`                    | 非生产环境覆盖 Secure Cookie 推导，仅用于特殊调试     |
-| `PORT` / `HOST`                         | 独立 Node server 的监听地址                           |
+| 名称                                                    | 说明                                                  |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| `AUTH_URL`                                              | canonical 用户入口，例如 `https://groupher.localhost` |
+| `AUTH_COOKIE_DOMAIN`                                    | Cookie 父域，例如 `.groupher.localhost`               |
+| `NEXTAUTH_SECRET`                                       | Auth.js JWT Session 的签名和加密密钥                  |
+| `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET`                 | GitHub OAuth App credential                           |
+| `SERVICE_AUTH_CLIENT_ID` / `SERVICE_AUTH_CLIENT_SECRET` | Auth 调 Phoenix Session API 的独立 client credential  |
+| `SERVICE_AUTH_TOKEN_ENDPOINT`                           | Service Identity client-credentials endpoint          |
+| `SERVICE_AUTH_CLIENTS_JSON`                             | Auth-owned service client registry                    |
+| `SERVICE_AUTH_RESOURCES_JSON`                           | RFC 8707 resource 到 audience 的注册映射              |
+| `SERVICE_AUTH_SIGNING_JWK`                              | Service access token 的 RS256 private signing JWK     |
+| `SERVICE_AUTH_ISSUER`                                   | Service access token issuer                           |
+| `PHOENIX_GRAPHQL_ENDPOINT`                              | Phoenix GraphQL 内部地址                              |
+| `AUTH_COOKIE_SECURE`                                    | 非生产环境覆盖 Secure Cookie 推导，仅用于特殊调试     |
+| `PORT` / `HOST`                                         | 独立 Node server 的监听地址                           |
 
 每个产品前端还必须把 `NEXT_PUBLIC_AUTH_ENDPOINT` 指向 canonical Auth 的完整地址：
 本地为 `https://groupher.localhost/api/auth`，生产为
@@ -318,10 +323,8 @@ GET /api/auth/csrf
   Session。
 - `@auth/core` 升级前必须回归 provider、CSRF、callback、Session Cookie 和安全跳转
   五类 contract。
-- 当前 Node 侧部分临时资源的 owner ref 由 Phoenix token 摘要派生；token 轮换后，
-  尚未完成的 preview 可能无法继续访问。迁出 Content Import 时，应改为由 Phoenix
-  校验后返回稳定的 user ref，或将稳定主体放入签名 delegation claims，不能通过
-  未验证 JWT payload 推断用户身份。
+- Content Import 的 preview owner subject 必须由 Phoenix 在验证 service/user
+  双重凭据后返回稳定的 delegation subject；不能通过未验证 JWT payload 推断用户身份。
 - `/health` 目前只表示 Auth 进程可用，不表示 OAuth Provider 与 Phoenix 凭据完整。
   生产部署流水线应增加独立的配置校验，缺少必要 secret、Provider credentials、
   `AUTH_COOKIE_DOMAIN` 或 Phoenix 地址时直接阻止发布。

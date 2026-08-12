@@ -1,14 +1,14 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-const deleteCommunityTag = gql`
-  mutation ($id: ID!, $community: String!, $thread: Thread) {
+const deleteCommunityTag = graphql(`
+  mutation DeleteCommunityTag($id: ID!, $community: String!, $thread: Thread) {
     deleteCommunityTag(id: $id, community: $community, thread: $thread) {
       id
     }
   }
-`
-const createCommunityTag = gql`
-  mutation (
+`)
+const createCommunityTag = graphql(`
+  mutation CreateCommunityTag(
     $thread: Thread!
     $title: String!
     $slug: String!
@@ -31,9 +31,9 @@ const createCommunityTag = gql`
       id
     }
   }
-`
-const updateCommunityTag = gql`
-  mutation (
+`)
+const updateCommunityTag = graphql(`
+  mutation UpdateCommunityTag(
     $id: ID!
     $color: RainbowColor
     $title: String
@@ -58,7 +58,7 @@ const updateCommunityTag = gql`
       id
     }
   }
-`
+`)
 
 const schema = {
   deleteCommunityTag,

@@ -13,6 +13,44 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    @desc "Current user's Apply admission state and blocking application"
+    field :community_application_state, non_null(:community_application_state) do
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.community_application_state/3)
+    end
+
+    @desc "One Community Application owned by the current user"
+    field :community_application, :community_application do
+      arg(:ref, non_null(:id))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.community_application/3)
+    end
+
+    @desc "Reviewer-scoped detail for any Community Application"
+    field :review_community_application, :community_application do
+      arg(:ref, non_null(:id))
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.review")
+      resolve(&R.CMS.review_community_application/3)
+    end
+
+    @desc "Reviewer-scoped Community Application queue"
+    field :paged_community_applications, non_null(:community_application_connection) do
+      arg(:filter, non_null(:community_applications_filter))
+      arg(:after, :string)
+      arg(:first, :integer, default_value: 20)
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.review")
+      resolve(&R.CMS.paged_community_applications/3)
+    end
+
+    @desc "Server-trusted origin metadata for an Application Logo"
+    field :community_application_logo_origin_info, :application_logo_origin_info do
+      arg(:public_ref, non_null(:id))
+      middleware(M.ServiceScope, audience: "phoenix:assets-api", scope: "assets:origin:read")
+      resolve(&R.CMS.community_application_logo_origin_info/3)
+    end
+
     @desc "Current Article Trash memberships"
     field :trashed_articles, :paged_trashed_articles do
       arg(:community, non_null(:string))
@@ -284,11 +322,11 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.community_asset_refs/3)
     end
 
-    @desc "server-trusted public-read origin metadata for one community asset"
+    @desc "service-scoped public-read origin metadata for one community asset"
     field :community_asset_origin_info, :community_asset_origin_info do
       arg(:public_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:assets-api", scope: "assets:origin:read")
       resolve(&R.CMS.community_asset_origin_info/3)
     end
 
@@ -296,12 +334,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)
       resolve(&R.CMS.all_passport_rules/3)
-    end
-
-    @desc "if use has pending apply"
-    field :has_pending_community_apply, :check_state do
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.has_pending_community_apply?/3)
     end
 
     @desc "if the community exist or not"

@@ -131,6 +131,7 @@ defmodule GroupherServer.Test.Helper.Schema.Account do
     query {
           sessionState {
             isValid
+            delegationSubject
             user {
               login
             }

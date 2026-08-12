@@ -6,7 +6,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/content'
 
 import type {
   TPagedTrashedPosts,

@@ -1,0 +1,107 @@
+web:
+  address: 127.0.0.1
+  port: 8080
+
+ui:
+  title: Groupher Local Status
+  header: Groupher Local Status
+  dashboard-heading: Local Groupher services
+  dashboard-subheading: Development health checks
+  dark-mode: true
+  default-sort-by: group
+
+storage:
+  type: sqlite
+  path: .tmp/status/gatus.db
+
+endpoints:
+  - name: Gateway
+    group: Backend
+    url: http://127.0.0.1:3003/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == gateway"
+      - "[BODY].status == ok"
+  - name: Authentication
+    group: Backend
+    url: http://127.0.0.1:3004/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == auth"
+      - "[BODY].status == ok"
+  - name: Phoenix API
+    group: Backend
+    url: http://127.0.0.1:4001/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == phoenix"
+      - "[BODY].status == ok"
+  - name: Content Delivery
+    group: Backend
+    url: http://127.0.0.1:8003/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == press"
+      - "[BODY].status == ok"
+  - name: Asset Upload API
+    group: Backend
+    url: http://127.0.0.1:8002/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == assets-hub"
+      - "[BODY].status == ok"
+  - name: Asset Read Worker
+    group: Backend
+    url: http://127.0.0.1:8787/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == assets-hub"
+      - "[BODY].status == ok"
+  - name: Landing
+    group: Frontend
+    url: http://127.0.0.1:3002/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == landing"
+      - "[BODY].status == ok"
+  - name: Main App
+    group: Frontend
+    url: http://127.0.0.1:3000/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == main"
+      - "[BODY].status == ok"
+  - name: Dashboard
+    group: Frontend
+    url: http://127.0.0.1:3001/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == dashboard"
+      - "[BODY].status == ok"
+  - name: Dash
+    group: Frontend
+    url: http://127.0.0.1:3005/health
+    interval: 30s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].schemaVersion == health.v1"
+      - "[BODY].service == dash"
+      - "[BODY].status == ok"

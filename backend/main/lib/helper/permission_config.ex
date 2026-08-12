@@ -50,8 +50,11 @@ defmodule Helper.PermissionConfig do
         "community.create",
         "community.update",
         "community.delete",
-        "community.apply.approve",
-        "community.apply.deny",
+        "community.application.review",
+        "community.application.approve",
+        "community.application.reject",
+        "community.application.retry_creation",
+        "community.application.retry_setup",
         "category.create",
         "category.update",
         "category.delete",
@@ -129,8 +132,26 @@ defmodule Helper.PermissionConfig do
       "community.create" => %{scope: :global, grant: "community.create"},
       "community.update" => %{scope: :global, grant: "community.update"},
       "community.delete" => %{scope: :global, grant: "community.delete"},
-      "community.apply.approve" => %{scope: :global, grant: "community.apply.approve"},
-      "community.apply.deny" => %{scope: :global, grant: "community.apply.deny"},
+      "community.application.review" => %{
+        scope: :global,
+        grant: "community.application.review"
+      },
+      "community.application.approve" => %{
+        scope: :global,
+        grant: "community.application.approve"
+      },
+      "community.application.reject" => %{
+        scope: :global,
+        grant: "community.application.reject"
+      },
+      "community.application.retry_creation" => %{
+        scope: :global,
+        grant: "community.application.retry_creation"
+      },
+      "community.application.retry_setup" => %{
+        scope: :global,
+        grant: "community.application.retry_setup"
+      },
       "billing.state.update" => %{scope: :global, grant: "system_accountant"},
       "article.mirror_home" => %{scope: :global, grant: "homemirror"},
       "article.move_blackhole" => %{scope: :global, grant: "blackeye"},

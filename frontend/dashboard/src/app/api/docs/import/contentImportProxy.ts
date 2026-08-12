@@ -1,12 +1,8 @@
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
-
-const CONTENT_IMPORT_BACKEND_TOKEN_HEADER = 'x-groupher-backend-token'
-const CONTENT_IMPORT_USER_REF_HEADER = 'x-groupher-user-ref'
+import { dashboardToContentImportHeaders } from '../../../../lib/serviceIdentity'
 
 type TOptions = {
   backendToken: string
   fetcher?: typeof fetch
-  userRef: string
 }
 
 const serviceUnavailable = (message: string): Response =>
@@ -36,7 +32,7 @@ const requestBody = async (request: Request): Promise<ArrayBuffer | undefined> =
  */
 export const proxyContentImportRequest = async (
   request: Request,
-  { backendToken, fetcher = fetch, userRef }: TOptions,
+  { backendToken, fetcher = fetch }: TOptions,
 ): Promise<Response> => {
   const baseUrl = configuredContentImportUrl()
   if (baseUrl instanceof Response) return baseUrl
@@ -46,12 +42,8 @@ export const proxyContentImportRequest = async (
   const headers = new Headers(request.headers)
   headers.delete('cookie')
   headers.delete('host')
-  headers.set('Authorization', `Bearer ${backendToken}`)
-  headers.set(CONTENT_IMPORT_BACKEND_TOKEN_HEADER, backendToken)
-  headers.set(CONTENT_IMPORT_USER_REF_HEADER, userRef)
-
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (serverTrustSecret) headers.set(GROUPHER_SERVER_TRUST_HEADER, serverTrustSecret)
+  const serviceHeaders = await dashboardToContentImportHeaders(backendToken)
+  for (const [name, value] of Object.entries(serviceHeaders)) headers.set(name, value)
 
   return fetcher(targetUrl, {
     body: await requestBody(request),

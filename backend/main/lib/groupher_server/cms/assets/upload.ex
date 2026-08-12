@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   Phoenix owns the business boundary: community permission, stable public refs,
   canonical URLs, and final DB writes. The assets-hub service owns R2 signing and
-  object verification, then calls back through a server-trusted mutation.
+  object verification, then calls back through a scoped service mutation.
   """
 
   import Ecto.Query, warn: false
@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   alias GroupherServer.{Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Assets.Write
+  alias GroupherServer.CMS.Assets.{Capability, Write}
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
       asset_uid = Utils.uid(18)
       asset_public_ref = "asset_" <> asset_uid
       object_key = original_object_key(community.slug, issued_at, asset_uid)
-      canonical_url = "#{public_endpoint()}/a/#{asset_public_ref}/original"
+      canonical_url = "#{Capability.public_endpoint()}/a/#{asset_public_ref}/original"
       expires_at = DateTime.add(issued_at, @capability_ttl_seconds, :second)
 
       # Capability payload is the signed handoff from Phoenix to assets-hub.
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
          upload_ref: upload_ref,
          asset_public_ref: asset_public_ref,
          object_key: object_key,
-         capability: sign_capability(payload),
+         capability: Capability.sign(payload),
          expires_at: expires_at,
          max_size_bytes: @max_size_bytes,
          allowed_mime_types: @allowed_mime_types
@@ -212,28 +212,6 @@ defmodule GroupherServer.CMS.Assets.Upload do
     |> where([community], community.id == ^community_id)
     |> lock("FOR UPDATE")
     |> Repo.one!()
-  end
-
-  defp sign_capability(payload) do
-    encoded = payload |> Jason.encode!() |> Base.url_encode64(padding: false)
-    signature = :crypto.mac(:hmac, :sha256, capability_secret(), encoded)
-
-    encoded <> "." <> Base.url_encode64(signature, padding: false)
-  end
-
-  defp capability_secret do
-    System.get_env("ASSETS_HUB_CAPABILITY_SECRET") || server_trust_secret() ||
-      raise "ASSETS_HUB_CAPABILITY_SECRET is required"
-  end
-
-  defp server_trust_secret do
-    :groupher_server
-    |> Application.get_env(:server_trust, [])
-    |> Keyword.get(:secret)
-  end
-
-  defp public_endpoint do
-    System.get_env("ASSETS_PUBLIC_ENDPOINT") || "https://assets.groupher.com"
   end
 
   defp original_object_key(community_slug, %DateTime{} = issued_at, asset_uid) do

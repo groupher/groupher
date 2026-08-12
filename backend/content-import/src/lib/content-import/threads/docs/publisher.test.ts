@@ -97,7 +97,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/b.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(store.getSource).toHaveBeenCalledTimes(1)
@@ -111,7 +111,7 @@ describe('runPreviewDocBulkImport', () => {
       'home',
       'job-1',
       [{ bodyBag: { document: [] }, externalRef: 'docs/b.md' }],
-      expect.objectContaining({ serverTrustSecret: 'secret' }),
+      expect.objectContaining({ serviceIdentity: 'secret' }),
     )
   })
 
@@ -131,7 +131,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/a.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.publishArtiment).toHaveBeenCalledWith([paragraph])
@@ -153,7 +153,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/a.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.deserializeMarkdown).toHaveBeenCalledWith('# Visible title\n\nBody', {
@@ -181,7 +181,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/a.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.publishArtiment).toHaveBeenCalledWith([heading, paragraph])
@@ -203,7 +203,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/large.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.stageDocImportBodies).toHaveBeenCalledWith(
@@ -230,7 +230,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/broken.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.stageDocImportBodies).toHaveBeenCalledWith(
@@ -264,7 +264,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/a.md', 'docs/missing.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.stageDocImportBodies).toHaveBeenCalledWith(
@@ -315,7 +315,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/broken.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(result.status).toBe('failed')
@@ -333,7 +333,7 @@ describe('runPreviewDocBulkImport', () => {
     })
 
     await runPreviewDocBulkImport('home', 'job-1', 'prv_123456', 'att_123456', sourceRefs, store, {
-      serverTrustSecret: 'secret',
+      serviceIdentity: 'secret',
     })
 
     expect(mocks.stageDocImportBodies).toHaveBeenCalledTimes(2)
@@ -357,7 +357,7 @@ describe('runPreviewDocBulkImport', () => {
       'att_123456',
       ['docs/a.md'],
       store,
-      { serverTrustSecret: 'secret' },
+      { serviceIdentity: 'secret' },
     )
 
     expect(mocks.deserializeMarkdown).toHaveBeenCalledWith('!!! note\n    Body', {

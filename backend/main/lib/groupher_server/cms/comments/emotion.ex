@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
 
-  alias CMS.{CanCan, Events, FrontDesk}
+  alias CMS.{Events, FrontDesk, Gate}
   alias CMS.Helper.EmotionToggle
   alias CMS.Model.{Comment, CommentUserEmotion}
 
@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
            {:ok, _thread_key} <-
-             CanCan.allow_emotion(
+             Gate.allow_emotion(
                article.community.slug,
                :comment,
                comment.thread,
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
       with {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
            {:ok, _thread_key} <-
-             CanCan.allow_emotion(
+             Gate.allow_emotion(
                article.community.slug,
                :comment,
                comment.thread,

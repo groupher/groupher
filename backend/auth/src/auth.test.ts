@@ -27,19 +27,30 @@ describe('Auth core integration', () => {
   })
 
   it('preserves Phoenix browser-session machine error codes', async () => {
-    vi.stubEnv('GROUPHER_SERVER_TRUST_SECRET', 'server-trust')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_ID', 'auth-test')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', 'auth-secret')
+    vi.stubEnv('SERVICE_AUTH_TOKEN_ENDPOINT', 'https://auth.test/oauth2/token')
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        Response.json({
+      vi.fn(async (input) => {
+        if (String(input) === 'https://auth.test/oauth2/token') {
+          return Response.json({
+            access_token: 'service-token',
+            expires_in: 600,
+            scope: 'auth:session:refresh',
+            token_type: 'Bearer',
+          })
+        }
+
+        return Response.json({
           errors: [
             {
               extensions: { code: 'SESSION_REVOKED' },
               message: 'Browser Session revoked.',
             },
           ],
-        }),
-      ),
+        })
+      }),
     )
 
     await expect(refreshBrowserSession('bs_revoked')).rejects.toMatchObject({

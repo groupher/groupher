@@ -10,8 +10,14 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
     field :browser_sessions, non_null(list_of(non_null(:browser_session))) do
       arg(:browser_session_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:read")
       resolve(&R.Accounts.browser_sessions/3)
+    end
+
+    @desc "List linked OAuth accounts for canonical Auth."
+    field :linked_oauth_accounts, non_null(:linked_oauth_accounts) do
+      middleware(M.DelegatedScope, audience: "phoenix:auth-api", scope: "auth:oauth:read")
+      resolve(&R.Accounts.linked_oauth_accounts/3)
     end
 
     @desc "get all users"

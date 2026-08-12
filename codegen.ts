@@ -1,0 +1,72 @@
+import type { CodegenConfig } from '@graphql-codegen/cli'
+
+const config: CodegenConfig = {
+  schema: 'backend/main/schema.graphql',
+  documents: [
+    'frontend/core/schemas/pages/user.ts',
+    'frontend/core/schemas/pages/user.fragments.ts',
+    'frontend/core/schemas/pages/article.fragments.ts',
+    'frontend/core/schemas/pages/misc.fragments.ts',
+    'frontend/core/schemas/pages/post.ts',
+    'frontend/core/schemas/pages/changelog.ts',
+    'frontend/core/schemas/pages/doc.ts',
+    'frontend/core/schemas/pages/doc.fragments.ts',
+    'frontend/core/schemas/pages/community.ts',
+    'frontend/core/schemas/pages/action.ts',
+    'frontend/core/schemas/pages/misc.ts',
+    'frontend/core/unit/AboutThread/schema.ts',
+    'frontend/core/unit/ChangelogThread/schema.ts',
+    'frontend/core/unit/CoverEditor/schema.ts',
+    'frontend/core/unit/RichEditor/schema.ts',
+    'frontend/core/unit/DashboardThread/Analysis/WebOverview/schema.ts',
+    'frontend/core/unit/DashboardThread/Analysis/WebOverview/server.ts',
+    'frontend/core/unit/DashboardThread/schema/admins.ts',
+    'frontend/core/unit/DashboardThread/Appearance/Theme/schema.ts',
+    'frontend/core/unit/DashboardThread/schema/appearance.ts',
+    'frontend/core/unit/DashboardThread/schema/assets.ts',
+    'frontend/core/unit/DashboardThread/schema/content.ts',
+    'frontend/core/unit/PassportEditor/schema.ts',
+    'frontend/core/unit/KanbanThread/schema.ts',
+    'frontend/core/unit/KanbanThread/fragments.ts',
+    'frontend/core/unit/DocCovers/schema.ts',
+    'frontend/core/unit/DocCovers/fragments.ts',
+    'frontend/core/unit/ArticleSettingMenu/schema.ts',
+    'frontend/core/unit/ArticleSettingMenu/fragments.ts',
+    'frontend/core/unit/TagSettingEditor/schema.ts',
+    'frontend/core/unit/Comments/schema.ts',
+    'frontend/core/unit/Comments/fragments.ts',
+    'frontend/core/unit/DashboardThread/Appearance/Wallpaper/schema.ts',
+    'frontend/core/unit/DashboardThread/Appearance/Wallpaper/fragments.ts',
+    'frontend/core/unit/DashboardThread/schema/docs.ts',
+    'frontend/core/unit/DashboardThread/schema/docs.fragments.ts',
+    'frontend/core/unit/DashboardThread/schema/fragments.ts',
+    'frontend/core/unit/DashboardThread/schema/integrations.ts',
+    'frontend/core/unit/DashboardThread/schema/settings.ts',
+    'frontend/core/unit/DashboardThread/schema/shell.ts',
+    'frontend/core/unit/DashboardThread/schema/tags.ts',
+    'frontend/core/unit/ArticleEditor/schema.ts',
+    'frontend/core/unit/ArticleEditor/fragments.ts',
+    'frontend/core/unit/PostThread/schema.ts',
+    'frontend/core/unit/DashboardThread/CMS/Docs/Import/schema.ts',
+    'frontend/core/unit/DashboardThread/CMS/Docs/Import/fragments.ts',
+  ],
+  pluckConfig: {
+    globalGqlIdentifierName: [],
+    modules: [
+      {
+        name: '~/graphql/authoring',
+        identifier: 'graphql',
+      },
+    ],
+  },
+  generates: {
+    'frontend/core/lib/graphql/generated/': {
+      preset: 'client',
+      presetConfig: {
+        fragmentMasking: false,
+      },
+    },
+  },
+}
+
+export default config

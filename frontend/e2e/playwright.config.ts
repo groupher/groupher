@@ -55,14 +55,14 @@ const webServer: TWebServer[] = authStack
   ? [
       {
         command:
-          'yarn exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 GROUPHER_SERVER_TRUST_SECRET=e2e-server-trust yarn mock:server',
+          'yarn exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 yarn mock:server',
         url: 'http://localhost:4104/health',
         reuseExistingServer: false,
         timeout: 120_000,
       },
       {
         command:
-          'yarn exec cross-env NODE_ENV=test PORT=3104 AUTH_URL=http://auth.groupher.localhost:3104 AUTH_COOKIE_SECURE=true AUTH_COOKIE_DOMAIN=.groupher.localhost NEXTAUTH_SECRET=e2e-auth-secret-e2e-auth-secret GROUPHER_SERVER_TRUST_SECRET=e2e-server-trust PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql AUTH_TEST_ALLOWED_ORIGINS=http://dash.groupher.localhost:3103 yarn workspace @groupher/backend-auth exec tsx src/e2e/server.ts',
+          'yarn exec cross-env NODE_ENV=test PORT=3104 AUTH_URL=http://auth.groupher.localhost:3104 AUTH_COOKIE_SECURE=true AUTH_COOKIE_DOMAIN=.groupher.localhost NEXTAUTH_SECRET=e2e-auth-secret-e2e-auth-secret SERVICE_AUTH_CLIENT_ID=auth-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql AUTH_TEST_ALLOWED_ORIGINS=http://dash.groupher.localhost:3103 yarn workspace @groupher/backend-auth exec tsx src/e2e/server.ts',
         url: 'http://localhost:3104/health',
         reuseExistingServer: false,
         timeout: 120_000,

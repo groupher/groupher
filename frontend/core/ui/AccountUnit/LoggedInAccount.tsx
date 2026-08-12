@@ -74,7 +74,7 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
               <CmdSVG className={s.icon} />
             </div>
             {/* <MenuBar>主题?</MenuBar> */}
-            <Link href={ROUTE.APPLY_COMMUNITY} prefetch={false} className={s.linkable}>
+            <Link href={ROUTE.APPLY} prefetch={false} className={s.linkable}>
               <div className={s.menuBar}>
                 <div className={s.menuTitle}>{t('account.menu.create_community')}</div>
                 <AddSVG className={s.icon} />

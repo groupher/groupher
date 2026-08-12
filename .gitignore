@@ -116,6 +116,8 @@ frontend/dashboard/graphql/schema.graphql
 
 # TanStack Router generated output
 frontend/dash/src/routeTree.gen.ts
+frontend/dash/.tanstack/
+frontend/apply/src/routeTree.gen.ts
 
 # =====================
 # Backend (Elixir / BEAM)

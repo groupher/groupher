@@ -7,28 +7,10 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   import Helper.Utils, only: [handle_absinthe_error: 3]
   import Helper.ErrorCode
 
-  alias Helper.Datetime
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Policy.Model.PublishThrottle
-
-  @interval_minutes GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
-  @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit
-  @day_total GroupherServer.CMS.Policy.Config.publish_throttle().day_limit
-
-  def call(
-        %{context: %{cur_user: %{cur_passport: %{"global" => %{"god" => true}}}}} = resolution,
-        _
-      ) do
-    resolution
-  end
+  alias GroupherServer.CMS.Gate
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
-    with {:ok, record} <- CMS.Policy.load_publish_throttle(%User{id: cur_user.id}),
-         {:ok, _} <- interval_check(record, opt),
-         {:ok, _} <- hour_limit_check(record, opt),
-         {:ok, _} <- day_limit_check(record, opt) do
+    with {:ok, _} <- Gate.check_publish_throttle(cur_user, opt) do
       resolution
     else
       {:error, :interval_check} ->
@@ -52,34 +34,5 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   def call(resolution, _) do
     resolution
     |> handle_absinthe_error("Authorize: need login", ecode(:account_login))
-  end
-
-  # TODO: option: passport ..
-  defp interval_check(%PublishThrottle{last_publish_time: last_publish_time}, opt) do
-    interval_opt = Keyword.get(opt, :interval) || @interval_minutes
-    latest_valid_time = Datetime.shift(last_publish_time, minutes: interval_opt)
-
-    case DateTime.before?(latest_valid_time, Datetime.now()) do
-      true -> {:ok, :interval_check}
-      false -> {:error, :interval_check}
-    end
-  end
-
-  defp hour_limit_check(%PublishThrottle{hour_count: hour_count}, opt) do
-    hour_count_opt = Keyword.get(opt, :hour_limit) || @hour_limit
-
-    case hour_count < hour_count_opt do
-      true -> {:ok, :hour_limit_check}
-      false -> {:error, :hour_limit_check}
-    end
-  end
-
-  defp day_limit_check(%PublishThrottle{date_count: day_count}, opt) do
-    day_limit_opt = Keyword.get(opt, :day_limit) || @day_total
-
-    case day_count < day_limit_opt do
-      true -> {:ok, :day_limit_check}
-      false -> {:error, :day_limit_check}
-    end
   end
 end

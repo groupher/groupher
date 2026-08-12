@@ -64,11 +64,7 @@ export type TUser = TSimpleUser & {
   meta?: {
     isMaker: boolean
     publishedPostsCount: number
-    publishedJobsCount: number
     publishedBlogsCount: number
-    publishedWorksCount: number | null
-    publishedRadarsCount: number
-    publishedMeetupsCount: number
   }
 }
 

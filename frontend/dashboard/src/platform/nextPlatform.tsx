@@ -1,7 +1,6 @@
 'use client'
 
 import NextImage from 'next/image'
-import NextLink from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import NextScript from 'next/script'
 import { type ComponentType, type ReactNode, useMemo } from 'react'
@@ -11,9 +10,10 @@ import {
   PlatformProvider,
   resolveDsbRoute,
   type TPlatformImageProps,
-  type TPlatformLinkProps,
   type TPlatformScriptProps,
 } from '~/platform'
+
+import NextPlatformLink from './Link'
 
 type TProps = {
   children: ReactNode
@@ -75,7 +75,7 @@ export const NextPlatformProvider = ({ children }: TProps): ReactNode => {
         navi,
         components: {
           Image: NextImage as ComponentType<TPlatformImageProps>,
-          Link: NextLink as ComponentType<TPlatformLinkProps>,
+          Link: NextPlatformLink,
           Script: NextScript as ComponentType<TPlatformScriptProps>,
         },
       }}

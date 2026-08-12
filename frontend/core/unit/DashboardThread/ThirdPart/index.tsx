@@ -4,7 +4,7 @@ import { useState } from 'react'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/integrations'
 
 import { getIntegrationIconSrc } from './constant'
 import useSalon, { cn } from './salon'

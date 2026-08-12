@@ -3,10 +3,13 @@ import { describe, expect, it, vi } from 'vitest'
 import { createPhoenixOrigin, OriginError } from './origin'
 
 describe('Phoenix Press origin client', () => {
+  const tokenProvider = { getToken: vi.fn().mockResolvedValue('press-service-token') }
+
   it('uses executable Absinthe RSS field names and aliases the response DTO', async () => {
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, init) => {
       const request = JSON.parse(String(init?.body)) as { query: string }
       expect(request.query).toContain('pressCommunityRSSFeed: pressCommunityRssFeed')
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer press-service-token')
       return Response.json({
         data: {
           pressCommunityRSSFeed: {
@@ -36,9 +39,11 @@ describe('Phoenix Press origin client', () => {
       })
     })
 
-    const feed = await createPhoenixOrigin('http://phoenix.test/graphiql', fetcher).communityFeed(
-      'home',
-    )
+    const feed = await createPhoenixOrigin(
+      'http://phoenix.test/graphiql',
+      fetcher,
+      tokenProvider,
+    ).communityFeed('home')
     expect(feed.feedRevision).toBe('revision-1')
     expect(feed.config.feedType).toBe('digest')
     expect(feed.config.feedThreads).toEqual(['post'])
@@ -58,7 +63,7 @@ describe('Phoenix Press origin client', () => {
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValue(Response.json({ errors: [{ message: 'Press Article', code: 4003 }] }))
-    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher)
+    const origin = createPhoenixOrigin('http://phoenix.test/graphiql', fetcher, tokenProvider)
 
     await expect(
       origin.article({ community: 'home', thread: 'post', innerId: '1' }),

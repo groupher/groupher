@@ -63,7 +63,7 @@ export default function CommunityBrief() {
           </Link>
 
           <div className={s.divider} />
-          <Link className={s.menuItem} href='/apply/community'>
+          <Link className={s.menuItem} href='/apply'>
             <div className={s.menuIconBox}>
               <PlusSVG className={s.menuIcon} />
             </div>

@@ -5,7 +5,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TModerator, TUser } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/admins'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
 type TPassportJson = Record<string, unknown>

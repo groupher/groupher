@@ -1,17 +1,22 @@
+import type { VariablesOf } from '@graphql-typed-document-node/core'
 import { cacheLife, cacheTag } from 'next/cache'
 
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { TAG_THREADS, THREAD } from '~/const/thread'
-import { gqFetch } from '~/graphql/server'
+import { gqFetchTyped } from '~/graphql/server'
 import type { TI18nNamespace } from '~/i18n'
 import { loadLocaleFile } from '~/i18n'
-import { P } from '~/schemas'
+import { changelog as changelogQuery, pagedChangelogs } from '~/schemas/pages/changelog'
+import { pagedComments } from '~/schemas/pages/comment'
+import { community as communityQuery } from '~/schemas/pages/community'
+import { doc as docQuery, docPublicTree } from '~/schemas/pages/doc'
+import { communityTagGroups, communityTagStats, themePresets } from '~/schemas/pages/misc'
+import { groupedKanbanPosts, pagedPosts, post as postQuery } from '~/schemas/pages/post'
 import type {
   TCommunityInfo,
   TDoc,
   TDocPublicTree,
-  TDocPublicTreeQuery,
   TLocale,
   TPagedArticlesParams,
   TPagedChangelogs,
@@ -21,7 +26,6 @@ import type {
   TTagGroup,
   TTagStats,
   TThemePresetOption,
-  TThemePresetsQuery,
   TThread,
 } from '~/spec'
 import { parseDashboard, parseWallpaper } from '~/utils/ssr'
@@ -31,16 +35,16 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
 
-  const response = await gqFetch(P.community, { slug: community, userHasLogin: false })
-
-  const { data, errors } = await response.json()
+  const { data, errors } = await gqFetchTyped(communityQuery, {
+    slug: community,
+    userHasLogin: false,
+  })
 
   // console.log('## data: ', data.community.dashboard.enable)
 
   if (errors) {
-    // console.log('## error in fetching', P.community)
+    // console.log('## error in fetching', community)
     console.log('## error details 1', errors)
-    console.log('## error details 1', errors[0]?.locations)
     return {
       community: { slug: '' },
       dashboard: parseDashboard(null),
@@ -49,9 +53,9 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   }
 
   return {
-    community: data.community,
-    dashboard: parseDashboard(data.community),
-    wallpaper: parseWallpaper(data.community),
+    community: data.community as unknown as TCommunityInfo['community'],
+    dashboard: parseDashboard(data.community as unknown as TCommunityInfo['community']),
+    wallpaper: parseWallpaper(data.community as unknown as TCommunityInfo['community']),
   }
 }
 
@@ -86,11 +90,7 @@ const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   'use cache'
   cacheLife('days')
 
-  const response = await gqFetch(P.themePresets, {})
-  const { data, errors } = (await response.json()) as {
-    data?: TThemePresetsQuery
-    errors?: unknown
-  }
+  const { data, errors } = await gqFetchTyped(themePresets, {})
 
   if (errors || !data?.themePresets) {
     console.log('## error details theme presets', errors)
@@ -98,8 +98,8 @@ const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   }
 
   return data.themePresets.map((preset) => ({
-    value: preset.value,
-    tokens: preset.tokens,
+    value: preset.value as TThemePresetOption['value'],
+    tokens: preset.tokens as TThemePresetOption['tokens'],
   }))
 }
 
@@ -108,19 +108,25 @@ export const getThemePresets = async (): Promise<TThemePresetOption[]> => {
 }
 
 const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {
-  const response = await gqFetch(P.pagedPosts, {
-    filter,
+  type PagedPostsFilter = VariablesOf<typeof pagedPosts>['filter']
+
+  const graphqlFilter: PagedPostsFilter = {
+    ...filter,
+    cat: filter.cat as PagedPostsFilter['cat'],
+    status: filter.status as PagedPostsFilter['status'],
+    order: filter.order as PagedPostsFilter['order'],
+  }
+  const { data, errors } = await gqFetchTyped(pagedPosts, {
+    filter: graphqlFilter,
     userHasLogin: false,
   })
-
-  const { data, errors } = await response.json()
 
   if (errors) {
     console.log('## error details', errors)
     return null
   }
 
-  return data.pagedPosts
+  return data.pagedPosts as unknown as TPagedPosts
 }
 
 const getCachedPagedPosts = async (community: string): Promise<TPagedPosts | null> => {
@@ -158,19 +164,17 @@ export const getPagedChangelogs = async (community: string): Promise<TPagedChang
   cacheLife('minutes')
   cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
 
-  const response = await gqFetch(P.pagedChangelogs, {
+  const { data, errors } = await gqFetchTyped(pagedChangelogs, {
     filter: { community, page: 1 },
     userHasLogin: false,
   })
-
-  const { data, errors } = await response.json()
 
   if (errors) {
     console.log('## error details', errors)
     return null
   }
 
-  return data.pagedChangelogs
+  return data.pagedChangelogs as unknown as TPagedChangelogs
 }
 
 type TGroupedKanbanPosts = {
@@ -188,16 +192,14 @@ export const getGroupedKanbanPosts = async (
   cacheLife('minutes')
   cacheTag(CACHE_TAG.articlesCache(community, THREAD.KANBAN))
 
-  const response = await gqFetch(P.groupedKanbanPosts, { community })
-
-  const { data, errors } = await response.json()
+  const { data, errors } = await gqFetchTyped(groupedKanbanPosts, { community })
 
   if (errors) {
     console.log('## error details', errors)
     return null
   }
 
-  return data.groupedKanbanPosts
+  return data.groupedKanbanPosts as unknown as TGroupedKanbanPosts
 }
 
 export const getTagGroups = async (
@@ -212,16 +214,17 @@ export const getTagGroups = async (
   const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return []
 
-  const response = await gqFetch(P.communityTagGroups, { community, thread: gqlThread })
-
-  const { data, errors } = await response.json()
+  const { data, errors } = await gqFetchTyped(communityTagGroups, {
+    community,
+    thread: gqlThread,
+  })
   if (errors) {
-    // console.log('## error in fetching', P.community)
+    // console.log('## error in fetching', community)
     console.log('## error details', errors)
     return []
   }
 
-  return data.communityTagGroups || []
+  return (data.communityTagGroups || []) as unknown as TTagGroup[]
 }
 
 export const getTagStats = async (
@@ -234,9 +237,11 @@ export const getTagStats = async (
   const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return null
 
-  const response = await gqFetch(P.communityTagStats, { community, thread: gqlThread, slug })
-
-  const { data, errors } = await response.json()
+  const { data, errors } = await gqFetchTyped(communityTagStats, {
+    community,
+    thread: gqlThread,
+    slug,
+  })
   if (errors) {
     console.log('## error details', errors)
     return null
@@ -254,7 +259,7 @@ export const getPost = async (
   cacheLife('minutes')
 
   // cacheTag(CACHE_TAG.articlesCache(community, thread))
-  const response = await gqFetch(P.post, {
+  const { data, errors } = await gqFetchTyped(postQuery, {
     article: {
       innerId: id,
       community,
@@ -263,15 +268,13 @@ export const getPost = async (
     userHasLogin: false,
   })
 
-  const { data, errors } = await response.json()
-
   if (errors) {
-    // console.log('## error in fetching', P.community)
+    // console.log('## error in fetching', community)
     console.log('## error details', errors)
     return null
   }
 
-  return data.post
+  return data.post as unknown as TPost
 }
 
 export const getChangelog = async (community: string, id: string): Promise<TPost | null> => {
@@ -279,7 +282,7 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
   cacheLife('minutes')
 
   // cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
-  const response = await gqFetch(P.changelog, {
+  const { data, errors } = await gqFetchTyped(changelogQuery, {
     article: {
       innerId: id,
       community,
@@ -288,22 +291,20 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
     userHasLogin: false,
   })
 
-  const { data, errors } = await response.json()
-
   if (errors) {
-    // console.log('## error in fetching', P.community)
+    // console.log('## error in fetching', community)
     console.log('## error details', errors)
     return null
   }
 
-  return data.changelog
+  return data.changelog as unknown as TPost
 }
 
 export const getDoc = async (community: string, id: string): Promise<TDoc | null> => {
   'use cache'
   cacheLife('minutes')
 
-  const response = await gqFetch(P.doc, {
+  const { data, errors } = await gqFetchTyped(docQuery, {
     article: {
       innerId: id,
       community,
@@ -312,35 +313,28 @@ export const getDoc = async (community: string, id: string): Promise<TDoc | null
     userHasLogin: false,
   })
 
-  const { data, errors } = await response.json()
-
   if (errors) {
     console.log('## error details', errors)
     return null
   }
 
-  return data.doc
+  return data.doc as unknown as TDoc
 }
 
 export const getDocPublicTree = async (community: string): Promise<TDocPublicTree | null> => {
   'use cache'
   cacheLife('minutes')
 
-  const response = await gqFetch(P.docPublicTree, {
+  const { data, errors } = await gqFetchTyped(docPublicTree, {
     community,
   })
-
-  const { data, errors } = (await response.json()) as {
-    data?: TDocPublicTreeQuery
-    errors?: unknown
-  }
 
   if (errors || !data?.docPublicTree) {
     console.log('## error details doc public tree', errors)
     return null
   }
 
-  return data.docPublicTree
+  return data.docPublicTree as unknown as TDocPublicTree
 }
 
 export const getPagedComments = async (
@@ -352,7 +346,7 @@ export const getPagedComments = async (
   'use cache'
   cacheLife('minutes')
 
-  const response = await gqFetch(P.pagedComments, {
+  const { data, errors } = await gqFetchTyped(pagedComments, {
     article: {
       innerId: id,
       community,
@@ -362,12 +356,10 @@ export const getPagedComments = async (
     filter: { page, size: 30 },
   })
 
-  const { data, errors } = await response.json()
-
   if (errors) {
     console.log('## error details', errors)
     return null
   }
 
-  return data.pagedComments
+  return data.pagedComments as unknown as TPagedComments
 }

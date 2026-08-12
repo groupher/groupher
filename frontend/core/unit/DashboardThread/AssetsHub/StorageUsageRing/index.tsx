@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/assets'
 
 import type { TAssetStats } from '../spec'
 import { STORAGE_RING_CIRCUMFERENCE, STORAGE_RING_RADIUS } from './constant'

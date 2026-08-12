@@ -3,13 +3,17 @@
   "name": "assets-hub",
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-28",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "vars": {
     "ASSETS_PUBLIC_ENDPOINT": "https://assets.groupher.com",
-    "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
+    "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
+    "SERVICE_AUTH_ISSUER": "https://auth.groupher.com",
+    "SERVICE_AUTH_JWKS_URL": "https://auth.groupher.com/.well-known/jwks.json",
+    "SERVICE_AUTH_TOKEN_ENDPOINT": "https://auth.groupher.com/oauth2/token"
   },
   "secrets": {
-    "required": ["GROUPHER_SERVER_TRUST_SECRET"]
+    "required": ["ASSETS_HUB_CAPABILITY_SECRET", "SERVICE_AUTH_CLIENT_ID", "SERVICE_AUTH_CLIENT_SECRET"]
   },
   "r2_buckets": [
     {

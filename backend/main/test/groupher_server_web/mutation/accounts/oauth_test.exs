@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
   alias Accounts.Model.OauthProvider
 
-  @server_trust_secret "test-server-trust-secret"
+  @test_service_identity "enabled"
 
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"})
   @valid_twitter_profile mock_attrs(:oauth_profile, %{provider: "twitter"})
@@ -17,12 +17,11 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   setup do
     {:ok, user} = db_insert(:user)
 
-    user_conn = :user |> simu_conn(user) |> with_server_trust()
-    guest_conn = :guest |> simu_conn() |> with_server_trust()
-    untrusted_user_conn = simu_conn(:user, user)
+    user_conn = :user |> simu_conn(user) |> with_test_service_identity()
+    guest_conn = :guest |> simu_conn() |> with_test_service_identity()
     untrusted_guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn guest_conn untrusted_user_conn untrusted_guest_conn user)a}
+    {:ok, ~m(user_conn guest_conn untrusted_guest_conn user)a}
   end
 
   describe "[oauth signin]" do
@@ -41,7 +40,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
           provider_id: @valid_github_profile.provider_id
         )
 
-      assert oauth_provider.raw["login"] == @valid_github_profile.login
+      assert is_nil(oauth_provider.raw)
     end
 
     test "can signin oauth with google", ~m(guest_conn)a do
@@ -58,80 +57,15 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
           provider_id: @valid_google_profile.provider_id
         )
 
-      assert oauth_provider.raw["sub"] == @valid_google_profile.provider_id
+      assert is_nil(oauth_provider.raw)
     end
 
     test "can not signin oauth without server trust", ~m(untrusted_guest_conn)a do
       variables = %{provider: gql_oauth_provider(@valid_github_profile)}
 
-      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:server_trust))
+      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:service_identity))
     end
 
-    @query S.OAuth.m(:link_oauth)
-    test "can link oauth with twitter", ~m(user_conn user)a do
-      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
-
-      ret = user_conn |> gq_mutation(@query, variables)
-
-      assert ret["user"]["login"] == user.login
-
-      oauth_provider =
-        Repo.get_by(OauthProvider,
-          provider: @valid_twitter_profile.provider,
-          provider_id: @valid_twitter_profile.provider_id
-        )
-
-      assert oauth_provider.user_id == user.id
-      assert oauth_provider.raw["username"] == @valid_twitter_profile.login
-    end
-
-    test "can not link oauth with twitter with unlogged", ~m(guest_conn)a do
-      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
-
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
-    end
-
-    test "can not link oauth with invalid server trust", ~m(untrusted_user_conn)a do
-      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
-
-      invalid_trust_conn =
-        Plug.Conn.put_req_header(
-          untrusted_user_conn,
-          "x-groupher-server-trust",
-          "invalid-server-trust-secret"
-        )
-
-      assert invalid_trust_conn |> mutation_error?(@query, variables, ecode(:server_trust))
-    end
-
-    ##
-
-    @query S.OAuth.m(:unlink_oauth)
-    test "can unlink oauth with provider", ~m(user_conn user)a do
-      github_provider = @valid_github_profile |> Map.put(:login, user.login)
-      twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)
-
-      {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
-      {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
-
-      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
-
-      ret = user_conn |> gq_mutation(@query, variables)
-
-      assert ret["login"] == user.login
-    end
-
-    test "can not unlink oauth with provider when unlogged in", ~m(guest_conn user)a do
-      github_provider = @valid_github_profile |> Map.put(:login, user.login)
-      twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)
-
-      {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
-      {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
-
-      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
-
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
-    end
   end
 
   describe "[browser session refresh]" do
@@ -171,17 +105,66 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     end
   end
 
-  defp gql_oauth_provider(profile) do
-    profile =
-      case Map.get(profile, :raw) do
-        %{} = raw -> Map.put(profile, :raw, Jason.encode!(raw))
-        _ -> profile
-      end
+  describe "[canonical oauth accounts]" do
+    @link_query """
+    mutation($identity: VerifiedOauthIdentityInput!) {
+      linkOauthIdentity(identity: $identity) {
+        entries {
+          publicRef
+          provider
+          canUnlink
+        }
+      }
+    }
+    """
 
-    map_key_stringify(profile)
+    @unlink_query """
+    mutation($publicRef: ID!) {
+      unlinkOauthIdentity(publicRef: $publicRef) {
+        entries {
+          publicRef
+          provider
+          canUnlink
+        }
+      }
+    }
+    """
+
+    test "links and unlinks through the canonical public-ref contract", ~m(user_conn)a do
+      identity = %{
+        provider: @valid_twitter_profile.provider,
+        provider_id: @valid_twitter_profile.provider_id,
+        login: @valid_twitter_profile.login,
+        nickname: @valid_twitter_profile.nickname,
+        avatar: @valid_twitter_profile.avatar
+      }
+
+      linked = user_conn |> gq_mutation(@link_query, %{identity: identity})
+
+      assert [%{"publicRef" => public_ref, "provider" => "twitter", "canUnlink" => false}] =
+               linked["entries"]
+
+      github_identity = %{
+        provider: @valid_github_profile.provider,
+        provider_id: @valid_github_profile.provider_id,
+        login: @valid_github_profile.login,
+        nickname: @valid_github_profile.nickname,
+        avatar: @valid_github_profile.avatar
+      }
+
+      linked = user_conn |> gq_mutation(@link_query, %{identity: github_identity})
+      assert length(linked["entries"]) == 2
+
+      unlinked = user_conn |> gq_mutation(@unlink_query, %{publicRef: public_ref})
+      assert [%{"provider" => "github", "canUnlink" => false}] = unlinked["entries"]
+    end
   end
 
-  defp with_server_trust(conn) do
-    Plug.Conn.put_req_header(conn, "x-groupher-server-trust", @server_trust_secret)
+  defp gql_oauth_provider(profile) do
+    profile |> Map.drop([:raw, "raw"]) |> map_key_stringify()
+  end
+
+  defp with_test_service_identity(conn) do
+    Plug.Conn.put_req_header(conn, "x-groupher-test-service-identity", @test_service_identity)
   end
 end

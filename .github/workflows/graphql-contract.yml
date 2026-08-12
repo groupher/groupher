@@ -1,0 +1,88 @@
+name: GraphQL schema contract
+
+on:
+  pull_request:
+    paths:
+      - 'backend/main/**'
+      - 'frontend/core/schemas/**'
+      - 'frontend/core/schemas/fragments/**'
+      - 'frontend/core/unit/**'
+      - 'contracts/graphql/**'
+      - 'frontend/core/lib/graphql/**'
+      - 'codegen.ts'
+      - 'Makefile'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/graphql-contract.yml'
+  push:
+    paths:
+      - 'backend/main/**'
+      - 'frontend/core/schemas/**'
+      - 'frontend/core/schemas/fragments/**'
+      - 'frontend/core/unit/**'
+      - 'contracts/graphql/**'
+      - 'frontend/core/lib/graphql/**'
+      - 'codegen.ts'
+      - 'Makefile'
+      - 'package.json'
+      - 'yarn.lock'
+      - '.github/workflows/graphql-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: SDL freshness and Pages operations
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install JavaScript dependencies
+        run: yarn install --immutable
+
+      - name: Setup Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: '26.2'
+          elixir-version: '1.19.5'
+
+      - name: Install backend dependencies
+        working-directory: backend/main
+        run: mix deps.get
+
+      - name: Generate the backend SDL and mock-schema link
+        run: make be.gen.schema
+
+      - name: Fail when the checked-in SDL is stale
+        run: git diff --exit-code -- backend/main/schema.graphql
+
+      - name: Validate repository GraphQL invariants
+        run: yarn contract:graphql
+
+      - name: Validate Pages operations against the backend SDL
+        run: yarn vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/pages/pages.schema.test.ts
+
+      - name: Validate feature-local operations against the backend SDL
+        run: yarn vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/feature.schema.test.ts
+
+      - name: Rebuild and verify generated GraphQL artifacts
+        run: |
+          git ls-files --error-unmatch \
+            frontend/core/lib/graphql/generated/fragment-masking.ts \
+            frontend/core/lib/graphql/generated/gql.ts \
+            frontend/core/lib/graphql/generated/graphql.ts \
+            frontend/core/lib/graphql/generated/index.ts
+          yarn graphql:codegen
+          yarn contract:graphql:generated
+          git diff --exit-code -- frontend/core/lib/graphql/generated

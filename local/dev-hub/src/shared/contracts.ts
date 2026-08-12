@@ -1,4 +1,4 @@
-export type TServiceGroup = 'frontend' | 'backend'
+export type TServiceGroup = 'frontend' | 'backend' | 'infra'
 
 export type TTechnology =
   | 'absinthe'
@@ -40,6 +40,8 @@ export type TServiceStartPolicy = {
   optionalDependencies: string[]
 }
 
+export type TServiceReadiness = 'health-v1' | 'http-status' | 'port'
+
 export type TServiceEndpoint = {
   id: string
   label: string
@@ -71,6 +73,15 @@ export type TServiceLog = {
   chunk: string
 }
 
+export type TExternalProcessInfo = {
+  ports: number[]
+  processIds: number[]
+  processGroups: number[]
+  commands: string[]
+  workingDirectories: string[]
+  canStop: boolean
+}
+
 export type TMetricThresholds = {
   serverCpuPercent: number
   serverRssBytes: number
@@ -97,6 +108,7 @@ export type TPublicService = {
   startedAt: number | null
   endedAt: number | null
   exitCode: number | null
+  externalProcess?: TExternalProcessInfo | null
   canStart: boolean
   unavailableReason: string | null
   metricThresholds: TMetricThresholds

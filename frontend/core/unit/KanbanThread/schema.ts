@@ -1,9 +1,7 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-import { F } from '~/schemas'
-
-const groupedKanbanPosts = gql`
-  query groupedKanbanPosts($community: String!) {
+const groupedKanbanPosts = graphql(`
+  query GroupedKanbanPosts($community: String!) {
     groupedKanbanPosts(community: $community) {
       backlog {
         entries {
@@ -11,90 +9,94 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          community { slug }
+          community {
+            slug
+          }
           meta {
             thread
           }
           author {
-            ${F.author}
+            ...KanbanAuthorFields
           }
         }
-        ${F.pagi}
+        ...KanbanPageFields
       }
-
       todo {
         entries {
           innerId
           cat
           status
           title
-          community { slug }
+          community {
+            slug
+          }
           meta {
             thread
           }
           author {
-            ${F.author}
+            ...KanbanAuthorFields
           }
         }
-        ${F.pagi}
+        ...KanbanPageFields
       }
-
       wip {
         entries {
           innerId
           cat
           status
           title
-          community { slug }
+          community {
+            slug
+          }
           meta {
             thread
           }
           author {
-            ${F.author}
+            ...KanbanAuthorFields
           }
         }
-        ${F.pagi}
+        ...KanbanPageFields
       }
-
       done {
         entries {
           innerId
           cat
           status
           title
-          community { slug }
+          community {
+            slug
+          }
           meta {
             thread
           }
           author {
-            ${F.author}
+            ...KanbanAuthorFields
           }
         }
-        ${F.pagi}
+        ...KanbanPageFields
       }
-
       rejected {
         entries {
           innerId
           cat
           status
           title
-          community { slug }
+          community {
+            slug
+          }
           meta {
             thread
           }
           author {
-            ${F.author}
+            ...KanbanAuthorFields
           }
         }
-        ${F.pagi}
+        ...KanbanPageFields
       }
     }
   }
-`
+`)
 
-const schema = {
+export default {
   groupedKanbanPosts,
 }
-
-export default schema

@@ -1,44 +1,7 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-const markerFields = gql`
-  fragment docCoverMarkerFields on Marker {
-    type
-    provider
-    name
-    src
-    unified
-    appearance {
-      light {
-        color
-        bg
-      }
-      dark {
-        color
-        bg
-      }
-    }
-  }
-`
-
-const coverItemFields = gql`
-  fragment docCoverItemFields on DocCoverCardItem {
-    id
-    nodeId
-    docId
-    index
-    type
-    title
-    href
-    badge
-    leafCount
-    marker {
-      ...docCoverMarkerFields
-    }
-  }
-`
-
-const docCover = gql`
-  query ($community: String!, $view: DocCoverView = PUBLIC) {
+const docCover = graphql(`
+  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {
     docCover(community: $community, view: $view) {
       cards {
         id
@@ -47,7 +10,7 @@ const docCover = gql`
         appearance
         title
         items {
-          ...docCoverItemFields
+          ...DocCoverItemFields
         }
       }
       pinnedDocs {
@@ -68,9 +31,7 @@ const docCover = gql`
       }
     }
   }
-  ${markerFields}
-  ${coverItemFields}
-`
+`)
 
 const schema = {
   docCover,

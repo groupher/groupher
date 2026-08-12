@@ -47,6 +47,16 @@ export type TBrowserSessionSummary = {
   userAgentSummary?: string | null
 }
 
+export type TLinkedOauthAccount = {
+  publicRef: string
+  provider: string
+  login?: string | null
+  nickname?: string | null
+  avatar?: string | null
+  canUnlink: boolean
+  linkedAt: string
+}
+
 const REFRESHABLE_CODES = new Set(['TOKEN_EXPIRED', 'TOKEN_MISSING'])
 let refreshPromise: Promise<void> | null = null
 
@@ -185,6 +195,53 @@ export const revokeOtherSessions = async (): Promise<void> => {
     method: 'POST',
   })
   if (!response.ok) throw new Error(`Auth Session revoke failed with status ${response.status}.`)
+}
+
+export const listLinkedOauthAccounts = async (): Promise<TLinkedOauthAccount[]> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/accounts`, { credentials: 'include' })
+  if (!response.ok) throw await requestError(response, 'Auth account list')
+
+  const payload = (await response.json()) as { accounts?: unknown }
+  if (!Array.isArray(payload.accounts)) throw new Error('Auth returned invalid linked accounts.')
+  return payload.accounts as TLinkedOauthAccount[]
+}
+
+/** Starts a provider-link flow through Auth and navigates to the provider. */
+export const beginLinkedOauthAccount = async (
+  provider: string,
+  returnTo = typeof window !== 'undefined' ? window.location.href : '',
+): Promise<void> => {
+  const response = await fetch(`${AUTH_ENDPOINT}/accounts/${encodeURIComponent(provider)}/link`, {
+    body: JSON.stringify({ returnTo }),
+    credentials: 'include',
+    headers: { ...stateChangeHeaders(), 'content-type': 'application/json' },
+    method: 'POST',
+  })
+  if (!response.ok) throw await requestError(response, 'Auth account link')
+
+  const payload = (await response.json()) as { authorizationUrl?: unknown }
+  if (typeof payload.authorizationUrl !== 'string' || !payload.authorizationUrl) {
+    throw new Error('Auth returned an invalid provider authorization URL.')
+  }
+  window.location.assign(payload.authorizationUrl)
+}
+
+export const unlinkLinkedOauthAccount = async (
+  publicRef: string,
+): Promise<TLinkedOauthAccount[]> => {
+  const response = await fetch(
+    `${AUTH_ENDPOINT}/accounts/${encodeURIComponent(publicRef)}/unlink`,
+    {
+      credentials: 'include',
+      headers: stateChangeHeaders(),
+      method: 'POST',
+    },
+  )
+  if (!response.ok) throw await requestError(response, 'Auth account unlink')
+
+  const payload = (await response.json()) as { accounts?: unknown }
+  if (!Array.isArray(payload.accounts)) throw new Error('Auth returned invalid linked accounts.')
+  return payload.accounts as TLinkedOauthAccount[]
 }
 
 export const resolveAuthFailure = (

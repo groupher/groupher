@@ -1,66 +1,66 @@
-import { gql } from 'urql'
+import { graphql } from '~/graphql/authoring'
 
-import { F } from '~/schemas'
-
-const updatePost = gql`
-  mutation ($article: ArticlePathInput!, $title: String, $communityTags: [ID]) {
+const updatePost = graphql(`
+  mutation UpdatePostFromMenu($article: ArticlePathInput!, $title: String, $communityTags: [ID]) {
     updatePost(article: $article, title: $title, communityTags: $communityTags) {
       innerId
       title
       communityTags {
-        ${F.tag}
+        ...ArticleMenuTagFields
       }
     }
   }
-`
-const setPostCat = gql`
-  mutation ($article: ArticlePathInput!, $cat: ArticleCatEnum!) {
+`)
+
+const setPostCat = graphql(`
+  mutation SetPostCat($article: ArticlePathInput!, $cat: ArticleCatEnum!) {
     setPostCat(article: $article, cat: $cat) {
       innerId
       cat
     }
   }
-`
-const setPostStatus = gql`
-  mutation ($article: ArticlePathInput!, $status: ArticleStatusEnum!) {
+`)
+
+const setPostStatus = graphql(`
+  mutation SetPostStatus($article: ArticlePathInput!, $status: ArticleStatusEnum!) {
     setPostStatus(article: $article, status: $status) {
       innerId
       status
     }
   }
-`
+`)
 
-const pinPost = gql`
-  mutation ($article: ArticlePathInput!) {
+const pinPost = graphql(`
+  mutation PinPost($article: ArticlePathInput!) {
     pinPost(article: $article) {
       innerId
     }
   }
-`
+`)
 
-const undoPinPost = gql`
-  mutation ($article: ArticlePathInput!) {
+const undoPinPost = graphql(`
+  mutation UndoPinPost($article: ArticlePathInput!) {
     undoPinPost(article: $article) {
       innerId
       isPinned
     }
   }
-`
+`)
 
-const communityTagGroups = gql`
-  query ($community: String!, $thread: Thread) {
+const communityTagGroups = graphql(`
+  query CommunityTagGroupsForMenu($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
       title
       index
       tags {
-        ${F.tag}
+        ...ArticleMenuTagFields
       }
     }
   }
-`
+`)
 
-const schema = {
+export default {
   updatePost,
   setPostCat,
   setPostStatus,
@@ -68,5 +68,3 @@ const schema = {
   undoPinPost,
   communityTagGroups,
 }
-
-export default schema

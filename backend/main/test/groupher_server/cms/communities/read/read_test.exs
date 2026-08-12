@@ -30,6 +30,17 @@ defmodule GroupherServer.Test.CMS.Communities.Read do
       assert community.views == 0
     end
 
+    test "denied viewer reads do not inc views", ~m(community user2)a do
+      Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
+      |> CMS.Model.CommunityLifecycle.changeset(%{state: :suspended})
+      |> Repo.update!()
+
+      assert {:error, {:not_exist, "Community"}} =
+               CMS.Communities.read(community.slug, user2)
+
+      assert Repo.get!(CMS.Model.Community, community.id).views == 0
+    end
+
     test "read subscribed community should have a flag", ~m(community user user2)a do
       {:ok, _} = CMS.Communities.subscribe(community, user)
 

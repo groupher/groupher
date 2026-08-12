@@ -93,6 +93,7 @@ export function FlowServiceNode({ data }: TFlowNodeProps) {
         onOpenMetrics={data.onOpenMetrics}
         onOpenConfig={data.onOpenConfig}
         onOpenDependencies={data.onOpenDependencies}
+        onOpenExternal={data.onOpenExternal}
       />
       {data.outgoingRelationIds.map((relationId, index) =>
         renderRelationHandle(relationId, index, data.outgoingRelationIds.length, 'source'),

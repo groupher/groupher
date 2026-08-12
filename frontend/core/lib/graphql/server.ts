@@ -1,3 +1,4 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 import { print, type DocumentNode } from 'graphql'
 import { headers } from 'next/headers'
@@ -43,6 +44,11 @@ const postGraphQL = async (
   })
 }
 
+export type TGraphQLPayload<TData> = {
+  data?: TData
+  errors?: Array<{ message?: string }>
+}
+
 /**
  * Sends a server-side GraphQL POST to Phoenix.
  *
@@ -51,7 +57,7 @@ const postGraphQL = async (
  *
  * @example
  * ```ts
- * const response = await gqFetch(P.community, {
+ * const response = await gqFetch(communityQuery, {
  *   slug: 'home',
  *   userHasLogin: false,
  * })
@@ -63,6 +69,38 @@ export const gqFetch = async (
   variables?: Record<string, unknown>,
 ): Promise<Response> => {
   return postGraphQL(query, variables)
+}
+
+/**
+ * Typed SSR boundary for migrated operations.
+ *
+ * The transport still returns the raw GraphQL envelope, but the document
+ * controls both the variables accepted at the call site and the result type
+ * carried by `data`. Legacy string queries continue to use `gqFetch`.
+ */
+export const gqFetchTyped = async <TResult, TVariables extends Record<string, unknown>>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+): Promise<TGraphQLPayload<TResult>> => {
+  const response = await gqFetch(query, variables)
+
+  return (await response.json()) as TGraphQLPayload<TResult>
+}
+
+/**
+ * Typed request-aware SSR boundary for migrated operations.
+ *
+ * Like `gqFetchTyped`, this keeps variables and results tied to the document
+ * while preserving the existing request-cookie behavior of `gqAuthFetch`.
+ * Callers must keep it outside `"use cache"` scopes.
+ */
+export const gqAuthFetchTyped = async <TResult, TVariables extends Record<string, unknown>>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+): Promise<TGraphQLPayload<TResult>> => {
+  const response = await gqAuthFetch(query, variables)
+
+  return (await response.json()) as TGraphQLPayload<TResult>
 }
 
 /**

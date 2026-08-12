@@ -41,13 +41,30 @@ const StatusSetting: FC<TProps> = ({ onBack }) => {
   }, [article.status])
 
   const handleStatus = () => {
+    const graphQLStatus =
+      status === ARTICLE_STATUS.FIXED
+        ? ARTICLE_STATUS.DONE
+        : status === ARTICLE_STATUS.SOLVED
+          ? ARTICLE_STATUS.RESOLVED
+          : status
     const params = {
       article: {
         innerId: article.innerId,
         community: article.community?.slug,
         thread: article.meta.thread,
       },
-      status,
+      status: graphQLStatus as
+        | 'BACKLOG'
+        | 'DEFAULT'
+        | 'DONE'
+        | 'REJECT'
+        | 'REJECT_DUP'
+        | 'REJECT_NO_PLAN'
+        | 'REJECT_REPRO'
+        | 'REJECT_STALE'
+        | 'RESOLVED'
+        | 'TODO'
+        | 'WIP',
     }
 
     setPostStatus(params).then((result) => {

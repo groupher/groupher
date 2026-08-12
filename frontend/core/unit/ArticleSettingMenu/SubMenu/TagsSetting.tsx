@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'urql'
 import { THREAD } from '~/const/thread'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { updateViewingArticle } from '~/signal'
-import type { TColorName, TID, TTag, TTagGroup } from '~/spec'
+import type { TColorName, TID, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Checker from '~/ui/Checker'
 import TagNode from '~/ui/TagNode'
@@ -40,7 +40,8 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   })
   const [updatePostRes, updatePost] = useMutation(S.updatePost)
 
-  const tags = result.data?.communityTagGroups?.flatMap((group: TTagGroup) => group.tags) || []
+  const tags = (result.data?.communityTagGroups?.flatMap((group) => group.tags) ||
+    []) as unknown as TTag[]
 
   useEffect(() => {
     const originTags = article.communityTags || []
@@ -72,7 +73,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
         toast('修改失败', 'error')
       } else {
         toast('修改完成')
-        const newTags = res.data.updatePost.communityTags
+        const newTags = res.data.updatePost.communityTags as unknown as TTag[]
         setChecked(newTags.map((item) => item.id))
         updateViewingArticle({ id: article.id, communityTags: newTags })
         resetTouched()

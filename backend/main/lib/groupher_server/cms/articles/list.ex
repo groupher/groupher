@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.CanCan
+  alias CMS.Gate
   alias CMS.Dashboard.KanbanBoards
   alias CMS.FrontDesk
   alias CMS.Artiment.Enums
@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Articles.List do
     %{page: page, size: size} = filter
     flags = %{pending: :legal}
 
-    with {:ok, _thread} <- CanCan.allow_thread(Map.get(filter, :community), thread),
+    with {:ok, _thread} <- Gate.allow_thread(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
       |> CMS.Articles.active_scope(thread)

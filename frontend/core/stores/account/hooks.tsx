@@ -14,13 +14,6 @@ import { StoreContext } from './context'
 
 const useBaseStore = createStoreHook(StoreContext)
 
-type TSessionStateQuery = {
-  sessionState?: {
-    isValid?: boolean | null
-    user?: TUser | null
-  } | null
-}
-
 // This reads only the non-sensitive hint cookie. The real Phoenix token remains
 // HttpOnly and is consumed by the same-origin GraphQL proxy when `me` is sent.
 const hasSignedInHintCookie = (): boolean => {
@@ -35,13 +28,9 @@ const hasSignedInHintCookie = (): boolean => {
 export default function Hooks() {
   const storeHook = useBaseStore()
   const store = storeHook.live$
-  const shouldFetchMe = hasSignedInHintCookie()
+  const shouldFetchMe = store.loading && hasSignedInHintCookie()
 
-  const { data, loading, error } = useQuery<TSessionStateQuery>(
-    sessionState,
-    {},
-    { pause: !shouldFetchMe },
-  )
+  const { data, loading, error } = useQuery(sessionState, {}, { pause: !shouldFetchMe })
 
   // Keep client state in sync during logout before the next refresh lands.
   // Without this, auth-sensitive widgets can briefly render the old login state.
@@ -68,7 +57,14 @@ export default function Hooks() {
 
     if (!loading) {
       store.commit({
-        user: data?.sessionState?.isValid ? data.sessionState.user : null,
+        user: data?.sessionState?.isValid
+          ? data.sessionState.user
+            ? {
+                ...data.sessionState.user,
+                passport: data.sessionState.user.passport as TUser['passport'],
+              }
+            : null
+          : null,
       })
     }
   }, [shouldFetchMe, loading, error, data, store])

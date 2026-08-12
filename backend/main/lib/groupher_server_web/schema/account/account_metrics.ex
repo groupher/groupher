@@ -45,8 +45,8 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
   input_object :oauth_provider_input do
     field(:provider, non_null(:string))
     field(:provider_id, non_null(:string))
-    field(:login, non_null(:string))
-    field(:avatar, non_null(:string))
+    field(:login, :string)
+    field(:avatar, :string)
     field(:nickname, :string)
     field(:email, :string)
     field(:locale, :string)
@@ -55,7 +55,21 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
     field(:country, :string)
     field(:city, :string)
     field(:company, :string)
-    field(:raw, :json)
+  end
+
+  input_object :verified_oauth_identity_input do
+    field(:provider, non_null(:string))
+    field(:provider_id, non_null(:string))
+    field(:login, :string)
+    field(:nickname, :string)
+    field(:avatar, :string)
+    field(:email, :string)
+    field(:locale, :string)
+    field(:link, :string)
+    field(:bio, :string)
+    field(:country, :string)
+    field(:city, :string)
+    field(:company, :string)
   end
 
   # see: https://github.com/absinthe-graphql/absinthe/issues/206

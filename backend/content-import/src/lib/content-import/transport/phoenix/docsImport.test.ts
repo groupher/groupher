@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   SOURCE_ANALYSIS_SCHEMA_VERSION,
@@ -36,6 +36,23 @@ const sourceInfo: TSourceInfo = {
 }
 
 describe('Docs import GraphQL Json variables', () => {
+  beforeEach(() => {
+    vi.stubEnv('SERVICE_AUTH_CLIENT_ID', 'content-import-test')
+    vi.stubEnv('SERVICE_AUTH_CLIENT_SECRET', 'content-import-secret')
+    vi.stubEnv('SERVICE_AUTH_TOKEN_ENDPOINT', 'https://auth.test/oauth2/token')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({ access_token: 'service-token', expires_in: 600, token_type: 'Bearer' }),
+      ),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
+  })
+
   it('encodes SourceTree objects as the backend Json scalar string input', async () => {
     const requests: Array<Record<string, unknown>> = []
     const fetchImpl: typeof fetch = async (_input, init) => {
@@ -59,7 +76,7 @@ describe('Docs import GraphQL Json variables', () => {
     const target = await previewDocImportTarget('home', sourceInfo, analysis, {
       fetchImpl,
       graphqlEndpoint: 'https://example.test/graphql',
-      serverTrustSecret: 'server-trust',
+      serviceIdentity: 'service:content-import',
     })
     await startDocImport(
       'home',
@@ -81,13 +98,13 @@ describe('Docs import GraphQL Json variables', () => {
         backendToken: 'backend-token',
         fetchImpl,
         graphqlEndpoint: 'https://example.test/graphql',
-        serverTrustSecret: 'server-trust',
+        serviceIdentity: 'service:content-import',
       },
     )
     await cancelDocImport('home', 'job-1', {
       fetchImpl,
       graphqlEndpoint: 'https://example.test/graphql',
-      serverTrustSecret: 'server-trust',
+      serviceIdentity: 'service:content-import',
     })
 
     expect(requests).toHaveLength(3)

@@ -52,25 +52,6 @@ const makeTokens = ({
 })
 
 describe('useTopGlow', () => {
-  it('disables glow in APPLY_COMMUNITY metric', () => {
-    const wrapper = makeStoreWrapper({
-      metric: METRIC.APPLY_COMMUNITY,
-      dashboard: {
-        themeTokens: makeTokens({
-          lightGlowType: 'x',
-          darkGlowType: 'GREY_GREEN',
-          lightGlowOpacity: 65,
-          darkGlowOpacity: 80,
-        }),
-      },
-    })
-
-    const { result } = renderHook(() => useTopGlow(), { wrapper })
-
-    expect(result.current.glowType).toBeNull()
-    expect(result.current.glowFixed).toBe(false)
-  })
-
   it('disables glow on landing when wallpaper is not AMBER_MAUVE', () => {
     const wrapper = makeStoreWrapper({
       metric: METRIC.LANDING,

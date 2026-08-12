@@ -1,61 +1,62 @@
-import F from '../fragments'
+import { graphql } from '~/graphql/authoring'
 
-export const post = `
-  query post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+export const post = graphql(`
+  query Post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     post(article: $article) {
-      ${F.article}
-      ${F.articleDetail}
+      ...PagePostFields
+      ...PagePostDetailFields
     }
   }
-`
-export const pagedPosts = `
-  query($filter: PagedPostsFilter!, $userHasLogin: Boolean!) {
+`)
+
+export const pagedPosts = graphql(`
+  query PagedPosts($filter: PagedPostsFilter!, $userHasLogin: Boolean!) {
     pagedPosts(filter: $filter) {
       entries {
-        ${F.article}
+        ...PagePostFields
         cat
         status
         meta {
           thread
           latestUpvotedUsers {
-            ${F.author}
+            ...PageCommonUserFields
           }
         }
         digest
         commentsParticipants {
-          ${F.author}
+          ...PageAuthorFields
         }
         viewerHasViewed @include(if: $userHasLogin)
         viewerHasUpvoted @include(if: $userHasLogin)
       }
-      ${F.pagi}
+      ...PagePostPageInfo
     }
   }
-`
+`)
 
-export const pagedPublishedPosts = `
-  query($login: String!, $filter: PagiFilter!, $userHasLogin: Boolean!) {
+export const pagedPublishedPosts = graphql(`
+  query PagedPublishedPosts($login: String!, $filter: PagiFilter!, $userHasLogin: Boolean!) {
     pagedPublishedPosts(login: $login, filter: $filter) {
       entries {
-        ${F.article}
+        ...PagePostFields
         meta {
           thread
         }
         digest
         linkAddr
         commentsParticipants {
-          ${F.author}
+          ...PageAuthorFields
         }
         viewerHasViewed @include(if: $userHasLogin)
         viewerHasUpvoted @include(if: $userHasLogin)
       }
-      ${F.pagi}
+      ...PagePostPageInfo
     }
   }
-`
+`)
 
-export const groupedKanbanPosts = `
-  query groupedKanbanPosts($community: String!) {
+export const groupedKanbanPosts = graphql(`
+  query PagesGroupedKanbanPosts($community: String!) {
     groupedKanbanPosts(community: $community) {
       backlog {
         entries {
@@ -70,12 +71,11 @@ export const groupedKanbanPosts = `
             thread
           }
           author {
-            ${F.author}
+            ...PageAuthorFields
           }
         }
-        ${F.pagi}
+        ...PagePostPageInfo
       }
-
       todo {
         entries {
           innerId
@@ -89,12 +89,11 @@ export const groupedKanbanPosts = `
             thread
           }
           author {
-            ${F.author}
+            ...PageAuthorFields
           }
         }
-        ${F.pagi}
+        ...PagePostPageInfo
       }
-
       wip {
         entries {
           innerId
@@ -108,12 +107,11 @@ export const groupedKanbanPosts = `
             thread
           }
           author {
-            ${F.author}
+            ...PageAuthorFields
           }
         }
-        ${F.pagi}
+        ...PagePostPageInfo
       }
-
       done {
         entries {
           innerId
@@ -127,12 +125,11 @@ export const groupedKanbanPosts = `
             thread
           }
           author {
-            ${F.author}
+            ...PageAuthorFields
           }
         }
-        ${F.pagi}
+        ...PagePostPageInfo
       }
-
       rejected {
         entries {
           innerId
@@ -146,11 +143,11 @@ export const groupedKanbanPosts = `
             thread
           }
           author {
-            ${F.author}
+            ...PageAuthorFields
           }
         }
-        ${F.pagi}
+        ...PagePostPageInfo
       }
     }
   }
-`
+`)

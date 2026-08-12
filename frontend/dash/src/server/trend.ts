@@ -1,3 +1,4 @@
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { createServerFn } from '@tanstack/react-start'
 
 import {
@@ -7,10 +8,6 @@ import {
 import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
-
-type TAnalysisTrendsQueryData = {
-  analysisTrendsOverview: TAnalysisTrendsOverview | null
-}
 
 export type TDashTrendOverview = {
   community: string
@@ -24,7 +21,7 @@ export const loadTrendOverview = createServerFn({ method: 'GET', strict: false }
     setPrivateCacheHeader()
 
     try {
-      const result = await fetchGraphQL<TAnalysisTrendsQueryData>(
+      const result = await fetchGraphQL<ResultOf<typeof ANALYSIS_TRENDS_OVERVIEW_QUERY>>(
         ANALYSIS_TRENDS_OVERVIEW_QUERY,
         { community: data.community, days: 7 },
         token,
@@ -34,7 +31,7 @@ export const loadTrendOverview = createServerFn({ method: 'GET', strict: false }
       return {
         community: data.community,
         data:
-          result.data?.analysisTrendsOverview ||
+          (result.data?.analysisTrendsOverview as unknown as TAnalysisTrendsOverview | null) ||
           unavailableOverview(
             errors.map((error) => ({
               code: 'graphql_error',

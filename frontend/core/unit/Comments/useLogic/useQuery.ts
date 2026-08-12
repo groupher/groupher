@@ -4,7 +4,7 @@ import { ANCHOR } from '~/const/dom'
 import { scrollIntoEle } from '~/dom'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import type { TComment, TEmotion, TEmotionType, TID } from '~/spec'
+import type { TComment, TEmotion, TEmotionRawType, TEmotionType, TID, TPagedComments } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import { isWordsCountValid } from '~/ui/WordsCounter/helper'
@@ -129,7 +129,11 @@ export default function useQuery(): TRet {
         if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticlePath)) return
 
         repliesPagiNo = {}
-        commentsStore.commit({ pagedComments, loading: false, initialized: true })
+        commentsStore.commit({
+          pagedComments: pagedComments as unknown as TPagedComments,
+          loading: false,
+          initialized: true,
+        })
 
         if (commentsStore.needRefreshState) {
           loadCommentsState()
@@ -174,7 +178,7 @@ export default function useQuery(): TRet {
     query(S.pagedCommentReplies, params).then(({ pagedCommentReplies }) => {
       if (shouldIgnoreResult(requestId, repliesRequestRef, requestArticlePath)) return
 
-      addToReplies(innerId, pagedCommentReplies.entries)
+      addToReplies(innerId, pagedCommentReplies.entries as unknown as TComment[])
 
       repliesPagiNo[innerId] = pagedCommentReplies.pageNumber
       commentsStore.commit({
@@ -225,7 +229,7 @@ export default function useQuery(): TRet {
     viewerHasReacted: boolean,
   ): void => {
     const commentPath = buildCommentPath(comment)
-    const emotion = name.toUpperCase()
+    const emotion = name.toUpperCase() as Exclude<TEmotionRawType, 'UPVOTE'>
     const nextEmotions = updateEmotionState(comment.emotions || [], name, !viewerHasReacted)
 
     if (viewerHasReacted) {

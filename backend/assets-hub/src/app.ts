@@ -28,6 +28,10 @@ const json = jsonResponse
 const uploadExpiresInSeconds = 10 * 60
 const defaultCorsOrigins = [
   'http://localhost:3003',
+  'http://groupher.localhost:3003',
+  'https://groupher.localhost',
+  'http://apply.groupher.localhost',
+  'https://apply.groupher.localhost',
   'http://dashboard.groupher.localhost',
   'https://dashboard.groupher.localhost',
 ]
@@ -164,9 +168,9 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
       })
 
       logUpload('asset_upload_presigned', {
-        assetPublicRef: capability.assetPublicRef,
-        communityId: capability.communityId,
-        communitySlug: capability.communitySlug,
+        assetPublicRef: capability.purpose === 'asset.upload' ? capability.assetPublicRef : null,
+        communityId: capability.purpose === 'asset.upload' ? capability.communityId : null,
+        communitySlug: capability.purpose === 'asset.upload' ? capability.communitySlug : null,
         contentType: capability.declaredMimeType,
         filename: capability.declaredFilename,
         objectKey: capability.objectKey,
@@ -177,7 +181,7 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
       return json({
         ok: true,
         result: {
-          assetPublicRef: capability.assetPublicRef,
+          assetPublicRef: capability.purpose === 'asset.upload' ? capability.assetPublicRef : null,
           objectKey: capability.objectKey,
           upload: {
             headers: {
@@ -254,10 +258,10 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
       )
 
       logUpload('asset_upload_finalized', {
-        assetId: asset.id,
-        assetPublicRef: capability.assetPublicRef,
-        communityId: capability.communityId,
-        communitySlug: capability.communitySlug,
+        assetId: 'id' in asset ? asset.id : null,
+        assetPublicRef: capability.purpose === 'asset.upload' ? capability.assetPublicRef : null,
+        communityId: capability.purpose === 'asset.upload' ? capability.communityId : null,
+        communitySlug: capability.purpose === 'asset.upload' ? capability.communitySlug : null,
         contentHash,
         contentType: capability.declaredMimeType,
         filename: capability.declaredFilename,

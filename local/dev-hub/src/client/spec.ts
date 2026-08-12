@@ -8,4 +8,5 @@ export type THubDrawer =
   | { kind: 'metrics'; serviceId: string }
   | { kind: 'config'; serviceId: string }
   | { kind: 'dependencies'; serviceId: string }
+  | { kind: 'external'; serviceId: string }
   | null

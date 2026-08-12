@@ -4,7 +4,7 @@ import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '@dash/util
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
-import '../styles/global.css'
+import '../../../core/tailwind/global.css'
 import { InitialNowProvider } from '~/hooks/useInitialNow'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'

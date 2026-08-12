@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
       GraphQL field
           -> middleware(M.Passport, action: "...")
-          -> PermissionRegistry.requirement(action)
+          -> Gate.Passport.Registry.requirement(action)
           -> resolve_grant(requirement, resolution)
           -> read cur_user.cur_passport
           -> match grant in proper context scope
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.Comment
-  alias Helper.PermissionRegistry
+  alias GroupherServer.CMS.Gate.Passport.Registry
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
@@ -66,7 +66,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp authorize_action(resolution, action, opts) do
-    case PermissionRegistry.requirement(action) do
+    case Registry.requirement(action) do
       {:ok, requirement} ->
         case maybe_put_article_path(resolution, opts) do
           {:ok, resolution} -> check_requirement(resolution, requirement)
@@ -141,7 +141,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp fetch_cur_passport(_), do: {:error, :missing_passport}
 
   defp has_permission?(cur_passport, resolution, requirement) do
-    normalized_passport = PermissionRegistry.normalize_rules(cur_passport)
+    normalized_passport = Registry.normalize_rules(cur_passport)
 
     has_god_permission?(normalized_passport) or
       check_scope_permission(normalized_passport, resolution, requirement)

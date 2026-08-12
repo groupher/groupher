@@ -6,7 +6,7 @@ import { GRAPHQL_FETCH_OPTIONS } from '~/graphql/client'
 import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import useDocsEditor from '../../store/hooks'
 import { composeLoadedDraftSession } from '../helper'

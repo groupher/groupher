@@ -206,11 +206,15 @@ Press / Fly secrets
   PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
   DATABASE_URL=<production PostgreSQL connection>
   METRIC_IP_SALT=<secret>
-  PRESS_INTERNAL_TOKEN=<shared secret>
+  SERVICE_AUTH_TOKEN_ENDPOINT=https://auth.groupher.com/oauth2/token
+  SERVICE_AUTH_CLIENT_ID=<press client id>
+  SERVICE_AUTH_CLIENT_SECRET=<press client secret>
 
 Phoenix / Fly secrets
   PRESS_INTERNAL_URL=https://press.groupher.com
-  PRESS_INTERNAL_TOKEN=<same shared secret>
+  SERVICE_AUTH_TOKEN_ENDPOINT=https://auth.groupher.com/oauth2/token
+  SERVICE_AUTH_CLIENT_ID=<phoenix client id>
+  SERVICE_AUTH_CLIENT_SECRET=<phoenix client secret>
 
 Landing / Cloudflare Pages variables
   PRESS_SITE=https://press.groupher.com

@@ -22,10 +22,12 @@ export type TPlatformSearch = Record<string, TPlatformSearchValue>
 export type TRouteTarget = TDsbRouteTarget
 
 export type TPlatformLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
-  href: string
+  href?: string
+  route?: TRouteTarget
   prefetch?: boolean
   replace?: boolean
   scroll?: boolean
+  preserveSearch?: boolean
 }
 
 export type TPlatformImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> & {

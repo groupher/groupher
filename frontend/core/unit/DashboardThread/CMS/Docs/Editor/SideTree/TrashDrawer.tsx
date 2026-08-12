@@ -7,7 +7,7 @@ import FileTextSVG from '~/icons/FileText'
 import RotateSVG from '~/icons/Rotate'
 import BaseDrawer from '~/ui/Drawer'
 import { toast } from '~/ui/Toaster'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
 import { reloadDocPublishChecklist } from '../helper'
 import { SIDE_TREE_NODE_TYPE } from './constant'

@@ -1,6 +1,3 @@
-import { gql } from 'urql'
-
-import { F } from '~/schemas'
 import { thread2Path } from '~/utils/thread'
 
 import { setTag as setTagMutation, unsetTag as unsetTagMutation } from '../../schemas/pages/action'
@@ -17,24 +14,16 @@ const ARTICLE_SCHEMA = {
 const getArticle = (thread) => {
   const schema = ARTICLE_SCHEMA[thread2Path(thread)]
 
-  return gql`
-    ${schema}
-  `
+  return schema
 }
 
-const setTag = gql`
-  ${setTagMutation}
-`
-const unsetTag = gql`
-  ${unsetTagMutation}
-`
+const setTag = setTagMutation
+const unsetTag = unsetTagMutation
 
 const schema = {
   setTag,
   unsetTag,
   getArticle,
-  getUpvote: F.getUpvote,
-  getUndoUpvote: F.getUndoUpvote,
 }
 
 export default schema

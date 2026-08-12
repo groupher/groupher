@@ -3,12 +3,12 @@ import type { ReactNode } from 'react'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import SidebarIcon from '~/icons/dsb/Sidebar'
-import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { dsbRoutes, Link, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import ActiveMark from './ActiveMark'
 import type { TSubMenuItem, TSubMenuScope } from './constant'
-import useSalon, { cn } from './salon/doc'
+import useSalon, { cnMerge } from './salon/doc'
 import SubMenuBack from './SubMenuBack'
 
 type TProps = {
@@ -80,22 +80,19 @@ export default function SubMenu({
         {items.map((item) => {
           const isActive = item.slug === activeSlug
           const section = item.path ? `${baseRoute}/${item.path}` : baseRoute
-          const target = dsbRoutes.section({
+          const route = dsbRoutes.section({
             community: currentCommunity,
             section,
           })
           const endSlot = endSlots?.[item.slug]
 
           return (
-            <button
-              type='button'
+            <Link
               key={item.slug}
-              className={cn(s.item, isActive && s.itemActive)}
-              onClick={() =>
-                navi.to(target, {
-                  preserveSearch: true,
-                })
-              }
+              route={route}
+              className={cnMerge(s.item, isActive && s.itemActive)}
+              aria-current={isActive ? 'page' : undefined}
+              preserveSearch
             >
               {isActive && (
                 <ActiveMark
@@ -108,7 +105,7 @@ export default function SubMenu({
               {endSlot !== undefined && endSlot !== null && (
                 <span className={s.itemEnd}>{endSlot}</span>
               )}
-            </button>
+            </Link>
           )
         })}
       </div>

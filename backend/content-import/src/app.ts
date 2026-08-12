@@ -1,16 +1,21 @@
-import { createHash } from 'node:crypto'
-
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
+import {
+  bearerToken,
+  createServiceTokenVerifier,
+  serviceTokenErrorStatus,
+  type TServiceTokenVerifier,
+} from '@groupher/service/auth'
 import { createHealthResponse } from '@groupher/service/health'
-import { hasCronSecret, jsonResponse, readBearerToken } from '@groupher/service/http'
+import { jsonResponse } from '@groupher/service/http'
 import { Hono } from 'hono'
 
 import { getPreviewStore, sweepExpiredPreviews } from './lib/content-import/core/preview-store'
+import { resolveDelegationSubject } from './lib/groupherGraphql'
 
 type TAuthenticatedOptions = {
   backendToken: string
   previewSecret: string
-  serverTrustSecret: string
+  serviceIdentity: string
   userRef: string
 }
 
@@ -23,13 +28,13 @@ type THandlers = {
   cancelPreview: (
     previewRef: string,
     community: string,
-    owner: Pick<TAuthenticatedOptions, 'serverTrustSecret' | 'userRef'>,
+    owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
   ) => Promise<Response>
   createPreview: (request: Request, options: TAuthenticatedOptions) => Promise<Response>
   getPreview: (
     previewRef: string,
     community: string,
-    owner: Pick<TAuthenticatedOptions, 'serverTrustSecret' | 'userRef'>,
+    owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
   ) => Promise<Response>
   sweepExpiredPreviews: () => Promise<number>
 }
@@ -37,6 +42,8 @@ type THandlers = {
 type TOptions = {
   environment?: Record<string, string | undefined>
   handlers?: Partial<THandlers>
+  resolveDelegationSubject?: (backendToken: string) => Promise<string | null>
+  serviceTokenVerifier?: TServiceTokenVerifier
 }
 
 const missingHandler = (name: string) => async (): Promise<Response> =>
@@ -61,18 +68,17 @@ const defaultHandlers = {
 
 const json = jsonResponse
 
-const tokenUserRef = (backendToken: string) =>
-  createHash('sha256').update(backendToken).digest('base64url').slice(0, 32)
-
-const hasTrustedProxyHeader = (request: Request, serverTrustSecret: string): boolean =>
-  request.headers.get(GROUPHER_SERVER_TRUST_HEADER)?.trim() === serverTrustSecret
-
-const resolveAuthOptions = (
+const resolveAuthOptions = async (
   request: Request,
   environment: Record<string, string | undefined>,
-): TAuthenticatedOptions | Response => {
-  const backendToken =
-    readBearerToken(request) || request.headers.get('x-groupher-backend-token') || ''
+  verifier: TServiceTokenVerifier,
+  resolveSubject: (backendToken: string) => Promise<string | null>,
+): Promise<TAuthenticatedOptions | Response> => {
+  const serviceToken = bearerToken(request.headers.get('authorization') || undefined)
+  const delegatedAuthorization = request.headers.get(GROUPHER_USER_AUTHORIZATION_HEADER)
+  const backendToken = delegatedAuthorization?.startsWith('Bearer ')
+    ? delegatedAuthorization.slice(7).trim()
+    : ''
   if (!backendToken.trim()) {
     return json(
       {
@@ -83,9 +89,22 @@ const resolveAuthOptions = (
     )
   }
 
+  if (!serviceToken) return json({ error: { code: 'unauthorized' }, ok: false }, 401)
+  try {
+    const actor = await verifier.verify(serviceToken, 'docs:import:proxy')
+    if (actor.subject !== 'service:dashboard') {
+      return json({ error: { code: 'forbidden' }, ok: false }, 403)
+    }
+  } catch (error) {
+    const status = serviceTokenErrorStatus(error)
+    return json(
+      { error: { code: status === 403 ? 'forbidden' : 'unauthorized' }, ok: false },
+      status,
+    )
+  }
+
   const previewSecret = environment.CONTENT_IMPORT_PREVIEW_SECRET || environment.NEXTAUTH_SECRET
-  const serverTrustSecret = environment.GROUPHER_SERVER_TRUST_SECRET
-  if (!previewSecret?.trim() || !serverTrustSecret?.trim()) {
+  if (!previewSecret?.trim()) {
     return json(
       {
         error: { code: 'service_unavailable', message: 'Content import is not configured.' },
@@ -95,59 +114,84 @@ const resolveAuthOptions = (
     )
   }
 
-  const configuredUserRef = request.headers.get('x-groupher-user-ref')?.trim()
-  const trustedProxy = hasTrustedProxyHeader(request, serverTrustSecret.trim())
-  const userRef = trustedProxy && configuredUserRef ? configuredUserRef : tokenUserRef(backendToken)
+  const userRef = await resolveSubject(backendToken).catch(() => null)
+  if (!userRef) {
+    return json(
+      {
+        error: { code: 'unauthorized', message: 'The delegated user credential is invalid.' },
+        ok: false,
+      },
+      401,
+    )
+  }
 
   return {
     backendToken: backendToken.trim(),
     previewSecret: previewSecret.trim(),
-    serverTrustSecret: serverTrustSecret.trim(),
+    serviceIdentity: 'service:dashboard',
     userRef,
   }
 }
 
-export const createApp = ({ environment = process.env, handlers = {} }: TOptions = {}) => {
+export const createApp = ({
+  environment = process.env,
+  handlers = {},
+  resolveDelegationSubject: resolveSubject = resolveDelegationSubject,
+  serviceTokenVerifier,
+}: TOptions = {}) => {
   const app = new Hono()
   const resolvedHandlers: THandlers = { ...defaultHandlers, ...handlers } as THandlers
+  const verifier =
+    serviceTokenVerifier ||
+    createServiceTokenVerifier({
+      audience: 'content-import:internal-api',
+      issuer: environment.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
+      jwksUrl:
+        environment.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
+    })
 
   app.get('/health', (context) => context.json(createHealthResponse({ service: 'content-import' })))
 
-  app.post('/api/docs/import/previews', (context) => {
-    const options = resolveAuthOptions(context.req.raw, environment)
+  app.post('/api/docs/import/previews', async (context) => {
+    const options = await resolveAuthOptions(context.req.raw, environment, verifier, resolveSubject)
     if (options instanceof Response) return options
     return resolvedHandlers.createPreview(context.req.raw, options)
   })
 
-  app.get('/api/docs/import/previews/:previewRef', (context) => {
-    const options = resolveAuthOptions(context.req.raw, environment)
+  app.get('/api/docs/import/previews/:previewRef', async (context) => {
+    const options = await resolveAuthOptions(context.req.raw, environment, verifier, resolveSubject)
     if (options instanceof Response) return options
     const community = new URL(context.req.url).searchParams.get('community') || ''
     return resolvedHandlers.getPreview(context.req.param('previewRef'), community, {
-      serverTrustSecret: options.serverTrustSecret,
+      serviceIdentity: options.serviceIdentity,
       userRef: options.userRef,
     })
   })
 
-  app.delete('/api/docs/import/previews/:previewRef', (context) => {
-    const options = resolveAuthOptions(context.req.raw, environment)
+  app.delete('/api/docs/import/previews/:previewRef', async (context) => {
+    const options = await resolveAuthOptions(context.req.raw, environment, verifier, resolveSubject)
     if (options instanceof Response) return options
     const community = new URL(context.req.url).searchParams.get('community') || ''
     return resolvedHandlers.cancelPreview(context.req.param('previewRef'), community, {
-      serverTrustSecret: options.serverTrustSecret,
+      serviceIdentity: options.serviceIdentity,
       userRef: options.userRef,
     })
   })
 
-  app.post('/api/docs/import/previews/:previewRef/apply', (context) => {
-    const options = resolveAuthOptions(context.req.raw, environment)
+  app.post('/api/docs/import/previews/:previewRef/apply', async (context) => {
+    const options = await resolveAuthOptions(context.req.raw, environment, verifier, resolveSubject)
     if (options instanceof Response) return options
     return resolvedHandlers.applyPreview(context.req.raw, context.req.param('previewRef'), options)
   })
 
   app.post('/api/internal/docs-import/sweep', async (context) => {
-    if (!hasCronSecret(context.req.raw, environment)) {
-      return json({ ok: false }, 401)
+    const token = bearerToken(context.req.header('authorization'))
+    if (!token) return json({ ok: false }, 401)
+    try {
+      const actor = await verifier.verify(token, 'docs:import:sweep')
+      if (actor.subject !== 'service:dashboard') return json({ ok: false }, 403)
+    } catch (error) {
+      return json({ ok: false }, serviceTokenErrorStatus(error))
     }
     const deleted = await resolvedHandlers.sweepExpiredPreviews()
     return json({ deleted, ok: true })

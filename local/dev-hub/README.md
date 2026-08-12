@@ -72,7 +72,7 @@ make dev.app
 ## 能力
 
 - **服务编排**：启动、停止和重启服务；按进程组清理子进程。
-- **外部进程识别**：目标端口被其他进程占用时标记为 external，避免误杀非 Dev Hub 管理的进程。
+- **进程接管与安全边界**：启动时识别并重启可安全确认归属的旧服务；无法确认归属时保留为 `external`，避免误杀其他项目的进程。
 - **实时状态**：通过 Server-Sent Events 推送服务状态、日志、Git 快照和指标。
 - **内嵌终端**：使用 xterm.js 展示 stdout / stderr，并保留 ANSI 颜色。
 - **列表与关系图**：既能按 Frontend / Backend 浏览，也能查看 Gateway 路由和 GraphQL 依赖。
@@ -149,6 +149,19 @@ startPolicy: {
 ```
 
 当前 `main` 和 `dashboard` 默认使用 `chain`，强依赖是 `gateway`、`auth` 和 `phoenix`，弱依赖是 `document-converter`。因此点击主 `Start` 会启动默认链路，菜单里显示 `Start chain (default)`；需要隔离调试时，可以从小三角菜单选择 `Start only this service`；需要把 converter 一起拉起时，选择 `Start all related`。
+
+### 进程接管、重启与日志
+
+Dev Hub 的服务状态不仅由端口是否响应决定，还要区分进程是否能被安全识别和管理：
+
+- 启动 Dev Hub 时，如果发现服务端口已经被占用，会检查监听 PID、进程组、工作目录和运行命令；对于能匹配服务定义的进程，Dev Hub 会先关闭旧进程组，再按 `startPolicy` 启动依赖和目标服务。
+- 重新启动后的服务由 Dev Hub 自己 `spawn`，因此拥有新的 PID、进程组和 stdout / stderr 管道，日志会出现在服务卡片的终端中。
+- `Start` 和 `Restart` 遇到可安全确认归属的旧进程时，也使用同一套“关闭旧进程后重新启动”流程，不会只把旧进程标记成 `running`。
+- 无法确认进程归属时才显示 `external`。典型情况包括其他项目的 Vite/Node 服务占用同一端口、从不同目录手动启动的程序、代理或容器监听端口，或者进程命令与服务定义不匹配。此时 Dev Hub 不会关闭它，应该从原终端或所属工具停止。
+- `external` 状态在能够读取监听 PID、进程组、工作目录和命令时可以点击。Drawer 会展示这些信息；只有 Dev Hub 能安全匹配服务进程组时，“Close matching process” 按钮才会启用。无法确认归属时仍展示诊断信息，但按钮保持禁用，避免误杀其他项目。
+- 关闭旧进程后，如果端口没有在等待窗口内释放，Dev Hub 会停止重启流程并报告端口仍被占用，不会继续强行启动第二个实例。
+
+因此，重新打开 Dev Hub 后看到旧服务被重新启动且有日志是正常目标；看到 `external` 则表示 Dev Hub 无法安全证明该进程属于当前服务。
 
 Converter 依赖 `backend/document-converter/.venv` 中的 Python 3.12 环境。首次使用前在仓库根目录运行：
 

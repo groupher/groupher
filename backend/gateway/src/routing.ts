@@ -2,6 +2,7 @@ export type GatewayTargetKind =
   | 'main'
   | 'dashboard'
   | 'dash'
+  | 'apply'
   | 'landing'
   | 'auth'
   | 'phoenix'
@@ -33,6 +34,7 @@ const APP = {
   LANDING: 'landing',
   DASHBOARD: 'dashboard',
   DASH: 'dash',
+  APPLY: 'apply',
   MAIN: 'main',
 } as const
 
@@ -43,6 +45,7 @@ export const SITE = {
   MAIN: process.env.MAIN_SITE || `https://${APP.MAIN}.groupher.com`,
   DASHBOARD: process.env.DASHBOARD_SITE || `https://${APP.DASHBOARD}.groupher.com`,
   DASH: process.env.DASH_SITE || `https://${APP.DASH}.groupher.com`,
+  APPLY: process.env.APPLY_SITE || `https://${APP.APPLY}.groupher.com`,
   AUTH: process.env.AUTH_SITE || 'https://auth.groupher.com',
   API:
     process.env.API_SITE ||
@@ -53,8 +56,8 @@ export const SITE = {
 export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
 export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
 const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
-const isDashViteAssetRoute = (pathname: string): boolean =>
-  pathname.startsWith('/__dash_hmr') ||
+const isDashViteAssetRoute = (pathname: string): boolean => pathname.startsWith('/__dash_hmr')
+const isSharedViteAssetRoute = (pathname: string): boolean =>
   pathname.startsWith('/@fs/') ||
   pathname.startsWith('/@id/') ||
   pathname.startsWith('/@react-refresh') ||
@@ -63,6 +66,25 @@ const isDashViteAssetRoute = (pathname: string): boolean =>
   pathname.startsWith('/node_modules/.vite/') ||
   pathname.startsWith('/src/') ||
   pathname.startsWith('/_vite/')
+const isDashVirtualDevClientReferer = (refererUrl: URL | null): boolean =>
+  Boolean(
+    refererUrl &&
+    isPlatformRootHost(refererUrl.host) &&
+    refererUrl.pathname === '/@id/virtual:tanstack-start-dev-client-entry',
+  )
+const isDashViteModuleReferer = (refererUrl: URL | null): boolean =>
+  Boolean(
+    refererUrl &&
+    isPlatformRootHost(refererUrl.host) &&
+    (refererUrl.pathname.startsWith('/@fs/') ||
+      refererUrl.pathname.startsWith('/@react-refresh') ||
+      refererUrl.pathname.startsWith('/@vite/') ||
+      refererUrl.pathname.startsWith('/@tanstack-start/') ||
+      refererUrl.pathname.startsWith('/node_modules/.vite/') ||
+      refererUrl.pathname.startsWith('/src/') ||
+      refererUrl.pathname.startsWith('/_vite/')),
+  )
+const isApplyViteAssetRoute = (pathname: string): boolean => pathname.startsWith('/__apply_hmr')
 const isTanStackServerFnRoute = (pathname: string): boolean => pathname.startsWith('/_serverFn/')
 const isUnprefixedDevAssetRoute = (pathname: string): boolean =>
   isNextStaticRoute(pathname) || pathname.startsWith('/_next/hmr')
@@ -80,6 +102,8 @@ export const isMainHost = (host: string): boolean => isAppHost(host, APP.MAIN)
 export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LANDING)
 
 export const isDashHost = (host: string): boolean => isAppHost(host, APP.DASH)
+
+export const isApplyHost = (host: string): boolean => isAppHost(host, APP.APPLY)
 
 export const isPlatformRootHost = (host: string): boolean => {
   const hostname = host.split(':')[0].toLowerCase()
@@ -152,6 +176,9 @@ export const isDashRoute = (pathname: string, host: string): boolean => {
   const pathParts = pathname.split('/').filter(Boolean)
   return pathParts.length >= 2 && pathParts[1] === 'dash'
 }
+
+export const isApplyRoute = (pathname: string, host: string): boolean =>
+  isApplyHost(host) || pathname === '/apply' || pathname.startsWith('/apply/')
 
 export const getDashboardUrl = (pathname: string, host: string, search = ''): URL => {
   return new URL(pathname + search, SITE.DASHBOARD)
@@ -237,8 +264,19 @@ export const resolveGatewayTarget = ({
     return target('dash', getDashUrl(pathname, routingHost, search), method)
   }
 
-  // Dash is the only Vite application. Its module dependency graph uses virtual
-  // root URLs whose downstream requests no longer retain the original page URL.
+  if (isApplyHost(routingHost)) {
+    return target('apply', new URL(fullPath, SITE.APPLY), method)
+  }
+
+  if (isApplyRoute(pathname, routingHost)) {
+    return target('apply', new URL(fullPath, SITE.APPLY), method)
+  }
+
+  if (isApplyViteAssetRoute(pathname)) {
+    return target('apply', new URL(fullPath, SITE.APPLY), method)
+  }
+
+  // App-specific HMR sockets don't carry a reliable Referer during upgrade.
   if (isDashViteAssetRoute(pathname)) {
     return target('dash', new URL(fullPath, SITE.DASH), method)
   }
@@ -249,13 +287,22 @@ export const resolveGatewayTarget = ({
 
   if (
     (isUnprefixedDevAssetRoute(pathname) ||
+      isSharedViteAssetRoute(pathname) ||
       isUnprefixedStaticAssetRoute(pathname) ||
       isSharedCoreAssetRoute(pathname) ||
       isTanStackServerFnRoute(pathname)) &&
     refererUrl
   ) {
+    if (isDashVirtualDevClientReferer(refererUrl) || isDashViteModuleReferer(refererUrl)) {
+      return target('dash', new URL(fullPath, SITE.DASH), method)
+    }
+
     if (isDashRoute(refererUrl.pathname, refererUrl.host)) {
       return target('dash', new URL(fullPath, SITE.DASH), method)
+    }
+
+    if (isApplyRoute(refererUrl.pathname, refererUrl.host)) {
+      return target('apply', new URL(fullPath, SITE.APPLY), method)
     }
 
     if (isDashboardRoute(refererUrl.pathname, refererUrl.host)) {

@@ -35,6 +35,7 @@ type TProps = {
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
   onOpenDependencies: (id: string) => void
+  onOpenExternal: (id: string) => void
 }
 
 const NODE_TYPES = {
@@ -101,6 +102,7 @@ export function FlowView({
   onOpenMetrics,
   onOpenConfig,
   onOpenDependencies,
+  onOpenExternal,
 }: TProps) {
   const layoutServices = useMemo(
     () => services.map(({ id, status }) => ({ id, status })),
@@ -302,6 +304,7 @@ export function FlowView({
           onOpenMetrics,
           onOpenConfig,
           onOpenDependencies,
+          onOpenExternal,
         },
       }
     })
@@ -332,6 +335,7 @@ export function FlowView({
     onOpenConfig,
     onOpenDependencies,
     onOpenMetrics,
+    onOpenExternal,
     onRestartService,
     onStartService,
     onToggleService,

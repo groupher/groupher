@@ -1,10 +1,10 @@
 import type { TDsbTabs } from '~/hooks/useDsbTabs'
 
 const NON_COMMUNITY_ROUTE = {
-  APPLY_COMMUNITY: '/apply/community',
+  APPLY: '/apply',
 }
 
-export const APPLY_COMMUNITY = '/apply/community'
+export const APPLY = '/apply'
 export const FEEDBACK = '/home/post?for=feedback'
 export const DOCS = '/home/doc'
 

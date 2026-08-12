@@ -1,38 +1,38 @@
-import F from '../fragments'
+import { graphql } from '~/graphql/authoring'
 
-export const communityTagGroups = `
-  query ($community: String!, $thread: Thread) {
+export const communityTagGroups = graphql(`
+  query PageCommunityTagGroups($community: String!, $thread: Thread) {
     communityTagGroups(community: $community, thread: $thread) {
       id
       title
       index
       tags {
-        ${F.tag}
+        ...PageTagFields
       }
     }
   }
-`
+`)
 
-export const communityTagStats = `
-  query ($community: String!, $thread: Thread!, $slug: String!) {
+export const communityTagStats = graphql(`
+  query CommunityTagStats($community: String!, $thread: Thread!, $slug: String!) {
     communityTagStats(community: $community, thread: $thread, slug: $slug) {
       contentsCount
       todayContentsCount
     }
   }
-`
+`)
 
-export const themePresets = `
-  query {
+export const themePresets = graphql(`
+  query ThemePresets {
     themePresets {
       value
       tokens
     }
   }
-`
+`)
 
-export const pagedCategories = `
-  query($filter: PagiFilter!) {
+export const pagedCategories = graphql(`
+  query PagePagedCategories($filter: PagiFilter!) {
     pagedCategories(filter: $filter) {
       entries {
         id
@@ -40,7 +40,7 @@ export const pagedCategories = `
         slug
         index
       }
-      ${F.pagi}
+      ...PageCategoryPageInfo
     }
   }
-`
+`)

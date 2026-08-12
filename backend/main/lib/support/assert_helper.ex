@@ -246,8 +246,8 @@ defmodule GroupherServer.Test.AssertHelper do
           conn =
             Plug.Conn.put_req_header(
               conn,
-              "x-groupher-server-trust",
-              "test-server-trust-secret"
+              "x-groupher-test-service-identity",
+              "enabled"
             )
 
           body_bag = GroupherServer.Support.Factory.Articles.body_bag(body)

@@ -1,13 +1,10 @@
-import { gqAuthFetch } from '~/graphql/server'
+import { gqAuthFetchTyped } from '~/graphql/server'
+import type { TDocDraftInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/Article/spec'
+import type { TDocTreeInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/docs'
 
-import type {
-  TDocDraftQueryData,
-  TDocEditorInitialDataResult,
-  TDocTreeQueryData,
-  TGraphQLResult,
-} from './spec'
+import type { TDocEditorInitialDataResult } from './spec'
 
 const isPageNode = (node: TDocTreeNodeDTO): boolean => String(node.type).toLowerCase() === 'page'
 
@@ -78,10 +75,8 @@ export const getDocEditorInitialData = async (
   docId: string | null,
 ): Promise<TDocEditorInitialDataResult> => {
   try {
-    const treeResponse = await gqAuthFetch(S.docTree, { community })
-    const treePayload = (await treeResponse.json()) as TGraphQLResult<TDocTreeQueryData>
-    const treeData = treePayload.data ?? null
-    const docTree = treeData?.docTree ?? null
+    const treePayload = await gqAuthFetchTyped(S.docTree, { community })
+    const docTree = (treePayload.data?.docTree as unknown as TDocTreeInitialData | null) ?? null
     // The editor route must have a concrete doc id. If the URL is empty or stale,
     // pick the first page so SSR can hydrate matching tree + document data.
     const nodes = getDocTreeGroups(docTree?.tabs ?? [])
@@ -90,16 +85,14 @@ export const getDocEditorInitialData = async (
 
     if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }
 
-    const draftResponse = await gqAuthFetch(S.docDraft, {
+    const draftPayload = await gqAuthFetchTyped(S.docDraft, {
       community,
       id: activeDocId,
     })
-    const draftPayload = (await draftResponse.json()) as TGraphQLResult<TDocDraftQueryData>
-    const draftData = draftPayload.data ?? null
 
     return {
       docTree,
-      docDraft: draftData?.docDraft ?? null,
+      docDraft: (draftPayload.data?.docDraft as unknown as TDocDraftInitialData | null) ?? null,
       activeDocId,
     }
   } catch (err) {

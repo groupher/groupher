@@ -6,7 +6,7 @@ import type { TPagedArticles } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-import S from '~/unit/DashboardThread/schema'
+import S from '~/unit/DashboardThread/schema/content'
 
 type TArticleKind = 'changelog' | 'post'
 

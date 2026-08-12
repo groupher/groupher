@@ -1,6 +1,6 @@
 import { connection } from 'next/server'
 
-import { gqAuthFetch } from '~/graphql/server'
+import { gqAuthFetchTyped } from '~/graphql/server'
 import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
 import {
   ANALYSIS_TRENDS_OVERVIEW_QUERY,
@@ -9,12 +9,6 @@ import {
 import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
 
 type TGraphQLError = { message?: unknown }
-type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
-
-type TAnalysisTrendsQueryData = {
-  analysisTrendsOverview: TAnalysisTrendsOverview | null
-}
-
 const unavailableOverview = (errors: TGraphQLError[] = []): TAnalysisTrendsOverview =>
   buildUnavailableOverview(
     errors.map((error) => ({
@@ -32,11 +26,10 @@ export default async function TrendPage({ params }) {
   await connection()
 
   try {
-    const response = await gqAuthFetch(ANALYSIS_TRENDS_OVERVIEW_QUERY, {
+    const payload = await gqAuthFetchTyped(ANALYSIS_TRENDS_OVERVIEW_QUERY, {
       community,
       days: 7,
     })
-    const payload = (await response.json()) as TGraphQLPayload<TAnalysisTrendsQueryData>
     if (payload.errors) {
       return <WebOverview community={community} data={unavailableOverview(payload.errors)} />
     }
@@ -44,7 +37,10 @@ export default async function TrendPage({ params }) {
     return (
       <WebOverview
         community={community}
-        data={payload.data?.analysisTrendsOverview ?? unavailableOverview()}
+        data={
+          (payload.data?.analysisTrendsOverview as unknown as TAnalysisTrendsOverview | null) ??
+          unavailableOverview()
+        }
       />
     )
   } catch (err) {

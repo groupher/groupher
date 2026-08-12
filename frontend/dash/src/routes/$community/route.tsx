@@ -34,7 +34,12 @@ function CommunityLayout() {
   const { shell, locale } = Route.useLoaderData()
 
   return (
-    <CommunityBoundary key={shell.community.slug} community={shell.community} locale={locale}>
+    <CommunityBoundary
+      key={shell.community.slug}
+      account={shell.account}
+      community={shell.community}
+      locale={locale}
+    >
       <Outlet />
     </CommunityBoundary>
   )

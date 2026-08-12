@@ -27,8 +27,7 @@ export type TApplyDocsDatasetInput = {
 const applyStep = async (input: TApplyDocsDatasetInput): Promise<void> => {
   'use step'
 
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (!serverTrustSecret) throw new Error('Groupher server trust is not configured.')
+  const serviceIdentity = 'service:content-import'
   await runPreviewDocBulkImport(
     input.community,
     input.jobRef,
@@ -36,17 +35,16 @@ const applyStep = async (input: TApplyDocsDatasetInput): Promise<void> => {
     input.attemptRef,
     input.sourceRefs,
     getPreviewStore(),
-    { serverTrustSecret },
+    { serviceIdentity },
   )
 }
 
 const failStep = async (input: TApplyDocsDatasetInput, message: string): Promise<void> => {
   'use step'
 
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (!serverTrustSecret) return
+  const serviceIdentity = 'service:content-import'
   await failDocImport(input.community, input.jobRef, 'doc_import_workflow_failed', message, {
-    serverTrustSecret,
+    serviceIdentity,
   })
 }
 

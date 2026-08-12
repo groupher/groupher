@@ -6,10 +6,11 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Communities.Passport
+  alias CMS.Gate.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
-  alias Helper.{Multi, ORM, PermissionConfig, PermissionRegistry, T, Transaction}
+  alias CMS.Gate.Passport.Registry
+  alias Helper.{Multi, ORM, PermissionConfig, T, Transaction}
 
   @doc """
   set a community moderator
@@ -247,7 +248,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     case get_in(rules, [community.slug]) do
       %{"root" => true} ->
         moderator
-        |> ORM.update(%{passport_item_count: PermissionRegistry.root_passport_item_count()})
+        |> ORM.update(%{passport_item_count: Registry.root_passport_item_count()})
 
       %{"cms" => %{}} ->
         community_rules = get_in(rules, [community.slug, "cms"]) || %{}
@@ -296,13 +297,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     case Map.get(cur_user, :cur_passport) do
       passport when is_map(passport) ->
         passport
-        |> PermissionRegistry.normalize_rules()
+        |> Registry.normalize_rules()
         |> get_in([community_slug, "root"]) == true
 
       _ ->
         with {:ok, passport} <- Passport.get_passport(cur_user) do
           passport
-          |> PermissionRegistry.normalize_rules()
+          |> Registry.normalize_rules()
           |> get_in([community_slug, "root"]) == true
         else
           _ -> false
@@ -316,13 +317,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     case Map.get(cur_user, :cur_passport) do
       passport when is_map(passport) ->
         passport
-        |> PermissionRegistry.normalize_rules()
+        |> Registry.normalize_rules()
         |> get_in(["global", "god"]) == true
 
       _ ->
         with {:ok, passport} <- Passport.get_passport(cur_user) do
           passport
-          |> PermissionRegistry.normalize_rules()
+          |> Registry.normalize_rules()
           |> get_in(["global", "god"]) == true
         else
           _ -> false

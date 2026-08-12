@@ -6,8 +6,16 @@ import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts
 
 test('standalone services declare a four-item technology stack', () => {
   for (const service of SERVICE_DEFINITIONS) {
+    if (service.id === 'gatus') continue
     assert.equal(service.technologies?.length, 4, service.name)
   }
+})
+
+test('Gatus is an infra service with HTTP readiness', () => {
+  const gatus = SERVICE_DEFINITIONS.find((definition) => definition.id === 'gatus')
+  assert.equal(gatus?.group, 'infra')
+  assert.equal(gatus?.readiness, 'http-status')
+  assert.deepEqual(gatus?.args, ['ops/status/start-local.sh'])
 })
 
 test('frontend and Phoenix stacks match their runtime boundaries', () => {
@@ -36,7 +44,7 @@ test('frontend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'frontend').map(
       (definition) => definition.id,
     ),
-    ['landing', 'main', 'dashboard', 'dash', 'inspire-me'],
+    ['landing', 'main', 'dashboard', 'dash', 'apply', 'inspire-me'],
   )
 })
 
@@ -68,6 +76,7 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'auth', target: 'dashboard', label: '/:community/dashboard/*' },
       { source: 'gateway', target: 'dash', label: '/:community/dash/*' },
       { source: 'gateway', target: 'main', label: 'all other routes' },
+      { source: 'gateway', target: 'apply', label: '/apply/*' },
       { source: 'gateway', target: 'press', label: '*.md, feed.*, llms.txt, sitemap.xml' },
       { source: 'press', target: 'phoenix', label: 'CMS.Press GraphQL projection' },
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
@@ -75,6 +84,8 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'dashboard', target: 'content-import', label: '/api/docs/import/*' },
       { source: 'dashboard', target: 'assets-hub', label: 'asset upload flow' },
       { source: 'dash', target: 'phoenix', label: 'GraphQL' },
+      { source: 'apply', target: 'phoenix', label: 'CommunityApplications GraphQL' },
+      { source: 'apply', target: 'assets-hub', label: 'Application Logo upload' },
       { source: 'dash', target: 'content-import', label: '/api/docs/import/*' },
       { source: 'dash', target: 'assets-hub', label: 'asset upload flow' },
       { source: 'assets-hub', target: 'phoenix', label: 'trusted GraphQL' },

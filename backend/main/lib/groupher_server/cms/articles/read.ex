@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.CanCan
+  alias CMS.Gate
   alias CMS.Model.{Community, PinnedArticle}
   alias Helper.{Multi, Constant, Datetime, ORM, T}
 
@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id) when thread in @threads do
-    with {:ok, _thread} <- CanCan.allow_thread(community.slug, thread),
+    with {:ok, _thread} <- Gate.allow_thread(community.slug, thread),
          {:ok, article} <- if_article_legal(community, thread, inner_id) do
       do_read_article(article, community, thread)
     end
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{id: user_id} = user)
       when thread in @threads do
-    with {:ok, _thread} <- CanCan.allow_thread(community.slug, thread),
+    with {:ok, _thread} <- Gate.allow_thread(community.slug, thread),
          {:ok, article} <- if_article_legal(community, thread, inner_id, user) do
       Multi.new()
       |> Multi.run(:normal_read, fn _, _ ->

@@ -13,7 +13,7 @@ import type {
   TDocCoverPinnedDocAppearance,
 } from '~/unit/DocCovers/spec'
 
-import DashboardSchema from '../../../schema'
+import DashboardSchema from '../../../schema/docs'
 import { SIDE_TREE_NODE_TYPE } from '../Editor/SideTree/constant'
 import type { TSideTreeGroup, TSideTreePage, TSideTreeTab } from '../Editor/SideTree/spec'
 

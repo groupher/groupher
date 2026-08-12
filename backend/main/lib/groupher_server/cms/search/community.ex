@@ -13,17 +13,18 @@ defmodule GroupherServer.CMS.Search.Community do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Communities.Read
   alias CMS.Model.Community
   alias Helper.ORM
 
   @search_items_count 15
 
   def search(title) do
-    do_search_communities(Community, title)
+    do_search_communities(Read.scope(Community), title)
   end
 
   def search(title, %User{} = user) do
-    with {:ok, communities} <- do_search_communities(Community, title) do
+    with {:ok, communities} <- do_search_communities(Read.scope(Community), title) do
       %{entries: entries} = communities
 
       entries =
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.Search.Community do
 
   defp do_search_communities_with_category(title, category) do
     from(
-      c in Community,
+      c in Read.scope(Community),
       join: cat in assoc(c, :categories),
       where: cat.slug == ^category
     )

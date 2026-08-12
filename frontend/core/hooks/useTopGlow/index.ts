@@ -1,7 +1,5 @@
 'use client'
 
-import { includes } from 'ramda'
-
 import METRIC from '~/const/metric'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { TOP_GLOW } from '~/const/top_glow'
@@ -28,10 +26,7 @@ export default function useTopGlow(): TTopGlow {
 
   const metric = useMetric()
 
-  if (
-    includes(metric, [METRIC.APPLY_COMMUNITY]) ||
-    (metric === METRIC.LANDING && source !== GRADIENT_WALLPAPER_NAME.AMBER_MAUVE)
-  ) {
+  if (metric === METRIC.LANDING && source !== GRADIENT_WALLPAPER_NAME.AMBER_MAUVE) {
     return {
       glowType: null,
       glowFixed: false,

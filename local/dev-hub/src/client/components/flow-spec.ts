@@ -19,6 +19,7 @@ export type TFlowServiceNodeData = Record<string, unknown> & {
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
   onOpenDependencies: (id: string) => void
+  onOpenExternal: (id: string) => void
 }
 
 export type TFlowServiceNode = Node<TFlowServiceNodeData, 'service'>

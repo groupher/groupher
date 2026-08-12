@@ -1,0 +1,37 @@
+{
+  "name": "@groupher/frontend-apply",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config app.config.ts --host 127.0.0.1",
+    "build": "CLOUDFLARE_ENV=production vite build --config app.config.ts",
+    "preview": "vite preview --config app.config.ts",
+    "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --dry-run --config dist/server/wrangler.json",
+    "generate:routes": "node ./scripts/generate-route-tree.mjs",
+    "type-check": "yarn generate:routes && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --ignore-path ./config/oxfmtignore ./src",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --ignore-path ./config/oxfmtignore --check ./src",
+    "clean": "rimraf .output .tanstack vite.config.*.timestamp-* src/routeTree.gen.ts *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@groupher/contracts": "1.0.0",
+    "@groupher/frontend-core": "1.0.0",
+    "@tanstack/react-router": "1.170.21",
+    "@tanstack/react-start": "1.168.38",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "valtio": "2.3.2"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.50.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/router-generator": "1.167.24",
+    "@vitejs/plugin-react": "^6.0.5",
+    "rimraf": "^6.1.3",
+    "vite": "^8.2.0",
+    "wrangler": "^4.118.0"
+  }
+}

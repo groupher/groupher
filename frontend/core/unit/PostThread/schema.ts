@@ -1,6 +1,4 @@
-import { gql } from 'urql'
-
-import { F } from '~/schemas'
+import { graphql } from '~/graphql/authoring'
 
 import { pagedChangelogs } from '../../schemas/pages/changelog'
 import { communityTagStats as communityTagStatsQuery } from '../../schemas/pages/misc'
@@ -12,15 +10,13 @@ const PAGED_ARTICLE_SCHEMA = {
 }
 
 const getPagedArticlesSchema = (thread) => {
-  return gql`
-    ${PAGED_ARTICLE_SCHEMA[thread]}
-  `
+  return PAGED_ARTICLE_SCHEMA[thread]
 }
 
 const getArticleFreshSchema = () => {
   // TODO: commentParticipants
-  return gql`
-    query post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+  return graphql(`
+    query PostThreadFresh($article: ArticlePathInput!, $userHasLogin: Boolean!) {
       post(article: $article) {
         innerId
         views
@@ -30,19 +26,15 @@ const getArticleFreshSchema = () => {
         viewerHasUpvoted @include(if: $userHasLogin)
       }
     }
-  `
+  `)
 }
 
-const communityTagStats = gql`
-  ${communityTagStatsQuery}
-`
+const communityTagStats = communityTagStatsQuery
 
 const schema = {
   communityTagStats,
   getPagedArticlesSchema,
   getArticleFreshSchema,
-  getUpvote: F.getUpvote,
-  getUndoUpvote: F.getUndoUpvote,
 }
 
 export default schema

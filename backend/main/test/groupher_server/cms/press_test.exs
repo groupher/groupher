@@ -3,7 +3,15 @@ defmodule GroupherServer.Test.CMS.Press do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{DocPublishRelease, DocTreeNode, DocTreeSnapshot, Post, PressConfig}
+  alias CMS.Model.{
+    CommunityLifecycle,
+    DocPublishRelease,
+    DocTreeNode,
+    DocTreeSnapshot,
+    Post,
+    PressConfig
+  }
+
   alias GroupherServerWeb.Schema
 
   setup do
@@ -30,6 +38,10 @@ defmodule GroupherServer.Test.CMS.Press do
   test "origin projections hide communities that are not publicly active", ~m(community post)a do
     community
     |> Ecto.Changeset.change(pending: Helper.Constant.CMS.pending(:applying))
+    |> Repo.update!()
+
+    Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    |> CommunityLifecycle.changeset(%{state: :setting_up})
     |> Repo.update!()
 
     assert {:error, {:not_exist, "Public Community"}} =
@@ -106,7 +118,15 @@ defmodule GroupherServer.Test.CMS.Press do
               }
             }} =
              Absinthe.run(query, Schema,
-               variables: %{"community" => community.slug, "input" => %{}}
+               variables: %{"community" => community.slug, "input" => %{}},
+               context: %{
+                 service_actor: %{
+                   audience: "phoenix:press-api",
+                   scopes: MapSet.new(["press:rss-feed:read"]),
+                   subject: "service:press",
+                   token_id: "test-token"
+                 }
+               }
              )
 
     assert is_binary(feed_revision)

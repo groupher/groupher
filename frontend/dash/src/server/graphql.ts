@@ -1,9 +1,11 @@
 import { serializeGraphQLError } from '@dash/utils/graphql-error'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import {
   GROUPHER_AUTH_SIGNED_IN_COOKIE,
   GROUPHER_AUTH_TOKEN_COOKIE,
 } from '@groupher/contracts/auth'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
+import { print, type DocumentNode } from 'graphql'
 
 export type TGraphQLResponse<TData> = {
   data?: TData
@@ -47,11 +49,21 @@ export const setPrivateCacheHeader = (): void => {
   setResponseHeader('cache-control', 'private, no-store')
 }
 
-export const fetchGraphQL = async <TData>(
-  query: string,
+export function fetchGraphQL<TResult, TVariables extends Record<string, unknown>>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+  token: string | null,
+): Promise<TGraphQLResponse<TResult>>
+export function fetchGraphQL<TData>(
+  query: string | DocumentNode,
   variables: Record<string, unknown>,
   token: string | null,
-): Promise<TGraphQLResponse<TData>> => {
+): Promise<TGraphQLResponse<TData>>
+export async function fetchGraphQL<TData>(
+  query: string | DocumentNode,
+  variables: Record<string, unknown>,
+  token: string | null,
+): Promise<TGraphQLResponse<TData>> {
   const endpoint = process.env.GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql'
   const response = await fetch(endpoint, {
     method: 'POST',
@@ -61,7 +73,7 @@ export const fetchGraphQL = async <TData>(
       'Content-Type': 'application/json',
       ...(token ? { cookie: `${GROUPHER_AUTH_TOKEN_COOKIE}=${token}` } : {}),
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({ query: typeof query === 'string' ? query : print(query), variables }),
   })
 
   if (!response.ok) {

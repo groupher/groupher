@@ -87,6 +87,20 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
          do: list(session.user, current_ref)
   end
 
+  @doc "Checks that a browser access token still points to an active owned session."
+  def active_for_user?(user_id, ref) when is_integer(user_id) and is_binary(ref) do
+    now = DateTime.utc_now()
+
+    from(session in BrowserSession,
+      where:
+        session.user_id == ^user_id and session.ref == ^ref and session.status == :active and
+          session.absolute_expires_at > ^now
+    )
+    |> Repo.exists?()
+  end
+
+  def active_for_user?(_user_id, _ref), do: false
+
   def revoke_other_for_ref(current_ref) when is_binary(current_ref) do
     with {:ok, session} <- active_session(current_ref, DateTime.utc_now()),
          do: revoke_other_sessions(session.user, current_ref)

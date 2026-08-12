@@ -10,19 +10,23 @@ defmodule GroupherServer.CMS.Communities do
   alias Helper.T
 
   alias __MODULE__.{
-    Apply,
     Categories,
     Count,
     List,
     Members,
     Moderator,
-    Passport,
     Read,
+    SlugClaims,
     Subscribe,
     TagStats,
     Tags,
-    Write
+    Write,
+    Creation,
+    Setup
   }
+
+  alias CMS.Gate.Passport
+  alias CMS.Communities.Lifecycle
 
   # Read
   @spec read(String.t()) :: T.domain_res(Community.t())
@@ -36,6 +40,9 @@ defmodule GroupherServer.CMS.Communities do
 
   @spec read(String.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def read(slug, %User{} = user, opt), do: Read.read(slug, user, opt)
+
+  @spec read_all(String.t(), keyword()) :: T.domain_res(Community.t())
+  def read_all(slug, opt \\ []), do: Read.read_all(slug, opt)
 
   @spec exist?(String.t()) :: T.domain_res(%{exist: boolean()})
   def exist?(slug), do: Read.exist?(slug)
@@ -58,20 +65,48 @@ defmodule GroupherServer.CMS.Communities do
   def sync_base_info(%Community{} = community, args), do: Write.sync_base_info(community, args)
 
   @spec delete(String.t() | Community.t()) :: T.domain_res(Community.t())
+  @doc """
+  Hard-delete helper retained for explicit maintenance and fixture cleanup.
+
+  Product-facing deletion must use archive/2 and the Lifecycle reclaim flow.
+  """
   def delete(community), do: Write.delete(community)
 
-  # Apply
-  @spec apply(map(), User.t()) :: T.domain_res(Community.t())
-  def apply(args, %User{} = user), do: Apply.apply(args, user)
+  @spec create_from_application(String.t(), String.t()) :: T.domain_res(term())
+  def create_from_application(application_ref, operation_ref),
+    do: Creation.create_from_application(application_ref, operation_ref)
 
-  @spec approve_apply(String.t()) :: T.domain_res(Community.t())
-  def approve_apply(slug), do: Apply.approve(slug)
+  @spec run_setup(String.t(), String.t()) :: T.domain_res(term())
+  def run_setup(community_ref, operation_ref), do: Setup.run(community_ref, operation_ref)
 
-  @spec deny_apply(T.id()) :: T.domain_res(Community.t())
-  def deny_apply(id), do: Apply.deny(id)
+  @spec retry_setup(String.t(), User.t(), integer()) :: T.domain_res(term())
+  def retry_setup(application_ref, %User{} = reviewer, expected_version),
+    do: Setup.retry(application_ref, reviewer, expected_version)
 
-  @spec has_pending_apply?(User.t()) :: T.domain_res(%{exist: boolean()})
-  def has_pending_apply?(%User{} = user), do: Apply.has_pending?(user)
+  @spec mark_setup_failed(String.t(), String.t(), term(), integer()) :: T.domain_res(term())
+  def mark_setup_failed(application_ref, operation_ref, reason, attempt),
+    do: Setup.mark_failed(application_ref, operation_ref, reason, attempt)
+
+  # Lifecycle commands
+  @spec archive(String.t() | integer(), keyword()) :: T.domain_res(term())
+  def archive(community_ref, opts \\ []), do: Lifecycle.archive(community_ref, opts)
+
+  @spec restore(String.t() | integer(), keyword()) :: T.domain_res(term())
+  def restore(community_ref, opts \\ []), do: Lifecycle.restore(community_ref, opts)
+
+  @spec schedule_reclaim(String.t() | integer(), keyword()) :: T.domain_res(term())
+  def schedule_reclaim(community_ref, opts \\ []),
+    do: Lifecycle.schedule_reclaim(community_ref, opts)
+
+  @spec cancel_reclaim(String.t() | integer(), keyword()) :: T.domain_res(term())
+  def cancel_reclaim(community_ref, opts \\ []),
+    do: Lifecycle.cancel_reclaim(community_ref, opts)
+
+  @spec destroy(String.t() | integer(), keyword()) :: T.domain_res(term())
+  def destroy(community_ref, opts \\ []), do: Lifecycle.destroy(community_ref, opts)
+
+  @spec release_expired_slug_claims(DateTime.t()) :: {non_neg_integer(), nil}
+  def release_expired_slug_claims(now), do: SlugClaims.release_expired(now)
 
   # Members
   @spec members(atom(), Community.t(), map()) :: T.domain_res(T.paged_data())

@@ -7,7 +7,7 @@ import BindSVG from '~/icons/Bind'
 import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
-import { dsbRoutes, parseDsbPathname, usePlatform } from '~/platform'
+import { dsbRoutes, Link, parseDsbPathname, usePlatform } from '~/platform'
 import type { TDsbPath } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -16,7 +16,7 @@ import type { TDsbMenuGroup } from '../spec'
 import ActiveMark from './ActiveMark'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
 import { dispatchMenuView, type TMenuView } from './events'
-import useSalon, { cn } from './salon/group'
+import useSalon, { cn, cnMerge } from './salon/group'
 
 type TProps = {
   activeMainTab: TDsbPath
@@ -37,20 +37,13 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.folder}>
-        <button
-          type='button'
+        <Link
+          route={dsbRoutes.section({
+            community: currentCommunity,
+            section: group.overviewSlug,
+          })}
           className={s.folderLink}
-          onClick={() =>
-            navi.to(
-              dsbRoutes.section({
-                community: currentCommunity,
-                section: group.overviewSlug,
-              }),
-              {
-                preserveSearch: true,
-              },
-            )
-          }
+          preserveSearch
         >
           <div className={s.iconBox}>
             {group.icon === DSB_MENU_ICON.BASIC && <InfoSVG className={s.menuIcon} />}
@@ -61,7 +54,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
             {group.icon === DSB_MENU_ICON.BIND && <BindSVG className={s.menuIcon} />}
           </div>
           <h3 className={s.title}>{t(group.title)}</h3>
-        </button>
+        </Link>
         <button
           type='button'
           className={s.foldBtn}
@@ -87,10 +80,12 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
             })
 
             return (
-              <button
+              <Link
                 key={item.slug}
-                type='button'
-                className={cn(s.item, isActive && s.itemActive)}
+                route={itemRoute}
+                className={cnMerge(s.item, isActive && s.itemActive)}
+                aria-current={isActive ? 'page' : undefined}
+                preserveSearch
                 onClick={() => {
                   if (submenuConfig) {
                     dispatchMenuView({
@@ -104,10 +99,6 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                       view: MENU_VIEW.MAIN,
                     })
                   }
-
-                  navi.to(itemRoute, {
-                    preserveSearch: true,
-                  })
                 }}
               >
                 {isActive && (
@@ -119,7 +110,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                 )}
 
                 <span className={s.itemLabel}>{t(item.title)}</span>
-              </button>
+              </Link>
             )
           })}
         </div>

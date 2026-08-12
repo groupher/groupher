@@ -241,8 +241,7 @@ createServer((req, res) => {
     }
 
     if (AUTH_E2E_ENABLED && req.method === 'POST') {
-      const trusted =
-        req.headers['x-groupher-server-trust'] === process.env.GROUPHER_SERVER_TRUST_SECRET
+      const trusted = req.headers.authorization === 'Bearer e2e-service-token'
       if (!trusted) {
         const code = recordProtectedRequest(req.headers.cookie)
         if (code) {
@@ -255,6 +254,22 @@ createServer((req, res) => {
     }
 
     handler(req, res)
+    return
+  }
+
+  if (AUTH_E2E_ENABLED && req.method === 'POST' && req.url === '/oauth2/token') {
+    res.statusCode = 200
+    res.setHeader('cache-control', 'no-store')
+    res.setHeader('content-type', 'application/json; charset=utf-8')
+    res.end(
+      JSON.stringify({
+        access_token: 'e2e-service-token',
+        expires_in: 600,
+        scope:
+          'auth:session:signin auth:session:read auth:session:refresh auth:session:revoke auth:oauth:read auth:oauth:link auth:oauth:unlink',
+        token_type: 'Bearer',
+      }),
+    )
     return
   }
 

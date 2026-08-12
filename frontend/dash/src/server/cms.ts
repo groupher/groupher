@@ -1,12 +1,14 @@
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { createServerFn } from '@tanstack/react-start'
-import { print, type DocumentNode } from 'graphql'
 
 import { THREAD } from '~/const/thread'
-import { P } from '~/schemas'
-import type { TPagedArticles, TTagGroup, TThemePresetOption, TThemePresetsQuery } from '~/spec'
+import { themePresets } from '~/schemas/pages/misc'
+import type { TPagedArticles, TTagGroup, TThemePresetOption } from '~/spec'
 import type { TPagedAssets } from '~/unit/DashboardThread/AssetsHub/spec'
 import type { TPagedTrashedPosts, TTrashedPost } from '~/unit/DashboardThread/CMS/Trash/spec'
-import DashboardSchema from '~/unit/DashboardThread/schema'
+import DashboardAssetsSchema from '~/unit/DashboardThread/schema/assets'
+import DashboardContentSchema from '~/unit/DashboardThread/schema/content'
+import DashboardTagsSchema from '~/unit/DashboardThread/schema/tags'
 import KanbanSchema from '~/unit/KanbanThread/schema'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
@@ -19,42 +21,6 @@ type TGroupedKanban = {
   rejected: TPagedArticles
 }
 
-type TPagedArticlesQuery = {
-  pagedPosts?: TPagedArticles | null
-  pagedChangelogs?: TPagedArticles | null
-}
-
-type TGroupedKanbanPostsQuery = {
-  groupedKanbanPosts?: TGroupedKanban | null
-}
-
-type TTagGroupsQuery = {
-  communityTagGroups?: TTagGroup[] | null
-}
-
-type TTrashedPostsQuery = {
-  trashedArticles?: TPagedTrashedPosts | null
-}
-
-type TPagedAssetsQuery = {
-  pagedCommunityAssets?: TPagedAssets | null
-}
-
-const toQuery = (document: DocumentNode | string): string =>
-  typeof document === 'string' ? document : print(document)
-
-const fetchPaged = async (
-  query: string,
-  variables: Record<string, unknown>,
-): Promise<TPagedArticles | null> => {
-  const token = getAuthToken()
-  setPrivateCacheHeader()
-
-  const result = await fetchGraphQL<Record<string, TPagedArticles | null>>(query, variables, token)
-
-  return Object.values(result.data ?? {})[0] ?? null
-}
-
 export type TPagedPostsInput = {
   community: string
   page?: number
@@ -63,23 +29,37 @@ export type TPagedPostsInput = {
 export const loadPagedPosts = createServerFn({ method: 'GET', strict: false })
   .validator((data: TPagedPostsInput) => data)
   .handler(async ({ data }): Promise<TPagedArticles | null> => {
-    const payload = await fetchPaged(toQuery(DashboardSchema.pagedPosts), {
-      filter: { page: data.page || 1, size: 20, community: data.community },
-      userHasLogin: false,
-    })
+    const token = getAuthToken()
+    setPrivateCacheHeader()
 
-    return (payload as TPagedArticlesQuery['pagedPosts']) || null
+    const result = await fetchGraphQL(
+      DashboardContentSchema.pagedPosts,
+      {
+        filter: { page: data.page || 1, size: 20, community: data.community },
+        userHasLogin: false,
+      },
+      token,
+    )
+
+    return (result.data?.pagedPosts as unknown as TPagedArticles | null) || null
   })
 
 export const loadPagedChangelogs = createServerFn({ method: 'GET', strict: false })
   .validator((data: TPagedPostsInput) => data)
   .handler(async ({ data }): Promise<TPagedArticles | null> => {
-    const payload = await fetchPaged(toQuery(DashboardSchema.pagedChangelogs), {
-      filter: { page: data.page || 1, size: 20, community: data.community },
-      userHasLogin: false,
-    })
+    const token = getAuthToken()
+    setPrivateCacheHeader()
 
-    return (payload as TPagedArticlesQuery['pagedChangelogs']) || null
+    const result = await fetchGraphQL(
+      DashboardContentSchema.pagedChangelogs,
+      {
+        filter: { page: data.page || 1, size: 20, community: data.community },
+        userHasLogin: false,
+      },
+      token,
+    )
+
+    return (result.data?.pagedChangelogs as unknown as TPagedArticles | null) || null
   })
 
 export type TKanbanInput = {
@@ -92,13 +72,13 @@ export const loadKanban = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TGroupedKanbanPostsQuery>(
-      toQuery(KanbanSchema.groupedKanbanPosts),
+    const result = await fetchGraphQL(
+      KanbanSchema.groupedKanbanPosts,
       { community: data.community },
       token,
     )
 
-    return result.data?.groupedKanbanPosts ?? null
+    return (result.data?.groupedKanbanPosts as unknown as TGroupedKanban | null) ?? null
   })
 
 export type TTagGroupsInput = {
@@ -112,13 +92,13 @@ export const loadTagGroups = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TTagGroupsQuery>(
-      toQuery(DashboardSchema.communityTagGroups),
+    const result = await fetchGraphQL<ResultOf<typeof DashboardTagsSchema.communityTagGroups>>(
+      DashboardTagsSchema.communityTagGroups,
       { community: data.community, thread: data.thread || THREAD.POST },
       token,
     )
 
-    return result.data?.communityTagGroups ?? null
+    return (result.data?.communityTagGroups as unknown as TTagGroup[] | null) ?? null
   })
 
 export type TTrashInput = {
@@ -132,13 +112,13 @@ export const loadTrash = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TTrashedPostsQuery>(
-      toQuery(DashboardSchema.trashedPosts),
+    const result = await fetchGraphQL(
+      DashboardContentSchema.trashedPosts,
       { community: data.community, page: data.page || 1, size: 20 },
       token,
     )
 
-    const trashedArticles = result.data?.trashedArticles
+    const trashedArticles = result.data?.trashedArticles as unknown as TPagedTrashedPosts | null
     if (!trashedArticles) {
       return null
     }
@@ -161,13 +141,13 @@ export const loadAssets = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TPagedAssetsQuery>(
-      toQuery(DashboardSchema.pagedCommunityAssets),
+    const result = await fetchGraphQL(
+      DashboardAssetsSchema.pagedCommunityAssets,
       { community: data.community, filter: { page: data.page || 1, size: 20 } },
       token,
     )
 
-    return result.data?.pagedCommunityAssets ?? null
+    return (result.data?.pagedCommunityAssets as unknown as TPagedAssets | null) ?? null
   })
 
 export const loadThemePresets = createServerFn({ method: 'GET', strict: false })
@@ -176,11 +156,11 @@ export const loadThemePresets = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     setPrivateCacheHeader()
 
-    const result = await fetchGraphQL<TThemePresetsQuery>(toQuery(P.themePresets), {}, token)
+    const result = await fetchGraphQL(themePresets, {}, token)
     const presets = result.data?.themePresets || []
 
     return presets.map((preset) => ({
-      value: preset.value,
-      tokens: preset.tokens,
+      value: preset.value as TThemePresetOption['value'],
+      tokens: preset.tokens as TThemePresetOption['tokens'],
     }))
   })

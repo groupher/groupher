@@ -20,7 +20,6 @@ import { applyDocsDataset } from './applyDocsDataset'
 describe('applyDocsDataset failure projection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubEnv('GROUPHER_SERVER_TRUST_SECRET', 'server-trust')
     mocks.failDocImport.mockResolvedValue(undefined)
   })
 
@@ -43,7 +42,7 @@ describe('applyDocsDataset failure projection', () => {
       'job-1',
       'doc_import_workflow_failed',
       cause.message,
-      { serverTrustSecret: 'server-trust' },
+      { serviceIdentity: 'service:content-import' },
     )
   })
 })

@@ -91,7 +91,7 @@ export default function Landing() {
           <div className={cn(s.desc, 'mt-2')}>{t('landing.hero.subline')}</div>
 
           <div className={s.buttonGroup}>
-            <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
+            <a href={ROUTE.APPLY} className={s.linkable}>
               <BorderButton space={8} className='bold-sm'>
                 {t('landing.hero.cta.start')}
               </BorderButton>

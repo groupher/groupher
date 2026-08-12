@@ -26,7 +26,6 @@ type TOptions = {
   backendToken: string
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
-  serverTrustSecret: string
 }
 
 const responseHeaders = {
@@ -143,7 +142,7 @@ const readPayload = async (request: Request): Promise<TRequestPayload> => {
 /** Publishes a bounded editor value and persists it through the allowlisted GraphQL action. */
 export const handleArtimentPublishRequest = async (
   request: Request,
-  { backendToken, fetchImpl, graphqlEndpoint, serverTrustSecret }: TOptions,
+  { backendToken, fetchImpl, graphqlEndpoint }: TOptions,
 ): Promise<Response> => {
   try {
     const payload = await readPayload(request)
@@ -153,7 +152,6 @@ export const handleArtimentPublishRequest = async (
       bodyBag,
       fetchImpl,
       graphqlEndpoint,
-      serverTrustSecret,
       variables: payload.variables!,
     })
 

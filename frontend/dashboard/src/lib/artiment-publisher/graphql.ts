@@ -1,7 +1,8 @@
 import { ArtimentPublisherError, type TArtimentBodyBag } from '@groupher/artiment-publisher'
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
+
+import { dashboardToPhoenixHeaders } from '../serviceIdentity'
 
 export type TUpdateDocDraftVariables = {
   community: string
@@ -25,7 +26,6 @@ type TOptions = {
   bodyBag: TArtimentBodyBag
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
-  serverTrustSecret: string
   variables: TUpdateDocDraftVariables
 }
 
@@ -105,16 +105,14 @@ export const updateDocDraftWithBodyBag = async <TData>({
   bodyBag,
   fetchImpl = fetch,
   graphqlEndpoint = GRAPHQL_ENDPOINT,
-  serverTrustSecret,
   variables,
 }: TOptions): Promise<TData> => {
   const response = await fetchImpl(graphqlEndpoint, {
     method: 'POST',
     cache: 'no-store',
     headers: {
-      Authorization: `Bearer ${backendToken}`,
       'Content-Type': 'application/json',
-      [GROUPHER_SERVER_TRUST_HEADER]: serverTrustSecret,
+      ...(await dashboardToPhoenixHeaders(backendToken, 'dashboard:body-bag:write')),
     },
     body: JSON.stringify({
       query: UPDATE_DOC_DRAFT,

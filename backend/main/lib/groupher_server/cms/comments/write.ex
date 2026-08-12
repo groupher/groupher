@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
 
-  alias CMS.{CanCan, FrontDesk}
+  alias CMS.{FrontDesk, Gate}
 
   alias CMS.Comments.{BodyCodec, Numbering, Participants, Replies, States}
   alias CMS.Events
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   defp do_create(thread, article, body, %User{} = user, info) do
     article = Repo.preload(article, [[author: :user], :community])
 
-    with {:ok, _} <- CanCan.allow_comment(article, user) do
+    with {:ok, _} <- Gate.allow_comment(article) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
         insert_comment(body, thread, info.foreign_key, article, user)
@@ -101,7 +101,7 @@ defmodule GroupherServer.CMS.Comments.Write do
          replying_comment <- Repo.preload(target_comment, reply_to_comment: :author),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
          {:ok, article} <- FrontDesk.article_of(replying_comment, preload: [author: :user]),
-         {:ok, _} <- CanCan.allow_comment(article, user),
+         {:ok, _} <- Gate.allow_comment(article),
          {:ok, info} <- match(thread),
          parent_comment <- Replies.root_comment(replying_comment) do
       Multi.new()

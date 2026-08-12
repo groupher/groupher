@@ -7,6 +7,57 @@ defmodule GroupherServer.CMS.Const do
 
   enum(stage, do: [draft: :draft, public: :public])
 
+  enum passport_action do
+    [
+      community_application_review: "community.application.review",
+      community_application_approve: "community.application.approve",
+      community_application_reject: "community.application.reject",
+      community_application_retry_creation: "community.application.retry_creation",
+      community_application_retry_setup: "community.application.retry_setup",
+      community_update: "community.update",
+      community_delete: "community.delete"
+    ]
+  end
+
+  enum gate_action do
+    [
+      read: :read,
+      archive: :archive,
+      restore: :restore,
+      schedule_reclaim: :schedule_reclaim,
+      cancel_reclaim: :cancel_reclaim,
+      destroy: :destroy
+    ]
+  end
+
+  enum lifecycle_state do
+    [
+      setting_up: :setting_up,
+      setup_failed: :setup_failed,
+      active: :active,
+      read_only: :read_only,
+      suspended: :suspended,
+      archived: :archived,
+      scheduled_reclaim: :scheduled_reclaim,
+      destroy: :destroy
+    ]
+  end
+
+  enum lifecycle_blocker_type do
+    [
+      owner_archive: :owner_archive,
+      moderation_suspend: :moderation_suspend,
+      moderation_archive: :moderation_archive,
+      ops_legal_hold: :ops_legal_hold,
+      billing_read_only: :billing_read_only,
+      billing_suspend: :billing_suspend
+    ]
+  end
+
+  enum lifecycle_blocker_end_type do
+    [released: :released, terminated: :terminated]
+  end
+
   enum(article_branch_type, do: [main: :main, preview: :preview])
   enum(article_branch_status, do: [active: :active, archived: :archived])
 
