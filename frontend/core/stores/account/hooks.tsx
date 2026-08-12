@@ -28,7 +28,7 @@ const hasSignedInHintCookie = (): boolean => {
 export default function Hooks() {
   const storeHook = useBaseStore()
   const store = storeHook.live$
-  const shouldFetchMe = hasSignedInHintCookie()
+  const shouldFetchMe = store.loading && hasSignedInHintCookie()
 
   const { data, loading, error } = useQuery(sessionState, {}, { pause: !shouldFetchMe })
 

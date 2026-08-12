@@ -4,6 +4,8 @@ import {
   getDashboardUrl,
   getDashUrl,
   isAuthRoute,
+  isApplyHost,
+  isApplyRoute,
   isDashHost,
   isDashRoute,
   isDashboardRoute,
@@ -43,6 +45,16 @@ describe('gateway/routing', () => {
       expect(isLandingHost('landing.groupher.localhost')).toBe(true)
       expect(isLandingHost('groupher.localhost')).toBe(false)
       expect(isDashHost('dash.groupher.localhost')).toBe(true)
+      expect(isApplyHost('apply.groupher.localhost')).toBe(true)
+    })
+  })
+
+  describe('isApplyRoute', () => {
+    it('recognizes only the independent Apply root and host', () => {
+      expect(isApplyRoute('/apply', 'groupher.com')).toBe(true)
+      expect(isApplyRoute('/apply/review/app_1', 'groupher.com')).toBe(true)
+      expect(isApplyRoute('/anything', 'apply.groupher.localhost')).toBe(true)
+      expect(isApplyRoute('/home/dash/apply', 'groupher.com')).toBe(false)
     })
   })
 
@@ -237,6 +249,27 @@ describe('gateway/routing', () => {
       expect(resolve('/home/overview', 'dash.groupher.localhost').targetKind).toBe('dash')
     })
 
+    it('routes Apply as an independent app with the canonical path intact', () => {
+      const target = resolve('/apply/review/app_1', 'groupher.com', '?tab=events')
+      expect(target.targetKind).toBe('apply')
+      expect(target.targetUrl.origin).toBe(new URL(SITE.APPLY).origin)
+      expect(target.targetUrl.pathname).toBe('/apply/review/app_1')
+      expect(target.targetUrl.search).toBe('?tab=events')
+    })
+
+    it('routes shared Vite modules by the Apply page referer', () => {
+      const target = resolve(
+        '/@tanstack-start/styles.css',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/apply/',
+      )
+      expect(target.targetKind).toBe('apply')
+      expect(target.targetUrl.pathname).toBe('/@tanstack-start/styles.css')
+    })
+
     it('routes the canonical dashboard path to the dashboard app unchanged', () => {
       const target = resolve('/cps/dashboard', 'www.groupher.com', '?page=1')
       expect(target.targetKind).toBe('dashboard')
@@ -334,34 +367,57 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.pathname).toBe('/_vite/client')
     })
 
-    it('routes Dash Vite development assets without requiring a page referer', () => {
+    it('routes shared Vite development assets using the Dash page referer', () => {
+      const dashReferer = 'https://groupher.localhost/home/dash/overview'
       const moduleTarget = resolve(
         '/@id/virtual:tanstack-start-dev-client-entry',
         'groupher.localhost',
         '',
         undefined,
+        'GET',
+        dashReferer,
       )
       const stylesheetTarget = resolve(
         '/@tanstack-start/styles.css',
         'groupher.localhost',
         '?routes=__root__',
         undefined,
+        'GET',
+        dashReferer,
       )
-      const refreshTarget = resolve('/@react-refresh', 'groupher.localhost', '', undefined)
+      const refreshTarget = resolve(
+        '/@react-refresh',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        dashReferer,
+      )
       const fsTarget = resolve(
         '/@fs/Users/xieyiming/code/groupher/groupher/node_modules/vite/dist/client/env.mjs',
         'groupher.localhost',
         '',
         undefined,
+        'GET',
+        dashReferer,
       )
       const dependencyTarget = resolve(
         '/node_modules/.vite/deps/react.js',
         'groupher.localhost',
         '',
         undefined,
+        'GET',
+        dashReferer,
       )
       const hmrTarget = resolve('/__dash_hmr', 'groupher.localhost', '', undefined)
-      const sourceTarget = resolve('/src/router.tsx', 'groupher.localhost', '', undefined)
+      const sourceTarget = resolve(
+        '/src/router.tsx',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        dashReferer,
+      )
 
       expect(moduleTarget.targetKind).toBe('dash')
       expect(moduleTarget.targetUrl.pathname).toBe('/@id/virtual:tanstack-start-dev-client-entry')
@@ -380,6 +436,62 @@ describe('gateway/routing', () => {
       expect(hmrTarget.targetUrl.pathname).toBe('/__dash_hmr')
       expect(sourceTarget.targetKind).toBe('dash')
       expect(sourceTarget.targetUrl.pathname).toBe('/src/router.tsx')
+    })
+
+    it('routes root Dash Vite assets after the virtual client entry becomes the referer', () => {
+      const virtualClientReferer =
+        'https://groupher.localhost/@id/virtual:tanstack-start-dev-client-entry'
+      const target = resolve(
+        '/@react-refresh',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        virtualClientReferer,
+      )
+
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe('/@react-refresh')
+    })
+
+    it('keeps chained Dash Vite modules on Dash after the referer becomes an fs module', () => {
+      const moduleReferer =
+        'https://groupher.localhost/@fs/Users/xieyiming/code/groupher/groupher/node_modules/@tanstack/react-start/dist/plugin/default-entry/client.tsx'
+      const target = resolve(
+        '/@fs/Users/xieyiming/code/groupher/groupher/frontend/core/ui/Switcher/Tabs/DesktopView.tsx',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        moduleReferer,
+      )
+
+      expect(target.targetKind).toBe('dash')
+      expect(target.targetUrl.pathname).toBe(
+        '/@fs/Users/xieyiming/code/groupher/groupher/frontend/core/ui/Switcher/Tabs/DesktopView.tsx',
+      )
+    })
+
+    it('keeps Dash Vite modules on Dash through the refresh and source chain', () => {
+      const refreshTarget = resolve(
+        '/@vite/client',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/@react-refresh',
+      )
+      const sourceTarget = resolve(
+        '/src/routeTree.gen.ts',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/src/router.tsx',
+      )
+
+      expect(refreshTarget.targetKind).toBe('dash')
+      expect(sourceTarget.targetKind).toBe('dash')
     })
 
     it('routes shared core static assets by the dash page referer', () => {
