@@ -32,8 +32,8 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       :user
       |> simu_conn(user)
       |> Plug.Conn.put_req_header(
-        "x-groupher-server-trust",
-        "test-server-trust-secret"
+        "x-groupher-test-service-identity",
+        "enabled"
       )
 
     {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
@@ -107,7 +107,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
     test "requires publisher proof for BodyBag but not metadata-only updates",
          ~m(user_conn community page_payload)a do
       doc_id = page_payload.node.doc_id
-      direct_user_conn = Plug.Conn.delete_req_header(user_conn, "x-groupher-server-trust")
+
+      direct_user_conn =
+        Plug.Conn.delete_req_header(user_conn, "x-groupher-test-service-identity")
 
       assert direct_user_conn
              |> mutation_error?(S.Doc.m(:update_draft), %{

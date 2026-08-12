@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   alias GroupherServer.CMS.Model.CommunityAsset
 
-  @server_trust_header "X-Groupher-Server-Trust"
   @timeout 10_000
 
   plug(Tesla.Middleware.JSON, engine: Jason)
@@ -51,14 +50,18 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   defp do_enqueue(%CommunityAsset{storage: "r2", storage_key: storage_key} = asset)
        when is_binary(storage_key) do
     with {:ok, endpoint} <- endpoint(),
-         {:ok, trust_secret} <- server_trust_secret() do
-      request(endpoint, trust_secret, asset)
+         {:ok, service_token} <-
+           GroupherServer.ServiceIdentity.Client.token(
+             "https://assets.groupher.com/internal",
+             ["assets:object:delete"]
+           ) do
+      request(endpoint, service_token, asset)
     end
   end
 
   defp do_enqueue(_asset), do: {:error, :skipped}
 
-  defp request(endpoint, trust_secret, asset) do
+  defp request(endpoint, service_token, asset) do
     body = %{
       assetId: asset.id,
       assetPublicRef: asset.public_ref,
@@ -67,7 +70,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
       storageKey: asset.storage_key
     }
 
-    headers = [{@server_trust_header, trust_secret}]
+    headers = [{"authorization", "Bearer #{service_token}"}]
 
     {duration_us, result} =
       :timer.tc(fn ->
@@ -114,16 +117,6 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     |> case do
       nil -> {:error, :skipped}
       endpoint -> {:ok, endpoint}
-    end
-  end
-
-  defp server_trust_secret do
-    :groupher_server
-    |> Application.get_env(:server_trust, [])
-    |> Keyword.get(:secret)
-    |> case do
-      value when is_binary(value) and value != "" -> {:ok, value}
-      _ -> {:error, :skipped}
     end
   end
 end

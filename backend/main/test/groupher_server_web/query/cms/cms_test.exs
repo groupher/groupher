@@ -28,24 +28,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     {:ok, ~m(guest_conn community user user2)a}
   end
 
-  describe "apply community" do
-    @check_community_pending_query S.Community.q(:has_pending_community_apply)
-    test "can check if user has pending apply", ~m(user)a do
-      user_conn = simu_conn(:user, user)
-
-      check_state = user_conn |> gq_query(@check_community_pending_query)
-
-      assert not check_state["exist"]
-
-      attrs = mock_attrs(:community)
-      {:ok, _community} = CMS.Communities.apply(attrs, user)
-
-      user_conn = simu_conn(:user, user)
-      check_state = user_conn |> gq_query(@check_community_pending_query)
-
-      assert check_state["exist"]
-    end
-
+  describe "community checks" do
     @check_community_exist_query S.Community.q(:is_community_exist)
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
@@ -375,9 +358,6 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @tag :skip_ci
     test "can get open-graph info by url", ~m(user)a do
       user_conn = simu_conn(:user, user)
-
-      user_conn
-      |> gq_query(@check_community_pending_query)
 
       variables = %{url: "https://www.ifanr.com/1561465"}
 

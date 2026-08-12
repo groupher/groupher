@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Middleware.BodyBagTrust do
   @moduledoc """
-  Requires trusted-server proof whenever a GraphQL mutation carries a BodyBag.
+  Requires a scoped service actor whenever a GraphQL mutation carries a BodyBag.
 
   Metadata-only Article updates remain regular authenticated GraphQL requests;
   only server-derived document fields require this additional trust boundary.
@@ -20,21 +20,32 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
   import Helper.ErrorCode
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
-  @doc "Allows ordinary mutations and requires server trust whenever body_bag is present."
+  @doc "Allows ordinary mutations and requires a bounded publisher scope for BodyBag writes."
   @impl Absinthe.Middleware
   def call(
-        %{arguments: %{body_bag: _}, context: %{server_trusted: true}} = resolution,
+        %{arguments: %{body_bag: _}, context: %{service_actor: actor} = context} = resolution,
         _opts
-      ),
-      do: resolution
+      ) do
+    allowed =
+      (actor.subject == "service:test-suite" and MapSet.member?(actor.scopes, "*")) or
+        (actor.audience == "phoenix:dashboard-api" and
+           MapSet.member?(actor.scopes, "dashboard:body-bag:write") and
+           Map.has_key?(context, :delegated_actor)) or
+        (actor.audience == "phoenix:content-import-api" and
+           MapSet.member?(actor.scopes, "content-import:write"))
 
-  def call(%{arguments: %{body_bag: _}} = resolution, _opts) do
-    handle_absinthe_error(
-      resolution,
-      "BodyBag requires a trusted Groupher server",
-      ecode(:server_trust)
-    )
+    if allowed, do: resolution, else: reject(resolution)
   end
 
+  def call(%{arguments: %{body_bag: _}} = resolution, _opts), do: reject(resolution)
+
   def call(resolution, _opts), do: resolution
+
+  defp reject(resolution) do
+    handle_absinthe_error(
+      resolution,
+      "BodyBag requires an authorized Groupher publisher service",
+      ecode(:service_identity)
+    )
+  end
 end

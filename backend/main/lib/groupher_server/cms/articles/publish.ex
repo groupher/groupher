@@ -234,7 +234,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          {:ok, community} <- Communities.update_count_field(community, thread),
          {:ok, _community} <- Communities.update_inner_id(community, thread, public_article),
          {:ok, _states} <- Accounts.Publish.update_states(user, thread),
-         {:ok, _action} <- CMS.Policy.log_publish_action(user) do
+         {:ok, _action} <- CMS.Gate.log_publish_action(user) do
       {:ok, public_article}
     end
   end

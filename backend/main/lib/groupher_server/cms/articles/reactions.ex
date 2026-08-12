@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.{CanCan, FrontDesk}
+  alias CMS.{FrontDesk, Gate}
   alias CMS.Helper.EmotionToggle
   alias CMS.Model.ArticleUserEmotion
   alias Helper.{Multi, T, Transaction}
@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
 
     with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, _thread_key} <-
-           CanCan.allow_emotion(article.community.slug, :article, thread, emotion) do
+           Gate.allow_emotion(article.community.slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
           %{received_user_id: article.author.user_id, user_id: user.id}
@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.Articles.Reactions do
 
     with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, _thread_key} <-
-           CanCan.allow_emotion(article.community.slug, :article, thread, emotion) do
+           Gate.allow_emotion(article.community.slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
           %{received_user_id: article.author.user_id, user_id: user.id}

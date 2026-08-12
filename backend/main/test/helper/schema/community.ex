@@ -11,28 +11,6 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
     """
   end
 
-  def m(:approve_community_apply) do
-    """
-    mutation($community: String!) {
-          approveCommunityApply(community: $community) {
-            slug
-            pending
-          }
-        }
-    """
-  end
-
-  def m(:deny_community_apply) do
-    """
-    mutation($community: String!) {
-          denyCommunityApply(community: $community) {
-            slug
-            pending
-          }
-        }
-    """
-  end
-
   def m(:create_community) do
     """
     mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $locale: String) {
@@ -76,40 +54,6 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
     mutation($community: String!){
           subscribeCommunity(community: $community) {
             slug
-          }
-        }
-    """
-  end
-
-  def m(:apply_community) do
-    """
-    mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $applyMsg: String, $applyCategory: String, $locale: String) {
-          applyCommunity(title: $title, desc: $desc, logo: $logo, slug: $slug, applyMsg: $applyMsg, applyCategory: $applyCategory, locale: $locale) {
-            locale
-            moderators {
-              isRoot
-              user {
-                login
-                avatar
-                nickname
-              }
-            }
-            pending
-            slug
-            meta {
-              applyMsg
-              applyCategory
-            }
-          }
-        }
-    """
-  end
-
-  def q(:has_pending_community_apply) do
-    """
-    query {
-          hasPendingCommunityApply {
-            exist
           }
         }
     """

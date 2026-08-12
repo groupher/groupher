@@ -1,7 +1,11 @@
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+import {
+  bearerToken,
+  createServiceTokenVerifier,
+  serviceTokenErrorStatus,
+} from '@groupher/service/auth'
 
 import {
-  fetchCommunityAssetOriginInfo,
+  fetchAssetOriginInfo,
   PhoenixGraphQLError,
   type TCommunityAssetOriginInfo,
 } from './phoenix'
@@ -43,13 +47,20 @@ const errorResponse = (
 
 const parseJsonBody = async (request: Request) => request.json().catch(() => null)
 
-const serverTrustSecret = (env: Env) => env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-
-const isTrustedInternalRequest = (request: Request, env: Env) => {
-  const secret = serverTrustSecret(env)
-  if (!secret) return false
-
-  return request.headers.get(GROUPHER_SERVER_TRUST_HEADER) === secret
+const authorizeInternalRequest = async (request: Request, env: Env): Promise<null | 401 | 403> => {
+  const token = bearerToken(request.headers.get('authorization') || undefined)
+  if (!token) return 401
+  try {
+    const verifier = createServiceTokenVerifier({
+      audience: 'assets-hub:internal-api',
+      issuer: env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
+      jwksUrl: env.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
+    })
+    const actor = await verifier.verify(token, 'assets:object:delete')
+    return actor.subject === 'service:phoenix' ? null : 403
+  } catch (error) {
+    return serviceTokenErrorStatus(error)
+  }
 }
 
 const normalizeDeleteMessage = (input: unknown): TAssetDeleteMessage | null => {
@@ -172,7 +183,7 @@ const serveAsset = async (request: Request, env: Env) => {
 
   let originInfo: TCommunityAssetOriginInfo | null
   try {
-    originInfo = await fetchCommunityAssetOriginInfo({
+    originInfo = await fetchAssetOriginInfo({
       environment: env,
       publicRef: assetPath.assetPublicRef,
     })
@@ -205,8 +216,16 @@ const enqueueAssetDelete = async (request: Request, env: Env) => {
     })
   }
 
-  if (!isTrustedInternalRequest(request, env)) {
-    return errorResponse('server_trust_required', 'Server trust is required.', 401)
+  const authErrorStatus = await authorizeInternalRequest(request, env)
+  if (authErrorStatus) {
+    const forbidden = authErrorStatus === 403
+    return errorResponse(
+      forbidden ? 'service_scope_forbidden' : 'service_identity_required',
+      forbidden
+        ? 'The service identity does not grant this operation.'
+        : 'A scoped service identity is required.',
+      authErrorStatus,
+    )
   }
 
   const message = normalizeDeleteMessage(await parseJsonBody(request))

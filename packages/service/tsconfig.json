@@ -12,6 +12,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
-  "include": ["health/**/*.ts", "http/**/*.ts"],
+  "include": ["auth/**/*.ts", "health/**/*.ts", "http/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

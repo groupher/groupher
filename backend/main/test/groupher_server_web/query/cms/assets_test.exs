@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   @asset_refs_query S.Asset.q(:community_asset_refs)
   @origin_info_query S.Asset.q(:community_asset_origin_info)
-  @server_trust_secret "test-server-trust-secret"
+  @test_service_identity "enabled"
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
     server_conn =
       :guest
       |> simu_conn()
-      |> Plug.Conn.put_req_header("x-groupher-server-trust", @server_trust_secret)
+      |> Plug.Conn.put_req_header("x-groupher-test-service-identity", @test_service_identity)
 
     {:ok, ~m(asset_conn community post server_conn user)a}
   end
@@ -36,7 +36,9 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
                  %{
                    cur_user: user,
                    asset_refs: asset_refs
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert length(refs) == 25
 
@@ -61,7 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
       assert first_entry["source"] == "query-refs.png"
     end
 
-    test "server-trusted query can read asset origin info", ~m(community server_conn user)a do
+    test "scoped service query can read asset origin info", ~m(community server_conn user)a do
       {:ok, asset} =
         CMS.Assets.register_to_community(
           community,
@@ -96,14 +98,14 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
       assert result["meta"]["r2Head"]["etag"] == "etag-origin-query"
     end
 
-    test "origin info query requires server trust", ~m(user)a do
+    test "origin info query requires a scoped service identity", ~m(user)a do
       conn = simu_conn(:user, user)
 
       assert conn
              |> query_error?(
                @origin_info_query,
                %{publicRef: "asset_origin_query"},
-               ecode(:server_trust)
+               ecode(:service_identity)
              )
     end
   end

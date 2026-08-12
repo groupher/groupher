@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Assets do
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.T
 
-  alias __MODULE__.{Deletion, Read, Upload, Write}
+  alias __MODULE__.{ApplicationUploads, Deletion, Read, Upload, Write}
 
   @doc """
   Lists active assets owned by a community.
@@ -110,6 +110,21 @@ defmodule GroupherServer.CMS.Assets do
   @spec register(Community.t(), map(), User.t() | nil) :: T.domain_res(CommunityAsset.t())
   def register(%Community{} = community, attrs, user \\ nil) do
     register_to_community(community, attrs, user)
+  end
+
+  @doc "Promotes one finalized Application Logo using local database writes only."
+  def register_from_application_upload(community, upload, user),
+    do: ApplicationUploads.register(community, upload, user)
+
+  @doc "Requests best-effort deletion for an expired Application Logo object."
+  def delete_application_upload_object(upload) do
+    Deletion.enqueue(%CommunityAsset{
+      id: upload.id,
+      public_ref: upload.public_ref,
+      community_id: nil,
+      storage: upload.storage,
+      storage_key: upload.storage_key
+    })
   end
 
   @doc "Creates a short-lived upload capability for assets-hub."
