@@ -86,7 +86,7 @@ export default function HomeHeader() {
               <div>预约演示</div>
             </Link>
           ) : (
-            <Link className={cn(s.requestDemoLink, 'scale-90')} href={`/${ROUTE.APPLY_COMMUNITY}`}>
+            <Link className={cn(s.requestDemoLink, 'scale-90')} href={ROUTE.APPLY}>
               <Button space={3} className='bold-sm'>
                 <span className='relative mr-2.5 flex size-3 scale-75 brightness-125'>
                   <span className='s-full bg-rainbow-purpleLite absolute inline-flex animate-ping rounded-full opacity-80'></span>

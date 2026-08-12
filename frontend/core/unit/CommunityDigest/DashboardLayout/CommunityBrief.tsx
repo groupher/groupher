@@ -1,5 +1,5 @@
 import { BRAND_LAYOUT } from '~/const/layout'
-import { APPLY_COMMUNITY } from '~/const/route'
+import { APPLY } from '~/const/route'
 import { THREAD_PATH } from '~/const/thread'
 import { assetSrc } from '~/helper'
 import useLayout from '~/hooks/useLayout'
@@ -54,7 +54,7 @@ export default function CommunityBrief() {
             </Link>
 
             <div className={s.divider} />
-            <Link className={cn(s.panelItem, s.outside)} href={APPLY_COMMUNITY}>
+            <Link className={cn(s.panelItem, s.outside)} href={APPLY}>
               <PlusSVG className={s.icon} />
               <div>{t('dsb.community_brief.new_community')}</div>
               <div className='grow' />

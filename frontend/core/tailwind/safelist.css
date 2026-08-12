@@ -1,8 +1,8 @@
 /* container  */
 @source inline('container-{landing,community,community-doc,dashboard}');
 @source inline('container-{landing,community,article,dashboard}-wrapper');
-@source inline('container-{apply_community,community_sidebar}');
-@source inline('container-{apply_community,community_sidebar}-wrapper');
+@source inline('container-community_sidebar');
+@source inline('container-community_sidebar-wrapper');
 @source inline('text-{title,digest,hint,link}');
 
 /* fill for icons */

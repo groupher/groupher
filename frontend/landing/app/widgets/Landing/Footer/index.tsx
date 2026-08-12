@@ -22,7 +22,7 @@ export default function Footer() {
         {t('landing.footer.desc.suffix')}
       </div>
       <div className={s.buttons}>
-        <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>
+        <a href={ROUTE.APPLY} className={s.linkable}>
           <BorderButton space={8}>{t('landing.footer.cta')}</BorderButton>
         </a>
       </div>
