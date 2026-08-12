@@ -1,25 +1,22 @@
-# Dashboard TanStack V2 Implementation Review
+# Dashboard TanStack V2 实现评审
 
-> Review date: 2026-08-08
+> 评审日期：2026-08-08
 >
-> Scope: `frontend/dash`, `frontend/dashboard`, shared Dashboard surfaces in
-> `frontend/core`, and the local Gateway routes that expose both applications.
+> 范围：`frontend/dash`、`frontend/dashboard`、`frontend/core` 中共享的 Dashboard
+> 界面，以及暴露两个应用的本地 Gateway 路由。
 
-## Release conclusion
+## 发布结论
 
-The native TanStack migration, PlatformProvider client boundary, app isolation,
-SSR/provider lifecycle, theme/time hydration, pending/error shell, static
-assets, and local dual-app routing are implemented and validated.
+原生 TanStack 迁移、PlatformProvider 客户端边界、应用隔离、SSR/provider 生命周期、
+主题/时间 hydration、pending/error shell、静态资源和本地双应用路由均已实现并验证。
 
-V2 as a whole must not yet be labelled complete. Phase 3 remains blocked by a
-backend domain prerequisite: the canonical Community payload does not expose a
-single monotonic version covering profile, Dashboard, theme, wallpaper,
-navigation, aliases, threads, tags, SEO, and related configuration tables.
-Without that contract, `syncFromServer`, the focus version probe, and the
-idempotent cross-cloud Main revalidation request cannot implement the ordering
-guarantees specified by V2.
+V2 整体目前还不能标记为完成。Phase 3 仍被一个后端领域前置条件阻塞：canonical
+Community payload 没有暴露一个覆盖 profile、Dashboard、theme、wallpaper、navigation、
+aliases、threads、tags、SEO 及相关配置表的单调递增版本。没有这个合同，
+`syncFromServer`、focus version probe 和幂等的跨云 Main revalidation request 无法实现
+V2 规定的顺序保证。
 
-## Verified implementation
+## 已验证的实现
 
 - `frontend/dash/src/adapters` has no runtime files or aliases.
 - Dash and Dashboard are separate workspace applications and have no static

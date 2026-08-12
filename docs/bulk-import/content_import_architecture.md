@@ -6,9 +6,9 @@
 >
 > Source of truth：涉及 Content Import 的跨来源架构、Node/Phoenix 边界和公共命名时，以本文为准。
 >
-> 关联文档：[`import-file-sdk.md`](./import-file-sdk.md) 描述首期 PreviewStore/Files SDK/PostgreSQL staging；[`bulk-import.md`](./bulk-import.md) 描述 GitHub Docs 产品流程；[`content-import-refactor-plan.md`](./content-import-refactor-plan.md) 记录实施与旧链路直接删除；[`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 定义共享 Import Content、BodyBag 和 Article 写入边界；[`import-error-handling.md`](./import-error-handling.md) 记录联调错误、清理和重复来源覆盖边界。
+> 关联文档：[`import_file_sdk.md`](./import_file_sdk.md) 描述首期 PreviewStore/Files SDK/PostgreSQL staging；[`bulk_import.md`](./bulk_import.md) 描述 GitHub Docs 产品流程；[`content_import_refactor_plan.md`](./content_import_refactor_plan.md) 记录实施与旧链路直接删除；[`article_publish_import_refactor.md`](./article_publish_import_refactor.md) 定义共享 Import Content、BodyBag 和 Article 写入边界；[`import_error_handling.md`](./import_error_handling.md) 记录联调错误、清理和重复来源覆盖边界。
 >
-> 冲突优先级：跨来源架构与术语以本文为准；Files SDK 和临时对象生命周期以 `import-file-sdk.md` 为准；产品步骤与 UI 以 `bulk-import.md` 为准；单篇格式转换与 BodyBag 以 `article-publish-import-refactor.md` 为准。
+> 冲突优先级：跨来源架构与术语以本文为准；Files SDK 和临时对象生命周期以 `import_file_sdk.md` 为准；产品步骤与 UI 以 `bulk_import.md` 为准；单篇格式转换与 BodyBag 以 `article_publish_import_refactor.md` 为准。
 >
 > 更新：2026-07-22
 
@@ -223,7 +223,7 @@ Markdown/MDX 只负责 body protocol。以下信息必须继续是 typed metadat
 
 MD/MDX 来源必须区分元数据标题、Doc 可见标题、SourceTree 导航标题和目标 AST 中已消费的前导 H1。分析结果通过 `titleSource` 向 Publisher 提供来源证明；原始 Markdown/MDX 始终保持不变。
 
-完整的字段定义、解析优先级、Publisher 行为矩阵和测试要求见独立规范 [`markdown-title-normalization.md`](./markdown-title-normalization.md)。该规范使用 `SourceAnalysis.schemaVersion = 2`，由所有 Docs framework 共用。
+完整的字段定义、解析优先级、Publisher 行为矩阵和测试要求见独立规范 [`markdown_title_normalization.md`](./markdown_title_normalization.md)。该规范使用 `SourceAnalysis.schemaVersion = 2`，由所有 Docs framework 共用。
 
 ### 4.3 来源到 Thread 的映射
 
@@ -433,7 +433,7 @@ ImportSourceMapping
 
 ### 8.2 更新判断不是比较两个 updatedAt
 
-本节描述未来单篇增量同步的三方 diff。当前完整 Repo 再次批量导入采用更粗的 source-wins：同一 Connection/Mapping 命中后复用原 Doc ref，在用户确认覆盖警告后更新受来源管理字段；未映射目标碰撞仍阻断。详细交互和本轮联调结论见 [`bulk-import.md`](./bulk-import.md) 与 [`import-error-handling.md`](./import-error-handling.md)。
+本节描述未来单篇增量同步的三方 diff。当前完整 Repo 再次批量导入采用更粗的 source-wins：同一 Connection/Mapping 命中后复用原 Doc ref，在用户确认覆盖警告后更新受来源管理字段；未映射目标碰撞仍阻断。详细交互和本轮联调结论见 [`bulk_import.md`](./bulk_import.md) 与 [`import_error_handling.md`](./import_error_handling.md)。
 
 同步采用三方基线：
 
@@ -667,4 +667,4 @@ GitHub Repo
 
 业务 contract 不要求跨 provider 的根指针 CAS；严格 conditional-create 只在 PreviewStore 基础设施层按 provider 能力实现。当前 GitHub Docs 导入仍只需要 Node 服务端 private `upload/download/list/delete`。
 
-详细对象布局、TTL、清理顺序和 provider 配置以 [`import-file-sdk.md`](./import-file-sdk.md) 为准。
+详细对象布局、TTL、清理顺序和 provider 配置以 [`import_file_sdk.md`](./import_file_sdk.md) 为准。

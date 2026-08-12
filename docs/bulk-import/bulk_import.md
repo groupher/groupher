@@ -6,7 +6,7 @@
 >
 > 重构范围：七类 Docs framework adapter 已在 Dashboard Node/TS 落地并通过现有 basic golden fixtures；目录、PreviewStore/Files SDK、PostgreSQL staging 和 Phoenix 旧链路已完成直接切换，不恢复生产双路径。
 >
-> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。跨来源架构、`ThreadDataset`、Node/Phoenix 边界和公共命名以 [`content-import-architecture.md`](./backend-content-import-architecture.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准；本轮联调错误与恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
+> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。跨来源架构、`ThreadDataset`、Node/Phoenix 边界和公共命名以 [`content_import_architecture.md`](./content_import_architecture.md) 为准；Files SDK/staging 以 [`import_file_sdk.md`](./import_file_sdk.md) 为准；实施清单以 [`content_import_refactor_plan.md`](./content_import_refactor_plan.md) 为准；共享 Import Content/BodyBag 以 [`article_publish_import_refactor.md`](./article_publish_import_refactor.md) 为准；本轮联调错误与恢复边界见 [`import_error_handling.md`](./import_error_handling.md)。
 >
 > 本文先定义目标产品规格，再单列当前实现快照、目标验收标准和迁移步骤。
 
@@ -72,7 +72,7 @@ Workflow Step B 读取 SourceTree，调用 Phoenix Validator 并保存 Target Pr
 
 Bulk v1 的 Review 只检查结构、目标映射、数量和 warning，不在确认前转换或展示单篇正文。用户确认后的“逐篇转换”只是一个 Bulk Import Job 内部的 item 执行单位；完成后进入 Docs 编辑器检查正文。
 
-两条产品流程不共享页面状态和 Review 状态，但共享现有 Import Content、artiment-publisher、BodyBag contract、PostgreSQL staging 和 Docs Writer。Bulk 只是把多个 source item 组织成 `DocsDataset` 并在最终阶段使用树级原子 apply；后续单篇来源同步使用同一写入链的 single-item mode。单篇导入的详细边界见 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md)。
+两条产品流程不共享页面状态和 Review 状态，但共享现有 Import Content、artiment-publisher、BodyBag contract、PostgreSQL staging 和 Docs Writer。Bulk 只是把多个 source item 组织成 `DocsDataset` 并在最终阶段使用树级原子 apply；后续单篇来源同步使用同一写入链的 single-item mode。单篇导入的详细边界见 [`article_publish_import_refactor.md`](./article_publish_import_refactor.md)。
 
 ## 3. 目标和非目标
 
@@ -1002,14 +1002,14 @@ frontend/dashboard/src/
     └── applyDocsDataset.ts
 ```
 
-详细文件树见 [`content-import-architecture.md`](./backend-content-import-architecture.md#9-node-目录结构)。
+详细文件树见 [`content_import_architecture.md`](./content_import_architecture.md#9-node-目录结构)。
 
 #### 19.5.2 收敛共享解析基础设施
 
 现有实现继续遵守以下边界，目录迁移时不能退化：
 
 1. POSIX 相对路径规范化、路径大小写和扩展名判断。
-2. Markdown/MDX frontmatter、title、slug、route 和 sourceRef 提取；标题必须遵守独立的 [MD/MDX 文档标题归一化规范](./markdown-title-normalization.md)，保留 `metadataTitle / title / SourceTree.page.title` 的语义边界。
+2. Markdown/MDX frontmatter、title、slug、route 和 sourceRef 提取；标题必须遵守独立的 [MD/MDX 文档标题归一化规范](./markdown_title_normalization.md)，保留 `metadataTitle / title / SourceTree.page.title` 的语义边界。
 3. JSON/YAML 解析，以及 JS/TS/ESM/CJS 配置的 AST 静态对象提取。
 4. sidebar/meta/nav 公共节点归一化。
 5. `TBadSmell` 构造、source path 定位和 warning/error 等级。

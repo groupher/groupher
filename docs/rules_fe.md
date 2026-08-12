@@ -1,4 +1,4 @@
-# Frontend Rules
+# 前端规则
 
 前端协作约束。
 

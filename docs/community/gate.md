@@ -663,7 +663,7 @@ TODO(V2)：评估 `PublishThrottle.check/2` 是否统一为 `{:ok, boolean}`。�
 - 在 `CMS.Const` 增加 Gate action 与 Passport action key，并让 Access 映射和 Passport Config
   共同消费；补齐 action 穷举、Registry 存在性和 unknown action 测试。
 - 模型、配置、测试辅助函数和测试模块名称。
-- 模块文档及 `docs/reorg-be-modules.md` 中旧的 `CMS.Policy` 边界描述。
+- 模块文档及 `docs/reorg_be_modules.md` 中旧的 `CMS.Policy` 边界描述。
 
 这是模块和调用边界重构，不改变现有数据库表、Passport 规则格式、GraphQL error code 或 GraphQL
 公开行为；内部 ReviewAuth/Passport 返回合同按上述目标统一。

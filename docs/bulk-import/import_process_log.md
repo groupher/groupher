@@ -4,7 +4,7 @@
 >
 > 范围：定义 Content Import 在 Preview 与 Job 两个执行阶段中，如何生成、保存、投影和轮询用户可见的过程信息，以及前端 `ImportProcessLog` 的通用边界。
 >
-> 关联文档：[`content-import-architecture.md`](./content-import-architecture.md) 负责跨来源总体架构；[`bulk-import.md`](./bulk-import.md) 负责 GitHub Docs 产品流程；[`import-file-sdk.md`](./import-file-sdk.md) 负责 PreviewStore、Files SDK 与 PostgreSQL staging；[`import-error-handling.md`](./import-error-handling.md) 记录错误透传、Back/reset 与联调复盘。
+> 关联文档：[`content_import_architecture.md`](./content_import_architecture.md) 负责跨来源总体架构；[`bulk_import.md`](./bulk_import.md) 负责 GitHub Docs 产品流程；[`import_file_sdk.md`](./import_file_sdk.md) 负责 PreviewStore、Files SDK 与 PostgreSQL staging；[`import_error_handling.md`](./import_error_handling.md) 记录错误透传、Back/reset 与联调复盘。
 >
 > 本文不改变 `Platform -> Source -> ThreadDataset -> Thread -> ImportSourceMapping` 总体边界，也不把 Preview 与 ImportJob 合并成一个新的 Workflow Session。
 

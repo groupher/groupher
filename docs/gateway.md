@@ -232,7 +232,7 @@ Gateway 应该成为 Groupher 的入口 contract，而不是一个业务子应�
 
 ## 相关文档
 
-- [`docs/sub-apps/gateway-hono-migration.md`](./sub-apps/gateway-hono-migration.md)
+- [`docs/sub-apps/gateway_hono_migration.md`](./sub-apps/gateway_hono_migration.md)
 - [`docs/sub-apps/auth.md`](./sub-apps/auth.md)
 - [`docs/sub-apps/README.md`](./sub-apps/README.md)
 

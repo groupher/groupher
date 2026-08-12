@@ -4,7 +4,7 @@
 >
 > 范围：Preview 分析、Workflow 错误投影、Back/reset 清理、重复来源覆盖、Docs Writer 与 archive 下载/解压。不重新定义总体架构。
 >
-> 关联文档：产品流程见 [`bulk-import.md`](./bulk-import.md)；总体边界见 [`content-import-architecture.md`](./content-import-architecture.md)；过程投影见 [`import-process-log.md`](./import-process-log.md)；Files SDK 与临时对象生命周期见 [`import-file-sdk.md`](./import-file-sdk.md)。
+> 关联文档：产品流程见 [`bulk_import.md`](./bulk_import.md)；总体边界见 [`content_import_architecture.md`](./content_import_architecture.md)；过程投影见 [`import_process_log.md`](./import_process_log.md)；Files SDK 与临时对象生命周期见 [`import_file_sdk.md`](./import_file_sdk.md)。
 
 ## 1. 结论
 

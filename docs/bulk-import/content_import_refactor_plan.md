@@ -4,7 +4,7 @@
 >
 > 范围：按最终 Node/Phoenix 边界整理目录并完成公开 GitHub Repo → Docs 的首个垂直切片。
 >
-> Source of truth：跨来源架构、公共命名、目录目标和 Node/Phoenix 职责以 [`content-import-architecture.md`](./content-import-architecture.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准；本轮联调与错误恢复见 [`import-error-handling.md`](./import-error-handling.md)。
+> Source of truth：跨来源架构、公共命名、目录目标和 Node/Phoenix 职责以 [`content_import_architecture.md`](./content_import_architecture.md) 为准；Files SDK/staging 以 [`import_file_sdk.md`](./import_file_sdk.md) 为准；产品流程以 [`bulk_import.md`](./bulk_import.md) 为准；共享 Import Content/BodyBag 以 [`article_publish_import_refactor.md`](./article_publish_import_refactor.md) 为准；本轮联调与错误恢复见 [`import_error_handling.md`](./import_error_handling.md)。
 >
 > 更新：2026-07-22
 
@@ -174,7 +174,7 @@ groupherChanged = currentGroupherHash != mapping.groupher_hash
 - `Mapping/last_imported_local_hash` 是目标命名。
 - Groupher 维护 Preview Session。
 
-发生冲突时必须以前文 0.x 和 `content-import-architecture.md` 为准，不能根据旧 checklist 恢复被删除的双路径。
+发生冲突时必须以前文 0.x 和 `content_import_architecture.md` 为准，不能根据旧 checklist 恢复被删除的双路径。
 
 ## 历史实施快照
 
@@ -192,7 +192,7 @@ groupherChanged = currentGroupherHash != mapping.groupher_hash
 
 上表记录的是切换前的历史状态，不能用来判断当前目标架构是否完成。当前本地实施结果以前文 0.5.2 为准；复杂 analyzer 变体、固定公开仓库与部署环境端到端验证仍未完成。
 
-本文后续完成项记录 Phoenix ContentImport 基线和历史落地状态。涉及 file-based Docs 来源分析的未来归属时，以上述边界更新和 `bulk-import.md` 为准，不能从旧 checklist 推导出继续维护 Elixir/Node 双 analyzer。
+本文后续完成项记录 Phoenix ContentImport 基线和历史落地状态。涉及 file-based Docs 来源分析的未来归属时，以上述边界更新和 `bulk_import.md` 为准，不能从旧 checklist 推导出继续维护 Elixir/Node 双 analyzer。
 
 ### 当前实施快照
 
@@ -1197,7 +1197,7 @@ Bulk v1 只继承其中的 Job、Mapping、幂等和 atomic apply contract。Ass
 两份文档描述的是不同层级，不能合并成一套枚举：
 
 - 本节的 `validating/pending/loading/planning/staging/ready/applying/...` 是通用 ContentImport 执行状态，用于持久化 Job、恢复、诊断和运维。
-- `bulk-import.md` 的 `idle/analyzing_repository/ready_for_review/importing/completed/failed` 是 Dashboard 产品 UI 阶段，用于三步 Stepper 和用户操作。
+- `bulk_import.md` 的 `idle/analyzing_repository/ready_for_review/importing/completed/failed` 是 Dashboard 产品 UI 阶段，用于三步 Stepper 和用户操作。
 - GitHub Bulk Import 在用户确认前只有 Vercel Workflow + immutable PreviewRecord/DocsDataset，尚未创建 Phoenix Job；确认后才进入通用 Job 的 publishing/applying 状态。
 
 映射固定如下：

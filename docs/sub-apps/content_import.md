@@ -14,7 +14,7 @@
 Phoenix 数据库。
 
 详细的 Dataset、PreviewStore 和 Phoenix 写入约束继续以
-[`../bulk-import/backend-content-import-architecture.md`](../bulk-import/backend-content-import-architecture.md)
+[`../bulk-import/content_import_architecture.md`](../bulk-import/content_import_architecture.md)
 为准；本文只描述独立部署后的子应用边界。
 
 ## 本地入口
@@ -39,7 +39,7 @@ make be.content-import.start
 - 导入进度、结构化错误、reset 和有限重试。
 
 单文件 PDF、DOCX、PPTX、XLSX、HTML 到 Markdown 的转换委托给
-[`document-converter`](./document-converter.md)。`content-import` 仍然负责来源
+[`document_converter`](./document_converter.md)。`content-import` 仍然负责来源
 编排、Dataset 和目标映射。
 
 ## 边界

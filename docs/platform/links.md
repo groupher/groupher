@@ -1,42 +1,38 @@
-# Platform Links
+# Platform 链接
 
-## Purpose
+## 目的
 
-Dashboard UI is shared by two applications:
+Dashboard UI 由两个应用共享：
 
-- `frontend/dashboard` uses Next.js App Router and `next/link`.
-- `frontend/dash` uses TanStack Router and `@tanstack/react-router`'s `Link`.
+- `frontend/dashboard` 使用 Next.js App Router 和 `next/link`。
+- `frontend/dash` 使用 TanStack Router 和 `@tanstack/react-router` 的 `Link`。
 
-Shared Core components must not import either router directly. They use the
-platform link contract exposed by `PlatformProvider`.
+共享 Core 组件不得直接导入任一 Router，而应使用 `PlatformProvider` 暴露的
+Platform 链接合同。
 
-## Link contract
+## 链接合同
 
 Core uses `frontend/core/platform/Link.tsx`:
 
 ```tsx
-<PlatformLink
-  route={dsbRoutes.section({ community, section: 'appearance' })}
-  preserveSearch
->
+<PlatformLink route={dsbRoutes.section({ community, section: 'appearance' })} preserveSearch>
   Appearance
 </PlatformLink>
 ```
 
-The contract accepts either:
+该合同接受以下任一种形式：
 
-- `route`: an internal typed dashboard route target;
-- `href`: an ordinary URL, including an external URL.
+- `route`：内部的类型化 Dashboard 路由目标；
+- `href`：普通 URL，包括外部 URL。
 
-The Core component does not decide whether navigation is handled by Next or
-TanStack Router. The active platform adapter does that.
+Core 组件不判断导航由 Next 还是 TanStack Router 处理，这由当前 Platform adapter
+负责。
 
-## Platform implementations
+## Platform 实现
 
 ### Next Dashboard
 
-`frontend/dashboard/src/platform/Link.tsx` resolves the route with the
-`dashboard` root segment and renders:
+`frontend/dashboard/src/platform/Link.tsx` 使用 `dashboard` 根片段解析路由，并渲染：
 
 ```tsx
 <NextLink href={resolvedHref}>...</NextLink>
@@ -44,45 +40,40 @@ TanStack Router. The active platform adapter does that.
 
 ### TanStack Dash
 
-`frontend/dash/src/platform/Link.tsx` resolves the route with the `dash` root
-segment and renders:
+`frontend/dash/src/platform/Link.tsx` 使用 `dash` 根片段解析路由，并渲染：
 
 ```tsx
 <TanStackLink to={resolvedHref}>...</TanStackLink>
 ```
 
-The TanStack adapter owns TanStack-specific concerns such as `preload`,
-`replace`, and the registered route type. Those details must not leak into
-Core components.
+TanStack adapter 负责 `preload`、`replace` 和已注册路由类型等 TanStack 专属逻辑。
+这些细节不得泄漏到 Core 组件中。
 
-## Semantic boundary
+## 语义边界
 
-Use links for navigation:
+导航使用链接：
 
 ```tsx
 <PlatformLink route={target}>Settings</PlatformLink>
 ```
 
-Use buttons for actions:
+动作使用按钮：
 
 ```tsx
-<button type="button" onClick={onCollapse}>
+<button type='button' onClick={onCollapse}>
   Collapse
 </button>
 ```
 
-Navigation items must not be implemented as buttons calling `navi.to()`.
-Using a real link preserves keyboard navigation, copy-link, open-in-new-tab,
-modified-click behavior, browser fallback, and assistive-technology semantics.
+导航项不得实现为调用 `navi.to()` 的按钮。使用真正的链接可以保留键盘导航、复制链接、
+在新标签页打开、修改键点击、浏览器回退和辅助技术语义。
 
-`navi.to()` remains appropriate for imperative navigation such as redirects,
-post-submit transitions, and back/forward actions.
+`navi.to()` 仍适合重定向、提交后的跳转以及前进/后退等命令式导航。
 
-## Search parameters
+## Search 参数
 
-Dashboard route builders return a platform-neutral `TRouteTarget`. The adapter
-resolves it with the platform's root segment and the current search state when
-`preserveSearch` is requested:
+Dashboard 路由构造器返回与平台无关的 `TRouteTarget`。请求 `preserveSearch` 时，adapter
+使用平台根片段和当前 search 状态解析它：
 
 ```text
 Core route target
@@ -90,19 +81,16 @@ Core route target
   -> Dash adapter: /community/dash/...
 ```
 
-This keeps the two route trees parallel without making Core know which app is
-currently rendering it.
+这样可以保持两棵路由树平行，同时不让 Core 知道当前由哪个应用渲染。
 
-## Adding a new platform
+## 添加新平台
 
-When adding another host or router:
+添加新的 Host 或 Router 时：
 
-1. Implement the `TPlatformLinkProps` contract.
-2. Resolve `route` using that platform's root segment and search rules.
-3. Render the router's native link component.
-4. Register the implementation in that platform's `PlatformProvider`.
-5. Keep Core components on `PlatformLink`; do not add router-specific imports.
+1. 实现 `TPlatformLinkProps` 合同。
+2. 使用该平台的根片段和 search 规则解析 `route`。
+3. 渲染 Router 原生的链接组件。
+4. 在该平台的 `PlatformProvider` 中注册实现。
+5. Core 组件继续使用 `PlatformLink`，不要增加 Router 专属导入。
 
-The implementation should continue to render a semantic anchor for internal
-and external navigation. Only controls that mutate UI state should render as
-buttons.
+实现应继续为内部和外部导航渲染语义化锚点。只有改变 UI 状态的控件才应渲染为按钮。

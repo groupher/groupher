@@ -1,27 +1,27 @@
-# OAuth Account Link And Unlink
+# OAuth 帐户链接和取消链接
 
-> Status: design proposal; no implementation is implied by this document.
+> 状态：设计方案；本文件不暗示任何实施。
 >
-> This document covers linking and unlinking external OAuth identities for an
-> already authenticated Groupher user. Initial sign-in and Browser Session
-> lifecycle remain defined by [`v1.md`](./v1.md). First-party service identity
-> and user delegation remain defined by [`v2.md`](./v2.md).
+> 本文档涵盖链接和取消链接外部 OAuth 身份
+> 已通过身份验证的 Groupher 用户。初始登录和 Browser Session
+> 生命周期仍然由 [`v1.md`](./v1.md) 定义。第一方服务身份
+> 和用户委托仍然由 [`v2.md`](./v2.md) 定义。
 
-## Objective
+## 目标
 
-Groupher users need to manage more than one external login identity without
-creating duplicate Groupher users, allowing an external identity to move
-between users, or letting browser-supplied provider data become identity proof.
+Groupher用户需要管理多个外部登录身份而无需
+创建重复的 Groupher 用户，允许外部身份移动
+用户之间，或者让浏览器提供的提供商数据成为身份证明。
 
-The target contract must answer five questions explicitly:
+目标合约必须明确回答五个问题：
 
-1. Who proved the external provider identity?
-2. Which authenticated Groupher user requested the change?
-3. Which service is allowed to perform the account operation?
-4. Which component owns the provider binding and its invariants?
-5. How does the user retain at least one usable login method?
+1. 谁证明了外部提供商的身份？
+2. 哪个经过身份验证的 Groupher 用户请求了更改？
+3. 哪些服务可以执行账户操作？
+4. 哪个组件拥有提供者绑定及其不变量？
+   5、用户如何保留至少一种可用的登录方式？
 
-The short answer is:
+简短的回答是：
 
 ```text
 Auth proves the OAuth provider identity and orchestrates the browser flow.
@@ -29,29 +29,29 @@ Phoenix owns the Groupher user, provider binding, uniqueness, and unlink rules.
 Dashboard/Main/Apply only render account settings and start the Auth flow.
 ```
 
-## Scope
+## 范围
 
-This document covers:
+本文档涵盖：
 
-- Listing external identities linked to the current Groupher user.
-- Linking a new OAuth identity to the current user.
-- Idempotently handling an identity already linked to the current user.
-- Rejecting an identity already linked to another user.
-- Unlinking one identity without removing the last usable login method.
-- Service Identity and delegated-user requirements for Auth-to-Phoenix calls.
-- Browser Session behavior after link and unlink.
-- Transaction, concurrency, audit, and failure semantics.
+- 列出与当前 Groupher 用户关联的外部身份。
+- 将新的 OAuth 身份链接到当前用户。
+- 幂等地处理已链接到当前用户的身份。
+- 拒绝已链接到其他用户的身份。
+- 取消一个身份的链接，而不删除最后一个可用的登录方法。
+- Auth 到 Phoenix 呼叫的服务身份和委派用户要求。
+- Browser Session 链接和取消链接后的行为。
+- 事务、并发、审计和故障语义。
 
-This document does not cover:
+本文档不涵盖：
 
-- Initial OAuth sign-in and new-user registration.
-- Automatic account merging based on email address.
-- Merging two existing Groupher users and their content.
-- MCP, agent, third-party client, or Groupher-as-OAuth-provider grants.
-- Enterprise tenant OIDC/SAML connection administration.
-- Provider access-token storage for calling provider APIs after login.
+- 初始OAuth登录和新用户注册。
+- 根据电子邮件地址自动帐户合并。
+- 合并两个现有的 Groupher 用户及其内容。
+- MCP、代理、第三方客户或 Groupher-as-OAuth-提供商拨款。
+- 企业租户 OIDC/SAML 连接管理。
+- 提供者访问令牌存储，用于在登录后调用提供者 API。
 
-## Terminology
+## 术语
 
 ```text
 Groupher user
@@ -82,13 +82,13 @@ Account merge
   Linking must never perform an implicit merge.
 ```
 
-## Current Architecture
+## 当前架构
 
-### Sign-in
+### 登录
 
-`backend/auth` uses `@auth/core` with a JWT Session strategy and no Auth.js
-database adapter. Auth.js owns OAuth protocol handling, while Phoenix owns the
-actual user and provider rows:
+`backend/auth` 使用 `@auth/core` 和 JWT Session 策略，并且没有 Auth.js
+数据库适配器。 Auth.js 拥有 OAuth 协议处理，而 Phoenix 拥有
+实际用户和提供者行：
 
 ```text
 Browser
@@ -100,13 +100,13 @@ Browser
   -> Auth sets its Session Cookie and groupher-auth.token
 ```
 
-This means Auth.js `Adapter.linkAccount` is not the persistence boundary for
-Groupher. There is no Auth.js `User`/`Account` database that can replace
-Phoenix's `account.users` and `account.oauth_providers` tables.
+这意味着 Auth.js `Adapter.linkAccount` 不是持久性边界
+Groupher。没有 Auth.js `User`/`Account` 数据库可以替代
+Phoenix 的 `account.users` 和 `account.oauth_providers` 表。
 
-### Persistent model
+### 持久模型
 
-Phoenix stores external identities in `Accounts.Model.OauthProvider`:
+Phoenix 将外部身份存储在 `Accounts.Model.OauthProvider` 中：
 
 ```text
 oauth_providers
@@ -120,21 +120,21 @@ oauth_providers
   raw provider profile
 ```
 
-The database has a global unique index on `(provider, provider_id)`. This is the
-correct fundamental identity invariant: one external provider identity may
-belong to at most one Groupher user.
+该数据库在 `(provider, provider_id)` 上有一个全局唯一索引。这是
+正确的基本身份不变：一个外部提供者身份可能
+最多属于一个 Groupher 用户。
 
-The model currently has no opaque public binding reference or timestamps, so it
-cannot yet supply the proposed `publicRef` or `linkedAt` projection. It also
-permits one Groupher user to have multiple identities from the same provider
-because there is no `(user_id, provider)` unique index. The target V1 product
-model rejects that case: one Groupher user may bind at most one account from
-each provider.
+该模型当前没有不透明的公共绑定引用或时间戳，因此它
+尚无法提供建议的 `publicRef` 或 `linkedAt` 投影。它还
+允许一名 Groupher 用户拥有来自同一提供商的多个身份
+因为没有 `(user_id, provider)` 唯一索引。目标V1产品
+模型拒绝这种情况：一个 Groupher 用户最多可以绑定一个帐户
+每个提供商。
 
-### Current GraphQL operations
+### 当前的 GraphQL 操作
 
-The old browser-facing `linkOauth` and `unlinkOauth` fields have been removed.
-Phoenix now exposes only the Auth-scoped account-management contract:
+旧的面向浏览器的 `linkOauth` 和 `unlinkOauth` 字段已被删除。
+Phoenix 现在仅公开 Auth 范围的账户管理合约：
 
 ```graphql
 linkedOauthAccounts: LinkedOauthAccounts!
@@ -142,7 +142,7 @@ linkOauthIdentity(identity: VerifiedOauthIdentityInput!): LinkedOauthAccounts!
 unlinkOauthIdentity(publicRef: ID!): LinkedOauthAccounts!
 ```
 
-These operations require:
+这些操作需要：
 
 ```text
 audience phoenix:auth-api
@@ -150,22 +150,20 @@ scope    auth:oauth:read | auth:oauth:link | auth:oauth:unlink
 delegated current user
 ```
 
-Auth is the only intended caller. The remaining incomplete part is the
-provider authorization orchestration that obtains a verified identity before
-calling `linkOauthIdentity`.
+Auth 是唯一的预期呼叫者。剩下的不完整部分是
+提供者授权编排，在之前获取经过验证的身份
+呼叫`linkOauthIdentity`。
 
-## Current Problems
+## 目前的问题
 
-### 1. The old service contract was wrong (resolved)
+### 1.旧的服务合同有错误（已解决）
 
-Dashboard cannot prove that GitHub, Google, or another provider authenticated a
-particular external identity. Only Auth owns provider authorization, callback,
-state, PKCE, and normalized provider results.
+Dashboard 无法证明 GitHub、Google 或其他提供商验证了
+特定的外部身份。只有Auth拥有提供者授权，回调，
+状态、PKCE 和标准化提供者结果。旧的 Dashboard 范围字段已被删除。 Dashboard 不再呼叫
+Phoenix直接用于帐户链接或取消链接。
 
-The old Dashboard-scoped fields were removed. Dashboard no longer calls
-Phoenix directly for account linking or unlinking.
-
-Target owner:
+目标所有者：
 
 ```text
 service:auth
@@ -173,42 +171,42 @@ audience phoenix:auth-api
 scope    auth:oauth:link | auth:oauth:unlink | auth:oauth:read
 ```
 
-### 2. The browser can describe an identity but cannot prove it
+### 2.浏览器可以描述身份但无法证明它
 
-`OauthProviderInput` accepts `provider`, `providerId`, `login`, `avatar`, and
-arbitrary profile fields. This is acceptable only after Auth has completed the
-provider callback and is itself authenticated to Phoenix.
+`OauthProviderInput` 接受 `provider`、`providerId`、`login`、`avatar` 和
+任意配置文件字段。仅当 Auth 完成后才可以接受
+提供者回调，并且本身已通过 Phoenix 进行身份验证。
 
-The same input must never become a browser-facing account-management contract.
-In particular:
+相同的输入绝不能成为面向浏览器的帐户管理合约。
+特别是：
 
-- `providerId` must come from the verified provider callback.
-- `login`, `email`, and profile metadata are attributes, not linking authority.
-- Matching email addresses must not trigger automatic linking or merging.
-- `raw` must not accept arbitrary browser JSON or provider token sets.
+- `providerId` 必须来自经过验证的提供商回调。
+- `login`、`email` 和配置文件元数据是属性，而不是链接权限。
+- 匹配的电子邮件地址不得触发自动链接或合并。
+- `raw` 不得接受任意浏览器 JSON 或提供商令牌集。
 
-### 3. Legacy token issuance was removed
+### 3. 删除旧代币发行
 
-The old GraphQL field and legacy token behavior are gone. Linking an identity
-returns the updated provider binding projection and does not mint a Phoenix
-bearer token or create a Browser Session.
+旧的 GraphQL 字段和遗留令牌行为都消失了。关联身份
+返回更新后的提供者绑定投影并且不创建 Phoenix
+不记名令牌或创建一个Browser Session。
 
-The target result is the updated provider binding projection, not a credential.
+目标结果是更新的提供者绑定投影，而不是凭证。
 
-### 4. Link can reassign an identity during a race
+### 4. Link 可以在比赛期间重新分配身份
 
-The current flow first checks whether `(provider, provider_id)` belongs to a
-different user and then calls the generic `ORM.upsert_by/3` helper.
+当前流程首先检查 `(provider, provider_id)` 是否属于
+不同的用户，然后调用通用的 `ORM.upsert_by/3` 帮助程序。
 
-That upsert uses `(provider, provider_id)` as the conflict target and updates all
-other changed fields, including `user_id`. Two concurrent link requests can
-therefore pass the pre-check and let the conflict update move the external
-identity from one Groupher user to another.
+该 upsert 使用 `(provider, provider_id)` 作为冲突目标并更新所有
+其他更改的字段，包括 `user_id`。两个并发的链接请求可以
+因此通过预检查并让冲突更新移动外部
+身份从一个 Groupher 用户到另一个用户。
 
-This violates the most important account-linking invariant. A provider binding
-must never change owner through upsert.
+这违反了最重要的帐户链接不变量。提供者绑定
+绝不能通过更新插入来更改所有者。
 
-The target write must use insert-only conflict semantics:
+目标写入必须使用仅插入冲突语义：
 
 ```text
 insert binding for current user
@@ -218,42 +216,42 @@ insert binding for current user
   never update user_id on conflict
 ```
 
-### 5. Link is not one atomic domain transaction
+### 5. 链接不是一个原子域事务
 
-Provider creation and the GitHub-derived `Social` update are executed as
-separate steps. If the derived-profile update fails after provider insertion,
-the account is linked even though the mutation returns an error.
+提供程序创建和 GitHub 派生的 `Social` 更新执行为
+单独的步骤。如果在提供程序插入后派生配置文件更新失败，
+即使突变返回错误，该帐户仍会被链接。
 
-Binding persistence, required derived-state updates, and the audit event must
-share one transaction. The current implicit partial-success contract is not
-acceptable.
+绑定持久性、所需的派生状态更新和审核事件必须
+共享一笔交易。当前隐含的部分成功合约不是
+可以接受。
 
-### 6. Concurrent unlink can remove the last login methods
+### 6.并发unlink可以去掉最后登录的方法
 
-The current unlink flow counts provider rows and deletes afterward. Two
-concurrent requests can both observe a count of two and then delete different
-rows, leaving the user with no login method.
+当前的取消链接流程对提供者行进行计数并随后删除。两个
+并发请求都可以观察到计数为 2，然后删除不同的
+行，使用户没有登录方法。
 
-The target operation must lock the owning user row inside one transaction before
-checking the last-provider invariant and deleting. Link uses the same user-level
-serialization point so inserts, deletes, and derived-state writes cannot interleave.
+目标操作必须先在一个事务内锁定拥有用户行
+检查最后一个提供者不变量并删除。链接使用相同的用户级别
+序列化点，因此插入、删除和派生状态写入不能交错。
 
-### 7. Unlink accepts too much input
+### 7.取消链接接受太多输入
 
-Unlink only needs to identify one existing binding owned by the current user.
-It should not accept a complete mutable provider profile.
+取消链接只需要识别当前用户拥有的一个现有绑定。
+它不应该接受完整的可变提供者配置文件。
 
-The browser/API reference is an opaque binding `publicRef`. If Groupher
-decides to permit only one identity per provider per user, a provider enum is
-also sufficient for internal lookup, but public mutations still use the stable
-binding reference. Raw provider account ids are never public mutation identifiers.
+browser/API 引用是不透明的绑定 `publicRef`。如果Groupher
+决定只允许每个用户每个提供商使用一个身份，提供商枚举是
+对于内部查找也足够了，但是公共突变仍然使用稳定的
+绑定参考。原始提供商帐户 ID 绝不是公共突变标识符。
 
-### 8. Derived profile state can become stale
+### 8. 派生的配置文件状态可能会变得过时
 
-Linking GitHub currently writes `Social.github`. Unlinking GitHub removes the
-provider row but does not clear or recompute the derived social value.
+链接 GitHub 当前写入 `Social.github`。取消链接 GitHub 会删除
+提供者行，但不清除或重新计算派生的社会价值。
 
-The product must distinguish:
+产品必须区分：
 
 ```text
 login identity binding
@@ -261,97 +259,95 @@ user-authored social profile link
 provider-derived profile suggestion
 ```
 
-Unlink must not silently delete a user-authored social URL, but it also must not
-leave provider-derived state pretending that the identity is still verified.
-The source of each derived field therefore needs to be explicit.
+取消链接不得默默删除用户创作的社交URL，但也不得
+留下提供者派生的状态，假装身份仍然经过验证。
+因此，每个派生字段的来源都需要明确。
 
-### 9. Link orchestration must be separate from sign-in (resolved in Auth)
+### 9. 链接编排必须与登录分开（在 Auth 中解决）
 
-Auth now uses a dedicated link endpoint and callback. It never reuses the normal
-sign-in callback for a link request, and a link callback fails closed when its
-intent, Session, provider, or state does not match.
+Auth 现在使用专用链接端点和回调。它从不重复使用普通的
+链接请求的登录回调，链接回调失败时关闭
+意图、Session、提供商或状态不匹配。### 10.测试覆盖率仍然有较低级别的绕过
 
-### 10. Test coverage still has a lower-level bypass
+一些较低级别的 Phoenix 测试仍然注入编译时门控通配符
+测试服务参与者并直接调用Phoenix。专用 Auth 和规范
+Phoenix 测试现在涵盖目标流程；剩余的旁路仅用于测试并且
+不代表生产调用者。下层套房还需要
+如果要完全删除旁路，则需要迁移。
 
-Some lower-level Phoenix tests still inject the compile-time-gated wildcard
-test service actor and call Phoenix directly. Dedicated Auth and canonical
-Phoenix tests now cover the target flow; the remaining bypass is test-only and
-does not represent a production caller. The lower-level suite still needs to
-be migrated if the bypass is to be removed entirely.
+规范安全合约涵盖以下测试：
 
-The canonical security contract is covered by tests for:
+- Auth拥有的链接意图和回调绑定。
+- 提供商回调验证。
+- 修正`service:auth`受众和范围。
+- 委托当前用户证明。
+- 并发下的跨用户冲突行为。
+- 并发取消链接下最后提供者的安全性。
+- 链接/取消链接后的Browser Session行为。
 
-- Auth-owned link intent and callback binding.
-- Provider callback verification.
-- Correct `service:auth` audience and scope.
-- Delegated current-user proof.
-- Cross-user conflict behavior under concurrency.
-- Last-provider safety under concurrent unlink.
-- Browser Session behavior after link/unlink.
+## 业务不变量
 
-## Business Invariants
+以下是必需的，而不是可选的实现细节：
 
-The following are required, not optional implementation details:
+1. 1个`(provider, provider_account_id)`最多属于1个Groupher用户。
+2. 一个Groupher用户最多为每个提供商绑定一个提供商。
+3. 链接永远不会改变现有提供者绑定的所有者。
+4. 链接永远不会自动合并两个 Groupher 用户。
+5. 电子邮件平等并不能证明两个帐户属于同一个人。
+6. 目标 Groupher 用户始终来自经过验证的委托用户参与者。
+7. 提供商身份数据始终来自 Auth 验证的提供商回调。
+   8、用户解除关联后保留至少一种可用的登录方式。
+8. 链接和取消链接是原子的并且是并发安全的。
+9. 链接不会创建或替换 Browser Session。
+10. 链接不返回新的旧访问令牌。
+11. 过期或撤销的 Browser Session 无法完成陈旧的链接意图。
+12. 链接意图是提供商绑定的、短暂的、一次性的和重放安全的；
+    原子服务器端记录是消费权限。
+13. 提供商令牌和完整的原始有效负载永远不会写入日志或审计
+    元数据。
+14. 每个链接/取消链接成功和拒绝都是可审计的，无需存储
+    凭据。
 
-1. One `(provider, provider_account_id)` belongs to at most one Groupher user.
-2. One Groupher user has at most one provider binding for each provider.
-3. Linking never changes the owner of an existing provider binding.
-4. Linking never merges two Groupher users automatically.
-5. Email equality is not proof that two accounts belong to the same person.
-6. The target Groupher user always comes from a verified delegated user actor.
-7. Provider identity data always comes from an Auth-verified provider callback.
-8. A user retains at least one usable login method after unlink.
-9. Link and unlink are atomic and concurrency-safe.
-10. Link does not create or replace a Browser Session.
-11. Link does not return a new legacy access token.
-12. An expired or revoked Browser Session cannot complete a stale link intent.
-13. A link intent is provider-bound, short-lived, single-use, and replay-safe;
-    an atomic server-side record is the consumption authority.
-14. Provider tokens and full raw payloads are never written to logs or audit
-    metadata.
-15. Every link/unlink success and rejection is auditable without storing
-    credentials.
+## 所有权决策
 
-## Ownership Decision
+### Auth 拥有
 
-### Auth owns
+- 帐户管理 HTTP 端点。
+- 当前 Auth Session 和 Browser Session 连续性。
+- 链接意图创建、过期、一次性消耗、返回URL。
+- OAuth 提供商选择和授权重定向。
+- 提供者回调、状态、随机数和 PKCE 验证。
+- 提供商帐户/个人资料标准化。
+- 在需要时按需刷新当前 Phoenix 用户凭证。
+- Auth到Phoenix服务身份和用户委托传输。
+- Browser-面向重定向和错误呈现。
 
-- Account-management HTTP endpoints.
-- Current Auth Session and Browser Session continuity.
-- Link-intent creation, expiry, one-time consumption, and return URL.
-- OAuth provider selection and authorization redirect.
-- Provider callback, state, nonce, and PKCE validation.
-- Provider account/profile normalization.
-- Demand-driven refresh of the current Phoenix user credential when needed.
-- Auth-to-Phoenix service identity and user delegation transport.
-- Browser-facing redirect and error presentation.
+### Phoenix 拥有
 
-### Phoenix owns
+- Groupher 用户和外部提供商绑定。
+- 稳定/不透明的绑定参考。
+- 全球提供商身份的唯一性。
+- 同用户幂等性和跨用户冲突拒绝。
+- 最后登录方法不变量。
+- 原子链接/取消链接事务和行锁定。
+- 帐户状态、阻止和删除政策。
+- 派生的配置文件状态所有权和清理规则。
+- 链接/取消链接审核记录。
 
-- Groupher users and external provider bindings.
-- Stable/opaque binding references.
-- Global provider-identity uniqueness.
-- Same-user idempotency and cross-user conflict rejection.
-- The last-login-method invariant.
-- Atomic link/unlink transactions and row locking.
-- Account state, blocking, and deletion policy.
-- Derived profile-state ownership and cleanup rules.
-- Link/unlink audit records.
+### 产品应用拥有
 
-### Product applications own
+- 显示链接的提供者及其状态。
+- 将浏览器发送到规范 Auth 以开始链接/取消链接。
+- 渲染成功、冲突、取消和错误 UI。
 
-- Showing linked providers and their state.
-- Sending the browser to canonical Auth to begin link/unlink.
-- Rendering success, conflict, cancellation, and error UI.
+产品应用程序不接收提供商凭据，也不调用
+Phoenix 直接链接/取消链接突变。
 
-Product applications do not receive provider credentials and do not call the
-Phoenix link/unlink mutations directly.
+## 登录方法模型
 
-## Login Methods Model
-
-The first release has one login-method type: a persisted OAuth provider binding.
-Groupher has no password, passkey, or provider-disabled state. The exact first-
-release predicate is therefore:
+第一个版本有一个登录方法类型：持久的 OAuth 提供程序绑定。
+Groupher 没有密码、密钥或提供商禁用状态。确切的第一-
+因此，释放谓词是：
 
 ```text
 usable(binding)
@@ -362,21 +358,19 @@ usable_login_method_count(user)
   = count of that active user's oauth_providers rows
 ```
 
-Phoenix is the sole owner of `usable_login_method_count` and `canUnlink`:
+Phoenix 是 `usable_login_method_count` 和 `canUnlink` 的唯一所有者：
 
 ```text
 canUnlink(binding) = usable_login_method_count(binding.user) > 1
 ```
 
-Phoenix includes `canUnlink` in the canonical linked-account projection. Auth
-passes it through and product applications render it; neither independently
-recounts methods. The projection is only a UI hint. The unlink transaction must
-recompute the predicate under the user lock and reject the last-method deletion
-even when a client holds a stale `canUnlink: true` response.
+Phoenix 包括规范链接账户投影中的 `canUnlink`。 Auth
+传递它并由产品应用程序呈现它；既不独立
+叙述方法。投影只是 UI 提示。取消链接交易必须
+重新计算用户锁下的谓词并拒绝最后方法删除
+即使客户端持有陈旧的 `canUnlink: true` 响应。## 提供商绑定和配置文件所有权
 
-## Provider Binding And Profile Ownership
-
-Provider binding metadata and user-authored profile state are separate models:
+提供者绑定元数据和用户创作的配置文件状态是单独的模型：
 
 ```text
 OAuth provider binding metadata
@@ -388,12 +382,12 @@ Groupher user/profile state
   owned by the user and never overwritten merely because a binding is linked
 ```
 
-Linking an identity to an existing user writes or refreshes binding metadata. It
-does not overwrite User, Profile, or Social fields. Same-user idempotent link may
-also refresh only the allowlisted binding metadata.
+将身份链接到现有用户会写入或刷新绑定元数据。它
+不会覆盖用户、个人资料或社交字段。同用户幂等链接可能
+还只刷新允许列表中的绑定元数据。
 
-If Groupher chooses to project provider data into user-visible profile fields,
-the projection must store field-level provenance sufficient to distinguish:
+如果 Groupher 选择将提供商数据投影到用户可见的配置文件字段中，
+投影必须存储足以区分的字段级来源：
 
 ```text
 user-authored
@@ -401,25 +395,25 @@ provider-derived(provider, binding publicRef)
 system-generated
 ```
 
-A user edit changes the field to `user-authored`. Unlink clears or recomputes
-only values whose current provenance still points to the removed binding. It
-must neither delete user-authored data nor leave provider-derived data presented
-as verified after its source binding is gone. `Social.github`, `bio`, `company`,
-`country`, `city`, `link`, avatar, nickname, and derived fields all follow
-this policy; GitHub is not a special one-field exception.
+用户编辑将该字段更改为 `user-authored`。取消链接清除或重新计算
+仅当前来源仍指向已删除绑定的值。它
+既不能删除用户创作的数据，也不能保留提供者衍生的数据
+在其源绑定消失后进行验证。 `Social.github`、`bio`、`company`、
+`country`、`city`、`link`、头像、昵称和派生字段均遵循
+本政策； GitHub 不是一种特殊的单字段异常。
 
-New-user sign-in/registration may use provider metadata to initialize otherwise
-empty Groupher fields under a separately documented registration policy. That
-does not authorize link-to-existing-user to overwrite those fields.
+新用户登录/注册可以使用提供商元数据进行初始化，否则
+单独记录的注册政策下的空 Groupher 字段。那
+不授权链接到现有用户覆盖这些字段。
 
-## Target Persistent Binding Model
+## 目标持久绑定模型
 
-Every provider binding receives an opaque, stable `public_ref`. Public Auth and
-GraphQL contracts identify a binding only through this reference; raw provider
-account ids are not public mutation identifiers.
+每个提供者绑定都会收到一个不透明的、稳定的`public_ref`。公共Auth和
+GraphQL合同仅通过此引用来识别约束力；原料供应商
+帐户 ID 不是公共突变标识符。
 
-The target binding also records UTC timestamps so the projection can supply
-`linkedAt`:
+目标绑定还记录 UTC 时间戳，以便投影可以提供
+`linkedAt`：
 
 ```text
 oauth_providers
@@ -435,14 +429,14 @@ UNIQUE(provider, provider_id)
 UNIQUE(user_id, provider)
 ```
 
-Phoenix declares `inserted_at` and `updated_at` as `:utc_datetime`; migrations
-use `:timestamptz` through the repository's UTC timestamp conventions.
+Phoenix 将 `inserted_at` 和 `updated_at` 声明为 `:utc_datetime`；迁移
+通过存储库的 UTC 时间戳约定使用 `:timestamptz`。
 
-The first index prevents one external identity from belonging to two Groupher
-users. The second enforces the V1 product decision that one Groupher user cannot
-link two different accounts from the same provider.
+第一个索引防止一个外部身份属于两个 Groupher
+用户。第二个强制执行 V1 产品决策，而一个 Groupher 用户无法
+链接来自同一提供商的两个不同帐户。
 
-## Target Link Flow
+## 目标链接流量
 
 ```text
 Browser                 Auth                  Provider               Phoenix
@@ -464,9 +458,9 @@ Browser                 Auth                  Provider               Phoenix
    |<---------------------| clear intent + redirect                      |
 ```
 
-### Link-intent contract
+### 链接意向合约
 
-A link intent binds at least:
+链接意图至少绑定：
 
 ```text
 action: link
@@ -479,25 +473,25 @@ created-at and short expiry
 one-time consumption status
 ```
 
-Every intent is a server-side record. A signed or encrypted stateless Cookie is
-not an intent because it cannot enforce one-time consumption and can be replayed
-until expiry. The browser may carry only a random opaque `intentRef` in a
-host-only, HttpOnly, Secure Auth Cookie or integrity-protected OAuth state; all
-provider, user, Session, expiry, nonce, and consumption authority remains in the
-server-side record.
+每个意图都是服务器端记录。签名或加密的无状态 Cookie 是
+不是一个意图，因为它不能强制执行一次性消费并且可以重放
+直至到期。浏览器可能只在一个随机不透明的`intentRef`
+仅主机、HttpOnly、安全 Auth Cookie 或完整性保护 OAuth 状态；全部
+提供者、用户、Session、过期时间、随机数和消费权限保留在
+服务器端记录。
 
-The intent state transition is atomic:
+意图状态转换是原子的：
 
 ```text
 pending -> consumed
 ```
 
-Only one callback may change `pending` to `consumed`. A callback observing any
-other state fails closed, and no Cookie deletion or client-side state change is
-treated as proof of consumption.
+只有一个回调可以将 `pending` 更改为 `consumed`。回调观察任何
+其他状态失败关闭，并且没有Cookie删除或客户端状态更改
+视为消费证明。
 
-The intent reference, intent nonce, and provider OAuth `state` have distinct
-roles:
+意图引用、意图随机数和提供者 OAuth `state` 具有不同的
+角色：
 
 ```text
 intentRef
@@ -511,25 +505,25 @@ OAuth state
   the server-side record supplies the integrity and replay authority.
 ```
 
-The callback first validates the OAuth state, then locates exactly one intent
-and atomically consumes it before processing the provider result. It verifies the
-provider and current `browserSessionRef` against that intent. A state value from
-one flow cannot be combined with another intent, and a consumed callback cannot
-be replayed. A transient failure starts a new intent rather than reviving a
-consumed state.
+回调首先验证 OAuth 状态，然后准确定位一个意图
+并在处理提供者结果之前自动消耗它。它验证了
+提供商和当前的`browserSessionRef`违背了这一意图。状态值来自
+一个流不能与另一个意图组合，并且消耗的回调不能
+被重播。短暂的故障会启动一个新的意图，而不是恢复一个新的意图
+消耗状态。
 
-The normal sign-in callback and link callback must be distinguishable before
-Phoenix identity exchange:
+之前必须区分正常的登录回调和链接回调
+Phoenix身份交换：
 
 ```text
 no valid link intent -> signinOauth
 valid link intent    -> linkOauthIdentity for current delegated user
 ```
 
-A malformed, expired, consumed, provider-mismatched, or Session-mismatched
-intent fails closed and never falls back to sign-in or account creation.
+格式错误、过期、已消耗、提供者不匹配或 Session 不匹配
+意图失败关闭，并且永远不会退回到登录或帐户创建。
 
-### Link result rules
+### 链接结果规则
 
 ```text
 identity not linked
@@ -554,15 +548,13 @@ current user blocked/deleted/session revoked
   -> consume or invalidate intent
 ```
 
-### Provider replacement
+### 提供商更换
 
-`OAUTH_PROVIDER_ALREADY_LINKED` never replaces the existing provider slot. To
-link provider account B, the user must first unlink provider account A through
-the normal last-login-method rule. The accepted V1 consequence is that a sole
-GitHub, Google, or other provider account cannot be replaced by another account
-from that provider because A cannot first be unlinked.
-
-## Target Unlink Flow
+`OAUTH_PROVIDER_ALREADY_LINKED` 永远不会取代现有的提供商插槽。至
+链接提供商帐户 B，用户必须首先通过以下方式取消链接提供商帐户 A：
+正常的最后登录方法规则。公认的 V1 结果是唯一的
+GitHub、Google 或其他提供商帐户不能被其他帐户替换
+来自该提供者，因为 A 无法首先取消链接。## 目标取消链接流程
 
 ```text
 Browser                 Auth                               Phoenix
@@ -579,25 +571,25 @@ Browser                 Auth                               Phoenix
    |<---------------------| updated provider list               |
 ```
 
-Unlink requires a valid current Auth Session, valid Phoenix user credential,
-exact Origin, and CSRF proof. V1 does not require recent authentication or
-provider reauthentication.
+取消链接需要有效的当前 Auth Session、有效的 Phoenix 用户凭证，
+确切的起源，以及CSRF证明。 V1 不需要最近的身份验证或
+提供商重新验证。
 
-Unlinking a provider does not terminate the current Browser Session or revoke
-other Browser Sessions. The response makes the updated provider list immediately
-available so every product UI can render the same state.
+取消链接提供商不会终止当前的 Browser Session 或撤销
+其他Browser会议。响应使提供商列表立即更新
+可用，因此每个产品 UI 都可以呈现相同的状态。
 
-## Proposed Public Auth HTTP Contract
+## 拟议的公开 Auth HTTP 合约
 
-Canonical Auth is the only browser-facing account-management origin.
+Canonical Auth 是唯一面向浏览器的帐户管理来源。
 
-### List
+### 列表
 
 ```http
 GET /api/auth/accounts
 ```
 
-Response:
+回应：
 
 ```json
 {
@@ -614,7 +606,7 @@ Response:
 }
 ```
 
-### Begin link
+### 开始链接
 
 ```http
 POST /api/auth/accounts/:provider/link
@@ -624,22 +616,22 @@ X-Groupher-CSRF: 1
 { "returnTo": "https://groupher.com/account/connections" }
 ```
 
-The endpoint creates the link intent and returns a controlled redirect or a
-provider authorization URL. The browser then navigates to that URL. `returnTo`
-uses the same strict first-party validation contract as regular sign-in
-redirects. The response is:
+端点创建链接意图并返回受控重定向或
+提供商授权URL。然后浏览器导航到该 URL。 `returnTo`
+使用与常规登录相同严格的第一方验证合同
+重定向。响应是：
 
 ```json
 { "authorizationUrl": "https://github.com/login/oauth/authorize?..." }
 ```
 
-The custom CSRF Header intentionally forces a CORS preflight. For every
-credentialed account-management endpoint, canonical Auth must allow credentials
-and that Header only for an exact allowlist of first-party origins, return
-`Vary: Origin`, and reject wildcard, `null`, unknown, and unapproved sibling-
-subdomain origins. The Header is not a CSRF boundary without that CORS policy.
+自定义 CSRF 标头有意强制执行 CORS 预检。对于每一个
+有凭据的帐户管理端点，规范 Auth 必须允许凭据
+并且该标头仅适用于第一方来源的确切白名单，返回
+`Vary: Origin`，并拒绝通配符、`null`、未知和未经批准的同级-
+子域起源。如果没有 CORS 策略，标头就不是 CSRF 边界。
 
-### Unlink
+### 取消链接
 
 ```http
 POST /api/auth/accounts/:publicRef/unlink
@@ -647,12 +639,12 @@ Origin: https://groupher.com
 X-Groupher-CSRF: 1
 ```
 
-The browser never sends `provider_id`, provider profile JSON, or a target user.
+浏览器从不发送 `provider_id`、提供商配置文件 JSON 或目标用户。
 
-## Proposed Phoenix GraphQL Contract
+## 拟议的 Phoenix GraphQL 合同
 
-These fields are internal Auth-to-Phoenix operations, not general browser
-mutations.
+这些字段是内部 Auth 到 Phoenix 操作，不是一般浏览器
+突变。
 
 ```graphql
 input VerifiedOauthIdentityInput {
@@ -696,25 +688,25 @@ mutation unlinkOauthIdentity(
 ): LinkedOauthAccounts!
 ```
 
-Exact scalar and naming conventions should follow the schema conventions at
-implementation time. The important contract changes are:
+精确的标量和命名约定应遵循以下架构约定：
+实施时间。重要的合同变更是：
 
-- Provider proof input is separate from a public binding reference.
-- No mutation returns an access token.
-- No mutation accepts a target user.
-- Unlink does not accept mutable provider profile data.
-- Responses return the canonical current binding projection.
+- 提供者证明输入与公共绑定引用分开。
+- 没有突变返回访问令牌。
+- 没有突变接受目标用户。
+- 取消链接不接受可变的提供商配置文件数据。
+- 响应返回规范的当前结合投影。
 
-## Service Identity And Delegation
+## 服务身份和委托
 
-Auth requests scoped service tokens for the Phoenix Auth resource:
+Auth 请求 Phoenix Auth 资源的范围服务令牌：
 
 ```text
 resource https://api.groupher.com/auth
 audience phoenix:auth-api
 ```
 
-Operation scopes:
+经营范围：
 
 ```text
 auth:oauth:read
@@ -722,16 +714,16 @@ auth:oauth:link
 auth:oauth:unlink
 ```
 
-Every request also carries the current user credential through the standardized
-delegation transport:
+每个请求还通过标准化携带当前用户凭证
+代表团交通：
 
 ```http
 Authorization: Bearer <service:auth token>
 X-Groupher-User-Authorization: Bearer <current user access token>
 ```
 
-Phoenix validates both before constructing `delegated_actor`, using a different
-verification profile for each token:
+Phoenix 在构建 `delegated_actor` 之前使用不同的方法验证两者
+每个令牌的验证配置文件：
 
 ```text
 service token
@@ -746,17 +738,17 @@ user token
   expiry, user subject, sid, active user, and active Browser Session
 ```
 
-The user token is identity and current-Session proof for delegation; it is not
-required to have the service token's `phoenix:auth-api` audience. Phoenix must
-still validate the user token's own exact audience rather than disabling
-audience validation. The user cannot be selected from input fields, provider
-email, provider login, Browser Session public ref, or an arbitrary user-ref
-Header.
+用户token是身份和当前-Session委托证明；它不是
+需要拥有服务令牌的 `phoenix:auth-api` 受众。 Phoenix必须
+仍然验证用户令牌自己的确切受众而不是禁用
+观众验证。无法从输入字段、提供商中选择用户
+电子邮件、提供商登录、Browser Session 公共引用或任意用户引用
+标头。
 
-The Auth.js Session is the protected Auth-side carrier of the stable Phoenix
-`browserSessionRef`; it is not a second independent account authority. The
-short-lived `groupher-auth.token` is derived from that Phoenix Browser Session
-and carries the same reference as `sid`. Before link completion:
+Auth.js Session 是稳定 Phoenix 受保护的 Auth 侧载体
+`browserSessionRef`;它不是第二个独立账户机构。的
+短暂的 `groupher-auth.token` 源自 Phoenix Browser Session
+并具有与 `sid` 相同的参考号。链接完成之前：
 
 ```text
 intent.browserSessionRef
@@ -765,24 +757,23 @@ intent.browserSessionRef
   = an active Phoenix BrowserSession owned by the delegated user
 ```
 
-Auth.js Cookie validity alone is insufficient because Auth does not learn that a
-Phoenix Browser Session was revoked merely by decoding its JWT Session. Phoenix
-must check the referenced Browser Session on every link completion, even when
-the short-lived user token has not yet expired. A `browserSessionRef` is only a
-binding constraint after both credentials have been verified; it never creates
-user authority by itself.
+Auth.js Cookie 单独的有效性是不够的，因为 Auth 不知道
+Phoenix Browser Session 仅通过解码其 JWT Session 就被撤销。 Phoenix
+必须在每个链接完成时检查引用的 Browser Session，即使
+短期用户令牌尚未过期。 `browserSessionRef` 只是一个
+验证两个凭证后的绑定约束；它从不创造
+用户权限本身。
 
-The Auth client registry must grant only the three exact OAuth account scopes
-in addition to its existing Browser Session scopes. Dashboard, Content Import,
-Assets Hub, Press, and Scheduler clients receive none of them.
+Auth 客户端注册表必须仅授予三个确切的 OAuth 帐户范围
+除了现有的 Browser Session 范围之外。 Dashboard，Content Import，
+Assets Hub、新闻和调度程序客户端都不会收到任何消息。
 
-## Data And Transaction Contract
+## 数据和交易合约
 
-### User-level serialization and lock order
+### 用户级序列化和锁定顺序这是帐户范围的交易规则，而不是 OAuth 本地约定。每个
 
-This is an Accounts-wide transaction rule, not an OAuth-local convention. Every
-transaction that writes two or more of these record classes uses the same lock
-and write order:
+写入两个或多个这些记录类的事务使用相同的锁
+并写出顺序：
 
 ```text
 1. current account.users row FOR UPDATE
@@ -791,146 +782,144 @@ and write order:
 4. audit row
 ```
 
-The user row is the serialization point even when link inserts a binding that
-does not exist yet. Locking only the existing binding set cannot serialize such
-an insert against unlink, and locking Social/Profile first on one path creates a
-conflicting order. Link, unlink, provider-metadata synchronization, ordinary
-profile/social editing, and any other multi-row Accounts transaction must follow
-this user-first order. A single-row update need not acquire unrelated locks, but
-it must not hold a downstream Profile/Social lock and later acquire an upstream
-User or provider-binding lock.
+即使链接插入了一个绑定，用户行也是序列化点
+尚不存在。仅锁定现有绑定集无法序列化此类
+防止取消链接的插入，并首先在一个路径上锁定社交/个人资料会创建一个
+顺序冲突。链接、取消链接、提供商元数据同步、普通
+个人资料/社交编辑以及任何其他多行帐户交易必须遵循
+这种用户至上的顺序。单行更新不需要获取无关的锁，但是
+它不得持有下游配置文件/社交锁并随后获取上游
+用户或提供者绑定锁。
 
-Existing-binding sign-in may remain read-only. Any sign-in or registration path
-that writes binding metadata or derived profile state must follow the same lock
-order; new-user registration keeps all required writes in one `Ecto.Multi`.
-Before implementation, audit existing profile and social update transactions for
-reverse or inconsistent multi-row write order.
+现有绑定登录可能保持只读状态。任何登录或注册路径
+写入绑定元数据或派生配置文件状态必须遵循相同的锁
+订单；新用户注册将所有必需的写入保留在一个 `Ecto.Multi` 中。
+在实施之前，审核现有的个人资料和社交更新交易
+反转或不一致的多行写入顺序。
 
-### Link transaction
+###链接交易
 
-One transaction must:
+一笔交易必须：
 
-1. Lock the delegated user's `account.users` row `FOR UPDATE`.
-2. Validate the delegated user and bound Browser Session are active.
-3. Attempt an insert-only provider-binding write.
-4. On unique conflict, classify the existing binding: return idempotently for the
-   same identity/current user, reject ownership by another user, and reject a
-   different identity when the current user already has that provider.
-5. Never update `user_id` through an upsert or conflict update.
-6. Refresh only allowlisted binding metadata under the profile-ownership policy.
-7. Apply any required derived-state changes in the same transaction.
-8. Insert an audit event.
-9. Return the canonical current provider list, including Phoenix-computed
-   `canUnlink`.
+1. 锁定委派用户的`account.users`行`FOR UPDATE`。
+2. 验证委派用户和绑定的 Browser Session 是否处于活动状态。
+3. 尝试仅插入提供者绑定写入。
+4. 在唯一冲突上，对现有绑定进行分类：幂等地返回
+   相同的身份/当前用户，拒绝另一个用户的所有权，并拒绝
+   当当前用户已经拥有该提供商时不同的身份。
+5. 切勿通过更新插入或冲突更新来更新 `user_id`。
+6. 仅刷新配置文件所有权策略下列入许可名单的绑定元数据。
+7. Apply同一事务中任何所需的派生状态更改。
+8. 插入审核事件。
+9. 返回规范的当前提供商列表，包括Phoenix-计算的
+   `canUnlink`。
 
-The unique database index remains the final arbiter. Application pre-checks are
-for error quality, not concurrency correctness.
+唯一的数据库索引仍然是最终的仲裁者。申请预检查是
+为了错误质量，而不是并发正确性。
 
-The migrations give both indexes stable constraint names, for example:
+迁移为两个索引提供了稳定的约束名称，例如：
 
 ```text
 oauth_providers_provider_provider_id_index
 oauth_providers_user_id_provider_index
 ```
 
-Phoenix handles both PostgreSQL constraint names explicitly, then re-queries the
-external-identity key and user/provider slot under the user lock before
-classifying the result. Constraint name alone is insufficient because a same-
-identity/current-user retry may satisfy both unique keys, and PostgreSQL's choice
-of reported constraint must not change idempotent success into a provider-slot
-conflict.
+Phoenix 显式处理两个 PostgreSQL 约束名称，然后重新查询
+之前用户锁下的外部身份密钥和用户/提供商插槽
+对结果进行分类。仅约束名称是不够的，因为相同-
+身份/当前用户重试可能满足两个唯一密钥和PostgreSQL的选择
+所报告的约束不得将幂等成功更改为提供程序槽
+冲突。
 
-### Unlink transaction
+### 取消关联交易
 
-One transaction must:
+一笔交易必须：
 
-1. Lock the delegated user's `account.users` row `FOR UPDATE`.
-2. Validate the delegated user and bound Browser Session are active.
-3. Resolve the opaque binding ref and verify ownership.
-4. Count usable login methods using the centralized first-release predicate:
-   the active user's `oauth_providers` rows.
-5. Reject deletion of the last usable method.
-6. Delete exactly one binding.
-7. Clear or recompute only profile fields still derived from that binding.
-8. Insert an audit event.
-9. Return the canonical remaining provider list.
+1. 锁定委托用户的`account.users`行`FOR UPDATE`。
+2. 验证委派用户和绑定的 Browser Session 是否处于活动状态。
+3. 解决不透明绑定引用并验证所有权。
+4. 使用集中式首次发布谓词计算可用登录方法：
+   活动用户的 `oauth_providers` 行。
+5. 拒绝删除最后一个可用的方法。
+6. 精确删除一个绑定。
+7. 仅清除或重新计算仍源自该绑定的配置文件字段。
+8. 插入审核事件。
+9. 返回规范的剩余提供商列表。
 
-### Unlink retry semantics
+### 取消链接重试语义
 
-The Phoenix mutation does not treat a missing binding as an idempotent success.
-After one unlink commits, a second request for the same `publicRef` returns
-`404 OAUTH_BINDING_NOT_FOUND`, using the same non-disclosing response as any
-binding not visible to the current user.
+Phoenix 突变不会将缺失的绑定视为幂等成功。
+提交一次取消链接后，对同一 `publicRef` 的第二个请求返回
+`404 OAUTH_BINDING_NOT_FOUND`，使用与任何其他相同的非公开响应
+绑定对当前用户不可见。
 
-Auth must not blindly replay unlink after an ambiguous network failure. It
-refetches the canonical linked-account list first:
+Auth 不得在出现不明确的网络故障后盲目重播取消链接。它
+首先重新获取规范的链接帐户列表：
 
 ```text
 publicRef absent  -> the desired state is reached; report unlink success
 publicRef present -> retry unlink once under the normal authorization checks
 ```
 
-This keeps the Phoenix ownership/error contract precise while preventing the UI
-from reporting a false failure when the first deletion committed but its response
-was lost.
+这可以保持 Phoenix 所有权/错误契约的精确性，同时防止 UI
+当第一次删除提交但其响应时报告错误失败
+迷路了。
 
-Auth implements this reconciliation for network/5xx failures: it refetches the
-canonical account list, treats an absent `publicRef` as success, and retries
-Phoenix unlink once when the binding is still present. An explicit Phoenix
-`OAUTH_BINDING_NOT_FOUND` remains a normal 404 and is not retried.
+Auth 针对网络/5xx 故障实现此协调：它重新获取
+规范帐户列表，将不存在的 `publicRef` 视为成功，然后重试
+Phoenix 当绑定仍然存在时取消链接一次。明确的Phoenix
+`OAUTH_BINDING_NOT_FOUND` 仍然是正常的 404 并且不会重试。### 当前 Phoenix 实现边界
 
-### Current Phoenix implementation boundaries
+第一个实现切片具有用户行锁、仅插入绑定
+写入、冲突分类和上次登录方法检查。两份合同
+步骤仍然明确推迟，而不是默默暗示：
 
-The first implementation slice has the user-row lock, insert-only binding
-writes, conflict classification, and last-login-method check. Two contract
-steps remain explicitly deferred rather than silently implied:
+- 尚未发出链接/取消链接审核事件。帐户域没有
+  合适的仅附加审计接收器；添加一个是后续交易步骤，
+  这段代码假装已经完成了。
+- 字段级出处尚未保留。 GitHub 当前的社会清理
+  使用保守的值相等检查作为临时 V1 后备。它必须
+  在投影其他提供者派生字段之前被替换，因为
+  无法将用户创作的相同值与提供者衍生的值区分开来
+  没有出处的价值观。
 
-- Link/unlink audit events are not emitted yet. The Accounts domain has no
-  suitable append-only audit sink; adding one is a follow-up transaction step,
-  not something this code pretends to have completed.
-- Field-level provenance is not persisted yet. GitHub Social cleanup currently
-  uses a conservative value-equality check as a temporary V1 fallback. It must
-  be replaced before additional provider-derived fields are projected, because
-  equal user-authored values cannot be distinguished from provider-derived
-  values without provenance.
+现在，该实现公开了内部 Phoenix 规范投影以及
+Auth 帐户列表、取消链接和 GitHub 开始链接/回调端点。链接
+意图持久化在每个意图的持久对象中并以原子方式消耗；
+没有生产过程中的后备。当前的 Auth 提供程序集有
+GitHub 已配置，因此端点拒绝未配置的提供程序。
+回调执行一次需求驱动的 Phoenix 令牌刷新并重试，OAuth
+帐户操作使用专用的速率限制存储桶，并且 Auth 进行协调
+在重试之前，针对规范帐户列表的模糊取消链接失败。
 
-The implementation now exposes the internal Phoenix canonical projection plus
-Auth account list, unlink, and GitHub begin-link/callback endpoints. Link
-intents are persisted in a per-intent Durable Object and consumed atomically;
-there is no production in-process fallback. The current Auth provider set has
-GitHub configured, so the endpoint rejects providers that are not configured.
-The callback performs one demand-driven Phoenix-token refresh and retry, OAuth
-account operations use the dedicated rate-limit buckets, and Auth reconciles
-ambiguous unlink failures against the canonical account list before retrying.
+## 待办事项
 
-## TODO
+这些是当前实施的剩余后续行动；他们是
+不是上面已经描述的 V1 链接/取消链接流程的先决条件：
 
-These are the remaining follow-ups from the current implementation; they are
-not prerequisites for the V1 link/unlink flow already described above:
+- 添加帐户拥有的仅附加审计接收器，然后实施事务步骤
+  8.所以链接和取消链接持久化审核事件。
+- 在投影任何新的提供商数据之前添加持久的字段级来源
+  进入个人资料/社交。替换当前的 GitHub 值相等清理
+  一旦出处存在就回退； GitHub 是唯一源自提供商的字段
+  当前V1切片。
+- 完成产品 UI：帐户连接入口点、规范链接
+  帐户列表、可空登录/头像回退、基于 Auth 的链接/取消链接操作、
+  取消/冲突/最后方法反馈，以及唯一提供商
+  更换限制。
 
-- Add an Accounts-owned append-only audit sink, then implement transaction step
-  8 so link and unlink persist audit events.
-- Add persisted field-level provenance before projecting any new provider data
-  into Profile/Social. Replace the current GitHub value-equality cleanup
-  fallback once provenance exists; GitHub is the only provider-derived field in
-  the current V1 slice.
-- Finish the product UI: account-connections entry point, canonical linked
-  account list, nullable login/avatar fallback, Auth-based link/unlink actions,
-  cancellation/conflict/last-method feedback, and the sole-provider
-  replacement limitation.
+### 不支持账户合并
 
-### Account merge is not supported
+当一个身份链接到另一个 Groupher 用户时，链接端点返回一个
+冲突。它不得移动提供商所有权、按活动选择一个用户，或者
+合并内容。
 
-When an identity is linked to another Groupher user, the link endpoint returns a
-conflict. It must not move provider ownership, choose one user by activity, or
-merge content.
+## 提供商资料政策
 
-## Provider Profile Policy
+Auth 规范化来自已验证回调的允许列表 DTO。它不发送
+将提供者令牌集或无界原始回调对象设置为 Phoenix。
 
-Auth normalizes an allowlisted DTO from the verified callback. It does not send
-the provider token set or an unbounded raw callback object to Phoenix.
-
-Recommended initial fields:
+推荐的初始字段：
 
 ```text
 provider
@@ -943,24 +932,24 @@ locale/location display hints
 bounded provider-profile metadata required for debugging
 ```
 
-Only `provider` and `providerAccountId` are identity-required. Provider `login`,
-`nickname`, `avatar`, email, and other profile fields are nullable because not
-every OAuth/OIDC provider supplies a stable username or display profile. Their
-absence never prevents linking to an existing Groupher user.
+只有 `provider` 和 `providerAccountId` 需要身份。提供者`login`，
+`nickname`、`avatar`、电子邮件和其他个人资料字段可为空，因为不
+每个 OAuth/OIDC 提供商都提供稳定的用户名或显示配置文件。他们的
+缺席永远不会阻止链接到现有的 Groupher 用户。
 
-Initial registration still requires a unique Groupher `User.login`, but that is
-a separate account-creation concern rather than a provider-binding requirement.
-The registration normalizer derives a candidate from provider login, then
-nickname/name, then verified email local-part, and finally a provider/account-id
-based fallback; Phoenix applies its normal login normalization and uniqueness
-allocation before creating the user.
+初始注册仍然需要唯一的Groupher`User.login`，但那就是
+一个单独的帐户创建问题，而不是提供商绑定要求。
+注册规范化器从提供商登录中导出候选者，然后
+昵称/名称，然后验证电子邮件本地部分，最后是提供商/帐户 ID
+基于后备； Phoenix 应用其正常登录规范化和唯一性
+创建用户之前进行分配。
 
-Provider callback refresh updates only the allowlisted binding metadata. It does
-not overwrite user-authored User/Profile/Social fields. Retention of bounded raw
-metadata remains an explicit product decision, but provider tokens and complete
-callback payloads are never part of that metadata.
+提供程序回调刷新仅更新允许列表中的绑定元数据。确实如此
+不覆盖用户创建的用户/个人资料/社交字段。保留有限的原始数据
+元数据仍然是一个明确的产品决策，但提供者令牌和完整的
+回调有效负载永远不是该元数据的一部分。
 
-Explicitly excluded:
+明确排除：
 
 ```text
 access_token
@@ -971,15 +960,13 @@ client secret
 full HTTP callback payload
 ```
 
-Provider credentials are outside this design and never stored in
-`OauthProvider.raw`.
+提供者凭证不在此设计范围内，并且永远不会存储在
+`OauthProvider.raw`。切换会清除每个现有的 `OauthProvider.raw` 值，而不是尝试
+保留或拒绝未知密钥。割接后，仅限制范围内的白名单
+可以写入上面定义的提供者简档元数据。
 
-The cutover clears every existing `OauthProvider.raw` value instead of trying to
-preserve or denylist unknown keys. After the cutover, only the bounded allowlisted
-provider-profile metadata defined above may be written.
-
-The cleanup is ordered after the writer change, not merely bundled into an
-unordered release:
+清理是在编写器更改后进行的，而不仅仅是捆绑到一个
+无序释放：
 
 ```text
 1. Auth stops sending the complete provider profile.
@@ -990,41 +977,41 @@ unordered release:
    existing oauth_providers.raw to null.
 ```
 
-Running the cleanup while an old writer is still live is invalid because a new
-registration or Link could write unbounded `raw` again after the cleanup.
+当旧的编写器仍然存在时运行清理是无效的，因为新的编写器
+注册或链接可以在清理后再次写入无界 `raw`。
 
-This cleanup is an explicitly-run post-deploy data operation. It must not be
-placed in `priv/repo/migrations` or any automatic boot-time or release migration
-set. Starting the first new instance must never trigger it while old instances
-may still be serving traffic.
+此清理是显式运行的部署后数据操作。一定不能是
+放置在 `priv/repo/migrations` 或任何自动启动时或发布迁移中
+设置。启动第一个新实例绝不能在旧实例时触发它
+可能仍在提供流量。
 
-## Session Semantics
+## Session 语义
 
-### Link
+### 链接
 
-- The existing Auth Session remains the current browser authority.
-- The existing Phoenix Browser Session remains active.
-- No new Browser Session is created.
-- No legacy Phoenix access token is returned by GraphQL.
-- Auth may refresh the short-lived Phoenix access Cookie if it expires during
-  the provider round trip, using the normal V1 refresh contract. The callback
-  refreshes once, updates the Cookie, and retries the Phoenix link operation;
-  a second expiry fails closed.
-- Successful link updates account settings but does not change the current user.
-- V1 does not require recent authentication. If step-up authentication is added,
-  protect Link before Unlink because Link adds a persistent login credential.
+- 现有的Auth Session仍然是当前的浏览器权限。
+- 现有的 Phoenix Browser Session 保持活动状态。
+- 没有创建新的Browser Session。
+- GraphQL 不返回旧版 Phoenix 访问令牌。
+- Auth 可能会刷新短暂的 Phoenix 访问权限 Cookie 如果在
+  提供商往返，使用正常的 V1 刷新合约。回调
+  刷新一次，更新Cookie，并重试Phoenix链接操作；
+  第二次到期失败关闭。
+- 成功的链接会更新帐户设置，但不会更改当前用户。
+- V1 不需要最近的身份验证。如果添加升级认证，
+  在取消链接之前保护链接，因为链接会添加持久登录凭据。
 
-### Unlink
+### 取消链接
 
-- The current Session remains active.
-- Removing the provider used for the current login is allowed only if another
-  usable login method remains.
-- Other Browser Sessions remain active.
-- V1 does not provide an “unlink and revoke sessions” combined operation.
+- 当前的 Session 保持活动状态。
+- 仅当另一个提供商使用时才允许删除用于当前登录的提供商
+  可用的登录方法仍然存在。
+- 其他Browser会话保持活动状态。
+- V1 不提供“取消链接和撤销会话”组合操作。
 
-## Error Contract
+## 错误合约
 
-Suggested machine-readable errors:
+建议的机器可读错误：
 
 ```text
 OAUTH_LINK_INVALID_INTENT
@@ -1044,12 +1031,12 @@ SERVICE_TOKEN_INVALID
 PERMISSION_DENIED
 ```
 
-V1 callback behavior uses `OAUTH_LINK_INVALID_INTENT` for malformed, expired,
-or mismatched intent/state input, and `OAUTH_LINK_REPLAYED` when an already
-consumed intent is submitted again. Provider cancellation is represented by
-the controlled `oauthLink=cancelled` redirect result.
+V1 回调行为使用 `OAUTH_LINK_INVALID_INTENT` 来表示格式错误、过期、
+或不匹配的意图/状态输入，以及 `OAUTH_LINK_REPLAYED` 当已经
+再次提交消耗的意图。提供商取消表示为
+受控的 `oauthLink=cancelled` 重定向结果。
 
-Status semantics:
+状态语义：
 
 ```text
 400  malformed provider/action/input
@@ -1063,12 +1050,12 @@ Status semantics:
 502/503 provider or Auth/Phoenix dependency unavailable
 ```
 
-The browser error page must not reveal the login, email, or user identity of the
-other account holding a conflicting provider binding.
+浏览器错误页面不得泄露登录名、电子邮件或用户身份
+其他帐户持有冲突的提供商绑定。
 
-## UI Contract
+## 用户界面合约
 
-Account settings display:
+账户设置显示：
 
 ```text
 provider icon/name
@@ -1079,8 +1066,8 @@ unlink action when canUnlink=true
 why the final provider cannot be removed
 ```
 
-Because provider login and avatar are nullable, every product uses the canonical
-display fallback:
+由于提供商登录名和头像可为空，因此每个产品都使用规范
+显示后备：
 
 ```text
 display label
@@ -1093,19 +1080,19 @@ avatar
   -> provider icon
 ```
 
-Email is not a display-label fallback because it may expose more identity data
-than the account-connections UI needs.
+电子邮件不是显示标签的后备方案，因为它可能会暴露更多身份数据
+超过帐户连接 UI 的需要。
 
-The UI starts all mutations at canonical Auth. It never sends provider profile
-data to Phoenix and never embeds provider credentials in URLs or client state.
+UI 在规范 Auth 处开始所有突变。它从不发送提供商资料
+数据到 Phoenix 并且从不在 URL 或客户端状态中嵌入提供者凭据。
 
-Provider cancellation returns to account settings with a stable, non-fatal
-state. Cross-user conflict explains that the external identity is already in
-use but does not identify the other Groupher account.
+提供商取消返回到帐户设置，具有稳定、非致命的
+状态。跨用户冲突说明外部身份已经存在
+使用但无法识别其他Groupher帐户。
 
-## Observability And Audit
+## 可观察性和审计
 
-Record non-sensitive events for:
+记录以下非敏感事件：
 
 ```text
 link intent created / expired / consumed / rejected
@@ -1121,119 +1108,115 @@ concurrent database conflict
 correlation/request id
 ```
 
-Audit records may contain stable Groupher user id, provider name, binding public
-ref, service subject, and result category. They must not contain provider
-tokens, service tokens, browser credentials, full profile JSON, authorization
-codes, or arbitrary provider error bodies.
+审计记录可能包含稳定的Groupher用户ID、提供商名称、绑定公共
+参考、服务主题和结果类别。它们不得包含提供者
+令牌、服务令牌、浏览器凭据、完整配置文件 JSON、授权
+代码或任意提供程序错误体。
 
-## Rate Limits
+## 速率限制
 
-Auth applies independent logical buckets through `AUTH_OAUTH_RATE_LIMITER` to:
+Auth通过`AUTH_OAUTH_RATE_LIMITER`将独立逻辑桶应用到：
 
-- Link-intent creation per user, Session, provider, and source IP.
-- Provider callback attempts per intent and source IP, including failures.
-- Unlink attempts per user and Session.
-- Account-list and Auth-to-Phoenix account operations per Auth client and user.
+- 每个用户、Session、提供商和源 IP 创建链接意图。
+- 每个意图和源 IP 的提供商回调尝试，包括失败。
+- 取消每个用户和Session的链接尝试。
+- 每个 Auth 客户端和用户的帐户列表和 Auth 到 Phoenix 帐户操作。
 
-Rate limiting must not become the only replay defense. Link intents are still
-single-use, provider-bound, Session-bound, and short-lived.
+速率限制绝不能成为唯一的重放防御。链接意图仍然
+一次性使用、受提供商限制、Session 受限制且寿命短暂。## 迁移计划
 
-## Migration Plan
+### 第 1 阶段：冻结不安全路径
 
-### Phase 1: Freeze the unsafe path
+- 删除过时的 `linkOauth`/`unlinkOauth` 字段及其
+  `dashboard:oauth:write`授权合同。
+- 不要为现有突变添加 Dashboard 代理。
+- 添加记录当前全球唯一提供商身份索引的测试。
+- 强制执行已接受的 V1 产品规则，即一个用户最多可以链接一个帐户
+  来自每个提供商。
 
-- Remove the obsolete `linkOauth`/`unlinkOauth` fields and their
-  `dashboard:oauth:write` authorization contract.
-- Do not add a Dashboard proxy for the existing mutations.
-- Add tests documenting the current global unique provider identity index.
-- Enforce the accepted V1 product rule that one user may link at most one account
-  from each provider.
+### 第 2 阶段：正确的 Phoenix 域操作
 
-### Phase 2: Correct Phoenix domain operations
+- 将可为空的 `public_ref` 和 UTC 时间戳添加到 `oauth_providers`。
+- 使用唯一的不透明 `public_ref` 回填每个现有绑定，验证否
+  如果存在空值或重复项，请创建唯一索引，然后使该列不为空。
+- 使用明确记录的现有行填充 `inserted_at`
+  迁移时间戳，因为遗留表没有历史链接时间；
+  不要将回填值显示为原始提供商链接事件时间。
+- 在创建`UNIQUE(user_id, provider)`之前，查询并报告每个重复项
+  组及其绑定 ID 和提供者 ID。预计产量不会
+  重复；这是一个防御性断言，而不是兼容性工作流程。
+- 如果断言失败，则中止迁移和部署。请勿删除或
+  重写任何提供者绑定以使索引通过。
+- 报告冲突的行以进行明确的人工审核。部署可能会恢复
+  仅在经过产品批准的单独数据迁移解决事件后；
+  本文档不授权删除、存档、合并或其他修复
+  算法。
+- 断言通过后创建并强制执行 `UNIQUE(user_id, provider)`。
+- 更改Auth和Phoenix以停止发送和接受无限的`raw`，耗尽所有
+  旧实例，确认没有无限制的写入者剩余，然后有一个操作员
+  显式清除每个现有的 `oauth_providers.raw` 值。本次数据清理
+  不是 `priv/repo/migrations` 或任何自动启动/发布迁移的一部分。
+  不要保留未知密钥或清除拒绝列表。
+- 将期望 `raw` 镜像完整提供商配置文件的测试替换为
+  有界允许列表和凭据排除断言。
+- 在投影任何提供商数据之前引入现场级源跟踪
+  进入用户可见的个人资料/社交字段。
+- 用插入/冲突分类替换所有权更改更新插入。
+- 使并发首次登录恢复唯一的 `create_user` 或
+  `create_profile` 通过重新查询提交的外部身份和
+  重用其所有者来创建 Browser Session。
+- 明确命名两个唯一约束并使用
+  PostgreSQL 约束名称，后跟锁定下的规范键重新查询。
+- 使链接和解除链接首先锁定用户行并共享一个锁定顺序。
+- 审核普通配置文件/社交多行交易并将其与
+  帐户范围内的用户 -> 绑定 -> 个人资料/社交 -> 审核顺序。
+- 集中第一个版本的可用登录方法谓词和 `canUnlink`。
+- 将经过验证的提供者 DTO 与取消链接的参考输入分开。
+- 使非权威提供商配置文件字段可为空。
+- 从链接中删除旧代币生成。
+- 添加规范的链接帐户预测和机器可读错误。
 
-- Add nullable `public_ref` and UTC timestamps to `oauth_providers`.
-- Backfill every existing binding with a unique opaque `public_ref`, verify no
-  nulls or duplicates, create the unique index, then make the column not null.
-- Populate `inserted_at` for existing rows using an explicitly documented
-  migration timestamp because the legacy table has no historical linked time;
-  do not present the backfill value as the original provider-link event time.
-- Before creating `UNIQUE(user_id, provider)`, query and report every duplicate
-  group with its binding ids and provider ids. Production is expected to have no
-  duplicates; this is a defensive assertion, not a compatibility workflow.
-- If the assertion fails, abort the migration and deployment. Do not delete or
-  rewrite any provider binding to make the index pass.
-- Report the conflicting rows for an explicit human review. Deployment may resume
-  only after a separate, product-approved data migration resolves the incident;
-  this document does not authorize deletion, archival, merge, or another repair
-  algorithm.
-- Create and enforce `UNIQUE(user_id, provider)` after the assertion passes.
-- Change Auth and Phoenix to stop sending and accepting unbounded `raw`, drain all
-  old instances, confirm no unbounded writer remains, then have an operator
-  explicitly clear every existing `oauth_providers.raw` value. This data cleanup
-  is not part of `priv/repo/migrations` or any automatic boot/release migration.
-  Do not preserve unknown keys or scrub through a denylist.
-- Replace tests that expect `raw` to mirror the complete provider profile with
-  bounded allowlist and credential-exclusion assertions.
-- Introduce field-level source tracking before any provider data is projected
-  into user-visible Profile/Social fields.
-- Replace ownership-changing upsert with insert/conflict classification.
-- Make concurrent first-time sign-ins recover a unique `create_user` or
-  `create_profile` race by re-querying the committed external identity and
-  reusing its owner for Browser Session creation.
-- Name both unique constraints explicitly and classify conflicts using the
-  PostgreSQL constraint name followed by canonical key re-query under lock.
-- Make link and unlink lock the user row first and share one lock order.
-- Audit ordinary profile/social multi-row transactions and align them with the
-  Accounts-wide User -> binding -> Profile/Social -> audit order.
-- Centralize the first-release usable-login-method predicate and `canUnlink`.
-- Separate verified provider DTO from unlink reference input.
-- Make non-authoritative provider profile fields nullable.
-- Remove legacy token generation from link.
-- Add canonical linked-account projections and machine-readable errors.
+### 第 3 阶段：添加 Auth 编排
 
-### Phase 3: Add Auth orchestration
+- 帐户列表/链接/取消链接 HTTP 端点在规范 Auth 中实现。
+- 短暂的、一次性的链接意图保存在持久对象中，并且
+  原子消耗；浏览器状态仅携带不透明的引用。
+- OAuth 状态绑定到一个意图随机数、提供者和意图绑定
+  Phoenix `browserSessionRef`;回调重放失败关闭。
+- 已验证的 GitHub 回调通过以下方式调用 Phoenix
+  `auth:oauth:link`委托合约并返回控制成功，
+  取消或错误重定向。
+- Auth到Phoenix委托仅转发标准化用户凭证，并且
+  与服务令牌分开验证它。
+- 剩余的第 3 阶段工作是添加任何未来的提供商适配器和生产
+  配置的提供程序的烟雾覆盖范围。### 第 4 阶段：产品 UI
 
-- Account list/link/unlink HTTP endpoints are implemented in canonical Auth.
-- Short-lived, single-use link intents are persisted in a Durable Object and
-  atomically consumed; browser state carries only an opaque reference.
-- OAuth state is bound to one intent nonce, provider, and the intent-bound
-  Phoenix `browserSessionRef`; callback replay fails closed.
-- Verified GitHub callbacks call Phoenix through the
-  `auth:oauth:link` delegation contract and return controlled success,
-  cancellation, or error redirects.
-- Auth-to-Phoenix delegation forwards only the standardized user credential and
-  validates it separately from the service token.
-- Remaining Phase 3 work is adding any future provider adapters and production
-  smoke coverage for the configured provider.
+- 在选定的产品界面中添加帐户连接 UI。
+- 从规范投影渲染链接帐户。
+- Apply 规范的可空登录/头像显示后备。
+- 仅通过 Auth 端点启动链接/取消链接。
+- 解释冲突、最后提供者保护和提供者取消。
+- 解释 V1 不能取代单一提供商帐户。
 
-### Phase 4: Product UI
+### 第 5 阶段：删除过时的合同
 
-- Add account connections UI in the selected product surface.
-- Render linked accounts from the canonical projection.
-- Apply the canonical nullable login/avatar display fallback.
-- Start link/unlink only through Auth endpoints.
-- Explain conflicts, last-provider protection, and provider cancellation.
-- Explain that V1 cannot replace a sole provider account.
+- 旧的`dashboard:oauth:write`模式契约被删除。
+- 旧的 `linkOauth: TokenInfo` 和 `unlinkOauth(provider profile)` 字段是
+  删除； `OauthProviderInput` 仅保留用于登录。
+- `service:test-suite` 通配符角色仅保留为编译时，
+  用于较低级别 Phoenix 测试的测试环境兼容性帮助程序。它是
+  不是生产身份，在生产配置中不可用，并且
+  不是浏览器/Auth链接合同的一部分。删除它是一个单独的
+  测试套件清理，不是完成 Auth 流程的先决条件。
+- 验证没有浏览器或产品服务器直接调用 Phoenix 链接/取消链接。
 
-### Phase 5: Remove obsolete contracts
+## 切换操作手册
 
-- The old `dashboard:oauth:write` schema contract is removed.
-- The old `linkOauth: TokenInfo` and `unlinkOauth(provider profile)` fields are
-  removed; `OauthProviderInput` remains only for sign-in.
-- The `service:test-suite` wildcard actor remains only as a compile-time,
-  test-environment compatibility helper for lower-level Phoenix tests. It is
-  not a production identity, is not available in production configuration, and
-  is not part of the browser/Auth link contract. Removing it is a separate
-  test-suite cleanup, not a prerequisite for the completed Auth flow.
-- Verify no browser or product server calls Phoenix link/unlink directly.
+版本控制的 [OAuth V1 切换操作手册](./link_unlink_oauth_runbook.md)
+和审查的执行工件定义了这些操作。他们一定不存在
+仅作为操作员的本地 SQL 文件或未记录的一次性脚本。
 
-## Cutover Runbook
-
-The version-controlled [OAuth V1 cutover runbook](./link_unlink_oauth_runbook.md)
-and reviewed execution artifacts define these operations. They must not exist
-only as an operator's local SQL file or an undocumented once script.
-
-The runbook covers two separate operations:
+该操作手册涵盖两个独立的操作：
 
 ```text
 required
@@ -1244,11 +1227,11 @@ conditional
   deployment. The runbook does not define a generic delete or repair algorithm.
 ```
 
-Scripts and operator commands are checked into the repository, reviewed, and
-identified by version or checksum. They are not placed in `priv/repo/migrations`
-and are never executed automatically during application boot or release startup.
+脚本和操作员命令被签入存储库、进行审查并
+由版本或校验和标识。它们没有放置在 `priv/repo/migrations` 中
+并且在应用程序启动或发布启动期间永远不会自动执行。
 
-The execution checklist records at least:
+执行清单至少记录：
 
 ```text
 release and commit
@@ -1266,187 +1249,183 @@ registration, Link, Unlink, and sign-in smoke results
 monitoring results, execution time, and final status
 ```
 
-The `raw` cleanup is intentionally forward-only: do not copy unbounded raw data
-into a backup table or restore it during rollback. If the duplicate assertion
-fails, the operator stops after producing the report; only a separately reviewed
-and product-approved data migration may change those bindings.
+`raw` 清理有意只向前：不复制无限制的原始数据
+到备份表中或在回滚期间恢复它。如果重复的断言
+不合格，操作员出具报告后停止；仅单独审查
+产品批准的数据迁移可能会改变这些绑定。
 
-## Test Plan
+## 测试计划
 
-### Auth protocol tests
+### Auth 协议测试
 
-- Frontend Auth helpers cover account list, begin-link `authorizationUrl`
-  navigation, opaque-ref unlink, and machine-readable error propagation.
-- Link requires current Auth Session, exact Origin, and CSRF proof.
-- Unlink requires current Auth Session, exact Origin, CSRF proof, and a valid
-  Phoenix user credential; it does not require recent authentication or provider
-  reauthentication.
-- The intentRef Cookie is host-only; its server-side intent is short-lived,
-  provider-bound, Session-bound, and one-time.
-- Replaying a signed/encrypted browser value cannot consume a server-side intent
-  more than once.
-- Concurrent callbacks allow exactly one `pending -> consumed` transition.
-- OAuth state from one flow cannot consume or be combined with another intent.
-- Invalid/expired/consumed intent never falls back to sign-in.
-- Provider cancellation returns a controlled result.
-- Callback provider mismatch fails closed.
-- Expired Phoenix user credential uses the V1 demand-refresh path once.
-- Callback refresh writes the refreshed Phoenix access Cookie before the
-  controlled success redirect.
-- Ambiguous unlink failures reconcile against the canonical account list and
-  retry at most once.
-- Revoked Browser Session cannot complete link.
-- `returnTo` cannot escape approved first-party origins.
-- Credentialed CORS preflight allows only exact first-party origins and the
-  account-management CSRF Header; wildcard, `null`, and sibling origins fail.
+- 前端 Auth 助手覆盖帐户列表，开始链接 `authorizationUrl`
+  导航、不透明引用取消链接和机器可读的错误传播。
+- 链接需要当前的Auth Session、确切的来源和CSRF证明。
+- 取消链接需要当前的 Auth Session、确切的来源、CSRF 证明和有效的
+  Phoenix 用户凭证；它不需要最近的身份验证或提供商
+  重新验证。
+  -intentRef Cookie 仅限主机；它的服务器端意图是短暂的，
+  提供商绑定、Session 绑定和一次性。
+- 重放签名/加密的浏览器值无法消耗服务器端意图
+  不止一次。
+- 并发回调仅允许一次 `pending -> consumed` 转换。
+- 来自一个流的 OAuth 状态不能消耗或与另一意图组合。
+- 无效/过期/已消耗的意图永远不会退回到登录。
+- 提供者取消返回受控结果。
+- 回调提供者不匹配失败关闭。
+- 过期的 Phoenix 用户凭证使用 V1 请求刷新路径一次。
+- 回调刷新将刷新的 Phoenix 访问 Cookie 写入之前
+  受控成功重定向。
+- 不明确的取消链接失败与规范帐户列表一致，并且
+  最多重试一次。
+- 已撤销的Browser Session无法完成链接。
+- `returnTo` 无法逃脱经批准的第一方来源。
+- 经过认证的 CORS 预检仅允许准确的第一方来源和
+  帐户管理 CSRF 标头；通配符、`null` 和同级起源失败。
 
-### Phoenix authorization tests
+### Phoenix 授权测试
 
-- Missing service proof is rejected.
-- Wrong service subject, audience, or scope is rejected.
-- A valid browser user token is checked against its own audience and is not
-  required to carry the service token's Auth API audience.
-- A user token with the wrong token type or browser audience is rejected.
-- Service proof without a delegated user is rejected.
-- User proof without Auth service proof is rejected.
-- Auth link scope cannot unlink; Auth unlink scope cannot link.
-- Dashboard/Content Import/Press/Assets Hub tokens cannot manage providers.
+- 缺少服务证明将被拒绝。
+- 错误的服务主题、受众或范围将被拒绝。
+- 有效的浏览器用户令牌会根据其自己的受众进行检查，并且不会
+  需要携带服务令牌的 Auth API 受众。
+- 令牌类型或浏览器受众错误的用户令牌将被拒绝。
+- 没有委托用户的服务证明被拒绝。
+- 没有Auth服务证明的用户证明将被拒绝。
+- Auth链接范围无法取消链接； Auth 取消链接范围无法链接。
+- Dashboard/Content Import/按/Assets Hub令牌无法管理提供商。### 链接域测试
 
-### Link domain tests
+- 指向当前用户的新身份链接。
+- 相同身份/当前用户是幂等的。
+- 另一个用户拥有的身份会返回冲突，而无需更改所有权。
+- 来自两个用户的并发链接永远不会移动`user_id`。
+- 同一用户的链接和取消链接在用户行上序列化并保留两者
+  绑定所有权和最终登录方法不变量。
+- 并发链接/取消链接路径获取用户、绑定、派生配置文件和审核
+  锁定记录的顺序。
+- 普通个人资料/社交多行编辑遵循相同的帐户范围顺序
+  并且不要通过链接/取消链接引入反向锁死锁。
+- Link 永远不会创建 Browser Session 或返回旧令牌。
+- 所需的派生状态更改在事务上是一致的。
+- 同用户幂等链接刷新绑定元数据而不覆盖
+  用户创建的配置文件字段。
+- 没有`login`、昵称或头像的提供商可以链接到现有用户。
+- 将同一提供商的第二个帐户链接到一个用户将被拒绝，而无需
+  替换现有的绑定。
+- 违反外部身份和用户/提供者约束
+  通过它们的稳定名称来识别并规范地重新查询为不同的
+  机器错误。
+- 无论哪种身份/当前用户重试都保持幂等性
+  唯一约束PostgreSQL报告。
+- 提供商令牌字段不会保留在配置文件 JSON 或日志中。
 
-- New identity links to the current user.
-- Same identity/current user is idempotent.
-- Identity owned by another user returns conflict without ownership change.
-- Concurrent links from two users never move `user_id`.
-- Link and unlink for the same user serialize on the user row and preserve both
-  binding ownership and the final-login-method invariant.
-- Concurrent link/unlink paths acquire User, binding, derived-profile, and audit
-  locks in the documented order.
-- Ordinary profile/social multi-row edits follow the same Accounts-wide order
-  and do not introduce a reverse-lock deadlock with link/unlink.
-- Link never creates a Browser Session or returns a legacy token.
-- Required derived-state changes are transactionally consistent.
-- Same-user idempotent link refreshes binding metadata without overwriting
-  user-authored profile fields.
-- Providers without `login`, nickname, or avatar can link to an existing user.
-- Linking a second account from the same provider to one user is rejected without
-  replacing the existing binding.
-- Violations of the external-identity and user/provider constraints are
-  recognized by their stable names and canonically re-queried into distinct
-  machine errors.
-- A same-identity/current-user retry remains idempotent regardless of which
-  unique constraint PostgreSQL reports.
-- Provider token fields are not persisted in profile JSON or logs.
+### 取消链接域测试
 
-### Unlink domain tests
+- 当存在另一个可用方法时，可以取消链接拥有的绑定。
+- 外部绑定无法取消链接。
+- 最后可用的方法无法取消链接。
+- 并发取消链接无法删除所有登录方法。
+- 提供者派生的配置文件状态遵循所选的清理策略。
+- 取消链接保留用户创作的字段并仅清除源自
+  删除了绑定。
+- 当前的Session行为符合记录的政策。
+- 取消链接使当前和其他 Browser 会话保持活动状态。
+- 重复提交的取消链接从 Phoenix 返回 `OAUTH_BINDING_NOT_FOUND`。
+- 在模糊的取消链接响应之后，Auth 重新获取绑定列表并处理
+  缺席的 `publicRef` 视为成功完成。
 
-- Owned binding can be unlinked when another usable method remains.
-- Foreign binding cannot be unlinked.
-- Last usable method cannot be unlinked.
-- Concurrent unlink cannot remove all login methods.
-- Provider-derived profile state follows the selected cleanup policy.
-- Unlink preserves user-authored fields and clears only values sourced from the
-  removed binding.
-- Current Session behavior matches the documented policy.
-- Unlink leaves the current and other Browser Sessions active.
-- Repeating a committed unlink returns `OAUTH_BINDING_NOT_FOUND` from Phoenix.
-- After an ambiguous unlink response, Auth refetches the binding list and treats
-  an absent `publicRef` as successful completion.
+### 迁移测试
 
-### Migration tests
-
-- Every existing provider binding receives a unique non-null `publicRef`.
-- The global `(provider, provider_id)` identity invariant survives the migration.
-- The duplicate assertion reports exact conflicting rows and aborts without
-  deleting or rewriting bindings.
-- A failed assertion requires an explicitly approved independent data migration
-  before retry; the Link/Unlink release performs no automatic repair.
-- The migration creates and enforces one binding per `(user_id, provider)` after
-  the assertion passes.
-- Old writers are drained before the post-deploy `raw` cleanup runs.
-- Automatic boot-time and release migrations never execute the `raw` cleanup;
-  an operator invokes it explicitly after rollout verification.
-- The checked-in cutover runbook records the reviewed artifact version, dry-run
-  counts, rollout/drain proof, affected rows, post-run verification, and smoke
-  results.
-- Every existing `oauth_providers.raw` value is cleared, and subsequent
-  registration/Link writes contain only bounded allowlisted metadata.
-- New bindings expose UTC `linkedAt`; legacy backfill timestamps are handled as
-  migration-time values rather than claimed historical link events.
+- 每个现有的提供者绑定都会收到一个唯一的非空`publicRef`。
+- 全局 `(provider, provider_id)` 身份不变在迁移后仍然存在。
+- 重复断言报告确切的冲突行并中止，而无需
+  删除或重写绑定。
+- 失败的断言需要明确批准的独立数据迁移
+  重试之前；链接/取消链接版本不执行自动修复。
+- 迁移会在之后为每个 `(user_id, provider)` 创建并强制执行一个绑定
+  断言通过。
+- 在部署后 `raw` 清理运行之前，旧编写器已被耗尽。
+- 自动启动时和发布迁移从不执行 `raw` 清理；
+  操作员在推出验证后显式调用它。
+- 签入的切换操作手册记录了已审核的工件版本、试运行
+  计数、推出/耗尽证明、受影响的行、运行后验证和烟雾
+  结果。
+- 每个现有的 `oauth_providers.raw` 值都被清除，后续的
+  注册/链接写入仅包含有限的允许列表元数据。
+- 新绑定公开 UTC `linkedAt`；遗留回填时间戳被处理为
+  迁移时间值而不是声明的历史链接事件。
 
 ### Browser E2E
 
-- Signed-in user links a different provider and remains the same Groupher user.
-- Refresh and a new sign-in can use the newly linked provider.
-- Unlink updates every product account menu consistently.
-- Last-provider UI is disabled and the server independently rejects it.
-- Missing provider login/avatar uses nickname/localized provider label and the
-  provider icon without exposing email.
-- Provider cancellation and conflict do not log the user out.
-- Cross-user conflict never exposes the other account.
+- 登录用户链接到不同的提供商并保持相同的 Groupher 用户。
+- 刷新和新登录可以使用新链接的提供商。
+- Unlink 一致更新每个产品帐户菜单。
+- 最后一个提供者 UI 被禁用并且服务器独立地拒绝它。
+- 缺少提供商登录/头像使用昵称/本地化提供商标签和
+  提供商图标而不暴露电子邮件。
+- 提供商取消和冲突不会使用户注销。
+- 跨用户冲突永远不会暴露其他帐户。## 验收标准
 
-## Acceptance Criteria
+- Auth 是唯一面向浏览器的链接/取消链接协议所有者。
+- Phoenix 仍然是唯一持久的提供者绑定权限。
+- 产品应用程序从不转发浏览器断言的提供商配置文件。
+- 只有具有确切 Auth 受众/范围的 `service:auth` 才能调用突变。
+- Phoenix 独立验证委派的当前用户。
+- 服务和用户凭证使用单独的精确受众验证配置文件。
+- 链接完成会重新验证意图绑定 Phoenix Browser Session，即使
+  委托的访问令牌尚未过期。
+- 提供者身份所有权不能通过更新插入或竞赛来更改。
+- 在用户行上链接和取消链接序列化并共享一个锁定顺序。
+- 并发取消链接无法删除最终可用的登录方法。
+- 在第一个版本中，可用的登录方法正是活动用户的OAuth
+  提供者行； Phoenix 单独计算 `canUnlink` 并在锁定状态下重新检查它。
+- 电子邮件平等永远不会自动链接或合并用户。
+- 链接不会铸造旧代币或创建 Browser Session。
+- 取消链接接受不透明的拥有的绑定引用，而不是提供者配置文件。
+- 每个绑定都有回填的不透明 `publicRef` 和 UTC 时间戳；提供者
+  除提供商/帐户 ID 之外的配置文件属性可为空。
+- 提供者元数据刷新不会覆盖用户创作的配置文件字段，并且
+  unlink 仅清除仍源自已删除绑定的字段。
+- 提供者令牌和无限回调有效负载不会被保留或记录。
+- 现有无界 `oauth_providers.raw` 值在切换时被清除；新的
+  值仅包含有限的允许列表配置文件元数据。
+- `raw` 清理仅在所有无界写入器被替换且旧后运行
+  实例已耗尽。
+- 清理是显式运行的数据操作，而不是自动启动时
+  或释放迁移。
+- 必需和有条件的切换操作使用经过审查、版本控制的
+  工件和完整的执行清单；一旦脚本没有未记录的
+  接受了。
+- OAuth 状态仅与一个意图绑定；重播，提供商不匹配，Session
+  不匹配、替换和过期失败关闭。
+- 一次性意图消费是由原子服务器端记录强制执行的，从不
+  由无状态的Cookie。
+- 一个Groupher用户不能绑定同一提供商的两个帐户。
+- 意外的重复绑定停止部署并需要单独
+  批准的数据迁移；此版本永远不会自动修复它们。
+- V1 永远不会取代现有的提供商位置；单一提供商帐户不能
+  自助服务被该提供商的另一个帐户取代。
+- V1不需要最近的认证；任何后续的逐步强化都会保护 Link
+  在取消链接之前，因为链接添加了持久登录凭据。
+- 取消链接不需要最近的身份验证，并且不会撤销任何 Browser 会话。
+- 所有多行帐户写入都遵循共享的用户优先锁定顺序。
+- 取消链接重试行为将 Phoenix 的缺失绑定响应与
+  Auth 的故障后期望状态协调。
+- 帐户设置可以列出绑定并一致地呈现 `canUnlink`。
+- 旧的 Dashboard 范围和直接 GraphQL 帐户管理路径被删除。
 
-- Auth is the only browser-facing link/unlink protocol owner.
-- Phoenix remains the only persistent provider-binding authority.
-- Product applications never forward browser-asserted provider profiles.
-- Only `service:auth` with exact Auth audience/scope can call the mutations.
-- Phoenix independently verifies the delegated current user.
-- Service and user credentials use separate exact audience-verification profiles.
-- Link completion revalidates the intent-bound Phoenix Browser Session even when
-  the delegated access token has not expired.
-- Provider identity ownership cannot change through upsert or a race.
-- Link and unlink serialize on the user row and share one lock order.
-- Concurrent unlink cannot remove the final usable login method.
-- In the first release, usable login methods are exactly the active user's OAuth
-  provider rows; Phoenix alone computes `canUnlink` and rechecks it under lock.
-- Email equality never links or merges users automatically.
-- Link does not mint a legacy token or create a Browser Session.
-- Unlink accepts an opaque owned binding reference, not a provider profile.
-- Every binding has a backfilled opaque `publicRef` and UTC timestamps; provider
-  profile attributes other than provider/account id are nullable.
-- Provider metadata refresh does not overwrite user-authored profile fields, and
-  unlink clears only fields still sourced from the removed binding.
-- Provider tokens and unbounded callback payloads are not persisted or logged.
-- Existing unbounded `oauth_providers.raw` values are cleared at cutover; new
-  values contain only bounded allowlisted profile metadata.
-- The `raw` cleanup runs only after all unbounded writers are replaced and old
-  instances are drained.
-- The cleanup is an explicitly-run data operation, never an automatic boot-time
-  or release migration.
-- Required and conditional cutover operations use reviewed, version-controlled
-  artifacts and a completed execution checklist; no undocumented once script is
-  accepted.
-- OAuth state is bound to exactly one intent; replay, provider mismatch, Session
-  mismatch, substitution, and expiry fail closed.
-- One-time intent consumption is enforced by an atomic server-side record, never
-  by a stateless Cookie.
-- One Groupher user cannot bind two accounts from the same provider.
-- Unexpected duplicate bindings stop deployment and require a separately
-  approved data migration; this release never repairs them automatically.
-- V1 never replaces an existing provider slot; a sole provider account cannot be
-  self-service replaced by another account from that provider.
-- V1 requires no recent authentication; any later step-up hardening protects Link
-  before Unlink because Link adds a persistent login credential.
-- Unlink requires no recent authentication and revokes no Browser Sessions.
-- All multi-row Accounts writes follow the shared user-first lock order.
-- Unlink retry behavior distinguishes Phoenix's missing-binding response from
-  Auth's post-failure desired-state reconciliation.
-- Account settings can list bindings and render `canUnlink` consistently.
-- Old Dashboard-scoped and direct GraphQL account-management paths are removed.
+## 开放决策
 
-## Open Decisions
+1. 保留哪些规范化提供商资料字段以及保留多长时间？
+2. Main、Dashboard、Dash 和 Main 时帐户连接 UI 位于何处
+   Apply共存？
 
-1. Which normalized provider profile fields are retained, and for how long?
-2. Where does the account-connections UI live while Main, Dashboard, Dash, and
-   Apply coexist?
+## 相关文档
 
-## Related Documents
-
-- [`docs/auth/v1.md`](./v1.md): Browser Auth and Session lifecycle.
-- [`docs/auth/v2.md`](./v2.md): Service Identity and user delegation.
-- [`docs/oauth/overview.md`](../oauth/overview.md): OAuth scenario boundaries.
-- [Auth.js database models](https://authjs.dev/concepts/database-models): Auth.js
-  User/Account adapter semantics and account-linking context.
-- [Auth.js provider reference](https://authjs.dev/reference/core/providers):
-  provider callback data and automatic email-linking security warning.
+- [`docs/auth/v1.md`](./v1.md)：Browser Auth 和 Session 生命周期。
+- [`docs/auth/v2.md`](./v2.md)：服务身份和用户委托。
+- [`docs/oauth/overview.md`](../oauth/overview.md)：OAuth场景边界。
+- [Auth.js 数据库模型]([[[K188]]]): Auth.js
+  用户/帐户适配器语义和帐户链接上下文。
+- [Auth.js 提供商参考]([[[K189]]]):
+  提供商回调数据和自动电子邮件链接安全警告。

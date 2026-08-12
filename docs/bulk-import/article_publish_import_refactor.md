@@ -4,7 +4,7 @@
 >
 > 范围：单文档导入、Article 正文发布链路、Elixir 内容转换清理
 >
-> Source of truth：本文负责共享 Import Content、Rich Editor codec、artiment-publisher 和 BodyBag。批量/多来源编排以 [`content-import-architecture.md`](./backend-content-import-architecture.md) 为准；GitHub Docs 产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 为准；联调错误和恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
+> Source of truth：本文负责共享 Import Content、Rich Editor codec、artiment-publisher 和 BodyBag。批量/多来源编排以 [`content_import_architecture.md`](./content_import_architecture.md) 为准；GitHub Docs 产品流程以 [`bulk_import.md`](./bulk_import.md) 为准；Files SDK/staging 以 [`import_file_sdk.md`](./import_file_sdk.md) 为准；实施清单以 [`content_import_refactor_plan.md`](./content_import_refactor_plan.md) 为准；联调错误和恢复边界见 [`import_error_handling.md`](./import_error_handling.md)。
 >
 > 更新：2026-07-22（补充 Content Import 复用边界）
 
@@ -18,7 +18,7 @@
 | Phase 4：Elixir parser/converter 清理 | 已完成   | 旧 converter、`ContentPipeline`、`MarkdownNormalizer`、Earmark 已删除；Comment/Mention 边界已拆分                                  |
 | Phase 5：独立拆分 publisher           | 后续演进 | 当前不阻塞本轮完成；满足拆分条件后再迁出 DSB                                                                                       |
 
-当前结论：Article/共享 Import Content 重构已经完成；唯一未闭环的是 Phase 1 的外部部署验证。2026-07-16 完成本计划时，Docs/Changelog 批量正文导入仍为 `deferred`；目前 GitHub Docs 已复用共享 Node codec/publisher，并完成 Files SDK Preview、PostgreSQL BodyBag staging 与原子 apply 的本地切换，Changelog 仍未接线。批量编排的当前状态以 [`bulk-import.md`](./bulk-import.md) 为准。
+当前结论：Article/共享 Import Content 重构已经完成；唯一未闭环的是 Phase 1 的外部部署验证。2026-07-16 完成本计划时，Docs/Changelog 批量正文导入仍为 `deferred`；目前 GitHub Docs 已复用共享 Node codec/publisher，并完成 Files SDK Preview、PostgreSQL BodyBag staging 与原子 apply 的本地切换，Changelog 仍未接线。批量编排的当前状态以 [`bulk_import.md`](./bulk_import.md) 为准。
 
 边界澄清：`document-converter` 的部署状态只影响 PDF、DOCX、PPTX、XLSX、HTML 等“外部文件 → Markdown”来源。GitHub Repo 中已经是 Markdown/MDX 的 Docs 直接进入共享 Import Content codec/publisher，不调用 `document-converter`；因此 Phase 1 的 Vercel 部署与 smoke 不是 GitHub Docs Bulk Import 的 release blocker。
 
@@ -622,7 +622,7 @@ TArtimentBodyBag -> ContentImport apply / GraphQL
 
 GitHub Docs Bulk Import 直接复用上述 Node codec/publisher：Node 从 `DocsDataset` 读取 selected Markdown/MDX，对每个 item 调用同一个 Import Content server function，再把 BodyBag 有界分批发送给 Phoenix。不能在 `threads/docs` 或 Bulk workflow 下新增第二套 Markdown/BodyBag converter，也不应通过 HTTP 调用 Dashboard 自己的 `/api/artiment/import`。
 
-Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`content-import-architecture.md`](./backend-content-import-architecture.md) 和 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 第零章。
+Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`content_import_architecture.md`](./content_import_architecture.md) 和 [`content_import_refactor_plan.md`](./content_import_refactor_plan.md) 第零章。
 
 ### 8.4 Comment 与 Mention
 
@@ -681,7 +681,7 @@ Comment 暂不迁移，因此 Article cutover 后采用以下边界：
 - 已实现 `artiment-publisher` 核心：稳定 Plate JSON、Markdown、sanitized HTML、TOC、plain text、digest、`bodyHash` 和 `schemaVersion`。
 - 持久化 JSON 保留节点 `id/_id`；`bodyHash` 单独使用 `canonicalizeValue()`，忽略临时身份字段。
 - 已实现 2 MiB、20,000 nodes、64 层深度限制，以及未知/transient node 的结构化拒绝。
-- 2 MiB 指序列化 Plate value 的未压缩 UTF-8 bytes，是共享 Import Content/publisher 的固定输入上限。Bulk Docs 复用同一 publisher，因此单篇在这里触发 `payload_too_large` 时由 Bulk 编排映射为可展示的 `content_too_large` 并跳过；Bulk 另有 5 MiB canonical BodyBag 和 6 MiB 完整 GraphQL request JSON 上限，详见 [`import-file-sdk.md`](./import-file-sdk.md)。
+- 2 MiB 指序列化 Plate value 的未压缩 UTF-8 bytes，是共享 Import Content/publisher 的固定输入上限。Bulk Docs 复用同一 publisher，因此单篇在这里触发 `payload_too_large` 时由 Bulk 编排映射为可展示的 `content_too_large` 并跳过；Bulk 另有 5 MiB canonical BodyBag 和 6 MiB 完整 GraphQL request JSON 上限，详见 [`import_file_sdk.md`](./import_file_sdk.md)。
 - 已建立需要 Groupher session 的 `POST /api/artiment/publish`；Phase 2 初始只返回 BodyBag，Phase 3 已扩展为携带用户 token 与 publisher proof 调用 GraphQL。
 - 当前 Route Handler 的 action allowlist 仅包含 `updateDocDraft`，服务于 Docs autosave；Post/Blog/Changelog 后端 mutation 已完成 BodyBag cutover，但尚无对应 DSB publisher transport action。
 - 15 项 focused tests、Dashboard lint、type-check 和带 mock GraphQL 的 Turbopack production build 通过。

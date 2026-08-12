@@ -89,53 +89,53 @@ Release ledger
 
 ### 1. 最终核心模型 & 表
 
-| # | 最终名称 | 位置 | 说明 |
-|---|----------|------|------|
-| 1 | `ArticleWorkspace` 模块 / `article_workspaces` 表 | `cms/model/article_workspace.ex` | draft 当前编辑区 |
-| 2 | `ArticleSnapshot` 模块 / `article_snapshots` 表 | `cms/model/article_snapshot.ex` | article 内容历史证据 |
-| 3 | `DocTreeSnapshot` 模块 / `doc_tree_snapshots` 表 | `cms/model/doc_tree_snapshot.ex` | tree 历史证据 |
-| 4 | `DocDocument` 模块 / `doc_documents` 表 | `cms/model/doc_document.ex` | docs runtime 内容缓存 |
+| #   | 最终名称                                          | 位置                             | 说明                  |
+| --- | ------------------------------------------------- | -------------------------------- | --------------------- |
+| 1   | `ArticleWorkspace` 模块 / `article_workspaces` 表 | `cms/model/article_workspace.ex` | draft 当前编辑区      |
+| 2   | `ArticleSnapshot` 模块 / `article_snapshots` 表   | `cms/model/article_snapshot.ex`  | article 内容历史证据  |
+| 3   | `DocTreeSnapshot` 模块 / `doc_tree_snapshots` 表  | `cms/model/doc_tree_snapshot.ex` | tree 历史证据         |
+| 4   | `DocDocument` 模块 / `doc_documents` 表           | `cms/model/doc_document.ex`      | docs runtime 内容缓存 |
 
 > `DocContent` 已改名为 `DocDocument`，与 `PostDocument` / `BlogDocument` / `ChangelogDocument` 命名对齐。
 > 若从旧模型迁移，真实 diff 是 `ArticleVersion` → `ArticleWorkspace`、`ArticleRevision` → `ArticleSnapshot`、`DocTreeRevision` → `DocTreeSnapshot`、`DocContent` → `DocDocument`。
 
 ### 2. 最终 FK 字段命名
 
-| # | 表 | 最终字段 | 指向 | 说明 |
-|---|-----|----------|------|------|
-| 5 | `doc_tree_nodes` | `workspace_id` | ArticleWorkspace | draft page 指向 workspace；public page 用 `doc_id` |
-| 6 | `doc_tree_trash_items` | `workspace_id` | ArticleWorkspace | docs trash 语境内不需要 `article_` 前缀 |
-| 7 | `doc_tree_events` | `workspace_id` | ArticleWorkspace | doc-owned event 绑定的 workspace |
-| 8 | `doc_tree_events` | `snapshot_id` | DocTreeSnapshot | event 被发布进哪个 tree snapshot |
-| 9 | `publish_release_articles` | `snapshot_id` | ArticleSnapshot | release article 子表只引用 article snapshot |
-| 10 | `article_snapshots` | `workspace_id` | ArticleWorkspace | draft snapshot 指向 workspace；public snapshot 指向 `article_id` |
-| 11 | `publish_releases` | `tree_snapshot_id` | DocTreeSnapshot | 必须保留 `tree_`，release 还通过子表关联 article snapshots |
-| 12 | `docs_site_states` | `base_snapshot_id` | DocTreeSnapshot | 必须保留 `base_`，表示 staged changes 的基线（从 doc_tree_draft_states 搬来） |
-| 13 | `publish_requests` | `base_snapshot_id` | DocTreeSnapshot | 必须保留 `base_`，表示 request/review 的基线 |
+| #   | 表                         | 最终字段           | 指向             | 说明                                                                          |
+| --- | -------------------------- | ------------------ | ---------------- | ----------------------------------------------------------------------------- |
+| 5   | `doc_tree_nodes`           | `workspace_id`     | ArticleWorkspace | draft page 指向 workspace；public page 用 `doc_id`                            |
+| 6   | `doc_tree_trash_items`     | `workspace_id`     | ArticleWorkspace | docs trash 语境内不需要 `article_` 前缀                                       |
+| 7   | `doc_tree_events`          | `workspace_id`     | ArticleWorkspace | doc-owned event 绑定的 workspace                                              |
+| 8   | `doc_tree_events`          | `snapshot_id`      | DocTreeSnapshot  | event 被发布进哪个 tree snapshot                                              |
+| 9   | `publish_release_articles` | `snapshot_id`      | ArticleSnapshot  | release article 子表只引用 article snapshot                                   |
+| 10  | `article_snapshots`        | `workspace_id`     | ArticleWorkspace | draft snapshot 指向 workspace；public snapshot 指向 `article_id`              |
+| 11  | `publish_releases`         | `tree_snapshot_id` | DocTreeSnapshot  | 必须保留 `tree_`，release 还通过子表关联 article snapshots                    |
+| 12  | `docs_site_states`         | `base_snapshot_id` | DocTreeSnapshot  | 必须保留 `base_`，表示 staged changes 的基线（从 doc_tree_draft_states 搬来） |
+| 13  | `publish_requests`         | `base_snapshot_id` | DocTreeSnapshot  | 必须保留 `base_`，表示 request/review 的基线                                  |
 
 > **命名约定**：DB column / Ecto schema 用 `snake_case`；GraphQL / JSON payload / frontend store 用 `camelCase`。
 
 ### 2b. FK 迁移对照
 
-| # | 表 / 位置 | 旧名 | 新名 |
-|---|-----------|------|------|
-| M1 | `doc_tree_nodes` | `article_workspace_id` | `workspace_id` |
-| M2 | `doc_tree_trash_items` | `article_workspace_id` | `workspace_id` |
-| M3 | `doc_tree_events` | `binding_workspace_id` | `workspace_id` |
-| M4 | `doc_tree_events` | `published_snapshot_id` | `snapshot_id` |
-| M5 | `publish_release_articles` | `article_snapshot_id` | `snapshot_id` |
-| M6 | `article_snapshots` | `article_workspace_id` | `workspace_id` |
-| M7 | GQL / JSON draft tree node | `docId` | `workspaceId` |
-| M8 | GQL / JSON article snapshot | `articleWorkspaceId` | `workspaceId` |
+| #   | 表 / 位置                   | 旧名                    | 新名           |
+| --- | --------------------------- | ----------------------- | -------------- |
+| M1  | `doc_tree_nodes`            | `article_workspace_id`  | `workspace_id` |
+| M2  | `doc_tree_trash_items`      | `article_workspace_id`  | `workspace_id` |
+| M3  | `doc_tree_events`           | `binding_workspace_id`  | `workspace_id` |
+| M4  | `doc_tree_events`           | `published_snapshot_id` | `snapshot_id`  |
+| M5  | `publish_release_articles`  | `article_snapshot_id`   | `snapshot_id`  |
+| M6  | `article_snapshots`         | `article_workspace_id`  | `workspace_id` |
+| M7  | GQL / JSON draft tree node  | `docId`                 | `workspaceId`  |
+| M8  | GQL / JSON article snapshot | `articleWorkspaceId`    | `workspaceId`  |
 
 > `publish_releases.tree_snapshot_id`、`docs_site_states.base_snapshot_id`、`publish_requests.base_snapshot_id` 不是冗余命名，不参与去前缀。
 
 ### 3. Ecto Schema 自身字段
 
-| # | 表 | 字段 | 语义 |
-|---|-----|------|------|
-| 14 | `article_snapshots` | `snapshot_number` | 保留。同一 article 的 snapshot 线性序号（per-article，非全局） |
-| 15 | `doc_tree_snapshots` | `snapshot_number` | 删除。与 `PublishRelease.release_number` 永远 1:1，用 release_number 即可（见 R9 定案） |
+| #   | 表                   | 字段              | 语义                                                                                    |
+| --- | -------------------- | ----------------- | --------------------------------------------------------------------------------------- |
+| 14  | `article_snapshots`  | `snapshot_number` | 保留。同一 article 的 snapshot 线性序号（per-article，非全局）                          |
+| 15  | `doc_tree_snapshots` | `snapshot_number` | 删除。与 `PublishRelease.release_number` 永远 1:1，用 release_number 即可（见 R9 定案） |
 
 > `ArticleSnapshot.snapshot_number` 是同一 article 维度的递增序号，不是 community 全局序号。用于排序同一 article 的 checkpoint / publish 历史。
 >
@@ -143,16 +143,16 @@ Release ledger
 
 ### 4. 最终 Ecto belongs_to 关联
 
-| # | 模型 | 最终关联 |
-|---|------|----------|
-| 16 | `DocTreeNode` | `belongs_to(:workspace, ArticleWorkspace)` |
-| 17 | `DocTreeTrashItem` | `belongs_to(:workspace, ArticleWorkspace)` |
-| 18 | `DocTreeEvent` | `belongs_to(:workspace, ArticleWorkspace)` |
-| 19 | `DocTreeEvent` | `belongs_to(:snapshot, DocTreeSnapshot)` |
-| 20 | `PublishReleaseArticle` | `belongs_to(:snapshot, ArticleSnapshot)` |
-| 21 | `PublishRelease` | `belongs_to(:tree_snapshot, DocTreeSnapshot)` |
-| 22 | `DocsSiteState` | `belongs_to(:base_snapshot, DocTreeSnapshot)` |
-| 23 | `ArticleSnapshot` | `belongs_to(:workspace, ArticleWorkspace)`（draft snapshot 指向 workspace） |
+| #   | 模型                    | 最终关联                                                                    |
+| --- | ----------------------- | --------------------------------------------------------------------------- |
+| 16  | `DocTreeNode`           | `belongs_to(:workspace, ArticleWorkspace)`                                  |
+| 17  | `DocTreeTrashItem`      | `belongs_to(:workspace, ArticleWorkspace)`                                  |
+| 18  | `DocTreeEvent`          | `belongs_to(:workspace, ArticleWorkspace)`                                  |
+| 19  | `DocTreeEvent`          | `belongs_to(:snapshot, DocTreeSnapshot)`                                    |
+| 20  | `PublishReleaseArticle` | `belongs_to(:snapshot, ArticleSnapshot)`                                    |
+| 21  | `PublishRelease`        | `belongs_to(:tree_snapshot, DocTreeSnapshot)`                               |
+| 22  | `DocsSiteState`         | `belongs_to(:base_snapshot, DocTreeSnapshot)`                               |
+| 23  | `ArticleSnapshot`       | `belongs_to(:workspace, ArticleWorkspace)`（draft snapshot 指向 workspace） |
 
 ### 5. Counter 字段 — 合并收敛
 
@@ -170,124 +170,125 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 ```
 
 **三层 dirty 检测**：
-| 粒度 | 检测方式 |
-|------|---------|
+
+| 粒度          | 检测方式                                                    |
+| ------------- | ----------------------------------------------------------- |
 | tree conflict | `client.baseRevision == docs_site_states.tree_lock_version` |
-| site-level | `site_draft_version != published_version` |
-| tree-level | `staged_event_count > 0` |
-| page-level | per-article snapshot/hash diff |
+| site-level    | `site_draft_version != published_version`                   |
+| tree-level    | `staged_event_count > 0`                                    |
+| page-level    | per-article snapshot/hash diff                              |
 
 **关键约束**：publish 完成时在同一事务里更新 `base_snapshot_id` / `staged_event_count` / `last_published_*`；只有发布后 plan 已清空时才设置 `published_version = site_draft_version`。部分发布后不能推进 `published_version`，否则 site-level dirty 会被误判为干净。当前 publish 只更新了 tree draft state，没更新 site publish counter，这是旧模型半截子工程，一并修。
 
 ### 6. GraphQL 类型 & 枚举
 
-| # | 最终名称 / 字段 | 说明 |
-|---|-----------------|------|
-| S1 | `object :article_snapshot` | ArticleSnapshot GQL 类型 |
-| S2 | `enum :article_snapshot_stage` | values: `draft`, `public` |
-| S3 | `field(:stage, :article_snapshot_stage)` | snapshot 生命周期阶段 |
-| S4 | `field(:snapshot_number, :integer)` on `ArticleSnapshot` | 保留，per-article 线性序号 |
-| S5 | `DocTreeSnapshot` 不暴露 number | tree 序号从 `PublishRelease.releaseNumber` 取 |
+| #   | 最终名称 / 字段                                          | 说明                                          |
+| --- | -------------------------------------------------------- | --------------------------------------------- |
+| S1  | `object :article_snapshot`                               | ArticleSnapshot GQL 类型                      |
+| S2  | `enum :article_snapshot_stage`                           | values: `draft`, `public`                     |
+| S3  | `field(:stage, :article_snapshot_stage)`                 | snapshot 生命周期阶段                         |
+| S4  | `field(:snapshot_number, :integer)` on `ArticleSnapshot` | 保留，per-article 线性序号                    |
+| S5  | `DocTreeSnapshot` 不暴露 number                          | tree 序号从 `PublishRelease.releaseNumber` 取 |
 
 > 注：所有 item 编号为 section-local 阅读辅助，不要求全局唯一。
 
 ### 7. GraphQL Query Fields
 
-| # | 改前 | 改后 |
-|---|------|------|
-| 30 | `field :doc_draft_revisions, list_of(:article_snapshot)` | `field :doc_draft_snapshots, list_of(:article_snapshot)` |
-| 31 | `field :doc_draft_revision, :article_snapshot` | `field :doc_draft_snapshot, :article_snapshot` |
-| 32 | `arg(:snapshot_id, non_null(:id))` | `arg(:snapshot_id, non_null(:id))` |
+| #   | 改前                                                     | 改后                                                     |
+| --- | -------------------------------------------------------- | -------------------------------------------------------- |
+| 30  | `field :doc_draft_revisions, list_of(:article_snapshot)` | `field :doc_draft_snapshots, list_of(:article_snapshot)` |
+| 31  | `field :doc_draft_revision, :article_snapshot`           | `field :doc_draft_snapshot, :article_snapshot`           |
+| 32  | `arg(:snapshot_id, non_null(:id))`                       | `arg(:snapshot_id, non_null(:id))`                       |
 
 ### 8. GraphQL Mutation Fields
 
-| # | 改前 | 改后 |
-|---|------|------|
-| 33 | `field :checkpoint_doc_draft_revision, :article_snapshot` | `field :checkpoint_doc_draft_snapshot, :article_snapshot` |
-| 34 | `field :restore_doc_draft_revision, :doc_draft` | `field :restore_doc_draft_snapshot, :doc_draft` |
-| 35 | `arg(:snapshot_id, non_null(:id))` | `arg(:snapshot_id, non_null(:id))` |
+| #   | 改前                                                      | 改后                                                      |
+| --- | --------------------------------------------------------- | --------------------------------------------------------- |
+| 33  | `field :checkpoint_doc_draft_revision, :article_snapshot` | `field :checkpoint_doc_draft_snapshot, :article_snapshot` |
+| 34  | `field :restore_doc_draft_revision, :doc_draft`           | `field :restore_doc_draft_snapshot, :doc_draft`           |
+| 35  | `arg(:snapshot_id, non_null(:id))`                        | `arg(:snapshot_id, non_null(:id))`                        |
 
 ### 9. GQL 类型上的 FK 字段
 
-| # | 类型 | 字段 | 说明 |
-|---|------|------|------|
-| 36 | `doc_tree_state` | `base_snapshot_id` | 保留，表示 staged changes 的基线 |
-| 37 | `doc_tree_state` | `latest_snapshot_id` | 保留，指向当前最新的 `DocTreeSnapshot` |
-| 38 | `doc_tree_state` | `latest_snapshot_number` | 删除（DocTreeSnapshot 无自身序号，用 release_number） |
-| 39 | `doc_tree_state` | `latest_release_number` | 如果 UI 需要展示树当前发布序号 |
-| 40 | `doc_tree_state` | `latest_release_id` | 可选，便于从 tree state 跳到 release 详情 |
+| #   | 类型             | 字段                     | 说明                                                  |
+| --- | ---------------- | ------------------------ | ----------------------------------------------------- |
+| 36  | `doc_tree_state` | `base_snapshot_id`       | 保留，表示 staged changes 的基线                      |
+| 37  | `doc_tree_state` | `latest_snapshot_id`     | 保留，指向当前最新的 `DocTreeSnapshot`                |
+| 38  | `doc_tree_state` | `latest_snapshot_number` | 删除（DocTreeSnapshot 无自身序号，用 release_number） |
+| 39  | `doc_tree_state` | `latest_release_number`  | 如果 UI 需要展示树当前发布序号                        |
+| 40  | `doc_tree_state` | `latest_release_id`      | 可选，便于从 tree state 跳到 release 详情             |
 
 > `latest_snapshot_id` 保留，指向当前最新的 `DocTreeSnapshot`。数字序号不要挂在 snapshot 上；如果前端需要显示发布序号，读取 `latest_release_number`，语义来自 `PublishRelease.release_number`。
 
 ### 10. Backend Resolver Functions
 
-| # | 改前 | 改后 |
-|---|------|------|
-| 39 | `doc_draft_revisions/3` | `doc_draft_snapshots/3` |
-| 40 | `doc_draft_revision/3` | `doc_draft_snapshot/3` |
-| 41 | `checkpoint_doc_draft_revision/3` | `checkpoint_doc_draft_snapshot/3` |
-| 42 | `restore_doc_draft_revision/3` | `restore_doc_draft_snapshot/3` |
+| #   | 改前                              | 改后                              |
+| --- | --------------------------------- | --------------------------------- |
+| 39  | `doc_draft_revisions/3`           | `doc_draft_snapshots/3`           |
+| 40  | `doc_draft_revision/3`            | `doc_draft_snapshot/3`            |
+| 41  | `checkpoint_doc_draft_revision/3` | `checkpoint_doc_draft_snapshot/3` |
+| 42  | `restore_doc_draft_revision/3`    | `restore_doc_draft_snapshot/3`    |
 
 ### 11. Public API 函数
 
-| # | 位置 | 改前 | 改后 |
-|---|------|------|------|
-| 43 | `CMS.Articles` | `list_doc_draft_revisions/3` | `list_doc_draft_snapshots/3` |
-| 44 | `CMS.Articles` | `get_doc_draft_revision/3` | `get_doc_draft_snapshot/3` |
-| 45 | `CMS.Articles` | `checkpoint_doc_draft_revision/3` | `checkpoint_doc_draft_snapshot/3` |
-| 46 | `CMS.Articles` | `restore_doc_draft_revision/3` | `restore_doc_draft_snapshot/3` |
+| #   | 位置           | 改前                              | 改后                              |
+| --- | -------------- | --------------------------------- | --------------------------------- |
+| 43  | `CMS.Articles` | `list_doc_draft_revisions/3`      | `list_doc_draft_snapshots/3`      |
+| 44  | `CMS.Articles` | `get_doc_draft_revision/3`        | `get_doc_draft_snapshot/3`        |
+| 45  | `CMS.Articles` | `checkpoint_doc_draft_revision/3` | `checkpoint_doc_draft_snapshot/3` |
+| 46  | `CMS.Articles` | `restore_doc_draft_revision/3`    | `restore_doc_draft_snapshot/3`    |
 
 ### 12. Business Logic Module & Functions
 
-| # | 文件 | 改前 | 改后 |
-|---|------|------|------|
-| 47 | `cms/articles/revision.ex` | Module `Articles.Revision` | Module `Articles.Snapshot` |
-| 48 | 同上 | `get_article_workspace_revision/3` | `get_article_workspace_snapshot/3` |
-| 49 | 同上 | `revision_attrs_from_article_workspace/4` | `snapshot_attrs_from_article_workspace/4` |
-| 50 | 同上 | `revision_attrs_from_article/3` | `snapshot_attrs_from_article/3` |
-| 53 | 同上 | `match_revision_target/2` | `match_snapshot_target/2` |
-| 54 | 同上 | `latest_revision/2` | `latest_snapshot/2` |
-| 55 | 同上 | `trim_revisions_after_restore/3` | `trim_snapshots_after_restore/3` |
-| 56 | 同上 | `trim_published_revisions_after_restore/2` | `trim_published_snapshots_after_restore/2` |
-| 57 | 同上 | `article_workspace_revisions_query/1` | `article_workspace_snapshots_query/1` |
-| 58 | 同上 | `get_doc_draft_revision/3` | `get_doc_draft_snapshot/3` |
-| 59 | 同上 | `revision_content_hash/2` | `snapshot_content_hash/2` |
+| #   | 文件                       | 改前                                       | 改后                                       |
+| --- | -------------------------- | ------------------------------------------ | ------------------------------------------ |
+| 47  | `cms/articles/revision.ex` | Module `Articles.Revision`                 | Module `Articles.Snapshot`                 |
+| 48  | 同上                       | `get_article_workspace_revision/3`         | `get_article_workspace_snapshot/3`         |
+| 49  | 同上                       | `revision_attrs_from_article_workspace/4`  | `snapshot_attrs_from_article_workspace/4`  |
+| 50  | 同上                       | `revision_attrs_from_article/3`            | `snapshot_attrs_from_article/3`            |
+| 53  | 同上                       | `match_revision_target/2`                  | `match_snapshot_target/2`                  |
+| 54  | 同上                       | `latest_revision/2`                        | `latest_snapshot/2`                        |
+| 55  | 同上                       | `trim_revisions_after_restore/3`           | `trim_snapshots_after_restore/3`           |
+| 56  | 同上                       | `trim_published_revisions_after_restore/2` | `trim_published_snapshots_after_restore/2` |
+| 57  | 同上                       | `article_workspace_revisions_query/1`      | `article_workspace_snapshots_query/1`      |
+| 58  | 同上                       | `get_doc_draft_revision/3`                 | `get_doc_draft_snapshot/3`                 |
+| 59  | 同上                       | `revision_content_hash/2`                  | `snapshot_content_hash/2`                  |
 
 ### 12b. Business Logic 函数名中残留的 `version` 清理
 
 > 模型名改完后，函数名中的 `version` 残留会让代码难以阅读理解。已经是最终领域名的 `workspace` 不需要为了“去前缀”再改。
 
-| # | 位置 | 示例改前 | 改后 |
-|---|------|---------|------|
-| 62 | `Articles.Draft` | `publish_article_version/3` | `publish_workspace/3` 或 `publish_article_workspace/3`（二选一，按模块语境定） |
-| 63 | `Articles.Draft` | `create_article_version/3` | `create_workspace/3` 或 `create_article_workspace/3`（二选一，按模块语境定） |
-| 64 | 各模块 | `article_version` 变量名 | `workspace` |
-| 65 | 各模块 | `%ArticleVersion{}` 模式匹配 | `%ArticleWorkspace{}` |
-| 66 | 各模块 | `article_version_id` 变量 | `workspace_id` |
+| #   | 位置             | 示例改前                     | 改后                                                                           |
+| --- | ---------------- | ---------------------------- | ------------------------------------------------------------------------------ |
+| 62  | `Articles.Draft` | `publish_article_version/3`  | `publish_workspace/3` 或 `publish_article_workspace/3`（二选一，按模块语境定） |
+| 63  | `Articles.Draft` | `create_article_version/3`   | `create_workspace/3` 或 `create_article_workspace/3`（二选一，按模块语境定）   |
+| 64  | 各模块           | `article_version` 变量名     | `workspace`                                                                    |
+| 65  | 各模块           | `%ArticleVersion{}` 模式匹配 | `%ArticleWorkspace{}`                                                          |
+| 66  | 各模块           | `article_version_id` 变量    | `workspace_id`                                                                 |
 
 ### 13. 前端 GraphQL Schema (`schema.ts`)
 
-| # | 最终字段 / 操作 | 说明 |
-|---|-----------------|------|
-| 62 | `docDraftSnapshots` query | 使用 snapshot 命名，不再用 revision |
-| 63 | `$stage: ArticleSnapshotStage` | `DRAFT` / `PUBLIC` |
-| 64 | `snapshotNumber` field | ArticleSnapshot per-article 序号 |
-| 65 | `checkpointDocDraftSnapshot` mutation | 创建 draft snapshot |
-| 66 | `restoreDocDraftSnapshot` mutation | 从 snapshot 恢复 draft |
-| 67 | `$snapshotId: ID!` arg | snapshot 参数 |
-| 68 | `baseSnapshotId` field | 保留，基线语义 |
-| 69 | `latestSnapshotId` field | 最新 tree snapshot id |
-| 70 | `latestSnapshotNumber` field | 删除 |
-| 71 | `latestReleaseNumber` field | 如 UI 需要发布序号 |
-| 72 | `latestReleaseId` field | 可选 |
+| #   | 最终字段 / 操作                       | 说明                                |
+| --- | ------------------------------------- | ----------------------------------- |
+| 62  | `docDraftSnapshots` query             | 使用 snapshot 命名，不再用 revision |
+| 63  | `$stage: ArticleSnapshotStage`        | `DRAFT` / `PUBLIC`                  |
+| 64  | `snapshotNumber` field                | ArticleSnapshot per-article 序号    |
+| 65  | `checkpointDocDraftSnapshot` mutation | 创建 draft snapshot                 |
+| 66  | `restoreDocDraftSnapshot` mutation    | 从 snapshot 恢复 draft              |
+| 67  | `$snapshotId: ID!` arg                | snapshot 参数                       |
+| 68  | `baseSnapshotId` field                | 保留，基线语义                      |
+| 69  | `latestSnapshotId` field              | 最新 tree snapshot id               |
+| 70  | `latestSnapshotNumber` field          | 删除                                |
+| 71  | `latestReleaseNumber` field           | 如 UI 需要发布序号                  |
+| 72  | `latestReleaseId` field               | 可选                                |
 
 ### 14. 前端组件 & Hooks
 
-| # | 文件 | 改前 | 改后 |
-|---|------|------|------|
-| 71 | `Editor/Article/useLogic.ts` | `snapshotNumber` | `snapshotNumber` |
-| 72 | 同上 | `revisionSignature` | `snapshotSignature` |
-| 73 | `SideTree/useLogic.ts` | `revision` / `revisionRef` | 不变（计数器） |
+| #   | 文件                         | 改前                       | 改后                |
+| --- | ---------------------------- | -------------------------- | ------------------- |
+| 71  | `Editor/Article/useLogic.ts` | `snapshotNumber`           | `snapshotNumber`    |
+| 72  | 同上                         | `revisionSignature`        | `snapshotSignature` |
+| 73  | `SideTree/useLogic.ts`       | `revision` / `revisionRef` | 不变（计数器）      |
 
 ---
 
@@ -300,6 +301,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：`ArticleWorkspace` 是可变工作区，同时维护 `draft` 和 `public` 两份副本语义矛盾。`docs` + `DocDocument` 才是线上 source of truth。
 
 **方案**：
+
 - `ArticleWorkspace.stage` 只保留 `:draft`（可选未来加 `:review`）
 - 删除所有 `stage=public` 的 ArticleWorkspace 行（publish 不再创建 workspace public 镜像）
 - Publish 流程：更新 `docs` + `DocDocument` → 创建 `ArticleSnapshot(stage=public)` 作为历史证据 → 创建 `PublishRelease` 引用该 snapshot
@@ -313,6 +315,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：之前考虑删除 public node 行、从 DocTreeSnapshot 直接 serve。但树和内容应对齐：各自有 runtime 层（`docs` + `DocDocument` / `DocTreeNode(public)`）和 history 层（`ArticleSnapshot` / `DocTreeSnapshot`）。
 
 **方案**：
+
 - `DocTreeNode(stage=public)` **保留**，和 `docs` + `DocDocument` 对等，作为树的 runtime serving 层
 - `DocTreeSnapshot` 退回到纯历史证据角色，和 `ArticleSnapshot` 对齐
 - Publish 时写 `DocTreeNode(public)` 行（当前已有）+ 创建 `DocTreeSnapshot` 作为历史证据
@@ -324,6 +327,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：`PublishRelease` 自存 `tree_json`，又通过 `tree_snapshot_id` FK 指向 `DocTreeSnapshot`（也存 `tree_json`）。
 
 **方案**：
+
 - 从 `PublishRelease` schema 删除 `tree_json` 字段
 - 需要 tree_json 时通过 `Repo.preload(publish_release, :tree_snapshot)` 获取
 
@@ -332,6 +336,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：`DocTreeNode` 的 GQL 字段 `doc_id` 对 draft 节点映射到 `workspace_id`（→ workspaces），对 public 节点映射到 `doc_id`（→ docs）。前端无法区分。
 
 **方案**：
+
 - Draft 节点暴露 `workspace_id`（指向 ArticleWorkspace）
 - Public 节点暴露 `doc_id`（指向 docs）
 - 两个字段各在对应 stage 的节点上有效
@@ -341,6 +346,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：当前 diff = `ArticleWorkspace(draft)` vs `ArticleWorkspace(public)`（同表自比较）。
 
 **方案**（配合 R1）：
+
 - Diff = `ArticleWorkspace(draft)` vs `latest ArticleSnapshot(stage=public)`
 - 内容 diff：比较 `content_hash`
 - 树 diff：`DocTreeNode(draft)` 构建的树 vs `DocTreeSnapshot.tree_json`
@@ -350,6 +356,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：`publish_doc` / `publish_all_unpublished_docs` / `publish_tree` / `publish_group` 这类旧入口如果继续暴露，会绕过 `PublishRelease`，导致 release history 缺口。
 
 **方案**：
+
 - 不做兼容层，也不保留旧 GraphQL 暴露。
 - 对外只保留统一 publish 入口：`publish_changes(change_set)`。
 - 内部需要复用时，也必须通过 release publish 的计划、校验、写 runtime、写 snapshot、写 release 全链路。
@@ -360,6 +367,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：当前 event 有 `status: staged → published → reverted/discarded` 流程，`published` 状态用于跟踪哪些 event 已写入 public node 行。同时 `PublishReleaseTreeEvent` 也在 release 中保留了 event 副本，形成双重追踪。
 
 **方案**（配合 R2 保留 public node）：
+
 - Event 保持 `status: staged → published`，跟踪 draft 变更是否已发布到 public node
 - `PublishReleaseTreeEvent` 保留作为发布时的审计副本
 - 两者不冲突：event 表是工作流状态机，release event 是发布锚点下的不可变记录
@@ -371,6 +379,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：两个 per-community 单例表，`base_snapshot_id` / `staged_event_count` 和站点级发布元数据分散在两张表；树变更时两个 counter 一起 bump，容易误读成完全重叠。实际上 tree lock 和 site dirty 是两种职责，应该合表但保留分离锁。
 
 **方案**：
+
 - **删除** `doc_tree_draft_states` 表
 - 把 `base_snapshot_id`、`staged_event_count` 搬到 `docs_site_states`
 - `doc_tree_draft_states.revision` 迁移为 `docs_site_states.tree_lock_version`
@@ -386,6 +395,7 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 **问题**：两个单调序号，不清楚语义关系。当前 DocTreeSnapshot 只在 publish/release 时创建（tree 每次 draft 操作产生的是 DocTreeEvent，不是 snapshot）。
 
 **方案**（提前定案）：
+
 - `release_number`：publish 行为序列（每次 publish 递增）
 - **删除 `DocTreeSnapshot.snapshot_number`**，直接使用 `PublishRelease.release_number`。
 - **1:1 约束**：每次 publish 都创建 DocTreeSnapshot，即使本次只有 doc content changes、没有 tree changes。content-only publish 时写入与上一次相同的 tree_json，并由新的 `PublishRelease.tree_snapshot_id` 指向它。这样 1:1 永远成立。
@@ -419,18 +429,18 @@ docs_site_states                      (合并后，删除 doc_tree_draft_states 
 
 在 rename + refactor 完成后，以下表新增字段：
 
-| # | 表 | 字段 | 类型 | 默认 | 说明 |
-|---|-----|------|------|------|------|
-| N1 | `article_workspaces` | `branch` | `:string` | `nil` | nil = 主分支 |
-| N2 | `article_workspaces` | `version` | `:string` | `nil` | nil = 默认版本 |
-| N3 | `doc_tree_nodes` | `branch` | `:string` | `nil` | 同上 |
-| N4 | `doc_tree_nodes` | `version` | `:string` | `nil` | 同上 |
-| N5 | `docs` | `branch` | `:string` | `nil` | 发布内容分支归属 |
-| N6 | `docs` | `version` | `:string` | `nil` | 发布内容版本归属 |
-| N7 | `doc_tree_snapshots` | `branch` | `:string` | `nil` | 树快照分支归属 |
-| N8 | `doc_tree_snapshots` | `version` | `:string` | `nil` | 树快照版本归属 |
-| N9 | `article_snapshots` | `branch` | `:string` | `nil` | 内容快照分支归属 |
-| N10 | `article_snapshots` | `version` | `:string` | `nil` | 内容快照版本归属 |
+| #   | 表                   | 字段      | 类型      | 默认  | 说明             |
+| --- | -------------------- | --------- | --------- | ----- | ---------------- |
+| N1  | `article_workspaces` | `branch`  | `:string` | `nil` | nil = 主分支     |
+| N2  | `article_workspaces` | `version` | `:string` | `nil` | nil = 默认版本   |
+| N3  | `doc_tree_nodes`     | `branch`  | `:string` | `nil` | 同上             |
+| N4  | `doc_tree_nodes`     | `version` | `:string` | `nil` | 同上             |
+| N5  | `docs`               | `branch`  | `:string` | `nil` | 发布内容分支归属 |
+| N6  | `docs`               | `version` | `:string` | `nil` | 发布内容版本归属 |
+| N7  | `doc_tree_snapshots` | `branch`  | `:string` | `nil` | 树快照分支归属   |
+| N8  | `doc_tree_snapshots` | `version` | `:string` | `nil` | 树快照版本归属   |
+| N9  | `article_snapshots`  | `branch`  | `:string` | `nil` | 内容快照分支归属 |
+| N10 | `article_snapshots`  | `version` | `:string` | `nil` | 内容快照版本归属 |
 
 ### 扩展后的读模型
 

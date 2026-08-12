@@ -4,9 +4,9 @@
 >
 > 范围：公开 GitHub 仓库的 Docs Bulk Import。公共资源上传、ZIP 浏览器直传、图片/附件复制不在本文范围。
 >
-> Source of truth：本文只负责 PreviewStore、Files SDK、PostgreSQL staging 和对象生命周期。跨来源架构、公共术语和 Node/Phoenix 总边界以 [`content-import-architecture.md`](./content-import-architecture.md) 为准。
+> Source of truth：本文只负责 PreviewStore、Files SDK、PostgreSQL staging 和对象生命周期。跨来源架构、公共术语和 Node/Phoenix 总边界以 [`content_import_architecture.md`](./content_import_architecture.md) 为准。
 >
-> 关联文档：产品流程与交互以 [`bulk-import.md`](./bulk-import.md) 为准；实施与旧链路直接删除见 [`content-import-refactor-plan.md`](./content-import-refactor-plan.md)；共享 Import Content/BodyBag 见 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md)；Preview 清理与错误恢复见 [`import-error-handling.md`](./import-error-handling.md)。
+> 关联文档：产品流程与交互以 [`bulk_import.md`](./bulk_import.md) 为准；实施与旧链路直接删除见 [`content_import_refactor_plan.md`](./content_import_refactor_plan.md)；共享 Import Content/BodyBag 见 [`article_publish_import_refactor.md`](./article_publish_import_refactor.md)；Preview 清理与错误恢复见 [`import_error_handling.md`](./import_error_handling.md)。
 
 ## 1. 结论
 
@@ -210,7 +210,7 @@ Phoenix ContentImport
 ```
 
 本文只展开存储部分；完整 Platform/Source/ThreadDataset/Thread 分层见
-[`content-import-architecture.md`](./content-import-architecture.md)。
+[`content_import_architecture.md`](./content_import_architecture.md)。
 
 ## 4. Analyze 阶段
 
@@ -841,7 +841,7 @@ DOCS_IMPORT_ENDPOINT=...
 5. 直接删除旧 Snapshot/Preparation/Plan/Job/JobItem/JobAsset/PayloadStore/Preview Session 数据、旧 payload 文件，以及 `payload_ref/preparation_ref/plan_ref` 等只服务 locator 的字段；现有 Docs 正文不删除。
 6. 删除无调用方的 codecs 和恢复逻辑，不保留双写或兼容分支。
 7. 不做历史数据迁移、backfill、dual read/write、旧 decoder、fallback 或兼容 accessor；旧来源关联需要时由用户重新导入生成。
-8. 更新 `bulk-import.md`、`content-import-refactor-plan.md` 中旧的双存储描述。
+8. 更新 `bulk_import.md`、`content_import_refactor_plan.md` 中旧的双存储描述。
 
 ### Phase 5：端到端验收
 
@@ -867,16 +867,16 @@ DOCS_IMPORT_ENDPOINT=...
 
 ## 16. 对现有文档的影响
 
-跨来源架构已独立收敛到 [`content-import-architecture.md`](./content-import-architecture.md)。本文只覆盖 Files SDK 和 staging 细节；其他文档发生边界或命名冲突时，以总架构文档为准。
+跨来源架构已独立收敛到 [`content_import_architecture.md`](./content_import_architecture.md)。本文只覆盖 Files SDK 和 staging 细节；其他文档发生边界或命名冲突时，以总架构文档为准。
 
 需要保持同步的文档：
 
-- [`bulk-import.md`](./bulk-import.md)
+- [`bulk_import.md`](./bulk_import.md)
   - Phoenix 不再负责 Snapshot/Preparation/Plan PayloadStore。
   - BodyBag staging 改为 PostgreSQL staging。
   - Private Blob 由 Files SDK adapter 提供，不硬编码为 `@vercel/blob`。
   - 增加主动 sweeper 尚未接线的事实。
-- [`content-import-refactor-plan.md`](./content-import-refactor-plan.md)
+- [`content_import_refactor_plan.md`](./content_import_refactor_plan.md)
   - 删除“完整 Snapshot/Preparation/Plan 统一由 PayloadStore 恢复”的目标。
   - 收缩通用 Job/Persistence 模型。
   - file-based Docs import 以 Node Preview artifact + DB staging 为唯一生产路径。
@@ -932,7 +932,7 @@ Files SDK PreviewStore integration
 - [Files SDK Vercel Blob adapter](https://files-sdk.dev/adapters/vercel-blob)
 - [Files SDK signedUploadUrl](https://files-sdk.dev/api/signed-upload-url)
 - [Files SDK filesystem adapter](https://files-sdk.dev/adapters/fs)
-- [`content-import-architecture.md`](./content-import-architecture.md)
-- [`bulk-import.md`](./bulk-import.md)
-- [`content-import-refactor-plan.md`](./content-import-refactor-plan.md)
-- [`article-publish-import-refactor.md`](./article-publish-import-refactor.md)
+- [`content_import_architecture.md`](./content_import_architecture.md)
+- [`bulk_import.md`](./bulk_import.md)
+- [`content_import_refactor_plan.md`](./content_import_refactor_plan.md)
+- [`article_publish_import_refactor.md`](./article_publish_import_refactor.md)
