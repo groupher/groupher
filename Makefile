@@ -51,11 +51,17 @@ fe.dev.dashboard:
 fe.dev.dash:
 	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:dash
 
+fe.dev.apply:
+	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:apply
+
 fe.build.dashboard:
 	yarn run build:prod:dashboard
 
 fe.build.dash:
 	yarn run build:prod:dash
+
+fe.build.apply:
+	yarn run build:prod:apply
 
 fe.serve.dashboard: 
 	yarn run serve:prod:dashboard
