@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import { DSB_DOC } from '../../constant'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, fg, bg, hover, primary, vividDark } = useTwBelt()

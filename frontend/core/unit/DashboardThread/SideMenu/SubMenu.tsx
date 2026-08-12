@@ -8,7 +8,7 @@ import useCommunity from '~/stores/community/hooks'
 
 import ActiveMark from './ActiveMark'
 import type { TSubMenuItem, TSubMenuScope } from './constant'
-import useSalon, { cn } from './salon/doc'
+import useSalon, { cnMerge } from './salon/doc'
 import SubMenuBack from './SubMenuBack'
 
 type TProps = {
@@ -90,7 +90,7 @@ export default function SubMenu({
             <button
               type='button'
               key={item.slug}
-              className={cn(s.item, isActive && s.itemActive)}
+              className={cnMerge(s.item, isActive && s.itemActive)}
               onClick={() =>
                 navi.to(target, {
                   preserveSearch: true,

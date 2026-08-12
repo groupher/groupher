@@ -16,7 +16,7 @@ import type { TDsbMenuGroup } from '../spec'
 import ActiveMark from './ActiveMark'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
 import { dispatchMenuView, type TMenuView } from './events'
-import useSalon, { cn } from './salon/group'
+import useSalon, { cn, cnMerge } from './salon/group'
 
 type TProps = {
   activeMainTab: TDsbPath
@@ -90,7 +90,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
               <button
                 key={item.slug}
                 type='button'
-                className={cn(s.item, isActive && s.itemActive)}
+                className={cnMerge(s.item, isActive && s.itemActive)}
                 onClick={() => {
                   if (submenuConfig) {
                     dispatchMenuView({
