@@ -12,9 +12,10 @@ defmodule GroupherServer.Analysis.Web do
   alias __MODULE__.Provider.Umami
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias Helper.Transaction
+  alias Helper.{Cache, Transaction}
 
   @config Config.base()
+  @active_cache_seconds 30
 
   @type page_dimension :: :path | :entry | :exit | :title | :query
   @type source_dimension :: :referrer | :channel | :domain
@@ -64,6 +65,29 @@ defmodule GroupherServer.Analysis.Web do
       end
     else
       {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
+    end
+  end
+
+  @doc """
+  Returns the current active visitor count for one community.
+
+  The provider result is cached briefly by the trusted Umami website identity
+  so multiple dashboard clients do not all refresh the same upstream value.
+  """
+  @spec active(Community.t()) :: {:ok, %{visitors: non_neg_integer()}} | {:error, term()}
+  def active(%Community{} = community) do
+    provider = provider()
+
+    with {:ok, community_analysis} <- prepare_community(community, provider),
+         website_id when is_binary(website_id) <- community_analysis.umami_website_id,
+         {:ok, payload} <-
+           Cache.get_or_fetch(
+             :common,
+             "analysis.active.#{website_id}",
+             [expire_sec: @active_cache_seconds],
+             fn -> provider.active(community_analysis) end
+           ) do
+      {:ok, payload}
     end
   end
 

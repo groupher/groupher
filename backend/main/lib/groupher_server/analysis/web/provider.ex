@@ -20,6 +20,9 @@ defmodule GroupherServer.Analysis.Web.Provider do
   """
   @callback overview(Community.t(), map()) :: {:ok, map()} | {:error, term()}
 
+  @doc "Returns the current active visitor count for one community."
+  @callback active(Community.t()) :: {:ok, %{visitors: non_neg_integer()}} | {:error, term()}
+
   @doc "Returns one normalized page breakdown dimension."
   @callback pages(Community.t(), map(), :path | :entry | :exit | :title | :query) ::
               {:ok, list(map())} | {:error, term()}

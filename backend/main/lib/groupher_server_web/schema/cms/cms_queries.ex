@@ -118,6 +118,16 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.analysis_trends_overview/3)
     end
 
+    @desc "Current active visitors for the built-in community Analysis"
+    field :analysis_active_visitors, :analysis_web_active do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_active_visitors/3)
+    end
+
     @desc "One built-in community Analysis page dimension"
     field :analysis_trend_pages, :analysis_trend_pages_section do
       arg(:community, non_null(:string))

@@ -46,6 +46,10 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:change_rate, :float)
   end
 
+  object :analysis_web_active do
+    field(:visitors, non_null(:integer))
+  end
+
   object :analysis_web_overview_summary do
     field(:pageviews, :analysis_web_metric)
     field(:visitors, :analysis_web_metric)
@@ -206,5 +210,4 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:top_referrers, list_of(:analysis_web_referrer_metric))
     field(:error, :string)
   end
-
 end

@@ -98,6 +98,7 @@ type Documents = {
   '\n  query SearchUsers($name: String!) {\n    searchUsers(name: $name) {\n      entries {\n        ...CommentAuthorFields\n      }\n    }\n  }\n': typeof types.SearchUsersDocument
   '\n  query PagedPublishedComments($login: String!, $thread: Thread, $filter: PagiFilter!) {\n    pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {\n      entries {\n        ...CommentFields\n        article {\n          innerId\n          title\n          thread\n          author {\n            nickname\n            login\n          }\n        }\n      }\n      ...CommentPageFields\n    }\n  }\n': typeof types.PagedPublishedCommentsDocument
   '\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n': typeof types.CoverSimpleQueryDocument
+  '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n': typeof types.AnalysisActiveVisitorsDocument
   '\n  query AnalysisTrendPages(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendPagesDimension!\n  ) {\n    analysisTrendPages(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n          bounceRate\n          visitDuration\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n': typeof types.AnalysisTrendPagesDocument
   '\n  query AnalysisTrendSources(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendSourcesDimension!\n  ) {\n    analysisTrendSources(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n': typeof types.AnalysisTrendSourcesDocument
   '\n  query AnalysisTrendEnvironment(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendEnvironmentDimension!\n  ) {\n    analysisTrendEnvironment(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n          percentage\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n': typeof types.AnalysisTrendEnvironmentDocument
@@ -369,6 +370,8 @@ const documents: Documents = {
     types.PagedPublishedCommentsDocument,
   '\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n':
     types.CoverSimpleQueryDocument,
+  '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n':
+    types.AnalysisActiveVisitorsDocument,
   '\n  query AnalysisTrendPages(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendPagesDimension!\n  ) {\n    analysisTrendPages(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n          bounceRate\n          visitDuration\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n':
     types.AnalysisTrendPagesDocument,
   '\n  query AnalysisTrendSources(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendSourcesDimension!\n  ) {\n    analysisTrendSources(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n':
@@ -1089,6 +1092,12 @@ export function graphql(
 export function graphql(
   source: '\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n',
 ): (typeof documents)['\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n']
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n',
+): (typeof documents)['\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

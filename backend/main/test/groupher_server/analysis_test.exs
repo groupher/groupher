@@ -125,6 +125,20 @@ defmodule GroupherServer.Analysis.WebTest do
     end
   end
 
+  describe "Umami active visitor projection" do
+    test "accepts a zero active visitor count" do
+      assert {:ok, %{visitors: 0}} = Umami.normalize_active(%{"visitors" => 0})
+    end
+
+    test "normalizes a non-negative visitor count" do
+      assert {:ok, %{visitors: 27}} = Umami.normalize_active(%{"visitors" => "27"})
+    end
+
+    test "rejects an invalid active visitor response" do
+      assert {:error, {:unexpected_body, :map}} = Umami.normalize_active(%{"visitors" => -1})
+    end
+  end
+
   describe "Umami weekly sessions projection" do
     test "accepts Umami weekly rows returned as 24 hourly scalar values" do
       rows = [

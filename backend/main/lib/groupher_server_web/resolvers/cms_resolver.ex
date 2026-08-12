@@ -889,6 +889,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     AnalysisWeb.trends_overview(community, args)
   end
 
+  def analysis_active_visitors(_root, %{community: %Community{} = community}, _info) do
+    case AnalysisWeb.active(community) do
+      {:ok, payload} -> {:ok, payload}
+      {:error, _reason} -> {:ok, nil}
+    end
+  end
+
   def analysis_trend_pages(
         _root,
         %{community: %Community{} = community, dimension: dimension} = args,

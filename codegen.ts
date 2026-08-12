@@ -20,6 +20,7 @@ const config: CodegenConfig = {
     'frontend/core/unit/RichEditor/schema.ts',
     'frontend/core/unit/DashboardThread/Analysis/WebOverview/schema.ts',
     'frontend/core/unit/DashboardThread/Analysis/WebOverview/server.ts',
+    'frontend/core/unit/DashboardThread/Analysis/RealtimeOnline/schema.ts',
     'frontend/core/unit/DashboardThread/schema/admins.ts',
     'frontend/core/unit/DashboardThread/Appearance/Theme/schema.ts',
     'frontend/core/unit/DashboardThread/schema/appearance.ts',

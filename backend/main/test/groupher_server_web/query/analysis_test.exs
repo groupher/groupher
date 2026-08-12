@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.Analysis do
   use GroupherServer.TestMate
 
   @overview_query S.Analysis.q(:overview)
+  @active_visitors_query S.Analysis.q(:active_visitors)
   @pages_query S.Analysis.q(:pages)
   @sources_query S.Analysis.q(:sources)
   @environment_query S.Analysis.q(:environment)
@@ -45,6 +46,13 @@ defmodule GroupherServer.Test.Query.Analysis do
       assert result["summary"]["pageviews"]["value"] == 0
       assert result["chart"]["points"] == []
       assert [%{"code" => "not_configured", "section" => "overview"}] = result["errors"]
+    end
+
+    test "community admin gets a nullable active visitor result when unavailable",
+         ~m(conn community)a do
+      result = conn |> gq_query(@active_visitors_query, %{community: community.slug})
+
+      assert is_nil(result)
     end
 
     test "community admin can query unavailable Trends sections", ~m(conn community)a do
@@ -89,6 +97,15 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @overview_query,
                %{community: community.slug, days: 7},
+               ecode(:account_login)
+             )
+    end
+
+    test "guest cannot query active visitors", ~m(guest_conn community)a do
+      assert guest_conn
+             |> query_error?(
+               @active_visitors_query,
+               %{community: community.slug},
                ecode(:account_login)
              )
     end

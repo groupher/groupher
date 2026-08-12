@@ -71,6 +71,16 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
     """
   end
 
+  def q(:active_visitors) do
+    """
+    query($community: String!) {
+      analysisActiveVisitors(community: $community) {
+        visitors
+      }
+    }
+    """
+  end
+
   def q(:pages) do
     """
     query($community: String!, $days: Int, $dimension: AnalysisTrendPagesDimension!) {

@@ -103,6 +103,9 @@ type RootQueryType {
   "Built-in community Analysis Trends summary and chart"
   analysisTrendsOverview(community: String!, days: Int): AnalysisTrendsOverview
 
+  "Current active visitors for the built-in community Analysis"
+  analysisActiveVisitors(community: String!): AnalysisWebActive
+
   "One built-in community Analysis page dimension"
   analysisTrendPages(community: String!, days: Int, dimension: AnalysisTrendPagesDimension!): AnalysisTrendPagesSection
 
@@ -1105,6 +1108,10 @@ type AnalysisWebMetric {
   value: Float
   previousValue: Float
   changeRate: Float
+}
+
+type AnalysisWebActive {
+  visitors: Int!
 }
 
 type AnalysisWebOverviewSummary {

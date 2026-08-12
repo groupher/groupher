@@ -434,6 +434,8 @@ export default {
   'dsb.analysis.referrers': '来源',
   'dsb.analysis.empty': '暂无数据。',
   'dsb.analysis.unavailable': '统计服务暂时不可用。',
+  'dsb.analysis.online': '在线',
+  'dsb.analysis.online_unavailable': '暂不可用',
   'dsb.analysis.logs_tbd': '统计日志暂未开放。',
   'dsb.page.not_found': '页面不存在',
   'dsb.page.proxy_error': '代理配置异常。',

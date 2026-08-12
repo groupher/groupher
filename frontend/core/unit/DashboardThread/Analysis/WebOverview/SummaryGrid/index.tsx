@@ -29,7 +29,7 @@ export default function SummaryGrid({ data }: TProps) {
     <section className={s.wrapper}>
       {items.map((item, index) => (
         <MetricItem
-          align={index === 0 ? 'start' : index === items.length - 1 ? 'end' : 'center'}
+          align={index === items.length - 1 ? 'end' : 'start'}
           key={item.key}
           item={item}
         />

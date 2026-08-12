@@ -3323,6 +3323,12 @@ export type CoverSimpleQueryQueryVariables = Exact<{
 
 export type CoverSimpleQueryQuery = { post: { innerId: string | null } }
 
+export type AnalysisActiveVisitorsQueryVariables = Exact<{
+  community: string
+}>
+
+export type AnalysisActiveVisitorsQuery = { analysisActiveVisitors: { visitors: number } | null }
+
 export type AnalysisTrendPagesQueryVariables = Exact<{
   community: string
   days?: number | null | undefined
@@ -15932,6 +15938,46 @@ export const CoverSimpleQueryDocument = {
     },
   ],
 } as unknown as DocumentNode<CoverSimpleQueryQuery, CoverSimpleQueryQueryVariables>
+export const AnalysisActiveVisitorsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'AnalysisActiveVisitors' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'analysisActiveVisitors' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'visitors' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<AnalysisActiveVisitorsQuery, AnalysisActiveVisitorsQueryVariables>
 export const AnalysisTrendPagesDocument = {
   kind: 'Document',
   definitions: [
