@@ -240,6 +240,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       assert results["isValid"] == true
       assert results["user"] |> Map.get("login") == user.login
+      assert results["delegationSubject"] |> String.starts_with?("user:")
     end
 
     test "user with invalid token gets a machine-readable auth failure" do

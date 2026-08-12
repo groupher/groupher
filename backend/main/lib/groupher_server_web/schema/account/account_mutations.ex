@@ -19,7 +19,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:provider, non_null(:oauth_provider_input))
       arg(:browser_session, :browser_session_metadata_input)
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:signin")
       resolve(&R.Accounts.signin_oauth/3)
     end
 
@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     field :refresh_browser_session, :browser_signin_result do
       arg(:browser_session_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:refresh")
       resolve(&R.Accounts.refresh_browser_session/3)
     end
 
@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     field :revoke_browser_session, :done do
       arg(:browser_session_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
       resolve(&R.Accounts.revoke_browser_session/3)
     end
 
@@ -43,35 +43,39 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:browser_session_ref, non_null(:string))
       arg(:public_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
       resolve(&R.Accounts.revoke_browser_session_public/3)
     end
 
     field :revoke_other_browser_sessions, :done do
       arg(:browser_session_ref, non_null(:string))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope, audience: "phoenix:auth-api", scope: "auth:session:revoke")
       resolve(&R.Accounts.revoke_other_browser_sessions/3)
     end
 
-    @desc "Link an OAuth provider to the current account."
-    field :link_oauth, :token_info do
-      arg(:provider, non_null(:oauth_provider_input))
+    @desc "Link a verified OAuth identity through canonical Auth."
+    field :link_oauth_identity, non_null(:linked_oauth_accounts) do
+      arg(:identity, non_null(:verified_oauth_identity_input))
 
-      middleware(M.ServerTrust)
-      middleware(M.Authorize, :login)
+      middleware(M.DelegatedScope,
+        audience: "phoenix:auth-api",
+        scope: "auth:oauth:link"
+      )
 
-      resolve(&R.Accounts.link_oauth/3)
+      resolve(&R.Accounts.link_oauth_identity/3)
     end
 
-    @desc "Unlink an OAuth provider from the current account."
-    field :unlink_oauth, :user do
-      arg(:provider, non_null(:oauth_provider_input))
+    @desc "Unlink one OAuth binding through canonical Auth."
+    field :unlink_oauth_identity, non_null(:linked_oauth_accounts) do
+      arg(:public_ref, non_null(:id))
 
-      middleware(M.ServerTrust)
-      middleware(M.Authorize, :login)
+      middleware(M.DelegatedScope,
+        audience: "phoenix:auth-api",
+        scope: "auth:oauth:unlink"
+      )
 
-      resolve(&R.Accounts.unlink_oauth/3)
+      resolve(&R.Accounts.unlink_oauth_identity/3)
     end
 
     @desc "follow a user"

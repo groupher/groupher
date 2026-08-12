@@ -35,4 +35,4 @@ config :groupher_server, GroupherServer.Repo,
   pool_size: 50,
   queue_target: 5000
 
-config :groupher_server, :server_trust, secret: "test-server-trust-secret"
+config :groupher_server, :assets_hub, capability_secret: "mock-assets-hub-capability-secret"

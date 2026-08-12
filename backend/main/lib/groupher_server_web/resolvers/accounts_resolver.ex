@@ -8,7 +8,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias Helper.PermissionRegistry
+  alias GroupherServer.CMS.Gate.Passport.Registry
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
   def me(_root, _args, _info), do: {:ok, nil}
@@ -32,7 +32,13 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   def session_state(_root, _args, %{context: %{cur_user: cur_user}}) do
     CMS.Communities.subscribe_default_ifnot(cur_user)
-    {:ok, %{is_valid: true, user: cur_user}}
+
+    {:ok,
+     %{
+       delegation_subject: Accounts.Profiles.delegation_subject(cur_user),
+       is_valid: true,
+       user: cur_user
+     }}
   end
 
   def session_state(_root, _args, _info), do: {:ok, %{is_valid: false}}
@@ -113,12 +119,18 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   defp browser_session_result(result), do: result
 
-  def link_oauth(_root, %{provider: provider}, %{context: %{cur_user: cur_user}}) do
-    Accounts.Profiles.link_oauth(cur_user.login, provider)
+  def linked_oauth_accounts(_root, _args, %{context: %{cur_user: cur_user}}) do
+    Accounts.Profiles.linked_oauth_accounts(cur_user.login)
   end
 
-  def unlink_oauth(_root, %{provider: provider}, %{context: %{cur_user: cur_user}}) do
-    Accounts.Profiles.unlink_oauth(cur_user.login, provider)
+  def link_oauth_identity(_root, %{identity: identity}, %{context: %{cur_user: cur_user}}) do
+    Accounts.Profiles.link_oauth_identity(cur_user.login, identity)
+  end
+
+  def unlink_oauth_identity(_root, %{public_ref: public_ref}, %{
+        context: %{cur_user: cur_user}
+      }) do
+    Accounts.Profiles.unlink_oauth_identity(cur_user.login, public_ref)
   end
 
   def follow(_root, %{user: user}, %{context: %{cur_user: cur_user}}) do
@@ -258,7 +270,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def get_all_rules(_root, _args, %{context: %{cur_user: _}}) do
-    cms_rules = PermissionRegistry.all_rules(:cms, :stringify)
+    cms_rules = Registry.all_rules(:cms, :stringify)
 
     {:ok, %{cms: cms_rules}}
   end

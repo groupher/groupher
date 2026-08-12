@@ -5,6 +5,20 @@
   "compatibility_date": "2026-07-31",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "LINK_INTENTS",
+        "class_name": "LinkIntentObject"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-link-intents",
+      "new_sqlite_classes": ["LinkIntentObject"]
+    }
+  ],
   "routes": [
     {
       "pattern": "auth.groupher.com/*",
@@ -14,13 +28,33 @@
   "vars": {
     "AUTH_URL": "https://auth.groupher.com",
     "AUTH_COOKIE_DOMAIN": ".groupher.com",
+    "SERVICE_AUTH_ISSUER": "https://auth.groupher.com",
+    "SERVICE_AUTH_RESOURCES_JSON": "{\"https://api.groupher.com/assets\":\"phoenix:assets-api\",\"https://api.groupher.com/auth\":\"phoenix:auth-api\",\"https://api.groupher.com/content-import\":\"phoenix:content-import-api\",\"https://api.groupher.com/dashboard\":\"phoenix:dashboard-api\",\"https://api.groupher.com/press\":\"phoenix:press-api\",\"https://assets.groupher.com/internal\":\"assets-hub:internal-api\",\"https://content-import.groupher.com/internal\":\"content-import:internal-api\",\"https://dashboard.groupher.com/scheduler\":\"dashboard:scheduler-api\",\"https://press.groupher.com/internal\":\"press:internal-api\"}",
+    "SERVICE_AUTH_TOKEN_TTL_SECONDS": "600",
+    "SERVICE_AUTH_TOKEN_ENDPOINT": "https://auth.groupher.com/oauth2/token",
     "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
     "NODE_ENV": "production"
   },
   "ratelimits": [
     {
+      "name": "AUTH_OAUTH_RATE_LIMITER",
+      "namespace_id": "9001003",
+      "simple": {
+        "limit": 30,
+        "period": 60
+      }
+    },
+    {
       "name": "AUTH_REFRESH_RATE_LIMITER",
       "namespace_id": "9001001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "SERVICE_TOKEN_RATE_LIMITER",
+      "namespace_id": "9001002",
       "simple": {
         "limit": 10,
         "period": 60
@@ -32,7 +66,10 @@
       "AUTH_GITHUB_ID",
       "AUTH_GITHUB_SECRET",
       "NEXTAUTH_SECRET",
-      "GROUPHER_SERVER_TRUST_SECRET"
+      "SERVICE_AUTH_CLIENTS_JSON",
+      "SERVICE_AUTH_CLIENT_ID",
+      "SERVICE_AUTH_CLIENT_SECRET",
+      "SERVICE_AUTH_SIGNING_JWK"
     ]
   },
   "observability": {

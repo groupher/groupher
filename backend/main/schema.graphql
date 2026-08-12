@@ -7,6 +7,9 @@ type RootQueryType {
   "List Browser Sessions for canonical Auth through trusted transport only."
   browserSessions(browserSessionRef: String!): [BrowserSession!]!
 
+  "List linked OAuth accounts for canonical Auth."
+  linkedOauthAccounts: LinkedOauthAccounts!
+
   "get all users"
   pagedUsers(filter: PagedUsersFilter!): PagedUsers!
 
@@ -281,11 +284,11 @@ type RootMutationType {
 
   revokeOtherBrowserSessions(browserSessionRef: String!): Done
 
-  "Link an OAuth provider to the current account."
-  linkOauth(provider: OauthProviderInput!): TokenInfo
+  "Link a verified OAuth identity through canonical Auth."
+  linkOauthIdentity(identity: VerifiedOauthIdentityInput!): LinkedOauthAccounts!
 
-  "Unlink an OAuth provider from the current account."
-  unlinkOauth(provider: OauthProviderInput!): User
+  "Unlink one OAuth binding through canonical Auth."
+  unlinkOauthIdentity(publicRef: ID!): LinkedOauthAccounts!
 
   "follow a user"
   follow(login: String!): User
@@ -3570,6 +3573,21 @@ enum DsbRssFeedType {
 type SessionState {
   user: User
   isValid: Boolean
+  delegationSubject: String
+}
+
+type LinkedOauthAccount {
+  publicRef: ID!
+  provider: String!
+  login: String
+  nickname: String
+  avatar: String
+  canUnlink: Boolean!
+  linkedAt: DateTime!
+}
+
+type LinkedOauthAccounts {
+  entries: [LinkedOauthAccount!]!
 }
 
 type UserMeta {
@@ -3734,11 +3752,6 @@ type Achievement {
   sponsorMember: Boolean
 }
 
-type TokenInfo {
-  token: String
-  user: User
-}
-
 type BrowserSigninResult {
   accessToken: String
   accessExpiresAt: DateTime
@@ -3850,8 +3863,8 @@ input SocialInput {
 input OauthProviderInput {
   provider: String!
   providerId: String!
-  login: String!
-  avatar: String!
+  login: String
+  avatar: String
   nickname: String
   email: String
   locale: String
@@ -3860,7 +3873,21 @@ input OauthProviderInput {
   country: String
   city: String
   company: String
-  raw: Json
+}
+
+input VerifiedOauthIdentityInput {
+  provider: String!
+  providerId: String!
+  login: String
+  nickname: String
+  avatar: String
+  email: String
+  locale: String
+  link: String
+  bio: String
+  country: String
+  city: String
+  company: String
 }
 
 """

@@ -15,6 +15,21 @@ defmodule GroupherServerWeb.Schema.Account.Types do
   object :session_state do
     field(:user, :user)
     field(:is_valid, :boolean)
+    field(:delegation_subject, :string)
+  end
+
+  object :linked_oauth_account do
+    field(:public_ref, non_null(:id))
+    field(:provider, non_null(:string))
+    field(:login, :string)
+    field(:nickname, :string)
+    field(:avatar, :string)
+    field(:can_unlink, non_null(:boolean))
+    field(:linked_at, non_null(:datetime))
+  end
+
+  object :linked_oauth_accounts do
+    field(:entries, non_null(list_of(non_null(:linked_oauth_account))))
   end
 
   object :user_meta do
@@ -206,11 +221,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     field(:donate_member, :boolean)
     field(:senior_member, :boolean)
     field(:sponsor_member, :boolean)
-  end
-
-  object :token_info do
-    field(:token, :string)
-    field(:user, :user)
   end
 
   object :browser_signin_result do

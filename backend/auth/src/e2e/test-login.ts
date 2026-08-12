@@ -32,7 +32,6 @@ export const testLogin = async (request: Request): Promise<Response> => {
       country: '',
       city: '',
       company: '',
-      raw: JSON.stringify({ login }),
     },
     {
       userAgentSummary:

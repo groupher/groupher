@@ -2,14 +2,33 @@ import Config
 
 import Helper.Utils, only: [get_host_from_url: 1]
 
-if secret = System.get_env("GROUPHER_SERVER_TRUST_SECRET") do
-  config :groupher_server, :server_trust, secret: secret
-end
+service_auth_origin =
+  if config_env() in [:prod, :seed_prod],
+    do: "https://auth.groupher.com",
+    else: "http://127.0.0.1:3004"
 
 if System.get_env("WEB_ANALYSIS_API_TOKEN") do
-  config :groupher_server, :web_analysis,
-    api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
+  config :groupher_server, :web_analysis, api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
 end
+
+config :groupher_server, GroupherServerWeb.ServiceIdentity,
+  issuer: System.get_env("SERVICE_AUTH_ISSUER") || service_auth_origin,
+  jwks_url:
+    System.get_env("SERVICE_AUTH_JWKS_URL") ||
+      "#{service_auth_origin}/.well-known/jwks.json",
+  audiences: [
+    "phoenix:assets-api",
+    "phoenix:auth-api",
+    "phoenix:content-import-api",
+    "phoenix:dashboard-api",
+    "phoenix:press-api"
+  ]
+
+config :groupher_server, GroupherServer.ServiceIdentity.Client,
+  token_endpoint:
+    System.get_env("SERVICE_AUTH_TOKEN_ENDPOINT") || "#{service_auth_origin}/oauth2/token",
+  client_id: System.get_env("SERVICE_AUTH_CLIENT_ID"),
+  client_secret: System.get_env("SERVICE_AUTH_CLIENT_SECRET")
 
 # ## Using releases
 #
@@ -25,6 +44,12 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() in [:prod, :seed_prod] do
+  config :groupher_server, :allow_test_service_identity, false
+
+  if Application.get_env(:groupher_server, :allow_test_service_identity, false) do
+    raise "test service identity must never be enabled in production"
+  end
+
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
   # want to use a different value for prod and you most likely don't want

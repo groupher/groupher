@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { Auth, type AuthConfig, setEnvDefaults } from '@auth/core'
 import GitHub from '@auth/core/providers/github'
 import {
@@ -6,7 +8,11 @@ import {
   getAuthCookieNames,
   getAuthSessionCookieName,
 } from '@groupher/contracts/auth'
-import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
+import {
+  createServiceTokenProviderFromEnv,
+  type TServiceTokenProvider,
+} from '@groupher/service/auth'
 import { serialize } from 'hono/utils/cookie'
 
 import './env'
@@ -19,8 +25,15 @@ export const BROWSER_SESSION_MAX_AGE = 60 * 60 * 24 * 90
 export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
 const PHOENIX_GRAPHQL_ENDPOINT =
   process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || 'http://127.0.0.1:4001/graphiql'
+const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
+let serviceTokenProvider: TServiceTokenProvider | undefined
 
-const useSecureCookies =
+const authServiceToken = (scope: string) => {
+  serviceTokenProvider ??= createServiceTokenProviderFromEnv()
+  return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
+}
+
+export const useSecureCookies =
   process.env.AUTH_COOKIE_SECURE === 'true' ||
   process.env.AUTH_URL?.startsWith('https://') ||
   process.env.NODE_ENV === 'production'
@@ -109,18 +122,115 @@ export type TBrowserSessionSummary = {
   userAgentSummary?: string | null
 }
 
+export type TLinkedOauthAccount = {
+  publicRef: string
+  provider: string
+  login?: string | null
+  nickname?: string | null
+  avatar?: string | null
+  canUnlink: boolean
+  linkedAt: string
+}
+
+export type TVerifiedGithubIdentity = {
+  provider: 'github'
+  providerId: string
+  login?: string
+  nickname?: string
+  avatar?: string
+  email?: string
+  bio?: string
+  city?: string
+  company?: string
+}
+
+export const githubAuthorizationUrl = (
+  state: string,
+  redirectUri: string,
+  codeVerifier: string,
+): string => {
+  const clientId = process.env.AUTH_GITHUB_ID?.trim()
+  if (!clientId) throw new Error('GitHub OAuth is not configured.')
+
+  const url = new URL('https://github.com/login/oauth/authorize')
+  url.searchParams.set('client_id', clientId)
+  url.searchParams.set('redirect_uri', redirectUri)
+  url.searchParams.set('state', state)
+  url.searchParams.set(
+    'code_challenge',
+    createHash('sha256').update(codeVerifier).digest('base64url'),
+  )
+  url.searchParams.set('code_challenge_method', 'S256')
+  url.searchParams.set('scope', 'read:user user:email')
+  return url.toString()
+}
+
+export const exchangeGithubCodeForIdentity = async (
+  code: string,
+  redirectUri: string,
+  codeVerifier: string,
+): Promise<TVerifiedGithubIdentity> => {
+  const clientId = process.env.AUTH_GITHUB_ID?.trim()
+  const clientSecret = process.env.AUTH_GITHUB_SECRET?.trim()
+  if (!clientId || !clientSecret) throw new Error('GitHub OAuth is not configured.')
+
+  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      code,
+      code_verifier: codeVerifier,
+      redirect_uri: redirectUri,
+    }),
+    headers: { accept: 'application/json', 'content-type': 'application/json' },
+    method: 'POST',
+  })
+  if (!tokenResponse.ok) throw new Error('GitHub OAuth token exchange failed.')
+  const tokenPayload = (await tokenResponse.json()) as { access_token?: unknown; error?: unknown }
+  if (typeof tokenPayload.access_token !== 'string' || !tokenPayload.access_token) {
+    throw new Error('GitHub OAuth token exchange failed.')
+  }
+
+  const profileResponse = await fetch('https://api.github.com/user', {
+    headers: {
+      accept: 'application/vnd.github+json',
+      authorization: `Bearer ${tokenPayload.access_token}`,
+      'user-agent': 'groupher-auth',
+    },
+  })
+  if (!profileResponse.ok) throw new Error('GitHub profile lookup failed.')
+  const profile = (await profileResponse.json()) as Record<string, unknown>
+  if (typeof profile.id !== 'number' && typeof profile.id !== 'string') {
+    throw new Error('GitHub profile is invalid.')
+  }
+
+  const stringField = (key: string): string | undefined =>
+    typeof profile[key] === 'string' && profile[key] ? (profile[key] as string) : undefined
+
+  return {
+    avatar: stringField('avatar_url'),
+    bio: stringField('bio'),
+    city: stringField('location'),
+    company: stringField('company'),
+    email: stringField('email'),
+    login: stringField('login'),
+    nickname: stringField('name'),
+    provider: 'github',
+    providerId: String(profile.id),
+  }
+}
+
 export const signinOauth = async (
   provider: Record<string, unknown>,
   browserSession: TBrowserSessionMetadata = {},
 ): Promise<TBrowserSigninResult> => {
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (!serverTrustSecret) throw new Error('Groupher server trust is not configured.')
+  const serviceToken = await authServiceToken('auth:session:signin')
 
   const response = await fetch(PHOENIX_GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      [GROUPHER_SERVER_TRUST_HEADER]: serverTrustSecret,
+      authorization: `Bearer ${serviceToken}`,
     },
     body: JSON.stringify({
       query: SIGNIN_OAUTH_MUTATION,
@@ -196,7 +306,6 @@ export const buildAuthConfig = ({
           country: '',
           city: githubProfile.location,
           company: githubProfile.company,
-          raw: JSON.stringify(profile),
         }
 
         const browserSession = await exchangeIdentity(provider)
@@ -270,6 +379,27 @@ const getRequestCookieNames = (request: Request): string[] => {
     .split(';')
     .map((part) => part.trim().split('=')[0])
     .filter((name): name is string => Boolean(name))
+}
+
+/** Reads the HttpOnly Phoenix access cookie for Auth-to-Phoenix delegation. */
+export const readPhoenixUserToken = (request: Request): string | null => {
+  const cookie = request.headers.get('cookie')
+  if (!cookie) return null
+
+  for (const part of cookie.split(';')) {
+    const [name, ...valueParts] = part.trim().split('=')
+    if (name !== GROUPHER_AUTH_TOKEN_COOKIE) continue
+
+    const value = valueParts.join('=').trim()
+    if (!value) return null
+    try {
+      return decodeURIComponent(value)
+    } catch {
+      return value
+    }
+  }
+
+  return null
 }
 
 export const buildAuthCookieClearingHeaders = (request: Request): string[] => {
@@ -428,27 +558,84 @@ const REVOKE_OTHER_BROWSER_SESSIONS_MUTATION = `
   }
 `
 
+const LINKED_OAUTH_ACCOUNTS_QUERY = `
+  query LinkedOauthAccounts {
+    linkedOauthAccounts {
+      entries {
+        publicRef
+        provider
+        login
+        nickname
+        avatar
+        canUnlink
+        linkedAt
+      }
+    }
+  }
+`
+
+const LINK_OAUTH_IDENTITY_MUTATION = `
+  mutation LinkOauthIdentity($identity: VerifiedOauthIdentityInput!) {
+    linkOauthIdentity(identity: $identity) {
+      entries {
+        publicRef
+        provider
+        login
+        nickname
+        avatar
+        canUnlink
+        linkedAt
+      }
+    }
+  }
+`
+
+const UNLINK_OAUTH_IDENTITY_MUTATION = `
+  mutation UnlinkOauthIdentity($publicRef: ID!) {
+    unlinkOauthIdentity(publicRef: $publicRef) {
+      entries {
+        publicRef
+        provider
+        login
+        nickname
+        avatar
+        canUnlink
+        linkedAt
+      }
+    }
+  }
+`
+
 const callPhoenix = async <TData>(
   query: string,
   variables: Record<string, unknown>,
+  scope: string,
+  userToken?: string,
 ): Promise<TData> => {
-  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
-  if (!serverTrustSecret) throw new Error('Groupher server trust is not configured.')
+  const serviceToken = await authServiceToken(scope)
 
-  const response = await fetch(PHOENIX_GRAPHQL_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      [GROUPHER_SERVER_TRUST_HEADER]: serverTrustSecret,
-    },
-    body: JSON.stringify({ query, variables }),
-    cache: 'no-store',
-  })
+  let response: Response
+  try {
+    response = await fetch(PHOENIX_GRAPHQL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${serviceToken}`,
+        ...(userToken ? { [GROUPHER_USER_AUTHORIZATION_HEADER]: `Bearer ${userToken}` } : {}),
+      },
+      body: JSON.stringify({ query, variables }),
+      cache: 'no-store',
+    })
+  } catch {
+    throw new PhoenixBrowserSessionError('Phoenix request was not completed.', {
+      code: 'PHOENIX_NETWORK_ERROR',
+      upstreamStatus: undefined,
+    })
+  }
   if (!response.ok) {
-    throw new PhoenixBrowserSessionError(
-      `Phoenix browser-session request failed with status ${response.status}.`,
-      { upstreamStatus: response.status },
-    )
+    throw new PhoenixBrowserSessionError(`Phoenix request failed with status ${response.status}.`, {
+      upstreamStatus: response.status,
+    })
   }
 
   const payload = (await response.json()) as {
@@ -457,21 +644,64 @@ const callPhoenix = async <TData>(
   }
   if (payload.errors?.length || !payload.data) {
     const error = payload.errors?.[0]
-    throw new PhoenixBrowserSessionError(
-      error?.message || 'Phoenix browser-session request failed.',
-      {
-        code: typeof error?.extensions?.code === 'string' ? error.extensions.code : undefined,
-      },
-    )
+    throw new PhoenixBrowserSessionError(error?.message || 'Phoenix request failed.', {
+      code: typeof error?.extensions?.code === 'string' ? error.extensions.code : undefined,
+    })
   }
 
   return payload.data
 }
 
+const linkedAccountsResult = (data: {
+  linkedOauthAccounts?: { entries?: unknown }
+}): TLinkedOauthAccount[] => {
+  const entries = data.linkedOauthAccounts?.entries
+  if (!Array.isArray(entries)) throw new Error('Phoenix returned invalid linked OAuth accounts.')
+
+  return entries as TLinkedOauthAccount[]
+}
+
+export const listLinkedOauthAccounts = async (userToken: string): Promise<TLinkedOauthAccount[]> =>
+  linkedAccountsResult(
+    await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
+      LINKED_OAUTH_ACCOUNTS_QUERY,
+      {},
+      'auth:oauth:read',
+      userToken,
+    ),
+  )
+
+export const linkOauthIdentity = async (
+  userToken: string,
+  identity: Record<string, unknown>,
+): Promise<TLinkedOauthAccount[]> =>
+  linkedAccountsResult(
+    await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
+      LINK_OAUTH_IDENTITY_MUTATION,
+      { identity },
+      'auth:oauth:link',
+      userToken,
+    ),
+  )
+
+export const unlinkOauthIdentity = async (
+  userToken: string,
+  publicRef: string,
+): Promise<TLinkedOauthAccount[]> =>
+  linkedAccountsResult(
+    await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
+      UNLINK_OAUTH_IDENTITY_MUTATION,
+      { publicRef },
+      'auth:oauth:unlink',
+      userToken,
+    ),
+  )
+
 export const refreshBrowserSession = async (ref: string): Promise<TBrowserSigninResult> => {
   const data = await callPhoenix<{ refreshBrowserSession?: Partial<TBrowserSigninResult> }>(
     REFRESH_BROWSER_SESSION_MUTATION,
     { browserSessionRef: ref },
+    'auth:session:refresh',
   )
   const result = data.refreshBrowserSession
   if (
@@ -490,15 +720,18 @@ export const revokeBrowserSession = async (ref: string): Promise<void> => {
   const data = await callPhoenix<{ revokeBrowserSession?: { done?: unknown } }>(
     REVOKE_BROWSER_SESSION_MUTATION,
     { browserSessionRef: ref },
+    'auth:session:revoke',
   )
   if (data.revokeBrowserSession?.done !== true)
     throw new Error('Phoenix did not revoke the browser session.')
 }
 
 export const listBrowserSessions = async (ref: string): Promise<TBrowserSessionSummary[]> => {
-  const data = await callPhoenix<{ browserSessions?: unknown }>(LIST_BROWSER_SESSIONS_QUERY, {
-    browserSessionRef: ref,
-  })
+  const data = await callPhoenix<{ browserSessions?: unknown }>(
+    LIST_BROWSER_SESSIONS_QUERY,
+    { browserSessionRef: ref },
+    'auth:session:read',
+  )
   if (!Array.isArray(data.browserSessions))
     throw new Error('Phoenix returned invalid browser sessions.')
   return data.browserSessions as TBrowserSessionSummary[]
@@ -508,6 +741,7 @@ export const revokeBrowserSessionPublic = async (ref: string, publicRef: string)
   const data = await callPhoenix<{ revokeBrowserSessionPublic?: { done?: unknown } }>(
     REVOKE_BROWSER_SESSION_PUBLIC_MUTATION,
     { browserSessionRef: ref, publicRef },
+    'auth:session:revoke',
   )
   if (data.revokeBrowserSessionPublic?.done !== true)
     throw new Error('Phoenix did not revoke the browser session.')
@@ -517,6 +751,7 @@ export const revokeOtherBrowserSessions = async (ref: string): Promise<void> => 
   const data = await callPhoenix<{ revokeOtherBrowserSessions?: { done?: unknown } }>(
     REVOKE_OTHER_BROWSER_SESSIONS_MUTATION,
     { browserSessionRef: ref },
+    'auth:session:revoke',
   )
   if (data.revokeOtherBrowserSessions?.done !== true)
     throw new Error('Phoenix did not revoke other browser sessions.')

@@ -1,1 +1,1 @@
-export const GROUPHER_SERVER_TRUST_HEADER = 'X-Groupher-Server-Trust'
+export const GROUPHER_USER_AUTHORIZATION_HEADER = 'X-Groupher-User-Authorization'

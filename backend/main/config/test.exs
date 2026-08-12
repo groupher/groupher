@@ -1,12 +1,14 @@
 import Config
 
+config :groupher_server, :allow_test_service_identity, true
+
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :groupher_server, GroupherServerWeb.Endpoint,
   http: [port: 4001],
   server: false
 
-config :groupher_server, :server_trust, secret: "test-server-trust-secret"
+config :groupher_server, :assets_hub, capability_secret: "test-assets-hub-capability-secret"
 
 # Print only warnings and errors during test
 config :logger, level: :warning

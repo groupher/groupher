@@ -11,6 +11,13 @@ defmodule GroupherServer.Accounts.Profiles do
   @spec read_user(User.t()) :: T.domain_res(User.t())
   def read_user(%User{} = user), do: UserRead.read_user(user)
 
+  @doc "Returns an opaque, stable subject for service-to-user delegation."
+  @spec delegation_subject(User.t()) :: String.t()
+  def delegation_subject(%User{id: id}) do
+    digest = :crypto.hash(:sha256, "groupher:user:" <> to_string(id))
+    "user:" <> Base.url_encode64(digest, padding: false)
+  end
+
   @spec read_user(User.t(), User.t()) :: T.domain_res(User.t())
   def read_user(%User{} = user, %User{} = cur_user), do: UserRead.read_user(user, cur_user)
 
@@ -49,6 +56,16 @@ defmodule GroupherServer.Accounts.Profiles do
 
   @spec unlink_oauth(String.t(), map()) :: T.domain_res(User.t())
   def unlink_oauth(login, provider), do: Oauth.unlink_oauth(login, provider)
+
+  @spec linked_oauth_accounts(String.t()) :: T.domain_res(map())
+  def linked_oauth_accounts(login), do: Oauth.linked_oauth_accounts(login)
+
+  @spec link_oauth_identity(String.t(), map()) :: T.domain_res(map())
+  def link_oauth_identity(login, provider), do: Oauth.link_oauth_identity(login, provider)
+
+  @spec unlink_oauth_identity(String.t(), String.t()) :: T.domain_res(map())
+  def unlink_oauth_identity(login, public_ref),
+    do: Oauth.unlink_oauth_identity(login, public_ref)
 
   @spec default_subscribed_communities(map()) :: T.domain_res(T.paged_data())
   def default_subscribed_communities(filter), do: List.default_subscribed_communities(filter)
