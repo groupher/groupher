@@ -1,4 +1,5 @@
 import { serializeGraphQLError } from '@dash/utils/graphql-error'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import {
   GROUPHER_AUTH_SIGNED_IN_COOKIE,
   GROUPHER_AUTH_TOKEN_COOKIE,
@@ -48,11 +49,21 @@ export const setPrivateCacheHeader = (): void => {
   setResponseHeader('cache-control', 'private, no-store')
 }
 
-export const fetchGraphQL = async <TData>(
+export function fetchGraphQL<TResult, TVariables extends Record<string, unknown>>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+  token: string | null,
+): Promise<TGraphQLResponse<TResult>>
+export function fetchGraphQL<TData>(
   query: string | DocumentNode,
   variables: Record<string, unknown>,
   token: string | null,
-): Promise<TGraphQLResponse<TData>> => {
+): Promise<TGraphQLResponse<TData>>
+export async function fetchGraphQL<TData>(
+  query: string | DocumentNode,
+  variables: Record<string, unknown>,
+  token: string | null,
+): Promise<TGraphQLResponse<TData>> {
   const endpoint = process.env.GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql'
   const response = await fetch(endpoint, {
     method: 'POST',

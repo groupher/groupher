@@ -1,3 +1,4 @@
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { createServerFn } from '@tanstack/react-start'
 
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
@@ -45,13 +46,13 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
 
     setPrivateCacheHeader()
 
-    const communityResult = await fetchGraphQL<{ community?: TCommunity }>(
+    const communityResult = await fetchGraphQL<ResultOf<typeof communityQuery>>(
       communityQuery,
       { incViews: false, slug: data.community, userHasLogin },
       token,
     )
 
-    const community = communityResult.data?.community
+    const community = communityResult.data?.community as unknown as TCommunity | null | undefined
     if (!community) {
       const detail = communityResult.errors?.[0]?.message || 'Community was not found.'
       throw new Error(detail)

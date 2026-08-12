@@ -69,6 +69,12 @@ This document does not cover:
 - Reorganizing unrelated frontend domain code.
 - Loading `backend/main/schema.graphql` in Main, Dashboard, or Dash at runtime.
 
+**明确边界：本次只实施 GraphQL fragments、typed documents、Codegen 和
+schema contract checks。TanStack Query/QueryClient、query key、缓存
+invalidation、`/api/posts` 到 `/api/graphql` 的 transport 迁移、Valtio
+server-state 替换，以及任何 hook/cache 重构都不属于本次 fragment 迁移，必须
+保留在独立的后续方案和实现中。**
+
 ## Current State
 
 ### Historical field strings
@@ -1032,6 +1038,11 @@ this phase.
 
 ### Phase 4: Make typed documents canonical
 
+**当前已完成的 cleanup slice：Core SSR 的固定文档已通过 `gqFetchTyped`，Dash
+和 Dashboard 的 server loaders 已直接传递 typed documents，并删除了对应的
+手写 operation envelope。domain model 与 generated result 之间仍保留显式
+adapter；这不是重新引入运行时 schema check。**
+
 The current Codegen allowlist now contains static documents for all known Pages
 and Dashboard operation sources. The remaining Phase 4 work is consumer and
 transport cleanup:
@@ -1048,6 +1059,10 @@ transport cleanup:
 - Make code generation and schema validation required checks.
 
 ### Phase 5: Prepare, but do not perform, TanStack Query migration
+
+**本阶段只有兼容性说明，不引入 TanStack Query，也不修改当前 urql、SSR 或
+浏览器 transport。所有 QueryClient、query key、hydration、mutation cache
+和 `/api/posts` 生命周期工作都必须在独立文档中完成。**
 
 At this point GraphQL operations are independent of urql. A later migration can
 reuse the same typed documents:

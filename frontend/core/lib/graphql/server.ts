@@ -88,6 +88,22 @@ export const gqFetchTyped = async <TResult, TVariables extends Record<string, un
 }
 
 /**
+ * Typed request-aware SSR boundary for migrated operations.
+ *
+ * Like `gqFetchTyped`, this keeps variables and results tied to the document
+ * while preserving the existing request-cookie behavior of `gqAuthFetch`.
+ * Callers must keep it outside `"use cache"` scopes.
+ */
+export const gqAuthFetchTyped = async <TResult, TVariables extends Record<string, unknown>>(
+  query: TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables,
+): Promise<TGraphQLPayload<TResult>> => {
+  const response = await gqAuthFetch(query, variables)
+
+  return (await response.json()) as TGraphQLPayload<TResult>
+}
+
+/**
  * Sends a request-aware server-side GraphQL POST to Phoenix.
  *
  * User-specific SSR calls use the current request cookies when available and

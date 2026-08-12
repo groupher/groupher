@@ -1,10 +1,11 @@
+import type { ResultOf, TypedDocumentNode, VariablesOf } from '@graphql-typed-document-node/core'
 import type { Metadata } from 'next'
 import { cacheLife, cacheTag } from 'next/cache'
 
 import { CACHE_TAG } from '~/const/cache'
 import { THREAD } from '~/const/thread'
 import { extractRootResponseKey } from '~/graphql/document'
-import { gqFetch } from '~/graphql/server'
+import { gqFetchTyped } from '~/graphql/server'
 import { pagedChangelogs } from '~/schemas/pages/changelog'
 import { pagedPosts } from '~/schemas/pages/post'
 import type { TPagedArticles, TPagedArticlesParams, TParseDashboard, TThread } from '~/spec'
@@ -46,12 +47,24 @@ const getPagedQuery = (
 ) => {
   switch (thread) {
     case THREAD.CHANGELOG: {
-      return { schema: pagedChangelogs, variables: { filter, userHasLogin: false } }
+      return {
+        schema: pagedChangelogs,
+        variables: {
+          filter: filter as VariablesOf<typeof pagedChangelogs>['filter'],
+          userHasLogin: false,
+        },
+      }
     }
     // groupedKanbanPosts remains outside this article-list selector.
 
     default: {
-      return { schema: pagedPosts, variables: { filter, userHasLogin: false } }
+      return {
+        schema: pagedPosts,
+        variables: {
+          filter: filter as VariablesOf<typeof pagedPosts>['filter'],
+          userHasLogin: false,
+        },
+      }
     }
   }
 }
@@ -75,9 +88,13 @@ const fetchPagedArticles = async (
   if (!hasArticles(thread)) return null
 
   const { schema, variables } = getPagedQuery(community, thread, filter)
-  const response = await gqFetch(schema, variables)
+  type PagedVariables = VariablesOf<typeof pagedPosts> | VariablesOf<typeof pagedChangelogs>
+  type PagedResult = ResultOf<typeof pagedPosts> | ResultOf<typeof pagedChangelogs>
 
-  const { data, errors } = await response.json()
+  const { data, errors } = await gqFetchTyped(
+    schema as TypedDocumentNode<PagedResult, PagedVariables>,
+    variables as PagedVariables,
+  )
 
   if (errors) {
     console.log('## error details', errors)
@@ -85,7 +102,9 @@ const fetchPagedArticles = async (
   }
 
   const responseKey = extractRootResponseKey(schema)
-  return responseKey ? data[responseKey] : null
+  return responseKey
+    ? ((data as Record<string, TPagedArticles | null> | undefined)?.[responseKey] ?? null)
+    : null
 }
 
 const getCachedPagedArticles = async (
