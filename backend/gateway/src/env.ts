@@ -1,9 +1,9 @@
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { config } from 'dotenv'
 
-const cwd = process.cwd()
-const gatewayRoot = path.basename(cwd) === 'gateway' ? cwd : path.join(cwd, 'backend/gateway')
+const gatewayRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 config({
   path: [
