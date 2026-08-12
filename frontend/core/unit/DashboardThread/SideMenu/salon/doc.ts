@@ -21,7 +21,7 @@ export default function useSalon() {
       DSB_DOC.SIDE_MENU.EXPANDED_BODY_TOP,
     ),
     item: cn(
-      'row-center relative w-full overflow-hidden rounded-lg py-1 pr-3 pl-5 text-sm no-underline',
+      'row-center relative w-full overflow-hidden rounded-lg py-1 pr-3 pl-5 text-left text-sm no-underline',
       `hover:${bg('hoverBg')}`,
       fg('digest'),
     ),

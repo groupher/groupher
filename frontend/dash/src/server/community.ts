@@ -4,7 +4,9 @@ import { createServerFn } from '@tanstack/react-start'
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import { community as communityQuery } from '~/schemas/pages/community'
-import type { TCommunity, TParseDashboard } from '~/spec'
+import { sessionState as sessionStateQuery } from '~/schemas/pages/user'
+import type { TCommunity, TParseDashboard, TUser } from '~/spec'
+import type { TInit as TAccountInit } from '~/stores/account/spec'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
@@ -30,6 +32,7 @@ const makeOverview = (community: TCommunity) => ({
 })
 
 export type TCommunityShell = {
+  account: TAccountInit
   community: TCommunity
   dashboard: TParseDashboard
   wallpaper: ReturnType<typeof parseWallpaper>
@@ -46,11 +49,15 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
 
     setPrivateCacheHeader()
 
-    const communityResult = await fetchGraphQL<ResultOf<typeof communityQuery>>(
+    const communityPromise = fetchGraphQL<ResultOf<typeof communityQuery>>(
       communityQuery,
       { incViews: false, slug: data.community, userHasLogin },
       token,
     )
+    const accountPromise = token
+      ? loadAccount(token)
+      : Promise.resolve({ loading: false, user: null })
+    const [communityResult, account] = await Promise.all([communityPromise, accountPromise])
 
     const community = communityResult.data?.community as unknown as TCommunity | null | undefined
     if (!community) {
@@ -64,6 +71,7 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
     }
 
     return {
+      account,
       community,
       dashboard,
       wallpaper: parseWallpaper(community),
@@ -71,3 +79,23 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
       demoMode: isDemoMode,
     }
   })
+
+const loadAccount = async (token: string): Promise<TAccountInit> => {
+  const result = await fetchGraphQL<ResultOf<typeof sessionStateQuery>>(
+    sessionStateQuery,
+    {},
+    token,
+  )
+  const session = result.data?.sessionState
+
+  return {
+    loading: false,
+    user:
+      session?.isValid && session.user
+        ? {
+            ...session.user,
+            passport: session.user.passport as TUser['passport'],
+          }
+        : null,
+  }
+}

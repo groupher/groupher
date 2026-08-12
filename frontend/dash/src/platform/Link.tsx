@@ -1,6 +1,7 @@
+import { Link as TanStackLink } from '@tanstack/react-router'
 import type { MouseEvent } from 'react'
 
-import type { TPlatformLinkProps } from '~/platform'
+import { resolveDsbRoute, type TPlatformLinkProps } from '~/platform'
 import { usePlatform } from '~/platform'
 
 const isModifiedClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
@@ -8,6 +9,7 @@ const isModifiedClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
 
 export default function TanStackPlatformLink({
   children,
+  route,
   href,
   onClick,
   onFocus,
@@ -15,11 +17,22 @@ export default function TanStackPlatformLink({
   prefetch,
   replace,
   scroll,
+  preserveSearch,
   target,
   ...props
 }: TPlatformLinkProps) {
   const { navi } = usePlatform()
-  const isInternal = href.startsWith('/')
+  const finalHref = route
+    ? resolveDsbRoute(route, {
+        rootSegment: 'dash',
+        currentSearch: navi.location.searchParams,
+        preserveSearch,
+      })
+    : href
+
+  if (!finalHref) throw new Error('PlatformLink requires either href or route')
+
+  const isInternal = finalHref.startsWith('/')
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event)
@@ -27,32 +40,47 @@ export default function TanStackPlatformLink({
 
     event.preventDefault()
     if (replace) {
-      navi.replace(href, { scroll })
+      navi.replace(finalHref, { scroll })
     } else {
-      navi.push(href, { scroll })
+      navi.push(finalHref, { scroll })
     }
   }
 
   const handlePrefetch = () => {
-    if (prefetch && isInternal) void navi.prefetch(href)
+    if (prefetch && isInternal) void navi.prefetch(finalHref)
+  }
+
+  if (!isInternal) {
+    return (
+      <a
+        {...props}
+        href={finalHref}
+        target={target}
+        onClick={handleClick}
+        onFocus={(event) => {
+          onFocus?.(event)
+          handlePrefetch()
+        }}
+        onMouseEnter={(event) => {
+          onMouseEnter?.(event)
+          handlePrefetch()
+        }}
+      >
+        {children}
+      </a>
+    )
   }
 
   return (
-    <a
+    <TanStackLink
       {...props}
-      href={href}
+      to={finalHref}
       target={target}
-      onClick={handleClick}
-      onFocus={(event) => {
-        onFocus?.(event)
-        handlePrefetch()
-      }}
-      onMouseEnter={(event) => {
-        onMouseEnter?.(event)
-        handlePrefetch()
-      }}
+      onClick={onClick}
+      preload={prefetch ? 'intent' : false}
+      replace={replace}
     >
       {children}
-    </a>
+    </TanStackLink>
   )
 }

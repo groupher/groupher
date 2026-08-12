@@ -14,7 +14,7 @@ export default function useSalon({ fold }: TProps) {
   return {
     wrapper: 'mb-4',
     folder: 'row-between group mb-3',
-    folderLink: cn('row-center grow no-underline', fg('digest')),
+    folderLink: cn('row-center grow text-left no-underline', fg('digest')),
     foldBtn: cn('align-both size-5 pointer rounded-md', hover('bg')),
     iconBox: 'align-both size-5',
     title: cn('text-sm grow ml-2 mr-1 bold text-left', fg('digest'), 'dark:brightness-110'),
@@ -25,7 +25,7 @@ export default function useSalon({ fold }: TProps) {
     ),
     menu: 'ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
-      'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg overflow-hidden',
+      'block relative no-underline w-full text-left text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg overflow-hidden',
       `hover:${bg('hoverBg')}`,
       fg('digest'),
     ),
