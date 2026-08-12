@@ -68,6 +68,7 @@ const Tabs: FC<TViewProps> = ({
 
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
   const hasActiveItem = items.some((it) => getItemKey(it) === activeKey)
+  const itemKeys = items.map(getItemKey).join('\u0001')
 
   const [metrics, setMetrics] = useState<TTabMetrics>(INITIAL_METRICS)
   const [hasMeasured, setHasMeasured] = useState(false)
@@ -96,8 +97,10 @@ const Tabs: FC<TViewProps> = ({
     const navEl = navRef.current
     if (!navEl) return
 
-    measureTabs(defaultActiveTabIndex)
-    const rafId = window.requestAnimationFrame(() => setHasMeasured(true))
+    const rafId = window.requestAnimationFrame(() => {
+      measureTabs(defaultActiveTabIndex)
+      setHasMeasured(true)
+    })
 
     const observer = new ResizeObserver(() => {
       measureTabs(defaultActiveTabIndex)
@@ -112,7 +115,7 @@ const Tabs: FC<TViewProps> = ({
       window.cancelAnimationFrame(rafId)
       observer.disconnect()
     }
-  }, [defaultActiveTabIndex, items, measureTabs])
+  }, [defaultActiveTabIndex, itemKeys, measureTabs])
 
   const handleItemClick = useCallback(
     (index: number) => {
