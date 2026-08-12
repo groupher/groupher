@@ -214,10 +214,20 @@ config :tesla,
 config :groupher_server, Oban,
   engine: Oban.Engines.Basic,
   repo: GroupherServer.Repo,
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted},
+       {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads},
+       {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims}
+     ]}
+  ],
   queues: [
     default: 10,
     search: 5,
-    snapshot: 5
+    snapshot: 5,
+    community_application: 5,
+    community_setup: 5
   ]
 
 import_config "#{config_env()}.exs"

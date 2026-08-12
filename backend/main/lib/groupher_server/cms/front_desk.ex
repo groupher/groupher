@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
   alias CMS.Comments.Replies
+  alias CMS.Communities.Read
   alias CMS.Helper.ArticlePath
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
@@ -27,9 +28,10 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
   def community(slug) when is_binary(slug) do
-    Community
+    Read.scope()
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
+    |> preload(:lifecycle)
     |> preload(moderators: [:community, :user])
     |> Repo.one()
     |> done()

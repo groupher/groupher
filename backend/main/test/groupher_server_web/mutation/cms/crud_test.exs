@@ -3,10 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{Category, CommunityModerator, Passport}
-
-  @community_normal Constant.CMS.pending(:normal)
-  @community_applying Constant.CMS.pending(:applying)
+  alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
 
   setup do
     {:ok, category} = db_insert(:category)
@@ -246,7 +243,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       deleted = rule_conn |> gq_mutation(@delete_community_query, variables)
 
       assert deleted["slug"] == community.slug
-      assert {:error, _} = ORM.find(Community, community.id)
+      assert {:ok, _community} = ORM.find(Community, community.id)
+      assert Repo.get_by!(CommunityLifecycle, community_id: community.id).state == :archived
     end
 
     test "unauth user delete community fails", ~m(user_conn guest_conn)a do
@@ -517,50 +515,6 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       assert guest_conn
              |> mutation_error?(@unsubscribe_query, variables, ecode(:account_login))
-    end
-  end
-
-  describe "mutation cms community apply" do
-    @apply_community_query S.Community.m(:apply_community)
-    test "apply a community should have default root user", ~m(user_conn)a do
-      variables = mock_attrs(:community, %{locale: "it"})
-      created = user_conn |> gq_mutation(@apply_community_query, variables)
-
-      {:ok, found} = Community |> ORM.find_by(%{slug: created["slug"]})
-      assert created["slug"] == found.slug
-      assert created["pending"] == @community_applying
-
-      moderator = created["moderators"] |> Enum.at(0)
-      assert moderator["isRoot"]
-      assert created["locale"] == "it"
-    end
-
-    @approve_community_query S.Community.m(:approve_community_apply)
-    test "can approve a community apply2", ~m(user_conn)a do
-      variables = mock_attrs(:community)
-      created = user_conn |> gq_mutation(@apply_community_query, variables)
-
-      variables = %{community: created["slug"]}
-      rule_conn = simu_conn(:user, cms: %{"community.apply.approve" => true})
-
-      rule_conn |> gq_mutation(@approve_community_query, variables)
-
-      {:ok, found} = Community |> ORM.find_by(%{slug: created["slug"]})
-      assert found.pending == @community_normal
-    end
-
-    @deny_community_query S.Community.m(:deny_community_apply)
-    test "can deny a community apply", ~m(user_conn)a do
-      variables = mock_attrs(:community)
-      created = user_conn |> gq_mutation(@apply_community_query, variables)
-      {:ok, community} = Community |> ORM.find_by(%{slug: created["slug"]})
-
-      variables = %{community: created["slug"]}
-      rule_conn = simu_conn(:user, cms: %{"community.apply.deny" => true})
-
-      rule_conn |> gq_mutation(@deny_community_query, variables)
-
-      assert {:error, _} = Community |> ORM.find(community.id)
     end
   end
 end

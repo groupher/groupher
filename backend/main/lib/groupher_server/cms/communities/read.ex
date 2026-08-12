@@ -1,32 +1,65 @@
 defmodule GroupherServer.CMS.Communities.Read do
   @moduledoc """
   Read helpers for communities.
+
+  The default scope is the single public-read boundary for Community queries.
+  Internal and management callers must opt into `scope_all/1` explicitly.
   """
 
+  import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Gate
   alias CMS.FrontDesk
-  alias CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Model.{Community, CommunityDashboard, CommunityLifecycle}
   alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
+  @community_normal Helper.Constant.CMS.pending(:normal)
+  @public_lifecycle_states [:active, :read_only]
+
+  @doc "Restricts a Community query to the current default public-read states."
+  @spec scope(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def scope(queryable \\ Community) do
+    from(community in queryable,
+      left_join: lifecycle in CommunityLifecycle,
+      on: lifecycle.community_id == community.id,
+      where:
+        lifecycle.state in ^@public_lifecycle_states or
+          (is_nil(lifecycle.id) and community.pending == ^@community_normal)
+    )
+  end
+
+  @doc "Returns an unfiltered Community query for explicit internal or management reads."
+  @spec scope_all(Ecto.Queryable.t()) :: Ecto.Query.t()
+  def scope_all(queryable \\ Community), do: from(community in queryable)
+
+  @doc "Checks a preloaded Community against the same default public-read policy."
+  @spec public?(Community.t()) :: boolean()
+  def public?(%Community{lifecycle: %CommunityLifecycle{state: state}}),
+    do: state in @public_lifecycle_states
+
+  def public?(%Community{lifecycle: nil, pending: @community_normal}), do: true
+  def public?(%Community{}), do: false
 
   @spec read(String.t(), keyword() | User.t()) :: T.domain_res(term())
   def read(slug, opt \\ @default_read_opt)
 
-  def read(slug, %User{} = user) do
-    read(slug, @default_read_opt) |> viewer_has_states(user)
-  end
+  def read(slug, %User{} = user), do: read_for_viewer(slug, user, @default_read_opt)
 
   def read(slug, opt), do: do_read(slug, opt)
 
+  @doc "Reads a Community without applying the public Lifecycle scope."
+  @spec read_all(String.t(), keyword()) :: T.domain_res(Community.t())
+  def read_all(slug, opt \\ @default_read_opt), do: do_read_all(slug, opt)
+
   @spec read(String.t(), User.t(), keyword()) :: T.domain_res(term())
   def read(slug, %User{} = user, opt) do
-    read(slug, opt) |> viewer_has_states(user)
+    read_for_viewer(slug, user, opt)
   end
 
   @doc """
@@ -51,6 +84,48 @@ defmodule GroupherServer.CMS.Communities.Read do
     end
   end
 
+  defp read_for_viewer(slug, user, opt) do
+    with {:ok, community} <- do_read_all(slug, Keyword.put(opt, :inc_views, false)),
+         {:ok, true} <- Gate.can(user, :read, community),
+         {:ok, community} <- maybe_inc_views(community, opt) do
+      viewer_has_states({:ok, community}, user)
+    else
+      {:ok, false} -> {:error, {:not_exist, "Community"}}
+      {:error, :not_exist} -> {:error, {:not_exist, "Community"}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp maybe_inc_views(community, opt) do
+    case get_in(opt, [:inc_views]) do
+      true -> ORM.inc(community, :views)
+      false -> {:ok, community}
+    end
+  end
+
+  defp do_read_all(slug, opt) do
+    Community
+    |> scope_all()
+    |> where([community], community.slug == ^slug or community.aka == ^slug)
+    |> preload([:dashboard, :lifecycle, moderators: [:community, :user]])
+    |> Repo.one()
+    |> done()
+    |> case do
+      {:ok, community} ->
+        with {:ok, community} <- ORM.fill_meta(community),
+             {:ok, community} <- ensure_community_with_dashboard(community),
+             {:ok, community} <- read_moderators(community) do
+          case get_in(opt, [:inc_views]) do
+            true -> ORM.inc(community, :views)
+            false -> {:ok, community}
+          end
+        end
+
+      {:error, _} = error ->
+        error
+    end
+  end
+
   defp read_moderators(%Community{} = community) do
     community |> Map.merge(%{moderators: community.moderators}) |> done
   end
@@ -72,6 +147,4 @@ defmodule GroupherServer.CMS.Communities.Read do
 
     {:ok, Map.merge(community, viewer_has_states)}
   end
-
-  defp viewer_has_states({:error, reason}, _user), do: {:error, reason}
 end

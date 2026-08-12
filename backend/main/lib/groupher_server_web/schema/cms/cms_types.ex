@@ -15,10 +15,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS.Gate.Passport.Registry
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}
-  alias Helper.{ORM, PermissionRegistry}
+  alias Helper.ORM
   alias GroupherServerWeb.Schema
 
   import_types(Schema.CMS.Metrics)
@@ -31,6 +32,248 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
+  end
+
+  enum :community_application_status do
+    value(:submitted)
+    value(:reviewing)
+    value(:approved)
+    value(:creation_failed)
+    value(:setting_up)
+    value(:setup_failed)
+    value(:created)
+    value(:rejected)
+    value(:cancelled)
+    value(:expired)
+  end
+
+  enum :community_application_category do
+    value(:product, as: :PRODUCT)
+    value(:gaming, as: :GAMING)
+    value(:teach, as: :TEACH)
+    value(:group, as: :GROUP)
+  end
+
+  enum :community_application_actor_type do
+    value(:applicant)
+    value(:reviewer)
+    value(:job)
+    value(:system)
+  end
+
+  enum :community_lifecycle_state do
+    value(:setting_up)
+    value(:setup_failed)
+    value(:active)
+    value(:read_only)
+    value(:suspended)
+    value(:archived)
+    value(:scheduled_reclaim)
+    value(:destroy)
+  end
+
+  enum :community_lifecycle_blocker_type do
+    value(:owner_archive)
+    value(:moderation_suspend)
+    value(:moderation_archive)
+    value(:ops_legal_hold)
+    value(:billing_read_only)
+    value(:billing_suspend)
+  end
+
+  enum :community_lifecycle_blocker_end_type do
+    value(:released)
+    value(:terminated)
+  end
+
+  object :community_application_actor do
+    field(:public_ref, non_null(:id),
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_actor_ref/3
+    )
+  end
+
+  object :community_application_community do
+    field(:public_ref, non_null(:id),
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_community_ref/3
+    )
+
+    field(:slug, non_null(:string))
+  end
+
+  object :community_application_logo do
+    field(:application_upload_ref, non_null(:id))
+    field(:community_asset_ref, :id)
+    field(:url, non_null(:string))
+  end
+
+  object :community_application_job_error do
+    field(:reason_code, non_null(:string))
+    field(:message, non_null(:string))
+    field(:operation_ref, :id)
+    field(:occurred_at, :datetime)
+    field(:attempt, :integer)
+  end
+
+  object :community_application_event do
+    field(:from_status, :community_application_status)
+    field(:to_status, non_null(:community_application_status))
+    field(:actor_type, non_null(:community_application_actor_type))
+
+    field(:actor, :community_application_actor,
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_event_actor/3
+    )
+
+    field(:reason_code, :string)
+    field(:operation_ref, :id)
+    field(:occurred_at, non_null(:datetime))
+  end
+
+  object :community_application_event_edge do
+    field(:cursor, non_null(:string))
+    field(:node, non_null(:community_application_event))
+  end
+
+  object :community_application_page_info do
+    field(:end_cursor, :string)
+    field(:has_next_page, non_null(:boolean))
+  end
+
+  object :community_application_event_connection do
+    field(:edges, non_null(list_of(non_null(:community_application_event_edge))))
+    field(:page_info, non_null(:community_application_page_info))
+  end
+
+  object :community_application do
+    field(:public_ref, non_null(:id))
+    field(:status, non_null(:community_application_status))
+    field(:version, non_null(:integer))
+
+    field(:applicant, non_null(:community_application_actor),
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_applicant/3
+    )
+
+    field(:reviewer, :community_application_actor,
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_reviewer/3
+    )
+
+    field(:title, non_null(:string))
+    field(:slug, non_null(:string))
+    field(:desc, non_null(:string))
+
+    field(:logo, non_null(:community_application_logo),
+      resolve: &GroupherServerWeb.Resolvers.CMS.community_application_logo/3
+    )
+
+    field(:locale, non_null(:string))
+    field(:apply_category, non_null(:community_application_category))
+    field(:apply_message, :string)
+    field(:submitted_at, non_null(:datetime))
+    field(:expires_at, :datetime)
+    field(:reviewed_at, :datetime)
+    field(:setup_started_at, :datetime)
+    field(:completed_at, :datetime)
+    field(:updated_at, non_null(:datetime))
+    field(:decision_reason_code, :string)
+    field(:decision_note, :string)
+
+    field(:community, :community_application_community,
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_community/3
+    )
+
+    field(:last_job_error, :community_application_job_error,
+      resolve: &GroupherServerWeb.Resolvers.CMS.application_job_error/3
+    )
+
+    field :events, non_null(:community_application_event_connection) do
+      arg(:first, :integer, default_value: 100)
+      arg(:after, :string)
+      resolve(&GroupherServerWeb.Resolvers.CMS.community_application_events/3)
+    end
+  end
+
+  object :community_application_edge do
+    field(:cursor, non_null(:string))
+    field(:node, non_null(:community_application))
+  end
+
+  object :community_application_connection do
+    field(:edges, non_null(list_of(non_null(:community_application_edge))))
+    field(:page_info, non_null(:community_application_page_info))
+  end
+
+  object :community_application_policy do
+    field(:allowed, non_null(:boolean))
+    field(:reason_code, :string)
+    field(:retry_at, :datetime)
+    field(:metadata, non_null(:json))
+  end
+
+  object :community_application_state do
+    field(:can_apply, non_null(:community_application_policy))
+    field(:current_application, :community_application)
+    field(:latest_failed_application, :community_application)
+  end
+
+  input_object :community_application_input do
+    field(:title, non_null(:string))
+    field(:slug, non_null(:string))
+    field(:desc, non_null(:string))
+    field(:logo_asset_ref, non_null(:id))
+    field(:locale, non_null(:string))
+    field(:apply_category, non_null(:community_application_category))
+    field(:apply_message, :string)
+  end
+
+  input_object :application_logo_upload_input do
+    field(:file_name, non_null(:string))
+    field(:mime_type, non_null(:string))
+    field(:size_bytes, non_null(:integer))
+  end
+
+  object :application_logo_upload_intent do
+    field(:upload_ref, non_null(:id))
+    field(:object_key, non_null(:string))
+    field(:canonical_url, non_null(:string))
+    field(:capability, non_null(:string))
+    field(:expires_at, non_null(:datetime))
+    field(:max_size_bytes, non_null(:integer))
+    field(:allowed_mime_types, non_null(list_of(non_null(:string))))
+  end
+
+  object :application_logo_upload_completion do
+    field(:upload_ref, non_null(:id), resolve: fn upload, _, _ -> {:ok, upload.public_ref} end)
+    field(:status, non_null(:string))
+    field(:url, non_null(:string))
+    field(:finalized_at, non_null(:datetime))
+  end
+
+  object :application_logo_origin_info do
+    field(:public_ref, non_null(:id))
+    field(:status, non_null(:string))
+    field(:filename, :string)
+    field(:mime_type, :string)
+    field(:size_bytes, :integer)
+    field(:storage, :string)
+    field(:storage_key, :string)
+  end
+
+  input_object :community_application_logo_completion_input do
+    field(:upload_ref, non_null(:id))
+    field(:storage, non_null(:string))
+    field(:storage_key, non_null(:string))
+    field(:url, non_null(:string))
+    field(:content_hash, non_null(:string))
+    field(:mime_type, non_null(:string))
+    field(:size_bytes, non_null(:integer))
+  end
+
+  input_object :community_applications_filter do
+    field(:statuses, list_of(non_null(:community_application_status)))
+    field(:applicant_ref, :id)
+    field(:reviewer_ref, :id)
+    field(:slug, :string)
+    field(:submitted_from, :datetime)
+    field(:submitted_to, :datetime)
   end
 
   object :trashed_article do
@@ -1070,6 +1313,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     @desc "Whether the current viewer is a moderator of this community."
     field(:viewer_is_moderator, :boolean)
 
+    field(:lifecycle_state, :community_lifecycle_state,
+      resolve: fn
+        %{lifecycle: %{state: state}}, _, _ -> {:ok, state}
+        _, _, _ -> {:ok, nil}
+      end
+    )
+
     field(:pending, :integer)
 
     timestamp_fields()
@@ -1431,7 +1681,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   defp moderator_passport_item_count(passport, community_slug) do
     if moderator_root?(passport, community_slug) do
-      PermissionRegistry.root_passport_item_count()
+      Registry.root_passport_item_count()
     else
       passport
       |> get_in([community_slug, "cms"])
@@ -1442,7 +1692,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   defp fallback_moderator_passport_item_count(moderator) do
     count = moderator.passport_item_count || 0
 
-    if count >= PermissionRegistry.root_passport_item_count(), do: 0, else: count
+    if count >= Registry.root_passport_item_count(), do: 0, else: count
   end
 
   defp count_enabled_rules(rules) when is_map(rules) do

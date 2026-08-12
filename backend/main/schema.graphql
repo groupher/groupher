@@ -70,6 +70,21 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
 
+  "Current user's Apply admission state and blocking application"
+  communityApplicationState: CommunityApplicationState!
+
+  "One Community Application owned by the current user"
+  communityApplication(ref: ID!): CommunityApplication
+
+  "Reviewer-scoped detail for any Community Application"
+  reviewCommunityApplication(ref: ID!): CommunityApplication
+
+  "Reviewer-scoped Community Application queue"
+  pagedCommunityApplications(filter: CommunityApplicationsFilter!, after: String, first: Int): CommunityApplicationConnection!
+
+  "Server-trusted origin metadata for an Application Logo"
+  communityApplicationLogoOriginInfo(publicRef: ID!): ApplicationLogoOriginInfo
+
   "Current Article Trash memberships"
   trashedArticles(community: String!, thread: Thread!, filter: TrashFilter): PagedTrashedArticles
 
@@ -148,14 +163,11 @@ type RootQueryType {
   "paged article references for one community asset"
   communityAssetRefs(community: String!, assetId: ID!, filter: PagiFilter): PagedArticleDocumentAssetRefs
 
-  "server-trusted public-read origin metadata for one community asset"
+  "service-scoped public-read origin metadata for one community asset"
   communityAssetOriginInfo(publicRef: String!): CommunityAssetOriginInfo
 
   "Get all passport rules available to the current user."
   allPassportRules: AllRules
-
-  "if use has pending apply"
-  hasPendingCommunityApply: CheckState
 
   "if the community exist or not"
   isCommunityExist(slug: String!): CheckState
@@ -317,6 +329,33 @@ type RootMutationType {
   "mark all unread message as read"
   markReadAll(type: MailboxType): Done
 
+  "Create an Application-scoped Community Logo upload intent"
+  createCommunityApplicationLogoUploadIntent(input: ApplicationLogoUploadInput!): ApplicationLogoUploadIntent!
+
+  "Complete an Application Logo upload from Assets Hub"
+  completeCommunityApplicationLogoUpload(input: CommunityApplicationLogoCompletionInput!): ApplicationLogoUploadCompletion!
+
+  "Submit a new Community Application"
+  submitCommunityApplication(input: CommunityApplicationInput!, idempotencyKey: String!): CommunityApplication!
+
+  "Cancel an owned Community Application"
+  cancelCommunityApplication(ref: ID!, expectedVersion: Int!): CommunityApplication!
+
+  "Move a submitted Application into review"
+  startCommunityApplicationReview(ref: ID!, expectedVersion: Int!): CommunityApplication!
+
+  "Approve a reviewed Community Application"
+  approveCommunityApplication(ref: ID!, expectedVersion: Int!, note: String): CommunityApplication!
+
+  "Reject a reviewed Community Application"
+  rejectCommunityApplication(ref: ID!, expectedVersion: Int!, reasonCode: String!, note: String): CommunityApplication!
+
+  "Retry Community identity creation for a failed Application"
+  retryCommunityCreation(ref: ID!, expectedVersion: Int!): CommunityApplication!
+
+  "Retry Community setup for a failed Application"
+  retryCommunitySetup(ref: ID!, expectedVersion: Int!): CommunityApplication!
+
   "create a global community"
   createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
 
@@ -337,17 +376,6 @@ type RootMutationType {
 
   "delete an unreferenced community asset from the asset library"
   deleteCommunityAsset(community: String!, id: ID!): CommunityAsset
-
-  "apply to create a community"
-  applyCommunity(
-    title: String!, desc: String!, slug: String!, logo: String!, locale: String, applyMsg: String, applyCategory: String
-  ): Community
-
-  "approve the apply to create a community"
-  approveCommunityApply(community: String!): Community
-
-  "deny the apply to create a community"
-  denyCommunityApply(community: String!): Community
 
   "create category"
   createCategory(community: String!, title: String!, slug: String!): Category
@@ -1369,6 +1397,203 @@ type CheckState {
 type DoneState {
   "Whether the requested operation completed successfully."
   done: Boolean
+}
+
+enum CommunityApplicationStatus {
+  SUBMITTED
+  REVIEWING
+  APPROVED
+  CREATION_FAILED
+  SETTING_UP
+  SETUP_FAILED
+  CREATED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum CommunityApplicationCategory {
+  PRODUCT
+  GAMING
+  TEACH
+  GROUP
+}
+
+enum CommunityApplicationActorType {
+  APPLICANT
+  REVIEWER
+  JOB
+  SYSTEM
+}
+
+enum CommunityLifecycleState {
+  SETTING_UP
+  SETUP_FAILED
+  ACTIVE
+  READ_ONLY
+  SUSPENDED
+  ARCHIVED
+  SCHEDULED_RECLAIM
+  DESTROY
+}
+
+type CommunityApplicationActor {
+  publicRef: ID!
+}
+
+type CommunityApplicationCommunity {
+  publicRef: ID!
+  slug: String!
+}
+
+type CommunityApplicationLogo {
+  applicationUploadRef: ID!
+  communityAssetRef: ID
+  url: String!
+}
+
+type CommunityApplicationJobError {
+  reasonCode: String!
+  message: String!
+  operationRef: ID
+  occurredAt: DateTime
+  attempt: Int
+}
+
+type CommunityApplicationEvent {
+  fromStatus: CommunityApplicationStatus
+  toStatus: CommunityApplicationStatus!
+  actorType: CommunityApplicationActorType!
+  actor: CommunityApplicationActor
+  reasonCode: String
+  operationRef: ID
+  occurredAt: DateTime!
+}
+
+type CommunityApplicationEventEdge {
+  cursor: String!
+  node: CommunityApplicationEvent!
+}
+
+type CommunityApplicationPageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type CommunityApplicationEventConnection {
+  edges: [CommunityApplicationEventEdge!]!
+  pageInfo: CommunityApplicationPageInfo!
+}
+
+type CommunityApplication {
+  publicRef: ID!
+  status: CommunityApplicationStatus!
+  version: Int!
+  applicant: CommunityApplicationActor!
+  reviewer: CommunityApplicationActor
+  title: String!
+  slug: String!
+  desc: String!
+  logo: CommunityApplicationLogo!
+  locale: String!
+  applyCategory: CommunityApplicationCategory!
+  applyMessage: String
+  submittedAt: DateTime!
+  expiresAt: DateTime
+  reviewedAt: DateTime
+  setupStartedAt: DateTime
+  completedAt: DateTime
+  updatedAt: DateTime!
+  decisionReasonCode: String
+  decisionNote: String
+  community: CommunityApplicationCommunity
+  lastJobError: CommunityApplicationJobError
+  events(first: Int, after: String): CommunityApplicationEventConnection!
+}
+
+type CommunityApplicationEdge {
+  cursor: String!
+  node: CommunityApplication!
+}
+
+type CommunityApplicationConnection {
+  edges: [CommunityApplicationEdge!]!
+  pageInfo: CommunityApplicationPageInfo!
+}
+
+type CommunityApplicationPolicy {
+  allowed: Boolean!
+  reasonCode: String
+  retryAt: DateTime
+  metadata: Json!
+}
+
+type CommunityApplicationState {
+  canApply: CommunityApplicationPolicy!
+  currentApplication: CommunityApplication
+  latestFailedApplication: CommunityApplication
+}
+
+input CommunityApplicationInput {
+  title: String!
+  slug: String!
+  desc: String!
+  logoAssetRef: ID!
+  locale: String!
+  applyCategory: CommunityApplicationCategory!
+  applyMessage: String
+}
+
+input ApplicationLogoUploadInput {
+  fileName: String!
+  mimeType: String!
+  sizeBytes: Int!
+}
+
+type ApplicationLogoUploadIntent {
+  uploadRef: ID!
+  objectKey: String!
+  canonicalUrl: String!
+  capability: String!
+  expiresAt: DateTime!
+  maxSizeBytes: Int!
+  allowedMimeTypes: [String!]!
+}
+
+type ApplicationLogoUploadCompletion {
+  uploadRef: ID!
+  status: String!
+  url: String!
+  finalizedAt: DateTime!
+}
+
+type ApplicationLogoOriginInfo {
+  publicRef: ID!
+  status: String!
+  filename: String
+  mimeType: String
+  sizeBytes: Int
+  storage: String
+  storageKey: String
+}
+
+input CommunityApplicationLogoCompletionInput {
+  uploadRef: ID!
+  storage: String!
+  storageKey: String!
+  url: String!
+  contentHash: String!
+  mimeType: String!
+  sizeBytes: Int!
+}
+
+input CommunityApplicationsFilter {
+  statuses: [CommunityApplicationStatus!]
+  applicantRef: ID
+  reviewerRef: ID
+  slug: String
+  submittedFrom: DateTime
+  submittedTo: DateTime
 }
 
 type TrashedArticle {
@@ -2573,6 +2798,8 @@ type Community {
 
   "Whether the current viewer is a moderator of this community."
   viewerIsModerator: Boolean
+
+  lifecycleState: CommunityLifecycleState
 
   pending: Int
 

@@ -12,12 +12,14 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
 
     field :press_article, :press_article do
       arg(:article, non_null(:article_path_input))
+      middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:article:read")
       resolve(&R.CMS.press_article/3)
     end
 
     field :press_community_rss_feed, :press_community_rss_feed do
       arg(:community, non_null(:string))
       arg(:input, non_null(:press_community_rss_feed_input))
+      middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:rss-feed:read")
       resolve(&R.CMS.press_community_rss_feed/3)
     end
 
@@ -25,11 +27,13 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))
       arg(:input, non_null(:press_thread_rss_feed_input))
+      middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:rss-feed:read")
       resolve(&R.CMS.press_thread_rss_feed/3)
     end
 
     field :press_site_manifest, :press_site_manifest do
       arg(:community, non_null(:string))
+      middleware(M.ServiceScope, audience: "phoenix:press-api", scope: "press:site:read")
       resolve(&R.CMS.press_site_manifest/3)
     end
   end

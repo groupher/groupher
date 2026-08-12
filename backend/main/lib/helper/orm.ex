@@ -31,6 +31,7 @@ defmodule Helper.ORM do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Communities.Read
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
@@ -642,10 +643,10 @@ defmodule Helper.ORM do
       {:ok, %Community{}}
   """
   def find_community(slug) do
-    Community
-    # |> where([c], c.pending == ^@community_normal)
+    Read.scope(Community)
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
+    |> preload(:lifecycle)
     |> preload(moderators: :user)
     |> Repo.one()
     |> done

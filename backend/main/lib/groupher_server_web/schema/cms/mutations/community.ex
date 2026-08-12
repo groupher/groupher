@@ -8,6 +8,91 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
   use Helper.GqlSchemaSuite
 
   object :cms_mutation_community do
+    @desc "Create an Application-scoped Community Logo upload intent"
+    field :create_community_application_logo_upload_intent,
+          non_null(:application_logo_upload_intent) do
+      arg(:input, non_null(:application_logo_upload_input))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.create_community_application_logo_upload_intent/3)
+    end
+
+    @desc "Complete an Application Logo upload from Assets Hub"
+    field :complete_community_application_logo_upload,
+          non_null(:application_logo_upload_completion) do
+      arg(:input, non_null(:community_application_logo_completion_input))
+
+      middleware(M.ServiceScope,
+        audience: "phoenix:assets-api",
+        scope: "assets:application-upload:complete"
+      )
+
+      resolve(&R.CMS.complete_community_application_logo_upload/3)
+    end
+
+    @desc "Submit a new Community Application"
+    field :submit_community_application, non_null(:community_application) do
+      arg(:input, non_null(:community_application_input))
+      arg(:idempotency_key, non_null(:string))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.submit_community_application/3)
+    end
+
+    @desc "Cancel an owned Community Application"
+    field :cancel_community_application, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      middleware(M.Authorize, :login)
+      resolve(&R.CMS.cancel_community_application/3)
+    end
+
+    @desc "Move a submitted Application into review"
+    field :start_community_application_review, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.review")
+      resolve(&R.CMS.start_community_application_review/3)
+    end
+
+    @desc "Approve a reviewed Community Application"
+    field :approve_community_application, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      arg(:note, :string)
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.approve")
+      resolve(&R.CMS.approve_community_application/3)
+    end
+
+    @desc "Reject a reviewed Community Application"
+    field :reject_community_application, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      arg(:reason_code, non_null(:string))
+      arg(:note, :string)
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.reject")
+      resolve(&R.CMS.reject_community_application/3)
+    end
+
+    @desc "Retry Community identity creation for a failed Application"
+    field :retry_community_creation, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.retry_creation")
+      resolve(&R.CMS.retry_community_creation/3)
+    end
+
+    @desc "Retry Community setup for a failed Application"
+    field :retry_community_setup, non_null(:community_application) do
+      arg(:ref, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.application.retry_setup")
+      resolve(&R.CMS.retry_community_setup/3)
+    end
+
     @desc "create a global community"
     field :create_community, :community do
       arg(:title, non_null(:string))
@@ -78,7 +163,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :complete_community_asset_upload, :community_asset do
       arg(:input, non_null(:community_asset_upload_completion_input))
 
-      middleware(M.ServerTrust)
+      middleware(M.ServiceScope,
+        audience: "phoenix:assets-api",
+        scope: "assets:upload:complete"
+      )
 
       resolve(&R.CMS.complete_community_asset_upload/3)
     end
@@ -93,39 +181,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.delete_community_asset/3)
-    end
-
-    @desc "apply to create a community"
-    field :apply_community, :community do
-      arg(:title, non_null(:string))
-      arg(:desc, non_null(:string))
-      arg(:slug, non_null(:string))
-      arg(:logo, non_null(:string))
-      arg(:locale, :string)
-      arg(:apply_msg, :string)
-      arg(:apply_category, :string)
-
-      middleware(M.Authorize, :login)
-      resolve(&R.CMS.apply_community/3)
-    end
-
-    @desc "approve the apply to create a community"
-    field :approve_community_apply, :community do
-      arg(:community, non_null(:string))
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.apply.approve")
-      resolve(&R.CMS.approve_community_apply/3)
-    end
-
-    @desc "deny the apply to create a community"
-    field :deny_community_apply, :community do
-      arg(:community, non_null(:string))
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.apply.deny")
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.deny_community_apply/3)
     end
 
     @desc "create category"

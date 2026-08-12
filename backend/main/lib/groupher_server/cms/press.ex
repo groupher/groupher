@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Press do
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Communities.Read
   alias CMS.Model.{ArticleBranch, Community, Doc, DocPublishRelease, DocTreeNode, PressConfig}
   alias Helper.{Constant, Later}
 
@@ -23,13 +24,12 @@ defmodule GroupherServer.CMS.Press do
   @threads [:post, :blog, :changelog, :doc]
   @public_stage CMS.Const.stage(:public)
   @audit_legal Constant.CMS.pending(:legal)
-  @community_normal Constant.CMS.pending(:normal)
   @site_host get_config(:general, :site_host)
   @manifest_limit 500
 
   @spec config(Community.t() | String.t()) :: {:ok, PressConfig.t() | map()} | {:error, term()}
   def config(community) do
-    with {:ok, community} <- community(community) do
+    with {:ok, community} <- internal_community(community) do
       case Repo.get_by(PressConfig, community_id: community.id) do
         %PressConfig{} = config -> {:ok, config}
         nil -> {:ok, legacy_config(community)}
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Press do
   @spec update_config(Community.t() | String.t(), map(), User.t() | nil) ::
           {:ok, PressConfig.t()} | {:error, term()}
   def update_config(community, attrs, actor) do
-    with {:ok, community} <- community(community),
+    with {:ok, community} <- internal_community(community),
          {:ok, current} <- config(community) do
       attrs = normalize_config_attrs(attrs)
 
@@ -109,12 +109,19 @@ defmodule GroupherServer.CMS.Press do
 
   def invalidate(slug) when is_binary(slug) do
     endpoint = System.get_env("PRESS_INTERNAL_URL")
-    token = System.get_env("PRESS_INTERNAL_TOKEN")
 
-    if is_binary(endpoint) and endpoint != "" and is_binary(token) and token != "" do
+    token =
+      GroupherServer.ServiceIdentity.Client.token(
+        System.get_env("PRESS_INTERNAL_RESOURCE") || "https://press.groupher.com/internal",
+        ["press:cache:invalidate"]
+      )
+
+    if is_binary(endpoint) and endpoint != "" and match?({:ok, _}, token) do
+      {:ok, token} = token
+
       case Req.post("#{String.trim_trailing(endpoint, "/")}/internal/invalidate",
              json: %{community: slug},
-             headers: [{"x-press-internal-token", token}],
+             headers: [{"authorization", "Bearer #{token}"}],
              receive_timeout: 5_000
            ) do
         {:ok, %{status: status}} when status in 200..299 -> :ok
@@ -129,7 +136,7 @@ defmodule GroupherServer.CMS.Press do
   @spec article(map()) :: {:ok, map()} | {:error, term()}
   def article(%{community: community_ref, thread: thread, inner_id: inner_id})
       when thread in @threads do
-    with {:ok, community} <- community(community_ref),
+    with {:ok, community} <- public_community(community_ref),
          :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :markdown_enabled),
@@ -144,7 +151,7 @@ defmodule GroupherServer.CMS.Press do
   @spec community_rss_feed(Community.t() | String.t(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
   def community_rss_feed(community, opts \\ %{}) do
-    with {:ok, community} <- community(community),
+    with {:ok, community} <- public_community(community),
          :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :feed_enabled) do
@@ -162,7 +169,7 @@ defmodule GroupherServer.CMS.Press do
   def thread_rss_feed(community, thread, opts \\ %{})
 
   def thread_rss_feed(community, thread, opts) when thread in @threads do
-    with {:ok, community} <- community(community),
+    with {:ok, community} <- public_community(community),
          :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :feed_enabled),
@@ -179,7 +186,7 @@ defmodule GroupherServer.CMS.Press do
 
   @spec site_manifest(Community.t() | String.t()) :: {:ok, map()} | {:error, term()}
   def site_manifest(community) do
-    with {:ok, community} <- community(community),
+    with {:ok, community} <- public_community(community),
          :ok <- ensure_community_public(community),
          {:ok, config} <- config(community) do
       threads = selected_threads(community, @threads)
@@ -440,14 +447,39 @@ defmodule GroupherServer.CMS.Press do
     :crypto.hash(:sha256, value) |> Base.encode16(case: :lower)
   end
 
-  defp community(%Community{} = community), do: {:ok, Repo.preload(community, :dashboard)}
+  defp internal_community(%Community{} = community),
+    do: {:ok, Repo.preload(community, [:dashboard, :lifecycle])}
 
-  defp community(slug) when is_binary(slug) do
+  defp internal_community(slug) when is_binary(slug) do
     Community
     |> Repo.get_by(slug: slug)
     |> case do
       nil -> {:error, {:not_exist, "Community"}}
-      community -> {:ok, Repo.preload(community, :dashboard)}
+      community -> {:ok, Repo.preload(community, [:dashboard, :lifecycle])}
+    end
+  end
+
+  defp public_community(%Community{id: id}), do: public_community_by_id(id)
+
+  defp public_community(slug) when is_binary(slug) do
+    Read.scope(Community)
+    |> where([c], c.slug == ^slug or c.aka == ^slug)
+    |> preload([:dashboard, :lifecycle])
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, "Public Community"}}
+      community -> {:ok, community}
+    end
+  end
+
+  defp public_community_by_id(id) when is_integer(id) do
+    Read.scope(Community)
+    |> where([c], c.id == ^id)
+    |> preload([:dashboard, :lifecycle])
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, "Public Community"}}
+      community -> {:ok, community}
     end
   end
 
@@ -526,8 +558,11 @@ defmodule GroupherServer.CMS.Press do
     if Map.get(config, field), do: :ok, else: {:error, {:custom, "Press output is disabled"}}
   end
 
-  defp ensure_community_public(%{pending: @community_normal}), do: :ok
-  defp ensure_community_public(_), do: {:error, {:not_exist, "Public Community"}}
+  defp ensure_community_public(%Community{} = community) do
+    if Read.public?(community),
+      do: :ok,
+      else: {:error, {:not_exist, "Public Community"}}
+  end
 
   defp bounded_limit(value, configured) when is_integer(value), do: min(max(value, 1), configured)
   defp bounded_limit(_, configured), do: configured

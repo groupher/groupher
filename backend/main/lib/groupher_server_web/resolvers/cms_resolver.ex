@@ -37,6 +37,148 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community ..
   # #######################
+  def community_application_state(_root, _args, %{context: %{cur_user: user}}) do
+    with {:ok, current} <- CMS.CommunityApplications.current(user),
+         {:ok, latest_failed} <- CMS.CommunityApplications.latest_failed(user) do
+      policy = CMS.CommunityApplications.can_apply(user)
+
+      {:ok,
+       %{
+         can_apply: %{policy | reason_code: stringify(policy.reason_code)},
+         current_application: current,
+         latest_failed_application: latest_failed
+       }}
+    end
+  end
+
+  def community_application(_root, %{ref: public_ref}, %{context: %{cur_user: user}}) do
+    CMS.CommunityApplications.get_owned(public_ref, user) |> application_result()
+  end
+
+  def review_community_application(_root, %{ref: public_ref}, %{
+        context: %{cur_user: reviewer}
+      }) do
+    CMS.CommunityApplications.review_detail(public_ref, reviewer) |> application_result()
+  end
+
+  def paged_community_applications(_root, args, %{context: %{cur_user: reviewer}}) do
+    filter =
+      args
+      |> Map.get(:filter, %{})
+      |> Map.put(:first, Map.get(args, :first, 20))
+      |> Map.put(:after, Map.get(args, :after))
+      |> normalize_application_filter()
+
+    with {:ok, page} <- CMS.CommunityApplications.review_queue(filter, reviewer) do
+      {:ok, connection(page.entries, page.has_next_page, &application_cursor/1)}
+    else
+      error -> application_result(error)
+    end
+  end
+
+  def create_community_application_logo_upload_intent(
+        _root,
+        %{input: input},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.CommunityApplications.create_logo_upload_intent(input, user) |> application_result()
+  end
+
+  def complete_community_application_logo_upload(_root, %{input: input}, _info) do
+    CMS.CommunityApplications.complete_logo_upload(input) |> application_result()
+  end
+
+  def submit_community_application(
+        _root,
+        %{input: input, idempotency_key: idempotency_key},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.CommunityApplications.submit(input, user, idempotency_key) |> application_result()
+  end
+
+  def cancel_community_application(
+        _root,
+        %{ref: public_ref, expected_version: expected_version},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.CommunityApplications.cancel(public_ref, user, expected_version) |> application_result()
+  end
+
+  def start_community_application_review(
+        _root,
+        %{ref: public_ref, expected_version: expected_version},
+        %{context: %{cur_user: reviewer}}
+      ) do
+    CMS.CommunityApplications.start_review(public_ref, reviewer, expected_version)
+    |> application_result()
+  end
+
+  def approve_community_application(_root, args, %{context: %{cur_user: reviewer}}) do
+    metadata = %{note: Map.get(args, :note)}
+
+    CMS.CommunityApplications.approve(args.ref, reviewer, args.expected_version, metadata)
+    |> application_result()
+  end
+
+  def reject_community_application(_root, args, %{context: %{cur_user: reviewer}}) do
+    reason = %{reason_code: args.reason_code, note: Map.get(args, :note)}
+
+    CMS.CommunityApplications.reject(args.ref, reviewer, args.expected_version, reason)
+    |> application_result()
+  end
+
+  def retry_community_creation(_root, args, %{context: %{cur_user: reviewer}}) do
+    CMS.CommunityApplications.retry_creation(args.ref, reviewer, args.expected_version)
+    |> application_result()
+  end
+
+  def retry_community_setup(_root, args, %{context: %{cur_user: reviewer}}) do
+    CMS.Communities.retry_setup(args.ref, reviewer, args.expected_version)
+    |> application_result()
+  end
+
+  def community_application_logo(application, _args, _info),
+    do: CMS.CommunityApplications.logo(application) |> application_result()
+
+  def application_applicant(application, _args, _info),
+    do: CMS.CommunityApplications.applicant(application) |> application_result()
+
+  def application_reviewer(application, _args, _info),
+    do: CMS.CommunityApplications.reviewer(application) |> application_result()
+
+  def application_community(application, _args, _info),
+    do: CMS.CommunityApplications.application_community(application) |> application_result()
+
+  def community_application_events(application, args, _info) do
+    with {:ok, page} <- CMS.CommunityApplications.events(application, args) do
+      {:ok, connection(page.entries, page.has_next_page, &event_cursor/1)}
+    else
+      error -> application_result(error)
+    end
+  end
+
+  def application_actor_ref(actor, _args, _info), do: {:ok, actor.login}
+  def application_community_ref(community, _args, _info), do: {:ok, community.slug}
+
+  def application_job_error(%{last_job_error: nil}, _args, _info), do: {:ok, nil}
+
+  def application_job_error(%{last_job_error: error}, _args, _info) do
+    {:ok,
+     %{
+       reason_code: error["reason_code"],
+       message: error["message"],
+       operation_ref: error["operation_ref"],
+       occurred_at: error["occurred_at"],
+       attempt: error["attempt"]
+     }}
+  end
+
+  def application_event_actor(event, _args, _info),
+    do: CMS.CommunityApplications.event_actor(event) |> application_result()
+
+  def community_application_logo_origin_info(_root, %{public_ref: public_ref}, _info),
+    do: CMS.CommunityApplications.logo_origin(public_ref) |> application_result()
+
   def press_config(_root, %{community: community}, _info), do: CMS.Press.config(community)
 
   def update_press_config(_root, %{input: %{community: community} = input}, %{
@@ -452,28 +594,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 
-  def delete_community(_root, %{community: community}, _info) do
-    Community |> ORM.find_delete!(community.id)
-  end
-
-  def apply_community(_root, args, %{context: %{cur_user: user}}) do
-    CMS.Communities.apply(args, user)
-  end
-
-  def approve_community_apply(_root, %{community: community}, _) do
-    CMS.Communities.approve_apply(community)
-  end
-
-  def deny_community_apply(_root, %{community: community}, _) do
-    CMS.Communities.deny_apply(community.id)
+  def delete_community(_root, %{community: %Community{} = community}, %{
+        context: %{cur_user: user}
+      }) do
+    with {:ok, true} <- CMS.Gate.check(user, :archive, community),
+         {:ok, _blocker} <-
+           CMS.Communities.archive(community.slug, operation_ref: Ecto.UUID.generate()),
+         {:ok, archived} <- CMS.Communities.read_all(community.slug, inc_views: false) do
+      {:ok, archived}
+    end
   end
 
   def community_exist?(_root, %{slug: slug}, _) do
     CMS.Communities.exist?(slug)
-  end
-
-  def has_pending_community_apply?(_root, _, %{context: %{cur_user: user}}) do
-    CMS.Communities.has_pending_apply?(user)
   end
 
   def cover_edit_info(%{cover_edit_info_id: nil}, _, _), do: {:ok, nil}
@@ -1290,4 +1423,64 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp article_path_community(_), do: {:error, "invalid article input"}
+
+  defp normalize_application_filter(filter) do
+    filter
+    |> maybe_put_actor_id(:applicant_ref, :applicant_id)
+    |> maybe_put_actor_id(:reviewer_ref, :reviewer_id)
+  end
+
+  defp maybe_put_actor_id(filter, public_key, id_key) do
+    case Map.get(filter, public_key) do
+      nil ->
+        filter
+
+      public_ref ->
+        case FrontDesk.user(public_ref) do
+          {:ok, user} -> Map.put(filter, id_key, user.id)
+          _ -> Map.put(filter, id_key, -1)
+        end
+    end
+  end
+
+  defp connection(entries, has_next_page, cursor_fun) do
+    edges =
+      Enum.map(entries, fn entry ->
+        %{cursor: opaque_cursor(cursor_fun.(entry)), node: entry}
+      end)
+
+    %{
+      edges: edges,
+      page_info: %{
+        end_cursor: edges |> List.last() |> then(&if(&1, do: &1.cursor, else: nil)),
+        has_next_page: has_next_page
+      }
+    }
+  end
+
+  defp application_cursor(application),
+    do: "#{DateTime.to_iso8601(application.submitted_at)}|#{application.public_ref}"
+
+  defp event_cursor(event), do: "#{DateTime.to_iso8601(event.occurred_at)}|#{event.id}"
+  defp opaque_cursor(value), do: value |> to_string() |> Base.url_encode64(padding: false)
+
+  defp application_result({:ok, value}), do: {:ok, value}
+
+  defp application_result({:error, reason}) do
+    reason_code = reason |> normalize_reason() |> Atom.to_string()
+
+    {:error,
+     [
+       message: reason_code,
+       extensions: %{code: Helper.ErrorCode.ecode(:custom), reasonCode: reason_code}
+     ]}
+  end
+
+  defp normalize_reason({reason, _metadata}) when is_atom(reason), do: reason
+  defp normalize_reason(reason) when is_atom(reason), do: reason
+  defp normalize_reason(_), do: :apply_not_allowed
+
+  defp stringify(nil), do: nil
+  defp stringify(value) when is_atom(value), do: Atom.to_string(value)
+  defp stringify(value), do: to_string(value)
 end
