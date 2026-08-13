@@ -102,7 +102,7 @@ test.describe('Auth V1 browser protocol', () => {
     request,
   }) => {
     await testLogin(page)
-    await page.goto(`${DASH_ORIGIN}/home/dash/overview`)
+    await page.goto(`${DASH_ORIGIN}/home/overview`)
     await expect(page.getByTestId('dashboard-overview-title')).toBeVisible()
     await clearAccessCookie(context)
 
@@ -124,7 +124,7 @@ test.describe('Auth V1 browser protocol', () => {
     request,
   }) => {
     await testLogin(page)
-    await page.goto(`${DASH_ORIGIN}/home/dash/overview`)
+    await page.goto(`${DASH_ORIGIN}/home/overview`)
     await expect(page.getByTestId('dashboard-overview-title')).toBeVisible()
 
     const expireResponse = await request.post(`${MOCK_ORIGIN}/__e2e/auth/expire-access`)
@@ -156,8 +156,8 @@ test.describe('Auth V1 browser protocol', () => {
       await testLogin(pageA)
       await testLogin(pageB)
       await Promise.all([
-        pageA.goto(`${DASH_ORIGIN}/home/dash/overview`),
-        pageB.goto(`${DASH_ORIGIN}/home/dash/overview`),
+        pageA.goto(`${DASH_ORIGIN}/home/overview`),
+        pageB.goto(`${DASH_ORIGIN}/home/overview`),
       ])
       const state = await readState(request)
       const browserB = state.sessions.find((session) => session.browserFamily === 'E2E Browser B')
@@ -207,12 +207,31 @@ test.describe('Auth V1 browser protocol', () => {
       if (req.url() === `${AUTH_ORIGIN}/api/auth/token/refresh`) refreshRequests.push(req.url())
     })
 
-    const response = await page.goto(`${DASH_ORIGIN}/home/dash/overview`)
+    const response = await page.goto(`${DASH_ORIGIN}/home/overview`)
     expect(await response?.text()).toContain('Restoring your session')
     await expect(page.getByTestId('dashboard-overview-title')).toBeVisible()
 
     expect(refreshRequests).toHaveLength(1)
     expect((await readState(request)).stats.refreshCalls).toBe(1)
+  })
+
+  test('P0 keeps the account visible after callback cookies reach the application', async ({
+    context,
+    page,
+  }) => {
+    await testLogin(page)
+
+    expect((await context.cookies()).map((cookie) => cookie.name)).toEqual(
+      expect.arrayContaining([ACCESS_COOKIE, HINT_COOKIE, SESSION_COOKIE]),
+    )
+
+    await page.goto(`${DASH_ORIGIN}/home/overview`)
+    await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0)
+
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0)
   })
 
   test('P1 logout revokes the session, clears cookies, and signs out a sibling tab', async ({
@@ -223,8 +242,8 @@ test.describe('Auth V1 browser protocol', () => {
     await testLogin(page)
     const sibling = await context.newPage()
     await Promise.all([
-      page.goto(`${DASH_ORIGIN}/home/dash/overview`),
-      sibling.goto(`${DASH_ORIGIN}/home/dash/overview`),
+      page.goto(`${DASH_ORIGIN}/home/overview`),
+      sibling.goto(`${DASH_ORIGIN}/home/overview`),
     ])
     await openAccountMenu(page)
     await page.getByRole('button', { name: /log out/i }).click()
@@ -253,7 +272,7 @@ test.describe('Auth V1 browser protocol', () => {
       await testLogin(pageC)
       await Promise.all(
         [pageA, pageB, pageC].map((currentPage) =>
-          currentPage.goto(`${DASH_ORIGIN}/home/dash/overview`),
+          currentPage.goto(`${DASH_ORIGIN}/home/overview`),
         ),
       )
       await openAccountMenu(pageA)
