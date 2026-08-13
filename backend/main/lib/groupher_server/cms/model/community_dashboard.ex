@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a
-  @optional_fields ~w(base_info wallpaper seo layout enable thread_emotions rss header_links footer_links footer_oneline_links social_links doc_faq third_party_analytics umami_website_id)a
 
   def default do
     %{
@@ -93,9 +92,6 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
 
   @doc false
   def update_changeset(%CommunityDashboard{} = community_dashboard, attrs) do
-    community_dashboard
-    |> cast(attrs, @optional_fields ++ @required_fields)
-
-    # |> cast(attrs, @optional_fields ++ @required_fields)
+    cast(community_dashboard, attrs, [:umami_website_id])
   end
 end

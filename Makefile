@@ -149,7 +149,7 @@ be.install:
 	cd ./backend/main && mix deps.get 
 
 be.start:
-	cd ./backend/main && MIX_ENV=mock mix phx.server
+	cd ./backend/main && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
 
 # generate graphql schema (SDL) and link it for the mock server
 be.gen.schema:
@@ -174,7 +174,7 @@ be.watch.wip2:
 	cd ./backend/main && mix test --listen-on-stdin --stale --only wip2
 
 be.mock.start: 
-	cd ./backend/main && MIX_ENV=mock mix phx.server
+	cd ./backend/main && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
 
 be.migrate:
 	cd ./backend/main && mix ecto.migrate && cd -
