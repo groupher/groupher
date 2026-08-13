@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.ViewerState do
   @moduledoc """
   Projects viewer-specific state onto comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> ViewerState
+        -> Repo / domain event
   """
 
   alias GroupherServer.Accounts.Model.User

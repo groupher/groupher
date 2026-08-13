@@ -32,6 +32,7 @@ const localeAliases: Record<TLocale, keyof typeof localeLoaders> = {
   [LOCALE.ES]: 'en',
 } as const
 
+/** Returns i18n namespaces by metric for the frontend shared workflow. */
 export const getI18nNamespacesByMetric = (metric?: TMetric): TI18nNamespace[] => {
   switch (metric) {
     case METRIC.DASHBOARD:
@@ -43,6 +44,7 @@ export const getI18nNamespacesByMetric = (metric?: TMetric): TI18nNamespace[] =>
   }
 }
 
+/** Loads locale file for the frontend shared workflow. */
 export async function loadLocaleFile(
   locale: TLocale = LOCALE.EN,
   namespaces: readonly TI18nNamespace[] = DEFAULT_NAMESPACES,

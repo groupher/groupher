@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
 
   Provides dashboard section updates such as base info, SEO, layout, links,
   theme presets, RSS options, media reports, and FAQ content.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Dashboard
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

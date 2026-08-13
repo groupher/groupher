@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.SlugClaims do
-  @moduledoc "Database-backed ownership for the shared community slug namespace."
+  @moduledoc """
+  Database-backed ownership for the shared community slug namespace.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> SlugClaims
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Lifecycle do
-  @moduledoc "State, blocker and capability authority for Community availability."
+  @moduledoc """
+  State, blocker and capability authority for Community availability.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Lifecycle
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

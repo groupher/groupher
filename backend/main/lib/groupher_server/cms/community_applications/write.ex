@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Write do
-  @moduledoc "Transactional submission, cancellation, and expiry operations."
+  @moduledoc """
+  Transactional submission, cancellation, and expiry operations.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Write
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

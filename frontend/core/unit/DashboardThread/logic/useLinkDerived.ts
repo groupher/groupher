@@ -17,6 +17,7 @@ export type TRet = {
   isFooterLayoutTouched: boolean
 }
 
+/** Exposes link derived state and actions through the shared React hook boundary. */
 export default function useLinkDerived(): TRet {
   const dsb$ = useDashboard()
   const { isChanged } = useHelper()

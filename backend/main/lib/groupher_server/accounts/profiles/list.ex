@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Profiles.List do
 
   The module keeps profile-page pagination, default community suggestions, and
   subscribed-community reads under the account namespace.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> List
+        -> Repo
   """
 
   import Ecto.Query, warn: false

@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   Cleanup helpers for seed data reset.
 
   Use this only from seed/setup flows where destructive cleanup is expected.
+
+  Business position:
+
+      Seed task
+        -> CleanUp
+        -> CMS context
+        -> Repo
   """
 
   import Ecto.Query, warn: false

@@ -19,6 +19,13 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   tree and site dirty state, but it should not invalidate an editor
   `baseRevision`. Doc content mutations only bump the site draft version through
   `bump_site_draft/1`.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Revision
+        -> Repo / published projection
   """
 
   alias Ecto.Multi

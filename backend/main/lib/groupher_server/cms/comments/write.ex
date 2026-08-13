@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Write do
   @moduledoc """
   CRUD operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Write
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

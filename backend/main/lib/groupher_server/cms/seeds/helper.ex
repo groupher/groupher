@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   Seed modules use this for reusable lookup, randomization, and fixture helpers
   while keeping runtime helpers separate.
+
+  Business position:
+
+      Seed task
+        -> Helper
+        -> CMS context
+        -> Repo
   """
 
   import ShortMaps

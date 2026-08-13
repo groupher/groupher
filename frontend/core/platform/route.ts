@@ -94,6 +94,7 @@ const parseSearchKeys = (
   return next
 }
 
+/** Runs the to dsb target from path operation at the frontend shared boundary. */
 export const toDsbTargetFromPath = (rawPath: string): TDsbRouteTarget | null => {
   if (!rawPath) return null
 
@@ -114,10 +115,13 @@ export const toDsbTargetFromPath = (rawPath: string): TDsbRouteTarget | null => 
   }
 }
 
+/** Reports whether dsb root segment at the frontend shared boundary. */
 export const isDsbRootSegment = (value: string): value is TDsbRouteRootSegment =>
   value === 'dashboard' || value === 'dash'
 
+/** Parses dsb pathname into the canonical frontend shared representation. */
 export const parseDsbPathname = (pathname: string): TRouteMeta | null => {
+  /** Reports whether dsb root segment at the frontend shared boundary. */
   const normalized = trimPath(pathname)
   const segments = normalized.split('/').filter(Boolean)
 
@@ -288,8 +292,10 @@ export const DSB_ROUTES = {
   section: createSectionWithSearch(),
 } as const
 
+/** Resolves dsb route without leaking frontend shared routing details to callers. */
 export const dsbRoutes = DSB_ROUTES
 
+/** Resolves dsb route without leaking frontend shared routing details to callers. */
 export const resolveDsbRoute = (
   target: TRouteTarget,
   options: {
@@ -316,6 +322,7 @@ export const resolveDsbRoute = (
   return `/${target.community}/${options.rootSegment}${normalizedSegment}${toSearchString(mergedSearch)}`
 }
 
+/** Reports whether active dsb route at the frontend shared boundary. */
 export const isActiveDsbRoute = (pathname: string, target: TRouteTarget): boolean => {
   const meta = parseDsbPathname(pathname)
   if (!meta) return false

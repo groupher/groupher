@@ -3,6 +3,12 @@ defmodule GroupherServer.Jobs do
   Application-facing facade for background jobs.
 
   Business modules should call this facade instead of `Oban.insert/2` directly.
+
+  Business position:
+
+      Application caller
+        -> Jobs
+        -> domain / infrastructure boundary
   """
 
   alias GroupherServer.Jobs
@@ -11,6 +17,7 @@ defmodule GroupherServer.Jobs do
 
   @type later_job :: {module(), atom(), list()}
 
+  @doc "Enqueues a compatibility job that invokes the encoded module/function/arguments tuple."
   @spec later(later_job()) :: {:ok, :pass}
   def later({mod, func, args} = job) when is_atom(mod) and is_atom(func) and is_list(args) do
     if Config.skip_enqueue?() do
@@ -22,6 +29,7 @@ defmodule GroupherServer.Jobs do
     end
   end
 
+  @doc "Enqueues an artiment search-index update unless job insertion is disabled."
   @spec search_index(atom(), atom(), term()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
   def search_index(action, thread, ref) when is_atom(action) and is_atom(thread) do
     if Config.skip_enqueue?() do
@@ -34,6 +42,7 @@ defmodule GroupherServer.Jobs do
   end
 
   @spec snapshot_refresh(atom(), term(), keyword()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
+  @doc "Enqueues a snapshot refresh for the supplied resource kind and references."
   def snapshot_refresh(kind, refs, opts) when is_atom(kind) and is_list(opts) do
     if Config.skip_enqueue?() do
       {:ok, :pass}

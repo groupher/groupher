@@ -17,6 +17,13 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
 
       struct |> cast(attrs, fields) |> BgConfigValidator.validate()
 
+  Business position:
+
+      Dashboard/Cover GraphQL input
+        -> Ecto changeset
+        -> BgConfigValidator
+        -> valid embedded background config or field errors
+
   """
 
   import Ecto.Changeset
@@ -30,6 +37,7 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
   @pattern_ids 1..33 |> Enum.map(&String.pad_leading("#{&1}", 2, "0"))
   @pattern_tones ~w(dark light)
 
+  @doc "Validates every nested field in a dashboard or cover background changeset."
   def validate(changeset) do
     changeset
     |> validate_inclusion(:type, @wallpaper_types)

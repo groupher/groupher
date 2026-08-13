@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Collects do
   @moduledoc """
   Article collect helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Collects
+        -> Repo / domain event
   """
 
   import GroupherServer.CMS.Artiment.Matcher

@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.ServiceAuth.Verifier do
   @moduledoc """
   Verifies Auth-issued service access JWTs locally from a bounded JWKS cache.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Verifier
+        -> web or domain boundary
   """
 
   @cache_table :groupher_service_auth_jwks

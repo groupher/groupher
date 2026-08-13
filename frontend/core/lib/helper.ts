@@ -17,6 +17,7 @@ type TSortableItem = {
   group?: string
 }
 
+/** Runs the sort by key operation at the frontend shared boundary. */
 export const sortByKey = <T, K extends keyof T>(source: readonly T[], key: K): T[] => {
   if (isEmpty(source)) return []
 
@@ -33,7 +34,9 @@ export const sortByKey = <T, K extends keyof T>(source: readonly T[], key: K): T
   }, source)
 }
 
+/** Runs the sort by color operation at the frontend shared boundary. */
 export const sortByColor = (items: readonly TSortableItem[]) => sortByKey(items, 'color')
+/** Runs the sort by index operation at the frontend shared boundary. */
 export const sortByIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'index')
 
 /**
@@ -51,6 +54,7 @@ export const getRandomInt = (min: number, max: number): number => {
   return Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum
 }
 
+/** Runs the num2 percent operation at the frontend shared boundary. */
 export const num2Percent = (decimal: number): string => {
   if (!decimal) return '0%'
 
@@ -139,6 +143,7 @@ type TShareParam = {
   href?: string
   name?: string
 }
+/** Runs the open share window operation at the frontend shared boundary. */
 export const openShareWindow = (platformUrl: string, param: TShareParam): void => {
   const safeParam = []
 

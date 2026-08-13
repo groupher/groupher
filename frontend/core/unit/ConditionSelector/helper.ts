@@ -6,6 +6,7 @@ import type { TConditionMode, TTransKey } from '~/spec'
 
 import type { TActiveCondition, TMenuItem } from './spec'
 
+/** Returns menu items for the frontend shared workflow. */
 export const getMenuItems = (mode: TConditionMode): TMenuItem[] => {
   switch (mode) {
     case CONDITION_MODE.STATUS: {
@@ -26,10 +27,12 @@ export const getMenuItems = (mode: TConditionMode): TMenuItem[] => {
   }
 }
 
+/** Returns active menu item for the frontend shared workflow. */
 export const getActiveMenuItem = (items: TMenuItem[], active: TActiveCondition): TMenuItem => {
   return find((item) => item.key === active, items)
 }
 
+/** Returns title for the frontend shared workflow. */
 export const getTitle = (mode: TConditionMode): TTransKey => {
   switch (mode) {
     case CONDITION_MODE.STATUS: {

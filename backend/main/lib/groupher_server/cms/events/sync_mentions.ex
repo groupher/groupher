@@ -13,6 +13,13 @@ defmodule GroupherServer.CMS.Events.SyncMentions do
   The event payload carries the article or comment that changed. The handler is
   intentionally thin so parsing, persistence, and notification decisions remain
   owned by the mention domain modules.
+
+  Business position:
+
+      Domain write
+        -> CMS.Events
+        -> SyncMentions
+        -> bounded side effect
   """
 
   alias GroupherServer.CMS

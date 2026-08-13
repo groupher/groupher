@@ -16,6 +16,7 @@ const buildSearchObject = (searchParams: URLSearchParams): Record<string, string
   return search
 }
 
+/** Exposes doc editor url state and actions through the shared React hook boundary. */
 export default function useDocEditorUrl(): {
   currentDocId: string | null
   syncDocIdToUrl: (docId: string | null) => void

@@ -1,6 +1,17 @@
 defmodule GroupherServerWeb.Schema.Account.Mutations do
   @moduledoc """
-  accounts mutations
+  GraphQL mutation fields for account profile, Session, OAuth binding, follow,
+  collection, and mailbox writes.
+
+  The schema declares input and middleware contracts only; Accounts resolvers
+  and contexts own authorization-sensitive business behavior and persistence.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Mutations
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

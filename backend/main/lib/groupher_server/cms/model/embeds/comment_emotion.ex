@@ -1,12 +1,19 @@
 defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
   @moduledoc """
-  general fields for each emotion
+  Generates persisted counts and viewer projections for each comment emotion.
 
   e.g:
     field(:beer_count, :integer, default: 0)
     field(:beer_user_logins, :string)
     field(:viewer_has_beered, :boolean, default: false, virtual: true)
     embeds_many(:latest_beer_users, Embeds.User, on_replace: :delete)
+
+  Business position:
+
+      CMS context
+        -> Macros schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
     alias GroupherServer.CMS
 
@@ -31,7 +38,14 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article meta info for article-like content, like post ...
+  Embedded emotion counters and recent-user snapshots for a comment.
+
+  Business position:
+
+      Comment reaction write
+        -> CommentEmotion changeset
+        -> Comment row
+        -> Viewer-aware GraphQL projection
   """
   use Ecto.Schema
   use Accessible

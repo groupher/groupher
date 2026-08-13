@@ -16,6 +16,7 @@ const resetStats = () => ({
   signInCalls: 0,
 })
 
+/** Runs the reset auth state operation at the frontend shared boundary. */
 export const resetAuthState = () => {
   sessionSequence = 0
   tokenSequence = 0
@@ -58,6 +59,7 @@ const issueAccess = (session) => {
   }
 }
 
+/** Creates auth session from typed frontend shared inputs. */
 export const createAuthSession = (provider, metadata = {}) => {
   stats.signInCalls += 1
   const id = ++sessionSequence
@@ -84,11 +86,13 @@ export const createAuthSession = (provider, metadata = {}) => {
   return issueAccess(session)
 }
 
+/** Runs the refresh auth session operation at the frontend shared boundary. */
 export const refreshAuthSession = (ref) => {
   stats.refreshCalls += 1
   return issueAccess(activeSession(ref))
 }
 
+/** Lists auth sessions through the bounded frontend shared interface. */
 export const listAuthSessions = (currentRef) => {
   const current = activeSession(currentRef)
   return [...sessions.values()]
@@ -109,6 +113,7 @@ export const listAuthSessions = (currentRef) => {
     }))
 }
 
+/** Runs the revoke auth session operation at the frontend shared boundary. */
 export const revokeAuthSession = (ref) => {
   stats.revokeCalls += 1
   const session = activeSession(ref)
@@ -116,6 +121,7 @@ export const revokeAuthSession = (ref) => {
   return { done: true }
 }
 
+/** Runs the revoke auth session public operation at the frontend shared boundary. */
 export const revokeAuthSessionPublic = (currentRef, publicRef) => {
   stats.revokeCalls += 1
   const current = activeSession(currentRef)
@@ -127,6 +133,7 @@ export const revokeAuthSessionPublic = (currentRef, publicRef) => {
   return { done: true }
 }
 
+/** Runs the revoke other auth sessions operation at the frontend shared boundary. */
 export const revokeOtherAuthSessions = (currentRef) => {
   stats.revokeCalls += 1
   const current = activeSession(currentRef)
@@ -144,6 +151,7 @@ const readCookie = (cookieHeader, name) => {
   return null
 }
 
+/** Runs the record protected request operation at the frontend shared boundary. */
 export const recordProtectedRequest = (cookieHeader) => {
   stats.protectedCalls += 1
   const token = readCookie(cookieHeader, 'groupher-auth.token')
@@ -156,11 +164,13 @@ export const recordProtectedRequest = (cookieHeader) => {
   return null
 }
 
+/** Runs the expire access tokens operation at the frontend shared boundary. */
 export const expireAccessTokens = () => {
   const expiredAt = new Date(Date.now() - 1_000).toISOString()
   for (const access of accessTokens.values()) access.expiresAt = expiredAt
 }
 
+/** Returns auth state for the frontend shared workflow. */
 export const getAuthState = () => ({
   sessions: [...sessions.values()].map((session) => ({ ...session })),
   stats: { ...stats },

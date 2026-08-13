@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Publish.Comments do
 
   Comment publication remains owned by `CMS.Comments`; this module gives profile
   and mailbox surfaces a compact account namespace for paged reads.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Comments
+        -> Repo
   """
 
   alias GroupherServer.CMS

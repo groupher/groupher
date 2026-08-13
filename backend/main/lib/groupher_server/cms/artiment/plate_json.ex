@@ -7,6 +7,14 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
   inspect the persisted AST shape.
 
   See `docs/bulk-import/article-publish-import-refactor.md` for why Elixir does not serialize Plate.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> PlateJSON
+        -> Repo / domain event
   """
 
   @doc "Decodes a persisted Plate JSON root list without deriving content formats."

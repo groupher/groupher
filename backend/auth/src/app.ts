@@ -1,3 +1,14 @@
+/**
+ * Composes the Auth HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import { GROUPHER_AUTH_CSRF_HEADER, GROUPHER_AUTH_CSRF_VALUE } from '@groupher/contracts/auth'
 import { createHealthResponse } from '@groupher/service/health'
 import { Hono } from 'hono'
@@ -81,6 +92,7 @@ const isAllowedLocalAuthOrigin = (url: URL): boolean => {
   return LOCAL_AUTH_HOSTS.has(url.hostname) && (url.port === '' || url.port === '443')
 }
 
+/** Reports whether allowed auth origin at the auth boundary. */
 export const isAllowedAuthOrigin = (origin: string): boolean => {
   try {
     const url = new URL(origin)
@@ -118,6 +130,7 @@ const clientRateLimitKey = (request: Request): string => {
   return request.headers.get('cf-connecting-ip') || forwardedFor || 'unknown-client'
 }
 
+/** Maps browser session error into the public auth result shape. */
 export const mapBrowserSessionError = (
   error: unknown,
   fallbackCode: string,
@@ -145,6 +158,7 @@ export const mapBrowserSessionError = (
   return { code: fallbackCode, status: 503 }
 }
 
+/** Creates the auth application with injectable runtime dependencies. */
 export const createApp = ({
   authHandler = handleAuthRequest,
   listBrowserSessions: listSessions = listBrowserSessions,

@@ -14,6 +14,7 @@ type TRet = {
 } & TLinkState &
   TDerived
 
+/** Exposes header state and actions through the shared React hook boundary. */
 export default function useHeader(): TRet {
   const dsb$ = useDashboard()
   const derived = useLinkDerived()

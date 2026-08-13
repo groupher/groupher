@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
   Search identity is deliberately separate from the public ArticlePath or
   CommentPath stored in `locator`. Platform adapters may use `ref` as their
   object id, but callers must use `locator` for navigation and domain reads.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Artiment
+        -> search platform
   """
 
   @type artiment_type :: :article | :comment

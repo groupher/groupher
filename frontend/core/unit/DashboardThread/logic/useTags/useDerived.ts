@@ -18,6 +18,7 @@ export type TRet = {
   inlineTagLayoutTouched: boolean
 }
 
+/** Exposes derived state and actions through the shared React hook boundary. */
 export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()

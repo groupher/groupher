@@ -13,6 +13,7 @@ type TRet = {
   bg: TColorName
 }
 
+/** Exposes topbar state and actions through the shared React hook boundary. */
 export default function useTopbar(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

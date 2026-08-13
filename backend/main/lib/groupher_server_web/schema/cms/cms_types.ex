@@ -5,6 +5,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   These types define the user-facing CMS data contract used by query and
   mutation fields in Playground, including communities, articles, comments,
   dashboard settings, moderation payloads, and pagination wrappers.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

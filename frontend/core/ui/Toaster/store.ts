@@ -57,6 +57,7 @@ const makeToast = (option: TToastOptions): TToastItem => {
   }
 }
 
+/** Runs the toast operation at the frontend shared boundary. */
 export const toast = (input: TToastInput, type: TToastType = 'info'): string => {
   if (typeof window === 'undefined') return ''
 
@@ -93,6 +94,7 @@ export const toast = (input: TToastInput, type: TToastType = 'info'): string => 
   return nextItem.id
 }
 
+/** Runs the remove toast operation at the frontend shared boundary. */
 export const removeToast = (id: string): void => {
   const nextItems = items.filter((item) => item.id !== id)
   if (nextItems.length === items.length) return
@@ -102,6 +104,7 @@ export const removeToast = (id: string): void => {
   notify()
 }
 
+/** Runs the subscribe toast operation at the frontend shared boundary. */
 export const subscribeToast = (subscriber: TToastSubscriber): (() => void) => {
   subscribers.add(subscriber)
   subscriber(cloneItems())

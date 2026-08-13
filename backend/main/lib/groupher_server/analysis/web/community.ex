@@ -1,6 +1,14 @@
 defmodule GroupherServer.Analysis.Web.Community do
   @moduledoc """
   Route-derived analysis context for one community.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Community
+        -> Repo / analytics provider
   """
 
   alias GroupherServer.CMS.Model.Community, as: CMSCommunity

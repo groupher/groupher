@@ -21,6 +21,12 @@ defmodule Helper.ORM do
     `find_user/1`, `find_community/1`, `lock_community/1`, `lock_article/2`
   - Article projection helpers:
     `extract_and_assign_article/1`, `extract_articles/2`
+
+  Business position:
+
+      Domain or web caller
+        -> ORM
+        -> normalized value / infrastructure
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, done: 3, strip_struct: 1]
@@ -546,6 +552,7 @@ defmodule Helper.ORM do
     |> Repo.update()
   end
 
+  @doc "Runs `merge_dsb_section` through the public `ORM` boundary."
   def merge_dsb_section(%CommunityDashboard{} = community_dashboard, key, args) do
     merged_args =
       community_dashboard[key] |> ensure_dsb_key_exist |> Map.merge(args) |> strip_struct

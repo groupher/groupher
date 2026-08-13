@@ -5,6 +5,13 @@
 defmodule GroupherServerWeb.Middleware.GQLResultFmt do
   @moduledoc """
   Convert domain-level error results into GraphQL error shape.
+
+  Business position:
+
+      Resolver result
+        -> GQLResultFmt middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware

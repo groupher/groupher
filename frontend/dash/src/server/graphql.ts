@@ -24,6 +24,7 @@ export class GraphQLRequestError extends Error {
   }
 }
 
+/** Reads auth token through the bounded frontend shared interface. */
 export const readAuthToken = (cookieHeader: string | null): string | null => {
   if (!cookieHeader) return null
 
@@ -35,6 +36,7 @@ export const readAuthToken = (cookieHeader: string | null): string | null => {
   return null
 }
 
+/** Returns auth token for the frontend shared workflow. */
 export const getAuthToken = (): string | null => readAuthToken(getRequest().headers.get('cookie'))
 
 const hasSignedInHint = (): boolean => {
@@ -45,6 +47,7 @@ const hasSignedInHint = (): boolean => {
 }
 
 // Dashboard HTML and loader data are scoped to the current session.
+/** Runs the set private cache header operation at the frontend shared boundary. */
 export const setPrivateCacheHeader = (): void => {
   setResponseHeader('cache-control', 'private, no-store')
 }
@@ -59,6 +62,7 @@ export function fetchGraphQL<TData>(
   variables: Record<string, unknown>,
   token: string | null,
 ): Promise<TGraphQLResponse<TData>>
+/** Runs the fetch graph ql operation at the frontend shared boundary. */
 export async function fetchGraphQL<TData>(
   query: string | DocumentNode,
   variables: Record<string, unknown>,

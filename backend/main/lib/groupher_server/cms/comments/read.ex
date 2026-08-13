@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Read do
   @moduledoc """
   Read operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Read
+        -> Repo / domain event
   """
 
   import Helper.Utils, only: [done: 1]

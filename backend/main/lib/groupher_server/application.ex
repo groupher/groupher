@@ -5,6 +5,13 @@ defmodule GroupherServer.Application do
   It assembles runtime workers for Phoenix, Repo, PubSub, DNS clustering,
   Oban jobs, and Cachex pools. Seed environments skip DNS, endpoint,
   Cachex, and Oban workers; test environments only skip Oban-backed jobs.
+
+  Business position:
+
+      BEAM runtime
+        -> GroupherServer.Application
+        -> Repo + PubSub + Endpoint + Finch + Oban + Cachex
+        -> GraphQL/domain/background execution
   """
   use Application
 
@@ -15,6 +22,7 @@ defmodule GroupherServer.Application do
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   @spec start(any, any) :: {:error, any} | {:ok, pid}
+  @doc "Starts the environment-appropriate Groupher supervision tree."
   def start(_type, _args) do
     children =
       [
@@ -33,6 +41,7 @@ defmodule GroupherServer.Application do
 
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
+  @doc "Forwards release-time configuration changes to the Phoenix endpoint."
   def config_change(changed, _new, removed) do
     GroupherServerWeb.Endpoint.config_change(changed, removed)
     :ok

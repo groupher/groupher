@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   One list item represents one user action, even when a deleted Tab/Group owns
   many Tree nodes and Doc Articles. Restore replays draft/public placement
   snapshots and removes all Article memberships atomically.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Trash
+        -> Repo / published projection
   """
 
   import Ecto.Query, warn: false

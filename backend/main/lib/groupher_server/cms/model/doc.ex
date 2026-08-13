@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Model.Doc do
   Docs content anchor. One row per Doc draft or public head. Rows representing
   the same logical Article share `article_hash_id`; Tree code maps that identity
   to its product-level `doc_id` at the Docs boundary.
+
+  Business position:
+
+      CMS context
+        -> Doc schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

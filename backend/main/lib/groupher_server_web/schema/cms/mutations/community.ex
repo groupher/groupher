@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
   Includes creating/updating communities, handling apply/approve flows,
   moderator assignments, and community tag/group maintenance.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Community
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

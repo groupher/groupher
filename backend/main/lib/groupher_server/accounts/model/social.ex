@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.Social do
 
   Social links are separate from the core user row so profile edits can update
   external handles without bloating authentication/account identity fields.
+
+  Business position:
+
+      Accounts context
+        -> Social schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunityApplicationLogoUpload do
-  @moduledoc "Temporary application-owned logo upload before a Community exists."
+  @moduledoc """
+  Temporary application-owned logo upload before a Community exists.
+
+  Business position:
+
+      CMS context
+        -> CommunityApplicationLogoUpload schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 

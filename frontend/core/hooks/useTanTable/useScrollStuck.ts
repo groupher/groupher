@@ -7,6 +7,7 @@ type TStuck = {
   right: boolean
 }
 
+/** Exposes scroll stuck state and actions through the shared React hook boundary. */
 export function useScrollStuck() {
   const ref = useRef<HTMLDivElement | null>(null)
   const [stuck, setStuck] = useState<TStuck>({ left: false, right: false })

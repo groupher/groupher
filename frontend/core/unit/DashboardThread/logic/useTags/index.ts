@@ -38,6 +38,7 @@ type TRet = {
   commitTagSorting: (tagGroups: TTagGroup[]) => void
 } & TDrived
 
+/** Exposes tags state and actions through the shared React hook boundary. */
 export default function useTags(): TRet {
   const dsb$ = useDashboard()
   const { edit } = useHelper()

@@ -2,7 +2,17 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article meta info for article-like content, like post ...
+  Embedded operational metadata shared by article-like CMS threads.
+
+  It carries moderation state, engagement projections, comment sequencing, and
+  thread identity alongside the thread's primary schema.
+
+  Business position:
+
+      CMS context
+        -> ArticleMeta schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

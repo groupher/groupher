@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   This seed keeps the dataset intentionally small so Cloudflare gateway smoke
   tests can exercise Main and Dashboard without loading the full demo corpus.
+
+  Business position:
+
+      Seed task
+        -> LiteHome
+        -> CMS context
+        -> Repo
   """
 
   import Ecto.Query, warn: false

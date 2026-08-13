@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 // 允许的参数白名单
 const ALLOWED_SEARCH_PARAMS = ['page', 'sort', 'filter', 'tab'] // 按需扩展
 
+/** Runs the url peek proxy operation at the frontend shared boundary. */
 export function urlPeekProxy(request: NextRequest) {
   const url = request.nextUrl
 

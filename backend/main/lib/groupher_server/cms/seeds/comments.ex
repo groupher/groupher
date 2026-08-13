@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   The module creates development comment data that exercises article detail and
   conversation UI paths.
+
+  Business position:
+
+      Seed task
+        -> Comments
+        -> CMS context
+        -> Repo
   """
 
   import GroupherServer.Support.Factory

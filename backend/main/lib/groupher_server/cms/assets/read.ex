@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Assets.Read do
 
   Billing-oriented reads only look at active rows in `community_assets`. Usage
   reads go through `article_document_asset_refs`.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Read
+        -> Repo / Assets Hub
   """
 
   import Ecto.Query, warn: false

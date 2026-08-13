@@ -17,6 +17,7 @@ const LEGACY_COMPARE_FIELDS = new Set<TDsbStoreFieldKey>([
   FIELD.FOOTER_ONELINE_LINKS,
 ])
 
+/** Exposes touch state and actions through the shared React hook boundary. */
 export default function useTouch(): TRet {
   const dsb$ = useDashboard()
 

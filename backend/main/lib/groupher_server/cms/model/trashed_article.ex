@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
 
   `article_hash_id` identifies every draft/public physical row belonging to the
   same Article; this table deliberately has no polymorphic database foreign key.
+
+  Business position:
+
+      CMS context
+        -> TrashedArticle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

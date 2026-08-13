@@ -21,6 +21,7 @@ const config = {
   },
 } as const
 
+/** Exposes cms articles state and actions through the shared React hook boundary. */
 export default function useCmsArticles(kind: TArticleKind) {
   const articleList$ = useArticleList()
   const community$ = useCommunity()

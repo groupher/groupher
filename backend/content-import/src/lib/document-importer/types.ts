@@ -1,3 +1,14 @@
+/**
+ * Defines TypeScript contracts shared inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import type { TRichEditorNodeValue } from '@groupher/rich-editor/node'
 
 export type TDocumentImportDiagnostic = {

@@ -5,6 +5,7 @@ import { useSearchParams } from '~/platform'
 import type { TTag } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 
+/** Exposes active tag state and actions through the shared React hook boundary. */
 export default function useActiveTag(): TTag | null {
   const articleList$ = useArticleList()
   const searchParams = useSearchParams()

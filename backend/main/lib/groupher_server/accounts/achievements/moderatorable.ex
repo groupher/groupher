@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Achievements.Moderatorable do
 
   This backs account achievement/profile surfaces that need to show moderation
   reach without exposing the join rows directly.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Moderatorable
+        -> Repo
   """
 
   import Ecto.Query, warn: false

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycle do
-  @moduledoc "Public availability lifecycle for a community created from an application."
+  @moduledoc """
+  Public availability lifecycle for a community created from an application.
+
+  Business position:
+
+      CMS context
+        -> CommunityLifecycle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 

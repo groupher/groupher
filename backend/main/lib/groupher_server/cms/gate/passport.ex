@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.Passport do
-  @moduledoc "Passport facade and compatibility adapter for Gate checks."
+  @moduledoc """
+  Passport facade and compatibility adapter for Gate checks.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Passport
+        -> allow / deny
+        -> domain context
+  """
 
   alias GroupherServer.CMS.Communities.Passport, as: Legacy
   alias GroupherServer.CMS.Gate.Passport.Registry

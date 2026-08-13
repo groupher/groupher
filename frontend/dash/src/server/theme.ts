@@ -36,6 +36,7 @@ const isThemeMode = (value: string | null): value is TThemeMode =>
 const isThemeName = (value: string | null): value is TThemeName =>
   value === THEME.LIGHT || value === THEME.DARK
 
+/** Resolves theme seed without leaking frontend shared routing details to callers. */
 export const resolveThemeSeed = (cookieHeader: string | null): TThemeSeed => {
   const cookieMode = readCookie(cookieHeader, THEME_MODE_COOKIE)
   const cookieResolvedTheme = readCookie(cookieHeader, RESOLVED_THEME_COOKIE)

@@ -1,6 +1,14 @@
 defmodule GroupherServer.Analysis.Contribution.Config do
   @moduledoc """
   Static configuration contract for contribution analytics.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Config
+        -> Repo / analytics provider
   """
 
   @general_config Application.compile_env(:groupher_server, :general, [])

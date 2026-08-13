@@ -10,6 +10,7 @@ type TRes = {
   resState: TResState
 }
 
+/** Exposes kanban posts state and actions through the shared React hook boundary. */
 export default function useKanbanPosts(): TRes {
   const { backlog, todo, wip, done, rejected, resState } = useArticleList()
 

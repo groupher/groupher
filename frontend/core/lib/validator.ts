@@ -51,6 +51,7 @@ export const validateSlug = (value?: string | null): TSlugValidation => {
   return { valid: true, value: next }
 }
 
+/** Reports whether valid slug at the frontend shared boundary. */
 export const isValidSlug = (value?: string | null): boolean => validateSlug(value).valid
 
 /**

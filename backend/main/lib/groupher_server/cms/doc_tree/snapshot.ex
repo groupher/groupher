@@ -12,6 +12,13 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
 
   Snapshot JSON uses stable `node_id` values, not physical row ids. This is the
   middle layer used by Tree diff/review UI.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Snapshot
+        -> Repo / published projection
   """
 
   import Ecto.Query, warn: false

@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Upvotes do
   @moduledoc """
   Upvote operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Upvotes
+        -> Repo / domain event
   """
 
   import Helper.ErrorCode

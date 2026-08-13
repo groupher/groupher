@@ -4,6 +4,12 @@ defmodule GroupherServer.Test.AssertHelper do
   tests that require check from graphql response
 
   NOTE: we use POST in query_get, see https://github.com/coderplanets/coderplanets_server/issues/259
+
+  Business position:
+
+      Test case
+        -> AssertHelper
+        -> endpoint / fixture / Repo
   """
 
   import Helper.ErrorCode, only: [ecode: 1]

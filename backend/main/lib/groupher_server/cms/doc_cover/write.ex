@@ -15,6 +15,13 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   Public cover rows never reference draft nodes. If a draft node has not been
   published yet, writes fail with a product-facing warning error.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Write
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false

@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.UserSocket do
 
   It accepts inbound transport connections, returns the initialized socket, and
   defines the socket identifier strategy used by channel-level broadcast flows.
+
+  Business position:
+
+      Realtime client
+        -> Phoenix endpoint
+        -> UserSocket
+        -> channel transport
   """
   use Phoenix.Socket
 

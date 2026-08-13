@@ -14,6 +14,7 @@ type TRet = TDsdSEOConf & {
   toggleSEO: (seoEnable: boolean) => void
 }
 
+/** Exposes seo state and actions through the shared React hook boundary. */
 export default function useSEO(): TRet {
   const dsb$ = useDashboard()
   const { edit, anyChanged } = useHelper()

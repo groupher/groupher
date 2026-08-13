@@ -12,8 +12,10 @@ type TPointerBorderHighlight = {
   length: number
 }
 
+/** Normalizes angle into the canonical frontend shared shape. */
 export const normalizeAngle = (angle: number): number => ((angle % 360) + 360) % 360
 
+/** Runs the clamp length operation at the frontend shared boundary. */
 export const clampLength = (length: number): number =>
   Math.min(BORDER_HIGHLIGHT_LENGTH_RANGE.MAX, Math.max(BORDER_HIGHLIGHT_LENGTH_RANGE.MIN, length))
 
@@ -25,6 +27,7 @@ const getDistanceFromLength = (length: number): number => {
   return VIEWBOX.minDistance + normalized * (VIEWBOX.maxDistance - VIEWBOX.minDistance)
 }
 
+/** Returns handle point for the frontend shared workflow. */
 export const getHandlePoint = ({ angle, length }: TBorderHighlight): TPoint => {
   const rad = (normalizeAngle(angle) * Math.PI) / 180
   const distance = getDistanceFromLength(length)
@@ -35,11 +38,13 @@ export const getHandlePoint = ({ angle, length }: TBorderHighlight): TPoint => {
   }
 }
 
+/** Returns point from pointer for the frontend shared workflow. */
 export const getPointFromPointer = (clientX: number, clientY: number, rect: DOMRect): TPoint => ({
   x: ((clientX - rect.left) / rect.width) * VIEWBOX.width,
   y: ((clientY - rect.top) / rect.height) * VIEWBOX.height,
 })
 
+/** Returns border highlight from point for the frontend shared workflow. */
 export const getBorderHighlightFromPoint = ({ x, y }: TPoint): TPointerBorderHighlight => {
   const dx = x - VIEWBOX.centerX
   const dy = y - VIEWBOX.centerY

@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Count do
   @moduledoc """
   Count helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Count
+        -> Repo / Oban
   """
   import Ecto.Query, only: [from: 2, where: 3]
   import Helper.Utils, only: [plural: 1, strip_struct: 1]

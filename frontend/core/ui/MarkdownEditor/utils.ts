@@ -8,6 +8,7 @@ const TASK_LIST_RE = /^(\s*)([-*+])\s+\[( |x|X)\]\s+(.*)$/
 const UNORDERED_LIST_RE = /^(\s*)([-*+])\s+(.*)$/
 const ORDERED_LIST_RE = /^(\s*)(\d+)([.)])\s+(.*)$/
 
+/** Runs the safe value operation at the frontend shared boundary. */
 export const safeValue = (value?: string): string => value ?? ''
 
 const buildUpdate = (
@@ -33,6 +34,7 @@ const buildUpdate = (
   return { value: next, start: cursor, end: cursor }
 }
 
+/** Runs the continue list on enter operation at the frontend shared boundary. */
 export const continueListOnEnter = (textarea: HTMLTextAreaElement): TSelectionUpdate | null => {
   const { selectionStart, selectionEnd, value } = textarea
 
@@ -69,6 +71,7 @@ export const continueListOnEnter = (textarea: HTMLTextAreaElement): TSelectionUp
   return null
 }
 
+/** Runs the apply wrap operation at the frontend shared boundary. */
 export const applyWrap = (
   textarea: HTMLTextAreaElement,
   before: string,
@@ -86,6 +89,7 @@ export const applyWrap = (
   return { value: next, start, end }
 }
 
+/** Runs the apply line prefix operation at the frontend shared boundary. */
 export const applyLinePrefix = (
   textarea: HTMLTextAreaElement,
   prefix: string,
@@ -106,6 +110,7 @@ export const applyLinePrefix = (
   return { value: next, start, end }
 }
 
+/** Runs the apply ordered list operation at the frontend shared boundary. */
 export const applyOrderedList = (
   textarea: HTMLTextAreaElement,
   placeholder: string,

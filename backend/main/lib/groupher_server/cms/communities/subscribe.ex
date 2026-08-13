@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Subscribe do
   @moduledoc """
   Subscribe helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Subscribe
+        -> Repo / Oban
   """
   alias GroupherServer.{Accounts, CMS, Repo}
 

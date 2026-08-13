@@ -27,6 +27,7 @@ type TCmsSectionLayoutConfig = {
 
 const SECTION_BODY_GAP = 'mt-5'
 
+/** Creates the shared layout wrapper for a CMS dashboard section. */
 export default function createCmsSectionLayout({
   breadcrumbAddon,
   crumbTitle,

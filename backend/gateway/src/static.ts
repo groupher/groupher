@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Static boundary inside Gateway.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -17,9 +28,11 @@ const PUBLIC_FILE_TYPES = {
   '/favicon.ico': { fileName: 'favicon.ico', contentType: 'image/x-icon' },
 } as const
 
+/** Returns public file for the gateway workflow. */
 export const getPublicFile = (pathname: string) =>
   PUBLIC_FILE_TYPES[pathname as keyof typeof PUBLIC_FILE_TYPES]
 
+/** Reads public file through the bounded gateway interface. */
 export const readPublicFile = async (fileName: string): Promise<ArrayBuffer> => {
   const content = await readFile(path.join(PUBLIC_ROOT, fileName)).catch(() =>
     readFile(path.join(DIST_PUBLIC_ROOT, fileName)),

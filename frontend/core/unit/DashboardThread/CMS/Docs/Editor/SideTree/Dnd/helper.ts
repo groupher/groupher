@@ -9,6 +9,7 @@ const clampTranslateX = (x: number): number =>
 // SideTree groups have different heights, so dnd-kit may emit scale transforms
 // while sorting. Keep only bounded translation to avoid squeezing text/icons or
 // letting the drag preview drift far outside the narrow side tree.
+/** Runs the to translate only transform operation at the frontend shared boundary. */
 export const toTranslateOnlyTransform = (transform: Transform | null): string | undefined => {
   if (!transform) return undefined
 

@@ -4,6 +4,7 @@ import { BORDER_HIGHLIGHT_COLOR } from '../../../../../constant'
 import { normalizeBorderHighlightRainbowHue } from '../../../../../helper'
 import { CHECKER_BACKGROUND, RAINBOW_STOPS } from './constant'
 
+/** Returns rainbow gradient for the frontend shared workflow. */
 export const getRainbowGradient = (direction: string, rainbowHue = 0): string =>
   `linear-gradient(${direction}, ${RAINBOW_STOPS.map((stop) => {
     const hue = normalizeBorderHighlightRainbowHue(stop + rainbowHue)
@@ -11,6 +12,7 @@ export const getRainbowGradient = (direction: string, rainbowHue = 0): string =>
     return `hsl(${hue}, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_SATURATION}%, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_LIGHTNESS}%)`
   }).join(', ')})`
 
+/** Returns layered background style for the frontend shared workflow. */
 export const getLayeredBackgroundStyle = (image: string): CSSProperties => ({
   backgroundImage: [image, ...CHECKER_BACKGROUND.images].join(', '),
   backgroundPosition: ['0 0', ...CHECKER_BACKGROUND.positions].join(', '),
@@ -18,6 +20,7 @@ export const getLayeredBackgroundStyle = (image: string): CSSProperties => ({
   backgroundSize: ['100% 100%', ...CHECKER_BACKGROUND.sizes].join(', '),
 })
 
+/** Returns hue track style for the frontend shared workflow. */
 export const getHueTrackStyle = (): CSSProperties => ({
   backgroundImage: `linear-gradient(to right,
     hsl(0, ${BORDER_HIGHLIGHT_COLOR.SATURATION}%, ${BORDER_HIGHLIGHT_COLOR.LIGHTNESS}%),
@@ -32,8 +35,10 @@ export const getHueTrackStyle = (): CSSProperties => ({
   backgroundSize: '100% 100%',
 })
 
+/** Returns swatch style for the frontend shared workflow. */
 export const getSwatchStyle = (color: string): CSSProperties =>
   getLayeredBackgroundStyle(`linear-gradient(${color}, ${color})`)
 
+/** Returns rainbow style for the frontend shared workflow. */
 export const getRainbowStyle = (rainbowHue = 0, direction = 'to bottom'): CSSProperties =>
   getLayeredBackgroundStyle(getRainbowGradient(direction, rainbowHue))

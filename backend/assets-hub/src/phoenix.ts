@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Phoenix boundary inside Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
 import type { TCommunityAssetUploadCapability, TUploadCapability } from './capability'
@@ -204,6 +215,7 @@ const requestPhoenixGraphQL = async <TData>({
   return result.data
 }
 
+/** Runs the complete phoenix upload operation at the assets hub boundary. */
 export const completePhoenixUpload = async ({
   capability,
   environment = process.env,
@@ -267,6 +279,7 @@ export const completePhoenixUpload = async ({
   return result.completeCommunityAssetUpload
 }
 
+/** Runs the fetch community asset origin info operation at the assets hub boundary. */
 export const fetchCommunityAssetOriginInfo = async ({
   environment,
   publicRef,
@@ -286,6 +299,7 @@ export const fetchCommunityAssetOriginInfo = async ({
   return result.communityAssetOriginInfo
 }
 
+/** Runs the fetch asset origin info operation at the assets hub boundary. */
 export const fetchAssetOriginInfo = async ({
   environment,
   publicRef,

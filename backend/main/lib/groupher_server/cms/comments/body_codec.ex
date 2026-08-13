@@ -6,6 +6,14 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   not moved to that boundary yet, so this module keeps only the two derived
   values their current schema needs: sanitized-by-construction HTML and digest.
   It deliberately does not generate Markdown, TOC, XML, RSS, or Article hashes.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> BodyCodec
+        -> Repo / domain event
   """
 
     alias GroupherServer.CMS.Artiment.PlateJSON

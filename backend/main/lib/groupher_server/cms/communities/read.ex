@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Communities.Read do
 
   The default scope is the single public-read boundary for Community queries.
   Internal and management callers must opt into `scope_all/1` explicitly.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Read
+        -> Repo / Oban
   """
 
   import Ecto.Query, warn: false

@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.ErrorJSON do
 
   It converts Phoenix error templates into a normalized `%{errors: %{detail: ...}}`
   payload consumed by API clients.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> ErrorJSON
+        -> HTML/JSON response
   """
   # If you want to customize a particular status code,
   # you may add your own clauses, such as:

@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.AppStore do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded app-store platform and link published by a community.
+
+  Business position:
+
+      CMS context
+        -> AppStore schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

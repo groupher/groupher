@@ -1,6 +1,8 @@
 /**
  * Typed DocsDataset manifest decoder for immutable Preview artifacts.
  *
+ *   Preview manifest JSON -> DocsDataset decoder -> artifact refs -> apply workflow
+ *
  * @see docs/bulk-import/content-import-architecture.md
  */
 import type {

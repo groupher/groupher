@@ -19,6 +19,7 @@ type TNavActiveStyleHelpers = {
   primary: (key: string) => string
 }
 
+/** Returns nav active layout styles for the frontend shared workflow. */
 export const getNavActiveLayoutStyles = ({
   cn,
   bg,
@@ -41,6 +42,7 @@ export const getNavActiveLayoutStyles = ({
   },
 })
 
+/** Returns active nav layout styles for the frontend shared workflow. */
 export const getActiveNavLayoutStyles = (
   { cn, bg, primary }: TNavActiveStyleHelpers,
   layout: TNavActiveLayout | null | undefined,
@@ -51,6 +53,7 @@ export const getActiveNavLayoutStyles = (
   return activeStyles[resolvedLayout] ?? activeStyles[NAV_ACTIVE_LAYOUT.TEXT]
 }
 
+/** Exposes nav active layout salon state and actions through the shared React hook boundary. */
 export default function useNavActiveLayoutSalon({ layout }: TProps = {}) {
   const { cn, bg, primary } = useTwBelt()
   const { navActiveLayout } = useLayout()

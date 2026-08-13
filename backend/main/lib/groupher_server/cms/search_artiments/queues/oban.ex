@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Queues.Oban do
-  @moduledoc "Oban-backed persistent queue for Search Artiments indexing jobs."
+  @moduledoc """
+  Oban-backed persistent queue for Search Artiments indexing jobs.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Oban
+        -> search platform
+  """
 
   @behaviour GroupherServer.CMS.SearchArtiments.QueueAdapter
 

@@ -13,6 +13,7 @@ type TRet = {
   stats: TTagStats | null
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const tag = useActiveTag()
   const articleList$ = useArticleList()

@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Config do
   @moduledoc """
   Static configuration for CMS artiment mention parsing and URL shaping.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Config
+        -> Repo / external boundary
   """
 
   import Helper.Utils, only: [get_config: 2]

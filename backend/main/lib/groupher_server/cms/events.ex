@@ -15,6 +15,13 @@ defmodule GroupherServer.CMS.Events do
   exposed by this module instead of invoking event modules directly. This helps
   maintain a clear boundary for event behavior and makes it easier to evolve
   or reconfigure events without touching the rest of the codebase.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Events
+        -> Repo / external boundary
   """
 
   alias GroupherServer.CMS.Events.Event
@@ -22,6 +29,7 @@ defmodule GroupherServer.CMS.Events do
   @type event_result :: {:ok, term()} | {:error, term()}
 
   @spec emit(atom(), map(), map()) :: event_result()
+  @doc "Runs `emit` through the public `Events` boundary."
   def emit(type, payload, meta \\ %{}) when is_atom(type) and is_map(payload) and is_map(meta) do
     event = %Event{type: type, payload: payload, meta: meta}
 

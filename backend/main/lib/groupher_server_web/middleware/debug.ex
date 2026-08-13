@@ -3,7 +3,17 @@
 # ---
 defmodule GroupherServerWeb.Middleware.Debug do
   @moduledoc """
-  authorize gateway, mainly for login check
+  Legacy login-check middleware retained for schema compatibility.
+
+  New authorization decisions belong to `Authorize` and domain permission
+  gates; this module only rejects a missing current user.
+
+  Business position:
+
+      Resolver result
+        -> Debug middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware

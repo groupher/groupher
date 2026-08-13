@@ -1,3 +1,14 @@
+/**
+ * Forwards bounded HTTP requests and responses between Gateway and a selected target.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 
 import type { TGatewayTarget } from './routing'
@@ -47,6 +58,7 @@ const readCookie = (headers: Headers, name: string): string | null => {
   return null
 }
 
+/** Builds proxy headers from typed gateway inputs. */
 export const buildProxyHeaders = (request: Request, target: TGatewayTarget): Headers => {
   const headers = new Headers(request.headers)
   const requestUrl = new URL(request.url)
@@ -73,6 +85,7 @@ export const buildProxyHeaders = (request: Request, target: TGatewayTarget): Hea
   return headers
 }
 
+/** Builds proxy response from typed gateway inputs. */
 export const buildProxyResponse = (response: Response): Response => {
   const headers = new Headers(response.headers)
 
@@ -87,6 +100,7 @@ export const buildProxyResponse = (response: Response): Response => {
   })
 }
 
+/** Runs the proxy request operation at the gateway boundary. */
 export const proxyRequest = async (
   request: Request,
   target: TGatewayTarget,

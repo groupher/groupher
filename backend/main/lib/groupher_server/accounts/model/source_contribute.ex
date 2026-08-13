@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.SourceContribute do
 
   These rows let account/statistics code attribute contribution activity back to
   the originating content source.
+
+  Business position:
+
+      Accounts context
+        -> SourceContribute schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

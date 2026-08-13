@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Transitions do
-  @moduledoc "Single authority for Application state transitions and Event writes."
+  @moduledoc """
+  Single authority for Application state transitions and Event writes.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Transitions
+        -> Repo / Oban
+  """
 
   alias Ecto.Multi
   alias GroupherServer.CMS.Model.{CommunityApplication, CommunityApplicationEvent}

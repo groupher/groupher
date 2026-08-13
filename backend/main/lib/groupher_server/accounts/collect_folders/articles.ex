@@ -5,6 +5,14 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   The folder owns embedded collect refs; this module preloads the concrete
   thread records, applies privacy checks, and extracts a mixed article page for
   the GraphQL layer.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Articles
+        -> Repo
   """
 
   import Helper.ErrorCode

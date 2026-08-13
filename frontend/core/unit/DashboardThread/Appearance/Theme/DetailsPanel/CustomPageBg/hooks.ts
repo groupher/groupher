@@ -22,6 +22,7 @@ type TUseCustomPageBgControlsArgs = {
   onImmediateCommitPatch?: TPageBgPatchHandler
 }
 
+/** Resolves raw bg without leaking frontend shared routing details to callers. */
 export const resolveRawBg = (draft: TPageBgDraft) => draft.pageBg || THEME_PRESET_PAGE_BG_CSS_VAR
 
 const getThemePageBgState = (draft: TPageBgDraft) => {
@@ -43,6 +44,7 @@ const resolveCustomPatch = (theme: TThemeName, hue: number, intensity: number) =
   } as Partial<TPageBgDraft>
 }
 
+/** Exposes custom page bg controls state and actions through the shared React hook boundary. */
 export const useCustomPageBgControls = ({
   draft,
   theme,

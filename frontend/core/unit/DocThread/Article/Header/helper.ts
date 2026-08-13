@@ -19,6 +19,7 @@ const itemMatchesDoc = (item: TDocPublicTreeItem, doc: TDoc, pathname?: string |
   return false
 }
 
+/** Runs the find current group operation at the frontend shared boundary. */
 export const findCurrentGroup = (
   nodes: readonly TDocPublicTreeNavigationNode[],
   doc: TDoc,

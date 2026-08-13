@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   The source of truth remains articles plus community tag associations. These
   counters are updated on write paths and can be rebuilt from source data.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> TagStats
+        -> Repo / Oban
   """
 
   import Ecto.Query, warn: false

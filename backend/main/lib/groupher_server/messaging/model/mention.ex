@@ -5,6 +5,13 @@ defmodule GroupherServer.Messaging.Model.Mention do
   Mention rows are delivery records for users who were mentioned in a piece of
   content. They are separate from CMS mention facts, which describe the content
   graph regardless of mailbox delivery.
+
+  Business position:
+
+      Messaging context
+        -> Mention schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

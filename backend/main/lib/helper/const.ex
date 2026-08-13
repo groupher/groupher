@@ -4,6 +4,12 @@ defmodule Helper.Const do
 
   Keep global, cross-domain values here. Domain-owned values should live in
   their own `*.Const` modules.
+
+  Business position:
+
+      Domain or web caller
+        -> Const
+        -> normalized value / infrastructure
   """
 
   use GroupherServer.Const

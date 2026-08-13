@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityTagGroup do
 
   Tag groups organize tag presentation per thread without changing the tag's
   identity or content assignments.
+
+  Business position:
+
+      CMS context
+        -> CommunityTagGroup schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -8,11 +8,13 @@ const serviceToken = (resource: string, scope: string) => {
   return provider.getToken({ resource, scopes: [scope] })
 }
 
+/** Runs the dashboard to phoenix headers operation at the frontend shared boundary. */
 export const dashboardToPhoenixHeaders = async (userToken: string, scope: string) => ({
   Authorization: `Bearer ${await serviceToken('https://api.groupher.com/dashboard', scope)}`,
   [GROUPHER_USER_AUTHORIZATION_HEADER]: `Bearer ${userToken}`,
 })
 
+/** Runs the dashboard to content import headers operation at the frontend shared boundary. */
 export const dashboardToContentImportHeaders = async (
   userToken: string | null,
   scope = 'docs:import:proxy',

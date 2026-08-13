@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
   A row records one mentioner artiment, one mentioned internal/external target,
   and occurrence details. Messaging delivery consumes these facts but does not
   own this schema.
+
+  Business position:
+
+      CMS context
+        -> ArtimentMention schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Post do
 
   Posts are the default discussion thread and share the CMS article workflow:
   author, community join, tags, reactions, comments, and publish state.
+
+  Business position:
+
+      CMS context
+        -> Post schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

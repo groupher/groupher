@@ -11,6 +11,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ do
   merge items between the two lists, so users can switch modes without losing the
   previous grouped or flat arrangement. `default/0` returns example content for
   both views so a new docs FAQ is immediately editable instead of starting empty.
+
+  Business position:
+
+      CMS context
+        -> DocFAQ schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

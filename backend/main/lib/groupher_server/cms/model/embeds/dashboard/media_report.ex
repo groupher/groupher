@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.MediaReport do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded media coverage item displayed on a community dashboard.
+
+  Business position:
+
+      CMS context
+        -> MediaReport schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

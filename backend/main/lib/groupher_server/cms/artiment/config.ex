@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Artiment.Config do
   @moduledoc """
   Static configuration contract for CMS artiments.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Config
+        -> Repo / domain event
   """
 
   @article_config Application.compile_env(:groupher_server, :article, [])

@@ -1,6 +1,12 @@
 defmodule Helper.T do
   @moduledoc """
-  custom @types
+  Shared type aliases for identifiers, paging results, and domain return values.
+
+  Business position:
+
+      Domain or web caller
+        -> T
+        -> normalized value / infrastructure
   """
 
   alias GroupherServer.{Accounts, CMS}

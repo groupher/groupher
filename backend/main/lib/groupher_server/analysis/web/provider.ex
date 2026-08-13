@@ -4,6 +4,14 @@ defmodule GroupherServer.Analysis.Web.Provider do
 
   Providers return a Groupher-owned DTO. Raw vendor response fields must not
   cross this boundary.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Provider
+        -> Repo / analytics provider
   """
 
   alias GroupherServer.Analysis.Web.Community

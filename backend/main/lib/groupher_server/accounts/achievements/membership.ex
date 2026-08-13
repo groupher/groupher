@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Achievements.Membership do
 
   A global lock per user prevents concurrent plan changes from racing the
   achievement row creation/upsert path.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Membership
+        -> Repo
   """
 
   import ShortMaps

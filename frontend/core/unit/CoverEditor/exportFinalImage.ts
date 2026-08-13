@@ -101,6 +101,7 @@ const canvasToBlob = (
     )
   })
 
+/** Resolves cover export filename without leaking frontend shared routing details to callers. */
 export const resolveCoverExportFilename = (
   mimeType: TCoverExportMimeType,
   filename?: string,
@@ -288,6 +289,7 @@ const drawCoverBackground = async (
   ctx.restore()
 }
 
+/** Returns cover export layers for the frontend shared workflow. */
 export const getCoverExportLayers = (config: TCoverConfig): TCoverExportLayer[] => {
   const canvas = { canvasWidth: config.canvasWidth, canvasHeight: config.canvasHeight }
 
@@ -322,6 +324,7 @@ export const getCoverExportLayers = (config: TCoverConfig): TCoverExportLayer[] 
     })
 }
 
+/** Runs the export final image operation at the frontend shared boundary. */
 export const exportFinalImage = async (
   config: TCoverConfig,
   options: TCoverExportOptions = {},

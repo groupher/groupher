@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Comment do
   Comment rows carry source-thread foreign keys, author data, floor/reply state,
   and moderation/reaction embeds. Keep public comment identity separate from
   internal database ids when exposing this schema through GraphQL.
+
+  Business position:
+
+      CMS context
+        -> Comment schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -16,6 +16,14 @@ defmodule GroupherServer.CMS.Articles.Publish do
   Preview branches are draft-only and can not call this module. Promote first
   copies Preview content into main/draft, then official publish follows this
   single path.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Publish
+        -> Repo / domain event
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}

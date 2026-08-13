@@ -1,21 +1,33 @@
 defmodule Helper.SiteFavicon do
   @moduledoc """
-  this lib coming from https://github.com/ikeikeikeike/exfavicon/blob/master/lib/exfavicon/finder.ex
+  Discovers a site's favicon through an SSRF-safe, bounded fetch pipeline.
+
+  The implementation originated from `exfavicon` but now validates target and
+  redirect URLs, limits response work, and accepts only supported icon results.
   fix edge case at line:60
+
+  Business position:
+
+      Domain or web caller
+        -> SiteFavicon
+        -> normalized value / infrastructure
   """
   alias Helper.UrlSafety
 
+  @doc "Finds page through the `SiteFavicon` boundary."
   def find_page(url) do
     with {:ok, safe_url} <- UrlSafety.validate_http_url(url) do
       req(safe_url)
     end
   end
 
+  @doc "Parses favicon into the canonical `SiteFavicon` representation."
   def parse_favicon(html, location) do
     icon_url = find_from_html(html, location)
     if icon_url, do: icon_url, else: default_path(location)
   end
 
+  @doc "Runs `find` through the public `SiteFavicon` boundary."
   def find(url) do
     {:ok, location, resp} = req(url)
 
@@ -23,6 +35,7 @@ defmodule Helper.SiteFavicon do
     if icon_url, do: icon_url, else: default_path(location)
   end
 
+  @doc "Finds from html through the `SiteFavicon` boundary."
   def find_from_html(html, url) do
     case detect(html, url) do
       {:ok, icon_url} ->
@@ -33,6 +46,7 @@ defmodule Helper.SiteFavicon do
     end
   end
 
+  @doc "Reports whether favicon url? according to `SiteFavicon`."
   def valid_favicon_url?(url) do
     with {:ok, safe_url} <- UrlSafety.validate_http_url(url),
          {:ok, resp} <- head(safe_url) do

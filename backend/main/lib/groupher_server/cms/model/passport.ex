@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Passport do
 
   A passport belongs to the editing user and stores the rules that gate or
   describe community access.
+
+  Business position:
+
+      CMS context
+        -> Passport schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -33,6 +33,7 @@ export type TCoverImageDraftContext = {
 export const ImageDraftContext = createContext<TCoverImageDraftContext | null>(null)
 ImageDraftContext.displayName = 'CoverImageDraft'
 
+/** Exposes image draft context state and actions through the shared React hook boundary. */
 export const useImageDraftContext = (): TCoverImageDraftContext => {
   const context = use(ImageDraftContext)
 

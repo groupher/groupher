@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded dashboard navigation, kanban, and theme-layout preferences.
+
+  Business position:
+
+      CMS context
+        -> Layout schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

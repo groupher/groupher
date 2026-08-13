@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Setup do
-  @moduledoc "Idempotent initialization and recovery for a newly created Community."
+  @moduledoc """
+  Idempotent initialization and recovery for a newly created Community.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Setup
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

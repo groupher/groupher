@@ -1,3 +1,14 @@
+/**
+ * Implements the App Widgets FeedbackPage boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'

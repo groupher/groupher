@@ -471,6 +471,7 @@ const getOutsideClipPath = (rect: TRoundedRect): string => {
 
 // Generates the outer-only SVG stroke for the free border control.
 // Example: angle=45 and length=0.28 draws a tapered highlight centered near top-right.
+/** Returns border render geometry for the frontend shared workflow. */
 export const getBorderRenderGeometry = ({
   borderRadius,
   borderHighlight,

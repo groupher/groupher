@@ -5,6 +5,14 @@ defmodule GroupherServer.Accounts.CollectFolders.List do
   Anonymous or non-owner reads only see public folders. Owner reads include
   private folders and can still apply thread filters through the folder meta
   flags.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> List
+        -> Repo
   """
 
   import Ecto.Query, warn: false

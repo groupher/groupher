@@ -5,6 +5,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   This module defines read-only CMS entry points consumed by clients in
   GraphQL Playground, including communities, categories, comments, reports,
   and dashboard-related query surfaces.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
   """
   import GroupherServerWeb.Schema.Helper.Queries
 

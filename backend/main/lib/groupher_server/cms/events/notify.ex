@@ -1,6 +1,17 @@
 defmodule GroupherServer.CMS.Events.Notify do
   @moduledoc """
-  notify events, for upvote, collect, comment, reply
+  Converts CMS interaction events into persisted Messaging notifications.
+
+  The handler resolves the affected article, author, thread, and recipient,
+  then delegates create/revoke operations to Messaging. Events whose content
+  has already been deleted are treated as an idempotent pass.
+
+  Business position:
+
+      Domain write
+        -> CMS.Events
+        -> Notify
+        -> bounded side effect
   """
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 

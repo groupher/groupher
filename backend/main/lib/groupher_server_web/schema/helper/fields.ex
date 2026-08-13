@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Fields do
   @moduledoc """
-  general fields used in GraphQL schema definition
+  Reusable Absinthe field macros for pagination, dashboard settings, and relations.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Fields
+        -> resolver or domain context
+        -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]

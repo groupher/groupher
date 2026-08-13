@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.SearchArtiments.Config do
   @moduledoc """
   Runtime configuration contract for CMS artiment search.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Config
+        -> search platform
   """
 
   @type t :: %__MODULE__{

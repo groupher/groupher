@@ -13,6 +13,7 @@ import { DOC_DRAFT_REVISION_CHECKPOINT_DELAY } from '../constant'
 import type { TDraftSnapshotStatus } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
+/** Exposes draft snapshot state and actions through the shared React hook boundary. */
 export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   const { t } = useTrans()
   const { slug: community } = useCommunity()

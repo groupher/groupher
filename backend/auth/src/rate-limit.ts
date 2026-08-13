@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Rate Limit boundary inside Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 export type TRateLimitBinding = {
   limit(input: { key: string }): Promise<{ success: boolean }>
 }

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims do
-  @moduledoc "Repairs expired Application Slug Claims after their Application is terminal."
+  @moduledoc """
+  Repairs expired Application Slug Claims after their Application is terminal.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> ReleaseExpiredSlugClaims
+        -> Repo / Oban
+  """
 
   use Oban.Worker, queue: :community_application, max_attempts: 3
 

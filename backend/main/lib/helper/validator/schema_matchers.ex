@@ -1,8 +1,15 @@
 defmodule Helper.Validator.Schema.Matchers do
   @moduledoc """
-  matchers for basic type, support required option
+  Primitive and required-field matchers used by JSON schema validation.
+
+  Business position:
+
+      Domain or web caller
+        -> Matchers
+        -> normalized value / infrastructure
   """
 
+  @doc "Injects the public `Matchers` imports and aliases into the caller."
   defmacro __using__(types) do
     # can not use Enum.each here, see https://elixirforum.com/t/define-multiple-modules-in-macro-only-last-one-gets-created/1654/4
     for type <- types do

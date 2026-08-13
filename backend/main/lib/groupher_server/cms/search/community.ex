@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Search.Community do
   Anonymous searches return matching communities by title, slug, or aka. Viewer
   searches enrich each entry with subscription state without changing the base
   pagination contract.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Community
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false

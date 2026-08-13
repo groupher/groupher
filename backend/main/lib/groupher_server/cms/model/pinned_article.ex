@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
 
   The row marks a concrete artiment thread item as pinned without moving or
   duplicating the source article.
+
+  Business position:
+
+      CMS context
+        -> PinnedArticle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

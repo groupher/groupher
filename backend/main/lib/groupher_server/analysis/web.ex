@@ -5,6 +5,14 @@ defmodule GroupherServer.Analysis.Web do
   This context resolves the trusted community analytics identity before it
   delegates to the vendor adapter. It returns Dashboard DTOs only: Umami
   credentials, raw response shapes, and website IDs never cross this boundary.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Web
+        -> Repo / analytics provider
   """
 
   alias __MODULE__.Config
@@ -162,6 +170,7 @@ defmodule GroupherServer.Analysis.Web do
   end
 
   @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
+  @doc "Runs `tracking_website_id` through the public `Web` boundary."
   def tracking_website_id(%Community{} = community) do
     with {:ok, dashboard} <- dashboard_for(community) do
       {:ok, dashboard.umami_website_id}

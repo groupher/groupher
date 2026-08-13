@@ -19,6 +19,13 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
 
       iex> ArticlePath.parse_arguments(%{article: %{community: "home", thread: :post, inner_id: "12"}})
       {:ok, %{article: %{community: "home", thread: :post, inner_id: "12"}, article_path: %{community: "home", thread: :post, inner_id: "12"}}}
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> ArticlePath
+        -> Repo / external boundary
   """
 
   alias GroupherServer.CMS.Artiment.Threads

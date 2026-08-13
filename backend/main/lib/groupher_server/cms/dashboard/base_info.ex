@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Dashboard.BaseInfo do
   Base info is edited from the dashboard, but some fields also belong to the
   canonical community record. `Dashboard.Write` uses this helper to split those
   fields from section-only payload before saving.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> BaseInfo
+        -> CommunityDashboard / Repo
   """
 
   @community_fields [:title, :locale, :desc, :logo, :favicon, :slug, :homepage]

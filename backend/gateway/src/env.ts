@@ -1,3 +1,14 @@
+/**
+ * Loads and validates runtime environment values for Gateway.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 

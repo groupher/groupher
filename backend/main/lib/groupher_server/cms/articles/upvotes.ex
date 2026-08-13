@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Upvotes do
   @moduledoc """
   Article upvote helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Upvotes
+        -> Repo / domain event
   """
 
   import GroupherServer.CMS.Artiment.Matcher

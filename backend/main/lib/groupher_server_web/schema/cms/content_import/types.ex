@@ -3,6 +3,13 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport.Types do
   Public GraphQL contract for recoverable ContentImport Jobs and Doc previews.
 
   See `docs/bulk-import/content-import-architecture.md` for the contracts crossing runtimes.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
 
   use Helper.GqlSchemaSuite

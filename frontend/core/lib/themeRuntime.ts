@@ -6,11 +6,13 @@ import THEME, {
 } from '~/const/theme'
 import type { TThemeMode, TThemeName } from '~/spec'
 
+/** Resolves system theme without leaking frontend shared routing details to callers. */
 export const resolveSystemTheme = (): TThemeName => {
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   return isDark ? THEME.DARK : THEME.LIGHT
 }
 
+/** Resolves runtime theme without leaking frontend shared routing details to callers. */
 export const resolveRuntimeTheme = (mode: TThemeMode): TThemeName => {
   if (mode === THEME_MODE.LIGHT) return THEME.LIGHT
   if (mode === THEME_MODE.DARK) return THEME.DARK
@@ -18,6 +20,7 @@ export const resolveRuntimeTheme = (mode: TThemeMode): TThemeName => {
   return resolveSystemTheme()
 }
 
+/** Runs the persist theme cookies operation at the frontend shared boundary. */
 export const persistThemeCookies = (mode: TThemeMode, theme: TThemeName): void => {
   if (typeof document === 'undefined') return
   if (document.documentElement.dataset.themeMode === undefined) return

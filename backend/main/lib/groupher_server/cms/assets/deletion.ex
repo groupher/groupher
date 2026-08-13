@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   Phoenix remains the business lifecycle authority. This module only sends a
   best-effort cleanup request to assets-hub; failures must not make a deleted
   asset readable again.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Deletion
+        -> Repo / Assets Hub
   """
 
   use Tesla

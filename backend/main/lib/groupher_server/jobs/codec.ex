@@ -1,5 +1,14 @@
 defmodule GroupherServer.Jobs.Codec do
-  @moduledoc false
+  @moduledoc """
+  Serializes supported job arguments before they cross the Oban persistence boundary.
+
+  Business position:
+
+      Domain event / scheduler
+        -> Oban
+        -> Codec
+        -> context / service
+  """
 
   @spec encode(term()) :: String.t()
   def encode(term) do

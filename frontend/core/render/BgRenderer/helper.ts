@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import { BG_RENDER_TYPE } from '~/lib/bg'
 import type { TBgRenderSpec } from '~/lib/bg'
 
+/** Returns fallback style for the frontend shared workflow. */
 export const getFallbackStyle = (renderSpec: TBgRenderSpec): CSSProperties => ({
   background: renderSpec.background,
 })
@@ -10,10 +11,12 @@ export const getFallbackStyle = (renderSpec: TBgRenderSpec): CSSProperties => ({
 // Core background content generation stays in WebGL; visual adjustments stay in CSS.
 // CSS filter gives blur/brightness/saturation the same final-layer semantics for
 // gradient, mesh, picture, texture effects, and the pattern overlay.
+/** Returns filter layer style for the frontend shared workflow. */
 export const getFilterLayerStyle = (renderSpec: TBgRenderSpec): CSSProperties => ({
   filter: `var(--preview-wallpaper-filter, ${renderSpec.filter})`,
 })
 
+/** Returns pattern layer style for the frontend shared workflow. */
 export const getPatternLayerStyle = (
   renderSpec: TBgRenderSpec,
   patternSize: string,
@@ -28,15 +31,18 @@ export const getPatternLayerStyle = (
   WebkitMaskSize: patternSize,
 })
 
+/** Returns visual identity for the frontend shared workflow. */
 export const getVisualIdentity = (renderSpec: TBgRenderSpec): string =>
   [renderSpec.type, renderSpec.source, renderSpec.imageUrl].join('|')
 
 const canAnimate = (): boolean =>
   typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+/** Reports whether crossfade at the frontend shared boundary. */
 export const shouldCrossfade = (previous: TBgRenderSpec, next: TBgRenderSpec): boolean =>
   canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
 
+/** Runs the preload image operation at the frontend shared boundary. */
 export const preloadImage = (renderSpec: TBgRenderSpec): Promise<void> => {
   if (renderSpec.type !== BG_RENDER_TYPE.IMAGE || !renderSpec.imageUrl) return Promise.resolve()
 

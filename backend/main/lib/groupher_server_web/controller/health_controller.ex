@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Controller.Health do
 
   This endpoint is used by infrastructure and deployment checks to confirm that
   the web node is reachable and able to serve requests.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> Health
+        -> HTML/JSON response
   """
   use GroupherServerWeb, :controller
 

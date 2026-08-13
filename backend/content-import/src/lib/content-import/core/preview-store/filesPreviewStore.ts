@@ -133,7 +133,7 @@ export default class FilesPreviewStore implements PreviewStore {
     }
   }
 
-  /** Scans root records for bounded expiry cleanup. */
+  /** Lists the independently indexed root records for bounded expiry cleanup. */
   async listRecords(): Promise<TPreviewRecord[]> {
     const records: TPreviewRecord[] = []
     for await (const file of this.files.listAll()) {

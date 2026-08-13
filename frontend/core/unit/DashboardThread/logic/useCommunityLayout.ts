@@ -11,6 +11,7 @@ type TRet = {
   saving: boolean
 }
 
+/** Exposes community layout state and actions through the shared React hook boundary. */
 export default function useCommunityLayout(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit: rawEdit, rollbackEdit } = useHelper()

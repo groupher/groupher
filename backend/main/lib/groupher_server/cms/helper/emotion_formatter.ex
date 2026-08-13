@@ -24,6 +24,13 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
 
   Zero-count emotions are filtered out, so the API only returns the sparse
   set of active reactions instead of every supported reaction type.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> EmotionFormatter
+        -> Repo / external boundary
   """
 
     @article_emotions GroupherServer.CMS.Artiment.Config.emotions()

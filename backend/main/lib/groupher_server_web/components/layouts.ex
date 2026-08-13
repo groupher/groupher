@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Layouts do
 
   This module hosts reusable templates that wrap controller views with common UI
   structure such as head, navigation, and container composition.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> Layouts
+        -> HTML/JSON response
   """
   use GroupherServerWeb, :html
 

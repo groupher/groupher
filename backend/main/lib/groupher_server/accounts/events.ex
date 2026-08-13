@@ -4,11 +4,20 @@ defmodule GroupherServer.Accounts.Events do
 
   Account write paths emit semantic events such as follow/undo-follow here, then
   notification handlers decide what downstream messages should be created.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Events
+        -> Repo
   """
 
   @type event_result :: {:ok, map()} | {:error, any()}
 
   @spec emit(atom(), map()) :: event_result()
+  @doc "Runs `emit` through the public `Events` boundary."
   def emit(:follow, %{user: user, from_user: from_user}) do
     __MODULE__.Notify.handle(:follow, user, from_user)
   end

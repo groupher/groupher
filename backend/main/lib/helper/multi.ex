@@ -16,14 +16,22 @@ defmodule Helper.Multi do
     `run/3`, `insert/3,4`).
   - The implementation intentionally stays minimal and delegates to `Ecto.Multi`
     without changing behavior.
+
+  Business position:
+
+      Domain or web caller
+        -> Multi
+        -> normalized value / infrastructure
   """
 
   @type t :: Ecto.Multi.t()
 
   @spec new() :: t()
+  @doc "Runs `new` through the public `Multi` boundary."
   def new, do: apply(Ecto.Multi, :new, [])
 
   @spec run(t(), Ecto.Multi.name(), Ecto.Multi.run()) :: t()
+  @doc "Runs `run` through the public `Multi` boundary."
   def run(multi, name, run), do: apply(Ecto.Multi, :run, [multi, name, run])
 
   @spec insert(
@@ -34,6 +42,7 @@ defmodule Helper.Multi do
           | (Ecto.Multi.changes() -> Ecto.Changeset.t() | Ecto.Schema.t()),
           Keyword.t()
         ) :: t()
+  @doc "Runs `insert` through the public `Multi` boundary."
   def insert(multi, name, changeset_or_struct_or_fun, opts \\ []) do
     apply(Ecto.Multi, :insert, [multi, name, changeset_or_struct_or_fun, opts])
   end

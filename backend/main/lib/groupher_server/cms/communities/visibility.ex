@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Visibility do
-  @moduledoc "Compatibility delegates for the former Community visibility policy."
+  @moduledoc """
+  Compatibility delegates for the former Community visibility policy.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Visibility
+        -> Repo / Oban
+  """
 
   alias GroupherServer.CMS.Communities.Read
   alias GroupherServer.CMS.Model.Community

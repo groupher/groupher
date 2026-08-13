@@ -68,6 +68,7 @@ const resolveActivePage = (sideTree: TSideTreeController): TSideTreePage | null 
   return activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
 }
 
+/** Exposes draft editor state state and actions through the shared React hook boundary. */
 export default function useDraftEditorState(
   sideTree: TSideTreeController,
   initialData?: TDocDraftInitialData | null,

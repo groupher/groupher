@@ -1,6 +1,16 @@
 defmodule GroupherServer.CMS.Model.ArticleDocument do
   @moduledoc """
-  mainly for full-text search
+  Stores canonical and derived article-document representations.
+
+  The JSON source, rendered formats, hashes, thumbnail, and plain text support
+  content delivery, change detection, export, and full-text search.
+
+  Business position:
+
+      CMS context
+        -> ArticleDocument schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

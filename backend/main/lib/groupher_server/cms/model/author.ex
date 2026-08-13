@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Author do
 
   The author row links CMS content to the account user while preserving CMS-side
   author metadata used by article queries and GraphQL responses.
+
+  Business position:
+
+      CMS context
+        -> Author schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -20,6 +20,7 @@ type TDocLayoutConfig = {
 
 const seg = DSB_ROUTE.DOC
 
+/** Creates doc layout from typed frontend shared inputs. */
 export default function createDocLayout({
   breadcrumbAddon,
   path,

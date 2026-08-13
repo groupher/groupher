@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Policy.Config do
   @moduledoc """
   Static configuration contract for CMS policy rules.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Config
+        -> Repo / external boundary
   """
 
   @general_config Application.compile_env(:groupher_server, :general, [])

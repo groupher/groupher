@@ -2,6 +2,12 @@ defmodule GroupherServer.Release do
   @moduledoc """
   Used for executing DB release tasks when run in production without Mix
   installed.
+
+  Business position:
+
+      Application caller
+        -> Release
+        -> domain / infrastructure boundary
   """
   @app :groupher_server
 

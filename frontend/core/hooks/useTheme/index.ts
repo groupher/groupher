@@ -19,6 +19,7 @@ type TApplyRuntimeThemeOptions = {
   keepFirstPaintVars?: boolean
 }
 
+/** Exposes theme state and actions through the shared React hook boundary. */
 export default function useTheme(): TRet {
   const { theme, themeMode, change: changeTheme, changeMode: doChangeMode } = useThemeDomain()
 

@@ -18,6 +18,7 @@ const useCommentsStore = () => {
   return commentsStore
 }
 
+/** Exposes comments root state state and actions through the shared React hook boundary. */
 export const useCommentsRootState = () => {
   const commentsStore = useCommentsStore()
   const comments = useSnapshot(commentsStore)
@@ -28,6 +29,7 @@ export const useCommentsRootState = () => {
   }
 }
 
+/** Exposes comments list state state and actions through the shared React hook boundary. */
 export const useCommentsListState = () => {
   const commentsStore = useCommentsStore()
   const comments = useSnapshot(commentsStore)
@@ -43,6 +45,7 @@ export const useCommentsListState = () => {
   }
 }
 
+/** Exposes comments edit state state and actions through the shared React hook boundary. */
 export const useCommentsEditState = (): TEditState => {
   const commentsStore = useCommentsStore()
   const comments = useSnapshot(commentsStore)
@@ -64,6 +67,7 @@ export const useCommentsEditState = (): TEditState => {
   }
 }
 
+/** Exposes comments head state state and actions through the shared React hook boundary. */
 export const useCommentsHeadState = () => {
   const commentsStore = useCommentsStore()
   const comments = useSnapshot(commentsStore)

@@ -2,6 +2,7 @@ import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import type { TColorName } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+/** Exposes kanban bg colors state and actions through the shared React hook boundary. */
 export default function useKanbanBgColors(): readonly TColorName[] {
   const dsb$ = useDashboard()
 

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Assets.ApplicationUploads do
-  @moduledoc "Promotes one finalized Application Logo into Community ownership using DB writes only."
+  @moduledoc """
+  Promotes one finalized Application Logo into Community ownership using DB writes only.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> ApplicationUploads
+        -> Repo / Assets Hub
+  """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Assets.Write

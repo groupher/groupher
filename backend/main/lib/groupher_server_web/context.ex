@@ -2,7 +2,18 @@
 
 defmodule GroupherServerWeb.Context do
   @moduledoc """
-  entry for all api
+  Builds the authenticated Absinthe context at the HTTP boundary.
+
+  It resolves browser access credentials, service JWTs, delegated-user headers,
+  and Session activity into the actor data consumed by resolvers.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Auth credential verification
+        -> Context actor projection
+        -> Absinthe resolver
   """
 
   @allow_test_service_auth Application.compile_env(

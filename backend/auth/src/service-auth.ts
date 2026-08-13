@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Service Auth boundary inside Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 
 import { importJWK, SignJWT, type JWK } from 'jose'
@@ -48,6 +59,7 @@ const matchesCredential = (secret: string, expected: string): boolean => {
   return actual.length === wanted.length && timingSafeEqual(actual, wanted)
 }
 
+/** Reads service auth config through the bounded auth interface. */
 export const readServiceAuthConfig = (
   environment: Record<string, string | undefined> = process.env,
 ): TServiceAuthConfig => {
@@ -79,6 +91,7 @@ const readBasicCredentials = (authorization: string | undefined) => {
   }
 }
 
+/** Runs the issue service token operation at the auth boundary. */
 export const issueServiceToken = async (
   request: Request,
   environment: Record<string, string | undefined> = process.env,
@@ -167,6 +180,7 @@ export const issueServiceToken = async (
   }
 }
 
+/** Runs the service jwks operation at the auth boundary. */
 export const serviceJwks = async (
   environment: Record<string, string | undefined> = process.env,
 ) => {

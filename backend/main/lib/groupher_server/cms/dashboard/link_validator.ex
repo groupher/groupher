@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Dashboard.LinkValidator do
   Header and footer links are user-authored nested maps coming from GraphQL.
   This helper keeps only the structural contract here: groups contain child
   links, links require a URL, and every visible node has an id and title.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> LinkValidator
+        -> CommunityDashboard / Repo
   """
 
   def valid_tree?(%{id: id, type: type, title: title} = item)

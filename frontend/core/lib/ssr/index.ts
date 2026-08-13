@@ -118,6 +118,7 @@ const getCachedPagedArticles = async (
   return fetchPagedArticles(community, thread, { community, page: 1 })
 }
 
+/** Returns paged articles for the frontend shared workflow. */
 export const getPagedArticles = async (
   community: string,
   thread: TThread,
@@ -130,6 +131,7 @@ export const getPagedArticles = async (
   return fetchPagedArticles(community, thread, filter)
 }
 
+/** Returns metadata for the frontend shared workflow. */
 export const getMetadata = (dashboard: TParseDashboard): Metadata => {
   const {
     seoEnable,

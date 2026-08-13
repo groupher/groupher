@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Config do
-  @moduledoc "Runtime policy values for the V1 application flow."
+  @moduledoc """
+  Runtime policy values for the V1 application flow.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Config
+        -> Repo / Oban
+  """
 
   @spec submitted_ttl_days() :: pos_integer()
   def submitted_ttl_days do

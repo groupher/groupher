@@ -34,6 +34,7 @@ import type {
   TUnderlineOptions,
 } from './spec'
 
+/** Exposes tw belt state and actions through the shared React hook boundary. */
 export default function useTwBelt(): TRet {
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()

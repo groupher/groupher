@@ -2,6 +2,13 @@ defmodule GroupherServer.CMS.Helper.Constraints do
   @moduledoc """
   Ecto constraint helpers for CMS models.
   This module has no dependencies on other CMS modules to avoid circular dependencies.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Constraints
+        -> Repo / external boundary
   """
   import Ecto.Changeset
 

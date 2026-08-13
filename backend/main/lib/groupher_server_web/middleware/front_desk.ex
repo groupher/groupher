@@ -3,7 +3,17 @@
 # ---
 defmodule GroupherServerWeb.Middleware.FrontDesk do
   @moduledoc """
-  fetch full community/account model info based on query args front GraphQL endpoint
+  Resolves public GraphQL references into domain models before a resolver runs.
+
+  It loads community, account, article, or comment records and enriches resolver
+  arguments with ownership flags so resolvers do not duplicate lookup logic.
+
+  Business position:
+
+      GraphQL arguments
+        -> FrontDesk public-ref lookup
+        -> loaded resolver arguments
+        -> domain resolver
   """
 
   @behaviour Absinthe.Middleware

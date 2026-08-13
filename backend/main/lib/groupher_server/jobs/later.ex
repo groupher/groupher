@@ -1,6 +1,13 @@
 defmodule GroupherServer.Jobs.Later do
   @moduledoc """
   Compatibility job for legacy fire-and-forget function calls.
+
+  Business position:
+
+      Domain event / scheduler
+        -> Oban
+        -> Later
+        -> context / service
   """
 
   use Oban.Worker,

@@ -81,10 +81,12 @@ export type TPlatform = {
 const PlatformContext = createContext<TPlatform | null>(null)
 let platformFallback: TPlatform | null = null
 
+/** Runs the set platform fallback operation at the frontend shared boundary. */
 export const setPlatformFallback = (value: TPlatform | null): void => {
   platformFallback = value
 }
 
+/** Runs the set platform fallback operation at the frontend shared boundary. */
 export const PlatformProvider = ({
   value,
   children,
@@ -93,10 +95,12 @@ export const PlatformProvider = ({
   children: ReactNode
 }): ReactNode => <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>
 
+/** Exposes platform state and actions through the shared React hook boundary. */
 export const usePlatform = (): TPlatform => {
   const platform = useContext(PlatformContext)
 
   if (!platform && !platformFallback) {
+    /** Exposes platform state and actions through the shared React hook boundary. */
     throw new Error('usePlatform must be used inside a PlatformProvider')
   }
 

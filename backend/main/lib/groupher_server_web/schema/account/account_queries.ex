@@ -1,6 +1,17 @@
 defmodule GroupherServerWeb.Schema.Account.Queries do
   @moduledoc """
-  accounts GraphQL queries
+  GraphQL query fields for account profiles, Sessions, OAuth bindings, mailbox,
+  follows, collections, permissions, and account search.
+
+  Field middleware prepares identity, pagination, and public references before
+  Accounts resolvers delegate reads to the domain context.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
   """
   import GroupherServerWeb.Schema.Helper.Queries
   use Helper.GqlSchemaSuite

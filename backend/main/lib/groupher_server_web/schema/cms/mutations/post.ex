@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
   @moduledoc """
   GraphQL mutations for post-thread article publishing and editing.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Post
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

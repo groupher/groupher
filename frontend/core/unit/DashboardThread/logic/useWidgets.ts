@@ -18,6 +18,7 @@ type TRet = {
   edit: TEditFunc
 }
 
+/** Exposes widgets state and actions through the shared React hook boundary. */
 export default function useWidgets(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
-  @moduledoc "Defense-in-depth global permission check for reviewer facades."
+  @moduledoc """
+  Defense-in-depth global permission check for reviewer facades.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> ReviewAuth
+        -> Repo / Oban
+  """
 
   alias GroupherServer.CMS.Gate
 

@@ -11,6 +11,7 @@ type TRet = {
   saving: boolean
 }
 
+/** Exposes brand state and actions through the shared React hook boundary. */
 export default function useBrand(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

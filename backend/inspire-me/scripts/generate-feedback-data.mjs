@@ -1,3 +1,14 @@
+/**
+ * Implements the Scripts Generate Feedback Data boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 import fs from 'node:fs/promises'
 import path from 'node:path'
 

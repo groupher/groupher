@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Covers do
   @moduledoc """
   Cover persistence helpers.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Covers
+        -> Repo / external boundary
   """
 
   alias GroupherServer.{CMS, Repo}
@@ -54,6 +61,7 @@ defmodule GroupherServer.CMS.Covers do
   end
 
   @spec remove_article_cover(article()) :: T.domain_res(article())
+  @doc "Removes article cover through the `Covers` boundary."
   def remove_article_cover(article) do
     Repo.transaction(fn ->
       old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
@@ -73,6 +81,7 @@ defmodule GroupherServer.CMS.Covers do
   end
 
   @spec delete_cover_edit_info(nil | T.id()) :: {:ok, :pass | CoverEditInfo.t()}
+  @doc "Removes cover edit info through the `Covers` boundary."
   def delete_cover_edit_info(nil), do: {:ok, :pass}
 
   def delete_cover_edit_info(id) do

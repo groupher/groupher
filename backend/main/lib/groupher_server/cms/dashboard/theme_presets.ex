@@ -13,6 +13,14 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
           |
           v
       layout.custom_theme_preset
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> ThemePresets
+        -> CommunityDashboard / Repo
   """
 
   alias GroupherServer.CMS.Dashboard.{ThemePreset, Write}

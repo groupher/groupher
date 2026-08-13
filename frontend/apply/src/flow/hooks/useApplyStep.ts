@@ -2,6 +2,7 @@ import { useSnapshot } from 'valtio'
 
 import { useApplyStore } from '../context'
 
+/** Exposes apply step state and actions through the shared React hook boundary. */
 export const useApplyStep = () => {
   const store = useApplyStore()
   const snapshot = useSnapshot(store)

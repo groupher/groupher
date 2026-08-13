@@ -13,6 +13,13 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
 
   The snapshot does not have its own number. Use DocPublishRelease.release_number
   when UI needs a human release sequence.
+
+  Business position:
+
+      CMS context
+        -> DocTreeSnapshot schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

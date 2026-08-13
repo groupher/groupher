@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
   @moduledoc """
   GraphQL mutations for changelog-thread article publishing and editing.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Changelog
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

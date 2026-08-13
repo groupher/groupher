@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.BlockTaskRunner do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article meta info for article-like content, like post ...
+  Embedded queue of block-derived follow-up tasks for an artiment.
+
+  Business position:
+
+      CMS context
+        -> BlockTaskRunner schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

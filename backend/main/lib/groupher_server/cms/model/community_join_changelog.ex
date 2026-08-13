@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinChangelog do
 
   It lets changelog content stay in its own table while community feeds can query
   membership and ordering through a dedicated relation.
+
+  Business position:
+
+      CMS context
+        -> CommunityJoinChangelog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

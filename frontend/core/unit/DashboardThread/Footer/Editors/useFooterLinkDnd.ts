@@ -31,6 +31,7 @@ type TRet = {
 // Wires footer-specific column adapters into the shared DnD draft controller.
 // `enableColumnSorting` is only true for grouped footer layout; oneline has a
 // synthetic single group and should only sort links inside that group.
+/** Exposes footer link dnd state and actions through the shared React hook boundary. */
 export default function useFooterLinkDnd({
   links,
   onCommit,

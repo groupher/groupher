@@ -4,6 +4,12 @@ defmodule GroupherServer.Support.Factory.Oauth do
 
   Use these fixtures when account/OAuth tests need realistic provider identity
   maps without hitting external services.
+
+  Business position:
+
+      Test case
+        -> Oauth
+        -> endpoint / fixture / Repo
   """
 
   alias GroupherServer.Support.FakeData

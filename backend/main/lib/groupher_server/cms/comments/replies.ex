@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Replies do
   @moduledoc """
   Helpers for resolving a reply thread's root comment.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Replies
+        -> Repo / domain event
   """
 
   alias GroupherServer.{CMS, Repo}

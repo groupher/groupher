@@ -1,3 +1,14 @@
+/**
+ * Composes the Gateway HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import { GROUPHER_AUTH_CSRF_HEADER, GROUPHER_AUTH_CSRF_VALUE } from '@groupher/contracts/auth'
 import { Hono } from 'hono'
 
@@ -28,8 +39,10 @@ const validateBrowserGraphQLRequest = (
   return null
 }
 
+/** Creates the Gateway application with injectable runtime dependencies. */
 export const createApp = ({ fetcher }: TOptions = {}) => {
   const app = new Hono()
+  /** Creates the gateway application with injectable runtime dependencies. */
 
   app.get('/health', (context) => context.json(buildHealthResponse()))
 

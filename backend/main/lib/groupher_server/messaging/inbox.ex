@@ -16,9 +16,11 @@ defmodule GroupherServer.Messaging.Inbox do
 
   alias GroupherServer.Messaging.{Mentions, Notifications}
 
+  @doc "Returns paged messages from the `Inbox` read boundary."
   def paged_messages(:mention, user, filter), do: Mentions.paged(user, filter)
   def paged_messages(:notification, user, filter), do: Notifications.paged(user, filter)
 
+  @doc "Runs `unread_count` through the public `Inbox` boundary."
   def unread_count(:mention, user_id), do: Mentions.unread_count(user_id)
   def unread_count(:notification, user_id), do: Notifications.unread_count(user_id)
 
@@ -30,9 +32,11 @@ defmodule GroupherServer.Messaging.Inbox do
   def unread_counts(:mention, user_ids), do: Mentions.unread_counts(user_ids)
   def unread_counts(:notification, user_ids), do: Notifications.unread_counts(user_ids)
 
+  @doc "Runs `mark_read` through the public `Inbox` boundary."
   def mark_read(:mention, ids, user), do: Mentions.mark_read(ids, user)
   def mark_read(:notification, ids, user), do: Notifications.mark_read(ids, user)
 
+  @doc "Runs `mark_read_all` through the public `Inbox` boundary."
   def mark_read_all(:mention, user), do: Mentions.mark_read_all(user)
   def mark_read_all(:notification, user), do: Notifications.mark_read_all(user)
 end

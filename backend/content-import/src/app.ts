@@ -1,3 +1,14 @@
+/**
+ * Composes the Content Import HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import {
   bearerToken,
@@ -133,6 +144,7 @@ const resolveAuthOptions = async (
   }
 }
 
+/** Creates the content import application with injectable runtime dependencies. */
 export const createApp = ({
   environment = process.env,
   handlers = {},

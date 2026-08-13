@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinBlog do
 
   Thread-specific join tables keep community membership/query constraints clear
   while each artiment type keeps its own content table.
+
+  Business position:
+
+      CMS context
+        -> CommunityJoinBlog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

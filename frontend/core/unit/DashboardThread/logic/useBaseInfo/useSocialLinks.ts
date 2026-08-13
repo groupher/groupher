@@ -11,6 +11,7 @@ export type TRet = {
   isSocialLinksTouched: boolean
 }
 
+/** Exposes social links state and actions through the shared React hook boundary. */
 export default function useSocialLinks(): TRet {
   const { socialLinks } = useDashboard()
   const { isChanged } = useHelper()

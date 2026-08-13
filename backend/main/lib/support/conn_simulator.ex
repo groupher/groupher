@@ -1,6 +1,15 @@
 defmodule GroupherServer.Test.ConnSimulator do
   @moduledoc """
-  mock user_conn, owner_conn, guest_conn
+  Builds authenticated and guest `Plug.Conn` fixtures for GraphQL endpoint tests.
+
+  Authenticated variants create or accept a User, issue the legacy test token,
+  and can stamp sanitized Passport rules for authorization scenarios.
+
+  Business position:
+
+      Test case
+        -> ConnSimulator
+        -> endpoint / fixture / Repo
   """
   import GroupherServer.Support.Factory
   import Phoenix.ConnTest, only: [build_conn: 0]
@@ -14,6 +23,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   alias Helper.{Guardian, ORM, PermissionRegistry}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()
+  @doc "Builds a guest, generated-user, or invalid-token test connection."
   def simu_conn(:guest) do
     build_conn()
   end
@@ -32,6 +42,7 @@ defmodule GroupherServer.Test.ConnSimulator do
     build_conn() |> put_req_header("authorization", token)
   end
 
+  @doc "Builds an authenticated connection from content ownership, a User, or Passport rules."
   def simu_conn(:owner, content) do
     with {:ok, author} <- author_of(content) do
       token = gen_jwt_token(id: author.id)
@@ -60,6 +71,7 @@ defmodule GroupherServer.Test.ConnSimulator do
     build_conn() |> put_req_header("authorization", token)
   end
 
+  @doc "Stamps CMS Passport rules for an existing user and returns its connection."
   def simu_conn(:user, %User{} = user, cms: passport_rules) do
     token = gen_jwt_token(id: user.id)
 

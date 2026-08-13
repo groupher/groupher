@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Emotion do
   @moduledoc """
   Emotion operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Emotion
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

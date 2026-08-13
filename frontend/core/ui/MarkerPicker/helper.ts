@@ -25,6 +25,7 @@ const emptyAppearance = (): TMarkerAppearance => ({
   dark: {},
 })
 
+/** Runs the to bg appearance operation at the frontend shared boundary. */
 export const toBgAppearance = (
   appearance?: TMarkerAppearance | TMarkerBgAppearance,
 ): TMarkerBgAppearance | undefined => {
@@ -36,6 +37,7 @@ export const toBgAppearance = (
   }
 }
 
+/** Runs the update marker appearance operation at the frontend shared boundary. */
 export const updateMarkerAppearance = (
   value: TMarkerValue,
   theme: TThemeName,
@@ -61,12 +63,14 @@ export const updateMarkerAppearance = (
   return { ...value, appearance: nextAppearance }
 }
 
+/** Returns appearance value for the frontend shared workflow. */
 export const getAppearanceValue = (
   value: TMarkerValue,
   theme: TThemeName,
   channel: TAppearanceChannel,
 ): string | undefined => value.appearance?.[theme][channel]
 
+/** Returns preset hex for the frontend shared workflow. */
 export const getPresetHex = (
   theme: TThemeName,
   channel: TAppearanceChannel,
@@ -76,6 +80,7 @@ export const getPresetHex = (
     ? RAINBOW_COLOR_HEX[theme][color]
     : RAINBOW_LITE_COLOR_HEX[theme][color]
 
+/** Runs the find appearance preset operation at the frontend shared boundary. */
 export const findAppearancePreset = (
   hex: string | undefined,
   theme: TThemeName,
@@ -89,6 +94,7 @@ export const findAppearancePreset = (
   )
 }
 
+/** Reports whether custom appearance value at the frontend shared boundary. */
 export const isCustomAppearanceValue = (
   hex: string | undefined,
   theme: TThemeName,
@@ -100,6 +106,7 @@ type TAppearanceTriggerStyle = {
   bg: string
 }
 
+/** Returns appearance trigger style for the frontend shared workflow. */
 export const getAppearanceTriggerStyle = (
   value: TMarkerValue,
   theme: TThemeName,
@@ -131,6 +138,7 @@ const resolveActiveAppearanceValue = (
   return palette[value as TColorName] ?? value
 }
 
+/** Resolves active appearance without leaking frontend shared routing details to callers. */
 export const resolveActiveAppearance = ({
   value,
   theme,
@@ -194,6 +202,7 @@ const getRelativeLuminance = (color: TRgba): number =>
   0.7152 * toLinearChannel(color.green) +
   0.0722 * toLinearChannel(color.blue)
 
+/** Returns readable check color for the frontend shared workflow. */
 export const getReadableCheckColor = (color: string, surfaceColor: string): string => {
   const foreground = parseHexColor(color)
   const surface = parseHexColor(surfaceColor)
@@ -212,6 +221,7 @@ export const getReadableCheckColor = (color: string, surfaceColor: string): stri
   return blackContrast >= whiteContrast ? CHECK_COLOR.BLACK : CHECK_COLOR.WHITE
 }
 
+/** Returns custom color fallback for the frontend shared workflow. */
 export const getCustomColorFallback = (
   appearance: TMarkerThemeAppearance | undefined,
   theme: TThemeName,

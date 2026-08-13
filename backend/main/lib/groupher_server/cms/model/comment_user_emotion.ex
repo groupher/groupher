@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   Ecto schema for per-user comment emotion reactions.
 
   This keeps expressive reaction state independent from comment upvote state.
+
+  Business position:
+
+      CMS context
+        -> CommentUserEmotion schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

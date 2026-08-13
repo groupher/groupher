@@ -1,7 +1,19 @@
+/**
+ * Implements the Src Db Retention boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { sql } from 'drizzle-orm'
 
 import type { PressDatabase } from './client'
 
+/** Runs the apply retention operation at the press boundary. */
 export const applyRetention = async (db: PressDatabase): Promise<void> => {
   await db.execute(sql`
     DELETE FROM analysis.press_metric_events
@@ -17,6 +29,7 @@ export const applyRetention = async (db: PressDatabase): Promise<void> => {
   `)
 }
 
+/** Runs the start retention operation at the press boundary. */
 export const startRetention = (db: PressDatabase | null): void => {
   if (!db) return
 

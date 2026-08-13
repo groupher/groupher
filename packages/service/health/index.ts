@@ -14,6 +14,7 @@ type TCreateHealthResponseOptions = {
   version?: string
 }
 
+/** Creates health response from typed service inputs. */
 export const createHealthResponse = ({
   checks = [],
   environment = process.env.NODE_ENV || 'development',

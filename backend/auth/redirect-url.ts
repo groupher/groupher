@@ -1,3 +1,14 @@
+/**
+ * Implements the Redirect Url boundary inside Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 type TResolveAuthRedirectOptions = {
   baseUrl: string
   sharedDomain?: string
@@ -10,6 +21,7 @@ const isDomainOrSubdomain = (hostname: string, domain: string): boolean => {
   return hostname === domain || hostname.endsWith(`.${domain}`)
 }
 
+/** Resolves auth redirect without leaking auth routing details to callers. */
 export const resolveAuthRedirect = ({
   baseUrl,
   sharedDomain,

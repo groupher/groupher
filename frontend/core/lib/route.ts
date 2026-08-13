@@ -103,6 +103,7 @@ const parseSubDomain = (args: TRouteArgs): string => {
   return communityPath
 }
 
+/** Parses url into the canonical frontend shared representation. */
 export const parseURL = (args: TRouteArgs): TParsedRoute => {
   let mainPath = ''
   let subPath = ''
@@ -133,14 +134,17 @@ export const parseURL = (args: TRouteArgs): TParsedRoute => {
 }
 
 // --------------
+/** Returns route path list for the frontend shared workflow. */
 export const getRoutePathList = (path: string): string[] => getPathSegments(path)
 
+/** Returns route main path for the frontend shared workflow. */
 export const getRouteMainPath = (asPath: string): string => {
   if (asPath === '/') return ROUTE.HOME
 
   return getPathSegments(asPath)[0] || ROUTE.HOME
 }
 
+/** Runs the ssr parse url operation at the frontend shared boundary. */
 export const ssrParseURL = (req: Pick<TRouteArgs, 'url'>): TSSRParsedRoute => {
   const { url } = req
   if (url === '/') {
@@ -176,6 +180,7 @@ export const ssrParseURL = (req: Pick<TRouteArgs, 'url'>): TSSRParsedRoute => {
   }
 }
 
+/** Runs the aka translate operation at the frontend shared boundary. */
 export const akaTranslate = (communitySlug: string): string => {
   switch (communitySlug) {
     case 'k8s':
@@ -219,6 +224,7 @@ const mergePagiQuery = (
 }
 
 // convert url query string to json, with optional pagi info
+/** Runs the query string to json operation at the frontend shared boundary. */
 export const queryStringToJSON = (
   path: string,
   opt: TQueryStringOptions = { noPagiInfo: false, pagi: 'string' },
@@ -239,6 +245,7 @@ export const queryStringToJSON = (
   return opt.noPagiInfo ? json : mergePagiQuery(json, opt)
 }
 
+/** Returns parameter by name for the frontend shared workflow. */
 export const getParameterByName = (name: string): string | null => {
   const url = Global.location.href
   const name$ = name.replace(/[[\]]/g, '\\$&')
@@ -249,6 +256,7 @@ export const getParameterByName = (name: string): string | null => {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
+/** Returns query from url for the frontend shared workflow. */
 export const getQueryFromUrl = (name: string, url: string): string | null => {
   const resolvedUrl = url || window.location.href
   const nameVal = name.replace(/[[\]]/g, '\\$&')
@@ -259,6 +267,7 @@ export const getQueryFromUrl = (name: string, url: string): string | null => {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
+/** Serializes query for the frontend shared protocol boundary. */
 export const serializeQuery = (obj: Record<string, unknown>): string => {
   const qstring = Object.keys(obj)
     .reduce((a: string[], k: string) => {
@@ -270,6 +279,7 @@ export const serializeQuery = (obj: Record<string, unknown>): string => {
   return isEmpty(qstring) ? '' : `?${qstring}`
 }
 
+/** Parses domain into the canonical frontend shared representation. */
 export const parseDomain = (url: string): string | TParsedDomain => {
   try {
     const parsedUrl: TParsedDomain = {}
@@ -317,6 +327,7 @@ export const parseDomain = (url: string): string | TParsedDomain => {
 
 // sync json query to the brower url without reload the page
 // empty value obj will be omit
+/** Runs the mark route operation at the frontend shared boundary. */
 export const markRoute = (
   query: Record<string, unknown>,
   opt: TQueryStringOptions = { noPagiInfo: true },

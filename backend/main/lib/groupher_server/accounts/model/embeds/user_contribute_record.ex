@@ -1,6 +1,13 @@
 defmodule GroupherServer.Accounts.Model.Embeds.UserContributeRecord do
   @moduledoc """
-  user contribute
+  One date/count entry inside an account contribution summary.
+
+  Business position:
+
+      Accounts context
+        -> UserContributeRecord schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

@@ -1,6 +1,17 @@
 defmodule GroupherServer.CMS.Policy.PublishThrottle do
   @moduledoc """
-  limit rate for publish content
+  Persists per-user publication timestamps and hourly/daily counters.
+
+  These facts are consumed by `CMS.Gate` to decide whether another publish
+  action is allowed; this module records activity rather than authorizing it.
+
+  Business position:
+
+      Successful content publish
+        -> CMS policy recorder
+        -> PublishThrottle
+        -> PostgreSQL counters
+        -> CMS.Gate on the next request
   """
 
   import Ecto.Query, warn: false

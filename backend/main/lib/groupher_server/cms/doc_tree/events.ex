@@ -19,6 +19,13 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   Events are intentionally domain-level. They are not a raw JSON patch; each one
   can be rendered, reviewed, and eventually reverted with its inverse payload.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Events
+        -> Repo / published projection
   """
 
   import Ecto.Query, warn: false

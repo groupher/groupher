@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   It coordinates community, category, thread, article, and comment seeds for
   local environments that need realistic content.
+
+  Business position:
+
+      Seed task
+        -> FullCommunity
+        -> CMS context
+        -> Repo
   """
 
   import Ecto.Query, warn: false

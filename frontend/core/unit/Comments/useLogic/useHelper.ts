@@ -16,6 +16,7 @@ type TRet = {
   resetPublish: (mode: TEditMode) => void
 }
 
+/** Exposes helper state and actions through the shared React hook boundary. */
 export default function useHelper(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {

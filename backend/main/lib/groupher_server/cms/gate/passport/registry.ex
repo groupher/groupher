@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.Passport.Registry do
-  @moduledoc "Gate-owned registry facade over the existing Passport registry."
+  @moduledoc """
+  Gate-owned registry facade over the existing Passport registry.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Registry
+        -> allow / deny
+        -> domain context
+  """
 
   alias Helper.PermissionRegistry, as: Legacy
 

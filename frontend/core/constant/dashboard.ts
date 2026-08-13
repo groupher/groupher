@@ -7,6 +7,7 @@ export const ONE_LINK_GROUP = '__ONE_LINK_GROUP__'
 export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
 export const INIT_KANBAN_BOARDS = [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
 
+/** Normalizes kanban boards into the canonical frontend shared shape. */
 export const normalizeKanbanBoards = (
   boards?: readonly string[] | null,
 ): readonly TKanbanBoard[] => {
@@ -15,6 +16,7 @@ export const normalizeKanbanBoards = (
   return boards as readonly TKanbanBoard[]
 }
 
+/** Serializes kanban boards for the frontend shared protocol boundary. */
 export const serializeKanbanBoards = (boards: readonly TKanbanBoard[]): string[] => {
   return [...boards]
 }

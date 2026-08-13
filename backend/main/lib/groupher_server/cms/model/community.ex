@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Community do
 
   A community is the main CMS container for threads, dashboard settings, tags,
   subscribers, moderators, and public navigation identity.
+
+  Business position:
+
+      CMS context
+        -> Community schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

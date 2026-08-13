@@ -6,6 +6,7 @@ type TRet = {
   inView: boolean
 }
 
+/** Exposes community digest viewport state and actions through the shared React hook boundary. */
 export default function useCommunityDigestViewport(): TRet {
   const community$ = useCommunity()
 

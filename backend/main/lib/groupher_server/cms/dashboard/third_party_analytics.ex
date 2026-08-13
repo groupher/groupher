@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Dashboard.ThirdPartyAnalytics do
   Dashboard reads provider definitions from this module through GraphQL, while
   persistence and public rendering reuse the same registry so provider support
   is not maintained independently in multiple layers.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> ThirdPartyAnalytics
+        -> CommunityDashboard / Repo
   """
 
   import Ecto.Changeset

@@ -1,6 +1,8 @@
 /**
  * BadSmell contract decoders shared by analysis artifacts and Review UI.
  *
+ *   analysis JSON -> diagnostic decoder -> bounded BadSmell[] -> Review UI/apply
+ *
  * @see docs/bulk-import/content-import-architecture.md
  */
 import type { TBadSmell } from '../../../core/contracts'

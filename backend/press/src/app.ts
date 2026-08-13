@@ -1,3 +1,14 @@
+/**
+ * Composes the Press HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { createHash } from 'node:crypto'
 
 import {
@@ -69,6 +80,7 @@ const responseFrom = (request: Request, output: CachedOutput): Response => {
   return new Response(output.body, { status: output.status, headers: output.headers })
 }
 
+/** Creates the press application with injectable runtime dependencies. */
 export const createApp = (dependencies: Dependencies = {}) => {
   const database = createDatabase()
   startRetention(database)

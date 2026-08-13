@@ -24,6 +24,7 @@ type TRet = {
   docCoversData: TDocCovers
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const dashboard = useDashboard()
   const article$ = useArticle()

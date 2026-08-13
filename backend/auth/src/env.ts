@@ -1,3 +1,14 @@
+/**
+ * Loads and validates runtime environment values for Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 

@@ -81,6 +81,7 @@ const createDefaultCrop = (): TCoverImageCrop => ({
   zoom: 1,
 })
 
+/** Creates cover image config from typed frontend shared inputs. */
 export const createCoverImageConfig = (
   which: TCoverImageWhich,
   source: string,
@@ -107,6 +108,7 @@ export const createCoverImageConfig = (
   }
 }
 
+/** Returns raised images for the frontend shared workflow. */
 export const getRaisedImages = (images: TCoverImages, which: TCoverImageWhich): TCoverImages => ({
   [COVER_IMAGE_WHICH.PRIMARY]: images.primary
     ? {
@@ -126,11 +128,13 @@ export const getRaisedImages = (images: TCoverImages, which: TCoverImageWhich): 
     : null,
 })
 
+/** Returns active image for the frontend shared workflow. */
 export const getActiveImage = (
   images: TCoverImages,
   activeImageWhich: TCoverImageWhich,
 ): TCoverImageConfig | null => images[activeImageWhich] ?? images.primary ?? images.secondary
 
+/** Returns next active image which for the frontend shared workflow. */
 export const getNextActiveImageWhich = (
   images: TCoverImages,
   activeImageWhich: TCoverImageWhich,

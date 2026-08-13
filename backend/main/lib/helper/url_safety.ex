@@ -9,6 +9,12 @@ defmodule Helper.UrlSafety do
 
   This module is used by HTTP client adapters (SiteFavicon, OgInfo) to validate
   URLs before making outgoing requests.
+
+  Business position:
+
+      Domain or web caller
+        -> UrlSafety
+        -> normalized value / infrastructure
   """
 
   import Bitwise

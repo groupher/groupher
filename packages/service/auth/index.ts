@@ -30,6 +30,7 @@ export class ServiceTokenAuthorizationError extends Error {
   }
 }
 
+/** Runs the service token error status operation at the service boundary. */
 export const serviceTokenErrorStatus = (error: unknown): 401 | 403 =>
   error instanceof ServiceTokenAuthorizationError ? error.status : 401
 
@@ -55,6 +56,7 @@ type TCachedToken = {
 const cacheKey = ({ resource, scopes }: TServiceTokenRequest) =>
   `${resource}\n${[...scopes].sort().join(' ')}`
 
+/** Creates service auth client from typed service inputs. */
 export const createServiceAuthClient = ({
   clientId,
   clientSecret,
@@ -118,6 +120,7 @@ export const createServiceAuthClient = ({
   }
 }
 
+/** Creates service auth client from env from typed service inputs. */
 export const createServiceAuthClientFromEnv = (
   environment: Record<string, string | undefined> = process.env,
   fetcher: typeof fetch = fetch,
@@ -129,6 +132,7 @@ export const createServiceAuthClientFromEnv = (
     fetcher,
   })
 
+/** Creates service auth verifier from typed service inputs. */
 export const createServiceAuthVerifier = ({
   audience,
   issuer,
@@ -172,5 +176,6 @@ export const createServiceAuthVerifier = ({
   }
 }
 
+/** Runs the bearer token operation at the service boundary. */
 export const bearerToken = (authorization: string | undefined): string | null =>
   authorization?.startsWith('Bearer ') ? authorization.slice(7).trim() || null : null

@@ -118,9 +118,11 @@ const SHADOW_PRESET_PARAMS: Record<Exclude<TCoverShadowPreset, 'custom'>, TShado
   },
 }
 
+/** Reports whether cover shadow active at the frontend shared boundary. */
 export const isCoverShadowActive = (shadow: TCoverShadow): boolean =>
   shadow.preset !== COVER_SHADOW_PRESET.NONE && normalizeCoverShadowOpacity(shadow.opacity) > 0
 
+/** Normalizes cover shadow preset into the canonical frontend shared shape. */
 export const normalizeCoverShadowPreset = (
   preset: TCoverShadowPreset | undefined,
 ): TCoverShadowPreset =>
@@ -130,6 +132,7 @@ export const normalizeCoverShadowPreset = (
       ? preset
       : COVER_SHADOW_DEFAULT.PRESET
 
+/** Normalizes cover shadow color mode into the canonical frontend shared shape. */
 export const normalizeCoverShadowColorMode = (
   colorMode: TCoverShadowColorMode | undefined,
 ): TCoverShadowColorMode =>
@@ -139,21 +142,25 @@ export const normalizeCoverShadowColorMode = (
     ? colorMode
     : COVER_SHADOW_COLOR_MODE.BLACK
 
+/** Normalizes cover shadow hue into the canonical frontend shared shape. */
 export const normalizeCoverShadowHue = (hue: number | undefined): number => {
   const nextHue = getFiniteNumber(hue, COVER_SHADOW_DEFAULT.HUE)
 
   return Math.round(((nextHue % 360) + 360) % 360)
 }
 
+/** Normalizes cover shadow rainbow hue into the canonical frontend shared shape. */
 export const normalizeCoverShadowRainbowHue = (hue: number | undefined): number => {
   const nextHue = getFiniteNumber(hue, COVER_SHADOW_DEFAULT.RAINBOW_HUE)
 
   return Math.round(((nextHue % 360) + 360) % 360)
 }
 
+/** Normalizes cover shadow opacity into the canonical frontend shared shape. */
 export const normalizeCoverShadowOpacity = (opacity: number | undefined): number =>
   clamp(getFiniteNumber(opacity, COVER_SHADOW_DEFAULT.OPACITY), 0, 1)
 
+/** Normalizes cover shadow into the canonical frontend shared shape. */
 export const normalizeCoverShadow = (shadow: TCoverShadow | number | undefined): TCoverShadow => {
   if (typeof shadow === 'number') {
     const preset =
@@ -243,6 +250,7 @@ const getRainbowShadow = (params: TShadowCssParams, rainbowHue: number): string 
     )
     .join(', ')
 
+/** Returns image shadow for the frontend shared workflow. */
 export const getImageShadow = (shadow: TCoverShadow | number | undefined): string | undefined => {
   const normalizedShadow = normalizeCoverShadow(shadow)
   const params =
@@ -275,27 +283,33 @@ export const getImageShadow = (shadow: TCoverShadow | number | undefined): strin
   ].join(', ')
 }
 
+/** Normalizes border highlight hue into the canonical frontend shared shape. */
 export const normalizeBorderHighlightHue = (hue: number | undefined): number => {
   const nextHue = getFiniteNumber(hue, BORDER_HIGHLIGHT_DEFAULT.HUE)
 
   return Math.round(((nextHue % 360) + 360) % 360)
 }
 
+/** Normalizes border highlight rainbow hue into the canonical frontend shared shape. */
 export const normalizeBorderHighlightRainbowHue = (hue: number | undefined): number => {
   const nextHue = getFiniteNumber(hue, BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE)
 
   return Math.round(((nextHue % 360) + 360) % 360)
 }
 
+/** Normalizes border highlight opacity into the canonical frontend shared shape. */
 export const normalizeBorderHighlightOpacity = (opacity: number | undefined): number =>
   clamp(getFiniteNumber(opacity, BORDER_HIGHLIGHT_DEFAULT.OPACITY), 0, 1)
 
+/** Normalizes border highlight saturation into the canonical frontend shared shape. */
 export const normalizeBorderHighlightSaturation = (saturation: number | undefined): number =>
   clamp(getFiniteNumber(saturation, BORDER_HIGHLIGHT_DEFAULT.SATURATION), 0, 100)
 
+/** Normalizes border highlight lightness into the canonical frontend shared shape. */
 export const normalizeBorderHighlightLightness = (lightness: number | undefined): number =>
   clamp(getFiniteNumber(lightness, BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS), 0, 100)
 
+/** Normalizes border highlight mode into the canonical frontend shared shape. */
 export const normalizeBorderHighlightMode = (
   mode: TBorderHighlightMode | undefined,
 ): TBorderHighlightMode =>
@@ -303,6 +317,7 @@ export const normalizeBorderHighlightMode = (
     ? mode
     : BORDER_HIGHLIGHT_DEFAULT.MODE
 
+/** Returns border highlight color for the frontend shared workflow. */
 export const getBorderHighlightColor = (
   borderHighlight: Partial<Pick<TBorderHighlight, 'hue' | 'saturation' | 'lightness' | 'opacity'>>,
 ): string => {
@@ -314,6 +329,7 @@ export const getBorderHighlightColor = (
   return `hsla(${hue}, ${saturation}%, ${lightness}%, ${formatAlpha(opacity)})`
 }
 
+/** Returns rainbow border highlight color for the frontend shared workflow. */
 export const getRainbowBorderHighlightColor = (
   progress: number,
   opacity: number | undefined,
@@ -332,6 +348,7 @@ export const getRainbowBorderHighlightColor = (
   return `hsla(${shiftedHue}, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_SATURATION}%, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_LIGHTNESS}%, ${formatAlpha(alpha)})`
 }
 
+/** Normalizes magnifier shadow into the canonical frontend shared shape. */
 export const normalizeMagnifierShadow = (shadow: number | undefined): number =>
   Math.round(
     clamp(
@@ -341,6 +358,7 @@ export const normalizeMagnifierShadow = (shadow: number | undefined): number =>
     ),
   )
 
+/** Normalizes magnifier border color into the canonical frontend shared shape. */
 export const normalizeMagnifierBorderColor = (
   borderColor: TMagnifierBorderColor | undefined,
 ): TMagnifierBorderColor =>
@@ -348,6 +366,7 @@ export const normalizeMagnifierBorderColor = (
     ? MAGNIFIER_BORDER_COLOR.BLACK
     : MAGNIFIER_BORDER_COLOR.GRAY
 
+/** Normalizes magnifier border width into the canonical frontend shared shape. */
 export const normalizeMagnifierBorderWidth = (borderWidth: number | undefined): number =>
   Math.round(
     clamp(
@@ -364,9 +383,11 @@ const normalizeMagnifierHighlightCenter = (
   y: clamp(getFiniteNumber(center?.y, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER.y), 0, 1),
 })
 
+/** Normalizes magnifier highlight intensity into the canonical frontend shared shape. */
 export const normalizeMagnifierHighlightIntensity = (intensity: number | undefined): number =>
   clamp(getFiniteNumber(intensity, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY), 0, 1)
 
+/** Normalizes magnifier appearance into the canonical frontend shared shape. */
 export const normalizeMagnifierAppearance = (
   appearance: Partial<TCoverMagnifier> | undefined,
 ): TCoverMagnifier => ({
@@ -403,6 +424,7 @@ export type TMagnifierAppearanceStyle = CSSProperties & {
   '--magnifier-crescent-mask': string
 }
 
+/** Returns magnifier appearance style for the frontend shared workflow. */
 export const getMagnifierAppearanceStyle = (
   appearance: Partial<TCoverMagnifier> | undefined,
 ): TMagnifierAppearanceStyle => {

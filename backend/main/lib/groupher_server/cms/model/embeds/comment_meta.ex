@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentMeta do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded moderation, report, and reply metadata for a comment.
+
+  Business position:
+
+      CMS context
+        -> CommentMeta schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

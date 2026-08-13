@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.DocTree.PublishedFields do
   Publish code uses this list when applying event payloads to public
   `doc_tree_nodes`. Keep it small and explicit so transient editor fields do not
   leak into the published tree snapshot.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> PublishedFields
+        -> Repo / published projection
   """
 
   @node_fields ~w(type parent_node_id title index href marker badge hidden)a

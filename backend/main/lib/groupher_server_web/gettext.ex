@@ -19,6 +19,13 @@ defmodule GroupherServerWeb.Gettext do
       dgettext "errors", "Here is the error message to translate"
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Gettext
+        -> web or domain boundary
   """
   use Gettext.Backend, otp_app: :groupher_server
 end

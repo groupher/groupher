@@ -1,8 +1,15 @@
 defmodule Helper.Utils.String do
   @moduledoc """
-  string utils
+  String normalization, truncation, and naming helpers used across contexts.
+
+  Business position:
+
+      Domain or web caller
+        -> String
+        -> normalized value / infrastructure
   """
 
+  @doc "Runs `stringify` through the public `String` boundary."
   def stringify(v) when is_binary(v), do: v
   def stringify(v) when is_integer(v), do: to_string(v)
   def stringify(v) when is_atom(v), do: to_string(v)
@@ -10,6 +17,7 @@ defmodule Helper.Utils.String do
 
   # see https://stackoverflow.com/a/49558074/4050784
   @spec str_occurrence(String.t(), String.t()) :: integer()
+  @doc "Runs `str_occurrence` through the public `String` boundary."
   def str_occurrence(string, substr) when is_binary(string) and is_binary(substr) do
     len = string |> String.split(substr) |> length()
     len - 1

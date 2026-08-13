@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads do
-  @moduledoc "Marks unattached Application Logo uploads as expired."
+  @moduledoc """
+  Marks unattached Application Logo uploads as expired.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> ExpireLogoUploads
+        -> Repo / Oban
+  """
 
   use Oban.Worker, queue: :community_application, max_attempts: 3
 

@@ -20,6 +20,7 @@ type TDocLayoutConfig = {
 
 const seg = DSB_ROUTE.DOC
 
+/** Creates the dashboard layout for documentation management routes. */
 export default function createDocLayout({
   breadcrumbAddon,
   path,

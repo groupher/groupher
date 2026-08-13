@@ -1,7 +1,13 @@
 defmodule Helper.ORMAtom do
   @moduledoc """
-  inc/dec: update int field by 1
+  Builds atomic Ecto update expressions for incrementing and decrementing counters.
   update_meta: 提供安全的 JSONB 字段部分更新功能，支持并发安全和最小化数据库写入。
+
+  Business position:
+
+      Domain or web caller
+        -> ORMAtom
+        -> normalized value / infrastructure
   """
 
   import Ecto.Query, warn: false

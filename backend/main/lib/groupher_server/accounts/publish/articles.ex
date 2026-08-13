@@ -5,6 +5,14 @@ defmodule GroupherServer.Accounts.Publish.Articles do
   The CMS article domain owns publication queries. This module adapts those
   queries for profile pages and keeps the user's published-count meta in sync
   after write paths change article state.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Articles
+        -> Repo
   """
 
   import Helper.Utils, only: [plural: 1]

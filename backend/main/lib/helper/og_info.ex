@@ -20,6 +20,7 @@ defmodule Helper.OgInfo do
 
   @default_site_favicon_adapter Helper.SiteFavicon
 
+  @doc "Runs `get` through the public `OgInfo` boundary."
   def get(url) do
     adapter = site_favicon_adapter()
 

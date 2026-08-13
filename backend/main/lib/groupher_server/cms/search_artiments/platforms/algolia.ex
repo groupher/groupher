@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
-  @moduledoc "Algolia implementation of the Search Artiments platform contract."
+  @moduledoc """
+  Algolia implementation of the Search Artiments platform contract.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Algolia
+        -> search platform
+  """
 
   @behaviour GroupherServer.CMS.SearchArtiments.PlatformAdapter
 

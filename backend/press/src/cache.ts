@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Cache boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { eq, like } from 'drizzle-orm'
 
 import type { PressDatabase } from './db/client'
@@ -17,6 +28,7 @@ export type OutputCache = {
   invalidate(prefix: string): Promise<void>
 }
 
+/** Creates output cache from typed press inputs. */
 export const createOutputCache = (db: PressDatabase | null): OutputCache => {
   const memory = new Map<string, CachedOutput>()
   return {

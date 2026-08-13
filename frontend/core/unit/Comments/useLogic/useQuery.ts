@@ -33,6 +33,7 @@ export type TRet = {
 let repliesPagiNo: Record<string, number> = {}
 const PAGI_SIZE = 30
 
+/** Exposes query state and actions through the shared React hook boundary. */
 export default function useQuery(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {

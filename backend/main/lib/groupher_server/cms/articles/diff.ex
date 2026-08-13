@@ -10,6 +10,14 @@ defmodule GroupherServer.CMS.Articles.Diff do
 
   Diff stores nothing. TimeMachine asks for only the selected revision pair, so
   Snapshot storage remains linear rather than growing with every possible pair.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Diff
+        -> Repo / domain event
   """
 
   alias GroupherServer.CMS.Articles.Snapshot

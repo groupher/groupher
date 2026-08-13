@@ -15,6 +15,7 @@ type TPostLayoutConfig = {
 
 const seg = DSB_ROUTE.POST
 
+/** Creates the dashboard layout for post management routes. */
 export default function createPostLayout({
   path,
   title,

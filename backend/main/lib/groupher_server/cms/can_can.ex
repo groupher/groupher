@@ -23,6 +23,13 @@ defmodule GroupherServer.CMS.CanCan do
 
       iex> CMS.CanCan.allow_emotion(community.slug, :comment, :post, :upvote)
       {:error, :emotion_not_allowed}
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> CanCan
+        -> Repo / external boundary
   """
 
   alias GroupherServer.CMS.CanCan.Communities
@@ -31,14 +38,17 @@ defmodule GroupherServer.CMS.CanCan do
 
   @spec allow_thread(map() | String.t() | nil, atom()) ::
           {:ok, atom()} | {:error, atom()}
+  @doc "Reports whether thread according to `CanCan`."
   def allow_thread(community, thread), do: Communities.allow_thread(community, thread)
 
   @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
           {:ok, atom()} | {:error, atom()}
+  @doc "Reports whether emotion according to `CanCan`."
   def allow_emotion(community, scope, thread, emotion) do
     Communities.allow_emotion(community, scope, thread, emotion)
   end
 
   @spec allow_comment(map(), term()) :: {:ok, map()} | {:error, atom()}
+  @doc "Reports whether comment according to `CanCan`."
   def allow_comment(article, user), do: Communities.allow_comment(article, user)
 end

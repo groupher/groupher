@@ -16,6 +16,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   logical `node_id` in the same Community, Branch, and Stage, never its physical
   `id`. Only root Tabs have a nil parent. Pins use the same field but remain in
   the Tab's independent pin lane.
+
+  Business position:
+
+      CMS context
+        -> DocTreeNode schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

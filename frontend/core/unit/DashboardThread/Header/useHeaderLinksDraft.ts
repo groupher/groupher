@@ -21,6 +21,7 @@ type TRet = {
   makeId: (prefix: string) => string
 }
 
+/** Exposes header links draft state and actions through the shared React hook boundary. */
 export default function useHeaderLinksDraft(): TRet {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()

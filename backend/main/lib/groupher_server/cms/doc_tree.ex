@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.DocTree do
   @moduledoc """
-  CMS docs side-tree facade.
+  Public CMS boundary for draft and published docs navigation trees.
 
   Docs editing owns a staged tree and a public tree in the same table. Dashboard
   APIs mutate only the staged rows; publish copies the staged snapshot into

@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
   Phoenix owns the business boundary: community permission, stable public refs,
   canonical URLs, and final DB writes. The assets-hub service owns R2 signing and
   object verification, then calls back through a scoped service mutation.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Upload
+        -> Repo / Assets Hub
   """
 
   import Ecto.Query, warn: false

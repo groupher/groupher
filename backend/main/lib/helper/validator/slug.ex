@@ -16,6 +16,12 @@ defmodule Helper.Validator.Slug do
 
       iex> Helper.Validator.Slug.valid?("react_19_guide")
       false
+
+  Business position:
+
+      Domain or web caller
+        -> Slug
+        -> normalized value / infrastructure
   """
 
   import Ecto.Changeset, only: [validate_format: 4]
@@ -23,10 +29,12 @@ defmodule Helper.Validator.Slug do
   @slug_regex ~r/^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
   @spec valid?(String.t()) :: boolean()
+  @doc "Runs `valid?` through the public `Slug` boundary."
   def valid?(slug) when is_binary(slug), do: Regex.match?(@slug_regex, slug)
   def valid?(_), do: false
 
   @spec normalize(String.t() | term()) :: String.t() | term()
+  @doc "Runs `normalize` through the public `Slug` boundary."
   def normalize(slug) when is_binary(slug) do
     slug
     |> String.trim()
@@ -40,6 +48,7 @@ defmodule Helper.Validator.Slug do
   def normalize(slug), do: slug
 
   @spec validate_changeset(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  @doc "Runs `validate_changeset` through the public `Slug` boundary."
   def validate_changeset(changeset, field \\ :slug) do
     validate_format(
       changeset,

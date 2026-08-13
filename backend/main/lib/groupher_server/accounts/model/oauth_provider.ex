@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
 
   Each row binds one provider/provider-id pair to one account. Provider profile
   fields are bounded display metadata; provider credentials are never persisted.
+
+  Business position:
+
+      Accounts context
+        -> OauthProvider schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

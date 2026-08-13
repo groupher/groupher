@@ -1,3 +1,14 @@
+/**
+ * Declares the Cloudflare bindings consumed by the Assets Hub Worker.
+ *
+ * Business position:
+ *
+ *   Worker deployment configuration
+ *     -> Env bindings
+ *     -> Assets Hub routes and queue consumer
+ *     -> R2 / Phoenix service boundary
+ */
+
 type R2ObjectBody = {
   body: ReadableStream
   httpEtag?: string

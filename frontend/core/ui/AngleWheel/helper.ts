@@ -31,6 +31,7 @@ type TLine = {
 // All exported helpers return the widget's public angle model: -180..180.
 // Internally, the geometry still uses circular trig so equivalent values such
 // as -10deg and 350deg render in the same physical position.
+/** Runs the snap angle operation at the frontend shared boundary. */
 export const snapAngle = (angle: number): number => {
   const normalizedAngle = normalizeSignedAngle(angle)
   const target = Math.round(normalizedAngle / SNAP_STEP) * SNAP_STEP
@@ -42,6 +43,7 @@ export const snapAngle = (angle: number): number => {
   return normalizedAngle
 }
 
+/** Runs the angle from pointer operation at the frontend shared boundary. */
 export const angleFromPointer = (clientX: number, clientY: number, rect: DOMRect): number => {
   const centerX = rect.left + rect.width / 2
   const centerY = rect.top + rect.height / 2
@@ -50,6 +52,7 @@ export const angleFromPointer = (clientX: number, clientY: number, rect: DOMRect
   return snapAngle(mathAngle + 90)
 }
 
+/** Runs the point from angle operation at the frontend shared boundary. */
 export const pointFromAngle = (angle: number): TPosition => {
   const rad = (angle * Math.PI) / 180
   const x = Math.sin(rad) * WHEEL_RADIUS
@@ -72,6 +75,7 @@ const svgPointFromAngle = (angle: number): TPoint => {
   }
 }
 
+/** Runs the tick line from angle operation at the frontend shared boundary. */
 export const tickLineFromAngle = (angle: number, major: boolean): TLine => {
   const rad = (angle * Math.PI) / 180
   const innerRadius = major ? MAJOR_TICK_INNER_RADIUS : TICK_INNER_RADIUS
@@ -84,6 +88,7 @@ export const tickLineFromAngle = (angle: number, major: boolean): TLine => {
   }
 }
 
+/** Runs the arc path from angle operation at the frontend shared boundary. */
 export const arcPathFromAngle = (angle: number): string => {
   const start = svgPointFromAngle(angle - GUIDE_ARC_SPAN / 2)
   const end = svgPointFromAngle(angle + GUIDE_ARC_SPAN / 2)

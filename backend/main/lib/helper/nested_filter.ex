@@ -1,7 +1,15 @@
 defmodule Helper.NestedFilter do
   @moduledoc """
-  Documentation for NestedFilter.
-  see: https://github.com/treble37/nested_filter
+  Recursively filters or selects keys and values in nested maps and lists.
+
+  The API is adapted from `treble37/nested_filter`; structs are treated as
+  opaque leaves so filtering does not silently destroy their type identity.
+
+  Business position:
+
+      Domain or web caller
+        -> NestedFilter
+        -> normalized value / infrastructure
   """
   @type key :: any
   @type val :: any
@@ -9,6 +17,7 @@ defmodule Helper.NestedFilter do
   @type predicate :: (key, val -> boolean)
 
   # @spec drop_by(struct, predicate) :: struct
+  @doc "Runs `drop_by` through the public `NestedFilter` boundary."
   def drop_by(%_{} = struct, _), do: struct
 
   # @spec drop_by(map, predicate) :: map
@@ -53,6 +62,7 @@ defmodule Helper.NestedFilter do
   end
 
   # @spec take_by(map, keys_to_select) :: map
+  @doc "Runs `take_by` through the public `NestedFilter` boundary."
   def take_by(map, keys_to_select) when is_map(map) do
     map
     |> Enum.reduce(%{}, fn {_key, val}, acc ->

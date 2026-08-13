@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.PublishThrottle do
-  @moduledoc "Gate facade for publish frequency admission and accounting."
+  @moduledoc """
+  Gate facade for publish frequency admission and accounting.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> PublishThrottle
+        -> allow / deny
+        -> domain context
+  """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Gate.Passport.Registry

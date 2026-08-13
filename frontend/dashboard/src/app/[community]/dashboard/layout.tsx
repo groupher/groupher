@@ -19,6 +19,7 @@ const parseLocale = (lang?: string | string[]) => {
   return langValue === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
 }
 
+/** Builds dashboard route metadata for the current community. */
 export async function generateMetadata({ params }): Promise<Metadata> {
   const params$ = await params
   const { dashboard } = await getCommunityInfo(params$.community)

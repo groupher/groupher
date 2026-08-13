@@ -24,6 +24,7 @@ const DEFAULT_MESH_RENDERER = GRADIENT_RENDERER.FLOW
 const isMeshGradientRenderer = (renderer: string): renderer is TMeshGradientRenderer =>
   MESH_GRADIENT_RENDERERS.includes(renderer as TMeshGradientRenderer)
 
+/** Reports whether mesh gradient recipe at the frontend shared boundary. */
 export const isMeshGradientRecipe = (recipe: TGradientRecipe): recipe is TMeshGradientRecipe =>
   isMeshGradientRenderer(recipe.renderer)
 
@@ -36,6 +37,7 @@ const getFinite = (value: number | undefined, fallback: number): number =>
 const getRecipeAngle = (recipe: TGradientRecipe): number =>
   normalizeSignedAngle(getFinite(recipe.angle, DEFAULT_ANGLE))
 
+/** Returns gradient recipe spread for the frontend shared workflow. */
 export const getGradientRecipeSpread = (recipe: TGradientRecipe): number =>
   isMeshGradientRecipe(recipe) ? recipe.softness : recipe.spread
 
@@ -109,6 +111,7 @@ export const composeGradientRecipeForRenderer = (
   }
 }
 
+/** Runs the apply gradient palette operation at the frontend shared boundary. */
 export const applyGradientPalette = (
   current: TGradientRecipe,
   palette: TGradientPaletteLike,
@@ -143,6 +146,7 @@ export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientR
   brightness: clampFinite(recipe.brightness, 100, 60, 140),
 })
 
+/** Normalizes even gradient stops into the canonical frontend shared shape. */
 export const normalizeEvenGradientStops = (colorCount: number): number[] => {
   if (colorCount <= 1) return [0]
 
@@ -179,6 +183,7 @@ export const normalizeLinearGradientStops = (
   })
 }
 
+/** Normalizes radial gradient stops into the canonical frontend shared shape. */
 export const normalizeRadialGradientStops = (
   colorCount: number,
   spread = 100,
@@ -196,6 +201,7 @@ export const normalizeRadialGradientStops = (
   )
 }
 
+/** Normalizes gradient stops into the canonical frontend shared shape. */
 export const normalizeGradientStops = (recipe: TGradientRecipe): number[] => {
   if (recipe.renderer === GRADIENT_RENDERER.LINEAR) {
     return normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops)

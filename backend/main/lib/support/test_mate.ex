@@ -1,6 +1,15 @@
 defmodule GroupherServer.TestMate do
   @moduledoc """
-  helper for reduce import modules in test files
+  Shared ExUnit case template for endpoint and persistence tests.
+
+  It layers project factories, connection simulators, common aliases, and stable
+  date fixtures on top of `GroupherServerWeb.ConnCase`.
+
+  Business position:
+
+      Test case
+        -> TestMate
+        -> endpoint / fixture / Repo
   """
   use ExUnit.CaseTemplate
 

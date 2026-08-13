@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
 
   The row stores canvas dimensions plus light/dark cover configs so authored
   cover layouts can be reconstructed in the dashboard editor.
+
+  Business position:
+
+      CMS context
+        -> CoverEditInfo schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__
@@ -53,6 +60,13 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
 
     It stores the selected background and ordered image layers used by the cover
     renderer.
+
+    Business position:
+
+        Dashboard cover editor
+          -> CoverEditInfo changeset
+          -> CoverConfig
+          -> PostgreSQL cover state
     """
 
     use Ecto.Schema

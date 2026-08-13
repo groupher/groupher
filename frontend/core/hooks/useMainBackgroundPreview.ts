@@ -23,6 +23,7 @@ const applyMainBackground = (background?: string | null) => {
 // Applies a temporary background preview to the main layout area and restores
 // the previous/background fallback on cleanup. Callers can disable the effect
 // for the inactive theme while still sharing the same hook.
+/** Exposes main background preview state and actions through the shared React hook boundary. */
 export default function useMainBackgroundPreview(
   background?: string | null,
   options: TOptions = {},

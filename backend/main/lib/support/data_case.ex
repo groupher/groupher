@@ -10,6 +10,12 @@ defmodule GroupherServer.DataCase do
   it cannot be async. For this reason, every test runs
   inside a transaction which is reset at the beginning
   of the test unless the test case is marked as async.
+
+  Business position:
+
+      Test case
+        -> DataCase
+        -> endpoint / fixture / Repo
   """
 
   use ExUnit.CaseTemplate

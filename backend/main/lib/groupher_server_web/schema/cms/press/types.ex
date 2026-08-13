@@ -1,5 +1,14 @@
 defmodule GroupherServerWeb.Schema.CMS.Press.Types do
-  @moduledoc "GraphQL DTOs for current public Press projections."
+  @moduledoc """
+  GraphQL DTOs for current public Press projections.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
+  """
 
   use Absinthe.Schema.Notation
 

@@ -1,20 +1,24 @@
 defmodule GroupherServerWeb do
   @moduledoc """
-  The entrypoint for defining your web interface, such
-  as controllers, views, channels and so on.
+  Shared compile-time entrypoint for Phoenix controllers, routers, channels,
+  HTML components, and verified routes.
 
   This can be used in your application as:
 
       use GroupherServerWeb, :controller
-      use GroupherServerWeb, :view
+      use GroupherServerWeb, :router
+      use GroupherServerWeb, :html
 
-  The definitions below will be executed for every view,
-  controller, etc, so keep them short and clean, focused
-  on imports, uses and aliases.
+  Each quoted block stays limited to framework setup, imports, aliases, and the
+  `Phoenix.VerifiedRoutes` contract. Product and domain behavior belongs in
+  normal modules outside this macro boundary.
 
-  Do NOT define functions inside the quoted expressions
-  below. Instead, define any helper function in modules
-  and import those modules here.
+  Business position:
+
+      Controller / Router / Channel / HTML module
+        -> use GroupherServerWeb
+        -> Phoenix framework imports + verified routes
+        -> Endpoint / Router / rendered response
   """
 
   def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
@@ -101,9 +105,7 @@ defmodule GroupherServerWeb do
     end
   end
 
-  @doc """
-  When used, dispatch to the appropriate controller/view/etc.
-  """
+  @doc "Dispatches `use GroupherServerWeb, role` to the matching framework setup macro."
   defmacro __using__(which) when is_atom(which) do
     apply(__MODULE__, which, [])
   end

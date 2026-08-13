@@ -5,6 +5,7 @@ import type { TColorName, TInlineTagLayout } from '~/spec'
 
 type TProps = { color: TColorName } & { layout?: TInlineTagLayout | null }
 
+/** Exposes inline tag salon state and actions through the shared React hook boundary. */
 export default function useInlineTagSalon({ color, layout }: TProps) {
   const { cn, br, fg, rainbow, rainbowLite } = useTwBelt()
   const { inlineTagLayout } = useLayout()

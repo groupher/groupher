@@ -30,6 +30,7 @@ const placeMoreLast = (columns: readonly THeaderColumn[]): THeaderColumn[] => {
 // Builds the editor-only column model from persisted header links. Single links
 // become one-link columns so they can be sorted alongside groups; More is kept
 // as the last non-sortable column and may also show fixed resolver links.
+/** Builds header columns from typed frontend shared inputs. */
 export const buildHeaderColumns = (
   links: readonly TLinkItem[],
   community: string,
@@ -91,6 +92,7 @@ export const buildHeaderColumns = (
 // Converts header columns back to persisted links. Empty single-link columns are
 // dropped, which is how dragging a header single link into another group removes
 // the source single-link column. Fixed More links are never persisted.
+/** Runs the flatten header columns operation at the frontend shared boundary. */
 export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkItem[] => {
   return columns.flatMap((column): TLinkItem[] => {
     if (column.type === HEADER_COLUMN_TYPE.LINK) {
@@ -113,6 +115,7 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkIt
   })
 }
 
+/** Runs the same header links operation at the frontend shared boundary. */
 export const sameHeaderLinks = (left: readonly TLinkItem[], right: readonly TLinkItem[]): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
 
@@ -125,6 +128,7 @@ const isSortableColumn = (column: THeaderColumn): boolean =>
 
 // Link sorting is only allowed into group/More columns. Single-link columns are
 // sortable as whole columns, but they do not accept child links.
+/** Runs the find column with link operation at the frontend shared boundary. */
 export const findColumnWithLink = (
   columns: readonly THeaderColumn[],
   itemId: string,
@@ -140,6 +144,7 @@ export const findColumnWithLink = (
 // Moves a link in the column draft. When the source is a single-link column and
 // the link is dragged into another group, the source column is removed from the
 // draft and therefore from the eventual persisted header links.
+/** Runs the move header link in columns operation at the frontend shared boundary. */
 export const moveHeaderLinkInColumns = (
   columns: readonly THeaderColumn[],
   itemId: string,
@@ -187,6 +192,7 @@ export const moveHeaderLinkInColumns = (
 
 // Sorts only movable header columns. The More column and any other fixed column
 // stay out of the sortable set and are appended after the reordered columns.
+/** Runs the move header column operation at the frontend shared boundary. */
 export const moveHeaderColumn = (
   columns: readonly THeaderColumn[],
   columnId: string,

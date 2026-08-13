@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CoverBackground do
 
   Cover editing stores background choices by id so article/doc cover payloads can
   reuse curated background definitions instead of duplicating image metadata.
+
+  Business position:
+
+      CMS context
+        -> CoverBackground schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

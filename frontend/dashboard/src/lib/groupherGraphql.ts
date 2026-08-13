@@ -46,6 +46,7 @@ const formatGraphQLErrorMessage = (value: unknown): string | null => {
   return value == null ? null : String(value)
 }
 
+/** Runs the request groupher graph ql operation at the frontend shared boundary. */
 export const requestGroupherGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown>,

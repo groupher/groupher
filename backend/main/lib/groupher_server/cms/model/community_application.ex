@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityApplication do
 
   The current row is the state authority. Events are append-only history and
   communities are not created until a reviewer approves this aggregate.
+
+  Business position:
+
+      CMS context
+        -> CommunityApplication schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

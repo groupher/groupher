@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.UserFollower do
 
   A row means `follower_id` follows `user_id`. It is maintained together with
   `UserFollowing` so reads can be efficient in both directions.
+
+  Business position:
+
+      Accounts context
+        -> UserFollower schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

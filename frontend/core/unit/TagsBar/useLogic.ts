@@ -19,6 +19,7 @@ type TRet = {
   totalCountThreshold: number
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const { push } = useRouter()
   const pathname = usePathname()

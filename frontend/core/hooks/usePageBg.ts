@@ -10,6 +10,7 @@ type TRes = {
   rawBg: string
 }
 
+/** Exposes page bg state and actions through the shared React hook boundary. */
 export default function usePageBg(): TRes {
   const { theme } = useTheme()
   const { themeTokens } = useThemePreset()

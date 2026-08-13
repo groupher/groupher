@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
 
   Pin records keep presentation ordering separate from the comment's own content
   and reply state.
+
+  Business position:
+
+      CMS context
+        -> PinnedComment schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

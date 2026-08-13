@@ -17,6 +17,7 @@ export const isValidFooterLinks = isValidDashboardLinks
 // a newly added oneline link stays editable instead of being filtered out.
 const isValidFooterOnelineLink = (link: TFooterOnelineLink): boolean =>
   Boolean(link.id) && typeof link.title === 'string' && typeof link.url === 'string'
+/** Reports whether valid footer oneline links at the frontend shared boundary. */
 export const isValidFooterOnelineLinks = (links: readonly TFooterOnelineLink[]): boolean =>
   links.every(isValidFooterOnelineLink)
 
@@ -28,6 +29,7 @@ export { toDraftLink }
 // editor works on group-shaped TLinkItem data. This adapter creates one
 // non-persisted group so oneline can reuse item editing and item sorting without
 // inheriting footer group editing semantics.
+/** Builds footer oneline draft links from typed frontend shared inputs. */
 export const buildFooterOnelineDraftLinks = (
   links: readonly TFooterOnelineLink[],
 ): readonly TLinkItem[] => [
@@ -41,6 +43,7 @@ export const buildFooterOnelineDraftLinks = (
 
 // Converts the one-group oneline editor draft back to the persisted flat list.
 // The synthetic group id/title are intentionally discarded here.
+/** Runs the flatten footer oneline draft links operation at the frontend shared boundary. */
 export const flattenFooterOnelineDraftLinks = (
   links: readonly TLinkItem[],
 ): readonly TFooterOnelineLink[] => {
@@ -54,6 +57,7 @@ export const flattenFooterOnelineDraftLinks = (
 // Converts persisted grouped footer links into DnD columns. Footer group layout
 // only supports real groups, so non-group records are ignored instead of being
 // coerced.
+/** Builds footer columns from typed frontend shared inputs. */
 export const buildFooterColumns = (links: readonly TLinkItem[]): TFooterColumn[] => {
   if (!isValidFooterLinks(links)) return []
 
@@ -73,6 +77,7 @@ export const buildFooterColumns = (links: readonly TLinkItem[]): TFooterColumn[]
 
 // Serializes footer DnD columns back to the backend shape and strips the
 // per-group dndId used only to disambiguate duplicate child ids across groups.
+/** Runs the flatten footer columns operation at the frontend shared boundary. */
 export const flattenFooterColumns = (columns: readonly TFooterColumn[]): TLinkItem[] => {
   return columns.map((column): TLinkItem => ({
     id: column.id,
@@ -82,12 +87,14 @@ export const flattenFooterColumns = (columns: readonly TFooterColumn[]): TLinkIt
   }))
 }
 
+/** Runs the same footer links operation at the frontend shared boundary. */
 export const sameFooterLinks = (left: readonly TLinkItem[], right: readonly TLinkItem[]): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
 
 const normalizeColumnIndexes = (columns: readonly TFooterColumn[]): TFooterColumn[] =>
   columns.map((column, sourceIndex) => ({ ...column, sourceIndex }))
 
+/** Runs the find column with link operation at the frontend shared boundary. */
 export const findColumnWithLink = (
   columns: readonly TFooterColumn[],
   itemId: string,
@@ -103,6 +110,7 @@ export const findColumnWithLink = (
 // Moves a link inside the local column draft. The source column may become
 // empty, but unlike header single-link columns it must remain present because
 // every footer group is an explicit persisted group.
+/** Runs the move footer link in columns operation at the frontend shared boundary. */
 export const moveFooterLinkInColumns = (
   columns: readonly TFooterColumn[],
   itemId: string,
@@ -149,6 +157,7 @@ export const moveFooterLinkInColumns = (
 
 // Sorts persisted footer groups. Oneline mode does not call this because its
 // synthetic group is only an editor adapter, not a draggable persisted group.
+/** Runs the move footer column operation at the frontend shared boundary. */
 export const moveFooterColumn = (
   columns: readonly TFooterColumn[],
   columnId: string,

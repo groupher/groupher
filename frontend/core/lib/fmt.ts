@@ -77,6 +77,7 @@ export const titleCase = (str: string): string => {
   })
 }
 
+/** Runs the title case hm operation at the frontend shared boundary. */
 export const titleCaseHM = (input: string): string => {
   // First, split the input string into words
   const words = input.split(/[-_\s]|(?=[A-Z])/).filter((word) => word.length > 0)
@@ -159,6 +160,7 @@ export const prettyURL = (url: string): string => {
  */
 export const toGTDLabelKey = (value: string): TTransKey => value.toUpperCase() as TTransKey
 
+/** Runs the alias gtddone status operation at the frontend shared boundary. */
 export const aliasGTDDoneStatus = (cat: TArticleCat, status: TArticleStatus): TTransKey => {
   if (status !== ARTICLE_STATUS.DONE) return toGTDLabelKey(status)
 
@@ -243,6 +245,7 @@ const UNITS: readonly [Unit, number][] = [
   ['second', 1000],
 ]
 
+/** Runs the fmt relative time operation at the frontend shared boundary. */
 export const fmtRelativeTime = (from: string | Date, now: number, locale: string): string => {
   const fromTime = typeof from === 'string' ? new Date(from).getTime() : from.getTime()
   const diff = fromTime - now

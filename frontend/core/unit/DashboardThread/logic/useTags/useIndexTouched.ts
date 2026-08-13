@@ -30,6 +30,7 @@ const addPlacement = (byId: Map<string, TPlacement[]>, id: string, placement: TP
 
 // Index placements by identity so current state can be checked in one pass.
 // Keeping an array per id preserves the old stable-sort behavior for duplicate ids.
+/** Builds tag placement index from typed frontend shared inputs. */
 export const buildTagPlacementIndex = (tagGroups: readonly TTagGroup[] = []): TPlacementIndex => {
   const byId = new Map<string, TPlacement[]>()
   let count = 0
@@ -57,6 +58,7 @@ export const buildTagPlacementIndex = (tagGroups: readonly TTagGroup[] = []): TP
   return { byId, count }
 }
 
+/** Reports whether tag placement changed at the frontend shared boundary. */
 export const hasTagPlacementChanged = (
   tagGroups: readonly TTagGroup[],
   baseline: TPlacementIndex,
@@ -93,6 +95,7 @@ export const hasTagPlacementChanged = (
   return count !== baseline.count
 }
 
+/** Exposes index touched state and actions through the shared React hook boundary. */
 export default function useIndexTouched(): boolean {
   const dsb$ = useDashboard()
   const tagGroups = dsb$.tagGroups

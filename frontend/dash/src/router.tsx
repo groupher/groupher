@@ -4,6 +4,7 @@ import RouteError from './components/RouteError'
 import RoutePending from './components/RoutePending'
 import { routeTree } from './routeTree.gen'
 
+/** Returns router for the frontend shared workflow. */
 export function getRouter() {
   return createTanStackRouter({
     routeTree,

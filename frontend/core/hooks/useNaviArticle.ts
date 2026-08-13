@@ -14,6 +14,7 @@ type TRes = {
   next: TArticle | null
 }
 
+/** Exposes navi article state and actions through the shared React hook boundary. */
 export default function useNaviArticle(): TRes {
   const articles = useContext(StoreContext)
   const curThread = useViewingThread()

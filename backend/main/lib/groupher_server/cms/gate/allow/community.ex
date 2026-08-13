@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.Allow.Community do
-  @moduledoc "Compatibility adapter for the existing community Allow rules."
+  @moduledoc """
+  Compatibility adapter for the existing community Allow rules.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Community
+        -> allow / deny
+        -> domain context
+  """
 
   alias GroupherServer.CMS.CanCan.Communities, as: Legacy
 

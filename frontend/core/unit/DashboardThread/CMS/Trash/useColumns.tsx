@@ -17,6 +17,7 @@ type TOptions = {
   onRequestPermanentDelete: (item: TTrashedPost) => void
 }
 
+/** Exposes columns state and actions through the shared React hook boundary. */
 export default function useColumns({
   activeActionId,
   onRestore,

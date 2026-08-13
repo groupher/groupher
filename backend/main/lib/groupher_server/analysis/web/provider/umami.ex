@@ -5,6 +5,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   Every request is scoped to the server-derived Umami website ID for the current
   community. This module deliberately returns normalized Groupher data instead
   of raw Umami response bodies.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Umami
+        -> Repo / analytics provider
   """
 
   @behaviour GroupherServer.Analysis.Web.Provider

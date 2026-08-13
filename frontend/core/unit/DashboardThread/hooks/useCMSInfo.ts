@@ -28,6 +28,7 @@ type TRet = {
   isDocFaqTouched: boolean
 }
 
+/** Exposes cmsinfo state and actions through the shared React hook boundary. */
 export default function useCMSInfo(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()

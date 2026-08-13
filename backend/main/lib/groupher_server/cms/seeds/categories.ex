@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Seeds.Categories do
   Seed helpers for community category fixtures.
 
   Category seed data gives local/dev communities predictable discovery grouping.
+
+  Business position:
+
+      Seed task
+        -> Categories
+        -> CMS context
+        -> Repo
   """
   @doc """
   default categories seeds for general community

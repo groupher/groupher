@@ -8,6 +8,13 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
       version_hash(docs(stage=draft))
                     !=
       article_snapshots(stage=public).version_hash
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> ChangeDetection
+        -> Repo / published projection
   """
 
   alias GroupherServer.CMS.Articles.Snapshot

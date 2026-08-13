@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.Tags do
   @moduledoc """
-  tags seeds
+  Creates the initial community tag groups and tag definitions.
+
+  Business position:
+
+      Seed task
+        -> Tags
+        -> CMS context
+        -> Repo
   """
 
   alias GroupherServer.CMS

@@ -8,6 +8,7 @@ export type TDsbTabState = {
   subTab: string | null
 }
 
+/** Exposes dsb tab state and actions through the shared React hook boundary. */
 export default function useDsbTab(): TDsbTabState {
   const { navi } = usePlatform()
   const meta = parseDsbPathname(navi.location.pathname)

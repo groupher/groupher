@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Read do
-  @moduledoc "Owner and reviewer read models for community applications."
+  @moduledoc """
+  Owner and reviewer read models for community applications.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Read
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

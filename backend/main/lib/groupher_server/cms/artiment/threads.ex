@@ -7,6 +7,14 @@ defmodule GroupherServer.CMS.Artiment.Threads do
 
   Absinthe exposes POST / BLOG / ABOUT by default and maps them back to the
   same lowercase atoms automatically.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Threads
+        -> Repo / domain event
   """
 
   alias GroupherServer.CMS.Artiment.Config

@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Review do
-  @moduledoc "Reviewer decisions and recovery transitions for community applications."
+  @moduledoc """
+  Reviewer decisions and recovery transitions for community applications.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Review
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

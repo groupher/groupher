@@ -2,6 +2,7 @@ import type { TDevLogo } from '~/ui/MarkerPicker/constant/dev_logo'
 
 const TWEMOJI_VERSION = '14.0.2'
 
+/** Returns dev logo file path for the frontend shared workflow. */
 export const getDevLogoFilePath = (name: TDevLogo): string => `/icons/devicon/${name}-original.svg`
 
 /**
@@ -15,5 +16,6 @@ export const getDevLogoSrc = (path: string): string => {
   return `https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/${name}/${name}-original.svg`
 }
 
+/** Returns twemoji src for the frontend shared workflow. */
 export const getTwemojiSrc = (unified: string): string =>
   `https://cdn.jsdelivr.net/gh/twitter/twemoji@${TWEMOJI_VERSION}/assets/svg/${unified}.svg`

@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Moderation do
   @moduledoc """
   Article moderation helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Moderation
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

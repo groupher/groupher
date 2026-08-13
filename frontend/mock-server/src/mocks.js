@@ -114,6 +114,7 @@ const scenarioFromSlug = (slug) => {
   return thirdPartyAnalyticsScenario
 }
 
+/** Runs the set third party analytics scenario operation at the frontend shared boundary. */
 export const setThirdPartyAnalyticsScenario = (scenario) => {
   if (!Object.hasOwn(THIRD_PARTY_ANALYTICS_SCENARIOS, scenario)) {
     throw new Error(`Unknown third-party analytics scenario: ${scenario}`)

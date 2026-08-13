@@ -15,6 +15,7 @@ type TKanbanLayoutConfig = {
 
 const seg = DSB_ROUTE.KANBAN
 
+/** Creates the dashboard layout for kanban management routes. */
 export default function createKanbanLayout({
   path,
   title,

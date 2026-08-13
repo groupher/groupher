@@ -1,6 +1,19 @@
 defmodule GroupherServer.CMS.Artiment.Matcher do
   @moduledoc """
-  this module defined the matches and handy guard ...
+  Resolves an artiment kind to its schema, association key, preload, and default
+  viewer metadata.
+
+  Callers use this registry to handle accounts, comments, tags, and thread
+  articles uniformly without scattering model-selection conditionals across
+  queries and mutations.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Matcher
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -19,6 +32,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
         }
 
   @spec match(map()) :: {:ok, match_info()} | {:error, {:custom, String.t()}}
+  @doc "Resolves matcher metadata from an artiment or metadata map."
   def match(%{thread: thread}) when is_atom(thread) do
     match(thread)
   end

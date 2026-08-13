@@ -14,6 +14,13 @@ defmodule GroupherServer.CMS.Assets do
 
   This split keeps billing independent from article usage. A community asset is
   counted once while it is active, even if no article references it.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Assets
+        -> Repo / external boundary
   """
 
   alias GroupherServer.Accounts.Model.User

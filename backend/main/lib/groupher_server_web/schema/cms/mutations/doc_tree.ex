@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   @moduledoc """
   GraphQL mutations for community docs side-tree editing.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / DocTree
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

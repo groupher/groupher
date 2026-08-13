@@ -3,6 +3,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Item do
   One selected source document and its bounded staging status.
 
   See `docs/bulk-import/article-publish-import-refactor.md` for terminal item outcomes.
+
+  Business position:
+
+      Dashboard
+        -> Content Import service
+        -> CMS.ContentImport
+        -> Item
+        -> Repo
   """
 
   use Ecto.Schema

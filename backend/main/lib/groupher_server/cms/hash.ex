@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Hash do
   @moduledoc """
   Shared content hash helpers for CMS publish/change detection.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Hash
+        -> Repo / external boundary
   """
 
   @article_version_algorithm :sha256

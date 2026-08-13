@@ -66,6 +66,7 @@ export const countWords = (body: string): number => {
   return countChinese(str) + countLatinWords(str)
 }
 
+/** Reports whether words count valid at the frontend shared boundary. */
 export const isWordsCountValid = (body: string, min: number, max: number): boolean => {
   const count = countWords(body)
   return count >= min && count <= max

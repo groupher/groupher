@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.SeedsConfig do
   @moduledoc """
-  init config for seeds
+  Static seed fixtures for icons, categories, communities, and related metadata.
+
+  Business position:
+
+      Seed task
+        -> SeedsConfig
+        -> CMS context
+        -> Repo
   """
   def svg_icons do
     [

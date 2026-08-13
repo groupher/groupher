@@ -20,6 +20,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
 
   means post articles only allow `heart`, while post comments allow both
   `beer` and `heart`.
+
+  Business position:
+
+      CMS context
+        -> ThreadEmotions schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   @type t :: %__MODULE__{}

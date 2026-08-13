@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinDoc do
 
   Docs have their own identity and publish workflow; this relation anchors the
   published doc into a community surface.
+
+  Business position:
+
+      CMS context
+        -> CommunityJoinDoc schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

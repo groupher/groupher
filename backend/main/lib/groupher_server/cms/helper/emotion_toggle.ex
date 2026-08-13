@@ -18,6 +18,13 @@ defmodule GroupherServer.CMS.Helper.EmotionToggle do
 
   The second call is idempotent because the same `(target, user, emotion)` row
   already exists.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> EmotionToggle
+        -> Repo / external boundary
   """
 
   alias GroupherServer.Accounts.Model.User

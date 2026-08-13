@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
 
   Nullable draft/public snapshots retain the stage-specific placement without
   copying Article content into the Tree Trash model.
+
+  Business position:
+
+      CMS context
+        -> TrashedDocTreeNode schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

@@ -1,6 +1,16 @@
 defmodule GroupherServer.CMS.Seeds.Domain do
   @moduledoc """
-  seeds data for init, should be called ONLY in new database, like migration
+  Orchestrates one-time CMS domain data initialization for a fresh database.
+
+  It is migration-like bootstrap work, not an idempotent runtime synchronization
+  path, and must only be invoked for a newly provisioned database.
+
+  Business position:
+
+      Seed task
+        -> Domain
+        -> CMS context
+        -> Repo
   """
 
   import Helper.Utils, only: [done: 1]

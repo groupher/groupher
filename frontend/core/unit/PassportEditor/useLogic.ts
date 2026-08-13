@@ -153,6 +153,7 @@ type TRet = {
   loading: boolean
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()

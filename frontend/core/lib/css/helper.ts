@@ -1,3 +1,4 @@
+/** Returns cssvar for the frontend shared workflow. */
 export const getCSSVar = (key: string): string | null => {
   if (typeof window === 'undefined') return null
 

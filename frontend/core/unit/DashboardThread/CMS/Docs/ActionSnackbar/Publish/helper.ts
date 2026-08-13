@@ -6,20 +6,25 @@ import type {
   TPublishSelectedInput,
 } from './spec'
 
+/** Returns checklist items for the frontend shared workflow. */
 export const getChecklistItems = (checklist: TPublishChecklist | null): TPublishChecklistItem[] => [
   ...(checklist?.docChanges ?? []),
   ...(checklist?.treeChanges ?? []),
 ]
 
+/** Reports whether selectable checklist items at the frontend shared boundary. */
 export const hasSelectableChecklistItems = (checklist: TPublishChecklist | null): boolean =>
   getChecklistItems(checklist).some((item) => item.selectable)
 
+/** Returns default selected ids for the frontend shared workflow. */
 export const getDefaultSelectedIds = (items: readonly TPublishChecklistItem[]): string[] =>
   items.filter((item) => item.selectable && item.selectedByDefault).map((item) => item.id)
 
+/** Returns checklist item ids for the frontend shared workflow. */
 export const getChecklistItemIds = (items: readonly TPublishChecklistItem[]): Set<string> =>
   new Set(items.map((item) => item.id))
 
+/** Runs the reconcile selected ids operation at the frontend shared boundary. */
 export const reconcileSelectedIds = (
   items: readonly TPublishChecklistItem[],
   currentIds: readonly string[],
@@ -37,6 +42,7 @@ export const reconcileSelectedIds = (
   return Array.from(selectedIds)
 }
 
+/** Returns selected publish count for the frontend shared workflow. */
 export const getSelectedPublishCount = (
   checklist: TPublishChecklist | null,
   selectedDocIds: readonly string[],
@@ -53,9 +59,11 @@ export const getSelectedPublishCount = (
   )
 }
 
+/** Reports whether delete checklist item at the frontend shared boundary. */
 export const isDeleteChecklistItem = (item: TPublishChecklistItem): boolean =>
   item.action === 'deleted'
 
+/** Returns restore tree change ids for the frontend shared workflow. */
 export const getRestoreTreeChangeIds = (
   checklist: TPublishChecklist | null,
   selectedTreeIds: readonly string[],
@@ -71,6 +79,7 @@ export const getRestoreTreeChangeIds = (
     .map((item) => item.id)
 }
 
+/** Returns publish plan for the frontend shared workflow. */
 export const getPublishPlan = (
   checklist: TPublishChecklist | null,
   selectedDocIds: readonly string[],
@@ -107,6 +116,7 @@ export const getPublishPlan = (
   }
 }
 
+/** Returns publish plan action for the frontend shared workflow. */
 export const getPublishPlanAction = (plan: TPublishPlan): TPublishPlanAction => {
   const hasPublishItems = plan.publishItems.length > 0
   const hasRestoreItems = plan.restoreItems.length > 0
@@ -118,6 +128,7 @@ export const getPublishPlanAction = (plan: TPublishPlan): TPublishPlanAction => 
   return 'noop'
 }
 
+/** Returns publish input action for the frontend shared workflow. */
 export const getPublishInputAction = (input: TPublishSelectedInput): TPublishPlanAction => {
   const hasPublishItems = input.docChangeIds.length > 0 || input.treeChangeIds.length > 0
   const hasRestoreItems = input.restoreTreeChangeIds.length > 0
@@ -129,6 +140,7 @@ export const getPublishInputAction = (input: TPublishSelectedInput): TPublishPla
   return 'noop'
 }
 
+/** Runs the format publish count label operation at the frontend shared boundary. */
 export const formatPublishCountLabel = (
   selectedCount: number,
   totalCount: number,
@@ -148,6 +160,7 @@ type TTreeChangeSummaryArgs = {
   changesPendingLabel: string
 }
 
+/** Runs the format tree change summary operation at the frontend shared boundary. */
 export const formatTreeChangeSummary = ({
   checklist,
   fallbackCount,

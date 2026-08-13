@@ -4,6 +4,7 @@ import useEvent from '~/hooks/useEvent'
 
 import { DOC_COVER_EVENT, type TDocCoverEventPayload } from './events'
 
+/** Exposes cover state and actions through the shared React hook boundary. */
 export default function useCover(docId: string): boolean {
   const [openDocId, setOpenDocId] = useState<string | null>(null)
 

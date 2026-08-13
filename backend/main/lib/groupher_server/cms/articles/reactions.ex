@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Reactions do
   @moduledoc """
   Article reactions helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Reactions
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

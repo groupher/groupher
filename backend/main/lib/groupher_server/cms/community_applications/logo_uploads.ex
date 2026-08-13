@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
-  @moduledoc "Application-scoped Logo upload intent, completion, and ownership checks."
+  @moduledoc """
+  Application-scoped Logo upload intent, completion, and ownership checks.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> LogoUploads
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

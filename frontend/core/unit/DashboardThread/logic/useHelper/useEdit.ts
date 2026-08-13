@@ -18,6 +18,7 @@ export type TRet = {
   onSave: (field: TDsbFieldKey) => void
 }
 
+/** Exposes edit state and actions through the shared React hook boundary. */
 export default function useEdit(): TRet {
   const dsb$ = useDashboard()
   const { mutation } = useMutation()

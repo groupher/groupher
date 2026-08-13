@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Metrics do
   @moduledoc """
-  common metrics in queries
+  Shared CMS metric field groups for artiment and community GraphQL objects.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Metrics
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Absinthe.Schema.Notation
 

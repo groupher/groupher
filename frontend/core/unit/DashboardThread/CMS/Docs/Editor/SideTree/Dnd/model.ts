@@ -11,6 +11,7 @@ type TNodeLocation = {
 
 const isGroup = (node: TSideTreeNavigationNode): node is TSideTreeGroup => node.type === 'group'
 
+/** Runs the side tree node lane operation at the frontend shared boundary. */
 export const sideTreeNodeLane = (node: TSideTreeNavigationNode): TSideTreeDndLane =>
   isGroup(node) ? SIDE_TREE_DND_LANE.GROUPS : SIDE_TREE_DND_LANE.LEAVES
 
@@ -29,6 +30,7 @@ const canonicalPages = (pages: readonly TSideTreeNavigationNode[]): TSideTreeNav
   return [...groups, ...leaves]
 }
 
+/** Runs the canonicalize side tree groups operation at the frontend shared boundary. */
 export const canonicalizeSideTreeGroups = (groups: readonly TSideTreeGroup[]): TSideTreeGroup[] =>
   groups.map((group) => ({
     ...group,
@@ -171,6 +173,7 @@ const insertNode = (
   return inserted ? nextGroups : null
 }
 
+/** Runs the move side tree node operation at the frontend shared boundary. */
 export const moveSideTreeNode = (
   groups: readonly TSideTreeGroup[],
   nodeId: string,
@@ -211,6 +214,7 @@ export const moveSideTreeNode = (
   )
 }
 
+/** Runs the side tree group subtree ids operation at the frontend shared boundary. */
 export const sideTreeGroupSubtreeIds = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
@@ -236,6 +240,7 @@ export const sideTreeGroupSubtreeIds = (
   return ids
 }
 
+/** Compares two side-tree group collections using their serialized structure. */
 export const sameSideTreeGroups = (
   left: readonly TSideTreeGroup[],
   right: readonly TSideTreeGroup[],

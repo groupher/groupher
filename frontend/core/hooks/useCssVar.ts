@@ -6,6 +6,7 @@ type TOptions = {
   selector?: string
 }
 
+/** Exposes cssvar state and actions through the shared React hook boundary. */
 export default function useCSSVar(name: string, deps?: DependencyList, options?: TOptions): string {
   const { theme } = useTheme()
   const [val, setVal] = useState('')

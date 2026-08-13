@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
-  @moduledoc "Creates a Community from one approved Application."
+  @moduledoc """
+  Creates a Community from one approved Application.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> CreateCommunity
+        -> Repo / Oban
+  """
 
   use Oban.Worker,
     queue: :community_application,

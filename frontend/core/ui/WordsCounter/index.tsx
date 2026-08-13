@@ -11,6 +11,12 @@ type TProps = {
   min?: number
 } & TSpace
 
+/**
+ * Displays the current content length against the accepted minimum/maximum.
+ *
+ * The counter owns presentation only; form validation and submission decisions
+ * remain with the consuming editor.
+ */
 const WordsCounter: FC<TProps> = ({ body, max = 2000, min = 10, ...spacing }) => {
   const s = useSalon({ ...spacing })
 

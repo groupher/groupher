@@ -22,12 +22,14 @@ const isDsbPath = (path: string): path is TDsbPath => {
 
 // Keep the doc return target in the mounted dashboard shell instead of the URL or
 // sessionStorage, so Back stays precise without leaking transient UI state.
+/** Runs the dispatch menu view operation at the frontend shared boundary. */
 export const dispatchMenuView = (detail: TMenuViewEvent): void => {
   window.dispatchEvent(new CustomEvent(DASHBOARD_MENU_VIEW_EVENT, { detail }))
 }
 
 // Back links can target any dashboard section; derive the main sidebar tab early
 // so heavy pages do not leave the old Docs item highlighted while loading.
+/** Resolves main tab without leaking frontend shared routing details to callers. */
 export const resolveMainTab = (href: string, dashboardBase: string): TDsbPath => {
   const path = href.split(/[?#]/)[0]
 

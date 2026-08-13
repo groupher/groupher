@@ -4,6 +4,12 @@ defmodule GroupherServer.Support.Factory do
   tests that require insert some mock data to db.
 
   for example you can db_insert(:user) to insert user into db
+
+  Business position:
+
+      Test case
+        -> Factory
+        -> endpoint / fixture / Repo
   """
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher

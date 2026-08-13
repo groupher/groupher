@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.Articles do
 
   These helpers support development/demo data setup and should not be used by
   runtime write paths.
+
+  Business position:
+
+      Seed task
+        -> Articles
+        -> CMS context
+        -> Repo
   """
 
   import GroupherServer.Support.Factory

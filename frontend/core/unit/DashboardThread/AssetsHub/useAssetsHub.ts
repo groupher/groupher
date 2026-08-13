@@ -51,6 +51,7 @@ const EMPTY_REFS_STATE: TReferencesState = {
   totalCount: 0,
 }
 
+/** Exposes assets hub state and actions through the shared React hook boundary. */
 export default function useAssetsHub(initialData?: TPagedAssets | null): TAssetsHubLogic {
   const { slug: community } = useCommunity()
   const { mutate, query } = useGraphQLClient()

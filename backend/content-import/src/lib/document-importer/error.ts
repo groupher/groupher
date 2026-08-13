@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib Document Importer Error boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import type { TDocumentImportDiagnostic } from './types'
 
 /** Stable Import Content failure carrying HTTP status and source/editor diagnostics. */

@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Audit.Actions do
 
   Keeping validation in code lets the audit table support new domains without
   a database enum migration.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Actions
+        -> Repo / external boundary
   """
 
   @actions ~w(

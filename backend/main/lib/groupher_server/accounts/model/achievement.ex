@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.Achievement do
 
   Account achievement services update this row when social or content actions
   change the user's reputation, membership, or contribution-derived badges.
+
+  Business position:
+
+      Accounts context
+        -> Achievement schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

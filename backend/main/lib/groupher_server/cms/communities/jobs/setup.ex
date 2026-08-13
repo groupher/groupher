@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Jobs.Setup do
-  @moduledoc "Runs idempotent initialization for a newly created Community."
+  @moduledoc """
+  Runs idempotent initialization for a newly created Community.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Setup
+        -> Repo / Oban
+  """
 
   use Oban.Worker,
     queue: :community_setup,

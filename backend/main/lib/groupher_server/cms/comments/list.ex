@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.List do
   @moduledoc """
   List/paged operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> List
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

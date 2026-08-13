@@ -737,6 +737,7 @@ class BgWebglRenderer {
   }
 }
 
+/** Creates bg webgl renderer from typed frontend shared inputs. */
 export const createBgWebglRenderer = (
   canvas: HTMLCanvasElement,
   textureScale = 1,

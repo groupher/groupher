@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Creation do
-  @moduledoc "Atomic Community identity creation from one approved Application."
+  @moduledoc """
+  Atomic Community identity creation from one approved Application.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Creation
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

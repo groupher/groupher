@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Policy do
-  @moduledoc "Composable admission policy for creating a community application."
+  @moduledoc """
+  Composable admission policy for creating a community application.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Policy
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 

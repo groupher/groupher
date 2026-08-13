@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib Content Import Core Contracts ThreadDataset boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import type { TArtifactRef } from './artifactRef'
 
 export const THREAD_DATASET_SCHEMA_VERSION = 1 as const

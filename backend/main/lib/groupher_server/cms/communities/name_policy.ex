@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
 
   The list mirrors public top-level routes and service namespaces. Future brand
   and dispute rules extend this module instead of adding resolver conditions.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> NamePolicy
+        -> Repo / Oban
   """
 
   import Ecto.Query, warn: false

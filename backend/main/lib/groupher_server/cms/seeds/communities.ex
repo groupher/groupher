@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.Communities do
   @moduledoc """
-  communities seeds
+  Creates the predefined communities required by a fresh Groupher database.
+
+  Business position:
+
+      Seed task
+        -> Communities
+        -> CMS context
+        -> Repo
   """
 
   import Helper.Utils, only: [done: 1]

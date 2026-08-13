@@ -39,6 +39,7 @@ const getChangedImagesPatch = (
 const hasImageDraftPatch = (patch: TCoverImageDraftPatch): boolean =>
   COVER_IMAGE_WHICH_LIST.some((which) => which in patch)
 
+/** Exposes cover image preview state and actions through the shared React hook boundary. */
 export default function useCoverImagePreview(): TCoverImageDraftContext {
   const {
     activeImageWhich: committedActiveImageWhich,

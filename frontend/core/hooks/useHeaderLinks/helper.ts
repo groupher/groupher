@@ -65,7 +65,9 @@ const isMoreTabFixedChild = (
   community: string,
 ) => isMoreTabFixedUrl(link.url || link.link || '', community)
 
+/** Reports whether custom more group at the frontend shared boundary. */
 export const isCustomMoreGroup = (
+  /** Reports whether custom more group at the frontend shared boundary. */
   item: Pick<TLinkItem, 'id' | 'title' | 'type'> | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
 ): boolean => item.id === MORE_TAB.CUSTOM_ID
 
@@ -109,7 +111,9 @@ const normalizeStructuredLinks = (
   })
 }
 
+/** Normalizes header links into the canonical frontend shared shape. */
 export const normalizeHeaderLinks = (
+  /** Normalizes header links into the canonical frontend shared shape. */
   links: readonly TLinkItem[] | readonly TLegacyHeaderLinkItem[],
   community: string,
 ): readonly TLinkItem[] => {
@@ -135,7 +139,9 @@ const asMoreTabLink = (id: string, title: string, url: string): TLinkChild => ({
   url,
 })
 
+/** Reports whether fold about to more at the frontend shared boundary. */
 export const shouldFoldAboutToMore = (links: readonly TLinkItem[]): boolean =>
+  /** Reports whether fold about to more at the frontend shared boundary. */
   hasCustomHeaderItems(links)
 
 /**

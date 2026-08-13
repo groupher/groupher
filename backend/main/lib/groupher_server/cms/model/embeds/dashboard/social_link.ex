@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.SocialLink do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded social link displayed by a community dashboard.
+
+  Business position:
+
+      CMS context
+        -> SocialLink schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

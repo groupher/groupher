@@ -63,6 +63,7 @@ export const createSideTreeGroup = (untitledTitle: string): TSideTreeGroup => ({
   pages: [],
 })
 
+/** Creates side tree pin from typed frontend shared inputs. */
 export const createSideTreePin = (untitledTitle: string): TSideTreePin => ({
   id: makeLocalSideTreeId(SIDE_TREE_ID_PREFIX.PIN),
   type: SIDE_TREE_NODE_TYPE.PIN,

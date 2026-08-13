@@ -6,6 +6,14 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   only general key/value like string/boolean are supported
   int/array of type are not supported, cuz it's hard to leverage between GraphQL/Schema/Types ..
   those cases need to manually add
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> Fields
+        -> CommunityDashboard / Repo
   """
 
   alias GroupherServer.CMS.Dashboard.KanbanBoards

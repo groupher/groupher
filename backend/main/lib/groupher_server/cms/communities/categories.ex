@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Categories do
   @moduledoc """
   Category helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Categories
+        -> Repo / Oban
   """
   import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
   import ShortMaps

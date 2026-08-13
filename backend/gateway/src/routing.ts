@@ -1,3 +1,14 @@
+/**
+ * Maps canonical host/path inputs to one explicit Groupher service target.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 export type GatewayTargetKind =
   | 'main'
   | 'dashboard'
@@ -53,8 +64,11 @@ export const SITE = {
   PRESS: process.env.PRESS_SITE || 'http://127.0.0.1:8003',
 }
 
+/** Reports whether a pathname belongs to the Auth service. */
 export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
+/** Reports whether auth route at the gateway boundary. */
 export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
+/** Reports whether graphql route at the gateway boundary. */
 const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
 const isDashViteAssetRoute = (pathname: string): boolean => pathname.startsWith('/__dash_hmr')
 const isSharedViteAssetRoute = (pathname: string): boolean =>
@@ -97,14 +111,20 @@ const isSharedCoreAssetRoute = (pathname: string): boolean =>
 
 const isAppHost = (host: string, app: string): boolean => host.startsWith(`${app}.`)
 
+/** Reports whether a hostname belongs to the main application. */
 export const isMainHost = (host: string): boolean => isAppHost(host, APP.MAIN)
+/** Reports whether main host at the gateway boundary. */
 
+/** Reports whether landing host at the gateway boundary. */
 export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LANDING)
 
+/** Reports whether dash host at the gateway boundary. */
 export const isDashHost = (host: string): boolean => isAppHost(host, APP.DASH)
 
+/** Reports whether apply host at the gateway boundary. */
 export const isApplyHost = (host: string): boolean => isAppHost(host, APP.APPLY)
 
+/** Reports whether platform root host at the gateway boundary. */
 export const isPlatformRootHost = (host: string): boolean => {
   const hostname = host.split(':')[0].toLowerCase()
   return [
@@ -116,7 +136,9 @@ export const isPlatformRootHost = (host: string): boolean => {
   ].includes(hostname)
 }
 
+/** Reports whether a pathname belongs to the Press service. */
 export const isPressRoute = (pathname: string): boolean =>
+  /** Reports whether press route at the gateway boundary. */
   /^\/[^/]+\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) ||
   /^\/[^/]+\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) ||
   /^\/[^/]+\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname) ||
@@ -151,14 +173,19 @@ const LANDING_STATIC_SIGN = `/${APP.LANDING}/_next/static`
 const DASHBOARD_STATIC_SIGN = `/${APP.DASHBOARD}/_next/static`
 const DASHBOARD_NEXT_SIGN = `/${APP.DASHBOARD}/_next/`
 
+/** Reports whether a pathname is a landing static asset route. */
 export const isLandingStaticRoute = (pathname: string): boolean =>
+  /** Reports whether landing static route at the gateway boundary. */
   pathname.startsWith(LANDING_STATIC_SIGN)
 
+/** Reports whether a pathname is a dashboard static asset route. */
 export const isDashboardStaticRoute = (pathname: string): boolean =>
+  /** Reports whether dashboard static route at the gateway boundary. */
   pathname.startsWith(DASHBOARD_STATIC_SIGN)
 
 const isDashboardNextRoute = (pathname: string): boolean => pathname.startsWith(DASHBOARD_NEXT_SIGN)
 
+/** Reports whether a request belongs to the dashboard application. */
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
   if (isAppHost(host, APP.DASHBOARD)) {
     return true
@@ -168,6 +195,7 @@ export const isDashboardRoute = (pathname: string, host: string): boolean => {
   return pathParts.length >= 2 && pathParts[1] === 'dashboard'
 }
 
+/** Reports whether a request belongs to the lightweight dashboard. */
 export const isDashRoute = (pathname: string, host: string): boolean => {
   if (isDashHost(host)) {
     return true
@@ -177,13 +205,16 @@ export const isDashRoute = (pathname: string, host: string): boolean => {
   return pathParts.length >= 2 && pathParts[1] === 'dash'
 }
 
+/** Reports whether apply route at the gateway boundary. */
 export const isApplyRoute = (pathname: string, host: string): boolean =>
   isApplyHost(host) || pathname === '/apply' || pathname.startsWith('/apply/')
 
+/** Returns dashboard url for the gateway workflow. */
 export const getDashboardUrl = (pathname: string, host: string, search = ''): URL => {
   return new URL(pathname + search, SITE.DASHBOARD)
 }
 
+/** Returns dash url for the gateway workflow. */
 export const getDashUrl = (pathname: string, _host: string, search = ''): URL =>
   new URL(pathname + search, SITE.DASH)
 
@@ -217,6 +248,7 @@ const target = (
   requiresBodyProxy: shouldForwardBody(method),
 })
 
+/** Resolves an incoming host and pathname to its upstream service target. */
 export const resolveGatewayTarget = ({
   pathname,
   search = '',

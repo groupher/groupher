@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Metrics boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { createHash, randomUUID } from 'node:crypto'
 
 import { sql } from 'drizzle-orm'
@@ -28,6 +39,7 @@ export type MetricEvent = {
   revision?: string
 }
 
+/** Runs the classify bot operation at the press boundary. */
 export const classifyBot = (userAgent = ''): BotFamily => {
   if (!userAgent) return 'unknown'
   if (/Googlebot/i.test(userAgent)) return 'googlebot'
@@ -37,6 +49,7 @@ export const classifyBot = (userAgent = ''): BotFamily => {
   return isbot(userAgent) ? 'others' : 'unknown'
 }
 
+/** Runs the classify ua operation at the press boundary. */
 export const classifyUa = (userAgent = ''): string | undefined => {
   if (/curl/i.test(userAgent)) return 'curl'
   if (/wget/i.test(userAgent)) return 'cli'
@@ -46,6 +59,7 @@ export const classifyUa = (userAgent = ''): string | undefined => {
   return undefined
 }
 
+/** Runs the hash client ip operation at the press boundary. */
 export const hashClientIp = (
   ip: string | undefined,
   salt = process.env.METRIC_IP_SALT,
@@ -54,8 +68,10 @@ export const hashClientIp = (
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex').slice(0, 24)
 }
 
+/** Runs the request id operation at the press boundary. */
 export const requestId = (header?: string): string => header || randomUUID()
 
+/** Creates metric recorder from typed press inputs. */
 export const createMetricRecorder = (db: PressDatabase | null) => ({
   record(event: MetricEvent): void {
     if (!db) return
@@ -65,6 +81,7 @@ export const createMetricRecorder = (db: PressDatabase | null) => ({
   },
 })
 
+/** Runs the persist metric operation at the press boundary. */
 export const persistMetric = async (db: PressDatabase, event: MetricEvent): Promise<void> => {
   await db.insert(pressMetricEvents).values(event)
   const hour = new Date(event.requestTimeUtc)

@@ -1,6 +1,17 @@
 defmodule GroupherServerWeb.Controller.OG do
   @moduledoc """
-  handle open-graph info
+  Returns Editor.js-compatible Open Graph metadata for a caller-supplied URL.
+
+  The URL is validated against SSRF rules before retrieval; failures return a
+  bounded fallback payload instead of exposing the fetch boundary.
+
+  Business position:
+
+      Editor link request
+        -> Phoenix router
+        -> URL safety validation
+        -> Open Graph fetch
+        -> Editor.js JSON response
   """
   use GroupherServerWeb, :controller
 

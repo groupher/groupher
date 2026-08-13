@@ -4,7 +4,16 @@
 # ---
 defmodule GroupherServerWeb.Middleware.PageSizeProof do
   @moduledoc """
-  make sure size less than max limit
+  Applies pagination defaults and clamps page size to the configured limit.
+
+  It also supplies the default sort order expected by paged resolvers.
+
+  Business position:
+
+      Resolver result
+        -> PageSizeProof middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware

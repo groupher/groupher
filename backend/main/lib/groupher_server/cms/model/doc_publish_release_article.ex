@@ -20,6 +20,13 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
         snapshot_id: 98,
         actions: ["modified", "moved"]
       }
+
+  Business position:
+
+      CMS context
+        -> DocPublishReleaseArticle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

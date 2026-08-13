@@ -8,6 +8,7 @@ const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 const isLinkVisible = (title: string, url: string): boolean =>
   title.trim() !== '' && url.trim() !== ''
 
+/** Runs the filter visible header links operation at the frontend shared boundary. */
 export const filterVisibleHeaderLinks = (
   links: readonly TResolvedHeaderLinkItem[],
 ): readonly TResolvedHeaderLinkItem[] => {
@@ -24,17 +25,20 @@ export const filterVisibleHeaderLinks = (
   })
 }
 
+/** Reports whether header link active at the frontend shared boundary. */
 export const isHeaderLinkActive = (slug: string, activePath: string, url: string): boolean => {
   const currentUrl = activePath ? `/${slug}/${activePath}` : `/${slug}`
 
   return normalizeUrl(currentUrl) === normalizeUrl(url)
 }
 
+/** Runs the more tab title operation at the frontend shared boundary. */
 export const moreTabTitle = (
   item: TResolvedHeaderLinkItem,
   t: (key: TTransKey) => string,
 ): string => (isMoreTabGroup(item) ? t(MORE_TAB.TITLE_KEY) : item.title)
 
+/** Runs the more tab link title operation at the frontend shared boundary. */
 export const moreTabLinkTitle = (link: TLinkChild, t: (key: TTransKey) => string): string => {
   if (link.id === MORE_TAB.ABOUT_ID) return t(MORE_TAB.ABOUT_TITLE_KEY)
   if (link.id === MORE_TAB.DASHBOARD_ID) return t(MORE_TAB.DASHBOARD_TITLE_KEY)

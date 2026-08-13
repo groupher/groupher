@@ -1,8 +1,17 @@
 defmodule GroupherServer.CMS.Events.Audition do
   @moduledoc """
-  events for mention task
+  Handles CMS moderation-audit events for comments and other artiments.
 
-  parse and fmt(see shape function) mentions to Messaging module
+  Content is submitted to `AuditBot`; the result updates legal-state fields and
+  returns the normalized moderation outcome to the event pipeline.
+
+  Business position:
+
+      Artiment / comment write
+        -> CMS.Events
+        -> Audition
+        -> AuditBot
+        -> persisted moderation state
   """
   import Ecto.Query, warn: false
 

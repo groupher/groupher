@@ -14,6 +14,7 @@ type TRet = {
   saving: boolean
 }
 
+/** Exposes nav active layout state and actions through the shared React hook boundary. */
 export default function useNavActiveLayout(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

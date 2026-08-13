@@ -27,6 +27,7 @@ type TArgs = {
   onPublished: () => void
 }
 
+/** Exposes publish actions state and actions through the shared React hook boundary. */
 export default function usePublishActions({
   reloadPublishChecklist,
   selectedInput,

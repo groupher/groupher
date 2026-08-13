@@ -1,6 +1,13 @@
 defmodule GroupherServer.FrontDesk.Cache do
   @moduledoc """
   Cache helpers for the public FrontDesk facade.
+
+  Business position:
+
+      Resolver / context
+        -> FrontDesk
+        -> Cache
+        -> cache / Repo
   """
 
   alias GroupherServer.Accounts.Model.User

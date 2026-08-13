@@ -18,6 +18,7 @@ const alias = {
   python: 'Pythoner',
 }
 
+/** Maps alias into the public frontend shared result shape. */
 export const mapAlias = (_source: TTabItem[], communitySlug: string): TTabItem[] => {
   const communityAlias = alias[communitySlug]
   const source = clone(_source)

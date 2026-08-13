@@ -5,6 +5,14 @@ defmodule GroupherServer.Accounts.Fans.ViewerState do
   The base list query returns users only. This helper derives
   `viewer_has_followed` and `viewer_been_followed` from the current viewer meta
   so GraphQL fields can stay flat.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> ViewerState
+        -> Repo
   """
 
   alias GroupherServer.Accounts.Model.User

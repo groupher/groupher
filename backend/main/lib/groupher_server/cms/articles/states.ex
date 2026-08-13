@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.States do
   @moduledoc """
   Article status and lifecycle helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> States
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

@@ -41,6 +41,7 @@ export type TDashboardLinkEditorActions = {
   linkActions: TLinkEditorActions
 }
 
+/** Exposes dashboard link editor actions state and actions through the shared React hook boundary. */
 export default function useDashboardLinkEditorActions({
   links,
   editLinks,

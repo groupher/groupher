@@ -15,6 +15,7 @@ type TProps = {
   onCommit: (groups: readonly TFaqEditorGroup[]) => void
 }
 
+/** Exposes doc faq dnd state and actions through the shared React hook boundary. */
 export default function useDocFaqDnd({ groups, onCommit }: TProps) {
   const sourceGroups = useMemo(() => [...groups], [groups])
 

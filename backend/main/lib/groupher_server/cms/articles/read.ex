@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Read do
   @moduledoc """
   Read helpers for articles.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Read
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

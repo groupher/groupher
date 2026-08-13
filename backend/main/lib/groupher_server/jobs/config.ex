@@ -1,6 +1,13 @@
 defmodule GroupherServer.Jobs.Config do
   @moduledoc """
   Shared Oban job policy for Groupher background jobs.
+
+  Business position:
+
+      Domain event / scheduler
+        -> Oban
+        -> Config
+        -> context / service
   """
 
   @type job_name :: :later | :search_index | :snapshot_refresh

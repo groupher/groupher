@@ -33,6 +33,7 @@ defmodule GroupherServer.Messaging.Mentions do
   alias GroupherServer.Messaging.Model.Mention
   alias Helper.{Multi, ORM}
 
+  @doc "Runs `send` through the public `Mentions` boundary."
   def send(_, [], _), do: {:ok, :pass}
 
   def send(%Comment{} = comment, mentions, %User{} = from_user) do
@@ -108,6 +109,7 @@ defmodule GroupherServer.Messaging.Mentions do
 
   defp normalize_mention(mention), do: {:ok, mention}
 
+  @doc "Runs `paged` through the public `Mentions` boundary."
   def paged(%User{} = user, %{page: page, size: size} = filter) do
     read = Map.get(filter, :read, false)
 
@@ -118,6 +120,7 @@ defmodule GroupherServer.Messaging.Mentions do
     |> done()
   end
 
+  @doc "Runs `unread_count` through the public `Mentions` boundary."
   def unread_count(user_id) do
     Mention
     |> where([m], m.to_user_id == ^user_id and m.read == false)
@@ -140,12 +143,14 @@ defmodule GroupherServer.Messaging.Mentions do
     |> done()
   end
 
+  @doc "Runs `mark_read` through the public `Mentions` boundary."
   def mark_read(ids, %User{} = user) when is_list(ids) do
     Mention
     |> where([m], m.id in ^ids and m.to_user_id == ^user.id and m.read == false)
     |> ORM.mark_read_all()
   end
 
+  @doc "Runs `mark_read_all` through the public `Mentions` boundary."
   def mark_read_all(%User{} = user) do
     Mention
     |> where([m], m.to_user_id == ^user.id and m.read == false)

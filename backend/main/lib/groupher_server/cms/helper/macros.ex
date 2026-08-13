@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Helper.Macros do
   @moduledoc """
-  macros for define article related fields in CMS models
+  Defines shared artiment schema fields and CMS changeset validation macros.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Macros
+        -> Repo / external boundary
   """
     import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 

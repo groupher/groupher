@@ -1,9 +1,16 @@
 defmodule GroupherServer do
   @moduledoc """
-  GroupherServer keeps the contexts that define your domain
-  and business logic.
+  Root namespace for Groupher's Phoenix modular monolith.
 
-  Contexts are also responsible for managing your data, regardless
-  if it comes from the database, an external API or others.
+  Domain contexts own business rules and persisted state. Web resolvers, jobs,
+  and internal-service boundaries enter through those contexts instead of
+  calling schemas or `GroupherServer.Repo` directly.
+
+  Business position:
+
+      HTTP / job / internal service
+        -> Accounts / CMS / Messaging / Analysis context
+        -> policy + lifecycle + read/write module
+        -> GroupherServer.Repo / bounded external service
   """
 end

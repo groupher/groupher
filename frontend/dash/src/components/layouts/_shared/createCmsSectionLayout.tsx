@@ -27,6 +27,7 @@ type TCmsSectionLayoutConfig = {
 
 const SECTION_BODY_GAP = 'mt-5'
 
+/** Creates cms section layout from typed frontend shared inputs. */
 export default function createCmsSectionLayout({
   breadcrumbAddon,
   crumbTitle,

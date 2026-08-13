@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.DocCover do
   @moduledoc """
-  Public docs cover facade.
+  Public CMS boundary for the published docs-cover projection.
 
       dashboard side tree(draft ids)
                  |
@@ -17,6 +17,13 @@ defmodule GroupherServer.CMS.DocCover do
   The cover has no draft layer. Every write updates the public cover
   immediately, while unpublished draft nodes are rejected before they can be
   referenced by cover rows.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> DocCover
+        -> Repo / external boundary
   """
 
   alias GroupherServer.CMS.DocCover.{Read, Sync, Write}

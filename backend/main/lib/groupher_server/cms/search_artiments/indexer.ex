@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Indexer do
-  @moduledoc "Persistent, idempotent Article indexing entrypoints used by background jobs."
+  @moduledoc """
+  Persistent, idempotent Article indexing entrypoints used by background jobs.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Indexer
+        -> search platform
+  """
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher

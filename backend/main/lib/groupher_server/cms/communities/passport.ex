@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Passport do
   @moduledoc """
   Passport CRUD.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Passport
+        -> Repo / Oban
   """
 
   import Helper.Utils, only: [done: 1, deep_merge: 2]

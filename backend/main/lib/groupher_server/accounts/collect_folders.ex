@@ -1,6 +1,14 @@
 defmodule GroupherServer.Accounts.CollectFolders do
   @moduledoc """
-  Accounts collect folders facade.
+  Public account boundary for collection-folder reads, writes, and article membership.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> CollectFolders
+        -> Repo
   """
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
@@ -8,6 +16,7 @@ defmodule GroupherServer.Accounts.CollectFolders do
   alias __MODULE__.{Articles, List, Write}
 
   @spec paged(User.t(), map()) :: T.domain_res(T.paged_data())
+  @doc "Runs `paged` through the public `CollectFolders` boundary."
   def paged(%User{id: user_id}, filter), do: List.page(user_id, filter)
 
   @spec paged(User.t(), map(), User.t()) :: T.domain_res(T.paged_data())
@@ -15,6 +24,7 @@ defmodule GroupherServer.Accounts.CollectFolders do
     do: List.page(user_id, filter, cur_user)
 
   @spec paged_articles(T.id(), map()) :: T.domain_res(T.paged_data())
+  @doc "Returns paged articles from the `CollectFolders` read boundary."
   def paged_articles(folder_id, filter), do: Articles.paged(folder_id, filter)
 
   @spec paged_articles(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
@@ -22,17 +32,22 @@ defmodule GroupherServer.Accounts.CollectFolders do
     do: Articles.paged(folder_id, filter, cur_user)
 
   @spec create(map(), User.t()) :: T.domain_res(term())
+  @doc "Runs `create` through the public `CollectFolders` boundary."
   def create(attrs, %User{} = user), do: Write.create(attrs, user)
 
   @spec update(T.id(), map()) :: T.domain_res(term())
+  @doc "Runs `update` through the public `CollectFolders` boundary."
   def update(folder_id, attrs), do: Write.update(folder_id, attrs)
 
   @spec delete(T.id()) :: T.domain_res(term())
+  @doc "Runs `delete` through the public `CollectFolders` boundary."
   def delete(folder_id), do: Write.delete(folder_id)
 
   @spec add(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `add` through the public `CollectFolders` boundary."
   def add(article, folder_id, %User{} = user), do: Write.add(article, folder_id, user)
 
   @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `remove` through the public `CollectFolders` boundary."
   def remove(article, folder_id, %User{} = user), do: Write.remove(article, folder_id, user)
 end

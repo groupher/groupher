@@ -3,9 +3,11 @@ import type { TMarkerValue } from '~/spec'
 
 import type { TDevLogoOption, TIconListOption, TIconOption } from '../spec'
 
+/** Reports whether dev logo option at the frontend shared boundary. */
 export const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption =>
   item.type === 'dev'
 
+/** Reports whether selected icon at the frontend shared boundary. */
 export const isSelectedIcon = (selectedValue: TMarkerValue, item: TIconOption): boolean =>
   selectedValue.type === MARKER.ICON &&
   selectedValue.provider === item.provider &&
@@ -17,6 +19,7 @@ const isSelectedDevLogo = (selectedValue: TMarkerValue, item: TIconListOption): 
   selectedValue.provider === 'dev' &&
   selectedValue.name === item.name
 
+/** Reports whether selected icon option at the frontend shared boundary. */
 export const isSelectedIconOption = (
   selectedValue: TMarkerValue,
   item: TIconListOption,

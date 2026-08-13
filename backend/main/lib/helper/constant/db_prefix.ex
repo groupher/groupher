@@ -1,6 +1,15 @@
 defmodule Helper.Constant.DBPrefix do
   @moduledoc """
-  this is the prefix for all tables in database, group alias
+  Canonical PostgreSQL schema prefixes used by Ecto schemas and migrations.
+
+  Keeping these names in one module prevents domain schemas from drifting onto
+  differently named database namespaces.
+
+  Business position:
+
+      Domain or web caller
+        -> DBPrefix
+        -> normalized value / infrastructure
   """
 
   @default "public"
@@ -12,12 +21,20 @@ defmodule Helper.Constant.DBPrefix do
   @payment "payment"
   @log "log"
 
+  @doc "Returns the default PostgreSQL schema prefix."
   def default, do: @default
+  @doc "Returns the CMS PostgreSQL schema prefix."
   def cms, do: @cms
+  @doc "Returns the Messaging PostgreSQL schema prefix."
   def messaging, do: @messaging
+  @doc "Returns the Delivery PostgreSQL schema prefix."
   def delivery, do: @delivery
+  @doc "Returns the Statistics PostgreSQL schema prefix."
   def statistics, do: @statistics
+  @doc "Returns the Accounts PostgreSQL schema prefix."
   def account, do: @account
+  @doc "Returns the Payment PostgreSQL schema prefix."
   def payment, do: @payment
+  @doc "Returns the Log PostgreSQL schema prefix."
   def log, do: @log
 end

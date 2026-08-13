@@ -21,6 +21,14 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   Keeping this on the backend gives every client the same token source for
   Appearance preset details, including page background, primary/accent colors,
   typography colors, frosted glass opacity, and page glow.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> ThemePreset
+        -> CommunityDashboard / Repo
   """
 
   @preset_keys [:default, :claude, :solarized, :hn]

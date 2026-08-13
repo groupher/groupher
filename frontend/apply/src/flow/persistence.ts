@@ -14,6 +14,7 @@ const persistedFields = (store: ApplyStore): ApplyDraft => ({
   applyMessage: store.applyMessage,
 })
 
+/** Runs the restore draft operation at the frontend shared boundary. */
 export const restoreDraft = (accountRef: string): Partial<ApplyDraft> | null => {
   try {
     const raw = localStorage.getItem(key(accountRef))
@@ -25,6 +26,7 @@ export const restoreDraft = (accountRef: string): Partial<ApplyDraft> | null => 
   }
 }
 
+/** Runs the persist draft operation at the frontend shared boundary. */
 export const persistDraft = (accountRef: string, store: ApplyStore): void => {
   localStorage.setItem(
     key(accountRef),
@@ -32,4 +34,5 @@ export const persistDraft = (accountRef: string, store: ApplyStore): void => {
   )
 }
 
+/** Runs the remove draft operation at the frontend shared boundary. */
 export const removeDraft = (accountRef: string): void => localStorage.removeItem(key(accountRef))

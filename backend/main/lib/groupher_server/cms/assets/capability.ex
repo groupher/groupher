@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Assets.Capability do
-  @moduledoc "Shared signing contract for browser-to-Assets-Hub upload capabilities."
+  @moduledoc """
+  Shared signing contract for browser-to-Assets-Hub upload capabilities.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Capability
+        -> Repo / Assets Hub
+  """
 
   @spec sign(map()) :: String.t()
   def sign(payload) when is_map(payload) do

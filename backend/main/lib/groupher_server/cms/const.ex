@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Const do
   @moduledoc """
   Shared CMS domain constants.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Const
+        -> Repo / external boundary
   """
 
   use GroupherServer.Const

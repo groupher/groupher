@@ -1,3 +1,14 @@
+/**
+ * Implements the Vitest.config boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({

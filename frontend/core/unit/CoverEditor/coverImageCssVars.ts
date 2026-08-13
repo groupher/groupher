@@ -37,6 +37,7 @@ const COVER_IMAGE_VAR_KEYS = [
   'magnifier-clone-origin',
 ] as const
 
+/** Returns cover image var name for the frontend shared workflow. */
 export function getCoverImageVarName(which: TCoverImageWhich, key: string): `--${string}` {
   return `--cover-image-${which}-${key}` as `--${string}`
 }
@@ -52,20 +53,24 @@ const COVER_IMAGE_PREVIEW_CLEANUP_CSS_VARS = COVER_IMAGE_WHICH_LIST.reduce<TPrev
   {},
 )
 
+/** Returns cover image var value for the frontend shared workflow. */
 export const getCoverImageVarValue = (
   which: TCoverImageWhich,
   key: string,
   fallback: string | number,
 ): string => `var(${getCoverImageVarName(which, key)}, ${fallback})`
 
+/** Returns frame padding value for the frontend shared workflow. */
 export const getFramePaddingValue = (image: TCoverImageConfig): string =>
   image.glassBorder.enabled ? `${GLASS_FRAME.PADDING_Y}px ${GLASS_FRAME.PADDING_X}px` : '0'
 
+/** Returns frame border radius value for the frontend shared workflow. */
 export const getFrameBorderRadiusValue = (image: TCoverImageConfig): string =>
   image.glassBorder.enabled
     ? `${image.borderRadius + GLASS_FRAME.PADDING_Y}px`
     : `${image.borderRadius}px`
 
+/** Returns magnifier render size for the frontend shared workflow. */
 export const getMagnifierRenderSize = (radius: number): number =>
   MAGNIFIER_RENDER_SIZE.MIN +
   (MAGNIFIER_RENDER_SIZE.MAX - MAGNIFIER_RENDER_SIZE.MIN) * Math.min(1, Math.max(0, radius))

@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
   @moduledoc """
   GraphQL mutations for comment creation, moderation, and reactions.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Comment
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

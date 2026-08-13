@@ -13,6 +13,7 @@ import { composeLoadedDraftSession } from '../helper'
 import type { TDocDraftDTO } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
+/** Exposes draft loader state and actions through the shared React hook boundary. */
 export default function useDraftLoader(draftState: TDraftEditorState): void {
   const {
     activePage,

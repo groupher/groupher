@@ -31,12 +31,14 @@ const PATTERNS: Record<TThirdPartyAnalyticsProvider, RegExp> = {
 
 const MAX_VALUE_LENGTH = 255
 
+/** Returns third party analytics value for the frontend shared workflow. */
 export const getThirdPartyAnalyticsValue = (config: TThirdPartyAnalyticsConfig): string => {
   const field = THIRD_PARTY_ANALYTICS_FIELDS[config.provider]
 
   return String(config[field] ?? '').trim()
 }
 
+/** Reports whether valid third party analytics config at the frontend shared boundary. */
 export const isValidThirdPartyAnalyticsConfig = (config: TThirdPartyAnalyticsConfig): boolean => {
   if (!config.enabled) return false
 
@@ -47,6 +49,7 @@ export const isValidThirdPartyAnalyticsConfig = (config: TThirdPartyAnalyticsCon
   return PATTERNS[config.provider].test(value)
 }
 
+/** Returns renderable third party analytics configs for the frontend shared workflow. */
 export const getRenderableThirdPartyAnalyticsConfigs = (
   configs: readonly TThirdPartyAnalyticsConfig[] = [],
 ): readonly TThirdPartyAnalyticsConfig[] => configs.filter(isValidThirdPartyAnalyticsConfig)

@@ -1,5 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+/** Exposes dsb salon state and actions through the shared React hook boundary. */
 export default function useDsbSalon() {
   const { cn, br, bg, hoverBr, shadow, primary, sexyBorder, vividDark } = useTwBelt()
 

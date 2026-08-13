@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  only used for embeds_many situation
+  Stable account snapshot embedded in reaction and participation projections.
+
+  Business position:
+
+      CMS context
+        -> User schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Analysis.Types do
   @moduledoc """
   GraphQL types for built-in community Analysis Web.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
 
   use Absinthe.Schema.Notation

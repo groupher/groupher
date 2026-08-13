@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.Config do
 
   Keep seed-only constants here so demo data choices do not leak into runtime
   CMS defaults.
+
+  Business position:
+
+      Seed task
+        -> Config
+        -> CMS context
+        -> Repo
   """
 
   @tag_threads [:post, :changelog, :kanban, :doc, :about]

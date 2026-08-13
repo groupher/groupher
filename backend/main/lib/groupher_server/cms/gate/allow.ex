@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.Allow do
-  @moduledoc "Gate facade for feature and resource-state allowances."
+  @moduledoc """
+  Gate facade for feature and resource-state allowances.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Allow
+        -> allow / deny
+        -> domain context
+  """
 
   alias __MODULE__.Community
 

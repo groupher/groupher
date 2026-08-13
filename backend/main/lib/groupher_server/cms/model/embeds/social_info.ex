@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.SocialInfo do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded social-platform identity and link published by a community.
+
+  Business position:
+
+      CMS context
+        -> SocialInfo schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

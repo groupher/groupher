@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Query do
-  @moduledoc "Platform-neutral Search Artiments query contract."
+  @moduledoc """
+  Platform-neutral Search Artiments query contract.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Query
+        -> search platform
+  """
 
   alias GroupherServer.CMS.SearchArtiments.Artiment
 

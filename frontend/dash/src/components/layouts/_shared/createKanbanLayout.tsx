@@ -15,6 +15,7 @@ type TKanbanLayoutConfig = {
 
 const seg = DSB_ROUTE.KANBAN
 
+/** Creates kanban layout from typed frontend shared inputs. */
 export default function createKanbanLayout({
   path,
   title,

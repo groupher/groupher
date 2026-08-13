@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
 
   The schema enforces one upvote per user/source item and lets article counters
   and user achievement reputation be updated from a durable relation.
+
+  Business position:
+
+      CMS context
+        -> ArticleUpvote schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

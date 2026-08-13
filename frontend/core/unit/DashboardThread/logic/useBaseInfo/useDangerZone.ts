@@ -7,6 +7,7 @@ export type TRet = {
   toggleVisiable: () => void
 }
 
+/** Exposes danger zone state and actions through the shared React hook boundary. */
 export default function useDangerZone(): TRet {
   // TODO: handle image upload
   const deleteCommunity = () => {

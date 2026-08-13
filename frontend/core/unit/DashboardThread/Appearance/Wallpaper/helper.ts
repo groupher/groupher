@@ -3,6 +3,7 @@ import type { TWallpaperData, TWallpaperType } from '~/spec'
 
 type TWallpaperSelectionState = Pick<TWallpaperData, 'gradient' | 'source' | 'type'>
 
+/** Reports whether active wallpaper source at the frontend shared boundary. */
 export const isActiveWallpaperSource = (
   wallpaper: TWallpaperSelectionState,
   type: TWallpaperType,
@@ -19,6 +20,7 @@ export const isActiveWallpaperSource = (
   return wallpaper.source === source
 }
 
+/** Reports whether gradient wallpaper at the frontend shared boundary. */
 export const isGradientWallpaper = (wallpaper: Pick<TWallpaperData, 'type'>): boolean => {
   return wallpaper.type === WALLPAPER_TYPE.GRADIENT
 }

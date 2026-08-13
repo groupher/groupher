@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib GroupherGraphql boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
@@ -22,6 +33,7 @@ export type TGroupherGraphQLOptions = {
   serviceScope?: string
 }
 
+/** Resolves delegation subject without leaking content import routing details to callers. */
 export const resolveDelegationSubject = async (backendToken: string): Promise<string | null> => {
   const data = await requestGroupherGraphQL<{
     sessionState?: { delegationSubject?: string | null; isValid?: boolean | null } | null
@@ -78,6 +90,7 @@ const formatGraphQLErrorMessage = (value: unknown): string | null => {
   return value == null ? null : String(value)
 }
 
+/** Runs the request groupher graph ql operation at the content import boundary. */
 export const requestGroupherGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown>,

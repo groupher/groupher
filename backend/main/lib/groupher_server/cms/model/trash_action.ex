@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashAction do
 
   The row exists only while at least one Article or Docs Tree child remains in
   Trash. Historical facts live in `AuditLog`, not here.
+
+  Business position:
+
+      CMS context
+        -> TrashAction schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

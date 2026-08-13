@@ -1,11 +1,22 @@
 defmodule GroupherServer.CMS.Events.Helper do
   @moduledoc """
-  helper functions for events
+  Normalizes event payload fragments before CMS event handlers consume them.
+
+  It currently consolidates repeated mention/citation targets while preserving
+  first-seen ordering and all block locations.
+
+  Business position:
+
+      Domain write
+        -> CMS.Events
+        -> Helper
+        -> bounded side effect
   """
 
   @doc """
-  merge same cited article in different blocks
-  e.g:
+  Merges repeated targets and combines their block locations.
+
+  For example:
   [
     %{
       block_linker: ["block-zByQI"],

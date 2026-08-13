@@ -8,7 +8,7 @@ const LINK_PROTOCOLS = new Set(['http:', 'https:', 'ftp:', 'mailto:', 'tel:'])
  * Build the editor URL after applying or clearing the active doc id query.
  *
  * @example
- * const nextUrl = buildDocEditorUrl('/home/dashboard/doc/editor', 'foo=1', '42')
+ * const nextUrl = buildDocEditorUrl('/home/doc/editor', 'foo=1', '42')
  * nextUrl.includes('docId=42')
  */
 export const buildDocEditorUrl = (
@@ -38,6 +38,7 @@ export const buildDocEditorUrl = (
 export const getDocIdFromPage = (page: TSideTreeChild | null): string | null =>
   page?.type === SIDE_TREE_NODE_TYPE.PAGE && page.docId ? page.docId : null
 
+/** Reports whether link href at the frontend shared boundary. */
 export const isLinkHref = (href: string): boolean => {
   const value = href.trim()
   if (!value) return false
@@ -49,6 +50,7 @@ export const isLinkHref = (href: string): boolean => {
   }
 }
 
+/** Returns default link title for the frontend shared workflow. */
 export const getDefaultLinkTitle = (href: string): string => {
   const value = href.trim()
   if (!value) return ''

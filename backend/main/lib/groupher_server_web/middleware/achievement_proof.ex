@@ -4,11 +4,23 @@
 # ---
 defmodule GroupherServerWeb.Middleware.AchievementProof do
   @moduledoc """
-  add default achievement for user
+  Supplies the empty achievement projection expected by GraphQL clients.
+
+  Account reads may legitimately return no achievement row. This middleware
+  converts only that `nil` value into stable zero/false fields and leaves real
+  values and errors untouched.
+
+  Business position:
+
+      Resolver result
+        -> AchievementProof middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware
 
+  @doc "Projects a missing achievement result into the public zero-value shape."
   def call(%{value: nil} = resolution, _) do
     value = %{
       reputation: 0,

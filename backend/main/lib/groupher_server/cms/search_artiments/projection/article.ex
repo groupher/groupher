@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
-  @moduledoc "Projects one public Article and its ArticleDocument into a Search Artiment."
+  @moduledoc """
+  Projects one public Article and its ArticleDocument into a Search Artiment.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Article
+        -> search platform
+  """
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.SearchArtiments.Artiment

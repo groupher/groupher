@@ -87,6 +87,7 @@ const isVerifiedPhoenixToken = (token: string, now = new Date()): boolean => {
   )
 }
 
+/** Returns phoenix token for the frontend shared workflow. */
 export const getPhoenixToken = (request: Request): string | null => {
   const cookieHeader = request.headers.get('cookie')
   if (!cookieHeader) return null

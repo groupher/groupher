@@ -91,6 +91,7 @@ const responseFailure = async (response: Response): Promise<TAuthFailure> => {
   }
 }
 
+/** Runs the auth failure from error operation at the frontend shared boundary. */
 export const authFailureFromError = (error: unknown): TAuthFailure =>
   error instanceof AuthRequestError ? { code: error.code, status: error.status } : {}
 
@@ -126,10 +127,12 @@ export const signIn = async (
   form.submit()
 }
 
+/** Runs the clear auth state operation at the frontend shared boundary. */
 export const clearAuthState = (): void => {
   logout()
 }
 
+/** Runs the invalidate auth state operation at the frontend shared boundary. */
 export const invalidateAuthState = (): void => {
   clearAuthState()
   broadcast('auth:invalid')
@@ -170,12 +173,14 @@ export const refreshSession = async (): Promise<void> => {
   }
 }
 
+/** Lists sessions through the bounded frontend shared interface. */
 export const listSessions = async (): Promise<TBrowserSessionSummary[]> => {
   const response = await fetch(`${AUTH_ENDPOINT}/sessions`, { credentials: 'include' })
   if (!response.ok) throw new Error(`Auth Session list failed with status ${response.status}.`)
   return (await response.json()) as TBrowserSessionSummary[]
 }
 
+/** Runs the revoke session operation at the frontend shared boundary. */
 export const revokeSession = async (publicRef: string): Promise<void> => {
   const response = await fetch(
     `${AUTH_ENDPOINT}/sessions/${encodeURIComponent(publicRef)}/revoke`,
@@ -188,6 +193,7 @@ export const revokeSession = async (publicRef: string): Promise<void> => {
   if (!response.ok) throw new Error(`Auth Session revoke failed with status ${response.status}.`)
 }
 
+/** Runs the revoke other sessions operation at the frontend shared boundary. */
 export const revokeOtherSessions = async (): Promise<void> => {
   const response = await fetch(`${AUTH_ENDPOINT}/sessions/revoke-others`, {
     credentials: 'include',
@@ -197,6 +203,7 @@ export const revokeOtherSessions = async (): Promise<void> => {
   if (!response.ok) throw new Error(`Auth Session revoke failed with status ${response.status}.`)
 }
 
+/** Lists linked oauth accounts through the bounded frontend shared interface. */
 export const listLinkedOauthAccounts = async (): Promise<TLinkedOauthAccount[]> => {
   const response = await fetch(`${AUTH_ENDPOINT}/accounts`, { credentials: 'include' })
   if (!response.ok) throw await requestError(response, 'Auth account list')
@@ -226,6 +233,7 @@ export const beginLinkedOauthAccount = async (
   window.location.assign(payload.authorizationUrl)
 }
 
+/** Runs the unlink linked oauth account operation at the frontend shared boundary. */
 export const unlinkLinkedOauthAccount = async (
   publicRef: string,
 ): Promise<TLinkedOauthAccount[]> => {
@@ -244,6 +252,7 @@ export const unlinkLinkedOauthAccount = async (
   return payload.accounts as TLinkedOauthAccount[]
 }
 
+/** Resolves auth failure without leaking frontend shared routing details to callers. */
 export const resolveAuthFailure = (
   failure: TAuthFailure,
 ): 'refresh' | 'login' | 'permission' | 'none' => {
@@ -294,5 +303,6 @@ export const withAuthRetry = async <T>(
   }
 }
 
+/** Runs the session channel operation at the frontend shared boundary. */
 export const sessionChannel = (): BroadcastChannel | null =>
   typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('groupher-auth')

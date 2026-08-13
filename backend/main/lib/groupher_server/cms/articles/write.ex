@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Articles.Write do
   Draft/Publish own content writes. Trash owns soft deletion, restore and
   permanent deletion; this module only keeps Author creation and first-publish
   notification helpers used by those write paths.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Write
+        -> Repo / domain event
   """
 
   alias GroupherServer.{CMS, Messaging, Repo}

@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.States do
   @moduledoc """
   State operations for comments (pin, fold).
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> States
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

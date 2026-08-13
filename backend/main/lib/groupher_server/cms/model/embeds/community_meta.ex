@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 
   Thread counts and inner-id indexes are generated from article thread config so
   new thread types do not require hand-editing this embed.
+
+  Business position:
+
+      CMS context
+        -> Macro schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   import Helper.Utils, only: [plural: 1]
@@ -33,7 +40,14 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded community counters, membership projections, and per-thread indexes.
+
+  Business position:
+
+      CMS community and artiment writes
+        -> CommunityMeta changeset
+        -> Community row
+        -> Community and dashboard read models
   """
   use Ecto.Schema
   use Accessible

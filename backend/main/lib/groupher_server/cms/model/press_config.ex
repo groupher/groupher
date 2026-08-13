@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.PressConfig do
-  @moduledoc "Community-scoped public output settings owned by CMS.Press."
+  @moduledoc """
+  Community-scoped public output settings owned by CMS.Press.
+
+  Business position:
+
+      CMS context
+        -> PressConfig schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
   use Accessible

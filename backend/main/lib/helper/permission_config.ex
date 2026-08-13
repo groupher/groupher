@@ -1,6 +1,12 @@
 defmodule Helper.PermissionConfig do
   @moduledoc """
   Centralized permission configuration for CMS authorization.
+
+  Business position:
+
+      Domain or web caller
+        -> PermissionConfig
+        -> normalized value / infrastructure
   """
 
   @contexts ["cms"]
@@ -299,10 +305,12 @@ defmodule Helper.PermissionConfig do
 
   defp put_default_community_rules(rules, _role, _community_slug), do: rules
 
+  @doc "Runs `default_root_passport` through the public `PermissionConfig` boundary."
   def default_root_passport(community_slug) when is_binary(community_slug) do
     {:ok, put_default_community_rules(%{"global" => %{}}, "root", community_slug)}
   end
 
+  @doc "Runs `default_moderator_passport` through the public `PermissionConfig` boundary."
   def default_moderator_passport(community_slug) when is_binary(community_slug) do
     {:ok, put_default_community_rules(%{"global" => %{}}, "moderator", community_slug)}
   end

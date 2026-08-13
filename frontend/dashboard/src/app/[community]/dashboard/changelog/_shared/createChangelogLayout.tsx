@@ -15,6 +15,7 @@ type TChangelogLayoutConfig = {
 
 const seg = DSB_ROUTE.CHANGELOG
 
+/** Creates the dashboard layout for changelog management routes. */
 export default function createChangelogLayout({
   path,
   title,

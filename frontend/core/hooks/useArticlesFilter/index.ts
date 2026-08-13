@@ -21,6 +21,7 @@ const toValidFilterValue = <TValue extends string>(
   return allowedValues.includes(value as TValue) ? (value as TValue) : null
 }
 
+/** Exposes articles filter state and actions through the shared React hook boundary. */
 export default function useArticlesFilter(): TRes {
   const { push } = useRouter()
   const pathname = usePathname()

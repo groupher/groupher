@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
   Product tables retain draft/public rows while one `TrashedArticle` row makes
   the logical Article inactive. Docs Tree placement remains a Docs concern and
   attaches its structural snapshots to the same `TrashAction`.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Trash
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

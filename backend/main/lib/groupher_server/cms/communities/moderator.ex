@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Moderator do
   @moduledoc """
   Moderator helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Moderator
+        -> Repo / Oban
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}

@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Moderation do
   @moduledoc """
   Moderation operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Moderation
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

@@ -14,6 +14,7 @@ const fallbackValue = (text?: string | null): Value => [
   },
 ]
 
+/** Parses doc value into the canonical frontend shared representation. */
 export const parseDocValue = (json?: string | null, fallback?: string | null): Value => {
   if (!json) return fallbackValue(fallback)
 

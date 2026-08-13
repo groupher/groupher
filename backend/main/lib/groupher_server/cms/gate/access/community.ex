@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.Gate.Access.Community do
-  @moduledoc "Community access composition across Lifecycle, relations and Passport."
+  @moduledoc """
+  Community access composition across Lifecycle, relations and Passport.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Community
+        -> allow / deny
+        -> domain context
+  """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Const

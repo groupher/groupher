@@ -6,6 +6,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Link do
 
   A `:link` item requires a URL and no children; a `:group` item owns child
   links and should not carry its own URL.
+
+  Business position:
+
+      CMS context
+        -> Link schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

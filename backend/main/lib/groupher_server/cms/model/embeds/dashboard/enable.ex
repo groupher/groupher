@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Enable do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded feature switches controlling dashboard sections and capabilities.
+
+  Business position:
+
+      CMS context
+        -> Enable schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

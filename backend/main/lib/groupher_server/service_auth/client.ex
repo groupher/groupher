@@ -1,5 +1,13 @@
 defmodule GroupherServer.ServiceAuth.Client do
-  @moduledoc "Fetches and caches short-lived Auth service tokens for Phoenix."
+  @moduledoc """
+  Fetches and caches short-lived Auth service tokens for Phoenix.
+
+  Business position:
+
+      Application caller
+        -> Client
+        -> domain / infrastructure boundary
+  """
 
   @cache_table :groupher_service_token_cache
   @refresh_skew_seconds 30

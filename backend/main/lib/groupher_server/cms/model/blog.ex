@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Blog do
 
   Blog shares the article workflow shape with other artiment threads while
   keeping its own table, constraints, meta embed, and community joins.
+
+  Business position:
+
+      CMS context
+        -> Blog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

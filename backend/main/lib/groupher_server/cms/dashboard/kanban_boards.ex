@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Dashboard.KanbanBoards do
   @moduledoc """
   Shared kanban board whitelist and defaults for dashboard layout.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> KanbanBoards
+        -> CommunityDashboard / Repo
   """
 
   @type board :: :backlog | :todo | :wip | :done | :rejected

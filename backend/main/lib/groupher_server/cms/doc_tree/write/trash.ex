@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
   The Tree owns placement snapshots for both draft and public stages. Article
   content remains in the normal Doc aggregate and is hidden by a
   `TrashedArticle` membership; no content is copied into Tree snapshots.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Trash
+        -> Repo / published projection
   """
 
   import Ecto.Query, warn: false

@@ -6,12 +6,14 @@ type TViewportHeightInput = {
   viewportHeight: number
 }
 
+/** Returns sticky viewport height for the frontend shared workflow. */
 export const getStickyViewportHeight = ({
   elementTop,
   stickyTop,
   viewportHeight,
 }: TViewportHeightInput): number => Math.max(0, viewportHeight - Math.max(stickyTop, elementTop))
 
+/** Exposes sticky viewport height state and actions through the shared React hook boundary. */
 export default function useStickyViewportHeight(
   stickyTop: number,
   layoutKey: string,

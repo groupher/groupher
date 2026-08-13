@@ -13,6 +13,7 @@ import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 const LANDING_GLOW_OPACITY = 65
 
+/** Exposes top glow state and actions through the shared React hook boundary. */
 export default function useTopGlow(): TTopGlow {
   const wallpaper = useWallpaperDomain()
   const { theme, isLightTheme } = useTheme()

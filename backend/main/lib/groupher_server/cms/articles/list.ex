@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.List do
   @moduledoc """
   Article listing helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> List
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false

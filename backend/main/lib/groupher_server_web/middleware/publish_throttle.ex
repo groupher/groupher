@@ -1,6 +1,16 @@
 defmodule GroupherServerWeb.Middleware.PublishThrottle do
   @moduledoc """
-  throttle control for publish contents
+  Enforces the CMS publication rate policy at the GraphQL boundary.
+
+  Authorization is delegated to `CMS.Gate`; interval, hourly, and daily denials
+  are translated into the corresponding public error codes.
+
+  Business position:
+
+      Publish mutation
+        -> PublishThrottle
+        -> CMS.Gate policy check
+        -> resolver or throttle error
   """
 
   @behaviour Absinthe.Middleware

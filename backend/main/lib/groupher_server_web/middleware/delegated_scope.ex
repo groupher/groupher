@@ -1,5 +1,14 @@
 defmodule GroupherServerWeb.Middleware.DelegatedScope do
-  @moduledoc "Requires a scoped service actor explicitly bound to a current user actor."
+  @moduledoc """
+  Requires a scoped service actor explicitly bound to a current user actor.
+
+  Business position:
+
+      Resolver result
+        -> DelegatedScope middleware
+        -> next middleware
+        -> GraphQL field result
+  """
 
   @behaviour Absinthe.Middleware
 

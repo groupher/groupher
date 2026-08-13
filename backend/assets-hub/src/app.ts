@@ -1,3 +1,14 @@
+/**
+ * Composes the Assets Hub HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { createHash } from 'node:crypto'
 
 import { createHealthResponse } from '@groupher/service/health'
@@ -125,8 +136,10 @@ const objectContentHash = async (capability: TUploadCapability) => {
   return sha256Hash(buffer)
 }
 
+/** Creates the Assets Hub application with injectable runtime dependencies. */
 export const createApp = ({ environment = process.env }: TOptions = {}) => {
   const app = new Hono()
+  /** Creates the assets hub application with injectable runtime dependencies. */
 
   app.use(
     '/uploads',

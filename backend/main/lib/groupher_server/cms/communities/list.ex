@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.List do
   @moduledoc """
   List helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> List
+        -> Repo / Oban
   """
 
   import Helper.Utils, only: [done: 1]

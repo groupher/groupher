@@ -44,6 +44,7 @@ const isActiveTabPath = (routeSegments: string[], targetPath: string): boolean =
   return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`)
 }
 
+/** Exposes dsb tabs state and actions through the shared React hook boundary. */
 export default function useDsbTabs(cfg: TDsbTabs): {
   items: TTabItem[]
   activeTab: string

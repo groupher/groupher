@@ -14,6 +14,7 @@ type TRet = {
   resetEdit: () => void
 }
 
+/** Exposes alias state and actions through the shared React hook boundary. */
 export default function useAlias(): TRet {
   const dsb$ = useDashboard()
   const { edit, resetEdit } = useHelper()

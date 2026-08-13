@@ -4,6 +4,13 @@ defmodule GroupherServer.Messaging.Model.Notification do
 
   Notifications collect one or more actors around a target action so inbox UI can
   show compact activity rows instead of one row per repeated action.
+
+  Business position:
+
+      Messaging context
+        -> Notification schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

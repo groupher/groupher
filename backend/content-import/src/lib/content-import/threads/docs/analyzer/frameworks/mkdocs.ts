@@ -1,3 +1,14 @@
+/**
+ * Adapts Mkdocs sources into the canonical Docs import tree.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import YAML from 'yaml'
 
 import type { TSourceNode, TSourceTree, TSourceWorkspace } from '../../contracts'

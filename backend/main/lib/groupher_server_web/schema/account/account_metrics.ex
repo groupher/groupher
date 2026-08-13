@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Schema.Account.Metrics do
 
   These definitions keep metric field names and middleware close to the account
   schema layer while resolver behavior remains in account/statistics modules.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Metrics
+        -> resolver or domain context
+        -> GraphQL response
   """
 
   use Absinthe.Schema.Notation

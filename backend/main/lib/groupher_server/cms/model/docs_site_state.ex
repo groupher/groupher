@@ -21,6 +21,13 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   as:
 
       site_draft_version != published_version
+
+  Business position:
+
+      CMS context
+        -> DocsSiteState schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

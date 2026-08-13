@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
   CMS domain front desk for reading/fetching and helper operations.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> FrontDesk
+        -> Repo / external boundary
   """
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
@@ -27,6 +34,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   @supported_comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
+  @doc "Runs `community` through the public `FrontDesk` boundary."
   def community(slug) when is_binary(slug) do
     Read.scope()
     |> where([c], c.slug == ^slug or c.aka == ^slug)
@@ -42,12 +50,15 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `live_user` through the public `FrontDesk` boundary."
   def live_user(login, opts \\ []) when is_binary(login), do: RootFrontDesk.live_user(login, opts)
 
   @spec revalidate_user(String.t()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `revalidate_user` through the public `FrontDesk` boundary."
   def revalidate_user(login) when is_binary(login), do: RootFrontDesk.revalidate().user(login)
 
   @spec comment(map()) :: T.domain_res(Comment.t())
+  @doc "Runs `comment` through the public `FrontDesk` boundary."
   def comment(%{} = comment_path), do: comment(comment_path, [])
 
   @spec comment(integer()) :: T.domain_res(Comment.t())
@@ -84,6 +95,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
+  @doc "Runs `community_tag` through the public `FrontDesk` boundary."
   def community_tag(id), do: ORM.find(CommunityTag, id)
 
   @spec community_tag(String.t(), atom(), String.t()) :: T.domain_res(CommunityTag.t())
@@ -94,6 +106,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec community_tags([T.id()]) :: T.domain_res([CommunityTag.t()])
+  @doc "Runs `community_tags` through the public `FrontDesk` boundary."
   def community_tags(tag_ids) when is_list(tag_ids) do
     pos =
       tag_ids
@@ -108,17 +121,20 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec full_comment(integer()) :: T.domain_res(T.article_info())
+  @doc "Runs `full_comment` through the public `FrontDesk` boundary."
   def full_comment(comment_id) do
     get_full_comment(comment_id)
   end
 
   @spec get(Ecto.Queryable.t(), T.id()) :: T.domain_res(term())
+  @doc "Runs `get` through the public `FrontDesk` boundary."
   def get(queryable, id), do: ORM.find(queryable, id)
 
   @spec get(Ecto.Queryable.t(), T.id(), keyword()) :: T.domain_res(term())
   def get(queryable, id, preload: preload), do: ORM.find(queryable, id, preload: preload)
 
   @spec get_by(Ecto.Queryable.t(), map()) :: T.domain_res(term())
+  @doc "Returns by through the `FrontDesk` boundary."
   def get_by(queryable, clauses), do: ORM.find_by(queryable, clauses)
 
   @spec get_by(Ecto.Queryable.t(), map(), keyword()) :: T.domain_res(term())
@@ -126,6 +142,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     do: ORM.find_by(queryable, clauses, preload: preload)
 
   @spec preload_author(Comment.t() | map()) :: {:ok, Comment.t() | map()} | {:error, map()}
+  @doc "Runs `preload_author` through the public `FrontDesk` boundary."
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done
 
   def preload_author(article) do
@@ -283,6 +300,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
+  @doc "Synchronizes embed replies through the `FrontDesk` boundary."
   def sync_embed_replies(%Comment{reply_to_comment_id: nil} = comment) do
     {:ok, comment}
   end
@@ -384,6 +402,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
+  @doc "Runs `article` through the public `FrontDesk` boundary."
   def article(%{} = article_path, opts \\ []) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
            ArticlePath.parse(article_path),

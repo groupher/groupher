@@ -32,6 +32,13 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
       iex> CMS.CanCan.Communities.allow_emotion("groupher", :comment, :post, :upvote)
       {:error, :emotion_not_allowed}
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Communities
+        -> Repo / external boundary
   """
 
   import Helper.Utils, only: [done: 1]

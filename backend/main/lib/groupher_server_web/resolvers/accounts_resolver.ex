@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Resolvers.Accounts do
   @moduledoc """
-  accounts resolvers
+  GraphQL resolver boundary for account profiles, relationships, and mailbox data.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Accounts
+        -> web or domain boundary
   """
   import ShortMaps
   import Helper.ErrorCode

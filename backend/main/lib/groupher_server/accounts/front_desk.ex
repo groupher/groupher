@@ -1,6 +1,14 @@
 defmodule GroupherServer.Accounts.FrontDesk do
   @moduledoc """
   Accounts domain front desk for fetching user/userid.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> FrontDesk
+        -> Repo
   """
 
   alias GroupherServer.Accounts.Model.User
@@ -9,6 +17,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
   @cache_pool :user_login
 
   @spec userid(String.t()) :: {:ok, integer()} | {:error, any()}
+  @doc "Runs `userid` through the public `FrontDesk` boundary."
   def userid(login) when is_binary(login) do
     case Cache.get(@cache_pool, login) do
       {:ok, user_id} -> {:ok, user_id}
@@ -17,9 +26,11 @@ defmodule GroupherServer.Accounts.FrontDesk do
   end
 
   @spec user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `user` through the public `FrontDesk` boundary."
   def user(login, opts \\ []) when is_binary(login), do: live_user(login, opts)
 
   @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `live_user` through the public `FrontDesk` boundary."
   def live_user(login, opts \\ []) when is_binary(login) do
     with {:ok, user_id} <- userid(login) do
       case fetch_user_by_id(user_id, opts) do

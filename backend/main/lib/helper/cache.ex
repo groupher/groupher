@@ -1,11 +1,18 @@
 defmodule Helper.Cache do
   @moduledoc """
-  memory cache using cachex https://github.com/whitfin/cachex
+  Cachex-backed application cache facade with named-pool and expiry helpers.
+
+  Business position:
+
+      Domain or web caller
+        -> Cache
+        -> normalized value / infrastructure
   """
   import Cachex.Spec
 
   @cache_pool Helper.Cache.Config.pool()
 
+  @doc "Runs `config` through the public `Cache` boundary."
   def config(pool_name) do
     pool_config =
       Map.get(@cache_pool, pool_name) ||
@@ -149,6 +156,7 @@ defmodule Helper.Cache do
     Cachex.expire(pool, key, :timer.minutes(expire_min))
   end
 
+  @doc "Runs `delete` through the public `Cache` boundary."
   def delete(pool, key), do: Cachex.del(pool, key)
 
   @doc """

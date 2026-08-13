@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommentUpvote do
 
   Comment upvotes are tracked separately from article upvotes because they affect
   comment-level viewer state and counters.
+
+  Business position:
+
+      CMS context
+        -> CommentUpvote schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

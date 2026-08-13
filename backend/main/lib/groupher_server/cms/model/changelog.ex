@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Changelog do
 
   Changelogs use the shared article publishing and reaction machinery while
   representing release/update content in a dedicated table.
+
+  Business position:
+
+      CMS context
+        -> Changelog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

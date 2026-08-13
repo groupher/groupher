@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Snapshot do
   The default mode is stale-first: cached summaries patch the given snapshot,
   misses return the original data and enqueue one batch refresh. Use
   `mode: :blocking` when the caller needs fresh display fields in this request.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Snapshot
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false

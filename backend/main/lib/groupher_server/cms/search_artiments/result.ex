@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Result do
-  @moduledoc "Platform-neutral paged Search Artiments result."
+  @moduledoc """
+  Platform-neutral paged Search Artiments result.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Result
+        -> search platform
+  """
 
   alias GroupherServer.CMS.SearchArtiments.Artiment
 

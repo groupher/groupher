@@ -11,6 +11,7 @@ type TThemeSeed = {
   themeMode: TThemeMode
 }
 
+/** Runs the pre paint theme detect script operation at the frontend shared boundary. */
 export const prePaintThemeDetectScript = ({ theme, themeMode }: TThemeSeed) => `
 (function() {
   try {
@@ -31,6 +32,7 @@ export const prePaintThemeDetectScript = ({ theme, themeMode }: TThemeSeed) => `
 })();
 `
 
+/** Runs the pre paint runtime seed script operation at the frontend shared boundary. */
 export const prePaintRuntimeSeedScript = (renderedAt: number) => `
 (function() {
   try {

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.Capacity do
-  @moduledoc "Measures the source volume used for search platform cost estimates."
+  @moduledoc """
+  Measures the source volume used for search platform cost estimates.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Capacity
+        -> search platform
+  """
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher

@@ -4,6 +4,12 @@ defmodule GroupherServer.Support.Factory.Articles do
 
   Factories centralize valid article/thread attributes so tests do not duplicate
   schema defaults.
+
+  Business position:
+
+      Test case
+        -> Articles
+        -> endpoint / fixture / Repo
   """
 
   alias GroupherServer.Support.FakeData

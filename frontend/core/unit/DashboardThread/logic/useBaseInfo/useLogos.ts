@@ -12,6 +12,7 @@ export type TRet = {
   isLogosTouched: boolean
 }
 
+/** Exposes logos state and actions through the shared React hook boundary. */
 export default function useLogos(): TRet {
   const dsb$ = useDashboard()
   const { anyChanged } = useHelper()

@@ -16,6 +16,7 @@ type TRet = {
 
 // Draft groups exist only while the inline title editor is open. Once the title
 // is confirmed, the real group is persisted and this local row is removed.
+/** Exposes draft tag state and actions through the shared React hook boundary. */
 export default function useDraftTag(activeThread?: TThread | null): TRet {
   const [draftGroups, setDraftGroups] = useState<TDraftGroup[]>([])
   const currentThread = activeThread || THREAD.POST

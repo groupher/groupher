@@ -7,6 +7,13 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   The dashboard row stores editable presentation sections such as base info,
   wallpaper, SEO, layout, enabled threads, links, social links, and docs FAQ.
   Domain write helpers normalize section payloads before updating this schema.
+
+  Business position:
+
+      CMS context
+        -> CommunityDashboard schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

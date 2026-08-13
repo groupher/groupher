@@ -21,6 +21,7 @@ type TRet = {
   edit: TEditFunc
 }
 
+/** Exposes kanban state and actions through the shared React hook boundary. */
 export default function useKanban(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

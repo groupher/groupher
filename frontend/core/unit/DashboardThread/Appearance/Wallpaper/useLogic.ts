@@ -172,6 +172,7 @@ const serializeWallpaperPatch = (patch: TWallpaperPatch): Record<string, unknown
   return serialized
 }
 
+/** Exposes logic value state and actions through the shared React hook boundary. */
 export function useLogicValue(): TWallpaperLogic {
   const wallpaper$ = useWallpaperDomain()
   const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
@@ -374,6 +375,7 @@ export function useLogicValue(): TWallpaperLogic {
   }
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TWallpaperLogic {
   const value = use(LogicContext)
   if (!value) throw new Error('useLogic must be used within LogicProvider')

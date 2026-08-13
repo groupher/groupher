@@ -21,6 +21,7 @@ const getRouteMatch = (pathname: string): TRouteMatch | null => {
   return { innerId, thread }
 }
 
+/** Exposes preview item active state and actions through the shared React hook boundary. */
 export default function usePreviewItemActive(
   innerId: string | number,
   thread: TThreadPath,

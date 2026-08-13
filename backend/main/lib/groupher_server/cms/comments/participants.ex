@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Participants do
   @moduledoc """
   Maintains article comment participant projections.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Participants
+        -> Repo / domain event
   """
 
   import Helper.Utils, only: [strip_struct: 1]

@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Press do
   This context owns Press configuration and is the only Phoenix boundary that
   Press may use for current public content. It never increments Article views
   and never exposes drafts or historical snapshots.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Press
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false
@@ -28,6 +35,7 @@ defmodule GroupherServer.CMS.Press do
   @manifest_limit 500
 
   @spec config(Community.t() | String.t()) :: {:ok, PressConfig.t() | map()} | {:error, term()}
+  @doc "Runs `config` through the public `Press` boundary."
   def config(community) do
     with {:ok, community} <- internal_community(community) do
       case Repo.get_by(PressConfig, community_id: community.id) do
@@ -39,6 +47,7 @@ defmodule GroupherServer.CMS.Press do
 
   @spec update_config(Community.t() | String.t(), map(), User.t() | nil) ::
           {:ok, PressConfig.t()} | {:error, term()}
+  @doc "Updates config through the `Press` write boundary."
   def update_config(community, attrs, actor) do
     with {:ok, community} <- internal_community(community),
          {:ok, current} <- config(community) do
@@ -134,6 +143,7 @@ defmodule GroupherServer.CMS.Press do
   end
 
   @spec article(map()) :: {:ok, map()} | {:error, term()}
+  @doc "Runs `article` through the public `Press` boundary."
   def article(%{community: community_ref, thread: thread, inner_id: inner_id})
       when thread in @threads do
     with {:ok, community} <- public_community(community_ref),
@@ -150,6 +160,7 @@ defmodule GroupherServer.CMS.Press do
 
   @spec community_rss_feed(Community.t() | String.t(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
+  @doc "Runs `community_rss_feed` through the public `Press` boundary."
   def community_rss_feed(community, opts \\ %{}) do
     with {:ok, community} <- public_community(community),
          :ok <- ensure_community_public(community),
@@ -166,6 +177,7 @@ defmodule GroupherServer.CMS.Press do
 
   @spec thread_rss_feed(Community.t() | String.t(), atom(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
+  @doc "Runs `thread_rss_feed` through the public `Press` boundary."
   def thread_rss_feed(community, thread, opts \\ %{})
 
   def thread_rss_feed(community, thread, opts) when thread in @threads do
@@ -185,6 +197,7 @@ defmodule GroupherServer.CMS.Press do
   def thread_rss_feed(_, _, _), do: {:error, {:custom, "invalid Press Feed thread"}}
 
   @spec site_manifest(Community.t() | String.t()) :: {:ok, map()} | {:error, term()}
+  @doc "Runs `site_manifest` through the public `Press` boundary."
   def site_manifest(community) do
     with {:ok, community} <- public_community(community),
          :ok <- ensure_community_public(community),

@@ -10,6 +10,13 @@ defmodule GroupherServerWeb.Middleware.ViewerDidConvert do
   Several viewer state resolvers return a list from an existence query. This
   middleware turns nil/empty results into `false` and a single matched row into
   `true` for public schema fields.
+
+  Business position:
+
+      Resolver result
+        -> ViewerDidConvert middleware
+        -> next middleware
+        -> GraphQL field result
   """
   @behaviour Absinthe.Middleware
 

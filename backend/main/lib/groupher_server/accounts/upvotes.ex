@@ -1,6 +1,14 @@
 defmodule GroupherServer.Accounts.Upvotes do
   @moduledoc """
-  Accounts upvotes facade.
+  Viewer-facing read model for artiments an account has upvoted.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Upvotes
+        -> Repo
   """
 
   import Ecto.Query, warn: false
@@ -15,6 +23,7 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
+  @doc "Returns paged articles from the `Upvotes` read boundary."
   def paged_articles(%User{id: user_id}, %{thread: thread} = filter) when is_atom(thread) do
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
 

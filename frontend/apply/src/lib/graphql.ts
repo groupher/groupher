@@ -13,6 +13,7 @@ export class ClientGraphQLError extends Error {
   }
 }
 
+/** Runs the client graph ql operation at the frontend shared boundary. */
 export const clientGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown> = {},

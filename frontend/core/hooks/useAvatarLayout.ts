@@ -9,6 +9,7 @@ type TRet = {
   isSquare: boolean
 }
 
+/** Exposes avatar layout state and actions through the shared React hook boundary. */
 export default function useAvatarLayout(): TRet {
   const dsb$ = useDashboard()
 

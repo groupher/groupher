@@ -6,8 +6,10 @@ import type {
   TMarkerValue,
 } from '~/spec'
 
+/** Normalizes node type into the canonical frontend shared shape. */
 export const normalizeNodeType = (type?: string | null): string => (type || '').toLowerCase()
 
+/** Runs the collect group ids operation at the frontend shared boundary. */
 export const collectGroupIds = (
   nodes: readonly TDocPublicTreeNavigationNode[],
 ): readonly string[] => {
@@ -23,9 +25,11 @@ export const collectGroupIds = (
   return groupIds
 }
 
+/** Reports whether link node at the frontend shared boundary. */
 export const isLinkNode = (item: TDocPublicTreeItem): boolean =>
   normalizeNodeType(item.type) === 'link'
 
+/** Reports whether external href at the frontend shared boundary. */
 export const isExternalHref = (href?: string | null): boolean => {
   if (!href) return false
 
@@ -39,14 +43,17 @@ const normalizePath = (path?: string | null): string => {
   return path.endsWith('/') ? path.slice(0, -1) : path
 }
 
+/** Reports whether active href at the frontend shared boundary. */
 export const isActiveHref = (pathname: string | null, href?: string | null): boolean => {
   if (!pathname || !href || isExternalHref(href)) return false
 
   return normalizePath(pathname) === normalizePath(href)
 }
 
+/** Returns node href for the frontend shared workflow. */
 export const getNodeHref = (item: TDocPublicTreeItem): string => item.href || '#'
 
+/** Returns node marker for the frontend shared workflow. */
 export const getNodeMarker = (item: TDocPublicTreeItem): TMarkerValue => {
   if (item.marker) return item.marker
   if (normalizeNodeType(item.type) === 'group') return DEFAULT_GROUP_MARKER
@@ -55,6 +62,7 @@ export const getNodeMarker = (item: TDocPublicTreeItem): TMarkerValue => {
   return DEFAULT_PAGE_MARKER
 }
 
+/** Runs the filter tree nodes operation at the frontend shared boundary. */
 export const filterTreeNodes = (
   nodes: readonly TDocPublicTreeNavigationNode[],
   query: string,

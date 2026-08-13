@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Numbering do
   @moduledoc """
   Allocates per-article comment public numbers.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Numbering
+        -> Repo / domain event
   """
 
   alias Helper.{ORM, T}

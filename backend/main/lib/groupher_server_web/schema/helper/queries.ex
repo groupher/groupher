@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Queries do
   @moduledoc """
-  common fields
+  Reusable Absinthe query macros for thread lists, entries, and viewer state.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1, past_verb: 1]
 

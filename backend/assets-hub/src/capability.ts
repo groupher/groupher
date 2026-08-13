@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Capability boundary inside Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 type TBaseUploadCapability = {
@@ -75,6 +86,7 @@ const assertCapability = (value: unknown): TUploadCapability => {
   return capability
 }
 
+/** Runs the verify capability operation at the assets hub boundary. */
 export const verifyCapability = (
   token: string,
   environment: Record<string, string | undefined> = process.env,

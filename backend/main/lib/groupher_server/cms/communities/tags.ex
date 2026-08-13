@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Tags do
   @moduledoc """
-  community tags logic
+  Owns community-tag creation, update, grouping, and article assignment workflows.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Tags
+        -> Repo / Oban
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

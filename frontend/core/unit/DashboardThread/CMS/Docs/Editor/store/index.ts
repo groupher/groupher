@@ -36,6 +36,7 @@ const DEFAULT_PUBLISH_RUNTIME: TDocPublishRuntime = {
   hasSelectableChecklistItems: false,
 }
 
+/** Reports whether tree changes at the frontend shared boundary. */
 export const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
   return (
     sideTree.treeState?.hasUnpublishedChanges === true ||
@@ -51,6 +52,7 @@ const hasNodeChanges = (sideTree: TSideTreeController): boolean => {
   )
 }
 
+/** Builds publish view from typed frontend shared inputs. */
 export const buildPublishView = (
   sideTree: TSideTreeController,
   saveStatus: TDocSaveStatus,

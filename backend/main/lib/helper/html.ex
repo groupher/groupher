@@ -1,11 +1,18 @@
 defmodule Helper.HTML do
   @moduledoc """
-  escape unsafe inputs, especially for the markdown contents
+  Sanitizes and escapes user-authored HTML derived from rich-text content.
+
+  Business position:
+
+      Domain or web caller
+        -> HTML
+        -> normalized value / infrastructure
   """
 
   import Ecto.Changeset
   # alias Phoenix.HTML
 
+  @doc "Runs `safe_string` through the public `HTML` boundary."
   def safe_string(%Ecto.Changeset{valid?: true, changes: changes} = changeset, field) do
     case Map.has_key?(changes, field) do
       true -> changeset |> put_change(field, escape_to_safe_string(changes[field]))

@@ -24,6 +24,7 @@ const EMPTY_PAGE: TPagedTrashedPosts = {
   totalPages: 0,
 }
 
+/** Exposes trashed posts state and actions through the shared React hook boundary. */
 export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null) {
   const { slug: community } = useCommunity()
   const { query, mutate } = useGraphQLClient()

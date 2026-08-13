@@ -1,3 +1,14 @@
+/**
+ * Starts the local Node server for Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { serve } from '@hono/node-server'
 
 import './env'

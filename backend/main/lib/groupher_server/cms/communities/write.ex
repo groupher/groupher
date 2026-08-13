@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Write do
   @moduledoc """
   Write helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Write
+        -> Repo / Oban
   """
   import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
 

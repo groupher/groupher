@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.AbuseReports.Report do
   @moduledoc """
   Abuse report operations.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Report
+        -> Repo / external boundary
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, strip_struct: 1]

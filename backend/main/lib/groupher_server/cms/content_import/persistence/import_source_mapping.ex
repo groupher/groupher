@@ -3,6 +3,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping do
   Last successful source and Groupher synchronization baseline.
 
   See `docs/bulk-import/content-import-architecture.md` for mapping ownership and identity.
+
+  Business position:
+
+      Dashboard
+        -> Content Import service
+        -> CMS.ContentImport
+        -> ImportSourceMapping
+        -> Repo
   """
 
   use Ecto.Schema

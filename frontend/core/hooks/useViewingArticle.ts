@@ -17,6 +17,7 @@ const parseArticleLink = (article: TArticle): string => {
   return `${SITE_URL}/${community.slug}/${thread}/${innerId}`
 }
 
+/** Exposes viewing article state and actions through the shared React hook boundary. */
 export default function useViewingArticle(): TRet {
   const article$ = useArticle()
   const { article } = article$

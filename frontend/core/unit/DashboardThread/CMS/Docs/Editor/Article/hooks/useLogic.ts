@@ -6,6 +6,7 @@ import useDraftLoader from './useDraftLoader'
 import useDraftSnapshot from './useDraftSnapshot'
 import useDraftStoreSync from './useDraftStoreSync'
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(
   sideTree: TSideTreeController,
   initialData?: TDocDraftInitialData | null,

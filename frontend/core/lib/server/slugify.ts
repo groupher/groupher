@@ -13,6 +13,7 @@ const toPinyin = (char: string): string => {
   return first || ''
 }
 
+/** Runs the slugify operation at the frontend shared boundary. */
 export const slugify = (value: string, fallback = 'untitled'): string => {
   const normalized = value.normalize('NFKD').replace(COMBINING_MARK_RE, '')
   let next = ''

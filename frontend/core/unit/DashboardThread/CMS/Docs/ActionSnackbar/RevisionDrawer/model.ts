@@ -52,6 +52,7 @@ export const EMPTY_REVISION_VALUE: TRichEditorValue = [
   },
 ]
 
+/** Parses revision document value into the canonical frontend shared representation. */
 export const parseRevisionDocumentValue = (json?: string | null): TRichEditorValue => {
   if (!json) return EMPTY_REVISION_VALUE
 
@@ -63,6 +64,7 @@ export const parseRevisionDocumentValue = (json?: string | null): TRichEditorVal
   }
 }
 
+/** Runs the dedupe revisions by snapshot operation at the frontend shared boundary. */
 export const dedupeRevisionsBySnapshot = (revisions: TArticleSnapshot[]): TDedupedRevisions => {
   const seen = new Set<string>()
   const deduped: TArticleSnapshot[] = []
@@ -85,6 +87,7 @@ export const dedupeRevisionsBySnapshot = (revisions: TArticleSnapshot[]): TDedup
 const snapshotIdentity = (revision?: TArticleSnapshot): string =>
   revision ? revision.versionHash || revision.id : 'empty'
 
+/** Builds snapshot diff pairs from typed frontend shared inputs. */
 export const buildSnapshotDiffPairs = (
   revisions: TArticleSnapshot[],
   options: {
@@ -107,6 +110,7 @@ export const buildSnapshotDiffPairs = (
     }
   })
 
+/** Builds revision history from typed frontend shared inputs. */
 export const buildRevisionHistory = (params: {
   draftRevisions: TArticleSnapshot[]
   publishedRevisions: TArticleSnapshot[]
