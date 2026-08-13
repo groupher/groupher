@@ -33,7 +33,7 @@ import {
   type TLinkIntentStore,
 } from './link-intent'
 import { createMemoryRateLimiter, type TRateLimitBinding } from './rate-limit'
-import { issueServiceToken, serviceJwks } from './service-identity'
+import { issueServiceToken, serviceJwks } from './service-auth'
 
 type TBindings = {
   AUTH_OAUTH_RATE_LIMITER?: TRateLimitBinding

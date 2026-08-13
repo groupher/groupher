@@ -1,26 +1,26 @@
-defmodule GroupherServerWeb.ServiceIdentityTest do
+defmodule GroupherServerWeb.ServiceAuthVerifierTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServerWeb.ServiceIdentity
+  alias GroupherServerWeb.ServiceAuth.Verifier
 
   setup do
     key = JOSE.JWK.generate_key({:rsa, 2048})
     {_, public_jwk} = key |> JOSE.JWK.to_public() |> JOSE.JWK.to_map()
     public_jwk = Map.put(public_jwk, "kid", "service-test-key")
-    previous = Application.get_env(:groupher_server, ServiceIdentity)
+    previous = Application.get_env(:groupher_server, Verifier)
 
-    Application.put_env(:groupher_server, ServiceIdentity,
+    Application.put_env(:groupher_server, Verifier,
       issuer: "https://auth.groupher.test",
       audiences: ["phoenix:press-api"],
       jwks: %{"keys" => [public_jwk]}
     )
 
-    on_exit(fn -> Application.put_env(:groupher_server, ServiceIdentity, previous || []) end)
+    on_exit(fn -> Application.put_env(:groupher_server, Verifier, previous || []) end)
     {:ok, key: key}
   end
 
   test "verifies a typed, audience-bound service token", %{key: key} do
-    assert {:ok, actor} = key |> token() |> ServiceIdentity.verify()
+    assert {:ok, actor} = key |> token() |> Verifier.verify()
     assert actor.subject == "service:press"
     assert actor.audience == "phoenix:press-api"
     assert MapSet.member?(actor.scopes, "press:article:read")
@@ -30,12 +30,12 @@ defmodule GroupherServerWeb.ServiceIdentityTest do
     assert {:error, :invalid_service_token} =
              key
              |> token(%{"aud" => "press:internal-api"})
-             |> ServiceIdentity.verify()
+             |> Verifier.verify()
   end
 
   test "recognizes only the dedicated service token type", %{key: key} do
-    assert ServiceIdentity.service_token?(token(key))
-    refute ServiceIdentity.service_token?(token(key, %{}, "JWT"))
+    assert Verifier.service_token?(token(key))
+    refute Verifier.service_token?(token(key, %{}, "JWT"))
   end
 
   defp token(key, overrides \\ %{}, type \\ "service_access+jwt") do

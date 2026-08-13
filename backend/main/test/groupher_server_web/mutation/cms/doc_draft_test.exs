@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       :user
       |> simu_conn(user)
       |> Plug.Conn.put_req_header(
-        "x-groupher-test-service-identity",
+        "x-groupher-test-service-auth",
         "enabled"
       )
 
@@ -109,7 +109,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       doc_id = page_payload.node.doc_id
 
       direct_user_conn =
-        Plug.Conn.delete_req_header(user_conn, "x-groupher-test-service-identity")
+        Plug.Conn.delete_req_header(user_conn, "x-groupher-test-service-auth")
 
       assert direct_user_conn
              |> mutation_error?(S.Doc.m(:update_draft), %{

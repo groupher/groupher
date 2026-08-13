@@ -42,7 +42,7 @@ describe('applyDocsDataset failure projection', () => {
       'job-1',
       'doc_import_workflow_failed',
       cause.message,
-      { serviceIdentity: 'service:content-import' },
+      { serviceSubject: 'service:content-import' },
     )
   })
 })

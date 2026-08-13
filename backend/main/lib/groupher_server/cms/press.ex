@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Press do
     endpoint = System.get_env("PRESS_INTERNAL_URL")
 
     token =
-      GroupherServer.ServiceIdentity.Client.token(
+      GroupherServer.ServiceAuth.Client.token(
         System.get_env("PRESS_INTERNAL_RESOURCE") || "https://press.groupher.com/internal",
         ["press:cache:invalidate"]
       )

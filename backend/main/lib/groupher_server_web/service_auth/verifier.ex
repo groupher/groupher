@@ -1,9 +1,9 @@
-defmodule GroupherServerWeb.ServiceIdentity do
+defmodule GroupherServerWeb.ServiceAuth.Verifier do
   @moduledoc """
   Verifies Auth-issued service access JWTs locally from a bounded JWKS cache.
   """
 
-  @cache_table :groupher_service_identity_jwks
+  @cache_table :groupher_service_auth_jwks
   @cache_ttl_ms :timer.minutes(5)
   @clock_skew_seconds 30
   @max_token_ttl_seconds 15 * 60

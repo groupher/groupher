@@ -1,6 +1,6 @@
 import { GRAPHQL_ENDPOINT } from '~/config'
 
-import { dashboardToPhoenixHeaders } from './serviceIdentity'
+import { dashboardToPhoenixHeaders } from './serviceAuth'
 
 type TGraphQLError = { code?: unknown; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }

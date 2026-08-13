@@ -15,7 +15,7 @@ type TServiceClient = {
   status: 'active' | 'disabled'
 }
 
-type TServiceIdentityConfig = {
+type TServiceAuthConfig = {
   clients: TServiceClient[]
   issuer: string
   resources: Record<string, string>
@@ -48,9 +48,9 @@ const matchesCredential = (secret: string, expected: string): boolean => {
   return actual.length === wanted.length && timingSafeEqual(actual, wanted)
 }
 
-export const readServiceIdentityConfig = (
+export const readServiceAuthConfig = (
   environment: Record<string, string | undefined> = process.env,
-): TServiceIdentityConfig => {
+): TServiceAuthConfig => {
   const ttlSeconds = Number.parseInt(environment.SERVICE_AUTH_TOKEN_TTL_SECONDS || '', 10)
   return {
     clients: jsonEnv<TServiceClient[]>(environment, 'SERVICE_AUTH_CLIENTS_JSON'),
@@ -97,7 +97,7 @@ export const issueServiceToken = async (
     return { error: 'invalid_grant', error_description: 'Unsupported grant type.', status: 400 }
   }
 
-  const config = readServiceIdentityConfig(environment)
+  const config = readServiceAuthConfig(environment)
   const client = config.clients.find((item) => item.clientId === credentials.clientId)
   if (
     !client ||
@@ -170,7 +170,7 @@ export const issueServiceToken = async (
 export const serviceJwks = async (
   environment: Record<string, string | undefined> = process.env,
 ) => {
-  const { signingJwk } = readServiceIdentityConfig(environment)
+  const { signingJwk } = readServiceAuthConfig(environment)
   if (signingJwk.kty !== 'RSA' || !signingJwk.n || !signingJwk.e) {
     throw new Error('SERVICE_AUTH_SIGNING_JWK must be an RSA private JWK.')
   }

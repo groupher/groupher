@@ -5,7 +5,7 @@ export type TServiceTokenRequest = {
   scopes: readonly string[]
 }
 
-export type TServiceTokenProvider = {
+export type TServiceAuthClient = {
   getToken(request: TServiceTokenRequest): Promise<string>
 }
 
@@ -16,7 +16,7 @@ export type TServiceActor = {
   tokenId: string
 }
 
-export type TServiceTokenVerifier = {
+export type TServiceAuthVerifier = {
   verify(token: string, requiredScope: string): Promise<TServiceActor>
 }
 
@@ -55,13 +55,13 @@ type TCachedToken = {
 const cacheKey = ({ resource, scopes }: TServiceTokenRequest) =>
   `${resource}\n${[...scopes].sort().join(' ')}`
 
-export const createServiceTokenProvider = ({
+export const createServiceAuthClient = ({
   clientId,
   clientSecret,
   endpoint,
   fetcher = fetch,
   refreshSkewSeconds = 30,
-}: TServiceTokenClientOptions): TServiceTokenProvider => {
+}: TServiceTokenClientOptions): TServiceAuthClient => {
   if (!clientId || !clientSecret || !endpoint) {
     throw new Error('Service identity client configuration is incomplete.')
   }
@@ -118,18 +118,18 @@ export const createServiceTokenProvider = ({
   }
 }
 
-export const createServiceTokenProviderFromEnv = (
+export const createServiceAuthClientFromEnv = (
   environment: Record<string, string | undefined> = process.env,
   fetcher: typeof fetch = fetch,
-): TServiceTokenProvider =>
-  createServiceTokenProvider({
+): TServiceAuthClient =>
+  createServiceAuthClient({
     clientId: environment.SERVICE_AUTH_CLIENT_ID?.trim() || '',
     clientSecret: environment.SERVICE_AUTH_CLIENT_SECRET?.trim() || '',
     endpoint: environment.SERVICE_AUTH_TOKEN_ENDPOINT?.trim() || '',
     fetcher,
   })
 
-export const createServiceTokenVerifier = ({
+export const createServiceAuthVerifier = ({
   audience,
   issuer,
   jwksUrl,
@@ -137,7 +137,7 @@ export const createServiceTokenVerifier = ({
   audience: string
   issuer: string
   jwksUrl: string
-}): TServiceTokenVerifier => {
+}): TServiceAuthVerifier => {
   const jwks = createRemoteJWKSet(new URL(jwksUrl), {
     cacheMaxAge: 5 * 60 * 1_000,
     cooldownDuration: 30_000,

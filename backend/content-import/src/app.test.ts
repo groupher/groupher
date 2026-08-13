@@ -91,7 +91,7 @@ test('preview creation passes stable auth options to the migrated handler', asyn
     {
       backendToken: userToken,
       previewSecret: 'preview-secret',
-      serviceIdentity: 'service:dashboard',
+      serviceSubject: 'service:dashboard',
       userRef,
     },
   ])
@@ -163,8 +163,8 @@ test('preview read and delete pass path params and owner scope', async () => {
   )
 
   assert.deepEqual(calls, [
-    ['get', 'prv_123', 'home', { serviceIdentity: 'service:dashboard', userRef }],
-    ['cancel', 'prv_123', 'home', { serviceIdentity: 'service:dashboard', userRef }],
+    ['get', 'prv_123', 'home', { serviceSubject: 'service:dashboard', userRef }],
+    ['cancel', 'prv_123', 'home', { serviceSubject: 'service:dashboard', userRef }],
   ])
 })
 
@@ -197,7 +197,7 @@ test('apply route passes the preview ref and full auth options', async () => {
       {
         backendToken: userToken,
         previewSecret: 'preview-secret',
-        serviceIdentity: 'service:dashboard',
+        serviceSubject: 'service:dashboard',
         userRef,
       },
     ],

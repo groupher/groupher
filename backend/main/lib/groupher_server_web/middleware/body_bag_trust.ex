@@ -45,7 +45,7 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
     handle_absinthe_error(
       resolution,
       "BodyBag requires an authorized Groupher publisher service",
-      ecode(:service_identity)
+      ecode(:service_auth)
     )
   end
 end

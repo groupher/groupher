@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Middleware.DelegatedScope do
     handle_absinthe_error(
       resolution,
       "service and user delegation is not authorized for this operation",
-      ecode(:service_identity)
+      ecode(:service_auth)
     )
   end
 end

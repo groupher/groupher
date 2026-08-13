@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
        when is_binary(storage_key) do
     with {:ok, endpoint} <- endpoint(),
          {:ok, service_token} <-
-           GroupherServer.ServiceIdentity.Client.token(
+           GroupherServer.ServiceAuth.Client.token(
              "https://assets.groupher.com/internal",
              ["assets:object:delete"]
            ) do

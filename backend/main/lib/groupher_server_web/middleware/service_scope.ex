@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
     handle_absinthe_error(
       resolution,
       "service identity is not authorized for this operation",
-      ecode(:service_identity)
+      ecode(:service_auth)
     )
   end
 end

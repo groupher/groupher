@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.AssertHelper do
           conn =
             Plug.Conn.put_req_header(
               conn,
-              "x-groupher-test-service-identity",
+              "x-groupher-test-service-auth",
               "enabled"
             )
 

@@ -1,4 +1,4 @@
-import { dashboardToContentImportHeaders } from '../../../../lib/serviceIdentity'
+import { dashboardToContentImportHeaders } from '../../../../lib/serviceAuth'
 
 type TOptions = {
   backendToken: string

@@ -1,9 +1,9 @@
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
 import {
   bearerToken,
-  createServiceTokenVerifier,
+  createServiceAuthVerifier,
   serviceTokenErrorStatus,
-  type TServiceTokenVerifier,
+  type TServiceAuthVerifier,
 } from '@groupher/service/auth'
 import { createHealthResponse } from '@groupher/service/health'
 import { jsonResponse } from '@groupher/service/http'
@@ -15,7 +15,7 @@ import { resolveDelegationSubject } from './lib/groupherGraphql'
 type TAuthenticatedOptions = {
   backendToken: string
   previewSecret: string
-  serviceIdentity: string
+  serviceSubject: string
   userRef: string
 }
 
@@ -28,13 +28,13 @@ type THandlers = {
   cancelPreview: (
     previewRef: string,
     community: string,
-    owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
+    owner: Pick<TAuthenticatedOptions, 'serviceSubject' | 'userRef'>,
   ) => Promise<Response>
   createPreview: (request: Request, options: TAuthenticatedOptions) => Promise<Response>
   getPreview: (
     previewRef: string,
     community: string,
-    owner: Pick<TAuthenticatedOptions, 'serviceIdentity' | 'userRef'>,
+    owner: Pick<TAuthenticatedOptions, 'serviceSubject' | 'userRef'>,
   ) => Promise<Response>
   sweepExpiredPreviews: () => Promise<number>
 }
@@ -43,7 +43,7 @@ type TOptions = {
   environment?: Record<string, string | undefined>
   handlers?: Partial<THandlers>
   resolveDelegationSubject?: (backendToken: string) => Promise<string | null>
-  serviceTokenVerifier?: TServiceTokenVerifier
+  serviceTokenVerifier?: TServiceAuthVerifier
 }
 
 const missingHandler = (name: string) => async (): Promise<Response> =>
@@ -71,7 +71,7 @@ const json = jsonResponse
 const resolveAuthOptions = async (
   request: Request,
   environment: Record<string, string | undefined>,
-  verifier: TServiceTokenVerifier,
+  verifier: TServiceAuthVerifier,
   resolveSubject: (backendToken: string) => Promise<string | null>,
 ): Promise<TAuthenticatedOptions | Response> => {
   const serviceToken = bearerToken(request.headers.get('authorization') || undefined)
@@ -128,7 +128,7 @@ const resolveAuthOptions = async (
   return {
     backendToken: backendToken.trim(),
     previewSecret: previewSecret.trim(),
-    serviceIdentity: 'service:dashboard',
+    serviceSubject: 'service:dashboard',
     userRef,
   }
 }
@@ -143,7 +143,7 @@ export const createApp = ({
   const resolvedHandlers: THandlers = { ...defaultHandlers, ...handlers } as THandlers
   const verifier =
     serviceTokenVerifier ||
-    createServiceTokenVerifier({
+    createServiceAuthVerifier({
       audience: 'content-import:internal-api',
       issuer: environment.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:
@@ -163,7 +163,7 @@ export const createApp = ({
     if (options instanceof Response) return options
     const community = new URL(context.req.url).searchParams.get('community') || ''
     return resolvedHandlers.getPreview(context.req.param('previewRef'), community, {
-      serviceIdentity: options.serviceIdentity,
+      serviceSubject: options.serviceSubject,
       userRef: options.userRef,
     })
   })
@@ -173,7 +173,7 @@ export const createApp = ({
     if (options instanceof Response) return options
     const community = new URL(context.req.url).searchParams.get('community') || ''
     return resolvedHandlers.cancelPreview(context.req.param('previewRef'), community, {
-      serviceIdentity: options.serviceIdentity,
+      serviceSubject: options.serviceSubject,
       userRef: options.userRef,
     })
   })

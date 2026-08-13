@@ -5,11 +5,11 @@ defmodule GroupherServerWeb.Context do
   entry for all api
   """
 
-  @allow_test_service_identity Application.compile_env(
-                                 :groupher_server,
-                                 :allow_test_service_identity,
-                                 false
-                               )
+  @allow_test_service_auth Application.compile_env(
+                             :groupher_server,
+                             :allow_test_service_auth,
+                             false
+                           )
   @behaviour Plug
 
   import Plug.Conn
@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Context do
   alias Accounts.Profiles.BrowserSessions
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
-  alias GroupherServerWeb.ServiceIdentity
+  alias GroupherServerWeb.ServiceAuth.Verifier
 
   def init(opts), do: opts
 
@@ -52,8 +52,8 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp authorize_context(context, {:bearer, token} = credential, conn) do
-    if ServiceIdentity.service_token?(token) do
-      case ServiceIdentity.verify(token) do
+    if Verifier.service_token?(token) do
+      case Verifier.verify(token) do
         {:ok, actor} ->
           context
           |> Map.put(:service_actor, actor)
@@ -77,9 +77,9 @@ defmodule GroupherServerWeb.Context do
   defp maybe_bind_delegated_actor(context), do: context
 
   defp maybe_put_test_service_actor(context, conn) do
-    if @allow_test_service_identity and
+    if @allow_test_service_auth and
          Application.get_env(:groupher_server, :env) == :test and
-         get_req_header(conn, "x-groupher-test-service-identity") == ["enabled"] do
+         get_req_header(conn, "x-groupher-test-service-auth") == ["enabled"] do
       Map.put(context, :service_actor, %{
         audience: "test:any",
         scopes: MapSet.new(["*"]),

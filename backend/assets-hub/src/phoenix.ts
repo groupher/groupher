@@ -1,7 +1,4 @@
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
 import type { TCommunityAssetUploadCapability, TUploadCapability } from './capability'
 
@@ -59,7 +56,7 @@ type TPhoenixEnvironment = Partial<
   >
 >
 
-let serviceTokenProvider: TServiceTokenProvider | undefined
+let serviceTokenProvider: TServiceAuthClient | undefined
 
 type TGraphQLError = {
   extensions?: Record<string, unknown>
@@ -176,7 +173,7 @@ const requestPhoenixGraphQL = async <TData>({
   variables: Record<string, unknown>
 }) => {
   const endpoint = requiredEnv(environment, 'PHOENIX_GRAPHQL_ENDPOINT')
-  serviceTokenProvider ??= createServiceTokenProviderFromEnv(environment)
+  serviceTokenProvider ??= createServiceAuthClientFromEnv(environment)
   const serviceToken = await serviceTokenProvider.getToken({
     resource: 'https://api.groupher.com/assets',
     scopes: [scope],

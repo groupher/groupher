@@ -1,4 +1,4 @@
-defmodule GroupherServer.ServiceIdentity.Client do
+defmodule GroupherServer.ServiceAuth.Client do
   @moduledoc "Fetches and caches short-lived Auth service tokens for Phoenix."
 
   @cache_table :groupher_service_token_cache

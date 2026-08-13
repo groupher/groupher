@@ -1,13 +1,10 @@
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
-let provider: TServiceTokenProvider | undefined
+let provider: TServiceAuthClient | undefined
 
 const serviceToken = (resource: string, scope: string) => {
-  provider ??= createServiceTokenProviderFromEnv()
+  provider ??= createServiceAuthClientFromEnv()
   return provider.getToken({ resource, scopes: [scope] })
 }
 

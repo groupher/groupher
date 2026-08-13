@@ -1,6 +1,6 @@
 import {
   bearerToken,
-  createServiceTokenVerifier,
+  createServiceAuthVerifier,
   serviceTokenErrorStatus,
 } from '@groupher/service/auth'
 
@@ -51,7 +51,7 @@ const authorizeInternalRequest = async (request: Request, env: Env): Promise<nul
   const token = bearerToken(request.headers.get('authorization') || undefined)
   if (!token) return 401
   try {
-    const verifier = createServiceTokenVerifier({
+    const verifier = createServiceAuthVerifier({
       audience: 'assets-hub:internal-api',
       issuer: env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl: env.SERVICE_AUTH_JWKS_URL || 'https://auth.groupher.com/.well-known/jwks.json',
@@ -220,7 +220,7 @@ const enqueueAssetDelete = async (request: Request, env: Env) => {
   if (authErrorStatus) {
     const forbidden = authErrorStatus === 403
     return errorResponse(
-      forbidden ? 'service_scope_forbidden' : 'service_identity_required',
+      forbidden ? 'service_scope_forbidden' : 'service_auth_required',
       forbidden
         ? 'The service identity does not grant this operation.'
         : 'A scoped service identity is required.',

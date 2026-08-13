@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto'
 
 import {
   bearerToken,
-  createServiceTokenVerifier,
+  createServiceAuthVerifier,
   serviceTokenErrorStatus,
-  type TServiceTokenVerifier,
+  type TServiceAuthVerifier,
 } from '@groupher/service/auth'
 import { createHealthResponse } from '@groupher/service/health'
 import { Hono } from 'hono'
@@ -36,7 +36,7 @@ type Dependencies = {
   origin?: Origin
   cache?: OutputCache
   recorder?: ReturnType<typeof createMetricRecorder>
-  serviceTokenVerifier?: TServiceTokenVerifier
+  serviceTokenVerifier?: TServiceAuthVerifier
 }
 
 type Rendered = {
@@ -77,7 +77,7 @@ export const createApp = (dependencies: Dependencies = {}) => {
   const recorder = dependencies.recorder || createMetricRecorder(database)
   const serviceTokenVerifier =
     dependencies.serviceTokenVerifier ||
-    createServiceTokenVerifier({
+    createServiceAuthVerifier({
       audience: 'press:internal-api',
       issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:

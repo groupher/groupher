@@ -2,7 +2,7 @@ import { ArtimentPublisherError, type TArtimentBodyBag } from '@groupher/artimen
 
 import { GRAPHQL_ENDPOINT } from '~/config'
 
-import { dashboardToPhoenixHeaders } from '../serviceIdentity'
+import { dashboardToPhoenixHeaders } from '../serviceAuth'
 
 export type TUpdateDocDraftVariables = {
   community: string

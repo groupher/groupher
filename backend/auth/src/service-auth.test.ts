@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import { exportJWK, generateKeyPair, jwtVerify } from 'jose'
 import { beforeAll, describe, expect, it } from 'vitest'
 
-import { issueServiceToken, serviceJwks } from './service-identity'
+import { issueServiceToken, serviceJwks } from './service-auth'
 
 const secret = 'press-development-secret'
 const resource = 'https://api.groupher.com/press'

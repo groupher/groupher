@@ -9,10 +9,7 @@ import {
   getAuthSessionCookieName,
 } from '@groupher/contracts/auth'
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 import { serialize } from 'hono/utils/cookie'
 
 import './env'
@@ -26,10 +23,10 @@ export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
 const PHOENIX_GRAPHQL_ENDPOINT =
   process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || 'http://127.0.0.1:4001/graphiql'
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
-let serviceTokenProvider: TServiceTokenProvider | undefined
+let serviceTokenProvider: TServiceAuthClient | undefined
 
 const authServiceToken = (scope: string) => {
-  serviceTokenProvider ??= createServiceTokenProviderFromEnv()
+  serviceTokenProvider ??= createServiceAuthClientFromEnv()
   return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
 }
 

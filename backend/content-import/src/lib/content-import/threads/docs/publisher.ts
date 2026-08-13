@@ -42,7 +42,7 @@ type TOptions = {
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
   onProgress?: (completed: number, total: number) => void
-  serviceIdentity: string
+  serviceSubject: string
 }
 
 const MARKDOWN_SOURCE_BY_FRAMEWORK = {
