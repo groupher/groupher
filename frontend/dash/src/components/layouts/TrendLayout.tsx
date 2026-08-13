@@ -6,6 +6,8 @@ import { DSB_ROUTE } from '~/const/route'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import RealtimeOnline from '~/unit/DashboardThread/Analysis/RealtimeOnline'
 import Portal from '~/unit/DashboardThread/Portal'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
 
@@ -19,6 +21,7 @@ const CRUMB_CONFIG = {
 export default function TrendLayout({ children }: { children: ReactNode }) {
   const s = useSalon()
   const { t } = useTrans()
+  const { slug: community } = useCommunity()
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
@@ -26,6 +29,7 @@ export default function TrendLayout({ children }: { children: ReactNode }) {
       <Portal
         title={t('dsb.menu.trend')}
         desc={t('dsb.analysis.desc')}
+        addon={community ? <RealtimeOnline community={community} /> : null}
         crumbItems={crumbItems}
         withDivider
       />
