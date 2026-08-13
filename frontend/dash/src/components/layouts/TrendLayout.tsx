@@ -29,6 +29,7 @@ export default function TrendLayout({ children }: { children: ReactNode }) {
       <Portal
         title={t('dsb.menu.trend')}
         desc={t('dsb.analysis.desc')}
+        addonAlign='edges'
         addon={community ? <RealtimeOnline community={community} /> : null}
         crumbItems={crumbItems}
         withDivider
