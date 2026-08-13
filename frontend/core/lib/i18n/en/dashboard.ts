@@ -450,7 +450,7 @@ export default {
   'dsb.analysis.referrers': 'Referrers',
   'dsb.analysis.empty': 'No data yet.',
   'dsb.analysis.unavailable': 'Analytics is temporarily unavailable.',
-  'dsb.analysis.online': 'online',
+  'dsb.analysis.online': 'online users',
   'dsb.analysis.online_unavailable': 'unavailable',
   'dsb.analysis.logs_tbd': 'Analytics logs are not available yet.',
   'dsb.page.not_found': 'Page not found',
