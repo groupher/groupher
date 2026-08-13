@@ -56,8 +56,8 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   @impl true
   def active(%Community{} = community) do
     with {:ok, request} <- request_config(community.umami_website_id),
-         {:ok, visitors} <- fetch_active(request) do
-      {:ok, %{visitors: visitors}}
+         {:ok, payload} <- fetch_active(request) do
+      {:ok, payload}
     end
   end
 
