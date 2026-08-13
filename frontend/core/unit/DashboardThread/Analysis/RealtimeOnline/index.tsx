@@ -78,7 +78,14 @@ export default function RealtimeOnline({ community }: TProps) {
     )
   }, [result.data, result.error, result.fetching])
 
-  if (state.visitors === null) return null
+  if (state.visitors === null) {
+    return (
+      <div className={s.wrapper} aria-label={t('dsb.analysis.online_unavailable')}>
+        <span className={s.value}>—</span>
+        <span className={s.stale}>{t('dsb.analysis.online_unavailable')}</span>
+      </div>
+    )
+  }
 
   if (state.status === 'stale') {
     return (
