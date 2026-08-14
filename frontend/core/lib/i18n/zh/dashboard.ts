@@ -428,6 +428,7 @@ export default {
   'dsb.analysis.pageviews': '页面浏览',
   'dsb.analysis.visitors': '访客',
   'dsb.analysis.visits': '会话',
+  'dsb.analysis.vs_last_7_days': '较前 7 天',
   'dsb.analysis.bounces': '跳出',
   'dsb.analysis.total_time': '总时长',
   'dsb.analysis.top_pages': 'Top 页面',

@@ -27,12 +27,8 @@ export default function SummaryGrid({ data }: TProps) {
 
   return (
     <section className={s.wrapper}>
-      {items.map((item, index) => (
-        <MetricItem
-          align={index === items.length - 1 ? 'end' : 'start'}
-          key={item.key}
-          item={item}
-        />
+      {items.map((item) => (
+        <MetricItem key={item.key} item={item} />
       ))}
     </section>
   )

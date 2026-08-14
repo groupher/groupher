@@ -444,6 +444,7 @@ export default {
   'dsb.analysis.pageviews': 'Pageviews',
   'dsb.analysis.visitors': 'Visitors',
   'dsb.analysis.visits': 'Sessions',
+  'dsb.analysis.vs_last_7_days': 'vs. last 7 days',
   'dsb.analysis.bounces': 'Bounces',
   'dsb.analysis.total_time': 'Total time',
   'dsb.analysis.top_pages': 'Top pages',
