@@ -42,7 +42,7 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, doc_m} = CMS.FrontDesk.article(community, :doc, doc_m.inner_id)
+      {:ok, doc_m} = CMS.FrontDesk.article(community, :doc, doc_m.inner_id, include_illegal: true)
       assert doc_m.pending == @audit_illegal
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)

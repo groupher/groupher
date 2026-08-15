@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.delete_comment(parent_comment)
+      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user)
 
       {:error, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
     end

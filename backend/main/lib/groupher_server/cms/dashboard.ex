@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Dashboard do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.Dashboard.{ThemePresets, Write}
+  alias GroupherServer.CMS.Dashboard.{ThemePresets, Writer}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.T
 
@@ -18,10 +18,10 @@ defmodule GroupherServer.CMS.Dashboard do
   update dashboard settings of a community
   """
   @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, args), do: Write.update(community, args)
+  def update(%Community{} = community, args), do: Writer.update(community, args)
 
   @spec update(Community.t(), atom(), map() | list()) :: T.domain_res(CommunityDashboard.t())
-  def update(%Community{} = community, key, args), do: Write.update(community, key, args)
+  def update(%Community{} = community, key, args), do: Writer.update(community, key, args)
 
   @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   @doc "Runs `save_custom_theme_preset` through the public `Dashboard` boundary."

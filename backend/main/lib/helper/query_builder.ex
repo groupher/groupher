@@ -291,7 +291,9 @@ defmodule Helper.QueryBuilder do
   end
 
   defp trans_articles_order(queryable, :upvotes) do
-    queryable |> order_by(desc: :upvotes_count)
+    # Article interaction ordering is projection-backed and requires the
+    # concrete thread. CMS.Articles.List delegates it to Interactions.State.
+    queryable
   end
 
   defp trans_articles_order(queryable, :comments) do

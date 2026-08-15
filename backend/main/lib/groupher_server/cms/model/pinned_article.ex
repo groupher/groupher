@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias GroupherServer.CMS

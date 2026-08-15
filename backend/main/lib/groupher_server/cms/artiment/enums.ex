@@ -53,13 +53,13 @@ defmodule GroupherServer.CMS.Artiment.Enums do
     :reject_stale
   ]
 
-  # compile-time constants (for Absinthe Schema)
+  @doc "Expands the canonical category atoms at compile time for Absinthe schemas."
   defmacro cat, do: @cat
 
   @doc "Expands the canonical workflow-status atoms at compile time for Absinthe schemas."
   defmacro status, do: @status
 
-  # optional: runtime access (for non-macro call sites like validations)
+  @doc "Returns the canonical category atoms for runtime validation."
   def cat_values, do: @cat
 
   @doc "Returns the canonical workflow-status atoms for runtime validation."

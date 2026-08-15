@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
         -> Repo / external boundary
   """
 
-    @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
   @all_emotions (@article_emotions ++ @comment_emotions) |> Enum.uniq()
 

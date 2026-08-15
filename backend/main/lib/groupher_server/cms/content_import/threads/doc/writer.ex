@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.{Branch, Draft}
+  alias GroupherServer.CMS.Articles.{Branch, Draft, Lifecycle}
   alias GroupherServer.CMS.ContentImport.{ImportSourceMapping, Jobs}
   alias GroupherServer.CMS.ContentImport.Persistence.Job
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
   alias GroupherServer.CMS.DocTree
   alias GroupherServer.CMS.DocTree.Import, as: DocTreeImport
-  alias GroupherServer.CMS.DocTree.Read, as: DocTreeRead
+  alias GroupherServer.CMS.DocTree.Reader, as: DocTreeReader
   alias GroupherServer.CMS.Model.{Community, TrashAction, TrashedArticle}
   alias Helper.Transaction
 
@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     |> Enum.map(& &1.target_ref)
     |> trashed_action_refs(community)
     |> Enum.reduce_while(:ok, fn action_ref, :ok ->
-      with {:ok, state} <- DocTreeRead.ensure_draft_state(community, branch_id: branch.id),
+      with {:ok, state} <- DocTreeReader.ensure_draft_state(community, branch_id: branch.id),
            {:ok, %{conflict: false}} <-
              DocTree.restore_trash_item(community, action_ref, %{
                actor_id: actor.id,
@@ -209,7 +209,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   defp target_refs_by_stage(target_refs, model, community, branch, stage) do
     model
-    |> CMS.Articles.active_scope(:doc)
+    |> CMS.Articles.Trash.not_trashed_scope(:doc)
     |> where([article], article.article_hash_id in ^target_refs)
     |> where([article], article.community_id == ^community.id)
     |> where([article], article.branch_id == ^branch.id)
@@ -243,13 +243,19 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     end)
   end
 
-  defp write_item(community, target_ref, attrs, _actor, :draft),
+  defp write_item(community, target_ref, attrs, actor, state) do
+    with {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id, :doc, target_ref) do
+      do_write_item(community, target_ref, attrs, actor, state)
+    end
+  end
+
+  defp do_write_item(community, target_ref, attrs, _actor, :draft),
     do: Draft.update(community, :doc, target_ref, attrs)
 
-  defp write_item(community, target_ref, attrs, actor, :public),
+  defp do_write_item(community, target_ref, attrs, actor, :public),
     do: Draft.update_or_create_from_public(community, :doc, target_ref, attrs, actor)
 
-  defp write_item(community, _target_ref, attrs, actor, :missing),
+  defp do_write_item(community, _target_ref, attrs, actor, :missing),
     do: Draft.create(community, :doc, attrs, actor)
 
   defp upsert_mappings(job, items, bodies) do

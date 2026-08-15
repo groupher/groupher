@@ -104,5 +104,4 @@ defmodule GroupherServer.CMS.Communities.SlugClaims do
     )
     |> Repo.update_all(set: [released_at: now, expires_at: nil, updated_at: now])
   end
-
 end

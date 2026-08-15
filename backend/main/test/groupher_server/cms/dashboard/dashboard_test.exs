@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     end
 
     test "read a exist community should have default dashboard field", ~m(community)a do
-      {:ok, community} = CMS.Communities.read(community.slug)
+      {:ok, community} = CMS.Communities.fetch(community.slug)
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 

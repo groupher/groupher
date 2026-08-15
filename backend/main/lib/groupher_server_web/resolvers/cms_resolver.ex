@@ -211,11 +211,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.Press.site_manifest(community)
 
   def community(_root, %{slug: slug, inc_views: inc_views}, %{context: %{cur_user: user}}) do
-    CMS.Communities.read(slug, user, inc_views: inc_views)
+    CMS.Communities.fetch(slug, user, inc_views: inc_views)
   end
 
   def community(_root, %{slug: slug, inc_views: inc_views}, _info) do
-    CMS.Communities.read(slug, inc_views: inc_views)
+    CMS.Communities.fetch(slug, inc_views: inc_views)
   end
 
   def paged_communities(_root, ~m(filter)a, %{context: %{cur_user: user}}) do
@@ -280,8 +280,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.create(args, user)
   end
 
-  def update_community(_root, %{community: community} = args, _info) do
-    CMS.Communities.update(community, args)
+  def update_community(
+        _root,
+        %{community: community} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Communities.update(community, args, user)
   end
 
   def update_dashboard(_root, %{community: community, dsb_section: _key} = args, _info) do
@@ -300,13 +304,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Dashboard.select_theme_preset(community, args)
   end
 
-  def doc_tree(_root, %{community: %Community{} = community}, _info) do
-    CMS.DocTree.read(community)
+  def doc_tree(_root, %{community: %Community{} = community}, %{context: %{cur_user: user}}) do
+    CMS.DocTree.read(community, actor: user, policy_mode: :moderator_management)
   end
 
-  def doc_tree(_root, %{community: community}, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.DocTree.read(community)
+  def doc_tree(_root, %{community: community}, %{context: %{cur_user: user}}) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
+      CMS.DocTree.read(community, actor: user, policy_mode: :moderator_management)
     end
   end
 
@@ -315,38 +319,68 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def doc_public_tree(_root, %{community: community}, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
       CMS.DocTree.read_public(community)
     end
   end
 
-  def doc_tree_trash_items(_root, %{community: %Community{} = community}, _info) do
-    CMS.DocTree.trash_items(community)
+  def doc_tree_trash_items(
+        _root,
+        %{community: %Community{} = community},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocTree.trash_items(community, actor: user, policy_mode: :moderator_management)
   end
 
-  def doc_tree_trash_items(_root, %{community: community}, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.DocTree.trash_items(community)
+  def doc_tree_trash_items(
+        _root,
+        %{community: community},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
+      CMS.DocTree.trash_items(community, actor: user, policy_mode: :moderator_management)
     end
   end
 
-  def doc_cover(_root, %{community: %Community{} = community} = args, _info) do
-    CMS.DocCover.read(community, doc_cover_view(args))
+  def doc_cover(
+        _root,
+        %{community: %Community{} = community} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocCover.read(community, doc_cover_view(args), user)
   end
 
-  def doc_cover(_root, %{community: community} = args, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.DocCover.read(community, doc_cover_view(args))
+  def doc_cover(
+        _root,
+        %{community: community} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
+      CMS.DocCover.read(community, doc_cover_view(args), user)
     end
   end
 
-  def doc_draft(_root, %{community: %Community{} = community, id: doc_id}, _info) do
-    CMS.Articles.read_doc_editor(community, doc_id)
+  def doc_draft(
+        _root,
+        %{community: %Community{} = community, id: doc_id},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Articles.read_doc_editor(community, doc_id,
+      actor: user,
+      policy_mode: :moderator_management
+    )
   end
 
-  def doc_draft(_root, %{community: community, id: doc_id}, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.Articles.read_doc_editor(community, doc_id)
+  def doc_draft(
+        _root,
+        %{community: community, id: doc_id},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
+      CMS.Articles.read_doc_editor(community, doc_id,
+        actor: user,
+        policy_mode: :moderator_management
+      )
     end
   end
 
@@ -360,7 +394,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def doc_draft_snapshots(_root, %{community: community} = args, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
       doc_draft_snapshots(nil, Map.put(args, :community, community), nil)
     end
   end
@@ -374,7 +408,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def doc_draft_snapshot(_root, %{community: community} = args, _info) do
-    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
       doc_draft_snapshot(nil, Map.put(args, :community, community), nil)
     end
   end
@@ -467,8 +501,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp publish_with_cover_sync?(args),
     do: (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
 
-  defp with_doc_tree_actor(attrs, %{cur_user: %{id: user_id}}),
-    do: Map.put(attrs, :actor_id, user_id)
+  defp with_doc_tree_actor(attrs, %{cur_user: user} = _args),
+    do: attrs |> Map.put(:actor_id, user.id) |> Map.put(:actor, user)
 
   defp with_doc_tree_actor(attrs, _args), do: attrs
 
@@ -501,53 +535,65 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def add_doc_cover_card(
         _root,
         %{community: community, group_node_id: group_node_id},
-        _info
+        %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.add_card(community, group_node_id)
+    CMS.DocCover.add_card(community, group_node_id, user)
   end
 
   def remove_doc_cover_card(
         _root,
         %{community: community, group_node_id: group_node_id},
-        _info
+        %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.remove_card(community, group_node_id)
+    CMS.DocCover.remove_card(community, group_node_id, user)
   end
 
-  def reorder_doc_cover_cards(_root, %{community: community, ids: ids}, _info) do
-    CMS.DocCover.reorder_cards(community, ids)
+  def reorder_doc_cover_cards(
+        _root,
+        %{community: community, ids: ids},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocCover.reorder_cards(community, ids, user)
   end
 
   def update_doc_cover_card_appearance(
         _root,
         %{community: community, id: id, appearance: appearance},
-        _info
+        %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.update_card_appearance(community, id, appearance)
+    CMS.DocCover.update_card_appearance(community, id, appearance, user)
   end
 
-  def pin_doc_to_cover(_root, %{community: community, node_id: node_id}, _info) do
-    CMS.DocCover.pin_doc(community, node_id)
+  def pin_doc_to_cover(
+        _root,
+        %{community: community, node_id: node_id},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocCover.pin_doc(community, node_id, user)
   end
 
-  def unpin_doc_from_cover(_root, %{community: community, node_id: node_id}, _info) do
-    CMS.DocCover.unpin_doc(community, node_id)
+  def unpin_doc_from_cover(
+        _root,
+        %{community: community, node_id: node_id},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocCover.unpin_doc(community, node_id, user)
   end
 
   def reorder_doc_cover_pinned_docs(
         _root,
         %{community: community, node_ids: node_ids},
-        _info
+        %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.reorder_pinned_docs(community, node_ids)
+    CMS.DocCover.reorder_pinned_docs(community, node_ids, user)
   end
 
   def update_pinned_doc_appearance(
         _root,
         %{community: community, node_id: node_id, appearance: appearance},
-        _info
+        %{context: %{cur_user: user}}
       ) do
-    CMS.DocCover.update_pinned_doc_appearance(community, node_id, appearance)
+    CMS.DocCover.update_pinned_doc_appearance(community, node_id, appearance, user)
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
@@ -594,20 +640,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 
-  def delete_community(_root, %{community: %Community{} = community}, %{
+  def request_destroy_community(_root, %{community: %Community{} = community}, %{
         context: %{cur_user: user}
       }) do
-    with {:ok, true} <- CMS.Gate.check(user, :archive, community),
+    with {:ok, _canonical} <- CMS.Gate.access_check(user, :request_destroy, community),
          {:ok, _blocker} <-
-           CMS.Communities.archive(community.slug, operation_ref: Ecto.UUID.generate()),
-         {:ok, archived} <- CMS.Communities.read_all(community.slug, inc_views: false) do
+           CMS.Communities.request_destroy(community.slug, operation_ref: Ecto.UUID.generate()),
+         {:ok, archived} <-
+           CMS.Communities.fetch(community.slug, :operations, inc_views: false) do
       {:ok, archived}
     end
   end
 
-  def community_exist?(_root, %{slug: slug}, _) do
-    CMS.Communities.exist?(slug)
-  end
+  def check_community_name(_root, %{slug: slug}, _info),
+    do: CMS.Communities.check_name(slug)
 
   def cover_edit_info(%{cover_edit_info_id: nil}, _, _), do: {:ok, nil}
 
@@ -644,9 +690,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   def read_article(root, args, info), do: read_article(root, args, info, [])
 
-  def read_article(_root, %{article: article_path}, info, opts) do
+  def read_article(_root, %{article: article_path} = args, info, opts) do
     with {:ok, article_path} <- ArticlePath.parse(article_path, opts) do
-      do_read_article(article_path, info)
+      do_read_article(article_path, info, Map.get(args, :view_event_id))
     end
   end
 
@@ -663,15 +709,25 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
   end
 
-  defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, %{
-         context: %{cur_user: user}
-       }) do
+  defp do_read_article(article_path, info, view_event_id \\ nil)
+
+  defp do_read_article(
+         %{community: community, thread: thread, inner_id: inner_id},
+         %{
+           context: %{cur_user: user}
+         },
+         view_event_id
+       ) do
     with {:ok, community} <- FrontDesk.community(community) do
-      CMS.Articles.read(community, thread, inner_id, user)
+      CMS.Articles.read(community, thread, inner_id, user, view_event_id)
     end
   end
 
-  defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, _info) do
+  defp do_read_article(
+         %{community: community, thread: thread, inner_id: inner_id},
+         _info,
+         _view_event_id
+       ) do
     with {:ok, community} <- FrontDesk.community(community) do
       CMS.Articles.read(community, thread, inner_id)
     end
@@ -1256,12 +1312,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.create_comment(thread, article, body, user)
   end
 
-  def update_comment(_root, ~m(body comment)a, _info) do
-    CMS.Comments.update_comment(comment, body)
+  def update_comment(_root, ~m(body comment)a, %{context: %{cur_user: user}}) do
+    CMS.Comments.update_comment(comment, body, user)
   end
 
-  def delete_comment(_root, ~m(comment)a, _info) do
-    CMS.Comments.delete_comment(comment)
+  def delete_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
+    CMS.Comments.delete_comment(comment, user)
   end
 
   def reply_comment(_root, %{comment: comment, body: body}, %{context: %{cur_user: user}}) do
@@ -1304,9 +1360,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.undo_mark_comment_solution(comment.id, user)
   end
 
-  def pin_comment(_root, ~m(comment)a, _info), do: CMS.Comments.pin_comment(comment.id)
+  def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
+    do: CMS.Comments.pin_comment(comment.id, user)
 
-  def undo_pin_comment(_root, ~m(comment)a, _info), do: CMS.Comments.undo_pin_comment(comment.id)
+  def undo_pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
+    do: CMS.Comments.undo_pin_comment(comment.id, user)
 
   def emotions(%{thread: _} = root, _args, _info) do
     {:ok, EmotionFormatter.format(root, :comment)}

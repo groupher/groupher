@@ -146,8 +146,8 @@ defmodule Helper.ORMAtom do
       # 通过模块更新（需在updates中包含id）
       {:ok, updated} = update_meta(Post, %{
         "id" => 1,
-        "reported_user_ids" => [1, 2],
-        "reported_count" => 42
+        "is_comment_locked" => true,
+        "next_floor" => 42
       })
 
       # 通过 atom key 更新顶层 meta 字段

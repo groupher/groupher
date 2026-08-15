@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     thread
     |> article_schema()
-    |> CMS.Articles.active_scope(thread)
+    |> CMS.Articles.Trash.not_trashed_scope(thread)
     |> join(:inner, [a], t in assoc(a, :community_tags))
     |> where([_a, t], t.id == ^tag.id)
     |> where([a, _t], a.pending != ^@audit_illegal)

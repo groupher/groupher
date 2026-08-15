@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     with {:ok, user} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
          {:ok, community} <- find_or_create(slug, title, user),
          {:ok, _} <- ensure_about_enabled(community) do
-      CMS.Communities.read(community.slug, inc_views: false)
+      CMS.Communities.fetch(community.slug, inc_views: false)
     end
   end
 

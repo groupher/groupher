@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentReplies do
           user
         )
 
-      {:ok, _} = CMS.Comments.delete_comment(parent_comment)
+      {:ok, _} = CMS.Comments.delete_comment(parent_comment, user)
 
       {:error, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
     end

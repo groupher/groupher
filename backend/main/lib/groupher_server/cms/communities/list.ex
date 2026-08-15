@@ -15,7 +15,6 @@ defmodule GroupherServer.CMS.Communities.List do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Communities.Read
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
@@ -37,6 +36,6 @@ defmodule GroupherServer.CMS.Communities.List do
   @spec page(map()) :: T.domain_res(term())
   def page(filter) do
     filter = filter |> Enum.reject(fn {_k, v} -> is_nil(v) end) |> Enum.into(%{})
-    Read.scope(Community) |> ORM.find_all(filter)
+    CMS.Gate.scope(Community, nil, :list, %{}) |> ORM.find_all(filter)
   end
 end

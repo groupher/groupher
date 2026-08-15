@@ -18,10 +18,10 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Comments.Write
+  alias CMS.Comments.Writer
   alias CMS.Artiment.Enums
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
-  alias CMS.{Communities, FrontDesk}
+  alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Articles.States do
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}),
-         {:ok, _} <- Write.batch_update_question_flag(post, cat == @article_cat.qa) do
+         {:ok, _} <- Writer.batch_update_question_flag(post, cat == @article_cat.qa) do
       updated |> done
     end
   end
@@ -71,13 +71,13 @@ defmodule GroupherServer.CMS.Articles.States do
   @spec archive(atom()) :: T.domain_res(term())
   def archive(thread) do
     with {:ok, info} <- match(thread) do
-      now = Datetime.now()
+      now = Datetime.now(:second)
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
       archive_threshold = Datetime.shift(now, threshold)
 
-      info.model
-      |> where([article], article.inserted_at < ^archive_threshold)
-      |> Repo.update_all(set: [is_archived: true, archived_at: now])
+      Lifecycle.ensure_thread_backfill(thread, now)
+
+      Lifecycle.archive_before(thread, info.model, archive_threshold, now)
       |> done()
     end
   end

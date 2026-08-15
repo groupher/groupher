@@ -45,6 +45,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     size = positive_integer(Map.get(attrs, :size), 20) |> min(@max_size)
     sort = Map.get(attrs, :sort, :relevance)
     scope = normalize_scope(Map.get(attrs, :scope, %{}))
+
     with :ok <- validate_text(text),
          :ok <- validate_sort(sort),
          {:ok, filters} <- normalize_filters(Map.get(attrs, :filters, %{})) do
@@ -81,8 +82,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
          {:ok, threads} <- normalize_enum_list(Map.get(filters, :threads), @threads),
          {:ok, author_refs} <- normalize_string_list(Map.get(filters, :author_refs)),
          {:ok, locales} <- normalize_string_list(Map.get(filters, :locales)) do
-      {:ok,
-       %{types: types, threads: threads, author_refs: author_refs, locales: locales}}
+      {:ok, %{types: types, threads: threads, author_refs: author_refs, locales: locales}}
     end
   end
 

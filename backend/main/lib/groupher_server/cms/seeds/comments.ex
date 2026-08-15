@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   """
 
   import GroupherServer.Support.Factory
-    alias GroupherServer.CMS
+  alias GroupherServer.CMS
   alias GroupherServer.Support.FakeData
 
   alias CMS.Model.{Comment, Community}

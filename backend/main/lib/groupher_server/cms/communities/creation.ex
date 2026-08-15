@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Write}
+  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
   alias GroupherServer.CMS.CommunityApplications.Transitions
   alias GroupherServer.CMS.Communities.Jobs.Setup
 
@@ -46,7 +46,8 @@ defmodule GroupherServer.CMS.Communities.Creation do
           Repo.rollback(:application_state_conflict)
 
         true ->
-          with {:ok, _slug} <- NamePolicy.validate(application.slug),
+          with {:ok, _slug} <-
+                 NamePolicy.check(application.slug, ignore_application_id: application.id),
                {:ok, user} <- fetch_user(application.user_id),
                {:ok, upload} <- finalized_upload(application),
                {:ok, community} <- create_core(application, upload, user),
@@ -92,7 +93,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   end
 
   defp create_core(application, upload, user) do
-    Write.create_core(
+    Writer.create_core(
       %{
         title: application.title,
         slug: application.slug,

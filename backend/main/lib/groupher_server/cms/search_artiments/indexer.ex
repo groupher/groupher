@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias GroupherServer.{CMS, Repo}
   alias CMS.SearchArtiments
   alias CMS.SearchArtiments.{Artiment, Projection}
+  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -55,7 +56,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <-
            info.model
-           |> CMS.Articles.active_scope(thread)
+           |> CMS.Gate.scope(nil, :read, %{thread: thread})
            |> where([article], article.id == ^article_id)
            |> Repo.one() do
       case Projection.Article.project(thread, article) do
@@ -79,10 +80,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   def sync_article_metrics(thread, article_id) do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <- searchable_article(info.model, thread, article_id) do
+      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+
       SearchArtiments.update_metrics([
         {Artiment.article_ref(thread, article.article_hash_id),
          %{
-           upvotes_count: article.upvotes_count || 0,
+           upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
            comments_count: article.comments_count || 0,
            updated_at: article.updated_at
          }}
@@ -106,7 +109,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   defp searchable_article(model, thread, article_id) do
     model
-    |> CMS.Articles.active_scope(thread)
+    |> CMS.Gate.scope(nil, :read, %{thread: thread})
     |> where([article], article.id == ^article_id)
     |> where([article], article.stage == ^CMS.Const.stage(:public))
     |> where([article], article.pending == ^@legal)
@@ -127,7 +130,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread) do
       articles =
         info.model
-        |> CMS.Articles.active_scope(thread)
+        |> CMS.Gate.scope(nil, :list, %{thread: thread})
         |> where([article], article.id > ^after_id)
         |> where([article], article.stage == ^CMS.Const.stage(:public))
         |> where([article], article.pending == ^@legal)

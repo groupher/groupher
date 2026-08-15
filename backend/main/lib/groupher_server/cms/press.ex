@@ -20,9 +20,8 @@ defmodule GroupherServer.CMS.Press do
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Communities.Read
   alias CMS.Model.{ArticleBranch, Community, Doc, DocPublishRelease, DocTreeNode, PressConfig}
-  alias Helper.{Constant, Later}
+  alias Helper.Later
 
   require Logger
 
@@ -30,7 +29,6 @@ defmodule GroupherServer.CMS.Press do
 
   @threads [:post, :blog, :changelog, :doc]
   @public_stage CMS.Const.stage(:public)
-  @audit_legal Constant.CMS.pending(:legal)
   @site_host get_config(:general, :site_host)
   @manifest_limit 500
 
@@ -147,7 +145,6 @@ defmodule GroupherServer.CMS.Press do
   def article(%{community: community_ref, thread: thread, inner_id: inner_id})
       when thread in @threads do
     with {:ok, community} <- public_community(community_ref),
-         :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :markdown_enabled),
          :ok <- ensure_thread_enabled(community, thread),
@@ -163,7 +160,6 @@ defmodule GroupherServer.CMS.Press do
   @doc "Runs `community_rss_feed` through the public `Press` boundary."
   def community_rss_feed(community, opts \\ %{}) do
     with {:ok, community} <- public_community(community),
-         :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :feed_enabled) do
       requested_threads = option(opts, :threads, config.feed_threads)
@@ -182,7 +178,6 @@ defmodule GroupherServer.CMS.Press do
 
   def thread_rss_feed(community, thread, opts) when thread in @threads do
     with {:ok, community} <- public_community(community),
-         :ok <- ensure_community_public(community),
          {:ok, config} <- config(community),
          :ok <- ensure_enabled(config, :feed_enabled),
          :ok <- ensure_feed_thread(config, thread),
@@ -200,7 +195,6 @@ defmodule GroupherServer.CMS.Press do
   @doc "Runs `site_manifest` through the public `Press` boundary."
   def site_manifest(community) do
     with {:ok, community} <- public_community(community),
-         :ok <- ensure_community_public(community),
          {:ok, config} <- config(community) do
       threads = selected_threads(community, @threads)
       items = site_items(community, threads, @manifest_limit)
@@ -220,15 +214,15 @@ defmodule GroupherServer.CMS.Press do
   defp current_article(community, thread, inner_id) do
     with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
-      |> join(:inner, [article], branch in ArticleBranch, on: branch.id == article.branch_id)
+      |> CMS.Gate.scope(nil, :read, %{thread: thread})
+      |> join(:inner, [article, ...], branch in ArticleBranch,
+        as: :press_branch,
+        on: branch.id == article.branch_id
+      )
       |> where([article], article.community_id == ^community.id)
-      |> where([_article, branch], branch.slug == "main")
+      |> where([_article, ...], as(:press_branch).slug == "main")
       |> where([article], article.inner_id == ^inner_id)
-      |> where([article], article.stage == ^@public_stage)
-      |> where([article], article.pending == ^@audit_legal)
-      |> where([article], is_nil(article.archived_at))
-      |> preload([article, _branch], [:document, :community_tags, author: :user])
+      |> preload([article, ...], [:document, :community_tags, author: :user])
       |> Repo.one()
       |> case do
         nil -> {:error, {:not_exist, "Press Article"}}
@@ -276,19 +270,19 @@ defmodule GroupherServer.CMS.Press do
 
   defp current_articles(community, :doc, limit) do
     Doc
-    |> CMS.Articles.active_scope(:doc)
-    |> join(:inner, [article], branch in ArticleBranch, on: branch.id == article.branch_id)
-    |> join(:inner, [article, _branch], node in DocTreeNode,
+    |> CMS.Gate.scope(nil, :list, %{thread: :doc})
+    |> join(:inner, [article, ...], branch in ArticleBranch,
+      as: :press_branch,
+      on: branch.id == article.branch_id
+    )
+    |> join(:inner, [article, ...], node in DocTreeNode,
       on:
         node.community_id == article.community_id and node.branch_id == article.branch_id and
           node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
           node.type == :page
     )
     |> where([article], article.community_id == ^community.id)
-    |> where([_article, branch], branch.slug == "main")
-    |> where([article], article.stage == ^@public_stage)
-    |> where([article], article.pending == ^@audit_legal)
-    |> where([article], is_nil(article.archived_at))
+    |> where([_article, ...], as(:press_branch).slug == "main")
     |> order_by([article], desc: article.active_at, desc: article.inserted_at)
     |> limit(^limit)
     |> preload([article, ...], [:document, :community_tags, author: :user])
@@ -299,16 +293,16 @@ defmodule GroupherServer.CMS.Press do
   defp current_articles(community, thread, limit) do
     with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
-      |> join(:inner, [article], branch in ArticleBranch, on: branch.id == article.branch_id)
+      |> CMS.Gate.scope(nil, :list, %{thread: thread})
+      |> join(:inner, [article, ...], branch in ArticleBranch,
+        as: :press_branch,
+        on: branch.id == article.branch_id
+      )
       |> where([article], article.community_id == ^community.id)
-      |> where([_article, branch], branch.slug == "main")
-      |> where([article], article.stage == ^@public_stage)
-      |> where([article], article.pending == ^@audit_legal)
-      |> where([article], is_nil(article.archived_at))
+      |> where([_article, ...], as(:press_branch).slug == "main")
       |> order_by([article], desc: article.active_at, desc: article.inserted_at)
       |> limit(^limit)
-      |> preload([article, _branch], [:document, :community_tags, author: :user])
+      |> preload([article, ...], [:document, :community_tags, author: :user])
       |> Repo.all()
       |> Enum.reject(&is_nil(&1.document))
     else
@@ -475,7 +469,7 @@ defmodule GroupherServer.CMS.Press do
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 
   defp public_community(slug) when is_binary(slug) do
-    Read.scope(Community)
+    CMS.Gate.scope(Community, nil, :read, %{})
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
@@ -486,7 +480,7 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp public_community_by_id(id) when is_integer(id) do
-    Read.scope(Community)
+    CMS.Gate.scope(Community, nil, :read, %{})
     |> where([c], c.id == ^id)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
@@ -569,12 +563,6 @@ defmodule GroupherServer.CMS.Press do
 
   defp ensure_enabled(config, field) do
     if Map.get(config, field), do: :ok, else: {:error, {:custom, "Press output is disabled"}}
-  end
-
-  defp ensure_community_public(%Community{} = community) do
-    if Read.public?(community),
-      do: :ok,
-      else: {:error, {:not_exist, "Public Community"}}
   end
 
   defp bounded_limit(value, configured) when is_integer(value), do: min(max(value, 1), configured)

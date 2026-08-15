@@ -80,7 +80,6 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
       assert deleted["innerId"] == to_string(comment.inner_id)
-      assert deleted["isDeleted"]
     end
   end
 
@@ -385,7 +384,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
       result = owner_conn |> gq_mutation(S.Comment.m(:undo_pin_comment), variables)
@@ -398,7 +397,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
       variables = %{comment: comment_path(community, post, :post, comment)}
 
       assert guest_conn

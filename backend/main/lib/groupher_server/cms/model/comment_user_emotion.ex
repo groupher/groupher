@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
+  import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.Comment

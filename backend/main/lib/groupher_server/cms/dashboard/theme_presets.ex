@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
         -> CommunityDashboard / Repo
   """
 
-  alias GroupherServer.CMS.Dashboard.{ThemePreset, Write}
+  alias GroupherServer.CMS.Dashboard.{ThemePreset, Writer}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.T
 
@@ -32,14 +32,14 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     args = Map.drop(args, [:community])
 
     with :ok <- validate_custom_save(args),
-         {:ok, community_dashboard} <- Write.ensure_exist(community),
+         {:ok, community_dashboard} <- Writer.ensure_exist(community),
          current_layout <- current_layout(community_dashboard),
          {:ok, custom_theme_preset} <- merge_custom_theme_preset(current_layout, args),
          args <-
            args
            |> Map.drop([:theme_preset_base, :theme_overwrite])
            |> Map.put(:custom_theme_preset, custom_theme_preset) do
-      Write.replace_section(community_dashboard, :layout, args)
+      Writer.replace_section(community_dashboard, :layout, args)
     end
   end
 
@@ -47,10 +47,10 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   def select(%Community{} = community, %{theme_preset: :custom} = args) do
     args = Map.drop(args, [:community])
 
-    with {:ok, community_dashboard} <- Write.ensure_exist(community),
+    with {:ok, community_dashboard} <- Writer.ensure_exist(community),
          current_layout <- current_layout(community_dashboard),
          true <- is_map(current_layout.custom_theme_preset) do
-      Write.update_section(community, :layout, args)
+      Writer.update_section(community, :layout, args)
     else
       false -> {:error, "custom theme preset has not been created"}
       error -> error
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   def select(%Community{} = community, args) do
     args = Map.drop(args, [:community])
 
-    Write.update_section(community, :layout, args)
+    Writer.update_section(community, :layout, args)
   end
 
   defp current_layout(community_dashboard) do

@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.UserTest do
       assert user.avatar == "avatar.png"
     end
 
-    test "does not read string-key maps" do
+    test "normalizes string-key maps from projection rows" do
       user =
         User.normalize(%{
           "id" => 1,
@@ -31,10 +31,12 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.UserTest do
           "avatar" => "avatar.png"
         })
 
-      refute User.valid?(user)
-      assert user.id == nil
-      assert user.user_id == nil
-      assert user.login == nil
+      assert User.valid?(user)
+      assert user.id == 1
+      assert user.user_id == 2
+      assert user.login == "alice"
+      assert user.nickname == "Alice"
+      assert user.avatar == "avatar.png"
     end
   end
 end

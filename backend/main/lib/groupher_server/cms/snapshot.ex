@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Snapshot do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Comment
+  alias CMS.Model.{Comment, CommentLifecycle}
   alias Helper.Cache
 
   @pool :snapshot
@@ -319,10 +319,8 @@ defmodule GroupherServer.CMS.Snapshot do
   defp load_summaries(:article, thread, ids) do
     with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
       model
-      |> CMS.Articles.active_scope(thread)
-      # `active_scope/2` only excludes trashed logical articles; snapshot
-      # summaries default to the public authority row.
-      |> where([article], article.id in ^ids and article.stage == :public)
+      |> CMS.Gate.scope(nil, :list, %{thread: thread})
+      |> where([article], article.id in ^ids)
       |> Repo.all()
       |> Map.new(&{&1.id, article_summary(thread, &1)})
       |> with_unavailable(ids, &unavailable_article(thread, &1))
@@ -333,9 +331,11 @@ defmodule GroupherServer.CMS.Snapshot do
 
   defp load_summaries(:comment, thread, ids) do
     Comment
+    |> join(:inner, [comment], lifecycle in CommentLifecycle, on: lifecycle.comment_id == comment.id)
     |> where([comment], comment.thread == ^thread and comment.id in ^ids)
+    |> select([comment, lifecycle], {comment, lifecycle.state})
     |> Repo.all()
-    |> Map.new(&{&1.id, comment_summary(thread, &1)})
+    |> Map.new(fn {comment, state} -> {comment.id, comment_summary(thread, comment, state)} end)
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
 
@@ -436,11 +436,11 @@ defmodule GroupherServer.CMS.Snapshot do
     }
   end
 
-  defp comment_summary(thread, %Comment{is_deleted: true} = comment) do
+  defp comment_summary(thread, %Comment{} = comment, :deleted) do
     thread |> unavailable_comment(comment.id) |> Map.put(:body_digest, Comment.delete_hint())
   end
 
-  defp comment_summary(thread, %Comment{} = comment) do
+  defp comment_summary(thread, %Comment{} = comment, _state) do
     %{
       id: comment.id,
       body_digest: digest(comment.body),

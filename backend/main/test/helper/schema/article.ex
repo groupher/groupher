@@ -725,8 +725,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           nickname
         }
         commentsParticipantsCount
-        isArchived
-        archivedAt
         #{extra}
       }
     }

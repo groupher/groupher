@@ -39,10 +39,10 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
     """
   end
 
-  def m(:delete_community) do
+  def m(:request_destroy_community) do
     """
     mutation($community: String!){
-          deleteCommunity(community: $community) {
+      requestDestroyCommunity(community: $community) {
             slug
           }
         }
@@ -59,11 +59,13 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
     """
   end
 
-  def q(:is_community_exist) do
+  def q(:check_community_name) do
     """
     query($slug: String!) {
-          isCommunityExist(slug: $slug) {
-            exist
+          checkCommunityName(slug: $slug) {
+            normalizedSlug
+            available
+            reasonCode
           }
         }
     """

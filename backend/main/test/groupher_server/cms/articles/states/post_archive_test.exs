@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.PostArchive do
 
       archived_post = archived_posts |> List.first()
       {:error, reason} = CMS.Articles.update(archived_post, %{"title" => "new title"})
-      assert reason |> is_error?(:archived)
+      assert reason == :article_archived
     end
 
     test "can not delete archived post" do
@@ -57,8 +57,8 @@ defmodule GroupherServer.Test.CMS.PostArchive do
 
       archived_post = archived_posts |> List.first()
 
-      {:error, reason} = CMS.Articles.trash(archived_post, nil)
-      assert reason |> is_error?(:archived)
+      {:error, reason} = CMS.Articles.trash(archived_post, :operations)
+      assert %CMS.Gate.Decision{primary: %{code: :article_archived}} = reason
     end
   end
 end

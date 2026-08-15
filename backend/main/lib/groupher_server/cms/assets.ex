@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Assets do
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.T
 
-  alias __MODULE__.{ApplicationUploads, Deletion, Read, Upload, Write}
+  alias __MODULE__.{ApplicationUploads, Deletion, Reader, Upload, Writer}
 
   @doc """
   Lists active assets owned by a community.
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec page(Community.t(), map() | nil) :: T.domain_res(T.paged_data())
-  def page(%Community{} = community, filter \\ nil), do: Read.page(community, filter)
+  def page(%Community{} = community, filter \\ nil), do: Reader.page(community, filter)
 
   @doc """
   Returns storage usage for active assets in one community.
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec usage(Community.t()) :: T.domain_res(map())
-  def usage(%Community{} = community), do: Read.usage(community)
+  def usage(%Community{} = community), do: Reader.usage(community)
 
   @doc """
   Returns asset filter stats and community storage quota.
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Assets do
   remain only the delete/detail usage projection.
   """
   @spec stats(Community.t(), map() | nil) :: T.domain_res(map())
-  def stats(%Community{} = community, filter \\ nil), do: Read.stats(community, filter)
+  def stats(%Community{} = community, filter \\ nil), do: Reader.stats(community, filter)
 
   @doc """
   Lists article document refs for one community asset.
@@ -83,7 +83,7 @@ defmodule GroupherServer.CMS.Assets do
   """
   @spec refs(Community.t(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
   def refs(%Community{} = community, asset_id, filter \\ nil),
-    do: Read.refs(community, asset_id, filter)
+    do: Reader.refs(community, asset_id, filter)
 
   @doc """
   Returns the active public-read origin metadata for one asset public ref.
@@ -92,7 +92,7 @@ defmodule GroupherServer.CMS.Assets do
   return uploader, database ids, permissions, or other dashboard-only details.
   """
   @spec origin_info(String.t()) :: T.domain_res(CommunityAsset.t())
-  def origin_info(public_ref), do: Read.origin_info(public_ref)
+  def origin_info(public_ref), do: Reader.origin_info(public_ref)
 
   @doc """
   Registers an uploaded object into a community asset library.
@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.Assets do
   @spec register_to_community(Community.t(), map(), User.t() | nil) ::
           T.domain_res(CommunityAsset.t())
   def register_to_community(%Community{} = community, attrs, user \\ nil) do
-    Write.register(community, attrs, user)
+    Writer.register(community, attrs, user)
   end
 
   @doc "Deprecated alias for register_to_community/3."
@@ -161,7 +161,7 @@ defmodule GroupherServer.CMS.Assets do
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
   def delete(%Community{} = community, asset_id) do
-    with {:ok, asset} <- Write.delete(community, asset_id) do
+    with {:ok, asset} <- Writer.delete(community, asset_id) do
       Deletion.enqueue(asset)
       {:ok, asset}
     end
@@ -193,8 +193,8 @@ defmodule GroupherServer.CMS.Assets do
   @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
   def link_refs(article, attrs, opts \\ []) do
     case Keyword.get(opts, :community) do
-      %Community{} = community -> Write.sync_article_refs(community, article, attrs)
-      nil -> Write.sync_article_refs(article, attrs)
+      %Community{} = community -> Writer.sync_article_refs(community, article, attrs)
+      nil -> Writer.sync_article_refs(article, attrs)
     end
   end
 
@@ -209,7 +209,7 @@ defmodule GroupherServer.CMS.Assets do
 
   @doc "Copies all derived document asset refs between two versions of one Article."
   @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_refs(source, target), do: Write.copy_article_refs(source, target)
+  def copy_refs(source, target), do: Writer.copy_article_refs(source, target)
 
   @doc "Deprecated alias for copy_refs/2."
   @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
@@ -228,7 +228,7 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
-  def cleanup_refs(thread, article_id), do: Write.purge_article_refs(thread, article_id)
+  def cleanup_refs(thread, article_id), do: Writer.purge_article_refs(thread, article_id)
 
   @doc "Deprecated alias for cleanup_refs/2."
   @spec purge_article_refs(atom(), T.id()) :: T.domain_res(term())

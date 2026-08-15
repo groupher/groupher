@@ -161,17 +161,14 @@ defmodule Helper.Utils do
     |> Absinthe.Resolution.put_result({:error, message: err_msg, extensions: %{code: ecode()}})
   end
 
-  # TODO: enhance, doc
   @doc "Repeats a scalar value and preserves the legacy single-integer-list string form."
   def repeat(times, [x]) when is_integer(x), do: to_string(for _ <- 1..times, do: x)
   def repeat(times, x), do: for(_ <- 1..times, do: x)
 
-  # TODO: enhance, doc
-  @doc "Adds a value to an existing list while preserving the helper return contract."
+  @doc "Adds an integer offset, defaulting to one."
   def add(num, offset \\ 1) when is_integer(num) and is_integer(offset), do: num + offset
 
-  # TODO: enhance, doc
-  @doc "Selects map entries whose keys or values satisfy the supplied predicate."
+  @doc "Extracts one key from each map in a list while preserving order."
   def pick_by(source, key) when is_list(source) and is_atom(key) do
     Enum.reduce(source, [], fn t, acc ->
       acc ++ [Map.get(t, key)]

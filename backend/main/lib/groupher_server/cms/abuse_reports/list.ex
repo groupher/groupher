@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   import ShortMaps
 
   alias GroupherServer.CMS
+  alias CMS.Interactions.State
 
   alias CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, QueryBuilder, T}
@@ -148,8 +149,10 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_info(thread, %AbuseReport{} = report) do
-    report
-    |> Map.get(thread)
+    article = report |> Map.get(thread)
+
+    article
+    |> article_with_projection_count(thread)
     |> Map.take(@export_article_keys)
     |> Map.merge(%{thread: thread})
   end
@@ -157,8 +160,13 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp extract_article_comment_info(%AbuseReport{} = report) do
     keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]
     author = Map.take(report.comment.author, @export_author_keys)
+    counts = State.counts(:comment, [report.comment.id]) |> Map.get(report.comment.id, %{})
 
-    comment = Map.take(report.comment, keys)
+    comment =
+      report.comment
+      |> Map.put(:upvotes_count, Map.get(counts, :upvotes_count, 0))
+      |> Map.take(keys)
+
     comment = Map.merge(comment, %{author: author})
 
     article = extract_article_in_comment(report.comment)
@@ -178,8 +186,16 @@ defmodule GroupherServer.CMS.AbuseReports.List do
       _ ->
         comment
         |> Map.get(thread)
+        |> article_with_projection_count(thread)
         |> Map.take(@export_article_keys)
         |> Map.merge(%{thread: thread})
     end
   end
+
+  defp article_with_projection_count(%{id: id} = article, thread) do
+    counts = State.counts(thread, [id]) |> Map.get(id, %{})
+    Map.put(article, :upvotes_count, Map.get(counts, :upvotes_count, 0))
+  end
+
+  defp article_with_projection_count(article, _thread), do: article
 end

@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [

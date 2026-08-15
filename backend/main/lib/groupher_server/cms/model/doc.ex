@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @required_fields ~w(branch_id article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
-  @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
+  @optional_fields ~w(subtitle updated_at inserted_at active_at inner_id
                       slug json author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240

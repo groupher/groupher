@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
         -> Repo / domain event
   """
 
-    alias GroupherServer.CMS.Artiment.PlateJSON
+  alias GroupherServer.CMS.Artiment.PlateJSON
 
   @digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 

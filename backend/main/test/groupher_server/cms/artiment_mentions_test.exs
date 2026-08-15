@@ -263,7 +263,8 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       {:ok, comment} =
         CMS.Comments.update_comment(
           comment,
-          plate_body([block("block-b", [text("https://example.com/changed")])])
+          plate_body([block("block-b", [text("https://example.com/changed")])]),
+          user
         )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(comment)
@@ -319,7 +320,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
 
       {:ok, mentioner} =
-        CMS.Comments.update_comment(mentioner, comment_body.(target_comments))
+        CMS.Comments.update_comment(mentioner, comment_body.(target_comments), user)
 
       {many_result, many_queries} =
         capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)

@@ -35,11 +35,17 @@ defmodule GroupherServer.CMS.Comments.Replies do
   end
 
   @spec root_id(T.id() | Comment.t()) :: T.domain_res(T.id())
-  def root_id(%Comment{} = comment), do: {:ok, root_comment(comment).id}
+  def root_id(comment) do
+    with {:ok, root} <- root(comment), do: {:ok, root.id}
+  end
 
-  def root_id(comment_id) do
+  @doc "Returns the root Comment with its thread coordinate for scoped reply reads."
+  @spec root(T.id() | Comment.t()) :: T.domain_res(Comment.t())
+  def root(%Comment{} = comment), do: {:ok, root_comment(comment)}
+
+  def root(comment_id) do
     with {:ok, comment} <- ORM.find(Comment, comment_id) do
-      root_id(comment)
+      {:ok, root_comment(comment)}
     end
   end
 end

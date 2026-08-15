@@ -21,29 +21,78 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   require Const
 
   @archive_blockers [:owner_archive, :moderation_archive]
-  @hidden_blockers [:billing_suspend, :moderation_suspend, :moderation_archive, :owner_archive]
+  @hidden_blockers [:moderation_suspend, :moderation_archive, :owner_archive]
   @write_blockers [
-    :billing_read_only,
-    :billing_suspend,
     :moderation_suspend,
     :moderation_archive,
     :owner_archive
   ]
-  @reclaim_blockers [:moderation_suspend, :moderation_archive, :ops_legal_hold]
+  @destroy_blockers [:moderation_suspend, :moderation_archive, :ops_legal_hold]
   @recoverable_archive_blockers [:owner_archive, :moderation_archive]
+  @public_readable_states [:active, :read_only]
+  @management_readable_states [
+    :setting_up,
+    :setup_failed,
+    :active,
+    :read_only,
+    :suspended,
+    :archived,
+    :pending_destroy
+  ]
+  @operations_readable_states [
+    :setting_up,
+    :setup_failed,
+    :active,
+    :read_only,
+    :suspended,
+    :archived,
+    :pending_destroy,
+    :destroy
+  ]
   @uuid_pattern ~r/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
   @allowed_transitions %{
     setting_up: [:active, :setup_failed],
     setup_failed: [:setting_up, :archived],
-    active: [:active, :read_only, :suspended, :archived, :scheduled_reclaim],
-    read_only: [:active, :read_only, :suspended, :archived, :scheduled_reclaim],
-    suspended: [:active, :read_only, :suspended, :archived, :scheduled_reclaim],
-    archived: [:active, :read_only, :suspended, :archived, :scheduled_reclaim],
-    scheduled_reclaim: [:active, :read_only, :suspended, :archived, :scheduled_reclaim, :destroy],
+    active: [:active, :read_only, :suspended, :archived, :pending_destroy],
+    read_only: [:active, :read_only, :suspended, :archived, :pending_destroy],
+    suspended: [:active, :read_only, :suspended, :archived, :pending_destroy],
+    archived: [:active, :read_only, :suspended, :archived, :pending_destroy],
+    pending_destroy: [:active, :read_only, :suspended, :archived, :pending_destroy, :destroy],
     destroy: [:destroy]
   }
 
-  @type capability :: :read | :write | :manage | :reclaim
+  @type capability :: :read | :write | :manage | :destroy
+  @type read_mode :: :public | :owner_management | :moderator_management | :operations
+
+  @doc "Returns the read modes shared by Community Scope and access checks."
+  @spec read_modes() :: [read_mode()]
+  def read_modes, do: [:public, :owner_management, :moderator_management, :operations]
+
+  @doc """
+  Returns the Lifecycle states readable by a Community policy mode.
+
+  `pending_destroy` is the materialized grace-window state. Its inclusion in
+  management and operations modes assumes Lifecycle orchestration advances
+  that state to `destroy` after the window; this function is a state predicate,
+  not a wall-clock deadline check.
+  """
+  @spec readable_states(read_mode()) :: [atom()]
+  def readable_states(:public), do: @public_readable_states
+  def readable_states(:owner_management), do: @management_readable_states
+  def readable_states(:moderator_management), do: @management_readable_states
+  def readable_states(:operations), do: @operations_readable_states
+
+  @doc "Checks a Community Lifecycle state for an explicit read policy mode."
+  @spec can_read_mode(Community.t() | CommunityLifecycle.t(), read_mode(), map()) ::
+          {:ok, boolean()} | {:error, atom()}
+  def can_read_mode(resource, mode, _context)
+      when mode in [:public, :owner_management, :moderator_management, :operations] do
+    with {:ok, lifecycle} <- lifecycle_from(resource) do
+      {:ok, lifecycle.state in readable_states(mode)}
+    end
+  end
+
+  def can_read_mode(_resource, _mode, _context), do: {:error, :unknown_policy_mode}
 
   @doc "Projects active blockers into the materialized Lifecycle state."
   @spec resolve_state([CommunityLifecycleBlocker.t() | map()]) :: atom()
@@ -59,17 +108,21 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   end
 
   @doc "Answers a state-only capability without interpreting actor identity."
-  @spec can_read(Community.t() | CommunityLifecycle.t()) :: {:ok, boolean()} | {:error, atom()}
-  def can_read(resource), do: capability(resource, :read)
+  @spec can_read(Community.t() | CommunityLifecycle.t(), map()) ::
+          {:ok, boolean()} | {:error, atom()}
+  def can_read(resource, context \\ %{}), do: capability(resource, :read, context)
 
-  @spec can_write(Community.t() | CommunityLifecycle.t()) :: {:ok, boolean()} | {:error, atom()}
-  def can_write(resource), do: capability(resource, :write)
+  @spec can_write(Community.t() | CommunityLifecycle.t(), map()) ::
+          {:ok, boolean()} | {:error, atom()}
+  def can_write(resource, context \\ %{}), do: capability(resource, :write, context)
 
-  @spec can_manage(Community.t() | CommunityLifecycle.t()) :: {:ok, boolean()} | {:error, atom()}
-  def can_manage(resource), do: capability(resource, :manage)
+  @spec can_manage(Community.t() | CommunityLifecycle.t(), map()) ::
+          {:ok, boolean()} | {:error, atom()}
+  def can_manage(resource, context \\ %{}), do: capability(resource, :manage, context)
 
-  @spec can_reclaim(Community.t() | CommunityLifecycle.t()) :: {:ok, boolean()} | {:error, atom()}
-  def can_reclaim(resource), do: capability(resource, :reclaim)
+  @spec can_destroy(Community.t() | CommunityLifecycle.t(), map()) ::
+          {:ok, boolean()} | {:error, atom()}
+  def can_destroy(resource, context \\ %{}), do: capability(resource, :destroy, context)
 
   @doc "Creates a Lifecycle changeset for a guarded state transition."
   @spec transition_changeset(CommunityLifecycle.t(), atom(), map()) :: Ecto.Changeset.t()
@@ -194,7 +247,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       if is_nil(lifecycle) do
         Repo.rollback(:lifecycle_not_found)
       else
-        ensure_mutable!(lifecycle)
+        ensure_not_destroyed!(lifecycle)
         ensure_expected_version!(lifecycle, opts)
         ensure_state_allowed!(lifecycle, Keyword.get(opts, :allowed_states))
 
@@ -235,7 +288,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       if is_nil(lifecycle) do
         Repo.rollback(:lifecycle_not_found)
       else
-        ensure_mutable!(lifecycle)
+        ensure_not_destroyed!(lifecycle)
         ensure_expected_version!(lifecycle, opts)
 
         blocker =
@@ -283,10 +336,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end)
   end
 
-  @doc "Creates the owner's archive blocker and projects the Community to archived."
-  @spec archive(String.t() | integer(), keyword()) ::
+  @doc "Creates the owner's destroy-request blocker and projects the Community to archived."
+  @spec request_destroy(String.t() | integer(), keyword()) ::
           {:ok, CommunityLifecycleBlocker.t()} | {:error, term()}
-  def archive(community_ref, opts \\ []) do
+  def request_destroy(community_ref, opts \\ []) do
     attrs = %{
       blocker_type: :owner_archive,
       cause_code: Keyword.get(opts, :cause_code, "owner_archive"),
@@ -314,10 +367,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     )
   end
 
-  @doc "Schedules a locked, auditable Community reclaim after all guards pass."
-  @spec schedule_reclaim(String.t() | integer(), keyword()) ::
+  @doc "Schedules a locked, auditable Community destroy after all guards pass."
+  @spec schedule_destroy(String.t() | integer(), keyword()) ::
           {:ok, CommunityLifecycle.t()} | {:error, term()}
-  def schedule_reclaim(community_ref, opts \\ []) do
+  def schedule_destroy(community_ref, opts \\ []) do
     Repo.transaction(fn ->
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
       lifecycle = lock_for_transition(community_ref)
@@ -329,14 +382,14 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       end
 
       blockers = active_blockers(lifecycle.id)
-      ensure_reclaim_allowed!(blockers, DateTime.utc_now(:second))
+      ensure_destroy_allowed!(blockers, DateTime.utc_now(:second))
 
-      case Repo.update(transition_changeset(lifecycle, :scheduled_reclaim)) do
+      case Repo.update(transition_changeset(lifecycle, :pending_destroy)) do
         {:ok, updated} ->
           case write_audit(
                  updated,
                  operation_ref,
-                 "community.reclaim_scheduled",
+                 "community.destroy_scheduled",
                  %{from_state: lifecycle.state, to_state: updated.state}
                ) do
             {:ok, _audit} -> updated
@@ -349,17 +402,17 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end)
   end
 
-  @doc "Cancels a scheduled reclaim and recomputes state from active blockers."
-  @spec cancel_reclaim(String.t() | integer(), keyword()) ::
+  @doc "Cancels a scheduled destroy and recomputes state from active blockers."
+  @spec cancel_destroy(String.t() | integer(), keyword()) ::
           {:ok, CommunityLifecycle.t()} | {:error, term()}
-  def cancel_reclaim(community_ref, opts \\ []) do
+  def cancel_destroy(community_ref, opts \\ []) do
     Repo.transaction(fn ->
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
       lifecycle = lock_for_transition(community_ref)
       ensure_lifecycle!(lifecycle)
       ensure_expected_version!(lifecycle, opts)
 
-      unless lifecycle.state == :scheduled_reclaim do
+      unless lifecycle.state == :pending_destroy do
         Repo.rollback(:lifecycle_state_conflict)
       end
 
@@ -370,7 +423,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
           case write_audit(
                  updated,
                  operation_ref,
-                 "community.reclaim_cancelled",
+                 "community.destroy_cancelled",
                  %{from_state: lifecycle.state, to_state: updated.state}
                ) do
             {:ok, _audit} -> updated
@@ -392,13 +445,13 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       ensure_lifecycle!(lifecycle)
       ensure_expected_version!(lifecycle, opts)
 
-      unless lifecycle.state == :scheduled_reclaim do
+      unless lifecycle.state == :pending_destroy do
         Repo.rollback(:lifecycle_state_conflict)
       end
 
       now = DateTime.utc_now(:second)
       blockers = active_blockers(lifecycle.id)
-      ensure_reclaim_allowed!(blockers, now)
+      ensure_destroy_allowed!(blockers, now)
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
 
       Enum.each(blockers, fn blocker ->
@@ -451,36 +504,40 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   @spec reconcile(String.t() | integer()) :: {:ok, CommunityLifecycle.t()} | {:error, term()}
   def reconcile(community_ref), do: transition(community_ref, :__reconcile__, [])
 
-  defp capability(resource, capability) do
+  # Read/write/manage trust the materialized state. Every blocker mutation must
+  # recompute that state in the same transaction to preserve this invariant.
+  defp capability(resource, capability, context) do
     with {:ok, lifecycle} <- lifecycle_from(resource) do
-      blockers = active_blockers(lifecycle.id)
-
-      state =
-        cond do
-          lifecycle.state in [:setting_up, :setup_failed, :scheduled_reclaim, :destroy] ->
-            lifecycle.state
-
-          blockers == [] ->
-            lifecycle.state
-
-          true ->
-            resolve_state(blockers)
-        end
-
-      {:ok, capability_allowed?(capability, state, blockers)}
+      capability_allowed(capability, lifecycle, context)
     end
   end
 
-  defp capability_allowed?(:read, state, _), do: state in [:active, :read_only]
-  defp capability_allowed?(:write, state, _), do: state == :active
+  defp capability_allowed(:read, lifecycle, _context),
+    do: {:ok, lifecycle.state in @public_readable_states}
 
-  defp capability_allowed?(:manage, state, _),
-    do: state in [:active, :read_only, :suspended, :archived, :scheduled_reclaim]
+  defp capability_allowed(:write, lifecycle, _context), do: {:ok, lifecycle.state == :active}
 
-  defp capability_allowed?(:reclaim, state, blockers),
-    do:
-      state in [:active, :read_only, :archived] and
-        not Enum.any?(blockers, &(blocker_type(&1) in @reclaim_blockers))
+  defp capability_allowed(:manage, lifecycle, _context),
+    do: {:ok, lifecycle.state in [:active, :read_only, :suspended, :archived, :pending_destroy]}
+
+  defp capability_allowed(:destroy, lifecycle, context) do
+    if lifecycle.state in [:active, :read_only, :archived] do
+      with {:ok, blockers} <- capability_blockers(lifecycle, context) do
+        {:ok, not Enum.any?(blockers, &(blocker_type(&1) in @destroy_blockers))}
+      end
+    else
+      {:ok, false}
+    end
+  end
+
+  defp capability_blockers(_lifecycle, %{active_blockers: blockers}) when is_list(blockers),
+    do: {:ok, blockers}
+
+  defp capability_blockers(%CommunityLifecycle{blockers: blockers}, _context)
+       when is_list(blockers),
+       do: {:ok, Enum.filter(blockers, &is_nil(&1.ended_at))}
+
+  defp capability_blockers(_lifecycle, _context), do: {:error, :lifecycle_not_loaded}
 
   defp lifecycle_from(%CommunityLifecycle{} = lifecycle), do: {:ok, lifecycle}
 
@@ -575,7 +632,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
          _audit_action,
          _metadata
        )
-       when state in [:scheduled_reclaim, :destroy] do
+       when state in [:pending_destroy, :destroy] do
     {:ok, lifecycle}
   end
 
@@ -645,10 +702,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp ensure_lifecycle!(nil), do: Repo.rollback(:lifecycle_not_found)
   defp ensure_lifecycle!(%CommunityLifecycle{}), do: :ok
 
-  defp ensure_mutable!(%CommunityLifecycle{state: :destroy}),
+  defp ensure_not_destroyed!(%CommunityLifecycle{state: :destroy}),
     do: Repo.rollback(:lifecycle_state_conflict)
 
-  defp ensure_mutable!(%CommunityLifecycle{}), do: :ok
+  defp ensure_not_destroyed!(%CommunityLifecycle{}), do: :ok
 
   defp ensure_expected_version!(%CommunityLifecycle{version: version}, opts) do
     case Keyword.get(opts, :expected_version) do
@@ -667,10 +724,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end
   end
 
-  defp ensure_reclaim_allowed!(blockers, now) do
+  defp ensure_destroy_allowed!(blockers, now) do
     cond do
-      Enum.any?(blockers, &(blocker_type(&1) in @reclaim_blockers)) ->
-        Repo.rollback(:reclaim_blocked)
+      Enum.any?(blockers, &(blocker_type(&1) in @destroy_blockers)) ->
+        Repo.rollback(:destroy_blocked)
 
       Enum.any?(blockers, &recovery_window_active?(&1, now)) ->
         Repo.rollback(:archive_recovery_window_active)
@@ -701,8 +758,8 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp maybe_state_timestamp(attrs, :archived),
     do: Map.put(attrs, :archived_at, DateTime.utc_now(:second))
 
-  defp maybe_state_timestamp(attrs, :scheduled_reclaim),
-    do: Map.put(attrs, :scheduled_reclaim_at, DateTime.utc_now(:second))
+  defp maybe_state_timestamp(attrs, :pending_destroy),
+    do: Map.put(attrs, :destroy_scheduled_at, DateTime.utc_now(:second))
 
   defp maybe_state_timestamp(attrs, :destroy),
     do: Map.put(attrs, :destroyed_at, DateTime.utc_now(:second))

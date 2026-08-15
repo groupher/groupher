@@ -98,9 +98,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
+      _results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
 
-      assert not results["isArchived"]
     end
 
     test "guest user can get comment participants after comment created",
@@ -331,14 +330,14 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id)
+      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
       Process.sleep(1000)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id)
+      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
@@ -377,7 +376,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-      {:ok, _pinned_comment} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
       Process.sleep(1000)
 
@@ -397,7 +396,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-      {:ok, _pinned_comment2} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},

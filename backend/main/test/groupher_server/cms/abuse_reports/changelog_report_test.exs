@@ -37,9 +37,9 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       assert report.report_cases_count == 1
       assert List.first(report_cases).user.login == user.login
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      changelog = CMS.Interactions.State.read(changelog, user, surface: :report)
       assert changelog.meta.reported_count == 1
-      assert user.id in changelog.meta.reported_user_ids
+      assert changelog.viewer_has_reported
     end
 
     test "can undo a report", ~m(user changelog)a do
@@ -50,8 +50,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 0
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert user.id not in changelog.meta.reported_user_ids
+      refute CMS.Interactions.State.read(changelog, user).viewer_has_reported
     end
 
     test "can undo a existed report", ~m(user user2 changelog)a do
@@ -63,10 +62,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-
-      assert user2.id in changelog.meta.reported_user_ids
-      assert user.id not in changelog.meta.reported_user_ids
+      assert CMS.Interactions.State.read(changelog, user2).viewer_has_reported
+      refute CMS.Interactions.State.read(changelog, user).viewer_has_reported
     end
 
     test "can undo a report with other user report it too", ~m(user user2 changelog)a do

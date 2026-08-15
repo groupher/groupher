@@ -18,7 +18,6 @@ defmodule Helper.Constant.DBPrefix do
   @statistics "statistics"
   @delivery "delivery"
   @messaging "messaging"
-  @payment "payment"
   @log "log"
 
   @doc "Returns the default PostgreSQL schema prefix."
@@ -33,8 +32,6 @@ defmodule Helper.Constant.DBPrefix do
   def statistics, do: @statistics
   @doc "Returns the Accounts PostgreSQL schema prefix."
   def account, do: @account
-  @doc "Returns the Payment PostgreSQL schema prefix."
-  def payment, do: @payment
   @doc "Returns the Log PostgreSQL schema prefix."
   def log, do: @log
 end

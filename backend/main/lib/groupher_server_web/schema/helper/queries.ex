@@ -48,6 +48,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
         @desc unquote("get #{thread} by id")
         field unquote(thread), non_null(unquote(thread)) do
           arg(:article, non_null(:article_path_input))
+          arg(:view_event_id, :id)
 
           resolve(fn root, args, info ->
             R.CMS.read_article(root, args, info, thread: unquote(thread))

@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.SearchArtiments.Artiment
+  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -29,6 +30,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          true <- is_binary(article.article_hash_id),
          true <- not is_nil(article.inner_id) do
       ref = Artiment.article_ref(thread, article.article_hash_id)
+      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
 
       {:ok,
        %Artiment{
@@ -47,7 +49,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          },
          author_ref: author_ref(article),
          locale: article.community.locale,
-         upvotes_count: article.upvotes_count || 0,
+         upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
          comments_count: article.comments_count || 0,
          published_at: article.active_at,
          inserted_at: article.inserted_at,

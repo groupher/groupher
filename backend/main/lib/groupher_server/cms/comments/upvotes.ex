@@ -1,49 +1,34 @@
 defmodule GroupherServer.CMS.Comments.Upvotes do
   @moduledoc """
-  Upvote operations for comments.
+  Comment upvotes backed by a fact row and the comment reaction projection.
 
   Business position:
 
-      Client
-        -> GraphQL
-        -> CMS.Comments
-        -> Upvotes
-        -> Repo / domain event
+      GraphQL mutation -> CMS.Comments.Upvotes -> upvote fact + interaction projection
   """
 
   import Helper.ErrorCode
-  import Helper.Utils, only: [done: 1, strip_struct: 1]
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias Helper.{Later, Multi, ORM, T}
 
-  alias CMS.Events
-  alias CMS.FrontDesk
+  alias CMS.{Events, FrontDesk, Gate}
+  alias CMS.Interactions.State
   alias CMS.Model.{Comment, CommentUpvote}
+  alias Helper.{Later, Multi, ORM, T}
 
   @spec upvote(T.id(), User.t()) :: T.domain_res(Comment.t())
   def upvote(comment_id, %User{id: user_id} = from_user) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         false <- comment.is_deleted do
+         {:ok, comment} <- Gate.access_check(from_user, :upvote, comment) do
       Multi.new()
       |> Multi.run(:create_comment_upvote, fn _, _ ->
         ORM.create(CommentUpvote, %{comment_id: comment.id, user_id: user_id})
       end)
-      |> Multi.run(:add_upvoted_user, fn _, _ ->
-        update_upvoted_user_list(comment, user_id, :add)
-      end)
-      |> Multi.run(:inc_upvotes_count, fn _, %{add_upvoted_user: comment} ->
-        ORM.inc(comment, :upvotes_count)
-      end)
-      |> Multi.run(:mark_article_author_upvoted, fn _, %{inc_upvotes_count: comment} ->
-        mark_article_author_upvoted_ifneed(comment, user_id, true)
-      end)
-      |> Multi.run(:viewer_states, fn _, %{mark_article_author_upvoted: comment} ->
-        viewer_states(comment, user_id)
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        FrontDesk.sync_embed_replies(comment)
+      |> Multi.run(:sync_projection, fn _, _ ->
+        with {:ok, _projection} <- State.write(comment, :upvote, from_user, :add) do
+          {:ok, State.read(comment, from_user)}
+        end
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: from_user}]})
@@ -57,28 +42,31 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
   @spec undo(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo(comment_id, %User{id: user_id} = from_user) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         false <- comment.is_deleted do
+         {:ok, comment} <- Gate.access_check(from_user, :upvote, comment) do
       Multi.new()
-      |> Multi.run(:delete_comment_upvote, fn _, _ ->
-        ORM.findby_delete(CommentUpvote, %{
-          comment_id: comment.id,
-          user_id: user_id
-        })
+      |> Multi.run(:find_comment_upvote, fn _, _ ->
+        case ORM.find_by(CommentUpvote, %{comment_id: comment.id, user_id: user_id}) do
+          {:ok, record} -> {:ok, record}
+          {:error, _} -> {:ok, nil}
+        end
       end)
-      |> Multi.run(:remove_upvoted_user, fn _, _ ->
-        update_upvoted_user_list(comment, user_id, :remove)
+      |> Multi.run(:delete_comment_upvote, fn _, %{find_comment_upvote: record} ->
+        case record do
+          nil -> {:ok, comment}
+          record -> ORM.delete(record)
+        end
       end)
-      |> Multi.run(:dec_upvotes_count, fn _, %{remove_upvoted_user: comment} ->
-        ORM.dec(comment, :upvotes_count)
-      end)
-      |> Multi.run(:unmark_article_author_upvoted, fn _, %{dec_upvotes_count: comment} ->
-        mark_article_author_upvoted_ifneed(comment, user_id, false)
-      end)
-      |> Multi.run(:viewer_states, fn _, %{unmark_article_author_upvoted: comment} ->
-        viewer_states(comment, user_id)
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        FrontDesk.sync_embed_replies(comment)
+      |> Multi.run(:sync_projection, fn _, %{find_comment_upvote: record} ->
+        case record do
+          nil ->
+            {:ok, State.read(comment, from_user)}
+
+          _ ->
+            with {:ok, _projection} <-
+                   State.write(comment, :upvote, from_user, :remove) do
+              {:ok, State.read(comment, from_user)}
+            end
+        end
       end)
       |> Multi.run(:after_events, fn _, _ ->
         Later.run(
@@ -90,43 +78,7 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
     end
   end
 
-  defp mark_article_author_upvoted_ifneed(%Comment{} = comment, user_id, value) do
-    with {:ok, article} <- FrontDesk.article_of(comment, preload: [author: :user]) do
-      case get_in(article, [:author, :user, :id]) == user_id do
-        true ->
-          meta = comment.meta |> Map.put(:is_article_author_upvoted, value)
-          ORM.update_meta(comment, meta)
-
-        false ->
-          {:ok, comment}
-      end
-    end
-  end
-
-  defp viewer_states(%Comment{} = comment, user_id) do
-    viewer_has_upvoted = Enum.member?(comment.meta.upvoted_user_ids, user_id)
-    viewer_has_reported = Enum.member?(comment.meta.reported_user_ids, user_id)
-
-    comment
-    |> Map.merge(%{viewer_has_upvoted: viewer_has_upvoted})
-    |> Map.merge(%{viewer_has_reported: viewer_has_reported})
-    |> done()
-  end
-
-  defp update_upvoted_user_list(comment, user_id, opt) do
-    cur_user_ids = get_in(comment, [:meta, :upvoted_user_ids])
-
-    user_ids =
-      case opt do
-        :add -> [user_id] ++ cur_user_ids
-        :remove -> cur_user_ids -- [user_id]
-      end
-
-    meta = comment.meta |> Map.merge(%{upvoted_user_ids: user_ids}) |> strip_struct()
-    ORM.update_meta(comment, meta)
-  end
-
-  defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}
+  defp result({:ok, %{sync_projection: comment}}), do: {:ok, comment}
 
   defp result({:error, :create_comment_upvote, _result, _steps}) do
     raise_error(:comment_already_upvote, "already upvoted")

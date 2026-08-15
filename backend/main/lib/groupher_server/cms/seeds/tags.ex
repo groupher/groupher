@@ -64,11 +64,27 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     end
   end
 
-  defp ensure_tags_count(_community, _thread, _bot, _groups, _group_by_title, target_count, current_count)
+  defp ensure_tags_count(
+         _community,
+         _thread,
+         _bot,
+         _groups,
+         _group_by_title,
+         target_count,
+         current_count
+       )
        when current_count >= target_count,
        do: :ok
 
-  defp ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, current_count) do
+  defp ensure_tags_count(
+         community,
+         thread,
+         bot,
+         groups,
+         group_by_title,
+         target_count,
+         current_count
+       ) do
     index = current_count + 1
     attrs = build_tag_attrs(thread, groups, group_by_title, target_count, index)
 

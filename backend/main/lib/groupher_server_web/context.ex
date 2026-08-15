@@ -1,5 +1,3 @@
-# a plug for router ...
-
 defmodule GroupherServerWeb.Context do
   @moduledoc """
   Builds the authenticated Absinthe context at the HTTP boundary.

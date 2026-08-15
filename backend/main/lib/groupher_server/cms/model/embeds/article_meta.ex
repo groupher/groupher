@@ -21,9 +21,8 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.Threads
-  alias CMS.Model.Embeds
 
-  @optional_fields ~w(thread is_edited is_comment_locked upvoted_user_ids collected_user_ids viewed_user_ids comments_participant_user_ids reported_user_ids reported_count is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words next_floor next_comment_inner_id)a
+  @optional_fields ~w(thread is_edited is_comment_locked comments_participant_user_ids reported_count upvoted_user_ids is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words next_floor next_comment_inner_id)a
 
   @doc "for test usage"
   def default_meta do
@@ -32,19 +31,14 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
       is_edited: false,
       is_comment_locked: false,
       folded_comment_count: 0,
-      upvoted_user_ids: [],
-      collected_user_ids: [],
-      viewed_user_ids: [],
-      reported_user_ids: [],
       comments_participant_user_ids: [],
       reported_count: 0,
+      upvoted_user_ids: [],
       is_sunk: false,
       can_undo_sink: true,
       last_active_at: nil,
       next_floor: 0,
       next_comment_inner_id: 0,
-      latest_upvoted_users: [],
-      latest_collected_users: [],
       # audit state
       is_legal: true,
       illegal_reason: [],
@@ -58,12 +52,9 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
     field(:is_comment_locked, :boolean, default: false)
     field(:folded_comment_count, :integer, default: 0)
 
-    # reaction history
-    field(:upvoted_user_ids, {:array, :integer}, default: [])
-    field(:collected_user_ids, {:array, :integer}, default: [])
-    field(:viewed_user_ids, {:array, :integer}, default: [])
-    field(:reported_user_ids, {:array, :integer}, default: [])
+    # `reported_count` remains a response projection; membership lives in reaction info.
     field(:reported_count, :integer, default: 0)
+    field(:upvoted_user_ids, {:array, :integer}, default: [])
 
     field(:comments_participant_user_ids, {:array, :integer}, default: [])
 
@@ -73,9 +64,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
     field(:last_active_at, :utc_datetime, default: nil)
     field(:next_floor, :integer, default: 0)
     field(:next_comment_inner_id, :integer, default: 0)
-
-    embeds_many(:latest_upvoted_users, Embeds.User, on_replace: :delete)
-    embeds_many(:latest_collected_users, Embeds.User, on_replace: :delete)
 
     # audit state
     field(:is_legal, :boolean, default: true)

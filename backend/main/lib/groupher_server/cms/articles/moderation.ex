@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
     with {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
+      |> CMS.Articles.Trash.not_trashed_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> done()

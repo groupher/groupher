@@ -291,7 +291,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("fresh"), user)
 
-      {:ok, _deleted_comment} = ORM.update(comment, %{is_deleted: true})
+      {:ok, _deleted_lifecycle} = CMS.Comments.Lifecycle.transition(comment.id, :deleted)
 
       snapshot = %{id: comment.id, body_digest: "old digest", article_id: post.id, thread: :post}
 

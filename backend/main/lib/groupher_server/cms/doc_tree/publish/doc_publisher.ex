@@ -24,7 +24,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
+  alias CMS.Articles.Lock
   alias CMS.DocTree.Events
+  alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
   alias Helper.{ORM, T}
 
@@ -79,24 +81,30 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
-        {:ok, draft} ->
-          {:ok, draft}
+      Lock.run(community, :doc, public_doc.article_hash_id, fn ->
+        with {:ok, _canonical_doc} <- CMS.Gate.access_check(user, :edit, public_doc) do
+          case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
+            {:ok, draft} ->
+              {:ok, draft}
 
-        {:error, _} ->
-          Draft.create(
-            community,
-            :doc,
-            %{
-              branch_id: branch.id,
-              article_hash_id: public_doc.article_hash_id,
-              title: public_doc.title,
-              slug: public_doc.slug,
-              body_bag: BodyBag.from_document_map(document)
-            },
-            user
-          )
-      end
+            {:error, _} ->
+              Draft.create(
+                community,
+                :doc,
+                %{
+                  branch_id: branch.id,
+                  article_hash_id: public_doc.article_hash_id,
+                  title: public_doc.title,
+                  slug: public_doc.slug,
+                  body_bag: BodyBag.from_document_map(document)
+                },
+                user
+              )
+          end
+        else
+          {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+        end
+      end)
     end
   end
 

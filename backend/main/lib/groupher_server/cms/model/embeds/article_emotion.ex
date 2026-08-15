@@ -4,9 +4,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
 
   e.g:
     field(:beer_count, :integer, default: 0)
-    field(:beer_user_logins, :string)
     field(:viewer_has_beered, :boolean, default: false, virtual: true)
-    embeds_many(:latest_beer_users, Embeds.User, on_replace: :delete)
 
   Business position:
 
@@ -15,11 +13,10 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-    alias GroupherServer.CMS
-
+  alias GroupherServer.CMS
   alias CMS.Model.Embeds
 
-  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @supported_emotions CMS.Artiment.Config.emotions()
 
   defmacro emotion_fields do
     @supported_emotions
@@ -52,8 +49,8 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros
-    @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
 
+  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count") ++
                      Enum.map(@supported_emotions, &:"#{&1}_user_logins")
 
@@ -73,6 +70,17 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
     |> Enum.into(%{})
   end
 
+  @doc false
+  def default_persisted_emotions do
+    @supported_emotions
+    |> Enum.reduce(%{}, fn emotion, acc ->
+      Map.merge(acc, %{
+        :"#{emotion}_count" => 0,
+        :"viewer_has_#{emotion}ed" => false
+      })
+    end)
+  end
+
   embedded_schema do
     emotion_fields()
   end
@@ -80,8 +88,5 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)
-
-    # |> cast_embed(:latest_downvote_users, required: false, with: &Embeds.User.changeset/2)
-    # |> ...
   end
 end

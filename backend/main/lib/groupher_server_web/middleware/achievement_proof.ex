@@ -26,9 +26,6 @@ defmodule GroupherServerWeb.Middleware.AchievementProof do
       reputation: 0,
       articles_upvotes_count: 0,
       articles_collects_count: 0,
-      donate_member: false,
-      senior_member: false,
-      sponsor_member: false,
       source_contribute: %{
         web: false,
         server: false,

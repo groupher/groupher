@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Communities.Meta do
       community_attrs = mock_attrs(:community)
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      {:ok, community} = CMS.Communities.update(community, %{title: "new title"})
+      {:ok, community} = CMS.Communities.update(community, %{title: "new title"}, user)
 
       assert strip_struct(community.meta) ==
                Map.merge(@default_meta, %{moderators_ids: [community.user_id]})

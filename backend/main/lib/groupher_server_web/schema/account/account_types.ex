@@ -228,9 +228,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     # field(:contents_watched_count, :integer)
 
     field(:source_contribute, :source_contribute)
-    field(:donate_member, :boolean)
-    field(:senior_member, :boolean)
-    field(:sponsor_member, :boolean)
   end
 
   object :browser_signin_result do

@@ -11,14 +11,15 @@ defmodule GroupherServer.CMS.CommunityApplications do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{Const, Gate}
+  alias GroupherServer.CMS.Const
+  alias GroupherServer.CMS.Gate.Passport
 
   alias GroupherServer.CMS.CommunityApplications.{
     LogoUploads,
     Policy,
-    Read,
+    Reader,
     Review,
-    Write
+    Writer
   }
 
   alias Helper.T
@@ -27,25 +28,25 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @spec current(User.t()) :: T.domain_res(term())
   @doc "Runs `current` through the public `CommunityApplications` boundary."
-  def current(%User{} = user), do: Read.current(user)
+  def current(%User{} = user), do: Reader.current(user)
 
   @spec latest_failed(User.t()) :: T.domain_res(term())
   @doc "Runs `latest_failed` through the public `CommunityApplications` boundary."
-  def latest_failed(%User{} = user), do: Read.latest_failed(user)
+  def latest_failed(%User{} = user), do: Reader.latest_failed(user)
 
   @spec history(User.t(), map()) :: T.domain_res(term())
   @doc "Runs `history` through the public `CommunityApplications` boundary."
-  def history(%User{} = user, filter \\ %{}), do: Read.history(user, filter)
+  def history(%User{} = user, filter \\ %{}), do: Reader.history(user, filter)
 
   @spec get_owned(String.t(), User.t()) :: T.domain_res(term())
   @doc "Returns owned through the `CommunityApplications` boundary."
-  def get_owned(public_ref, %User{} = user), do: Read.owned(public_ref, user)
+  def get_owned(public_ref, %User{} = user), do: Reader.owned(public_ref, user)
 
   @spec review_queue(map(), User.t()) :: T.domain_res(term())
   @doc "Runs `review_queue` through the public `CommunityApplications` boundary."
   def review_queue(filter, %User{} = reviewer) do
     with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
-      Read.review_queue(filter)
+      Reader.review_queue(filter)
     end
   end
 
@@ -53,29 +54,29 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `review_detail` through the public `CommunityApplications` boundary."
   def review_detail(public_ref, %User{} = reviewer) do
     with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
-      Read.review_detail(public_ref)
+      Reader.review_detail(public_ref)
     end
   end
 
   @spec events(term(), map()) :: T.domain_res(term())
   @doc "Runs `events` through the public `CommunityApplications` boundary."
-  def events(application, filter \\ %{}), do: Read.events(application, filter)
+  def events(application, filter \\ %{}), do: Reader.events(application, filter)
 
   @doc "Runs `applicant` through the public `CommunityApplications` boundary."
-  def applicant(application), do: Read.applicant(application)
+  def applicant(application), do: Reader.applicant(application)
   @doc "Runs `reviewer` through the public `CommunityApplications` boundary."
-  def reviewer(application), do: Read.reviewer(application)
+  def reviewer(application), do: Reader.reviewer(application)
   @doc "Runs `application_community` through the public `CommunityApplications` boundary."
-  def application_community(application), do: Read.community(application)
+  def application_community(application), do: Reader.community(application)
   @doc "Runs `event_actor` through the public `CommunityApplications` boundary."
-  def event_actor(event), do: Read.event_actor(event)
+  def event_actor(event), do: Reader.event_actor(event)
   @doc "Runs `logo` through the public `CommunityApplications` boundary."
-  def logo(application), do: Read.logo(application)
+  def logo(application), do: Reader.logo(application)
   @doc "Runs `logo_origin` through the public `CommunityApplications` boundary."
-  def logo_origin(public_ref), do: Read.logo_origin(public_ref)
+  def logo_origin(public_ref), do: Reader.logo_origin(public_ref)
 
   defp review_authorized?(reviewer, action) do
-    case Gate.check_passport(reviewer, action, %{}) do
+    case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end
@@ -88,12 +89,12 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   def submit(attrs, %User{} = user, idempotency_key),
-    do: Write.submit(attrs, user, idempotency_key)
+    do: Writer.submit(attrs, user, idempotency_key)
 
   @spec cancel(String.t(), User.t(), integer()) :: T.domain_res(term())
   @doc "Runs `cancel` through the public `CommunityApplications` boundary."
   def cancel(public_ref, %User{} = user, expected_version),
-    do: Write.cancel(public_ref, user, expected_version)
+    do: Writer.cancel(public_ref, user, expected_version)
 
   @spec start_review(String.t(), User.t(), integer()) :: T.domain_res(term())
   @doc "Runs `start_review` through the public `CommunityApplications` boundary."
@@ -129,7 +130,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @spec expire_due(DateTime.t()) :: T.domain_res(non_neg_integer())
   @doc "Runs `expire_due` through the public `CommunityApplications` boundary."
-  def expire_due(now), do: Write.expire_due(now)
+  def expire_due(now), do: Writer.expire_due(now)
 
   @spec mark_creation_failed(String.t(), String.t(), term()) :: T.domain_res(term())
   @doc "Runs `mark_creation_failed` through the public `CommunityApplications` boundary."

@@ -16,7 +16,13 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
 
   @behaviour Absinthe.Middleware
 
+  alias GroupherServer.CMS.Gate.Decision
+
   def call(%{errors: [%Ecto.Changeset{}]} = resolution, _), do: resolution
+
+  def call(%{errors: [%Decision{} = decision]} = resolution, _) do
+    Absinthe.Resolution.put_result(resolution, Decision.graphql_error(decision))
+  end
 
   def call(%{errors: [error]} = resolution, _) do
     if formattable_domain_error?(error) do

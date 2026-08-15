@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           end)
           |> Repo.transaction()
           |> case do
-            {:ok, _} -> Communities.Read.read(community.slug, inc_views: false)
+            {:ok, _} -> Communities.Reader.fetch(community.slug, inc_views: false)
             error -> result(error)
           end
         end)
@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          {:ok, _} <- Passport.stamp_passport(rules, target_user) do
       update_passport_item_count(community, target_user, rules)
 
-      Communities.Read.read(community.slug, inc_views: false)
+      Communities.Reader.fetch(community.slug, inc_views: false)
     else
       {:error, :community_root_only} ->
         {:error, {:community_root_only, "only community root can update moderator"}}
@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       |> Repo.transaction()
       |> case do
         {:ok, _} ->
-          Communities.Read.read(community_slug, inc_views: false)
+          Communities.Reader.fetch(community_slug, inc_views: false)
 
         error ->
           result(error)

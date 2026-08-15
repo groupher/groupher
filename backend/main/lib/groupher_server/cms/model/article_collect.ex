@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [

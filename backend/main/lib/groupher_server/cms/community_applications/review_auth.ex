@@ -11,11 +11,11 @@ defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
         -> Repo / Oban
   """
 
-  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Gate.Passport
 
   @spec authorize(map(), String.t()) :: :ok | {:error, atom()}
   def authorize(reviewer, grant) when is_map(reviewer) and is_binary(grant) do
-    case Gate.check_passport(reviewer, grant, %{}) do
+    case Passport.check(reviewer, grant, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end

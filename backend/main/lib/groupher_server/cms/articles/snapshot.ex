@@ -21,7 +21,8 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Branch, Draft, Lock, VersionedRelations, Write}
+  alias CMS.Articles.{Branch, Draft, Lock, VersionedRelations, Writer}
+  alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
   alias Helper.{ORM, T}
 
@@ -83,8 +84,12 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
           T.domain_res(ArticleSnapshot.t())
   def checkpoint(%Community{} = community, thread, article_hash_id, user, opts) do
     Lock.run(community, thread, article_hash_id, fn ->
-      with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts) do
+      with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
+           {:ok, actor} <- snapshot_actor(user, draft),
+           {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
         checkpoint_article(draft, CMS.Const.article_snapshot_action(:checkpoint), user, opts)
+      else
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       end
     end)
   end
@@ -138,6 +143,9 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     Lock.run(community, thread, article_hash_id, fn ->
       with {:ok, source_snapshot} <-
              get(community, thread, article_hash_id, snapshot_hash_id, opts),
+           {:ok, actor} <- snapshot_actor(user, source_snapshot),
+           {:ok, _canonical_snapshot} <-
+             CMS.Gate.access_check(actor, :restore_snapshot, source_snapshot),
            {:ok, draft} <- restore_into_draft(community, thread, source_snapshot, user, opts),
            {:ok, _restore_snapshot} <-
              checkpoint_article(
@@ -147,6 +155,8 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
                source_snapshot_id: source_snapshot.id
              ) do
         {:ok, draft}
+      else
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       end
     end)
   end
@@ -310,7 +320,15 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp author_id(nil, article), do: {:ok, article.author_id}
 
   defp author_id(%User{} = user, _article) do
-    with {:ok, %Author{id: id}} <- Write.ensure_author_exists(user), do: {:ok, id}
+    with {:ok, %Author{id: id}} <- Writer.ensure_author_exists(user), do: {:ok, id}
+  end
+
+  defp snapshot_actor(%User{} = user, _article), do: {:ok, user}
+
+  defp snapshot_actor(nil, article) do
+    with {:ok, %Author{user: %User{} = user}} <-
+           ORM.find(Author, article.author_id, preload: :user),
+         do: {:ok, user}
   end
 
   defp maybe_filter_stage(query, nil), do: query

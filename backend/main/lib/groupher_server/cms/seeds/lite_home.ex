@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
          {:ok, _} <- configure_dashboard(community),
          {:ok, _posts} <- seed_posts(community),
          {:ok, _} <- seed_changelogs(community),
-         {:ok, community} <- CMS.Communities.read(@slug, inc_views: false) do
+         {:ok, community} <- CMS.Communities.fetch(@slug, inc_views: false) do
       {:ok, Map.put(community, :seed_summary, summary(community))}
     end
   end
@@ -133,7 +133,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   defp existing_articles_by_title(schema, thread, community_id, titles) do
     schema
-    |> CMS.Articles.active_scope(thread)
+    |> CMS.Articles.Trash.not_trashed_scope(thread)
     |> join(:inner, [item], community in assoc(item, :communities))
     |> where([item, community], community.id == ^community_id and item.title in ^titles)
     |> Repo.all()
@@ -166,7 +166,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp count_kanban_posts(community_id) do
-    active_posts = CMS.Articles.active_scope(Post, :post)
+    active_posts = CMS.Articles.Trash.not_trashed_scope(Post, :post)
 
     Repo.aggregate(
       from(post in active_posts,
@@ -178,7 +178,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp count(schema, thread, community_id) do
-    active_articles = CMS.Articles.active_scope(schema, thread)
+    active_articles = CMS.Articles.Trash.not_trashed_scope(schema, thread)
 
     Repo.aggregate(
       from(item in active_articles,

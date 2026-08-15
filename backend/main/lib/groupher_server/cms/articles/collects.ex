@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.Articles.Collects do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Model.ArticleCollect
+  alias CMS.Model.{ArticleCollect, Author}
   alias CMS.{Events, FrontDesk}
-  alias Helper.{Multi, Later, ORM, T, Transaction}
+  alias CMS.Interactions.State
+  alias Helper.{Multi, Later, ORM, T}
 
   @spec collected_users(term(), map()) :: T.domain_res(term())
   def collected_users(article, filter),
@@ -29,29 +30,24 @@ defmodule GroupherServer.CMS.Articles.Collects do
   def collect(article, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.lock_row(article, fn article ->
-      Multi.new()
-      |> Multi.run(:inc_author_achieve, fn _, _ ->
-        Accounts.Achievements.achieve(article.author.user, :inc, :collect)
-      end)
-      |> Multi.run(:inc_article_collects_count, fn _, _ ->
-        ORM.inc(article, :collects_count)
-      end)
-      |> Multi.run(:update_article_reaction_user_list, fn _, _ ->
-        FrontDesk.update_article_reaction_user_list(:collect, article, user, :add)
-      end)
-      |> Multi.run(:create_collect, fn _, _ ->
-        {:ok, thread} = FrontDesk.thread_of(article)
-        args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
+    Multi.new()
+    |> Multi.run(:create_collect, fn _, _ ->
+      {:ok, thread} = FrontDesk.thread_of(article)
+      args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
 
-        ORM.create(ArticleCollect, args)
-      end)
-      |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events, :emit, [:notify_collect, %{article: article, from_user: user}]})
-      end)
-      |> Repo.transaction()
-      |> result()
+      ORM.create(ArticleCollect, args)
     end)
+    |> Multi.run(:sync_projection, fn _, _ ->
+      State.write(article, :collect, user, :add)
+    end)
+    |> Multi.run(:inc_author_achieve, fn _, _ ->
+      Accounts.Achievements.achieve(author_user(article), :inc, :collect)
+    end)
+    |> Multi.run(:after_events, fn _, _ ->
+      Later.run({Events, :emit, [:notify_collect, %{article: article, from_user: user}]})
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   @spec collect_ifneed(term(), User.t()) :: T.domain_res(term())
@@ -69,29 +65,27 @@ defmodule GroupherServer.CMS.Articles.Collects do
   def undo_collect(article, %User{} = user) do
     {:ok, info} = match(article)
 
-    Transaction.lock_row(article, fn article ->
-      Multi.new()
-      |> Multi.run(:find_collect, fn _, _ ->
-        find_collect_record(info, article, user.id)
-      end)
-      |> Multi.run(:dec_author_achieve, fn _, %{find_collect: record} ->
-        maybe_dec_author_achieve(record, article)
-      end)
-      |> Multi.run(:inc_article_collects_count, fn _, %{find_collect: record} ->
-        maybe_dec_collects_count(record, article)
-      end)
-      |> Multi.run(:update_article_reaction_user_list, fn _, %{find_collect: record} ->
-        maybe_update_collect_user_list(record, article, user)
-      end)
-      |> Multi.run(:undo_collect, fn _, %{find_collect: record} ->
-        maybe_undo_collect(record, article, info, user.id)
-      end)
-      |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events, :emit, [:notify_undo_collect, %{article: article, from_user: user}]})
-      end)
-      |> Repo.transaction()
-      |> result()
+    Multi.new()
+    |> Multi.run(:find_collect, fn _, _ ->
+      find_collect_record(info, article, user.id)
     end)
+    |> Multi.run(:dec_author_achieve, fn _, %{find_collect: record} ->
+      maybe_dec_author_achieve(record, article)
+    end)
+    |> Multi.run(:undo_collect, fn _, %{find_collect: record} ->
+      maybe_undo_collect(record, article, info, user.id)
+    end)
+    |> Multi.run(:sync_projection, fn _, %{find_collect: record} ->
+      case record do
+        nil -> {:ok, article}
+        _ -> State.write(article, :collect, user, :remove)
+      end
+    end)
+    |> Multi.run(:after_events, fn _, _ ->
+      Later.run({Events, :emit, [:notify_undo_collect, %{article: article, from_user: user}]})
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   defp find_collect_record(info, article, user_id) do
@@ -106,17 +100,11 @@ defmodule GroupherServer.CMS.Articles.Collects do
   defp maybe_dec_author_achieve(nil, _article), do: {:ok, :pass}
 
   defp maybe_dec_author_achieve(_record, article) do
-    Accounts.Achievements.achieve(article.author.user, :dec, :collect)
+    Accounts.Achievements.achieve(author_user(article), :dec, :collect)
   end
 
-  defp maybe_dec_collects_count(nil, article), do: {:ok, article}
-  defp maybe_dec_collects_count(_record, article), do: ORM.dec(article, :collects_count)
-
-  defp maybe_update_collect_user_list(nil, article, _user), do: {:ok, article}
-
-  defp maybe_update_collect_user_list(_record, article, user) do
-    FrontDesk.update_article_reaction_user_list(:collect, article, user, :remove)
-  end
+  defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
+  defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
   defp maybe_undo_collect(nil, article, _info, _user_id), do: {:ok, article}
 

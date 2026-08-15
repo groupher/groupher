@@ -51,7 +51,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     mutation($comment: CommentPathInput!) {
       deleteComment(comment: $comment) {
         innerId
-        isDeleted
       }
     }
     """
@@ -263,8 +262,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         oneComment(comment: $comment) {
           innerId
           body
-          isArchived
-          archivedAt
           viewerHasUpvoted
           emotions {
             type
@@ -406,8 +403,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
           innerId
           floor
           body
-          isArchived
-          archivedAt
           viewerHasUpvoted
           emotions {
             type

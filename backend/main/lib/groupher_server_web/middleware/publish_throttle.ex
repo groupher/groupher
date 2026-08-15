@@ -17,10 +17,10 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   import Helper.Utils, only: [handle_absinthe_error: 3]
   import Helper.ErrorCode
 
-  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Gate.PublishThrottle
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
-    with {:ok, _} <- Gate.check_publish_throttle(cur_user, opt) do
+    with {:ok, _} <- PublishThrottle.check(cur_user, opt) do
       resolution
     else
       {:error, :interval_check} ->

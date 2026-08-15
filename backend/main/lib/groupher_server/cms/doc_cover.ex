@@ -26,7 +26,8 @@ defmodule GroupherServer.CMS.DocCover do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.DocCover.{Read, Sync, Write}
+  alias GroupherServer.CMS.DocCover.{Reader, Sync, Writer}
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.{Community, DocCoverPinnedDoc, DocCoverCard}
   alias GroupherServer.CMS.Model.DocTreeNode
   alias Helper.T
@@ -39,65 +40,77 @@ defmodule GroupherServer.CMS.DocCover do
       :public     -> public docs route
       :dashboard  -> dashboard editor route
   """
-  @spec read(Community.t(), Read.view()) :: T.domain_res(map())
-  def read(%Community{} = community, view \\ :public), do: Read.read(community, view)
+  @spec read(Community.t(), Reader.view(), User.t() | nil) :: T.domain_res(map())
+  def read(%Community{} = community, view \\ :public, actor \\ nil),
+    do: Reader.read(community, view, actor)
 
   @doc """
   Adds one published Group as a Cover Card by draft node id.
   """
-  @spec add_card(Community.t(), T.id()) :: T.domain_res(map())
-  def add_card(%Community{} = community, draft_group_node_id),
-    do: Write.add_card(community, draft_group_node_id)
+  @spec add_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
+  def add_card(%Community{} = community, draft_group_node_id, %User{} = actor),
+    do: Writer.add_card(community, draft_group_node_id, actor)
 
   @doc """
   Removes one Cover Card by draft Group node id.
   """
-  @spec remove_card(Community.t(), T.id()) :: T.domain_res(map())
-  def remove_card(%Community{} = community, draft_group_node_id),
-    do: Write.remove_card(community, draft_group_node_id)
+  @spec remove_card(Community.t(), T.id(), User.t()) :: T.domain_res(map())
+  def remove_card(%Community{} = community, draft_group_node_id, %User{} = actor),
+    do: Writer.remove_card(community, draft_group_node_id, actor)
 
   @doc """
   Reorders Cover Cards by Card ids.
   """
-  @spec reorder_cards(Community.t(), list(T.id())) :: T.domain_res(map())
-  def reorder_cards(%Community{} = community, ids), do: Write.reorder_cards(community, ids)
+  @spec reorder_cards(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
+  def reorder_cards(%Community{} = community, ids, %User{} = actor),
+    do: Writer.reorder_cards(community, ids, actor)
 
   @doc """
   Updates appearance for one Cover Card.
   """
-  @spec update_card_appearance(Community.t(), T.id(), map()) ::
+  @spec update_card_appearance(Community.t(), T.id(), map(), User.t()) ::
           T.domain_res(DocCoverCard.t())
-  def update_card_appearance(%Community{} = community, cover_card_id, appearance) do
-    Write.update_card_appearance(community, cover_card_id, appearance)
+  def update_card_appearance(
+        %Community{} = community,
+        cover_card_id,
+        appearance,
+        %User{} = actor
+      ) do
+    Writer.update_card_appearance(community, cover_card_id, appearance, actor)
   end
 
   @doc """
   Pins one published page by draft page id.
   """
-  @spec pin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
-  def pin_doc(%Community{} = community, draft_node_id) do
-    Write.pin_doc(community, draft_node_id)
+  @spec pin_doc(Community.t(), T.id(), User.t()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def pin_doc(%Community{} = community, draft_node_id, %User{} = actor) do
+    Writer.pin_doc(community, draft_node_id, actor)
   end
 
   @doc """
   Removes one pinned cover item by draft page id.
   """
-  @spec unpin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
-  def unpin_doc(%Community{} = community, draft_node_id),
-    do: Write.unpin_doc(community, draft_node_id)
+  @spec unpin_doc(Community.t(), T.id(), User.t()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def unpin_doc(%Community{} = community, draft_node_id, %User{} = actor),
+    do: Writer.unpin_doc(community, draft_node_id, actor)
 
   @doc """
   Reorders the complete pinned-doc collection by public node identifier.
   """
-  @spec reorder_pinned_docs(Community.t(), list(T.id())) :: T.domain_res(map())
-  def reorder_pinned_docs(%Community{} = community, node_ids),
-    do: Write.reorder_pinned_docs(community, node_ids)
+  @spec reorder_pinned_docs(Community.t(), list(T.id()), User.t()) :: T.domain_res(map())
+  def reorder_pinned_docs(%Community{} = community, node_ids, %User{} = actor),
+    do: Writer.reorder_pinned_docs(community, node_ids, actor)
 
   @doc "Updates the Light/Dark appearance for one pinned card."
-  @spec update_pinned_doc_appearance(Community.t(), T.id(), map()) ::
+  @spec update_pinned_doc_appearance(Community.t(), T.id(), map(), User.t()) ::
           T.domain_res(DocCoverPinnedDoc.t())
-  def update_pinned_doc_appearance(%Community{} = community, draft_node_id, appearance) do
-    Write.update_pinned_doc_appearance(community, draft_node_id, appearance)
+  def update_pinned_doc_appearance(
+        %Community{} = community,
+        draft_node_id,
+        appearance,
+        %User{} = actor
+      ) do
+    Writer.update_pinned_doc_appearance(community, draft_node_id, appearance, actor)
   end
 
   @doc """

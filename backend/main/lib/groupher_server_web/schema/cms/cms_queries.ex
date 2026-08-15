@@ -211,6 +211,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_tree/3)
     end
 
@@ -237,6 +238,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_tree_trash_items/3)
     end
 
@@ -246,6 +248,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:view, :doc_cover_view, default_value: :public)
 
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_cover/3)
     end
 
@@ -256,6 +259,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_draft/3)
     end
 
@@ -353,12 +357,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.all_passport_rules/3)
     end
 
-    @desc "if the community exist or not"
-    field :is_community_exist, :check_state do
+    @desc "Check whether a community name is available."
+    field :check_community_name, :community_name_check do
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.community_exist?/3)
+      resolve(&R.CMS.check_community_name/3)
     end
 
     @desc "communities with pagination info"

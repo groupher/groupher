@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   use Accessible
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]

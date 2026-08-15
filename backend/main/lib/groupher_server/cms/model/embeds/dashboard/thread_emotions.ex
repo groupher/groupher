@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   use Accessible
 
   import Ecto.Changeset
-    @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
   @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()

@@ -209,20 +209,28 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   # published contents
-  def paged_published_articles(_root, %{user: user, filter: filter, thread: thread}, _info) do
-    Accounts.Publish.paged_articles(user, thread, filter)
+  def paged_published_articles(
+        _root,
+        %{user: user, filter: filter, thread: thread},
+        %{context: context}
+      ) do
+    Accounts.Publish.paged_articles(user, thread, filter, Map.get(context, :cur_user))
   end
 
   def paged_published_articles(_root, ~m(filter thread)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.Publish.paged_articles(cur_user, thread, filter)
+    Accounts.Publish.paged_articles(cur_user, thread, filter, cur_user)
   end
 
-  def paged_published_comments(_root, %{user: user, filter: filter, thread: thread}, _info) do
-    Accounts.Publish.paged_comments(user, thread, filter)
+  def paged_published_comments(
+        _root,
+        %{user: user, filter: filter, thread: thread},
+        %{context: context}
+      ) do
+    Accounts.Publish.paged_comments(user, thread, filter, Map.get(context, :cur_user))
   end
 
-  def paged_published_comments(_root, %{user: user, filter: filter}, _info) do
-    Accounts.Publish.paged_comments(user, filter)
+  def paged_published_comments(_root, %{user: user, filter: filter}, %{context: context}) do
+    Accounts.Publish.paged_comments(user, filter, Map.get(context, :cur_user))
   end
 
   # paged communities which the user it's the moderator

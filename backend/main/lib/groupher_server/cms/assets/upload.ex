@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   alias GroupherServer.{Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Assets.{Capability, Write}
+  alias GroupherServer.CMS.Assets.{Capability, Writer}
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
             lock_community!(community_id)
 
             with :ok <- ensure_capacity(community_id, attrs.size_bytes),
-                 {:ok, asset} <- Write.register(%Community{id: community_id}, attrs, nil) do
+                 {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
               asset
             else
               {:error, reason} -> Repo.rollback(reason)

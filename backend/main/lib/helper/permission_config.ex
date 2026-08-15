@@ -50,12 +50,11 @@ defmodule Helper.PermissionConfig do
         "god",
         "blackeye",
         "homemirror",
-        "system_accountant",
         "system_notification.publish",
         "stamp_passport",
         "community.create",
         "community.update",
-        "community.delete",
+        "community.request_destroy",
         "community.application.review",
         "community.application.approve",
         "community.application.reject",
@@ -137,7 +136,10 @@ defmodule Helper.PermissionConfig do
       # global
       "community.create" => %{scope: :global, grant: "community.create"},
       "community.update" => %{scope: :global, grant: "community.update"},
-      "community.delete" => %{scope: :global, grant: "community.delete"},
+      "community.request_destroy" => %{
+        scope: :global,
+        grant: "community.request_destroy"
+      },
       "community.application.review" => %{
         scope: :global,
         grant: "community.application.review"
@@ -158,7 +160,6 @@ defmodule Helper.PermissionConfig do
         scope: :global,
         grant: "community.application.retry_setup"
       },
-      "billing.state.update" => %{scope: :global, grant: "system_accountant"},
       "article.mirror_home" => %{scope: :global, grant: "homemirror"},
       "article.move_blackhole" => %{scope: :global, grant: "blackeye"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},

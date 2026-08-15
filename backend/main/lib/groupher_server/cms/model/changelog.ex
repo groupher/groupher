@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Model.Changelog do
 
   @required_fields ~w(branch_id article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
-  @optional_fields ~w(updated_at inserted_at active_at archived_at inner_id)a ++
+  @optional_fields ~w(updated_at inserted_at active_at inner_id)a ++
                      @article_cast_fields
 
   @type t :: %Changelog{}

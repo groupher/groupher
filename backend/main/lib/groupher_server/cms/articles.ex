@@ -35,8 +35,8 @@ defmodule GroupherServer.CMS.Articles do
     Moderation,
     Preview,
     Publish,
-    Reactions,
-    Read,
+    Emotions,
+    Reader,
     Snapshot,
     States,
     Trash,
@@ -47,11 +47,17 @@ defmodule GroupherServer.CMS.Articles do
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   @doc "Runs `read` through the public `Articles` boundary."
   def read(%Community{} = community, thread, inner_id),
-    do: Read.read(community, thread, inner_id)
+    do: Reader.read(community, thread, inner_id)
 
   @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{} = user) do
-    Read.read(community, thread, inner_id, user)
+    Reader.read(community, thread, inner_id, user)
+  end
+
+  @spec read(Community.t(), T.thread(), T.id(), User.t(), Ecto.UUID.t() | nil) ::
+          T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id, %User{} = user, view_event_id) do
+    Reader.read(community, thread, inner_id, user, view_event_id)
   end
 
   # List
@@ -74,7 +80,13 @@ defmodule GroupherServer.CMS.Articles do
   @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   @doc "Returns paged published from the `Articles` read boundary."
   def paged_published(thread, filter, %User{} = user) do
-    List.paged_published(thread, filter, user)
+    List.paged_published(thread, filter, user, nil)
+  end
+
+  @spec paged_published(T.thread(), map(), User.t(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
+  def paged_published(thread, filter, %User{} = target_user, actor) do
+    List.paged_published(thread, filter, target_user, actor)
   end
 
   @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
@@ -254,10 +266,6 @@ defmodule GroupherServer.CMS.Articles do
 
   # Lifecycle
 
-  @doc "Excludes logical Articles that currently belong to Trash."
-  @spec active_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
-  def active_scope(queryable, thread), do: Trash.active_scope(queryable, thread)
-
   @doc "Moves one logical Article into Trash without deleting its aggregate."
   @spec trash(T.article(), User.t() | nil, keyword()) ::
           T.domain_res(CMS.Model.TrashedArticle.t())
@@ -411,16 +419,16 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Runs `undo_lock_comments` through the public `Articles` boundary."
   def undo_lock_comments(article), do: States.undo_lock_comments(article)
 
-  # Reactions
+  # Emotions
 
   @spec emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
   @doc "Runs `emotion` through the public `Articles` boundary."
-  def emotion(article, emotion, %User{} = user), do: Reactions.emotion(article, emotion, user)
+  def emotion(article, emotion, %User{} = user), do: Emotions.emotion(article, emotion, user)
 
   @spec undo_emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
   @doc "Runs `undo_emotion` through the public `Articles` boundary."
   def undo_emotion(article, emotion, %User{} = user) do
-    Reactions.undo_emotion(article, emotion, user)
+    Emotions.undo_emotion(article, emotion, user)
   end
 
   # Upvotes

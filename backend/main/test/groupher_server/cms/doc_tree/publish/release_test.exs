@@ -47,6 +47,21 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert doc_change.selectable
     end
 
+    test "rejects moving a public Doc back to draft when the Community is not writable",
+         ~m(user community page_payload)a do
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      {:ok, _blocker} =
+        CMS.Communities.Lifecycle.apply_blocker(
+          community.slug,
+          %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
+          operation_ref: Ecto.UUID.generate()
+        )
+
+      assert {:error, :ancestor_community_not_writable} =
+               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
+    end
+
     test "returns a domain error for an unknown branch", ~m(community)a do
       assert {:error, _reason} = CMS.DocTree.publish_checklist(community, branch_id: -1)
     end

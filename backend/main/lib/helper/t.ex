@@ -74,12 +74,7 @@ defmodule Helper.T do
           thread: atom(),
           title: String.t(),
           upvotes_count: integer(),
-          meta: %{
-            upvoted_user_ids: [integer()],
-            collected_user_ids: [integer()],
-            viewed_user_ids: [integer()],
-            reported_user_ids: [integer()]
-          }
+          meta: map()
         }
 
   @type paged_article_common :: %{

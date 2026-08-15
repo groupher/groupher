@@ -44,7 +44,9 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, changelog_m} = CMS.FrontDesk.article(community, :changelog, changelog_m.inner_id)
+      {:ok, changelog_m} =
+        CMS.FrontDesk.article(community, :changelog, changelog_m.inner_id, include_illegal: true)
+
       assert changelog_m.pending == @audit_illegal
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
@@ -94,7 +96,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_changelog} = CMS.FrontDesk.article(community, :changelog, random_id)
       {:ok, _} = CMS.Articles.pin(community, random_changelog)
-      {:ok, _} = CMS.Articles.trash(random_changelog, nil)
+      {:ok, _} = CMS.Articles.trash(random_changelog, :operations)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 

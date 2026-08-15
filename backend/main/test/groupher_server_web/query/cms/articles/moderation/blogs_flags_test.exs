@@ -42,7 +42,9 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
           illegal_words: ["some-word"]
         })
 
-      {:ok, blog_m} = CMS.FrontDesk.article(community, :blog, blog_m.inner_id)
+      {:ok, blog_m} =
+        CMS.FrontDesk.article(community, :blog, blog_m.inner_id, include_illegal: true)
+
       assert blog_m.pending == @audit_illegal
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
@@ -92,7 +94,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_blog} = CMS.FrontDesk.article(community, :blog, random_id)
       {:ok, _} = CMS.Articles.pin(community, random_blog)
-      {:ok, _} = CMS.Articles.trash(random_blog, nil)
+      {:ok, _} = CMS.Articles.trash(random_blog, :operations)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 

@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.{Analysis, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
-  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const, Gate}
+  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
+  alias GroupherServer.CMS.Gate.Passport
   alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
 
   alias GroupherServer.CMS.Model.{
@@ -284,7 +285,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   end
 
   defp review_authorized?(reviewer, action) do
-    case Gate.check_passport(reviewer, action, %{}) do
+    case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end

@@ -127,19 +127,20 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
 
       resolve(&R.CMS.update_community/3)
     end
 
     @desc "delete a global community"
-    field :delete_community, :community do
+    field :request_destroy_community, :community do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.delete")
+      middleware(M.Passport, action: "community.request_destroy")
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.delete_community/3)
+      resolve(&R.CMS.request_destroy_community/3)
     end
 
     @desc "register an uploaded asset into the community asset library"

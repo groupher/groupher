@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.Post do
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
 
   @optional_fields ~w(
-    copy_right solution_digest updated_at inserted_at active_at archived_at
+    copy_right solution_digest updated_at inserted_at active_at
     cat status inner_id
   )a ++ @article_cast_fields
 

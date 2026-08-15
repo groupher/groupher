@@ -173,6 +173,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.add_doc_cover_card/3)
     end
 
@@ -183,6 +184,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.remove_doc_cover_card/3)
     end
 
@@ -193,6 +195,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.reorder_doc_cover_cards/3)
     end
 
@@ -204,6 +207,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_cover_card_appearance/3)
     end
 
@@ -214,6 +218,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.pin_doc_to_cover/3)
     end
 
@@ -224,6 +229,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.unpin_doc_from_cover/3)
     end
 
@@ -234,6 +240,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.reorder_doc_cover_pinned_docs/3)
     end
 
@@ -245,6 +252,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_pinned_doc_appearance/3)
     end
   end

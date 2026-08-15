@@ -13,7 +13,7 @@ defmodule GroupherServerWeb.Schema.Helper.Imports do
         -> GraphQL response
   """
 
-    alias GroupherServerWeb.Schema.CMS
+  alias GroupherServerWeb.Schema.CMS
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
   @doc """

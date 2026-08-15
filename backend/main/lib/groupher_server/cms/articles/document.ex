@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Articles.Document do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
-
   alias CMS.Artiment.BodyBag
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, Doc}

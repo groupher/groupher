@@ -29,16 +29,28 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Branch, Document, Draft, Lock, Snapshot, States, VersionedRelations, Write}
+
+  alias CMS.Articles.{
+    Branch,
+    Document,
+    Draft,
+    Lifecycle,
+    Lock,
+    Snapshot,
+    States,
+    VersionedRelations,
+    Write
+  }
+
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
   alias CMS.SearchArtiments.Indexer
-  alias CMS.{Assets, Communities, Events}
+  alias CMS.{Assets, Communities, Events, Gate}
+  alias CMS.Gate.{Decision, PublishThrottle}
   alias Ecto.Multi
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
 
   import Helper.Utils, only: [plural: 1]
-  import Helper.ErrorCode
 
   require CMS.Const
 
@@ -61,16 +73,13 @@ defmodule GroupherServer.CMS.Articles.Publish do
   @spec update(T.article(), map(), User.t() | nil) :: T.domain_res(T.article())
   def update(public_article, attrs, user \\ nil)
 
-  def update(%{is_archived: true}, _attrs, _user) do
-    raise_error(:archived, "article is archived, can not be edit or delete")
-  end
-
   def update(public_article, attrs, user) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(public_article),
          %Community{} = community <- Repo.get(Community, public_article.community_id),
          {:ok, user} <- publish_actor(public_article, user) do
       Lock.run(community, thread, public_article.article_hash_id, fn ->
-        with {:ok, _draft} <-
+        with {:ok, _canonical_article} <- Gate.access_check(user, :edit, public_article),
+             {:ok, _draft} <-
                Draft.ensure_from_public_unlocked(
                  community,
                  thread,
@@ -94,6 +103,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
                  Branch.main_slug()
                ) do
           {:ok, updated_public}
+        else
+          {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+          error -> error
         end
       end)
     else
@@ -115,9 +127,12 @@ defmodule GroupherServer.CMS.Articles.Publish do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
          true <- Branch.main?(branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
+         {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
          :ok <- validate_version(draft),
          {:ok, public_article, first_publish?} <-
            apply_draft(community, thread, branch, draft),
+         {:ok, _lifecycle} <-
+           Lifecycle.transition(community.id, thread, draft.article_hash_id, :published),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
@@ -137,6 +152,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
       false -> {:error, {:custom, "preview branches can not be published"}}
+      {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       error -> error
     end
   end
@@ -242,7 +258,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          {:ok, community} <- Communities.update_count_field(community, thread),
          {:ok, _community} <- Communities.update_inner_id(community, thread, public_article),
          {:ok, _states} <- Accounts.Publish.update_states(user, thread),
-         {:ok, _action} <- CMS.Gate.log_publish_action(user) do
+         {:ok, _action} <- PublishThrottle.log_publish_action(user) do
       {:ok, public_article}
     end
   end

@@ -26,15 +26,17 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Branch, Document, Lock, VersionedRelations, Write}
+  alias CMS.Articles.{Branch, Document, Lifecycle, Lock, VersionedRelations, Writer}
   alias CMS.Assets
+  alias CMS.Gate
+  alias CMS.Gate.Decision
   alias CMS.Model.{ArticleBranch, ArticleDocument, Author, Community, Embeds}
   alias Helper.{ORM, T}
 
   require CMS.Const
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
-  @default_emotions Embeds.ArticleEmotion.default_emotions()
+  @default_emotions Embeds.ArticleEmotion.default_persisted_emotions()
 
   @doc "Reads one branch-local Article draft by stable logical identity."
   @spec read(Community.t(), T.thread(), Ecto.UUID.t(), ArticleBranch.t() | map() | keyword()) ::
@@ -42,7 +44,15 @@ defmodule GroupherServer.CMS.Articles.Draft do
   def read(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
          {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
-      find_active(model, community, thread, article_hash_id, branch, CMS.Const.stage(:draft))
+      find_active(
+        model,
+        community,
+        thread,
+        article_hash_id,
+        branch,
+        CMS.Const.stage(:draft),
+        branch_ref
+      )
     end
   end
 
@@ -58,7 +68,15 @@ defmodule GroupherServer.CMS.Articles.Draft do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
          true <- Branch.main?(branch),
          {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
-      find_active(model, community, thread, article_hash_id, branch, CMS.Const.stage(:public))
+      find_active(
+        model,
+        community,
+        thread,
+        article_hash_id,
+        branch,
+        CMS.Const.stage(:public),
+        branch_ref
+      )
     else
       false -> {:error, {:custom, "preview branches do not contain public Articles"}}
       error -> error
@@ -80,12 +98,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
           T.domain_res(T.article())
   def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref) do
-      case read(community, thread, article_hash_id, branch) do
+      case read(community, thread, article_hash_id, branch_ref) do
         {:ok, draft} ->
           {:ok, draft}
 
         {:error, _} when branch.type == CMS.Const.article_branch_type(:main) ->
-          read_public(community, thread, article_hash_id, branch)
+          read_public(community, thread, article_hash_id, branch_ref)
 
         error ->
           error
@@ -96,7 +114,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   @doc "Creates a new Article draft and its derived ArticleDocument."
   @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
-    with {:ok, %Author{} = author} <- Write.ensure_author_exists(user) do
+    with {:ok, %Author{} = author} <- Writer.ensure_author_exists(user) do
       create_with_author(community, thread, attrs, author)
     end
   end
@@ -111,6 +129,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
          {:ok, draft_attrs} <- build_attrs(community, branch, attrs, body_content, author) do
       Repo.transaction(fn ->
         with {:ok, draft} <- create_draft_row(model, thread, draft_attrs),
+             {:ok, _lifecycle} <-
+               Lifecycle.ensure_created(community.id, thread, draft.article_hash_id),
              {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
              {:ok, _document} <- Document.create(draft, document_input(body_content)),
              {:ok, _asset_refs} <- Assets.link_refs(draft, attrs, community: community) do
@@ -152,9 +172,13 @@ defmodule GroupherServer.CMS.Articles.Draft do
         %User{} = user
       ) do
     Lock.run(community, thread, article_hash_id, fn ->
-      with {:ok, _draft} <-
+      with {:ok, editor_article} <- read_editor(community, thread, article_hash_id, attrs),
+           {:ok, _canonical_article} <- Gate.access_check(user, :edit, editor_article),
+           {:ok, _draft} <-
              ensure_from_public_unlocked(community, thread, article_hash_id, attrs, user) do
         update_unlocked(community, thread, article_hash_id, attrs)
+      else
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       end
     end)
   end
@@ -211,19 +235,43 @@ defmodule GroupherServer.CMS.Articles.Draft do
     |> Repo.insert()
   end
 
-  defp find_active(model, community, thread, article_hash_id, branch, stage) do
-    model
-    |> CMS.Articles.active_scope(thread)
-    |> where([article], article.article_hash_id == ^article_hash_id)
-    |> where([article], article.community_id == ^community.id)
-    |> where([article], article.branch_id == ^branch.id)
-    |> where([article], article.stage == ^stage)
-    |> Repo.one()
-    |> case do
-      nil -> {:error, {:not_exist, model}}
-      article -> {:ok, article}
+  defp find_active(model, community, thread, article_hash_id, branch, stage, opts) do
+    actor =
+      option(opts, :actor, if(stage == CMS.Const.stage(:public), do: nil, else: :operations))
+
+    policy_mode =
+      option(
+        opts,
+        :policy_mode,
+        if(stage == CMS.Const.stage(:public), do: :public, else: :operations)
+      )
+
+    query =
+      model
+      |> CMS.Articles.Trash.not_trashed_scope(thread)
+      |> CMS.Gate.scope(actor, :read, %{thread: thread, stage: stage, policy_mode: policy_mode})
+
+    case query do
+      %Ecto.Query{} = query ->
+        query
+        |> where([article], article.article_hash_id == ^article_hash_id)
+        |> where([article], article.community_id == ^community.id)
+        |> where([article], article.branch_id == ^branch.id)
+        |> where([article], article.stage == ^stage)
+        |> Repo.one()
+        |> case do
+          nil -> {:error, {:not_exist, model}}
+          article -> {:ok, article}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
+
+  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
+  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
+  defp option(_opts, _key, default), do: default
 
   defp build_attrs(%Community{} = community, branch, attrs, body_content, %Author{} = author) do
     # A canonical empty Doc has no content digest yet. Article rows still require

@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
         -> Macros
         -> Repo / external boundary
   """
-    import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
+  import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     ArticleCollect,
     ArticleBranch,
     ArticleUpvote,
+    ArticleLifecycle,
     Author,
     Comment,
     Community,
@@ -41,7 +42,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
         body: quote(do: String.t() | nil),
         body_html: quote(do: String.t() | nil),
         is_pinned: quote(do: boolean()),
-        is_deleted: quote(do: boolean()),
         pending: quote(do: integer())
       ] ++ extra_fields
 
@@ -156,9 +156,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   TABLE: "cms_[article]s"
   -----
-  add(:upvotes_count, :integer, default: 0)
-  add(:collects_count, :integer, default: 0)
-
   ## TABLE: "article_upvotes" and TABLE: "article_collects"
   -----
   add(:[article]_id, references(:cms_[article]s, on_delete: :delete_all))
@@ -166,10 +163,11 @@ defmodule GroupherServer.CMS.Helper.Macros do
   defmacro upvote_and_collect_fields do
     quote do
       has_many(:upvotes, {"article_upvotes", ArticleUpvote})
-      field(:upvotes_count, :integer, default: 0)
-
       has_many(:collects, {"article_collects", ArticleCollect})
-      field(:collects_count, :integer, default: 0)
+
+      # Projection-backed response fields; no columns are persisted on the article table.
+      field(:upvotes_count, :integer, default: 0, virtual: true)
+      field(:collects_count, :integer, default: 0, virtual: true)
     end
   end
 
@@ -186,8 +184,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
       :community_id,
       :comments_count,
       :comments_participants_count,
-      :upvotes_count,
-      :collects_count,
       :active_at,
       :pending
     ]
@@ -281,10 +277,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
   # for :original_community
   add(:community_id, references(:communities, on_delete: :delete_all))
 
-  # for :upvote and :collect
-  add(:upvotes_count, :integer, default: 0)
-  add(:collects_count, :integer, default: 0)
-
   # for :comment
   add(:comments_participants_count, :integer, default: 0)
   add(:comments_count, :integer, default: 0)
@@ -330,14 +322,19 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       belongs_to(:community, Community)
 
+      has_one(
+        :lifecycle,
+        ArticleLifecycle,
+        foreign_key: :article_hash_id,
+        references: :article_hash_id,
+        where: [thread: unquote(thread)]
+      )
+
       upvote_and_collect_fields()
       viewer_has_fields()
       comment_fields()
 
       field(:active_at, :utc_datetime)
-
-      field(:is_archived, :boolean)
-      field(:archived_at, :utc_datetime)
 
       field(:pending, :integer, default: 0)
 

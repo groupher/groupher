@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Reader, Revision}
   alias CMS.Model.{ArticleBranch, Community, DocTreeNode}
 
   require CMS.Const
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   def apply(%Community{} = community, %ArticleBranch{} = branch, tree, items_by_target)
       when is_map(tree) and is_map(items_by_target) do
     with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "branchSlug"),
-         {:ok, state} <- Read.ensure_draft_state(community, branch_id: branch.id),
+         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
          {:ok, attrs} <-
            flatten_tabs(
              community,

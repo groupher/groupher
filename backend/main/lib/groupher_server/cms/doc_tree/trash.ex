@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   alias CMS.Articles.{Branch, Lock}
   alias CMS.Articles.Trash, as: ArticleTrash
   alias CMS.DocTree.Events
-  alias CMS.DocTree.Write.{EventRecorder, Index, Operation}
+  alias CMS.DocTree.Writer.{EventRecorder, Index, Operation}
 
   alias CMS.Model.{
     Community,
@@ -36,10 +36,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   require CMS.Const
 
-  @doc "Lists current Docs Trash actions for one branch."
+  @doc "Lists current Docs Trash actions for one branch under an explicit read policy."
   @spec list(Community.t(), keyword() | map()) :: T.domain_res(list(map()))
   def list(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    actor = option(opts, :actor)
+    policy_mode = option(opts, :policy_mode, :moderator_management)
+
+    with {:ok, _community} <- readable_community(community, actor, policy_mode),
+         {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       actions =
         TrashAction
         |> join(:inner, [action], node in TrashedDocTreeNode,
@@ -56,6 +60,18 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       {:ok, Enum.map(actions, &to_map/1)}
     end
   end
+
+  defp readable_community(%Community{} = community, actor, _policy_mode) do
+    case CMS.Gate.access_check(actor, :manage_docs, community) do
+      {:ok, %Community{} = readable} -> {:ok, readable}
+      {:error, %CMS.Gate.Decision{} = decision} -> {:error, decision}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp option(opts, key, default \\ nil)
+  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
+  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
 
   @doc "Restores one complete Docs Trash action."
   @spec restore(Community.t(), T.id(), map()) :: T.domain_res(map())

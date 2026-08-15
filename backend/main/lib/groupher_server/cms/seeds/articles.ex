@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   """
 
   import GroupherServer.Support.Factory
-    alias GroupherServer.CMS
+  alias GroupherServer.CMS
 
   alias CMS.Model.Community
   alias Helper.{ORM, T}

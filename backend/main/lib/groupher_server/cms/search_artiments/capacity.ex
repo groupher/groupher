@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{ArticleDocument, Comment}
+  alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
   alias Helper.Constant
 
   require CMS.Const
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
       count =
         info.model
-        |> CMS.Articles.active_scope(thread)
+        |> CMS.Gate.scope(nil, :list, %{thread: thread})
         |> where([article], article.stage == ^CMS.Const.stage(:public))
         |> where([article], article.pending == ^@legal)
         |> Repo.aggregate(:count, :id)
@@ -68,7 +68,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp comment_counts do
     base =
       Comment
-      |> where([comment], comment.is_deleted == false and comment.pending == ^@legal)
+      |> join(:inner, [comment], lifecycle in CommentLifecycle, on: lifecycle.comment_id == comment.id)
+      |> where([comment, lifecycle], lifecycle.state == :visible and comment.pending == ^@legal)
 
     {p50, p95, p99} = comment_body_percentiles(base)
 

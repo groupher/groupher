@@ -4,9 +4,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
 
   e.g:
     field(:beer_count, :integer, default: 0)
-    field(:beer_user_logins, :string)
     field(:viewer_has_beered, :boolean, default: false, virtual: true)
-    embeds_many(:latest_beer_users, Embeds.User, on_replace: :delete)
 
   Business position:
 
@@ -15,10 +13,6 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-    alias GroupherServer.CMS
-
-  alias CMS.Model.Embeds
-
   @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
   defmacro emotion_fields do
@@ -26,9 +20,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
     |> Enum.map(fn emotion ->
       quote do
         field(unquote(:"#{emotion}_count"), :integer, default: 0)
-        field(unquote(:"#{emotion}_user_logins"), {:array, :string}, default: [])
         field(unquote(:"viewer_has_#{emotion}ed"), :boolean, default: false, virtual: true)
-        embeds_many(unquote(:"latest_#{emotion}_users"), Embeds.User, on_replace: :delete)
       end
     end)
   end
@@ -52,9 +44,8 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros
-    @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
-  @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count") ++
-                     Enum.map(@supported_emotions, &:"#{&1}_user_logins")
+  @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count")
 
   @doc "default emotion status for article comment"
   # for create comment and test usage
@@ -65,11 +56,21 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
         [
           "#{emotion}_count": 0,
           "latest_#{emotion}_users": [],
-          "#{emotion}_user_logins": [],
           "viewer_has_#{emotion}ed": false
         ]
     end)
     |> Enum.into(%{})
+  end
+
+  @doc false
+  def default_persisted_emotions do
+    @supported_emotions
+    |> Enum.reduce(%{}, fn emotion, acc ->
+      Map.merge(acc, %{
+        :"#{emotion}_count" => 0,
+        :"viewer_has_#{emotion}ed" => false
+      })
+    end)
   end
 
   embedded_schema do

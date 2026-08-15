@@ -22,40 +22,53 @@ defmodule GroupherServer.CMS.Communities do
     List,
     Members,
     Moderator,
-    Read,
+    Reader,
     SlugClaims,
     Subscribe,
     TagStats,
     Tags,
-    Write,
+    Writer,
     Creation,
-    Setup
+    Setup,
+    NamePolicy
   }
 
   alias CMS.Gate.Passport
   alias CMS.Communities.Lifecycle
 
   # Read
-  @spec read(String.t()) :: T.domain_res(Community.t())
-  @doc "Runs `read` through the public `Communities` boundary."
-  def read(slug), do: Read.read(slug)
+  @spec fetch(String.t()) :: T.domain_res(Community.t())
+  @doc "Fetches a Community through the Gate-scoped read boundary."
+  def fetch(slug), do: Reader.fetch(slug)
 
-  @spec read(String.t(), keyword()) :: T.domain_res(Community.t())
-  def read(slug, opt) when is_list(opt), do: Read.read(slug, opt)
+  @spec fetch(String.t(), keyword() | User.t() | :operations) :: T.domain_res(Community.t())
+  def fetch(slug, opt) when is_list(opt), do: Reader.fetch(slug, opt)
+  def fetch(slug, %User{} = user), do: Reader.fetch(slug, user)
+  def fetch(slug, :operations), do: Reader.fetch(slug, :operations)
 
-  @spec read(String.t(), User.t()) :: T.domain_res(Community.t())
-  def read(slug, %User{} = user), do: Read.read(slug, user)
+  @spec fetch(String.t(), User.t() | :operations, keyword()) :: T.domain_res(Community.t())
+  def fetch(slug, %User{} = user, opt), do: Reader.fetch(slug, user, opt)
+  def fetch(slug, :operations, opt), do: Reader.fetch(slug, :operations, opt)
 
-  @spec read(String.t(), User.t(), keyword()) :: T.domain_res(Community.t())
-  def read(slug, %User{} = user, opt), do: Read.read(slug, user, opt)
+  @spec check_name(term()) :: T.domain_res(map())
+  @doc "Checks whether a community name is available in the shared namespace."
+  def check_name(slug), do: check_name(slug, [])
 
-  @spec read_all(String.t(), keyword()) :: T.domain_res(Community.t())
-  @doc "Runs `read_all` through the public `Communities` boundary."
-  def read_all(slug, opt \\ []), do: Read.read_all(slug, opt)
+  @spec check_name(term(), keyword()) :: T.domain_res(map())
+  def check_name(slug, opts) do
+    case NamePolicy.check(slug, opts) do
+      {:ok, normalized_slug} ->
+        {:ok, %{normalized_slug: normalized_slug, available: true, reason_code: nil}}
 
-  @spec exist?(String.t()) :: T.domain_res(%{exist: boolean()})
-  @doc "Runs `exist?` through the public `Communities` boundary."
-  def exist?(slug), do: Read.exist?(slug)
+      {:error, reason} ->
+        {:ok,
+         %{
+           normalized_slug: NamePolicy.normalize(slug),
+           available: false,
+           reason_code: Atom.to_string(reason)
+         }}
+    end
+  end
 
   # List
   @spec paged(map()) :: T.domain_res(T.paged_data())
@@ -68,23 +81,18 @@ defmodule GroupherServer.CMS.Communities do
   # Write
   @spec create(map(), User.t()) :: T.domain_res(Community.t())
   @doc "Runs `create` through the public `Communities` boundary."
-  def create(args, %User{} = user), do: Write.create(args, user)
+  def create(args, %User{} = user), do: Writer.create(args, user)
 
-  @spec update(Community.t(), map()) :: T.domain_res(Community.t())
+  @spec update(Community.t(), map(), User.t() | :operations) :: T.domain_res(Community.t())
   @doc "Runs `update` through the public `Communities` boundary."
-  def update(%Community{} = community, args), do: Write.update(community, args)
+  def update(%Community{} = community, args, actor),
+    do: Writer.update(community, args, actor)
 
-  @spec sync_base_info(Community.t(), map()) :: T.domain_res(Community.t())
+  @spec sync_base_info(Community.t(), map(), User.t() | :operations) ::
+          T.domain_res(Community.t())
   @doc "Synchronizes base info through the `Communities` boundary."
-  def sync_base_info(%Community{} = community, args), do: Write.sync_base_info(community, args)
-
-  @spec delete(String.t() | Community.t()) :: T.domain_res(Community.t())
-  @doc """
-  Hard-delete helper retained for explicit maintenance and fixture cleanup.
-
-  Product-facing deletion must use archive/2 and the Lifecycle reclaim flow.
-  """
-  def delete(community), do: Write.delete(community)
+  def sync_base_info(%Community{} = community, args, actor),
+    do: Writer.sync_base_info(community, args, actor)
 
   @spec create_from_application(String.t(), String.t()) :: T.domain_res(term())
   @doc "Creates from application through the `Communities` write boundary."
@@ -106,23 +114,24 @@ defmodule GroupherServer.CMS.Communities do
     do: Setup.mark_failed(application_ref, operation_ref, reason, attempt)
 
   # Lifecycle commands
-  @spec archive(String.t() | integer(), keyword()) :: T.domain_res(term())
-  @doc "Runs `archive` through the public `Communities` boundary."
-  def archive(community_ref, opts \\ []), do: Lifecycle.archive(community_ref, opts)
+  @spec request_destroy(String.t() | integer(), keyword()) :: T.domain_res(term())
+  @doc "Requests reversible Community destruction through the Lifecycle boundary."
+  def request_destroy(community_ref, opts \\ []),
+    do: Lifecycle.request_destroy(community_ref, opts)
 
   @spec restore(String.t() | integer(), keyword()) :: T.domain_res(term())
   @doc "Runs `restore` through the public `Communities` boundary."
   def restore(community_ref, opts \\ []), do: Lifecycle.restore(community_ref, opts)
 
-  @spec schedule_reclaim(String.t() | integer(), keyword()) :: T.domain_res(term())
-  @doc "Runs `schedule_reclaim` through the public `Communities` boundary."
-  def schedule_reclaim(community_ref, opts \\ []),
-    do: Lifecycle.schedule_reclaim(community_ref, opts)
+  @spec schedule_destroy(String.t() | integer(), keyword()) :: T.domain_res(term())
+  @doc "Schedules irreversible Community destruction through Lifecycle."
+  def schedule_destroy(community_ref, opts \\ []),
+    do: Lifecycle.schedule_destroy(community_ref, opts)
 
-  @spec cancel_reclaim(String.t() | integer(), keyword()) :: T.domain_res(term())
-  @doc "Runs `cancel_reclaim` through the public `Communities` boundary."
-  def cancel_reclaim(community_ref, opts \\ []),
-    do: Lifecycle.cancel_reclaim(community_ref, opts)
+  @spec cancel_destroy(String.t() | integer(), keyword()) :: T.domain_res(term())
+  @doc "Cancels a pending Community destruction during its grace period."
+  def cancel_destroy(community_ref, opts \\ []),
+    do: Lifecycle.cancel_destroy(community_ref, opts)
 
   @spec destroy(String.t() | integer(), keyword()) :: T.domain_res(term())
   @doc "Runs `destroy` through the public `Communities` boundary."

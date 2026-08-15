@@ -100,51 +100,56 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     with {:ok, branch} <- Branch.resolve(community, :doc, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         Repo.transaction(fn ->
-          current_checklist = checklist(community, branch_id: branch.id)
+          with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community) do
+            current_checklist = checklist(community, branch_id: branch.id)
 
-          with {:ok, selection} <- Selection.from_input(args, current_checklist),
-               tree_checklist_item_ids <-
-                 include_doc_shell_tree_checklist_item_ids(
-                   community,
-                   branch,
-                   args,
-                   selection.doc_checklist_item_ids,
-                   selection.tree_checklist_item_ids
-                 ),
-               selection <-
-                 Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
-               {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
-            case publish_flow do
-              @publish_flow_noop ->
-                publish_payload(true, nil, current_checklist)
+            with {:ok, selection} <- Selection.from_input(args, current_checklist),
+                 tree_checklist_item_ids <-
+                   include_doc_shell_tree_checklist_item_ids(
+                     community,
+                     branch,
+                     args,
+                     selection.doc_checklist_item_ids,
+                     selection.tree_checklist_item_ids
+                   ),
+                 selection <-
+                   Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
+                 {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
+              case publish_flow do
+                @publish_flow_noop ->
+                  publish_payload(true, nil, current_checklist)
 
-              @publish_flow_restore ->
-                case restore_selected_changes(
-                       community,
-                       branch,
-                       selection.restore_tree_checklist_item_ids,
-                       user
-                     ) do
-                  {:ok, result} -> result
-                  {:error, reason} -> Repo.rollback(reason)
-                  reason -> Repo.rollback(reason)
-                end
+                @publish_flow_restore ->
+                  case restore_selected_changes(
+                         community,
+                         branch,
+                         selection.restore_tree_checklist_item_ids,
+                         user
+                       ) do
+                    {:ok, result} -> result
+                    {:error, reason} -> Repo.rollback(reason)
+                    reason -> Repo.rollback(reason)
+                  end
 
-              @publish_flow_publish ->
-                case publish_selected_changes(
-                       community,
-                       branch,
-                       current_checklist,
-                       selection.doc_checklist_item_ids,
-                       selection.tree_checklist_item_ids,
-                       selection.restore_tree_checklist_item_ids,
-                       user,
-                       sync_cover?
-                     ) do
-                  {:ok, result} -> result
-                  {:error, reason} -> Repo.rollback(reason)
-                  reason -> Repo.rollback(reason)
-                end
+                @publish_flow_publish ->
+                  case publish_selected_changes(
+                         community,
+                         branch,
+                         current_checklist,
+                         selection.doc_checklist_item_ids,
+                         selection.tree_checklist_item_ids,
+                         selection.restore_tree_checklist_item_ids,
+                         user,
+                         sync_cover?
+                       ) do
+                    {:ok, result} -> result
+                    {:error, reason} -> Repo.rollback(reason)
+                    reason -> Repo.rollback(reason)
+                  end
+              end
+            else
+              {:error, reason} -> Repo.rollback(reason)
+              reason -> Repo.rollback(reason)
             end
           else
             {:error, reason} -> Repo.rollback(reason)

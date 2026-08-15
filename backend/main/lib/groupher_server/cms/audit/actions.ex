@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Audit.Actions do
   @actions ~w(
     article.trashed
     article.restored
+    article.archived
     article.permanently_deleted
     doc_tree.trashed
     doc_tree.restored
@@ -27,8 +28,8 @@ defmodule GroupherServer.CMS.Audit.Actions do
     community.setup_failed
     community.setup_retried
     community.activated
-    community.reclaim_scheduled
-    community.reclaim_cancelled
+    community.destroy_scheduled
+    community.destroy_cancelled
     community.destroyed
     community.lifecycle_reconciled
   )

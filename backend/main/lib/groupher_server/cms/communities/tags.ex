@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  import GroupherServer.CMS.Articles.Write,
+  import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
   import Helper.ErrorCode

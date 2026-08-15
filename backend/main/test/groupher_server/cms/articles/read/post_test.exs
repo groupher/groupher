@@ -94,18 +94,20 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
          ~m(post_attrs community user)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
+      event_id = Ecto.UUID.generate()
+
       {:ok, post2} =
         CMS.Articles.read(
           article_community(post),
           :post,
           post.inner_id,
-          user
+          user,
+          event_id
         )
 
       assert post.id == post2.id
-
-      {:ok, created} = ORM.find(Post, post2.id)
-      assert user.id in created.meta.viewed_user_ids
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.State.read(post2, user).viewer_has_viewed
     end
 
     test "read post should update views and meta viewed_user_list",
@@ -113,32 +115,45 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       # same user duplicate case
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user
-        )
-
-      {:ok, created} = ORM.find(Post, post.id)
-
-      assert created.meta.viewed_user_ids |> length == 1
-      assert user.id in created.meta.viewed_user_ids
+      event_id = Ecto.UUID.generate()
 
       {:ok, _} =
         CMS.Articles.read(
           article_community(post),
           :post,
           post.inner_id,
-          user2
+          user,
+          event_id
+        )
+
+      {:ok, _} =
+        CMS.Articles.read(
+          article_community(post),
+          :post,
+          post.inner_id,
+          user,
+          event_id
+        )
+
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.State.read(post, user).viewer_has_viewed
+
+      event_id = Ecto.UUID.generate()
+
+      {:ok, _} =
+        CMS.Articles.read(
+          article_community(post),
+          :post,
+          post.inner_id,
+          user2,
+          event_id
         )
 
       {:ok, created} = ORM.find(Post, post.id)
-
-      assert created.meta.viewed_user_ids |> length == 2
-      assert user.id in created.meta.viewed_user_ids
-      assert user2.id in created.meta.viewed_user_ids
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert created.views == 1
+      assert CMS.Interactions.State.read(post, user).viewer_has_viewed
+      assert CMS.Interactions.State.read(post, user2).viewer_has_viewed
     end
 
     ## comment article_upvote:L60 if run this test

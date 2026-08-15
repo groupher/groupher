@@ -37,7 +37,7 @@ defmodule Helper.ORM do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Communities.Read
+  alias CMS.Interactions.State
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
@@ -64,7 +64,7 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.inc(article, :upvotes_count)
+      iex> ORM.inc(article, :comments_count)
       {:ok, updated_article}
   """
   defdelegate inc(queryable, field), to: ORMAtom
@@ -74,7 +74,7 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.dec(article, :upvotes_count)
+      iex> ORM.dec(article, :comments_count)
       {:ok, updated_article}
   """
   defdelegate dec(queryable, field), to: ORMAtom
@@ -650,7 +650,7 @@ defmodule Helper.ORM do
       {:ok, %Community{}}
   """
   def find_community(slug) do
-    Read.scope(Community)
+    GroupherServer.CMS.Gate.scope(Community, nil, :read, %{})
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
@@ -701,13 +701,14 @@ defmodule Helper.ORM do
 
   defp export_article_info(thread, article) do
     author = article.author.user
+    counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
 
     %{
       thread: thread,
       id: article.id,
       inner_id: article.inner_id,
       title: article.title,
-      upvotes_count: Map.get(article, :upvotes_count),
+      upvotes_count: Map.get(counts, :upvotes_count, 0),
       author: author
     }
   end

@@ -217,4 +217,83 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
     assert forked.draft.title == "Post selected history"
     assert forked.snapshot.source_snapshot_id == selected_snapshot.id
   end
+
+  test "rejects public and draft edits after the Community becomes non-writable" do
+    {community, _existing_post, attrs, user} = mock_article(:post)
+
+    {:ok, draft} =
+      CMS.Articles.create_draft(
+        community,
+        :post,
+        Map.merge(attrs, %{title: "Draft before suspension", body_bag: mock_body_bag(@body_v1)}),
+        user
+      )
+
+    {:ok, public_post} =
+      CMS.Articles.create(
+        community,
+        :post,
+        Map.merge(attrs, %{title: "Public before suspension", body_bag: mock_body_bag(@body_v1)}),
+        user
+      )
+
+    {:ok, _blocker} =
+      CMS.Communities.Lifecycle.apply_blocker(
+        community.slug,
+        %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
+        operation_ref: Ecto.UUID.generate()
+      )
+
+    assert {:error, :ancestor_community_not_writable} =
+             CMS.Articles.update_draft(
+               community,
+               :post,
+               draft.article_hash_id,
+               %{title: "Blocked draft edit"},
+               user
+             )
+
+    assert {:error, :ancestor_community_not_writable} =
+             CMS.Articles.update(public_post, %{title: "Blocked public edit"}, user)
+
+    assert {:ok, current_draft} =
+             CMS.Articles.read_draft(community, :post, draft.article_hash_id, [])
+
+    assert current_draft.title == "Draft before suspension"
+    assert Repo.get!(Post, public_post.id).title == "Public before suspension"
+  end
+
+  test "rejects Draft checkpoints and restores after the Community becomes non-writable" do
+    {community, _existing_post, attrs, user} = mock_article(:post)
+
+    {:ok, draft} =
+      CMS.Articles.create_draft(
+        community,
+        :post,
+        Map.merge(attrs, %{title: "Snapshot before suspension", body_bag: mock_body_bag(@body_v1)}),
+        user
+      )
+
+    {:ok, snapshot} =
+      CMS.Articles.checkpoint_draft(community, :post, draft.article_hash_id, user)
+
+    {:ok, _blocker} =
+      CMS.Communities.Lifecycle.apply_blocker(
+        community.slug,
+        %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
+        operation_ref: Ecto.UUID.generate()
+      )
+
+    assert {:error, :ancestor_community_not_writable} =
+             CMS.Articles.checkpoint_draft(community, :post, draft.article_hash_id, user)
+
+    assert {:error, :ancestor_community_not_writable} =
+             CMS.Articles.restore_snapshot(
+               community,
+               :post,
+               draft.article_hash_id,
+               snapshot.hash_id,
+               user
+             )
+  end
 end

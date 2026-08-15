@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
-  alias GroupherServer.CMS.{Const, Gate, CommunityApplications.Transitions}
+  alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
+  alias GroupherServer.CMS.Gate.Passport
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo
@@ -101,7 +102,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
              Const.passport_action(:community_application_retry_creation)
            ),
          {:ok, application} <- fetch(public_ref),
-         {:ok, _slug} <- NamePolicy.validate(application.slug) do
+         {:ok, _slug} <- NamePolicy.check(application.slug, ignore_application_id: application.id) do
       operation_ref = Ecto.UUID.generate()
 
       transition(
@@ -241,7 +242,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   end
 
   defp review_authorized?(reviewer, action) do
-    case Gate.check_passport(reviewer, action, %{}) do
+    case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end

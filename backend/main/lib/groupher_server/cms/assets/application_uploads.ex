@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Assets.Write
+  alias GroupherServer.CMS.Assets.Writer
   alias GroupherServer.CMS.Model.{Community, CommunityApplicationLogoUpload}
   alias Helper.Utils
 
@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         %CommunityApplicationLogoUpload{} = upload,
         %User{} = user
       ) do
-    Write.register(
+    Writer.register(
       community,
       %{
         public_ref: "asset_" <> Utils.uid(24),
