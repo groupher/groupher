@@ -23,13 +23,6 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
 
     assert public_changelog.stage == :public
 
-    assert {:ok, [%{action: :publish, stage: :public}]} =
-             CMS.Articles.list_snapshots(
-               context.community,
-               :changelog,
-               public_changelog.article_hash_id
-             )
-
     context.user_conn
     |> gq_mutation(S.Article.m(:update_article, :changelog), %{
       article: %{
@@ -37,18 +30,27 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
         community: context.community.slug,
         thread: "CHANGELOG"
       },
+      expectedVersion: public_changelog.version,
       title: "Republished Changelog",
       body: mock_rich_text("republished changelog")
     })
 
-    assert {:ok, [latest, first]} =
-             CMS.Articles.list_snapshots(
-               context.community,
-               :changelog,
-               public_changelog.article_hash_id
-             )
+    {:ok, draft} =
+      CMS.Articles.read_draft(context.community, :changelog, public_changelog.article_hash_id)
 
-    assert {latest.action, first.action} == {:publish, :publish}
+    assert draft.title == "Republished Changelog"
+
+    {:ok, actor} = CMS.FrontDesk.author_of(public_changelog)
+
+    {:ok, %{article: published, snapshot: nil}} =
+      CMS.Articles.publish_draft(
+        context.community,
+        :changelog,
+        public_changelog.article_hash_id,
+        actor
+      )
+
+    assert published.title == "Republished Changelog"
   end
 
   test "Changelog Draft stays private until its explicit publish mutation", context do
@@ -71,6 +73,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
       |> gq_mutation(S.Article.m(:update_article_draft, :changelog), %{
         community: context.community.slug,
         id: draft["id"],
+        expectedVersion: draft["version"],
         title: "Updated Changelog Draft",
         body: mock_rich_text("updated changelog draft")
       })
@@ -107,6 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
     update_variables = %{
       community: context.community.slug,
       id: draft["id"],
+      expectedVersion: draft["version"],
       title: "Unauthorized Changelog Draft",
       body: mock_rich_text("unauthorized changelog draft")
     }
@@ -156,6 +160,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
     variables = %{
       community: context.community.slug,
       id: public_changelog.article_hash_id,
+      expectedVersion: public_changelog.version,
       title: "First Changelog Draft",
       body: mock_rich_text("unauthorized first draft")
     }

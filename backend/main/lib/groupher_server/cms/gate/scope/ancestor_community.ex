@@ -21,7 +21,9 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     CommentLifecycle,
     Community,
     CommunityLifecycle,
-    CommunityModerator
+    CommunityModerator,
+    DocBranch,
+    DocLifecycle
   }
 
   alias Helper.Constant
@@ -105,42 +107,95 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     end
   end
 
-  @spec document(Ecto.Query.t(), atom(), module()) :: Ecto.Query.t() | {:error, atom()}
+  @spec document(Ecto.Query.t(), atom(), module(), atom(), atom(), integer() | :main | nil) ::
+          Ecto.Query.t() | {:error, atom()}
   def document(
         %Ecto.Query{} = query,
         thread,
         article_schema,
         policy_mode \\ :public,
-        stage \\ :public
+        stage \\ :public,
+        branch_ref \\ nil
       ) do
-    with :ok <-
-           reject_conflicting_scope_joins(query, [
-             article_schema,
-             ArticleLifecycle,
-             Community,
-             CommunityLifecycle
-           ]) do
-      query =
-        from(document in query,
-          join: article in ^article_schema,
-          as: :gate_article,
-          on: article.id == document.article_id and document.thread == ^thread,
-          join: article_lifecycle in ArticleLifecycle,
-          as: :gate_article_lifecycle,
-          on:
-            article_lifecycle.community_id == article.community_id and
-              article_lifecycle.thread == ^thread and
-              article_lifecycle.article_hash_id == article.article_hash_id,
-          join: community in assoc(article, :community),
-          as: :gate_community,
-          left_join: lifecycle in CommunityLifecycle,
-          as: :gate_community_lifecycle,
-          on: lifecycle.community_id == community.id
-        )
+    owned_schemas =
+      if thread == :doc,
+        do: [article_schema, DocBranch, DocLifecycle, Community, CommunityLifecycle],
+        else: [article_schema, ArticleLifecycle, Community, CommunityLifecycle]
 
+    with :ok <- reject_conflicting_scope_joins(query, owned_schemas),
+         %Ecto.Query{} = query <-
+           document_ancestors(query, thread, article_schema, policy_mode, branch_ref) do
       apply_document_policy(query, policy_mode, stage)
     end
   end
+
+  defp document_ancestors(query, :doc, article_schema, policy_mode, branch_ref) do
+    with %Ecto.Query{} = query <-
+           from(document in query,
+             join: article in ^article_schema,
+             as: :gate_article,
+             on: article.id == document.article_id and document.thread == ^:doc,
+             join: branch in DocBranch,
+             as: :gate_doc_branch,
+             on:
+               branch.id == article.branch_id and
+                 branch.community_id == article.community_id,
+             join: lifecycle in DocLifecycle,
+             as: :gate_article_lifecycle,
+             on:
+               lifecycle.community_id == article.community_id and
+                 lifecycle.branch_id == branch.id and
+                 lifecycle.article_hash_id == article.article_hash_id,
+             join: community in assoc(article, :community),
+             as: :gate_community,
+             left_join: community_lifecycle in CommunityLifecycle,
+             as: :gate_community_lifecycle,
+             on: community_lifecycle.community_id == community.id
+           ),
+         %Ecto.Query{} = query <- doc_branch_policy(query, branch_ref, policy_mode) do
+      query
+    end
+  end
+
+  defp document_ancestors(query, thread, article_schema, _policy_mode, _branch_ref) do
+    from(document in query,
+      join: article in ^article_schema,
+      as: :gate_article,
+      on: article.id == document.article_id and document.thread == ^thread,
+      join: article_lifecycle in ArticleLifecycle,
+      as: :gate_article_lifecycle,
+      on:
+        article_lifecycle.community_id == article.community_id and
+          article_lifecycle.thread == ^thread and
+          article_lifecycle.article_hash_id == article.article_hash_id,
+      join: community in assoc(article, :community),
+      as: :gate_community,
+      left_join: lifecycle in CommunityLifecycle,
+      as: :gate_community_lifecycle,
+      on: lifecycle.community_id == community.id
+    )
+  end
+
+  defp doc_branch_policy(query, :main, :public) do
+    from([gate_doc_branch: branch] in query,
+      where: branch.type == ^Const.doc_branch_type(:main)
+    )
+  end
+
+  defp doc_branch_policy(query, branch_ref, :public) when is_integer(branch_ref) do
+    from([gate_doc_branch: branch] in query,
+      where:
+        branch.id == ^branch_ref and
+          branch.type == ^Const.doc_branch_type(:main)
+    )
+  end
+
+  defp doc_branch_policy(query, branch_ref, _policy_mode) when is_integer(branch_ref) do
+    from([gate_doc_branch: branch] in query, where: branch.id == ^branch_ref)
+  end
+
+  defp doc_branch_policy(_query, _branch_ref, _policy_mode),
+    do: {:error, Const.gate_error(:scope_context_missing)}
 
   @doc false
   def community_actor(query, :public, _actor), do: query

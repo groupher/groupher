@@ -1,19 +1,19 @@
-import type { TArticleSnapshotActionWire, TArticleSnapshotStageWire } from '~/const/article'
+import type { TDocSnapshotActionWire, TDocSnapshotStageWire } from '~/const/article'
 
-export type TArticleSnapshotStage = TArticleSnapshotStageWire
-export type TArticleSnapshotAction = TArticleSnapshotActionWire
+export type TDocSnapshotStage = TDocSnapshotStageWire
+export type TDocSnapshotAction = TDocSnapshotActionWire
 
-export type TArticleSnapshotAuthor = {
+export type TDocSnapshotAuthor = {
   login?: string | null
   nickname?: string | null
   avatar?: string | null
 }
 
-export type TArticleSnapshot = {
+export type TDocSnapshot = {
   id: string
   thread?: string | null
-  stage: TArticleSnapshotStage
-  action: TArticleSnapshotAction
+  stage: TDocSnapshotStage
+  action: TDocSnapshotAction
   articleHashId?: string | null
   title?: string | null
   slug?: string | null
@@ -24,9 +24,9 @@ export type TArticleSnapshot = {
   revisionNumber?: number | null
   schemaVersion?: number | null
   insertedAt?: string | null
-  author?: TArticleSnapshotAuthor | null
+  author?: TDocSnapshotAuthor | null
 }
 
 export type TDocDraftSnapshotsPayload = {
-  docDraftSnapshots?: TArticleSnapshot[] | null
+  docDraftSnapshots?: TDocSnapshot[] | null
 }

@@ -17,13 +17,13 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Branch
+  alias CMS.Docs.Branch
   alias CMS.DocTree.{ChangeDetection, Events}
 
   require CMS.Const
 
   alias CMS.Model.{
-    ArticleSnapshot,
+    DocSnapshot,
     Doc,
     Community,
     DocCoverCard,
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     policy_mode = option(opts, :policy_mode, :operations)
 
     with {:ok, community} <- scoped_community(community, actor, policy_mode),
-         {:ok, branch} <- Branch.resolve(community, :doc, opts),
+         {:ok, branch} <- Branch.resolve(community, opts),
          {:ok, _state} <- ensure_site_state(community, branch) do
       Repo.transaction(fn ->
         {:ok, state} =
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   @spec read_public(Community.t(), keyword() | map()) :: T.domain_res(map())
   def read_public(%Community{} = community, opts \\ []) do
     with {:ok, community} <- public_community(community),
-         {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+         {:ok, branch} <- Branch.resolve(community, opts) do
       nodes = tree_nodes_for_branch(community, branch, CMS.Const.stage(:public))
       docs_by_doc_id = public_docs_by_doc_id(community, branch, nodes)
 
@@ -138,14 +138,15 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     actor = option(opts, :actor, :operations)
     policy_mode = option(opts, :policy_mode, :operations)
 
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       query =
         Doc
         |> CMS.Articles.Trash.not_trashed_scope(:doc)
-        |> CMS.Gate.scope(actor, :read, %{
+        |> CMS.Gate.scope(actor, :read_draft, %{
           thread: :doc,
           stage: :draft,
-          policy_mode: policy_mode
+          policy_mode: policy_mode,
+          branch_id: branch.id
         })
 
       case query do
@@ -181,7 +182,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
   @spec ensure_site_state(Community.t(), keyword() | map()) :: T.domain_res(DocsSiteState.t())
   def ensure_site_state(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       Transaction.lock_global("docs_site:init:#{community.id}:#{branch.id}", fn ->
         case ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
           {:ok, state} ->
@@ -195,7 +196,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   end
 
   def tree_nodes(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       {:ok, tree_nodes_for_branch(community, branch, stage)}
     end
   end
@@ -263,7 +264,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Enum.uniq()
 
     Doc
-    |> CMS.Gate.scope(nil, :list, %{thread: :doc})
+    |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id})
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == ^CMS.Const.stage(:public))
@@ -526,11 +527,10 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Map.new(&{&1.article_hash_id, &1})
 
     public_versions =
-      ArticleSnapshot
+      DocSnapshot
       |> where([s], s.community_id == ^community.id)
       |> where([s], s.branch_id == ^branch.id)
       |> where([s], s.stage == CMS.Const.stage(:public))
-      |> where([s], s.thread == :doc)
       |> where([s], s.article_hash_id in ^doc_ids)
       |> order_by([s], desc: s.revision_number, desc: s.id)
       |> Repo.all()

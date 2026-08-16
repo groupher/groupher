@@ -192,8 +192,13 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   defp public_article(schema, thread, article_id) do
+    context =
+      if thread == :doc,
+        do: %{thread: thread, branch_policy: :main},
+        else: %{thread: thread}
+
     schema
-    |> CMS.Gate.scope(nil, :read, %{thread: thread})
+    |> CMS.Gate.scope(nil, :read, context)
     |> where([article], article.id == ^article_id)
     |> Repo.one()
     |> done()

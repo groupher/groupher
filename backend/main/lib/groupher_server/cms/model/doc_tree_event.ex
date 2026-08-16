@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, ArticleBranch, DocTreeSnapshot}
+  alias CMS.Model.{Community, DocBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   @type t :: %DocTreeEvent{}
   schema "doc_tree_events" do
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
     belongs_to(:author, User)
     belongs_to(:snapshot, DocTreeSnapshot)
     belongs_to(:reverted_by_event, DocTreeEvent)
@@ -114,8 +114,8 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
       community_id = get_field(changeset, :community_id)
       branch_id = get_field(changeset, :branch_id)
 
-      case changeset.repo.get_by(ArticleBranch, id: branch_id, community_id: community_id) do
-        %ArticleBranch{} -> changeset
+      case changeset.repo.get_by(DocBranch, id: branch_id, community_id: community_id) do
+        %DocBranch{} -> changeset
         nil -> add_error(changeset, :branch_id, "does not belong to the community")
       end
     end)

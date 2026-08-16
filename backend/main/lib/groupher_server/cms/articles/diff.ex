@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Articles.Diff do
   @moduledoc """
-  Computes transient differences between immutable Article revisions.
+  Computes transient differences between immutable Doc revisions.
 
       left Snapshot/current state
                   |
@@ -13,15 +13,15 @@ defmodule GroupherServer.CMS.Articles.Diff do
 
   Business position:
 
-      Client / importer
+  Client / importer
         -> GraphQL or service boundary
         -> CMS.Articles
         -> Diff
         -> Repo / domain event
   """
 
-  alias GroupherServer.CMS.Articles.Snapshot
-  alias GroupherServer.CMS.Model.ArticleSnapshot
+  alias GroupherServer.CMS.Docs.Snapshot
+  alias GroupherServer.CMS.Model.DocSnapshot
   alias Helper.T
 
   @common_fields [:title, :digest, :slug, :subtitle]
@@ -40,20 +40,20 @@ defmodule GroupherServer.CMS.Articles.Diff do
   end
 
   @doc """
-  Compares two immutable Article Snapshots.
+  Compares two immutable Doc Snapshots.
 
   The editor AST renderer may consume `document_changed` and calculate its own
   structural/text presentation lazily. This function deliberately returns no
   persisted or pairwise cache record.
   """
-  @spec compare(ArticleSnapshot.t(), ArticleSnapshot.t()) :: result()
-  def compare(%ArticleSnapshot{} = left, %ArticleSnapshot{} = right) do
+  @spec compare(DocSnapshot.t(), DocSnapshot.t()) :: result()
+  def compare(%DocSnapshot{} = left, %DocSnapshot{} = right) do
     compare_states(snapshot_state(left), snapshot_state(right))
   end
 
-  @doc "Compares a mutable current Article row with an immutable Snapshot without storing Diff state."
-  @spec compare_current(T.article(), ArticleSnapshot.t()) :: T.domain_res(result())
-  def compare_current(article, %ArticleSnapshot{} = snapshot) do
+  @doc "Compares a mutable current Doc row with an immutable Snapshot without storing Diff state."
+  @spec compare_current(T.article(), DocSnapshot.t()) :: T.domain_res(result())
+  def compare_current(article, %DocSnapshot{} = snapshot) do
     with {:ok, current_state} <- Snapshot.current_state(article) do
       {:ok, compare_states(current_state, snapshot_state(snapshot))}
     end

@@ -18,8 +18,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.{Branch, Lock}
-  alias CMS.Articles.Trash, as: ArticleTrash
+  alias CMS.Articles.Lock
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Trash, as: DocTrash
   alias CMS.DocTree.Events
   alias CMS.DocTree.Writer.{EventRecorder, Index, Operation}
 
@@ -27,7 +28,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     Community,
     DocTreeNode,
     TrashAction,
-    TrashedArticle,
+    TrashedDocArticle,
     TrashedDocTreeNode
   }
 
@@ -43,7 +44,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     policy_mode = option(opts, :policy_mode, :moderator_management)
 
     with {:ok, _community} <- readable_community(community, actor, policy_mode),
-         {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+         {:ok, branch} <- Branch.resolve(community, opts) do
       actions =
         TrashAction
         |> join(:inner, [action], node in TrashedDocTreeNode,
@@ -81,9 +82,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            {:ok, action} <- find_action(community, branch, action_ref),
            items <- action_nodes(action, branch),
            {:ok, items} <- prepare_restore_items(community, branch, action, items, args),
-           doc_ids <- action_doc_ids(action),
+           doc_ids <- action_doc_ids(action, branch),
            {:ok, result} <-
-             Lock.run_many(community, :doc, doc_ids, fn ->
+             Lock.run_doc_many(community, branch.id, doc_ids, fn ->
                restore_action(community, branch, action, items, actor)
              end),
            {:ok, state} <- Operation.bump_revision(community, state, result.tree_event_count) do
@@ -119,6 +120,8 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            |> order_by([item], asc: item.id)
            |> limit(1)
            |> Repo.one() do
+      branch = Repo.get!(CMS.Model.DocBranch, root_item.branch_id)
+
       Transaction.lock_global("doc_tree:#{community.id}:#{root_item.branch_id}", fn ->
         case TrashAction
              |> where([current], current.id == ^action.id)
@@ -128,13 +131,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
             {:ok, %{done: true}}
 
           current ->
-            doc_ids = action_doc_ids(current)
+            doc_ids = action_doc_ids(current, branch)
 
-            Lock.run_many(community, :doc, doc_ids, fn ->
+            Lock.run_doc_many(community, root_item.branch_id, doc_ids, fn ->
               with {:ok, :done} <-
-                     ArticleTrash.permanently_delete_action_articles(
+                     DocTrash.permanently_delete_action_articles(
                        current,
                        community,
+                       branch,
                        actor,
                        source: Keyword.get(opts, :source, "api"),
                        audit: false,
@@ -155,7 +159,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
                        source: Keyword.get(opts, :source, "api"),
                        metadata: %{}
                      }),
-                   :ok <- ArticleTrash.delete_empty_action(current.id) do
+                   :ok <- CMS.Articles.Trash.delete_empty_action(current.id) do
                 {:ok, %{done: true}}
               end
             end)
@@ -173,7 +177,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
          {:ok, draft_nodes} <- restore_stage_nodes(community, branch, items, :draft),
          {:ok, public_nodes} <- restore_stage_nodes(community, branch, items, :public),
          {:ok, articles} <-
-           ArticleTrash.restore_action_articles(action, community, actor,
+           DocTrash.restore_action_articles(action, community, branch, actor,
              source: "api",
              audit: false,
              metadata: %{trash_root_type: action.root_type, trash_root_ref: action.root_ref}
@@ -195,7 +199,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
              source: "api",
              metadata: %{}
            }),
-         :ok <- ArticleTrash.delete_empty_action(action.id) do
+         :ok <- CMS.Articles.Trash.delete_empty_action(action.id) do
       {:ok,
        %{
          articles: articles,
@@ -239,9 +243,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     |> Repo.all()
   end
 
-  defp action_doc_ids(%TrashAction{} = action) do
-    TrashedArticle
-    |> where([item], item.trash_action_id == ^action.id and item.thread == :doc)
+  defp action_doc_ids(%TrashAction{} = action, branch) do
+    TrashedDocArticle
+    |> where([item], item.trash_action_id == ^action.id and item.branch_id == ^branch.id)
     |> select([item], item.article_hash_id)
     |> Repo.all()
   end

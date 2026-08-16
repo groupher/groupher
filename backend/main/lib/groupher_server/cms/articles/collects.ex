@@ -31,20 +31,25 @@ defmodule GroupherServer.CMS.Articles.Collects do
     {:ok, info} = match(article)
 
     Multi.new()
-    |> Multi.run(:create_collect, fn _, _ ->
-      {:ok, thread} = FrontDesk.thread_of(article)
-      args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, article.id)
+    |> Multi.run(:access_check, fn _, _ ->
+      CMS.Gate.access_check(user, :collect, article)
+    end)
+    |> Multi.run(:create_collect, fn _, %{access_check: canonical_article} ->
+      {:ok, thread} = FrontDesk.thread_of(canonical_article)
+      args = Map.put(%{user_id: user.id, thread: thread}, info.foreign_key, canonical_article.id)
 
       ORM.create(ArticleCollect, args)
     end)
-    |> Multi.run(:sync_projection, fn _, _ ->
-      State.write(article, :collect, user, :add)
+    |> Multi.run(:sync_projection, fn _, %{access_check: canonical_article} ->
+      State.write(canonical_article, :collect, user, :add)
     end)
-    |> Multi.run(:inc_author_achieve, fn _, _ ->
-      Accounts.Achievements.achieve(author_user(article), :inc, :collect)
+    |> Multi.run(:inc_author_achieve, fn _, %{access_check: canonical_article} ->
+      Accounts.Achievements.achieve(author_user(canonical_article), :inc, :collect)
     end)
-    |> Multi.run(:after_events, fn _, _ ->
-      Later.run({Events, :emit, [:notify_collect, %{article: article, from_user: user}]})
+    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
+      Later.run(
+        {Events, :emit, [:notify_collect, %{article: canonical_article, from_user: user}]}
+      )
     end)
     |> Repo.transaction()
     |> result()
@@ -66,23 +71,30 @@ defmodule GroupherServer.CMS.Articles.Collects do
     {:ok, info} = match(article)
 
     Multi.new()
-    |> Multi.run(:find_collect, fn _, _ ->
-      find_collect_record(info, article, user.id)
+    |> Multi.run(:access_check, fn _, _ ->
+      CMS.Gate.access_check(user, :collect, article)
     end)
-    |> Multi.run(:dec_author_achieve, fn _, %{find_collect: record} ->
-      maybe_dec_author_achieve(record, article)
+    |> Multi.run(:find_collect, fn _, %{access_check: canonical_article} ->
+      find_collect_record(info, canonical_article, user.id)
     end)
-    |> Multi.run(:undo_collect, fn _, %{find_collect: record} ->
-      maybe_undo_collect(record, article, info, user.id)
+    |> Multi.run(:dec_author_achieve, fn _,
+                                         %{access_check: canonical_article, find_collect: record} ->
+      maybe_dec_author_achieve(record, canonical_article)
     end)
-    |> Multi.run(:sync_projection, fn _, %{find_collect: record} ->
+    |> Multi.run(:undo_collect, fn _, %{access_check: canonical_article, find_collect: record} ->
+      maybe_undo_collect(record, canonical_article, info, user.id)
+    end)
+    |> Multi.run(:sync_projection, fn _,
+                                      %{access_check: canonical_article, find_collect: record} ->
       case record do
-        nil -> {:ok, article}
-        _ -> State.write(article, :collect, user, :remove)
+        nil -> {:ok, canonical_article}
+        _ -> State.write(canonical_article, :collect, user, :remove)
       end
     end)
-    |> Multi.run(:after_events, fn _, _ ->
-      Later.run({Events, :emit, [:notify_undo_collect, %{article: article, from_user: user}]})
+    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
+      Later.run(
+        {Events, :emit, [:notify_undo_collect, %{article: canonical_article, from_user: user}]}
+      )
     end)
     |> Repo.transaction()
     |> result()

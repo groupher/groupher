@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
-  alias CMS.Articles.Branch
+  alias CMS.Docs.Branch
   alias CMS.DocPublishRelease
 
   require CMS.Const
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   """
   @spec checklist(Community.t(), keyword() | map()) :: map() | {:error, term()}
   def checklist(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       Checklist.build(community, branch)
     end
   end
@@ -97,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
-    with {:ok, branch} <- Branch.resolve(community, :doc, args) do
+    with {:ok, branch} <- Branch.resolve(community, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         Repo.transaction(fn ->
           with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community) do
@@ -181,7 +181,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
           T.domain_res(Doc.t())
   def move_doc_to_draft(%Community{} = community, node_id, %User{} = user, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       DocPublisher.move_doc_to_draft(community, branch, node_id, user)
     end
   end
@@ -195,7 +195,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
         %User{} = user,
         opts \\ []
       ) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts),
+    with {:ok, branch} <- Branch.resolve(community, opts),
          {:ok, root} <- DocPublisher.public_node_for_draft(community, branch, node_id),
          true <- root.type in [:tab, :group],
          pages <-
@@ -227,7 +227,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   @spec public_node_for_draft(Community.t(), T.id(), keyword() | map()) ::
           T.domain_res(DocTreeNode.t())
   def public_node_for_draft(%Community{} = community, node_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       DocPublisher.public_node_for_draft(community, branch, node_id)
     end
   end
@@ -370,10 +370,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     if length(events) != length(tree_checklist_item_ids) do
       {:error, {:custom, "Selected tree publish item no longer exists."}}
     else
-      article_snapshots =
-        DocPublishRelease.article_snapshots_before_tree_events(community, branch, events)
+      doc_snapshots =
+        DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
 
-      {:ok, %{events: events, article_snapshots: article_snapshots}}
+      {:ok, %{events: events, doc_snapshots: doc_snapshots}}
     end
   end
 

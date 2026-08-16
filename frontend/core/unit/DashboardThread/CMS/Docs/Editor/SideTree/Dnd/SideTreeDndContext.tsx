@@ -22,7 +22,7 @@ import {
   SIDE_TREE_DND_LANE,
   SIDE_TREE_DND_TYPE,
 } from './constant'
-import { moveSideTreeNode, sameSideTreeGroups, sideTreeGroupSubtreeIds } from './model'
+import { moveSideTreeNode, sideTreeGroupSubtreeIds } from './model'
 import type { TSideTreeDragData, TSideTreeDragTarget } from './spec'
 
 type TRenderProps = {
@@ -206,7 +206,7 @@ export default function SideTreeDndContext({
     if (!activeId || !nextTarget) return
 
     const nextGroups = moveSideTreeNode(groups, activeId, nextTarget, rootParentNodeId)
-    if (sameSideTreeGroups(groups, nextGroups)) return
+    if (nextGroups === groups) return
 
     onCommit(nextGroups, activeId)
   }

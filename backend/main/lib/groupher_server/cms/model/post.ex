@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Model.Post do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(branch_id article_hash_id title digest)a
+  @required_fields ~w(article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
 
   @optional_fields ~w(
@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Model.Post do
     general_article_fields(:post)
   end
 
-  @doc "Returns the Post fields copied by Draft, Publish, Snapshot, and Restore."
+  @doc "Returns the Post fields copied by Draft and Publish."
   @spec version_fields() :: [atom()]
   def version_fields do
     ~w(title digest link_addr copy_right cat status solution_digest cover_url cover_url_dark)a
@@ -89,8 +89,7 @@ defmodule GroupherServer.CMS.Model.Post do
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)
     |> validate_length(:link_addr, min: 5, max: 400)
     |> validate_article_version_scope(:post)
-    |> foreign_key_constraint(:branch_id)
-    |> unique_constraint(:article_hash_id, name: :posts_branch_article_hash_stage_index)
+    |> unique_constraint(:article_hash_id, name: :posts_community_article_hash_stage_index)
   end
 
   # Absinthe enum inputs reach CMS as atoms. Do not accept raw string enum

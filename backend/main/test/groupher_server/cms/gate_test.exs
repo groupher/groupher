@@ -11,9 +11,34 @@ defmodule GroupherServer.Test.CMS.Gate do
     assert function_exported?(CMS.Gate, :scope, 3)
     assert function_exported?(CMS.Gate, :scope, 4)
     assert function_exported?(CMS.Gate, :access_check, 3)
+    assert function_exported?(CMS.Gate, :access_check, 4)
     refute function_exported?(CMS.Gate, :can, 3)
     refute function_exported?(CMS.Gate, :check, 3)
     refute function_exported?(CMS.Gate, :decide, 4)
+  end
+
+  test "read_draft access check uses the explicit management policy" do
+    {community, _public, attrs, owner} = mock_article(:post)
+
+    {:ok, draft} =
+      CMS.Articles.create_draft(
+        community,
+        :post,
+        Map.put(attrs, :title, "Draft for Gate"),
+        owner
+      )
+
+    assert {:ok, ^draft} =
+             CMS.Gate.access_check(owner, :read_draft, draft, %{
+               policy_mode: :owner_management
+             })
+
+    {:ok, other_user} = db_insert(:user)
+
+    assert {:error, %Decision{primary: %{code: :permission_denied}}} =
+             CMS.Gate.access_check(other_user, :read_draft, draft, %{
+               policy_mode: :owner_management
+             })
   end
 
   test "Allow rules remain on their own module" do
@@ -44,6 +69,7 @@ defmodule GroupherServer.Test.CMS.Gate do
 
     assert {:error, :unknown_action} = CMS.Gate.Access.evaluate(user, :purge, community)
     assert {:error, :unknown_action} = CMS.Gate.Access.evaluate_result(user, :purge, community)
+    assert {:error, :unknown_action} = CMS.Gate.Access.evaluate(user, :read_draft, community)
   end
 
   test "community command actions use the manage relation preflight" do
@@ -171,6 +197,55 @@ defmodule GroupherServer.Test.CMS.Gate do
              decision.primary
 
     assert {:error, :article_archived} = {:error, Decision.primary_code(decision)}
+  end
+
+  test "article interactions use the same Article and Community admission matrix" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+
+    community = %{
+      community
+      | lifecycle: Repo.get_by!(CommunityLifecycle, community_id: community.id)
+    }
+
+    article = %{
+      community_id: community.id,
+      article_hash_id: Ecto.UUID.generate(),
+      meta: %{is_comment_locked: false}
+    }
+
+    published_context = %{
+      community: community,
+      article_lifecycle: %ArticleLifecycle{state: :published}
+    }
+
+    for action <- [:upvote, :emotion, :collect] do
+      assert {:ok, true} =
+               CMS.Gate.Access.evaluate_result(user, action, article, published_context)
+    end
+
+    archived_context = %{
+      published_context
+      | article_lifecycle: %ArticleLifecycle{state: :archived}
+    }
+
+    for action <- [:upvote, :emotion, :collect] do
+      assert {:error, :article_archived} =
+               CMS.Gate.Access.evaluate_result(user, action, article, archived_context)
+    end
+
+    read_only_community = %{
+      community
+      | lifecycle: %{community.lifecycle | state: :read_only}
+    }
+
+    assert {:error, :ancestor_community_not_writable} =
+             CMS.Gate.Access.evaluate_result(
+               user,
+               :upvote,
+               article,
+               %{published_context | community: read_only_community}
+             )
   end
 
   test "structured decisions preserve every violation and choose the stable primary" do

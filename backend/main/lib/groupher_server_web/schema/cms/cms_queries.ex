@@ -264,10 +264,10 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "dashboard docs draft revision history"
-    field :doc_draft_snapshots, list_of(:article_snapshot) do
+    field :doc_draft_snapshots, list_of(:doc_snapshot) do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:stage, :article_snapshot_stage)
+      arg(:stage, :doc_snapshot_stage)
       arg(:limit, :integer, default_value: 30)
 
       middleware(M.Authorize, :login)
@@ -276,7 +276,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "one dashboard docs draft revision"
-    field :doc_draft_snapshot, :article_snapshot do
+    field :doc_draft_snapshot, :doc_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:snapshot_id, non_null(:id))

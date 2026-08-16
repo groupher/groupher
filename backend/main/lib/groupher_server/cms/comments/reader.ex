@@ -35,22 +35,26 @@ defmodule GroupherServer.CMS.Comments.Reader do
   end
 
   @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{} = comment), do: one_comment(comment.id)
+  def one_comment(%Comment{thread: thread} = comment),
+    do: read_by_id(comment.id, nil, thread)
 
   def one_comment(%{article: article_path, inner_id: inner_id}),
     do: read_by_path(article_path, inner_id, nil)
 
   def one_comment(id) do
-    Comment
-    |> CMS.Gate.scope(nil, :read, %{})
-    |> where([comment], comment.id == ^id)
-    |> preload(:author)
-    |> Repo.one()
-    |> ORM.fill_meta()
+    with %Comment{thread: thread} <- Repo.get(Comment, id) do
+      read_by_id(id, nil, thread)
+    else
+      nil -> {:error, :not_exist}
+    end
   end
 
   @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{} = comment, %User{} = user), do: one_comment(comment.id, user)
+  def one_comment(%Comment{thread: thread} = comment, %User{} = user) do
+    with {:ok, comment} <- read_by_id(comment.id, user, thread) do
+      add_viewer_states(comment, user)
+    end
+  end
 
   def one_comment(%{article: article_path, inner_id: inner_id}, %User{} = user) do
     with {:ok, comment} <- read_by_path(article_path, inner_id, user) do
@@ -59,14 +63,17 @@ defmodule GroupherServer.CMS.Comments.Reader do
   end
 
   def one_comment(id, %User{} = user) do
-    with {:ok, comment} <- read_by_id(id, user) do
+    with %Comment{thread: thread} <- Repo.get(Comment, id),
+         {:ok, comment} <- read_by_id(id, user, thread) do
       add_viewer_states(comment, user)
+    else
+      nil -> {:error, :not_exist}
     end
   end
 
-  defp read_by_id(id, actor) do
+  defp read_by_id(id, actor, thread) do
     Comment
-    |> CMS.Gate.scope(actor, :read, %{})
+    |> CMS.Gate.scope(actor, :read, %{thread: thread})
     |> where([comment], comment.id == ^id)
     |> preload(:author)
     |> Repo.one()

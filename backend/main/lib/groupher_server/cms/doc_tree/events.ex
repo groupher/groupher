@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Branch
+  alias CMS.Docs.Branch
   alias CMS.DocTree.Snapshot
   alias CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
   alias Helper.{ORM, T}
@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
         opts \\ []
       ) do
     Repo.transaction(fn ->
-      with {:ok, branch} <- Branch.resolve(community, :doc, opts),
+      with {:ok, branch} <- Branch.resolve(community, opts),
            {:ok, _community} <- ORM.lock_community(community),
            {:ok, event} <-
              insert_staged_event(
@@ -133,7 +133,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   def record_staged_many(%Community{} = community, events, author_id, opts) do
     Repo.transaction(fn ->
-      with {:ok, branch} <- Branch.resolve(community, :doc, opts),
+      with {:ok, branch} <- Branch.resolve(community, opts),
            {:ok, _community} <- ORM.lock_community(community) do
         next_seq = next_seq(community, branch)
 
@@ -179,7 +179,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec staged_events(Community.t(), keyword()) :: list(DocTreeEvent.t())
   def staged_events(%Community{} = community, opts \\ []) do
     owner = Keyword.get(opts, :owner)
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -200,7 +200,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   """
   @spec staged_tree_event_count(Community.t(), keyword()) :: non_neg_integer()
   def staged_tree_event_count(%Community{} = community, opts \\ []) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -381,7 +381,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   """
   @spec mark_doc_bound_published(Community.t(), String.t(), keyword()) :: non_neg_integer()
   def mark_doc_bound_published(%Community{} = community, doc_id, opts \\ []) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
 
     {count, _} =
       DocTreeEvent
@@ -427,7 +427,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   def mark_tree_create_published(_community, [], _opts), do: 0
 
   def mark_tree_create_published(%Community{} = community, node_ids, opts) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
     node_ids = Enum.map(node_ids, &to_string/1)
 
     {count, _} =
@@ -458,7 +458,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   def discard_doc_bound_staged(_community, [], _opts), do: 0
 
   def discard_doc_bound_staged(%Community{} = community, doc_ids, opts) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
     doc_ids = Enum.map(doc_ids, &to_string/1)
 
     {count, _} =
@@ -505,7 +505,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   def discard_tree_create_staged(_community, [], _opts), do: 0
 
   def discard_tree_create_staged(%Community{} = community, node_ids, opts) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
     node_ids = Enum.map(node_ids, &to_string/1)
 
     {count, _} =
@@ -530,7 +530,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec discard_staged_for_trash(Community.t(), [String.t()], [String.t()], keyword()) ::
           non_neg_integer()
   def discard_staged_for_trash(%Community{} = community, node_ids, doc_ids, opts \\ []) do
-    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    {:ok, branch} = Branch.resolve(community, opts)
     node_ids = Enum.map(node_ids, &to_string/1)
     doc_ids = Enum.map(doc_ids, &to_string/1)
 
@@ -577,7 +577,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec publish_snapshot(Community.t(), integer() | nil, String.t() | nil, keyword()) ::
           T.domain_res(DocTreeSnapshot.t())
   def publish_snapshot(%Community{} = community, author_id \\ nil, message \\ nil, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       do_publish_snapshot(community, branch, author_id, message, opts)
     end
   end

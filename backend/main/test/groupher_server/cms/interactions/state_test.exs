@@ -4,7 +4,16 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
   import Ecto.Query
 
   alias GroupherServer.CMS.Interactions.State
-  alias GroupherServer.CMS.Model.{Post, PostReactionInfo}
+
+  alias GroupherServer.CMS.Model.{
+    ArticleCollect,
+    ArticleLifecycle,
+    ArticleUpvote,
+    ArticleUserEmotion,
+    Post,
+    PostReactionInfo
+  }
+
   alias GroupherServer.CMS.Interactions.ViewEvents
   alias GroupherServer.Repo
 
@@ -17,6 +26,79 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
 
     assert {:ok, _} = CMS.Articles.undo_upvote(post, user)
     assert 0 == upvotes_count(post.id)
+  end
+
+  test "article interactions reject archived targets and keep existing facts unchanged" do
+    {community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+    {:ok, other_user} = db_insert(:user)
+
+    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Articles.emotion(post, :beer, user)
+    assert {:ok, _} = CMS.Articles.collect(post, user)
+
+    Repo.get_by!(ArticleLifecycle,
+      community_id: community.id,
+      thread: :post,
+      article_hash_id: post.article_hash_id
+    )
+    |> ArticleLifecycle.changeset(%{state: :archived})
+    |> Repo.update!()
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.undo_upvote(post, user)
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.undo_emotion(post, :beer, user)
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.undo_collect(post, user)
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.upvote(post, other_user)
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.emotion(post, :beer, other_user)
+
+    assert {:error, %{primary: %{code: :article_archived}}} =
+             CMS.Articles.collect(post, other_user)
+
+    assert Repo.exists?(
+             from(row in ArticleUpvote,
+               where: row.post_id == ^post.id and row.user_id == ^user.id
+             )
+           )
+
+    assert Repo.exists?(
+             from(row in ArticleCollect,
+               where: row.post_id == ^post.id and row.user_id == ^user.id
+             )
+           )
+
+    assert Repo.exists?(
+             from(row in ArticleUserEmotion,
+               where: row.post_id == ^post.id and row.user_id == ^user.id
+             )
+           )
+
+    refute Repo.exists?(
+             from(row in ArticleUpvote,
+               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+             )
+           )
+
+    refute Repo.exists?(
+             from(row in ArticleCollect,
+               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+             )
+           )
+
+    refute Repo.exists?(
+             from(row in ArticleUserEmotion,
+               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+             )
+           )
+
+    assert 1 == upvotes_count(post.id)
   end
 
   test "State.read returns projection counts rather than main-record counts" do

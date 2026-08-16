@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @type t :: %Doc{}
   schema "docs" do
-    article_version_fields()
+    doc_version_fields()
     field(:slug, :string)
     field(:json, :string)
 
@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.Model.Doc do
     |> validate_length(:link_addr, min: 5, max: 400)
     |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:body)
-    |> validate_article_version_scope(:doc)
+    |> validate_doc_version_scope()
     |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:article_hash_id, name: :docs_branch_article_hash_stage_index)
   end

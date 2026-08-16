@@ -212,9 +212,11 @@ defmodule GroupherServer.Support.Factory do
       factory_name
       |> mock(attributes)
       |> maybe_put_default_article_community()
-      |> maybe_put_default_article_branch()
+      |> maybe_put_default_doc_branch()
       |> maybe_put_default_tag_group()
       |> GroupherServer.Repo.insert()
+      |> ensure_community_lifecycle()
+      |> ensure_article_lifecycle()
     rescue
       e in Ecto.ConstraintError ->
         if retryable_constraint?(e) and attempts_left > 1 do
@@ -255,10 +257,8 @@ defmodule GroupherServer.Support.Factory do
 
   defp maybe_put_default_article_community(record), do: record
 
-  defp maybe_put_default_article_branch(%{__struct__: model, branch_id: nil} = article)
-       when model in [Post, Blog, Changelog, Doc] do
-    {:ok, %{thread: thread}} = match(article)
-    {:ok, branch} = CMS.Articles.Branch.resolve(article.community, thread)
+  defp maybe_put_default_doc_branch(%Doc{branch_id: nil} = article) do
+    {:ok, branch} = CMS.Docs.Branch.resolve(article.community, CMS.Docs.Branch.main_slug())
 
     %{
       article
@@ -268,7 +268,58 @@ defmodule GroupherServer.Support.Factory do
     }
   end
 
-  defp maybe_put_default_article_branch(record), do: record
+  defp maybe_put_default_doc_branch(%{__struct__: model} = article)
+       when model in [Post, Blog, Changelog] do
+    %{
+      article
+      | article_hash_id: article.article_hash_id || Ecto.UUID.generate(),
+        stage: article.stage || CMS.Const.stage(:public)
+    }
+  end
+
+  defp maybe_put_default_doc_branch(record), do: record
+
+  defp ensure_community_lifecycle({:ok, %Community{} = community} = result) do
+    with {:ok, _lifecycle} <- CMS.Communities.Lifecycle.ensure_created(community.id) do
+      result
+    end
+  end
+
+  defp ensure_community_lifecycle(result), do: result
+
+  defp ensure_article_lifecycle({:ok, %{__struct__: model} = article} = result)
+       when model in [Post, Blog, Changelog] do
+    {:ok, %{thread: thread}} = match(article)
+
+    state =
+      if article.stage == CMS.Const.stage(:public), do: :published, else: :draft_only
+
+    with {:ok, _lifecycle} <-
+           CMS.Articles.Lifecycle.ensure_created(
+             article.community_id,
+             thread,
+             article.article_hash_id,
+             state: state
+           ) do
+      result
+    end
+  end
+
+  defp ensure_article_lifecycle({:ok, %Doc{} = article} = result) do
+    state = if article.stage == CMS.Const.stage(:public), do: :published, else: :draft_only
+
+    with {:ok, _lifecycle} <-
+           CMS.Docs.Lifecycle.ensure_created(
+             article.community_id,
+             article.branch_id,
+             article.article_hash_id,
+             state: state
+           ) do
+      result
+    end
+  end
+
+  defp ensure_article_lifecycle(result), do: result
 
   defp put_default_tag_group(%CommunityTag{} = tag, community_id, thread) do
     title = tag.group || "Ungrouped"

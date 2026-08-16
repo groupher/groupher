@@ -22,9 +22,16 @@ defmodule GroupherServer.CMS.Gate.Access do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Gate.Scope
   alias GroupherServer.CMS.{FrontDesk, Articles}
   alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, CommunityLifecycle}
+
+  alias GroupherServer.CMS.Model.{
+    ArticleLifecycle,
+    CommentLifecycle,
+    CommunityLifecycle,
+    DocLifecycle
+  }
 
   @doc false
   def evaluate(user, action, community), do: Community.evaluate(user, action, community)
@@ -52,10 +59,32 @@ defmodule GroupherServer.CMS.Gate.Access do
   defp load_context(
          :article,
          %CommunityModel{} = community,
+         :doc,
+         %{community_id: community_id, branch_id: branch_id, article_hash_id: hash_id} = article
+       )
+       when community_id == community.id and not is_nil(branch_id) do
+    with %CommunityLifecycle{} = community_lifecycle <- lock_community_lifecycle(community.id),
+         %DocLifecycle{} = article_lifecycle <-
+           lock_doc_lifecycle(community.id, branch_id, hash_id) do
+      {:ok,
+       %{
+         article: article,
+         community: %{community | lifecycle: community_lifecycle},
+         community_lifecycle: community_lifecycle,
+         article_lifecycle: article_lifecycle
+       }}
+    else
+      nil -> {:error, :lifecycle_not_found}
+    end
+  end
+
+  defp load_context(
+         :article,
+         %CommunityModel{} = community,
          thread,
          %{community_id: community_id, article_hash_id: hash_id} = article
        )
-       when thread in [:post, :blog, :changelog, :doc] and community_id == community.id do
+       when thread in [:post, :blog, :changelog] and community_id == community.id do
     with %CommunityLifecycle{} = community_lifecycle <- lock_community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <-
            lock_article_lifecycle(community.id, thread, hash_id) do
@@ -109,7 +138,7 @@ defmodule GroupherServer.CMS.Gate.Access do
          {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
          %CommunityModel{} = community <- article.community,
          {:ok, result} <-
-           Articles.Lock.run(community, thread, article.article_hash_id, fn ->
+           Articles.Lock.run_for_article(community, thread, article, fn ->
              with {:ok, context} <- load_context(:comment, community, thread, article, comment),
                   %Decision{allowed: true} <- decision(user, action, comment, context) do
                {:ok, comment}
@@ -126,14 +155,18 @@ defmodule GroupherServer.CMS.Gate.Access do
     end
   end
 
+  def access_check(user, :read_draft, article) do
+    access_check(user, :read_draft, article, %{policy_mode: :owner_management})
+  end
+
   def access_check(user, action, %{community_id: community_id} = article) do
     with %CommunityModel{} = community <- Repo.get(CommunityModel, community_id),
          {:ok, thread} <- article_thread(article),
          {:ok, result} <-
-           Articles.Lock.run(community, thread, article.article_hash_id, fn ->
+           Articles.Lock.run_for_article(community, thread, article, fn ->
              with {:ok, context} <- load_context(:article, community, thread, article),
                   %Decision{allowed: true} <- decision(user, action, article, context) do
-               {:ok, article}
+               {:ok, canonical_article(context.article, context.community)}
              else
                %Decision{} = decision -> {:error, decision}
                {:error, reason} -> {:error, Decision.deny(reason)}
@@ -142,6 +175,32 @@ defmodule GroupherServer.CMS.Gate.Access do
       {:ok, result}
     else
       nil -> {:error, Decision.deny(:resource_not_found)}
+      {:error, %Decision{} = decision} -> {:error, decision}
+      {:error, reason} -> {:error, Decision.deny(reason)}
+    end
+  end
+
+  def access_check(user, :read_draft, %{community_id: community_id} = article, context)
+      when is_map(context) do
+    with %CommunityModel{} <- Repo.get(CommunityModel, community_id),
+         {:ok, thread} <- article_thread(article),
+         %{__struct__: schema} <- article,
+         %Ecto.Query{} = query <-
+           Scope.scope(
+             schema,
+             user,
+             :read_draft,
+             Map.merge(
+               %{thread: thread, stage: :draft, policy_mode: :owner_management},
+               context
+             )
+             |> maybe_put_doc_branch(article, thread)
+           ),
+         true <- Repo.exists?(where(query, [candidate], candidate.id == ^article.id)) do
+      {:ok, article}
+    else
+      nil -> {:error, Decision.deny(:resource_not_found)}
+      false -> {:error, Decision.deny(:permission_denied)}
       {:error, %Decision{} = decision} -> {:error, decision}
       {:error, reason} -> {:error, Decision.deny(reason)}
     end
@@ -174,6 +233,13 @@ defmodule GroupherServer.CMS.Gate.Access do
     |> GroupherServer.CMS.Gate.Decision.from_result(context)
   end
 
+  defp maybe_put_doc_branch(context, %{branch_id: branch_id}, :doc),
+    do: Map.put_new(context, :branch_id, branch_id)
+
+  defp maybe_put_doc_branch(context, _article, _thread), do: context
+
+  defp canonical_article(article, community), do: Map.put(article, :community, community)
+
   defp article_thread(%{thread: thread}) when thread in [:post, :blog, :changelog, :doc],
     do: {:ok, thread}
 
@@ -191,6 +257,17 @@ defmodule GroupherServer.CMS.Gate.Access do
     |> where(
       [lifecycle],
       lifecycle.community_id == ^community_id and lifecycle.thread == ^thread and
+        lifecycle.article_hash_id == ^article_hash_id
+    )
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+  end
+
+  defp lock_doc_lifecycle(community_id, branch_id, article_hash_id) do
+    DocLifecycle
+    |> where(
+      [lifecycle],
+      lifecycle.community_id == ^community_id and lifecycle.branch_id == ^branch_id and
         lifecycle.article_hash_id == ^article_hash_id
     )
     |> lock("FOR UPDATE")

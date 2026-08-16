@@ -91,6 +91,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -113,6 +114,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
         communityTags: [community_tag.id]
@@ -146,6 +148,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
 
@@ -158,6 +161,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
@@ -175,6 +179,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -196,6 +201,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -211,6 +217,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        expectedVersion: blog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }

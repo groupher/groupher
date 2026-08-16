@@ -1,12 +1,12 @@
-defmodule GroupherServer.CMS.Articles.Snapshot do
+defmodule GroupherServer.CMS.Docs.Snapshot do
   @moduledoc """
-  Stores the append-only revision timeline shared by every Article thread.
+  Stores the append-only revision timeline for Docs.
 
       branch draft/public head
                 |
                 | checkpoint / publish / fork / promote / restore
                 v
-      ArticleSnapshot(revision_number=N)
+      DocSnapshot(revision_number=N)
                 |
                 +--> Diff compares immutable states
                 +--> Restore copies state into a new/current Draft
@@ -21,9 +21,10 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Branch, Draft, Lock, VersionedRelations, Writer}
+  alias CMS.Articles.{Draft, Lock, VersionedRelations, Writer}
+  alias CMS.Docs.Branch
   alias CMS.Gate.Decision
-  alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
+  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
   alias Helper.{ORM, T}
 
   require CMS.Const
@@ -44,12 +45,11 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
   @doc "Lists one Article's branch-local immutable revision timeline."
   @spec list(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res([ArticleSnapshot.t()])
-  def list(%Community{} = community, thread, article_hash_id, opts) do
-    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
-      ArticleSnapshot
+          T.domain_res([DocSnapshot.t()])
+  def list(%Community{} = community, _thread, article_hash_id, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocSnapshot
       |> where([snapshot], snapshot.community_id == ^community.id)
-      |> where([snapshot], snapshot.thread == ^thread)
       |> where([snapshot], snapshot.branch_id == ^branch.id)
       |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
       |> maybe_filter_stage(option(opts, :stage))
@@ -62,32 +62,31 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
   @doc "Fetches one Snapshot in an Article's branch-local revision timeline."
   @spec get(Community.t(), T.thread(), Ecto.UUID.t(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res(ArticleSnapshot.t())
-  def get(%Community{} = community, thread, article_hash_id, snapshot_hash_id, opts) do
-    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
-      ArticleSnapshot
+          T.domain_res(DocSnapshot.t())
+  def get(%Community{} = community, _thread, article_hash_id, snapshot_hash_id, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocSnapshot
       |> where([snapshot], snapshot.hash_id == ^snapshot_hash_id)
       |> where([snapshot], snapshot.community_id == ^community.id)
-      |> where([snapshot], snapshot.thread == ^thread)
       |> where([snapshot], snapshot.branch_id == ^branch.id)
       |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
       |> Repo.one()
       |> case do
-        %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
-        nil -> {:error, {:not_exist, "Article Snapshot #{snapshot_hash_id}"}}
+        %DocSnapshot{} = snapshot -> {:ok, snapshot}
+        nil -> {:error, {:not_exist, "Doc Snapshot #{snapshot_hash_id}"}}
       end
     end
   end
 
   @doc "Creates or reuses a deduplicated checkpoint of the current Draft."
   @spec checkpoint(Community.t(), T.thread(), Ecto.UUID.t(), User.t() | nil, keyword() | map()) ::
-          T.domain_res(ArticleSnapshot.t())
+          T.domain_res(DocSnapshot.t())
   def checkpoint(%Community{} = community, thread, article_hash_id, user, opts) do
-    Lock.run(community, thread, article_hash_id, fn ->
+    run_locked(community, thread, article_hash_id, opts, fn ->
       with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
            {:ok, actor} <- snapshot_actor(user, draft),
            {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
-        checkpoint_article(draft, CMS.Const.article_snapshot_action(:checkpoint), user, opts)
+        checkpoint_article(draft, CMS.Const.doc_snapshot_action(:checkpoint), user, opts)
       else
         {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       end
@@ -96,13 +95,13 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
   @doc "Creates an immutable Snapshot from a current Article row."
   @spec checkpoint_article(T.article(), atom(), User.t() | nil, keyword() | map()) ::
-          T.domain_res(ArticleSnapshot.t())
+          T.domain_res(DocSnapshot.t())
   def checkpoint_article(article, action, user, opts \\ []) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: article.id, thread: thread),
          {:ok, author_id} <- author_id(user, article),
-         {:ok, attrs} <- snapshot_attrs(article, document, thread, action, author_id, opts) do
+         {:ok, attrs} <- snapshot_attrs(article, document, action, author_id, opts) do
       maybe_create_snapshot(attrs, action)
     end
   end
@@ -140,17 +139,20 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
         user,
         opts
       ) do
-    Lock.run(community, thread, article_hash_id, fn ->
+    run_locked(community, thread, article_hash_id, opts, fn ->
       with {:ok, source_snapshot} <-
              get(community, thread, article_hash_id, snapshot_hash_id, opts),
            {:ok, actor} <- snapshot_actor(user, source_snapshot),
-           {:ok, _canonical_snapshot} <-
-             CMS.Gate.access_check(actor, :restore_snapshot, source_snapshot),
-           {:ok, draft} <- restore_into_draft(community, thread, source_snapshot, user, opts),
+           {:ok, target_article} <-
+             Draft.read_editor(community, thread, article_hash_id, opts),
+           {:ok, _canonical_article} <-
+             CMS.Gate.access_check(actor, :restore_snapshot, target_article),
+           {:ok, _draft} <- restore_into_draft(community, thread, source_snapshot, user, opts),
+           {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
            {:ok, _restore_snapshot} <-
              checkpoint_article(
                draft,
-               CMS.Const.article_snapshot_action(:restore),
+               CMS.Const.doc_snapshot_action(:restore),
                user,
                source_snapshot_id: source_snapshot.id
              ) do
@@ -161,12 +163,22 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     end)
   end
 
-  defp snapshot_attrs(article, document, thread, action, author_id, opts) do
+  defp run_locked(%Community{} = community, :doc, article_hash_id, branch_ref, fun) do
+    with {:ok, branch} <- Branch.resolve(community, branch_ref) do
+      Lock.run_doc(community, branch.id, article_hash_id, fun)
+    end
+  end
+
+  defp run_locked(%Community{} = community, thread, article_hash_id, _branch_ref, fun) do
+    Lock.run(community, thread, article_hash_id, fun)
+  end
+
+  defp snapshot_attrs(article, document, action, author_id, opts) do
     branch_id = article.branch_id
     article_hash_id = article.article_hash_id
     version_data = version_data(article)
     version_hash = CMS.Hash.article_version_hash(article, document.body_hash, version_data)
-    parent_snapshot = latest_snapshot(thread, branch_id, article_hash_id)
+    parent_snapshot = latest_snapshot(branch_id, article_hash_id)
 
     with {:ok, body_bag} <- BodyBag.from_document(document) do
       {:ok,
@@ -174,7 +186,6 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
          community_id: article.community_id,
          branch_id: branch_id,
          article_hash_id: article_hash_id,
-         thread: thread,
          stage: article.stage,
          action: action,
          parent_snapshot_id: parent_snapshot && parent_snapshot.id,
@@ -188,7 +199,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
          body_bag: BodyBag.to_map(body_bag),
          data: version_data,
          version_hash: version_hash,
-         revision_number: next_revision_number(thread, branch_id, article_hash_id),
+         revision_number: next_revision_number(branch_id, article_hash_id),
          schema_version: document.schema_version || Map.get(article, :schema_version) || 1,
          message: option(opts, :message)
        }}
@@ -227,22 +238,21 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   end
 
   defp maybe_create_snapshot(attrs, action)
-       when action == CMS.Const.article_snapshot_action(:checkpoint) do
-    case latest_snapshot(attrs.thread, attrs.branch_id, attrs.article_hash_id) do
-      %ArticleSnapshot{version_hash: version_hash} = snapshot
+       when action == CMS.Const.doc_snapshot_action(:checkpoint) do
+    case latest_snapshot(attrs.branch_id, attrs.article_hash_id) do
+      %DocSnapshot{version_hash: version_hash} = snapshot
       when version_hash == attrs.version_hash ->
         {:ok, snapshot}
 
       _ ->
-        ORM.create(ArticleSnapshot, attrs)
+        ORM.create(DocSnapshot, attrs)
     end
   end
 
-  defp maybe_create_snapshot(attrs, _action), do: ORM.create(ArticleSnapshot, attrs)
+  defp maybe_create_snapshot(attrs, _action), do: ORM.create(DocSnapshot, attrs)
 
-  defp latest_snapshot(thread, branch_id, article_hash_id) do
-    ArticleSnapshot
-    |> where([snapshot], snapshot.thread == ^thread)
+  defp latest_snapshot(branch_id, article_hash_id) do
+    DocSnapshot
     |> where([snapshot], snapshot.branch_id == ^branch_id)
     |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
     |> order_by([snapshot], desc: snapshot.revision_number, desc: snapshot.id)
@@ -250,8 +260,8 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     |> Repo.one()
   end
 
-  defp next_revision_number(thread, branch_id, article_hash_id) do
-    case latest_snapshot(thread, branch_id, article_hash_id) do
+  defp next_revision_number(branch_id, article_hash_id) do
+    case latest_snapshot(branch_id, article_hash_id) do
       nil -> 1
       snapshot -> snapshot.revision_number + 1
     end
@@ -276,11 +286,11 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   end
 
   defp create_restored_draft(_community, _thread, _snapshot, nil, _opts) do
-    {:error, {:custom, "Article Snapshot restore requires a user to create a Draft"}}
+    {:error, {:custom, "DocSnapshot restore requires a user to create a Draft"}}
   end
 
   defp create_restored_draft(community, thread, snapshot, %User{} = user, opts) do
-    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       snapshot
       |> restore_attrs(branch_id: branch.id)
       |> Map.drop([:cover_url, :cover_url_dark])

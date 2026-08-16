@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   alias CMS.DocTree.Events
 
   alias CMS.Model.{
-    ArticleSnapshot,
+    DocSnapshot,
     Community,
     Doc,
     DocTreeEvent,
@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
     Enum.map(drafts, fn draft ->
       page = Map.get(pages_by_doc_id, draft.article_hash_id)
-      public = public_article_snapshot(community, branch, draft)
+      public = public_doc_snapshot(community, branch, draft)
       action = if public, do: "modified", else: "created"
       selectable = not is_nil(page)
       disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
@@ -301,14 +301,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     |> Repo.one()
   end
 
-  defp public_article_snapshot(%Community{} = community, branch, %Doc{
+  defp public_doc_snapshot(%Community{} = community, branch, %Doc{
          article_hash_id: article_hash_id
        }) do
-    ArticleSnapshot
+    DocSnapshot
     |> where([s], s.community_id == ^community.id)
     |> where([s], s.branch_id == ^branch.id)
     |> where([s], s.stage == CMS.Const.stage(:public))
-    |> where([s], s.thread == :doc)
     |> where([s], s.article_hash_id == ^article_hash_id)
     |> order_by([s], desc: s.revision_number, desc: s.id)
     |> limit(1)

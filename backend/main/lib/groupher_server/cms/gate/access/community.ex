@@ -56,6 +56,9 @@ defmodule GroupherServer.CMS.Gate.Access.Community do
           {:ok, false} -> {:error, :ancestor_community_not_writable}
           {:error, reason} -> {:error, reason}
         end
+
+      :read_draft ->
+        {:error, :unknown_action}
     end
   end
 

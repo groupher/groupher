@@ -97,6 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -124,6 +125,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
         communityTags: [community_tag.id]
@@ -172,6 +174,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
 
@@ -184,6 +187,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
@@ -201,6 +205,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -222,6 +227,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -237,6 +243,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        expectedVersion: changelog.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }

@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
   describe "[cms doc archive]" do
     test "can archive docs", ~m(doc_long_ago)a do
-      {:ok, _} = CMS.Articles.archive(:doc)
+    assert {:ok, _} = CMS.Articles.archive(:doc)
 
       archived_docs =
         Doc

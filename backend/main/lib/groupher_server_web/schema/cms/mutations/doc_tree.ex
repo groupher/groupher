@@ -43,6 +43,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     field :update_doc_draft, :doc_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:expected_version, non_null(:integer))
       arg(:title, :string)
       arg(:subtitle, :string)
       arg(:slug, :string)
@@ -56,7 +57,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     end
 
     @desc "save current docs draft as an article revision checkpoint"
-    field :checkpoint_doc_draft_snapshot, :article_snapshot do
+    field :checkpoint_doc_draft_snapshot, :doc_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 

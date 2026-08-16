@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Articles.Branch
+  alias CMS.Docs.Branch
   alias CMS.DocTree.{Reader, Revision}
   alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   def run(%Community{} = community, args, fun) do
     actor = Map.get(args, :actor, :operations)
 
-    with {:ok, branch} <- Branch.resolve(community, :doc, args) do
+    with {:ok, branch} <- Branch.resolve(community, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community),
              {:ok, _site_state} <- Reader.ensure_site_state(community, branch_id: branch.id),

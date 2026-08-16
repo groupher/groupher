@@ -319,7 +319,7 @@ defmodule GroupherServer.CMS.Snapshot do
   defp load_summaries(:article, thread, ids) do
     with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
       model
-      |> CMS.Gate.scope(nil, :list, %{thread: thread})
+      |> CMS.Gate.scope(nil, :list, scope_context(thread))
       |> where([article], article.id in ^ids)
       |> Repo.all()
       |> Map.new(&{&1.id, article_summary(thread, &1)})
@@ -331,13 +331,18 @@ defmodule GroupherServer.CMS.Snapshot do
 
   defp load_summaries(:comment, thread, ids) do
     Comment
-    |> join(:inner, [comment], lifecycle in CommentLifecycle, on: lifecycle.comment_id == comment.id)
+    |> join(:inner, [comment], lifecycle in CommentLifecycle,
+      on: lifecycle.comment_id == comment.id
+    )
     |> where([comment], comment.thread == ^thread and comment.id in ^ids)
     |> select([comment, lifecycle], {comment, lifecycle.state})
     |> Repo.all()
     |> Map.new(fn {comment, state} -> {comment.id, comment_summary(thread, comment, state)} end)
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
+
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
+  defp scope_context(thread), do: %{thread: thread}
 
   defp put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)

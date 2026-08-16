@@ -29,6 +29,7 @@ const createPost = graphql(`
 const updatePost = graphql(`
   mutation UpdatePostFromEditor(
     $article: ArticlePathInput!
+    $expectedVersion: Int!
     $title: String
     $bodyBag: ArtimentBodyBagInput
     $linkAddr: String
@@ -37,6 +38,7 @@ const updatePost = graphql(`
   ) {
     updatePost(
       article: $article
+      expectedVersion: $expectedVersion
       title: $title
       bodyBag: $bodyBag
       linkAddr: $linkAddr
@@ -74,11 +76,14 @@ const post = graphql(`
   query ArticleEditorPost($article: ArticlePathInput!) {
     post(article: $article) {
       innerId
+      version
       title
       linkAddr
       copyRight
-      archivedAt
-      isArchived
+      lifecycle {
+        state
+        archivedAt
+      }
       author {
         ...ArticleEditorAuthorFields
       }

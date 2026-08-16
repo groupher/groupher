@@ -206,7 +206,7 @@ defmodule GroupherServer.Test.CMS.Press do
   end
 
   test "Docs Feed exposes only the latest main-branch publish release", ~m(community user)a do
-    {:ok, branch} = CMS.Articles.Branch.resolve(community, :doc)
+    {:ok, branch} = CMS.Docs.Branch.resolve(community, nil)
     published_at = DateTime.utc_now(:second)
 
     for release_number <- 1..2 do

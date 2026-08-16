@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Gate.Access.Comment do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities
   alias GroupherServer.CMS.Gate.Allow
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, Community}
+  alias GroupherServer.CMS.Model.{CommentLifecycle, Community}
 
   @actions [:reply_comment, :edit, :delete, :upvote, :emotion, :pin]
 
@@ -47,15 +47,15 @@ defmodule GroupherServer.CMS.Gate.Access.Comment do
     end
   end
 
-  defp article_mutable(%{article_lifecycle: %ArticleLifecycle{state: :published}}), do: :ok
+  defp article_mutable(%{article_lifecycle: %{state: :published}}), do: :ok
 
-  defp article_mutable(%{article_lifecycle: %ArticleLifecycle{state: :archived}}),
+  defp article_mutable(%{article_lifecycle: %{state: :archived}}),
     do: {:error, :ancestor_article_archived}
 
-  defp article_mutable(%{article_lifecycle: %ArticleLifecycle{state: :deleted}}),
+  defp article_mutable(%{article_lifecycle: %{state: :deleted}}),
     do: {:error, :ancestor_article_deleted}
 
-  defp article_mutable(%{article_lifecycle: %ArticleLifecycle{state: :destroy}}),
+  defp article_mutable(%{article_lifecycle: %{state: :destroy}}),
     do: {:error, :ancestor_article_destroyed}
 
   defp article_mutable(_context), do: {:error, :lifecycle_not_loaded}

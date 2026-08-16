@@ -276,7 +276,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   """
   @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
   def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
-    with {:ok, branch} <- CMS.Articles.Branch.resolve(community, :doc, args) do
+    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, args) do
       DraftDoc.update(community, branch, doc_id, args, user)
     end
   end
@@ -437,7 +437,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
          args
        ) do
     with %User{} = actor <- Repo.get(User, Map.get(args, :actor_id)) do
-      Lock.run(community, :doc, node.doc_id, fn ->
+      Lock.run_doc(community, branch.id, node.doc_id, fn ->
         with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
              source <- Repo.preload(source, :document),
              %{json: json} = document when is_binary(json) <- source.document,

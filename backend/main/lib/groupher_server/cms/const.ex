@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Const do
   enum gate_action do
     [
       read: :read,
+      read_draft: :read_draft,
       list: :list,
       update: :update,
       publish: :publish,
@@ -79,10 +80,10 @@ defmodule GroupherServer.CMS.Const do
     [released: :released, terminated: :terminated]
   end
 
-  enum(article_branch_type, do: [main: :main, preview: :preview])
-  enum(article_branch_status, do: [active: :active, archived: :archived])
+  enum(doc_branch_type, do: [main: :main, preview: :preview])
+  enum(doc_branch_status, do: [active: :active, archived: :archived])
 
-  enum article_snapshot_action do
+  enum doc_snapshot_action do
     [
       checkpoint: :checkpoint,
       publish: :publish,

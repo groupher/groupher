@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     Community,
     DocCoverCard,
     DocCoverItem,
-    ArticleSnapshot,
+    DocSnapshot,
     Doc,
     DocCoverPinnedDoc,
     DocTreeNode
@@ -307,11 +307,10 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       |> Repo.one()
 
     latest_public_snapshot =
-      ArticleSnapshot
+      DocSnapshot
       |> where([s], s.community_id == ^community.id)
       |> where([s], s.branch_id == ^page.branch_id)
       |> where([s], s.article_hash_id == ^page.doc_id)
-      |> where([s], s.thread == :doc)
       |> where([s], s.stage == CMS.Const.stage(:public))
       |> order_by([s], desc: s.revision_number, desc: s.id)
       |> limit(1)

@@ -20,8 +20,9 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias CMS.Comments.Writer
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
+  alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
   alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}
@@ -56,19 +57,27 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   @spec update_edit_status(term()) :: T.domain_res(term())
-  def update_edit_status(%{meta: %Embeds.ArticleMeta{} = meta} = content) do
-    meta = meta |> Map.merge(%{is_edited: true})
-    ORM.update_meta(content, meta)
-  end
-
-  def update_edit_status(%{meta: nil} = content) do
-    meta = Embeds.ArticleMeta.default_meta() |> Map.merge(%{is_edited: true})
-    ORM.update_meta(content, meta)
-  end
+  def update_edit_status(%{meta: _} = content),
+    do: ORM.update_meta(content, %{is_edited: true})
 
   def update_edit_status(content), do: {:ok, content}
 
   @spec archive(atom()) :: T.domain_res(term())
+  def archive(:doc) do
+    now = Datetime.now(:second)
+    threshold = Datetime.shift(now, @archive_threshold[:default])
+
+    DocBranch
+    |> where([branch], branch.status == :active)
+    |> Repo.all()
+    |> Enum.reduce_while({:ok, 0}, fn branch, {:ok, archived_count} ->
+      case DocLifecycle.archive_before(branch, Doc, threshold, now) do
+        {:ok, count} -> {:cont, {:ok, archived_count + count}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
   def archive(thread) do
     with {:ok, info} <- match(thread) do
       now = Datetime.now(:second)

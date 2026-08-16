@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   created after the one-time migration backfill.
   """
   @spec ensure_thread_backfill(atom(), DateTime.t()) :: non_neg_integer()
-  def ensure_thread_backfill(thread, now) when thread in [:post, :blog, :changelog, :doc] do
+  def ensure_thread_backfill(thread, now) when thread in [:post, :blog, :changelog] do
     table = thread_table(thread)
 
     """
@@ -79,7 +79,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @spec ensure_created(integer(), atom(), Ecto.UUID.t(), keyword()) ::
           {:ok, ArticleLifecycle.t()} | {:error, term()}
   def ensure_created(community_id, thread, article_hash_id, opts \\ [])
-      when is_integer(community_id) and thread in [:post, :blog, :changelog, :doc] do
+      when is_integer(community_id) and thread in [:post, :blog, :changelog] do
     attrs = %{
       community_id: community_id,
       thread: thread,
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @doc "Archives stale public heads through the Lifecycle authority."
   @spec archive_before(atom(), module(), DateTime.t(), DateTime.t()) :: non_neg_integer()
   def archive_before(thread, article_model, threshold, _now)
-      when thread in [:post, :blog, :changelog, :doc] do
+      when thread in [:post, :blog, :changelog] do
     operation_ref = Ecto.UUID.generate()
 
     {:ok, count} =
@@ -208,5 +208,4 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   defp thread_table(:post), do: "posts"
   defp thread_table(:blog), do: "blogs"
   defp thread_table(:changelog), do: "changelogs"
-  defp thread_table(:doc), do: "docs"
 end

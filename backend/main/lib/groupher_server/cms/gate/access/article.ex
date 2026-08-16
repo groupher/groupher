@@ -16,9 +16,19 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.{Communities}
   alias GroupherServer.CMS.Gate.Allow
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, Community}
+  alias GroupherServer.CMS.Model.Community
 
-  @actions [:publish, :edit, :create_comment, :delete, :restore, :restore_snapshot]
+  @actions [
+    :publish,
+    :edit,
+    :create_comment,
+    :delete,
+    :restore,
+    :restore_snapshot,
+    :upvote,
+    :emotion,
+    :collect
+  ]
 
   @spec evaluate(User.t() | nil, atom(), map(), map()) :: {:ok, boolean()} | {:error, atom()}
   def evaluate(%User{} = _user, action, article, context)
@@ -54,86 +64,104 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
     end
   end
 
-  defp article_lifecycle(%{article_lifecycle: %ArticleLifecycle{} = lifecycle}),
-    do: {:ok, lifecycle}
+  defp article_lifecycle(%{article_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
 
   defp article_lifecycle(_context), do: {:error, :lifecycle_not_loaded}
 
   defp community(%{community: %Community{} = community}), do: {:ok, community}
   defp community(_context), do: {:error, :lifecycle_not_loaded}
 
-  defp action_allowed(:publish, %ArticleLifecycle{state: state}, _article)
+  defp action_allowed(:publish, %{state: state}, _article)
        when state in [:draft_only, :published],
        do: :ok
 
-  defp action_allowed(:publish, %ArticleLifecycle{state: :archived}, _article),
+  defp action_allowed(:publish, %{state: :archived}, _article),
     do: {:error, :article_archived}
 
-  defp action_allowed(:publish, %ArticleLifecycle{state: :deleted}, _article),
+  defp action_allowed(:publish, %{state: :deleted}, _article),
     do: {:error, :article_deleted}
 
-  defp action_allowed(:publish, %ArticleLifecycle{state: :destroy}, _article),
+  defp action_allowed(:publish, %{state: :destroy}, _article),
     do: {:error, :article_destroyed}
 
   # Editing an existing public Article and updating its editor Draft share the
   # same logical lifecycle. Keep this separate from :publish so both write
   # entry points reject a non-writable ancestor before touching Draft rows.
-  defp action_allowed(:edit, %ArticleLifecycle{state: state}, _article)
+  defp action_allowed(:edit, %{state: state}, _article)
        when state in [:draft_only, :published],
        do: :ok
 
-  defp action_allowed(:edit, %ArticleLifecycle{state: :archived}, _article),
+  defp action_allowed(:edit, %{state: :archived}, _article),
     do: {:error, :article_archived}
 
-  defp action_allowed(:edit, %ArticleLifecycle{state: :deleted}, _article),
+  defp action_allowed(:edit, %{state: :deleted}, _article),
     do: {:error, :article_deleted}
 
-  defp action_allowed(:edit, %ArticleLifecycle{state: :destroy}, _article),
+  defp action_allowed(:edit, %{state: :destroy}, _article),
     do: {:error, :article_destroyed}
 
-  defp action_allowed(:create_comment, %ArticleLifecycle{state: :published}, article) do
+  defp action_allowed(:create_comment, %{state: :published}, article) do
     case Allow.comment(article) do
       {:ok, _} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp action_allowed(:create_comment, %ArticleLifecycle{state: :archived}, _article),
+  defp action_allowed(:create_comment, %{state: :archived}, _article),
     do: {:error, :ancestor_article_archived}
 
-  defp action_allowed(:create_comment, %ArticleLifecycle{state: :deleted}, _article),
+  defp action_allowed(:create_comment, %{state: :deleted}, _article),
     do: {:error, :ancestor_article_deleted}
 
-  defp action_allowed(:create_comment, %ArticleLifecycle{state: :destroy}, _article),
+  defp action_allowed(:create_comment, %{state: :destroy}, _article),
     do: {:error, :ancestor_article_destroyed}
 
-  defp action_allowed(:delete, %ArticleLifecycle{state: state}, _article)
+  # Article interactions are mutation actions, not read-side decoration. Phase
+  # 1 deliberately denies both add and remove unless the Article is public and
+  # its Community remains writable; a future undo-only policy must be explicit.
+  defp action_allowed(action, %{state: :published}, _article)
+       when action in [:upvote, :emotion, :collect],
+       do: :ok
+
+  defp action_allowed(action, %{state: :archived}, _article)
+       when action in [:upvote, :emotion, :collect],
+       do: {:error, :article_archived}
+
+  defp action_allowed(action, %{state: :deleted}, _article)
+       when action in [:upvote, :emotion, :collect],
+       do: {:error, :article_deleted}
+
+  defp action_allowed(action, %{state: :destroy}, _article)
+       when action in [:upvote, :emotion, :collect],
+       do: {:error, :article_destroyed}
+
+  defp action_allowed(:delete, %{state: state}, _article)
        when state in [:draft_only, :published],
        do: :ok
 
-  defp action_allowed(:delete, %ArticleLifecycle{state: :archived}, _article),
+  defp action_allowed(:delete, %{state: :archived}, _article),
     do: {:error, :article_archived}
 
-  defp action_allowed(:delete, %ArticleLifecycle{state: :deleted}, _article),
+  defp action_allowed(:delete, %{state: :deleted}, _article),
     do: {:error, :article_deleted}
 
-  defp action_allowed(:delete, %ArticleLifecycle{state: :destroy}, _article),
+  defp action_allowed(:delete, %{state: :destroy}, _article),
     do: {:error, :article_destroyed}
 
-  defp action_allowed(:restore, %ArticleLifecycle{state: :deleted}, _article), do: :ok
+  defp action_allowed(:restore, %{state: :deleted}, _article), do: :ok
   defp action_allowed(:restore, _lifecycle, _article), do: {:error, :article_not_deleted}
 
-  defp action_allowed(:restore_snapshot, %ArticleLifecycle{state: state}, _article)
+  defp action_allowed(:restore_snapshot, %{state: state}, _article)
        when state in [:draft_only, :published],
        do: :ok
 
-  defp action_allowed(:restore_snapshot, %ArticleLifecycle{state: :archived}, _article),
+  defp action_allowed(:restore_snapshot, %{state: :archived}, _article),
     do: {:error, :article_archived}
 
-  defp action_allowed(:restore_snapshot, %ArticleLifecycle{state: :deleted}, _article),
+  defp action_allowed(:restore_snapshot, %{state: :deleted}, _article),
     do: {:error, :article_deleted}
 
-  defp action_allowed(:restore_snapshot, %ArticleLifecycle{state: :destroy}, _article),
+  defp action_allowed(:restore_snapshot, %{state: :destroy}, _article),
     do: {:error, :article_destroyed}
 
   defp action_allowed(_action, _lifecycle, _article), do: {:error, :article_not_mutable}

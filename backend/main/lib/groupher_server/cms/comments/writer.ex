@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp do_create(thread, article, body, %User{} = user, info) do
     article = Repo.preload(article, [[author: :user], :community])
 
-    Lock.run(article.community, thread, article.article_hash_id, fn ->
+    Lock.run_for_article(article.community, thread, article, fn ->
       create_unlocked(thread, article, body, user, info)
     end)
   end
@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
            FrontDesk.article_of(replying_comment, preload: [[author: :user], :community]),
          {:ok, info} <- match(thread),
          parent_comment <- Replies.root_comment(replying_comment) do
-      Lock.run(article.community, thread, article.article_hash_id, fn ->
+      Lock.run_for_article(article.community, thread, article, fn ->
         reply_unlocked(thread, article, body, user, info, replying_comment, parent_comment)
       end)
     else

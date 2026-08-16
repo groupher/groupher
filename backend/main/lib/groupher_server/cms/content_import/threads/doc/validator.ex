@@ -23,9 +23,9 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.Branch
+  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
-  alias GroupherServer.CMS.Model.{ArticleBranch, Community, DocsSiteState}
+  alias GroupherServer.CMS.Model.{Community, DocBranch, DocsSiteState}
 
   @max_depth CMS.Const.doc_tree_max_depth()
   @max_nodes 6_000
@@ -434,16 +434,16 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     branch_slug = Branch.main_slug()
 
     branch =
-      ArticleBranch
+      DocBranch
       |> where([branch], branch.community_id == ^community.id)
-      |> where([branch], branch.thread == :doc and branch.slug == ^branch_slug)
+      |> where([branch], branch.slug == ^branch_slug)
       |> Repo.one()
 
     case branch do
       nil ->
         {"doc:#{branch_slug}:0", []}
 
-      %ArticleBranch{} = branch ->
+      %DocBranch{} = branch ->
         revision =
           DocsSiteState
           |> where([state], state.community_id == ^community.id and state.branch_id == ^branch.id)

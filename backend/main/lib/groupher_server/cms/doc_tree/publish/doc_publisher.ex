@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
       docs(stage=draft) + ArticleDocument
           |
           v
-      CMS.Articles.publish_doc_draft
+          CMS.Docs.publish_draft
           |
           +--> docs(stage=public) / article snapshot
           +--> parent group public row
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, ancestors} <- ancestor_chain(community, branch, page),
          {:ok, snapshot} <-
-           CMS.Articles.publish_doc_draft(community, doc_id, user, branch_id: branch.id),
+          CMS.Docs.publish_draft(community, doc_id, user, branch_id: branch.id),
          {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
            upsert_public_node(community, branch, page, snapshot.article_hash_id),
@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      Lock.run(community, :doc, public_doc.article_hash_id, fn ->
+      Lock.run_doc(community, branch.id, public_doc.article_hash_id, fn ->
         with {:ok, _canonical_doc} <- CMS.Gate.access_check(user, :edit, public_doc) do
           case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
             {:ok, draft} ->

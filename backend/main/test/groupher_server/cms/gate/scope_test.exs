@@ -142,10 +142,16 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
   test "Article scope compiles complete public visibility for every thread" do
     for {thread, schema} <- article_schemas() do
+      context =
+        case thread do
+          :doc -> %{thread: :doc, branch_policy: :main}
+          _ -> %{thread: thread}
+        end
+
       query =
         schema
         |> select([article], %{id: article.id})
-        |> CMS.Gate.scope(nil, :list, %{thread: thread})
+        |> CMS.Gate.scope(nil, :list, context)
 
       assert %Ecto.Query{} = query
 
@@ -153,7 +159,14 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
       assert sql =~ ~s(JOIN "cms"."communities")
       assert sql =~ ~s(LEFT OUTER JOIN "cms"."community_lifecycles")
-      assert sql =~ ~s(JOIN "cms"."article_lifecycles")
+
+      if thread == :doc do
+        assert sql =~ ~s(JOIN "cms"."doc_lifecycles")
+        assert sql =~ ~s(JOIN "cms"."doc_branches")
+      else
+        assert sql =~ ~s(JOIN "cms"."article_lifecycles")
+      end
+
       refute sql =~ ~s(FROM "cms"."trashed_articles")
       assert sql =~ "stage"
       refute sql =~ "archived_at"
@@ -169,11 +182,63 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
              CMS.Gate.scope(Post, nil, :read, %{thread: :blog})
   end
 
+  test "Doc scope requires an explicit branch and makes public main policy visible" do
+    assert {:error, :scope_context_missing} =
+             CMS.Gate.scope(Doc, nil, :read, %{thread: :doc})
+
+    query = CMS.Gate.scope(Doc, nil, :read, %{thread: :doc, branch_id: 42})
+    assert %Ecto.Query{} = query
+
+    {sql, params} = to_sql(query)
+    assert sql =~ ~s(JOIN "cms"."doc_branches")
+    assert sql =~ "branch_id"
+    assert 42 in params
+    assert "main" in params
+
+    management_query =
+      CMS.Gate.scope(Doc, :operations, :read, %{
+        thread: :doc,
+        stage: :draft,
+        branch_id: 42,
+        policy_mode: :operations
+      })
+
+    assert %Ecto.Query{} = management_query
+  end
+
+  test "Article Draft scope has an explicit management action" do
+    query =
+      CMS.Gate.scope(Post, :operations, :read_draft, %{
+        thread: :post,
+        policy_mode: :operations
+      })
+
+    assert %Ecto.Query{} = query
+    {sql, params} = to_sql(query)
+    assert sql =~ "stage"
+    assert "draft" in params
+    assert ["draft_only", "published", "archived"] in params
+
+    assert {:error, :scope_policy_actor_mismatch} =
+             CMS.Gate.scope(Post, nil, :read_draft, %{
+               thread: :post,
+               policy_mode: :operations
+             })
+
+    assert {:error, :scope_context_missing} =
+             CMS.Gate.scope(Post, :operations, :read_draft, %{
+               thread: :post,
+               stage: :public,
+               policy_mode: :operations
+             })
+  end
+
   test "Document draft scope requires an explicit management policy" do
     operations_query =
       CMS.Gate.scope(ArticleDocument, :operations, :read, %{
         thread: :doc,
         stage: :draft,
+        branch_id: 42,
         policy_mode: :operations
       })
 
@@ -200,6 +265,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
              CMS.Gate.scope(ArticleDocument, nil, :read, %{
                thread: :doc,
                stage: :draft,
+               branch_id: 42,
                policy_mode: :operations
              })
 
@@ -208,6 +274,14 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
                thread: :doc,
                stage: :draft,
                policy_mode: :public
+             })
+
+    assert {:error, :scope_context_missing} =
+             CMS.Gate.scope(ArticleDocument, :operations, :read, %{
+               thread: :doc,
+               stage: :draft,
+               branch_policy: :main,
+               policy_mode: :operations
              })
   end
 
@@ -261,7 +335,13 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
   test "ArticleDocument scope compiles every parent table" do
     for {thread, _schema} <- article_schemas() do
-      query = CMS.Gate.scope(ArticleDocument, nil, :read, %{thread: thread})
+      context =
+        case thread do
+          :doc -> %{thread: :doc, branch_policy: :main}
+          _ -> %{thread: thread}
+        end
+
+      query = CMS.Gate.scope(ArticleDocument, nil, :read, context)
       assert %Ecto.Query{} = query
 
       {sql, params} = to_sql(query)

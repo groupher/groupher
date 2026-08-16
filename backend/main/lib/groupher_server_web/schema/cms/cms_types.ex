@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias GroupherServer.CMS.Gate.Passport.Registry
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
@@ -368,22 +368,27 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:pin)
   end
 
-  enum :article_snapshot_stage do
+  enum :article_stage do
     value(:draft)
     value(:public)
   end
 
-  enum :article_branch_type do
+  enum :doc_snapshot_stage do
+    value(:draft)
+    value(:public)
+  end
+
+  enum :doc_branch_type do
     value(:main)
     value(:preview)
   end
 
-  enum :article_branch_status do
+  enum :doc_branch_status do
     value(:active)
     value(:archived)
   end
 
-  enum :article_snapshot_action do
+  enum :doc_snapshot_action do
     value(:checkpoint)
     value(:publish)
     value(:fork)
@@ -391,11 +396,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:restore)
   end
 
-  object :article_branch do
+  object :doc_branch do
     field(:slug, non_null(:string))
     field(:title, non_null(:string))
-    field(:type, non_null(:article_branch_type))
-    field(:status, non_null(:article_branch_status))
+    field(:type, non_null(:doc_branch_type))
+    field(:status, non_null(:doc_branch_status))
   end
 
   enum :doc_publish_mode do
@@ -671,25 +676,33 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_draft do
     field(:id, :id)
     field(:doc_id, :id, resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
+    field(:version, non_null(:integer))
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
-    field(:stage, :article_snapshot_stage)
+    field(:stage, :doc_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
-    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+
+    field(:document, :article_document,
+      resolve: fn draft, _, _ ->
+        document = Repo.preload(draft, :document).document
+        {:ok, document}
+      end
+    )
   end
 
   object :article_draft do
     field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
     field(:thread, non_null(:thread), resolve: fn draft, _, _ -> {:ok, draft.meta.thread} end)
-    field(:stage, non_null(:article_snapshot_stage))
+    field(:version, non_null(:integer))
+    field(:stage, non_null(:article_stage))
     field(:title, non_null(:string))
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
-    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+    field(:document, :article_document, resolve: dataloader(CMS, :document))
     timestamp_fields()
   end
 
@@ -703,7 +716,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
-    field(:stage, :article_snapshot_stage)
+    field(:stage, :doc_snapshot_stage)
     field(:publish_state, :doc_tree_node_publish_state)
   end
 
@@ -958,11 +971,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
   end
 
-  object :article_snapshot do
+  object :doc_snapshot do
     field(:id, :id, resolve: fn snapshot, _, _ -> {:ok, snapshot.hash_id} end)
-    field(:thread, :thread)
-    field(:stage, :article_snapshot_stage)
-    field(:action, :article_snapshot_action)
+    field(:thread, :thread, resolve: fn _snapshot, _, _ -> {:ok, :doc} end)
+    field(:stage, :doc_snapshot_stage)
+    field(:action, :doc_snapshot_action)
     field(:article_hash_id, :string)
     field(:title, :string)
     field(:slug, :string)

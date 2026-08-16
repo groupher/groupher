@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Dashboard.KanbanBoards
   alias CMS.Interactions.State
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle}
+  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
   require CMS.Const
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Articles.List do
     with {:ok, _thread} <- Allow.thread(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
-      |> Scope.scope(nil, :list, %{thread: thread})
+      |> Scope.scope(nil, :list, scope_context(thread))
       |> QueryBuilder.domain_query(filter)
       |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
       |> State.order_articles(thread, Map.get(filter, :order))
@@ -166,7 +166,7 @@ defmodule GroupherServer.CMS.Articles.List do
 
     with {:ok, info} <- match(thread) do
       info.model
-      |> Scope.scope(actor, :list, %{thread: thread})
+      |> Scope.scope(actor, :list, scope_context(thread))
       |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
       |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
       |> select([article, ...], article)
@@ -182,7 +182,7 @@ defmodule GroupherServer.CMS.Articles.List do
   def count_published(thread, %User{} = user) do
     with {:ok, info} <- match(thread) do
       info.model
-      |> Scope.scope(nil, :list, %{thread: thread})
+      |> Scope.scope(nil, :list, scope_context(thread))
       |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
       |> where([_article, ...], as(:published_author).user_id == ^user.id)
       |> select([article, ...], count(article.id))
@@ -197,6 +197,9 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
 
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
+  defp scope_context(thread), do: %{thread: thread}
+
   defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
     Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))
   end
@@ -210,11 +213,7 @@ defmodule GroupherServer.CMS.Articles.List do
            PinnedArticle
            |> join(:inner, [p], c in assoc(p, :community))
            |> join(:inner, [p], article in assoc(p, ^thread))
-           |> join(:left, [p, c, article], trashed in TrashedArticle,
-             on:
-               trashed.thread == ^thread and
-                 trashed.article_hash_id == article.article_hash_id
-           )
+           |> pin_trash_join(thread)
            |> where([p, c, article, trashed], c.slug == ^community and is_nil(trashed.id))
            |> select([p, c, article, trashed], article)
            |> ORM.find_all(%{page: 1, size: 10}) do
@@ -225,6 +224,23 @@ defmodule GroupherServer.CMS.Articles.List do
   end
 
   defp add_pin_articles_ifneed(articles, _queryable, _filter), do: articles
+
+  defp pin_trash_join(query, :doc) do
+    join(query, :left, [p, c, article], trashed in TrashedDocArticle,
+      on:
+        trashed.community_id == article.community_id and
+          trashed.branch_id == article.branch_id and
+          trashed.article_hash_id == article.article_hash_id
+    )
+  end
+
+  defp pin_trash_join(query, thread) do
+    join(query, :left, [p, c, article], trashed in TrashedArticle,
+      on:
+        trashed.thread == ^thread and
+          trashed.article_hash_id == article.article_hash_id
+    )
+  end
 
   defp should_add_pin?(%{page: 1, sort: :desc_active} = filter) do
     skip_pinned_fields = [:article_tag, :article_tags, :community_tag, :community_tags, :order]

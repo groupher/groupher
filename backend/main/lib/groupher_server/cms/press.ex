@@ -20,7 +20,8 @@ defmodule GroupherServer.CMS.Press do
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.{ArticleBranch, Community, Doc, DocPublishRelease, DocTreeNode, PressConfig}
+  alias CMS.Docs.Branch
+  alias CMS.Model.{Community, Doc, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
   alias Helper.Later
 
   require Logger
@@ -211,18 +212,34 @@ defmodule GroupherServer.CMS.Press do
     end
   end
 
-  defp current_article(community, thread, inner_id) do
-    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
-      info.model
-      |> CMS.Gate.scope(nil, :read, %{thread: thread})
-      |> join(:inner, [article, ...], branch in ArticleBranch,
+  defp current_article(community, :doc, inner_id) do
+    with {:ok, branch} <- public_branch(community, :doc) do
+      Doc
+      |> CMS.Gate.scope(nil, :read, %{thread: :doc, branch_id: branch.id})
+      |> join(:inner, [article, ...], branch in DocBranch,
         as: :press_branch,
         on: branch.id == article.branch_id
       )
       |> where([article], article.community_id == ^community.id)
-      |> where([_article, ...], as(:press_branch).slug == "main")
+      |> where([_article, ...], as(:press_branch).type == ^CMS.Const.doc_branch_type(:main))
       |> where([article], article.inner_id == ^inner_id)
       |> preload([article, ...], [:document, :community_tags, author: :user])
+      |> Repo.one()
+      |> case do
+        nil -> {:error, {:not_exist, "Press Article"}}
+        %{document: nil} -> {:error, {:not_exist, "Press Article document"}}
+        article -> ensure_current_public_article(:doc, article)
+      end
+    end
+  end
+
+  defp current_article(community, thread, inner_id) do
+    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
+      info.model
+      |> CMS.Gate.scope(nil, :read, %{thread: thread})
+      |> where([article], article.community_id == ^community.id)
+      |> where([article], article.inner_id == ^inner_id)
+      |> preload([article], [:document, :community_tags, author: :user])
       |> Repo.one()
       |> case do
         nil -> {:error, {:not_exist, "Press Article"}}
@@ -252,9 +269,9 @@ defmodule GroupherServer.CMS.Press do
 
   defp current_feed_items(community, :doc, _limit) do
     DocPublishRelease
-    |> join(:inner, [release], branch in ArticleBranch, on: branch.id == release.branch_id)
+    |> join(:inner, [release], branch in DocBranch, on: branch.id == release.branch_id)
     |> where([release, branch], release.community_id == ^community.id)
-    |> where([_release, branch], branch.thread == :doc and branch.slug == "main")
+    |> where([_release, branch], branch.type == ^CMS.Const.doc_branch_type(:main))
     |> order_by([release], desc: release.release_number, desc: release.id)
     |> preload([release], [:author, :articles])
     |> limit(1)
@@ -269,37 +286,21 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp current_articles(community, :doc, limit) do
-    Doc
-    |> CMS.Gate.scope(nil, :list, %{thread: :doc})
-    |> join(:inner, [article, ...], branch in ArticleBranch,
-      as: :press_branch,
-      on: branch.id == article.branch_id
-    )
-    |> join(:inner, [article, ...], node in DocTreeNode,
-      on:
-        node.community_id == article.community_id and node.branch_id == article.branch_id and
-          node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
-          node.type == :page
-    )
-    |> where([article], article.community_id == ^community.id)
-    |> where([_article, ...], as(:press_branch).slug == "main")
-    |> order_by([article], desc: article.active_at, desc: article.inserted_at)
-    |> limit(^limit)
-    |> preload([article, ...], [:document, :community_tags, author: :user])
-    |> Repo.all()
-    |> Enum.reject(&is_nil(&1.document))
-  end
-
-  defp current_articles(community, thread, limit) do
-    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
-      info.model
-      |> CMS.Gate.scope(nil, :list, %{thread: thread})
-      |> join(:inner, [article, ...], branch in ArticleBranch,
+    with {:ok, branch} <- public_branch(community, :doc) do
+      Doc
+      |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id})
+      |> join(:inner, [article, ...], branch in DocBranch,
         as: :press_branch,
         on: branch.id == article.branch_id
       )
+      |> join(:inner, [article, ...], node in DocTreeNode,
+        on:
+          node.community_id == article.community_id and node.branch_id == article.branch_id and
+            node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
+            node.type == :page
+      )
       |> where([article], article.community_id == ^community.id)
-      |> where([_article, ...], as(:press_branch).slug == "main")
+      |> where([_article, ...], as(:press_branch).type == ^CMS.Const.doc_branch_type(:main))
       |> order_by([article], desc: article.active_at, desc: article.inserted_at)
       |> limit(^limit)
       |> preload([article, ...], [:document, :community_tags, author: :user])
@@ -309,6 +310,24 @@ defmodule GroupherServer.CMS.Press do
       _ -> []
     end
   end
+
+  defp current_articles(community, thread, limit) do
+    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
+      info.model
+      |> CMS.Gate.scope(nil, :list, %{thread: thread})
+      |> where([article], article.community_id == ^community.id)
+      |> order_by([article], desc: article.active_at, desc: article.inserted_at)
+      |> limit(^limit)
+      |> preload([article, ...], [:document, :community_tags, author: :user])
+      |> Repo.all()
+      |> Enum.reject(&is_nil(&1.document))
+    else
+      _ -> []
+    end
+  end
+
+  defp public_branch(community, :doc), do: Branch.resolve(community, Branch.main_slug())
+  defp public_branch(_community, _thread), do: {:ok, nil}
 
   defp ensure_current_public_article(:doc, article) do
     visible =

@@ -29,10 +29,15 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
 
       assert not changelog.meta.is_edited
 
-      {:ok, _} = CMS.Articles.update(changelog, %{"title" => "new title"})
-      {:ok, changelog} = ORM.find_by(Changelog, id: changelog.id)
+      {:ok, draft} =
+        CMS.Articles.update(
+          changelog,
+          %{"title" => "new title", expected_version: changelog.version}
+        )
 
-      assert changelog.meta.is_edited
+      assert draft.title == "new title"
+      assert {:ok, unchanged} = ORM.find_by(Changelog, id: changelog.id)
+      assert unchanged.title == changelog.title
     end
 
     test "changelog's lock/undo_lock article should work", ~m(user community changelog_attrs)a do

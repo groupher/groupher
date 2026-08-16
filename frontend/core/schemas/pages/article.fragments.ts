@@ -65,6 +65,7 @@ export const PageTagFields = graphql(`
 export const PagePostFields = graphql(`
   fragment PagePostFields on Post {
     innerId
+    version
     isPinned
     title
     insertedAt
@@ -108,8 +109,10 @@ export const PagePostDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    archivedAt
-    isArchived
+    lifecycle {
+      state
+      archivedAt
+    }
     viewerHasCollected @include(if: $userHasLogin)
     viewerHasUpvoted @include(if: $userHasLogin)
   }
@@ -118,6 +121,7 @@ export const PagePostDetailFields = graphql(`
 export const PageChangelogFields = graphql(`
   fragment PageChangelogFields on Changelog {
     innerId
+    version
     isPinned
     title
     insertedAt
@@ -161,8 +165,10 @@ export const PageChangelogDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    archivedAt
-    isArchived
+    lifecycle {
+      state
+      archivedAt
+    }
     viewerHasCollected @include(if: $userHasLogin)
     viewerHasUpvoted @include(if: $userHasLogin)
   }
@@ -232,8 +238,10 @@ export const PageDocDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    archivedAt
-    isArchived
+    lifecycle {
+      state
+      archivedAt
+    }
     viewerHasCollected @include(if: $userHasLogin)
     viewerHasUpvoted @include(if: $userHasLogin)
   }

@@ -33,27 +33,35 @@ defmodule GroupherServer.CMS.Articles.Emotions do
     {:ok, info} = match(article)
     article = Repo.preload(article, :community)
 
-    with {:ok, thread} <- FrontDesk.thread_of(article),
-         {:ok, _thread_key} <-
-           Allow.emotion(article.community.slug, :article, thread, emotion) do
-      toggle(article, info, emotion, user, desired_state)
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
+      toggle(article, info, thread, emotion, user, desired_state)
     end
   end
 
-  defp toggle(article, info, emotion, user, desired_state) do
-    target =
-      %{received_user_id: author_user_id(article), user_id: user.id}
-      |> Map.put(info.foreign_key, article.id)
-
+  defp toggle(article, info, thread, emotion, user, desired_state) do
     Multi.new()
-    |> Multi.run(:persist_user_emotion, fn _, _ ->
+    |> Multi.run(:access_check, fn _, _ ->
+      CMS.Gate.access_check(user, :emotion, article)
+    end)
+    |> Multi.run(:allow_emotion, fn _, %{access_check: canonical_article} ->
+      Allow.emotion(canonical_article.community.slug, :article, thread, emotion)
+    end)
+    |> Multi.run(:persist_user_emotion, fn _, %{access_check: canonical_article} ->
+      target =
+        %{received_user_id: author_user_id(canonical_article), user_id: user.id}
+        |> Map.put(info.foreign_key, canonical_article.id)
+
       EmotionToggle.persist(ArticleUserEmotion, target, emotion, desired_state)
     end)
-    |> Multi.run(:sync_projection, fn _, %{persist_user_emotion: changed?} ->
+    |> Multi.run(:sync_projection, fn _,
+                                      %{
+                                        access_check: canonical_article,
+                                        persist_user_emotion: changed?
+                                      } ->
       operation = if desired_state, do: :add, else: :remove
 
-      with :ok <- maybe_sync_projection(article, emotion, user, changed?, operation) do
-        {:ok, State.read(article, user)}
+      with :ok <- maybe_sync_projection(canonical_article, emotion, user, changed?, operation) do
+        {:ok, State.read(canonical_article, user)}
       end
     end)
     |> Repo.transaction()

@@ -355,12 +355,20 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
       {:ok, stat3} = CMS.Communities.tag_stats(article_tag3)
 
-      assert stat.contents_count == 0
-      assert stat.today_contents_count == 0
+      assert stat.contents_count == 1
+      assert stat.today_contents_count == 1
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
+      assert stat3.contents_count == 0
+      assert stat3.today_contents_count == 0
+
+      {:ok, %{article: _published, snapshot: nil}} =
+        CMS.Articles.publish_draft(community, :post, created.article_hash_id, user)
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      {:ok, stat3} = CMS.Communities.tag_stats(article_tag3)
+      assert stat.contents_count == 0
       assert stat3.contents_count == 1
-      assert stat3.today_contents_count == 1
     end
 
     test "can not create post with other community's community tags",

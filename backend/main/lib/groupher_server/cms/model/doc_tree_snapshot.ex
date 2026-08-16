@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, ArticleBranch}
+  alias CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
   @type t :: %DocTreeSnapshot{}
   schema "doc_tree_snapshots" do
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
     belongs_to(:author, User)
 
     field(:tree_json, :map)

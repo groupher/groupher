@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
 
   schema "article_lifecycles" do
     belongs_to(:community, Community)
-    field(:thread, Ecto.Enum, values: [:post, :blog, :changelog, :doc])
+    field(:thread, Ecto.Enum, values: [:post, :blog, :changelog])
     field(:article_hash_id, Ecto.UUID)
     field(:state, Ecto.Enum, values: @states, default: :draft_only)
     field(:version, :integer, default: 1)

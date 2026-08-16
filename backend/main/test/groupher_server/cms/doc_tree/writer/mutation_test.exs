@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   alias CMS.DocTree.Writer.Index
 
   alias CMS.Model.{
-    ArticleBranch,
+    DocBranch,
     Doc,
     DocsSiteState,
     DocTreeEvent,
@@ -425,7 +425,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
         end)
 
       {:ok, node} = draft_node(community, hd(links).id)
-      branch = Repo.get!(ArticleBranch, node.branch_id)
+      branch = Repo.get!(DocBranch, node.branch_id)
 
       {:ok, queries} =
         capture_repo_queries(fn ->
@@ -623,6 +623,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           user
         )
 
+      {:ok, current} =
+        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+
       {:ok, draft} =
         CMS.DocTree.update_draft(
           community,
@@ -630,7 +633,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           %{
             title: "Updated Install",
             slug: "updated-install",
-            body_bag: mock_body_bag(@plate_body)
+            body_bag: mock_body_bag(@plate_body),
+            expected_version: current.version
           },
           user
         )

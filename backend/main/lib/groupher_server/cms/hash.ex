@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Hash do
   @asset_url_algorithm :sha256
 
   @doc """
-  Hashes the complete canonical version state stored by `ArticleSnapshot`.
+  Hashes the complete canonical version state stored by `DocSnapshot`.
 
   Identity, branch, stage, counters, reactions, and other runtime fields are
   intentionally excluded. Product-specific version fields arrive through

@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleSnapshot, DocPublishRelease}
+  alias CMS.Model.{DocPublishRelease, DocSnapshot}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
   @type t :: %DocPublishReleaseArticle{}
   schema "doc_publish_release_articles" do
     belongs_to(:release, DocPublishRelease)
-    belongs_to(:snapshot, ArticleSnapshot)
+    belongs_to(:snapshot, DocSnapshot)
 
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
     timestamps(type: :utc_datetime)
   end
 
-  @doc "Builds the Article Snapshot membership row for a Docs release."
+  @doc "Builds the DocSnapshot membership row for a Docs release."
   def changeset(%DocPublishReleaseArticle{} = row, attrs) do
     row
     |> cast(attrs, @required_fields ++ @optional_fields)

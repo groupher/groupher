@@ -11,11 +11,12 @@ defmodule GroupherServer.CMS.Articles.Publish do
       main/public                       same main/public physical row
            |                                      |
            +-- initialize runtime                 +-- preserve runtime
-           +-- append publish Snapshot            +-- append publish Snapshot
+           +-- Doc: append DocSnapshot             +-- Doc: append DocSnapshot
+           +-- Article: no Snapshot               +-- Article: no Snapshot
 
-  Preview branches are draft-only and can not call this module. Promote first
-  copies Preview content into main/draft, then official publish follows this
-  single path.
+  Ordinary Articles have no branch dimension and use the persistent Draft path.
+  Docs branches may publish inside Dashboard; their public projection
+  and release remain branch-local and are never used by the public main scope.
 
   Business position:
 
@@ -31,18 +32,19 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias CMS.Artiment.BodyBag
 
   alias CMS.Articles.{
-    Branch,
     Document,
     Draft,
-    Lifecycle,
     Lock,
-    Snapshot,
     States,
     VersionedRelations,
     Write
   }
 
-  alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
+  alias CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias CMS.Docs.{Branch, Snapshot}
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
+
+  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
   alias CMS.SearchArtiments.Indexer
   alias CMS.{Assets, Communities, Events, Gate}
   alias CMS.Gate.{Decision, PublishThrottle}
@@ -60,7 +62,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
     article_hash_id = Map.get(attrs, :article_hash_id) || Ecto.UUID.generate()
     attrs = Map.put(attrs, :article_hash_id, article_hash_id)
 
-    Lock.run(community, thread, article_hash_id, fn ->
+    run_locked(community, thread, article_hash_id, attrs, fn ->
       with {:ok, _draft} <- Draft.create(community, thread, attrs, user),
            {:ok, %{article: public_article}} <-
              do_publish(community, thread, article_hash_id, user, attrs) do
@@ -69,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
     end)
   end
 
-  @doc "Updates a public Article through a temporary main Draft and publishes it atomically."
+  @doc "Starts or updates a persistent Draft while leaving the Public head unchanged."
   @spec update(T.article(), map(), User.t() | nil) :: T.domain_res(T.article())
   def update(public_article, attrs, user \\ nil)
 
@@ -77,62 +79,74 @@ defmodule GroupherServer.CMS.Articles.Publish do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(public_article),
          %Community{} = community <- Repo.get(Community, public_article.community_id),
          {:ok, user} <- publish_actor(public_article, user) do
-      Lock.run(community, thread, public_article.article_hash_id, fn ->
-        with {:ok, _canonical_article} <- Gate.access_check(user, :edit, public_article),
-             {:ok, _draft} <-
-               Draft.ensure_from_public_unlocked(
-                 community,
-                 thread,
-                 public_article.article_hash_id,
-                 Branch.main_slug(),
-                 user
-               ),
-             {:ok, _updated_draft} <-
-               Draft.update_unlocked(
-                 community,
-                 thread,
-                 public_article.article_hash_id,
-                 attrs
-               ),
-             {:ok, %{article: updated_public}} <-
-               do_publish(
-                 community,
-                 thread,
-                 public_article.article_hash_id,
-                 user,
-                 Branch.main_slug()
-               ) do
-          {:ok, updated_public}
-        else
-          {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
-          error -> error
+      run_locked(
+        community,
+        thread,
+        public_article.article_hash_id,
+        nil,
+        fn ->
+          with {:ok, _canonical_article} <- Gate.access_check(user, :edit, public_article),
+               {:ok, draft} <-
+                 Draft.ensure_from_public_unlocked(
+                   community,
+                   thread,
+                   public_article.article_hash_id,
+                   nil,
+                   user
+                 ),
+               attrs <- Map.put_new(attrs, :expected_version, draft.version),
+               {:ok, updated_draft} <-
+                 Draft.update_unlocked(
+                   community,
+                   thread,
+                   public_article.article_hash_id,
+                   attrs,
+                   require_version?: true
+                 ),
+               {:ok, _public_article} <- States.update_edit_status(public_article),
+               {:ok, updated_draft} <- States.update_edit_status(updated_draft) do
+            {:ok, updated_draft}
+          else
+            {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+            error -> error
+          end
         end
-      end)
+      )
     else
       nil -> {:error, {:not_exist, "Article Community"}}
       error -> error
     end
   end
 
-  @doc "Publishes one main-branch Draft and returns its public Article and immutable Snapshot."
+  @doc "Publishes one Draft and returns its public Article plus a DocSnapshot only for Doc targets."
   @spec publish(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), map() | keyword()) ::
-          T.domain_res(%{article: T.article(), snapshot: ArticleSnapshot.t()})
+          T.domain_res(%{article: T.article(), snapshot: DocSnapshot.t() | nil})
   def publish(%Community{} = community, thread, article_hash_id, %User{} = user, branch_ref) do
-    Lock.run(community, thread, article_hash_id, fn ->
+    run_locked(community, thread, article_hash_id, branch_ref, fn ->
       do_publish(community, thread, article_hash_id, user, branch_ref)
     end)
   end
 
+  defp run_locked(%Community{} = community, :doc, article_hash_id, branch_ref, fun) do
+    with {:ok, branch} <- Branch.resolve(community, branch_ref) do
+      Lock.run_doc(community, branch.id, article_hash_id, fun)
+    end
+  end
+
+  defp run_locked(%Community{} = community, thread, article_hash_id, _branch_ref, fun) do
+    Lock.run(community, thread, article_hash_id, fun)
+  end
+
   defp do_publish(%Community{} = community, thread, article_hash_id, %User{} = user, branch_ref) do
-    with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
-         true <- Branch.main?(branch),
+    with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
+         :ok <- validate_publish_branch(thread, branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
          {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
          :ok <- validate_version(draft),
          {:ok, public_article, first_publish?} <-
            apply_draft(community, thread, branch, draft),
          {:ok, _lifecycle} <-
-           Lifecycle.transition(community.id, thread, draft.article_hash_id, :published),
+           transition_lifecycle(community, thread, draft, branch, :published),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
@@ -142,23 +156,30 @@ defmodule GroupherServer.CMS.Articles.Publish do
              user,
              first_publish?
            ),
-         {:ok, snapshot} <-
-           Snapshot.checkpoint_article(
-             public_article,
-             CMS.Const.article_snapshot_action(:publish),
-             user
-           ),
+         {:ok, snapshot} <- maybe_snapshot(thread, public_article, user),
          :ok <- run_after_publish(public_article, first_publish?) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
-      false -> {:error, {:custom, "preview branches can not be published"}}
       {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
       error -> error
     end
   end
 
+  defp validate_publish_branch(:doc, _branch), do: :ok
+
+  defp validate_publish_branch(_thread, branch) do
+    if is_nil(branch), do: :ok, else: {:error, {:custom, "ordinary Articles have no branch"}}
+  end
+
   defp apply_draft(%Community{} = community, thread, branch, draft) do
-    case Draft.read_public(community, thread, draft.article_hash_id, branch) do
+    public_result =
+      if thread == :doc do
+        Draft.read_branch_public(community, thread, draft.article_hash_id, branch)
+      else
+        Draft.read_public(community, thread, draft.article_hash_id, nil)
+      end
+
+    case public_result do
       {:ok, public_article} -> publish_over_existing(thread, draft, public_article)
       {:error, _} -> publish_first(draft)
     end
@@ -294,4 +315,22 @@ defmodule GroupherServer.CMS.Articles.Publish do
   end
 
   defp validate_version(_article), do: :ok
+
+  defp resolve_branch(%Community{} = community, :doc, branch_ref),
+    do: Branch.resolve(community, branch_ref)
+
+  defp resolve_branch(_community, _thread, _branch_ref), do: {:ok, nil}
+
+  defp transition_lifecycle(community, :doc, draft, branch, state) do
+    DocLifecycle.transition(community.id, branch.id, draft.article_hash_id, state)
+  end
+
+  defp transition_lifecycle(community, thread, draft, _branch, state) do
+    ArticleLifecycle.transition(community.id, thread, draft.article_hash_id, state)
+  end
+
+  defp maybe_snapshot(:doc, article, user),
+    do: Snapshot.checkpoint_article(article, CMS.Const.doc_snapshot_action(:publish), user)
+
+  defp maybe_snapshot(_thread, _article, _user), do: {:ok, nil}
 end

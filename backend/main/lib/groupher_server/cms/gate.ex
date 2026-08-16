@@ -31,4 +31,8 @@ defmodule GroupherServer.CMS.Gate do
 
   @doc "Loads, locks, and checks a resource inside the current mutation transaction."
   defdelegate access_check(user, action, resource), to: Access
+
+  @doc "Checks a resource with an explicit Gate policy context."
+  def access_check(user, action, resource, context),
+    do: Access.access_check(user, action, resource, context)
 end

@@ -87,6 +87,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -109,6 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
         copyRight: "translate",
@@ -145,6 +147,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         communityTags: [community_tag.id, community_tag2.id]
       }
 
@@ -157,6 +160,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: result["version"],
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
@@ -174,6 +178,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -194,6 +199,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -208,6 +214,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        expectedVersion: post.version,
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -240,6 +247,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       variables = %{
         article: %{inner_id: post_b.inner_id, community: community_b.slug, thread: "POST"},
+        expectedVersion: post_b.version,
         title: "cross-community-update-#{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }

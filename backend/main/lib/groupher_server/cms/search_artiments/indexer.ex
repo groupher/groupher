@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <-
            info.model
-           |> CMS.Gate.scope(nil, :read, %{thread: thread})
+           |> CMS.Gate.scope(nil, :read, scope_context(thread))
            |> where([article], article.id == ^article_id)
            |> Repo.one() do
       case Projection.Article.project(thread, article) do
@@ -109,7 +109,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   defp searchable_article(model, thread, article_id) do
     model
-    |> CMS.Gate.scope(nil, :read, %{thread: thread})
+    |> CMS.Gate.scope(nil, :read, scope_context(thread))
     |> where([article], article.id == ^article_id)
     |> where([article], article.stage == ^CMS.Const.stage(:public))
     |> where([article], article.pending == ^@legal)
@@ -130,7 +130,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread) do
       articles =
         info.model
-        |> CMS.Gate.scope(nil, :list, %{thread: thread})
+        |> CMS.Gate.scope(nil, :list, scope_context(thread))
         |> where([article], article.id > ^after_id)
         |> where([article], article.stage == ^CMS.Const.stage(:public))
         |> where([article], article.pending == ^@legal)
@@ -163,4 +163,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
       error -> error
     end
   end
+
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
+  defp scope_context(thread), do: %{thread: thread}
 end

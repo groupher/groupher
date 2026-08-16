@@ -22,8 +22,10 @@ defmodule GroupherServer.CMS.Articles.Reader do
   alias Accounts.Model.User
   alias CMS.{Interactions}
   alias CMS.Gate.{Allow, Scope}
-  alias CMS.Model.{Community, PinnedArticle}
+  alias CMS.Model.{Community, DocBranch, PinnedArticle}
   alias Helper.{Multi, Constant, Datetime, ORM, T}
+
+  require CMS.Const
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
   @threads GroupherServer.CMS.Artiment.Config.threads()
@@ -108,17 +110,33 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   defp find_active(model, community_id, thread, inner_id, preloads, actor) do
-    model
-    |> Scope.scope(actor, :read, %{thread: thread})
-    |> where([article], article.community_id == ^community_id)
-    |> where([article], article.inner_id == ^inner_id)
-    |> preload(^preloads)
-    |> Repo.one()
-    |> case do
-      nil -> diagnose_moderation(model, community_id, thread, inner_id)
-      article -> {:ok, article}
+    with {:ok, context} <- public_scope_context(community_id, thread),
+         %Ecto.Query{} = query <- Scope.scope(model, actor, :read, context) do
+      query
+      |> where([article], article.community_id == ^community_id)
+      |> where([article], article.inner_id == ^inner_id)
+      |> preload(^preloads)
+      |> Repo.one()
+      |> case do
+        nil -> diagnose_moderation(model, community_id, thread, inner_id)
+        article -> {:ok, article}
+      end
+    else
+      {:error, reason} -> {:error, reason}
     end
   end
+
+  defp public_scope_context(community_id, :doc) do
+    case Repo.get_by(DocBranch,
+           community_id: community_id,
+           type: CMS.Const.doc_branch_type(:main)
+         ) do
+      %DocBranch{id: branch_id} -> {:ok, %{thread: :doc, branch_id: branch_id}}
+      nil -> {:error, {:not_exist, "Doc main branch"}}
+    end
+  end
+
+  defp public_scope_context(_community_id, thread), do: {:ok, %{thread: thread}}
 
   defp diagnose_moderation(model, community_id, thread, inner_id) do
     model

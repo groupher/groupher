@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
+  alias CMS.Docs.Branch
   alias CMS.Artiment.Threads
   alias CMS.Comments.Replies
   alias CMS.Helper.ArticlePath
@@ -266,13 +267,15 @@ defmodule GroupherServer.CMS.FrontDesk do
           {:ok, struct()} | {:error, map()}
   def article(community, thread, inner_id, opts \\ [])
 
-  def article(%Community{id: community_id}, thread, inner_id, opts) do
+  def article(%Community{id: community_id} = community, thread, inner_id, opts) do
     preload = Keyword.get(opts, :preload, [])
 
     with {:ok, info} <- match(thread),
+         {:ok, scope_context} <- public_scope_context(community, thread),
          %Ecto.Query{} = query <-
            CMS.Gate.scope(info.model, nil, :read, %{
              thread: thread,
+             branch_id: Map.get(scope_context, :branch_id),
              include_illegal: Keyword.get(opts, :include_illegal, false)
            }),
          {:ok, article} <-
@@ -290,6 +293,14 @@ defmodule GroupherServer.CMS.FrontDesk do
       {:error, _} -> {:error, {:article_not_found, "article not found"}}
     end
   end
+
+  defp public_scope_context(%Community{} = community, :doc) do
+    with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
+      {:ok, %{branch_id: branch.id}}
+    end
+  end
+
+  defp public_scope_context(_community, _thread), do: {:ok, %{}}
 
   defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 

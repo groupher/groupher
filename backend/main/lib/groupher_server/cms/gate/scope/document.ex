@@ -19,11 +19,23 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
   @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
   def scope(%Ecto.Query{} = query, actor, action, %{thread: thread} = context)
       when action in @actions do
+    branch_ref =
+      if thread == :doc,
+        do: Map.get(context, :branch_id) || Map.get(context, :branch_policy),
+        else: nil
+
     with {:ok, article_schema} <- ArticleSchema.fetch(thread),
          policy_mode <- Map.get(context, :policy_mode, :public),
          stage <- Map.get(context, :stage, :public),
          %Ecto.Query{} = scoped <-
-           AncestorCommunity.document(query, thread, article_schema, policy_mode, stage),
+           AncestorCommunity.document(
+             query,
+             thread,
+             article_schema,
+             policy_mode,
+             stage,
+             branch_ref
+           ),
          %Ecto.Query{} = scoped <- AncestorCommunity.community_actor(scoped, policy_mode, actor) do
       scoped
     end

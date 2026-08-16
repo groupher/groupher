@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, Author}
+  alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
   alias Helper.Constant
 
   require CMS.Const
@@ -23,14 +23,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   @draft_lifecycle_states [:draft_only, :published, :archived]
   @audit_illegal Constant.CMS.pending(:illegal)
 
-  @actions [:read, :list]
+  @actions [:read, :read_draft, :list]
+  @management_policy_modes [:owner_management, :moderator_management, :operations]
 
   @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, thread} <- resolve_thread(query, context),
-         {:ok, policy_mode} <- policy_mode(context),
-         {:ok, stage} <- stage(context),
-         %Ecto.Query{} = query <- base_scope(query, thread, policy_mode),
+         {:ok, policy_mode} <- policy_mode(context, action),
+         {:ok, stage} <- stage(context, action),
+         {:ok, branch_id} <- branch_id(context, thread),
+         %Ecto.Query{} = query <- base_scope(query, thread, policy_mode, branch_id),
          {:ok, query} <- apply_stage(query, stage, actor, policy_mode, context),
          {:ok, query} <- apply_actor_policy(query, actor, policy_mode) do
       query
@@ -44,10 +46,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
           Ecto.Query.t() | {:error, atom()}
   def moderation_diagnostic_scope(queryable, thread) do
     query = Ecto.Queryable.to_query(queryable)
+    branch_id = if thread == :doc, do: :main, else: nil
 
     with {:ok, expected_schema} <- ArticleSchema.fetch(thread),
          true <- root_schema(query) == expected_schema,
-         %Ecto.Query{} = query <- base_scope(query, thread, :public) do
+         %Ecto.Query{} = query <- base_scope(query, thread, :public, branch_id) do
       where(query, [article, ...], article.pending == ^@audit_illegal)
     else
       false -> {:error, :scope_root_mismatch}
@@ -55,23 +58,82 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  defp base_scope(query, thread, policy_mode) do
+  defp base_scope(query, thread, policy_mode, branch_id)
+
+  defp base_scope(query, :doc, policy_mode, branch_id) do
     with %Ecto.Query{} = query <- AncestorCommunity.article(query, policy_mode) do
       query
-      |> lifecycle_scope(thread)
+      |> doc_lifecycle_scope(branch_id)
+      |> doc_branch_scope(branch_id, policy_mode)
     end
   end
 
-  defp policy_mode(%{policy_mode: mode})
-       when mode in [:public, :owner_management, :moderator_management, :operations],
+  defp base_scope(query, thread, policy_mode, _branch_id) do
+    with %Ecto.Query{} = query <- AncestorCommunity.article(query, policy_mode) do
+      lifecycle_scope(query, thread)
+    end
+  end
+
+  defp doc_branch_scope(query, branch_id, policy_mode) when is_integer(branch_id) do
+    query =
+      from([article, ...] in query,
+        join: branch in DocBranch,
+        as: :gate_doc_branch,
+        on:
+          branch.id == article.branch_id and branch.community_id == article.community_id and
+            branch.id == ^branch_id
+      )
+
+    case policy_mode do
+      :public ->
+        from([article, ...] in query,
+          where: as(:gate_doc_branch).type == ^CMS.Const.doc_branch_type(:main)
+        )
+
+      _ ->
+        query
+    end
+  end
+
+  defp doc_branch_scope(query, :main, :public) do
+    from([article, ...] in query,
+      join: branch in DocBranch,
+      as: :gate_doc_branch,
+      on:
+        branch.id == article.branch_id and branch.community_id == article.community_id and
+          branch.type == ^CMS.Const.doc_branch_type(:main)
+    )
+  end
+
+  defp doc_branch_scope(_query, _branch_id, _policy_mode),
+    do: {:error, :scope_context_missing}
+
+  defp policy_mode(%{policy_mode: mode}, :read_draft)
+       when mode in @management_policy_modes,
        do: {:ok, mode}
 
-  defp policy_mode(%{}), do: {:ok, :public}
-  defp policy_mode(_), do: {:error, :scope_context_missing}
+  defp policy_mode(%{}, :read_draft), do: {:ok, :owner_management}
 
-  defp stage(%{stage: stage}) when stage in [:public, :draft], do: {:ok, stage}
-  defp stage(%{}), do: {:ok, :public}
-  defp stage(_), do: {:error, :scope_context_missing}
+  defp policy_mode(%{policy_mode: mode}, _action)
+       when mode in [:public | @management_policy_modes],
+       do: {:ok, mode}
+
+  defp policy_mode(%{}, _action), do: {:ok, :public}
+  defp policy_mode(_, _action), do: {:error, :scope_context_missing}
+
+  defp stage(%{stage: :draft}, :read_draft), do: {:ok, :draft}
+  defp stage(%{stage: _stage}, :read_draft), do: {:error, :scope_context_missing}
+  defp stage(%{}, :read_draft), do: {:ok, :draft}
+
+  defp stage(%{stage: stage}, _action) when stage in [:public, :draft], do: {:ok, stage}
+  defp stage(%{}, _action), do: {:ok, :public}
+  defp stage(_, _action), do: {:error, :scope_context_missing}
+
+  defp branch_id(%{branch_id: branch_id}, :doc) when is_integer(branch_id), do: {:ok, branch_id}
+  defp branch_id(%{branch_policy: :main}, :doc), do: {:ok, :main}
+  defp branch_id(%{}, :doc), do: {:error, :scope_context_missing}
+  defp branch_id(_, :doc), do: {:error, :scope_context_missing}
+  defp branch_id(_context, _thread), do: {:ok, nil}
 
   defp apply_stage(query, :public, actor, _policy_mode, context) do
     query = from([article, ...] in query, where: article.stage == ^:public)
@@ -113,6 +175,27 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       as: :gate_article_lifecycle,
       on:
         lifecycle.community_id == article.community_id and lifecycle.thread == ^thread and
+          lifecycle.article_hash_id == article.article_hash_id
+    )
+  end
+
+  defp doc_lifecycle_scope(query, branch_id) when is_integer(branch_id) do
+    from(article in query,
+      join: lifecycle in DocLifecycle,
+      as: :gate_article_lifecycle,
+      on:
+        lifecycle.community_id == article.community_id and lifecycle.branch_id == ^branch_id and
+          lifecycle.article_hash_id == article.article_hash_id
+    )
+  end
+
+  defp doc_lifecycle_scope(query, :main) do
+    from(article in query,
+      join: lifecycle in DocLifecycle,
+      as: :gate_article_lifecycle,
+      on:
+        lifecycle.community_id == article.community_id and
+          lifecycle.branch_id == article.branch_id and
           lifecycle.article_hash_id == article.article_hash_id
     )
   end

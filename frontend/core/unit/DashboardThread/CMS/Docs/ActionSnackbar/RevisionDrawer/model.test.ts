@@ -8,7 +8,7 @@ import {
   EMPTY_REVISION_VALUE,
   parseRevisionDocumentValue,
 } from './model'
-import type { TArticleSnapshot } from './spec'
+import type { TDocSnapshot } from './spec'
 
 const value = (...texts: string[]): TRichEditorValue =>
   texts.map((text, index) => ({
@@ -20,8 +20,8 @@ const value = (...texts: string[]): TRichEditorValue =>
 const snapshot = (
   id: string,
   documentValue: TRichEditorValue,
-  stage: TArticleSnapshot['stage'] = 'DRAFT',
-): TArticleSnapshot => ({
+  stage: TDocSnapshot['stage'] = 'DRAFT',
+): TDocSnapshot => ({
   action: 'CHECKPOINT',
   id,
   versionHash: id,

@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
 
       version_hash(docs(stage=draft))
                     !=
-      article_snapshots(stage=public).version_hash
+      doc_snapshots(stage=public).version_hash
 
   Business position:
 
@@ -17,8 +17,8 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
         -> Repo / published projection
   """
 
-  alias GroupherServer.CMS.Articles.Snapshot
-  alias GroupherServer.CMS.Model.{ArticleSnapshot, Doc}
+  alias GroupherServer.CMS.Docs.Snapshot
+  alias GroupherServer.CMS.Model.{Doc, DocSnapshot}
 
   @doc """
   Returns whether a draft doc version differs from its public version.
@@ -28,8 +28,8 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
       iex> ChangeDetection.draft_content_changed?(draft, public_snapshot)
       true
   """
-  @spec draft_content_changed?(Doc.t() | nil, ArticleSnapshot.t() | nil) :: boolean()
-  def draft_content_changed?(%Doc{} = draft, %ArticleSnapshot{} = public_snapshot) do
+  @spec draft_content_changed?(Doc.t() | nil, DocSnapshot.t() | nil) :: boolean()
+  def draft_content_changed?(%Doc{} = draft, %DocSnapshot{} = public_snapshot) do
     Snapshot.version_hash(draft) != public_snapshot.version_hash
   end
 
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
   def draft_content_changed?(_, _), do: false
 
   @doc """
-  Returns the complete version hash shape stored by `ArticleSnapshot`.
+  Returns the complete version hash shape stored by `DocSnapshot`.
 
   ## Examples
 

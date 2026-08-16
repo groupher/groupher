@@ -3,10 +3,11 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:update_draft) do
     """
-    mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $bodyBag: ArtimentBodyBagInput) {
-      updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, bodyBag: $bodyBag) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $subtitle: String, $slug: String, $bodyBag: ArtimentBodyBagInput) {
+      updateDocDraft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, subtitle: $subtitle, slug: $slug, bodyBag: $bodyBag) {
         id
         docId
+        version
         title
         subtitle
         slug
@@ -93,6 +94,7 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
       docDraft(community: $community, id: $id) {
         id
         docId
+        version
         title
         subtitle
         slug
@@ -117,7 +119,7 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def q(:draft_snapshots) do
     """
-    query($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
+    query($community: String!, $id: ID!, $stage: DocSnapshotStage) {
       docDraftSnapshots(community: $community, id: $id, stage: $stage) {
         id
         thread

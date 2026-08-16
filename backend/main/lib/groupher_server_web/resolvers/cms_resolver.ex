@@ -365,7 +365,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: %Community{} = community, id: doc_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.Articles.read_doc_editor(community, doc_id,
+    CMS.Docs.read_editor(community, doc_id,
       actor: user,
       policy_mode: :moderator_management
     )
@@ -377,7 +377,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{context: %{cur_user: user}}
       ) do
     with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
-      CMS.Articles.read_doc_editor(community, doc_id,
+      CMS.Docs.read_editor(community, doc_id,
         actor: user,
         policy_mode: :moderator_management
       )
@@ -390,7 +390,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       |> Map.take([:stage, :limit])
       |> Enum.to_list()
 
-    CMS.Articles.list_doc_draft_snapshots(community, doc_id, opts)
+    CMS.Docs.list_snapshots(community, doc_id, opts)
   end
 
   def doc_draft_snapshots(_root, %{community: community} = args, _info) do
@@ -404,7 +404,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: %Community{} = community, id: doc_id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.get_doc_draft_snapshot(community, doc_id, snapshot_id)
+    CMS.Docs.get_snapshot(community, doc_id, snapshot_id)
   end
 
   def doc_draft_snapshot(_root, %{community: community} = args, _info) do
@@ -448,7 +448,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.update_draft(
       community,
       doc_id,
-      Map.take(args, [:title, :subtitle, :slug, :body_bag]),
+      Map.take(args, [:title, :subtitle, :slug, :body_bag, :expected_version]),
       user
     )
   end
@@ -458,11 +458,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, id: doc_id, cur_user: user},
         _info
       ) do
-    CMS.Articles.checkpoint_doc_draft_snapshot(community, doc_id, user)
+    CMS.Docs.checkpoint_snapshot(community, doc_id, user)
   end
 
   def checkpoint_doc_draft_snapshot(_root, %{community: community, id: doc_id}, _info) do
-    CMS.Articles.checkpoint_doc_draft_snapshot(community, doc_id)
+    CMS.Docs.checkpoint_snapshot(community, doc_id)
   end
 
   def restore_doc_draft_snapshot(
@@ -470,7 +470,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, id: doc_id, snapshot_id: snapshot_id, cur_user: user},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id, user)
+    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id, user)
   end
 
   def restore_doc_draft_snapshot(
@@ -478,7 +478,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, id: doc_id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id)
+    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id)
   end
 
   def doc_publish_checklist(_root, %{community: community}, _info) do

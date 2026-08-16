@@ -18,6 +18,8 @@ export type ArticleCatEnum = 'BUG' | 'DISCUSSION' | 'IDEA' | 'QA'
 
 export type ArticleDocumentAssetUsage = 'ATTACHMENT' | 'COVER' | 'COVER_DARK' | 'EMBED' | 'INLINE'
 
+export type ArticleLifecycleState = 'ARCHIVED' | 'DELETED' | 'DESTROY' | 'DRAFT_ONLY' | 'PUBLISHED'
+
 export type ArticleOrderEnum = 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
 
 export type ArticlePathInput = {
@@ -25,10 +27,6 @@ export type ArticlePathInput = {
   innerId: string | number
   thread: Thread
 }
-
-export type ArticleSnapshotAction = 'CHECKPOINT' | 'FORK' | 'PROMOTE' | 'PUBLISH' | 'RESTORE'
-
-export type ArticleSnapshotStage = 'DRAFT' | 'PUBLIC'
 
 export type ArticleStatusEnum =
   | 'BACKLOG'
@@ -142,6 +140,10 @@ export type DocPublishChangesInput = {
 export type DocPublishMode = 'DOC_ONLY' | 'WITH_COVER_SYNC'
 
 export type DocPublishStatus = 'DRAFT' | 'PUBLIC'
+
+export type DocSnapshotAction = 'CHECKPOINT' | 'FORK' | 'PROMOTE' | 'PUBLISH' | 'RESTORE'
+
+export type DocSnapshotStage = 'DRAFT' | 'PUBLIC'
 
 export type DocTreeNodeInput = {
   badge?: string | null | undefined
@@ -544,6 +546,7 @@ export type PageTagFieldsFragment = {
 
 export type PagePostFieldsFragment = {
   innerId: string | null
+  version: number
   isPinned: boolean | null
   title: string | null
   insertedAt: unknown
@@ -612,8 +615,6 @@ export type PagePostFieldsFragment = {
 
 export type PagePostDetailFieldsFragment = {
   collectsCount: number | null
-  archivedAt: unknown
-  isArchived: boolean | null
   viewerHasCollected?: boolean | null
   viewerHasUpvoted?: boolean | null
   meta: {
@@ -640,10 +641,12 @@ export type PagePostDetailFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null> | null
+  lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
 }
 
 export type PageChangelogFieldsFragment = {
   innerId: string | null
+  version: number
   isPinned: boolean | null
   title: string | null
   insertedAt: unknown
@@ -712,8 +715,6 @@ export type PageChangelogFieldsFragment = {
 
 export type PageChangelogDetailFieldsFragment = {
   collectsCount: number | null
-  archivedAt: unknown
-  isArchived: boolean | null
   viewerHasCollected?: boolean | null
   viewerHasUpvoted?: boolean | null
   meta: {
@@ -740,6 +741,7 @@ export type PageChangelogDetailFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null> | null
+  lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
 }
 
 export type PagePostPageInfoFragment = {
@@ -826,8 +828,6 @@ export type PageDocFieldsFragment = {
 
 export type PageDocDetailFieldsFragment = {
   collectsCount: number | null
-  archivedAt: unknown
-  isArchived: boolean | null
   viewerHasCollected?: boolean | null
   viewerHasUpvoted?: boolean | null
   meta: {
@@ -854,6 +854,7 @@ export type PageDocDetailFieldsFragment = {
     bio: string | null
     shortbio: string | null
   } | null> | null
+  lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
 }
 
 export type PageDocPageInfoFragment = {
@@ -878,6 +879,7 @@ export type ChangelogQueryVariables = Exact<{
 export type ChangelogQuery = {
   changelog: {
     innerId: string | null
+    version: number
     isPinned: boolean | null
     title: string | null
     insertedAt: unknown
@@ -888,8 +890,6 @@ export type ChangelogQuery = {
     upvotesCount: number | null
     commentsParticipantsCount: number | null
     collectsCount: number | null
-    archivedAt: unknown
-    isArchived: boolean | null
     viewerHasCollected?: boolean | null
     viewerHasUpvoted?: boolean | null
     author: {
@@ -971,6 +971,7 @@ export type ChangelogQuery = {
       bio: string | null
       shortbio: string | null
     } | null> | null
+    lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
   }
 }
 
@@ -991,6 +992,7 @@ export type PagedChangelogsQuery = {
       viewerHasViewed?: boolean | null
       viewerHasUpvoted?: boolean | null
       innerId: string | null
+      version: number
       isPinned: boolean | null
       title: string | null
       insertedAt: unknown
@@ -1483,8 +1485,6 @@ export type PageDocQuery = {
     upvotesCount: number | null
     commentsParticipantsCount: number | null
     collectsCount: number | null
-    archivedAt: unknown
-    isArchived: boolean | null
     viewerHasCollected?: boolean | null
     viewerHasUpvoted?: boolean | null
     author: {
@@ -1566,6 +1566,7 @@ export type PageDocQuery = {
       bio: string | null
       shortbio: string | null
     } | null> | null
+    lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
   }
 }
 
@@ -1864,6 +1865,7 @@ export type PostQueryVariables = Exact<{
 export type PostQuery = {
   post: {
     innerId: string | null
+    version: number
     isPinned: boolean | null
     title: string | null
     insertedAt: unknown
@@ -1874,8 +1876,6 @@ export type PostQuery = {
     upvotesCount: number | null
     commentsParticipantsCount: number | null
     collectsCount: number | null
-    archivedAt: unknown
-    isArchived: boolean | null
     viewerHasCollected?: boolean | null
     viewerHasUpvoted?: boolean | null
     author: {
@@ -1957,6 +1957,7 @@ export type PostQuery = {
       bio: string | null
       shortbio: string | null
     } | null> | null
+    lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
   }
 }
 
@@ -1978,6 +1979,7 @@ export type PagedPostsQuery = {
       viewerHasViewed?: boolean | null
       viewerHasUpvoted?: boolean | null
       innerId: string | null
+      version: number
       isPinned: boolean | null
       title: string | null
       insertedAt: unknown
@@ -2081,6 +2083,7 @@ export type PagedPublishedPostsQuery = {
       viewerHasViewed?: boolean | null
       viewerHasUpvoted?: boolean | null
       innerId: string | null
+      version: number
       isPinned: boolean | null
       title: string | null
       insertedAt: unknown
@@ -2290,9 +2293,6 @@ export type UserAchievementFieldsFragment = {
   reputation: number | null
   articlesUpvotesCount: number | null
   articlesCollectsCount: number | null
-  donateMember: boolean | null
-  seniorMember: boolean | null
-  sponsorMember: boolean | null
 }
 
 export type MeQueryVariables = Exact<{ [key: string]: never }>
@@ -2342,9 +2342,6 @@ export type UserQuery = {
       reputation: number | null
       articlesUpvotesCount: number | null
       articlesCollectsCount: number | null
-      donateMember: boolean | null
-      seniorMember: boolean | null
-      sponsorMember: boolean | null
     } | null
     contributes: {
       startDate: unknown
@@ -2380,9 +2377,6 @@ export type SessionStateQuery = {
         reputation: number | null
         articlesUpvotesCount: number | null
         articlesCollectsCount: number | null
-        donateMember: boolean | null
-        seniorMember: boolean | null
-        sponsorMember: boolean | null
       } | null
     } | null
   } | null
@@ -2457,6 +2451,7 @@ export type CreatePostMutation = {
 
 export type UpdatePostFromEditorMutationVariables = Exact<{
   article: ArticlePathInput
+  expectedVersion: number
   title?: string | null | undefined
   bodyBag?: ArtimentBodyBagInput | null | undefined
   linkAddr?: string | null | undefined
@@ -2505,11 +2500,11 @@ export type ArticleEditorPostQueryVariables = Exact<{
 export type ArticleEditorPostQuery = {
   post: {
     innerId: string | null
+    version: number
     title: string | null
     linkAddr: string | null
     copyRight: string | null
-    archivedAt: unknown
-    isArchived: boolean | null
+    lifecycle: { state: ArticleLifecycleState; archivedAt: unknown } | null
     author: {
       login: string | null
       nickname: string | null
@@ -2584,6 +2579,7 @@ export type ArticleMenuTagFieldsFragment = {
 
 export type UpdatePostFromMenuMutationVariables = Exact<{
   article: ArticlePathInput
+  expectedVersion: number
   title?: string | null | undefined
   communityTags?: Array<string | number | null | undefined> | string | number | null | undefined
 }>
@@ -4611,7 +4607,7 @@ export type DocDraftQuery = {
     title: string | null
     subtitle: string | null
     slug: string | null
-    stage: ArticleSnapshotStage | null
+    stage: DocSnapshotStage | null
     digest: string | null
     insertedAt: unknown
     updatedAt: unknown
@@ -4628,15 +4624,15 @@ export type DocDraftQuery = {
 export type DocDraftSnapshotsQueryVariables = Exact<{
   community: string
   id: string | number
-  stage?: ArticleSnapshotStage | null | undefined
+  stage?: DocSnapshotStage | null | undefined
 }>
 
 export type DocDraftSnapshotsQuery = {
   docDraftSnapshots: Array<{
     id: string | null
     thread: Thread | null
-    stage: ArticleSnapshotStage | null
-    action: ArticleSnapshotAction | null
+    stage: DocSnapshotStage | null
+    action: DocSnapshotAction | null
     articleHashId: string | null
     title: string | null
     slug: string | null
@@ -4840,6 +4836,7 @@ export type UpdateDocTreeNodeMutation = {
 export type UpdateDocDraftMutationVariables = Exact<{
   community: string
   id: string | number
+  expectedVersion: number
   title?: string | null | undefined
   subtitle?: string | null | undefined
   slug?: string | null | undefined
@@ -4875,8 +4872,8 @@ export type CheckpointDocDraftSnapshotMutation = {
   checkpointDocDraftSnapshot: {
     id: string | null
     thread: Thread | null
-    stage: ArticleSnapshotStage | null
-    action: ArticleSnapshotAction | null
+    stage: DocSnapshotStage | null
+    action: DocSnapshotAction | null
     articleHashId: string | null
     title: string | null
     slug: string | null
@@ -4931,7 +4928,7 @@ export type MoveDocToDraftMutationVariables = Exact<{
 export type MoveDocToDraftMutation = {
   moveDocToDraft: {
     docId: string | null
-    stage: ArticleSnapshotStage | null
+    stage: DocSnapshotStage | null
     publishState: {
       status: DocPublishStatus | null
       published: boolean | null
@@ -6449,6 +6446,7 @@ export const PagePostFieldsFragmentDoc = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -6660,8 +6658,17 @@ export const PagePostDetailFieldsFragmentDoc = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -6742,6 +6749,7 @@ export const PageChangelogFieldsFragmentDoc = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -6933,8 +6941,17 @@ export const PageChangelogDetailFieldsFragmentDoc = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -7244,8 +7261,17 @@ export const PageDocDetailFieldsFragmentDoc = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -7700,9 +7726,6 @@ export const UserAchievementFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'reputation' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesUpvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesCollectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'donateMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'seniorMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'sponsorMember' } },
         ],
       },
     },
@@ -9545,6 +9568,7 @@ export const ChangelogDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -9652,8 +9676,17 @@ export const ChangelogDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -9919,6 +9952,7 @@ export const PagedChangelogsDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -10955,8 +10989,17 @@ export const PageDocDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -11912,6 +11955,7 @@ export const PostDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -12019,8 +12063,17 @@ export const PostDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'collectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'lifecycle' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'viewerHasCollected' },
@@ -12284,6 +12337,7 @@ export const PagedPostsDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -12588,6 +12642,7 @@ export const PagedPublishedPostsDocument = {
         kind: 'SelectionSet',
         selections: [
           { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'version' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
           { kind: 'Field', name: { kind: 'Name', value: 'title' } },
           { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
@@ -13207,9 +13262,6 @@ export const UserDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'reputation' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesUpvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesCollectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'donateMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'seniorMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'sponsorMember' } },
         ],
       },
     },
@@ -13320,9 +13372,6 @@ export const SessionStateDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'reputation' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesUpvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'articlesCollectsCount' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'donateMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'seniorMember' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'sponsorMember' } },
         ],
       },
     },
@@ -13496,6 +13545,14 @@ export const UpdatePostFromEditorDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
@@ -13534,6 +13591,11 @@ export const UpdatePostFromEditorDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
               },
               {
                 kind: 'Argument',
@@ -13695,11 +13757,21 @@ export const ArticleEditorPostDocument = {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'linkAddr' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'copyRight' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'isArchived' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'lifecycle' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'state' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'archivedAt' } },
+                    ],
+                  },
+                },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'author' },
@@ -13865,6 +13937,14 @@ export const UpdatePostFromMenuDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
@@ -13888,6 +13968,11 @@ export const UpdatePostFromMenuDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
               },
               {
                 kind: 'Argument',
@@ -19069,7 +19154,7 @@ export const DocDraftSnapshotsDocument = {
         {
           kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'stage' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticleSnapshotStage' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DocSnapshotStage' } },
         },
       ],
       selectionSet: {
@@ -19599,6 +19684,14 @@ export const UpdateDocDraftDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'title' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
         },
@@ -19634,6 +19727,11 @@ export const UpdateDocDraftDocument = {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'id' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
               },
               {
                 kind: 'Argument',

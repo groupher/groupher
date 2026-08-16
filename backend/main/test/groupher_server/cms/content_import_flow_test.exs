@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Articles.{Branch, Draft}
+  alias GroupherServer.CMS.Articles.Draft
   alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
   alias GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping
   alias GroupherServer.CMS.ContentImport.Persistence.Job
@@ -14,7 +14,8 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
   alias GroupherServer.CMS.DocTree
   alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, DocTreeNode}
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Model.{DocLifecycle, DocTreeNode}
 
   @job_query """
   query ContentImportJob($community: String!, $jobRef: ID!) {
@@ -225,9 +226,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, first_import} = Writer.apply(community, first_job.job_ref)
     first_doc_ref = first_import.first_imported_doc_ref
 
-    assert Repo.get_by(ArticleLifecycle,
+    {:ok, branch} = Branch.resolve(community, nil)
+
+    assert Repo.get_by(DocLifecycle,
              community_id: community.id,
-             thread: :doc,
+             branch_id: branch.id,
              article_hash_id: first_doc_ref
            )
 
@@ -308,9 +311,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     page = Repo.get_by!(DocTreeNode, community_id: community.id, type: :page)
     assert page.doc_id == first_doc_ref
 
-    assert Repo.get_by(ArticleLifecycle,
+    {:ok, branch} = Branch.resolve(community, nil)
+
+    assert Repo.get_by(DocLifecycle,
              community_id: community.id,
-             thread: :doc,
+             branch_id: branch.id,
              article_hash_id: first_doc_ref
            )
 
@@ -610,7 +615,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
                %{external_ref: "docs/start.md", body_bag: body_bag("Published body content", "a")}
              ])
 
-    assert {:ok, branch} = Branch.resolve(community, :doc, Branch.main_slug())
+    assert {:ok, branch} = Branch.resolve(community, Branch.main_slug())
     assert {:ok, state} = Reader.ensure_draft_state(community, branch_id: branch.id)
     assert {:ok, _state} = Revision.bump_tree_draft(community, state)
 

@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     DocsSiteState,
     DocTreeNode,
     TrashAction,
-    TrashedArticle,
+    TrashedDocArticle,
     TrashedDocTreeNode
   }
 
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     refute tree_node_exists?(community, page.node.id, :public)
 
     membership =
-      Repo.get_by!(TrashedArticle, article_hash_id: page.node.doc_id, thread: :doc)
+      Repo.get_by!(TrashedDocArticle, article_hash_id: page.node.doc_id)
 
     assert {:ok, [trash_item]} = CMS.DocTree.trash_items(community, actor: user)
     action = Repo.get_by!(TrashAction, hash_id: trash_item.id)
@@ -182,7 +182,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
            ) == 3
 
     assert Repo.aggregate(
-             from(item in TrashedArticle, where: item.trash_action_id == ^action.id),
+             from(item in TrashedDocArticle, where: item.trash_action_id == ^action.id),
              :count
            ) == 2
 
@@ -250,7 +250,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     refute Repo.get(TrashAction, action.id)
     refute Repo.get_by(TrashedDocTreeNode, trash_action_id: action.id)
-    refute Repo.get_by(TrashedArticle, trash_action_id: action.id)
+    refute Repo.get_by(TrashedDocArticle, trash_action_id: action.id)
 
     assert Repo.get_by(AuditLog,
              action: "doc_tree.permanently_deleted",
@@ -301,11 +301,13 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
         }
       ])
 
+    {:ok, current} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
+
     assert {:ok, original_draft} =
              CMS.DocTree.update_draft(
                community,
                page.node.doc_id,
-               %{body_bag: mock_body_bag(body)},
+               %{body_bag: mock_body_bag(body), expected_version: current.version},
                user
              )
 

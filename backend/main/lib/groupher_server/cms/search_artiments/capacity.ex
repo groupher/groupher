@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
       count =
         info.model
-        |> CMS.Gate.scope(nil, :list, %{thread: thread})
+        |> CMS.Gate.scope(nil, :list, scope_context(thread))
         |> where([article], article.stage == ^CMS.Const.stage(:public))
         |> where([article], article.pending == ^@legal)
         |> Repo.aggregate(:count, :id)
@@ -68,7 +68,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp comment_counts do
     base =
       Comment
-      |> join(:inner, [comment], lifecycle in CommentLifecycle, on: lifecycle.comment_id == comment.id)
+      |> join(:inner, [comment], lifecycle in CommentLifecycle,
+        on: lifecycle.comment_id == comment.id
+      )
       |> where([comment, lifecycle], lifecycle.state == :visible and comment.pending == ^@legal)
 
     {p50, p95, p99} = comment_body_percentiles(base)
@@ -105,6 +107,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp decimal_to_number(nil), do: 0
   defp decimal_to_number(%Decimal{} = value), do: Decimal.to_float(value)
   defp decimal_to_number(value), do: value
+
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
+  defp scope_context(thread), do: %{thread: thread}
 
   defp default_zero(nil), do: 0
   defp default_zero(value), do: value

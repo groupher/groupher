@@ -32,19 +32,25 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
     {:ok, info} = match(article)
 
     Multi.new()
-    |> Multi.run(:create_upvote, fn _, _ ->
-      create_upvote(article, info, user)
+    |> Multi.run(:access_check, fn _, _ ->
+      CMS.Gate.access_check(user, :upvote, article)
     end)
-    |> Multi.run(:sync_projection, fn _, _ ->
-      State.write(article, :upvote, user, :add)
+    |> Multi.run(:create_upvote, fn _, %{access_check: canonical_article} ->
+      create_upvote(canonical_article, info, user)
     end)
-    |> Multi.run(:add_achievement, fn _, _ ->
-      Accounts.Achievements.achieve(author_user(article), :inc, :upvote)
+    |> Multi.run(:sync_projection, fn _, %{access_check: canonical_article} ->
+      State.write(canonical_article, :upvote, user, :add)
     end)
-    |> Multi.run(:after_events, fn _, _ ->
-      Later.run({Events, :emit, [:notify_upvote, %{target: article, from_user: user}]})
+    |> Multi.run(:add_achievement, fn _, %{access_check: canonical_article} ->
+      Accounts.Achievements.achieve(author_user(canonical_article), :inc, :upvote)
+    end)
+    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
+      Later.run({Events, :emit, [:notify_upvote, %{target: canonical_article, from_user: user}]})
 
-      Later.run({Events, :emit, [:subscribe_community, %{target: article.community, user: user}]})
+      Later.run(
+        {Events, :emit,
+         [:subscribe_community, %{target: canonical_article.community, user: user}]}
+      )
     end)
     |> Repo.transaction()
     |> result()
@@ -57,29 +63,33 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
     {:ok, info} = match(article)
 
     Multi.new()
-    |> Multi.run(:find_upvote, fn _, _ ->
-      args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
+    |> Multi.run(:access_check, fn _, _ ->
+      CMS.Gate.access_check(from_user, :upvote, article)
+    end)
+    |> Multi.run(:find_upvote, fn _, %{access_check: canonical_article} ->
+      args = Map.put(%{user_id: user_id}, info.foreign_key, canonical_article.id)
 
       case ORM.find_by(ArticleUpvote, args) do
         {:ok, record} -> {:ok, record}
         {:error, _} -> {:ok, nil}
       end
     end)
-    |> Multi.run(:undo_upvote, fn _, %{find_upvote: record} ->
+    |> Multi.run(:undo_upvote, fn _, %{access_check: canonical_article, find_upvote: record} ->
       case record do
         nil ->
-          {:ok, article}
+          {:ok, canonical_article}
 
         _ ->
-          args = Map.put(%{user_id: user_id}, info.foreign_key, article.id)
+          args = Map.put(%{user_id: user_id}, info.foreign_key, canonical_article.id)
           ORM.findby_delete(ArticleUpvote, args)
-          {:ok, article}
+          {:ok, canonical_article}
       end
     end)
-    |> Multi.run(:sync_projection, fn _, %{find_upvote: record} ->
+    |> Multi.run(:sync_projection, fn _,
+                                      %{access_check: canonical_article, find_upvote: record} ->
       case record do
-        nil -> {:ok, article}
-        _ -> State.write(article, :upvote, from_user, :remove)
+        nil -> {:ok, canonical_article}
+        _ -> State.write(canonical_article, :upvote, from_user, :remove)
       end
     end)
     |> Multi.run(:after_events, fn _, %{undo_upvote: updated} ->

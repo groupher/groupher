@@ -4,7 +4,7 @@ import * as React from 'react'
 
 import PulseSVG from '~/icons/Pulse'
 import Img from '~/Img'
-import { usePlatform } from '~/platform'
+import { Link as PlatformLink } from '~/platform'
 import type { TArticle, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import TimeAgo from '~/ui/TimeAgo'
@@ -31,24 +31,20 @@ export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData:
 
 export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { navi } = usePlatform()
   const { slug } = useCommunity()
 
   return (
     <div className='w-full overflow-hidden'>
-      <button
-        type='button'
-        className={cn(s.articleTitle, 'truncate w-full text-left')}
-        onClick={() =>
-          navi.to({
-            app: 'dsb',
-            community: slug,
-            path: `${thread2Path(rowData.meta.thread)}/${rowData.innerId}`,
-          })
-        }
+      <PlatformLink
+        route={{
+          app: 'dsb',
+          community: slug,
+          path: `${thread2Path(rowData.meta.thread)}/${rowData.innerId}`,
+        }}
+        className={cn(s.articleTitle, 'inline-block truncate w-full text-left')}
       >
         ({rowData.innerId}) {rowData.title}
-      </button>
+      </PlatformLink>
 
       <div className='w-full overflow-hidden whitespace-nowrap'>
         <TagsList items={rowData.communityTags ?? EMPTY_ARR} left={0} />

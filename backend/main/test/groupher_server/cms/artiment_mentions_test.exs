@@ -165,7 +165,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
     end
 
     test "supports cross article mentions among post, blog, and changelog",
-         ~m(post blog changelog)a do
+         ~m(community post blog changelog user)a do
       blog_body =
         plate_body([
           block("block-blog", [text(~s(<a href="#{@site_host}/post/#{post.id}">post</a>))])
@@ -178,10 +178,16 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, blog} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(blog_body)})
+      {:ok, blog_draft} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(blog_body)})
 
-      {:ok, changelog} =
+      {:ok, changelog_draft} =
         CMS.Articles.update(changelog, %{body_bag: mock_body_bag(changelog_body)})
+
+      {:ok, %{article: blog}} =
+        CMS.Articles.publish_draft(community, :blog, blog_draft.article_hash_id, user)
+
+      {:ok, %{article: changelog}} =
+        CMS.Articles.publish_draft(community, :changelog, changelog_draft.article_hash_id, user)
 
       {:ok, {1, nil}} = ArtimentMentions.sync(blog)
       {:ok, {1, nil}} = ArtimentMentions.sync(changelog)
@@ -231,7 +237,11 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
         |> Jason.encode!()
 
-      {:ok, post} = CMS.Articles.update(post, %{body_bag: mock_body_bag(self_body)})
+      {:ok, draft} = CMS.Articles.update(post, %{body_bag: mock_body_bag(self_body)})
+
+      {:ok, %{article: post}} =
+        CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
+
       {:ok, :pass} = ArtimentMentions.sync(post)
 
       {:ok, result} = ArtimentMentions.mentions(:post, post.id, %{page: 1, size: 10})
@@ -350,13 +360,16 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
-      {:ok, post} =
+      {:ok, draft} =
         CMS.Articles.update(post, %{
           body_bag:
             mock_body_bag(
               plate_body([block("block-b", [text("clean content without mentions")])])
             )
         })
+
+      {:ok, %{article: post}} =
+        CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
 
       {:ok, :pass} = ArtimentMentions.sync(post)
 

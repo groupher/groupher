@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Model.DocPublishRelease do
 
   alias CMS.Model.{
     Community,
-    ArticleBranch,
+    DocBranch,
     DocTreeSnapshot,
     DocPublishReleaseArticle,
     DocPublishReleaseTreeEvent
@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.Model.DocPublishRelease do
   @type t :: %DocPublishRelease{}
   schema "doc_publish_releases" do
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
     belongs_to(:tree_snapshot, DocTreeSnapshot)
     belongs_to(:author, User)
     has_many(:articles, DocPublishReleaseArticle, foreign_key: :release_id)

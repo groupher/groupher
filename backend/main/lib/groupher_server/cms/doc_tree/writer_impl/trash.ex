@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   The Tree owns placement snapshots for both draft and public stages. Article
   content remains in the normal Doc aggregate and is hidden by a
-  `TrashedArticle` membership; no content is copied into Tree snapshots.
+  `TrashedDocArticle` membership; no content is copied into Tree snapshots.
 
   Business position:
 
@@ -18,7 +18,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.{Lock, Trash}
+  alias CMS.Articles.Lock
+  alias CMS.Docs.Trash
   alias CMS.DocTree.Events
   alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
   alias CMS.SearchArtiments.Indexer
@@ -42,7 +43,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
-    Lock.run_many(community, :doc, doc_ids, fn ->
+    Lock.run_doc_many(community, branch.id, doc_ids, fn ->
       with {:ok, action} <-
              Trash.create_action(community, actor, %{
                root_type: "doc_tree_#{draft_root.type}",
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
              }),
            {:ok, trash_nodes} <-
              persist_nodes(action, community, branch, draft_nodes, public_nodes, actor),
-           {:ok, _memberships} <- attach_docs(action, community, doc_ids, actor),
+           {:ok, _memberships} <- attach_docs(action, community, branch, doc_ids, actor),
            discarded_tree_events <-
              Events.discard_staged_for_trash(
                community,
@@ -205,8 +206,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
     end)
   end
 
-  defp attach_docs(action, community, doc_ids, actor) do
-    Trash.attach_many(action, community, :doc, doc_ids, actor,
+  defp attach_docs(action, community, branch, doc_ids, actor) do
+    Trash.attach_many(action, community, branch, doc_ids, actor,
       source: "api",
       audit: false,
       metadata: %{trash_root_type: action.root_type, trash_root_ref: action.root_ref}

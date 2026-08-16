@@ -49,6 +49,7 @@ export type TViewingInfo = {
 type TBaseArticle = {
   id?: TID
   innerId?: TID
+  version?: number
   title?: string
   digest?: string
   body?: string

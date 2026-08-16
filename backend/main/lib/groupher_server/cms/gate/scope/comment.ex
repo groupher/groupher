@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle}
+  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
   alias Helper.Constant
 
   @audit_illegal Constant.CMS.pending(:illegal)
@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
          %Ecto.Query{} = query <- AncestorCommunity.direct(query) do
       query
       |> maybe_filter_thread(context)
-      |> lifecycle_scope()
+      |> lifecycle_scope(context)
       |> public_comment(actor)
     end
   end
@@ -47,7 +47,28 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp maybe_filter_thread(query, _context), do: query
 
-  defp lifecycle_scope(query) do
+  defp lifecycle_scope(query, %{thread: :doc}) do
+    from(comment in query,
+      join: lifecycle in CommentLifecycle,
+      as: :gate_comment_lifecycle,
+      on: lifecycle.comment_id == comment.id,
+      join: branch in DocBranch,
+      as: :gate_doc_branch,
+      on:
+        branch.community_id == comment.community_id and
+          branch.type == :main,
+      join: doc_lifecycle in DocLifecycle,
+      as: :gate_doc_lifecycle,
+      on:
+        doc_lifecycle.community_id == comment.community_id and
+          doc_lifecycle.branch_id == branch.id and
+          doc_lifecycle.article_hash_id == comment.article_hash_id,
+      where: lifecycle.state != :destroy,
+      where: doc_lifecycle.state in [:published, :archived]
+    )
+  end
+
+  defp lifecycle_scope(query, _context) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
