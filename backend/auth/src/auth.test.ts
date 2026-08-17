@@ -64,7 +64,7 @@ describe('Auth core integration', () => {
       new Request('http://127.0.0.1:3004/api/auth/callback/github?code=abc'),
     )
 
-    expect(request.url).toBe('https://groupher.localhost/api/auth/callback/github?code=abc')
+    expect(request.url).toBe('https://auth.groupher.localhost/api/auth/callback/github?code=abc')
   })
 
   it('keeps the Phoenix token out of the Auth.js Session payload', async () => {
