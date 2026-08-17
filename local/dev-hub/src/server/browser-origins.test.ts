@@ -13,10 +13,9 @@ const originsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
 test('browser metrics accept raw-port and Portless origins for browser-facing services', () => {
   assert.deepEqual(Array.from(originsByService.get('dashboard') || []).sort(), [
     'http://127.0.0.1:3001',
-    'http://groupher.localhost:3003',
+    'http://dashboard.groupher.localhost:3001',
     'http://localhost:3001',
     'https://dashboard.groupher.localhost',
-    'https://groupher.localhost',
   ])
 
   const allOrigins = collectBrowserOrigins(originsByService)
@@ -33,7 +32,7 @@ test('browser metric reports must match both the service and page origin', () =>
       originsByService,
       serviceId: 'dashboard',
       requestOrigin: 'https://dashboard.groupher.localhost',
-      reportUrl: 'https://dashboard.groupher.localhost/home/dashboard',
+      reportUrl: 'https://dashboard.groupher.localhost/home',
     }),
     true,
   )
@@ -43,7 +42,7 @@ test('browser metric reports must match both the service and page origin', () =>
       originsByService,
       serviceId: 'main',
       requestOrigin: 'https://dashboard.groupher.localhost',
-      reportUrl: 'https://dashboard.groupher.localhost/home/dashboard',
+      reportUrl: 'https://dashboard.groupher.localhost/home',
     }),
     false,
   )
@@ -51,9 +50,9 @@ test('browser metric reports must match both the service and page origin', () =>
   assert.equal(
     isBrowserMetricOriginAllowed({
       originsByService,
-      serviceId: 'dashboard',
-      requestOrigin: 'https://groupher.localhost',
-      reportUrl: 'https://groupher.localhost/home/dashboard',
+      serviceId: 'dash',
+      requestOrigin: 'https://dash.groupher.localhost',
+      reportUrl: 'https://dash.groupher.localhost/home/overview',
     }),
     true,
   )
@@ -63,7 +62,7 @@ test('browser metric reports must match both the service and page origin', () =>
       originsByService,
       serviceId: 'dashboard',
       requestOrigin: 'https://dashboard.groupher.localhost',
-      reportUrl: 'https://evil.example/home/dashboard',
+      reportUrl: 'https://evil.example/home',
     }),
     false,
   )

@@ -283,10 +283,16 @@ export class MetricsStore {
     definition: TServiceDefinition,
     pages: Map<string, TBrowserMetricSample>,
   ): void {
-    const selected = Array.from(pages.values()).sort((left, right) => {
-      if (left.visibility !== right.visibility) return left.visibility === 'visible' ? -1 : 1
-      return right.at - left.at
-    })[0]
+    let selected: TBrowserMetricSample | undefined
+    for (const page of pages.values()) {
+      if (
+        !selected ||
+        (page.visibility === 'visible' && selected.visibility !== 'visible') ||
+        (page.visibility === selected.visibility && page.at > selected.at)
+      ) {
+        selected = page
+      }
+    }
 
     if (!selected) {
       this.updateSnapshot(serviceId, { browser: null, browserPageCount: 0 })

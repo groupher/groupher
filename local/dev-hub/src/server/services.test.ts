@@ -255,12 +255,13 @@ test('managed services expose stable Portless names and keep the API under the c
 
   const dashboard = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dashboard')
   assert.equal(dashboard?.portlessUrl, 'https://dashboard.groupher.localhost/health')
-  assert.equal(dashboard?.portlessAppUrl, 'https://dashboard.groupher.localhost/home/dashboard')
+  assert.equal(dashboard?.appUrl, 'http://127.0.0.1:3001/home')
+  assert.equal(dashboard?.portlessAppUrl, 'https://dashboard.groupher.localhost/home')
 
   const dash = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dash')
   assert.equal(dash?.portlessUrl, 'https://dash.groupher.localhost/health')
-  assert.equal(dash?.appUrl, 'http://127.0.0.1:3003/home/dash/overview')
-  assert.equal(dash?.portlessAppUrl, 'https://groupher.localhost/home/dash/overview')
+  assert.equal(dash?.appUrl, 'http://127.0.0.1:3005/home/overview')
+  assert.equal(dash?.portlessAppUrl, 'https://dash.groupher.localhost/home/overview')
 
   const assetsHub = SERVICE_DEFINITIONS.find((definition) => definition.id === 'assets-hub')
   assert.deepEqual(
