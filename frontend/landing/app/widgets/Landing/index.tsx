@@ -4,9 +4,9 @@
  * LandingPage
  */
 
+import { DASHBOARD_SITE_URL } from '~/config'
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import { ROUTE } from '~/const/route'
-import { DASHBOARD_SITE_URL } from '~/config'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'

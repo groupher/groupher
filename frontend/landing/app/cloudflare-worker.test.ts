@@ -43,7 +43,10 @@ describe('landing Cloudflare worker', () => {
     )
 
     expect(target.kind).toBe('not-found')
-    const response = await worker.fetch(new Request('https://groupher.test/home/dashboard/appearance'), env)
+    const response = await worker.fetch(
+      new Request('https://groupher.test/home/dashboard/appearance'),
+      env,
+    )
     expect(response.status).toBe(404)
     expect(env.fetcher).not.toHaveBeenCalled()
   })
@@ -79,7 +82,10 @@ describe('landing Cloudflare worker', () => {
     )
 
     expect(target.kind).toBe('not-found')
-    const response = await worker.fetch(new Request('https://groupher.test/home/dash/appearance'), env)
+    const response = await worker.fetch(
+      new Request('https://groupher.test/home/dash/appearance'),
+      env,
+    )
     expect(response.status).toBe(404)
     expect(env.fetcher).not.toHaveBeenCalled()
   })

@@ -297,12 +297,7 @@ describe('gateway/routing', () => {
     })
 
     it('uses the original Portless host instead of the Gateway listener host', () => {
-      const target = resolve(
-        '/home',
-        '127.0.0.1:3003',
-        '',
-        'dashboard.groupher.localhost',
-      )
+      const target = resolve('/home', '127.0.0.1:3003', '', 'dashboard.groupher.localhost')
       expect(target.targetKind).toBe('dashboard')
       expect(target.targetUrl.pathname).toBe('/home')
     })

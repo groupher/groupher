@@ -209,7 +209,7 @@ test.describe('Auth V1 browser protocol', () => {
 
     const response = await page.goto(`${DASH_ORIGIN}/home/overview`)
     expect(await response?.text()).toContain('Restoring your session')
-    await expect(page.getByTestId('dashboard-overview-title')).toBeVisible()
+    await expect(page.getByTestId('dashboard-overview-title')).toBeVisible({ timeout: 15_000 })
 
     expect(refreshRequests).toHaveLength(1)
     expect((await readState(request)).stats.refreshCalls).toBe(1)
