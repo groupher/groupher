@@ -15,6 +15,8 @@ import type { TSourceNode, TSourceTree, TSourceWorkspace } from '../../contracts
 import { loadDocuments, type TDocumentMetadata } from '../documentFile'
 import { asRecord, linkNode, pageNode, scopeNode, sectionNode, slugify } from '../helpers'
 
+const META_READ_CONCURRENCY = 8
+
 const documentFor = (
   directory: string,
   name: string,
@@ -28,9 +30,10 @@ const directorySection = async (
   directory: string,
   workspace: TSourceWorkspace,
   documents: Map<string, TDocumentMetadata>,
+  filePaths: ReadonlySet<string>,
 ): Promise<TSourceNode | null> => {
   const metaPath = `${directory}/meta.json`
-  if (!workspace.files.some((file) => file.path === metaPath)) return null
+  if (!filePaths.has(metaPath)) return null
   const meta = asRecord(JSON.parse(await workspace.readText(metaPath)))
   const children: TSourceNode[] = []
   for (const name of Array.isArray(meta?.pages) ? meta.pages : []) {
@@ -43,6 +46,42 @@ const directorySection = async (
     String(meta?.title || path.posix.basename(directory)),
     children,
   )
+}
+
+const loadDirectorySections = async (
+  root: string,
+  pages: readonly unknown[],
+  workspace: TSourceWorkspace,
+  documents: Map<string, TDocumentMetadata>,
+  filePaths: ReadonlySet<string>,
+): Promise<Map<string, TSourceNode>> => {
+  const entries = [
+    ...new Set(
+      pages.filter(
+        (entry): entry is string =>
+          typeof entry === 'string' && filePaths.has(`${root}/${entry}/meta.json`),
+      ),
+    ),
+  ]
+  const sections = new Map<string, TSourceNode>()
+  let nextIndex = 0
+  const workerCount = Math.min(META_READ_CONCURRENCY, entries.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      for (;;) {
+        const index = nextIndex
+        nextIndex += 1
+        if (index >= entries.length) return
+
+        const entry = entries[index]
+        const section = await directorySection(`${root}/${entry}`, workspace, documents, filePaths)
+        if (section) sections.set(entry, section)
+      }
+    }),
+  )
+
+  return sections
 }
 
 /** Maps Fumadocs meta files, separators, directories, and links into SourceTree.
@@ -58,6 +97,15 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
   const documents = await loadDocuments(workspace, root)
   const metaPath = `${root}/meta.json`
   const meta = asRecord(JSON.parse(await workspace.readText(metaPath)))
+  const pages = Array.isArray(meta?.pages) ? meta.pages : []
+  const filePaths = new Set(workspace.files.map((file) => file.path))
+  const directorySections = await loadDirectorySections(
+    root,
+    pages,
+    workspace,
+    documents,
+    filePaths,
+  )
   const directChildren: TSourceNode[] = []
   const usedPaths = new Set<string>()
   let activeSection: { children: TSourceNode[]; title: string } | null = null
@@ -67,7 +115,7 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
     else directChildren.push(item)
   }
 
-  for (const rawEntry of Array.isArray(meta?.pages) ? meta.pages : []) {
+  for (const rawEntry of pages) {
     if (typeof rawEntry !== 'string') continue
     const separator = rawEntry.match(/^---(.+)---$/)
     if (separator) {
@@ -99,8 +147,7 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
       usedPaths.add(document.sourcePath)
       append({ ...pageNode(document), route: rawEntry === 'index' ? '/index' : document.route })
     }
-    const childDirectory = `${root}/${rawEntry}`
-    const child = await directorySection(childDirectory, workspace, documents)
+    const child = directorySections.get(rawEntry)
     if (child) {
       for (const nested of child.type === 'section' ? child.pages : []) {
         if (nested.type === 'page') usedPaths.add(nested.sourcePath)
@@ -118,13 +165,15 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
     )
   }
   const configPaths = [
-    sourceConfig,
-    ...workspace.files
-      .map((file) => file.path)
-      .filter((file) => file.startsWith(`${root}/`) && file.endsWith('/meta.json'))
-      .sort(),
-    metaPath,
-  ].filter((value, index, values) => values.indexOf(value) === index)
+    ...new Set([
+      sourceConfig,
+      ...workspace.files
+        .map((file) => file.path)
+        .filter((file) => file.startsWith(`${root}/`) && file.endsWith('/meta.json'))
+        .sort(),
+      metaPath,
+    ]),
+  ]
 
   return {
     navigation: [

@@ -903,8 +903,8 @@ Private Blob 使用一个 Dashboard 项目级 private store，逻辑路径只使
 
 ```text
 content-import/previews/
+├── _preview-records/v1/prv_01JXYZ....json
 └── prv_01JXYZ.../
-    ├── preview-record.json
     ├── analysis-run.json
     └── attempts/{attemptRef}/
         ├── dataset/

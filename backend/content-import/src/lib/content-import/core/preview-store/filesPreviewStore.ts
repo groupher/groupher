@@ -11,7 +11,7 @@
  *
  * @see docs/bulk-import/import-file-sdk.md
  */
-import { Files, FilesError } from 'files-sdk'
+import { Files, FilesError, type StoredFile } from 'files-sdk'
 
 import {
   decodeDocsDataset,
@@ -39,6 +39,32 @@ import {
 } from './previewStore'
 
 const jsonText = (value: unknown): string => JSON.stringify(value)
+const RECORD_INDEX_PREFIX = '_preview-records/v1'
+const RECORD_INDEX_READY_KEY = '_preview-records/v1-ready.json'
+const RECORD_READ_CONCURRENCY = 8
+
+const mapWithConcurrency = async <TInput, TOutput>(
+  inputs: readonly TInput[],
+  concurrency: number,
+  mapper: (input: TInput) => Promise<TOutput>,
+): Promise<TOutput[]> => {
+  const results: TOutput[] = []
+  let nextIndex = 0
+  const workerCount = Math.min(Math.max(concurrency, 1), inputs.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      for (;;) {
+        const index = nextIndex
+        nextIndex += 1
+        if (index >= inputs.length) return
+        results[index] = await mapper(inputs[index])
+      }
+    }),
+  )
+
+  return results
+}
 
 /** Persists Preview artifacts over local Files SDK or private Vercel Blob adapters. */
 export default class FilesPreviewStore implements PreviewStore {
@@ -47,12 +73,10 @@ export default class FilesPreviewStore implements PreviewStore {
   /** Creates a PreviewStore over the already-configured Files SDK provider. */
   constructor(private readonly files: Files) {}
 
-  /** Creates the immutable Preview root record. */
+  /** Creates the canonical record directly in the independently enumerable catalog. */
   async create(record: TPreviewRecord): Promise<void> {
-    await this.putImmutable(
-      this.key(record.previewRef, 'preview-record.json'),
-      decodePreviewRecord(record),
-    )
+    const safeRecord = decodePreviewRecord(record)
+    await this.putImmutable(this.recordIndexKey(record.previewRef), safeRecord)
   }
 
   /** Deletes every artifact below the validated Preview prefix. */
@@ -61,9 +85,11 @@ export default class FilesPreviewStore implements PreviewStore {
     for await (const file of this.files.listAll({ prefix: `${this.prefix(previewRef)}/` })) {
       keys.push(file.key)
     }
-    if (keys.length === 0) return
-    const result = await this.files.delete(keys)
-    if (result.errors?.length) throw result.errors[0]!.error
+    if (keys.length > 0) await this.deleteKeys(keys)
+
+    // Keep the record index until the Preview prefix has been removed. A
+    // partial artifact deletion can then be retried by the next sweep.
+    await this.deleteKeys([this.recordIndexKey(previewRef)])
   }
 
   /** Reads and decodes attempt-scoped SourceAnalysis. */
@@ -102,8 +128,17 @@ export default class FilesPreviewStore implements PreviewStore {
 
   /** Reads and decodes the Preview root record. */
   async getRecord(previewRef: string): Promise<TPreviewRecord | null> {
-    const value = await this.getJson(this.key(previewRef, 'preview-record.json'))
-    return value ? decodePreviewRecord(value) : null
+    const indexedValue = await this.getJson(this.recordIndexKey(previewRef))
+    if (indexedValue) return decodePreviewRecord(indexedValue)
+
+    // Compatibility for records created before the catalog became canonical.
+    // A direct read also repairs a late legacy write even after backfill finished.
+    const legacyValue = await this.getJson(this.key(previewRef, 'preview-record.json'))
+    if (!legacyValue) return null
+
+    const record = decodePreviewRecord(legacyValue)
+    await this.putImmutable(this.recordIndexKey(previewRef), record)
+    return record
   }
 
   /** Reads and decodes the Phoenix-validated Review artifact. */
@@ -135,12 +170,16 @@ export default class FilesPreviewStore implements PreviewStore {
 
   /** Lists the independently indexed root records for bounded expiry cleanup. */
   async listRecords(): Promise<TPreviewRecord[]> {
-    const records: TPreviewRecord[] = []
-    for await (const file of this.files.listAll()) {
-      if (!file.key.endsWith('/preview-record.json')) continue
-      records.push(decodePreviewRecord(JSON.parse(await file.text()) as unknown))
+    await this.ensureLegacyRecordIndex()
+
+    const files: StoredFile[] = []
+    for await (const file of this.files.listAll({ prefix: `${RECORD_INDEX_PREFIX}/` })) {
+      files.push(file)
     }
-    return records
+
+    return mapWithConcurrency(files, RECORD_READ_CONCURRENCY, async (file) =>
+      decodePreviewRecord(JSON.parse(await file.text()) as unknown),
+    )
   }
 
   /** Lists sourceRefs from body object keys without downloading their contents. */
@@ -260,9 +299,42 @@ export default class FilesPreviewStore implements PreviewStore {
     return `${this.prefix(previewRef)}/${suffix}`
   }
 
+  private recordIndexKey(previewRef: string): string {
+    assertPreviewRef(previewRef)
+    return `${RECORD_INDEX_PREFIX}/${previewRef}.json`
+  }
+
   private prefix(previewRef: string): string {
     assertPreviewRef(previewRef)
     return previewRef
+  }
+
+  private async deleteKeys(keys: string[]): Promise<void> {
+    const result = await this.files.delete(keys)
+    if (result.errors?.length) throw result.errors[0]!.error
+  }
+
+  /**
+   * Backfills records written before the dedicated index existed. The marker is
+   * written only after every legacy record has an immutable index copy, so a
+   * failed migration is safe to retry. After this one-time pass, sweeps enumerate
+   * O(record count) objects instead of every Dataset and source body.
+   */
+  private async ensureLegacyRecordIndex(): Promise<void> {
+    if (await this.files.exists(RECORD_INDEX_READY_KEY)) return
+
+    const legacyFiles: StoredFile[] = []
+    for await (const file of this.files.listAll()) {
+      if (file.key.endsWith('/preview-record.json')) legacyFiles.push(file)
+    }
+
+    const records = await mapWithConcurrency(legacyFiles, RECORD_READ_CONCURRENCY, async (file) =>
+      decodePreviewRecord(JSON.parse(await file.text()) as unknown),
+    )
+    await mapWithConcurrency(records, RECORD_READ_CONCURRENCY, async (record) => {
+      await this.putImmutable(this.recordIndexKey(record.previewRef), record)
+    })
+    await this.putImmutable(RECORD_INDEX_READY_KEY, { schemaVersion: 1 })
   }
 
   private async putImmutable(key: string, value: unknown): Promise<void> {

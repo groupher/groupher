@@ -4,7 +4,7 @@ import path from 'node:path'
 
 import { Files } from 'files-sdk'
 import { fs } from 'files-sdk/fs'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   SOURCE_ANALYSIS_SCHEMA_VERSION,
@@ -18,6 +18,7 @@ import {
   createPreviewRecord,
   READY_RECEIPT_SCHEMA_VERSION,
   sha256Json,
+  sweepExpiredPreviews,
 } from './previewStore'
 
 const analysis: TSourceAnalysis = {
@@ -42,13 +43,13 @@ const analysis: TSourceAnalysis = {
 
 describe('FilesPreviewStore', () => {
   let directory = ''
+  let files: Files
   let store: FilesPreviewStore
 
   beforeEach(async () => {
     directory = await fsPromises.mkdtemp(path.join(os.tmpdir(), 'content-import-files-'))
-    store = new FilesPreviewStore(
-      new Files({ adapter: fs({ root: directory }), prefix: 'content-import/previews' }),
-    )
+    files = new Files({ adapter: fs({ root: directory }), prefix: 'content-import/previews' })
+    store = new FilesPreviewStore(files)
   })
 
   afterEach(async () => {
@@ -67,6 +68,8 @@ describe('FilesPreviewStore', () => {
       new Date('2026-07-22T00:00:00Z'),
     )
     await store.create(record)
+    expect(await files.exists(`_preview-records/v1/${record.previewRef}.json`)).toBe(true)
+    expect(await files.exists(`${record.previewRef}/preview-record.json`)).toBe(false)
     await store.putAnalysisRun(record.previewRef, {
       attemptRef: record.attemptRef,
       createdAt: record.createdAt,
@@ -180,9 +183,86 @@ describe('FilesPreviewStore', () => {
       userRef: 'user-1',
     })
     await store.create(record)
+    expect(await store.listRecords()).toEqual([record])
     await store.delete(record.previewRef)
     await store.delete(record.previewRef)
     expect(await store.getRecord(record.previewRef)).toBeNull()
+    expect(await store.listRecords()).toEqual([])
+  })
+
+  it('backfills legacy root records once and then lists only the record index prefix', async () => {
+    const record = createPreviewRecord({
+      community: 'home',
+      idempotencyKey: 'legacy-request',
+      previewRef: 'prv_legacy1',
+      repoUrl: 'https://github.com/acme/docs',
+      userRef: 'user-1',
+    })
+    await files.upload(`${record.previewRef}/preview-record.json`, JSON.stringify(record), {
+      contentType: 'application/json',
+    })
+
+    const listAll = vi.spyOn(files, 'listAll')
+    expect(await store.listRecords()).toEqual([record])
+    expect(await files.exists(`_preview-records/v1/${record.previewRef}.json`)).toBe(true)
+
+    listAll.mockClear()
+    expect(await store.listRecords()).toEqual([record])
+    expect(listAll).toHaveBeenCalledTimes(1)
+    expect(listAll.mock.calls[0]?.[0]).toEqual({ prefix: '_preview-records/v1/' })
+  })
+
+  it('repairs a directly read legacy record after the one-time backfill marker exists', async () => {
+    const record = createPreviewRecord({
+      community: 'home',
+      idempotencyKey: 'late-legacy-request',
+      previewRef: 'prv_legacy2',
+      repoUrl: 'https://github.com/acme/docs',
+      userRef: 'user-1',
+    })
+    await files.upload('_preview-records/v1-ready.json', JSON.stringify({ schemaVersion: 1 }), {
+      contentType: 'application/json',
+    })
+    await files.upload(`${record.previewRef}/preview-record.json`, JSON.stringify(record), {
+      contentType: 'application/json',
+    })
+
+    await expect(store.getRecord(record.previewRef)).resolves.toEqual(record)
+    expect(await files.exists(`_preview-records/v1/${record.previewRef}.json`)).toBe(true)
+  })
+
+  it('bounds concurrent expiry deletion', async () => {
+    const records = Array.from({ length: 20 }, (_, index) =>
+      createPreviewRecord(
+        {
+          community: 'home',
+          idempotencyKey: `request-${index}`,
+          previewRef: `prv_scale_${index}`,
+          repoUrl: 'https://github.com/acme/docs',
+          userRef: 'user-1',
+        },
+        new Date('2026-07-22T00:00:00Z'),
+      ),
+    )
+    await Promise.all(records.map((record) => store.create(record)))
+
+    const originalDelete = store.delete.bind(store)
+    let activeDeletes = 0
+    let maxDeletes = 0
+    vi.spyOn(store, 'delete').mockImplementation(async (previewRef) => {
+      activeDeletes += 1
+      maxDeletes = Math.max(maxDeletes, activeDeletes)
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        await originalDelete(previewRef)
+      } finally {
+        activeDeletes -= 1
+      }
+    })
+
+    await expect(sweepExpiredPreviews(store, new Date('2027-01-01T00:00:00Z'))).resolves.toBe(20)
+    expect(maxDeletes).toBeGreaterThan(1)
+    expect(maxDeletes).toBeLessThanOrEqual(8)
   })
 
   it('serializes concurrent local writes and preserves the first immutable value', async () => {
