@@ -85,6 +85,18 @@ cypress/videos/*
 **/next-env.d.ts
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+# tsc-files (lint-staged type check) leaves tsconfig.<random>.json temp configs
+# behind when the tsc subprocess is killed; the tracked ones use fixed names
+# (app/node/paths/build/...), so ignore the random-named leftovers only.
+tsconfig.*.json
+!tsconfig.json
+!tsconfig.app.json
+!tsconfig.node.json
+!tsconfig.paths.json
+!tsconfig.build.json
+!tsconfig.scripts.json
+!tsconfig.base.json
+!tsconfig.test.json
 .VSCodeCounter/
 .deepseekrc
 
