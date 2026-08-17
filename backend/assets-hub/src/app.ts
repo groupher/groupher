@@ -45,6 +45,8 @@ const defaultCorsOrigins = [
   'https://apply.groupher.localhost',
   'http://dashboard.groupher.localhost',
   'https://dashboard.groupher.localhost',
+  'http://dash.groupher.localhost',
+  'https://dash.groupher.localhost',
 ]
 
 const corsOrigin = (environment: Record<string, string | undefined>) => {
@@ -136,10 +138,9 @@ const objectContentHash = async (capability: TUploadCapability) => {
   return sha256Hash(buffer)
 }
 
-/** Creates the Assets Hub application with injectable runtime dependencies. */
+/** Creates the assets hub application with injectable runtime dependencies. */
 export const createApp = ({ environment = process.env }: TOptions = {}) => {
   const app = new Hono()
-  /** Creates the assets hub application with injectable runtime dependencies. */
 
   app.use(
     '/uploads',

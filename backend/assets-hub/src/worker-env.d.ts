@@ -19,7 +19,7 @@ type R2ObjectBody = {
 }
 
 type R2Bucket = {
-  delete(key: string): Promise<void>
+  delete(keys: string | string[]): Promise<void>
   get(key: string): Promise<R2ObjectBody | null>
 }
 

@@ -256,18 +256,9 @@ const enqueueAssetDelete = async (request: Request, env: Env) => {
   return json({ ok: true, result: { enqueued: true } })
 }
 
-const deleteAssetObject = async (env: Env, message: TAssetDeleteMessage) => {
-  await env.ASSETS_BUCKET.delete(message.storageKey)
-
-  console.info('[assets-hub] asset_object_deleted', {
-    assetId: message.assetId,
-    assetPublicRef: message.assetPublicRef,
-    communityId: message.communityId,
-    storageKey: message.storageKey,
-  })
-}
-
 const consumeAssetDeletes = async (batch: MessageBatch<unknown>, env: Env) => {
+  const validMessages: TAssetDeleteMessage[] = []
+
   for (const message of batch.messages) {
     const body = normalizeDeleteMessage(message.body)
     if (!body) {
@@ -275,7 +266,20 @@ const consumeAssetDeletes = async (batch: MessageBatch<unknown>, env: Env) => {
       continue
     }
 
-    await deleteAssetObject(env, body)
+    validMessages.push(body)
+  }
+
+  if (validMessages.length === 0) return
+
+  await env.ASSETS_BUCKET.delete([...new Set(validMessages.map((message) => message.storageKey))])
+
+  for (const message of validMessages) {
+    console.info('[assets-hub] asset_object_deleted', {
+      assetId: message.assetId,
+      assetPublicRef: message.assetPublicRef,
+      communityId: message.communityId,
+      storageKey: message.storageKey,
+    })
   }
 }
 
