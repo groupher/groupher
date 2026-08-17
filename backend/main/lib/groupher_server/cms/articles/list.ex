@@ -43,6 +43,17 @@ defmodule GroupherServer.CMS.Articles.List do
     @article_status.reject_stale
   ]
 
+  @doc """
+  Returns a paged list of legal articles for one thread.
+
+  Applies the public article scope, filter pack, and optional interaction
+  ordering, then prepends pinned articles on the first page.
+
+  ## Examples
+
+      CMS.Articles.List.page(:post, %{page: 1, size: 20})
+
+  """
   @spec page(atom(), map()) :: T.domain_res(term())
   def page(thread, filter) do
     %{page: page, size: size} = filter

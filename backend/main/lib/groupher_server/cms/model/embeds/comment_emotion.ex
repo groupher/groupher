@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
   """
   @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
+  @doc "Generates the count and viewer projection fields for each comment emotion."
   defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->

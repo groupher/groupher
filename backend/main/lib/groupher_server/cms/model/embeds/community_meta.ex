@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
+  @doc "Generates one pluralized thread count field per configured thread."
   defmacro thread_count_fields do
     @threads
     |> Enum.map(fn thread ->
@@ -70,6 +71,17 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
                      Enum.map(@threads, &:"#{plural(&1)}_count") ++
                      Enum.map(@threads, &:"#{plural(&1)}_inner_id_index")
 
+  @doc """
+  Returns the default community meta embed.
+
+  Combines the general options with zeroed per-thread counts and per-thread
+  inner id indexes.
+
+  ## Examples
+
+      CommunityMeta.default_meta()
+
+  """
   def default_meta do
     threads_counts =
       @threads

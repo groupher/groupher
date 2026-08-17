@@ -22,6 +22,21 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
 
   @type payload :: %{json: String.t(), html: String.t(), digest: String.t()}
 
+  @doc """
+  Parses a Plate JSON comment body into the derived comment payload.
+
+  Returns the raw `json`, the sanitized-by-construction `html`, and a plain-text
+  `digest` truncated to the configured digest length. Non-string input returns
+  `{:error, :invalid_body}`.
+
+  ## Examples
+
+      {:ok, payload} = CMS.Comments.BodyCodec.parse(body)
+
+      CMS.Comments.BodyCodec.parse(nil)
+      #=> {:error, :invalid_body}
+
+  """
   @spec parse(String.t()) :: {:ok, payload()} | {:error, term()}
   def parse(body) when is_binary(body) do
     with {:ok, ast} <- PlateJSON.decode(body) do

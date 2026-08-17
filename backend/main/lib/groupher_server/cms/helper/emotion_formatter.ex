@@ -37,6 +37,18 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
   @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
   @all_emotions (@article_emotions ++ @comment_emotions) |> Enum.uniq()
 
+  @doc """
+  Transforms internal emotion embeds into a sparse API-facing array.
+
+  Zero-count emotions are filtered out and the result is sorted by count
+  descending, then by emotion name.
+
+  ## Examples
+
+      EmotionFormatter.format(%{beer_count: 2, latest_beer_users: users, viewer_has_beered: true}, :article)
+      #=> [%{type: :beer, count: 2, viewer_has_reacted: true, latest_users: users}]
+
+  """
   @spec format(map() | nil, :article | :comment | nil) :: [map()]
   def format(%{emotions: emotions}, article_type), do: format(emotions, article_type)
   def format(nil, _kind), do: []

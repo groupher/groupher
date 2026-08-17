@@ -25,6 +25,19 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   @slug_pattern ~r/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
   @blocking_claim_statuses [:application, :community, :reserved, :disputed]
 
+  @doc """
+  Normalizes a slug: trims whitespace, lowercases, and treats an empty
+  result as nil.
+
+  ## Examples
+
+      CMS.Communities.NamePolicy.normalize("  GroupHer ")
+      #=> "groupher"
+
+      CMS.Communities.NamePolicy.normalize("  ")
+      #=> nil
+
+  """
   @spec normalize(term()) :: String.t() | nil
   def normalize(slug) when is_binary(slug) do
     slug = slug |> String.trim() |> String.downcase()

@@ -35,6 +35,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   require CMS.Const
 
+  @doc """
+  Updates one docs draft's article content.
+
+  The draft is created from the public doc when none exists, and only the site
+  draft revision is bumped; tree revisions are owned by the tree writer.
+
+  ## Examples
+
+      DraftDoc.update(community, branch, doc_id, %{title: "New title", slug: "new-title"}, user)
+      #=> {:ok, %Doc{stage: :draft}}
+
+  """
   def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
     with :ok <- validate_update_attrs(args),
          {:ok, site_state} <- Reader.ensure_site_state(community, branch_id: branch.id),

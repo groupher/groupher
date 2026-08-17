@@ -35,6 +35,17 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
   @community_types [:pl, :framework]
 
+  @doc """
+  Seeds every community of one type through the one-time domain bootstrap.
+
+  Only for a freshly provisioned database. Each community is created via
+  `community/2` with bot, category, thread, and tag setup.
+
+  ## Examples
+
+      CMS.Seeds.Domain.communities(:pl)
+
+  """
   @spec communities(atom()) :: T.domain_res(:ok)
   def communities(type) when type in @community_types do
     CommunitySeeds.get(type) |> Enum.each(&community(&1, type)) |> done

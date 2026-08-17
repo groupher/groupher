@@ -22,6 +22,17 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @report_threshold_for_fold Comment.report_threshold_for_fold()
 
+  @doc """
+  Files an abuse report against one user account.
+
+  Creates or appends a report case and refreshes the account's reported meta
+  in one transaction.
+
+  ## Examples
+
+      CMS.AbuseReports.Report.account(target_account, "spam", %{}, user)
+
+  """
   @spec account(User.t(), String.t(), map(), User.t()) :: T.domain_res(User.t())
   def account(%User{} = target_account, reason, attr, %User{} = user) do
     {:ok, info} = match(:account)

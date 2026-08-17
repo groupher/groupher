@@ -29,6 +29,25 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
+  @doc """
+  Runs one draft tree mutation inside the doc tree write envelope.
+
+  Acquires the community/branch tree lock, re-checks `base_revision`, and
+  builds either a mutation payload or a conflict response.
+
+  ## Examples
+
+      Operation.run(community, %{base_revision: 3, actor: user}, fn branch, state ->
+        {:ok, Operation.payload(community, state, node)}
+      end)
+      #=> {:ok, %{revision: 4, conflict: false, node: ..., affected_nodes: [...]}}
+
+      Operation.run(community, %{base_revision: 1, actor: user}, fn branch, state ->
+        {:ok, node}
+      end)
+      #=> {:ok, %{revision: 4, conflict: true, affected_nodes: []}}
+
+  """
   def run(%Community{} = community, args, fun) do
     actor = Map.get(args, :actor, :operations)
 

@@ -52,6 +52,17 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     "How to break down complex requirements"
   ]
 
+  @doc """
+  Seeds one sample article into a community for the given thread.
+
+  The community is looked up by slug and a fresh seed author is created per
+  article. The article gets random views before being returned.
+
+  ## Examples
+
+      CMS.Seeds.Articles.mock("elixir", :post)
+
+  """
   @spec mock(String.t(), atom()) :: T.domain_res(map())
   def mock(community_slug, thread) when is_binary(community_slug) and is_atom(thread) do
     with {:ok, community} <- ORM.find_by(Community, slug: community_slug),

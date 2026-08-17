@@ -24,6 +24,19 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   require Const
 
+  @doc """
+  Starts the review of an Application: moves it to `:reviewing` and clears
+  its slug claim expiry.
+
+  Requires a reviewer with the `community_application_review` passport grant
+  and an `expected_version` matching the current application version.
+
+  ## Examples
+
+      CMS.CommunityApplications.Review.start("capp_abc", %User{id: 1}, 1)
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec start(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def start(public_ref, %User{} = reviewer, expected_version) do

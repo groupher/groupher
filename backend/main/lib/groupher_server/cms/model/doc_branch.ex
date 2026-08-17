@@ -4,6 +4,8 @@ defmodule GroupherServer.CMS.Model.DocBranch do
 
   A DocBranch is a Docs workspace coordinate. Ordinary Post, Blog, and
   Changelog rows never reference this schema.
+
+  community + branch identity -> DocBranch row -> branch-scoped document ownership
   """
 
   alias __MODULE__

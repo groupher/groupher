@@ -13,6 +13,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   Doc branches use the same Draft operations, while their branch identity is
   resolved by `CMS.Docs.Branch`. Ordinary Articles have no branch dimension.
+
+  editor input -> Draft head -> publish boundary -> public Article head
   """
 
   import Ecto.Changeset, only: [put_change: 3, put_embed: 3]

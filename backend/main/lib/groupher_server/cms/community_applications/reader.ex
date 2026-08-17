@@ -25,6 +25,18 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
 
   alias GroupherServer.Repo
 
+  @doc """
+  Returns the user's most recent blocking application, if any.
+
+  ## Examples
+
+      CMS.CommunityApplications.Reader.current(%User{id: 1})
+      #=> {:ok, %CommunityApplication{}}
+
+      CMS.CommunityApplications.Reader.current(%User{id: 1})
+      #=> {:ok, nil}
+
+  """
   @spec current(User.t()) :: {:ok, CommunityApplication.t() | nil}
   def current(%User{id: user_id}) do
     statuses = CommunityApplication.blocking_statuses()

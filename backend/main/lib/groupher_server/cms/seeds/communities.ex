@@ -21,6 +21,17 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   @community_types [:pl, :framework]
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
+  @doc """
+  Seeds every predefined community of one type.
+
+  Each slug from the type list is created through the domain community seed
+  flow. Supported types are `:pl` and `:framework`.
+
+  ## Examples
+
+      CMS.Seeds.Communities.communities(:pl)
+
+  """
   @spec communities(atom()) :: T.domain_res(:ok)
   def communities(type) when type in @community_types do
     get(type) |> Enum.each(&mock(&1, type)) |> done

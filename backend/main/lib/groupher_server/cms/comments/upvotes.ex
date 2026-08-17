@@ -17,6 +17,17 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
   alias CMS.Model.{Comment, CommentUpvote}
   alias Helper.{Later, Multi, ORM, T}
 
+  @doc """
+  Upvotes a comment on behalf of the user.
+
+  Creates the upvote fact row, syncs the comment reaction projection, and emits
+  the upvote notification and community subscribe events.
+
+  ## Examples
+
+      CMS.Comments.Upvotes.upvote(comment_id, user)
+
+  """
   @spec upvote(T.id(), User.t()) :: T.domain_res(Comment.t())
   def upvote(comment_id, %User{id: user_id} = from_user) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),

@@ -29,6 +29,20 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
 
   # Explicit slugs are user input and win over title-derived slugs; title is
   # still trimmed when both are present.
+  @doc """
+  Normalizes a navigation title and its derived slug.
+
+  Explicit user slugs win over title-derived slugs; both are trimmed.
+
+  ## Examples
+
+      Identity.normalize_title_slug(%{title: "  Getting Started  "})
+      #=> %{title: "Getting Started", slug: "getting-started"}
+
+      Identity.normalize_title_slug(%{title: " Getting Started ", slug: "  custom-slug  "})
+      #=> %{title: "Getting Started", slug: "custom-slug"}
+
+  """
   def normalize_title_slug(%{slug: slug} = args) when is_binary(slug) do
     args
     |> trim_title()

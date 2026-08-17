@@ -18,6 +18,15 @@ defmodule GroupherServer.CMS.Communities.List do
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
+  @doc """
+  Returns paged Communities annotated with the viewer's subscription state.
+
+  ## Examples
+
+      CMS.Communities.List.page(%{page: 1, size: 20}, %User{meta: %{subscribed_communities_ids: [1]}})
+      #=> {:ok, %{entries: [%Community{}], page_number: 1}}
+
+  """
   @spec page(map(), User.t()) :: T.domain_res(term())
   def page(filter, %User{meta: meta}) do
     with {:ok, paged_communities} <- page(filter) do

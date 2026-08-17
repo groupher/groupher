@@ -25,12 +25,39 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   @tracked_threads [:post, :blog, :changelog]
   @default_thread :post
 
+  @doc """
+  Increments the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.TagStats.inc(article, tag)
+      #=> {:ok, :pass}
+
+  """
   @spec inc(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
   def inc(article, tag), do: do_update(article, tag, 1)
 
+  @doc """
+  Decrements the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.TagStats.dec(article, tag)
+      #=> {:ok, :pass}
+
+  """
   @spec dec(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
   def dec(article, tag), do: do_update(article, tag, -1)
 
+  @doc """
+  Applies multiple tag counter deltas in one batch upsert.
+
+  ## Examples
+
+      CMS.Communities.TagStats.update_many(article, [{tag, 1}, {other_tag, -1}])
+      #=> {:ok, :pass}
+
+  """
   @spec update_many(Ecto.Schema.t(), [{CommunityTag.t(), -1 | 1}]) :: T.domain_res(:pass)
   def update_many(_article, []), do: done(:pass)
 

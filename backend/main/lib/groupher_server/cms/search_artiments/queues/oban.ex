@@ -17,6 +17,18 @@ defmodule GroupherServer.CMS.SearchArtiments.Queues.Oban do
   alias GroupherServer.Jobs
 
   @impl true
+  @doc """
+  Enqueues one search indexing job through the Oban queue.
+
+  In seed environments enqueueing is skipped. Enqueue failures are logged and
+  reported via telemetry but still return `{:ok, :pass}` so search
+  infrastructure never rolls back content transactions.
+
+  ## Examples
+
+      Oban.enqueue({:upsert_article, :post, article_id})
+
+  """
   def enqueue(job) do
     if Application.get_env(:groupher_server, :env) == :seed_prod do
       {:ok, :pass}

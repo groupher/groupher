@@ -24,6 +24,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @batch_size 500
   @legal Constant.CMS.pending(:legal)
 
+  @doc """
+  Enqueues a background upsert job for one article.
+
+  The article's thread is resolved through `CMS.FrontDesk`, then the indexing
+  job is enqueued on the search queue.
+
+  ## Examples
+
+      CMS.SearchArtiments.Indexer.enqueue_upsert(post)
+
+  """
   @spec enqueue_upsert(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_upsert(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do

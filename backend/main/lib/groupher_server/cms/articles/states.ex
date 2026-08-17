@@ -33,6 +33,14 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
+  @doc """
+  Sets the category of a post and refreshes the question flag on its comments.
+
+  ## Examples
+
+      CMS.Articles.States.set_cat(post, :qa)
+
+  """
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}),

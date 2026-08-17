@@ -36,6 +36,25 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
+  @doc """
+  Publishes one draft doc and its public tree shell.
+
+  The draft content is published, then the page and its group/tab ancestors are
+  projected into public tree nodes (with optional cover sync), and the
+  doc-bound staged tree events are marked published.
+
+  ## Examples
+
+      DocPublisher.publish_doc_draft(
+        community,
+        branch,
+        %{doc_id: doc_id, page_node_id: node_id},
+        user,
+        true
+      )
+      #=> {:ok, %DocSnapshot{}}
+
+  """
   def publish_doc_draft(
         %Community{} = community,
         branch,

@@ -191,6 +191,15 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   @shared_token_keys @shared_token_specs |> Map.keys() |> MapSet.new()
   @theme_token_keys @theme_token_specs |> Map.keys() |> MapSet.new()
 
+  @doc """
+  Return the supported token keys grouped by preset section.
+
+  Example:
+
+      ThemePreset.token_keys()
+      #=> %{"shared" => ["glowFixed"], "light" => ["pageBg", ...], "dark" => ["pageBg", ...]}
+
+  """
   def token_keys do
     %{
       "shared" => MapSet.to_list(@shared_token_keys),

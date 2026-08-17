@@ -33,6 +33,21 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   alias CMS.Model.{Community, DocsSiteState}
   alias Helper.{ORM, T}
 
+  @doc """
+  Bumps the draft tree revision counters in one transaction.
+
+  Increments `tree_lock_version` and `site_draft_version`, and adds the optional
+  `staged_event_delta` to `staged_event_count`.
+
+  ## Examples
+
+      Revision.bump_tree_draft(community, state)
+      #=> {:ok, %DocsSiteState{}}
+
+      Revision.bump_tree_draft(community, state, staged_event_delta: 2)
+      #=> {:ok, %DocsSiteState{}}
+
+  """
   @spec bump_tree_draft(Community.t(), DocsSiteState.t(), keyword()) ::
           T.domain_res(DocsSiteState.t())
   def bump_tree_draft(%Community{} = community, %DocsSiteState{} = state, opts \\ []) do

@@ -15,6 +15,24 @@ defmodule GroupherServer.CMS.Dashboard.LinkValidator do
         -> CommunityDashboard / Repo
   """
 
+  @doc """
+  Returns whether a dashboard link-tree node is structurally valid.
+
+  A `:link` node requires a URL; a `:group` node is valid only when all of its
+  children are valid links.
+
+  ## Examples
+
+      LinkValidator.valid_tree?(%{id: "1", type: :link, title: "Home", url: "https://groupher.com"})
+      #=> true
+
+      LinkValidator.valid_tree?(%{id: "1", type: :group, title: "Group", links: []})
+      #=> true
+
+      LinkValidator.valid_tree?(%{id: "1", type: :link, title: "Home"})
+      #=> false
+
+  """
   def valid_tree?(%{id: id, type: type, title: title} = item)
       when is_binary(id) and is_binary(title) do
     case type do

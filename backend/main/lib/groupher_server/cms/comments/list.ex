@@ -34,6 +34,15 @@ defmodule GroupherServer.CMS.Comments.List do
     doc: [author: :user]
   ]
 
+  @doc """
+  Returns the comment summary state for one article: total count, participant
+  count, latest participants, and whether the viewer joined the conversation.
+
+  ## Examples
+
+      CMS.Comments.List.comments_state(:post, article_id)
+
+  """
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
   def comments_state(thread, article_id) do
     filter = %{page: 1, size: 20}

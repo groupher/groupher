@@ -19,6 +19,8 @@ defmodule GroupherServer.CMS.Articles.Lock do
   thread-scoped key, while Doc operations must explicitly provide a branch.
   Cross-branch Doc operations acquire all affected branch keys in a stable
   order.
+
+  lifecycle command -> scoped advisory key -> serialized Article mutation
   """
 
   alias GroupherServer.CMS.Model.Community

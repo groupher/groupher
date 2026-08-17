@@ -27,6 +27,7 @@ defmodule GroupherServer.CMS.Events.SyncMentions do
 
   @behaviour GroupherServer.CMS.Events.Handler
 
+  @doc "Handles the `:sync_mentions` event by refreshing mention facts for the payload artiment."
   @impl true
   def handle(%Event{type: :sync_mentions, payload: %{artiment: artiment}}) do
     CMS.ArtimentMentions.sync(artiment)

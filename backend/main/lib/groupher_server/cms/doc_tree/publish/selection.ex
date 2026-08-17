@@ -36,6 +36,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   @publish_flow_publish CMS.Const.doc_publish_flow(:publish)
   @publish_flow_restore CMS.Const.doc_publish_flow(:restore)
 
+  @doc """
+  Normalizes publish input into one explicit checklist selection.
+
+  Omitted lists default to all selectable items. Explicit ids must be known and
+  selectable, and a tree item can not be both published and restored.
+
+  ## Examples
+
+      Selection.from_input(args, checklist)
+      #=> {:ok,
+      #=>  %{doc_checklist_item_ids: [...], tree_checklist_item_ids: [...],
+      #=>    restore_tree_checklist_item_ids: []}}
+
+  """
   def from_input(args, current_checklist) do
     with {:ok, doc_checklist_item_ids} <-
            selected_checklist_item_ids(

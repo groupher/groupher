@@ -13,6 +13,17 @@ defmodule GroupherServer.CMS.Comments.Numbering do
 
   alias Helper.{ORM, T}
 
+  @doc """
+  Allocates the next comment floor for an article.
+
+  Atomically increments the article meta `:next_floor` counter and returns the
+  new floor value.
+
+  ## Examples
+
+      CMS.Comments.Numbering.next_floor(article, :post_id)
+
+  """
   @spec next_floor(map(), atom()) :: T.domain_res(integer())
   def next_floor(article, _foreign_key) do
     case ORM.inc_meta(article, :next_floor) do

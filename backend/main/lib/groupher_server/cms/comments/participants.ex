@@ -21,6 +21,19 @@ defmodule GroupherServer.CMS.Comments.Participants do
 
   @max_participator_count Comment.max_participator_count()
 
+  @doc """
+  Adds a user to an article's comment participant projection.
+
+  The locked article's participant embed is refreshed with the latest
+  normalized participants, capped at the configured limit, and the participant
+  user ids in meta are updated. Articles without a participant embed are left
+  untouched.
+
+  ## Examples
+
+      CMS.Comments.Participants.add_to_article(article, user)
+
+  """
   @spec add_to_article(map(), User.t()) :: T.domain_res(term())
   def add_to_article(
         %{comments_participants: _participants} = article,

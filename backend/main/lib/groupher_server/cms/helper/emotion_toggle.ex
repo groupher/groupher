@@ -26,6 +26,21 @@ defmodule GroupherServer.CMS.Helper.EmotionToggle do
 
   alias Helper.ORM
 
+  @doc """
+  Persists an emotion toggle for one target row.
+
+  Returns `{:ok, true}` when the desired state changed the fact table and
+  `{:ok, false}` when the row was already in the desired state.
+
+  ## Examples
+
+      EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2}, :beer, true)
+      #=> {:ok, true}
+
+      EmotionToggle.persist(CommentUserEmotion, %{comment_id: 1, user_id: 2}, :beer, true)
+      #=> {:ok, false}
+
+  """
   @spec persist(module(), map(), atom(), boolean()) :: {:ok, boolean()} | {:error, term()}
   def persist(schema, target, emotion, desired_state) when is_boolean(desired_state) do
     target = Map.put(target, :emotion, to_string(emotion))

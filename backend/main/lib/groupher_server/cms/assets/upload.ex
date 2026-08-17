@@ -28,6 +28,18 @@ defmodule GroupherServer.CMS.Assets.Upload do
   @storage_limit_bytes 100 * 1024 * 1024
   @capability_ttl_seconds 15 * 60
 
+  @doc """
+  Creates a short-lived upload capability intent for one community asset.
+
+  The intent validates the file metadata, checks the community storage quota,
+  and returns a signed capability plus the canonical object key and URL.
+
+  ## Examples
+
+      Upload.create_intent(community, %{filename: "hero.png", mime_type: "image/png", size_bytes: 1024}, user)
+      #=> {:ok, %{upload_ref: "upload_...", asset_public_ref: "asset_...", capability: "..."}}
+
+  """
   @spec create_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
   def create_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
     with {:ok, attrs} <- validate_file(file),

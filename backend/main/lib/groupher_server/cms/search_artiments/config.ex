@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Config do
             queue: nil,
             algolia: []
 
+  @doc "Returns the runtime search artiments configuration as a `%Config{}` struct."
   @spec runtime() :: t()
   def runtime do
     config = Application.fetch_env!(:groupher_server, :search_artiments)

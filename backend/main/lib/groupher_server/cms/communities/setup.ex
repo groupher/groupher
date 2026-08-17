@@ -32,6 +32,19 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   @community_normal Constant.CMS.pending(:normal)
 
+  @doc """
+  Runs idempotent initialization for a newly created Community.
+
+  Fetches the community, its application and the owner, ensures the owner is
+  the root moderator, initializes the doc tree and analysis provisioning,
+  then activates the community.
+
+  ## Examples
+
+      CMS.Communities.Setup.run("groupher", "op_123")
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec run(String.t(), String.t()) :: {:ok, CommunityApplication.t()} | {:error, term()}
   def run(community_ref, operation_ref) do
     with {:ok, community} <- fetch_community(community_ref),

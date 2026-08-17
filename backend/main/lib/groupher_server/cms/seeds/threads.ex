@@ -13,6 +13,18 @@ defmodule GroupherServer.CMS.Seeds.Threads do
         -> Repo
   """
 
+  @doc """
+  Returns the thread list a seeded community type exposes.
+
+  ## Examples
+
+      CMS.Seeds.Threads.get(:home)
+      #=> []
+
+      CMS.Seeds.Threads.get(:feedback)
+      #=> [%{slug: "post"}, %{slug: "kanban"}]
+
+  """
   def get(:home), do: []
 
   def get(:blackhole) do

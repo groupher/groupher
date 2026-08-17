@@ -21,6 +21,14 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
     destroy: [:destroy]
   }
 
+  @doc """
+  Returns the current lifecycle state for one comment.
+
+  ## Examples
+
+      CMS.Comments.Lifecycle.state(comment_id)
+
+  """
   @spec state(integer()) :: {:ok, CommentLifecycle.state()} | {:error, :lifecycle_not_found}
   def state(comment_id) do
     case Repo.get_by(CommentLifecycle, comment_id: comment_id) do

@@ -49,6 +49,7 @@ defmodule GroupherServer.CMS.Model.Community do
   # @required_fields ~w(title desc user_id)a
   @optional_fields ~w(favicon label index aka contributes_digest pending locale homepage articles_count moderators_count subscribers_count)a
 
+  @doc "Returns the maximum number of pinned articles per thread in a community."
   def max_pinned_article_count_per_thread, do: @max_pinned_article_count_per_thread
 
   schema "communities" do

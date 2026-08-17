@@ -33,6 +33,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
 
   require CMS.Const
 
+  @doc """
+  Records staged tree events and returns the tree-owner event count.
+
+  Doc-owned create events are excluded from the count because they publish
+  together with article content.
+
+  ## Examples
+
+      EventRecorder.record_tree_events(community, branch, args, [event_1, event_2])
+      #=> {:ok, 2}
+
+  """
   def record_tree_events(%Community{} = community, branch, args, events) do
     with {:ok, events} <-
            Events.record_staged_many(community, events, Map.get(args, :actor_id),

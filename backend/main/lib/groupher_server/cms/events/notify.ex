@@ -26,6 +26,13 @@ defmodule GroupherServer.CMS.Events.Notify do
   @type handle_result :: {:ok, term()} | {:error, term()}
   @type notify_action :: :comment | :reply | :upvote | :collect
 
+  @doc """
+  Handles notify events by converting them into persisted Messaging notifications.
+
+  Supported types are `:notify_comment`, `:notify_reply`, `:notify_upvote`,
+  `:notify_collect`, and their `:notify_undo_*` counterparts. Content that was
+  already deleted resolves to `{:ok, :pass}`.
+  """
   @spec handle(Event.t()) :: handle_result()
   @impl true
   def handle(%Event{type: :notify_comment, payload: %{comment: comment, from_user: from_user}}) do

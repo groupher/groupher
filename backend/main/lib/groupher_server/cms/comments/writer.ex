@@ -41,6 +41,18 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
 
+  @doc """
+  Creates a top-level comment on an article identified by community, thread,
+  and article id.
+
+  Runs under the article lock and coordinates lifecycle creation, counters,
+  participants, mention sync, and audit events in one transaction.
+
+  ## Examples
+
+      CMS.Comments.Writer.create(community, :post, article_id, body, user)
+
+  """
   @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
   def create(%Community{} = community, thread, article_id, body, %User{} = user) do

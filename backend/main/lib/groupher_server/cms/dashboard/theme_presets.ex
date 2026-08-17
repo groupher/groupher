@@ -27,6 +27,18 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.T
 
+  @doc """
+  Composes and persists a custom theme preset for a community layout.
+
+  The incoming overwrite is merged onto the current custom preset before the
+  composed `custom_theme_preset` is saved in the layout section.
+
+  ## Examples
+
+      ThemePresets.save_custom(community, %{theme_preset: :custom, theme_preset_base: :claude, theme_overwrite: %{"light" => %{"cardColor" => "#ffffff"}}})
+      #=> {:ok, %CommunityDashboard{}}
+
+  """
   @spec save_custom(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def save_custom(%Community{} = community, args) do
     args = Map.drop(args, [:community])

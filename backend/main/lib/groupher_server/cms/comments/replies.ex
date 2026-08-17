@@ -16,6 +16,17 @@ defmodule GroupherServer.CMS.Comments.Replies do
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
+  @doc """
+  Resolves the root comment of a reply thread.
+
+  A comment that does not reply to anything is its own root. Otherwise the root
+  is followed through `root_comment_id` or the loaded reply chain.
+
+  ## Examples
+
+      root = CMS.Comments.Replies.root_comment(comment)
+
+  """
   @spec root_comment(Comment.t()) :: Comment.t()
   def root_comment(%Comment{reply_to_comment_id: nil} = comment), do: comment
 

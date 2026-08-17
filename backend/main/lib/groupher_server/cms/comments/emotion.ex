@@ -17,9 +17,28 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias CMS.Model.CommentUserEmotion
   alias Helper.{Later, Multi, T}
 
+  @doc """
+  Applies one emotion to a comment on behalf of the user.
+
+  Persists the emotion fact row, syncs the comment reaction projection, and
+  emits a community subscribe event when the state actually changed.
+
+  ## Examples
+
+      CMS.Comments.Emotion.set(comment_id, :heart, user)
+
+  """
   @spec set(T.id(), atom(), User.t()) :: T.domain_res(term())
   def set(comment_id, emotion, %User{} = user), do: toggle(comment_id, emotion, user, true)
 
+  @doc """
+  Removes one emotion from a comment on behalf of the user.
+
+  ## Examples
+
+      CMS.Comments.Emotion.undo(comment_id, :heart, user)
+
+  """
   @spec undo(T.id(), atom(), User.t()) :: T.domain_res(term())
   def undo(comment_id, emotion, %User{} = user), do: toggle(comment_id, emotion, user, false)
 

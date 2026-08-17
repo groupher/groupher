@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
 
   @supported_emotions CMS.Artiment.Config.emotions()
 
+  @doc "Generates the count, login list, viewer, and latest-user fields for each artiment emotion."
   defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->

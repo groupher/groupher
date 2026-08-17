@@ -114,7 +114,7 @@ defmodule GroupherServer.CMS.Articles do
     Draft.create(community, thread, attrs, user)
   end
 
-  @doc "Reads a Draft for any Article thread and optionally applies :read_draft authorization."
+  @doc "Reads a Draft through one typed :read_draft Scope query."
   @spec read_draft(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def read_draft(%Community{} = community, thread, article_hash_id, opts \\ []) do

@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
 
   @required_fields ~w(community_id)a
 
+  @doc "Returns the default payload for every community dashboard section."
   def default do
     %{
       base_info: Embeds.Dashboard.BaseInfo.default(),

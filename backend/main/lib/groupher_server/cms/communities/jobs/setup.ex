@@ -17,6 +17,10 @@ defmodule GroupherServer.CMS.Communities.Jobs.Setup do
 
   alias GroupherServer.CMS
 
+  @doc """
+  Runs idempotent Community setup, marking the Application as failed once
+  all retries are exhausted.
+  """
   @impl Oban.Worker
   def perform(%Oban.Job{
         args: %{

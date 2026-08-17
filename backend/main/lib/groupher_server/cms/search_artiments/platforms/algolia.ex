@@ -22,6 +22,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   @default_max_plain_text_bytes 7_000
 
   @impl true
+  @doc """
+  Batches upserts artiment records into the Algolia index.
+
+  An empty artiment list is a no-op. Set `wait_for_task: true` to block until
+  the indexing task is published.
+
+  ## Examples
+
+      Algolia.upsert([artiment], wait_for_task: true)
+
+  """
   def upsert([], _opts), do: :ok
 
   def upsert(artiments, opts) when is_list(artiments) do

@@ -19,6 +19,19 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
 
   @legal Constant.CMS.pending(:legal)
 
+  @doc """
+  Projects one public article into a Search Artiment.
+
+  Reloads the article with community, document, and author data before building
+  the canonical projection with live interaction counts. Non-public articles
+  return `{:error, {:not_searchable, _}}`; incomplete articles return an
+  invalid projection error.
+
+  ## Examples
+
+      CMS.SearchArtiments.Projection.Article.project(:post, article)
+
+  """
   @spec project(Artiment.thread(), struct()) :: {:ok, Artiment.t()} | {:error, term()}
   def project(thread, article) do
     article = Repo.preload(article, [:community, :document, author: :user])

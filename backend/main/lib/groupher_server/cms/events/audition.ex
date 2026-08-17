@@ -26,6 +26,12 @@ defmodule GroupherServer.CMS.Events.Audition do
   @type audition_result :: {:ok, map()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
 
+  @doc """
+  Handles the `:audition` event, running moderation analysis on the payload artiment.
+
+  Comments and articles are submitted to `AuditBot`; the result updates the
+  legal-state fields and missing or deleted content resolves to `{:ok, :pass}`.
+  """
   @spec handle(Event.t()) :: handle_result()
   @impl true
   def handle(%Event{type: :audition, payload: %{artiment: artiment}}) do

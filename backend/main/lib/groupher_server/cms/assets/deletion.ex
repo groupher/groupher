@@ -25,6 +25,18 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
 
+  @doc """
+  Sends a best-effort provider delete request to assets-hub.
+
+  Failures are logged but never raised, so a deleted asset stays deleted
+  regardless of the enqueue outcome.
+
+  ## Examples
+
+      Deletion.enqueue(%CommunityAsset{id: 1, public_ref: "asset_1"})
+      #=> :ok
+
+  """
   @spec enqueue(CommunityAsset.t()) :: :ok
   def enqueue(%CommunityAsset{} = asset) do
     case safe_enqueue(asset) do

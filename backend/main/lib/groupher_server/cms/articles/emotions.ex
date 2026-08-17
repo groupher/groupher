@@ -19,6 +19,16 @@ defmodule GroupherServer.CMS.Articles.Emotions do
   alias CMS.Model.{ArticleUserEmotion, Author}
   alias Helper.{Multi, T}
 
+  @doc """
+  Applies one emotion to an article on behalf of the user.
+
+  Persists the emotion fact row and syncs the article reaction projection.
+
+  ## Examples
+
+      CMS.Articles.Emotions.emotion(article, :heart, user)
+
+  """
   @spec emotion(term(), atom(), User.t()) :: T.domain_res(term())
   def emotion(article, emotion, %User{} = user) do
     run_emotion(article, emotion, user, true)

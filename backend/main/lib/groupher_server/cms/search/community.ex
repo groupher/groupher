@@ -25,6 +25,17 @@ defmodule GroupherServer.CMS.Search.Community do
 
   @search_items_count 15
 
+  @doc """
+  Searches communities by title, slug, or aka.
+
+  Runs against the public community scope and returns up to 15 matching
+  communities.
+
+  ## Examples
+
+      CMS.Search.Community.search("elixir")
+
+  """
   def search(title) do
     do_search_communities(CMS.Gate.scope(Community, nil, :list, %{policy_mode: :public}), title)
   end

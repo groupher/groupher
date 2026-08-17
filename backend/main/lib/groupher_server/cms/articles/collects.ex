@@ -22,10 +22,29 @@ defmodule GroupherServer.CMS.Articles.Collects do
   alias CMS.Interactions.State
   alias Helper.{Multi, Later, ORM, T}
 
+  @doc """
+  Returns the paged users who collected the article.
+
+  ## Examples
+
+      CMS.Articles.Collects.collected_users(article, %{page: 1, size: 20})
+
+  """
   @spec collected_users(term(), map()) :: T.domain_res(term())
   def collected_users(article, filter),
     do: FrontDesk.load_reaction_users(ArticleCollect, article, filter)
 
+  @doc """
+  Collects an article on behalf of the user.
+
+  Creates the collect fact row, syncs the interaction projection, increments
+  the author's collect achievement, and emits the collect notification.
+
+  ## Examples
+
+      CMS.Articles.Collects.collect(article, user)
+
+  """
   @spec collect(term(), User.t()) :: T.domain_res(term())
   def collect(article, %User{} = user) do
     {:ok, info} = match(article)

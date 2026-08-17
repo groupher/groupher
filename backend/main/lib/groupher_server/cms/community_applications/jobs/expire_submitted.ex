@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted do
 
   alias GroupherServer.CMS
 
+  @doc "Expires submitted Applications whose review window elapsed."
   @impl Oban.Worker
   def perform(_job) do
     case CMS.CommunityApplications.expire_due(DateTime.utc_now(:second)) do

@@ -23,9 +23,41 @@ defmodule GroupherServer.CMS.CommunityApplications.Transitions do
     setup_failed: ~w(setting_up)a
   }
 
+  @doc """
+  Returns whether the Application state transition is allowed.
+
+  ## Examples
+
+      CMS.CommunityApplications.Transitions.allowed?(:submitted, :reviewing)
+      #=> true
+
+      CMS.CommunityApplications.Transitions.allowed?(:submitted, :approved)
+      #=> false
+
+  """
   @spec allowed?(CommunityApplication.status(), CommunityApplication.status()) :: boolean()
   def allowed?(from, to), do: to in Map.get(@allowed, from, [])
 
+  @doc """
+  Adds the Application status update and its Event write to the Multi.
+
+  When the transition is not allowed the Multi is failed with
+  `:application_state_conflict`.
+
+  ## Examples
+
+      CMS.CommunityApplications.Transitions.add(
+        Ecto.Multi.new(),
+        :application,
+        :event,
+        application,
+        :reviewing,
+        %{},
+        %{type: :reviewer, id: 1, occurred_at: DateTime.utc_now(:second)}
+      )
+      #=> %Ecto.Multi{}
+
+  """
   @spec add(Multi.t(), atom(), atom(), CommunityApplication.t(), atom(), map(), map()) ::
           Multi.t()
   def add(

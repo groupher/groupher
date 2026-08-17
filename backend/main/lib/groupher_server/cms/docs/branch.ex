@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Docs.Branch do
   @moduledoc """
   Resolves the Docs-only workspace branch coordinate.
+
+  community + branch ref -> canonical DocBranch -> branch-scoped Docs reads/writes
   """
 
   import Ecto.Query, warn: false
@@ -14,8 +16,25 @@ defmodule GroupherServer.CMS.Docs.Branch do
 
   @main_slug "main"
 
+  @doc "Returns the canonical main DocBranch slug."
   def main_slug, do: @main_slug
 
+  @doc """
+  Resolves a community-scoped DocBranch reference to its canonical row.
+
+  Accepts a `%DocBranch{}`, a map or keyword with `:branch_id`, `:branch` or
+  `:branch_slug`, the main slug (or `nil`/empty), a branch id integer, or a
+  branch slug string. The main branch is created on first access.
+
+  ## Examples
+
+      Branch.resolve(community, "main")
+      #=> {:ok, %DocBranch{slug: "main"}}
+
+      Branch.resolve(community, "missing")
+      #=> {:error, {:custom, "Doc branch not found"}}
+
+  """
   def resolve(%Community{} = community, %DocBranch{} = branch) do
     if branch.community_id == community.id,
       do: {:ok, branch},

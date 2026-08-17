@@ -109,15 +109,19 @@ defmodule GroupherServer.CMS.Interactions.Registry do
     }
   }
 
+  @doc "Returns the canonical interaction target metadata for a thread."
   @spec target(atom()) :: map()
   def target(thread), do: Map.fetch!(@targets, thread)
 
+  @doc "Returns metadata for all registered interaction targets."
   @spec targets() :: map()
   def targets, do: @targets
 
+  @doc "Returns the article schema module registered for a thread."
   @spec article_schema(atom()) :: module()
   def article_schema(thread), do: @targets |> Map.fetch!(thread) |> Map.fetch!(:article_schema)
 
+  @doc "Resolves the thread that owns the given article schema module."
   @spec thread_for(module()) :: {:ok, atom()} | :error
   def thread_for(schema) do
     case Enum.find(@targets, fn {_thread, info} -> Map.get(info, :article_schema) == schema end) do

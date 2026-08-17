@@ -28,6 +28,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
 
   @temporary_index_offset 100_000
 
+  @doc """
+  Moves one draft tree node to a new sibling position.
+
+  The old position is vacated before reindexing the target scope, and the
+  previous sibling scope is normalized when the node changes parents.
+
+  ## Examples
+
+      Index.move_node(community, branch, node, new_parent_node_id, 0)
+      #=> :ok
+
+  """
   def move_node(%Community{} = community, branch, %DocTreeNode{} = node, parent_node_id, index) do
     old_parent_node_id = node.parent_node_id
 

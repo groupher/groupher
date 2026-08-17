@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Model.TrashedDocArticle do
   @moduledoc """
   Branch-local Trash membership for one Doc identity.
+
+  Doc article -> TrashAction membership -> restore target or permanent deletion
   """
 
   use Ecto.Schema

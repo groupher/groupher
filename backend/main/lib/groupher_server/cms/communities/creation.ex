@@ -28,6 +28,20 @@ defmodule GroupherServer.CMS.Communities.Creation do
 
   @community_applying Constant.CMS.pending(:applying)
 
+  @doc """
+  Creates a Community from one approved Application inside a single transaction.
+
+  The application is locked and must be `:approved` (or already in the
+  `:setting_up` / `:created` / `:setup_failed` states). Core creation, lifecycle,
+  asset promotion, slug claim promotion and the idempotent Setup job enqueue
+  all happen in the same transaction; any failure rolls back.
+
+  ## Examples
+
+      CMS.Communities.create_from_application("capp_abc", "op_123")
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec create_from_application(String.t(), String.t()) :: {:ok, term()} | {:error, term()}
   def create_from_application(application_ref, operation_ref) do
     now = DateTime.utc_now(:second)

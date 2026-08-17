@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims do
 
   alias GroupherServer.CMS
 
+  @doc "Releases expired slug claims whose Application has reached a terminal state."
   @impl Oban.Worker
   def perform(_job) do
     {_count, nil} = CMS.Communities.release_expired_slug_claims(DateTime.utc_now(:second))

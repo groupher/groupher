@@ -46,6 +46,19 @@ defmodule GroupherServer.CMS.DocTree.Import do
   @insert_batch_size 500
   @managed_fields ~w(parent_node_id doc_id type title index href updated_at)a
 
+  @doc """
+  Projects one imported navigation tree into the branch's draft tree.
+
+  `tree` follows the `branchSlug` + `tabs[]` contract. Page nodes whose content
+  item is missing from `items_by_target` are skipped. Existing nodes are updated
+  in place, and the draft tree revision is bumped on success.
+
+  ## Examples
+
+      Import.apply(community, branch, %{"branchSlug" => "main", "tabs" => tabs}, items_by_target)
+      #=> {:ok, %{nodes: [%DocTreeNode{}], state: %DocsSiteState{}}}
+
+  """
   @spec apply(Community.t(), DocBranch.t(), map(), map()) ::
           {:ok, %{nodes: [DocTreeNode.t()], state: CMS.Model.DocsSiteState.t()}}
           | {:error, term()}

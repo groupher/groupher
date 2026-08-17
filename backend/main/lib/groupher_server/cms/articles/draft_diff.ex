@@ -4,12 +4,29 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
 
   This is the only Article-level source for has_unpublished_changes. It never
   creates a revision or Snapshot row.
+
+  draft + public heads -> transient field/document comparison -> editor change fact
   """
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.Draft
   alias CMS.Model.{ArticleDocument, Community}
 
+  @doc """
+  Compares one draft head with the public head and returns the transient change
+  fact.
+
+  Version fields are diffed individually while the document comparison prefers
+  `body_hash` and falls back to the raw json. The result carries `:changed`,
+  `:document_changed`, and the field-level `:fields` diffs. Non-draft inputs
+  always compare as unchanged.
+
+  ## Examples
+
+      %{changed: changed, fields: fields} =
+        CMS.Articles.DraftDiff.compare(draft, public)
+
+  """
   def compare(%{stage: :draft} = draft, %{stage: :public} = public) do
     document_changed? =
       with {:ok, draft_document} <- document(draft),

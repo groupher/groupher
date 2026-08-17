@@ -28,6 +28,14 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
+  @doc """
+  Returns a paged list of audit-failed articles for one thread.
+
+  ## Examples
+
+      CMS.Articles.Moderation.paged_audit_failed(:post, %{page: 1, size: 20})
+
+  """
   @spec paged_audit_failed(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed(thread, filter) do
     %{page: page, size: size} = filter

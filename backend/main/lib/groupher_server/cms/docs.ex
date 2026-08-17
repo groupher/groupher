@@ -3,6 +3,8 @@ defmodule GroupherServer.CMS.Docs do
   Public facade for Doc-only branches, snapshots and release publishing.
 
   Ordinary Post, Blog and Changelog never enter this boundary.
+
+  Docs branch/editor -> snapshot and tree boundaries -> public Docs release
   """
 
   alias GroupherServer.CMS

@@ -27,6 +27,26 @@ defmodule GroupherServer.CMS.Communities.Reader do
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
 
+  @doc """
+  Fetches a Community by slug (or aka) with dashboard, lifecycle, moderators
+  and viewer state preloaded.
+
+  Public viewers may pass a `%User{}` to get viewer state; explicit callers
+  pass `:operations`. By default the read increments the view counter unless
+  `inc_views: false` is given.
+
+  ## Examples
+
+      CMS.Communities.Reader.fetch("groupher")
+      #=> {:ok, %Community{}}
+
+      CMS.Communities.Reader.fetch("groupher", %User{id: 1})
+      #=> {:ok, %Community{}}
+
+      CMS.Communities.Reader.fetch("groupher", :operations)
+      #=> {:ok, %Community{}}
+
+  """
   @spec fetch(String.t(), keyword() | User.t() | :operations) :: T.domain_res(term())
   def fetch(slug, opt \\ @default_read_opt)
 

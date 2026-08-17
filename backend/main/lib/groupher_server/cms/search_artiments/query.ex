@@ -38,6 +38,21 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
   @threads [:post, :blog, :changelog, :doc]
   @sorts [:relevance]
 
+  @doc """
+  Builds a validated search query from raw attributes.
+
+  Scope and filter maps are normalized, page defaults to 1, size defaults to 20
+  and is capped, and empty text or unsupported sort values are rejected.
+
+  ## Examples
+
+      Query.new(%{text: "elixir"})
+      #=> {:ok, %Query{text: "elixir", page: 1, size: 20, sort: :relevance}}
+
+      Query.new(%{text: ""})
+      #=> {:error, {:custom, "search text is required"}}
+
+  """
   @spec new(map()) :: {:ok, t()} | {:error, term()}
   def new(attrs) when is_map(attrs) do
     text = attrs |> Map.get(:text, "") |> String.trim()

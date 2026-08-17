@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Config do
         -> Repo / Oban
   """
 
+  @doc "Returns the TTL in days before a submitted Application expires."
   @spec submitted_ttl_days() :: pos_integer()
   def submitted_ttl_days do
     :groupher_server

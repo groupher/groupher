@@ -36,6 +36,19 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     "GraphQL endpoint verification notes"
   ]
 
+  @doc """
+  Seeds the minimal home community dataset.
+
+  Pass `reset: true` to delete the existing home community first. Returns the
+  fetched community with a `seed_summary` of per-thread counts.
+
+  ## Examples
+
+      CMS.Seeds.LiteHome.seed()
+
+      CMS.Seeds.LiteHome.seed(reset: true)
+
+  """
   @spec seed(keyword()) :: T.domain_res(Community.t())
   def seed(opts \\ []) when is_list(opts) do
     reset? = Keyword.get(opts, :reset, false)

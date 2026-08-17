@@ -10,6 +10,16 @@ defmodule GroupherServer.CMS.Assets.Capability do
         -> Repo / Assets Hub
   """
 
+  @doc """
+  Signs an upload capability payload for assets-hub verification.
+
+  The payload is HMAC-SHA256 signed with the shared capability secret.
+
+  ## Examples
+
+      Capability.sign(%{"purpose" => "asset.upload", "uploadRef" => "upload_abc"})
+
+  """
   @spec sign(map()) :: String.t()
   def sign(payload) when is_map(payload) do
     encoded = payload |> Jason.encode!() |> Base.url_encode64(padding: false)

@@ -34,9 +34,22 @@ defmodule GroupherServer.CMS.Audit.Actions do
     community.lifecycle_reconciled
   )
 
+  @doc "Returns all registered CMS audit action names."
   @spec values() :: [String.t()]
   def values, do: @actions
 
+  @doc """
+  Checks whether an action name is a registered audit action.
+
+  ## Examples
+
+      Actions.valid?("article.trashed")
+      #=> true
+
+      Actions.valid?("unknown.action")
+      #=> false
+
+  """
   @spec valid?(String.t()) :: boolean()
   def valid?(action), do: action in @actions
 end

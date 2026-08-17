@@ -45,6 +45,18 @@ defmodule GroupherServer.CMS.Articles.Trash do
   @audit_illegal Constant.CMS.pending(:illegal)
   @default_retention_days 30
 
+  @doc """
+  Restricts a queryable to articles without an active trash membership.
+
+  The `:doc` clause filters against `TrashedDocArticle` using the branch
+  coordinate; all other threads filter against `TrashedArticle`.
+
+  ## Examples
+
+      Post
+      |> CMS.Articles.Trash.not_trashed_scope(:post)
+
+  """
   @spec not_trashed_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
   def not_trashed_scope(queryable, :doc) do
     from(article in queryable,

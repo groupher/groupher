@@ -35,6 +35,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
+  @doc """
+  Builds the publish checklist for one docs branch.
+
+  The checklist groups draft doc changes and staged tree changes into
+  `%{total_count, doc_changes, tree_changes}`. Tree create events that belong to
+  doc publishing are hidden behind their doc change item.
+
+  ## Examples
+
+      Checklist.build(community, branch)
+      #=> %{total_count: 2, doc_changes: [%{id: "doc:hash"}], tree_changes: []}
+
+  """
   def build(%Community{} = community, branch) do
     doc_changes = doc_change_items(community, branch)
     tree_changes = tree_change_items(community, branch)

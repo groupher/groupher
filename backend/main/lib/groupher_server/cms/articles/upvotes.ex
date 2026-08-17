@@ -23,10 +23,29 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   alias CMS.Interactions.State
   alias Helper.{Multi, Later, ORM, T}
 
+  @doc """
+  Returns the paged users who upvoted the article.
+
+  ## Examples
+
+      CMS.Articles.Upvotes.upvoted_users(article, %{page: 1, size: 20})
+
+  """
   @spec upvoted_users(term(), map()) :: T.domain_res(term())
   def upvoted_users(article, filter),
     do: FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
 
+  @doc """
+  Upvotes an article on behalf of the user.
+
+  Creates the upvote fact row, syncs the interaction projection, adds the
+  author's upvote achievement, and emits the upvote notification.
+
+  ## Examples
+
+      CMS.Articles.Upvotes.upvote(article, user)
+
+  """
   @spec upvote(term(), User.t()) :: T.domain_res(term())
   def upvote(article, %User{} = user) do
     {:ok, info} = match(article)

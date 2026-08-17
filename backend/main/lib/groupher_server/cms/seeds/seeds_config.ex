@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Seeds.SeedsConfig do
         -> CMS context
         -> Repo
   """
+  @doc "Returns the community slugs that use an SVG icon variant for their logo."
   def svg_icons do
     [
       "feedback",

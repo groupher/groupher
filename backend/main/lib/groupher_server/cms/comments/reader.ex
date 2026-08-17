@@ -24,6 +24,14 @@ defmodule GroupherServer.CMS.Comments.Reader do
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
+  @doc """
+  Fetches one comment through the FrontDesk read boundary.
+
+  ## Examples
+
+      CMS.Comments.Reader.fetch_comment(comment_id)
+
+  """
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
     FrontDesk.comment(comment_id)

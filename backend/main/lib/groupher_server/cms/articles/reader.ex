@@ -33,6 +33,17 @@ defmodule GroupherServer.CMS.Articles.Reader do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
+  @doc """
+  Reads one article by community, thread, and inner id for an anonymous viewer.
+
+  Records the view, loads the article document, marks the pinned flag, and
+  returns the article with viewer interaction states.
+
+  ## Examples
+
+      CMS.Articles.Reader.read(community, :post, 1001)
+
+  """
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id) when thread in @threads do
     with {:ok, _thread} <- Allow.thread(community.slug, thread),

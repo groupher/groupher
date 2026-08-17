@@ -28,6 +28,24 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     "GROUP" => :GROUP
   }
 
+  @doc """
+  Submits a community application atomically.
+
+  Normalizes the input, checks slug availability and the admission policy,
+  verifies the finalized logo upload and enforces idempotency through
+  `idempotency_key`. On success the application, slug claim, logo attach
+  and initial event are written in one transaction.
+
+  ## Examples
+
+      CMS.CommunityApplications.Writer.submit(
+        %{title: "Groupher", slug: "groupher", logo_asset_ref: "app_logo_x"},
+        %User{id: 1},
+        "client_txn_1"
+      )
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec submit(map(), User.t(), String.t()) :: {:ok, CommunityApplication.t()} | {:error, term()}
   def submit(attrs, %User{} = user, idempotency_key)
       when is_map(attrs) and is_binary(idempotency_key) do

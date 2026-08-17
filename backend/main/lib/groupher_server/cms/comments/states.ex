@@ -25,6 +25,17 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
+  @doc """
+  Pins a comment to the top of the article's comment list.
+
+  The actor-less variant always fails; use `pin/2` with the acting user.
+
+  ## Examples
+
+      CMS.Comments.States.pin(comment_id)
+      #=> {:error, :actor_required}
+
+  """
   @spec pin(T.id()) :: T.domain_res(Comment.t())
   def pin(_comment_id), do: {:error, :actor_required}
 

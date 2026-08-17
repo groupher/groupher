@@ -17,6 +17,21 @@ defmodule GroupherServer.CMS.CommunityApplications.Policy do
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo
 
+  @doc """
+  Returns whether the user may create a community application.
+
+  The decision combines the feature flag with the single-active-application
+  rule. `context` may force `feature_enabled`.
+
+  ## Examples
+
+      CMS.CommunityApplications.Policy.can_apply(%User{id: 1})
+      #=> %{allowed: true, reason_code: nil, retry_at: nil, metadata: %{}}
+
+      CMS.CommunityApplications.Policy.can_apply(%User{id: 1}, %{feature_enabled: false})
+      #=> %{allowed: false, reason_code: :apply_not_allowed, retry_at: nil, metadata: %{policy: "feature_flag"}}
+
+  """
   @spec can_apply(User.t(), map()) :: map()
   def can_apply(%User{id: user_id}, context \\ %{}) do
     feature_enabled = Map.get(context, :feature_enabled, feature_enabled?())

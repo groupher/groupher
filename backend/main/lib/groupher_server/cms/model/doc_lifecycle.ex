@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Model.DocLifecycle do
   @moduledoc """
   Branch-scoped lifecycle authority for one Doc identity.
+
+  DocBranch + identity -> DocLifecycle state/version -> Docs read and publish decisions
   """
 
   use Ecto.Schema

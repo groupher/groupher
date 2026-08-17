@@ -26,6 +26,13 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   @type subscribe_result :: {:ok, struct()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
 
+  @doc """
+  Handles the `:subscribe_community` event, subscribing the interacting user to
+  the target content's community unless the relationship already exists.
+
+  Comment parents are resolved through their owning article before the
+  idempotent membership write is delegated to `CMS.Communities.subscribe_ifnot/2`.
+  """
   @spec handle(Event.t()) :: handle_result()
   @impl true
   def handle(%Event{type: :subscribe_community, payload: %{target: target, user: user}}) do

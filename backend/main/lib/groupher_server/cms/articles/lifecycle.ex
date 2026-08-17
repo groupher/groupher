@@ -26,9 +26,11 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
     destroy: [:destroy]
   }
 
+  @doc "Returns all possible lifecycle states for a logical Article."
   @spec states() :: [ArticleLifecycle.state()]
   def states, do: @states
 
+  @doc "Returns the lifecycle states readable through the public gate."
   @spec public_readable_states() :: [ArticleLifecycle.state()]
   def public_readable_states, do: @public_readable_states
 

@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Docs.Lifecycle do
   @moduledoc """
   Branch-scoped lifecycle commands for Docs.
+
+  Docs branch state -> validated transition -> DocLifecycle persistence -> read/write capability
   """
 
   import Ecto.Query, warn: false
@@ -18,9 +20,23 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
     destroy: [:destroy]
   }
 
+  @doc "Returns all supported Docs lifecycle states."
   def states, do: @states
+  @doc "Returns the states visible through public reads."
   def public_readable_states, do: @public_readable_states
 
+  @doc """
+  Reads the current lifecycle state for one article hash inside a branch.
+
+  ## Examples
+
+      Lifecycle.state(community.id, branch.id, article_hash_id)
+      #=> {:ok, :published}
+
+      Lifecycle.state(community.id, branch.id, "missing")
+      #=> {:error, :lifecycle_not_found}
+
+  """
   def state(community_id, branch_id, article_hash_id) do
     case Repo.get_by(DocLifecycle,
            community_id: community_id,

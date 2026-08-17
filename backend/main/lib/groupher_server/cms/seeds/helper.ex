@@ -28,6 +28,17 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   @categories CMS.Seeds.Categories.get()
 
+  @doc """
+  Creates seed tag definitions for each community and thread.
+
+  Tags are created through the CMS communities boundary using the seed bot as
+  the actor. `type` selects the community type's default tag set.
+
+  ## Examples
+
+      CMS.Seeds.Helper.tagfy_threads([community], threads, bot, :pl)
+
+  """
   def tagfy_threads(communities, threads, bot, type) when is_list(communities) do
     Enum.each(communities, fn community ->
       Enum.each(threads, fn thread ->

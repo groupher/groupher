@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Docs.Trash do
   @moduledoc """
   Branch-local Trash membership and lifecycle operations for Docs.
+
+  Doc identity -> TrashAction membership -> restore or permanent deletion
   """
 
   import Ecto.Query, warn: false
@@ -21,9 +23,30 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   alias Helper.ORM
 
+  @doc """
+  Creates a TrashAction through the shared `Articles.Trash` boundary.
+
+  ## Examples
+
+      Trash.create_action(community, user, %{root_type: :doc, root_ref: hash_id})
+      #=> {:ok, %TrashAction{}}
+
+  """
   def create_action(community, actor, attrs),
     do: CMS.Articles.Trash.create_action(community, actor, attrs)
 
+  @doc """
+  Attaches many docs to one trash action inside a branch.
+
+  Each unique entry in `doc_ids` becomes a `TrashedDocArticle` row and moves
+  the branch lifecycle to `:deleted`. The first failure stops the batch.
+
+  ## Examples
+
+      Trash.attach_many(action, community, branch, [hash_1, hash_2], user)
+      #=> {:ok, [%TrashedDocArticle{}, ...]}
+
+  """
   def attach_many(
         %TrashAction{} = action,
         %Community{} = community,

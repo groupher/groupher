@@ -16,5 +16,6 @@ defmodule GroupherServer.CMS.DocTree.PublishedFields do
 
   @node_fields ~w(type parent_node_id title index href marker badge hidden)a
 
+  @doc "Returns the node fields copied from staged events to published tree nodes."
   def node_fields, do: @node_fields
 end

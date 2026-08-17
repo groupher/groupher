@@ -16,6 +16,17 @@ defmodule GroupherServer.CMS.Communities.SlugClaims do
   alias GroupherServer.CMS.Model.{CommunityApplication, CommunitySlugClaim}
   alias GroupherServer.Repo
 
+  @doc """
+  Adds a Multi step inserting the slug claim for the application carried in
+  `changes[application_key]`.
+
+  ## Examples
+
+      Ecto.Multi.new()
+      |> CMS.Communities.SlugClaims.insert_application(:claim, :application, expiry)
+      #=> %Ecto.Multi{}
+
+  """
   @spec insert_application(Multi.t(), atom(), atom(), DateTime.t()) :: Multi.t()
   def insert_application(multi, name, application_key, expires_at) do
     Multi.insert(multi, name, fn changes ->

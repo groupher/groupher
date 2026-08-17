@@ -35,6 +35,23 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     :updated_at
   ]
 
+  @doc """
+  Returns a paged list of abuse reports for one filter.
+
+  The `content_type` filter selects the target shape: `:account`, `:comment`,
+  or a content thread. Each shape preloads and projects the matching target
+  info onto the report entries.
+
+  ## Examples
+
+      AbuseReports.List.paged_reports(%{
+        content_type: :post,
+        content_id: post.id,
+        page: 1,
+        size: 20
+      })
+
+  """
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
   def paged_reports(%{content_type: :account, content_id: content_id} = filter) do
     with {:ok, info} <- match(:account) do

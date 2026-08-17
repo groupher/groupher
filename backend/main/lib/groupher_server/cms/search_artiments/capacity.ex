@@ -21,6 +21,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
 
   @legal Constant.CMS.pending(:legal)
 
+  @doc """
+  Measures the source volume used for search platform cost estimates.
+
+  Returns per-thread public article counts, ArticleDocument plain text byte
+  stats, and comment counts with body byte percentiles.
+  """
   @spec measure() :: map()
   def measure do
     %{
