@@ -24,6 +24,8 @@ type TOptions = {
 const invalidGraphQLRequest = (message: string) =>
   Response.json({ errors: [{ extensions: { code: 'INVALID_CSRF' }, message }] }, { status: 400 })
 
+const notFound = () => new Response('Not Found', { status: 404 })
+
 const validateBrowserGraphQLRequest = (
   request: Request,
   target: ReturnType<typeof resolveGatewayTarget>,
@@ -39,10 +41,9 @@ const validateBrowserGraphQLRequest = (
   return null
 }
 
-/** Creates the Gateway application with injectable runtime dependencies. */
+/** Creates the gateway application with injectable runtime dependencies. */
 export const createApp = ({ fetcher }: TOptions = {}) => {
   const app = new Hono()
-  /** Creates the gateway application with injectable runtime dependencies. */
 
   app.get('/health', (context) => context.json(buildHealthResponse()))
 
@@ -87,7 +88,12 @@ export const createApp = ({ fetcher }: TOptions = {}) => {
     })
 
     const invalidRequest = validateBrowserGraphQLRequest(context.req.raw, target)
-    return invalidRequest || proxyRequest(context.req.raw, target, { fetcher })
+    return (
+      invalidRequest ||
+      (target.targetKind === 'not-found'
+        ? notFound()
+        : proxyRequest(context.req.raw, target, { fetcher }))
+    )
   })
 
   return app

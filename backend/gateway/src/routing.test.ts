@@ -63,10 +63,9 @@ describe('gateway/routing', () => {
       expect(isDashboardRoute('/cps', 'dashboard.groupher.com')).toBe(true)
     })
 
-    it('returns true for /xxx/dashboard pattern', () => {
-      expect(isDashboardRoute('/cps/dashboard', 'www.groupher.com')).toBe(true)
-      expect(isDashboardRoute('/cps/dashboard/appearance', 'www.groupher.com')).toBe(true)
-      expect(isDashboardRoute('/cps/dashboard/appearance/kanban', 'www.groupher.com')).toBe(true)
+    it('does not recognize removed root-domain dashboard paths', () => {
+      expect(isDashboardRoute('/cps/dashboard', 'www.groupher.com')).toBe(false)
+      expect(isDashboardRoute('/cps/dashboard/appearance', 'www.groupher.com')).toBe(false)
     })
 
     it('returns false for non-dashboard route', () => {
@@ -82,9 +81,9 @@ describe('gateway/routing', () => {
       expect(isDashRoute('/home/overview', 'dash.groupher.com')).toBe(true)
     })
 
-    it('returns true for /xxx/dash pattern', () => {
-      expect(isDashRoute('/home/dash', 'www.groupher.com')).toBe(true)
-      expect(isDashRoute('/home/dash/overview', 'www.groupher.com')).toBe(true)
+    it('does not recognize removed root-domain Dash paths', () => {
+      expect(isDashRoute('/home/dash', 'www.groupher.com')).toBe(false)
+      expect(isDashRoute('/home/dash/overview', 'www.groupher.com')).toBe(false)
     })
 
     it('returns false for non-dash route', () => {
@@ -120,17 +119,17 @@ describe('gateway/routing', () => {
       expect(url.search).toBe('?tab=a')
     })
 
-    it('preserves the public /xxx/dash path', () => {
-      const url = getDashUrl('/home/dash', 'www.groupher.com', '?page=2')
+    it('preserves canonical Dash paths', () => {
+      const url = getDashUrl('/home/overview', 'dash.groupher.com', '?page=2')
       expect(url.origin).toBe(new URL(SITE.DASH).origin)
-      expect(url.pathname).toBe('/home/dash')
+      expect(url.pathname).toBe('/home/overview')
       expect(url.search).toBe('?page=2')
     })
 
     it('preserves nested public dash route segments', () => {
-      const url = getDashUrl('/home/dash/overview', 'www.groupher.com', '?tab=preview')
+      const url = getDashUrl('/home/appearance', 'dash.groupher.com', '?tab=preview')
       expect(url.origin).toBe(new URL(SITE.DASH).origin)
-      expect(url.pathname).toBe('/home/dash/overview')
+      expect(url.pathname).toBe('/home/appearance')
       expect(url.search).toBe('?tab=preview')
     })
   })
@@ -143,21 +142,21 @@ describe('gateway/routing', () => {
       expect(url.search).toBe('?page=1&tab=a')
     })
 
-    it('preserves the canonical /xxx/dashboard route', () => {
-      const url = getDashboardUrl('/cps/dashboard', 'www.groupher.com', '?page=2')
+    it('preserves canonical Dashboard paths', () => {
+      const url = getDashboardUrl('/cps/appearance', 'dashboard.groupher.com', '?page=2')
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps/dashboard')
+      expect(url.pathname).toBe('/cps/appearance')
       expect(url.search).toBe('?page=2')
     })
 
     it('keeps nested dashboard route segments', () => {
       const url = getDashboardUrl(
-        '/cps/dashboard/appearance/kanban',
-        'www.groupher.com',
+        '/cps/appearance/kanban',
+        'dashboard.groupher.com',
         '?tab=preview',
       )
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps/dashboard/appearance/kanban')
+      expect(url.pathname).toBe('/cps/appearance/kanban')
       expect(url.search).toBe('?tab=preview')
     })
 
@@ -173,9 +172,9 @@ describe('gateway/routing', () => {
     })
 
     it('preserves unexpected paths for the dashboard app to handle', () => {
-      const url = getDashboardUrl('/dashboard', 'www.groupher.com', '')
+      const url = getDashboardUrl('/cps', 'dashboard.groupher.com', '')
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/dashboard')
+      expect(url.pathname).toBe('/cps')
       expect(url.search).toBe('')
     })
   })
@@ -270,32 +269,24 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.pathname).toBe('/@tanstack-start/styles.css')
     })
 
-    it('routes the canonical dashboard path to the dashboard app unchanged', () => {
+    it('returns 404 for removed root-domain dashboard paths', () => {
       const target = resolve('/cps/dashboard', 'www.groupher.com', '?page=1')
-      expect(target.targetKind).toBe('dashboard')
-      expect(target.targetUrl.pathname).toBe('/cps/dashboard')
-      expect(target.targetUrl.search).toBe('?page=1')
+      expect(target.targetKind).toBe('not-found')
     })
 
-    it('routes dash route to dash site with its public path intact', () => {
+    it('returns 404 for removed root-domain Dash paths', () => {
       const target = resolve('/home/dash', 'www.groupher.com', '?page=1')
-      expect(target.targetKind).toBe('dash')
-      expect(target.targetUrl.pathname).toBe('/home/dash')
-      expect(target.targetUrl.search).toBe('?page=1')
+      expect(target.targetKind).toBe('not-found')
     })
 
-    it('routes nested dash route with its public path intact', () => {
+    it('returns 404 for nested removed root-domain Dash paths', () => {
       const target = resolve('/home/dash/overview', 'www.groupher.com', '?tab=preview')
-      expect(target.targetKind).toBe('dash')
-      expect(target.targetUrl.pathname).toBe('/home/dash/overview')
-      expect(target.targetUrl.search).toBe('?tab=preview')
+      expect(target.targetKind).toBe('not-found')
     })
 
-    it('rewrites nested dashboard route and keeps real route segments', () => {
+    it('returns 404 for nested removed root-domain dashboard paths', () => {
       const target = resolve('/cps/dashboard/appearance/kanban', 'www.groupher.com', '?tab=preview')
-      expect(target.targetKind).toBe('dashboard')
-      expect(target.targetUrl.pathname).toBe('/cps/dashboard/appearance/kanban')
-      expect(target.targetUrl.search).toBe('?tab=preview')
+      expect(target.targetKind).toBe('not-found')
     })
 
     it('keeps nested dashboard route on dashboard subdomain', () => {
@@ -307,13 +298,13 @@ describe('gateway/routing', () => {
 
     it('uses the original Portless host instead of the Gateway listener host', () => {
       const target = resolve(
-        '/home/dashboard',
+        '/home',
         '127.0.0.1:3003',
         '',
         'dashboard.groupher.localhost',
       )
       expect(target.targetKind).toBe('dashboard')
-      expect(target.targetUrl.pathname).toBe('/home/dashboard')
+      expect(target.targetUrl.pathname).toBe('/home')
     })
 
     it('uses the original Portless host for dash requests', () => {
@@ -346,7 +337,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dashboard/appearance',
+        'https://dashboard.groupher.localhost/home/appearance',
       )
 
       expect(target.targetKind).toBe('dashboard')
@@ -360,7 +351,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dash/overview',
+        'https://dash.groupher.localhost/home/overview',
       )
 
       expect(target.targetKind).toBe('dash')
@@ -368,7 +359,7 @@ describe('gateway/routing', () => {
     })
 
     it('routes shared Vite development assets using the Dash page referer', () => {
-      const dashReferer = 'https://groupher.localhost/home/dash/overview'
+      const dashReferer = 'https://dash.groupher.localhost/home/overview'
       const moduleTarget = resolve(
         '/@id/virtual:tanstack-start-dev-client-entry',
         'groupher.localhost',
@@ -501,7 +492,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dash/overview',
+        'https://dash.groupher.localhost/home/overview',
       )
       const iconTarget = resolve(
         '/icons/lucide/tag.svg',
@@ -509,7 +500,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dash/appearance',
+        'https://dash.groupher.localhost/home/appearance',
       )
 
       expect(wallpaperTarget.targetKind).toBe('dash')
@@ -525,7 +516,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dash/post/content',
+        'https://dash.groupher.localhost/home/post/content',
       )
 
       expect(avatarTarget.targetKind).toBe('dash')
@@ -539,7 +530,7 @@ describe('gateway/routing', () => {
         '?payload=encoded',
         undefined,
         'GET',
-        'https://groupher.localhost/home/dash/post/content',
+        'https://dash.groupher.localhost/home/post/content',
       )
 
       expect(target.targetKind).toBe('dash')

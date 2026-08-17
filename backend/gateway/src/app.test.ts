@@ -34,15 +34,26 @@ describe('gateway/app', () => {
   it('proxies application routes through the resolved gateway target', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('dashboard'))
     const app = createApp({ fetcher })
-    const response = await app.request('http://127.0.0.1:3003/home/dashboard', {
+    const response = await app.request('http://127.0.0.1:3003/home', {
       headers: { 'x-forwarded-host': 'dashboard.groupher.localhost' },
     })
 
     expect(await response.text()).toBe('dashboard')
     expect(fetcher).toHaveBeenCalledTimes(1)
     const [url, init] = fetcher.mock.calls[0]
-    expect(url).toEqual(new URL('/home/dashboard', SITE.DASHBOARD))
+    expect(url).toEqual(new URL('/home', SITE.DASHBOARD))
     expect(init?.redirect).toBe('manual')
+  })
+
+  it('returns 404 for removed root-domain dashboard paths', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('should not proxy'))
+    const app = createApp({ fetcher })
+    const response = await app.request('http://127.0.0.1:3003/home/dashboard', {
+      headers: { 'x-forwarded-host': 'groupher.localhost' },
+    })
+
+    expect(response.status).toBe(404)
+    expect(fetcher).not.toHaveBeenCalled()
   })
 
   it('does not serve the platform sitemap for a configured custom domain', async () => {
