@@ -26,7 +26,8 @@ export default function SubMenuBack({
 }: TProps) {
   const { t } = useTrans()
   const { navi } = usePlatform()
-  const meta = parseDsbPathname(navi.location.pathname)
+  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const meta = parseDsbPathname(navi.location.pathname, rootSegment)
   const community = meta?.community ?? ''
   const s = useSalon()
   const navigating = useRef(false)
@@ -52,7 +53,7 @@ export default function SubMenuBack({
     }
 
     switchToMainMenu()
-    const target = toDsbTargetFromPath(backHref)
+    const target = toDsbTargetFromPath(backHref, rootSegment)
     if (target) {
       navi.to(target)
     } else if (community) {

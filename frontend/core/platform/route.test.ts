@@ -4,7 +4,7 @@ import { isActiveDsbRoute, parseDsbPathname, resolveDsbRoute, toDsbTargetFromPat
 
 describe('platform route parsing', () => {
   it('normalizes overview as empty segments', () => {
-    expect(parseDsbPathname('/acme/dash/overview')).toEqual({
+    expect(parseDsbPathname('/acme/overview', 'dash')).toEqual({
       community: 'acme',
       rootSegment: 'dash',
       segments: [],
@@ -12,7 +12,7 @@ describe('platform route parsing', () => {
   })
 
   it('keeps normal dashboard nested segments', () => {
-    expect(parseDsbPathname('/acme/dashboard/info/logos')).toEqual({
+    expect(parseDsbPathname('/acme/info/logos', 'dashboard')).toEqual({
       community: 'acme',
       rootSegment: 'dashboard',
       segments: ['info', 'logos'],
@@ -39,7 +39,8 @@ describe('platform route search', () => {
       currentSearch: 'page=2&tab=draft&tag=tech&unexpected=oops',
       preserveSearch: true,
     })
-    const nextSearch = new URL(next, 'https://groupher.localhost').searchParams
+    expect(next.startsWith('/acme/post/content')).toBe(true)
+    const nextSearch = new URL(next, 'https://dash.groupher.localhost').searchParams
 
     expect(nextSearch.get('page')).toBe('6')
     expect(nextSearch.get('tab')).toBe('published')
@@ -51,10 +52,12 @@ describe('platform route search', () => {
 
   it('keeps doc editor and import allowlist keys, drops unknown keys', () => {
     const editorTarget = toDsbTargetFromPath(
-      '/acme/dash/doc/editor?docId=x&preview=job-1&job=j-1&unexpected=1',
+      '/acme/doc/editor?docId=x&preview=job-1&job=j-1&unexpected=1',
+      'dash',
     )
     const importTarget = toDsbTargetFromPath(
-      '/acme/dash/doc/import?preview=job-1&job=j-1&unexpected=1',
+      '/acme/doc/import?preview=job-1&job=j-1&unexpected=1',
+      'dash',
     )
 
     expect(editorTarget).toMatchObject({
@@ -96,7 +99,8 @@ describe('platform route search', () => {
         preserveSearch: true,
       },
     )
-    const nextSearch = new URL(next, 'https://groupher.localhost').searchParams
+    expect(next.startsWith('/acme/custom')).toBe(true)
+    const nextSearch = new URL(next, 'https://dash.groupher.localhost').searchParams
 
     expect(nextSearch.get('page')).toBeNull()
     expect(nextSearch.get('scope')).toBe('members')
@@ -111,7 +115,7 @@ describe('platform route active', () => {
       community: 'acme',
       path: '',
     }
-    expect(isActiveDsbRoute('/acme/dashboard/overview', target)).toBe(true)
-    expect(isActiveDsbRoute('/acme/dash/overview', target)).toBe(true)
+    expect(isActiveDsbRoute('/acme', target, 'dashboard')).toBe(true)
+    expect(isActiveDsbRoute('/acme/overview', target, 'dash')).toBe(true)
   })
 })

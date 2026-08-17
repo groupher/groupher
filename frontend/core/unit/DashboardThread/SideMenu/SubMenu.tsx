@@ -35,9 +35,9 @@ export default function SubMenu({
   const { slug: community } = useCommunity()
   const { navi } = usePlatform()
   const { subTab } = useDsbTab()
-  const meta = parseDsbPathname(navi.location.pathname)
+  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const meta = parseDsbPathname(navi.location.pathname, rootSegment)
   const currentCommunity = meta?.community ?? community
-  const rootSegment = meta?.rootSegment ?? 'dashboard'
   const { t } = useTrans()
   const s = useSalon()
 

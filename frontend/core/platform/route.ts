@@ -95,11 +95,14 @@ const parseSearchKeys = (
 }
 
 /** Runs the to dsb target from path operation at the frontend shared boundary. */
-export const toDsbTargetFromPath = (rawPath: string): TDsbRouteTarget | null => {
+export const toDsbTargetFromPath = (
+  rawPath: string,
+  rootSegment: TDsbRouteRootSegment = 'dashboard',
+): TDsbRouteTarget | null => {
   if (!rawPath) return null
 
   const parsed = new URL(rawPath, 'https://groupher.localhost')
-  const targetMeta = parseDsbPathname(parsed.pathname)
+  const targetMeta = parseDsbPathname(parsed.pathname, rootSegment)
 
   if (!targetMeta) return null
   const targetPath = targetMeta.segments.join('/')
@@ -120,34 +123,26 @@ export const isDsbRootSegment = (value: string): value is TDsbRouteRootSegment =
   value === 'dashboard' || value === 'dash'
 
 /** Parses dsb pathname into the canonical frontend shared representation. */
-export const parseDsbPathname = (pathname: string): TRouteMeta | null => {
-  /** Reports whether dsb root segment at the frontend shared boundary. */
+export const parseDsbPathname = (
+  pathname: string,
+  rootSegment: TDsbRouteRootSegment = 'dashboard',
+): TRouteMeta | null => {
   const normalized = trimPath(pathname)
   const segments = normalized.split('/').filter(Boolean)
+  const community = segments[0]
+  if (!community) return null
 
-  const normalizeOverviewRoot = (input: string[]): string[] => {
-    if (input[0] === 'overview') {
-      return input.slice(1)
-    }
+  const routeSegments = segments.slice(1)
+  const normalizedRouteSegments =
+    rootSegment === 'dash' && routeSegments[0] === 'overview'
+      ? routeSegments.slice(1)
+      : routeSegments
 
-    return input
+  return {
+    community,
+    rootSegment,
+    segments: normalizedRouteSegments,
   }
-
-  for (let i = 0; i < segments.length; i += 1) {
-    const segment = segments[i]
-    if (!isDsbRootSegment(segment)) continue
-
-    const community = segments[i - 1]
-    if (!community) return null
-
-    return {
-      community,
-      rootSegment: segment,
-      segments: normalizeOverviewRoot(segments.slice(i + 1)),
-    }
-  }
-
-  return null
 }
 
 const mergeSearch = (
@@ -292,7 +287,6 @@ export const DSB_ROUTES = {
   section: createSectionWithSearch(),
 } as const
 
-/** Resolves dsb route without leaking frontend shared routing details to callers. */
 export const dsbRoutes = DSB_ROUTES
 
 /** Resolves dsb route without leaking frontend shared routing details to callers. */
@@ -305,7 +299,8 @@ export const resolveDsbRoute = (
   },
 ): string => {
   const path = trimPath(target.path)
-  const normalizedSegment = path.length === 0 ? '' : `/${path}`
+  const resolvedPath = options.rootSegment === 'dash' && path.length === 0 ? 'overview' : path
+  const normalizedSegment = resolvedPath.length === 0 ? '' : `/${resolvedPath}`
 
   const mergedSearch = mergeSearch(target, {
     currentSearch:
@@ -319,12 +314,16 @@ export const resolveDsbRoute = (
     preserveSearch: options.preserveSearch,
   })
 
-  return `/${target.community}/${options.rootSegment}${normalizedSegment}${toSearchString(mergedSearch)}`
+  return `/${target.community}${normalizedSegment}${toSearchString(mergedSearch)}`
 }
 
 /** Reports whether active dsb route at the frontend shared boundary. */
-export const isActiveDsbRoute = (pathname: string, target: TRouteTarget): boolean => {
-  const meta = parseDsbPathname(pathname)
+export const isActiveDsbRoute = (
+  pathname: string,
+  target: TRouteTarget,
+  rootSegment: TDsbRouteRootSegment = 'dashboard',
+): boolean => {
+  const meta = parseDsbPathname(pathname, rootSegment)
   if (!meta) return false
   if (meta.community !== target.community) return false
 

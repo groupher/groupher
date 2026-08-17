@@ -62,10 +62,10 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
  */
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
   const { navi } = usePlatform()
-  const routeMeta = parseDsbPathname(navi.location.pathname)
+  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
   const community = routeMeta?.community ?? ''
   const search = navi.location.searchParams
-  const rootSegment = routeMeta?.rootSegment ?? 'dashboard'
   const routeSegmentsKey = routeMeta?.segments.join('/') ?? ''
   const crumbCacheRef = useRef<TBreadcrumbItem[]>([])
   const lastCommunityRef = useRef<string | undefined>(undefined)

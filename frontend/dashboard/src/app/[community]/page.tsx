@@ -1,3 +1,9 @@
-const CommunityPostPage = () => <h2>Community served</h2>
+'use client'
 
-export default CommunityPostPage
+import Overview from '~/unit/DashboardThread/Overview'
+
+const DashboardOverviewPage = () => {
+  return <Overview />
+}
+
+export default DashboardOverviewPage

@@ -11,7 +11,7 @@ export type TDsbTabState = {
 /** Exposes dsb tab state and actions through the shared React hook boundary. */
 export default function useDsbTab(): TDsbTabState {
   const { navi } = usePlatform()
-  const meta = parseDsbPathname(navi.location.pathname)
+  const meta = parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dashboard')
   const segments = meta ? meta.segments : []
 
   if (!meta) {

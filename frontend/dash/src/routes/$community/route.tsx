@@ -1,17 +1,34 @@
 import CommunityBoundary from '@dash/components/CommunityBoundary'
+import DashboardShell from '@dash/components/DashboardShell'
+import RouteError from '@dash/components/RouteError'
 import { loadCommunity } from '@dash/server/community'
 import { loadLocale } from '@dash/server/locale'
-import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { validateCommunitySearch } from '@dash/utils/route-search'
+import { Outlet, createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/$community')({
   staleTime: 300_000,
-  loader: async ({ location, params }) => {
-    const lang = new URLSearchParams(location.search).get('lang') || undefined
-    const mode = new URLSearchParams(location.search).get('mode') || undefined
+  errorComponent: RouteError,
+  validateSearch: validateCommunitySearch,
+  loaderDeps: ({ search }) => ({
+    lang: search.lang,
+    mode: search.mode,
+  }),
+  beforeLoad: ({ params, location }) => {
+    const pathname = location.pathname
+    const communityRoot = `/${params.community}`
 
+    if (pathname === communityRoot || pathname === `${communityRoot}/`) {
+      throw redirect({
+        to: '/$community/overview',
+        params: true,
+      })
+    }
+  },
+  loader: async ({ deps, params }) => {
     const [shell, locale] = await Promise.all([
-      loadCommunity({ data: { community: params.community, lang, mode } }),
-      loadLocale({ data: { lang } }),
+      loadCommunity({ data: { community: params.community, ...deps } }),
+      loadLocale({ data: { lang: deps.lang } }),
     ])
 
     return { shell, locale }
@@ -40,7 +57,9 @@ function CommunityLayout() {
       community={shell.community}
       locale={locale}
     >
-      <Outlet />
+      <DashboardShell shell={shell}>
+        <Outlet />
+      </DashboardShell>
     </CommunityBoundary>
   )
 }

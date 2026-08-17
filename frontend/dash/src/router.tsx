@@ -6,14 +6,18 @@ import { routeTree } from './routeTree.gen'
 
 /** Returns router for the frontend shared workflow. */
 export function getRouter() {
-  return createTanStackRouter({
+  const options = {
     routeTree,
     scrollRestoration: true,
     defaultErrorComponent: RouteError,
     defaultPendingComponent: RoutePending,
     defaultPendingMs: 250,
     defaultPendingMinMs: 300,
-  } as any)
+  }
+
+  // TanStack Router's option type requires strictNullChecks; Dash keeps the
+  // existing migration-wide tsconfig setting, so contain the boundary cast here.
+  return createTanStackRouter(options as unknown as Parameters<typeof createTanStackRouter>[0])
 }
 
 declare module '@tanstack/react-router' {

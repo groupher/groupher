@@ -6,12 +6,12 @@ import useDsbTabs, { type TDsbTabs } from '~/hooks/useDsbTabs'
 import { PlatformProvider, type TPlatform } from '~/platform'
 import type { TCommunity } from '~/spec'
 
-let mockPathname = '/acme/dashboard'
+let mockPathname = '/acme'
 let mockSearch = ''
 
 describe('useDsbTabs', () => {
   it('builds hrefs and resolves activeTab from layout segments', () => {
-    mockPathname = '/acme/dashboard/third-part/integrations'
+    mockPathname = '/acme/third-part/integrations'
 
     const cfg: TDsbTabs = {
       segment: 'third-part',
@@ -41,6 +41,7 @@ describe('useDsbTabs', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
+        dsbRootSegment: 'dashboard',
       },
     }
 
@@ -58,7 +59,7 @@ describe('useDsbTabs', () => {
     const { result } = renderHook(() => useDsbTabs(cfg), { wrapper: Wrapper })
 
     expect(result.current.activeTab).toBe('integrations')
-    expect(result.current.items[0].href).toBe('/acme/dashboard/third-part/integrations')
-    expect(result.current.items[1].href).toBe('/acme/dashboard/third-part/email')
+    expect(result.current.items[0].href).toBe('/acme/third-part/integrations')
+    expect(result.current.items[1].href).toBe('/acme/third-part/email')
   })
 })

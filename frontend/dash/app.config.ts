@@ -25,7 +25,7 @@ export default defineConfig({
     allowedHosts: ['dash.groupher.localhost', 'main.groupher.localhost', 'groupher.localhost'],
     ws: {
       protocol: 'wss',
-      host: 'groupher.localhost',
+      host: 'dash.groupher.localhost',
       clientPort: 443,
       path: '__dash_hmr',
     },

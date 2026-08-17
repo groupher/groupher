@@ -51,8 +51,8 @@ export default function useDsbTabs(cfg: TDsbTabs): {
 } {
   const { navi } = usePlatform()
   const { slug: community } = useCommunity()
-  const routeMeta = parseDsbPathname(navi.location.pathname)
-  const rootSegment = routeMeta?.rootSegment ?? 'dashboard'
+  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
   const routeSegments = routeMeta?.segments ?? []
   const basePath = stripSlash(cfg.segment)
   const defaultTab = cfg.items[0]?.slug ?? ''

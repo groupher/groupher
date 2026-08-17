@@ -3,7 +3,7 @@
 import { cnMerge } from '~/css'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
-import { dsbRoutes, usePlatform } from '~/platform'
+import { dsbRoutes, Link as PlatformLink } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import { MENU_VIEW } from '../constant'
@@ -34,7 +34,6 @@ export default function Collapsed({
   const { slug: community } = useCommunity()
   const { subTab } = useDsbTab()
   const { t } = useTrans()
-  const { navi } = usePlatform()
   const currentCommunity = community
   const s = useSalon()
   const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
@@ -62,25 +61,23 @@ export default function Collapsed({
             })
 
             return (
-              <button
+              <PlatformLink
                 key={item.slug}
-                type='button'
+                route={target}
                 className={cn(s.item, isActive && s.itemActive)}
                 title={title}
                 aria-label={title}
                 aria-current={isActive ? 'page' : undefined}
+                preserveSearch
                 onClick={() => {
                   dispatchMenuView({
                     subTab: item.slug,
                     view,
                   })
-                  navi.to(target, {
-                    preserveSearch: true,
-                  })
                 }}
               >
                 <DsbMenuIcon type={item.icon} className={s.icon} />
-              </button>
+              </PlatformLink>
             )
           })}
         </div>
