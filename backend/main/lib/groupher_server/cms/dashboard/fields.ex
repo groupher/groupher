@@ -82,10 +82,13 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
   @doc "Returns the default kanban board background colors."
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
+
   @doc "Returns the supported rainbow color values."
   def rainbow_colors, do: @rainbow_colors
+
   @doc "Returns the available theme preset names."
   def theme_presets, do: @theme_presets
+
   @doc """
   Returns the enum values registered for one dashboard enum key.
 

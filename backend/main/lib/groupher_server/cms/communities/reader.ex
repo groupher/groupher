@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
 
   alias Accounts.Model.User
   alias CMS.Gate
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T}
 
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
   defp scoped_query(slug, actor, opt) do
     policy_mode = Keyword.get(opt, :policy_mode, :public)
 
-    case Gate.scope(Community, actor, :read, %{policy_mode: policy_mode}) do
+    case Gate.scope(Community, actor, :read, CommunityScope.new(policy_mode)) do
       %Ecto.Query{} = query ->
         where(query, [community], community.slug == ^slug or community.aka == ^slug)
 

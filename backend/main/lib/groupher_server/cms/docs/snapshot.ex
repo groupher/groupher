@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
            {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
         checkpoint_article(draft, CMS.Const.doc_snapshot_action(:checkpoint), user, opts)
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
       end
     end)
   end
@@ -158,7 +158,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
              ) do
         {:ok, draft}
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
       end
     end)
   end

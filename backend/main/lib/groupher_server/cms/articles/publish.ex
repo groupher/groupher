@@ -47,7 +47,8 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
   alias CMS.SearchArtiments.Indexer
   alias CMS.{Assets, Communities, Events, Gate}
-  alias CMS.Gate.{Decision, PublishThrottle}
+  alias CMS.Gate.Decision
+  alias CMS.Gate.RateLimit.Publish, as: PublishRateLimit
   alias Ecto.Multi
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
@@ -107,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
                {:ok, updated_draft} <- States.update_edit_status(updated_draft) do
             {:ok, updated_draft}
           else
-            {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+            {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
             error -> error
           end
         end
@@ -160,7 +161,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          :ok <- run_after_publish(public_article, first_publish?) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
-      {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+      {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
       error -> error
     end
   end
@@ -279,7 +280,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          {:ok, community} <- Communities.update_count_field(community, thread),
          {:ok, _community} <- Communities.update_inner_id(community, thread, public_article),
          {:ok, _states} <- Accounts.Publish.update_states(user, thread),
-         {:ok, _action} <- PublishThrottle.log_publish_action(user) do
+         {:ok, _action} <- PublishRateLimit.record(user) do
       {:ok, public_article}
     end
   end

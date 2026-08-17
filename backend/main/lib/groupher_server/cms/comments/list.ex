@@ -20,6 +20,9 @@ defmodule GroupherServer.CMS.Comments.List do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
 
   alias CMS.Model.{Comment, PinnedComment}
   alias CMS.Comments.Replies
@@ -73,7 +76,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
           false ->
             from(c in Comment)
-            |> CMS.Gate.scope(user, :read, %{thread: thread})
+            |> CMS.Gate.scope(user, :read, comment_scope(thread))
             |> where(^thread_query)
             |> where([c], c.author_id == ^user.id)
             |> Repo.exists?()
@@ -113,7 +116,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
     Comment
     |> preload(^@published_article_preloads)
-    |> CMS.Gate.scope(actor, :list, %{})
+    |> CMS.Gate.scope(actor, :list, CommentScope.all_public())
     |> join(:inner, [comment, ...], author in assoc(comment, :author),
       as: :published_comment_author
     )
@@ -133,7 +136,7 @@ defmodule GroupherServer.CMS.Comments.List do
     query = from(comment in Comment, preload: ^article_preload)
 
     query
-    |> CMS.Gate.scope(actor, :list, %{thread: thread})
+    |> CMS.Gate.scope(actor, :list, comment_scope(thread))
     |> join(:inner, [comment, ...], author in assoc(comment, :author),
       as: :published_comment_author
     )
@@ -195,16 +198,13 @@ defmodule GroupherServer.CMS.Comments.List do
     |> group_by([c, a], c.inserted_at)
     |> group_by([c, a], c.id)
     |> select([c, a], a)
-    |> CMS.Gate.scope(nil, :list, %{thread: thread})
+    |> CMS.Gate.scope(nil, :list, comment_scope(thread))
     |> ORM.paginator(~m(page size)a)
     |> done()
   end
 
   defp public_article(schema, thread, article_id) do
-    context =
-      if thread == :doc,
-        do: %{thread: thread, branch_policy: :main, policy_mode: :public},
-        else: %{thread: thread, policy_mode: :public}
+    context = article_scope(thread)
 
     schema
     |> CMS.Gate.scope(nil, :read, context)
@@ -222,7 +222,7 @@ defmodule GroupherServer.CMS.Comments.List do
       query = from(c in Comment, preload: [reply_to_comment: :author])
 
       query
-      |> CMS.Gate.scope(user, :list, %{thread: thread})
+      |> CMS.Gate.scope(user, :list, comment_scope(thread))
       |> where(^thread_query)
       |> where(^where_query)
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
@@ -256,7 +256,7 @@ defmodule GroupherServer.CMS.Comments.List do
         )
 
       query
-      |> CMS.Gate.scope(user, :list, %{thread: root_comment.thread})
+      |> CMS.Gate.scope(user, :list, comment_scope(root_comment.thread))
       |> where(^where_query)
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
@@ -319,6 +319,12 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
+  defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)
+  defp comment_scope(thread), do: CommentScope.for_thread(thread)
+
+  defp article_scope(:doc), do: DocScope.public_main()
+  defp article_scope(thread), do: ArticleScope.public(thread)
+
   defp list_pinned_comments(%{foreign_key: foreign_key}, thread, article_id) do
     from(c in Comment,
       join: p in PinnedComment,
@@ -327,7 +333,7 @@ defmodule GroupherServer.CMS.Comments.List do
       order_by: [desc: p.inserted_at, desc: p.id],
       select: c
     )
-    |> CMS.Gate.scope(nil, :list, %{thread: thread})
+    |> CMS.Gate.scope(nil, :list, comment_scope(thread))
     |> Repo.all()
     |> done
   end

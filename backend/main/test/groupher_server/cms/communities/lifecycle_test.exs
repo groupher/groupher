@@ -5,6 +5,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   require CMS.Const
 
   alias CMS.Communities.Lifecycle
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias CMS.Model.{AuditLog, Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   test "projects blocker combinations into the strictest public state" do
@@ -242,7 +243,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
         |> Repo.update!()
 
       visible? =
-        CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
+        CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
         |> where([candidate], candidate.id == ^community.id)
         |> Repo.exists?()
 

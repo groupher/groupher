@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.CMS.Passport.Registry
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
   def me(_root, _args, _info), do: {:ok, nil}

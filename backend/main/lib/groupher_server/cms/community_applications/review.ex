@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
-  alias GroupherServer.CMS.Gate.Passport
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo

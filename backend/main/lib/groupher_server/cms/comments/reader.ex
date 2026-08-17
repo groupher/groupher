@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
   alias GroupherServer.Accounts.Model.User
 
   alias CMS.FrontDesk
+  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Comment
   alias CMS.Interactions.State
@@ -81,7 +82,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
 
   defp read_by_id(id, actor, thread) do
     Comment
-    |> CMS.Gate.scope(actor, :read, %{thread: thread})
+    |> CMS.Gate.scope(actor, :read, comment_scope(thread))
     |> where([comment], comment.id == ^id)
     |> preload(:author)
     |> Repo.one()
@@ -93,7 +94,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
            ArticlePath.parse(article_path),
          {:ok, comment_inner_id} <- parse_inner_id(comment_inner_id) do
       Comment
-      |> CMS.Gate.scope(actor, :read, %{thread: thread})
+      |> CMS.Gate.scope(actor, :read, comment_scope(thread))
       |> join(:inner, [comment, ...], article in assoc(comment, ^thread))
       |> where([comment, ...], comment.inner_id == ^comment_inner_id)
       |> where([_comment, ..., article], article.inner_id == ^article_inner_id)
@@ -110,6 +111,9 @@ defmodule GroupherServer.CMS.Comments.Reader do
   defp add_viewer_states(comment, user) do
     comment |> State.read(user) |> done
   end
+
+  defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)
+  defp comment_scope(thread), do: CommentScope.for_thread(thread)
 
   defp parse_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 

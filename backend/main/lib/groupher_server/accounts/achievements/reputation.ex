@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Achievements.Reputation do
         -> Repo
   """
 
-    import ShortMaps
+  import ShortMaps
 
   alias GroupherServer.Accounts.Model.{Achievement, User}
   alias Helper.{ORM, Transaction}

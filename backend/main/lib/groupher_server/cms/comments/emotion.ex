@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   alias GroupherServer.Accounts.Model.User
 
   alias CMS.{Events, FrontDesk, Gate}
-  alias CMS.Gate.Allow
+  alias CMS.Communities.Enable
   alias CMS.Interactions.State
   alias CMS.Helper.EmotionToggle
   alias CMS.Model.CommentUserEmotion
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Comments.Emotion do
          {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
          {:ok, comment} <- Gate.access_check(user, :emotion, comment) do
       with {:ok, _thread_key} <-
-             Allow.emotion(article.community.slug, :comment, comment.thread, emotion) do
+             Enable.emotion?(article.community.slug, :comment, comment.thread, emotion) do
         target = %{
           comment_id: comment.id,
           received_user_id: comment.author_id,

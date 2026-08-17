@@ -18,6 +18,8 @@ defmodule GroupherServer.CMS.Snapshot do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Model.{Comment, CommentLifecycle}
   alias Helper.Cache
 
@@ -341,8 +343,6 @@ defmodule GroupherServer.CMS.Snapshot do
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
-  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
 
   defp put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)
@@ -483,6 +483,9 @@ defmodule GroupherServer.CMS.Snapshot do
   defp cache_key(:user, _thread, id), do: "snapshot:user:#{id}"
   defp cache_key(:article, thread, id), do: "snapshot:article:#{thread}:#{id}"
   defp cache_key(:comment, thread, id), do: "snapshot:comment:#{thread}:#{id}"
+
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 
   defp enqueue(kind, refs, opts) do
     case GroupherServer.Jobs.snapshot_refresh(kind, refs, opts) do

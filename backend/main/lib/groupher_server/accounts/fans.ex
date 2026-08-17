@@ -42,8 +42,9 @@ defmodule GroupherServer.Accounts.Fans do
     List.paged_followings(user, filter, cur_user)
   end
 
-  @spec mark_viewer_follow_status(T.domain_res(T.paged_users()), User.t()) :: T.domain_res(T.paged_users())
-  @doc "Projects the current viewer follow state onto a paged user result."
+  @spec mark_viewer_follow_status(T.domain_res(T.paged_users()), User.t()) ::
+          T.domain_res(T.paged_users())
+  @doc "Runs `mark_viewer_follow_status` through the public `Fans` boundary."
   def mark_viewer_follow_status(result, %User{} = cur_user) do
     ViewerState.mark_viewer_follow_status(result, cur_user)
   end

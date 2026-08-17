@@ -11,6 +11,7 @@ defmodule GroupherServer.Logs.UserActivity do
         -> UserActivity
         -> domain / infrastructure boundary
   """
+
   # alias __MODULE__
 
   use Ecto.Schema

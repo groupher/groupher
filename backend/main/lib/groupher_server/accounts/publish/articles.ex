@@ -23,8 +23,8 @@ defmodule GroupherServer.Accounts.Publish.Articles do
   alias Accounts.Model.User
   alias Helper.ORM
 
-  def paged(%User{} = user, thread, filter) do
-    CMS.Articles.paged_published(thread, filter, user)
+  def paged(%User{} = target_user, thread, filter, actor \\ nil) do
+    CMS.Articles.paged_published(thread, filter, target_user, actor)
   end
 
   def update_states(%User{} = user, thread) do

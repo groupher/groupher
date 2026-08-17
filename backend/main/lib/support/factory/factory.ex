@@ -139,15 +139,6 @@ defmodule GroupherServer.Support.Factory do
     }
   end
 
-  defp mock_meta(:bill) do
-    %{
-      payment_usage: "donate",
-      payment_method: "alipay",
-      amount: 51.2,
-      note: "thank you"
-    }
-  end
-
   def mock_attrs(_, attrs \\ %{})
   def mock_attrs(:user, attrs), do: mock_meta(:user) |> Map.merge(attrs)
   def mock_attrs(:author, attrs), do: mock_meta(:author) |> Map.merge(attrs)
@@ -163,8 +154,6 @@ defmodule GroupherServer.Support.Factory do
     provider = Map.get(attrs, :provider) || Map.get(attrs, "provider") || "github"
     mock_meta({:oauth_profile, provider}) |> Map.merge(attrs)
   end
-
-  def mock_attrs(:bill, attrs), do: mock_meta(:bill) |> Map.merge(attrs)
 
   def mock_attrs(thread, attrs) when thread in [:post, :changelog, :doc, :blog] do
     thread

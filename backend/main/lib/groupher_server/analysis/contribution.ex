@@ -67,7 +67,7 @@ defmodule GroupherServer.Analysis.Contribution do
         |> do_get_contributes()
         |> to_counts_digest(days: @community_contribute_days)
 
-      CMS.Communities.update(community, %{contributes_digest: contributes_digest})
+      CMS.Communities.update(community, %{contributes_digest: contributes_digest}, :operations)
     end)
     |> Repo.transaction()
     |> result()

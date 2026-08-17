@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, ancestors} <- ancestor_chain(community, branch, page),
          {:ok, snapshot} <-
-          CMS.Docs.publish_draft(community, doc_id, user, branch_id: branch.id),
+           CMS.Docs.publish_draft(community, doc_id, user, branch_id: branch.id),
          {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
            upsert_public_node(community, branch, page, snapshot.article_hash_id),
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
               )
           end
         else
-          {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+          {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
         end
       end)
     end

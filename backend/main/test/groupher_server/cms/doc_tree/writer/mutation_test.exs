@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, %CMS.Gate.Decision{primary: %{code: :ancestor_community_not_writable}}} =
+      assert {:error, %CMS.Gate.Decision{primary: %{reason: :ancestor_community_not_writable}}} =
                CMS.DocTree.create_group(community, %{
                  parent_node_id: root_doc_tab_node_id(community),
                  title: "Blocked guides",

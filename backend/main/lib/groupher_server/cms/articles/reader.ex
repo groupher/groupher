@@ -21,7 +21,10 @@ defmodule GroupherServer.CMS.Articles.Reader do
 
   alias Accounts.Model.User
   alias CMS.{Interactions}
-  alias CMS.Gate.{Allow, Scope}
+  alias CMS.Gate.Scope
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Model.{Community, DocBranch, PinnedArticle}
   alias Helper.{Multi, Constant, Datetime, ORM, T}
 
@@ -46,7 +49,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   """
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id) when thread in @threads do
-    with {:ok, _thread} <- Allow.thread(community.slug, thread),
+    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
          {:ok, article} <- if_article_legal(community, thread, inner_id) do
       with {:ok, article} <- do_read_article(article, community, thread, nil, nil) do
         {:ok, Interactions.State.read(article)}
@@ -63,7 +66,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
           T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{} = user, event_id)
       when thread in @threads do
-    with {:ok, _thread} <- Allow.thread(community.slug, thread),
+    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
          {:ok, article} <- if_article_legal(community, thread, inner_id, user) do
       Multi.new()
       |> Multi.run(:normal_read, fn _, _ ->
@@ -143,7 +146,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
            type: CMS.Const.doc_branch_type(:main)
          ) do
       %DocBranch{id: branch_id} ->
-        {:ok, %{thread: :doc, branch_id: branch_id, policy_mode: :public}}
+        {:ok, DocScope.public_branch(branch_id)}
 
       nil ->
         {:error, {:not_exist, "Doc main branch"}}
@@ -151,7 +154,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   defp public_scope_context(_community_id, thread),
-    do: {:ok, %{thread: thread, policy_mode: :public}}
+    do: {:ok, ArticleScope.public(thread)}
 
   defp diagnose_moderation(model, community_id, thread, inner_id) do
     model

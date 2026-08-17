@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Gate.Passport
+  alias CMS.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
-  alias CMS.Gate.Passport.Registry
+  alias CMS.Passport.Registry
   alias Helper.{Multi, ORM, PermissionConfig, T, Transaction}
 
   @doc """

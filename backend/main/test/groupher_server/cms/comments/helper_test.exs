@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   use GroupherServer.TestMate
 
-  alias CMS.CanCan
+  alias CMS.Communities.Enable
   alias CMS.Comments.{Numbering, Replies}
   alias CMS.Interactions.State
   alias Helper.ORM
@@ -151,13 +151,13 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   describe "allow_comment/2" do
     test "should return true if article is not comment locked", ~m(post user)a do
-      assert {:ok, ^post} = CanCan.allow_comment(post, user)
+      assert {:ok, ^post} = Enable.comment?(post)
     end
 
     test "should return false if article is comment locked", ~m(post user)a do
       # 锁定评论
       {:ok, locked_post} = CMS.Articles.lock_comments(post)
-      assert {:error, :article_comments_locked} = CanCan.allow_comment(locked_post, user)
+      assert {:error, :article_comments_locked} = Enable.comment?(locked_post)
     end
   end
 end

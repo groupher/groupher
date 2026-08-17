@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Communities do
     NamePolicy
   }
 
-  alias CMS.Gate.Passport
+  alias CMS.Passport
   alias CMS.Communities.Lifecycle
 
   # Read

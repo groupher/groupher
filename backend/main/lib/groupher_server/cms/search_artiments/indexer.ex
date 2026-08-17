@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.SearchArtiments
   alias CMS.SearchArtiments.{Artiment, Projection}
   alias CMS.Interactions.State
@@ -175,6 +177,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
-  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 end

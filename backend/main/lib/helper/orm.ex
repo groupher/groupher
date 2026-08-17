@@ -35,6 +35,7 @@ defmodule Helper.ORM do
   import Helper.ErrorHandler
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
   alias CMS.Interactions.State
@@ -650,7 +651,7 @@ defmodule Helper.ORM do
       {:ok, %Community{}}
   """
   def find_community(slug) do
-    GroupherServer.CMS.Gate.scope(Community, nil, :read, %{})
+    GroupherServer.CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)

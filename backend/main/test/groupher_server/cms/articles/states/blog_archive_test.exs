@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
       archived_blog = archived_blogs |> List.first()
 
       {:error, reason} = CMS.Articles.trash(archived_blog, :operations)
-      assert %CMS.Gate.Decision{primary: %{code: :article_archived}} = reason
+      assert %CMS.Gate.Decision{primary: %{reason: :article_archived}} = reason
     end
   end
 end

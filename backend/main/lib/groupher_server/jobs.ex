@@ -41,14 +41,27 @@ defmodule GroupherServer.Jobs do
     end
   end
 
-  @spec snapshot_refresh(atom(), term(), keyword()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
   @doc "Enqueues a snapshot refresh for the supplied resource kind and references."
+  @spec snapshot_refresh(atom(), term(), keyword()) ::
+          {:ok, Oban.Job.t() | :pass} | {:error, term()}
   def snapshot_refresh(kind, refs, opts) when is_atom(kind) and is_list(opts) do
     if Config.skip_enqueue?() do
       {:ok, :pass}
     else
       %{kind: Atom.to_string(kind), refs: Codec.encode(refs), opts: Codec.encode(opts)}
       |> Jobs.SnapshotRefresh.new()
+      |> Oban.insert()
+    end
+  end
+
+  @doc "Enqueues a durable Artiment view projection by its idempotency key."
+  @spec view_projection(Ecto.UUID.t()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
+  def view_projection(event_id) do
+    if Config.skip_enqueue?() do
+      {:ok, :pass}
+    else
+      %{event_id: event_id}
+      |> Jobs.ViewProjection.new()
       |> Oban.insert()
     end
   end

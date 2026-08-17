@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Search.Community do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
   alias CMS.Model.Community
@@ -37,12 +38,12 @@ defmodule GroupherServer.CMS.Search.Community do
 
   """
   def search(title) do
-    do_search_communities(CMS.Gate.scope(Community, nil, :list, %{policy_mode: :public}), title)
+    do_search_communities(CMS.Gate.scope(Community, nil, :list, CommunityScope.public()), title)
   end
 
   def search(title, %User{} = user) do
     with {:ok, communities} <-
-           do_search_communities(CMS.Gate.scope(Community, user, :list, %{policy_mode: :public}), title) do
+           do_search_communities(CMS.Gate.scope(Community, user, :list, CommunityScope.public()), title) do
       %{entries: entries} = communities
 
       entries =
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Search.Community do
 
   defp do_search_communities_with_category(title, category) do
     from(
-      c in CMS.Gate.scope(Community, nil, :list, %{policy_mode: :public}),
+      c in CMS.Gate.scope(Community, nil, :list, CommunityScope.public()),
       join: cat in assoc(c, :categories),
       where: cat.slug == ^category
     )

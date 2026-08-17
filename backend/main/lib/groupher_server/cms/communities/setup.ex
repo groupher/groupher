@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
   alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
-  alias GroupherServer.CMS.Gate.Passport
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
 
   alias GroupherServer.CMS.Model.{

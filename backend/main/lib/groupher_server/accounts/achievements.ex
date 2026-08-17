@@ -1,6 +1,6 @@
 defmodule GroupherServer.Accounts.Achievements do
   @moduledoc """
-  Public account boundary for reputation, membership, and moderation eligibility.
+  Public account boundary for reputation and moderation eligibility.
 
   Business position:
 
@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Achievements do
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
 
-  alias __MODULE__.{Membership, Moderatorable, Reputation}
+  alias __MODULE__.{Moderatorable, Reputation}
 
   @spec achieve(User.t(), atom(), atom()) :: T.done()
   @doc "Runs `achieve` through the public `Achievements` boundary."
@@ -25,10 +25,6 @@ defmodule GroupherServer.Accounts.Achievements do
   def downgrade_achievement(%User{} = user, action, count) do
     Reputation.downgrade_achievement(user, action, count)
   end
-
-  @spec set_member(User.t(), atom()) :: T.domain_res(User.t())
-  @doc "Runs `set_member` through the public `Achievements` boundary."
-  def set_member(%User{} = user, plan), do: Membership.set_member(user, plan)
 
   @spec paged_moderatorable_communities(User.t(), map()) :: T.domain_res(T.paged_data())
   @doc "Returns paged moderatorable communities from the `Achievements` read boundary."

@@ -4,6 +4,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
   use GroupherServer.TestMate
   require CMS.Const
 
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+
   describe "[doc publish release]" do
     setup do
       {:ok, user} = db_insert(:user)
@@ -237,22 +239,14 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
 
       public_scope =
-        CMS.Gate.scope(CMS.Model.Doc, nil, :read, %{
-          thread: :doc,
-          branch_id: branch.id,
-          policy_mode: :public
-        })
+        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocScope.public_branch(branch.id))
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       refute Repo.exists?(public_scope)
 
       dashboard_scope =
-        CMS.Gate.scope(CMS.Model.Doc, :operations, :read, %{
-          thread: :doc,
-          stage: :public,
-          branch_id: branch.id,
-          policy_mode: :operations
-        })
+        CMS.Gate.scope(CMS.Model.Doc, :operations, :read,
+          DocScope.public_branch(branch.id, policy_mode: :operations))
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       assert Repo.exists?(dashboard_scope)

@@ -78,11 +78,13 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   @doc "操作某 emotion 的最近用户"
   def max_latest_emotion_users_count, do: @max_latest_emotion_users_count
+
   @doc "Returns the placeholder body shown for deleted comments."
   def delete_hint, do: @delete_hint
 
   @doc "Returns the report count at which a comment is auto-folded."
   def report_threshold_for_fold, do: @report_threshold_for_fold
+
   @doc "Returns the maximum number of pinned comments per article."
   def pinned_comment_limit, do: @pinned_comment_limit
 

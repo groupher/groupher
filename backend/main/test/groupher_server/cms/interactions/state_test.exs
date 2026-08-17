@@ -47,22 +47,22 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     |> ArticleLifecycle.changeset(%{state: :archived})
     |> Repo.update!()
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.undo_upvote(post, user)
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.undo_emotion(post, :beer, user)
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.undo_collect(post, user)
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.upvote(post, other_user)
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.emotion(post, :beer, other_user)
 
-    assert {:error, %{primary: %{code: :article_archived}}} =
+    assert {:error, %{primary: %{reason: :article_archived}}} =
              CMS.Articles.collect(post, other_user)
 
     assert Repo.exists?(
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
       |> CommunityLifecycle.changeset(%{state: state})
       |> Repo.update!()
 
-      assert {:error, %{primary: %{code: :ancestor_community_not_writable}}} =
+      assert {:error, %{primary: %{reason: :ancestor_community_not_writable}}} =
                CMS.Articles.upvote(post, user)
 
       refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))

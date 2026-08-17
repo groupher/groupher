@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
   alias Helper.Constant
 
@@ -114,8 +116,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp decimal_to_number(%Decimal{} = value), do: Decimal.to_float(value)
   defp decimal_to_number(value), do: value
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
-  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 
   defp default_zero(nil), do: 0
   defp default_zero(value), do: value

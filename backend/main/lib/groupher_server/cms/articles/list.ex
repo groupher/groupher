@@ -25,7 +25,10 @@ defmodule GroupherServer.CMS.Articles.List do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Gate.{Allow, Scope}
+  alias CMS.Gate.Scope
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Dashboard.KanbanBoards
   alias CMS.Interactions.State
   alias CMS.Artiment.Enums
@@ -59,7 +62,7 @@ defmodule GroupherServer.CMS.Articles.List do
     %{page: page, size: size} = filter
     flags = %{pending: :legal}
 
-    with {:ok, _thread} <- Allow.thread(Map.get(filter, :community), thread),
+    with {:ok, _thread} <- Enable.thread?(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
       |> Scope.scope(nil, :list, scope_context(thread))
@@ -208,8 +211,8 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
-  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 
   defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
     Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))

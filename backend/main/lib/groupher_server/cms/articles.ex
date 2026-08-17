@@ -120,10 +120,7 @@ defmodule GroupherServer.CMS.Articles do
   def read_draft(%Community{} = community, thread, article_hash_id, opts \\ []) do
     opts = draft_read_opts(opts)
 
-    with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
-         {:ok, _authorized} <- authorize_draft_read(draft, opts) do
-      {:ok, draft}
-    end
+    Draft.read(community, thread, article_hash_id, opts)
   end
 
   @doc "Reads the official main/public Article head by stable logical identity."
@@ -155,18 +152,6 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Returns the Article-level unpublished-change fact."
   def has_unpublished_changes(community, thread, article_hash_id, opts \\ []) do
     __MODULE__.DraftDiff.has_unpublished_changes(community, thread, article_hash_id, opts)
-  end
-
-  defp authorize_draft_read(draft, opts) do
-    actor = option(opts, :actor)
-
-    if is_nil(actor) do
-      {:ok, draft}
-    else
-      policy_mode = option(opts, :policy_mode, :owner_management)
-
-      CMS.Gate.access_check(actor, :read_draft, draft, %{policy_mode: policy_mode})
-    end
   end
 
   defp option(opts, key, default \\ nil)

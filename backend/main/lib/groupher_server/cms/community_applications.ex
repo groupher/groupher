@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Const
-  alias GroupherServer.CMS.Gate.Passport
+  alias GroupherServer.CMS.Passport
 
   alias GroupherServer.CMS.CommunityApplications.{
     LogoUploads,

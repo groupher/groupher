@@ -26,13 +26,16 @@ defmodule GroupherServer.CMS.Artiment.Threads do
 
   @doc "Expands the full thread atom list at compile time for Absinthe enum declarations."
   defmacro values, do: @values
+
   @doc "Expands the article-only thread atoms at compile time for Absinthe enum declarations."
   defmacro article_values, do: @article_values
 
   @doc "Returns the full thread atom list for runtime validation."
   def enums, do: @values
+
   @doc "Returns the article-only thread atoms for runtime validation."
   def article_enums, do: @article_values
+
   @doc "Returns the article-only thread atoms as a list for Ecto enum fields."
   def article_values_list, do: @article_values
 

@@ -1040,7 +1040,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, %CMS.Gate.Decision{primary: %{code: :ancestor_community_not_writable}}} =
+      assert {:error, %CMS.Gate.Decision{primary: %{reason: :ancestor_community_not_writable}}} =
                CMS.Comments.mark_comment_solution(comment.id, post_author)
 
       {:ok, unchanged_comment} = ORM.find(Comment, comment.id)

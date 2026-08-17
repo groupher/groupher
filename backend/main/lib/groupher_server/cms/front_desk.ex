@@ -18,6 +18,9 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Docs.Branch
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Artiment.Threads
   alias CMS.Comments.Replies
   alias CMS.Helper.ArticlePath
@@ -30,7 +33,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
   @doc "Runs `community` through the public `FrontDesk` boundary."
   def community(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
+    CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
@@ -271,14 +274,9 @@ defmodule GroupherServer.CMS.FrontDesk do
     preload = Keyword.get(opts, :preload, [])
 
     with {:ok, info} <- match(thread),
-         {:ok, scope_context} <- public_scope_context(community, thread),
+         {:ok, scope_context} <- public_scope_context(community, thread, opts),
          %Ecto.Query{} = query <-
-           CMS.Gate.scope(info.model, nil, :read, %{
-             thread: thread,
-             policy_mode: :public,
-             branch_id: Map.get(scope_context, :branch_id),
-             include_illegal: Keyword.get(opts, :include_illegal, false)
-           }),
+           CMS.Gate.scope(info.model, nil, :read, scope_context),
          {:ok, article} <-
            query
            |> where(
@@ -295,13 +293,14 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  defp public_scope_context(%Community{} = community, :doc) do
+  defp public_scope_context(%Community{} = community, :doc, opts) do
     with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
-      {:ok, %{branch_id: branch.id}}
+      {:ok, DocScope.public_branch(branch.id, include_illegal: Keyword.get(opts, :include_illegal, false))}
     end
   end
 
-  defp public_scope_context(_community, _thread), do: {:ok, %{}}
+  defp public_scope_context(_community, thread, opts),
+    do: {:ok, ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
 
   defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 

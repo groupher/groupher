@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
       archived_changelog = archived_changelogs |> List.first()
 
       {:error, reason} = CMS.Articles.trash(archived_changelog, :operations)
-      assert %CMS.Gate.Decision{primary: %{code: :article_archived}} = reason
+      assert %CMS.Gate.Decision{primary: %{reason: :article_archived}} = reason
     end
   end
 end

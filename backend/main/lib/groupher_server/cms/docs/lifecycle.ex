@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
 
   @doc "Returns all supported Docs lifecycle states."
   def states, do: @states
+
   @doc "Returns the states visible through public reads."
   def public_readable_states, do: @public_readable_states
 

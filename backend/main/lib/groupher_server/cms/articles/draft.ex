@@ -29,6 +29,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias CMS.Docs.Lifecycle, as: DocLifecycle
   alias CMS.Assets
   alias CMS.Gate
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
   alias Helper.{ORM, T}
@@ -217,7 +219,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
         update_unlocked(community, thread, article_hash_id, attrs, update_opts)
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_code(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
         {:error, reason} -> {:error, reason}
       end
     end)
@@ -302,9 +304,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
     action = if stage == CMS.Const.stage(:draft), do: :read_draft, else: :read
 
-    scope_context =
-      %{thread: thread, stage: stage, policy_mode: policy_mode}
-      |> maybe_put_branch(branch)
+    scope_context = scope_context(thread, stage, policy_mode, branch, opts)
 
     query =
       model
@@ -328,6 +328,29 @@ defmodule GroupherServer.CMS.Articles.Draft do
         {:error, reason}
     end
   end
+
+  defp scope_context(:doc, :draft, policy_mode, %DocBranch{id: branch_id}, _opts),
+    do: DocScope.draft(branch_id, policy_mode)
+
+  defp scope_context(:doc, :public, policy_mode, %DocBranch{id: branch_id}, opts),
+    do:
+      DocScope.public_branch(branch_id,
+        policy_mode: policy_mode,
+        include_illegal: option(opts, :include_illegal, false)
+      )
+
+  defp scope_context(thread, :draft, policy_mode, _branch, opts),
+    do:
+      ArticleScope.draft(thread, policy_mode,
+        include_illegal: option(opts, :include_illegal, false)
+      )
+
+  defp scope_context(thread, :public, policy_mode, _branch, opts),
+    do:
+      ArticleScope.public(thread,
+        policy_mode: policy_mode,
+        include_illegal: option(opts, :include_illegal, false)
+      )
 
   defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
   defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
@@ -514,11 +537,6 @@ defmodule GroupherServer.CMS.Articles.Draft do
   defp resolve_branch(community, :doc, ref), do: resolve_doc_branch(community, ref)
 
   defp resolve_doc_branch(%Community{} = community, ref), do: Branch.resolve(community, ref)
-
-  defp maybe_put_branch(context, nil), do: context
-
-  defp maybe_put_branch(context, %DocBranch{id: branch_id}),
-    do: Map.put(context, :branch_id, branch_id)
 
   defp maybe_where_branch(query, nil), do: query
 

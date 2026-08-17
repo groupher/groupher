@@ -119,14 +119,14 @@ defmodule GroupherServer.CMS.Comments.Writer do
       |> result()
       |> sync_article_metrics(article)
     else
-      {:error, %Decision{primary: %{code: :article_comments_locked}}} ->
+      {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
         raise_error(:article_comments_locked, "this article is forbid comment")
 
       {:error, :article_comments_locked} ->
         raise_error(:article_comments_locked, "this article is forbid comment")
 
       {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_code(decision)}
+        {:error, Decision.primary_reason(decision)}
 
       error ->
         error
@@ -146,7 +146,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
         reply_unlocked(thread, article, body, user, info, replying_comment, parent_comment)
       end)
     else
-      {:error, %Decision{primary: %{code: :article_comments_locked}}} ->
+      {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
         raise_error(:article_comments_locked, "this article is forbid comment")
 
       {:error, :article_comments_locked} ->
@@ -218,7 +218,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
         raise_error(:article_comments_locked, "this article is forbid comment")
 
       {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_code(decision)}
+        {:error, Decision.primary_reason(decision)}
 
       error ->
         error

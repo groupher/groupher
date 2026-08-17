@@ -218,7 +218,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Write.ensure_exist(community)
+  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Writer.ensure_exist(community)
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do

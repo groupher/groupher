@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.CMS.Passport.Registry
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}

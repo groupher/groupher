@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Articles.Emotions do
   alias GroupherServer.Accounts.Model.User
 
   alias CMS.FrontDesk
-  alias CMS.Gate.Allow
+  alias CMS.Communities.Enable
   alias CMS.Interactions.State
   alias CMS.Helper.EmotionToggle
   alias CMS.Model.{ArticleUserEmotion, Author}
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.Emotions do
       CMS.Gate.access_check(user, :emotion, article)
     end)
     |> Multi.run(:allow_emotion, fn _, %{access_check: canonical_article} ->
-      Allow.emotion(canonical_article.community.slug, :article, thread, emotion)
+      Enable.emotion?(canonical_article.community.slug, :article, thread, emotion)
     end)
     |> Multi.run(:persist_user_emotion, fn _, %{access_check: canonical_article} ->
       target =
