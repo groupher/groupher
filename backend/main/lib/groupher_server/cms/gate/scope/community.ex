@@ -14,23 +14,33 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
         -> Community scope compiler
         -> lifecycle-constrained query
         -> community read model
+
+  Example:
+
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Community.public()
+      iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Community), nil, :read, context)
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS.{Communities, Const}
+  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{CommunityLifecycle, CommunityModerator}
   alias Helper.Constant
 
   require Const
+
+  @behaviour Policy
 
   @community_normal Constant.CMS.pending(:normal)
   @actions [:read, :list]
   @lifecycle_binding :gate_lifecycle
   @policy_modes Communities.Lifecycle.read_modes()
 
-  @doc "Adds the public Community lifecycle predicate for supported read actions."
-  @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
+  @doc "Compiles Community Lifecycle and actor predicates into an Ecto query."
+  @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Community.t()) ::
+          Ecto.Query.t() | {:error, atom()}
+  @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, policy_mode} <- policy_mode(context),
          :ok <- validate_actor(policy_mode, actor) do

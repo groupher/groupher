@@ -28,9 +28,11 @@ defmodule GroupherServer.CMS.Policy.Config do
               day_limit: Keyword.get(@general_config, :publish_throttle_day_limit)
             }
 
+  @doc "Returns the default policy configuration struct."
   @spec base() :: t()
   def base, do: %__MODULE__{}
 
+  @doc "Returns the configured publish throttle limits."
   @spec publish_throttle() :: publish_throttle()
   def publish_throttle, do: base().publish_throttle
 end

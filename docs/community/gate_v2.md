@@ -1,6 +1,6 @@
 # Gate V2：统一读取范围与操作准入
 
-本文是 CMS Gate V2 的通用 Gate API 和准入契约入口，定义 Gate 的公开接口、资源读取边界、mutation 准入边界，以及 Reader、Writer、Lifecycle、Interaction 的职责。Article / Doc 内容版本、DocLifecycle、Trash、Restore 和 Docs Release 的后续边界以 [Gate V3](./gate_v3.md) 为准。
+本文是 CMS Gate V2 的通用 Gate API 和准入契约入口，定义 Gate 的公开接口、资源读取边界、mutation 准入边界，以及 Reader、Writer、Lifecycle、Interaction 的职责。Article / Doc 内容版本、DocLifecycle、Trash、Restore 和 Docs Release 的后续边界以 [Gate V3](./gate_v3.md) 为准；Scope Context 的最终 typed 契约以 [Gate V4](./gate_v4.md) 为准。
 
 本文不为旧接口、旧逻辑或旧数据路径设计保留层。当前系统尚未发布，重构按一次性切换处理；代码、测试、文档和调用方必须同时切到本文协议。V3 覆盖本文中与普通 Article Branch / Snapshot、Document Lifecycle 来源和 Docs Release 相关的旧定义，但不覆盖 Gate API、Decision、Community 和 Comment 契约。
 
@@ -13,7 +13,7 @@
 
 截至 2026-08-15，Gate V2 已经具备以下基础：
 
-- Community、Article、Comment、Document 的 Scope compiler 已建立；
+- Community、Article、Comment、Document 的 Scope compiler 已建立，并统一通过 `Gate.scope/4` 接收资源专属 typed Scope Context；
 - Article Lifecycle、Comment Lifecycle、Community Lifecycle 已分出状态权威；
 - Comment 的 Interaction 已由独立模块承载，reaction V2 作为 Gate 的既定下游基线；
 - Article、Comment 的主要 mutation 已开始使用锁定后的生命周期事实；
@@ -27,7 +27,7 @@
 - GraphQL 的旧状态字段已移向 lifecycle 语义，Article/Comment 测试 fixture 也已同步；
 - Membership/Billing 旧链路已清理，本阶段不建立新的 Membership/Billing 领域事实。
 
-Gate V2 的 Gate facade、Reader/Writer 命名、Community/Article/Comment/Document Scope、mutation access_check、Document Trash/Cover 管理边界、Community 写入口以及 GraphQL fixture 已完成一次性切换。跨 GraphQL、Press、Dashboard、Widget、Search、Feed 和后台 jobs 的静态禁用项审计也已完成；当前同步 batch archive 不以“伪造 outbox”作为完成条件。
+Gate V2 的 Gate facade、Reader/Writer 命名、Community/Article/Comment/Document Scope、mutation access_check、Document Trash/Cover 管理边界、Community 写入口以及 GraphQL fixture 已完成一次性切换。V4 已进一步删除 `scope/3`、`access_check/4` 和 raw-map Scope 入口；跨 GraphQL、Press、Dashboard、Widget、Search、Feed 和后台 jobs 的静态禁用项审计也已完成。
 
 ## 2. Gate V2 的唯一公开接口
 
@@ -50,7 +50,7 @@ Gate.access_check
   -> 拒绝时返回 {:error, %Gate.Decision{}}
 ```
 
-Gate V2 的公共面是编译期硬约束：除 `scope/3-4` 和 `access_check/3` 外，`CMS.Gate` 不得暴露任何资源准入 API。
+Gate V2 的公共面是编译期硬约束：除 `scope/4` 和 `access_check/3` 外，`CMS.Gate` 不得暴露任何资源准入 API。
 
 `CMS.Gate.Access`、资源级 `evaluate*`、`decision/4` 和 `Decision.allow/1` 是 Gate 内部实现 seam；它们可被 focused seam tests 覆盖，但不属于业务调用协议。业务代码只能使用 `CMS.Gate.scope` 和 `CMS.Gate.access_check`。
 
@@ -83,7 +83,7 @@ Scope 只构造 query，不执行数据库查询，也不逐行调用 access_che
 ```elixir
 query =
   Community
-  |> Gate.scope(actor, :read, %{})
+  |> Gate.scope(actor, :read, CMS.Gate.Context.Scope.Community.public())
   |> where([community], community.slug == ^slug or community.aka == ^slug)
   |> preload([:dashboard, :lifecycle])
 
@@ -329,7 +329,7 @@ queryable
 ### 5.2 Scope compiler ownership
 
 ```text
-AncestorCommunity
+CommunityChain
   Community
   CommunityLifecycle
 
@@ -479,17 +479,17 @@ Comment mutation 必须通过 access_check，不能只加载 Comment 本身。Co
 
 Document policy 已落到两条明确 Scope 路径：
 
-| Document action        | actor / mode                               | Scope 或 access_check                                                                               | 允许的 DocLifecycle(branch)                                         | 其它边界                                                        |
-| ---------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------- |
-| public read/list       | anonymous / `public`                       | `Gate.scope(ArticleDocument, actor, action, %{thread: :doc, stage: :public, branch_policy: :main})` | `published`, `archived`                                             | Community 只允许 `active`, `read_only`；过滤 illegal moderation |
-| draft read             | owner/moderator/operations management mode | `Gate.scope(..., %{thread: :doc, stage: :draft, branch_id: editor_branch_id, policy_mode: mode})`   | `draft_only`, `published`, `archived`                               | Community 状态和 actor 关系在 SQL 内约束                        |
-| branch/editor read     | 同上                                       | `Articles.Draft` 内部调用 `Gate.scope`                                                              | draft branch 的上述状态                                             | 不读已 trash membership                                         |
-| edit                   | User                                       | `Gate.access_check(user, :edit, draft)`                                                             | `draft_only`, `published`                                           | Writer 使用 canonical Draft                                     |
-| move / tree edit       | User 或显式 operations actor               | `Gate.access_check(actor, :manage_docs, community)`                                                 | Community 必须 writable                                             | Tree revision、event、Audit 同事务                              |
-| publish                | User                                       | `Gate.access_check(user, :publish, draft)` + `:manage_docs` Community check                         | `draft_only`, `published`                                           | 生成 `DocPublishRelease`、`DocSnapshot`、projection             |
-| restore snapshot       | User                                       | `Gate.access_check(user, :restore_snapshot, snapshot)`                                              | `draft_only`, `published`                                           | `DocSnapshot` 只恢复到 Draft，不直接改 public row               |
-| delete / restore trash | User / operations                          | Doc `:delete` / `:restore` access_check                                                             | delete 只从 `draft_only`/`published` 开始；restore 只接受 `deleted` | Doc Trash membership 与 DocLifecycle transition 同事务          |
-| management read        | owner/moderator/operations                 | explicit `policy_mode`                                                                              | 由 mode 状态矩阵决定                                                | 不提供 unscoped `read_all`                                      |
+| Document action        | actor / mode                               | Scope 或 access_check                                                       | 允许的 DocLifecycle(branch)                                         | 其它边界                                                        |
+| ---------------------- | ------------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| public read/list       | anonymous / `public`                       | `Gate.scope(ArticleDocument, actor, action, DocumentScope.public_main())`   | `published`, `archived`                                             | Community 只允许 `active`, `read_only`；过滤 illegal moderation |
+| draft read             | owner/moderator/operations management mode | `Gate.scope(..., DocumentScope.draft(editor_branch_id, mode))`              | `draft_only`, `published`, `archived`                               | Community 状态和 actor 关系在 SQL 内约束                        |
+| branch/editor read     | 同上                                       | `Articles.Draft` 内部调用 `Gate.scope`                                      | draft branch 的上述状态                                             | 不读已 trash membership                                         |
+| edit                   | User                                       | `Gate.access_check(user, :edit, draft)`                                     | `draft_only`, `published`                                           | Writer 使用 canonical Draft                                     |
+| move / tree edit       | User 或显式 operations actor               | `Gate.access_check(actor, :manage_docs, community)`                         | Community 必须 writable                                             | Tree revision、event、Audit 同事务                              |
+| publish                | User                                       | `Gate.access_check(user, :publish, draft)` + `:manage_docs` Community check | `draft_only`, `published`                                           | 生成 `DocPublishRelease`、`DocSnapshot`、projection             |
+| restore snapshot       | User                                       | `Gate.access_check(user, :restore_snapshot, snapshot)`                      | `draft_only`, `published`                                           | `DocSnapshot` 只恢复到 Draft，不直接改 public row               |
+| delete / restore trash | User / operations                          | Doc `:delete` / `:restore` access_check                                     | delete 只从 `draft_only`/`published` 开始；restore 只接受 `deleted` | Doc Trash membership 与 DocLifecycle transition 同事务          |
+| management read        | owner/moderator/operations                 | explicit `policy_mode`                                                      | 由 mode 状态矩阵决定                                                | 不提供 unscoped `read_all`                                      |
 
 Document 的物理 draft/public stage、branch、DocLifecycle 和 DocTree event 是四个不同事实；任何 publish、restore 或 move 都必须在同一 mutation 事务中分别处理，不能用一个 stage 字段代替生命周期准入。
 

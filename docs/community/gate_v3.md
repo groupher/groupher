@@ -2,7 +2,7 @@
 
 本文定义 CMS Gate、普通 Article、Doc 内容版本和 Docs Release 的边界。
 
-本文同时区分当前实现和目标实现。目标迁移不考虑历史数据，不保留旧模型的兼容读写，不做双表双写。实现应直接收敛到目标结构，不通过通用抽象把 Doc 专属能力重新暴露给普通 Article。
+本文同时区分当前实现和目标实现。目标迁移不考虑历史数据，不保留旧模型的兼容读写，不做双表双写。实现应直接收敛到目标结构，不通过通用抽象把 Doc 专属能力重新暴露给普通 Article。V4 已将本文的 Draft read 入口和 Scope Context 示例收敛为 typed contract。
 
 相关文档：
 
@@ -11,9 +11,9 @@
 
 ## V3 与 Gate V2 的优先级
 
-Gate V2 继续是 Gate 的通用接口和准入契约来源：
+Gate V2 继续是 Gate 的通用接口和准入契约来源；其中 facade arity 和 Draft read 入口以 Gate V4 的收口结果为准：
 
-- `Gate.scope/3-4`；
+- `Gate.scope/4`；V4 删除无法表达资源读取意图的 `Gate.scope/3`；
 - `Gate.access_check/3`；
 - `Gate.Decision`；
 - Community、Comment 和通用 action policy。
@@ -60,7 +60,7 @@ ensure_from_public
   Doc             按 branch 持久化 Public + Draft，并由 Docs 发布编排
 ```
 
-团队 Draft 读取使用 `:read_draft` Gate action；Article-level `has_unpublished_changes` 由 `DraftDiff.has_unpublished_changes/3` 派生，不物化额外事实表。
+团队 Draft 读取使用 `:read_draft` Gate Scope action；V4 将调用契约收口为 `Gate.scope(queryable, actor, :read_draft, scope_context)`，不再通过 `Gate.access_check` 执行 Draft read。Article-level `has_unpublished_changes` 由 `DraftDiff.has_unpublished_changes/3` 派生，不物化额外事实表。
 
 ### 1.2 Article Core 的最小共享能力
 
@@ -328,13 +328,13 @@ Gate.access_check(actor, :manage_docs, community)
 团队读取当前 Draft 使用显式的 `:read_draft` action：
 
 ```text
-Gate.access_check(actor, :read_draft, draft)
+Gate.scope(queryable, actor, :read_draft, scope_context)
   -> policy_mode: :owner_management
   -> stage: draft
   -> Doc 还必须带显式 branch_id
 ```
 
-`:read_draft` 是所有 Article 的共享授权读取能力；`:read` 只覆盖 Public，不得隐式授予 Draft 可见性。`moderator_management` 和 `operations` 可以作为同一 action 的更高权限 policy mode，但不新增平行动作。
+`:read_draft` 是所有 Article 的共享授权读取能力；V4 保留该 action，但将它限定为 Article/Doc Scope action，并删除 Access 侧特例。`:read` 只覆盖 Public，不得隐式授予 Draft 可见性。`moderator_management` 和 `operations` 可以作为同一 action 的更高权限 policy mode，但不新增平行动作。
 
 Gate 不拥有 `draft_only`、`published` 等状态；Lifecycle 也不判断 actor 是否为 owner、moderator 或管理员。
 
@@ -355,13 +355,13 @@ Doc Scope 的 branch 必须来自显式 policy context，不由 scope compiler �
 
 ```elixir
 # Public URL / Press / Feed
-%{thread: :doc, stage: :public, branch_id: main_branch_id, policy_mode: :public}
+DocScope.public_branch(main_branch_id)
 
 # Dashboard 团队读取指定 workspace
-%{thread: :doc, stage: :draft, branch_id: editor_branch_id, policy_mode: :owner_management}
+DocScope.draft(editor_branch_id, :owner_management)
 
 # 跨社区的公共聚合读取或维护任务
-%{thread: :doc, stage: :public, branch_policy: :main, policy_mode: :public}
+DocScope.public_main()
 ```
 
 规则：
@@ -422,7 +422,7 @@ publish Article
   -> 事务完成后删除已发布 Draft
 ```
 
-团队查看当前 Draft 是 Article Core 的授权读取能力，不是 Changelog 或 Doc 的专属能力；其 Gate 契约固定为 `Gate.access_check(actor, :read_draft, draft)` + `policy_mode: :owner_management`。
+团队查看当前 Draft 是 Article Core 的授权读取能力，不是 Changelog 或 Doc 的专属能力；V4 supersede 原 Access 契约，其 Gate 契约固定为 `Gate.scope(queryable, actor, :read_draft, scope_context)`，默认 `policy_mode: :owner_management`，并在原始查询中完成一次 scoped fetch。
 
 如果普通 Article 和 Doc 复用字段复制逻辑，只提取无状态的字段复制函数；不要重新建立可选 Branch 的通用 Versioning facade。
 
@@ -904,7 +904,7 @@ matrix、祖先 Lifecycle 检查和同事务 fact/projection 写入。普通 Art
 3. 普通 Article Publish 成功后才删除 Draft。
 4. 普通 Article 的 DraftDiff 只比较 Draft 与 Public，不依赖 Snapshot。
 5. `DraftDiff.has_unpublished_changes/3` 是 Article-level 事实的唯一查询入口，结果不物化。
-6. 团队查看当前 Draft 是所有 Article 的共享授权读取能力，统一通过 `Gate.access_check(actor, :read_draft, draft)`，默认 policy mode 为 `:owner_management`；普通 `:read` 不授予 Draft 可见性。
+6. 团队查看当前 Draft 是所有 Article 的共享授权读取能力，统一通过 `Gate.scope(queryable, actor, :read_draft, scope_context)` 执行一次 scoped fetch，默认 policy mode 为 `:owner_management`；`:read_draft` 不属于 Access action，普通 `:read` 不授予 Draft 可见性。
 7. 已发布 Article 再次编辑时，Lifecycle 仍是 `published`，同时存在 Public + Draft。
 8. `draft_only` 只表示对应资源和 branch 从未公开。
 9. DocLifecycle 按 `community_id + branch_id + article_hash_id` 唯一定位。

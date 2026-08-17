@@ -92,3 +92,31 @@ msgstr ""
 
 msgid "must be equal to %{number}"
 msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.read_only"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.unavailable"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.permission_denied"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.lifecycle_not_loaded"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.doc_branch_required"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.article_not_mutable"
+msgstr ""
+
+#: lib/groupher_server_web/middleware/gql_result_fmt.ex
+msgid "gate.unknown"
+msgstr ""

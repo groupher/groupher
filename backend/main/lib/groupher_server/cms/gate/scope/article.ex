@@ -13,11 +13,16 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
   alias Helper.Constant
 
   require CMS.Const
+
+  @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
   @draft_lifecycle_states [:draft_only, :published, :archived]
@@ -26,8 +31,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   @actions [:read, :read_draft, :list]
   @management_policy_modes [:owner_management, :moderator_management, :operations]
 
-  @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
-  def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
+  @doc "Compiles Article or Doc visibility predicates into an Ecto query."
+  @spec scope(Ecto.Query.t(), term(), atom(), ArticleContext.t() | DocContext.t()) ::
+          Ecto.Query.t() | {:error, atom()}
+  @impl Policy
+  def scope(%Ecto.Query{} = query, actor, action, context)
+      when (is_struct(context, ArticleContext) or is_struct(context, DocContext)) and
+             action in @actions do
     with {:ok, thread} <- resolve_thread(query, context),
          {:ok, policy_mode} <- policy_mode(context, action),
          {:ok, stage} <- stage(context, action),
@@ -39,7 +49,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
+  def scope(_query, _actor, _action, _context), do: {:error, :scope_context_missing}
 
   @doc false
   @spec moderation_diagnostic_scope(Ecto.Queryable.t(), atom()) ::
@@ -61,7 +71,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp base_scope(query, thread, policy_mode, branch_id)
 
   defp base_scope(query, :doc, policy_mode, branch_id) do
-    with %Ecto.Query{} = query <- AncestorCommunity.article(query, policy_mode) do
+    with %Ecto.Query{} = query <- CommunityChain.article(query, policy_mode) do
       query
       |> doc_lifecycle_scope(branch_id)
       |> doc_branch_scope(branch_id, policy_mode)
@@ -69,7 +79,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   defp base_scope(query, thread, policy_mode, _branch_id) do
-    with %Ecto.Query{} = query <- AncestorCommunity.article(query, policy_mode) do
+    with %Ecto.Query{} = query <- CommunityChain.article(query, policy_mode) do
       lifecycle_scope(query, thread)
     end
   end
@@ -108,32 +118,43 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp doc_branch_scope(_query, _branch_id, _policy_mode),
     do: {:error, :scope_context_missing}
 
-  defp policy_mode(%{policy_mode: mode}, :read_draft)
+  defp policy_mode(%ArticleContext{policy_mode: mode}, :read_draft)
        when mode in @management_policy_modes,
        do: {:ok, mode}
 
-  defp policy_mode(%{}, :read_draft), do: {:ok, :owner_management}
+  defp policy_mode(%DocContext{policy_mode: mode}, :read_draft)
+       when mode in @management_policy_modes,
+       do: {:ok, mode}
 
-  defp policy_mode(%{policy_mode: mode}, _action)
+  defp policy_mode(%ArticleContext{policy_mode: mode}, _action)
        when mode in [:public | @management_policy_modes],
        do: {:ok, mode}
 
-  defp policy_mode(%{}, _action), do: {:error, :scope_context_missing}
-  defp policy_mode(_, _action), do: {:error, :scope_context_missing}
+  defp policy_mode(%DocContext{policy_mode: mode}, _action)
+       when mode in [:public | @management_policy_modes],
+       do: {:ok, mode}
 
-  defp stage(%{stage: :draft}, :read_draft), do: {:ok, :draft}
-  defp stage(%{stage: _stage}, :read_draft), do: {:error, :scope_context_missing}
-  defp stage(%{}, :read_draft), do: {:ok, :draft}
+  defp policy_mode(_context, _action), do: {:error, :scope_context_missing}
 
-  defp stage(%{stage: stage}, _action) when stage in [:public, :draft], do: {:ok, stage}
-  defp stage(%{}, _action), do: {:ok, :public}
-  defp stage(_, _action), do: {:error, :scope_context_missing}
+  defp stage(%ArticleContext{stage: :draft}, :read_draft), do: {:ok, :draft}
+  defp stage(%DocContext{stage: :draft}, :read_draft), do: {:ok, :draft}
+  defp stage(%ArticleContext{}, :read_draft), do: {:error, :scope_context_missing}
+  defp stage(%DocContext{}, :read_draft), do: {:error, :scope_context_missing}
 
-  defp branch_id(%{branch_id: branch_id}, :doc) when is_integer(branch_id), do: {:ok, branch_id}
-  defp branch_id(%{branch_policy: :main}, :doc), do: {:ok, :main}
-  defp branch_id(%{}, :doc), do: {:error, :scope_context_missing}
-  defp branch_id(_, :doc), do: {:error, :scope_context_missing}
-  defp branch_id(_context, _thread), do: {:ok, nil}
+  defp stage(%ArticleContext{stage: stage}, _action) when stage in [:public, :draft],
+    do: {:ok, stage}
+
+  defp stage(%DocContext{stage: stage}, _action) when stage in [:public, :draft],
+    do: {:ok, stage}
+
+  defp stage(_context, _action), do: {:error, :scope_context_missing}
+
+  defp branch_id(%DocContext{branch_id: branch_id}, :doc) when is_integer(branch_id),
+    do: {:ok, branch_id}
+
+  defp branch_id(%DocContext{branch_policy: :main}, :doc), do: {:ok, :main}
+  defp branch_id(%DocContext{}, :doc), do: {:error, :scope_context_missing}
+  defp branch_id(%ArticleContext{}, _thread), do: {:ok, nil}
 
   defp apply_stage(query, :public, actor, _policy_mode, context) do
     query = from([article, ...] in query, where: article.stage == ^:public)
@@ -163,7 +184,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   defp apply_actor_policy(query, actor, policy_mode)
        when policy_mode in [:owner_management, :moderator_management, :operations] do
-    case AncestorCommunity.community_actor(query, policy_mode, actor) do
+    case CommunityChain.community_actor(query, policy_mode, actor) do
       %Ecto.Query{} = scoped -> {:ok, scoped}
       {:error, reason} -> {:error, reason}
     end

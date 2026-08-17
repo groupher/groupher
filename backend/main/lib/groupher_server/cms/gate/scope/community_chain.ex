@@ -1,9 +1,12 @@
-defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
+defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   @moduledoc """
   Compiles the public ancestor-Community boundary for CMS child resources.
 
   Gate owns the reserved joins. Existing Community/Lifecycle joins are rejected
   because their join predicates cannot be assumed to express the same policy.
+
+  The exported query helpers are internal compiler seams. Product callers use
+  `CMS.Gate.scope/4` and never call this module directly.
 
   Business position:
 
@@ -42,6 +45,7 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     :gate_community_lifecycle
   ]
 
+  @doc false
   @spec article(Ecto.Query.t()) :: Ecto.Query.t() | {:error, atom()}
   def article(%Ecto.Query{} = query, policy_mode \\ :public) do
     with :ok <-
@@ -59,6 +63,7 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     end
   end
 
+  @doc false
   @spec direct(Ecto.Query.t()) :: Ecto.Query.t() | {:error, atom()}
   def direct(%Ecto.Query{} = query) do
     with :ok <-
@@ -81,6 +86,7 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     end
   end
 
+  @doc false
   @spec comment(Ecto.Query.t(), atom(), module()) :: Ecto.Query.t() | {:error, atom()}
   def comment(%Ecto.Query{} = query, thread, article_schema) do
     with :ok <-
@@ -107,6 +113,7 @@ defmodule GroupherServer.CMS.Gate.Scope.AncestorCommunity do
     end
   end
 
+  @doc false
   @spec document(Ecto.Query.t(), atom(), module(), atom(), atom(), integer() | :main | nil) ::
           Ecto.Query.t() | {:error, atom()}
   def document(

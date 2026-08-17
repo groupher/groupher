@@ -10,42 +10,46 @@ defmodule GroupherServer.CMS.Gate.Access.Comment do
       loaded Comment + Context
         -> Gate Access
         -> effective lifecycle admission
+
+  Example contract:
+
+      check_access(actor, :edit, comment, %Context.Access.Comment{})
+      #=> :ok | {:error, reason}
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Gate.Allow
+  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS.Gate.Context.Access.Comment, as: CommentContext
+  alias GroupherServer.CMS.Gate.Access.Policy
   alias GroupherServer.CMS.Model.{CommentLifecycle, Community}
+
+  @behaviour Policy
 
   @actions [:reply_comment, :edit, :delete, :upvote, :emotion, :pin]
 
-  @spec evaluate(User.t() | nil, atom(), map(), map()) :: {:ok, boolean()} | {:error, atom()}
-  def evaluate(%User{} = _user, action, _comment, context)
-      when action in @actions and is_map(context) do
+  @doc "Checks Comment mutation admission without loading or locking resources."
+  @spec check_access(User.t() | nil, atom(), map(), CommentContext.t()) ::
+          :ok | {:error, atom()}
+  @impl Policy
+  def check_access(%User{} = _user, action, _comment, %CommentContext{} = context)
+      when action in @actions do
     with {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          :ok <- article_mutable(context),
          :ok <- comment_mutable(context),
          :ok <- action_allowed(action, context) do
-      {:ok, true}
+      :ok
     else
       {:ok, false} -> {:error, :ancestor_community_not_writable}
       {:error, _reason} = error -> error
     end
   end
 
-  def evaluate(nil, action, _comment, _context) when action in @actions, do: {:ok, false}
-  def evaluate(_user, _action, _comment, _context), do: {:error, :unknown_action}
+  def check_access(nil, action, _comment, _context) when action in @actions,
+    do: {:error, :permission_denied}
 
-  @spec evaluate_result(User.t() | nil, atom(), map(), map()) ::
-          {:ok, true} | {:error, atom()}
-  def evaluate_result(user, action, comment, context) do
-    case evaluate(user, action, comment, context) do
-      {:ok, true} -> {:ok, true}
-      {:ok, false} -> {:error, :permission_denied}
-      {:error, reason} -> {:error, reason}
-    end
-  end
+  def check_access(_user, _action, _comment, _context), do: {:error, :unknown_action}
 
   defp article_mutable(%{article_lifecycle: %{state: :published}}), do: :ok
 
@@ -78,7 +82,7 @@ defmodule GroupherServer.CMS.Gate.Access.Comment do
 
   defp action_allowed(:reply_comment, context) do
     with {:ok, article} <- article(context),
-         {:ok, _} <- Allow.comment(article) do
+         {:ok, _} <- Enable.comment?(article) do
       :ok
     end
   end

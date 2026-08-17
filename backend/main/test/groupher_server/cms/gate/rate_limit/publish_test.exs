@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Policy.PublishThrottle do
+defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
   @moduledoc false
 
   use GroupherServer.TestMate

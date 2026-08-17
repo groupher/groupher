@@ -12,31 +12,55 @@ defmodule GroupherServer.CMS.Gate.Scope do
         -> resource-specific scope compiler
         -> constrained Ecto query
         -> Repo owned by caller
+
+  Example:
+
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Community.public()
+      iex> {:ok, %Ecto.Query{}} = scope(GroupherServer.CMS.Model.Community, nil, :read, context)
   """
 
   alias GroupherServer.CMS.Const
-  alias GroupherServer.CMS.Gate.Scope.{Article, Comment, Community, Document}
-  alias GroupherServer.CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
+
+  alias GroupherServer.CMS.Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
+  alias GroupherServer.CMS.Gate.Scope.Registry
 
   require Const
 
   @doc "Compiles the requested read policy into the supplied queryable."
-  @spec scope(Ecto.Queryable.t(), term(), atom(), map()) ::
+  @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
           Ecto.Query.t() | {:error, atom()}
-  def scope(queryable, actor, action, context) when is_map(context) do
+  def scope(queryable, actor, action, %Community{} = context) do
     query = Ecto.Queryable.to_query(queryable)
 
-    case root_schema(query) do
-      GroupherServer.CMS.Model.Community -> Community.scope(query, actor, action, context)
-      Post -> Article.scope(query, actor, action, context)
-      Blog -> Article.scope(query, actor, action, context)
-      Changelog -> Article.scope(query, actor, action, context)
-      Doc -> Article.scope(query, actor, action, context)
-      GroupherServer.CMS.Model.Comment -> Comment.scope(query, actor, action, context)
-      ArticleDocument -> Document.scope(query, actor, action, context)
-      _ -> {:error, Const.gate_error(:scope_root_mismatch)}
-    end
+    Registry.compile(query, actor, action, root_schema(query), context)
   end
+
+  def scope(queryable, actor, action, %Article{} = context) do
+    query = Ecto.Queryable.to_query(queryable)
+
+    Registry.compile(query, actor, action, root_schema(query), context)
+  end
+
+  def scope(queryable, actor, action, %Doc{} = context) do
+    query = Ecto.Queryable.to_query(queryable)
+
+    Registry.compile(query, actor, action, root_schema(query), context)
+  end
+
+  def scope(queryable, actor, action, %Comment{} = context) do
+    query = Ecto.Queryable.to_query(queryable)
+
+    Registry.compile(query, actor, action, root_schema(query), context)
+  end
+
+  def scope(queryable, actor, action, %Document{} = context) do
+    query = Ecto.Queryable.to_query(queryable)
+
+    Registry.compile(query, actor, action, root_schema(query), context)
+  end
+
+  def scope(_queryable, _actor, _action, _context),
+    do: {:error, Const.gate_error(:scope_context_missing)}
 
   defp root_schema(%Ecto.Query{from: %{source: {_source, schema}}}), do: schema
   defp root_schema(_query), do: nil

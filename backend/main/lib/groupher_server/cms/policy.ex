@@ -14,12 +14,12 @@ defmodule GroupherServer.CMS.Policy do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.PublishThrottle
+  alias GroupherServer.CMS.Gate.RateLimit.Publish
 
-  @doc "Runs `log_publish_action` through the public `Policy` boundary."
-  defdelegate log_publish_action(user), to: PublishThrottle
+  @doc "Records a successful publish through the public Policy boundary."
+  defdelegate record(user), to: Publish
   @doc "Runs `load_publish_throttle` through the public `Policy` boundary."
-  defdelegate load_publish_throttle(user), to: PublishThrottle
+  defdelegate load_publish_throttle(user), to: Publish
   @doc "Runs `mock_publish_throttle_attr` through the public `Policy` boundary."
-  defdelegate mock_publish_throttle_attr(scope, user, opt), to: PublishThrottle
+  defdelegate mock_publish_throttle_attr(scope, user, opt), to: Publish
 end

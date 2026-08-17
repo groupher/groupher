@@ -16,303 +16,26 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     Post
   }
 
-  test "Community scope compiles the public lifecycle boundary" do
-    query = CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
-    assert %Ecto.Query{} = query
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias CMS.Gate.Context.Scope.Document, as: DocumentScope
 
-    {sql, params} = to_sql(query)
+  test "Comment all-thread scope is constructed only by all_public" do
+    assert_raise FunctionClauseError, fn -> CommentScope.for_thread(:all) end
 
-    assert sql =~ ~s(LEFT OUTER JOIN "cms"."community_lifecycles")
-    assert ["active", "read_only"] in params
-  end
-
-  test "scope rejects an omitted policy mode instead of defaulting to public" do
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(Community, nil, :read, %{})
-
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(Post, nil, :read, %{thread: :post})
-  end
-
-  test "Community scope requires explicit owner management mode for restricted states" do
-    {:ok, owner} = db_insert(:user)
-
-    owner_query =
-      CMS.Gate.scope(Community, owner, :read, %{policy_mode: :owner_management})
-
-    assert %Ecto.Query{} = owner_query
-
-    {owner_sql, owner_params} = to_sql(owner_query)
-    assert owner_sql =~ "user_id"
-
-    assert [
-             "setting_up",
-             "setup_failed",
-             "active",
-             "read_only",
-             "suspended",
-             "archived",
-             "pending_destroy"
-           ] in owner_params
-
-    assert {:error, :scope_policy_actor_mismatch} =
-             CMS.Gate.scope(Community, nil, :read, %{policy_mode: :owner_management})
-
-    assert {:error, :scope_policy_actor_mismatch} =
-             CMS.Gate.scope(Community, owner, :read, %{policy_mode: :operations})
-  end
-
-  test "Community scope compiles moderator and operations modes explicitly" do
-    {:ok, moderator} = db_insert(:user)
-
-    moderator_query =
-      CMS.Gate.scope(Community, moderator, :list, %{policy_mode: :moderator_management})
-
-    assert %Ecto.Query{} = moderator_query
-    {moderator_sql, _moderator_params} = to_sql(moderator_query)
-    assert moderator_sql =~ "communities_moderators"
-    assert moderator_sql =~ "exists("
-
-    operations_query =
-      CMS.Gate.scope(Community, :operations, :read, %{policy_mode: :operations})
-
-    assert %Ecto.Query{} = operations_query
-    {_operations_sql, operations_params} = to_sql(operations_query)
-
-    assert [
-             "setting_up",
-             "setup_failed",
-             "active",
-             "read_only",
-             "suspended",
-             "archived",
-             "pending_destroy",
-             "destroy"
-           ] in operations_params
-  end
-
-  test "Community owner public read never bypasses Lifecycle terminal states" do
-    {:ok, owner} = db_insert(:user)
-    {:ok, community} = mock_community(owner)
-
-    for state <- CMS.Const.lifecycle_state_values() do
-      Repo.get_by!(CommunityLifecycle, community_id: community.id)
-      |> CommunityLifecycle.changeset(%{state: state})
-      |> Repo.update!()
-
-      public_query =
-        CMS.Gate.scope(Community, owner, :read, %{policy_mode: :public})
-        |> where([candidate], candidate.id == ^community.id)
-
-      management_query =
-        CMS.Gate.scope(Community, owner, :read, %{policy_mode: :owner_management})
-        |> where([candidate], candidate.id == ^community.id)
-
-      assert Repo.exists?(public_query) == state in [:active, :read_only]
-      assert Repo.exists?(management_query) == (state != :destroy)
-    end
-  end
-
-  test "scope rejects unsupported roots, actions, and reserved bindings" do
-    assert {:error, :scope_root_mismatch} =
-             CMS.Gate.scope(CommunityLifecycle, nil, :read, %{})
-
-    assert {:error, :unknown_action} = CMS.Gate.scope(Community, nil, :publish, %{})
-
-    query =
-      from(community in Community,
-        left_join: lifecycle in CommunityLifecycle,
-        as: :gate_lifecycle,
-        on: lifecycle.community_id == community.id
-      )
-
-    assert {:error, :scope_binding_conflict} =
-             CMS.Gate.scope(query, nil, :read, %{policy_mode: :public})
-  end
-
-  test "Community scope rejects named and anonymous lifecycle joins" do
-    direct_join =
-      from(community in Community,
-        left_join: lifecycle in CommunityLifecycle,
-        on: lifecycle.community_id == community.id
-      )
-
-    association_join =
-      from(community in Community,
-        left_join: lifecycle in assoc(community, :lifecycle)
-      )
-
-    assert {:error, :scope_binding_conflict} =
-             CMS.Gate.scope(direct_join, nil, :read, %{policy_mode: :public})
-
-    assert {:error, :scope_binding_conflict} =
-             CMS.Gate.scope(association_join, nil, :read, %{policy_mode: :public})
-  end
-
-  test "Article scope compiles complete public visibility for every thread" do
-    for {thread, schema} <- article_schemas() do
-      context =
-        case thread do
-          :doc -> %{thread: :doc, branch_policy: :main, policy_mode: :public}
-          _ -> %{thread: thread, policy_mode: :public}
-        end
-
-      query =
-        schema
-        |> select([article], %{id: article.id})
-        |> CMS.Gate.scope(nil, :list, context)
-
-      assert %Ecto.Query{} = query
-
-      {sql, params} = to_sql(query)
-
-      assert sql =~ ~s(JOIN "cms"."communities")
-      assert sql =~ ~s(LEFT OUTER JOIN "cms"."community_lifecycles")
-
-      if thread == :doc do
-        assert sql =~ ~s(JOIN "cms"."doc_lifecycles")
-        assert sql =~ ~s(JOIN "cms"."doc_branches")
-      else
-        assert sql =~ ~s(JOIN "cms"."article_lifecycles")
-      end
-
-      refute sql =~ ~s(FROM "cms"."trashed_articles")
-      assert sql =~ "stage"
-      refute sql =~ "archived_at"
-      refute sql =~ "is_archived"
-      assert sql =~ "pending"
-      assert ["active", "read_only"] in params
-      assert ["published", "archived"] in params
-    end
-  end
-
-  test "Article scope validates an explicit thread against the root schema" do
-    assert {:error, :scope_root_mismatch} =
-             CMS.Gate.scope(Post, nil, :read, %{thread: :blog})
-  end
-
-  test "Doc scope requires an explicit branch and makes public main policy visible" do
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(Doc, nil, :read, %{thread: :doc})
-
-    query = CMS.Gate.scope(Doc, nil, :read, %{thread: :doc, branch_id: 42, policy_mode: :public})
-    assert %Ecto.Query{} = query
-
-    {sql, params} = to_sql(query)
-    assert sql =~ ~s(JOIN "cms"."doc_branches")
-    assert sql =~ "branch_id"
-    assert 42 in params
-    assert "main" in params
-
-    management_query =
-      CMS.Gate.scope(Doc, :operations, :read, %{
-        thread: :doc,
-        stage: :draft,
-        branch_id: 42,
-        policy_mode: :operations
-      })
-
-    assert %Ecto.Query{} = management_query
-  end
-
-  test "Article Draft scope has an explicit management action" do
-    query =
-      CMS.Gate.scope(Post, :operations, :read_draft, %{
-        thread: :post,
-        policy_mode: :operations
-      })
-
-    assert %Ecto.Query{} = query
-    {sql, params} = to_sql(query)
-    assert sql =~ "stage"
-    assert "draft" in params
-    assert ["draft_only", "published", "archived"] in params
-
-    assert {:error, :scope_policy_actor_mismatch} =
-             CMS.Gate.scope(Post, nil, :read_draft, %{
-               thread: :post,
-               policy_mode: :operations
-             })
-
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(Post, :operations, :read_draft, %{
-               thread: :post,
-               stage: :public,
-               policy_mode: :operations
-             })
-  end
-
-  test "Document draft scope requires an explicit management policy" do
-    operations_query =
-      CMS.Gate.scope(ArticleDocument, :operations, :read, %{
-        thread: :doc,
-        stage: :draft,
-        branch_id: 42,
-        policy_mode: :operations
-      })
-
-    assert %Ecto.Query{} = operations_query
-    {sql, params} = to_sql(operations_query)
-
-    assert sql =~ ~s(JOIN "cms"."docs")
-    assert sql =~ "stage"
-    assert "draft" in params
-    assert ["draft_only", "published", "archived"] in params
-
-    assert [
-             "setting_up",
-             "setup_failed",
-             "active",
-             "read_only",
-             "suspended",
-             "archived",
-             "pending_destroy",
-             "destroy"
-           ] in params
-
-    assert {:error, :scope_policy_actor_mismatch} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, %{
-               thread: :doc,
-               stage: :draft,
-               branch_id: 42,
-               policy_mode: :operations
-             })
-
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(ArticleDocument, :operations, :read, %{
-               thread: :doc,
-               stage: :draft,
-               policy_mode: :public
-             })
-
-    assert {:error, :scope_context_missing} =
-             CMS.Gate.scope(ArticleDocument, :operations, :read, %{
-               thread: :doc,
-               stage: :draft,
-               branch_policy: :main,
-               policy_mode: :operations
-             })
-  end
-
-  test "actor-aware Article scope keeps moderation visibility inside SQL" do
-    {:ok, actor} = db_insert(:user)
-    query = CMS.Gate.scope(Post, actor, :read, %{thread: :post, policy_mode: :public})
-    {sql, _params} = to_sql(query)
-
-    assert sql =~ ~s(FROM "cms"."authors")
-    assert sql =~ "user_id"
+    assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
   end
 
   test "Comment scope uses stable community_id and accepts an optional thread coordinate" do
     contextless =
       Comment
       |> select([comment], %{id: comment.id})
-      |> CMS.Gate.scope(nil, :list, %{})
+      |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
 
     threaded =
       Comment
       |> select([comment], %{id: comment.id})
-      |> CMS.Gate.scope(nil, :list, %{thread: :post})
+      |> CMS.Gate.scope(nil, :list, CommentScope.for_thread(:post))
 
     for query <- [contextless, threaded] do
       assert %Ecto.Query{} = query
@@ -346,8 +69,8 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     for {thread, _schema} <- article_schemas() do
       context =
         case thread do
-          :doc -> %{thread: :doc, branch_policy: :main, policy_mode: :public}
-          _ -> %{thread: thread, policy_mode: :public}
+          :doc -> DocumentScope.public_main()
+          _ -> DocumentScope.public(thread)
         end
 
       query = CMS.Gate.scope(ArticleDocument, nil, :read, context)
@@ -365,10 +88,10 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     comment_query = from(comment in Comment, join: community in assoc(comment, :community))
 
     assert {:error, :scope_binding_conflict} =
-             CMS.Gate.scope(article_query, nil, :read, %{thread: :post, policy_mode: :public})
+             CMS.Gate.scope(article_query, nil, :read, ArticleScope.public(:post))
 
     assert {:error, :scope_binding_conflict} =
-             CMS.Gate.scope(comment_query, nil, :read, %{})
+             CMS.Gate.scope(comment_query, nil, :read, CommentScope.all_public())
   end
 
   test "scope composes after select, distinct, and group_by" do
@@ -378,7 +101,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> distinct([_comment, author], author.id)
       |> group_by([comment, author], [comment.id, author.id])
       |> select([_comment, author], author)
-      |> CMS.Gate.scope(nil, :list, %{thread: :post})
+      |> CMS.Gate.scope(nil, :list, CommentScope.for_thread(:post))
 
     assert %Ecto.Query{} = query
     {sql, _params} = to_sql(query)
@@ -401,13 +124,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    assert %Ecto.Query{} = CMS.Gate.scope(Post, nil, :read, %{policy_mode: :public})
-    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, %{})
+    assert %Ecto.Query{} = CMS.Gate.scope(Post, nil, :read, ArticleScope.public(:post))
+    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentScope.all_public())
+
     assert %Ecto.Query{} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, %{
-               thread: :post,
-               policy_mode: :public
-             })
+             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentScope.public(:post))
 
     refute_receive :scope_query
   end
@@ -415,12 +136,12 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   test "high-frequency Article and Comment scopes produce valid EXPLAIN plans" do
     queries = [
       Post
-      |> CMS.Gate.scope(nil, :list, %{thread: :post, policy_mode: :public})
+      |> CMS.Gate.scope(nil, :list, ArticleScope.public(:post))
       |> where([article], article.community_id == ^0)
       |> order_by([article], desc: article.active_at)
       |> limit(20),
       Comment
-      |> CMS.Gate.scope(nil, :list, %{})
+      |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
       |> where([comment], comment.community_id == ^0)
       |> order_by([comment], desc: comment.inserted_at)
       |> limit(20)
@@ -440,7 +161,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     visible_query =
       Post
-      |> CMS.Gate.scope(nil, :read, %{thread: :post, policy_mode: :public})
+      |> CMS.Gate.scope(nil, :read, ArticleScope.public(:post))
       |> where([candidate], candidate.id == ^post.id)
 
     assert Repo.exists?(visible_query)

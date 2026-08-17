@@ -11,12 +11,22 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
       loaded Article + Context
         -> Gate Access
         -> lifecycle admission
+
+  Example contract:
+
+      check_access(actor, :publish, article, %Context.Access.Article{})
+      #=> :ok | {:error, reason}
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.{Communities}
-  alias GroupherServer.CMS.Gate.Allow
+  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
+  alias GroupherServer.CMS.Gate.Access.Policy
   alias GroupherServer.CMS.Model.Community
+
+  @behaviour Policy
 
   @actions [
     :publish,
@@ -30,25 +40,32 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
     :collect
   ]
 
-  @spec evaluate(User.t() | nil, atom(), map(), map()) :: {:ok, boolean()} | {:error, atom()}
-  def evaluate(%User{} = _user, action, article, context)
-      when action in @actions and is_map(article) and is_map(context),
-      do: evaluate_allowed(action, article, context)
+  @doc "Checks Article or Doc mutation admission without loading or locking resources."
+  @spec check_access(User.t() | nil, atom(), map(), ArticleContext.t() | DocContext.t()) ::
+          :ok | {:error, atom()}
+  @impl Policy
+  def check_access(%User{} = _user, action, article, context)
+      when action in @actions and is_map(article) and
+             (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
+      do: check_allowed(action, article, context)
 
-  def evaluate(:operations, action, article, context)
-      when action in @actions and is_map(article) and is_map(context),
-      do: evaluate_allowed(action, article, context)
+  def check_access(:operations, action, article, context)
+      when action in @actions and is_map(article) and
+             (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
+      do: check_allowed(action, article, context)
 
-  def evaluate(nil, action, _article, _context) when action in @actions, do: {:ok, false}
-  def evaluate(_user, _action, _article, _context), do: {:error, :unknown_action}
+  def check_access(nil, action, _article, _context) when action in @actions,
+    do: {:error, :permission_denied}
 
-  defp evaluate_allowed(action, article, context) do
+  def check_access(_user, _action, _article, _context), do: {:error, :unknown_action}
+
+  defp check_allowed(action, article, context) do
     with {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          :ok <- doc_branch_allowed(action, context),
          :ok <- action_allowed(action, lifecycle, article) do
-      {:ok, true}
+      :ok
     else
       {:ok, false} -> {:error, :ancestor_community_not_writable}
       {:error, _reason} = error -> error
@@ -61,17 +78,8 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
 
   defp doc_branch_allowed(_action, _context), do: :ok
 
-  @spec evaluate_result(User.t() | nil, atom(), map(), map()) ::
-          {:ok, true} | {:error, atom()}
-  def evaluate_result(user, action, article, context) do
-    case evaluate(user, action, article, context) do
-      {:ok, true} -> {:ok, true}
-      {:ok, false} -> {:error, :permission_denied}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
   defp article_lifecycle(%{article_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
+  defp article_lifecycle(%{doc_lifecycle: %{state: _} = lifecycle}), do: {:ok, lifecycle}
 
   defp article_lifecycle(_context), do: {:error, :lifecycle_not_loaded}
 
@@ -108,7 +116,7 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
     do: {:error, :article_destroyed}
 
   defp action_allowed(:create_comment, %{state: :published}, article) do
-    case Allow.comment(article) do
+    case Enable.comment?(article) do
       {:ok, _} -> :ok
       {:error, reason} -> {:error, reason}
     end

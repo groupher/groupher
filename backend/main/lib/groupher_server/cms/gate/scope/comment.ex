@@ -7,26 +7,37 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       Comment query
         -> Gate Scope
         -> public Comment boundary
+
+  Example:
+
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Comment.for_thread(:post)
+      iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
+  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
   alias Helper.Constant
 
   require CMS.Const
 
+  @behaviour Policy
+
   @audit_illegal Constant.CMS.pending(:illegal)
 
   @actions [:read, :list]
 
-  @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
+  @doc "Compiles thread-aware Comment visibility predicates into an Ecto query."
+  @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
+          Ecto.Query.t() | {:error, atom()}
+  @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with :ok <- validate_thread(context),
-         %Ecto.Query{} = query <- AncestorCommunity.direct(query) do
+         %Ecto.Query{} = query <- CommunityChain.direct(query) do
       query
       |> maybe_filter_thread(context)
       |> lifecycle_scope(context)
@@ -36,6 +47,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
 
+  defp validate_thread(%{thread: :all}), do: :ok
+
+  defp validate_thread(%{thread: :doc, branch_policy: :main}), do: :ok
+
+  defp validate_thread(%{thread: :doc}), do: {:error, :scope_context_missing}
+
   defp validate_thread(%{thread: thread}) do
     case ArticleSchema.fetch(thread) do
       {:ok, _schema} -> :ok
@@ -44,6 +61,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   end
 
   defp validate_thread(_context), do: :ok
+
+  defp maybe_filter_thread(query, %{thread: :all}), do: query
 
   defp maybe_filter_thread(query, %{thread: thread}),
     do: where(query, [comment], comment.thread == ^thread)
@@ -68,6 +87,36 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
           doc_lifecycle.article_hash_id == comment.article_hash_id,
       where: lifecycle.state != :destroy,
       where: doc_lifecycle.state in [:published, :archived]
+    )
+  end
+
+  defp lifecycle_scope(query, %{thread: :all}) do
+    from(comment in query,
+      join: lifecycle in CommentLifecycle,
+      as: :gate_comment_lifecycle,
+      on: lifecycle.comment_id == comment.id,
+      left_join: article_lifecycle in ArticleLifecycle,
+      as: :gate_article_lifecycle,
+      on:
+        article_lifecycle.community_id == comment.community_id and
+          article_lifecycle.thread == comment.thread and
+          article_lifecycle.article_hash_id == comment.article_hash_id and
+          comment.thread != ^:doc,
+      left_join: branch in DocBranch,
+      as: :gate_doc_branch,
+      on:
+        branch.community_id == comment.community_id and
+          branch.type == ^CMS.Const.doc_branch_type(:main) and comment.thread == ^:doc,
+      left_join: doc_lifecycle in DocLifecycle,
+      as: :gate_doc_lifecycle,
+      on:
+        doc_lifecycle.community_id == comment.community_id and
+          doc_lifecycle.branch_id == branch.id and
+          doc_lifecycle.article_hash_id == comment.article_hash_id and comment.thread == ^:doc,
+      where: lifecycle.state != :destroy,
+      where:
+        (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
+          (comment.thread == ^:doc and doc_lifecycle.state in [:published, :archived])
     )
   end
 

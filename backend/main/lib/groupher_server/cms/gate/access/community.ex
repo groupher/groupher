@@ -2,9 +2,8 @@ defmodule GroupherServer.CMS.Gate.Access.Community do
   @moduledoc """
   Community access composition across Lifecycle, relations and Passport.
 
-  Read/list checks use the same explicit policy modes as the Community Scope.
-  The default mode is public, so owner identity alone never bypasses the
-  Community Lifecycle.
+  Read/list visibility belongs to Community Scope. Access only checks the
+  resource mutation and management actions against the loaded facts.
 
   Business position:
 
@@ -13,29 +12,45 @@ defmodule GroupherServer.CMS.Gate.Access.Community do
         -> Community
         -> allow / deny
         -> domain context
+
+  Example contract:
+
+      check_access(actor, :update, community, %Context.Access.Community{})
+      #=> :ok | {:error, reason}
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
+  alias GroupherServer.CMS.Gate.Access.Policy
+  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.CMS.Model.Community
 
   require Const
 
+  @behaviour Policy
+
   @actions Const.gate_action_values()
 
-  @spec evaluate(User.t() | nil, atom(), Community.t()) ::
-          {:ok, boolean()} | {:error, atom()}
-  def evaluate(user, action, community), do: evaluate(user, action, community, %{})
+  @doc "Checks Community admission using the default loaded lifecycle context."
+  @spec check_access(User.t() | nil, atom(), Community.t()) :: :ok | {:error, atom()}
+  def check_access(user, action, community),
+    do:
+      check_access(user, action, community, %CommunityContext{
+        community: community,
+        community_lifecycle: Map.get(community, :lifecycle)
+      })
 
-  @spec evaluate(User.t() | nil, atom(), Community.t(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
-  def evaluate(user, action, %Community{} = community, context)
-      when action in @actions and is_map(context) do
+  @doc "Checks Community admission against an explicitly typed Access Context."
+  @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
+          :ok | {:error, atom()}
+  @impl Policy
+  def check_access(user, action, %Community{} = community, %CommunityContext{} = context)
+      when action in @actions do
     case action do
       action when action in [:read, :list] ->
-        read_allowed?(user, community, context)
+        read_allowed?(community, context)
 
       action
       when action in [
@@ -46,13 +61,14 @@ defmodule GroupherServer.CMS.Gate.Access.Community do
              :cancel_destroy,
              :destroy
            ] ->
-        with {:ok, true} <- lifecycle_allowed(community, :command, context) do
-          {:ok, command_relation_allowed?(user, community, action)}
+        with {:ok, true} <- lifecycle_allowed(community, :command, context),
+             :ok <- relation_allowed(command_relation_allowed?(user, community, action)) do
+          :ok
         end
 
       :manage_docs ->
         case Lifecycle.can_write(community, context) do
-          {:ok, true} -> {:ok, management_relation_allowed?(user, community)}
+          {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
           {:ok, false} -> {:error, :ancestor_community_not_writable}
           {:error, reason} -> {:error, reason}
         end
@@ -62,65 +78,20 @@ defmodule GroupherServer.CMS.Gate.Access.Community do
     end
   end
 
-  def evaluate(_user, _action, _community, _context), do: {:error, :unknown_action}
+  def check_access(_user, _action, _community, _context), do: {:error, :unknown_action}
 
-  @spec evaluate_result(User.t() | nil, atom(), Community.t()) ::
-          {:ok, true} | {:error, atom()}
-  def evaluate_result(user, action, community), do: evaluate_result(user, action, community, %{})
-
-  @spec evaluate_result(User.t() | nil, atom(), Community.t(), map()) ::
-          {:ok, true} | {:error, atom()}
-  def evaluate_result(user, action, community, context) do
-    case evaluate(user, action, community, context) do
-      {:ok, true} -> {:ok, true}
-      {:ok, false} -> {:error, :permission_denied}
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp read_allowed?(user, %Community{} = community, context) do
-    mode = Map.get(context, :policy_mode, :public)
-
-    with :ok <- validate_read_actor(user, mode),
-         {:ok, true} <- lifecycle_read_allowed(community, mode, context) do
-      {:ok, read_relation_allowed?(user, community, mode)}
+  defp read_allowed?(%Community{} = community, context) do
+    with {:ok, true} <- Lifecycle.can_read(community, context) do
+      :ok
     else
-      {:ok, false} -> {:ok, false}
-      {:error, :lifecycle_not_loaded} -> {:ok, community.pending == 0 and mode == :public}
+      {:ok, false} -> {:error, :permission_denied}
+      {:error, :lifecycle_not_loaded} -> relation_allowed(community.pending == 0)
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp lifecycle_read_allowed(%Community{} = community, :public, context),
-    do: Lifecycle.can_read(community, context)
-
-  defp lifecycle_read_allowed(%Community{} = community, mode, context)
-       when mode in [:owner_management, :moderator_management, :operations],
-       do: Lifecycle.can_read_mode(community, mode, context)
-
-  defp lifecycle_read_allowed(_community, _mode, _context),
-    do: {:error, :unknown_policy_mode}
-
-  defp read_relation_allowed?(_user, _community, :public), do: true
-
-  defp read_relation_allowed?(%User{} = user, community, :owner_management),
-    do: owner?(user, community)
-
-  defp read_relation_allowed?(%User{} = user, community, :moderator_management),
-    do: moderator?(user, community)
-
-  defp read_relation_allowed?(:operations, _community, :operations), do: true
-  defp read_relation_allowed?(%{type: :operations}, _community, :operations), do: true
-  defp read_relation_allowed?(_user, _community, _mode), do: false
-
-  defp validate_read_actor(_user, :public), do: :ok
-
-  defp validate_read_actor(%User{}, mode) when mode in [:owner_management, :moderator_management],
-    do: :ok
-
-  defp validate_read_actor(:operations, :operations), do: :ok
-  defp validate_read_actor(%{type: :operations}, :operations), do: :ok
-  defp validate_read_actor(_user, _mode), do: {:error, :permission_denied}
+  defp relation_allowed(true), do: :ok
+  defp relation_allowed(false), do: {:error, :permission_denied}
 
   defp lifecycle_allowed(%Community{} = community, :command, context) do
     case Lifecycle.can_manage(community, context) do

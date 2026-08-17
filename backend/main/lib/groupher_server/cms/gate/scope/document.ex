@@ -7,16 +7,27 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
       ArticleDocument query
         -> Gate Scope
         -> public Document boundary
+
+  Example:
+
+      iex> context = GroupherServer.CMS.Gate.Context.Scope.Document.public(:post)
+      iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.ArticleDocument), nil, :read, context)
   """
 
   alias GroupherServer.CMS.Const
-  alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
+  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias GroupherServer.CMS.Gate.Scope.Policy
 
   require Const
 
+  @behaviour Policy
+
   @actions [:read, :list]
 
-  @spec scope(Ecto.Query.t(), term(), atom(), map()) :: Ecto.Query.t() | {:error, atom()}
+  @doc "Compiles ArticleDocument ancestor and branch predicates into an Ecto query."
+  @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Document.t()) ::
+          Ecto.Query.t() | {:error, atom()}
+  @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, %{thread: thread} = context)
       when action in @actions do
     branch_ref =
@@ -28,7 +39,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
          {:ok, policy_mode} <- policy_mode(context),
          stage <- Map.get(context, :stage, :public),
          %Ecto.Query{} = scoped <-
-           AncestorCommunity.document(
+           CommunityChain.document(
              query,
              thread,
              article_schema,
@@ -36,7 +47,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
              stage,
              branch_ref
            ),
-         %Ecto.Query{} = scoped <- AncestorCommunity.community_actor(scoped, policy_mode, actor) do
+         %Ecto.Query{} = scoped <- CommunityChain.community_actor(scoped, policy_mode, actor) do
       scoped
     end
   end
