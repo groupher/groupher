@@ -6,6 +6,7 @@
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import { ROUTE } from '~/const/route'
+import { DASHBOARD_SITE_URL } from '~/config'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -104,7 +105,7 @@ export default function Landing() {
                     <div className={s.demoItemTitle}>{t('landing.hero.demo.official')}</div>
                     <LinkSVG className={s.outLink} />
                   </a>
-                  <a href={`/${ROUTE.HOME}/${ROUTE.DASHBOARD.OVERVIEW}`} className={s.demoItem}>
+                  <a href={`${DASHBOARD_SITE_URL}/${ROUTE.HOME}`} className={s.demoItem}>
                     <div className={s.demoItemTitle}>{t('landing.hero.demo.dashboard')}</div>
 
                     <LinkSVG className={s.outLink} />

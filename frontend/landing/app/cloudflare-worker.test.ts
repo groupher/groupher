@@ -36,14 +36,16 @@ describe('landing Cloudflare worker', () => {
     expect(env.fetcher).not.toHaveBeenCalled()
   })
 
-  it('routes dashboard paths to the dashboard origin without trimming dashboard segment', () => {
+  it('returns 404 for the removed dashboard root-domain route', async () => {
     const target = resolveCloudflareTarget(
       { pathname: '/home/dashboard/appearance', search: '?tab=theme' },
       env,
     )
 
-    expect(target.kind).toBe('dashboard')
-    expect(target.url.toString()).toBe('https://dashboard.test/home/dashboard/appearance?tab=theme')
+    expect(target.kind).toBe('not-found')
+    const response = await worker.fetch(new Request('https://groupher.test/home/dashboard/appearance'), env)
+    expect(response.status).toBe(404)
+    expect(env.fetcher).not.toHaveBeenCalled()
   })
 
   it('routes dashboard static chunks to the dashboard origin', () => {
@@ -70,21 +72,25 @@ describe('landing Cloudflare worker', () => {
     )
   })
 
-  it('routes Dash paths to the Dash Cloudflare origin', () => {
+  it('returns 404 for the removed Dash root-domain route', async () => {
     const target = resolveCloudflareTarget(
       { pathname: '/home/dash/appearance', search: '?tab=theme' },
       env,
     )
 
-    expect(target.kind).toBe('dash')
-    expect(target.url.toString()).toBe('https://dash.test/home/dash/appearance?tab=theme')
+    expect(target.kind).toBe('not-found')
+    const response = await worker.fetch(new Request('https://groupher.test/home/dash/appearance'), env)
+    expect(response.status).toBe(404)
+    expect(env.fetcher).not.toHaveBeenCalled()
   })
 
-  it('routes the public Dash health chain to the Dash health endpoint', () => {
+  it('returns 404 for the removed root-domain Dash health route', async () => {
     const target = resolveCloudflareTarget({ pathname: '/health/dash' }, env)
 
-    expect(target.kind).toBe('dash')
-    expect(target.url.toString()).toBe('https://dash.test/health')
+    expect(target.kind).toBe('not-found')
+    const response = await worker.fetch(new Request('https://groupher.test/health/dash'), env)
+    expect(response.status).toBe(404)
+    expect(env.fetcher).not.toHaveBeenCalled()
   })
 
   it('returns a conformant Edge Router health response', async () => {

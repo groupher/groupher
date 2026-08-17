@@ -1,0 +1,15 @@
+{
+  "extends": "../core/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "skipLibCheck": true
+  },
+  "include": [],
+  "files": [
+    "src/app/[community]/_preview/constant.ts",
+    "src/app/[community]/_preview/helper.ts",
+    "src/app/[community]/_preview/hooks.ts",
+    "src/app/[community]/layout.tsx",
+    "src/proxy.ts"
+  ]
+}

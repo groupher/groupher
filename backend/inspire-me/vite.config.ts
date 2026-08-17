@@ -11,8 +11,8 @@
 
 import { cloudflare } from '@cloudflare/vite-plugin'
 import { cdnAdapter } from '@vinext/cloudflare/cache/cdn-adapter'
-import { defineConfig } from 'vite'
 import vinext from 'vinext'
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [

@@ -46,10 +46,10 @@ fe.serve.main:
 
 # dashboard
 fe.dev.dashboard:
-	PORT=3001 NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:dashboard
+	PORT=3001 NEXT_PUBLIC_SITE_URL=https://dashboard.groupher.localhost NEXT_PUBLIC_DASHBOARD_SITE_URL=https://dashboard.groupher.localhost yarn run dev:dashboard
 
 fe.dev.dash:
-	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:dash
+	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth yarn run dev:dash
 
 fe.dev.apply:
 	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:apply
@@ -102,7 +102,7 @@ be.gateway.test:
 
 # auth
 be.auth.start:
-	PORT=3004 AUTH_URL=https://groupher.localhost yarn run dev:auth
+	PORT=3004 AUTH_URL=https://auth.groupher.localhost yarn run dev:auth
 
 be.auth.build:
 	yarn run build:prod:auth
