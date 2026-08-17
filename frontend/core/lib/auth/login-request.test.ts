@@ -11,9 +11,9 @@ describe('login request store', () => {
   afterEach(() => dismissLoginRequest())
 
   it('retains a request until the shared Login Modal consumes it', () => {
-    requestLogin({ returnTo: '/home/dash/doc/editor' })
+    requestLogin({ returnTo: '/home/doc/editor' })
 
-    expect(getLoginRequest()).toEqual({ returnTo: '/home/dash/doc/editor' })
+    expect(getLoginRequest()).toEqual({ returnTo: '/home/doc/editor' })
   })
 
   it('notifies mounted UI when login is requested or dismissed', () => {

@@ -28,9 +28,9 @@ describe('AuthLoginModal', () => {
   it('opens for imperative login requests and preserves returnTo', () => {
     render(<AuthLoginModal />)
 
-    act(() => requestLogin({ returnTo: '/home/dash/doc/editor' }))
+    act(() => requestLogin({ returnTo: '/home/doc/editor' }))
 
-    expect(screen.getByRole('button', { name: '/home/dash/doc/editor' })).toBeVisible()
+    expect(screen.getByRole('button', { name: '/home/doc/editor' })).toBeVisible()
   })
 
   it('closes through the shared request store', () => {

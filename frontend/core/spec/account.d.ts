@@ -79,5 +79,3 @@ export type TAccount = TUser & {
   isModerator?: boolean
   // ...
 }
-
-export type TMembership = 'seniorMember' | 'sponsorMember' | 'donateMember'

@@ -44,5 +44,6 @@ vi.mock('~/config', () => {
     ASSETS_HUB_READ_ENDPOINT: 'https://assets.example.test',
     PAGE_SIZE: { D: 20 },
     SITE_URL: 'https://example.test',
+    DASHBOARD_SITE_URL: 'https://dashboard.example.test',
   }
 })

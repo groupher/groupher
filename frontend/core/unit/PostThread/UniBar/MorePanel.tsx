@@ -1,4 +1,4 @@
-import { DSB_ROUTE } from '~/const/route'
+import { DASHBOARD_SITE_URL } from '~/config'
 import useTrans from '~/hooks/useTrans'
 import LinkSVG from '~/icons/ArrowUpRight'
 import ReportSVG from '~/icons/Report'
@@ -17,7 +17,10 @@ export default function MorePanel() {
 
   return (
     <div className={s.wrapper}>
-      <Link href={`/${slug}/${DSB_ROUTE.OVERVIEW}`} className={s.linkable}>
+      <Link
+        href={`${DASHBOARD_SITE_URL}/${slug}`}
+        className={s.linkable}
+      >
         <MenuBar>
           <div className={s.iconBox}>
             <SettingSVG className={s.dashboardIcon} />

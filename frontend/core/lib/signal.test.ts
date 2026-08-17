@@ -33,8 +33,8 @@ describe('signal', () => {
   })
 
   it('forwards legacy auth warnings to the shared Login Modal request', () => {
-    authWarn({ returnTo: '/home/dashboard' })
+    authWarn({ returnTo: '/home' })
 
-    expect(getLoginRequest()).toEqual({ returnTo: '/home/dashboard' })
+    expect(getLoginRequest()).toEqual({ returnTo: '/home' })
   })
 })

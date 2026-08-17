@@ -1,3 +1,4 @@
+import { DASHBOARD_SITE_URL } from '~/config'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { ROUTE } from '~/const/route'
 import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
@@ -5,7 +6,7 @@ import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 import { MORE_TAB } from './constant'
 
 const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
-const getDashboardPath = (community: string): string => `/${community}/dashboard`
+const getDashboardPath = (community: string): string => `${DASHBOARD_SITE_URL}/${community}`
 
 type TLegacyHeaderLinkItem = {
   id?: string
@@ -67,7 +68,6 @@ const isMoreTabFixedChild = (
 
 /** Reports whether custom more group at the frontend shared boundary. */
 export const isCustomMoreGroup = (
-  /** Reports whether custom more group at the frontend shared boundary. */
   item: Pick<TLinkItem, 'id' | 'title' | 'type'> | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
 ): boolean => item.id === MORE_TAB.CUSTOM_ID
 
@@ -113,7 +113,6 @@ const normalizeStructuredLinks = (
 
 /** Normalizes header links into the canonical frontend shared shape. */
 export const normalizeHeaderLinks = (
-  /** Normalizes header links into the canonical frontend shared shape. */
   links: readonly TLinkItem[] | readonly TLegacyHeaderLinkItem[],
   community: string,
 ): readonly TLinkItem[] => {
@@ -141,7 +140,6 @@ const asMoreTabLink = (id: string, title: string, url: string): TLinkChild => ({
 
 /** Reports whether fold about to more at the frontend shared boundary. */
 export const shouldFoldAboutToMore = (links: readonly TLinkItem[]): boolean =>
-  /** Reports whether fold about to more at the frontend shared boundary. */
   hasCustomHeaderItems(links)
 
 /**

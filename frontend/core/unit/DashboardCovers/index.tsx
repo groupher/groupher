@@ -1,6 +1,5 @@
 'use client'
 
-import { DSB_SEG } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import PinSVG from '~/icons/Pin'
 import { Link } from '~/platform'
@@ -22,7 +21,7 @@ export default function DsbCovers({ config }: Props) {
   const { t } = useTrans()
   const { slug } = useCommunity()
 
-  const buildHref = (seg: string) => joinPath(slug, DSB_SEG, seg)
+  const buildHref = (seg: string) => joinPath(slug, seg)
 
   return (
     <div className={s.wrapper}>
