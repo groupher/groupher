@@ -6,9 +6,7 @@ describe('resolveMainTab', () => {
   const dashboardBase = '/acme'
 
   it('resolves valid dashboard tabs with query or hash suffixes', () => {
-    expect(resolveMainTab('/acme/post/content?tab=latest', dashboardBase)).toBe(
-      DSB_ROUTE.POST,
-    )
+    expect(resolveMainTab('/acme/post/content?tab=latest', dashboardBase)).toBe(DSB_ROUTE.POST)
     expect(resolveMainTab('/acme/doc/editor#faq', dashboardBase)).toBe(DSB_ROUTE.DOC)
   })
 

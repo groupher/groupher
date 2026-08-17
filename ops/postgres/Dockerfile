@@ -4,7 +4,7 @@ ARG PG_ROARINGBITMAP_VERSION=1.2.0
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      curl unzip make gcc postgresql-server-dev-15 \
+      ca-certificates curl unzip make gcc postgresql-server-dev-15 \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp
