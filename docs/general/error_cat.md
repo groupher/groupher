@@ -545,8 +545,8 @@ namespace + reason
 
 当前 `article_comments_locked` 在旧 `Helper.Const` 中同时出现为 `4508` 和 `4615`。
 它不能作为两个 catalog entry 迁移；目标只保留一条 Gate 错误定义，旧的重复数值不保留。
-`gate_unknown`（`4699`）和 `default_error_code`（`4000`）属于保留/兜底编号，不是普通
-业务错误。
+`default`（`4000`）、`custom`（`4001`）和 `gate_unknown`（`4699`）属于保留/兜底编号，
+不是普通业务错误。
 
 这张表是迁移的 context 落点清单，不是历史 code 兼容表。真正实现时，各调用方必须改用
 目标 catalog 的生成构造函数；未列入表中的新错误不能继续扩展 `Helper.Const`。
