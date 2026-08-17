@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Repo
+  alias GroupherServer.CMS.Interactions.Registry
   alias GroupherServer.CMS.Model.ArticleLifecycle
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
@@ -205,7 +206,5 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   defp state_time(state, state, now, _current), do: now
   defp state_time(_state, _target, _now, current), do: current
 
-  defp thread_table(:post), do: "posts"
-  defp thread_table(:blog), do: "blogs"
-  defp thread_table(:changelog), do: "changelogs"
+  defp thread_table(thread), do: Registry.article_table(thread)
 end

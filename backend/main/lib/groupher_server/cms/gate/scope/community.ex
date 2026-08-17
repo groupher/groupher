@@ -111,7 +111,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   end
 
   defp policy_mode(%{policy_mode: mode}) when mode in @policy_modes, do: {:ok, mode}
-  defp policy_mode(%{}), do: {:ok, :public}
+  defp policy_mode(%{}), do: {:error, Const.gate_error(:scope_context_missing)}
   defp policy_mode(_context), do: {:error, Const.gate_error(:unknown_policy_mode)}
 
   defp validate_actor(:public, _actor), do: :ok

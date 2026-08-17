@@ -5,11 +5,14 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
 
   alias GroupherServer.CMS.Interactions.State
 
+  alias GroupherServer.Accounts.Model.Achievement
+
   alias GroupherServer.CMS.Model.{
     ArticleCollect,
     ArticleLifecycle,
     ArticleUpvote,
     ArticleUserEmotion,
+    CommunityLifecycle,
     Post,
     PostReactionInfo
   }
@@ -99,6 +102,64 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
            )
 
     assert 1 == upvotes_count(post.id)
+  end
+
+  test "article interaction commands reject every non-writable Community state" do
+    for state <- [:read_only, :suspended, :archived, :pending_destroy, :destroy] do
+      {community, post, _attrs, user} = mock_article(:post)
+
+      Repo.get_by!(CommunityLifecycle, community_id: community.id)
+      |> CommunityLifecycle.changeset(%{state: state})
+      |> Repo.update!()
+
+      assert {:error, %{primary: %{code: :ancestor_community_not_writable}}} =
+               CMS.Articles.upvote(post, user)
+
+      refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))
+    end
+  end
+
+  test "unique fact constraint failure leaves projection, achievement and fact unchanged" do
+    {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+
+    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    baseline = Repo.get_by!(Achievement, user_id: post.author.user_id)
+
+    assert {:error, {:already_upvoted, _}} = CMS.Articles.upvote(post, user)
+    assert 1 == upvotes_count(post.id)
+    assert 1 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
+
+    unchanged = Repo.get_by!(Achievement, user_id: post.author.user_id)
+    assert baseline.articles_upvotes_count == unchanged.articles_upvotes_count
+    assert baseline.reputation == unchanged.reputation
+  end
+
+  test "projection update failure rolls the fact and achievement back" do
+    {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
+    suffix = System.unique_integer([:positive])
+    function_name = "test_block_projection_#{suffix}"
+    trigger_name = "test_block_projection_trigger_#{suffix}"
+
+    Repo.query!("""
+    CREATE FUNCTION cms.#{function_name}() RETURNS trigger
+    LANGUAGE plpgsql AS $$ BEGIN RETURN NULL; END; $$
+    """)
+
+    Repo.query!("""
+    CREATE TRIGGER #{trigger_name}
+    BEFORE UPDATE ON cms.post_reaction_infos
+    FOR EACH ROW EXECUTE FUNCTION cms.#{function_name}()
+    """)
+
+    try do
+      assert {:error, :projection_not_updated} = CMS.Articles.upvote(post, user)
+    after
+      Repo.query!("DROP TRIGGER #{trigger_name} ON cms.post_reaction_infos")
+      Repo.query!("DROP FUNCTION cms.#{function_name}()")
+    end
+
+    refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))
+    assert is_nil(upvotes_count(post.id))
   end
 
   test "State.read returns projection counts rather than main-record counts" do

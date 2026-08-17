@@ -197,8 +197,8 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
-  defp scope_context(thread), do: %{thread: thread}
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
+  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
 
   defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
     Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))

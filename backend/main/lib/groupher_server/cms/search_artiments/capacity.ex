@@ -108,8 +108,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp decimal_to_number(%Decimal{} = value), do: Decimal.to_float(value)
   defp decimal_to_number(value), do: value
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
-  defp scope_context(thread), do: %{thread: thread}
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
+  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
 
   defp default_zero(nil), do: 0
   defp default_zero(value), do: value

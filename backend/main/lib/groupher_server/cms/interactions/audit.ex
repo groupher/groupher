@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
   """
 
   alias GroupherServer.Repo
+  alias GroupherServer.CMS.Interactions.Registry
 
   @article_threads ~w(post blog changelog doc)
 
@@ -24,13 +25,13 @@ defmodule GroupherServer.CMS.Interactions.Audit do
       repairs =
         Enum.reduce(@article_threads, 0, fn thread, total ->
           total +
-            repair_fixed(thread, "article_upvotes", "upvoted_user_ids") +
-            repair_fixed(thread, "article_collects", "collected_user_ids") +
-            repair_emotions(thread, "articles_users_emotions") +
+            repair_fixed(thread, Registry.fact(:upvote).table, "upvoted_user_ids") +
+            repair_fixed(thread, Registry.fact(:collect).table, "collected_user_ids") +
+            repair_emotions(thread, Registry.fact(:emotion).table) +
             repair_reports(thread)
         end) +
-          repair_fixed("comment", "comments_upvotes", "upvoted_user_ids") +
-          repair_emotions("comment", "comments_users_emotions") +
+          repair_fixed("comment", Registry.fact(:comment_upvote).table, "upvoted_user_ids") +
+          repair_emotions("comment", Registry.fact(:comment_emotion).table) +
           repair_reports("comment")
 
       %{repairs: repairs}
@@ -47,7 +48,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_fixed(thread, fact_table, bitmap_column) do
     target_column = target_column(thread)
-    info_table = "#{thread}_reaction_infos"
+    info_table = Registry.target(String.to_existing_atom(thread)).reaction.__schema__(:source)
     fact_filter = if thread == "comment", do: "WHERE TRUE", else: "WHERE thread = '#{thread}'"
     count_column = fixed_count_column(bitmap_column)
 
@@ -81,7 +82,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_emotions(thread, fact_table) do
     target_column = target_column(thread)
-    info_table = "#{thread}_emotion_infos"
+    info_table = Registry.target(String.to_existing_atom(thread)).emotion.__schema__(:source)
     fact_filter = "WHERE #{target_column} IS NOT NULL"
 
     insert_missing_emotion_infos(info_table, target_column, fact_table, fact_filter)
@@ -97,7 +98,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_reports(thread) do
     target_column = target_column(thread)
-    info_table = "#{thread}_reaction_infos"
+    info_table = Registry.target(String.to_existing_atom(thread)).reaction.__schema__(:source)
     report_filter = "WHERE #{target_column} IS NOT NULL"
 
     insert_missing_report_infos(info_table, target_column, report_filter)
@@ -342,8 +343,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
     count
   end
 
-  defp target_column("comment"), do: "comment_id"
-  defp target_column(thread), do: "#{thread}_id"
+  defp target_column(thread), do: Registry.target_column(String.to_existing_atom(thread))
 
   defp fixed_count_column("upvoted_user_ids"), do: "upvotes_count"
   defp fixed_count_column("collected_user_ids"), do: "collects_count"

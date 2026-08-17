@@ -46,15 +46,9 @@ defmodule GroupherServer.CMS.Comments.Emotion do
             {:ok, State.read(comment, user)}
           end
         end)
-        |> Multi.run(:after_events, fn _, _ ->
-          if desired_state do
-            Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: user}]})
-          else
-            {:ok, :pass}
-          end
-        end)
         |> Repo.transaction()
         |> result()
+        |> emit_after_commit(desired_state, comment, user)
       end
     end
   end
@@ -62,10 +56,19 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   defp maybe_sync_projection(_comment, _emotion, _user, false, _operation), do: :ok
 
   defp maybe_sync_projection(comment, emotion, user, true, operation) do
-    {:ok, _projection} = State.write(comment, {:emotion, emotion}, user, operation)
-    :ok
+    case State.write(comment, {:emotion, emotion}, user, operation) do
+      {:ok, _projection} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp result({:ok, %{sync_projection: comment}}), do: {:ok, comment}
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp emit_after_commit({:ok, comment} = result, true, _target, user) do
+    Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: user}]})
+    result
+  end
+
+  defp emit_after_commit(result, _desired_state, _target, _user), do: result
 end

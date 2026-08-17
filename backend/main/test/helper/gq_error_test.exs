@@ -21,6 +21,13 @@ defmodule GroupherServer.Test.Helper.GQLErrorTest do
                GQLError.encode({:comment_pin_limit, message})
     end
 
+    test "maps projection infrastructure failures to a safe public error" do
+      code = ecode(:update_fails)
+
+      assert {:error, [message: "当前操作暂不可执行，请稍后重试。", code: ^code]} =
+               GQLError.encode(:projection_not_updated)
+    end
+
     test "raises for unknown reason in test env" do
       assert_raise ArgumentError, ~r/unknown error reason/, fn ->
         GQLError.encode(:unknown_reason_for_test)

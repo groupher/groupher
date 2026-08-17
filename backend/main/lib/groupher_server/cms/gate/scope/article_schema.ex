@@ -9,16 +9,14 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
         -> root schema validation
   """
 
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
-
-  @schemas %{post: Post, blog: Blog, changelog: Changelog, doc: Doc}
-  @threads Map.new(@schemas, fn {thread, schema} -> {schema, thread} end)
+  alias GroupherServer.CMS.Interactions.Registry
 
   @spec fetch(atom()) :: {:ok, module()} | {:error, :scope_context_missing}
   def fetch(thread) when is_atom(thread) do
-    case Map.fetch(@schemas, thread) do
-      {:ok, schema} -> {:ok, schema}
-      :error -> {:error, :scope_context_missing}
+    try do
+      {:ok, Registry.article_schema(thread)}
+    rescue
+      KeyError -> {:error, :scope_context_missing}
     end
   end
 
@@ -26,7 +24,7 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
 
   @spec thread_for(module()) :: {:ok, atom()} | {:error, :scope_root_mismatch}
   def thread_for(schema) when is_atom(schema) do
-    case Map.fetch(@threads, schema) do
+    case Registry.thread_for(schema) do
       {:ok, thread} -> {:ok, thread}
       :error -> {:error, :scope_root_mismatch}
     end

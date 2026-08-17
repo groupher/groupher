@@ -46,13 +46,9 @@ defmodule GroupherServer.CMS.Articles.Collects do
     |> Multi.run(:inc_author_achieve, fn _, %{access_check: canonical_article} ->
       Accounts.Achievements.achieve(author_user(canonical_article), :inc, :collect)
     end)
-    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
-      Later.run(
-        {Events, :emit, [:notify_collect, %{article: canonical_article, from_user: user}]}
-      )
-    end)
     |> Repo.transaction()
     |> result()
+    |> emit_after_commit(:collect, user)
   end
 
   @spec collect_ifneed(term(), User.t()) :: T.domain_res(term())
@@ -91,13 +87,9 @@ defmodule GroupherServer.CMS.Articles.Collects do
         _ -> State.write(canonical_article, :collect, user, :remove)
       end
     end)
-    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
-      Later.run(
-        {Events, :emit, [:notify_undo_collect, %{article: canonical_article, from_user: user}]}
-      )
-    end)
     |> Repo.transaction()
     |> result()
+    |> emit_after_commit(:undo_collect, user)
   end
 
   defp find_collect_record(info, article, user_id) do
@@ -176,4 +168,16 @@ defmodule GroupherServer.CMS.Articles.Collects do
   defp result({:ok, %{create_collect: result}}), do: result |> done()
   defp result({:ok, %{undo_collect: result}}), do: result |> done()
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp emit_after_commit({:ok, article} = result, :collect, user) do
+    Later.run({Events, :emit, [:notify_collect, %{article: article, from_user: user}]})
+    result
+  end
+
+  defp emit_after_commit({:ok, article} = result, :undo_collect, user) do
+    Later.run({Events, :emit, [:notify_undo_collect, %{article: article, from_user: user}]})
+    result
+  end
+
+  defp emit_after_commit(result, _action, _user), do: result
 end

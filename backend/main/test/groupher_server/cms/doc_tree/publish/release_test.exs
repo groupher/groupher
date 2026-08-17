@@ -237,7 +237,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
 
       public_scope =
-        CMS.Gate.scope(CMS.Model.Doc, nil, :read, %{thread: :doc, branch_id: branch.id})
+        CMS.Gate.scope(CMS.Model.Doc, nil, :read, %{
+          thread: :doc,
+          branch_id: branch.id,
+          policy_mode: :public
+        })
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       refute Repo.exists?(public_scope)

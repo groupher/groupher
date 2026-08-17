@@ -16,6 +16,12 @@ defmodule Helper.GQLError do
   def encode({:error, [message: _message, code: _code]} = error), do: error
   def encode({:error, error}), do: encode(error)
 
+  # Projection writes are infrastructure failures, not a public domain reason.
+  # Keep the internal atom out of the GraphQL message and reuse the stable
+  # update-failure code already used by persistence boundaries.
+  def encode(:projection_not_updated),
+    do: {:error, [message: "当前操作暂不可执行，请稍后重试。", code: ErrorCode.ecode(:update_fails)]}
+
   def encode({reason, meta}) when is_atom(reason) do
     message = if is_binary(meta), do: meta, else: Atom.to_string(reason)
     {:error, [message: message, code: safe_ecode(reason)]}

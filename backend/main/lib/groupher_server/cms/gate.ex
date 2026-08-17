@@ -18,11 +18,12 @@ defmodule GroupherServer.CMS.Gate do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.{Access, Scope}
+  alias __MODULE__.{Access, Decision, Scope}
 
   @doc "Builds a read query with Gate policies without executing it."
   @spec scope(Ecto.Queryable.t(), term(), atom()) :: Ecto.Query.t() | {:error, atom()}
-  def scope(queryable, actor, action), do: scope(queryable, actor, action, %{})
+  def scope(queryable, actor, action),
+    do: scope(queryable, actor, action, %{policy_mode: :public})
 
   @spec scope(Ecto.Queryable.t(), term(), atom(), map()) ::
           Ecto.Query.t() | {:error, atom()}
@@ -33,6 +34,9 @@ defmodule GroupherServer.CMS.Gate do
   defdelegate access_check(user, action, resource), to: Access
 
   @doc "Checks a resource with an explicit Gate policy context."
-  def access_check(user, action, resource, context),
-    do: Access.access_check(user, action, resource, context)
+  def access_check(user, :read_draft, resource, context),
+    do: Access.access_check(user, :read_draft, resource, context)
+
+  def access_check(_user, _action, _resource, _context),
+    do: {:error, Decision.deny(:unknown_action)}
 end

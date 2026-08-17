@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
        when mode in [:public | @management_policy_modes],
        do: {:ok, mode}
 
-  defp policy_mode(%{}, _action), do: {:ok, :public}
+  defp policy_mode(%{}, _action), do: {:error, :scope_context_missing}
   defp policy_mode(_, _action), do: {:error, :scope_context_missing}
 
   defp stage(%{stage: :draft}, :read_draft), do: {:ok, :draft}

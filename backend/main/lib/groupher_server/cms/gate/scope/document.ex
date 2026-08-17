@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
         else: nil
 
     with {:ok, article_schema} <- ArticleSchema.fetch(thread),
-         policy_mode <- Map.get(context, :policy_mode, :public),
+         {:ok, policy_mode} <- policy_mode(context),
          stage <- Map.get(context, :stage, :public),
          %Ecto.Query{} = scoped <-
            AncestorCommunity.document(
@@ -45,4 +45,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
     do: {:error, Const.gate_error(:scope_context_missing)}
 
   def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
+
+  defp policy_mode(%{policy_mode: mode})
+       when mode in [:public, :owner_management, :moderator_management, :operations],
+       do: {:ok, mode}
+
+  defp policy_mode(_context), do: {:error, Const.gate_error(:scope_context_missing)}
 end

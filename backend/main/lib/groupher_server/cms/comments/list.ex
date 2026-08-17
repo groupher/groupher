@@ -194,8 +194,8 @@ defmodule GroupherServer.CMS.Comments.List do
   defp public_article(schema, thread, article_id) do
     context =
       if thread == :doc,
-        do: %{thread: thread, branch_policy: :main},
-        else: %{thread: thread}
+        do: %{thread: thread, branch_policy: :main, policy_mode: :public},
+        else: %{thread: thread, policy_mode: :public}
 
     schema
     |> CMS.Gate.scope(nil, :read, context)

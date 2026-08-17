@@ -131,12 +131,16 @@ defmodule GroupherServer.CMS.Articles.Reader do
            community_id: community_id,
            type: CMS.Const.doc_branch_type(:main)
          ) do
-      %DocBranch{id: branch_id} -> {:ok, %{thread: :doc, branch_id: branch_id}}
-      nil -> {:error, {:not_exist, "Doc main branch"}}
+      %DocBranch{id: branch_id} ->
+        {:ok, %{thread: :doc, branch_id: branch_id, policy_mode: :public}}
+
+      nil ->
+        {:error, {:not_exist, "Doc main branch"}}
     end
   end
 
-  defp public_scope_context(_community_id, thread), do: {:ok, %{thread: thread}}
+  defp public_scope_context(_community_id, thread),
+    do: {:ok, %{thread: thread, policy_mode: :public}}
 
   defp diagnose_moderation(model, community_id, thread, inner_id) do
     model

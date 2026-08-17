@@ -242,7 +242,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
         |> Repo.update!()
 
       visible? =
-        CMS.Gate.scope(Community, nil, :read, %{})
+        CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
         |> where([candidate], candidate.id == ^community.id)
         |> Repo.exists?()
 

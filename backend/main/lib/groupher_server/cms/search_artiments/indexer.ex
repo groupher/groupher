@@ -164,6 +164,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
-  defp scope_context(thread), do: %{thread: thread}
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
+  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
 end

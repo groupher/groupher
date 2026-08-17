@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
   @doc "Runs `community` through the public `FrontDesk` boundary."
   def community(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, %{})
+    CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
@@ -275,6 +275,7 @@ defmodule GroupherServer.CMS.FrontDesk do
          %Ecto.Query{} = query <-
            CMS.Gate.scope(info.model, nil, :read, %{
              thread: thread,
+             policy_mode: :public,
              branch_id: Map.get(scope_context, :branch_id),
              include_illegal: Keyword.get(opts, :include_illegal, false)
            }),

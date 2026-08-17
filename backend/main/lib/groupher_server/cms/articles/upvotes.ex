@@ -44,16 +44,9 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
     |> Multi.run(:add_achievement, fn _, %{access_check: canonical_article} ->
       Accounts.Achievements.achieve(author_user(canonical_article), :inc, :upvote)
     end)
-    |> Multi.run(:after_events, fn _, %{access_check: canonical_article} ->
-      Later.run({Events, :emit, [:notify_upvote, %{target: canonical_article, from_user: user}]})
-
-      Later.run(
-        {Events, :emit,
-         [:subscribe_community, %{target: canonical_article.community, user: user}]}
-      )
-    end)
     |> Repo.transaction()
     |> result()
+    |> emit_after_commit(:upvote, user)
     |> hydrate(user)
     |> sync_search_metrics()
   end
@@ -92,11 +85,9 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
         _ -> State.write(canonical_article, :upvote, from_user, :remove)
       end
     end)
-    |> Multi.run(:after_events, fn _, %{undo_upvote: updated} ->
-      Later.run({Events, :emit, [:notify_undo_upvote, %{target: updated, from_user: from_user}]})
-    end)
     |> Repo.transaction()
     |> result()
+    |> emit_after_commit(:undo_upvote, from_user)
     |> hydrate(from_user)
     |> sync_search_metrics()
   end
@@ -117,6 +108,23 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   defp result({:ok, %{create_upvote: result}}), do: result |> done()
   defp result({:ok, %{undo_upvote: result}}), do: result |> done()
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp emit_after_commit({:ok, article} = result, :upvote, user) do
+    Later.run({Events, :emit, [:notify_upvote, %{target: article, from_user: user}]})
+
+    Later.run(
+      {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
+    )
+
+    result
+  end
+
+  defp emit_after_commit({:ok, article} = result, :undo_upvote, user) do
+    Later.run({Events, :emit, [:notify_undo_upvote, %{target: article, from_user: user}]})
+    result
+  end
+
+  defp emit_after_commit(result, _action, _user), do: result
 
   defp sync_search_metrics({:ok, article} = result) do
     _ = Indexer.enqueue_metrics(article)

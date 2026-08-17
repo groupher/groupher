@@ -17,6 +17,14 @@ defmodule GroupherServer.Test.CMS.Gate do
     refute function_exported?(CMS.Gate, :decide, 4)
   end
 
+  test "four-arity access_check fails closed for non-read_draft actions" do
+    {community, post, _attrs, user} = mock_article(:post)
+    post = %{post | community: community}
+
+    assert {:error, %Decision{primary: %{code: :unknown_action}}} =
+             CMS.Gate.access_check(user, :upvote, post, %{})
+  end
+
   test "read_draft access check uses the explicit management policy" do
     {community, _public, attrs, owner} = mock_article(:post)
 
@@ -245,6 +253,14 @@ defmodule GroupherServer.Test.CMS.Gate do
                :upvote,
                article,
                %{published_context | community: read_only_community}
+             )
+
+    assert {:error, :article_not_mutable} =
+             CMS.Gate.Access.evaluate_result(
+               user,
+               :upvote,
+               article,
+               Map.put(published_context, :doc_branch, %{type: :preview})
              )
   end
 

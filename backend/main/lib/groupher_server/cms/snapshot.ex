@@ -341,8 +341,8 @@ defmodule GroupherServer.CMS.Snapshot do
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
 
-  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main}
-  defp scope_context(thread), do: %{thread: thread}
+  defp scope_context(:doc), do: %{thread: :doc, branch_policy: :main, policy_mode: :public}
+  defp scope_context(thread), do: %{thread: thread, policy_mode: :public}
 
   defp put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)

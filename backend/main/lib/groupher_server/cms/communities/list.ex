@@ -36,6 +36,6 @@ defmodule GroupherServer.CMS.Communities.List do
   @spec page(map()) :: T.domain_res(term())
   def page(filter) do
     filter = filter |> Enum.reject(fn {_k, v} -> is_nil(v) end) |> Enum.into(%{})
-    CMS.Gate.scope(Community, nil, :list, %{}) |> ORM.find_all(filter)
+    CMS.Gate.scope(Community, nil, :list, %{policy_mode: :public}) |> ORM.find_all(filter)
   end
 end

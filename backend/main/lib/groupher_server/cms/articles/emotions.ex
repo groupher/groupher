@@ -31,8 +31,6 @@ defmodule GroupherServer.CMS.Articles.Emotions do
 
   defp run_emotion(article, emotion, user, desired_state) do
     {:ok, info} = match(article)
-    article = Repo.preload(article, :community)
-
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       toggle(article, info, thread, emotion, user, desired_state)
     end

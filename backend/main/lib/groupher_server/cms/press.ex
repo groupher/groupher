@@ -215,7 +215,7 @@ defmodule GroupherServer.CMS.Press do
   defp current_article(community, :doc, inner_id) do
     with {:ok, branch} <- public_branch(community, :doc) do
       Doc
-      |> CMS.Gate.scope(nil, :read, %{thread: :doc, branch_id: branch.id})
+      |> CMS.Gate.scope(nil, :read, %{thread: :doc, branch_id: branch.id, policy_mode: :public})
       |> join(:inner, [article, ...], branch in DocBranch,
         as: :press_branch,
         on: branch.id == article.branch_id
@@ -236,7 +236,7 @@ defmodule GroupherServer.CMS.Press do
   defp current_article(community, thread, inner_id) do
     with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
       info.model
-      |> CMS.Gate.scope(nil, :read, %{thread: thread})
+      |> CMS.Gate.scope(nil, :read, %{thread: thread, policy_mode: :public})
       |> where([article], article.community_id == ^community.id)
       |> where([article], article.inner_id == ^inner_id)
       |> preload([article], [:document, :community_tags, author: :user])
@@ -288,7 +288,7 @@ defmodule GroupherServer.CMS.Press do
   defp current_articles(community, :doc, limit) do
     with {:ok, branch} <- public_branch(community, :doc) do
       Doc
-      |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id})
+      |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id, policy_mode: :public})
       |> join(:inner, [article, ...], branch in DocBranch,
         as: :press_branch,
         on: branch.id == article.branch_id
@@ -314,7 +314,7 @@ defmodule GroupherServer.CMS.Press do
   defp current_articles(community, thread, limit) do
     with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
       info.model
-      |> CMS.Gate.scope(nil, :list, %{thread: thread})
+      |> CMS.Gate.scope(nil, :list, %{thread: thread, policy_mode: :public})
       |> where([article], article.community_id == ^community.id)
       |> order_by([article], desc: article.active_at, desc: article.inserted_at)
       |> limit(^limit)
@@ -488,7 +488,7 @@ defmodule GroupherServer.CMS.Press do
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 
   defp public_community(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, %{})
+    CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
@@ -499,7 +499,7 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp public_community_by_id(id) when is_integer(id) do
-    CMS.Gate.scope(Community, nil, :read, %{})
+    CMS.Gate.scope(Community, nil, :read, %{policy_mode: :public})
     |> where([c], c.id == ^id)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()

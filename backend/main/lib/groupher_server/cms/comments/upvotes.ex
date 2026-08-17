@@ -30,12 +30,9 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
           {:ok, State.read(comment, from_user)}
         end
       end)
-      |> Multi.run(:after_events, fn _, _ ->
-        Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: from_user}]})
-        Later.run({Events, :emit, [:notify_upvote, %{target: comment, from_user: from_user}]})
-      end)
       |> Repo.transaction()
       |> result()
+      |> emit_after_commit(:upvote, comment, from_user)
     end
   end
 
@@ -68,13 +65,9 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
             end
         end
       end)
-      |> Multi.run(:after_events, fn _, _ ->
-        Later.run(
-          {Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: from_user}]}
-        )
-      end)
       |> Repo.transaction()
       |> result()
+      |> emit_after_commit(:undo_upvote, comment, from_user)
     end
   end
 
@@ -85,4 +78,17 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
   end
 
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp emit_after_commit({:ok, comment} = result, :upvote, _target, user) do
+    Later.run({Events, :emit, [:subscribe_community, %{target: comment, user: user}]})
+    Later.run({Events, :emit, [:notify_upvote, %{target: comment, from_user: user}]})
+    result
+  end
+
+  defp emit_after_commit({:ok, comment} = result, :undo_upvote, _target, user) do
+    Later.run({Events, :emit, [:notify_undo_upvote, %{target: comment, from_user: user}]})
+    result
+  end
+
+  defp emit_after_commit(result, _action, _target, _user), do: result
 end

@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
           )
         )
 
-      assert {:ok, _trash_item} = CMS.Articles.trash(post, nil)
+      assert {:ok, _trash_item} = CMS.Articles.trash(post, :operations)
       assert count(Post, community.id) == 3
 
       {:ok, community} = LiteHome.seed()
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   defp kanban_count(community_id) do
     {:ok, total_count} =
       Post
-      |> CMS.Articles.active_scope(:post)
+      |> CMS.Articles.Trash.not_trashed_scope(:post)
       |> join(:inner, [post], community in assoc(post, :communities))
       |> where([post, community], community.id == ^community_id and not is_nil(post.status))
       |> ORM.count()
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
     {:ok, total_count} =
       schema
-      |> CMS.Articles.active_scope(thread)
+      |> CMS.Articles.Trash.not_trashed_scope(thread)
       |> join(:inner, [item], community in assoc(item, :communities))
       |> where([_item, community], community.id == ^community_id)
       |> ORM.count()

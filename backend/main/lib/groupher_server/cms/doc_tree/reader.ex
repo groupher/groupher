@@ -264,7 +264,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Enum.uniq()
 
     Doc
-    |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id})
+    |> CMS.Gate.scope(nil, :list, %{thread: :doc, branch_id: branch.id, policy_mode: :public})
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == ^CMS.Const.stage(:public))

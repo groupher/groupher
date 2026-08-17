@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   @priority [
     :resource_not_found,
     :gate_resource_mismatch,
+    :doc_branch_required,
     :lifecycle_not_found,
     :ancestor_community_not_writable,
     :ancestor_article_archived,
@@ -43,6 +44,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :article_archived,
     :article_deleted,
     :article_destroyed,
+    :article_not_mutable,
     :comment_deleted,
     :comment_destroyed,
     :article_comments_locked,
@@ -125,6 +127,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp source(reason)
        when reason in [
+              :doc_branch_required,
               :ancestor_community_not_writable,
               :ancestor_article_archived,
               :ancestor_article_deleted,
@@ -132,6 +135,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
               :article_archived,
               :article_deleted,
               :article_destroyed,
+              :article_not_mutable,
               :comment_deleted,
               :comment_destroyed,
               :lifecycle_not_found,
@@ -143,6 +147,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   defp source(_reason), do: :resource
 
   defp retryable?(:lifecycle_not_loaded), do: true
+  defp retryable?(:doc_branch_required), do: true
   defp retryable?(_reason), do: false
 
   defp actions(reason)
@@ -167,6 +172,8 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp actions(:permission_denied), do: [:show_permission_notice]
   defp actions(:lifecycle_not_loaded), do: [:retry]
+  defp actions(:doc_branch_required), do: [:return_to_list]
+  defp actions(:article_not_mutable), do: []
   defp actions(_reason), do: []
 
   defp public_message(reason)
@@ -191,5 +198,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
 
   defp public_message(:permission_denied), do: "当前账号没有执行此操作的权限。"
   defp public_message(:lifecycle_not_loaded), do: "当前状态正在更新，请稍后重试。"
+  defp public_message(:doc_branch_required), do: "文档分支上下文缺失，请返回后重试。"
+  defp public_message(:article_not_mutable), do: "当前内容不可执行此操作。"
   defp public_message(_reason), do: "当前操作暂不可执行。"
 end

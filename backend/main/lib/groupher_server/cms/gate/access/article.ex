@@ -46,6 +46,7 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
     with {:ok, lifecycle} <- article_lifecycle(context),
          {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
+         :ok <- doc_branch_allowed(action, context),
          :ok <- action_allowed(action, lifecycle, article) do
       {:ok, true}
     else
@@ -53,6 +54,12 @@ defmodule GroupherServer.CMS.Gate.Access.Article do
       {:error, _reason} = error -> error
     end
   end
+
+  defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
+       when action in [:upvote, :emotion, :collect] and type != :main,
+       do: {:error, :article_not_mutable}
+
+  defp doc_branch_allowed(_action, _context), do: :ok
 
   @spec evaluate_result(User.t() | nil, atom(), map(), map()) ::
           {:ok, true} | {:error, atom()}

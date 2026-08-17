@@ -12,9 +12,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Scope.{AncestorCommunity, ArticleSchema}
   alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
   alias Helper.Constant
+
+  require CMS.Const
 
   @audit_illegal Constant.CMS.pending(:illegal)
 
@@ -56,7 +59,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       as: :gate_doc_branch,
       on:
         branch.community_id == comment.community_id and
-          branch.type == :main,
+          branch.type == ^CMS.Const.doc_branch_type(:main),
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:

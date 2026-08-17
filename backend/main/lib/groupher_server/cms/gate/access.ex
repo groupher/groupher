@@ -30,6 +30,7 @@ defmodule GroupherServer.CMS.Gate.Access do
     ArticleLifecycle,
     CommentLifecycle,
     CommunityLifecycle,
+    DocBranch,
     DocLifecycle
   }
 
@@ -64,6 +65,7 @@ defmodule GroupherServer.CMS.Gate.Access do
        )
        when community_id == community.id and not is_nil(branch_id) do
     with %CommunityLifecycle{} = community_lifecycle <- lock_community_lifecycle(community.id),
+         %DocBranch{} = doc_branch <- lock_doc_branch(community.id, branch_id),
          %DocLifecycle{} = article_lifecycle <-
            lock_doc_lifecycle(community.id, branch_id, hash_id) do
       {:ok,
@@ -71,12 +73,22 @@ defmodule GroupherServer.CMS.Gate.Access do
          article: article,
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
+         doc_branch: doc_branch,
          article_lifecycle: article_lifecycle
        }}
     else
       nil -> {:error, :lifecycle_not_found}
     end
   end
+
+  defp load_context(
+         :article,
+         %CommunityModel{} = community,
+         :doc,
+         %{community_id: community_id}
+       )
+       when community_id == community.id,
+       do: {:error, :doc_branch_required}
 
   defp load_context(
          :article,
@@ -271,6 +283,13 @@ defmodule GroupherServer.CMS.Gate.Access do
         lifecycle.article_hash_id == ^article_hash_id
     )
     |> lock("FOR UPDATE")
+    |> Repo.one()
+  end
+
+  defp lock_doc_branch(community_id, branch_id) do
+    DocBranch
+    |> where([branch], branch.community_id == ^community_id and branch.id == ^branch_id)
+    |> lock("FOR SHARE")
     |> Repo.one()
   end
 
