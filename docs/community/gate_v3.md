@@ -882,7 +882,7 @@ TArticleSnapshot*               -> TDocSnapshot*
 ## 12. 验收原则
 
 Article/Doc Lifecycle 之外的 upvote、emotion、collect mutation admission 不由本 V3 另建协议；它们
-继续遵守 Gate V2，并按 [Artiment reactions v3](../artiment/reactions_v3.md) 补齐 Article action
+继续遵守 Gate V2，并按 [Artiment Interaction V3](../artiment/interaction_v3.md) 补齐 Article action
 matrix、祖先 Lifecycle 检查和同事务 fact/projection 写入。普通 Article 与 Doc Lifecycle 的拆分不得
 产生两套 interaction Gate 路径。
 

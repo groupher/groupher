@@ -7,7 +7,7 @@
 - [Gate V2：统一读取范围与操作准入](./gate_v2.md)
 - [Gate V3：Article Core 与 Doc Release 边界](./gate_v3.md)
 - [Community Lifecycle](./lifecycle.md)
-- [Artiment reactions v2](../artiment/reactions_v2.md)
+- [Artiment Interaction V2](../artiment/interaction_v2.md)
 
 ## 1. 结论
 

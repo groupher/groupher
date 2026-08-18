@@ -433,9 +433,10 @@ namespace path 由完整 tuple 转换：
     {:cms, :gate} -> "cms.gate"
     {:account, :collection} -> "account.collection"
 
-`GroupherServer.ErrorCat` 还提供 `gq_format/1`，负责把已声明的 `ErrorCat.Error` 转换为
-统一的 GraphQL 错误值，并拒绝 raw atom / raw tuple。它不根据 raw atom 猜测 message key，
-也不根据 code 反推 namespace。Absinthe middleware 只负责把这个统一值放入 GraphQL response。
+`GroupherServer.ErrorCat` 还提供 `gq_format/1`，负责把已声明且定义字段一致的
+`ErrorCat.Error` 转换为统一的 GraphQL 错误值，并拒绝 raw atom / raw tuple 或被篡改的
+ErrorCat struct。它不根据 raw atom 猜测 message key，也不根据 code 反推 namespace。
+Absinthe middleware 只负责把这个统一值放入 GraphQL response。
 
 ## 12. 对外输出
 

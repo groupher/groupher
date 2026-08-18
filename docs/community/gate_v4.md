@@ -13,11 +13,11 @@
 V4 本轮阶段已在当前代码中完成：
 
 - Phase 0：`read_draft` 已从 Access 移到一次 scoped fetch，删除 `Gate.access_check/4`；
-- Phase 1：Community、Article、Doc、Comment 已使用资源专属 Access Context，Loader、Access.Policy 和 Scope.Policy 边界已建立；
+- Phase 1：Community、Article、Doc、Comment 已使用资源专属 Access Context，Access.Load、Access.Policy 和 Scope.Policy 边界已建立；
 - Phase 2：Community、Article、Doc、Comment、Document 已使用资源专属 Scope Context，`Gate.scope/3` 与 raw-map Scope 已删除；
 - Phase 3：Enable、Passport、CommunityChain、RateLimit.Publish 的 ownership 和命名已收口，旧 Gate 兼容模块已移除；
 - Phase 4：Gate focused tests、真实 Reader/Doc Release 链路、按 ownership 拆分的 Gate 测试和编译期残留扫描已通过。
-- Phase 5：`Gate.Access` 已收敛为内部 facade，按资源拆分的访问检查编排位于 `Access.Check.*`；Loader 查询、Policy behavior 和 Gate Decision 边界已收口，Gate 模块和 typed Context constructor 文档已补齐。
+- Phase 5：`Gate.Access` 已收敛为内部 facade，访问检查由 `Access.Check.article/comment/community` 按资源编排；`Access.Load`、`Access.Policy` 和 Gate Decision 边界已收口，Gate 模块和 typed Context constructor 文档已补齐。
 
 以下阶段章节保留为迁移决策与验收记录；其中“当前”描述指 V4 实施前状态。
 
@@ -192,8 +192,8 @@ Resolver.build_access_context(...)
 ```
 
 `CMS.Gate.Access` 只作为内部入口 facade，根据 resource dispatch 到对应的
-`Gate.Access.Check.*`。Check flow 再调用对应的 `Gate.Access.Loader.*`。
-资源 Loader 负责：
+`Gate.Access.Check.article/comment/community`。Check flow 再调用对应的 `Gate.Access.Load.*`。
+`Access.Load` 负责：
 
 1. 确认资源与父资源身份一致；
 2. 在既有锁边界内加载 canonical resource；
@@ -213,6 +213,12 @@ Access Context 的 required field 必须真实存在。以下情况统一拒绝�
 - Comment 的 `community_id`、`article_hash_id` 或 `thread` 与父 Article 链不一致；
 - Doc 缺少 DocBranch 或 branch-scoped DocLifecycle；
 - resource 的 `community_id` 与加载到的 Community 不一致；
+- `Gate.access_check/3` 收到 raw map 或非 Community/Comment/Article struct。
+
+三类资源错误必须区分：不支持的输入类型返回 `unsupported_resource`；支持的资源
+类型查不到 canonical row 返回 `resource_not_found`；输入 struct 与数据库或父链身份
+不一致返回 `gate_resource_mismatch`。不得再把任意非 Community/Comment 值兜底交给
+Article 检查，也不得让 pattern mismatch 泄漏为 `FunctionClauseError`。
 - Access Context 类型与 policy 资源类型不一致。
 
 错误继续转换为 `Gate.Decision`；Context struct 本身不承载用户可见错误文案。
@@ -319,7 +325,7 @@ Context.Scope.Document.draft(branch_id, :owner_management)
 
 constructor 负责拒绝 `stage: :draft` 配合 `policy_mode: :public` 等非法组合。`Gate.scope/4` 和资源 compiler 通过 struct pattern 直接读取 Scope Context，不增加通用 getter 或把 Context 转回 map。
 
-Access Context 不提供对应的公共 constructor；它只能由 `Gate.Access.Loader.*` 根据数据库权威事实构造。
+Access Context 不提供对应的公共 constructor；它只能由 `Gate.Access.Load.*` 根据数据库权威事实构造。
 
 `Gate.Context.Scope` 和 `Gate.Context.Access` 是 union type 模块，不定义通用 struct：
 
@@ -390,15 +396,15 @@ V3 同步更新范围固定为：
 ### Phase 1：Access Context 内部替换
 
 1. 定义资源专属 `Gate.Context.Access.*`；
-2. 让资源专属 Loader 返回对应 Access Context struct；
-3. 将 `Access.Community/Article/Doc/Comment` 的 map pattern 改为 Access Context struct pattern；
+2. 让 `Access.Load` 的资源函数返回对应 Access Context struct；
+3. 将 `Access.Policy` 的资源规则从 map pattern 改为 Access Context struct pattern；
 4. 保持 `Gate.access_check/3` 和业务调用方不变；
 5. 对 Access Context 缺失、资源错配和 Doc branch 缺失增加 focused tests；
-6. 将资源准入入口统一为 `check_access/4`；
+6. 将资源准入入口统一为 `Access.Policy.article/comment/community`；
 7. 删除 `evaluate`、`evaluate_result` 以及 policy 对无类型 map 的兼容 clause；
-8. 由 `Gate.Access` 私有地将 `check_access/4` 结果转换为 `Gate.Decision`，删除对外可调用的 `Access.decision/4`。
+8. 由 `Access.Check` 私有地将 Policy 结果转换为 `Gate.Decision`，删除对外可调用的 `Access.decision/4`。
 
-这一阶段按资源原子迁移 Loader、Access Context 和 policy。已迁移资源收到 map 或错误 Context 类型必须 fail closed，不得在 struct pattern 失败后退回 map；尚未迁移的资源可以暂时保留原内部 map 路径。这一阶段不应修改业务 action、Lifecycle transition 或 Writer 的领域行为。
+这一阶段按资源原子迁移 Load、Access Context 和 Policy。已迁移资源收到 map、未支持的 struct 或错误 Context 类型必须以 `unsupported_resource` fail closed，不得在 struct pattern 失败后退回 Article 路径。这一阶段不应修改业务 action、Lifecycle transition 或 Writer 的领域行为。
 
 ### Phase 2：Scope Context 完整定义与调用方迁移
 
@@ -450,7 +456,7 @@ V4 完成必须同时满足：
 - Doc 和普通 Article Access Context 明确分离；
 - actor 只有一个来源；
 - Access Context 不接受 caller-provided `policy_mode`；
-- Access Context 只由 Gate 内部资源 Loader 构造；
+- Access Context 只由 Gate 内部 `Access.Load` 构造；
 - Scope Context 按 Community、Article、Doc、Comment、Document 分型；
 - Scope mode 必须显式且仍校验 actor；
 - `Gate.access_check/3` 公共签名不变；
@@ -500,8 +506,9 @@ Gate
 ```
 
 Decision 只聚合内部 reason、去重并选择 primary，同时保留 Gate admission 所需的
-结构化 violation 元数据。Gate 对外错误码复用 `Helper.ErrorCode`，预留 `46xx`
-作为 Gate admission 错误码段。GraphQL/API 层负责错误 payload 投影和 Gettext
+结构化 violation 元数据。Gate 对外错误码由 `GroupherServer.CMS.Gate.ErrorCat` 声明，
+由全局 `GroupherServer.ErrorCat` 校验并使用 `46xx` 作为 Gate admission 错误码段。
+GraphQL/API 层负责错误 payload 投影和 Gettext
 本地化，不再把 reason atom 转成大写字符串，也不在 CMS Gate 层硬编码中文用户文案。
 
 Lifecycle、Passport 和 Community Enable 是 Gate 消费的权威事实来源，不是 Gate 的子模块：
@@ -601,7 +608,7 @@ cms/
 所有新增或迁移后的模块必须提供真实的 `@moduledoc`，不能使用 `@moduledoc false` 规避说明。至少覆盖：
 
 - `Gate.Context.Access`、`Gate.Context.Scope` 及全部资源 Context；
-- `Gate.Access`、`Gate.Access.Check.*`、`Gate.Access.Loader.*`、各资源 Access policy 和 Access/Scope behavior；
+- `Gate.Access`、`Gate.Access.Check`、`Gate.Access.Load`、`Gate.Access.Policy` 和 Access/Scope 边界；
 - `Gate.Scope.Registry`、`Gate.Scope.CommunityChain` 和各资源 Scope compiler；
 - `Gate.RateLimit.Publish`、`CMS.Passport.*`、`Communities.Enable` 等本次迁移模块。
 
@@ -617,7 +624,7 @@ Access Context 的 flow 至少表达：
 
 ```text
 Gate.access_check
-  -> resource Loader
+  -> Access.Load resource function
   -> Gate.Context.Access.*
   -> resource access policy
   -> Gate.Decision
@@ -638,9 +645,9 @@ Access facade 与 resource check flow 至少表达：
 ```text
 CMS.Gate.access_check
   -> Gate.Access facade
-  -> Access.Check.{Community, Article, Comment}
-  -> Access.Loader + resource lock
-  -> Access.{Community, Article, Comment}.check_access/4
+  -> Access.Check.community/article/comment
+  -> Access.Load + resource lock
+  -> Access.Policy.community/article/comment
   -> Gate.Decision
 ```
 
@@ -648,17 +655,12 @@ CMS.Gate.access_check
 
 ## 11. Access 协议和命名
 
-`CMS.Gate.Access` 是内部 facade，只负责暴露稳定的 Gate 内部入口和分发，不持有 Repo、锁、Loader 或 Decision 编排逻辑。资源模块使用明确的 `check_access/4`，不使用 `evaluate`、`evaluate_result` 或 `evaluate_allowed` 这类无法表达业务方向的名称。
+`CMS.Gate.Access` 是内部 facade，只负责稳定入口、资源分发，以及把不支持的输入类型转换为 fail-closed Decision；它不持有 Repo、锁、加载或资源 Policy。`Check`、`Load`、`Policy` 的函数都直接用资源名，避免 `Check.check`、`Loader.load` 这类模块名与函数名重复但仍未表达对象的命名。
 
 ```elixir
-defmodule GroupherServer.CMS.Gate.Access.Policy do
-  @callback check_access(
-              actor :: term(),
-              action :: atom(),
-              resource :: struct(),
-              access_context :: struct()
-            ) :: :ok | {:error, atom()}
-end
+Access.Check.article(actor, action, article)
+Access.Load.article(community, thread, article)
+Access.Policy.article(actor, action, article, access_context)
 ```
 
 内部调用链为：
@@ -666,30 +668,30 @@ end
 ```text
 Gate.access_check(actor, action, resource)
   -> Gate.Access facade
-  -> Access.Check.*
-  -> Loader + lock + typed Access Context
-  -> Resource.check_access(actor, action, resource, access_context)
+  -> Access.Check.article/comment/community
+  -> Access.Load + lock + typed Access Context
+  -> Access.Policy.article/comment/community
   -> Gate.Decision
 ```
 
 Access 检查编排按资源拆分：
 
 ```text
-Access.Check.Community
-  -> Loader.community
-  -> Access.Community policy
+Access.Check.community
+  -> Load.community
+  -> Policy.community
 
-Access.Check.Article
+Access.Check.article
   -> Repo community + FrontDesk thread
-  -> Articles.Lock
-  -> Loader.article
-  -> Access.Article policy
+  -> Articles.MutationLock.with_article
+  -> Load.article
+  -> Policy.article
 
-Access.Check.Comment
+Access.Check.comment
   -> FrontDesk parent chain
-  -> Articles.Lock
-  -> Loader.comment
-  -> Access.Comment policy
+  -> Articles.MutationLock.with_article
+  -> Load.comment
+  -> Policy.comment
 ```
 
 私有检查使用具体名称，例如：
@@ -704,25 +706,26 @@ check_passport
 
 `CMS.Gate.Access` 不应再同时暴露 `evaluate`、`evaluate_result` 和 `decision` 三层近义协议，也不应在单资源 mutation access check 中重新调用 Scope 查询来代替 Access Context 检查。
 
-资源 `check_access/4` 只返回 `:ok | {:error, reason}`。对应的
-`Access.Check.*` 负责在唯一的资源编排路径将结果交给 `Gate.Decision` 构造
-grant/deny 结果；`Gate.Access` 本身不构造 Decision，也不下沉到各资源 policy。
+资源 `Policy.article/comment/community` 只返回 `:ok | {:error, reason}`。对应的
+`Access.Check` 负责在唯一的资源编排路径将结果交给 `Gate.Decision` 构造
+grant/deny 结果；`Gate.Access` 只为分发前的 `unsupported_resource` 构造拒绝结果，
+不参与已支持资源的 Decision 编排，也不下沉到各资源 Policy。
 
-### 11.1 资源 Loader
+### 11.1 资源加载
 
-Access Context 包含 Gate 专属的权威事实。锁定 Lifecycle、校验 resource/ancestor identity、选择 DocBranch、区分 ArticleLifecycle 与 DocLifecycle，并保证缺失事实 fail closed，均由资源专属 Loader 完成：
+Access Context 包含 Gate 专属的权威事实。锁定 Lifecycle、校验 resource/ancestor identity、选择 DocBranch、区分 ArticleLifecycle 与 DocLifecycle，并保证缺失事实 fail closed，均由 `Access.Load` 完成：
 
 ```text
-Gate.Access.Loader
-├── Community.load(resource) -> Context.Access.Community
-├── Article.load(community, thread, resource)
+Gate.Access.Load
+├── community(resource) -> Context.Access.Community
+├── article(community, thread, resource)
 │   ├── thread in Article threads -> Context.Access.Article
 │   └── thread == :doc            -> Context.Access.Doc
-└── Comment.load(community, thread, article, resource) -> Context.Access.Comment
+└── comment(community, thread, article, resource) -> Context.Access.Comment
 ```
 
-`Article.load/3` 按 thread 在 Article Context 与 Doc Context 之间分派；Comment
-Loader 组合父级 Article/Doc Context 后返回 Comment Context。资源 Loader 只能由
+`Load.article/3` 按 thread 在 Article Context 与 Doc Context 之间分派；`Load.comment/4`
+组合父级 Article/Doc Context 后返回 Comment Context。资源加载只能由
 Gate 内部调用。
 
 ## 12. Scope 协议和 CommunityChain
@@ -904,8 +907,8 @@ test/groupher_server/cms/
 | `gate_test.exs`                       | facade 只暴露 `scope`、`access_check`，并正确 dispatch                  |
 | `gate/context/access/*_test.exs`      | Access Context 的 required fields、资源分型和 struct 契约               |
 | `gate/context/scope/*_test.exs`       | Scope Context constructor、合法组合、类型错配和 fail closed             |
-| `gate/access_test.exs`                | Loader dispatch、resource policy dispatch、Decision 转换                |
-| `gate/access/loader/*_test.exs`       | resource/ancestor 定位、锁定、identity 校验和 typed Access Context 构造 |
+| `gate/access_test.exs`                | Load dispatch、Policy dispatch、unsupported resource、Decision 转换     |
+| `gate/access/load/*_test.exs`         | resource/ancestor 定位、锁定、identity 校验和 typed Access Context 构造 |
 | `gate/access/*_test.exs`              | 对应资源的 action/state/actor admission matrix                          |
 | `gate/scope_test.exs`                 | root schema dispatch、未知 root/action fail closed                      |
 | `gate/scope/*_test.exs`               | 对应资源的 SQL policy 和 actor/mode matrix                              |

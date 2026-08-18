@@ -3,7 +3,7 @@
 Community Lifecycle 只拥有 Community 自身状态、Blocker 投影、状态转换和并发 guard。Gate V2 的读取与操作准入合同统一记录在 [gate_v2.md](./gate_v2.md)，本文不再定义另一套 Gate facade 或读取绕过入口。
 
 Interaction mutation 对这些能力的消费与当前缺口记录在
-[Artiment reactions v3](../artiment/reactions_v3.md)：Article upvote、emotion、collect 必须通过 Gate
+[Artiment Interaction V3](../artiment/interaction_v3.md)：Article upvote、emotion、collect 必须通过 Gate
 组合 `Lifecycle.can_write/1`，不能因目标曾通过 public read 就继续写 fact/projection。Lifecycle 不拥有
 interaction action，也不直接读写 reaction fact。
 
@@ -64,7 +64,7 @@ request_destroy / restore / schedule_destroy / cancel_destroy / destroy
 Gate 对 Community Lifecycle 的 `FOR SHARE` admission lock 表示当前事务中的时刻性准入；目标资源的
 transition 再以 `FOR UPDATE`、allowed transition 和 version guard 保证状态变化。两者不表示一次 Gate
 检查永久冻结聚合状态。Interaction 必须在调用 Gate 的同一事务内完成 fact 与 projection 写入，具体
-事务形态和测试矩阵见 [Artiment reactions v3](../artiment/reactions_v3.md) §3、§5。
+事务形态和测试矩阵见 [Artiment Interaction V3](../artiment/interaction_v3.md) §3、§5。
 
 ## 数据和清理
 
