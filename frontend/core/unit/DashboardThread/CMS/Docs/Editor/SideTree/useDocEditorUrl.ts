@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react'
 
-import { parseDsbPathname, usePlatform } from '~/platform'
+import { parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
 
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 
@@ -16,14 +16,15 @@ const buildSearchObject = (searchParams: URLSearchParams): Record<string, string
   return search
 }
 
+/** Exposes doc editor url state and actions through the shared React hook boundary. */
 export default function useDocEditorUrl(): {
   currentDocId: string | null
   syncDocIdToUrl: (docId: string | null) => void
 } {
   const { navi } = usePlatform()
   const routeMeta = useMemo(
-    () => parseDsbPathname(navi.location.pathname),
-    [navi.location.pathname],
+    () => parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dashboard'),
+    [navi.location.pathname, navi.dsbRootSegment],
   )
   const currentDocId = navi.location.searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
 
@@ -31,9 +32,14 @@ export default function useDocEditorUrl(): {
     (docId: string | null): void => {
       if (!routeMeta) return
 
-      const nextPath = `/${routeMeta.community}/${routeMeta.rootSegment}${
-        routeMeta.segments.length ? `/${routeMeta.segments.join('/')}` : ''
-      }`
+      const nextPath = resolveDsbRoute(
+        {
+          app: 'dsb',
+          community: routeMeta.community,
+          path: routeMeta.segments.join('/'),
+        },
+        { rootSegment: navi.dsbRootSegment ?? 'dashboard' },
+      )
 
       const nextSearch = buildSearchObject(
         new URLSearchParams(navi.location.searchParams.toString()),

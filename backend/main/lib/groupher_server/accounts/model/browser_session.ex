@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.BrowserSession do
 
   `ref` is the opaque internal link carried by Auth.js and browser access-token
   claims. `public_ref` is a separate opaque handle for user device management.
+
+  Business position:
+
+      Accounts context
+        -> BrowserSession schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

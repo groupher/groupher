@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
   Phoenix owns the business boundary: community permission, stable public refs,
   canonical URLs, and final DB writes. The assets-hub service owns R2 signing and
   object verification, then calls back through a scoped service mutation.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Upload
+        -> Repo / Assets Hub
   """
 
   import Ecto.Query, warn: false
@@ -12,7 +19,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   alias GroupherServer.{Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Assets.{Capability, Write}
+  alias GroupherServer.CMS.Assets.{Capability, Writer}
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
@@ -21,6 +28,18 @@ defmodule GroupherServer.CMS.Assets.Upload do
   @storage_limit_bytes 100 * 1024 * 1024
   @capability_ttl_seconds 15 * 60
 
+  @doc """
+  Creates a short-lived upload capability intent for one community asset.
+
+  The intent validates the file metadata, checks the community storage quota,
+  and returns a signed capability plus the canonical object key and URL.
+
+  ## Examples
+
+      Upload.create_intent(community, %{filename: "hero.png", mime_type: "image/png", size_bytes: 1024}, user)
+      #=> {:ok, %{upload_ref: "upload_...", asset_public_ref: "asset_...", capability: "..."}}
+
+  """
   @spec create_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
   def create_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
     with {:ok, attrs} <- validate_file(file),
@@ -104,7 +123,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
             lock_community!(community_id)
 
             with :ok <- ensure_capacity(community_id, attrs.size_bytes),
-                 {:ok, asset} <- Write.register(%Community{id: community_id}, attrs, nil) do
+                 {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
               asset
             else
               {:error, reason} -> Repo.rollback(reason)

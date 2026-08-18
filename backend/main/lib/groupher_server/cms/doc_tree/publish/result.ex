@@ -17,6 +17,23 @@ defmodule GroupherServer.CMS.DocTree.Publish.Result do
   project-wide result abstraction.
   """
 
+  @doc """
+  Maps an enumerable while every function result is `{:ok, value}`.
+
+  Stops at the first non-ok result and returns it unchanged.
+
+  ## Examples
+
+      Result.map_while_ok([1, 2, 3], fn x -> {:ok, x * 2} end)
+      #=> {:ok, [2, 4, 6]}
+
+      Result.map_while_ok([1, 2, 3], fn
+        2 -> {:error, :boom}
+        x -> {:ok, x}
+      end)
+      #=> {:error, :boom}
+
+  """
   def map_while_ok(enumerable, fun) do
     enumerable
     |> Enum.reduce_while({:ok, []}, fn item, {:ok, acc} ->

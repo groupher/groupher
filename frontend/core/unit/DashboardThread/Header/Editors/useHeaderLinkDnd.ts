@@ -31,6 +31,7 @@ type TRet = {
 // Wires header-specific column adapters into the shared DnD draft controller.
 // The header adapter understands single-link columns and the fixed More column,
 // so callers can treat the returned columns as the complete editor view model.
+/** Exposes header link dnd state and actions through the shared React hook boundary. */
 export default function useHeaderLinkDnd({ links, community, onCommit }: TProps): TRet {
   const sourceColumns = useMemo(() => buildHeaderColumns(links, community), [community, links])
 

@@ -2,28 +2,38 @@ defmodule GroupherServer.CMS.Gate do
   @moduledoc """
   Public facade for CMS operation admission.
 
-  Community resource access (can/3 and check/3) composes the actor-independent
-  Lifecycle capabilities with Community relations. Allow, Passport and
-  PublishThrottle remain separate Gate seams.
+  Gate exposes only two product-facing operations:
+
+    * `scope/4` compiles a query boundary without executing it;
+    * `access_check/3` loads, locks, and checks one mutation resource.
+
+  Community Enable, Passport, and publish rate limiting are separate internal
+  seams and are not re-exported from this facade.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Gate
+        -> Repo / external boundary
+
+  Examples:
+
+      iex> context = CMS.Gate.Context.Scope.Article.public(:post)
+      iex> {:ok, query} = CMS.Gate.scope(GroupherServer.CMS.Model.Post, nil, :read, context)
+      iex> %Ecto.Query{} = query
+
+      iex> {:ok, _community} = CMS.Gate.access_check(actor, :update, community)
   """
 
-  alias __MODULE__.{Access, Allow, Passport, PublishThrottle}
+  alias __MODULE__.{Access, Scope}
 
-  defdelegate allow_thread(community, thread), to: Allow, as: :thread
-  defdelegate allow_emotion(community, scope, thread, emotion), to: Allow, as: :emotion
-  defdelegate allow_comment(article), to: Allow, as: :comment
+  @doc "Builds a read query with a resource-specific Scope Context."
+  @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
+          Ecto.Query.t() | {:error, atom()}
+  def scope(queryable, actor, action, context),
+    do: Scope.scope(queryable, actor, action, context)
 
-  defdelegate check_passport(user, passport_action, context), to: Passport, as: :check
-  defdelegate get_passport(user), to: Passport
-  defdelegate stamp_passport(rules, user), to: Passport
-  defdelegate erase_passport(path, user), to: Passport
-  defdelegate delete_passport(user), to: Passport
-  defdelegate paged_passports(community, key), to: Passport
-  defdelegate all_passport_rules(), to: Passport
-
-  defdelegate can(user, action, community), to: Access
-  defdelegate check(user, action, community), to: Access
-
-  defdelegate check_publish_throttle(user, opts), to: PublishThrottle, as: :check
-  defdelegate log_publish_action(user), to: PublishThrottle
+  @doc "Loads, locks, and checks a resource inside the current mutation transaction."
+  defdelegate access_check(user, action, resource), to: Access
 end

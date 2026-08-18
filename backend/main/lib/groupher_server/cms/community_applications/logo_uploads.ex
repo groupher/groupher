@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
-  @moduledoc "Application-scoped Logo upload intent, completion, and ownership checks."
+  @moduledoc """
+  Application-scoped Logo upload intent, completion, and ownership checks.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> LogoUploads
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 
@@ -15,6 +25,21 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
   @allowed_mime_types ~w(image/jpeg image/png image/webp image/gif)
   @max_size_bytes 10 * 1024 * 1024
 
+  @doc """
+  Creates a logo upload intent for the community application flow.
+
+  Validates the file, records a pending upload and returns a signed
+  capability payload for assets-hub.
+
+  ## Examples
+
+      CMS.CommunityApplications.LogoUploads.create_intent(
+        %{file_name: "logo.png", mime_type: "image/png", size_bytes: 1024},
+        %User{id: 1}
+      )
+      #=> {:ok, %{upload_ref: "app_logo_...", capability: "..."}}
+
+  """
   @spec create_intent(map(), User.t()) :: {:ok, map()} | {:error, term()}
   def create_intent(file, %User{} = user) when is_map(file) do
     with %{allowed: true} <- Policy.can_apply(user),

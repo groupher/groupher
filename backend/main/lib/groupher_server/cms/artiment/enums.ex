@@ -1,6 +1,18 @@
 defmodule GroupherServer.CMS.Artiment.Enums do
   @moduledoc """
-  article enums for post, blog, doc, changelog
+  Canonical category and workflow-status values shared by CMS artiments.
+
+  Compile-time macros feed Absinthe enum declarations, while runtime accessors
+  feed changesets and validators. Both surfaces return the same atom values so
+  GraphQL and persistence cannot drift.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Enums
+        -> Repo / domain event
   """
 
   @type cat_enum :: :idea | :bug | :qa | :discussion
@@ -41,11 +53,15 @@ defmodule GroupherServer.CMS.Artiment.Enums do
     :reject_stale
   ]
 
-  # compile-time constants (for Absinthe Schema)
+  @doc "Expands the canonical category atoms at compile time for Absinthe schemas."
   defmacro cat, do: @cat
+
+  @doc "Expands the canonical workflow-status atoms at compile time for Absinthe schemas."
   defmacro status, do: @status
 
-  # optional: runtime access (for non-macro call sites like validations)
+  @doc "Returns the canonical category atoms for runtime validation."
   def cat_values, do: @cat
+
+  @doc "Returns the canonical workflow-status atoms for runtime validation."
   def status_values, do: @status
 end

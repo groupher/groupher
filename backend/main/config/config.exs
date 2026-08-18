@@ -159,6 +159,11 @@ config :groupher_server, :search_artiments,
     max_plain_text_bytes: 7_000
   ]
 
+config :groupher_server, GroupherServer.CMS.Interactions.Config,
+  view_batch_size: 100,
+  view_event_retention_days: 30,
+  latest_users_limit: 5
+
 config :groupher_server, :cache,
   pool: %{
     common: %{
@@ -218,7 +223,9 @@ config :groupher_server, Oban,
      crontab: [
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted},
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads},
-       {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims}
+       {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims},
+       {"@daily", GroupherServer.Jobs.ViewEventRetention},
+       {"@daily", GroupherServer.Jobs.InteractionAudit}
      ]}
   ],
   queues: [

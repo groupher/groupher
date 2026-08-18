@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib Content Import Threads Docs Contracts SourceWorkspace boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 export type TSourceFile = {
   path: string
   sizeBytes: number

@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Dashboard App boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { createApp } from './app'
 import {
   handleApplyDocImportPreview,

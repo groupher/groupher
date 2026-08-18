@@ -5,7 +5,7 @@ import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import { PlatformProvider, type TPlatform } from '~/platform'
 
-let mockPathname = '/acme/dashboard'
+let mockPathname = '/acme'
 let mockSearch = ''
 
 describe('useDsbTab', () => {
@@ -31,6 +31,7 @@ describe('useDsbTab', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
+        dsbRootSegment: 'dashboard',
       },
     }
 
@@ -42,17 +43,17 @@ describe('useDsbTab', () => {
   }
 
   it('parses main/sub tabs from pathname', () => {
-    mockPathname = '/acme/dashboard/threads/posts'
+    mockPathname = '/acme/threads/posts'
     const { result } = render()
     expect(result.current.mainTab).toBe('threads')
     expect(result.current.subTab).toBe('posts')
 
-    mockPathname = '/acme/dashboard/overview'
+    mockPathname = '/acme'
     const rOverview = render().result
     expect(rOverview.current.mainTab).toBe(DSB_ROUTE.OVERVIEW)
     expect(rOverview.current.subTab).toBeNull()
 
-    mockPathname = '/acme/posts'
+    mockPathname = '/acme'
     const r2 = render().result
     expect(r2.current.mainTab).toBe(DSB_ROUTE.OVERVIEW)
     expect(r2.current.subTab).toBeNull()

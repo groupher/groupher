@@ -1,8 +1,14 @@
 defmodule Helper.Validator.Schema do
   @moduledoc """
-  validate json data by given schema, mostly used in editors validator
+  Validates editor JSON payloads against the repository's declarative schemas.
 
   currently support boolean / string / number / enum
+
+  Business position:
+
+      Domain or web caller
+        -> Schema
+        -> normalized value / infrastructure
   """
 
   # use Helper.Validator.Schema.Matchers, [:string, :number, :list, :boolean]

@@ -75,6 +75,7 @@ export const GRAPHQL_RETRY_OPTIONS = {
     !!err?.networkError && !(err.networkError instanceof AuthRequestError),
 }
 
+/** Resolves graph qlfailure without leaking frontend shared routing details to callers. */
 export const resolveGraphQLFailure = (error: CombinedError): { code?: string; status?: number } => {
   const code = error.graphQLErrors
     .map((item) => item.extensions?.code)

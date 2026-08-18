@@ -6,14 +6,37 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   not moved to that boundary yet, so this module keeps only the two derived
   values their current schema needs: sanitized-by-construction HTML and digest.
   It deliberately does not generate Markdown, TOC, XML, RSS, or Article hashes.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> BodyCodec
+        -> Repo / domain event
   """
 
-    alias GroupherServer.CMS.Artiment.PlateJSON
+  alias GroupherServer.CMS.Artiment.PlateJSON
 
   @digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   @type payload :: %{json: String.t(), html: String.t(), digest: String.t()}
 
+  @doc """
+  Parses a Plate JSON comment body into the derived comment payload.
+
+  Returns the raw `json`, the sanitized-by-construction `html`, and a plain-text
+  `digest` truncated to the configured digest length. Non-string input returns
+  `{:error, :invalid_body}`.
+
+  ## Examples
+
+      {:ok, payload} = CMS.Comments.BodyCodec.parse(body)
+
+      CMS.Comments.BodyCodec.parse(nil)
+      #=> {:error, :invalid_body}
+
+  """
   @spec parse(String.t()) :: {:ok, payload()} | {:error, term()}
   def parse(body) when is_binary(body) do
     with {:ok, ast} <- PlateJSON.decode(body) do

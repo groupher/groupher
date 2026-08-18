@@ -21,6 +21,14 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   Keeping this on the backend gives every client the same token source for
   Appearance preset details, including page background, primary/accent colors,
   typography colors, frosted glass opacity, and page glow.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> ThemePreset
+        -> CommunityDashboard / Repo
   """
 
   @preset_keys [:default, :claude, :solarized, :hn]
@@ -183,6 +191,15 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   @shared_token_keys @shared_token_specs |> Map.keys() |> MapSet.new()
   @theme_token_keys @theme_token_specs |> Map.keys() |> MapSet.new()
 
+  @doc """
+  Return the supported token keys grouped by preset section.
+
+  Example:
+
+      ThemePreset.token_keys()
+      #=> %{"shared" => ["glowFixed"], "light" => ["pageBg", ...], "dark" => ["pageBg", ...]}
+
+  """
   def token_keys do
     %{
       "shared" => MapSet.to_list(@shared_token_keys),

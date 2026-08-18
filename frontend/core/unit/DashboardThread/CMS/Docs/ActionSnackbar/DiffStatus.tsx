@@ -13,7 +13,7 @@ import S from '~/unit/DashboardThread/schema/docs'
 import useDocsEditor from '../Editor/store/hooks'
 import { DOC_ACTION_LABEL_KEY } from './constant'
 import { buildRevisionHistory } from './RevisionDrawer/model'
-import type { TArticleSnapshot, TDocDraftSnapshotsPayload } from './RevisionDrawer/spec'
+import type { TDocSnapshot, TDocDraftSnapshotsPayload } from './RevisionDrawer/spec'
 import useRevisionDiffModel from './RevisionDrawer/useRevisionDiffModel'
 import useSalon, { cn } from './salon/diff_status'
 
@@ -28,8 +28,8 @@ const DiffStatus: FC = () => {
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [draftRevisions, setDraftRevisions] = useState<TArticleSnapshot[]>([])
-  const [publishedRevisions, setPublishedRevisions] = useState<TArticleSnapshot[]>([])
+  const [draftRevisions, setDraftRevisions] = useState<TDocSnapshot[]>([])
+  const [publishedRevisions, setPublishedRevisions] = useState<TDocSnapshot[]>([])
   const docDraftId = docDraftInfo.id
   const label = t(DOC_ACTION_LABEL_KEY.DIFF)
 

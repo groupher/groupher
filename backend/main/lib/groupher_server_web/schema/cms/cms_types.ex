@@ -5,6 +5,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   These types define the user-facing CMS data contract used by query and
   mutation fields in Playground, including communities, articles, comments,
   dashboard settings, moderation payloads, and pagination wrappers.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 
@@ -14,8 +21,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{Accounts, CMS}
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.CMS.Passport.Registry
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}
@@ -24,9 +31,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   import_types(Schema.CMS.Metrics)
 
-  object :check_state do
-    @desc "Whether the checked resource exists or condition is met."
-    field(:exist, :boolean)
+  object :community_name_check do
+    @desc "Result of checking a community name against the shared namespace."
+    field(:normalized_slug, :string)
+    field(:available, non_null(:boolean))
+    field(:reason_code, :string)
   end
 
   object :done_state do
@@ -68,8 +77,37 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:read_only)
     value(:suspended)
     value(:archived)
-    value(:scheduled_reclaim)
+    value(:pending_destroy)
     value(:destroy)
+  end
+
+  enum :article_lifecycle_state do
+    value(:draft_only)
+    value(:published)
+    value(:archived)
+    value(:deleted)
+    value(:destroy)
+  end
+
+  enum :comment_lifecycle_state do
+    value(:visible)
+    value(:deleted)
+    value(:destroy)
+  end
+
+  object :article_lifecycle do
+    field(:state, non_null(:article_lifecycle_state))
+    field(:changed_at, :datetime)
+    field(:archived_at, :datetime)
+    field(:deleted_at, :datetime)
+    field(:destroyed_at, :datetime)
+  end
+
+  object :comment_lifecycle do
+    field(:state, non_null(:comment_lifecycle_state))
+    field(:changed_at, :datetime)
+    field(:deleted_at, :datetime)
+    field(:destroyed_at, :datetime)
   end
 
   enum :community_lifecycle_blocker_type do
@@ -77,8 +115,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:moderation_suspend)
     value(:moderation_archive)
     value(:ops_legal_hold)
-    value(:billing_read_only)
-    value(:billing_suspend)
   end
 
   enum :community_lifecycle_blocker_end_type do
@@ -332,22 +368,27 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:pin)
   end
 
-  enum :article_snapshot_stage do
+  enum :article_stage do
     value(:draft)
     value(:public)
   end
 
-  enum :article_branch_type do
+  enum :doc_snapshot_stage do
+    value(:draft)
+    value(:public)
+  end
+
+  enum :doc_branch_type do
     value(:main)
     value(:preview)
   end
 
-  enum :article_branch_status do
+  enum :doc_branch_status do
     value(:active)
     value(:archived)
   end
 
-  enum :article_snapshot_action do
+  enum :doc_snapshot_action do
     value(:checkpoint)
     value(:publish)
     value(:fork)
@@ -355,11 +396,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:restore)
   end
 
-  object :article_branch do
+  object :doc_branch do
     field(:slug, non_null(:string))
     field(:title, non_null(:string))
-    field(:type, non_null(:article_branch_type))
-    field(:status, non_null(:article_branch_status))
+    field(:type, non_null(:doc_branch_type))
+    field(:status, non_null(:doc_branch_status))
   end
 
   enum :doc_publish_mode do
@@ -635,25 +676,33 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_draft do
     field(:id, :id)
     field(:doc_id, :id, resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
+    field(:version, non_null(:integer))
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
-    field(:stage, :article_snapshot_stage)
+    field(:stage, :doc_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
-    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+
+    field(:document, :article_document,
+      resolve: fn draft, _, _ ->
+        document = Repo.preload(draft, :document).document
+        {:ok, document}
+      end
+    )
   end
 
   object :article_draft do
     field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
     field(:thread, non_null(:thread), resolve: fn draft, _, _ -> {:ok, draft.meta.thread} end)
-    field(:stage, non_null(:article_snapshot_stage))
+    field(:version, non_null(:integer))
+    field(:stage, non_null(:article_stage))
     field(:title, non_null(:string))
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
-    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+    field(:document, :article_document, resolve: dataloader(CMS, :document))
     timestamp_fields()
   end
 
@@ -667,7 +716,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
-    field(:stage, :article_snapshot_stage)
+    field(:stage, :doc_snapshot_stage)
     field(:publish_state, :doc_tree_node_publish_state)
   end
 
@@ -922,11 +971,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
   end
 
-  object :article_snapshot do
+  object :doc_snapshot do
     field(:id, :id, resolve: fn snapshot, _, _ -> {:ok, snapshot.hash_id} end)
-    field(:thread, :thread)
-    field(:stage, :article_snapshot_stage)
-    field(:action, :article_snapshot_action)
+    field(:thread, :thread, resolve: fn _snapshot, _, _ -> {:ok, :doc} end)
+    field(:stage, :doc_snapshot_stage)
+    field(:action, :doc_snapshot_action)
     field(:article_hash_id, :string)
     field(:title, :string)
     field(:slug, :string)

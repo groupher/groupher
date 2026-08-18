@@ -1,3 +1,14 @@
+/**
+ * Implements the Scripts R2 Smoke boundary inside Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import '../src/env'
 import { smokeR2 } from '../src/r2'
 

@@ -18,6 +18,7 @@ import {
 } from './helper'
 import type { TPublishChecklist, TPublishSelectedInput } from './spec'
 
+/** Exposes publish checklist state and actions through the shared React hook boundary. */
 export default function usePublishChecklist() {
   const { slug: community } = useCommunity()
   const { setPublishRuntime } = useDocsEditor()

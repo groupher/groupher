@@ -1,6 +1,6 @@
 import { GRAPHQL_ENDPOINT } from '~/config'
 
-import { dashboardToPhoenixHeaders } from './serviceIdentity'
+import { dashboardToPhoenixHeaders } from './serviceAuth'
 
 type TGraphQLError = { code?: unknown; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
@@ -46,6 +46,7 @@ const formatGraphQLErrorMessage = (value: unknown): string | null => {
   return value == null ? null : String(value)
 }
 
+/** Runs the request groupher graph ql operation at the frontend shared boundary. */
 export const requestGroupherGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown>,

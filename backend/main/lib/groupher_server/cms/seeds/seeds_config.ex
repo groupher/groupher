@@ -1,7 +1,15 @@
 defmodule GroupherServer.CMS.Seeds.SeedsConfig do
   @moduledoc """
-  init config for seeds
+  Static seed fixtures for icons, categories, communities, and related metadata.
+
+  Business position:
+
+      Seed task
+        -> SeedsConfig
+        -> CMS context
+        -> Repo
   """
+  @doc "Returns the community slugs that use an SVG icon variant for their logo."
   def svg_icons do
     [
       "feedback",

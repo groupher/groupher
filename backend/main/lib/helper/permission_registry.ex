@@ -39,6 +39,12 @@ defmodule Helper.PermissionRegistry do
           "cms" => %{...}
         }
       }
+
+  Business position:
+
+      Domain or web caller
+        -> PermissionRegistry
+        -> normalized value / infrastructure
   """
 
   alias Helper.PermissionConfig

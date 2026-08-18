@@ -2,6 +2,7 @@ import { COLOR } from '~/const/colors'
 import { ARTICLE_STATUS } from '~/const/gtd'
 import type { TArticleStatus, TColorName } from '~/spec'
 
+/** Returns gtdcolor for the frontend shared workflow. */
 export const getGTDColor = (status: TArticleStatus, bgColors: TColorName[]): TColorName => {
   switch (status) {
     case ARTICLE_STATUS.BACKLOG: {

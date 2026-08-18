@@ -2,22 +2,20 @@ defmodule GroupherServer.CMS.Articles do
   @moduledoc """
   Public CMS facade for product Articles and the shared version lifecycle.
 
-      Post / Blog / Changelog / Doc
+      Post / Blog / Changelog
                     |
                     v
-      article_hash_id + ArticleBranch
+      article_hash_id + ArticleLifecycle
                     |
           +---------+----------+
           |                    |
           v                    v
-      mutable Draft       immutable Snapshot
-          |                    |
-          +--> Publish         +--> Diff / Restore / TimeMachine
+      mutable Draft       explicit Publish
           |
-          +--> Preview fork/promote
+          +--> DraftDiff
 
-  Docs-specific Tree and `DocPublishRelease` composition stays outside this
-  facade; Docs wrappers translate product `doc_id` language only at the edge.
+  Doc-specific Branch, Lifecycle, Snapshot, Tree and Release composition lives
+  under `CMS.Docs`; this facade only owns the ordinary Article core.
   """
 
   alias Helper.T
@@ -33,11 +31,9 @@ defmodule GroupherServer.CMS.Articles do
     Draft,
     List,
     Moderation,
-    Preview,
     Publish,
-    Reactions,
-    Read,
-    Snapshot,
+    Emotions,
+    Reader,
     States,
     Trash,
     Upvotes
@@ -45,34 +41,52 @@ defmodule GroupherServer.CMS.Articles do
 
   # Read
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  @doc "Runs `read` through the public `Articles` boundary."
   def read(%Community{} = community, thread, inner_id),
-    do: Read.read(community, thread, inner_id)
+    do: Reader.read(community, thread, inner_id)
 
   @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{} = user) do
-    Read.read(community, thread, inner_id, user)
+    Reader.read(community, thread, inner_id, user)
+  end
+
+  @spec read(Community.t(), T.thread(), T.id(), User.t(), Ecto.UUID.t() | nil) ::
+          T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id, %User{} = user, view_event_id) do
+    Reader.read(community, thread, inner_id, user, view_event_id)
   end
 
   # List
 
   @spec page(T.thread(), map()) :: T.domain_res(T.paged_data())
+  @doc "Runs `page` through the public `Articles` boundary."
   def page(thread, filter), do: List.page(thread, filter)
 
   @spec page(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
 
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
+  @doc "Runs `grouped_kanban` through the public `Articles` boundary."
   def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
 
   @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
+  @doc "Returns paged kanban from the `Articles` read boundary."
   def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
 
   @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
+  @doc "Returns paged published from the `Articles` read boundary."
   def paged_published(thread, filter, %User{} = user) do
-    List.paged_published(thread, filter, user)
+    List.paged_published(thread, filter, user, nil)
+  end
+
+  @spec paged_published(T.thread(), map(), User.t(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
+  def paged_published(thread, filter, %User{} = target_user, actor) do
+    List.paged_published(thread, filter, target_user, actor)
   end
 
   @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
+  @doc "Runs `count_published` through the public `Articles` boundary."
   def count_published(thread, %User{} = user),
     do: List.count_published(thread, user)
 
@@ -85,13 +99,14 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
+  @doc "Runs `update` through the public `Articles` boundary."
   def update(article, attrs), do: Publish.update(article, attrs)
 
-  @doc "Updates and immediately republishes an Article through the shared lifecycle."
+  @doc "Starts or updates the persistent Article Draft; explicit Publish is separate."
   @spec update(T.article(), map(), User.t()) :: T.domain_res(T.article())
   def update(article, attrs, %User{} = user), do: Publish.update(article, attrs, user)
 
-  # Shared Draft / Snapshot lifecycle
+  # Shared Article Draft lifecycle
 
   @doc "Creates a branch-local draft for any Article thread."
   @spec create_draft(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
@@ -99,10 +114,12 @@ defmodule GroupherServer.CMS.Articles do
     Draft.create(community, thread, attrs, user)
   end
 
-  @doc "Reads a branch-local draft for any Article thread."
+  @doc "Reads a Draft through one typed :read_draft Scope query."
   @spec read_draft(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def read_draft(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    opts = draft_read_opts(opts)
+
     Draft.read(community, thread, article_hash_id, opts)
   end
 
@@ -127,129 +144,41 @@ defmodule GroupherServer.CMS.Articles do
     Draft.update_or_create_from_public(community, thread, article_hash_id, attrs, user)
   end
 
-  @doc "Lists one Article's branch-local immutable revision history."
-  @spec list_snapshots(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
-          T.domain_res([CMS.Model.ArticleSnapshot.t()])
-  def list_snapshots(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    Snapshot.list(community, thread, article_hash_id, opts)
+  @doc "Compares the current Draft with Public without creating history."
+  def draft_diff(community, thread, article_hash_id, opts \\ []) do
+    __MODULE__.DraftDiff.compare_current(community, thread, article_hash_id, opts)
   end
 
-  @doc "Fetches one immutable Article Snapshot."
-  @spec get_snapshot(
-          Community.t(),
-          T.thread(),
-          Ecto.UUID.t(),
-          Ecto.UUID.t(),
-          keyword() | map()
-        ) ::
-          T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def get_snapshot(
-        %Community{} = community,
-        thread,
-        article_hash_id,
-        snapshot_hash_id,
-        opts \\ []
-      ) do
-    Snapshot.get(community, thread, article_hash_id, snapshot_hash_id, opts)
+  @doc "Returns the Article-level unpublished-change fact."
+  def has_unpublished_changes(community, thread, article_hash_id, opts \\ []) do
+    __MODULE__.DraftDiff.has_unpublished_changes(community, thread, article_hash_id, opts)
   end
 
-  @doc "Creates a deduplicated checkpoint of one Article draft."
-  @spec checkpoint_draft(
-          Community.t(),
-          T.thread(),
-          Ecto.UUID.t(),
-          User.t() | nil,
-          keyword() | map()
-        ) :: T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def checkpoint_draft(community, thread, article_hash_id, user \\ nil, opts \\ []) do
-    Snapshot.checkpoint(community, thread, article_hash_id, user, opts)
+  defp option(opts, key, default \\ nil)
+  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
+  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
+  defp option(_opts, _key, default), do: default
+
+  defp draft_read_opts(opts) do
+    if is_nil(option(opts, :actor)) or not is_nil(option(opts, :policy_mode)) do
+      opts
+    else
+      put_option(opts, :policy_mode, :owner_management)
+    end
   end
 
-  @doc "Restores one Snapshot into a target branch draft without deleting history."
-  @spec restore_snapshot(
-          Community.t(),
-          T.thread(),
-          Ecto.UUID.t(),
-          Ecto.UUID.t(),
-          User.t() | nil,
-          keyword() | map()
-        ) :: T.domain_res(T.article())
-  def restore_snapshot(
-        community,
-        thread,
-        article_hash_id,
-        snapshot_hash_id,
-        user \\ nil,
-        opts \\ []
-      ) do
-    Snapshot.restore(community, thread, article_hash_id, snapshot_hash_id, user, opts)
-  end
+  defp put_option(opts, key, value) when is_list(opts), do: Keyword.put(opts, key, value)
+  defp put_option(opts, key, value) when is_map(opts), do: Map.put(opts, key, value)
+  defp put_option(_opts, key, value), do: [{key, value}]
 
-  @doc "Publishes one main Draft and returns its public Article and immutable Snapshot."
+  @doc "Publishes one ordinary Article Draft and returns its public Article."
   @spec publish_draft(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
-          T.domain_res(%{
-            article: T.article(),
-            snapshot: CMS.Model.ArticleSnapshot.t()
-          })
+          T.domain_res(%{article: T.article(), snapshot: nil})
   def publish_draft(community, thread, article_hash_id, %User{} = user, opts \\ []) do
     Publish.publish(community, thread, article_hash_id, user, opts)
   end
 
-  @doc "Computes an ephemeral Diff between two immutable Article Snapshots."
-  def diff_snapshots(left, right), do: __MODULE__.Diff.compare(left, right)
-
-  @doc "Computes an ephemeral Diff from a current Article row to a Snapshot."
-  def diff_current(article, snapshot), do: __MODULE__.Diff.compare_current(article, snapshot)
-
-  @doc "Forks one main/public Article into a new isolated Preview branch."
-  def fork_preview(community, thread, article_hash_id, attrs, %User{} = user) do
-    Preview.fork(community, thread, article_hash_id, attrs, user)
-  end
-
-  @doc "Promotes one Preview draft into main/draft without publishing it."
-  def promote_preview(community, thread, article_hash_id, preview_ref, %User{} = user) do
-    Preview.promote(community, thread, article_hash_id, preview_ref, user)
-  end
-
-  # Docs product language stays at the facade boundary.
-
-  @doc "Reads a Docs editor head by product-level `doc_id`."
-  def read_doc_editor(community, doc_id, opts \\ []) do
-    read_editor(community, :doc, doc_id, opts)
-  end
-
-  @doc "Lists Docs revisions by product-level `doc_id`."
-  def list_doc_draft_snapshots(community, doc_id, opts \\ []) do
-    list_snapshots(community, :doc, doc_id, opts)
-  end
-
-  @doc "Fetches one Docs revision by product-level `doc_id`."
-  def get_doc_draft_snapshot(community, doc_id, snapshot_id, opts \\ []) do
-    get_snapshot(community, :doc, doc_id, snapshot_id, opts)
-  end
-
-  @doc "Creates a Docs draft checkpoint by product-level `doc_id`."
-  def checkpoint_doc_draft_snapshot(community, doc_id, user \\ nil, opts \\ []) do
-    checkpoint_draft(community, :doc, doc_id, user, opts)
-  end
-
-  @doc "Restores a Docs revision into the target Docs draft."
-  def restore_doc_draft_snapshot(community, doc_id, snapshot_id, user \\ nil, opts \\ []) do
-    restore_snapshot(community, :doc, doc_id, snapshot_id, user, opts)
-  end
-
-  @doc "Publishes one Docs draft by product-level `doc_id`."
-  def publish_doc_draft(community, doc_id, %User{} = user, opts \\ []) do
-    with {:ok, %{snapshot: snapshot}} <- publish_draft(community, :doc, doc_id, user, opts) do
-      {:ok, snapshot}
-    end
-  end
-
   # Lifecycle
-
-  @doc "Excludes logical Articles that currently belong to Trash."
-  @spec active_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
-  def active_scope(queryable, thread), do: Trash.active_scope(queryable, thread)
 
   @doc "Moves one logical Article into Trash without deleting its aggregate."
   @spec trash(T.article(), User.t() | nil, keyword()) ::
@@ -290,23 +219,29 @@ defmodule GroupherServer.CMS.Articles do
   def get_trashed(ref), do: Trash.get(ref)
 
   @spec archive(T.thread()) :: T.domain_res(term())
+  @doc "Runs `archive` through the public `Articles` boundary."
   def archive(thread), do: States.archive(thread)
 
   @spec sink(T.article()) :: T.domain_res(T.article())
+  @doc "Runs `sink` through the public `Articles` boundary."
   def sink(article), do: States.sink(article)
 
   @spec undo_sink(T.article()) :: T.domain_res(T.article())
+  @doc "Runs `undo_sink` through the public `Articles` boundary."
   def undo_sink(article), do: States.undo_sink(article)
 
   # Meta
 
   @spec set_cat(T.article(), Enums.cat_enum() | nil) :: T.domain_res(T.article())
+  @doc "Runs `set_cat` through the public `Articles` boundary."
   def set_cat(article, cat), do: States.set_cat(article, cat)
 
   @spec set_status(T.article(), Enums.status_enum() | nil) :: T.domain_res(T.article())
+  @doc "Runs `set_status` through the public `Articles` boundary."
   def set_status(article, status), do: States.set_status(article, status)
 
   @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
+  @doc "Updates active timestamp through the `Articles` write boundary."
   def update_active_timestamp(thread, article) do
     States.update_active_timestamp(thread, article)
   end
@@ -314,6 +249,7 @@ defmodule GroupherServer.CMS.Articles do
   # Moderation
 
   @spec set_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
+  @doc "Runs `set_illegal` through the public `Articles` boundary."
   def set_illegal(thread, id, attrs),
     do: Moderation.set_illegal(thread, id, attrs)
 
@@ -321,6 +257,7 @@ defmodule GroupherServer.CMS.Articles do
   def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
 
   @spec unset_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
+  @doc "Runs `unset_illegal` through the public `Articles` boundary."
   def unset_illegal(thread, id, attrs),
     do: Moderation.unset_illegal(thread, id, attrs)
 
@@ -328,21 +265,26 @@ defmodule GroupherServer.CMS.Articles do
   def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
 
   @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
+  @doc "Runs `set_audit_failed` through the public `Articles` boundary."
   def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
   @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
+  @doc "Returns paged audit failed from the `Articles` read boundary."
   def paged_audit_failed(thread, filter),
     do: Moderation.paged_audit_failed(thread, filter)
 
   # Placement
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `pin` through the public `Articles` boundary."
   def pin(%Community{} = community, article), do: States.pin(community, article)
 
   @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `undo_pin` through the public `Articles` boundary."
   def undo_pin(%Community{} = community, article), do: States.undo_pin(community, article)
 
   @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `mirror` through the public `Articles` boundary."
   def mirror(%Community{} = community, article), do: States.mirror(community, article)
 
   @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
@@ -351,9 +293,11 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `unmirror` through the public `Articles` boundary."
   def unmirror(%Community{} = community, article), do: States.unmirror(community, article)
 
   @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `move` through the public `Articles` boundary."
   def move(%Community{} = community, article), do: States.move(community, article)
 
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
@@ -362,6 +306,7 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `move_to_blackhole` through the public `Articles` boundary."
   def move_to_blackhole(%Community{} = community, article),
     do: States.move_to_blackhole(community, article)
 
@@ -371,6 +316,7 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
+  @doc "Runs `mirror_to_home` through the public `Articles` boundary."
   def mirror_to_home(%Community{} = community, article),
     do: States.mirror_to_home(community, article)
 
@@ -380,56 +326,70 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @spec lock_comments(T.article()) :: T.domain_res(T.article())
+  @doc "Runs `lock_comments` through the public `Articles` boundary."
   def lock_comments(article), do: States.lock_comments(article)
 
   @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
+  @doc "Runs `undo_lock_comments` through the public `Articles` boundary."
   def undo_lock_comments(article), do: States.undo_lock_comments(article)
 
-  # Reactions
+  # Emotions
 
   @spec emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
-  def emotion(article, emotion, %User{} = user), do: Reactions.emotion(article, emotion, user)
+  @doc "Runs `emotion` through the public `Articles` boundary."
+  def emotion(article, emotion, %User{} = user), do: Emotions.emotion(article, emotion, user)
 
   @spec undo_emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `undo_emotion` through the public `Articles` boundary."
   def undo_emotion(article, emotion, %User{} = user) do
-    Reactions.undo_emotion(article, emotion, user)
+    Emotions.undo_emotion(article, emotion, user)
   end
 
   # Upvotes
 
   @spec upvote(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `upvote` through the public `Articles` boundary."
   def upvote(article, %User{} = user), do: Upvotes.upvote(article, user)
 
   @spec undo_upvote(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `undo_upvote` through the public `Articles` boundary."
   def undo_upvote(article, %User{} = user), do: Upvotes.undo_upvote(article, user)
 
   @spec upvoted_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
+  @doc "Runs `upvoted_users` through the public `Articles` boundary."
   def upvoted_users(article, filter), do: Upvotes.upvoted_users(article, filter)
 
   # Collects
 
   @spec collect(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `collect` through the public `Articles` boundary."
   def collect(article, %User{} = user), do: Collects.collect(article, user)
 
   @spec collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `collect_ifneed` through the public `Articles` boundary."
   def collect_ifneed(article, %User{} = user), do: Collects.collect_ifneed(article, user)
 
   @spec undo_collect(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `undo_collect` through the public `Articles` boundary."
   def undo_collect(article, %User{} = user), do: Collects.undo_collect(article, user)
 
   @spec undo_collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
+  @doc "Runs `undo_collect_ifneed` through the public `Articles` boundary."
   def undo_collect_ifneed(article, %User{} = user),
     do: Collects.undo_collect_ifneed(article, user)
 
   @spec collected_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
+  @doc "Runs `collected_users` through the public `Articles` boundary."
   def collected_users(article, filter), do: Collects.collected_users(article, filter)
 
   @spec set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(ArticleCollect.t())
+  @doc "Runs `set_collect_folder` through the public `Articles` boundary."
   def set_collect_folder(%ArticleCollect{} = collect, folder) do
     Collects.set_collect_folder(collect, folder)
   end
 
   @spec undo_set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(ArticleCollect.t())
+  @doc "Runs `undo_set_collect_folder` through the public `Articles` boundary."
   def undo_set_collect_folder(%ArticleCollect{} = collect, folder) do
     Collects.undo_set_collect_folder(collect, folder)
   end

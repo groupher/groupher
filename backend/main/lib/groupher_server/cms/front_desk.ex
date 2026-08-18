@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.FrontDesk do
   @moduledoc """
   CMS domain front desk for reading/fetching and helper operations.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> FrontDesk
+        -> Repo / external boundary
   """
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
@@ -10,25 +17,23 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
+  alias CMS.Docs.Branch
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Artiment.Threads
   alias CMS.Comments.Replies
-  alias CMS.Communities.Read
   alias CMS.Helper.ArticlePath
-  alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
+  alias CMS.Model.{Comment, Community, CommunityTag}
+  alias CMS.Interactions.State
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
-  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
-  @max_latest_upvoted_users_count GroupherServer.CMS.Artiment.Config.max_upvoted_users_count() ||
-                                    10
-
-  @max_latest_emotion_users_count 4
-  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @supported_comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
 
   @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
+  @doc "Runs `community` through the public `FrontDesk` boundary."
   def community(slug) when is_binary(slug) do
-    Read.scope()
+    CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
@@ -42,12 +47,15 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `live_user` through the public `FrontDesk` boundary."
   def live_user(login, opts \\ []) when is_binary(login), do: RootFrontDesk.live_user(login, opts)
 
   @spec revalidate_user(String.t()) :: {:ok, User.t()} | {:error, any()}
+  @doc "Runs `revalidate_user` through the public `FrontDesk` boundary."
   def revalidate_user(login) when is_binary(login), do: RootFrontDesk.revalidate().user(login)
 
   @spec comment(map()) :: T.domain_res(Comment.t())
+  @doc "Runs `comment` through the public `FrontDesk` boundary."
   def comment(%{} = comment_path), do: comment(comment_path, [])
 
   @spec comment(integer()) :: T.domain_res(Comment.t())
@@ -84,6 +92,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
+  @doc "Runs `community_tag` through the public `FrontDesk` boundary."
   def community_tag(id), do: ORM.find(CommunityTag, id)
 
   @spec community_tag(String.t(), atom(), String.t()) :: T.domain_res(CommunityTag.t())
@@ -94,6 +103,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec community_tags([T.id()]) :: T.domain_res([CommunityTag.t()])
+  @doc "Runs `community_tags` through the public `FrontDesk` boundary."
   def community_tags(tag_ids) when is_list(tag_ids) do
     pos =
       tag_ids
@@ -108,17 +118,20 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec full_comment(integer()) :: T.domain_res(T.article_info())
+  @doc "Runs `full_comment` through the public `FrontDesk` boundary."
   def full_comment(comment_id) do
     get_full_comment(comment_id)
   end
 
   @spec get(Ecto.Queryable.t(), T.id()) :: T.domain_res(term())
+  @doc "Runs `get` through the public `FrontDesk` boundary."
   def get(queryable, id), do: ORM.find(queryable, id)
 
   @spec get(Ecto.Queryable.t(), T.id(), keyword()) :: T.domain_res(term())
   def get(queryable, id, preload: preload), do: ORM.find(queryable, id, preload: preload)
 
   @spec get_by(Ecto.Queryable.t(), map()) :: T.domain_res(term())
+  @doc "Returns by through the `FrontDesk` boundary."
   def get_by(queryable, clauses), do: ORM.find_by(queryable, clauses)
 
   @spec get_by(Ecto.Queryable.t(), map(), keyword()) :: T.domain_res(term())
@@ -126,6 +139,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     do: ORM.find_by(queryable, clauses, preload: preload)
 
   @spec preload_author(Comment.t() | map()) :: {:ok, Comment.t() | map()} | {:error, map()}
+  @doc "Runs `preload_author` through the public `FrontDesk` boundary."
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done
 
   def preload_author(article) do
@@ -201,88 +215,8 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec thread_of(any()) :: {:error, {:custom, String.t()}}
   def thread_of(_), do: {:error, {:custom, "invalid article"}}
 
-  @doc """
-  mark viewer emotions status for article or comment
-  """
-  @spec mark_viewer_emotion_states(map() | [map()], User.t() | nil) :: map() | [map()]
-  def mark_viewer_emotion_states(paged_artiments, nil), do: paged_artiments
-  def mark_viewer_emotion_states(%{entries: []} = paged_artiments, _), do: paged_artiments
-
-  def mark_viewer_emotion_states(%{entries: entries} = artiments, %User{} = user) do
-    entries =
-      Enum.map(entries, fn artiment ->
-        case Map.has_key?(artiment, :replies) do
-          true ->
-            mark_viewer_emotion_states(artiment, user)
-            |> Map.put(:replies, mark_replies_emotion_states(artiment, user))
-
-          false ->
-            mark_viewer_emotion_states(artiment, user)
-        end
-      end)
-
-    %{artiments | entries: entries}
-  end
-
-  @spec mark_viewer_emotion_states(Comment.t(), User.t()) :: Comment.t()
-  def mark_viewer_emotion_states(%Comment{} = comment, %User{} = user) do
-    do_mark_viewer_emotion_states(comment, user, @supported_comment_emotions)
-  end
-
-  @spec mark_viewer_emotion_states(map(), User.t()) :: map()
-  def mark_viewer_emotion_states(article, %User{} = user) do
-    do_mark_viewer_emotion_states(article, user, @supported_emotions)
-  end
-
-  defp do_mark_viewer_emotion_states(%{emotions: nil} = artiment, _user, _emotions) do
-    artiment
-  end
-
-  defp do_mark_viewer_emotion_states(artiment, %User{} = user, emotions) do
-    update_viewed_status =
-      emotions
-      |> Enum.reduce([], fn emotion, acc ->
-        already_emoted = user_in_logins?(artiment.emotions[:"#{emotion}_user_logins"], user)
-        acc ++ ["viewer_has_#{emotion}ed": already_emoted]
-      end)
-      |> Enum.into(%{})
-
-    updated_emotions = Map.merge(artiment.emotions, update_viewed_status)
-
-    %{artiment | emotions: updated_emotions}
-  end
-
-  defp mark_replies_emotion_states(%Comment{replies: []}, _), do: []
-
-  defp mark_replies_emotion_states(%Comment{replies: replies}, user) do
-    Enum.map(replies, fn reply_comment ->
-      mark_viewer_emotion_states(reply_comment, user)
-    end)
-  end
-
-  @doc """
-  update emotions field for body article and comment
-  """
-  @spec update_emotions_field(map(), atom(), map(), User.t()) :: {:ok, map()} | {:error, map()}
-  def update_emotions_field(artiment, emotion, status, user) do
-    %{user_count: user_count, user_list: user_list} = status
-
-    latest_users =
-      user_list |> normalize_embed_users() |> Enum.slice(0, @max_latest_emotion_users_count)
-
-    emotions =
-      %{}
-      |> Map.put(:"#{emotion}_count", user_count)
-      |> Map.put(:"#{emotion}_user_logins", user_list |> Enum.map(& &1.login))
-      |> Map.put(:"latest_#{emotion}_users", latest_users)
-
-    viewer_has_mentioned = user.login in Map.get(emotions, :"#{emotion}_user_logins")
-    emotions = emotions |> Map.put(:"viewer_has_#{emotion}ed", viewer_has_mentioned)
-
-    artiment |> ORM.update_embed(:emotions, emotions)
-  end
-
   @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
+  @doc "Synchronizes embed replies through the `FrontDesk` boundary."
   def sync_embed_replies(%Comment{reply_to_comment_id: nil} = comment) do
     {:ok, comment}
   end
@@ -322,68 +256,8 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  @doc """
-  add or remove article's reaction users in list history
-  e.g:
-  add/remove user_id to upvoted_user_ids in article meta
-  """
-  @spec update_article_reaction_user_list(atom(), map(), User.t(), :add | :remove) ::
-          {:ok, map()} | {:error, map()}
-  def update_article_reaction_user_list(action, %{meta: nil} = article, %User{} = user, opt) do
-    action = past_verb(action)
-    cur_user_ids = []
-    cur_users = []
-
-    updated_user_ids =
-      case opt do
-        :add -> [user.id] ++ cur_user_ids
-        :remove -> cur_user_ids -- [user.id]
-      end
-
-    updated_users =
-      case opt do
-        :add -> [extract_embed_user(user)] ++ cur_users
-        :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
-      end
-      |> normalize_embed_users()
-
-    meta =
-      @default_article_meta
-      |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
-      |> Map.merge(%{"latest_#{action}_users": updated_users})
-
-    ORM.update_meta(article, meta)
-  end
-
-  def update_article_reaction_user_list(action, article, %User{} = user, opt) do
-    action = past_verb(action)
-    cur_user_ids = get_in(article, [:meta, :"#{action}_user_ids"])
-
-    cur_users = get_in(article, [:meta, :"latest_#{action}_users"]) |> normalize_embed_users()
-
-    updated_user_ids =
-      case opt do
-        :add -> [user.id] ++ cur_user_ids
-        :remove -> cur_user_ids -- [user.id]
-      end
-
-    updated_users =
-      case opt do
-        :add -> [extract_embed_user(user)] ++ cur_users
-        :remove -> Enum.reject(cur_users, &user_id_match?(&1, user.id))
-      end
-      |> normalize_embed_users()
-      |> Enum.slice(0, @max_latest_upvoted_users_count)
-
-    meta =
-      article.meta
-      |> Map.merge(%{"#{action}_user_ids": updated_user_ids})
-      |> Map.merge(%{"latest_#{action}_users": updated_users})
-
-    ORM.update_meta(article, meta)
-  end
-
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
+  @doc "Runs `article` through the public `FrontDesk` boundary."
   def article(%{} = article_path, opts \\ []) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
            ArticlePath.parse(article_path),
@@ -396,18 +270,37 @@ defmodule GroupherServer.CMS.FrontDesk do
           {:ok, struct()} | {:error, map()}
   def article(community, thread, inner_id, opts \\ [])
 
-  def article(%Community{id: community_id}, thread, inner_id, opts) do
+  def article(%Community{id: community_id} = community, thread, inner_id, opts) do
     preload = Keyword.get(opts, :preload, [])
-    query = %{community_id: community_id, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find_by(info.model, query, preload: preload),
+         {:ok, scope_context} <- public_scope_context(community, thread, opts),
+         %Ecto.Query{} = query <-
+           CMS.Gate.scope(info.model, nil, :read, scope_context),
+         {:ok, article} <-
+           query
+           |> where(
+             [article],
+             article.community_id == ^community_id and article.inner_id == ^inner_id
+           )
+           |> preload(^preload)
+           |> Repo.one()
+           |> done(),
          {:ok, article} <- ORM.fill_meta(article) do
-      {:ok, article}
+      {:ok, State.read(article)}
     else
       {:error, _} -> {:error, {:article_not_found, "article not found"}}
     end
   end
+
+  defp public_scope_context(%Community{} = community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
+      {:ok, DocScope.public_branch(branch.id, include_illegal: Keyword.get(opts, :include_illegal, false))}
+    end
+  end
+
+  defp public_scope_context(_community, thread, opts),
+    do: {:ok, ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
 
   defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 
@@ -453,37 +346,8 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  defp extract_embed_user(%User{} = user) do
-    user
-    |> Embeds.User.from_account_user()
-    |> Map.from_struct()
-  end
-
-  defp normalize_embed_users(users) do
-    users
-    |> Enum.map(&Embeds.User.normalize/1)
-    |> Enum.filter(&Embeds.User.valid?/1)
-    |> Enum.uniq_by(&Embeds.User.uniq_key/1)
-  end
-
-  defp user_id_match?(user, user_id) do
-    Map.get(user, :user_id) == user_id
-  end
-
-  defp user_in_logins?([], _), do: false
-  defp user_in_logins?(ids_list, %User{login: login}), do: Enum.member?(ids_list, login)
-
   defp done({:ok, _} = result), do: result
   defp done({:error, _} = result), do: result
   defp done(nil), do: {:error, :not_exist}
   defp done(result), do: {:ok, result}
-
-  defp past_verb(word) do
-    word_str = if is_atom(word), do: Atom.to_string(word), else: word
-
-    case word_str do
-      "upvote" -> "upvoted"
-      _ -> "#{word_str}ed"
-    end
-  end
 end

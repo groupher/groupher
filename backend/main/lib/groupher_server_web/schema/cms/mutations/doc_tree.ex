@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   @moduledoc """
   GraphQL mutations for community docs side-tree editing.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / DocTree
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 
@@ -36,6 +43,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     field :update_doc_draft, :doc_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:expected_version, non_null(:integer))
       arg(:title, :string)
       arg(:subtitle, :string)
       arg(:slug, :string)
@@ -49,7 +57,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     end
 
     @desc "save current docs draft as an article revision checkpoint"
-    field :checkpoint_doc_draft_snapshot, :article_snapshot do
+    field :checkpoint_doc_draft_snapshot, :doc_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
@@ -166,6 +174,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.add_doc_cover_card/3)
     end
 
@@ -176,6 +185,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.remove_doc_cover_card/3)
     end
 
@@ -186,6 +196,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.reorder_doc_cover_cards/3)
     end
 
@@ -197,6 +208,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_cover_card_appearance/3)
     end
 
@@ -207,6 +219,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.pin_doc_to_cover/3)
     end
 
@@ -217,6 +230,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.unpin_doc_from_cover/3)
     end
 
@@ -227,6 +241,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.reorder_doc_cover_pinned_docs/3)
     end
 
@@ -238,6 +253,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_pinned_doc_appearance/3)
     end
   end

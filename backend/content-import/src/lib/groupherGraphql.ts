@@ -1,8 +1,16 @@
+/**
+ * Implements the Src Lib GroupherGraphql boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
 type TGraphQLError = { code?: unknown; message?: unknown }
 type TGraphQLPayload<T> = { data?: T | null; errors?: TGraphQLError[] }
@@ -21,10 +29,11 @@ export type TGroupherGraphQLOptions = {
   backendToken?: string
   fetchImpl?: typeof fetch
   graphqlEndpoint?: string
-  serviceIdentity?: string
+  serviceSubject?: string
   serviceScope?: string
 }
 
+/** Resolves delegation subject without leaking content import routing details to callers. */
 export const resolveDelegationSubject = async (backendToken: string): Promise<string | null> => {
   const data = await requestGroupherGraphQL<{
     sessionState?: { delegationSubject?: string | null; isValid?: boolean | null } | null
@@ -38,7 +47,7 @@ export const resolveDelegationSubject = async (backendToken: string): Promise<st
     {},
     {
       backendToken,
-      serviceIdentity: 'service:content-import',
+      serviceSubject: 'service:content-import',
       serviceScope: 'content-import:write',
     },
   )
@@ -49,7 +58,7 @@ export const resolveDelegationSubject = async (backendToken: string): Promise<st
     : null
 }
 
-let serviceTokenProvider: TServiceTokenProvider | undefined
+let serviceTokenProvider: TServiceAuthClient | undefined
 
 const configuredGraphQLEndpoint = (): string => {
   const endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim()
@@ -81,14 +90,15 @@ const formatGraphQLErrorMessage = (value: unknown): string | null => {
   return value == null ? null : String(value)
 }
 
+/** Runs the request groupher graph ql operation at the content import boundary. */
 export const requestGroupherGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown>,
   options: TGroupherGraphQLOptions,
 ): Promise<T> => {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (options.backendToken && options.serviceIdentity) {
-    serviceTokenProvider ??= createServiceTokenProviderFromEnv()
+  if (options.backendToken && options.serviceSubject) {
+    serviceTokenProvider ??= createServiceAuthClientFromEnv()
     const token = await serviceTokenProvider.getToken({
       resource: 'https://api.groupher.com/content-import',
       scopes: [options.serviceScope || 'content-import:write'],

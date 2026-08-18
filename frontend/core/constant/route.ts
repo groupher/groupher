@@ -8,10 +8,8 @@ export const APPLY = '/apply'
 export const FEEDBACK = '/home/post?for=feedback'
 export const DOCS = '/home/doc'
 
-export const DSB_SEG = 'dashboard'
-
 export const DSB_ROUTE = {
-  OVERVIEW: DSB_SEG,
+  OVERVIEW: 'overview',
   // basic-info
   INFO: 'info',
   SEO: 'seo',

@@ -1,11 +1,18 @@
 defmodule Helper.Cache do
   @moduledoc """
-  memory cache using cachex https://github.com/whitfin/cachex
+  Cachex-backed application cache facade with named-pool and expiry helpers.
+
+  Business position:
+
+      Domain or web caller
+        -> Cache
+        -> normalized value / infrastructure
   """
   import Cachex.Spec
 
   @cache_pool Helper.Cache.Config.pool()
 
+  @doc "Runs `config` through the public `Cache` boundary."
   def config(pool_name) do
     pool_config =
       Map.get(@cache_pool, pool_name) ||
@@ -75,6 +82,60 @@ defmodule Helper.Cache do
   end
 
   @doc """
+  Returns a cached value or loads and caches one value for a missing key.
+
+  The loader must return `{:ok, value}` or `{:error, reason}`. Only successful
+  values are cached. A global lock with a second cache check prevents multiple
+  callers from loading the same missing key concurrently on connected BEAM
+  nodes.
+  """
+  @spec get_or_fetch(
+          atom(),
+          atom() | String.t(),
+          keyword(),
+          (-> {:ok, any()} | {:error, any()})
+        ) :: {:ok, any()} | {:error, any()}
+  def get_or_fetch(pool, key, options, loader) when is_function(loader, 0) do
+    case get(pool, key) do
+      {:ok, value} ->
+        {:ok, value}
+
+      {:error, nil} ->
+        lock_id = {{__MODULE__, pool, key}, self()}
+
+        :global.trans(lock_id, fn ->
+          case get(pool, key) do
+            {:ok, value} ->
+              {:ok, value}
+
+            {:error, nil} ->
+              case safe_load(loader) do
+                {:ok, value} = result ->
+                  case put(pool, key, value, options) do
+                    {:ok, _} -> result
+                    {:error, reason} -> {:error, {:cache_write_failed, reason}}
+                  end
+
+                {:error, reason} ->
+                  {:error, reason}
+              end
+          end
+        end)
+    end
+  end
+
+  defp safe_load(loader) do
+    try do
+      loader.()
+    rescue
+      error -> {:error, {:exception, Exception.message(error)}}
+    catch
+      :exit, reason -> {:error, {:exit, reason}}
+      kind, reason -> {:error, {kind, reason}}
+    end
+  end
+
+  @doc """
   ## Example
   iex> Helper.Cache.put(a, "x")
   {:ok, "x"}
@@ -82,6 +143,8 @@ defmodule Helper.Cache do
   def put(pool, key, value) do
     Cachex.put(pool, key, value)
   end
+
+  def put(pool, key, value, []), do: put(pool, key, value)
 
   def put(pool, key, value, expire_sec: expire_sec) do
     Cachex.put(pool, key, value)
@@ -93,6 +156,7 @@ defmodule Helper.Cache do
     Cachex.expire(pool, key, :timer.minutes(expire_min))
   end
 
+  @doc "Runs `delete` through the public `Cache` boundary."
   def delete(pool, key), do: Cachex.del(pool, key)
 
   @doc """

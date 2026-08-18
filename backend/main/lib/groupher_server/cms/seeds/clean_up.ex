@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   Cleanup helpers for seed data reset.
 
   Use this only from seed/setup flows where destructive cleanup is expected.
+
+  Business position:
+
+      Seed task
+        -> CleanUp
+        -> CMS context
+        -> Repo
   """
 
   import Ecto.Query, warn: false
@@ -13,6 +20,17 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   alias CMS.Model.{Community, Post}
   alias Helper.{ORM, T}
 
+  @doc """
+  Deletes a community and its seeded post articles.
+
+  The community is found by slug and removed together with its `:post` thread
+  articles. Used by seed reset flows.
+
+  ## Examples
+
+      CMS.Seeds.CleanUp.community(:elixir)
+
+  """
   @spec community(atom()) :: T.domain_res(Community.t())
   def community(slug) do
     with {:ok, community} <- ORM.findby_delete(Community, %{slug: to_string(slug)}) do

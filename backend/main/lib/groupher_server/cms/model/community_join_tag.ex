@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinTag do
 
   The relation stores tag assignments by thread/source item so tag filtering does
   not need to mutate the source article row.
+
+  Business position:
+
+      CMS context
+        -> CommunityJoinTag schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

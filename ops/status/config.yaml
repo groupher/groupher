@@ -231,7 +231,7 @@ endpoints:
 
   - name: Dash Public Route
     group: Public paths
-    url: https://groupher.com/health/dash
+    url: https://dash.groupher.com/health
     interval: 2m
     conditions:
       - "[STATUS] == 200"

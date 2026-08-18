@@ -1,18 +1,42 @@
 defmodule GroupherServer.CMS.CommunityApplications.Review do
-  @moduledoc "Reviewer decisions and recovery transitions for community applications."
+  @moduledoc """
+  Reviewer decisions and recovery transitions for community applications.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Review
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
-  alias GroupherServer.CMS.{Const, Gate, CommunityApplications.Transitions}
+  alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo
 
   require Const
 
+  @doc """
+  Starts the review of an Application: moves it to `:reviewing` and clears
+  its slug claim expiry.
+
+  Requires a reviewer with the `community_application_review` passport grant
+  and an `expected_version` matching the current application version.
+
+  ## Examples
+
+      CMS.CommunityApplications.Review.start("capp_abc", %User{id: 1}, 1)
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec start(String.t(), User.t(), integer()) ::
           {:ok, CommunityApplication.t()} | {:error, term()}
   def start(public_ref, %User{} = reviewer, expected_version) do
@@ -91,7 +115,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
              Const.passport_action(:community_application_retry_creation)
            ),
          {:ok, application} <- fetch(public_ref),
-         {:ok, _slug} <- NamePolicy.validate(application.slug) do
+         {:ok, _slug} <- NamePolicy.check(application.slug, ignore_application_id: application.id) do
       operation_ref = Ecto.UUID.generate()
 
       transition(
@@ -231,7 +255,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   end
 
   defp review_authorized?(reviewer, action) do
-    case Gate.check_passport(reviewer, action, %{}) do
+    case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end

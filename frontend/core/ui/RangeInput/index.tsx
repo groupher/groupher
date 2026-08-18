@@ -51,6 +51,13 @@ type TRangeVars = CSSProperties & {
   width?: string
 }
 
+/**
+ * Renders an accessible range control with a visually adjusted track.
+ *
+ * The component keeps a local draft for pointer/keyboard interaction, reports
+ * intermediate changes through `onChange`, and reports committed values through
+ * `onChangeEnd` without making consumers reproduce those event semantics.
+ */
 const RangeInput: FC<TProps> = ({
   testid = 'range-input',
   id,

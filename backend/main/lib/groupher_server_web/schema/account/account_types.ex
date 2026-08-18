@@ -1,6 +1,16 @@
 defmodule GroupherServerWeb.Schema.Account.Types do
   @moduledoc """
-  accounts GraphQL commont types
+  Shared GraphQL object, input, filter, and enum types for the Accounts API.
+
+  These types project Accounts schemas into the stable browser/internal-service
+  contract and attach field-level resolvers for associations and viewer state.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 
@@ -218,9 +228,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     # field(:contents_watched_count, :integer)
 
     field(:source_contribute, :source_contribute)
-    field(:donate_member, :boolean)
-    field(:senior_member, :boolean)
-    field(:sponsor_member, :boolean)
   end
 
   object :browser_signin_result do

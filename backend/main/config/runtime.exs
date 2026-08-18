@@ -11,7 +11,7 @@ if System.get_env("WEB_ANALYSIS_API_TOKEN") do
   config :groupher_server, :web_analysis, api_token: System.get_env("WEB_ANALYSIS_API_TOKEN")
 end
 
-config :groupher_server, GroupherServerWeb.ServiceIdentity,
+config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
   issuer: System.get_env("SERVICE_AUTH_ISSUER") || service_auth_origin,
   jwks_url:
     System.get_env("SERVICE_AUTH_JWKS_URL") ||
@@ -24,7 +24,7 @@ config :groupher_server, GroupherServerWeb.ServiceIdentity,
     "phoenix:press-api"
   ]
 
-config :groupher_server, GroupherServer.ServiceIdentity.Client,
+config :groupher_server, GroupherServer.ServiceAuth.Client,
   token_endpoint:
     System.get_env("SERVICE_AUTH_TOKEN_ENDPOINT") || "#{service_auth_origin}/oauth2/token",
   client_id: System.get_env("SERVICE_AUTH_CLIENT_ID"),
@@ -44,9 +44,9 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() in [:prod, :seed_prod] do
-  config :groupher_server, :allow_test_service_identity, false
+  config :groupher_server, :allow_test_service_auth, false
 
-  if Application.get_env(:groupher_server, :allow_test_service_identity, false) do
+  if Application.get_env(:groupher_server, :allow_test_service_auth, false) do
     raise "test service identity must never be enabled in production"
   end
 

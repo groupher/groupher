@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunitySubscriber do
 
   Subscription rows connect users to communities and are the source for
   denormalized subscriber ids/counts on user and community meta.
+
+  Business position:
+
+      CMS context
+        -> CommunitySubscriber schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

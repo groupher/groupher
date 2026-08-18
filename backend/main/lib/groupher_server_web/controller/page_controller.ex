@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.PageController do
 
   It currently serves the default home page and acts as the HTTP entry for basic
   server-rendered view content.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> PageController
+        -> HTML/JSON response
   """
   use GroupherServerWeb, :controller
 

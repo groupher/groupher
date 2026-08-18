@@ -7,6 +7,7 @@ type TPayload = {
   fallback?: string
 }
 
+/** Runs the title slugify operation at the frontend shared boundary. */
 export const titleSlugify = async (req: Request) => {
   const payload = (await req.json().catch(() => ({}))) as TPayload
   const value = payload.value?.trim()

@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.States do
   @moduledoc """
   Article status and lifecycle helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> States
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -10,10 +18,11 @@ defmodule GroupherServer.CMS.Articles.States do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Comments.Write
+  alias CMS.Comments.Writer
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
-  alias CMS.{Communities, FrontDesk}
+  alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
+  alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}
@@ -24,10 +33,18 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
+  @doc """
+  Sets the category of a post and refreshes the question flag on its comments.
+
+  ## Examples
+
+      CMS.Articles.States.set_cat(post, :qa)
+
+  """
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}),
-         {:ok, _} <- Write.batch_update_question_flag(post, cat == @article_cat.qa) do
+         {:ok, _} <- Writer.batch_update_question_flag(post, cat == @article_cat.qa) do
       updated |> done
     end
   end
@@ -48,28 +65,36 @@ defmodule GroupherServer.CMS.Articles.States do
   end
 
   @spec update_edit_status(term()) :: T.domain_res(term())
-  def update_edit_status(%{meta: %Embeds.ArticleMeta{} = meta} = content) do
-    meta = meta |> Map.merge(%{is_edited: true})
-    ORM.update_meta(content, meta)
-  end
-
-  def update_edit_status(%{meta: nil} = content) do
-    meta = Embeds.ArticleMeta.default_meta() |> Map.merge(%{is_edited: true})
-    ORM.update_meta(content, meta)
-  end
+  def update_edit_status(%{meta: _} = content),
+    do: ORM.update_meta(content, %{is_edited: true})
 
   def update_edit_status(content), do: {:ok, content}
 
   @spec archive(atom()) :: T.domain_res(term())
+  def archive(:doc) do
+    now = Datetime.now(:second)
+    threshold = Datetime.shift(now, @archive_threshold[:default])
+
+    DocBranch
+    |> where([branch], branch.status == :active)
+    |> Repo.all()
+    |> Enum.reduce_while({:ok, 0}, fn branch, {:ok, archived_count} ->
+      case DocLifecycle.archive_before(branch, Doc, threshold, now) do
+        {:ok, count} -> {:cont, {:ok, archived_count + count}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
   def archive(thread) do
     with {:ok, info} <- match(thread) do
-      now = Datetime.now()
+      now = Datetime.now(:second)
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
       archive_threshold = Datetime.shift(now, threshold)
 
-      info.model
-      |> where([article], article.inserted_at < ^archive_threshold)
-      |> Repo.update_all(set: [is_archived: true, archived_at: now])
+      Lifecycle.ensure_thread_backfill(thread, now)
+
+      Lifecycle.archive_before(thread, info.model, archive_threshold, now)
       |> done()
     end
   end

@@ -2,12 +2,14 @@ import { THEME_FIRST_PAINT_STYLE_ID } from '~/const/theme'
 
 type TCancel = () => void
 
+/** Runs the remove theme first paint vars operation at the frontend shared boundary. */
 export const removeThemeFirstPaintVars = (): void => {
   if (typeof document === 'undefined') return
 
   document.getElementById(THEME_FIRST_PAINT_STYLE_ID)?.remove()
 }
 
+/** Runs the schedule remove theme first paint vars operation at the frontend shared boundary. */
 export const scheduleRemoveThemeFirstPaintVars = (): TCancel => {
   if (typeof window === 'undefined') return () => {}
 

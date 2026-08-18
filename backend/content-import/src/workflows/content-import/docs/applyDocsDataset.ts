@@ -27,7 +27,7 @@ export type TApplyDocsDatasetInput = {
 const applyStep = async (input: TApplyDocsDatasetInput): Promise<void> => {
   'use step'
 
-  const serviceIdentity = 'service:content-import'
+  const serviceSubject = 'service:content-import'
   await runPreviewDocBulkImport(
     input.community,
     input.jobRef,
@@ -35,16 +35,16 @@ const applyStep = async (input: TApplyDocsDatasetInput): Promise<void> => {
     input.attemptRef,
     input.sourceRefs,
     getPreviewStore(),
-    { serviceIdentity },
+    { serviceSubject },
   )
 }
 
 const failStep = async (input: TApplyDocsDatasetInput, message: string): Promise<void> => {
   'use step'
 
-  const serviceIdentity = 'service:content-import'
+  const serviceSubject = 'service:content-import'
   await failDocImport(input.community, input.jobRef, 'doc_import_workflow_failed', message, {
-    serviceIdentity,
+    serviceSubject,
   })
 }
 

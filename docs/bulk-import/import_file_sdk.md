@@ -275,23 +275,24 @@ WorkflowRun automatically: completed
 建议使用通用 Content Import prefix；首期其中只有 `DocsDataset`：
 
 ```text
-content-import/previews/{previewRef}/
-|-- preview-record.json
-|-- analysis-run.json
-`-- attempts/
-    `-- {attemptRef}/
-        |-- dataset/
-        |   |-- manifest.json
-        |   |-- analysis.json
-        |   |-- tree.json
-        |   |-- bodies/
-        |   |   |-- {encodedSourceRef}
-        |   |   `-- ...
-        |   |-- bad-smells.json
-        |   `-- optional-streams/     # future；首期不创建空目录
-        |-- review/
-        |   `-- target-preview.json
-        `-- ready.json
+content-import/previews/
+|-- _preview-records/v1/{previewRef}.json  # canonical PreviewRecord catalog
+`-- {previewRef}/
+    |-- analysis-run.json
+    `-- attempts/
+        `-- {attemptRef}/
+            |-- dataset/
+            |   |-- manifest.json
+            |   |-- analysis.json
+            |   |-- tree.json
+            |   |-- bodies/
+            |   |   |-- {encodedSourceRef}
+            |   |   `-- ...
+            |   |-- bad-smells.json
+            |   `-- optional-streams/     # future；首期不创建空目录
+            |-- review/
+            |   `-- target-preview.json
+            `-- ready.json
 ```
 
 规则：
@@ -301,7 +302,7 @@ content-import/previews/{previewRef}/
 - `ready.json` 位于 attempt 内，是完整 Review artifact 的最终完成凭证；根目录不维护“哪个 retry 获胜”的可变指针。
 - `ready.json` 至少绑定 `attemptRef/datasetManifestHash/targetPreviewHash/targetRevision`，且其内容在重试间保持确定性。
 - source object key 使用安全编码后的 `sourceRef`，不能直接拼接未经校验的仓库路径。
-- `preview-record.json` 是不可变的产品侧授权记录，不是 Workflow Session；它保存 owner、community、TTL、requested source 和预先固定的 `attemptRef`。
+- `_preview-records/v1/{previewRef}.json` 是不可变的产品侧授权记录和清理目录，不是 Workflow Session；它保存 owner、community、TTL、requested source 和预先固定的 `attemptRef`。新 Preview 只写这一份 canonical record，避免 catalog/root 双写竞态；旧 `{previewRef}/preview-record.json` 仅用于兼容回填和按 ref 读取时的自愈。
 - `analysis-run.json` 是 write-once 的 WorkflowRun 关联；它不复制 Step 状态、retry 历史或可从 Workflow/Job 查询到的错误状态。
 - 用户确认后由 Phoenix ImportJob 保存 `previewRef/datasetRef` 的一次性关联，不回写可变 Blob session，也不在 PreviewRecord 中累积 `publishRunRef/jobRef`。
 - 不在 key、metadata 或 URL 中放 token、用户输入的绝对路径或私有 credential。

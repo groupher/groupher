@@ -1,6 +1,7 @@
 import type { CommunityApplication } from '../spec'
 import { clientGraphQL } from './graphql'
 
+/** Runs the submit application operation at the frontend shared boundary. */
 export const submitApplication = async (
   input: {
     title: string
@@ -25,6 +26,7 @@ export const submitApplication = async (
   return result.submitCommunityApplication
 }
 
+/** Runs the mutate review application operation at the frontend shared boundary. */
 export const mutateReviewApplication = async (
   action: 'start' | 'approve' | 'reject' | 'retry_creation' | 'retry_setup' | 'cancel',
   ref: string,

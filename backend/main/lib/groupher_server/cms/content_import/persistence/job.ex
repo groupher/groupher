@@ -3,6 +3,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job do
   Persisted execution state for one confirmed Docs import preview.
 
   See `docs/bulk-import/article-publish-import-refactor.md` for the Job state machine.
+
+  Business position:
+
+      Dashboard
+        -> Content Import service
+        -> CMS.ContentImport
+        -> Job
+        -> Repo
   """
 
   use Ecto.Schema

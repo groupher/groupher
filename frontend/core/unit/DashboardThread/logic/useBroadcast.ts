@@ -17,6 +17,7 @@ type TRet = TBroadcastConf & {
   broadcastOnCancel: (isArticle?: boolean) => void
 }
 
+/** Exposes broadcast state and actions through the shared React hook boundary. */
 export default function useBroadcast(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged, onSave } = useHelper()

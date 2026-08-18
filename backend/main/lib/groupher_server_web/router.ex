@@ -7,8 +7,15 @@ defmodule GroupherServerWeb.Router do
       /api/og-info
       /graphiql
 
-  Frontend application routes are owned by the Next.js apps; this router keeps
-  only backend HTTP surfaces that Phoenix serves directly.
+  Frontend application routes are owned by the Next.js and TanStack Start apps;
+  this router keeps only backend HTTP surfaces that Phoenix serves directly.
+
+  Business position:
+
+      HTTP client
+        -> Phoenix Endpoint
+        -> Router pipeline
+        -> page / health / OG / Absinthe GraphQL
   """
 
   use GroupherServerWeb, :router

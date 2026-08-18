@@ -3,7 +3,15 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Model.{ArtimentMention, AuditLog, Comment, Post, TrashAction, TrashedArticle}
+  alias CMS.Model.{
+    ArticleLifecycle,
+    ArtimentMention,
+    AuditLog,
+    Comment,
+    Post,
+    TrashAction,
+    TrashedArticle
+  }
 
   @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 
@@ -114,6 +122,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     refute Repo.get(Post, post.id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
+    refute Repo.get_by(ArticleLifecycle,
+             community_id: community.id,
+             thread: :post,
+             article_hash_id: post.article_hash_id
+           )
+
     assert Repo.get_by(AuditLog,
              action: "article.permanently_deleted",
              resource_ref: post.article_hash_id
@@ -220,7 +234,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     {_community, doc, _attrs, user} = mock_article(:doc)
 
     assert {:error, {:custom, message}} = CMS.Articles.trash(doc, user)
-    assert message =~ "Tree node"
+    assert message =~ "Docs Tree lifecycle"
   end
 
   test "Trash and restore update community counters for ordinary Article threads" do

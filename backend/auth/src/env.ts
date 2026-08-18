@@ -1,9 +1,20 @@
+/**
+ * Loads and validates runtime environment values for Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { config } from 'dotenv'
 
-const cwd = process.cwd()
-const authRoot = path.basename(cwd) === 'auth' ? cwd : path.join(cwd, 'backend/auth')
+const authRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 config({
   path: [

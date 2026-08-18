@@ -119,12 +119,14 @@ const getPreviewReadyState = (key: string): boolean => previewStatus.get(key) ==
 
 const getPreviewIntentKey = (): string | null => previewIntentKey
 
+/** Runs the set preview intent key operation at the frontend shared boundary. */
 export const setPreviewIntentKey = (key: string): void => {
   if (previewIntentKey === key) return
   previewIntentKey = key
   emit()
 }
 
+/** Runs the clear preview intent key operation at the frontend shared boundary. */
 export const clearPreviewIntentKey = (key?: string): void => {
   if (!previewIntentKey) return
   if (key && previewIntentKey !== key) return
@@ -168,6 +170,7 @@ export const usePreviewCacheState = <
   )
 }
 
+/** Exposes preview intent key state and actions through the shared React hook boundary. */
 export const usePreviewIntentKey = (): string | null => {
   const version = useSyncExternalStore(
     subscribe,

@@ -1,3 +1,14 @@
+/**
+ * Implements the App Page boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 

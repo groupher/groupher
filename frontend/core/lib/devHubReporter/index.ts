@@ -24,6 +24,7 @@ type TChromiumPerformance = Performance & {
   }
 }
 
+/** Runs the start dev hub reporter operation at the frontend shared boundary. */
 export function startDevHubReporter({ serviceId, endpoint }: TReporterOptions): () => void {
   const hubUrl = normalizeHubUrl(endpoint)
   const key = `${serviceId}:${hubUrl}`

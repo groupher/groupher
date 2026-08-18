@@ -1,5 +1,14 @@
 defmodule Mix.Tasks.SearchArtiments.Reindex do
-  @moduledoc "Configures the active search index and rebuilds all Article records."
+  @moduledoc """
+  Configures the active search index and rebuilds all Article records.
+
+  Business position:
+
+      Operator
+        -> Mix task / Reindex
+        -> context / service
+        -> terminal output
+  """
 
   use Mix.Task
 

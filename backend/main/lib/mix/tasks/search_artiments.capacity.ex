@@ -1,5 +1,14 @@
 defmodule Mix.Tasks.SearchArtiments.Capacity do
-  @moduledoc "Prints source record and byte counts for Search Artiments planning."
+  @moduledoc """
+  Prints source record and byte counts for Search Artiments planning.
+
+  Business position:
+
+      Operator
+        -> Mix task / Capacity
+        -> context / service
+        -> terminal output
+  """
 
   use Mix.Task
 

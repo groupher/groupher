@@ -13,6 +13,13 @@ defmodule GroupherServerWeb.Middleware.PutCurrentUser do
 
   Use this middleware when downstream resolver code expects the viewer in the
   argument map instead of reading from the Absinthe context directly.
+
+  Business position:
+
+      Resolver result
+        -> PutCurrentUser middleware
+        -> next middleware
+        -> GraphQL field result
   """
   @behaviour Absinthe.Middleware
 

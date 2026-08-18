@@ -58,6 +58,21 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     layout: [:custom_theme_preset]
   }
 
+  @doc """
+  Extracts the section payload from incoming dashboard args.
+
+  Replace-style sections return their whole list payload, while embed sections
+  return the remaining sparse args map.
+
+  ## Examples
+
+      SectionPayload.section_args(:header_links, %{header_links: [%{id: "1"}], community: community})
+      #=> [%{id: "1"}]
+
+      SectionPayload.section_args(:seo, %{seo: %{seo_enable: true}, community: community})
+      #=> %{seo: %{seo_enable: true}}
+
+  """
   @spec section_args(atom(), map()) :: map() | list() | nil
   def section_args(key, args) when key in @replace_section_fields do
     args

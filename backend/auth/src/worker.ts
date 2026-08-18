@@ -1,3 +1,14 @@
+/**
+ * Exposes the Auth Cloudflare Worker entrypoint.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 type TWorkerEnv = {
   AUTH_OAUTH_RATE_LIMITER?: {
     limit(input: { key: string }): Promise<{ success: boolean }>

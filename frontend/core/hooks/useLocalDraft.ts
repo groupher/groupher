@@ -22,6 +22,7 @@ type TRet<T> = {
  */
 export default function useLocalDraft<K extends TFieldKey>(field: K): TRet<TDsbFieldMap[K]>
 export default function useLocalDraft<T>(source: T, original: T): TRet<T>
+/** Exposes local draft state and actions through the shared React hook boundary. */
 export default function useLocalDraft<K extends TFieldKey, T>(
   fieldOrSource: K | T,
   maybeOriginal?: T,

@@ -1,6 +1,7 @@
 import type { TDocDraftAuthor } from '../../Editor/store/spec'
 import { DOC_INFO_EMPTY } from '../constant'
 
+/** Runs the format doc info date operation at the frontend shared boundary. */
 export const formatDocInfoDate = (value?: string | null): string => {
   if (!value) return DOC_INFO_EMPTY
 
@@ -19,9 +20,11 @@ export const formatDocInfoDate = (value?: string | null): string => {
     .replace(',', '')
 }
 
+/** Returns doc info author name for the frontend shared workflow. */
 export const getDocInfoAuthorName = (author?: TDocDraftAuthor | null): string =>
   author?.nickname || author?.login || ''
 
+/** Runs the format doc info slug operation at the frontend shared boundary. */
 export const formatDocInfoSlug = (slug?: string | null): string => {
   if (!slug) return DOC_INFO_EMPTY
 

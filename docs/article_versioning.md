@@ -1,9 +1,10 @@
 # 文章版本控制架构
 
-> 状态：已接受实施。该项目尚未上线，因此
-> 如果需要，实施可以使用直接的一次性数据迁移。运行时
-> 兼容性分支、旧别名、双读路径和双写路径
-> 被明确禁止。
+> 状态：已被 [Gate V3](./community/gate_v3.md) 取代。
+>
+> 本文仅保留历史方案背景，不再作为当前 Article / Doc Versioning 的实现或验收依据。当前普通 Article 只使用 Article Core 的 Draft/Public；Branch、DocSnapshot、Doc Tree 和 Release 仅属于 Doc。
+
+> 历史状态：本文方案曾被接受实施，后续已由 Gate V3 重新划分 Article Core 与 Doc 专属能力。
 
 ## 1. 目标
 

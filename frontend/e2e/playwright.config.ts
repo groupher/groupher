@@ -21,12 +21,12 @@ const appConfig = {
   },
   dashboard: {
     cmd: `yarn exec cross-env PORT=3101 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-dashboard dev`,
-    url: 'http://localhost:3101',
+    url: 'http://dashboard.groupher.localhost:3101',
     testDir: path.resolve('frontend/e2e/tests/dashboard'),
   },
   dash: {
     cmd: `yarn exec cross-env PORT=3103 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-dash dev`,
-    url: 'http://localhost:3103',
+    url: 'http://dash.groupher.localhost:3103',
     testDir: path.resolve('frontend/e2e/tests/dash'),
   },
   landing: {

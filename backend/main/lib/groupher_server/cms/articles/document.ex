@@ -1,11 +1,18 @@
 defmodule GroupherServer.CMS.Articles.Document do
   @moduledoc """
   CRUD operations for article documents.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Document
+        -> Repo / domain event
   """
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
-
   alias CMS.Artiment.BodyBag
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, Doc}

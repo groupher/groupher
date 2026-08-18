@@ -48,6 +48,7 @@ type TRet = {
   isModerator: (user: TUser | null) => boolean
 }
 
+/** Exposes admins state and actions through the shared React hook boundary. */
 export default function useAdmins(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()

@@ -1,3 +1,14 @@
+/**
+ * Starts the local Node server for Gateway.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import { serve } from '@hono/node-server'
 
 import './env'

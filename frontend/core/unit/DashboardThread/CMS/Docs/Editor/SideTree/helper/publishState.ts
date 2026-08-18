@@ -28,5 +28,6 @@ export const needsPublishAttention = (state?: TDocTreeNodePublishState | null): 
   return state?.hasDraft === true || state?.hasUnpublishedChanges === true
 }
 
+/** Reports whether public doc at the frontend shared boundary. */
 export const isPublicDoc = (state?: TDocTreeNodePublishState | null): boolean =>
   getDocPublishStatus(state) === DOC_PUBLISH_STATUS.PUBLIC

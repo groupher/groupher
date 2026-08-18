@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Search.User do
 
   This is intentionally bounded for mention pickers and small search surfaces,
   not a full text-search pipeline.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> User
+        -> Repo
   """
 
   import Ecto.Query, warn: false

@@ -1,3 +1,14 @@
+/**
+ * Composes the Gateway HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import { GROUPHER_AUTH_CSRF_HEADER, GROUPHER_AUTH_CSRF_VALUE } from '@groupher/contracts/auth'
 import { Hono } from 'hono'
 
@@ -12,6 +23,8 @@ type TOptions = {
 
 const invalidGraphQLRequest = (message: string) =>
   Response.json({ errors: [{ extensions: { code: 'INVALID_CSRF' }, message }] }, { status: 400 })
+
+const notFound = () => new Response('Not Found', { status: 404 })
 
 const validateBrowserGraphQLRequest = (
   request: Request,
@@ -28,6 +41,7 @@ const validateBrowserGraphQLRequest = (
   return null
 }
 
+/** Creates the gateway application with injectable runtime dependencies. */
 export const createApp = ({ fetcher }: TOptions = {}) => {
   const app = new Hono()
 
@@ -74,7 +88,12 @@ export const createApp = ({ fetcher }: TOptions = {}) => {
     })
 
     const invalidRequest = validateBrowserGraphQLRequest(context.req.raw, target)
-    return invalidRequest || proxyRequest(context.req.raw, target, { fetcher })
+    return (
+      invalidRequest ||
+      (target.targetKind === 'not-found'
+        ? notFound()
+        : proxyRequest(context.req.raw, target, { fetcher }))
+    )
   })
 
   return app

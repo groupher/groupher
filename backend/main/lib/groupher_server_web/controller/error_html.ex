@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.ErrorHTML do
 
   It translates template names such as `"404.html"` into human-readable status
   text for browser-facing responses.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> ErrorHTML
+        -> HTML/JSON response
   """
   use GroupherServerWeb, :html
 

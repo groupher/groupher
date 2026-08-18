@@ -7,6 +7,13 @@ defmodule GroupherServerWeb.Middleware.CountLength do
 
   Use this only at schema fields whose public contract is an integer count, not
   at fields that should expose the list itself.
+
+  Business position:
+
+      Resolver result
+        -> CountLength middleware
+        -> next middleware
+        -> GraphQL field result
   """
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function

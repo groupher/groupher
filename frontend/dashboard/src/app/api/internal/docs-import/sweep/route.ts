@@ -1,10 +1,10 @@
 import {
   bearerToken,
-  createServiceTokenVerifier,
+  createServiceAuthVerifier,
   serviceTokenErrorStatus,
 } from '@groupher/service/auth'
 
-import { dashboardToContentImportHeaders } from '../../../../../lib/serviceIdentity'
+import { dashboardToContentImportHeaders } from '../../../../../lib/serviceAuth'
 
 /**
  * Cron-only cleanup boundary for expired PreviewStore prefixes.
@@ -35,7 +35,7 @@ export const POST = async (request: Request): Promise<Response> => {
   const token = bearerToken(request.headers.get('authorization') || undefined)
   if (!token) return Response.json({ ok: false }, { status: 401 })
   try {
-    const verifier = createServiceTokenVerifier({
+    const verifier = createServiceAuthVerifier({
       audience: 'dashboard:scheduler-api',
       issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:

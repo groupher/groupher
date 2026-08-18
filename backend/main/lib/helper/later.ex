@@ -1,6 +1,12 @@
 defmodule Helper.Later do
   @moduledoc """
   Background jobs support for fire-and-forget function calls.
+
+  Business position:
+
+      Domain or web caller
+        -> Later
+        -> normalized value / infrastructure
   """
 
   alias GroupherServer.Jobs

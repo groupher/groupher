@@ -18,6 +18,7 @@ const validLinks = (links: readonly TLinkItem[]): TLinkItem[] =>
 // Footer group and footer oneline share the low-level link item editor actions.
 // Group mode uses the default dashboard footer field; oneline passes an adapter
 // that converts the temporary one-group draft back to footerOnelineLinks.
+/** Exposes footer editor actions state and actions through the shared React hook boundary. */
 export default function useFooterEditorActions(
   sourceLinks: readonly TLinkItem[],
   onEditLinks?: (links: readonly TLinkItem[]) => void,

@@ -5,6 +5,13 @@ defmodule GroupherServer.Accounts.Model.User do
   The user row owns identity/profile basics and embeds denormalized account state
   such as mailbox, meta, achievements, and contribution summaries. Domain
   modules should update those derived embeds through account helpers.
+
+  Business position:
+
+      Accounts context
+        -> User schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

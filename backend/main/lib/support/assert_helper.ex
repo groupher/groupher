@@ -4,6 +4,12 @@ defmodule GroupherServer.Test.AssertHelper do
   tests that require check from graphql response
 
   NOTE: we use POST in query_get, see https://github.com/coderplanets/coderplanets_server/issues/259
+
+  Business position:
+
+      Test case
+        -> AssertHelper
+        -> endpoint / fixture / Repo
   """
 
   import Helper.ErrorCode, only: [ecode: 1]
@@ -246,7 +252,7 @@ defmodule GroupherServer.Test.AssertHelper do
           conn =
             Plug.Conn.put_req_header(
               conn,
-              "x-groupher-test-service-identity",
+              "x-groupher-test-service-auth",
               "enabled"
             )
 

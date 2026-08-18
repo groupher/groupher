@@ -1,3 +1,14 @@
+/**
+ * Starts the local Node server for Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { serve } from '@hono/node-server'
 
 import './env'

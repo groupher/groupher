@@ -1,3 +1,14 @@
+/**
+ * Forwards WebSocket upgrades from Gateway to the selected upstream service.
+ *
+ * Business position:
+ *
+ *   Browser / service
+ *     -> Gateway module
+ *     -> selected Groupher application
+ *     -> proxied response
+ */
+
 import type { IncomingMessage } from 'node:http'
 import net from 'node:net'
 import type { Duplex } from 'node:stream'
@@ -12,6 +23,7 @@ const firstHeaderValue = (value: string | string[] | undefined): string | null =
   return value?.split(',')[0]?.trim() || null
 }
 
+/** Builds upgrade target url from typed gateway inputs. */
 export const buildUpgradeTargetUrl = (request: IncomingMessage): URL => {
   const requestUrl = new URL(request.url || '/', 'http://gateway.local')
   const target = resolveGatewayTarget({
@@ -23,9 +35,14 @@ export const buildUpgradeTargetUrl = (request: IncomingMessage): URL => {
     referer: firstHeaderValue(request.headers.referer),
   })
 
+  if (target.targetKind === 'not-found') {
+    return new URL('http://gateway.invalid')
+  }
+
   return target.targetUrl
 }
 
+/** Builds upgrade header lines from typed gateway inputs. */
 export const buildUpgradeHeaderLines = (headers: TUpgradeHeaders, targetUrl: URL): string[] => {
   const forwardedHost =
     firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
@@ -52,12 +69,17 @@ export const buildUpgradeHeaderLines = (headers: TUpgradeHeaders, targetUrl: URL
   return lines
 }
 
+/** Runs the proxy upgrade request operation at the gateway boundary. */
 export const proxyUpgradeRequest = (
   request: IncomingMessage,
   socket: Duplex,
   head: Buffer,
 ): void => {
   const targetUrl = buildUpgradeTargetUrl(request)
+  if (targetUrl.hostname === 'gateway.invalid') {
+    socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
+    return
+  }
   const port = Number.parseInt(
     targetUrl.port || (targetUrl.protocol === 'https:' ? '443' : '80'),
     10,

@@ -1,18 +1,19 @@
 import type { TTransKey } from '~/spec'
 
 import { REVISION_LABEL_KEY } from '../constant'
-import type { TArticleSnapshotAuthor } from './spec'
+import type { TDocSnapshotAuthor } from './spec'
 
 type TTranslate = (key: TTransKey) => string
 
-export const getRevisionAuthorName = (
-  t: TTranslate,
-  author?: TArticleSnapshotAuthor | null,
-): string => author?.nickname || author?.login || t(REVISION_LABEL_KEY.UNKNOWN_AUTHOR)
+/** Returns revision author name for the frontend shared workflow. */
+export const getRevisionAuthorName = (t: TTranslate, author?: TDocSnapshotAuthor | null): string =>
+  author?.nickname || author?.login || t(REVISION_LABEL_KEY.UNKNOWN_AUTHOR)
 
-export const getRevisionAuthorInitial = (author?: TArticleSnapshotAuthor | null): string =>
+/** Returns revision author initial for the frontend shared workflow. */
+export const getRevisionAuthorInitial = (author?: TDocSnapshotAuthor | null): string =>
   (author?.nickname || author?.login || '').trim().charAt(0).toUpperCase() || '?'
 
+/** Runs the format relative revision time operation at the frontend shared boundary. */
 export const formatRelativeRevisionTime = (t: TTranslate, datetime?: string | null): string => {
   if (!datetime) return t(REVISION_LABEL_KEY.UNKNOWN_TIME)
 

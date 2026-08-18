@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.DocCover.Sync do
   Cards are explicitly selected Groups. Publishing a Page must never create a
   Card implicitly; the read projection derives current Card items from the
   published navigation tree.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Sync
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false

@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityCategory do
 
   The relation supports category-filtered community listing without embedding
   category state into the community row.
+
+  Business position:
+
+      CMS context
+        -> CommunityCategory schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -7,6 +7,12 @@ defmodule Helper.ContentThumbnail do
   tokens by the frontend.
 
   See `docs/bulk-import/article-publish-import-refactor.md` for ArticleDocument ownership.
+
+  Business position:
+
+      Domain or web caller
+        -> ContentThumbnail
+        -> normalized value / infrastructure
   """
 
   @version 1

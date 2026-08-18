@@ -291,24 +291,27 @@ previewStore.markReady(...)
 ### 5.3 对象布局
 
 ```text
-content-import/previews/{previewRef}/
-|-- preview-record.json
-|-- analysis-run.json
-`-- attempts/
-    `-- {attemptRef}/
-        |-- dataset/
-        |   |-- manifest.json
-        |   |-- analysis.json
-        |   |-- tree.json
-        |   |-- bodies/
-        |   |-- bad-smells.json
-        |   `-- optional-streams/     # future；首期不创建空目录
-        |-- review/
-        |   `-- target-preview.json
-        `-- ready.json
+content-import/previews/
+|-- _preview-records/v1/{previewRef}.json  # canonical PreviewRecord catalog
+`-- {previewRef}/
+    |-- analysis-run.json
+    `-- attempts/
+        `-- {attemptRef}/
+            |-- dataset/
+            |   |-- manifest.json
+            |   |-- analysis.json
+            |   |-- tree.json
+            |   |-- bodies/
+            |   |-- bad-smells.json
+            |   `-- optional-streams/     # future；首期不创建空目录
+            |-- review/
+            |   `-- target-preview.json
+            `-- ready.json
 ```
 
 `target-preview.json` 是 Phoenix 根据 SourceTree 和当前 Groupher 状态生成的 Review 结果，不属于只表达来源事实的 `DocsDataset`，因此放在 `review/`。`ready.json` 必须最后写，并至少绑定 `attemptRef`、`datasetManifestHash`、`targetPreviewHash` 和 `targetRevision`。`markReady` 的幂等语义固定为：对象不存在则创建；已存在且这些稳定字段完全相同则视为成功；已存在但内容不同则报告 invariant error。
+
+`_preview-records/v1/{previewRef}.json` 同时是 PreviewRecord 的唯一事实源和 TTL sweeper 的独立枚举目录。旧 `{previewRef}/preview-record.json` 只作为迁移输入保留；回填失败可重试，按 ref 读取旧记录也会补写 canonical catalog record。
 
 Files SDK 的统一 `upload()` 不承诺所有 provider 都有 conditional-create/CAS。首期通过固定 `attemptRef`、单个活动 Workflow run、content-addressed immutable shards 和 attempt-local ready receipt 避免业务依赖根指针 CAS；若某个 PreviewStore provider 仍需要严格 create-if-absent，只能在 PreviewStore 内通过 provider `raw`/原生条件写实现，不能泄漏到 Analyzer 或 Workflow 业务代码。
 

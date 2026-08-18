@@ -1,5 +1,7 @@
 /** Candidate-file admission rules for bounded repository extraction.
  *
+ *   GitHub tree -> candidate filter -> bounded text/config files -> SourceWorkspace
+ *
  * @see docs/bulk-import/bulk-import.md
  */
 import path from 'node:path'

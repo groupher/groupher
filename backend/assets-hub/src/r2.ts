@@ -1,3 +1,14 @@
+/**
+ * Implements the Src R2 boundary inside Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { randomUUID } from 'node:crypto'
 
 import {
@@ -32,6 +43,7 @@ const requiredEnv = (environment: Record<string, string | undefined>, name: stri
   return value
 }
 
+/** Returns r2 config for the assets hub workflow. */
 export const getR2Config = (environment: Record<string, string | undefined> = process.env) => {
   const endpoint = requiredEnv(environment, 'ASSETS_R2_ENDPOINT')
   if (endpoint.includes(requiredEnv(environment, 'ASSETS_R2_BUCKET'))) {
@@ -47,6 +59,7 @@ export const getR2Config = (environment: Record<string, string | undefined> = pr
   } satisfies TR2Config
 }
 
+/** Creates r2 client from typed assets hub inputs. */
 export const createR2Client = (config = getR2Config()) =>
   new S3Client({
     credentials: {
@@ -72,6 +85,7 @@ const assertHeadObject = (
   }
 }
 
+/** Creates presigned put url from typed assets hub inputs. */
 export const createPresignedPutUrl = async ({
   checksumSha256,
   contentType,
@@ -98,6 +112,7 @@ export const createPresignedPutUrl = async ({
   )
 }
 
+/** Creates presigned get url from typed assets hub inputs. */
 export const createPresignedGetUrl = async ({
   expiresInSeconds = 300,
   key,
@@ -118,6 +133,7 @@ export const createPresignedGetUrl = async ({
   )
 }
 
+/** Runs the head r2 object operation at the assets hub boundary. */
 export const headR2Object = async (key: string) => {
   const config = getR2Config()
   const client = createR2Client(config)
@@ -125,6 +141,7 @@ export const headR2Object = async (key: string) => {
   return client.send(new HeadObjectCommand({ Bucket: config.bucket, Key: key }))
 }
 
+/** Returns r2 object bytes for the assets hub workflow. */
 export const getR2ObjectBytes = async (key: string) => {
   const config = getR2Config()
   const client = createR2Client(config)
@@ -136,6 +153,7 @@ export const getR2ObjectBytes = async (key: string) => {
   return Buffer.from(bytes)
 }
 
+/** Runs the smoke r2 operation at the assets hub boundary. */
 export const smokeR2 = async (): Promise<TR2SmokeResult> => {
   const config = getR2Config()
   const client = createR2Client(config)

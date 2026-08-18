@@ -1,5 +1,7 @@
 # Doc ID 统一重构方案
 
+> 状态：已被 [Gate V3](./community/gate_v3.md) 取代，仅保留历史 ID 统一方案。本文中的 ArticleWorkspace、ArticleSnapshot 和旧 FK 关系不再作为当前数据模型或验收依据。
+
 ---
 
 ## 一、问题

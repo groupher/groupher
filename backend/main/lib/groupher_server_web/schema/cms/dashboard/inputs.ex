@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
   @moduledoc """
   GraphQL dashboard input types.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Inputs
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Absinthe.Schema.Notation
 

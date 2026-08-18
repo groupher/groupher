@@ -1,6 +1,8 @@
 /**
  * Framework detection over bounded SourceWorkspace metadata.
  *
+ *   SourceWorkspace markers -> framework detector -> adapter name -> source analyzer
+ *
  * @see docs/bulk-import/bulk-import.md
  */
 import type { TSourceWorkspace } from '../contracts'

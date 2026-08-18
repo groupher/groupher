@@ -17,6 +17,13 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
 
   `target_type + target_id` deliberately stays generic so article threads and
   Tree snapshots can share one review queue without mixing their storage models.
+
+  Business position:
+
+      CMS context
+        -> PublishRequest schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

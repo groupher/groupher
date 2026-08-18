@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinPost do
 
   The join keeps post membership explicit for community feeds, tag stats, and
   moderation queries.
+
+  Business position:
+
+      CMS context
+        -> CommunityJoinPost schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

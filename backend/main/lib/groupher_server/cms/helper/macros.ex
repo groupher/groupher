@@ -1,8 +1,15 @@
 defmodule GroupherServer.CMS.Helper.Macros do
   @moduledoc """
-  macros for define article related fields in CMS models
+  Defines shared artiment schema fields and CMS changeset validation macros.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Macros
+        -> Repo / external boundary
   """
-    import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
+  import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
@@ -10,14 +17,16 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   alias CMS.Model.{
     ArticleCollect,
-    ArticleBranch,
     ArticleUpvote,
+    ArticleLifecycle,
     Author,
     Comment,
     Community,
     CommunityJoinTag,
     CommunityTag,
     CoverEditInfo,
+    DocBranch,
+    DocLifecycle,
     Embeds
   }
 
@@ -34,7 +43,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
         body: quote(do: String.t() | nil),
         body_html: quote(do: String.t() | nil),
         is_pinned: quote(do: boolean()),
-        is_deleted: quote(do: boolean()),
         pending: quote(do: integer())
       ] ++ extra_fields
 
@@ -149,9 +157,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   TABLE: "cms_[article]s"
   -----
-  add(:upvotes_count, :integer, default: 0)
-  add(:collects_count, :integer, default: 0)
-
   ## TABLE: "article_upvotes" and TABLE: "article_collects"
   -----
   add(:[article]_id, references(:cms_[article]s, on_delete: :delete_all))
@@ -159,10 +164,11 @@ defmodule GroupherServer.CMS.Helper.Macros do
   defmacro upvote_and_collect_fields do
     quote do
       has_many(:upvotes, {"article_upvotes", ArticleUpvote})
-      field(:upvotes_count, :integer, default: 0)
-
       has_many(:collects, {"article_collects", ArticleCollect})
-      field(:collects_count, :integer, default: 0)
+
+      # Projection-backed response fields; no columns are persisted on the article table.
+      field(:upvotes_count, :integer, default: 0, virtual: true)
+      field(:collects_count, :integer, default: 0, virtual: true)
     end
   end
 
@@ -179,8 +185,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
       :community_id,
       :comments_count,
       :comments_participants_count,
-      :upvotes_count,
-      :collects_count,
       :active_at,
       :pending
     ]
@@ -194,20 +198,19 @@ defmodule GroupherServer.CMS.Helper.Macros do
   """
   @spec article_version_cast_fields() :: [atom()]
   def article_version_cast_fields do
-    [:article_hash_id, :branch_id, :stage, :body_hash, :schema_version]
+    [:article_hash_id, :stage, :body_hash, :schema_version, :version]
   end
 
   @doc """
-  Adds the shared logical identity and current branch/stage coordinate.
+  Adds the ordinary Article logical identity and current stage coordinate.
 
-      article_hash_id + branch_id + stage
+      article_hash_id + stage
                      |
-                     +--> exactly one current row per stage in a branch
+                     +--> exactly one current row per Community and stage
   """
   defmacro article_version_fields do
     quote do
       field(:article_hash_id, Ecto.UUID)
-      belongs_to(:branch, ArticleBranch)
 
       field(:stage, Ecto.Enum,
         values: CMS.Const.stage_values(),
@@ -216,39 +219,48 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       field(:body_hash, :string)
       field(:schema_version, :integer, default: 1)
+      field(:version, :integer, default: 1)
+    end
+  end
+
+  @doc "Adds the Doc-only branch/stage coordinate."
+  defmacro doc_version_fields do
+    quote do
+      field(:article_hash_id, Ecto.UUID)
+      belongs_to(:branch, DocBranch)
+
+      field(:stage, Ecto.Enum,
+        values: CMS.Const.stage_values(),
+        default: CMS.Const.stage(:public)
+      )
+
+      field(:body_hash, :string)
+      field(:schema_version, :integer, default: 1)
+      field(:version, :integer, default: 1)
     end
   end
 
   @doc """
-  Validates the shared Article branch/stage invariant for a product changeset.
+  Validates the ordinary Article identity/stage invariant.
 
-  The Branch must match the Article's Community and thread. Preview branches
-  are draft-only; only main may own a public runtime row.
+  Ordinary Articles deliberately have no Branch. Database uniqueness is the
+  source of truth for one Draft and one Public row per Community and identity.
   """
   @spec validate_article_version_scope(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
-  def validate_article_version_scope(changeset, thread) do
+  def validate_article_version_scope(changeset, _thread), do: changeset
+
+  @doc "Validates the Doc branch/community/stage invariant."
+  @spec validate_doc_version_scope(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  def validate_doc_version_scope(changeset) do
     prepare_changes(changeset, fn changeset ->
       branch_id = get_field(changeset, :branch_id)
       community_id = get_field(changeset, :community_id)
 
-      case changeset.repo.get_by(ArticleBranch,
-             id: branch_id,
-             community_id: community_id,
-             thread: thread
-           ) do
-        %ArticleBranch{type: type} -> validate_preview_article(changeset, type)
-        nil -> add_error(changeset, :branch_id, "does not belong to the Article scope")
+      case changeset.repo.get_by(DocBranch, id: branch_id, community_id: community_id) do
+        %DocBranch{} -> changeset
+        nil -> add_error(changeset, :branch_id, "does not belong to the Doc scope")
       end
     end)
-  end
-
-  defp validate_preview_article(changeset, type) do
-    if type == CMS.Const.article_branch_type(:preview) and
-         get_field(changeset, :stage) == CMS.Const.stage(:public) do
-      add_error(changeset, :stage, "preview branches can not contain public Articles")
-    else
-      changeset
-    end
   end
 
   @doc """
@@ -273,10 +285,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   # for :original_community
   add(:community_id, references(:communities, on_delete: :delete_all))
-
-  # for :upvote and :collect
-  add(:upvotes_count, :integer, default: 0)
-  add(:collects_count, :integer, default: 0)
 
   # for :comment
   add(:comments_participants_count, :integer, default: 0)
@@ -323,18 +331,40 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       belongs_to(:community, Community)
 
+      unquote(lifecycle_association(thread))
+
       upvote_and_collect_fields()
       viewer_has_fields()
       comment_fields()
 
       field(:active_at, :utc_datetime)
 
-      field(:is_archived, :boolean)
-      field(:archived_at, :utc_datetime)
-
       field(:pending, :integer, default: 0)
 
       timestamps(type: :utc_datetime)
+    end
+  end
+
+  defp lifecycle_association(:doc) do
+    quote do
+      has_one(
+        :lifecycle,
+        DocLifecycle,
+        foreign_key: :article_hash_id,
+        references: :article_hash_id
+      )
+    end
+  end
+
+  defp lifecycle_association(thread) do
+    quote do
+      has_one(
+        :lifecycle,
+        ArticleLifecycle,
+        foreign_key: :article_hash_id,
+        references: :article_hash_id,
+        where: [thread: unquote(thread)]
+      )
     end
   end
 

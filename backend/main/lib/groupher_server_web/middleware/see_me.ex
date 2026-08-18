@@ -8,6 +8,13 @@ defmodule GroupherServerWeb.Middleware.SeeMe do
 
   Keeping this as an explicit middleware makes it possible to attach temporary
   breakpoints or logging in one place without changing schema definitions.
+
+  Business position:
+
+      Resolver result
+        -> SeeMe middleware
+        -> next middleware
+        -> GraphQL field result
   """
   @behaviour Absinthe.Middleware
 

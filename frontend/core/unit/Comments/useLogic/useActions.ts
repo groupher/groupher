@@ -26,6 +26,7 @@ export type TActions = {
   closeReplyEditor: () => void
 } & ReturnType<typeof useQuery>
 
+/** Exposes actions state and actions through the shared React hook boundary. */
 export default function useActions(): TActions {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {

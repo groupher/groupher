@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.ReferenceTask do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article meta info for article-like content, like post ...
+  Embedded mention and bidirectional-link tasks produced from artiment content.
+
+  Business position:
+
+      CMS context
+        -> ReferenceTask schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

@@ -1,6 +1,15 @@
 defmodule Helper.QueryBuilder do
   @moduledoc """
-  handle common query picas across the project
+  Composes shared Ecto filtering, sorting, pagination, and time-window query packs.
+
+  Domain read models supply their base query and opt into these bounded clauses;
+  this module does not own domain-specific visibility rules.
+
+  Business position:
+
+      Domain or web caller
+        -> QueryBuilder
+        -> normalized value / infrastructure
   """
 
   import Ecto.Query, warn: false
@@ -46,6 +55,7 @@ defmodule Helper.QueryBuilder do
     |> where([q], q.inserted_at <= ^end_of_today)
   end
 
+  @doc "Runs `filter_pack` through the public `QueryBuilder` boundary."
   def filter_pack(queryable, filter) when is_map(filter) do
     # The lower the position, the lower the priority.
     queryable
@@ -206,6 +216,7 @@ defmodule Helper.QueryBuilder do
     end)
   end
 
+  @doc "Handles the supported `QueryBuilder` input at this public boundary."
   def handle_community_relate_logic(queryable, filter) do
     Enum.reduce(filter, queryable, fn
       {:category, category_slug}, queryable ->
@@ -280,7 +291,9 @@ defmodule Helper.QueryBuilder do
   end
 
   defp trans_articles_order(queryable, :upvotes) do
-    queryable |> order_by(desc: :upvotes_count)
+    # Article interaction ordering is projection-backed and requires the
+    # concrete thread. CMS.Articles.List delegates it to Interactions.State.
+    queryable
   end
 
   defp trans_articles_order(queryable, :comments) do

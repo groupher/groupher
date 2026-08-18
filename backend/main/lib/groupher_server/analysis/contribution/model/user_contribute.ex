@@ -4,6 +4,14 @@ defmodule GroupherServer.Analysis.Contribution.Model.UserContribute do
 
   Contribution jobs and middleware aggregate user activity into these date-bucketed
   rows for profile contribution charts.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> UserContribute
+        -> Repo / analytics provider
   """
   alias __MODULE__
 

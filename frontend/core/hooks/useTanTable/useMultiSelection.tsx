@@ -17,6 +17,7 @@ export type MultiSelectionTableMeta = {
   isSomeSelected: (ids: string[]) => boolean
 }
 
+/** Exposes multi selection state and actions through the shared React hook boundary. */
 export function useMultiSelection() {
   const [selected, setSelected] = useState<Set<string>>(() => new Set())
 

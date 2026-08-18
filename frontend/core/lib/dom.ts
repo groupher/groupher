@@ -28,8 +28,10 @@ export const scrollIntoEle = (eleID: string): void => {
   }
 }
 
+/** Runs the scroll to header operation at the frontend shared boundary. */
 export const scrollToHeader = (): void => scrollIntoEle(ANCHOR.GLOBAL_CLASSIC_ID)
 
+/** Runs the scroll drawer to top operation at the frontend shared boundary. */
 export const scrollDrawerToTop = (): void => {
   if (typeof window !== 'object') return
 
@@ -43,6 +45,7 @@ export const scrollDrawerToTop = (): void => {
   scrollIntoEle(ANCHOR.DRAWER_HEAD)
 }
 
+/** Runs the scroll to comments operation at the frontend shared boundary. */
 export const scrollToComments = (view: TContainer = 'body'): void => {
   if (typeof window === 'object') {
     const scroller = view === 'body' ? window[BODY_SCROLLER] : window[DRAWER_SCROLLER]

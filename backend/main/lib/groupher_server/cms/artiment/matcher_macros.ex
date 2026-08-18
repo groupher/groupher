@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   @moduledoc """
-  generate match functions
+  Generates the thread-specific clauses used by `CMS.Artiment.Matcher`.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> MatcherMacros
+        -> Repo / domain event
   """
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Artiment.Config

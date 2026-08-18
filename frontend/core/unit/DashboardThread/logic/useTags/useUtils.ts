@@ -21,6 +21,7 @@ type TRet = {
   commitTagSorting: (tagGroups: TTagGroup[]) => void
 }
 
+/** Exposes utils state and actions through the shared React hook boundary. */
 export default function useUtils(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()

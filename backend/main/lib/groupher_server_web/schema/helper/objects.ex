@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Objects do
   @moduledoc """
-  general fields used in schema definition
+  Reusable Absinthe object macros for paged and cross-thread CMS results.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Objects
+        -> resolver or domain context
+        -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1]
 

@@ -1,5 +1,15 @@
 defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
-  @moduledoc "Creates a Community from one approved Application."
+  @moduledoc """
+  Creates a Community from one approved Application.
+
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> CreateCommunity
+        -> Repo / Oban
+  """
 
   use Oban.Worker,
     queue: :community_application,
@@ -8,6 +18,10 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
 
   alias GroupherServer.CMS
 
+  @doc """
+  Creates a Community from the approved Application, marking the Application
+  as creation-failed once all retries are exhausted.
+  """
   @impl Oban.Worker
   def perform(%Oban.Job{
         args: %{"application_ref" => application_ref, "operation_ref" => operation_ref},

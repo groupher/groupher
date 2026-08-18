@@ -34,6 +34,7 @@ type TRet<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndTar
 // The parent store is updated once on drop through `onCommit`. Header and footer
 // provide their own adapters for building columns, moving links, moving columns,
 // and flattening the draft back to the persisted shape.
+/** Exposes sortable draft state and actions through the shared React hook boundary. */
 export default function useSortableDraft<
   TColumn extends TLinkDndColumnBase,
   TLink,

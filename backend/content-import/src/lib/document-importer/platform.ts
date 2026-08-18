@@ -1,6 +1,8 @@
 /**
  * Imports one public documentation page as Markdown with SSRF-safe DNS pinning.
  *
+ *   public URL -> DNS/redirect safety -> bounded fetch -> Markdown deserializer
+ *
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
 import { Buffer } from 'node:buffer'

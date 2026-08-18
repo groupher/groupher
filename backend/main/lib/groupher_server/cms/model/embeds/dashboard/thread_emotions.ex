@@ -20,6 +20,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
 
   means post articles only allow `heart`, while post comments allow both
   `beer` and `heart`.
+
+  Business position:
+
+      CMS context
+        -> ThreadEmotions schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   @type t :: %__MODULE__{}
@@ -28,7 +35,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   use Accessible
 
   import Ecto.Changeset
-    @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Artiment.Config.threads()
   @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
   @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()

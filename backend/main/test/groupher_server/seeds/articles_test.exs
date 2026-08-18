@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
+  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.CMS.Seeds.{Articles, Communities}
 
   describe "[articles seeds]" do
@@ -17,13 +18,14 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
 
       [first | _] = articles
       {:ok, reloaded_post} = ORM.find(Post, first.id)
+      counts = State.counts(:post, [first.id]) |> Map.fetch!(first.id)
 
       comments_count =
         from(c in Comment, where: c.post_id == ^first.id)
         |> count()
 
       assert comments_count >= 2
-      assert reloaded_post.upvotes_count > 0
+      assert counts.upvotes_count > 0
 
       emotion_total =
         reloaded_post.emotions

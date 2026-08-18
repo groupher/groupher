@@ -10,6 +10,12 @@ defmodule GroupherServerWeb.ConnCase do
   DB tests can run async by passing `async: true` when using this case.
   Each test runs in a SQL sandbox owner process; async tests get isolated
   owners while sync tests run in shared mode.
+
+  Business position:
+
+      Test case
+        -> ConnCase
+        -> endpoint / fixture / Repo
   """
 
   use ExUnit.CaseTemplate

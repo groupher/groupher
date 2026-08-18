@@ -103,6 +103,9 @@ type RootQueryType {
   "Built-in community Analysis Trends summary and chart"
   analysisTrendsOverview(community: String!, days: Int): AnalysisTrendsOverview
 
+  "Current active visitors for the built-in community Analysis"
+  analysisActiveVisitors(community: String!): AnalysisWebActive
+
   "One built-in community Analysis page dimension"
   analysisTrendPages(community: String!, days: Int, dimension: AnalysisTrendPagesDimension!): AnalysisTrendPagesSection
 
@@ -143,10 +146,10 @@ type RootQueryType {
   docDraft(community: String!, id: ID!): DocDraft
 
   "dashboard docs draft revision history"
-  docDraftSnapshots(community: String!, id: ID!, stage: ArticleSnapshotStage, limit: Int): [ArticleSnapshot]
+  docDraftSnapshots(community: String!, id: ID!, stage: DocSnapshotStage, limit: Int): [DocSnapshot]
 
   "one dashboard docs draft revision"
-  docDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): ArticleSnapshot
+  docDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): DocSnapshot
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -169,8 +172,8 @@ type RootQueryType {
   "Get all passport rules available to the current user."
   allPassportRules: AllRules
 
-  "if the community exist or not"
-  isCommunityExist(slug: String!): CheckState
+  "Check whether a community name is available."
+  checkCommunityName(slug: String!): CommunityNameCheck
 
   "communities with pagination info"
   pagedCommunities(filter: CommunitiesFilter!): PagedCommunities
@@ -236,25 +239,25 @@ type RootQueryType {
   collectedUsers(article: ArticlePathInput!, filter: PagiFilter!): PagedUsers
 
   "get post by id"
-  post(article: ArticlePathInput!): Post!
+  post(article: ArticlePathInput!, viewEventId: ID): Post!
 
   "get paged posts"
   pagedPosts(thread: PostThread, filter: PagedPostsFilter!): PagedPosts
 
   "get blog by id"
-  blog(article: ArticlePathInput!): Blog!
+  blog(article: ArticlePathInput!, viewEventId: ID): Blog!
 
   "get paged blogs"
   pagedBlogs(thread: BlogThread, filter: PagedBlogsFilter!): PagedBlogs
 
   "get changelog by id"
-  changelog(article: ArticlePathInput!): Changelog!
+  changelog(article: ArticlePathInput!, viewEventId: ID): Changelog!
 
   "get paged changelogs"
   pagedChangelogs(thread: ChangelogThread, filter: PagedChangelogsFilter!): PagedChangelogs
 
   "get doc by id"
-  doc(article: ArticlePathInput!): Doc!
+  doc(article: ArticlePathInput!, viewEventId: ID): Doc!
 
   "get paged docs"
   pagedDocs(thread: DocThread, filter: PagedDocsFilter!): PagedDocs
@@ -363,7 +366,7 @@ type RootMutationType {
   updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
 
   "delete a global community"
-  deleteCommunity(community: String!): Community
+  requestDestroyCommunity(community: String!): Community
 
   "register an uploaded asset into the community asset library"
   registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
@@ -486,12 +489,12 @@ type RootMutationType {
 
   "update a cms\/post"
   updatePost(
-    article: ArticlePathInput!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
 
   "save changes to a post draft without publishing"
   updatePostDraft(
-    community: String!, id: ID!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing post draft"
@@ -551,12 +554,12 @@ type RootMutationType {
 
   "update a cms\/blog"
   updateBlog(
-    article: ArticlePathInput!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
 
   "save changes to a blog draft without publishing"
   updateBlogDraft(
-    community: String!, id: ID!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing blog draft"
@@ -610,12 +613,12 @@ type RootMutationType {
 
   "update a cms\/changelog"
   updateChangelog(
-    article: ArticlePathInput!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
 
   "save changes to a changelog draft without publishing"
   updateChangelogDraft(
-    community: String!, id: ID!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing changelog draft"
@@ -819,11 +822,11 @@ type RootMutationType {
 
   "update a docs draft document"
   updateDocDraft(
-    community: String!, id: ID!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
+    community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
   ): DocDraft
 
   "save current docs draft as an article revision checkpoint"
-  checkpointDocDraftSnapshot(community: String!, id: ID!): ArticleSnapshot
+  checkpointDocDraftSnapshot(community: String!, id: ID!): DocSnapshot
 
   "publish selected docs content and tree changes as one release"
   publishDocChanges(community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
@@ -1105,6 +1108,10 @@ type AnalysisWebMetric {
   value: Float
   previousValue: Float
   changeRate: Float
+}
+
+type AnalysisWebActive {
+  visitors: Int!
 }
 
 type AnalysisWebOverviewSummary {
@@ -1389,9 +1396,13 @@ type PressSiteManifest {
   items: [PressRSSFeedItem!]!
 }
 
-type CheckState {
-  "Whether the checked resource exists or condition is met."
-  exist: Boolean
+type CommunityNameCheck {
+  "Result of checking a community name against the shared namespace."
+  normalizedSlug: String
+
+  available: Boolean!
+
+  reasonCode: String
 }
 
 type DoneState {
@@ -1433,8 +1444,37 @@ enum CommunityLifecycleState {
   READ_ONLY
   SUSPENDED
   ARCHIVED
-  SCHEDULED_RECLAIM
+  PENDING_DESTROY
   DESTROY
+}
+
+enum ArticleLifecycleState {
+  DRAFT_ONLY
+  PUBLISHED
+  ARCHIVED
+  DELETED
+  DESTROY
+}
+
+enum CommentLifecycleState {
+  VISIBLE
+  DELETED
+  DESTROY
+}
+
+type ArticleLifecycle {
+  state: ArticleLifecycleState!
+  changedAt: DateTime
+  archivedAt: DateTime
+  deletedAt: DateTime
+  destroyedAt: DateTime
+}
+
+type CommentLifecycle {
+  state: CommentLifecycleState!
+  changedAt: DateTime
+  deletedAt: DateTime
+  destroyedAt: DateTime
 }
 
 type CommunityApplicationActor {
@@ -1647,12 +1687,17 @@ enum DocTreeNodeType {
   PIN
 }
 
-enum ArticleSnapshotStage {
+enum ArticleStage {
   DRAFT
   PUBLIC
 }
 
-enum ArticleSnapshotAction {
+enum DocSnapshotStage {
+  DRAFT
+  PUBLIC
+}
+
+enum DocSnapshotAction {
   CHECKPOINT
   PUBLISH
   FORK
@@ -1942,10 +1987,11 @@ type DocCoverPinnedDoc {
 type DocDraft {
   id: ID
   docId: ID
+  version: Int!
   title: String
   subtitle: String
   slug: String
-  stage: ArticleSnapshotStage
+  stage: DocSnapshotStage
   digest: String
   author: User
   insertedAt: DateTime
@@ -1956,7 +2002,8 @@ type DocDraft {
 type ArticleDraft {
   id: ID!
   thread: Thread!
-  stage: ArticleSnapshotStage!
+  version: Int!
+  stage: ArticleStage!
   title: String!
   digest: String
   slug: String
@@ -1976,7 +2023,7 @@ type DocTreeMutationPayload {
 
 type MoveDocToDraftPayload {
   docId: ID
-  stage: ArticleSnapshotStage
+  stage: DocSnapshotStage
   publishState: DocTreeNodePublishState
 }
 
@@ -2218,11 +2265,11 @@ type ArticleDocument {
   assetRefs: [ArticleDocumentAssetRef]
 }
 
-type ArticleSnapshot {
+type DocSnapshot {
   id: ID
   thread: Thread
-  stage: ArticleSnapshotStage
-  action: ArticleSnapshotAction
+  stage: DocSnapshotStage
+  action: DocSnapshotAction
   articleHashId: String
   title: String
   slug: String
@@ -2241,6 +2288,7 @@ type ArticleSnapshot {
 
 type Post implements Article {
   innerId: ID
+  version: Int!
   title: String
   document: ArticleDocument
   digest: String
@@ -2261,8 +2309,7 @@ type Post implements Article {
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
   viewerHasReported: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
   pending: Int
@@ -2278,6 +2325,7 @@ type Post implements Article {
 
 type Changelog implements Article {
   innerId: ID
+  version: Int!
   title: String
   document: ArticleDocument
   digest: String
@@ -2298,8 +2346,7 @@ type Changelog implements Article {
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
   viewerHasReported: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
   pending: Int
@@ -2313,6 +2360,7 @@ type Changelog implements Article {
 
 type Doc implements Article {
   innerId: ID
+  version: Int!
   title: String
   document: ArticleDocument
   digest: String
@@ -2333,8 +2381,7 @@ type Doc implements Article {
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
   viewerHasReported: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
   pending: Int
@@ -2349,6 +2396,7 @@ type Doc implements Article {
 
 type Blog implements Article {
   innerId: ID
+  version: Int!
   title: String
   document: ArticleDocument
   digest: String
@@ -2369,8 +2417,7 @@ type Blog implements Article {
   viewerHasUpvoted: Boolean
   viewerHasViewed: Boolean
   viewerHasReported: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
   pending: Int
@@ -2887,9 +2934,7 @@ type CommentReply {
   viewerHasUpvoted: Boolean
   viewerHasReported: Boolean
   replyToComment: Comment
-  isDeleted: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: CommentLifecycle
   insertedAt: DateTime
   updatedAt: DateTime
 }
@@ -2910,9 +2955,7 @@ type Comment {
   viewerHasUpvoted: Boolean
   viewerHasReported: Boolean
   replyToComment: Comment
-  isDeleted: Boolean
-  isArchived: Boolean
-  archivedAt: DateTime
+  lifecycle: CommentLifecycle
   insertedAt: DateTime
   updatedAt: DateTime
   replies: [CommentReply]
@@ -3974,9 +4017,6 @@ type Achievement {
   articlesUpvotesCount: Int
   articlesCollectsCount: Int
   sourceContribute: SourceContribute
-  donateMember: Boolean
-  seniorMember: Boolean
-  sponsorMember: Boolean
 }
 
 type BrowserSigninResult {

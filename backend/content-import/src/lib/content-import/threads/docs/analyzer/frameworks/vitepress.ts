@@ -1,3 +1,14 @@
+/**
+ * Adapts Vitepress sources into the canonical Docs import tree.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import type { TSourceNode, TSourceTree, TSourceWorkspace } from '../../contracts'
 import { loadDocuments, sourcePathForRoute, type TDocumentMetadata } from '../documentFile'
 import { asRecord, linkNode, pageNode, scopeNode, sectionNode, slugify } from '../helpers'

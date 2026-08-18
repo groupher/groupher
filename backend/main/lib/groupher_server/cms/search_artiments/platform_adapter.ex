@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.SearchArtiments.PlatformAdapter do
-  @moduledoc "Contract implemented by Search Artiments platforms."
+  @moduledoc """
+  Contract implemented by Search Artiments platforms.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> PlatformAdapter
+        -> search platform
+  """
 
   alias GroupherServer.CMS.SearchArtiments.{Artiment, Query, Result}
 

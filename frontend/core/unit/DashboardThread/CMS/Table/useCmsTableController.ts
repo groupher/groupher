@@ -9,6 +9,7 @@ import type { TCmsTableController, TCmsTableControllerOptions } from './types'
 
 const DEFAULT_SELECT_COLUMN_ANIMATION_MS = 200
 
+/** Exposes cms table controller state and actions through the shared React hook boundary. */
 export default function useCmsTableController(
   options?: TCmsTableControllerOptions,
 ): TCmsTableController {

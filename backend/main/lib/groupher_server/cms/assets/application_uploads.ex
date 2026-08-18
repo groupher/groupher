@@ -1,11 +1,32 @@
 defmodule GroupherServer.CMS.Assets.ApplicationUploads do
-  @moduledoc "Promotes one finalized Application Logo into Community ownership using DB writes only."
+  @moduledoc """
+  Promotes one finalized Application Logo into Community ownership using DB writes only.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> ApplicationUploads
+        -> Repo / Assets Hub
+  """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Assets.Write
+  alias GroupherServer.CMS.Assets.Writer
   alias GroupherServer.CMS.Model.{Community, CommunityApplicationLogoUpload}
   alias Helper.Utils
 
+  @doc """
+  Promotes one finalized Application Logo upload into Community ownership.
+
+  The upload metadata is passed to `CMS.Assets.Writer.register` so the object
+  becomes a regular community asset with `asset_type: :image`.
+
+  ## Examples
+
+      ApplicationUploads.register(community, upload, user)
+      #=> {:ok, %CommunityAsset{}}
+
+  """
   @spec register(Community.t(), CommunityApplicationLogoUpload.t(), User.t()) ::
           {:ok, term()} | {:error, term()}
   def register(
@@ -13,7 +34,7 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         %CommunityApplicationLogoUpload{} = upload,
         %User{} = user
       ) do
-    Write.register(
+    Writer.register(
       community,
       %{
         public_ref: "asset_" <> Utils.uid(24),

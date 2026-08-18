@@ -1,8 +1,20 @@
+/**
+ * Implements the Src Db Client boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
 
 export type PressDatabase = ReturnType<typeof drizzle>
 
+/** Runs the database url from env operation at the press boundary. */
 export const databaseUrlFromEnv = (
   environment: NodeJS.ProcessEnv = process.env,
 ): string | undefined => {
@@ -18,6 +30,7 @@ export const databaseUrlFromEnv = (
   return url.toString()
 }
 
+/** Creates database from typed press inputs. */
 export const createDatabase = (url = databaseUrlFromEnv()): PressDatabase | null => {
   if (!url) return null
   const client = postgres(url, { max: 4, idle_timeout: 20 })

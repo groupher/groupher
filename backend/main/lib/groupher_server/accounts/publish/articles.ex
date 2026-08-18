@@ -5,6 +5,14 @@ defmodule GroupherServer.Accounts.Publish.Articles do
   The CMS article domain owns publication queries. This module adapts those
   queries for profile pages and keeps the user's published-count meta in sync
   after write paths change article state.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Articles
+        -> Repo
   """
 
   import Helper.Utils, only: [plural: 1]
@@ -15,8 +23,8 @@ defmodule GroupherServer.Accounts.Publish.Articles do
   alias Accounts.Model.User
   alias Helper.ORM
 
-  def paged(%User{} = user, thread, filter) do
-    CMS.Articles.paged_published(thread, filter, user)
+  def paged(%User{} = target_user, thread, filter, actor \\ nil) do
+    CMS.Articles.paged_published(thread, filter, target_user, actor)
   end
 
   def update_states(%User{} = user, thread) do

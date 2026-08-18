@@ -190,18 +190,22 @@ const getStableImageIndex = (seed: string | number): number => {
   )
 }
 
+/** Runs the mock image operation at the frontend shared boundary. */
 export const mockImage = (seed?: string | number): string => {
   if (seed !== undefined) return images[getStableImageIndex(seed)]
 
   return images[getRandomInt(0, 4)]
 }
 
+/** Runs the mock users operation at the frontend shared boundary. */
 export const mockUsers = (num: number): TUser[] => {
   return users.slice(0, Math.min(num, users.length - 1))
 }
 
+/** Runs the mock tags operation at the frontend shared boundary. */
 export const mockTags = (num: number): TTag[] => tags.slice(0, Math.min(num, tags.length))
 
+/** Runs the mock help cats operation at the frontend shared boundary. */
 export const mockHelpCats = () => {
   return [
     {

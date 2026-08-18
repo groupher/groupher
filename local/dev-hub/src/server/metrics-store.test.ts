@@ -96,3 +96,51 @@ test('pauses persistence and raises a notice at the per-service size limit', asy
     await rm(rootDir, { force: true, recursive: true })
   }
 })
+
+test('selects the newest visible browser page without sorting all pages', async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), 'dev-hub-metrics-pages-'))
+  let now = new Date(2026, 6, 23, 12, 0, 0).getTime()
+  const store = new MetricsStore(rootDir, [definition], { now: () => now })
+
+  try {
+    await store.initialize()
+    await store.recordBrowser({
+      serviceId: 'main',
+      pageId: 'visible-old',
+      url: 'http://localhost:3000/visible-old',
+      visibility: 'visible',
+      heapBytes: 10,
+      busyPercent: 1,
+      sampleWindowMs: 2_000,
+    })
+    now += 1
+    await store.recordBrowser({
+      serviceId: 'main',
+      pageId: 'hidden-new',
+      url: 'http://localhost:3000/hidden-new',
+      visibility: 'hidden',
+      heapBytes: 20,
+      busyPercent: 2,
+      sampleWindowMs: 2_000,
+    })
+
+    assert.equal(store.getSnapshots().main?.browser?.pageId, 'visible-old')
+
+    now += 1
+    await store.recordBrowser({
+      serviceId: 'main',
+      pageId: 'visible-new',
+      url: 'http://localhost:3000/visible-new',
+      visibility: 'visible',
+      heapBytes: 30,
+      busyPercent: 3,
+      sampleWindowMs: 2_000,
+    })
+
+    assert.equal(store.getSnapshots().main?.browser?.pageId, 'visible-new')
+    assert.equal(store.getSnapshots().main?.browserPageCount, 3)
+  } finally {
+    await store.close()
+    await rm(rootDir, { force: true, recursive: true })
+  }
+})

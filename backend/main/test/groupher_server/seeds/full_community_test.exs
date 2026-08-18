@@ -9,6 +9,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
@@ -58,10 +59,11 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       comments_count =
         from(c in Comment, where: c.post_id == ^post.id) |> count()
+      post_counts = State.counts(:post, [post.id]) |> Map.fetch!(post.id)
 
       assert comments_count >= 23
 
-      assert post.upvotes_count in 10..20
+      assert post_counts.upvotes_count in 10..20
 
       {:ok, post_tag_groups} =
         CMS.Communities.tag_groups(%{
@@ -89,8 +91,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
             order_by: [asc: c.id]
           )
         )
+      comment_counts = State.counts(:comment, [top_comment.id]) |> Map.fetch!(top_comment.id)
 
-      assert top_comment.upvotes_count in 5..10
+      assert comment_counts.upvotes_count in 5..10
 
       comment_emotion_total =
         top_comment.emotions

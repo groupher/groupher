@@ -1,0 +1,15 @@
+defmodule GroupherServer.CMS.Model.ChangelogReactionInfo do
+  @moduledoc """
+  Changelog fixed-reaction projection schema.
+
+  Business position:
+
+      CMS.Interactions.State -> ChangelogReactionInfo -> cms.changelog_reaction_infos
+  """
+
+  use GroupherServer.CMS.Interactions.Schema.ReactionInfoSchema,
+    table: "changelog_reaction_infos",
+    target: :changelog,
+    target_schema: GroupherServer.CMS.Model.Changelog,
+    collection?: true
+end

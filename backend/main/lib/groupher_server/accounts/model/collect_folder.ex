@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
 
   The folder stores embedded article collect refs plus denormalized meta so the
   account collection UI can page folders and mixed-thread contents efficiently.
+
+  Business position:
+
+      Accounts context
+        -> CollectFolder schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

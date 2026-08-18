@@ -8,6 +8,7 @@ import {
   urlPeekProxy,
 } from '~/app/proxies'
 
+/** Runs the proxy operation at the frontend shared boundary. */
 export async function proxy(request: NextRequest) {
   // proxy in this array will be applied in order
   const proxyFunctions = [avoidScanProxy, oopsProxy, queryWhitelistProxy, urlPeekProxy]

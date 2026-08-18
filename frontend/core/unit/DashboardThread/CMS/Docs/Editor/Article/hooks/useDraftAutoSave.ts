@@ -22,6 +22,7 @@ type TParams = {
   patchSideTreeChild: (childId: string, patch: Partial<TSideTreeChild>) => void
 }
 
+/** Exposes draft auto save state and actions through the shared React hook boundary. */
 export default function useDraftAutoSave(
   draftState: TDraftEditorState,
   { patchSideTreeChild }: TParams,

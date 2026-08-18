@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Render boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import type { FeedItem, RSSFeed, SiteManifest } from './types'
 
 const xml = (value: unknown): string =>
@@ -22,6 +33,7 @@ const markdownText = (value: unknown): string =>
 const itemContent = (feed: RSSFeed, item: FeedItem): string =>
   feed.config.feedType === 'full' ? item.html || item.digest || '' : item.digest || ''
 
+/** Runs the render rss operation at the press boundary. */
 export const renderRSS = (feed: RSSFeed): string => {
   const home = `${feed.community.canonicalOrigin}${feed.community.canonicalPath}`
   const items = feed.items
@@ -45,6 +57,7 @@ ${items}
 </channel></rss>\n`
 }
 
+/** Runs the render atom operation at the press boundary. */
 export const renderAtom = (feed: RSSFeed): string => {
   const home = `${feed.community.canonicalOrigin}${feed.community.canonicalPath}`
   const updated =
@@ -59,6 +72,7 @@ export const renderAtom = (feed: RSSFeed): string => {
 <feed xmlns="http://www.w3.org/2005/Atom"><id>${xml(home)}</id><title>${xml(feed.community.title)}</title><updated>${xml(updated)}</updated><link href="${xml(home)}"/>${entries}</feed>\n`
 }
 
+/** Runs the render jsonfeed operation at the press boundary. */
 export const renderJSONFeed = (feed: RSSFeed): string =>
   `${JSON.stringify({
     version: 'https://jsonfeed.org/version/1.1',
@@ -87,6 +101,7 @@ export const renderJSONFeed = (feed: RSSFeed): string =>
     })),
   })}\n`
 
+/** Runs the render llms operation at the press boundary. */
 export const renderLlms = (manifest: SiteManifest): string => {
   const lines = [`# ${markdownText(manifest.community.title)}`]
   if (manifest.community.description)
@@ -99,6 +114,7 @@ export const renderLlms = (manifest: SiteManifest): string => {
   return `${lines.join('\n')}\n`
 }
 
+/** Runs the render sitemap operation at the press boundary. */
 export const renderSitemap = (manifest: SiteManifest): string => {
   const urls = manifest.items
     .map(

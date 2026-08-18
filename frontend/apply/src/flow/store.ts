@@ -2,6 +2,7 @@ import { proxy } from 'valtio'
 
 import type { ApplyStore } from './spec'
 
+/** Runs the empty draft operation at the frontend shared boundary. */
 export const emptyDraft = (): ApplyStore => ({
   currentStep: 0,
   communityType: 'PRODUCT',
@@ -19,4 +20,5 @@ export const emptyDraft = (): ApplyStore => ({
   submittedApplication: null,
 })
 
+/** Creates apply store from typed frontend shared inputs. */
 export const createApplyStore = () => proxy<ApplyStore>(emptyDraft())

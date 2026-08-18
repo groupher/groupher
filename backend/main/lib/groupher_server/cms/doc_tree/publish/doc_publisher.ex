@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
       docs(stage=draft) + ArticleDocument
           |
           v
-      CMS.Articles.publish_doc_draft
+          CMS.Docs.publish_draft
           |
           +--> docs(stage=public) / article snapshot
           +--> parent group public row
@@ -24,7 +24,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
+  alias CMS.Articles.Lock
   alias CMS.DocTree.Events
+  alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
   alias Helper.{ORM, T}
 
@@ -34,6 +36,25 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
+  @doc """
+  Publishes one draft doc and its public tree shell.
+
+  The draft content is published, then the page and its group/tab ancestors are
+  projected into public tree nodes (with optional cover sync), and the
+  doc-bound staged tree events are marked published.
+
+  ## Examples
+
+      DocPublisher.publish_doc_draft(
+        community,
+        branch,
+        %{doc_id: doc_id, page_node_id: node_id},
+        user,
+        true
+      )
+      #=> {:ok, %DocSnapshot{}}
+
+  """
   def publish_doc_draft(
         %Community{} = community,
         branch,
@@ -44,7 +65,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, ancestors} <- ancestor_chain(community, branch, page),
          {:ok, snapshot} <-
-           CMS.Articles.publish_doc_draft(community, doc_id, user, branch_id: branch.id),
+           CMS.Docs.publish_draft(community, doc_id, user, branch_id: branch.id),
          {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
            upsert_public_node(community, branch, page, snapshot.article_hash_id),
@@ -79,24 +100,30 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
-        {:ok, draft} ->
-          {:ok, draft}
+      Lock.run_doc(community, branch.id, public_doc.article_hash_id, fn ->
+        with {:ok, _canonical_doc} <- CMS.Gate.access_check(user, :edit, public_doc) do
+          case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
+            {:ok, draft} ->
+              {:ok, draft}
 
-        {:error, _} ->
-          Draft.create(
-            community,
-            :doc,
-            %{
-              branch_id: branch.id,
-              article_hash_id: public_doc.article_hash_id,
-              title: public_doc.title,
-              slug: public_doc.slug,
-              body_bag: BodyBag.from_document_map(document)
-            },
-            user
-          )
-      end
+            {:error, _} ->
+              Draft.create(
+                community,
+                :doc,
+                %{
+                  branch_id: branch.id,
+                  article_hash_id: public_doc.article_hash_id,
+                  title: public_doc.title,
+                  slug: public_doc.slug,
+                  body_bag: BodyBag.from_document_map(document)
+                },
+                user
+              )
+          end
+        else
+          {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+        end
+      end)
     end
   end
 

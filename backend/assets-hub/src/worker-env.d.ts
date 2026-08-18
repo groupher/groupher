@@ -1,3 +1,14 @@
+/**
+ * Declares the Cloudflare bindings consumed by the Assets Hub Worker.
+ *
+ * Business position:
+ *
+ *   Worker deployment configuration
+ *     -> Env bindings
+ *     -> Assets Hub routes and queue consumer
+ *     -> R2 / Phoenix service boundary
+ */
+
 type R2ObjectBody = {
   body: ReadableStream
   httpEtag?: string
@@ -8,7 +19,7 @@ type R2ObjectBody = {
 }
 
 type R2Bucket = {
-  delete(key: string): Promise<void>
+  delete(keys: string | string[]): Promise<void>
   get(key: string): Promise<R2ObjectBody | null>
 }
 

@@ -4,12 +4,19 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
 
   Emotion rows are separate from upvotes so lightweight reaction state can be
   toggled without changing ranking/vote semantics.
+
+  Business position:
+
+      CMS context
+        -> ArticleUserEmotion schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [

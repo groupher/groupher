@@ -1,5 +1,7 @@
 /** Framework-neutral read boundary over normalized candidate source files.
  *
+ *   admitted repository files -> normalized paths -> SourceWorkspace -> analyzer
+ *
  * @see docs/bulk-import/content-import-architecture.md
  */
 import fs from 'node:fs/promises'

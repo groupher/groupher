@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       :user
       |> simu_conn(user)
       |> Plug.Conn.put_req_header(
-        "x-groupher-test-service-identity",
+        "x-groupher-test-service-auth",
         "enabled"
       )
 
@@ -79,6 +79,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
+          expectedVersion: expected_version(community, doc_id),
           title: "测试一下中文",
           subtitle: "这是页面副标题",
           slug: "ce-shi-yi-xia-zhong-wen",
@@ -100,6 +101,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
              |> mutation_error?(S.Doc.m(:update_draft), %{
                community: community.slug,
                id: doc_id,
+               expectedVersion: expected_version(community, doc_id),
                title: "Needs Slug"
              })
     end
@@ -109,12 +111,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       doc_id = page_payload.node.doc_id
 
       direct_user_conn =
-        Plug.Conn.delete_req_header(user_conn, "x-groupher-test-service-identity")
+        Plug.Conn.delete_req_header(user_conn, "x-groupher-test-service-auth")
 
       assert direct_user_conn
              |> mutation_error?(S.Doc.m(:update_draft), %{
                community: community.slug,
                id: doc_id,
+               expectedVersion: expected_version(community, doc_id),
                bodyBag: body_bag(@plate_body, :base)
              })
 
@@ -123,6 +126,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
+          expectedVersion: expected_version(community, doc_id),
           title: "Metadata Only",
           slug: "metadata-only"
         })
@@ -140,6 +144,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
+          expectedVersion: expected_version(community, doc_id),
           title: "Invalid Slug",
           slug: "invalid_slug",
           bodyBag: body_bag(@plate_body, :base)
@@ -157,6 +162,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
+          expectedVersion: expected_version(community, doc_id),
           title: "Versioned Draft",
           subtitle: "First subtitle",
           slug: "versioned-draft",
@@ -193,6 +199,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
@@ -215,6 +222,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
@@ -234,6 +242,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
@@ -296,6 +305,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Published Draft",
         subtitle: "Published subtitle",
         slug: "published-draft",
@@ -346,6 +356,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Published Draft",
         subtitle: "Published subtitle updated",
         slug: "published-draft",
@@ -475,6 +486,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
+        expectedVersion: expected_version(community, doc_id),
         title: "Publish Guard",
         slug: "publish-guard",
         bodyBag: body_bag(@plate_body, :base)
@@ -513,4 +525,32 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
   end
 
   defp empty_docs_community(user), do: create_empty_docs_community(user)
+
+  defp expected_version(community, doc_id) do
+    {:ok, branch} = CMS.Docs.Branch.resolve(community, nil)
+
+    draft_version =
+      Repo.one(
+        from(d in CMS.Model.Doc,
+          where:
+            d.community_id == ^community.id and
+              d.branch_id == ^branch.id and
+              d.article_hash_id == ^doc_id and
+              d.stage == :draft,
+          select: d.version
+        )
+      )
+
+    draft_version ||
+      Repo.one!(
+      from(d in CMS.Model.Doc,
+        where:
+          d.community_id == ^community.id and
+            d.branch_id == ^branch.id and
+            d.article_hash_id == ^doc_id and
+            d.stage == :public,
+        select: d.version
+      )
+      )
+  end
 end

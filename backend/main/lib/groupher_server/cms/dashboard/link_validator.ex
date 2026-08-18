@@ -5,8 +5,34 @@ defmodule GroupherServer.CMS.Dashboard.LinkValidator do
   Header and footer links are user-authored nested maps coming from GraphQL.
   This helper keeps only the structural contract here: groups contain child
   links, links require a URL, and every visible node has an id and title.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> LinkValidator
+        -> CommunityDashboard / Repo
   """
 
+  @doc """
+  Returns whether a dashboard link-tree node is structurally valid.
+
+  A `:link` node requires a URL; a `:group` node is valid only when all of its
+  children are valid links.
+
+  ## Examples
+
+      LinkValidator.valid_tree?(%{id: "1", type: :link, title: "Home", url: "https://groupher.com"})
+      #=> true
+
+      LinkValidator.valid_tree?(%{id: "1", type: :group, title: "Group", links: []})
+      #=> true
+
+      LinkValidator.valid_tree?(%{id: "1", type: :link, title: "Home"})
+      #=> false
+
+  """
   def valid_tree?(%{id: id, type: type, title: title} = item)
       when is_binary(id) and is_binary(title) do
     case type do

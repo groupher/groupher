@@ -1,20 +1,24 @@
 defmodule GroupherServerWeb.Middleware.CutParticipators do
   @moduledoc """
-  # cut comments participants manually by count
-  # this tem solution may have performace issue when the content's comments
-  # has too much participants
-  #
-  # NOTE: this is NOT the right solution
-  # should use WINDOW function
-  # see https://github.com/coderplanets/coderplanets_server/issues/16
-  #
-  # the Enum.uniq logic is a tmp sulution for distinct comments users, this should be
-  # in dataloader logic, but the distinct is not working in production env
+  Bounds and de-duplicates the comment-participant list returned by Absinthe.
+
+  The current loader returns the full participant collection, so this legacy
+  middleware applies the requested `filter.first` (or five by default) after
+  resolution. It is an in-memory compatibility boundary, not a database paging
+  implementation.
+
+  Business position:
+
+      Resolver result
+        -> CutParticipators middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware
   @default_length 5
 
+  @doc "Returns a bounded, newest-first unique participant list when resolution succeeds."
   def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
 
   def call(%{value: value, arguments: %{filter: %{first: first}}} = resolution, _) do

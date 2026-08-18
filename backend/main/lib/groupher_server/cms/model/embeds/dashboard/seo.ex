@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.SEO do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded search-engine metadata configured for a community dashboard.
+
+  Business position:
+
+      CMS context
+        -> SEO schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

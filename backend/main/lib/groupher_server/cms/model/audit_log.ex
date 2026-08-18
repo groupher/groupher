@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.AuditLog do
 
   Resource and actor references are snapshots rather than foreign keys so the
   audit survives permanent deletion of the underlying business data.
+
+  Business position:
+
+      CMS context
+        -> AuditLog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

@@ -5,6 +5,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   This module defines read-only CMS entry points consumed by clients in
   GraphQL Playground, including communities, categories, comments, reports,
   and dashboard-related query surfaces.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
   """
   import GroupherServerWeb.Schema.Helper.Queries
 
@@ -118,6 +125,16 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.analysis_trends_overview/3)
     end
 
+    @desc "Current active visitors for the built-in community Analysis"
+    field :analysis_active_visitors, :analysis_web_active do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "analysis.web.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_active_visitors/3)
+    end
+
     @desc "One built-in community Analysis page dimension"
     field :analysis_trend_pages, :analysis_trend_pages_section do
       arg(:community, non_null(:string))
@@ -194,6 +211,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_tree/3)
     end
 
@@ -220,6 +238,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_tree_trash_items/3)
     end
 
@@ -229,6 +248,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:view, :doc_cover_view, default_value: :public)
 
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_cover/3)
     end
 
@@ -239,14 +259,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.doc_draft/3)
     end
 
     @desc "dashboard docs draft revision history"
-    field :doc_draft_snapshots, list_of(:article_snapshot) do
+    field :doc_draft_snapshots, list_of(:doc_snapshot) do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:stage, :article_snapshot_stage)
+      arg(:stage, :doc_snapshot_stage)
       arg(:limit, :integer, default_value: 30)
 
       middleware(M.Authorize, :login)
@@ -255,7 +276,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "one dashboard docs draft revision"
-    field :doc_draft_snapshot, :article_snapshot do
+    field :doc_draft_snapshot, :doc_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:snapshot_id, non_null(:id))
@@ -336,12 +357,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.all_passport_rules/3)
     end
 
-    @desc "if the community exist or not"
-    field :is_community_exist, :check_state do
+    @desc "Check whether a community name is available."
+    field :check_community_name, :community_name_check do
       arg(:slug, non_null(:string))
 
       middleware(M.Authorize, :login)
-      resolve(&R.CMS.community_exist?/3)
+      resolve(&R.CMS.check_community_name/3)
     end
 
     @desc "communities with pagination info"

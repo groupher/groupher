@@ -3,9 +3,11 @@ on:
   push:
     paths:
       - 'backend/main/**' # only trigger when this dir changes
+      - 'ops/postgres/**'
   pull_request:
     paths:
       - 'backend/main/**'
+      - 'ops/postgres/**'
 
 jobs:
   setup:
@@ -50,17 +52,6 @@ jobs:
     defaults:
       run:
         working-directory: backend/main
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: groupher_server_test
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
       - uses: actions/checkout@v3
 
@@ -88,6 +79,17 @@ jobs:
 
       - name: Ensure dependencies are synced
         run: mix deps.get
+
+      - name: Start PostgreSQL with pg_roaringbitmap
+        working-directory: ${{ github.workspace }}
+        run: |
+          docker build -t groupher-postgres:15-roaringbitmap -f ops/postgres/Dockerfile ops/postgres
+          docker run --detach --name groupher-postgres --publish 5432:5432 \
+            --env POSTGRES_USER=postgres \
+            --env POSTGRES_PASSWORD=postgres \
+            --env POSTGRES_DB=groupher_server_test \
+            groupher-postgres:15-roaringbitmap
+          until docker exec groupher-postgres pg_isready -U postgres -d groupher_server_test; do sleep 1; done
 
       - name: Run tests
         run: mix test --exclude skip_ci --max-cases 8 --max-failures 1

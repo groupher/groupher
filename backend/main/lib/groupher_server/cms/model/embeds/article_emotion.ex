@@ -1,19 +1,24 @@
 defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
   @moduledoc """
-  general fields for each emotion
+  Generates persisted counts and viewer projections for each artiment emotion.
 
   e.g:
     field(:beer_count, :integer, default: 0)
-    field(:beer_user_logins, :string)
     field(:viewer_has_beered, :boolean, default: false, virtual: true)
-    embeds_many(:latest_beer_users, Embeds.User, on_replace: :delete)
-  """
-    alias GroupherServer.CMS
 
+  Business position:
+
+      CMS context
+        -> Macros schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
+  alias GroupherServer.CMS
   alias CMS.Model.Embeds
 
-  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @supported_emotions CMS.Artiment.Config.emotions()
 
+  @doc "Generates the count, login list, viewer, and latest-user fields for each artiment emotion."
   defmacro emotion_fields do
     @supported_emotions
     |> Enum.map(fn emotion ->
@@ -31,15 +36,22 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article meta info for article-like content, like post, blog...
+  Embedded emotion counters and recent-user snapshots for an artiment.
+
+  Business position:
+
+      Artiment reaction write
+        -> ArticleEmotion changeset
+        -> Artiment row
+        -> Viewer-aware GraphQL projection
   """
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros
-    @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
 
+  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
   @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count") ++
                      Enum.map(@supported_emotions, &:"#{&1}_user_logins")
 
@@ -59,6 +71,17 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
     |> Enum.into(%{})
   end
 
+  @doc false
+  def default_persisted_emotions do
+    @supported_emotions
+    |> Enum.reduce(%{}, fn emotion, acc ->
+      Map.merge(acc, %{
+        :"#{emotion}_count" => 0,
+        :"viewer_has_#{emotion}ed" => false
+      })
+    end)
+  end
+
   embedded_schema do
     emotion_fields()
   end
@@ -66,8 +89,5 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)
-
-    # |> cast_embed(:latest_downvote_users, required: false, with: &Embeds.User.changeset/2)
-    # |> ...
   end
 end

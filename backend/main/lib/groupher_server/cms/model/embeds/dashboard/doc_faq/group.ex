@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Group do
   Groups are used only by `DocFAQ.group_items`. The flat FAQ view stores its
   questions directly in `DocFAQ.flat_items`, so there is no hidden default group
   persisted for flat mode.
+
+  Business position:
+
+      CMS context
+        -> Group schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
 

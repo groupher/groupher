@@ -76,7 +76,7 @@ describe('Docs import GraphQL Json variables', () => {
     const target = await previewDocImportTarget('home', sourceInfo, analysis, {
       fetchImpl,
       graphqlEndpoint: 'https://example.test/graphql',
-      serviceIdentity: 'service:content-import',
+      serviceSubject: 'service:content-import',
     })
     await startDocImport(
       'home',
@@ -98,13 +98,13 @@ describe('Docs import GraphQL Json variables', () => {
         backendToken: 'backend-token',
         fetchImpl,
         graphqlEndpoint: 'https://example.test/graphql',
-        serviceIdentity: 'service:content-import',
+        serviceSubject: 'service:content-import',
       },
     )
     await cancelDocImport('home', 'job-1', {
       fetchImpl,
       graphqlEndpoint: 'https://example.test/graphql',
-      serviceIdentity: 'service:content-import',
+      serviceSubject: 'service:content-import',
     })
 
     expect(requests).toHaveLength(3)

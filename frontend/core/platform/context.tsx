@@ -10,6 +10,8 @@ import type {
   ScriptHTMLAttributes,
 } from 'react'
 
+import type { TDsbRouteRootSegment } from './route'
+
 export type TNaviOptions = {
   replace?: boolean
   preserveSearch?: boolean
@@ -54,6 +56,8 @@ export type TDsbRouteTarget = {
 }
 
 export type TPlatformNavi = {
+  /** Identifies the DSB product adapter; it is not emitted as a URL segment. */
+  dsbRootSegment?: TDsbRouteRootSegment
   location: {
     pathname: string
     search: string
@@ -81,6 +85,7 @@ export type TPlatform = {
 const PlatformContext = createContext<TPlatform | null>(null)
 let platformFallback: TPlatform | null = null
 
+/** Runs the set platform fallback operation at the frontend shared boundary. */
 export const setPlatformFallback = (value: TPlatform | null): void => {
   platformFallback = value
 }
@@ -93,6 +98,7 @@ export const PlatformProvider = ({
   children: ReactNode
 }): ReactNode => <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>
 
+/** Exposes platform state and actions through the shared React hook boundary. */
 export const usePlatform = (): TPlatform => {
   const platform = useContext(PlatformContext)
 

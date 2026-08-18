@@ -47,6 +47,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   This module is the fact store only. Notification behavior should consume
   these facts downstream instead of being coupled to sync.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Store
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false

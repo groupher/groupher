@@ -21,6 +21,13 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   as:
 
       site_draft_version != published_version
+
+  Business position:
+
+      CMS context
+        -> DocsSiteState schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -31,7 +38,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, ArticleBranch, DocTreeSnapshot}
+  alias CMS.Model.{Community, DocBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -43,7 +50,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   @type t :: %DocsSiteState{}
   schema "docs_site_states" do
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
     belongs_to(:base_snapshot, DocTreeSnapshot)
     belongs_to(:last_published_by, User)
 

@@ -4,6 +4,13 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
 
   Thread lists are config-driven, so the embed generates published-count fields
   instead of hard-coding post/blog/changelog/doc field definitions.
+
+  Business position:
+
+      Accounts context
+        -> Macro schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   import Helper.Utils, only: [plural: 1]
@@ -22,7 +29,14 @@ end
 
 defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   @moduledoc """
-  general article meta info for articles
+  Embedded account metadata for moderation, follows, and per-thread publication totals.
+
+  Business position:
+
+      Accounts writes / CMS events
+        -> UserMeta changeset
+        -> User row
+        -> Profile and permission read models
   """
   use Ecto.Schema
   use Accessible

@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Schema.Helper.Mutations do
   @moduledoc """
-  general mutations used for articles
+  Reusable mutation macros for artiment reactions and related CMS operations.
 
   can not define private macros, see:
   https://github.com/elixir-lang/elixir/issues/3887
@@ -8,6 +8,13 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   Thread modules use `article_react_mutations/2` to expand their supported
   reactions. Trash lifecycle mutations are intentionally defined once in the
   cross-entity CMS operation schema instead of being generated per thread.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Mutations
+        -> resolver or domain context
+        -> GraphQL response
   """
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R

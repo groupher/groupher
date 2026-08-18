@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.Moderation do
   @moduledoc """
   Article moderation helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Moderation
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -20,6 +28,14 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
+  @doc """
+  Returns a paged list of audit-failed articles for one thread.
+
+  ## Examples
+
+      CMS.Articles.Moderation.paged_audit_failed(:post, %{page: 1, size: 20})
+
+  """
   @spec paged_audit_failed(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed(thread, filter) do
     %{page: page, size: size} = filter
@@ -27,7 +43,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
     with {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
+      |> CMS.Articles.Trash.not_trashed_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> done()

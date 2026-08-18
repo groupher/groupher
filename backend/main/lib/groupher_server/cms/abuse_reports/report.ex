@@ -1,15 +1,20 @@
 defmodule GroupherServer.CMS.AbuseReports.Report do
   @moduledoc """
   Abuse report operations.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Report
+        -> Repo / external boundary
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias CMS.FrontDesk
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.CMS.{FrontDesk, Interactions.State}
   alias Helper.{Multi, ORM, T, Transaction}
 
   alias Accounts.Model.User
@@ -17,6 +22,17 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @report_threshold_for_fold Comment.report_threshold_for_fold()
 
+  @doc """
+  Files an abuse report against one user account.
+
+  Creates or appends a report case and refreshes the account's reported meta
+  in one transaction.
+
+  ## Examples
+
+      CMS.AbuseReports.Report.account(target_account, "spam", %{}, user)
+
+  """
   @spec account(User.t(), String.t(), map(), User.t()) :: T.domain_res(User.t())
   def account(%User{} = target_account, reason, attr, %User{} = user) do
     {:ok, info} = match(:account)
@@ -53,84 +69,91 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
   @spec article(T.article(), String.t(), map(), User.t()) :: T.domain_res(T.article())
   def article(target_article, reason, attr, %User{} = user) do
-    {:ok, info} = match(target_article)
-
-    Transaction.lock_row(target_article, fn article ->
+    with {:ok, thread} <- FrontDesk.thread_of(target_article) do
       Multi.new()
       |> Multi.run(:create_abuse_report, fn _, _ ->
-        {:ok, thread} = FrontDesk.thread_of(article)
-        create_report(thread, article.id, reason, attr, user)
+        create_report(thread, target_article.id, reason, attr, user)
       end)
-      |> Multi.run(:update_report_meta, fn _, _ ->
-        update_report_meta(info, article)
+      |> Multi.run(:sync_projection, fn _, _ ->
+        sync_projection(target_article, :report, user, :add)
+      end)
+      |> Multi.run(:hydrate, fn _, _ ->
+        {:ok, State.read(target_article, user, surface: :report)}
       end)
       |> Repo.transaction()
       |> result()
-    end)
+    end
   end
 
   @spec undo_article(T.article(), User.t()) :: T.domain_res(T.article())
   def undo_article(target_article, %User{} = user) do
     {:ok, thread} = FrontDesk.thread_of(target_article)
-    {:ok, info} = match(thread)
 
-    Transaction.lock_row(target_article, fn article ->
-      Multi.new()
-      |> Multi.run(:delete_abuse_report, fn _, _ ->
-        delete_report(thread, article.id, user)
-      end)
-      |> Multi.run(:update_report_meta, fn _, _ ->
-        update_report_meta(info, article)
-      end)
-      |> Repo.transaction()
-      |> result()
+    Multi.new()
+    |> Multi.run(:delete_abuse_report, fn _, _ ->
+      delete_report(thread, target_article.id, user)
     end)
+    |> Multi.run(:sync_projection, fn _, _ ->
+      sync_projection(target_article, :report, user, :remove)
+    end)
+    |> Multi.run(:hydrate, fn _, _ ->
+      {:ok, State.read(target_article, user, surface: :report)}
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   @spec comment(Comment.t(), String.t(), map(), User.t()) :: T.domain_res(Comment.t())
   def comment(%Comment{} = target_comment, reason, attr, %User{} = user) do
-    Transaction.lock_row(target_comment, fn comment ->
-      Multi.new()
-      |> Multi.run(:create_abuse_report, fn _, _ ->
-        create_report(:comment, comment.id, reason, attr, user)
-      end)
-      |> Multi.run(:update_report_meta, fn _, _ ->
-        {:ok, info} = match(:comment)
-        update_report_meta(info, comment)
-      end)
-      |> Multi.run(:fold_comment_report_too_many, fn _, %{create_abuse_report: abuse_report} ->
-        if abuse_report.report_cases_count >= @report_threshold_for_fold,
-          do: CMS.Comments.fold_comment(comment.id, user),
-          else: {:ok, comment}
-      end)
-      |> Multi.run(:viewer_states, fn _, %{update_report_meta: comment} ->
-        viewer_report_state(comment, user)
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
-        FrontDesk.sync_embed_replies(comment)
-      end)
-      |> Repo.transaction()
-      |> result()
+    Multi.new()
+    |> Multi.run(:create_abuse_report, fn _, _ ->
+      create_report(:comment, target_comment.id, reason, attr, user)
     end)
+    |> Multi.run(:sync_projection, fn _, _ ->
+      sync_projection(target_comment, :report, user, :add)
+    end)
+    |> Multi.run(:fold_comment_report_too_many, fn _, %{create_abuse_report: abuse_report} ->
+      if abuse_report.report_cases_count >= @report_threshold_for_fold,
+        do: CMS.Comments.fold_comment(target_comment.id, user),
+        else: {:ok, target_comment}
+    end)
+    |> Multi.run(:hydrate, fn _, _ ->
+      {:ok, State.read(target_comment, user, surface: :report)}
+    end)
+    |> Multi.run(:sync_embed_replies, fn _, %{hydrate: comment} ->
+      FrontDesk.sync_embed_replies(comment)
+    end)
+    |> Repo.transaction()
+    |> result()
   end
 
   @spec undo_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def undo_comment(%Comment{} = target_comment, %User{} = user) do
-    Transaction.lock_row(target_comment, fn comment ->
-      Multi.new()
-      |> Multi.run(:delete_abuse_report, fn _, _ ->
-        delete_report(:comment, comment.id, user)
-      end)
-      |> Multi.run(:update_report_meta, fn _, _ ->
-        {:ok, info} = match(:comment)
-        update_report_meta(info, comment)
-      end)
-      |> Multi.run(:viewer_states, fn _, %{update_report_meta: comment} ->
-        viewer_report_state(comment, user)
-      end)
-      |> Repo.transaction()
-      |> result()
+    Multi.new()
+    |> Multi.run(:delete_abuse_report, fn _, _ ->
+      delete_report(:comment, target_comment.id, user)
     end)
+    |> Multi.run(:sync_projection, fn _, _ ->
+      sync_projection(target_comment, :report, user, :remove)
+    end)
+    |> Multi.run(:hydrate, fn _, _ ->
+      {:ok, State.read(target_comment, user, surface: :report)}
+    end)
+    |> Multi.run(:sync_embed_replies, fn _, %{hydrate: comment} ->
+      FrontDesk.sync_embed_replies(comment)
+    end)
+    |> Repo.transaction()
+    |> result()
+  end
+
+  defp sync_projection(%Comment{} = comment, :report, user, operation) do
+    {:ok, _projection} = State.write(comment, :report, user, operation)
+    {:ok, :pass}
+  end
+
+  defp sync_projection(article, :report, user, operation) do
+    {:ok, _projection} = State.write(article, :report, user, operation)
+    {:ok, :pass}
   end
 
   defp create_report(type, content_id, reason, attr, %User{} = user) do
@@ -210,12 +233,6 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
     content |> ORM.update_meta(meta)
   end
 
-  defp viewer_report_state(%Comment{} = comment, %User{id: user_id}) do
-    comment
-    |> Map.put(:viewer_has_reported, Enum.member?(comment.meta.reported_user_ids, user_id))
-    |> done()
-  end
-
   defp not_reported_before(info, content_id, %User{login: login}) do
     query = from(r in AbuseReport, where: field(r, ^info.foreign_key) == ^content_id)
 
@@ -239,6 +256,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   end
 
   defp result({:ok, %{sync_embed_replies: result}}), do: result |> done()
+  defp result({:ok, %{hydrate: result}}), do: result |> done()
   defp result({:ok, %{update_report_meta: result}}), do: result |> done()
   defp result({:ok, %{update_content_reported_flag: result}}), do: result |> done()
 

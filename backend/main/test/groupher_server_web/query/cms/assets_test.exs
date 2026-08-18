@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   @asset_refs_query S.Asset.q(:community_asset_refs)
   @origin_info_query S.Asset.q(:community_asset_origin_info)
-  @test_service_identity "enabled"
+  @test_service_auth "enabled"
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
     server_conn =
       :guest
       |> simu_conn()
-      |> Plug.Conn.put_req_header("x-groupher-test-service-identity", @test_service_identity)
+      |> Plug.Conn.put_req_header("x-groupher-test-service-auth", @test_service_auth)
 
     {:ok, ~m(asset_conn community post server_conn user)a}
   end
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
              |> query_error?(
                @origin_info_query,
                %{publicRef: "asset_origin_query"},
-               ecode(:service_identity)
+               ecode(:service_auth)
              )
     end
   end

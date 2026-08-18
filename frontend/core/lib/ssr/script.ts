@@ -12,6 +12,7 @@ ${script}
 })();
 `
 
+/** Runs the pre paint theme detect script operation at the frontend shared boundary. */
 export const prePaintThemeDetectScript = () =>
   withTryCatch(`    var stored = localStorage.getItem('${LOCAL_THEME_KEY}');
     var theme = '${THEME_MODE.LIGHT}';
@@ -27,6 +28,7 @@ export const prePaintThemeDetectScript = () =>
     document.documentElement.style.colorScheme = theme;
 `)
 
+/** Runs the pre paint init time operation at the frontend shared boundary. */
 export const prePaintInitTime = () =>
   withTryCatch(`    window.__GROUPHER_INITIAL_NOW__ = Date.now();`)
 

@@ -47,6 +47,7 @@ const toURLSearchParams = (
   return searchParams
 }
 
+/** Returns paged articles params for the frontend shared workflow. */
 export const getPagedArticlesParams = (
   community: string,
   source?: TSearchParamsLike | TSearchParamsObject | null,

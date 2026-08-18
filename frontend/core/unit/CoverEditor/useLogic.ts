@@ -115,6 +115,7 @@ const store = proxy<TStore>({
   },
 })
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
   const { isDarkTheme } = useTheme()

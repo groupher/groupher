@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Enums do
   @moduledoc """
   GraphQL dashboard enum types.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Enums
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Absinthe.Schema.Notation
 

@@ -12,12 +12,19 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
 
   Snapshot JSON uses stable `node_id` values, not physical row ids. This is the
   middle layer used by Tree diff/review UI.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Snapshot
+        -> Repo / published projection
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Branch
+  alias CMS.Docs.Branch
   alias CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
@@ -106,7 +113,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   end
 
   defp stage_json(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)

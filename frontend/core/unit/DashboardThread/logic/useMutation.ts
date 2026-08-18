@@ -39,6 +39,7 @@ type TRet = {
   mergeBackEditingTag: () => void
 }
 
+/** Exposes mutation state and actions through the shared React hook boundary. */
 export default function useMutation(): TRet {
   const dashboard$ = useDashboard()
   const liveDashboard$ = dashboard$.live$ ?? dashboard$

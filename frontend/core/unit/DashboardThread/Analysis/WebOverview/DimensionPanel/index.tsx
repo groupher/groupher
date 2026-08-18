@@ -43,6 +43,8 @@ export default function DimensionPanel({
   title,
 }: TProps) {
   const s = useSalon()
+  const resolvedMetricKey = metricKey ?? 'visitors'
+  const maxMetric = Math.max(...items.map((item) => item.metrics[resolvedMetricKey]), 1)
 
   return (
     <section className={s.wrapper}>
@@ -70,7 +72,9 @@ export default function DimensionPanel({
         ) : items.length > 0 ? (
           items
             .slice(0, DIMENSION_ROW_LIMIT)
-            .map((item) => <Row key={item.value} item={item} metricKey={metricKey} />)
+            .map((item) => (
+              <Row key={item.value} item={item} maxMetric={maxMetric} metricKey={metricKey} />
+            ))
         ) : (
           <div className={s.state}>{emptyLabel}</div>
         )}

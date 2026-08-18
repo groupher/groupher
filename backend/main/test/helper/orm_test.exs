@@ -167,12 +167,12 @@ defmodule GroupherServer.Test.Helper.ORM do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = ORM.inc(post, :upvotes_count)
-      {:ok, ret} = ORM.inc(post, :upvotes_count)
-      assert ret.upvotes_count == 2
+      {:ok, _} = ORM.inc(post, :comments_count)
+      {:ok, ret} = ORM.inc(post, :comments_count)
+      assert ret.comments_count == 2
 
-      {:ok, ret} = ORM.dec(post, :upvotes_count)
-      assert ret.upvotes_count == 1
+      {:ok, ret} = ORM.dec(post, :comments_count)
+      assert ret.comments_count == 1
     end
 
     test "inc should return error for non-integer field", ~m(community user)a do
@@ -195,14 +195,14 @@ defmodule GroupherServer.Test.Helper.ORM do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, ret} = ORM.inc(post, :upvotes_count)
-      assert ret.upvotes_count == 1
+      {:ok, ret} = ORM.inc(post, :comments_count)
+      assert ret.comments_count == 1
 
-      {:ok, _} = ORM.dec(post, :upvotes_count)
-      {:ok, _} = ORM.dec(post, :upvotes_count)
-      {:ok, ret} = ORM.dec(post, :upvotes_count)
+      {:ok, _} = ORM.dec(post, :comments_count)
+      {:ok, _} = ORM.dec(post, :comments_count)
+      {:ok, ret} = ORM.dec(post, :comments_count)
 
-      assert ret.upvotes_count == 0
+      assert ret.comments_count == 0
     end
   end
 

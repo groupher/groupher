@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.List do
   @moduledoc """
   List/paged operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> List
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -12,22 +20,41 @@ defmodule GroupherServer.CMS.Comments.List do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
 
-  alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
-  alias CMS.Comments.{Replies, ViewerState}
+  alias CMS.Comments.Replies
+  alias CMS.Interactions.State
   alias Helper.{Later, ORM, QueryBuilder, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
+  @published_article_preloads [
+    post: [author: :user],
+    blog: [author: :user],
+    changelog: [author: :user],
+    doc: [author: :user]
+  ]
 
+  @doc """
+  Returns the comment summary state for one article: total count, participant
+  count, latest participants, and whether the viewer joined the conversation.
+
+  ## Examples
+
+      CMS.Comments.List.comments_state(:post, article_id)
+
+  """
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
   def comments_state(thread, article_id) do
     filter = %{page: 1, size: 20}
 
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- FrontDesk.get(info.model, article_id),
-         {:ok, paged_participants} <- do_paged_comments_participants(thread_query, filter) do
+         {:ok, article} <- public_article(info.model, thread, article_id),
+         {:ok, paged_participants} <-
+           do_paged_comments_participants(thread, thread_query, filter) do
       %{
         total_count: article.comments_count,
         participants_count: article.comments_participants_count,
@@ -49,6 +76,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
           false ->
             from(c in Comment)
+            |> CMS.Gate.scope(user, :read, comment_scope(thread))
             |> where(^thread_query)
             |> where([c], c.author_id == ^user.id)
             |> Repo.exists?()
@@ -81,31 +109,39 @@ defmodule GroupherServer.CMS.Comments.List do
     {:error, "unknown mode: #{mode}"}
   end
 
-  @spec paged_published_comments(User.t(), map()) :: T.domain_res(T.paged_data())
-  def paged_published_comments(%User{id: user_id}, filter) do
+  @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
+  def paged_published_comments(%User{id: user_id}, filter, actor) do
     %{page: page, size: size} = filter
 
     Comment
-    |> join(:inner, [comment], author in assoc(comment, :author))
-    |> where([comment, author], author.id == ^user_id)
+    |> preload(^@published_article_preloads)
+    |> CMS.Gate.scope(actor, :list, CommentScope.all_public())
+    |> join(:inner, [comment, ...], author in assoc(comment, :author),
+      as: :published_comment_author
+    )
+    |> where([_comment, ...], as(:published_comment_author).id == ^user_id)
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
     |> ORM.extract_and_assign_article()
     |> done()
   end
 
-  @spec paged_published_comments(User.t(), T.thread(), map()) ::
+  @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
-  def paged_published_comments(%User{id: user_id}, thread, filter) do
+  def paged_published_comments(%User{id: user_id}, thread, filter, actor) do
     %{page: page, size: size} = filter
 
     article_preload = Keyword.new([{thread, [author: :user]}])
     query = from(comment in Comment, preload: ^article_preload)
 
     query
-    |> join(:inner, [comment], author in assoc(comment, :author))
-    |> where([comment, author], comment.thread == ^thread)
-    |> where([comment, author], author.id == ^user_id)
+    |> CMS.Gate.scope(actor, :list, comment_scope(thread))
+    |> join(:inner, [comment, ...], author in assoc(comment, :author),
+      as: :published_comment_author
+    )
+    |> where([comment, ...], comment.thread == ^thread)
+    |> where([_comment, ...], as(:published_comment_author).id == ^user_id)
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
     |> ORM.extract_and_assign_article()
@@ -137,8 +173,9 @@ defmodule GroupherServer.CMS.Comments.List do
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
-         {:ok, article} <- FrontDesk.get(info.model, article_id),
-         {:ok, paged_data} <- do_paged_comments_participants(thread_query, filters) do
+         {:ok, article} <- public_article(info.model, thread, article_id),
+         {:ok, paged_data} <-
+           do_paged_comments_participants(thread, thread_query, filters) do
       if article.comments_participants_count !== paged_data.total_count do
         Later.run(
           {ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]}
@@ -149,7 +186,7 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  defp do_paged_comments_participants(query, filters) do
+  defp do_paged_comments_participants(thread, query, filters) do
     %{page: page, size: size} = filters
 
     Comment
@@ -161,7 +198,18 @@ defmodule GroupherServer.CMS.Comments.List do
     |> group_by([c, a], c.inserted_at)
     |> group_by([c, a], c.id)
     |> select([c, a], a)
+    |> CMS.Gate.scope(nil, :list, comment_scope(thread))
     |> ORM.paginator(~m(page size)a)
+    |> done()
+  end
+
+  defp public_article(schema, thread, article_id) do
+    context = article_scope(thread)
+
+    schema
+    |> CMS.Gate.scope(nil, :read, context)
+    |> where([article], article.id == ^article_id)
+    |> Repo.one()
     |> done()
   end
 
@@ -170,16 +218,23 @@ defmodule GroupherServer.CMS.Comments.List do
     sort = Map.get(filters, :sort, :asc_inserted)
 
     with {:ok, thread_query} <- match(thread, :query, article_id) do
+      article_author_id = article_author_id(thread, article_id)
       query = from(c in Comment, preload: [reply_to_comment: :author])
 
       query
+      |> CMS.Gate.scope(user, :list, comment_scope(thread))
       |> where(^thread_query)
       |> where(^where_query)
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
-      |> FrontDesk.mark_viewer_emotion_states(user)
-      |> ViewerState.mark_has_upvoted(user)
+      |> then(fn paged ->
+        Map.put(
+          paged,
+          :entries,
+          State.read(:comment, paged.entries, user, article_author_id: article_author_id)
+        )
+      end)
       |> done()
     end
   end
@@ -188,8 +243,9 @@ defmodule GroupherServer.CMS.Comments.List do
     %{page: page, size: size} = filters
     sort = Map.get(filters, :sort, :asc_inserted)
 
-    with {:ok, root_comment_id} <- Replies.root_id(comment_id) do
+    with {:ok, root_comment} <- Replies.root(comment_id) do
       query = from(c in Comment, preload: [reply_to_comment: :author])
+      root_comment_id = root_comment.id
 
       where_query =
         dynamic(
@@ -200,18 +256,26 @@ defmodule GroupherServer.CMS.Comments.List do
         )
 
       query
+      |> CMS.Gate.scope(user, :list, comment_scope(root_comment.thread))
       |> where(^where_query)
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
-      |> FrontDesk.mark_viewer_emotion_states(user)
-      |> ViewerState.mark_has_upvoted(user)
+      |> then(fn paged ->
+        Map.put(
+          paged,
+          :entries,
+          State.read(:comment, paged.entries, user,
+            article_author_id: article_author_id(root_comment)
+          )
+        )
+      end)
       |> done()
     end
   end
 
   defp add_pinned_comments_ifneed(paged_comments, thread, article_id, %{page: 1}) do
     with {:ok, info} <- match(thread),
-         {:ok, pinned_comments} <- list_pinned_comments(info, article_id) do
+         {:ok, pinned_comments} <- list_pinned_comments(info, thread, article_id) do
       case pinned_comments do
         [] ->
           paged_comments
@@ -233,14 +297,43 @@ defmodule GroupherServer.CMS.Comments.List do
 
   defp add_pinned_comments_ifneed(paged_comments, _thread, _article_id, _), do: paged_comments
 
-  defp list_pinned_comments(%{foreign_key: foreign_key}, article_id) do
-    from(p in PinnedComment,
-      join: c in Comment,
+  defp article_author_id(thread, article_id) do
+    with {:ok, %{model: model}} <- match(thread) do
+      from(article in model,
+        join: author in assoc(article, :author),
+        where: article.id == ^article_id,
+        select: author.user_id
+      )
+      |> Repo.one()
+    else
+      _ -> nil
+    end
+  end
+
+  defp article_author_id(comment) do
+    with {:ok, article} <- CMS.FrontDesk.article_of(comment),
+         {:ok, author} <- CMS.FrontDesk.author_of(article) do
+      author.id
+    else
+      _ -> nil
+    end
+  end
+
+  defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)
+  defp comment_scope(thread), do: CommentScope.for_thread(thread)
+
+  defp article_scope(:doc), do: DocScope.public_main()
+  defp article_scope(thread), do: ArticleScope.public(thread)
+
+  defp list_pinned_comments(%{foreign_key: foreign_key}, thread, article_id) do
+    from(c in Comment,
+      join: p in PinnedComment,
       on: p.comment_id == c.id,
       where: field(p, ^foreign_key) == ^article_id,
       order_by: [desc: p.inserted_at, desc: p.id],
       select: c
     )
+    |> CMS.Gate.scope(nil, :list, comment_scope(thread))
     |> Repo.all()
     |> done
   end

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Jobs.Setup do
-  @moduledoc "Runs idempotent initialization for a newly created Community."
+  @moduledoc """
+  Runs idempotent initialization for a newly created Community.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Setup
+        -> Repo / Oban
+  """
 
   use Oban.Worker,
     queue: :community_setup,
@@ -8,6 +17,10 @@ defmodule GroupherServer.CMS.Communities.Jobs.Setup do
 
   alias GroupherServer.CMS
 
+  @doc """
+  Runs idempotent Community setup, marking the Application as failed once
+  all retries are exhausted.
+  """
   @impl Oban.Worker
   def perform(%Oban.Job{
         args: %{

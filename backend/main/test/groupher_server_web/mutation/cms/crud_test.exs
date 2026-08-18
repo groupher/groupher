@@ -235,14 +235,14 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(@create_community_query, variables, ecode(:changeset))
     end
 
-    @delete_community_query S.Community.m(:delete_community)
-    test "auth user can delete community", ~m(community)a do
+    @request_destroy_community_query S.Community.m(:request_destroy_community)
+    test "auth user can request community destruction", ~m(community)a do
       variables = %{community: community.slug}
-      rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
+      rule_conn = simu_conn(:user, cms: %{"community.request_destroy" => true})
 
-      deleted = rule_conn |> gq_mutation(@delete_community_query, variables)
+      archived = rule_conn |> gq_mutation(@request_destroy_community_query, variables)
 
-      assert deleted["slug"] == community.slug
+      assert archived["slug"] == community.slug
       assert {:ok, _community} = ORM.find(Community, community.id)
       assert Repo.get_by!(CommunityLifecycle, community_id: community.id).state == :archived
     end
@@ -262,8 +262,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "delete non-exist community fails" do
-      rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
-      assert rule_conn |> mutation_error?(@delete_community_query, %{community: non_exist_slug()})
+      rule_conn = simu_conn(:user, cms: %{"community.request_destroy" => true})
+
+      assert rule_conn
+             |> mutation_error?(@request_destroy_community_query, %{community: non_exist_slug()})
     end
   end
 

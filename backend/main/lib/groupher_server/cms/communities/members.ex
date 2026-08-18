@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Members do
   @moduledoc """
   Members helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Members
+        -> Repo / Oban
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

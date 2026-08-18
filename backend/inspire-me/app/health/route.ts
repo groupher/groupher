@@ -1,3 +1,14 @@
+/**
+ * Implements the App Health Route boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 const SERVICE_ID = 'inspire-me'
 
 export const dynamic = 'force-dynamic'

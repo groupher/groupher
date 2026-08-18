@@ -41,6 +41,7 @@ export const adaptWallpaperBgRenderSpec = (state: TWallpaperThemeState): TBgRend
   return composeBgRenderSpec(state)
 }
 
+/** Exposes wallpaper state and actions through the shared React hook boundary. */
 export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
@@ -52,6 +53,7 @@ export default function useWallpaper(): TRet {
   )
 }
 
+/** Exposes wallpaper bg render spec state and actions through the shared React hook boundary. */
 export function useWallpaperBgRenderSpec(): TBgRenderSpec {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()

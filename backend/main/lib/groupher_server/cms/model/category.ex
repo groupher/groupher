@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Category do
 
   Categories group communities at the discovery/navigation layer and are joined
   to communities through `CommunityCategory`.
+
+  Business position:
+
+      CMS context
+        -> Category schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

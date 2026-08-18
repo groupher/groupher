@@ -38,11 +38,15 @@ defmodule GroupherServer.Accounts.Mailbox do
   RETURNING users.id, users.updated_at
   """
 
+  @doc "Runs `status` through the public `Mailbox` boundary."
   def status(%User{mailbox: nil}), do: done(@default_status)
   def status(%User{mailbox: mailbox}), do: done(mailbox)
 
+  @doc "Runs `mark_read` through the public `Mailbox` boundary."
   def mark_read(type, ids, %User{} = user), do: Messaging.mark_read(type, ids, user)
+  @doc "Runs `mark_read_all` through the public `Mailbox` boundary."
   def mark_read_all(type, %User{} = user), do: Messaging.mark_read_all(type, user)
+  @doc "Returns paged messages from the `Mailbox` read boundary."
   def paged_messages(type, user, filter), do: Messaging.paged_messages(type, user, filter)
 
   @doc """

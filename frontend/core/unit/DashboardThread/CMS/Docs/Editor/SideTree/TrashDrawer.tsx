@@ -62,6 +62,7 @@ const appendGroupOptions = (
   }
 }
 
+/** Builds restore parent options from typed frontend shared inputs. */
 export const buildRestoreParentOptions = (
   tabs: readonly TSideTreeTab[],
   itemType?: string | null,

@@ -10,6 +10,9 @@ on:
       - 'frontend/core/**'
       - 'frontend/mock-server/**'
       - 'frontend/e2e/**'
+      - 'backend/auth/**'
+      - 'packages/contracts/**'
+      - 'packages/service/**'
       - 'package.json'
       - 'yarn.lock'
       - '!frontend/**/vercel.json'
@@ -22,6 +25,9 @@ on:
       - 'frontend/core/**'
       - 'frontend/mock-server/**'
       - 'frontend/e2e/**'
+      - 'backend/auth/**'
+      - 'packages/contracts/**'
+      - 'packages/service/**'
       - 'package.json'
       - 'yarn.lock'
       - '!frontend/**/vercel.json'
@@ -38,6 +44,7 @@ jobs:
       dashboard: ${{ steps.filter.outputs.dashboard }}
       dash: ${{ steps.filter.outputs.dash }}
       landing: ${{ steps.filter.outputs.landing }}
+      auth: ${{ steps.filter.outputs.auth }}
       shared: ${{ steps.filter.outputs.shared }}
     steps:
       - uses: actions/checkout@v4
@@ -59,6 +66,10 @@ jobs:
               - 'frontend/e2e/**'
               - 'package.json'
               - 'yarn.lock'
+            auth:
+              - 'backend/auth/**'
+              - 'packages/contracts/**'
+              - 'packages/service/**'
 
   e2e-main:
     name: playwright (main)
@@ -92,8 +103,8 @@ jobs:
         with:
           name: playwright-report-main
           path: |
-            playwright-report
-            test-results
+            .playwright/report
+            .playwright/test-results
 
   e2e-dashboard:
     name: playwright (dashboard)
@@ -127,8 +138,8 @@ jobs:
         with:
           name: playwright-report-dashboard
           path: |
-            playwright-report
-            test-results
+            .playwright/report
+            .playwright/test-results
 
   e2e-dash:
     name: playwright (dash)
@@ -162,8 +173,8 @@ jobs:
         with:
           name: playwright-report-dash
           path: |
-            playwright-report
-            test-results
+            .playwright/report
+            .playwright/test-results
 
   e2e-landing:
     name: playwright (landing)
@@ -197,5 +208,40 @@ jobs:
         with:
           name: playwright-report-landing
           path: |
-            playwright-report
-            test-results
+            .playwright/report
+            .playwright/test-results
+
+  e2e-auth:
+    name: playwright (auth)
+    needs: changes
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    timeout-minutes: 30
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.auth == 'true' || needs.changes.outputs.dash == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Run auth e2e
+        env:
+          CI: true
+        run: yarn test:e2e:auth --grep "P0"
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-auth
+          path: |
+            .playwright/report
+            .playwright/test-results

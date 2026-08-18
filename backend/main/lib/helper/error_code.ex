@@ -1,14 +1,22 @@
 defmodule Helper.ErrorCode do
   @moduledoc """
-  error code map for all site
+  Shared public error-code macros used by domains and GraphQL middleware.
+
+  Business position:
+
+      Domain or web caller
+        -> ErrorCode
+        -> normalized value / infrastructure
   """
   require Helper.Const
 
   @spec raise_error(atom(), String.t()) :: {:error, {atom(), String.t()}}
+  @doc "Runs `raise_error` through the public `ErrorCode` boundary."
   def raise_error(code_atom, msg) do
     {:error, {code_atom, msg}}
   end
 
+  @doc "Runs `ecode` through the public `ErrorCode` boundary."
   def ecode(reason) when is_atom(reason) do
     try do
       Helper.Const.error_code(reason)

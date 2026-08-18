@@ -6,6 +6,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
   tokens and private keys are rejected from the public configuration map.
 
   See `docs/bulk-import/content-import-architecture.md` for the persistence boundary.
+
+  Business position:
+
+      Dashboard
+        -> Content Import service
+        -> CMS.ContentImport
+        -> Connection
+        -> Repo
   """
 
   use Ecto.Schema

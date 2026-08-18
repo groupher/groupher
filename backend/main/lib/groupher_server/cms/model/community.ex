@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Community do
 
   A community is the main CMS container for threads, dashboard settings, tags,
   subscribers, moderators, and public navigation identity.
+
+  Business position:
+
+      CMS context
+        -> Community schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -42,6 +49,7 @@ defmodule GroupherServer.CMS.Model.Community do
   # @required_fields ~w(title desc user_id)a
   @optional_fields ~w(favicon label index aka contributes_digest pending locale homepage articles_count moderators_count subscribers_count)a
 
+  @doc "Returns the maximum number of pinned articles per thread in a community."
   def max_pinned_article_count_per_thread, do: @max_pinned_article_count_per_thread
 
   schema "communities" do

@@ -3,6 +3,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Body do
   Authoritative PostgreSQL staging row for one canonical BodyBag.
 
   See `docs/bulk-import/article-publish-import-refactor.md` for staging and apply ownership.
+
+  Business position:
+
+      Dashboard
+        -> Content Import service
+        -> CMS.ContentImport
+        -> Body
+        -> Repo
   """
 
   use Ecto.Schema

@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
 
   Moderator rows grant community-level permissions and back account surfaces that
   list where a user can moderate.
+
+  Business position:
+
+      CMS context
+        -> CommunityModerator schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

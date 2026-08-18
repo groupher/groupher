@@ -1,3 +1,14 @@
+/**
+ * Implements the Cookie Config boundary inside Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import type { AuthConfig } from '@auth/core'
 import { getAuthCookieNames } from '@groupher/contracts/auth'
 

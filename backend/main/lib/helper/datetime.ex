@@ -4,6 +4,12 @@ defmodule Helper.Datetime do
 
   Use this module instead of local-time helpers so database timestamps and
   date-window queries stay stable across server timezone changes.
+
+  Business position:
+
+      Domain or web caller
+        -> Datetime
+        -> normalized value / infrastructure
   """
 
   @type date_or_datetime :: Date.t() | DateTime.t()

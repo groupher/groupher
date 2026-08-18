@@ -56,18 +56,23 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         assert is_binary(created["document"]["markdown"])
         assert is_map(created["document"]["markdownToc"])
 
+        {:ok, public_article} =
+          CMS.FrontDesk.article(community, unquote(thread), created["innerId"])
+
         update_vars = %{
-          article: %{
-            inner_id: created["innerId"],
-            community: community.slug,
-            thread: unquote(thread |> to_string() |> String.upcase())
-          },
+          community: community.slug,
+          id: public_article.article_hash_id,
+          expectedVersion: public_article.version,
           title: "#{unquote(thread)}-updated-#{unique}",
           body: @plate_body_updated
         }
 
         updated =
-          user_conn |> gq_mutation(S.Article.m(:update_document, unquote(update_op)), update_vars)
+          user_conn
+          |> gq_mutation(
+            S.Article.m(:update_draft_document, unquote(update_op <> "Draft")),
+            update_vars
+          )
 
         assert updated["document"]["json"] == @plate_body_updated
         assert updated["title"] == update_vars.title
@@ -83,7 +88,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         queried =
           user_conn |> gq_query(S.Article.q(:document, unquote(query_field), nil), query_vars)
 
-        assert queried["document"]["json"] == @plate_body_updated
+        assert queried["document"]["json"] == @plate_body
         assert is_binary(queried["document"]["html"])
       end
     end

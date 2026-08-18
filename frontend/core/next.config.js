@@ -12,6 +12,7 @@ const baseConfig = {
     '127.0.0.1',
     'groupher.localhost',
     'main.groupher.localhost',
+    'dash.groupher.localhost',
     'dashboard.groupher.localhost',
     'landing.groupher.localhost',
   ],

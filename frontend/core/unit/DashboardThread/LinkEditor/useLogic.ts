@@ -7,6 +7,7 @@ type TProps = {
   editingLink?: TLinkDraftItem
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic({ editing, editingLink }: TProps) {
   const [snapshot, setSnapshot] = useState<TLinkDraftItem | null>(null)
   const [draft, setDraft] = useState<TLinkDraftItem | null>(null)

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 
 import { ROUTE } from '~/const/route'
 
+/** Runs the avoid scan proxy operation at the frontend shared boundary. */
 export function avoidScanProxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 

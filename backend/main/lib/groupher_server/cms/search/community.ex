@@ -5,26 +5,45 @@ defmodule GroupherServer.CMS.Search.Community do
   Anonymous searches return matching communities by title, slug, or aka. Viewer
   searches enrich each entry with subscription state without changing the base
   pagination contract.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Community
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
-  alias CMS.Communities.Read
   alias CMS.Model.Community
   alias Helper.ORM
 
   @search_items_count 15
 
+  @doc """
+  Searches communities by title, slug, or aka.
+
+  Runs against the public community scope and returns up to 15 matching
+  communities.
+
+  ## Examples
+
+      CMS.Search.Community.search("elixir")
+
+  """
   def search(title) do
-    do_search_communities(Read.scope(Community), title)
+    do_search_communities(CMS.Gate.scope(Community, nil, :list, CommunityScope.public()), title)
   end
 
   def search(title, %User{} = user) do
-    with {:ok, communities} <- do_search_communities(Read.scope(Community), title) do
+    with {:ok, communities} <-
+           do_search_communities(CMS.Gate.scope(Community, user, :list, CommunityScope.public()), title) do
       %{entries: entries} = communities
 
       entries =
@@ -67,7 +86,7 @@ defmodule GroupherServer.CMS.Search.Community do
 
   defp do_search_communities_with_category(title, category) do
     from(
-      c in Read.scope(Community),
+      c in CMS.Gate.scope(Community, nil, :list, CommunityScope.public()),
       join: cat in assoc(c, :categories),
       where: cat.slug == ^category
     )

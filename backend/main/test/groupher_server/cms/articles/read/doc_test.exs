@@ -92,18 +92,20 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
          ~m(doc_attrs community user)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
+      event_id = Ecto.UUID.generate()
+
       {:ok, doc2} =
         CMS.Articles.read(
           article_community(doc),
           :doc,
           doc.inner_id,
-          user
+          user,
+          event_id
         )
 
       assert doc.id == doc2.id
-
-      {:ok, created} = ORM.find(Doc, doc2.id)
-      assert user.id in created.meta.viewed_user_ids
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.State.read(doc2, user).viewer_has_viewed
     end
 
     test "read doc should update views and meta viewed_user_list",
@@ -111,32 +113,38 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       # same user duplicate case
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(doc),
-          :doc,
-          doc.inner_id,
-          user
-        )
-
-      {:ok, created} = ORM.find(Doc, doc.id)
-
-      assert created.meta.viewed_user_ids |> length == 1
-      assert user.id in created.meta.viewed_user_ids
+      event_id = Ecto.UUID.generate()
 
       {:ok, _} =
         CMS.Articles.read(
           article_community(doc),
           :doc,
           doc.inner_id,
-          user2
+          user,
+          event_id
+        )
+
+      {:ok, _} = CMS.Articles.read(article_community(doc), :doc, doc.inner_id, user, event_id)
+
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
+
+      event_id = Ecto.UUID.generate()
+
+      {:ok, _} =
+        CMS.Articles.read(
+          article_community(doc),
+          :doc,
+          doc.inner_id,
+          user2,
+          event_id
         )
 
       {:ok, created} = ORM.find(Doc, doc.id)
-
-      assert created.meta.viewed_user_ids |> length == 2
-      assert user.id in created.meta.viewed_user_ids
-      assert user2.id in created.meta.viewed_user_ids
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert created.views == 1
+      assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
+      assert CMS.Interactions.State.read(doc, user2).viewer_has_viewed
     end
 
     test "read doc should contains viewer_has_xxx state",

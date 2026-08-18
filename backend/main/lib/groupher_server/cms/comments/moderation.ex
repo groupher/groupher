@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Moderation do
   @moduledoc """
   Moderation operations for comments.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Moderation
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -18,6 +26,17 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   @audit_illegal Helper.Constant.CMS.pending(:illegal)
   @audit_failed Helper.Constant.CMS.pending(:audit_failed)
 
+  @doc """
+  Marks a comment as audited illegal with the given audit details.
+
+  Updates the comment pending flag, stores the legal-state meta, and appends
+  the illegal comment to the author's meta before revalidating the user.
+
+  ## Examples
+
+      CMS.Comments.Moderation.set_illegal(comment_id, audit_state)
+
+  """
   @spec set_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def set_illegal(comment_id, audit_state) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do

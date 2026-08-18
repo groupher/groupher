@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Db Schema boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import {
   bigint,
   bigserial,

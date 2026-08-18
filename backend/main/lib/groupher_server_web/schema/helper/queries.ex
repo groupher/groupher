@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Queries do
   @moduledoc """
-  common fields
+  Reusable Absinthe query macros for thread lists, entries, and viewer state.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1, past_verb: 1]
 
@@ -41,6 +48,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
         @desc unquote("get #{thread} by id")
         field unquote(thread), non_null(unquote(thread)) do
           arg(:article, non_null(:article_path_input))
+          arg(:view_event_id, :id)
 
           resolve(fn root, args, info ->
             R.CMS.read_article(root, args, info, thread: unquote(thread))

@@ -8,6 +8,7 @@ import {
   OUTGOING_TOP_DOT_TRANSITION,
 } from './constant'
 
+/** Exposes fork dots animation state and actions through the shared React hook boundary. */
 export default function useForkDotsAnimation(showForkRelation: boolean) {
   const incomingDotControls = useAnimationControls()
   const outgoingTopDotControls = useAnimationControls()

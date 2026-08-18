@@ -19,6 +19,7 @@ type TParams = {
   reload: () => void
 }
 
+/** Exposes side tree persistence state and actions through the shared React hook boundary. */
 export default function useSideTreePersistence({
   revisionRef,
   setTreeState,

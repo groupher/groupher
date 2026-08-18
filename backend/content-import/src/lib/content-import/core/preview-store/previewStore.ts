@@ -27,6 +27,7 @@ export const PREVIEW_RECORD_SCHEMA_VERSION = 1 as const
 export const ANALYSIS_RUN_SCHEMA_VERSION = 1 as const
 export const APPLY_RUN_SCHEMA_VERSION = 1 as const
 export const READY_RECEIPT_SCHEMA_VERSION = 1 as const
+const PREVIEW_DELETE_CONCURRENCY = 8
 
 export type TPreviewRecord = {
   attemptRef: string
@@ -77,7 +78,7 @@ export type TPreviewSource = {
 
 /** Persistence boundary for attempt-scoped, immutable import artifacts. */
 export interface PreviewStore {
-  /** Creates the owner/source/TTL root record before workflow dispatch. */
+  /** Creates the owner/source/TTL record before workflow dispatch. */
   create(record: TPreviewRecord): Promise<void>
   /** Deletes every artifact under a Preview after cancel or expiry. */
   delete(previewRef: string): Promise<void>
@@ -241,7 +242,13 @@ export const sweepExpiredPreviews = async (
   const expired = (await store.listRecords()).filter(
     (record) => new Date(record.expiresAt).getTime() <= now.getTime(),
   )
-  await Promise.all(expired.map((record) => store.delete(record.previewRef)))
+  for (let index = 0; index < expired.length; index += PREVIEW_DELETE_CONCURRENCY) {
+    await Promise.all(
+      expired
+        .slice(index, index + PREVIEW_DELETE_CONCURRENCY)
+        .map((record) => store.delete(record.previewRef)),
+    )
+  }
   return expired.length
 }
 

@@ -1,6 +1,15 @@
 defmodule Helper.Scheduler do
   @moduledoc """
-  cron-like job scheduler
+  Quantum scheduler entrypoints for periodic compatibility and maintenance work.
+
+  The scheduler invokes domain facades; it does not own article, comment, Trash,
+  or audit state. New durable asynchronous work should normally use Oban jobs.
+
+  Business position:
+
+      Domain or web caller
+        -> Scheduler
+        -> normalized value / infrastructure
   """
   use Quantum, otp_app: :groupher_server
 
@@ -14,21 +23,23 @@ defmodule Helper.Scheduler do
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @doc """
-  clear all the cache in Cachex
-  just in case the cache system broken
+  Compatibility hook reserved for a full Cachex clear.
+
+  The current implementation intentionally performs no operation.
   """
   def clear_all_cache do
     # Cache.clear_all()
   end
 
   @doc """
-  archive articles and comments based on config
+  Archives eligible artiments for every configured thread.
   """
   def archive_artiments do
     Enum.map(@threads, &CMS.Articles.archive(&1))
     |> done
   end
 
+  @doc "Archives comments that meet the CMS retention policy."
   def archive_comments do
     CMS.Comments.archive_comments()
   end
@@ -38,11 +49,13 @@ defmodule Helper.Scheduler do
     CMS.Trash.purge_due()
   end
 
+  @doc "Emits audit events for failed Post and Blog moderation records."
   def articles_audition do
     audit_articles(:post)
     audit_articles(:blog)
   end
 
+  @doc "Emits audit events for the current page of failed comment moderation records."
   def comments_audition do
     with {:ok, paged_comments} <- CMS.Comments.paged_audit_failed_comments(%{page: 1, size: 30}) do
       Enum.map(paged_comments.entries, fn comment ->

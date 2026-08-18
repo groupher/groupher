@@ -1,7 +1,7 @@
 'use client'
 
 import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
@@ -28,6 +28,7 @@ const hasSignedInHintCookie = (): boolean => {
 export default function Hooks() {
   const storeHook = useBaseStore()
   const store = storeHook.live$
+  const sessionProbeStarted = useRef(false)
   const shouldFetchMe = store.loading && hasSignedInHintCookie()
 
   const { data, loading, error } = useQuery(sessionState, {}, { pause: !shouldFetchMe })
@@ -44,9 +45,16 @@ export default function Hooks() {
 
   useEffect(() => {
     if (!shouldFetchMe) {
-      store.commit({ user: null, loading: false })
+      // `store.loading` becomes false after the probe resolves. Do not treat
+      // that post-probe render as an anonymous initial state and erase the
+      // user we just received.
+      if (!sessionProbeStarted.current && !store.user) {
+        store.commit({ user: null, loading: false })
+      }
       return
     }
+
+    sessionProbeStarted.current = true
 
     if (error) {
       store.commit({ loading: false })

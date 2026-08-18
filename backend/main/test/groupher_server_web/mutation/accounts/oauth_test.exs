@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
   alias Accounts.Model.OauthProvider
 
-  @test_service_identity "enabled"
+  @test_service_auth "enabled"
 
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"})
   @valid_twitter_profile mock_attrs(:oauth_profile, %{provider: "twitter"})
@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   setup do
     {:ok, user} = db_insert(:user)
 
-    user_conn = :user |> simu_conn(user) |> with_test_service_identity()
-    guest_conn = :guest |> simu_conn() |> with_test_service_identity()
+    user_conn = :user |> simu_conn(user) |> with_test_service_auth()
+    guest_conn = :guest |> simu_conn() |> with_test_service_auth()
     untrusted_guest_conn = simu_conn(:guest)
 
     {:ok, ~m(user_conn guest_conn untrusted_guest_conn user)a}
@@ -63,9 +63,8 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     test "can not signin oauth without server trust", ~m(untrusted_guest_conn)a do
       variables = %{provider: gql_oauth_provider(@valid_github_profile)}
 
-      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:service_identity))
+      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:service_auth))
     end
-
   end
 
   describe "[browser session refresh]" do
@@ -164,7 +163,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     profile |> Map.drop([:raw, "raw"]) |> map_key_stringify()
   end
 
-  defp with_test_service_identity(conn) do
-    Plug.Conn.put_req_header(conn, "x-groupher-test-service-identity", @test_service_identity)
+  defp with_test_service_auth(conn) do
+    Plug.Conn.put_req_header(conn, "x-groupher-test-service-auth", @test_service_auth)
   end
 end

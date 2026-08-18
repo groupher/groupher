@@ -29,6 +29,7 @@ const convertToErrorMsg = (errCode) => {
   }
 }
 
+/** Runs the error for human operation at the frontend shared boundary. */
 export const errorForHuman = (details) => {
   const errCode = details[0].code
 

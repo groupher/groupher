@@ -9,6 +9,7 @@ type TRet = {
   enableThread: (key: string, toggle: boolean) => void
 }
 
+/** Exposes enable state and actions through the shared React hook boundary. */
 export default function useEnable(): TRet {
   const dsb$ = useDashboard()
   const { onSave } = useHelper()

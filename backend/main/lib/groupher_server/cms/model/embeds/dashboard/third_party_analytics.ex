@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThirdPartyAnalytics do
   These values are normal browser-visible tracking identities, not provider API
   credentials. Validation delegates to the Dashboard provider registry so the
   provider list and field rules have a single backend source of truth.
+
+  Business position:
+
+      CMS context
+        -> ThirdPartyAnalytics schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

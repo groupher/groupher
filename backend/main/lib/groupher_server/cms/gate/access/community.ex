@@ -1,77 +1,133 @@
 defmodule GroupherServer.CMS.Gate.Access.Community do
-  @moduledoc "Community access composition across Lifecycle, relations and Passport."
+  @moduledoc """
+  Community access composition across Lifecycle, relations and Passport.
+
+  Read/list visibility belongs to Community Scope. Access only checks the
+  resource mutation and management actions against the loaded facts.
+
+  Business position:
+
+      CMS operation
+        -> CMS.Gate
+        -> Community
+        -> allow / deny
+        -> domain context
+
+  Example contract:
+
+      check_access(actor, :update, community, %Context.Access.Community{})
+      #=> :ok | {:error, reason}
+  """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
+  alias GroupherServer.CMS.Gate.Access.Policy
+  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.CMS.Model.Community
 
   require Const
 
+  @behaviour Policy
+
   @actions Const.gate_action_values()
 
-  @spec can(User.t() | nil, atom(), Community.t()) ::
-          {:ok, boolean()} | {:error, atom()}
-  def can(user, action, %Community{} = community) when action in @actions do
+  @doc "Checks Community admission using the default loaded lifecycle context."
+  @spec check_access(User.t() | nil, atom(), Community.t()) :: :ok | {:error, atom()}
+  def check_access(user, action, community),
+    do:
+      check_access(user, action, community, %CommunityContext{
+        community: community,
+        community_lifecycle: Map.get(community, :lifecycle)
+      })
+
+  @doc "Checks Community admission against an explicitly typed Access Context."
+  @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
+          :ok | {:error, atom()}
+  @impl Policy
+  def check_access(user, action, %Community{} = community, %CommunityContext{} = context)
+      when action in @actions do
     case action do
-      :read ->
-        with {:ok, true} <- lifecycle_allowed(community, :read) do
-          {:ok, true}
-        else
-          {:ok, false} -> {:ok, read_private_allowed?(user, community)}
+      action when action in [:read, :list] ->
+        read_allowed?(community, context)
+
+      action
+      when action in [
+             :update,
+             :request_destroy,
+             :restore,
+             :schedule_destroy,
+             :cancel_destroy,
+             :destroy
+           ] ->
+        with {:ok, true} <- lifecycle_allowed(community, :command, context),
+             :ok <- relation_allowed(command_relation_allowed?(user, community, action)) do
+          :ok
+        end
+
+      :manage_docs ->
+        case Lifecycle.can_write(community, context) do
+          {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
+          {:ok, false} -> {:error, :ancestor_community_not_writable}
           {:error, reason} -> {:error, reason}
         end
 
-      action when action in [:archive, :restore, :schedule_reclaim, :cancel_reclaim, :destroy] ->
-        with {:ok, true} <- lifecycle_allowed(community, :command) do
-          {:ok, command_relation_allowed?(user, community, action)}
-        end
+      :read_draft ->
+        {:error, :unknown_action}
     end
   end
 
-  def can(_user, _action, _community), do: {:error, :unknown_action}
+  def check_access(_user, _action, _community, _context), do: {:error, :unknown_action}
 
-  @spec check(User.t() | nil, atom(), Community.t()) ::
-          {:ok, true} | {:error, atom()}
-  def check(user, action, community) do
-    case can(user, action, community) do
-      {:ok, true} -> {:ok, true}
+  defp read_allowed?(%Community{} = community, context) do
+    with {:ok, true} <- Lifecycle.can_read(community, context) do
+      :ok
+    else
       {:ok, false} -> {:error, :permission_denied}
+      {:error, :lifecycle_not_loaded} -> relation_allowed(community.pending == 0)
       {:error, reason} -> {:error, reason}
     end
   end
 
-  defp lifecycle_allowed(%Community{} = community, :read) do
-    case Lifecycle.can_read(community) do
+  defp relation_allowed(true), do: :ok
+  defp relation_allowed(false), do: {:error, :permission_denied}
+
+  defp lifecycle_allowed(%Community{} = community, :command, context) do
+    case Lifecycle.can_manage(community, context) do
       {:error, :lifecycle_not_loaded} -> {:ok, community.pending == 0}
       result -> result
     end
   end
-
-  defp lifecycle_allowed(%Community{} = community, :command) do
-    case Lifecycle.can_manage(community) do
-      {:error, :lifecycle_not_loaded} -> {:ok, community.pending == 0}
-      result -> result
-    end
-  end
-
-  defp read_private_allowed?(nil, _community), do: false
-
-  defp read_private_allowed?(%User{} = user, community),
-    do: owner?(user, community) or moderator?(user, community) or god?(user)
 
   defp command_relation_allowed?(nil, _community, _action), do: false
+  defp command_relation_allowed?(:operations, _community, _action), do: true
+  defp command_relation_allowed?(%{type: :operations}, _community, _action), do: true
 
-  defp command_relation_allowed?(user, community, :archive) do
+  defp command_relation_allowed?(user, community, :request_destroy) do
     base_command_relation_allowed?(user, community) or
-      passport_allowed?(user, community, Const.passport_action(:community_delete))
+      passport_allowed?(user, community, Const.passport_action(:community_request_destroy))
   end
 
   defp command_relation_allowed?(user, community, _action),
     do:
       base_command_relation_allowed?(user, community) or
         passport_allowed?(user, community, Const.passport_action(:community_update))
+
+  defp management_relation_allowed?(:operations, _community), do: true
+  defp management_relation_allowed?(%{type: :operations}, _community), do: true
+
+  defp management_relation_allowed?(%User{} = user, community),
+    do:
+      owner?(user, community) or moderator?(user, community) or god?(user) or
+        root?(user, community) or docs_member?(user, community)
+
+  defp management_relation_allowed?(_user, _community), do: false
+
+  # Docs editing remains an authenticated-member capability; the explicit Gate
+  # action still enforces the Community Lifecycle writable state.
+  defp docs_member?(%User{}, %Community{}), do: true
+  defp docs_member?(_, _), do: false
 
   defp base_command_relation_allowed?(%User{} = user, community),
     do:

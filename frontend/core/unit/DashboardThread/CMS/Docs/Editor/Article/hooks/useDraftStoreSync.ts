@@ -4,6 +4,7 @@ import useDocsEditor from '../../store/hooks'
 import { composeDraftEditorStorePatch, composeEmptyDraftEditorStorePatch } from '../helper'
 import type { TDraftEditorState } from './useDraftEditorState'
 
+/** Exposes draft store sync state and actions through the shared React hook boundary. */
 export default function useDraftStoreSync(draftState: TDraftEditorState): void {
   const { setDocDraftSession } = useDocsEditor()
   const { activePage, bodyStats, dirty, draft, loadStatus, meta, savedDraft, saveStatus } =

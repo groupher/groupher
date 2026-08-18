@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
       GraphQL field
           -> middleware(M.Passport, action: "...")
-          -> Gate.Passport.Registry.requirement(action)
+          -> CMS.Passport.Registry.requirement(action)
           -> resolve_grant(requirement, resolution)
           -> read cur_user.cur_passport
           -> match grant in proper context scope
@@ -48,7 +48,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.CMS.Gate.Passport.Registry
+  alias GroupherServer.CMS.Passport.Registry
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution

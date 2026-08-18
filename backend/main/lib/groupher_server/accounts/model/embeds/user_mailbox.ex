@@ -1,6 +1,13 @@
 defmodule GroupherServer.Accounts.Model.Embeds.UserMailbox do
   @moduledoc """
-  general article meta info for articles
+  Embedded unread counters projected onto an account mailbox.
+
+  Business position:
+
+      Accounts context
+        -> UserMailbox schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

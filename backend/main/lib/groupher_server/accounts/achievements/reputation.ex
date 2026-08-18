@@ -4,9 +4,17 @@ defmodule GroupherServer.Accounts.Achievements.Reputation do
 
   Follow, upvote, and collect events adjust both the source counter and the
   weighted reputation total under a per-user lock.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Reputation
+        -> Repo
   """
 
-    import ShortMaps
+  import ShortMaps
 
   alias GroupherServer.Accounts.Model.{Achievement, User}
   alias Helper.{ORM, Transaction}

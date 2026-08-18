@@ -15,6 +15,7 @@ type TChangelogLayoutConfig = {
 
 const seg = DSB_ROUTE.CHANGELOG
 
+/** Creates changelog layout from typed frontend shared inputs. */
 export default function createChangelogLayout({
   path,
   title,

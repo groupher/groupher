@@ -1,3 +1,14 @@
+/**
+ * Composes the Assets Hub HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { createHash } from 'node:crypto'
 
 import { createHealthResponse } from '@groupher/service/health'
@@ -34,6 +45,8 @@ const defaultCorsOrigins = [
   'https://apply.groupher.localhost',
   'http://dashboard.groupher.localhost',
   'https://dashboard.groupher.localhost',
+  'http://dash.groupher.localhost',
+  'https://dash.groupher.localhost',
 ]
 
 const corsOrigin = (environment: Record<string, string | undefined>) => {
@@ -125,6 +138,7 @@ const objectContentHash = async (capability: TUploadCapability) => {
   return sha256Hash(buffer)
 }
 
+/** Creates the assets hub application with injectable runtime dependencies. */
 export const createApp = ({ environment = process.env }: TOptions = {}) => {
   const app = new Hono()
 

@@ -1,6 +1,13 @@
 defmodule GroupherServer.Jobs.SearchIndex do
   @moduledoc """
   Search Artiments indexing job.
+
+  Business position:
+
+      Domain event / scheduler
+        -> Oban
+        -> SearchIndex
+        -> context / service
   """
 
   use Oban.Worker,

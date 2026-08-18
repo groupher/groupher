@@ -113,6 +113,7 @@ const mapTab = (node: TDocTreeNodeDTO): TSideTreeTab => ({
 const findTabByDocId = (tabs: readonly TSideTreeTab[], docId: string | null): TSideTreeTab | null =>
   tabs.find((tab) => resolveActiveIdFromUrl(tab.groups, docId) !== null) ?? null
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
   const { currentDocId, syncDocIdToUrl } = useDocEditorUrl()

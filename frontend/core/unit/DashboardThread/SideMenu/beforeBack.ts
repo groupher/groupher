@@ -2,6 +2,7 @@ export type TBeforeDashboardBack = () => Promise<boolean>
 
 let beforeBack: TBeforeDashboardBack | null = null
 
+/** Runs the register before dashboard back operation at the frontend shared boundary. */
 export const registerBeforeDashboardBack = (handler: TBeforeDashboardBack): (() => void) => {
   beforeBack = handler
 
@@ -10,5 +11,6 @@ export const registerBeforeDashboardBack = (handler: TBeforeDashboardBack): (() 
   }
 }
 
+/** Runs the run before dashboard back operation at the frontend shared boundary. */
 export const runBeforeDashboardBack = async (): Promise<boolean> =>
   beforeBack ? beforeBack() : true

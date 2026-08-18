@@ -10,6 +10,7 @@ type TParams = {
   editorRef: RefObject<TRichEditorHandle | null>
 }
 
+/** Exposes import state and actions through the shared React hook boundary. */
 export default function useImport({ docId, editorRef }: TParams) {
   const cursorRef = useRef<TCursorRef | null>(null)
   const preparedDocIdRef = useRef<string | null>(null)

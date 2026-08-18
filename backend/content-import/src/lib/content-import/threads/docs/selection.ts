@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib Content Import Threads Docs Selection boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import { DocsImportError } from '../../core/errors'
 /**
  * Applies user page selection without losing required navigation ancestors.

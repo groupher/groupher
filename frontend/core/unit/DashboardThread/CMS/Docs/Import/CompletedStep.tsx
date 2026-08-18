@@ -17,7 +17,7 @@ export default function CompletedStep({
 }) {
   const s = useSalon()
   const { t } = useTrans()
-  const editorUrl = `/${community}/dashboard/doc/editor${job.firstImportedDocRef ? `?docId=${encodeURIComponent(job.firstImportedDocRef)}` : ''}`
+  const editorUrl = `/${community}/doc/editor${job.firstImportedDocRef ? `?docId=${encodeURIComponent(job.firstImportedDocRef)}` : ''}`
   const issues = [...job.failedItems, ...job.skipped]
   const partial = issues.length > 0
   const total = job.progress.bodies?.total ?? job.counts.pages + issues.length

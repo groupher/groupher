@@ -5,6 +5,12 @@ defmodule Helper.Transaction do
   - Global mutex for critical sections
   - Complete error stack capture
   - Automatic transaction management
+
+  Business position:
+
+      Domain or web caller
+        -> Transaction
+        -> normalized value / infrastructure
   """
 
   @doc """

@@ -4,6 +4,14 @@ defmodule GroupherServer.Analysis.Web.Provider do
 
   Providers return a Groupher-owned DTO. Raw vendor response fields must not
   cross this boundary.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Provider
+        -> Repo / analytics provider
   """
 
   alias GroupherServer.Analysis.Web.Community
@@ -19,6 +27,9 @@ defmodule GroupherServer.Analysis.Web.Provider do
   Returns the SSR-sized v2 overview DTO seed for one community and time range.
   """
   @callback overview(Community.t(), map()) :: {:ok, map()} | {:error, term()}
+
+  @doc "Returns the current active visitor count for one community."
+  @callback active(Community.t()) :: {:ok, %{visitors: non_neg_integer()}} | {:error, term()}
 
   @doc "Returns one normalized page breakdown dimension."
   @callback pages(Community.t(), map(), :path | :entry | :exit | :title | :query) ::

@@ -1,6 +1,13 @@
 defmodule GroupherServer.Jobs.SnapshotRefresh do
   @moduledoc """
   Snapshot cache refresh job.
+
+  Business position:
+
+      Domain event / scheduler
+        -> Oban
+        -> SnapshotRefresh
+        -> context / service
   """
 
   use Oban.Worker,

@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.DocCoverPinnedDoc do
 
   Pinned docs are independent from cover groups. Each relation owns its Light
   and Dark card appearance without changing the document's tree membership.
+
+  Business position:
+
+      CMS context
+        -> DocCoverPinnedDoc schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__

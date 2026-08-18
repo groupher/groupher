@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Comment do
   Comment rows carry source-thread foreign keys, author data, floor/reply state,
   and moderation/reaction embeds. Keep public comment identity separate from
   internal database ids when exposing this schema through GraphQL.
+
+  Business position:
+
+      CMS context
+        -> Comment schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -12,7 +19,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   use Accessible
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [
@@ -25,7 +32,7 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.Model.{CommentUpvote, Embeds}
+  alias CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -33,15 +40,12 @@ defmodule GroupherServer.CMS.Model.Comment do
   # alias Helper.HTML
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
-  @required_fields ~w(body author_id)a
-  @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded is_deleted inner_id floor is_article_author thread is_for_question is_solution pending)a
-  # @updatable_fields ~w(body_html is_folded is_deleted floor upvotes_count is_pinned is_for_question is_solution replies_count pending)a
+  @required_fields ~w(body author_id community_id article_hash_id)a
+  @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question is_solution pending)a
   @updatable_fields ~w(
     body_html
     is_folded
-    is_deleted
     floor
-    upvotes_count
     is_pinned
     is_for_question
     is_solution
@@ -49,8 +53,6 @@ defmodule GroupherServer.CMS.Model.Comment do
     pending
     inserted_at
     updated_at
-    is_archived
-    archived_at
     is_article_author
     root_comment_id
   )a
@@ -76,23 +78,29 @@ defmodule GroupherServer.CMS.Model.Comment do
 
   @doc "操作某 emotion 的最近用户"
   def max_latest_emotion_users_count, do: @max_latest_emotion_users_count
+
+  @doc "Returns the placeholder body shown for deleted comments."
   def delete_hint, do: @delete_hint
 
+  @doc "Returns the report count at which a comment is auto-folded."
   def report_threshold_for_fold, do: @report_threshold_for_fold
+
+  @doc "Returns the maximum number of pinned comments per article."
   def pinned_comment_limit, do: @pinned_comment_limit
 
-  schema_artiment_type(is_archived: boolean())
+  schema_artiment_type()
 
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
+    belongs_to(:community, Community)
+    has_one(:lifecycle, CommentLifecycle)
+    field(:article_hash_id, Ecto.UUID)
 
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:body, :string)
     field(:body_html, :string)
     # 是否被折叠
     field(:is_folded, :boolean, default: false)
-    # 是否被删除
-    field(:is_deleted, :boolean, default: false)
     # Public comment locator within its article.
     field(:inner_id, :id)
     # 楼层
@@ -103,8 +111,8 @@ defmodule GroupherServer.CMS.Model.Comment do
 
     # 是否是评论文章的作者
     field(:is_article_author, :boolean, default: false)
-    field(:upvotes_count, :integer, default: 0)
-
+    # Projection-backed response field; no column is persisted on comments.
+    field(:upvotes_count, :integer, default: 0, virtual: true)
     # 是否置顶
     field(:is_pinned, :boolean, default: false)
     field(:viewer_has_upvoted, :boolean, default: false, virtual: true)
@@ -120,9 +128,6 @@ defmodule GroupherServer.CMS.Model.Comment do
     embeds_one(:meta, Embeds.CommentMeta, on_replace: :update)
 
     has_many(:upvotes, {"comments_upvotes", CommentUpvote})
-
-    field(:is_archived, :boolean, default: false)
-    field(:archived_at, :utc_datetime)
 
     field(:pending, :integer, default: 0)
 
@@ -152,6 +157,8 @@ defmodule GroupherServer.CMS.Model.Comment do
   defp geneal_changeset(content) do
     content
     |> foreign_key_constraint(:author_id)
+    |> foreign_key_constraint(:community_id)
+    |> check_constraint(:community_id, name: :comments_community_matches_article)
     |> articles_foreign_key_constraint
     |> articles_exactly_one_ref_constraint(:comments)
     |> articles_thread_matches_ref_constraint(:comments)

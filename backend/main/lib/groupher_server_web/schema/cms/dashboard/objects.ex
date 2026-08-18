@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Objects do
   @moduledoc """
   GraphQL dashboard object types.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Objects
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Absinthe.Schema.Notation
 

@@ -1,12 +1,21 @@
 defmodule GroupherServer.CMS.Communities.Creation do
-  @moduledoc "Atomic Community identity creation from one approved Application."
+  @moduledoc """
+  Atomic Community identity creation from one approved Application.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Creation
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Write}
+  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
   alias GroupherServer.CMS.CommunityApplications.Transitions
   alias GroupherServer.CMS.Communities.Jobs.Setup
 
@@ -19,6 +28,20 @@ defmodule GroupherServer.CMS.Communities.Creation do
 
   @community_applying Constant.CMS.pending(:applying)
 
+  @doc """
+  Creates a Community from one approved Application inside a single transaction.
+
+  The application is locked and must be `:approved` (or already in the
+  `:setting_up` / `:created` / `:setup_failed` states). Core creation, lifecycle,
+  asset promotion, slug claim promotion and the idempotent Setup job enqueue
+  all happen in the same transaction; any failure rolls back.
+
+  ## Examples
+
+      CMS.Communities.create_from_application("capp_abc", "op_123")
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec create_from_application(String.t(), String.t()) :: {:ok, term()} | {:error, term()}
   def create_from_application(application_ref, operation_ref) do
     now = DateTime.utc_now(:second)
@@ -37,7 +60,8 @@ defmodule GroupherServer.CMS.Communities.Creation do
           Repo.rollback(:application_state_conflict)
 
         true ->
-          with {:ok, _slug} <- NamePolicy.validate(application.slug),
+          with {:ok, _slug} <-
+                 NamePolicy.check(application.slug, ignore_application_id: application.id),
                {:ok, user} <- fetch_user(application.user_id),
                {:ok, upload} <- finalized_upload(application),
                {:ok, community} <- create_core(application, upload, user),
@@ -83,7 +107,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   end
 
   defp create_core(application, upload, user) do
-    Write.create_core(
+    Writer.create_core(
       %{
         title: application.title,
         slug: application.slug,

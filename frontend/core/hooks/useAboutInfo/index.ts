@@ -9,6 +9,7 @@ type TABoutInfo = {
   mediaReports: readonly TMediaReport[]
 }
 
+/** Exposes about info state and actions through the shared React hook boundary. */
 export default function useAboutInfo(): TABoutInfo {
   const dsb$ = useDashboard()
 

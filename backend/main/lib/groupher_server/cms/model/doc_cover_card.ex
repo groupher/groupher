@@ -9,6 +9,13 @@ defmodule GroupherServer.CMS.Model.DocCoverCard do
 
   The Card keeps cover ordering and cover-local appearance. Its title and
   direct Page/Link/Group items are projected from the published Group.
+
+  Business position:
+
+      CMS context
+        -> DocCoverCard schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   Report records connect a reporter, source content, and moderation case payload
   so audit/review workflows can process unsafe content independently of the
   source article or comment table.
+
+  Business position:
+
+      CMS context
+        -> AbuseReport schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -12,7 +19,7 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   use Accessible
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_at_most_one_ref_constraint: 2, articles_foreign_key_constraint: 1]

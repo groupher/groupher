@@ -13,10 +13,10 @@ import {
   getRevisionAuthorName,
 } from './display'
 import useSalon, { cn } from './salon/item'
-import type { TArticleSnapshot } from './spec'
+import type { TDocSnapshot } from './spec'
 
 type TProps = {
-  revision: TArticleSnapshot
+  revision: TDocSnapshot
   selected: boolean
   restoreDisabled: boolean
   restoring: boolean

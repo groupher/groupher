@@ -4,6 +4,14 @@ defmodule GroupherServer.Analysis.Web.Config do
 
   `base/0` returns static provider and query defaults. `runtime/0` returns only
   runtime credentials injected through application environment.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Config
+        -> Repo / analytics provider
   """
 
   alias GroupherServer.Analysis.Web.Provider.Umami
@@ -33,6 +41,13 @@ defmodule GroupherServer.Analysis.Web.Config do
   defmodule Runtime do
     @moduledoc """
     Runtime-only Web Analysis credentials.
+
+    Business position:
+
+        Application environment
+          -> Analysis.Web.Config.runtime/0
+          -> Runtime struct
+          -> Analytics provider client
     """
 
     @type t :: %__MODULE__{

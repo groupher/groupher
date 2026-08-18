@@ -20,6 +20,7 @@ export const ACTIVE_LAYOUT_ID = {
 
 // Direction is from the incoming menu's perspective: submenus enter from the right,
 // Back returns Main from the left, while the outgoing menu exits opposite.
+/** Returns menu direction for the frontend shared workflow. */
 export const getMenuDirection = (view: TMenuView): TMenuDirection =>
   view === MENU_VIEW.DOC ||
   view === MENU_VIEW.POST ||

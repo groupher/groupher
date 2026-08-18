@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycleBlocker do
-  @moduledoc "An active or ended restriction contributing to a Community Lifecycle state."
+  @moduledoc """
+  An active or ended restriction contributing to a Community Lifecycle state.
+
+  Business position:
+
+      CMS context
+        -> CommunityLifecycleBlocker schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 

@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Config do
   @moduledoc """
   Static configuration contract for the GraphQL/web layer.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Config
+        -> web or domain boundary
   """
 
   @general_config Application.compile_env(:groupher_server, :general, [])

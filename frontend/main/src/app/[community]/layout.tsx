@@ -13,6 +13,7 @@ import { getMetadata } from '~/utils/ssr'
 import WebAnalysisScript from '../WebAnalysisScript'
 import Client from './Client'
 
+/** Runs the generate metadata operation at the frontend shared boundary. */
 export async function generateMetadata({ params }): Promise<Metadata> {
   const params$ = await params
   const { dashboard } = await getCommunityInfo(params$.community)

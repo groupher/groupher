@@ -4,13 +4,20 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
 
   The schema enforces one upvote per user/source item and lets article counters
   and user achievement reputation be updated from a durable relation.
+
+  Business position:
+
+      CMS context
+        -> ArticleUpvote schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [

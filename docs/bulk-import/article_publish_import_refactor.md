@@ -355,7 +355,7 @@ Elixir: bodyHash + title + digest + slug + subtitle + versioned relations
           `-- versionHash
 ```
 
-`bodyHash` 随 BodyBag 保存。`versionHash` 不属于 BodyBag，只在 Elixir 创建 Snapshot 或比较当前 Draft 与 Snapshot 时生成。
+`bodyHash` 随 BodyBag 保存。`versionHash` 不属于 BodyBag，只在 Elixir 为 Doc 创建 `DocSnapshot` 或比较当前 Draft 与 Snapshot 时生成；普通 Article Publish 不创建 Snapshot。
 
 Snapshot 对比不调用 publisher：
 
@@ -367,7 +367,7 @@ Snapshot 对比不调用 publisher：
 
 ```text
 ArticleDocument / Article (Draft/Public): body_hash
-ArticleSnapshot:                          version_hash
+DocSnapshot:                              version_hash
 ```
 
 当前同名 `content_hash` 字段在切换时直接按上述语义重命名；本次不兼容旧 hash，也不做 backfill。

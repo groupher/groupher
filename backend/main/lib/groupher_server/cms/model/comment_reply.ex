@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommentReply do
 
   The row links a comment to the comment it replies to so reply trees can be
   queried without overloading the main comment record.
+
+  Business position:
+
+      CMS context
+        -> CommentReply schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycle do
-  @moduledoc "Public availability lifecycle for a community created from an application."
+  @moduledoc """
+  Public availability lifecycle for a community created from an application.
+
+  Business position:
+
+      CMS context
+        -> CommunityLifecycle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 
@@ -15,7 +24,7 @@ defmodule GroupherServer.CMS.Model.CommunityLifecycle do
   @timestamps_opts [type: :utc_datetime]
   @states Const.lifecycle_state_values()
   @required_fields ~w(community_id state version)a
-  @optional_fields ~w(application_id activated_at changed_at archived_at scheduled_reclaim_at destroyed_at failed_at last_error)a
+  @optional_fields ~w(application_id activated_at changed_at archived_at destroy_scheduled_at destroyed_at failed_at last_error)a
 
   @type t :: %__MODULE__{}
 
@@ -27,7 +36,7 @@ defmodule GroupherServer.CMS.Model.CommunityLifecycle do
     field(:activated_at, :utc_datetime)
     field(:changed_at, :utc_datetime)
     field(:archived_at, :utc_datetime)
-    field(:scheduled_reclaim_at, :utc_datetime)
+    field(:destroy_scheduled_at, :utc_datetime)
     field(:destroyed_at, :utc_datetime)
     field(:failed_at, :utc_datetime)
     field(:last_error, :map)

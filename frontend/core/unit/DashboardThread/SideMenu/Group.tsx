@@ -26,7 +26,7 @@ type TProps = {
 const Group: FC<TProps> = ({ activeMainTab, group }) => {
   const { slug: community } = useCommunity()
   const { navi } = usePlatform()
-  const routeMeta = parseDsbPathname(navi.location.pathname)
+  const routeMeta = parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dashboard')
   const currentCommunity = routeMeta?.community ?? community
   const [foldState, setFoldState] = useState<boolean | null>(null)
   const fold = foldState ?? group.initFold

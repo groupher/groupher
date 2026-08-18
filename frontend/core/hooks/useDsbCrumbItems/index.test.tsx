@@ -5,12 +5,12 @@ import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useDsbCrumbItems, { type TDsbCrumbNode } from '~/hooks/useDsbCrumbItems'
 import { PlatformProvider, type TPlatform } from '~/platform'
 
-let mockPathname = '/acme/dashboard'
+let mockPathname = '/acme'
 let mockSearch = ''
 
 describe('useDsbCrumbItems', () => {
   it('builds breadcrumb chain using seg/toSeg', () => {
-    mockPathname = '/acme/dashboard/third-part/email'
+    mockPathname = '/acme/third-part/email'
     const value: TPlatform = {
       components: {
         Image: () => null,
@@ -31,6 +31,7 @@ describe('useDsbCrumbItems', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
+        dsbRootSegment: 'dashboard',
       },
     }
 
@@ -50,7 +51,7 @@ describe('useDsbCrumbItems', () => {
 
     const { result } = renderHook(() => useDsbCrumbItems(root), { wrapper: Wrapped })
     expect(result.current).toHaveLength(2)
-    expect(result.current[0].path).toBe('/acme/dashboard/integrations')
+    expect(result.current[0].path).toBe('/acme/integrations')
     expect(result.current[1].path).toBe('')
   })
 })

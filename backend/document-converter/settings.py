@@ -1,5 +1,7 @@
 """Environment-backed limits for the standalone document converter.
 
+Deployment environment -> validated Settings -> HTTP/conversion limits
+
 See docs/bulk-import/article-publish-import-refactor.md for fixed service ownership.
 """
 

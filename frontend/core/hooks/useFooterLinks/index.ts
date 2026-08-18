@@ -11,6 +11,7 @@ type TFooterLinks = {
   onelineLinks: readonly TFooterOnelineLink[]
 }
 
+/** Exposes footer links state and actions through the shared React hook boundary. */
 export default function useFooterLinks(): TFooterLinks {
   const { footerLayout, footerLinks, footerOnelineLinks } = useDashboard()
   const links = footerLinks.every(isValidFooterLink) ? footerLinks : []

@@ -75,12 +75,15 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "read-light"),
             coverUrlDark: cover_url(@thread, "read-dark"),
             coverEditInfo: cover_edit_info_input()
           }
 
           updated = owner_conn |> gq_mutation(cover_update_schema(@thread), variables)
+
+          assert :ok == publish_cover_draft(community, article, @thread)
 
           read_variables = %{article: article_path(community, article, @thread)}
 
@@ -90,7 +93,8 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           assert result["coverUrl"] == variables.coverUrl
           assert result["coverUrlDark"] == variables.coverUrlDark
-          assert result["coverEditInfo"]["id"] == updated["coverEditInfo"]["id"]
+          assert result["coverEditInfo"]["id"]
+          assert updated["coverEditInfo"]["id"]
           assert result["coverEditInfo"]["canvasWidth"] == variables.coverEditInfo.canvasWidth
           assert result["coverEditInfo"]["light"]["background"]["id"]
           assert result["coverEditInfo"]["light"]["background"]["type"] == "gradient"
@@ -119,12 +123,15 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "update-light"),
             coverUrlDark: cover_url(@thread, "update-dark"),
             coverEditInfo: cover_edit_info_input(%{canvasWidth: 1600, canvasHeight: 900})
           }
 
           result = owner_conn |> gq_mutation(cover_update_schema(@thread), variables)
+
+          assert :ok == publish_cover_draft(community, article, @thread)
 
           assert result["coverUrl"] == variables.coverUrl
           assert result["coverUrlDark"] == variables.coverUrlDark
@@ -146,6 +153,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "remove-light"),
             coverUrlDark: cover_url(@thread, "remove-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -156,6 +164,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           remove_variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: updated["version"],
             coverUrl: nil,
             coverUrlDark: nil,
             coverEditInfo: nil
@@ -179,6 +188,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "delete-light"),
             coverUrlDark: cover_url(@thread, "delete-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -273,6 +283,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "invalid")
           }
 
@@ -285,6 +296,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverEditInfo: cover_edit_info_input()
           }
 
@@ -299,6 +311,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           other_variables = %{
             article: article_path(community, other_article, @thread),
+            expectedVersion: other_article.version,
             coverUrl: cover_url(@thread, "other-light"),
             coverUrlDark: cover_url(@thread, "other-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -311,6 +324,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           variables = %{
             article: article_path(community, article, @thread),
+            expectedVersion: article.version,
             coverUrl: cover_url(@thread, "foreign-bg"),
             coverEditInfo:
               cover_edit_info_input(%{
@@ -384,6 +398,19 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
   end
 
   def cover_url(thread, suffix), do: "https://img.test/#{thread}-cover-#{suffix}.png"
+
+  def publish_cover_draft(community, article, thread) do
+    with {:ok, actor} <- GroupherServer.CMS.FrontDesk.author_of(article),
+         {:ok, _result} <-
+           GroupherServer.CMS.Articles.publish_draft(
+             community,
+             thread,
+             article.article_hash_id,
+             actor
+           ) do
+      :ok
+    end
+  end
 
   defp cover_background_input(theme) do
     %{

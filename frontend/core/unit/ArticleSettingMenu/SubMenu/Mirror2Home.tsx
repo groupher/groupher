@@ -28,6 +28,7 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
         community: article.community?.slug,
         thread: article.meta.thread,
       },
+      expectedVersion: article.version,
     }
 
     console.log('## ## handle action')

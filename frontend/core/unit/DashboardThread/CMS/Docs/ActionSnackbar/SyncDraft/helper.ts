@@ -1,3 +1,4 @@
+/** Runs the format saved time operation at the frontend shared boundary. */
 export const formatSavedTime = (value?: string | null): string => {
   if (!value) return 'Save time unavailable'
 

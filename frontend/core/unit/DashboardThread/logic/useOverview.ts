@@ -9,6 +9,7 @@ import S from '~/unit/DashboardThread/schema/shell'
 
 type TCommunityOverview = NonNullable<ResultOf<typeof S.communityOverview>['community']>
 
+/** Exposes overview state and actions through the shared React hook boundary. */
 export default function useOverview(): TOverview {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()

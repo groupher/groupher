@@ -8,6 +8,7 @@ type TOptions = {
   preventScroll?: boolean
 }
 
+/** Exposes auto focus target state and actions through the shared React hook boundary. */
 export const useAutoFocusTarget = <T extends TFocusable>(
   ref: RefObject<T | null>,
   enabled = false,

@@ -4,6 +4,14 @@ defmodule GroupherServer.Analysis.Contribution.Model.CommunityContribute do
 
   Community dashboards use these date-bucketed rows to render activity trends
   without scanning article/comment history on every request.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> CommunityContribute
+        -> Repo / analytics provider
   """
   alias __MODULE__
 

@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Link Intent boundary inside Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import { randomBytes } from 'node:crypto'
 
 export const LINK_INTENT_TTL_SECONDS = 10 * 60
@@ -44,8 +55,10 @@ const INTENT_REF_PATTERN = /^li_[A-Za-z0-9_-]{20,80}$/
 
 const opaqueRef = (prefix: string): string => `${prefix}${randomBytes(24).toString('base64url')}`
 
+/** Creates code verifier from typed auth inputs. */
 export const createCodeVerifier = (): string => `cv_${randomBytes(32).toString('base64url')}`
 
+/** Creates link intent from typed auth inputs. */
 export const createLinkIntent = ({
   browserSessionRef,
   provider,
@@ -71,11 +84,14 @@ export const createLinkIntent = ({
   }
 }
 
+/** Reports whether valid intent ref at the auth boundary. */
 export const isValidIntentRef = (value: string): boolean => INTENT_REF_PATTERN.test(value)
 
+/** Runs the encode link state operation at the auth boundary. */
 export const encodeLinkState = (intent: Pick<TLinkIntent, 'intentRef' | 'nonce'>): string =>
   `${intent.intentRef}.${intent.nonce}`
 
+/** Runs the decode link state operation at the auth boundary. */
 export const decodeLinkState = (value: string): { intentRef: string; nonce: string } | null => {
   const [intentRef, nonce, extra] = value.split('.')
   if (extra || !intentRef || !nonce || !isValidIntentRef(intentRef)) return null

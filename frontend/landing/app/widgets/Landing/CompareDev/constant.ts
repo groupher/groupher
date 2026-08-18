@@ -3,6 +3,7 @@ import type { TTransKey } from '~/spec'
 
 type TTranslate = (key: TTransKey) => string
 
+/** Returns metric map for the frontend shared workflow. */
 export const getMetricMap = (t: TTranslate) => ({
   DEFAULT: {
     title: t('landing.compare.metric.default.title'),

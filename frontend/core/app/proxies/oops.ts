@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 
 import { ROUTE } from '~/const/route'
 
+/** Runs the oops proxy operation at the frontend shared boundary. */
 export function oopsProxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 

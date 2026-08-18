@@ -149,12 +149,12 @@ const validateTargetStep = async (input: TAnalyzeGitHubRepoInput): Promise<void>
       throw new DocsImportError('preview_dataset_missing', 'preview', 'Preview dataset is missing.')
     }
 
-    const serviceIdentity = 'service:content-import'
+    const serviceSubject = 'service:content-import'
     const target = await previewDocImportTarget(
       input.community,
       dataset.sourceInfo as TSourceInfo,
       analysis,
-      { serviceIdentity },
+      { serviceSubject },
     )
     const preview: TDocImportPreview = {
       badSmells: analysis.badSmells,

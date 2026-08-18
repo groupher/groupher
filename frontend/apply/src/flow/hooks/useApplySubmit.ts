@@ -6,6 +6,7 @@ import { ClientGraphQLError } from '../../lib/graphql'
 import { useApplyStore } from '../context'
 import { removeDraft } from '../persistence'
 
+/** Exposes apply submit state and actions through the shared React hook boundary. */
 export const useApplySubmit = (accountRef: string) => {
   const store = useApplyStore()
   const snapshot = useSnapshot(store)

@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.Branch
+  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.ContentImport.Process
   alias GroupherServer.CMS.ContentImport.Persistence.Connection
   alias GroupherServer.CMS.ContentImport.Persistence.Job

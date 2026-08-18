@@ -4,6 +4,7 @@ type TRes = {
   loaded: boolean
 }
 
+/** Exposes loaded state and actions through the shared React hook boundary. */
 export default function useLoaded(): TRes {
   const [loaded, setLoaded] = useState(false)
 

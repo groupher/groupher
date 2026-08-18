@@ -11,6 +11,7 @@ const assetsHubEndpoint = () =>
     ? 'https://assets-hub.groupher.com'
     : 'https://assets-hub.groupher.localhost'
 
+/** Runs the upload application logo operation at the frontend shared boundary. */
 export const uploadApplicationLogo = async (file: File): Promise<{ ref: string; url: string }> => {
   const result = await clientGraphQL<{
     createCommunityApplicationLogoUploadIntent: UploadIntent

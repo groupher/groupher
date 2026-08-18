@@ -4,10 +4,17 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
   The module creates development comment data that exercises article detail and
   conversation UI paths.
+
+  Business position:
+
+      Seed task
+        -> Comments
+        -> CMS context
+        -> Repo
   """
 
   import GroupherServer.Support.Factory
-    alias GroupherServer.CMS
+  alias GroupherServer.CMS
   alias GroupherServer.Support.FakeData
 
   alias CMS.Model.{Comment, Community}
@@ -20,6 +27,17 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
 
+  @doc """
+  Seeds sample comments and replies for one article.
+
+  Counts and ranges come from `opts` and fall back to `CMS.Seeds.Config`
+  defaults. When `seed_replies` is true, replies are created per comment.
+
+  ## Examples
+
+      CMS.Seeds.Comments.mock(community, :post, article, count_range: {3, 3})
+
+  """
   @spec mock(Community.t(), atom(), map(), keyword()) :: T.domain_res([Comment.t()])
   def mock(%Community{} = community, thread, article, opts \\ [])
       when thread in [:post, :changelog, :doc] do

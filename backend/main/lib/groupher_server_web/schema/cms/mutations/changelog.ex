@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
   @moduledoc """
   GraphQL mutations for changelog-thread article publishing and editing.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Changelog
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 
@@ -46,6 +53,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
     @desc "update a cms/changelog"
     field :update_changelog, :changelog do
       arg(:article, non_null(:article_path_input))
+      arg(:expected_version, non_null(:integer))
       arg(:title, :string)
       arg(:body_bag, :artiment_body_bag_input)
       arg(:digest, :string)
@@ -67,6 +75,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
     field :update_changelog_draft, :article_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:expected_version, non_null(:integer))
       arg(:title, :string)
       arg(:body_bag, :artiment_body_bag_input)
       arg(:digest, :string)

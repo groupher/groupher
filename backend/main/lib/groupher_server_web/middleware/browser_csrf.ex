@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   Gateway rejects malformed browser requests early, but Phoenix verifies the
   original request metadata again before any GraphQL resolver can run.
+
+  Business position:
+
+      Resolver result
+        -> BrowserCsrf middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   import Plug.Conn

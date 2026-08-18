@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.Communities do
   @moduledoc """
-  communities seeds
+  Creates the predefined communities required by a fresh Groupher database.
+
+  Business position:
+
+      Seed task
+        -> Communities
+        -> CMS context
+        -> Repo
   """
 
   import Helper.Utils, only: [done: 1]
@@ -14,6 +21,17 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   @community_types [:pl, :framework]
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
+  @doc """
+  Seeds every predefined community of one type.
+
+  Each slug from the type list is created through the domain community seed
+  flow. Supported types are `:pl` and `:framework`.
+
+  ## Examples
+
+      CMS.Seeds.Communities.communities(:pl)
+
+  """
   @spec communities(atom()) :: T.domain_res(:ok)
   def communities(type) when type in @community_types do
     get(type) |> Enum.each(&mock(&1, type)) |> done
@@ -40,7 +58,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     with {:ok, user} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
          {:ok, community} <- find_or_create(slug, title, user),
          {:ok, _} <- ensure_about_enabled(community) do
-      CMS.Communities.read(community.slug, inc_views: false)
+      CMS.Communities.fetch(community.slug, inc_views: false)
     end
   end
 

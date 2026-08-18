@@ -18,6 +18,7 @@ const toTextColorClass = (className: string): string => {
   return segments.join(':')
 }
 
+/** Returns dsb icon class name for the frontend shared workflow. */
 export const getDsbIconClassName = (className?: string): string | undefined => {
   if (!className) return undefined
 

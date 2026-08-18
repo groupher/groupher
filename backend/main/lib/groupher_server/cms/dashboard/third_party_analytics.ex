@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Dashboard.ThirdPartyAnalytics do
   Dashboard reads provider definitions from this module through GraphQL, while
   persistence and public rendering reuse the same registry so provider support
   is not maintained independently in multiple layers.
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> ThirdPartyAnalytics
+        -> CommunityDashboard / Repo
   """
 
   import Ecto.Changeset
@@ -112,10 +120,20 @@ defmodule GroupherServer.CMS.Dashboard.ThirdPartyAnalytics do
 
   @provider_keys Enum.map(@providers, & &1.provider)
 
+  @doc "Returns the registry of supported third-party analytics providers."
   def providers, do: @providers
 
+  @doc "Returns the provider keys of all supported analytics providers."
   def provider_keys, do: @provider_keys
 
+  @doc """
+  Validates a third-party analytics changeset against the provider registry.
+
+  ## Examples
+
+      ThirdPartyAnalytics.validate_provider(changeset)
+
+  """
   def validate_provider(changeset) do
     changeset
     |> validate_inclusion(:provider, provider_keys())

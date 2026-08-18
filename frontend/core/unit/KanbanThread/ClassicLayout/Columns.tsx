@@ -59,6 +59,7 @@ function BodyColumn({ column, className = '' }: { column: TColumn; className?: s
   )
 }
 
+/** Exposes columns data state and actions through the shared React hook boundary. */
 export function useColumnsData() {
   const s = useSalon()
   const { t } = useTrans()

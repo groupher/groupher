@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Fans.List do
 
   Viewer-aware variants enrich each user row with follow-state booleans so the
   frontend can render follow buttons without extra round trips.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> List
+        -> Repo
   """
 
   import Ecto.Query, warn: false

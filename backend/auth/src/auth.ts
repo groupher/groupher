@@ -1,3 +1,14 @@
+/**
+ * Adapts Auth.js and OAuth provider callbacks to Groupher Session creation.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import { createHash } from 'node:crypto'
 
 import { Auth, type AuthConfig, setEnvDefaults } from '@auth/core'
@@ -9,10 +20,7 @@ import {
   getAuthSessionCookieName,
 } from '@groupher/contracts/auth'
 import { GROUPHER_USER_AUTHORIZATION_HEADER } from '@groupher/contracts/headers'
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 import { serialize } from 'hono/utils/cookie'
 
 import './env'
@@ -26,10 +34,10 @@ export const BROWSER_SESSION_USER_AGENT_MAX_LENGTH = 255
 const PHOENIX_GRAPHQL_ENDPOINT =
   process.env.PHOENIX_GRAPHQL_ENDPOINT?.trim() || 'http://127.0.0.1:4001/graphiql'
 const PHOENIX_AUTH_RESOURCE = 'https://api.groupher.com/auth'
-let serviceTokenProvider: TServiceTokenProvider | undefined
+let serviceTokenProvider: TServiceAuthClient | undefined
 
 const authServiceToken = (scope: string) => {
-  serviceTokenProvider ??= createServiceTokenProviderFromEnv()
+  serviceTokenProvider ??= createServiceAuthClientFromEnv()
   return serviceTokenProvider.getToken({ resource: PHOENIX_AUTH_RESOURCE, scopes: [scope] })
 }
 
@@ -144,6 +152,7 @@ export type TVerifiedGithubIdentity = {
   company?: string
 }
 
+/** Runs the github authorization url operation at the auth boundary. */
 export const githubAuthorizationUrl = (
   state: string,
   redirectUri: string,
@@ -165,6 +174,7 @@ export const githubAuthorizationUrl = (
   return url.toString()
 }
 
+/** Runs the exchange github code for identity operation at the auth boundary. */
 export const exchangeGithubCodeForIdentity = async (
   code: string,
   redirectUri: string,
@@ -220,6 +230,7 @@ export const exchangeGithubCodeForIdentity = async (
   }
 }
 
+/** Runs the signin oauth operation at the auth boundary. */
 export const signinOauth = async (
   provider: Record<string, unknown>,
   browserSession: TBrowserSessionMetadata = {},
@@ -262,6 +273,7 @@ export const signinOauth = async (
   return result as TBrowserSigninResult
 }
 
+/** Builds auth config from typed auth inputs. */
 export const buildAuthConfig = ({
   onPhoenixSignin = () => undefined,
   onSessionToken = () => undefined,
@@ -328,6 +340,7 @@ export const buildAuthConfig = ({
   return config
 }
 
+/** Builds phoenix token cookie from typed auth inputs. */
 export const buildPhoenixTokenCookie = (token: string, maxAge = ACCESS_TOKEN_MAX_AGE): string =>
   serialize(GROUPHER_AUTH_TOKEN_COOKIE, token, {
     domain: process.env.AUTH_COOKIE_DOMAIN?.trim(),
@@ -402,6 +415,7 @@ export const readPhoenixUserToken = (request: Request): string | null => {
   return null
 }
 
+/** Builds auth cookie clearing headers from typed auth inputs. */
 export const buildAuthCookieClearingHeaders = (request: Request): string[] => {
   const authCookies = getAuthCookieNames(useSecureCookies)
   const authCookieNames = Object.values(authCookies)
@@ -433,6 +447,7 @@ export const buildAuthCookieClearingHeaders = (request: Request): string[] => {
   )
 }
 
+/** Runs the to canonical auth request operation at the auth boundary. */
 export const toCanonicalAuthRequest = (request: Request): Request => {
   const authUrl = process.env.AUTH_URL?.trim()
   if (!authUrl) return request
@@ -453,6 +468,7 @@ const maxAgeUntil = (expiresAt: string, maximum: number): number => {
   return Math.max(0, Math.min(maximum, Math.floor((expiresAtMs - Date.now()) / 1000)))
 }
 
+/** Runs the append phoenix token cookie operation at the auth boundary. */
 export const appendPhoenixTokenCookie = (
   response: Response,
   result: TBrowserSigninResult,
@@ -661,6 +677,7 @@ const linkedAccountsResult = (data: {
   return entries as TLinkedOauthAccount[]
 }
 
+/** Lists linked oauth accounts through the bounded auth interface. */
 export const listLinkedOauthAccounts = async (userToken: string): Promise<TLinkedOauthAccount[]> =>
   linkedAccountsResult(
     await callPhoenix<{ linkedOauthAccounts?: { entries?: unknown } }>(
@@ -671,6 +688,7 @@ export const listLinkedOauthAccounts = async (userToken: string): Promise<TLinke
     ),
   )
 
+/** Runs the link oauth identity operation at the auth boundary. */
 export const linkOauthIdentity = async (
   userToken: string,
   identity: Record<string, unknown>,
@@ -684,6 +702,7 @@ export const linkOauthIdentity = async (
     ),
   )
 
+/** Runs the unlink oauth identity operation at the auth boundary. */
 export const unlinkOauthIdentity = async (
   userToken: string,
   publicRef: string,
@@ -697,6 +716,7 @@ export const unlinkOauthIdentity = async (
     ),
   )
 
+/** Runs the refresh browser session operation at the auth boundary. */
 export const refreshBrowserSession = async (ref: string): Promise<TBrowserSigninResult> => {
   const data = await callPhoenix<{ refreshBrowserSession?: Partial<TBrowserSigninResult> }>(
     REFRESH_BROWSER_SESSION_MUTATION,
@@ -716,6 +736,7 @@ export const refreshBrowserSession = async (ref: string): Promise<TBrowserSignin
   return result as TBrowserSigninResult
 }
 
+/** Runs the revoke browser session operation at the auth boundary. */
 export const revokeBrowserSession = async (ref: string): Promise<void> => {
   const data = await callPhoenix<{ revokeBrowserSession?: { done?: unknown } }>(
     REVOKE_BROWSER_SESSION_MUTATION,
@@ -726,6 +747,7 @@ export const revokeBrowserSession = async (ref: string): Promise<void> => {
     throw new Error('Phoenix did not revoke the browser session.')
 }
 
+/** Lists browser sessions through the bounded auth interface. */
 export const listBrowserSessions = async (ref: string): Promise<TBrowserSessionSummary[]> => {
   const data = await callPhoenix<{ browserSessions?: unknown }>(
     LIST_BROWSER_SESSIONS_QUERY,
@@ -737,6 +759,7 @@ export const listBrowserSessions = async (ref: string): Promise<TBrowserSessionS
   return data.browserSessions as TBrowserSessionSummary[]
 }
 
+/** Runs the revoke browser session public operation at the auth boundary. */
 export const revokeBrowserSessionPublic = async (ref: string, publicRef: string): Promise<void> => {
   const data = await callPhoenix<{ revokeBrowserSessionPublic?: { done?: unknown } }>(
     REVOKE_BROWSER_SESSION_PUBLIC_MUTATION,
@@ -747,6 +770,7 @@ export const revokeBrowserSessionPublic = async (ref: string, publicRef: string)
     throw new Error('Phoenix did not revoke the browser session.')
 }
 
+/** Runs the revoke other browser sessions operation at the auth boundary. */
 export const revokeOtherBrowserSessions = async (ref: string): Promise<void> => {
   const data = await callPhoenix<{ revokeOtherBrowserSessions?: { done?: unknown } }>(
     REVOKE_OTHER_BROWSER_SESSIONS_MUTATION,
@@ -764,6 +788,7 @@ const issuedAuthSession = (response: Response): boolean => {
   return setCookie.includes(`${sessionCookie}=`) || setCookie.includes(`${sessionCookie}.0=`)
 }
 
+/** Creates auth request handler from typed auth inputs. */
 export const createAuthRequestHandler = ({
   authCore = callAuthCore,
   signinOauth: exchangeIdentity = signinOauth,

@@ -19,6 +19,13 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   tree and site dirty state, but it should not invalidate an editor
   `baseRevision`. Doc content mutations only bump the site draft version through
   `bump_site_draft/1`.
+
+  Business position:
+
+      Dashboard / public Docs
+        -> CMS.DocTree
+        -> Revision
+        -> Repo / published projection
   """
 
   alias Ecto.Multi
@@ -26,6 +33,21 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   alias CMS.Model.{Community, DocsSiteState}
   alias Helper.{ORM, T}
 
+  @doc """
+  Bumps the draft tree revision counters in one transaction.
+
+  Increments `tree_lock_version` and `site_draft_version`, and adds the optional
+  `staged_event_delta` to `staged_event_count`.
+
+  ## Examples
+
+      Revision.bump_tree_draft(community, state)
+      #=> {:ok, %DocsSiteState{}}
+
+      Revision.bump_tree_draft(community, state, staged_event_delta: 2)
+      #=> {:ok, %DocsSiteState{}}
+
+  """
   @spec bump_tree_draft(Community.t(), DocsSiteState.t(), keyword()) ::
           T.domain_res(DocsSiteState.t())
   def bump_tree_draft(%Community{} = community, %DocsSiteState{} = state, opts \\ []) do
@@ -50,7 +72,7 @@ defmodule GroupherServer.CMS.DocTree.Revision do
 
   @spec bump_site_draft(Community.t()) :: T.domain_res(DocsSiteState.t())
   def bump_site_draft(%Community{} = community) do
-    with {:ok, state} <- CMS.DocTree.Read.ensure_draft_state(community) do
+    with {:ok, state} <- CMS.DocTree.Reader.ensure_draft_state(community) do
       bump_site_draft(community, state)
     end
   end

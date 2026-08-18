@@ -5,6 +5,13 @@
 defmodule GroupherServerWeb.Middleware.GeneralError do
   @moduledoc """
   Fallback formatter for legacy non-domain/non-changeset errors.
+
+  Business position:
+
+      Resolver result
+        -> GeneralError middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware

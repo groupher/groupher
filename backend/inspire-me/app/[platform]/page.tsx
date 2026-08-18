@@ -1,3 +1,14 @@
+/**
+ * Implements the App [platform] Page boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -5,6 +16,7 @@ import { getFeedbackPlatform, getFeedbackPlatforms } from '../lib/feedback'
 import { clampPage } from '../lib/pagination'
 import { FeedbackPage, POSTS_PER_PAGE } from '../widgets/FeedbackPage'
 
+/** Runs the generate metadata operation at the inspire me boundary. */
 export async function generateMetadata({
   params,
 }: {

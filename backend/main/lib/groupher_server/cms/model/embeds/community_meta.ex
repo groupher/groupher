@@ -4,12 +4,20 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 
   Thread counts and inner-id indexes are generated from article thread config so
   new thread types do not require hand-editing this embed.
+
+  Business position:
+
+      CMS context
+        -> Macro schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   import Helper.Utils, only: [plural: 1]
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
+  @doc "Generates one pluralized thread count field per configured thread."
   defmacro thread_count_fields do
     @threads
     |> Enum.map(fn thread ->
@@ -33,7 +41,14 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded community counters, membership projections, and per-thread indexes.
+
+  Business position:
+
+      CMS community and artiment writes
+        -> CommunityMeta changeset
+        -> Community row
+        -> Community and dashboard read models
   """
   use Ecto.Schema
   use Accessible
@@ -56,6 +71,17 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
                      Enum.map(@threads, &:"#{plural(&1)}_count") ++
                      Enum.map(@threads, &:"#{plural(&1)}_inner_id_index")
 
+  @doc """
+  Returns the default community meta embed.
+
+  Combines the general options with zeroed per-thread counts and per-thread
+  inner id indexes.
+
+  ## Examples
+
+      CommunityMeta.default_meta()
+
+  """
   def default_meta do
     threads_counts =
       @threads

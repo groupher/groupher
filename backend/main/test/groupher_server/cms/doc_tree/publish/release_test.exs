@@ -4,6 +4,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
   use GroupherServer.TestMate
   require CMS.Const
 
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+
   describe "[doc publish release]" do
     setup do
       {:ok, user} = db_insert(:user)
@@ -45,6 +47,21 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert doc_change.doc_id == page_payload.node.doc_id
       assert doc_change.selected_by_default
       assert doc_change.selectable
+    end
+
+    test "rejects moving a public Doc back to draft when the Community is not writable",
+         ~m(user community page_payload)a do
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      {:ok, _blocker} =
+        CMS.Communities.Lifecycle.apply_blocker(
+          community.slug,
+          %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
+          operation_ref: Ecto.UUID.generate()
+        )
+
+      assert {:error, :ancestor_community_not_writable} =
+               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
     end
 
     test "returns a domain error for an unknown branch", ~m(community)a do
@@ -149,6 +166,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, [:articles, :tree_events, :tree_snapshot])
+      assert release.branch_id == state.branch_id
 
       assert release.tree_snapshot.tree_json["version"] == 3
 
@@ -158,6 +176,80 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert [] = release.tree_events
 
       assert CMS.DocTree.publish_checklist(community).total_count == 0
+    end
+
+    test "publishes a non-main branch into its own release and site cursor",
+         ~m(user community)a do
+      {:ok, branch} =
+        CMS.Docs.Branch.create_preview(
+          community,
+          %{slug: "preview-release"},
+          user
+        )
+
+      {:ok, state} = CMS.DocTree.initialize(community, branch_id: branch.id)
+
+      {:ok, tab} =
+        ORM.create(CMS.Model.DocTreeNode, %{
+          community_id: community.id,
+          branch_id: branch.id,
+          stage: :draft,
+          node_id: Ecto.UUID.generate(),
+          type: :tab,
+          title: "Preview",
+          index: 0
+        })
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          branch_id: branch.id,
+          parent_node_id: tab.node_id,
+          title: "Preview Guides",
+          slug: "preview-guides",
+          base_revision: state.tree_lock_version
+        })
+
+      {:ok, _page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            branch_id: branch.id,
+            parent_node_id: group_payload.node.id,
+            title: "Preview Install",
+            slug: "preview-install",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      assert {:ok, %{done: true, release: release, checklist: %{total_count: 0}}} =
+               CMS.DocTree.publish_changes(community, %{branch_id: branch.id}, user)
+
+      assert release.branch_id == branch.id
+
+      {:ok, published_state} =
+        ORM.find_by(CMS.Model.DocsSiteState,
+          community_id: community.id,
+          branch_id: branch.id
+        )
+
+      assert published_state.published_version == published_state.site_draft_version
+      assert published_state.branch_id == branch.id
+
+      assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
+
+      public_scope =
+        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocScope.public_branch(branch.id))
+        |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
+
+      refute Repo.exists?(public_scope)
+
+      dashboard_scope =
+        CMS.Gate.scope(CMS.Model.Doc, :operations, :read,
+          DocScope.public_branch(branch.id, policy_mode: :operations))
+        |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
+
+      assert Repo.exists?(dashboard_scope)
     end
 
     test "does not create a release when publish checklist is empty", ~m(user community)a do
@@ -355,12 +447,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           base_revision: tree.revision
         })
 
+      {:ok, current} =
+        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+
       {:ok, _draft} =
         CMS.DocTree.update_draft(
           community,
           page_payload.node.doc_id,
           %{
-            subtitle: "Edited subtitle"
+            subtitle: "Edited subtitle",
+            expected_version: current.version
           },
           user
         )

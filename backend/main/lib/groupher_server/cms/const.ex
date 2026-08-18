@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Const do
   @moduledoc """
   Shared CMS domain constants.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Const
+        -> Repo / external boundary
   """
 
   use GroupherServer.Const
@@ -15,18 +22,35 @@ defmodule GroupherServer.CMS.Const do
       community_application_retry_creation: "community.application.retry_creation",
       community_application_retry_setup: "community.application.retry_setup",
       community_update: "community.update",
-      community_delete: "community.delete"
+      community_request_destroy: "community.request_destroy"
     ]
   end
 
   enum gate_action do
     [
       read: :read,
-      archive: :archive,
+      read_draft: :read_draft,
+      list: :list,
+      update: :update,
+      publish: :publish,
+      create_comment: :create_comment,
+      reply_comment: :reply_comment,
+      request_destroy: :request_destroy,
+      manage_docs: :manage_docs,
       restore: :restore,
-      schedule_reclaim: :schedule_reclaim,
-      cancel_reclaim: :cancel_reclaim,
+      schedule_destroy: :schedule_destroy,
+      cancel_destroy: :cancel_destroy,
       destroy: :destroy
+    ]
+  end
+
+  enum gate_error do
+    [
+      scope_root_mismatch: :scope_root_mismatch,
+      scope_binding_conflict: :scope_binding_conflict,
+      scope_context_missing: :scope_context_missing,
+      unknown_policy_mode: :unknown_policy_mode,
+      scope_policy_actor_mismatch: :scope_policy_actor_mismatch
     ]
   end
 
@@ -38,7 +62,7 @@ defmodule GroupherServer.CMS.Const do
       read_only: :read_only,
       suspended: :suspended,
       archived: :archived,
-      scheduled_reclaim: :scheduled_reclaim,
+      pending_destroy: :pending_destroy,
       destroy: :destroy
     ]
   end
@@ -48,9 +72,7 @@ defmodule GroupherServer.CMS.Const do
       owner_archive: :owner_archive,
       moderation_suspend: :moderation_suspend,
       moderation_archive: :moderation_archive,
-      ops_legal_hold: :ops_legal_hold,
-      billing_read_only: :billing_read_only,
-      billing_suspend: :billing_suspend
+      ops_legal_hold: :ops_legal_hold
     ]
   end
 
@@ -58,10 +80,10 @@ defmodule GroupherServer.CMS.Const do
     [released: :released, terminated: :terminated]
   end
 
-  enum(article_branch_type, do: [main: :main, preview: :preview])
-  enum(article_branch_status, do: [active: :active, archived: :archived])
+  enum(doc_branch_type, do: [main: :main, preview: :preview])
+  enum(doc_branch_status, do: [active: :active, archived: :archived])
 
-  enum article_snapshot_action do
+  enum doc_snapshot_action do
     [
       checkpoint: :checkpoint,
       publish: :publish,

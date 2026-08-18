@@ -8,6 +8,7 @@ const EMPTY_TREE: TDocPublicTree = {
   tabs: [],
 }
 
+/** Exposes public tree state and actions through the shared React hook boundary. */
 export default function usePublicTree(initialTree?: TDocPublicTree | null): TDocPublicTree {
   const { slug: community } = useCommunity()
 

@@ -1,12 +1,24 @@
 defmodule GroupherServer.CMS.SearchArtiments.Indexer do
-  @moduledoc "Persistent, idempotent Article indexing entrypoints used by background jobs."
+  @moduledoc """
+  Persistent, idempotent Article indexing entrypoints used by background jobs.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Indexer
+        -> search platform
+  """
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.SearchArtiments
   alias CMS.SearchArtiments.{Artiment, Projection}
+  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -14,6 +26,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @batch_size 500
   @legal Constant.CMS.pending(:legal)
 
+  @doc """
+  Enqueues a background upsert job for one article.
+
+  The article's thread is resolved through `CMS.FrontDesk`, then the indexing
+  job is enqueued on the search queue.
+
+  ## Examples
+
+      CMS.SearchArtiments.Indexer.enqueue_upsert(post)
+
+  """
   @spec enqueue_upsert(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_upsert(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
@@ -46,7 +69,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <-
            info.model
-           |> CMS.Articles.active_scope(thread)
+           |> CMS.Gate.scope(nil, :read, scope_context(thread))
            |> where([article], article.id == ^article_id)
            |> Repo.one() do
       case Projection.Article.project(thread, article) do
@@ -70,10 +93,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   def sync_article_metrics(thread, article_id) do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <- searchable_article(info.model, thread, article_id) do
+      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+
       SearchArtiments.update_metrics([
         {Artiment.article_ref(thread, article.article_hash_id),
          %{
-           upvotes_count: article.upvotes_count || 0,
+           upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
            comments_count: article.comments_count || 0,
            updated_at: article.updated_at
          }}
@@ -97,7 +122,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   defp searchable_article(model, thread, article_id) do
     model
-    |> CMS.Articles.active_scope(thread)
+    |> CMS.Gate.scope(nil, :read, scope_context(thread))
     |> where([article], article.id == ^article_id)
     |> where([article], article.stage == ^CMS.Const.stage(:public))
     |> where([article], article.pending == ^@legal)
@@ -118,7 +143,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with {:ok, info} <- match(thread) do
       articles =
         info.model
-        |> CMS.Articles.active_scope(thread)
+        |> CMS.Gate.scope(nil, :list, scope_context(thread))
         |> where([article], article.id > ^after_id)
         |> where([article], article.stage == ^CMS.Const.stage(:public))
         |> where([article], article.pending == ^@legal)
@@ -151,4 +176,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
       error -> error
     end
   end
+
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 end

@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Analysis.Types do
   @moduledoc """
   GraphQL types for built-in community Analysis Web.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Types
+        -> resolver or domain context
+        -> GraphQL response
   """
 
   use Absinthe.Schema.Notation
@@ -44,6 +51,10 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:value, :float)
     field(:previous_value, :float)
     field(:change_rate, :float)
+  end
+
+  object :analysis_web_active do
+    field(:visitors, non_null(:integer))
   end
 
   object :analysis_web_overview_summary do
@@ -206,5 +217,4 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:top_referrers, list_of(:analysis_web_referrer_metric))
     field(:error, :string)
   end
-
 end

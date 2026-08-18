@@ -64,6 +64,7 @@ const unavailableMetric = (): TAnalysisWebMetric => ({
   changeRate: null,
 })
 
+/** Runs the unavailable overview operation at the frontend shared boundary. */
 export const unavailableOverview = (
   errors: TAnalysisTrendsOverview['errors'] = [],
 ): TAnalysisTrendsOverview => ({

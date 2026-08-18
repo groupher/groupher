@@ -24,6 +24,7 @@ const readToken = (cookieHeader: string | null): string | null => {
   return null
 }
 
+/** Runs the request graph ql operation at the frontend shared boundary. */
 export const requestGraphQL = async <T>(
   query: string,
   variables: Record<string, unknown> = {},

@@ -16,6 +16,7 @@ type TRes = {
   pagedParams: ReturnType<typeof getPagedArticlesParams>
 }
 
+/** Exposes paged changelogs state and actions through the shared React hook boundary. */
 export default function usePagedChangelogs(): TRes {
   const articleList = useArticleList()
   const { slug } = useCommunity()

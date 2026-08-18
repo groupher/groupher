@@ -1,14 +1,37 @@
 defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
-  @moduledoc "Projects one public Article and its ArticleDocument into a Search Artiment."
+  @moduledoc """
+  Projects one public Article and its ArticleDocument into a Search Artiment.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Article
+        -> search platform
+  """
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.SearchArtiments.Artiment
+  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
 
   @legal Constant.CMS.pending(:legal)
 
+  @doc """
+  Projects one public article into a Search Artiment.
+
+  Reloads the article with community, document, and author data before building
+  the canonical projection with live interaction counts. Non-public articles
+  return `{:error, {:not_searchable, _}}`; incomplete articles return an
+  invalid projection error.
+
+  ## Examples
+
+      CMS.SearchArtiments.Projection.Article.project(:post, article)
+
+  """
   @spec project(Artiment.thread(), struct()) :: {:ok, Artiment.t()} | {:error, term()}
   def project(thread, article) do
     article = Repo.preload(article, [:community, :document, author: :user])
@@ -20,6 +43,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          true <- is_binary(article.article_hash_id),
          true <- not is_nil(article.inner_id) do
       ref = Artiment.article_ref(thread, article.article_hash_id)
+      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
 
       {:ok,
        %Artiment{
@@ -38,7 +62,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          },
          author_ref: author_ref(article),
          locale: article.community.locale,
-         upvotes_count: article.upvotes_count || 0,
+         upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
          comments_count: article.comments_count || 0,
          published_at: article.active_at,
          inserted_at: article.inserted_at,

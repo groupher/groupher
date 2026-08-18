@@ -38,6 +38,7 @@ const DEFAULT_OPTIONS: TOptions = {
   feedThreads: [],
 }
 
+/** Exposes rss state and actions through the shared React hook boundary. */
 export default function useRSS(): TRet {
   const dsb$ = useDashboard()
   const { slug: community } = useCommunity()

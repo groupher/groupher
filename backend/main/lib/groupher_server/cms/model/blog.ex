@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.Blog do
 
   Blog shares the article workflow shape with other artiment threads while
   keeping its own table, constraints, meta embed, and community joins.
+
+  Business position:
+
+      CMS context
+        -> Blog schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -22,9 +29,9 @@ defmodule GroupherServer.CMS.Model.Blog do
 
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(branch_id article_hash_id title digest)a
+  @required_fields ~w(article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
-  @optional_fields ~w(updated_at inserted_at active_at archived_at inner_id)a ++
+  @optional_fields ~w(updated_at inserted_at active_at inner_id)a ++
                      @article_cast_fields
 
   @schema_prefix DBPrefix.cms()
@@ -38,7 +45,7 @@ defmodule GroupherServer.CMS.Model.Blog do
     general_article_fields(:blog)
   end
 
-  @doc "Returns the Blog fields copied by Draft, Publish, Snapshot, and Restore."
+  @doc "Returns the Blog fields copied by Draft and Publish."
   @spec version_fields() :: [atom()]
   def version_fields do
     ~w(title digest link_addr cover_url cover_url_dark)a
@@ -66,7 +73,6 @@ defmodule GroupherServer.CMS.Model.Blog do
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)
     |> validate_length(:link_addr, min: 5, max: 400)
     |> validate_article_version_scope(:blog)
-    |> foreign_key_constraint(:branch_id)
-    |> unique_constraint(:article_hash_id, name: :blogs_branch_article_hash_stage_index)
+    |> unique_constraint(:article_hash_id, name: :blogs_community_article_hash_stage_index)
   end
 end

@@ -1,5 +1,14 @@
 defmodule GroupherServerWeb.Middleware.ServiceScope do
-  @moduledoc "Requires one exact service-token audience and operation scope."
+  @moduledoc """
+  Requires one exact service-token audience and operation scope.
+
+  Business position:
+
+      Resolver result
+        -> ServiceScope middleware
+        -> next middleware
+        -> GraphQL field result
+  """
 
   @behaviour Absinthe.Middleware
 
@@ -26,7 +35,7 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
     handle_absinthe_error(
       resolution,
       "service identity is not authorized for this operation",
-      ecode(:service_identity)
+      ecode(:service_auth)
     )
   end
 end

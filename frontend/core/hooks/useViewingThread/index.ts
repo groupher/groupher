@@ -24,6 +24,7 @@ const getThreadFromPathname = (pathname: string): TThread | null => {
   return null
 }
 
+/** Exposes viewing thread state and actions through the shared React hook boundary. */
 export default function useViewingThread(): TThread {
   const pathname = usePathname()
 

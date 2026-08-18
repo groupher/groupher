@@ -4,8 +4,27 @@ defmodule GroupherServer.CMS.Seeds.Threads do
 
   The returned thread lists define which product surfaces each seeded community
   exposes in local/demo data.
+
+  Business position:
+
+      Seed task
+        -> Threads
+        -> CMS context
+        -> Repo
   """
 
+  @doc """
+  Returns the thread list a seeded community type exposes.
+
+  ## Examples
+
+      CMS.Seeds.Threads.get(:home)
+      #=> []
+
+      CMS.Seeds.Threads.get(:feedback)
+      #=> [%{slug: "post"}, %{slug: "kanban"}]
+
+  """
   def get(:home), do: []
 
   def get(:blackhole) do

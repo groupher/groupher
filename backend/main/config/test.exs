@@ -1,6 +1,6 @@
 import Config
 
-config :groupher_server, :allow_test_service_identity, true
+config :groupher_server, :allow_test_service_auth, true
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
@@ -28,6 +28,7 @@ config :groupher_server, GroupherServer.Repo,
   password: "postgres",
   database: "groupher_server_test",
   hostname: "localhost",
+  port: String.to_integer(System.get_env("TEST_DB_PORT") || "5432"),
   pool_size: 20,
   # 设置查询超时时间为 60 秒
   timeout: 60_000,

@@ -250,7 +250,7 @@ end
 不选择其他存储位置：
 
 - 不放在 `docs`：Thumbnail 是 Article Document 的派生结构，不是 Doc 元数据。
-- 不放在 `article_snapshots`：Snapshot 是不可变历史检查点，不是公开页面当前读取模型。
+- 不放在 `doc_snapshots`：Snapshot 是不可变历史检查点，不是公开页面当前读取模型。
 - 不建立独立表：当前没有独立生命周期、多尺寸或异步资产状态，单独建表会增加无必要的关联复杂度。
 
 ### 5.3 数据模型

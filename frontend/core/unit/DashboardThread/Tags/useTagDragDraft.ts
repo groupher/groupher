@@ -259,6 +259,7 @@ const isSamePlacement = (
 // Keeps a local copy of the tag/group placement while dragging. This mirrors the
 // link editor DnD pattern: update local UI during hover, then commit the final
 // flattened tagGroups once on drop.
+/** Exposes tag drag draft state and actions through the shared React hook boundary. */
 export default function useTagDragDraft({
   tagGroups,
   draftGroups,

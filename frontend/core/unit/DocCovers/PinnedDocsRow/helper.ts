@@ -3,6 +3,7 @@ import { INITIAL_WALLPAPER_THEME_STATE } from '~/stores/wallpaper/constant'
 
 import type { TDocCoverPinnedDocAppearance } from '../spec'
 
+/** Runs the pinned doc background operation at the frontend shared boundary. */
 export const pinnedDocBackground = (
   appearance: TDocCoverPinnedDocAppearance | null | undefined,
   dark: boolean,

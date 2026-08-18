@@ -4,23 +4,9 @@ import { createApp, mapBrowserSessionError } from './app'
 import { PhoenixBrowserSessionError } from './auth'
 import { decodeLinkState, MemoryLinkIntentStore } from './link-intent'
 
-const originalNodeEnv = process.env.NODE_ENV
-const originalTestAllowedOrigins = process.env.AUTH_TEST_ALLOWED_ORIGINS
-
 describe('Auth Hono application', () => {
   afterEach(() => {
-    if (originalTestAllowedOrigins === undefined) {
-      delete process.env.AUTH_TEST_ALLOWED_ORIGINS
-    } else {
-      process.env.AUTH_TEST_ALLOWED_ORIGINS = originalTestAllowedOrigins
-    }
-
-    if (originalNodeEnv === undefined) {
-      delete process.env.NODE_ENV
-      return
-    }
-
-    process.env.NODE_ENV = originalNodeEnv
+    vi.unstubAllEnvs()
   })
 
   it('exposes the service health contract', async () => {
@@ -108,7 +94,7 @@ describe('Auth Hono application', () => {
   })
 
   it('allows explicitly configured test origins with ports outside production', async () => {
-    process.env.AUTH_TEST_ALLOWED_ORIGINS = 'http://dash.groupher.localhost:3103'
+    vi.stubEnv('AUTH_TEST_ALLOWED_ORIGINS', 'http://dash.groupher.localhost:3103')
 
     const response = await createApp().request('/api/auth/session', {
       method: 'OPTIONS',
@@ -124,8 +110,8 @@ describe('Auth Hono application', () => {
   })
 
   it('rejects local Auth CORS origins in production', async () => {
-    process.env.NODE_ENV = 'production'
-    process.env.AUTH_TEST_ALLOWED_ORIGINS = 'http://dash.groupher.localhost:3103'
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('AUTH_TEST_ALLOWED_ORIGINS', 'http://dash.groupher.localhost:3103')
 
     const response = await createApp().request('/api/auth/session', {
       method: 'OPTIONS',

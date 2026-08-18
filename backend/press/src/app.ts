@@ -1,10 +1,21 @@
+/**
+ * Composes the Press HTTP application and its injected route dependencies.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import { createHash } from 'node:crypto'
 
 import {
   bearerToken,
-  createServiceTokenVerifier,
+  createServiceAuthVerifier,
   serviceTokenErrorStatus,
-  type TServiceTokenVerifier,
+  type TServiceAuthVerifier,
 } from '@groupher/service/auth'
 import { createHealthResponse } from '@groupher/service/health'
 import { Hono } from 'hono'
@@ -36,7 +47,7 @@ type Dependencies = {
   origin?: Origin
   cache?: OutputCache
   recorder?: ReturnType<typeof createMetricRecorder>
-  serviceTokenVerifier?: TServiceTokenVerifier
+  serviceTokenVerifier?: TServiceAuthVerifier
 }
 
 type Rendered = {
@@ -69,6 +80,7 @@ const responseFrom = (request: Request, output: CachedOutput): Response => {
   return new Response(output.body, { status: output.status, headers: output.headers })
 }
 
+/** Creates the press application with injectable runtime dependencies. */
 export const createApp = (dependencies: Dependencies = {}) => {
   const database = createDatabase()
   startRetention(database)
@@ -77,7 +89,7 @@ export const createApp = (dependencies: Dependencies = {}) => {
   const recorder = dependencies.recorder || createMetricRecorder(database)
   const serviceTokenVerifier =
     dependencies.serviceTokenVerifier ||
-    createServiceTokenVerifier({
+    createServiceAuthVerifier({
       audience: 'press:internal-api',
       issuer: process.env.SERVICE_AUTH_ISSUER || 'https://auth.groupher.com',
       jwksUrl:

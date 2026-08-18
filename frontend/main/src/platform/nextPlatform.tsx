@@ -30,6 +30,7 @@ export default function NextPlatformProvider({ children }: TProps) {
     const searchParamsObj = new URLSearchParams(search)
 
     return {
+      dsbRootSegment: 'dashboard' as const,
       location: {
         pathname,
         search: searchString,
@@ -65,7 +66,7 @@ export default function NextPlatformProvider({ children }: TProps) {
       prefetch: async (href) => {
         await router.prefetch(href)
       },
-      isActive: (target) => isActiveDsbRoute(pathname, target),
+      isActive: (target) => isActiveDsbRoute(pathname, target, 'dashboard'),
     }
   }, [pathname, search, router])
 

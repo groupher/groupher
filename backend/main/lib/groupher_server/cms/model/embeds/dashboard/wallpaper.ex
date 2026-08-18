@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general article comment meta info
+  Embedded light/dark wallpaper configuration for a community dashboard.
+
+  Business position:
+
+      CMS context
+        -> Wallpaper schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible
@@ -36,6 +43,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     The fields are generated from dashboard GraphQL field metadata and validated
     through `BgConfigValidator` so frontend wallpaper controls and backend
     storage share the same accepted shape.
+
+    Business position:
+
+        Dashboard wallpaper mutation
+          -> Wallpaper changeset
+          -> BgConfig validation
+          -> CommunityDashboard row
     """
 
     use Ecto.Schema

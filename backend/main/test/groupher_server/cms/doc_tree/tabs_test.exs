@@ -50,6 +50,20 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
       assert {:ok, %{tabs: []}} = CMS.DocTree.read_public(community)
     end
 
+    test "public tree read is hidden after the Community is suspended" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = create_community(user)
+
+      {:ok, _blocker} =
+        CMS.Communities.Lifecycle.apply_blocker(
+          community.slug,
+          %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
+          operation_ref: Ecto.UUID.generate()
+        )
+
+      assert {:error, {:not_exist, "Community"}} = CMS.DocTree.read_public(community)
+    end
+
     test "renames and reorders tabs through the generic tree mutations" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = create_community(user)

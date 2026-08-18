@@ -30,6 +30,7 @@ import EmailIcon from './social/Email'
 import WechatIcon from './social/WeChat'
 import UpvoteIcon from './Upvote'
 
+/** Returns local svg for the frontend shared workflow. */
 export const getLocalSVG = (type: string): FC => {
   switch (type) {
     case SVG.DESKTOP: {

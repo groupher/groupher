@@ -17,6 +17,7 @@ export type TRet = {
   getRepliesState: () => TRepliesState
 }
 
+/** Exposes derived state and actions through the shared React hook boundary. */
 export default function useDerived(): TRet {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {

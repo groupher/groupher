@@ -24,6 +24,7 @@ export const GROUPHER_AUTH_CSRF_VALUE = '1'
  */
 export const GROUPHER_AUTH_SIGNED_IN_COOKIE = 'groupher-auth.signed-in'
 
+/** Returns auth cookie names for the contracts workflow. */
 export const getAuthCookieNames = (secure: boolean) => {
   // `__Host-` requires Secure, Path=/, and no Domain. Auth is the only origin
   // that receives this long-lived browser Session and OAuth protocol state.
@@ -40,5 +41,6 @@ export const getAuthCookieNames = (secure: boolean) => {
   }
 }
 
+/** Returns auth session cookie name for the contracts workflow. */
 export const getAuthSessionCookieName = (secure: boolean): string =>
   getAuthCookieNames(secure).sessionToken

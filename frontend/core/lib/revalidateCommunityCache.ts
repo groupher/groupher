@@ -1,3 +1,4 @@
+/** Runs the revalidate community cache operation at the frontend shared boundary. */
 export const revalidateCommunityCache = async (community: string): Promise<void> => {
   if (!community) return
 

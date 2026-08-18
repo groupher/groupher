@@ -3,7 +3,14 @@ defmodule GroupherServer.Accounts.Model.Achievement do
   Ecto schema for user achievement and reputation counters.
 
   Account achievement services update this row when social or content actions
-  change the user's reputation, membership, or contribution-derived badges.
+  change the user's reputation or contribution-derived badges.
+
+  Business position:
+
+      Accounts context
+        -> Achievement schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -17,7 +24,7 @@ defmodule GroupherServer.Accounts.Model.Achievement do
   @schema_prefix DBPrefix.account()
 
   @required_fields ~w(user_id)a
-  @optional_fields ~w(articles_upvotes_count articles_collects_count contents_watched_count followers_count reputation donate_member senior_member sponsor_member)a
+  @optional_fields ~w(articles_upvotes_count articles_collects_count contents_watched_count followers_count reputation)a
 
   @type t :: %Achievement{}
   schema "achievements" do
@@ -30,10 +37,6 @@ defmodule GroupherServer.Accounts.Model.Achievement do
     field(:reputation, :integer, default: 0)
     # source_contribute
     embeds_one(:source_contribute, SourceContribute, on_replace: :delete)
-
-    field(:donate_member, :boolean, default: false)
-    field(:senior_member, :boolean, default: false)
-    field(:sponsor_member, :boolean, default: false)
 
     timestamps(type: :utc_datetime)
   end

@@ -1,5 +1,3 @@
-import { prettyNum } from '~/fmt'
-
 import { CHART_GRID_RATIOS, CHART_SIZE } from '../constant'
 import {
   formatTimestamp,
@@ -12,14 +10,13 @@ import type { TAnalysisTrendsOverview } from '../spec'
 import useSalon from './salon'
 
 type TProps = {
-  emptyLabel: string
   points: TAnalysisTrendsOverview['chart']['points']
   title: string
   viewsLabel: string
   visitsLabel: string
 }
 
-export default function TrendChart({ emptyLabel, points, title, viewsLabel, visitsLabel }: TProps) {
+export default function TrendChart({ points, title, viewsLabel, visitsLabel }: TProps) {
   const s = useSalon()
   const hasPoints = points.length > 0
   const chartPoints = points
@@ -30,14 +27,6 @@ export default function TrendChart({ emptyLabel, points, title, viewsLabel, visi
 
   return (
     <div className={s.wrapper}>
-      <div className={s.head}>
-        <div>
-          <h3 className={s.title}>{title}</h3>
-          <p className={s.subtitle}>{hasPoints ? prettyNum(max) : emptyLabel}</p>
-        </div>
-        <div className={s.maxValue}>{hasPoints ? prettyNum(max) : null}</div>
-      </div>
-
       <svg
         viewBox={`0 0 ${CHART_SIZE.width} ${CHART_SIZE.height}`}
         className={s.svg}

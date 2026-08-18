@@ -29,19 +29,32 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "community checks" do
-    @check_community_exist_query S.Community.q(:is_community_exist)
-    test "can check if a community is exist", ~m(user)a do
+    @check_community_name_query S.Community.q(:check_community_name)
+    test "checks community name availability", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
-      check_state = rule_conn |> gq_query(@check_community_exist_query, %{slug: "elixir"})
+      check = rule_conn |> gq_query(@check_community_name_query, %{slug: "Elixir"})
 
-      assert not check_state["exist"]
+      assert check["available"]
+      assert check["normalizedSlug"] == "elixir"
+      assert is_nil(check["reasonCode"])
 
       community_attrs = mock_attrs(:community, %{slug: "elixir"})
       {:ok, _community} = CMS.Communities.create(community_attrs, user)
 
-      check_state = rule_conn |> gq_query(@check_community_exist_query, %{slug: "elixir"})
-      assert check_state["exist"]
+      check = rule_conn |> gq_query(@check_community_name_query, %{slug: "elixir"})
+      assert not check["available"]
+      assert check["reasonCode"] == "slug_claimed"
+    end
+
+    test "reports reserved names as unavailable", do: assert_name_unavailable("home", "reserved_slug")
+
+    defp assert_name_unavailable(slug, reason) do
+      rule_conn = simu_conn(:user, cms: %{"community.create" => true})
+      check = rule_conn |> gq_query(@check_community_name_query, %{slug: slug})
+
+      refute check["available"]
+      assert check["reasonCode"] == reason
     end
   end
 

@@ -19,6 +19,7 @@ export type TRet = {
   queryOpenGraphInfo: (item: TMediaReport) => void
 }
 
+/** Exposes media reports state and actions through the shared React hook boundary. */
 export default function useMediaReports(): TRet {
   const dsb$ = useDashboard()
 

@@ -146,9 +146,11 @@ export const deriveMagnifierInteraction = (
 /** Normalizes interaction geometry without depending on React or the image draft store. */
 export const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
+/** Runs the clamp cover height operation at the frontend shared boundary. */
 export const clampCoverHeight = (height: number): number =>
   Math.min(COVER_HEIGHT_RANGE.MAX, Math.max(COVER_HEIGHT_RANGE.MIN, Math.round(height)))
 
+/** Returns magnifier radius from canvas point for the frontend shared workflow. */
 export const getMagnifierRadiusFromCanvasPoint = (
   point: TCoverPoint,
   center: TCoverPoint,
@@ -163,5 +165,6 @@ export const getMagnifierRadiusFromCanvasPoint = (
   return clamp01((distance - minRadius) / (maxRadius - minRadius))
 }
 
+/** Runs the clamp magnifier zoom operation at the frontend shared boundary. */
 export const clampMagnifierZoom = (zoom: number): number =>
   Math.min(MAGNIFIER_ZOOM_RANGE.MAX, Math.max(MAGNIFIER_ZOOM_RANGE.MIN, Number(zoom.toFixed(1))))

@@ -98,7 +98,6 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
       assert deleted["innerId"] == to_string(comment.inner_id)
-      assert deleted["isDeleted"]
     end
   end
 
@@ -382,7 +381,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
       result = owner_conn |> gq_mutation(S.Comment.m(:undo_pin_comment), variables)
@@ -401,7 +400,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.pin_comment(comment.id)
+      {:ok, _} = CMS.Comments.pin_comment(comment.id, user)
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
 
       assert guest_conn

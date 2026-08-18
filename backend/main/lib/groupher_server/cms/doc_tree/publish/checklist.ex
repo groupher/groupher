@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   alias CMS.DocTree.Events
 
   alias CMS.Model.{
-    ArticleSnapshot,
+    DocSnapshot,
     Community,
     Doc,
     DocTreeEvent,
@@ -35,6 +35,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
+  @doc """
+  Builds the publish checklist for one docs branch.
+
+  The checklist groups draft doc changes and staged tree changes into
+  `%{total_count, doc_changes, tree_changes}`. Tree create events that belong to
+  doc publishing are hidden behind their doc change item.
+
+  ## Examples
+
+      Checklist.build(community, branch)
+      #=> %{total_count: 2, doc_changes: [%{id: "doc:hash"}], tree_changes: []}
+
+  """
   def build(%Community{} = community, branch) do
     doc_changes = doc_change_items(community, branch)
     tree_changes = tree_change_items(community, branch)
@@ -130,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
     Enum.map(drafts, fn draft ->
       page = Map.get(pages_by_doc_id, draft.article_hash_id)
-      public = public_article_snapshot(community, branch, draft)
+      public = public_doc_snapshot(community, branch, draft)
       action = if public, do: "modified", else: "created"
       selectable = not is_nil(page)
       disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
@@ -301,14 +314,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     |> Repo.one()
   end
 
-  defp public_article_snapshot(%Community{} = community, branch, %Doc{
+  defp public_doc_snapshot(%Community{} = community, branch, %Doc{
          article_hash_id: article_hash_id
        }) do
-    ArticleSnapshot
+    DocSnapshot
     |> where([s], s.community_id == ^community.id)
     |> where([s], s.branch_id == ^branch.id)
     |> where([s], s.stage == CMS.Const.stage(:public))
-    |> where([s], s.thread == :doc)
     |> where([s], s.article_hash_id == ^article_hash_id)
     |> order_by([s], desc: s.revision_number, desc: s.id)
     |> limit(1)

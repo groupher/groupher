@@ -3,6 +3,7 @@ type TRet = {
   getCSSVar: (name: string) => void
 }
 
+/** Exposes custom primary state and actions through the shared React hook boundary. */
 export default function useCustomPrimary(): TRet {
   const setCSSVar = (name: string, value: string) => {
     if (typeof document !== 'undefined') {

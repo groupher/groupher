@@ -1,12 +1,20 @@
 defmodule GroupherServer.CMS.AbuseReports.List do
   @moduledoc """
   List operations for abuse reports.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> List
+        -> Repo / external boundary
   """
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
   alias GroupherServer.CMS
+  alias CMS.Interactions.State
 
   alias CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, QueryBuilder, T}
@@ -27,6 +35,23 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     :updated_at
   ]
 
+  @doc """
+  Returns a paged list of abuse reports for one filter.
+
+  The `content_type` filter selects the target shape: `:account`, `:comment`,
+  or a content thread. Each shape preloads and projects the matching target
+  info onto the report entries.
+
+  ## Examples
+
+      AbuseReports.List.paged_reports(%{
+        content_type: :post,
+        content_id: post.id,
+        page: 1,
+        size: 20
+      })
+
+  """
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
   def paged_reports(%{content_type: :account, content_id: content_id} = filter) do
     with {:ok, info} <- match(:account) do
@@ -141,8 +166,10 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_info(thread, %AbuseReport{} = report) do
-    report
-    |> Map.get(thread)
+    article = report |> Map.get(thread)
+
+    article
+    |> article_with_projection_count(thread)
     |> Map.take(@export_article_keys)
     |> Map.merge(%{thread: thread})
   end
@@ -150,8 +177,13 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp extract_article_comment_info(%AbuseReport{} = report) do
     keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]
     author = Map.take(report.comment.author, @export_author_keys)
+    counts = State.counts(:comment, [report.comment.id]) |> Map.get(report.comment.id, %{})
 
-    comment = Map.take(report.comment, keys)
+    comment =
+      report.comment
+      |> Map.put(:upvotes_count, Map.get(counts, :upvotes_count, 0))
+      |> Map.take(keys)
+
     comment = Map.merge(comment, %{author: author})
 
     article = extract_article_in_comment(report.comment)
@@ -171,8 +203,16 @@ defmodule GroupherServer.CMS.AbuseReports.List do
       _ ->
         comment
         |> Map.get(thread)
+        |> article_with_projection_count(thread)
         |> Map.take(@export_article_keys)
         |> Map.merge(%{thread: thread})
     end
   end
+
+  defp article_with_projection_count(%{id: id} = article, thread) do
+    counts = State.counts(thread, [id]) |> Map.get(id, %{})
+    Map.put(article, :upvotes_count, Map.get(counts, :upvotes_count, 0))
+  end
+
+  defp article_with_projection_count(article, _thread), do: article
 end

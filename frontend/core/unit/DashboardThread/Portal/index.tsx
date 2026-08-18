@@ -11,6 +11,7 @@ type TProps = {
   desc?: ReactNode
   hideTitle?: boolean
   withDivider?: boolean
+  addonAlign?: 'center' | 'edges'
   crumbItems?: TBreadcrumbItem[]
   breadcrumbAddon?: ReactNode
   addon?: ReactNode
@@ -24,13 +25,14 @@ const Portal: FC<TProps> = ({
   desc = null,
   hideTitle = false,
   withDivider = true,
+  addonAlign = 'center',
   crumbItems = DEFAULT_CRUMB_ITEMS,
   breadcrumbAddon = null,
   addon = null,
   testid = '',
   ...spacing
 }) => {
-  const s = useSalon({ ...spacing })
+  const s = useSalon({ ...spacing, addonAlign })
   const { submenuCollapsed } = useDashboardStore()
   const showBreadcrumbs = !submenuCollapsed && crumbItems.length > 0
 

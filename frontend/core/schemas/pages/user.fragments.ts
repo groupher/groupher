@@ -24,8 +24,5 @@ export const UserAchievementFields = graphql(`
     reputation
     articlesUpvotesCount
     articlesCollectsCount
-    donateMember
-    seniorMember
-    sponsorMember
   }
 `)

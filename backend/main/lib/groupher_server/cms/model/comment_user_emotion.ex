@@ -3,12 +3,19 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   Ecto schema for per-user comment emotion reactions.
 
   This keeps expressive reaction state independent from comment upvote state.
+
+  Business position:
+
+      CMS context
+        -> CommentUserEmotion schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
+  import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.Comment

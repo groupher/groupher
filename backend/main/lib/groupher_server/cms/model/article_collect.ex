@@ -4,13 +4,20 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
 
   Each row binds a user to one concrete artiment thread item. Account collect
   folders may embed references to these rows for grouped collection views.
+
+  Business position:
+
+      CMS context
+        -> ArticleCollect schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
   use Ecto.Schema
 
   import Ecto.Changeset
-    import GroupherServer.CMS.Helper.Macros
+  import GroupherServer.CMS.Helper.Macros
 
   import GroupherServer.CMS.Helper.Constraints,
     only: [

@@ -4,6 +4,8 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 import { createSourceWorkspace } from '../../../platforms/github/repo/workspace/sourceWorkspace'
+import type { TSourceFile, TSourceWorkspace } from '../contracts'
+import { analyzeFumadocs } from './frameworks/fumadocs'
 import { analyzeSourceWorkspace, detectFramework } from './index'
 import { parseStaticConfig } from './staticConfig'
 
@@ -123,6 +125,49 @@ describe('Docs framework analyzer', () => {
     })
     expect(JSON.stringify(analysis.tree.navigation).match(/"type":"page"/g)).toHaveLength(3)
     expect(JSON.stringify(analysis.tree.navigation)).toContain('"sizeBytes":')
+  })
+
+  it('indexes Fumadocs paths once and reads directory metadata with bounded concurrency', async () => {
+    const sources = new Map([
+      ['source.config.ts', "export default defineDocs({ dir: 'content/docs' })"],
+      ['content/docs/meta.json', JSON.stringify({ pages: ['alpha', 'beta', 'gamma'] })],
+      ['content/docs/alpha/meta.json', JSON.stringify({ pages: ['intro'], title: 'Alpha' })],
+      ['content/docs/alpha/intro.md', '# Alpha intro'],
+      ['content/docs/beta/meta.json', JSON.stringify({ pages: ['intro'], title: 'Beta' })],
+      ['content/docs/beta/intro.md', '# Beta intro'],
+      ['content/docs/gamma/meta.json', JSON.stringify({ pages: ['intro'], title: 'Gamma' })],
+      ['content/docs/gamma/intro.md', '# Gamma intro'],
+    ])
+    const files = [...sources].map(([sourcePath, source]): TSourceFile => ({
+      path: sourcePath,
+      sizeBytes: Buffer.byteLength(source),
+    }))
+    files.some = () => {
+      throw new Error('Fumadocs analyzer must not rescan workspace.files for each page')
+    }
+
+    let activeMetaReads = 0
+    let maxMetaReads = 0
+    const workspace: TSourceWorkspace = {
+      files,
+      readText: async (sourcePath) => {
+        if (/content\/docs\/[^/]+\/meta\.json$/.test(sourcePath)) {
+          activeMetaReads += 1
+          maxMetaReads = Math.max(maxMetaReads, activeMetaReads)
+          await new Promise((resolve) => setTimeout(resolve, 5))
+          activeMetaReads -= 1
+        }
+        return sources.get(sourcePath)!
+      },
+      revision: 'c'.repeat(40),
+    }
+
+    const tree = await analyzeFumadocs(workspace)
+    const [scope] = tree.navigation
+    if (!scope || scope.type !== 'scope') throw new Error('Expected a Fumadocs scope.')
+
+    expect(maxMetaReads).toBeGreaterThan(1)
+    expect(scope.pages.map((item) => item.title)).toEqual(['Alpha', 'Beta', 'Gamma'])
   })
 
   it.each([

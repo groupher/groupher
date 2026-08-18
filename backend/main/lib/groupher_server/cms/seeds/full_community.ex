@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   It coordinates community, category, thread, article, and comment seeds for
   local environments that need realistic content.
+
+  Business position:
+
+      Seed task
+        -> FullCommunity
+        -> CMS context
+        -> Repo
   """
 
   import Ecto.Query, warn: false
@@ -49,6 +56,16 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()
 
+  @doc """
+  Seeds a complete demo community with default options.
+
+  Delegates to `mock/2` with an empty keyword list.
+
+  ## Examples
+
+      CMS.Seeds.FullCommunity.mock("elixir")
+
+  """
   @spec mock(String.t() | atom()) :: T.domain_res(map())
   def mock(slug), do: mock(slug, [])
 
@@ -60,7 +77,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
              {:ok, _} <- seed_about_dashboard(community, slug),
              {:ok, posts} <- seed_threads(community, opts),
              {:ok, _} <- seed_post_states_and_cats(posts),
-             {:ok, updated_community} <- CMS.Communities.read(community.slug, inc_views: false) do
+             {:ok, updated_community} <- CMS.Communities.fetch(community.slug, inc_views: false) do
           {:ok, updated_community}
         end
 

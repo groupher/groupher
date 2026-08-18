@@ -49,7 +49,7 @@ describe('gateway/upgrade', () => {
         headers: {
           connection: 'Upgrade',
           host: 'groupher.localhost',
-          referer: 'https://groupher.localhost/home/dashboard/doc/editor',
+          referer: 'https://dashboard.groupher.localhost/home/doc/editor',
           upgrade: 'websocket',
         },
       }),

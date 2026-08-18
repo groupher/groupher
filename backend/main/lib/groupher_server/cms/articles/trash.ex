@@ -5,6 +5,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
   Product tables retain draft/public rows while one `TrashedArticle` row makes
   the logical Article inactive. Docs Tree placement remains a Docs concern and
   attaches its structural snapshots to the same `TrashAction`.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> Trash
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -12,15 +20,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Document, Lock}
+  alias CMS.Articles.{Document, Lifecycle, Lock}
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Trash, as: DocTrash
   alias CMS.Communities.TagStats
 
   alias CMS.Model.{
     ArtimentMention,
-    ArticleSnapshot,
+    ArticleLifecycle,
     Community,
+    Doc,
+    DocBranch,
     TrashAction,
     TrashedArticle,
+    TrashedDocArticle,
     TrashedDocTreeNode
   }
 
@@ -32,8 +45,36 @@ defmodule GroupherServer.CMS.Articles.Trash do
   @audit_illegal Constant.CMS.pending(:illegal)
   @default_retention_days 30
 
-  @spec active_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
-  def active_scope(queryable, thread) do
+  @doc """
+  Restricts a queryable to articles without an active trash membership.
+
+  The `:doc` clause filters against `TrashedDocArticle` using the branch
+  coordinate; all other threads filter against `TrashedArticle`.
+
+  ## Examples
+
+      Post
+      |> CMS.Articles.Trash.not_trashed_scope(:post)
+
+  """
+  @spec not_trashed_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
+  def not_trashed_scope(queryable, :doc) do
+    from(article in queryable,
+      as: :active_doc,
+      where:
+        not exists(
+          from(trashed in TrashedDocArticle,
+            where:
+              trashed.community_id == parent_as(:active_doc).community_id and
+                trashed.branch_id == parent_as(:active_doc).branch_id and
+                trashed.article_hash_id == parent_as(:active_doc).article_hash_id,
+            select: 1
+          )
+        )
+    )
+  end
+
+  def not_trashed_scope(queryable, thread) do
     from(article in queryable,
       as: :active_article,
       where:
@@ -51,34 +92,66 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @spec trashed?(Community.t(), T.thread(), Ecto.UUID.t()) :: boolean()
   def trashed?(%Community{} = community, thread, article_hash_id) do
-    TrashedArticle
-    |> where([item], item.community_id == ^community.id)
-    |> where([item], item.thread == ^thread)
-    |> where([item], item.article_hash_id == ^article_hash_id)
-    |> Repo.exists?()
+    case thread do
+      :doc ->
+        TrashedDocArticle
+        |> where([item], item.community_id == ^community.id)
+        |> where([item], item.article_hash_id == ^article_hash_id)
+        |> Repo.exists?()
+
+      _ ->
+        TrashedArticle
+        |> where([item], item.community_id == ^community.id)
+        |> where([item], item.thread == ^thread)
+        |> where([item], item.article_hash_id == ^article_hash_id)
+        |> Repo.exists?()
+    end
   end
 
   @spec trashed_article?(map()) :: boolean()
   def trashed_article?(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
-      TrashedArticle
-      |> where([item], item.community_id == ^article.community_id)
-      |> where([item], item.thread == ^thread)
-      |> where([item], item.article_hash_id == ^article.article_hash_id)
-      |> Repo.exists?()
+      case thread do
+        :doc ->
+          TrashedDocArticle
+          |> where([item], item.community_id == ^article.community_id)
+          |> where([item], item.branch_id == ^article.branch_id)
+          |> where([item], item.article_hash_id == ^article.article_hash_id)
+          |> Repo.exists?()
+
+        _ ->
+          TrashedArticle
+          |> where([item], item.community_id == ^article.community_id)
+          |> where([item], item.thread == ^thread)
+          |> where([item], item.article_hash_id == ^article.article_hash_id)
+          |> Repo.exists?()
+      end
     else
       _ -> false
     end
   end
 
   @spec trash(map(), User.t() | nil, keyword()) :: T.domain_res(TrashedArticle.t())
-  def trash(article, actor, opts \\ []) do
+  def trash(_article, _actor, _opts \\ [])
+
+  def trash(%Doc{}, _actor, _opts),
+    do: {:error, {:custom, "Doc deletion must go through the Docs Tree lifecycle"}}
+
+  def trash(article, actor, opts) do
     result =
       with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
            %Community{} = community <- Repo.get(Community, article.community_id) do
-        Lock.run(community, thread, article.article_hash_id, fn ->
-          do_trash(community, thread, article.article_hash_id, actor, opts)
-        end)
+        case find_membership(community, thread, article.article_hash_id) do
+          %TrashedArticle{} = item ->
+            {:ok, item}
+
+          nil ->
+            with {:ok, canonical} <- CMS.Gate.access_check(actor, :delete, article) do
+              Lock.run_for_article(community, thread, article, fn ->
+                do_trash(community, thread, canonical.article_hash_id, actor, opts)
+              end)
+            end
+        end
       else
         nil -> {:error, {:not_exist, "Article Community"}}
         error -> error
@@ -101,13 +174,28 @@ defmodule GroupherServer.CMS.Articles.Trash do
           User.t() | nil,
           keyword()
         ) :: T.domain_res(TrashedArticle.t())
+  def attach(_action, _community, _thread, _article_hash_id, _actor, _opts \\ [])
+
+  def attach(
+        %TrashAction{} = action,
+        %Community{} = community,
+        :doc,
+        article_hash_id,
+        actor,
+        opts
+      ) do
+    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, opts) do
+      CMS.Docs.Trash.attach(action, community, branch, article_hash_id, actor, opts)
+    end
+  end
+
   def attach(
         %TrashAction{} = action,
         %Community{} = community,
         thread,
         article_hash_id,
         actor,
-        opts \\ []
+        opts
       ) do
     case find_membership(community, thread, article_hash_id) do
       %TrashedArticle{} = item ->
@@ -115,28 +203,70 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       nil ->
         with {:ok, article} <- representative_article(community, thread, article_hash_id),
-             :ok <- ensure_trashable(article),
              {:ok, item} <-
-               create_membership(action, community, thread, article_hash_id, actor, opts),
-             {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-             :ok <- update_visibility_stats(article, thread, :trash),
-             {:ok, _audit} <-
-               maybe_record_audit(
-                 "article.trashed",
-                 %{
-                   community_id: community.id,
-                   actor: actor,
-                   resource_type: to_string(thread),
-                   resource_ref: article_hash_id,
-                   resource_snapshot: article_snapshot(article, thread),
-                   operation_ref: action.hash_id,
-                   source: Keyword.get(opts, :source, "api"),
-                   metadata: Keyword.get(opts, :metadata, %{})
-                 },
-                 opts
-               ) do
+               attach_article(action, community, thread, article_hash_id, article, actor, opts) do
           {:ok, item}
         end
+    end
+  end
+
+  @doc "Attaches many logical Articles after bulk-loading memberships and representative rows."
+  @spec attach_many(
+          TrashAction.t(),
+          Community.t(),
+          T.thread(),
+          [Ecto.UUID.t()],
+          User.t() | nil,
+          keyword()
+        ) :: T.domain_res([TrashedArticle.t()])
+  def attach_many(
+        %TrashAction{} = action,
+        %Community{} = community,
+        thread,
+        article_hash_ids,
+        actor,
+        opts \\ []
+      ) do
+    article_hash_ids = Enum.uniq(article_hash_ids)
+
+    existing_by_hash_id =
+      TrashedArticle
+      |> where([item], item.community_id == ^community.id)
+      |> where([item], item.thread == ^thread)
+      |> where([item], item.article_hash_id in ^article_hash_ids)
+      |> Repo.all()
+      |> Map.new(&{&1.article_hash_id, &1})
+
+    missing_ids = Enum.reject(article_hash_ids, &Map.has_key?(existing_by_hash_id, &1))
+
+    with {:ok, articles_by_hash_id} <- representative_articles(community, thread, missing_ids) do
+      article_hash_ids
+      |> Enum.reduce_while({:ok, []}, fn article_hash_id, {:ok, items} ->
+        case Map.fetch(existing_by_hash_id, article_hash_id) do
+          {:ok, item} ->
+            {:cont, {:ok, [item | items]}}
+
+          :error ->
+            article = Map.fetch!(articles_by_hash_id, article_hash_id)
+
+            case attach_article(
+                   action,
+                   community,
+                   thread,
+                   article_hash_id,
+                   article,
+                   actor,
+                   opts
+                 ) do
+              {:ok, item} -> {:cont, {:ok, [item | items]}}
+              error -> {:halt, error}
+            end
+        end
+      end)
+      |> case do
+        {:ok, items} -> {:ok, Enum.reverse(items)}
+        error -> error
+      end
     end
   end
 
@@ -199,11 +329,39 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @spec restore(Ecto.UUID.t() | TrashedArticle.t(), User.t() | nil, keyword()) ::
           T.domain_res(map())
-  def restore(item_or_ref, actor, opts \\ []) do
+  def restore(_item_or_ref, _actor, _opts \\ [])
+
+  def restore(%TrashedDocArticle{} = item, actor, opts) do
+    result =
+      with %Community{} = community <- Repo.get(Community, item.community_id),
+           {:ok, branch} <- Branch.resolve(community, item.branch_id),
+           %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
+        doc_ids = doc_action_article_hash_ids(action, branch)
+
+        Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+          with false <- action_has_other_children?(action.id, item.id, :doc),
+               {:ok, [doc]} <-
+                 DocTrash.restore_action_articles(action, community, branch, actor, opts),
+               :ok <- delete_empty_action(action.id) do
+            {:ok, doc}
+          else
+            true -> {:error, {:custom, "Trash action must be restored as one group"}}
+            error -> error
+          end
+        end)
+      else
+        nil -> {:error, {:not_exist, "Trash Community"}}
+        error -> error
+      end
+
+    sync_search(result, :upsert)
+  end
+
+  def restore(item_or_ref, actor, opts) do
     result =
       with {:ok, item} <- resolve_item(item_or_ref),
            %Community{} = community <- Repo.get(Community, item.community_id) do
-        Lock.run(community, item.thread, item.article_hash_id, fn ->
+        run_item_locked(community, item, fn ->
           do_restore(item.id, community, actor, opts)
         end)
       else
@@ -216,11 +374,48 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @spec permanently_delete(Ecto.UUID.t() | TrashedArticle.t(), User.t() | nil, keyword()) ::
           T.domain_res(map())
-  def permanently_delete(item_or_ref, actor, opts \\ []) do
+  def permanently_delete(_item_or_ref, _actor, _opts \\ [])
+
+  def permanently_delete(%TrashedDocArticle{} = item, actor, opts) do
+    result =
+      with %Community{} = community <- Repo.get(Community, item.community_id),
+           {:ok, branch} <- Branch.resolve(community, item.branch_id),
+           %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
+        doc_ids = doc_action_article_hash_ids(action, branch)
+
+        Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+          with false <- action_has_other_children?(action.id, item.id, :doc),
+               {:ok, :done} <-
+                 DocTrash.permanently_delete_action_articles(
+                   action,
+                   community,
+                   branch,
+                   actor,
+                   opts
+                 ),
+               :ok <- delete_empty_action(action.id) do
+            {:ok, %{done: true}}
+          else
+            true ->
+              {:error, {:custom, "Trash action must be permanently deleted as one group"}}
+
+            error ->
+              error
+          end
+        end)
+      else
+        nil -> {:error, {:not_exist, "Trash Community"}}
+        error -> error
+      end
+
+    sync_search(result, {:delete, :doc, item.article_hash_id})
+  end
+
+  def permanently_delete(item_or_ref, actor, opts) do
     with {:ok, item} <- resolve_item(item_or_ref),
          %Community{} = community <- Repo.get(Community, item.community_id) do
       result =
-        Lock.run(community, item.thread, item.article_hash_id, fn ->
+        run_item_locked(community, item, fn ->
           do_permanently_delete(item.id, community, actor, opts)
         end)
 
@@ -298,6 +493,15 @@ defmodule GroupherServer.CMS.Articles.Trash do
           )
         )
       )
+      |> where(
+        [action],
+        not exists(
+          from(item in TrashedDocArticle,
+            where: item.trash_action_id == parent_as(:action).id,
+            select: 1
+          )
+        )
+      )
       |> Repo.delete_all()
 
     if count in [0, 1], do: :ok, else: {:error, {:custom, "invalid Trash action cleanup"}}
@@ -311,7 +515,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
         nil ->
           with {:ok, article} <- representative_article(community, thread, article_hash_id),
-               :ok <- ensure_trashable(article),
+               {:ok, restore_state} <- trash_restore_state(article),
                {:ok, action} <-
                  create_action(community, actor, %{
                    root_type: :article,
@@ -319,7 +523,16 @@ defmodule GroupherServer.CMS.Articles.Trash do
                    retention_days: Keyword.get(opts, :retention_days, @default_retention_days)
                  }),
                {:ok, item} <-
-                 create_membership(action, community, thread, article_hash_id, actor, opts),
+                 create_membership(
+                   action,
+                   community,
+                   thread,
+                   article_hash_id,
+                   actor,
+                   Keyword.put(opts, :restore_state, restore_state)
+                 ),
+               {:ok, _lifecycle} <-
+                 Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
                {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
                :ok <- update_visibility_stats(article, thread, :trash),
                {:ok, _audit} <-
@@ -339,15 +552,50 @@ defmodule GroupherServer.CMS.Articles.Trash do
     end
   end
 
-  defp create_membership(action, community, thread, article_hash_id, actor, _opts) do
+  defp create_membership(action, community, thread, article_hash_id, actor, opts) do
     ORM.create(TrashedArticle, %{
       trash_action_id: action.id,
       community_id: community.id,
       thread: thread,
       article_hash_id: article_hash_id,
+      restore_state: Keyword.fetch!(opts, :restore_state),
       deleted_by_id: actor_id(actor),
       deleted_at: action.deleted_at
     })
+  end
+
+  defp attach_article(action, community, thread, article_hash_id, article, actor, opts) do
+    with {:ok, restore_state} <- trash_restore_state(article),
+         {:ok, item} <-
+           create_membership(
+             action,
+             community,
+             thread,
+             article_hash_id,
+             actor,
+             Keyword.put(opts, :restore_state, restore_state)
+           ),
+         {:ok, _lifecycle} <-
+           Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
+         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
+         :ok <- update_visibility_stats(article, thread, :trash),
+         {:ok, _audit} <-
+           maybe_record_audit(
+             "article.trashed",
+             %{
+               community_id: community.id,
+               actor: actor,
+               resource_type: to_string(thread),
+               resource_ref: article_hash_id,
+               resource_snapshot: article_snapshot(article, thread),
+               operation_ref: action.hash_id,
+               source: Keyword.get(opts, :source, "api"),
+               metadata: Keyword.get(opts, :metadata, %{})
+             },
+             opts
+           ) do
+      {:ok, item}
+    end
   end
 
   defp do_restore(item_id, community, actor, opts) do
@@ -382,7 +630,15 @@ defmodule GroupherServer.CMS.Articles.Trash do
   defp restore_membership(item, action, community, actor, opts) do
     with {:ok, article} <-
            representative_article(community, item.thread, item.article_hash_id),
+         {:ok, _canonical} <- CMS.Gate.access_check(actor, :restore, article),
          {:ok, _} <- Repo.delete(item),
+         {:ok, _lifecycle} <-
+           Lifecycle.transition(
+             community.id,
+             item.thread,
+             item.article_hash_id,
+             item.restore_state
+           ),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :active),
          :ok <- update_visibility_stats(article, item.thread, :restore),
          {:ok, _audit} <-
@@ -402,6 +658,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
            ) do
       {:ok, article}
     end
+  end
+
+  defp run_item_locked(%Community{} = community, %TrashedArticle{} = item, fun) do
+    Lock.run(community, item.thread, item.article_hash_id, fun)
   end
 
   defp do_permanently_delete(item_id, community, actor, opts) do
@@ -439,7 +699,18 @@ defmodule GroupherServer.CMS.Articles.Trash do
            representative_article(community, item.thread, item.article_hash_id),
          {:ok, physical_articles} <-
            physical_articles(community, item.thread, item.article_hash_id),
+         {:ok, _lifecycle} <-
+           Lifecycle.transition(community.id, item.thread, item.article_hash_id, :destroy),
          :ok <- purge_article_aggregate(item.thread, item.article_hash_id, physical_articles),
+         {_, _} <-
+           Repo.delete_all(
+             from(lifecycle in ArticleLifecycle,
+               where:
+                 lifecycle.community_id == ^community.id and
+                   lifecycle.thread == ^item.thread and
+                   lifecycle.article_hash_id == ^item.article_hash_id
+             )
+           ),
          {:ok, _} <- Repo.delete(item),
          {:ok, _audit} <-
            maybe_record_audit(
@@ -474,7 +745,39 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> where([node], node.trash_action_id == ^action_id)
       |> Repo.exists?()
 
-    other_articles? or tree_nodes?
+    other_docs? =
+      TrashedDocArticle
+      |> where([item], item.trash_action_id == ^action_id)
+      |> Repo.exists?()
+
+    other_articles? or other_docs? or tree_nodes?
+  end
+
+  defp action_has_other_children?(action_id, item_id, :doc) do
+    other_articles? =
+      TrashedArticle
+      |> where([item], item.trash_action_id == ^action_id)
+      |> Repo.exists?()
+
+    other_docs? =
+      TrashedDocArticle
+      |> where([item], item.trash_action_id == ^action_id and item.id != ^item_id)
+      |> Repo.exists?()
+
+    tree_nodes? =
+      TrashedDocTreeNode
+      |> where([node], node.trash_action_id == ^action_id)
+      |> Repo.exists?()
+
+    other_articles? or other_docs? or tree_nodes?
+  end
+
+  defp doc_action_article_hash_ids(%TrashAction{} = action, %DocBranch{} = branch) do
+    TrashedDocArticle
+    |> where([item], item.trash_action_id == ^action.id and item.branch_id == ^branch.id)
+    |> select([item], item.article_hash_id)
+    |> order_by([item], asc: item.article_hash_id)
+    |> Repo.all()
   end
 
   defp physical_articles(%Community{} = community, thread, article_hash_id) do
@@ -491,14 +794,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   defp purge_article_aggregate(thread, article_hash_id, physical_articles) do
-    with :ok <- purge_physical_articles(thread, physical_articles),
-         {_count, _} <-
-           ArticleSnapshot
-           |> where([snapshot], snapshot.thread == ^thread)
-           |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
-           |> Repo.delete_all() do
-      :ok
-    end
+    _ = article_hash_id
+    purge_physical_articles(thread, physical_articles)
   end
 
   defp purge_physical_articles(thread, physical_articles) do
@@ -541,6 +838,30 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> case do
         nil -> {:error, {:not_exist, "logical Article"}}
         article -> {:ok, article}
+      end
+    end
+  end
+
+  defp representative_articles(_community, _thread, []), do: {:ok, %{}}
+
+  defp representative_articles(%Community{} = community, thread, article_hash_ids) do
+    with {:ok, info} <- match(thread) do
+      public_stage = CMS.Const.stage(:public)
+
+      articles_by_hash_id =
+        info.model
+        |> where([article], article.community_id == ^community.id)
+        |> where([article], article.article_hash_id in ^article_hash_ids)
+        |> order_by([article], desc: article.stage == ^public_stage)
+        |> preload([:community_tags, :communities, author: :user])
+        |> Repo.all()
+        |> Enum.reduce(%{}, fn article, acc ->
+          Map.put_new(acc, article.article_hash_id, article)
+        end)
+
+      case Enum.find(article_hash_ids, &(not Map.has_key?(articles_by_hash_id, &1))) do
+        nil -> {:ok, articles_by_hash_id}
+        _missing_id -> {:error, {:not_exist, "logical Article"}}
       end
     end
   end
@@ -607,10 +928,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
     |> Map.new()
   end
 
-  defp ensure_trashable(%{is_archived: true}),
-    do: {:error, {:archived, "article is archived, can not be deleted"}}
-
-  defp ensure_trashable(_article), do: :ok
+  defp trash_restore_state(article) do
+    with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
+         {:ok, state} <- Lifecycle.state(article.community_id, thread, article.article_hash_id) do
+      if state == :archived,
+        do: {:error, {:archived, "article is archived, can not be deleted"}},
+        else: {:ok, state}
+    end
+  end
 
   defp ensure_standalone_trash_supported(:doc),
     do: {:error, {:custom, "Docs Articles must be moved to Trash through their Tree node"}}

@@ -3,218 +3,86 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
 
   use GroupherServer.TestMate
 
-  @body_v1 Jason.encode!([
-             %{"type" => "p", "children" => [%{"text" => "post version one content"}]}
-           ])
-  @body_v2 Jason.encode!([
-             %{"type" => "p", "children" => [%{"text" => "post version two content"}]}
-           ])
-  @body_preview Jason.encode!([
-                  %{"type" => "p", "children" => [%{"text" => "post preview content"}]}
-                ])
+  alias CMS.Articles.DraftDiff
+  alias CMS.Model.Post
 
-  test "supports the complete Post Draft, Revision, Diff, Preview, and Publish lifecycle" do
-    {community, _existing_post, attrs, user} = mock_article(:post)
+  test "DraftDiff includes every Post version field" do
+    public = %Post{
+      stage: :public,
+      title: "Public",
+      digest: "digest",
+      link_addr: "https://example.com/public",
+      copy_right: "original",
+      cover_url: "https://example.com/cover.png"
+    }
+
+    draft = %{
+      public
+      | stage: :draft,
+        copy_right: "updated",
+        cover_url: "https://example.com/new-cover.png"
+    }
+
+    assert %{changed: true, fields: fields} = DraftDiff.compare(draft, public)
+    assert fields.copy_right == %{before: "original", after: "updated"}
+
+    assert fields.cover_url == %{
+             before: "https://example.com/cover.png",
+             after: "https://example.com/new-cover.png"
+           }
+  end
+
+  test "keeps an ordinary Post draft until explicit publish" do
+    {community, public, attrs, user} = mock_article(:post)
 
     {:ok, draft} =
-      CMS.Articles.create_draft(
+      CMS.Articles.update_draft(
         community,
         :post,
-        Map.merge(attrs, %{title: "Post version one", body_bag: mock_body_bag(@body_v1)}),
+        public.article_hash_id,
+        %{
+          title: "Post draft",
+          body_bag: mock_body_bag(mock_rich_text("draft")),
+          expected_version: public.version
+        },
         user
       )
 
     assert draft.stage == :draft
-    assert is_binary(draft.article_hash_id)
+    refute Map.has_key?(draft, :branch_id)
 
-    {:ok, first} =
-      CMS.Articles.checkpoint_draft(community, :post, draft.article_hash_id, user)
+    assert {:ok, unchanged_public} =
+             CMS.Articles.read_public(community, :post, public.article_hash_id)
 
-    {:ok, updated} =
-      CMS.Articles.update_draft(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{title: "Post version two", body_bag: mock_body_bag(@body_v2)},
-        user
-      )
+    assert unchanged_public.title == public.title
 
-    assert {:ok, %{changed: true, document_changed: true}} =
-             CMS.Articles.diff_current(updated, first)
+    assert {:ok, _authorized_draft} =
+             CMS.Articles.read_draft(community, :post, public.article_hash_id, actor: user)
 
-    assert {:ok, [only_revision]} =
-             CMS.Articles.list_snapshots(community, :post, draft.article_hash_id)
-
-    assert only_revision.hash_id == first.hash_id
-
-    {:ok, second} =
-      CMS.Articles.checkpoint_draft(community, :post, draft.article_hash_id, user)
-
-    assert updated.title == "Post version two"
-    assert {first.revision_number, second.revision_number} == {1, 2}
-    assert CMS.Articles.diff_snapshots(first, second).document_changed
-
-    {:ok, restored} =
-      CMS.Articles.restore_snapshot(
-        community,
-        :post,
-        draft.article_hash_id,
-        first.hash_id,
-        user
-      )
-
-    assert restored.title == "Post version one"
-
-    {:ok, %{snapshot: published}} =
-      CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
-
-    assert published.action == :publish
-    assert published.revision_number == 4
-
-    {:ok, forked} =
-      CMS.Articles.fork_preview(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{slug: "post-preview", title: "Post Preview"},
-        user
-      )
-
-    assert forked.branch.type == :preview
-    assert forked.draft.stage == :draft
-    assert forked.snapshot.action == :fork
-
-    {:ok, _preview_draft} =
-      CMS.Articles.update_draft(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{
-          branch_id: forked.branch.id,
-          title: "Post preview promoted",
-          body_bag: mock_body_bag(@body_preview)
-        },
-        user
-      )
-
-    {:ok, promoted} =
-      CMS.Articles.promote_preview(
-        community,
-        :post,
-        draft.article_hash_id,
-        forked.branch,
-        user
-      )
-
-    assert promoted.snapshot.action == :promote
-    assert promoted.snapshot.revision_number == 5
-    assert promoted.draft.title == "Post preview promoted"
-
-    {:ok, public_before_publish} =
-      CMS.Articles.read_public(community, :post, draft.article_hash_id)
-
-    assert public_before_publish.title == "Post version one"
-
-    {:ok, %{snapshot: final_public}} =
-      CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
-
-    assert final_public.revision_number == 6
-    assert final_public.title == "Post preview promoted"
+    {:ok, other_user} = db_insert(:user)
 
     assert {:error, _} =
-             CMS.Articles.read_public(
-               community,
-               :post,
-               draft.article_hash_id,
-               branch_id: forked.branch.id
-             )
+             CMS.Articles.read_draft(community, :post, public.article_hash_id, actor: other_user)
+
+    assert {:ok, true} =
+             CMS.Articles.has_unpublished_changes(community, :post, public.article_hash_id)
+
+    {:ok, %{article: republished, snapshot: nil}} =
+      CMS.Articles.publish_draft(community, :post, public.article_hash_id, user)
+
+    assert republished.title == "Post draft"
+    assert {:error, _} = CMS.Articles.read_draft(community, :post, public.article_hash_id)
+
+    assert {:ok, false} =
+             CMS.Articles.has_unpublished_changes(community, :post, public.article_hash_id)
+
+    _ = attrs
   end
 
-  test "rejects Preview promotion after main/public has changed" do
-    {community, _existing_post, attrs, user} = mock_article(:post)
+  test "DraftDiff reports no change when the current Post has no Draft" do
+    {community, public, _attrs, _user} = mock_article(:post)
 
-    {:ok, draft} =
-      CMS.Articles.create_draft(
-        community,
-        :post,
-        Map.merge(attrs, %{title: "Post conflict base", body_bag: mock_body_bag(@body_v1)}),
-        user
-      )
-
-    {:ok, _published} =
-      CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
-
-    {:ok, forked} =
-      CMS.Articles.fork_preview(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{slug: "post-conflict-preview", title: "Post Conflict Preview"},
-        user
-      )
-
-    {:ok, _main_draft} =
-      CMS.Articles.update_draft(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{title: "Post main changed", body_bag: mock_body_bag(@body_v2)},
-        user
-      )
-
-    {:ok, _republished} =
-      CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
-
-    assert {:error, {:conflict, "main/public changed after the Preview fork"}} =
-             CMS.Articles.promote_preview(
-               community,
-               :post,
-               draft.article_hash_id,
-               forked.branch,
-               user
-             )
-  end
-
-  test "can fork a Preview from an explicitly selected historical Snapshot" do
-    {community, _existing_post, attrs, user} = mock_article(:post)
-
-    {:ok, draft} =
-      CMS.Articles.create_draft(
-        community,
-        :post,
-        Map.merge(attrs, %{title: "Post selected history", body_bag: mock_body_bag(@body_v1)}),
-        user
-      )
-
-    {:ok, selected_snapshot} =
-      CMS.Articles.checkpoint_draft(community, :post, draft.article_hash_id, user)
-
-    {:ok, _updated} =
-      CMS.Articles.update_draft(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{title: "Post current head", body_bag: mock_body_bag(@body_v2)},
-        user
-      )
-
-    {:ok, _published} =
-      CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
-
-    {:ok, forked} =
-      CMS.Articles.fork_preview(
-        community,
-        :post,
-        draft.article_hash_id,
-        %{
-          slug: "post-selected-history",
-          title: "Post Selected History",
-          source_snapshot_hash_id: selected_snapshot.hash_id
-        },
-        user
-      )
-
-    assert forked.draft.title == "Post selected history"
-    assert forked.snapshot.source_snapshot_id == selected_snapshot.id
+    assert {:ok, %{changed: false, document_changed: false, fields: %{}}} =
+             CMS.Articles.draft_diff(community, :post, public.article_hash_id)
   end
 end

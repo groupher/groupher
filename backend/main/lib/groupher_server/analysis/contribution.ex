@@ -1,6 +1,14 @@
 defmodule GroupherServer.Analysis.Contribution do
   @moduledoc """
   Contribution analytics for users and communities.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Contribution
+        -> Repo / analytics provider
   """
   import Ecto.Query, warn: false
   import Helper.Utils
@@ -59,7 +67,7 @@ defmodule GroupherServer.Analysis.Contribution do
         |> do_get_contributes()
         |> to_counts_digest(days: @community_contribute_days)
 
-      CMS.Communities.update(community, %{contributes_digest: contributes_digest})
+      CMS.Communities.update(community, %{contributes_digest: contributes_digest}, :operations)
     end)
     |> Repo.transaction()
     |> result()
@@ -88,6 +96,7 @@ defmodule GroupherServer.Analysis.Contribution do
   end
 
   # NOTE*  must be public, cause it will be exec by background job
+  @doc "Returns contributes then cache through the `Contribution` boundary."
   def get_contributes_then_cache(%Community{id: id}) do
     scope = Cache.get_scope(:community_contributes, id)
 

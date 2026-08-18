@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.Setup do
-  @moduledoc "Idempotent initialization and recovery for a newly created Community."
+  @moduledoc """
+  Idempotent initialization and recovery for a newly created Community.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Setup
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 
@@ -7,7 +16,8 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.{Analysis, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
-  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const, Gate}
+  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
 
   alias GroupherServer.CMS.Model.{
@@ -22,6 +32,19 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
   @community_normal Constant.CMS.pending(:normal)
 
+  @doc """
+  Runs idempotent initialization for a newly created Community.
+
+  Fetches the community, its application and the owner, ensures the owner is
+  the root moderator, initializes the doc tree and analysis provisioning,
+  then activates the community.
+
+  ## Examples
+
+      CMS.Communities.Setup.run("groupher", "op_123")
+      #=> {:ok, %CommunityApplication{}}
+
+  """
   @spec run(String.t(), String.t()) :: {:ok, CommunityApplication.t()} | {:error, term()}
   def run(community_ref, operation_ref) do
     with {:ok, community} <- fetch_community(community_ref),
@@ -275,7 +298,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   end
 
   defp review_authorized?(reviewer, action) do
-    case Gate.check_passport(reviewer, action, %{}) do
+    case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
       _ -> {:error, :review_permission_denied}
     end

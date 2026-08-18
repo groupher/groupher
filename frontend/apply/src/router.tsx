@@ -2,6 +2,7 @@ import { createRouter } from '@tanstack/react-router'
 
 import { routeTree } from './routeTree.gen'
 
+/** Returns router for the frontend shared workflow. */
 export function getRouter() {
   return createRouter({
     routeTree,

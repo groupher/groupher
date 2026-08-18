@@ -14,6 +14,7 @@ type TRet = {
   loadArticle: (p: TArticleLoad) => void
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
   const article$ = useArticle()
   const account = useAccount()

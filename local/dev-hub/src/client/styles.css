@@ -980,7 +980,7 @@ button {
   padding: 0 2px 13px;
 }
 
-.service-identity {
+.service-auth {
   display: flex;
   min-width: 0;
   align-items: center;

@@ -1,6 +1,13 @@
 defmodule GroupherServer.FrontDesk.Revalidate do
   @moduledoc """
   Revalidate cached FrontDesk resources.
+
+  Business position:
+
+      Resolver / context
+        -> FrontDesk
+        -> Revalidate
+        -> cache / Repo
   """
 
   alias GroupherServer.FrontDesk

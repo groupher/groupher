@@ -3,6 +3,13 @@ defmodule GroupherServer.CMS.Model.Doc do
   Docs content anchor. One row per Doc draft or public head. Rows representing
   the same logical Article share `article_hash_id`; Tree code maps that identity
   to its product-level `doc_id` at the Docs boundary.
+
+  Business position:
+
+      CMS context
+        -> Doc schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -26,14 +33,14 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @required_fields ~w(branch_id article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
-  @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
+  @optional_fields ~w(subtitle updated_at inserted_at active_at inner_id
                       slug json author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240
 
   @type t :: %Doc{}
   schema "docs" do
-    article_version_fields()
+    doc_version_fields()
     field(:slug, :string)
     field(:json, :string)
 
@@ -74,7 +81,7 @@ defmodule GroupherServer.CMS.Model.Doc do
     |> validate_length(:link_addr, min: 5, max: 400)
     |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:body)
-    |> validate_article_version_scope(:doc)
+    |> validate_doc_version_scope()
     |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:article_hash_id, name: :docs_branch_article_hash_stage_index)
   end

@@ -27,6 +27,7 @@ const shouldSkipQueryWhitelist = (pathname: string): boolean => {
   )
 }
 
+/** Runs the query whitelist proxy operation at the frontend shared boundary. */
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)
 

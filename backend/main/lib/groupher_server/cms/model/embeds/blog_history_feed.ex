@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.BlogHistoryFeed do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded historical feed item imported for a community blog.
+
+  Business position:
+
+      CMS context
+        -> BlogHistoryFeed schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

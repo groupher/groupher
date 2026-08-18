@@ -48,6 +48,7 @@ export const pageIdsFromNodes = (nodes: readonly TImportTreeNode[]): string[] =>
   return Array.from(ids)
 }
 
+/** Runs the page ids from tabs operation at the frontend shared boundary. */
 export const pageIdsFromTabs = (tabs: TImportTreeTab[]): string[] => {
   const ids = new Set<string>()
   for (const tab of tabs) {

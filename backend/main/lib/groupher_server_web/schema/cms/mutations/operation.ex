@@ -4,6 +4,13 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
   This module covers operational actions like category binding, community
   subscription, tag indexing, and article move/mirror workflows.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Operation
+        -> resolver or domain context
+        -> GraphQL response
   """
   use Helper.GqlSchemaSuite
 

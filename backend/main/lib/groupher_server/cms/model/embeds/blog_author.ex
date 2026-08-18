@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.BlogAuthor do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  general community meta
+  Embedded external author profile attached to a blog entry.
+
+  Business position:
+
+      CMS context
+        -> BlogAuthor schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

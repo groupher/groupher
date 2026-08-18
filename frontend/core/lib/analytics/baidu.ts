@@ -1,5 +1,6 @@
 import { Global } from '~/helper'
 
+/** Returns analytics tag for the frontend shared workflow. */
 export const getAnalyticsTag = () => {
   return {
     __html: `
@@ -13,6 +14,7 @@ export const getAnalyticsTag = () => {
   }
 }
 
+/** Runs the handle route change operation at the frontend shared boundary. */
 export const handleRouteChange = (url: string): void => {
   try {
     Global._hmt?.push(['_trackPageview', url])

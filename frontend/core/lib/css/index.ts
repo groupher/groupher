@@ -10,6 +10,7 @@ import { cn as cnFast } from 'cnfast'
  */
 export const cnMerge = (...inputs: ClassValue[]) => cnFast(...inputs)
 
+/** Runs the cn operation at the frontend shared boundary. */
 export const cn = (...inputs: ClassValue[]) => clsx(inputs)
 
 export { getCSSVar } from './helper'

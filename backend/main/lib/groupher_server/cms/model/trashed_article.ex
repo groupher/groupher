@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
 
   `article_hash_id` identifies every draft/public physical row belonging to the
   same Article; this table deliberately has no polymorphic database foreign key.
+
+  Business position:
+
+      CMS context
+        -> TrashedArticle schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
@@ -17,8 +24,10 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
-  @threads [:post, :blog, :changelog, :doc]
-  @required_fields ~w(trash_action_id community_id thread article_hash_id deleted_at)a
+  @threads [:post, :blog, :changelog]
+  @required_fields ~w(
+    trash_action_id community_id thread article_hash_id restore_state deleted_at
+  )a
   @optional_fields ~w(deleted_by_id)a
 
   @type t :: %__MODULE__{}
@@ -29,6 +38,7 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
     belongs_to(:community, Community)
     field(:thread, Ecto.Enum, values: @threads)
     field(:article_hash_id, Ecto.UUID)
+    field(:restore_state, Ecto.Enum, values: [:draft_only, :published, :archived])
     belongs_to(:deleted_by, User)
     field(:deleted_at, :utc_datetime)
     field(:article, :map, virtual: true)

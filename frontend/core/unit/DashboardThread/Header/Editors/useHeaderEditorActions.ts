@@ -15,6 +15,7 @@ type TProps = {
 
 export type THeaderEditorActions = TDashboardLinkEditorActions
 
+/** Exposes header editor actions state and actions through the shared React hook boundary. */
 export default function useHeaderEditorActions({
   links,
   makeId,

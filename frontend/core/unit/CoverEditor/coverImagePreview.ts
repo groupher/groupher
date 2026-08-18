@@ -13,6 +13,7 @@ export type TCoverImagePreviewDetail = {
 
 type TCoverImagePreviewEvent = CustomEvent<TCoverImagePreviewDetail>
 
+/** Runs the emit cover image preview operation at the frontend shared boundary. */
 export const emitCoverImagePreview = (state: TCoverImagePreviewState | null): void => {
   if (typeof window === 'undefined') return
 
@@ -23,6 +24,7 @@ export const emitCoverImagePreview = (state: TCoverImagePreviewState | null): vo
   )
 }
 
+/** Runs the subscribe cover image preview operation at the frontend shared boundary. */
 export const subscribeCoverImagePreview = (
   listener: (state: TCoverImagePreviewState | null) => void,
 ): (() => void) => {

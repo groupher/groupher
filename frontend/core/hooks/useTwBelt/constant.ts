@@ -59,6 +59,7 @@ export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {
  */
 const THEME_KEY_CACHE = new Map<string, string>()
 
+/** Runs the key to class operation at the frontend shared boundary. */
 export function keyToClass(prefix: string, key: string): string {
   const cacheKey = `${prefix}|${key}`
   const cached = THEME_KEY_CACHE.get(cacheKey)
@@ -72,6 +73,7 @@ export function keyToClass(prefix: string, key: string): string {
 const MARGIN_CACHE = new Map<string, string>()
 const MARGIN_CACHE_MAX = 512
 
+/** Runs the cached margin operation at the frontend shared boundary. */
 export function cachedMargin(spacing: TSpace): string {
   const t = spacing.top ?? ''
   const b = spacing.bottom ?? ''

@@ -4,6 +4,7 @@ import type { TArticle } from '~/spec'
 import { SHARE_TYPE } from './constant'
 import type { TLinksData } from './spec'
 
+/** Parses links data into the canonical frontend shared representation. */
 export const parseLinksData = (article: TArticle, link: string): TLinksData => {
   if (!article?.meta?.thread) {
     return {
@@ -24,6 +25,7 @@ export const parseLinksData = (article: TArticle, link: string): TLinksData => {
   }
 }
 
+/** Runs the to platform operation at the frontend shared boundary. */
 export const toPlatform = (article: TArticle, type: string, url: string): void => {
   const { title, digest } = article
 

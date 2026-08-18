@@ -1,6 +1,17 @@
 defmodule Helper.Utils do
   @moduledoc """
-  until functions
+  Legacy facade for cross-domain result, configuration, map/string, and small
+  normalization helpers.
+
+  New domain-specific behavior should live with its owning context. This module
+  remains the compatibility surface for widely imported helpers while focused
+  implementations live under `Helper.Utils.Map` and `Helper.Utils.String`.
+
+  Business position:
+
+      Domain or web caller
+        -> Utils
+        -> normalized value / infrastructure
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler
@@ -12,21 +23,33 @@ defmodule Helper.Utils do
   alias Helper.{Cache, Utils}
 
   # Map utils
+  @doc "Runs `atom_values_to_upcase` through the public `Utils` boundary."
   defdelegate atom_values_to_upcase(map), to: Utils.Map
+  @doc "Runs `map_key_stringify` through the public `Utils` boundary."
   defdelegate map_key_stringify(map), to: Utils.Map
+  @doc "Runs `keys_to_atoms` through the public `Utils` boundary."
   defdelegate keys_to_atoms(map), to: Utils.Map
+  @doc "Runs `keys_to_strings` through the public `Utils` boundary."
   defdelegate keys_to_strings(map), to: Utils.Map
+  @doc "Runs `camelize_map_key` through the public `Utils` boundary."
   defdelegate camelize_map_key(map), to: Utils.Map
   defdelegate camelize_map_key(map, opt), to: Utils.Map
+  @doc "Runs `snake_map_key` through the public `Utils` boundary."
   defdelegate snake_map_key(map), to: Utils.Map
+  @doc "Runs `deep_merge` through the public `Utils` boundary."
   defdelegate deep_merge(left, right), to: Utils.Map
+  @doc "Runs `map_atom_value` through the public `Utils` boundary."
   defdelegate map_atom_value(attrs, opt), to: Utils.Map
 
   # String Utils
+  @doc "Runs `stringify` through the public `Utils` boundary."
   defdelegate stringify(str), to: Utils.String
+  @doc "Runs `count_words` through the public `Utils` boundary."
   defdelegate count_words(str), to: Utils.String
+  @doc "Runs `str_occurrence` through the public `Utils` boundary."
   defdelegate str_occurrence(string, substr), to: Utils.String
 
+  @doc "Reads one application configuration key, or an entire section with `:all`."
   def get_config(section, key, app \\ :groupher_server)
 
   def get_config(section, :all, app) do
@@ -47,14 +70,10 @@ defmodule Helper.Utils do
     end
   end
 
-  @doc """
-  plural version of the thread
-  """
+  @doc "Returns the conventional plural atom for a thread name."
   def plural(thread), do: :"#{thread}s"
 
-  @doc """
-  not general, only used in this project
-  """
+  @doc "Returns the project-specific past-tense label for an action."
   def past_verb(word) do
     word_str = if is_atom(word), do: Atom.to_string(word), else: word
 
@@ -64,9 +83,7 @@ defmodule Helper.Utils do
     end
   end
 
-  @doc """
-  handle General {:ok, ..} or {:error, ..} return
-  """
+  @doc "Normalizes common ORM and boolean results into Groupher result tuples."
   def done(false), do: {:error, :not_exist}
   def done(true), do: {:ok, true}
   def done(nil), do: {:error, :not_exist}
@@ -96,6 +113,7 @@ defmodule Helper.Utils do
   # def done({0, nil}), do: {:error, %{done: false}}
   # def done({n, nil}, extra: extra) when is_integer(n), do: {:ok, %{done: true}}
 
+  @doc "Normalizes a result and caches its successful value under the supplied scope."
   def done_and_cache(result, pool, scope, expire_sec: expire_sec) do
     with {:ok, res} <- done(result) do
       Cache.put(pool, scope, res, expire_sec: expire_sec)
@@ -117,9 +135,7 @@ defmodule Helper.Utils do
     end
   end
 
-  @doc """
-  see: https://hexdocs.pm/absinthe/errors.html#content for error format
-  """
+  @doc "Projects a domain failure into Absinthe's error result shape."
   def handle_absinthe_error(resolution, {reason, meta}, code) when is_integer(code) do
     message = if is_binary(meta), do: meta, else: Atom.to_string(reason)
 
@@ -145,24 +161,26 @@ defmodule Helper.Utils do
     |> Absinthe.Resolution.put_result({:error, message: err_msg, extensions: %{code: ecode()}})
   end
 
-  # TODO: enhance, doc
+  @doc "Repeats a scalar value and preserves the legacy single-integer-list string form."
   def repeat(times, [x]) when is_integer(x), do: to_string(for _ <- 1..times, do: x)
   def repeat(times, x), do: for(_ <- 1..times, do: x)
 
-  # TODO: enhance, doc
+  @doc "Adds an integer offset, defaulting to one."
   def add(num, offset \\ 1) when is_integer(num) and is_integer(offset), do: num + offset
 
-  # TODO: enhance, doc
+  @doc "Extracts one key from each map in a list while preserving order."
   def pick_by(source, key) when is_list(source) and is_atom(key) do
     Enum.reduce(source, [], fn t, acc ->
       acc ++ [Map.get(t, key)]
     end)
   end
 
+  @doc "Returns the canonical empty pagination payload."
   def empty_pagi_data do
     %{entries: [], total_count: 0, page_size: 0, total_pages: 1, page_number: 1}
   end
 
+  @doc "Checks whether a string length or integer is greater than or equal to a target."
   @spec large_than(String.t() | integer(), integer()) :: true | false
   def large_than(value, target) when is_binary(value) and is_integer(target) do
     String.length(value) >= target
@@ -182,6 +200,7 @@ defmodule Helper.Utils do
   end
 
   @spec less_than(String.t() | integer(), integer()) :: true | false
+  @doc "Runs `less_than` through the public `Utils` boundary."
   def less_than(value, target) when is_binary(value) and is_integer(target) do
     String.length(value) <= target
   end
@@ -255,10 +274,12 @@ defmodule Helper.Utils do
     _ -> nil
   end
 
+  @doc "Converts the input to upcase at the `Utils` boundary."
   def to_upcase(v) when is_atom(v), do: v |> to_string |> String.upcase()
   def to_upcase(v) when is_binary(v), do: v |> String.upcase()
   def to_upcase(_), do: nil
 
+  @doc "Runs `uid` through the public `Utils` boundary."
   def uid(str_len \\ 5) do
     Nanoid.generate(str_len, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
   end
@@ -283,6 +304,7 @@ defmodule Helper.Utils do
 
   # Repo.transaction will rewrite error to {:error, :rollback}, so if we want to return error with
   # details context, need use try catch
+  @doc "Runs `use_transaction` through the public `Utils` boundary."
   def use_transaction(fun) do
     Repo.transaction(fn ->
       case fun.() do

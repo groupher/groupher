@@ -1,8 +1,17 @@
 defmodule GroupherServer.CMS.Events.Audition do
   @moduledoc """
-  events for mention task
+  Handles CMS moderation-audit events for comments and other artiments.
 
-  parse and fmt(see shape function) mentions to Messaging module
+  Content is submitted to `AuditBot`; the result updates legal-state fields and
+  returns the normalized moderation outcome to the event pipeline.
+
+  Business position:
+
+      Artiment / comment write
+        -> CMS.Events
+        -> Audition
+        -> AuditBot
+        -> persisted moderation state
   """
   import Ecto.Query, warn: false
 
@@ -17,6 +26,12 @@ defmodule GroupherServer.CMS.Events.Audition do
   @type audition_result :: {:ok, map()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
 
+  @doc """
+  Handles the `:audition` event, running moderation analysis on the payload artiment.
+
+  Comments and articles are submitted to `AuditBot`; the result updates the
+  legal-state fields and missing or deleted content resolves to `{:ok, :pass}`.
+  """
   @spec handle(Event.t()) :: handle_result()
   @impl true
   def handle(%Event{type: :audition, payload: %{artiment: artiment}}) do

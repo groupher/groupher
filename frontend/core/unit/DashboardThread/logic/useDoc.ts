@@ -19,6 +19,7 @@ type TRet = {
   addDocCategory: () => void
 }
 
+/** Exposes doc state and actions through the shared React hook boundary. */
 export default function useDoc(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

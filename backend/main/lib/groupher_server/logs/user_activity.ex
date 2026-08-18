@@ -4,7 +4,14 @@ defmodule GroupherServer.Logs.UserActivity do
 
   The log records which content source a user interacted with so audit and
   activity surfaces can be built without joining every source table.
+
+  Business position:
+
+      Application caller
+        -> UserActivity
+        -> domain / infrastructure boundary
   """
+
   # alias __MODULE__
 
   use Ecto.Schema

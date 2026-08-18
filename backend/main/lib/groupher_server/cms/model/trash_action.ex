@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashAction do
 
   The row exists only while at least one Article or Docs Tree child remains in
   Trash. Historical facts live in `AuditLog`, not here.
+
+  Business position:
+
+      CMS context
+        -> TrashAction schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
@@ -12,7 +19,12 @@ defmodule GroupherServer.CMS.Model.TrashAction do
   import Ecto.Changeset
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, TrashedArticle, TrashedDocTreeNode}
+  alias GroupherServer.CMS.Model.{
+    Community,
+    TrashedArticle,
+    TrashedDocArticle,
+    TrashedDocTreeNode
+  }
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -32,6 +44,7 @@ defmodule GroupherServer.CMS.Model.TrashAction do
     field(:scheduled_permanent_deletion_at, :utc_datetime)
 
     has_many(:trashed_articles, TrashedArticle)
+    has_many(:trashed_doc_articles, TrashedDocArticle)
     has_many(:trashed_doc_tree_nodes, TrashedDocTreeNode)
 
     timestamps(type: :utc_datetime)

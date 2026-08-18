@@ -1,4 +1,20 @@
 defmodule GroupherServerWeb.Endpoint do
+  @moduledoc """
+  Phoenix transport boundary for static assets, parsers, sessions, CORS, and
+  request routing.
+
+  The endpoint assembles transport middleware only. `Router` selects the public
+  Phoenix surface, `Context` resolves request identity, and domain contexts own
+  all business authorization and persistence.
+
+  Business position:
+
+      HTTP client
+        -> GroupherServerWeb.Endpoint plugs
+        -> GroupherServerWeb.Router
+        -> controller / GraphQL boundary
+        -> domain context
+  """
   # use Sentry.PlugCapture
   use Phoenix.Endpoint, otp_app: :groupher_server
 

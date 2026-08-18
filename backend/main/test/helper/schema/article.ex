@@ -291,6 +291,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         thread
         stage
         title
+        version
       }
     }
     """
@@ -328,12 +329,13 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article_draft, thread) do
     """
-    mutation($community: String!, $id: ID!, $title: String, $bodyBag: ArtimentBodyBagInput) {
-      update#{t(thread)}Draft(community: $community, id: $id, title: $title, bodyBag: $bodyBag) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput) {
+      update#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag) {
         id
         thread
         stage
         title
+        version
       }
     }
     """
@@ -352,9 +354,10 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID]){
-      update#{t(thread)}(article: $article, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID]){
+      update#{t(thread)}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags) {
         innerId
+        version
         title
         document {
           html
@@ -425,6 +428,24 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
+  def m(:update_draft_document, operation) do
+    """
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput) {
+      #{operation}(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag) {
+        id
+        version
+        title
+        document {
+          json
+          markdown
+          markdownToc
+          html
+        }
+      }
+    }
+    """
+  end
+
   def m(:create_cover, thread) do
     thread_name = thread |> to_string() |> String.capitalize()
 
@@ -446,6 +467,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         coverEditInfo: $coverEditInfo
       ) {
         innerId
+        version
         coverUrl
         coverUrlDark
         coverEditInfo {
@@ -478,17 +500,20 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation(
       $article: ArticlePathInput!
+      $expectedVersion: Int!
       $coverUrl: String
       $coverUrlDark: String
       $coverEditInfo: CoverEditInfoInput
     ) {
       update#{thread_name}(
         article: $article
+        expectedVersion: $expectedVersion
         coverUrl: $coverUrl
         coverUrlDark: $coverUrlDark
         coverEditInfo: $coverEditInfo
       ) {
         innerId
+        version
         coverUrl
         coverUrlDark
         coverEditInfo {
@@ -725,8 +750,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           nickname
         }
         commentsParticipantsCount
-        isArchived
-        archivedAt
         #{extra}
       }
     }

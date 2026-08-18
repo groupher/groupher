@@ -6,6 +6,7 @@ import { removeEmptyValuesFromObject } from '~/helper'
 import type { TCommunity, TNameAlias, TParseDashboard, TParsedWallpaper } from '~/spec'
 import { FIELDS } from '~/stores/dashboard/constant'
 
+/** Parses wallpaper into the canonical frontend shared representation. */
 export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {
   if (!community) return {}
 
@@ -30,6 +31,7 @@ const parseDashboardAlias = (nameAlias: TNameAlias[]): TNameAlias[] => {
   return reject((item: TNameAlias) => item.slug === '', [...nameAlias, ...unChangedAlias])
 }
 
+/** Parses dashboard into the canonical frontend shared representation. */
 export const parseDashboard = (community: TCommunity): TParseDashboard => {
   if (!community) {
     const defaultFields = { ...FIELDS }

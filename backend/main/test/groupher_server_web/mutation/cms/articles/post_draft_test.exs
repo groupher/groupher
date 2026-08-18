@@ -23,24 +23,23 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
 
     assert public_post.stage == :public
 
-    assert {:ok, [%{action: :publish, stage: :public}]} =
-             CMS.Articles.list_snapshots(
-               context.community,
-               :post,
-               public_post.article_hash_id
-             )
-
     context.user_conn
     |> gq_mutation(S.Article.m(:update_article, :post), %{
       article: %{inner_id: result["innerId"], community: context.community.slug, thread: "POST"},
+      expectedVersion: public_post.version,
       title: "Republished Post",
       body: mock_rich_text("republished post")
     })
 
-    assert {:ok, [latest, first]} =
-             CMS.Articles.list_snapshots(context.community, :post, public_post.article_hash_id)
+    {:ok, draft} = CMS.Articles.read_draft(context.community, :post, public_post.article_hash_id)
+    assert draft.title == "Republished Post"
 
-    assert {latest.action, first.action} == {:publish, :publish}
+    {:ok, actor} = CMS.FrontDesk.author_of(public_post)
+
+    {:ok, %{article: published, snapshot: nil}} =
+      CMS.Articles.publish_draft(context.community, :post, public_post.article_hash_id, actor)
+
+    assert published.title == "Republished Post"
   end
 
   test "Post Draft stays private until its explicit publish mutation", context do
@@ -61,6 +60,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
       |> gq_mutation(S.Article.m(:update_article_draft, :post), %{
         community: context.community.slug,
         id: draft["id"],
+        expectedVersion: draft["version"],
         title: "Updated Post Draft",
         body: mock_rich_text("updated post draft")
       })
@@ -97,6 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
     update_variables = %{
       community: context.community.slug,
       id: draft["id"],
+      expectedVersion: draft["version"],
       title: "Unauthorized Post Draft",
       body: mock_rich_text("unauthorized post draft")
     }
@@ -144,6 +145,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
     variables = %{
       community: context.community.slug,
       id: public_post.article_hash_id,
+      expectedVersion: public_post.version,
       title: "First Post Draft",
       body: mock_rich_text("unauthorized first draft")
     }

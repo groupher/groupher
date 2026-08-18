@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
 
   Nullable draft/public snapshots retain the stage-specific placement without
   copying Article content into the Tree Trash model.
+
+  Business position:
+
+      CMS context
+        -> TrashedDocTreeNode schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
@@ -13,7 +20,7 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.{ArticleBranch, Community, TrashAction}
+  alias GroupherServer.CMS.Model.{Community, DocBranch, TrashAction}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -29,7 +36,7 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
     field(:hash_id, Ecto.UUID, autogenerate: true)
     belongs_to(:trash_action, TrashAction)
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
     field(:node_id, :string)
     field(:doc_id, Ecto.UUID)
     field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())

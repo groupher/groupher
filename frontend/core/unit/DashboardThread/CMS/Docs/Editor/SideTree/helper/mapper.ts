@@ -48,6 +48,7 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
   }
 }
 
+/** Maps pin into the public frontend shared result shape. */
 export const mapPin = (node: TDocTreeNodeDTO): TSideTreePin => ({
   id: node.id,
   type: SIDE_TREE_NODE_TYPE.PIN,

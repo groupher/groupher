@@ -4,7 +4,14 @@
 # ---
 defmodule GroupherServerWeb.Middleware.ChangesetErrors do
   @moduledoc """
-  translate changeset into Graphql-spec with i18n support
+  Converts Ecto changeset failures into localized GraphQL error payloads.
+
+  Business position:
+
+      Resolver result
+        -> ChangesetErrors middleware
+        -> next middleware
+        -> GraphQL field result
   """
 
   @behaviour Absinthe.Middleware

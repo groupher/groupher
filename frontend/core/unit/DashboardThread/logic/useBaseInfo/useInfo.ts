@@ -21,6 +21,7 @@ export type TRet = {
   isCityTouched: boolean
 }
 
+/** Exposes info state and actions through the shared React hook boundary. */
 export default function useInfo(): TRet {
   const dsb$ = useDashboard()
   const { anyChanged } = useHelper()

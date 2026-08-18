@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  only used for embeds_many situation
+  Stable account snapshot embedded in reaction and participation projections.
+
+  Business position:
+
+      CMS context
+        -> User schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema
@@ -34,7 +41,10 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   end
 
   @doc """
-  Normalizes account structs and atom-key maps into an embed user struct.
+  Normalizes account structs and atom- or string-key maps into an embed user struct.
+
+  String-key maps are expected from JSONB and raw SQL projection rows; atom-key
+  maps are expected from Ecto structs and application code.
   """
   @spec normalize(term()) :: t()
   def normalize(%AccountUser{} = user), do: from_account_user(user)
@@ -50,11 +60,11 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   end
 
   def normalize(user) when is_map(user) do
-    id = Map.get(user, :id)
-    user_id = Map.get(user, :user_id) || id
-    login = Map.get(user, :login)
-    avatar = Map.get(user, :avatar)
-    nickname = Map.get(user, :nickname) || login
+    id = Map.get(user, :id) || Map.get(user, "id")
+    user_id = Map.get(user, :user_id) || Map.get(user, "user_id") || id
+    login = Map.get(user, :login) || Map.get(user, "login")
+    avatar = Map.get(user, :avatar) || Map.get(user, "avatar")
+    nickname = Map.get(user, :nickname) || Map.get(user, "nickname") || login
 
     %__MODULE__{
       id: id || user_id,

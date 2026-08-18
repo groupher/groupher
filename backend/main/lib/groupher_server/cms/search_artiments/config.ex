@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.SearchArtiments.Config do
   @moduledoc """
   Runtime configuration contract for CMS artiment search.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Config
+        -> search platform
   """
 
   @type t :: %__MODULE__{
@@ -13,6 +20,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Config do
             queue: nil,
             algolia: []
 
+  @doc "Returns the runtime search artiments configuration as a `%Config{}` struct."
   @spec runtime() :: t()
   def runtime do
     config = Application.fetch_env!(:groupher_server, :search_artiments)

@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild do
   Embedded schema for child links inside dashboard link groups.
 
   Child links are the flat leaf nodes rendered in header/footer dropdowns.
+
+  Business position:
+
+      CMS context
+        -> LinkChild schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   use Accessible

@@ -11,6 +11,7 @@ type TNodeLocation = {
 
 const isGroup = (node: TSideTreeNavigationNode): node is TSideTreeGroup => node.type === 'group'
 
+/** Runs the side tree node lane operation at the frontend shared boundary. */
 export const sideTreeNodeLane = (node: TSideTreeNavigationNode): TSideTreeDndLane =>
   isGroup(node) ? SIDE_TREE_DND_LANE.GROUPS : SIDE_TREE_DND_LANE.LEAVES
 
@@ -29,6 +30,7 @@ const canonicalPages = (pages: readonly TSideTreeNavigationNode[]): TSideTreeNav
   return [...groups, ...leaves]
 }
 
+/** Keeps nested Groups ahead of Page and Link siblings throughout the tree. */
 export const canonicalizeSideTreeGroups = (groups: readonly TSideTreeGroup[]): TSideTreeGroup[] =>
   groups.map((group) => ({
     ...group,
@@ -103,7 +105,9 @@ const removeNode = (
       pages.push(page)
     }
 
-    nextGroups.push({ ...group, pages: canonicalPages(pages) })
+    // Input is canonicalized once before removal. Re-canonicalizing the whole
+    // remaining subtree at every ancestor turns a deep tree into O(n × depth).
+    nextGroups.push({ ...group, pages })
   }
 
   return { groups: nextGroups, node: removed }
@@ -162,30 +166,29 @@ const insertNode = (
     const nestedById = new Map(nextNestedGroups.map((nested) => [nested.id, nested]))
     return {
       ...group,
-      pages: canonicalPages(
-        group.pages.map((page) => (isGroup(page) ? nestedById.get(page.id) || page : page)),
-      ),
+      pages: group.pages.map((page) => (isGroup(page) ? nestedById.get(page.id) || page : page)),
     }
   })
 
   return inserted ? nextGroups : null
 }
 
+/** Moves one node while preserving Group/leaf lanes and rejecting descendant drops. */
 export const moveSideTreeNode = (
   groups: readonly TSideTreeGroup[],
   nodeId: string,
   target: TSideTreeDragTarget,
   rootParentNodeId: string,
-): TSideTreeGroup[] => {
+): readonly TSideTreeGroup[] => {
   const source = findNodeLocation(groups, nodeId, rootParentNodeId)
-  if (!source || target.overNodeId === nodeId) return [...groups]
-  if (source.lane !== target.lane) return [...groups]
-  if (!isGroup(source.node) && target.parentNodeId === rootParentNodeId) return [...groups]
+  if (!source || target.overNodeId === nodeId) return groups
+  if (source.lane !== target.lane) return groups
+  if (!isGroup(source.node) && target.parentNodeId === rootParentNodeId) return groups
   if (
     isGroup(source.node) &&
     (target.parentNodeId === source.node.id || groupContains(source.node, target.parentNodeId))
   ) {
-    return [...groups]
+    return groups
   }
 
   const nextIndex =
@@ -194,10 +197,10 @@ export const moveSideTreeNode = (
     source.index < target.index
       ? target.index - 1
       : target.index
-  if (source.parentNodeId === target.parentNodeId && source.index === nextIndex) return [...groups]
+  if (source.parentNodeId === target.parentNodeId && source.index === nextIndex) return groups
 
   const removed = removeNode(canonicalizeSideTreeGroups(groups), nodeId)
-  if (!removed.node) return [...groups]
+  if (!removed.node) return groups
 
   return (
     insertNode(
@@ -207,10 +210,11 @@ export const moveSideTreeNode = (
       nextIndex,
       removed.node,
       rootParentNodeId,
-    ) || [...groups]
+    ) || groups
   )
 }
 
+/** Collects a Group subtree for descendant-drop exclusion during dragging. */
 export const sideTreeGroupSubtreeIds = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
@@ -235,8 +239,3 @@ export const sideTreeGroupSubtreeIds = (
   groups.some(collect)
   return ids
 }
-
-export const sameSideTreeGroups = (
-  left: readonly TSideTreeGroup[],
-  right: readonly TSideTreeGroup[],
-): boolean => JSON.stringify(left) === JSON.stringify(right)

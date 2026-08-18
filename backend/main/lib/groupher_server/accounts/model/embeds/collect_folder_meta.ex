@@ -1,12 +1,19 @@
 defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros do
   @moduledoc """
-  general fields for each folder meta
+  Generates per-thread presence and count fields for collection-folder metadata.
 
   e.g:
     field(:has_post, :boolean, default: false)
     field(:post_count, :integer, default: 0)
+
+  Business position:
+
+      Accounts context
+        -> Macros schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
-    @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   defmacro threads_fields do
     @threads
@@ -21,12 +28,19 @@ end
 
 defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
   @moduledoc """
-  general article meta info for articles
+  Embedded counters describing which artiment threads a collection folder contains.
+
+  Business position:
+
+      Collection-folder write
+        -> CollectFolderMeta changeset
+        -> User collection-folder row
+        -> Accounts read model
   """
   use Ecto.Schema
   import Ecto.Changeset
   import GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros
-    @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @optional_fields Enum.map(@threads, &:"#{&1}_count") ++
                      Enum.map(@threads, &:"has_#{&1}")

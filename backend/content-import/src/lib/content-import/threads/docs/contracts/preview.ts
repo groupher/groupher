@@ -1,3 +1,14 @@
+/**
+ * Implements the Src Lib Content Import Threads Docs Contracts Preview boundary inside Content Import.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix import job
+ *     -> Content Import module
+ *     -> canonical source tree / apply batch
+ *     -> Phoenix persistence boundary
+ */
+
 import type { TBadSmell } from '../../../core/contracts'
 /**
  * Public Review contract produced only after Phoenix target validation.

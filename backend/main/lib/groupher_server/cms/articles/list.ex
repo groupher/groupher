@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Articles.List do
   @moduledoc """
   Article listing helpers.
+
+  Business position:
+
+      Client / importer
+        -> GraphQL or service boundary
+        -> CMS.Articles
+        -> List
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -17,17 +25,19 @@ defmodule GroupherServer.CMS.Articles.List do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Gate
+  alias CMS.Gate.Scope
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Dashboard.KanbanBoards
-  alias CMS.FrontDesk
+  alias CMS.Interactions.State
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle}
+  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
   require CMS.Const
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
-  @published_flags %{pending: :legal}
   @kanban_rejected_statuses [
     @article_status.reject,
     @article_status.reject_dup,
@@ -36,19 +46,32 @@ defmodule GroupherServer.CMS.Articles.List do
     @article_status.reject_stale
   ]
 
+  @doc """
+  Returns a paged list of legal articles for one thread.
+
+  Applies the public article scope, filter pack, and optional interaction
+  ordering, then prepends pinned articles on the first page.
+
+  ## Examples
+
+      CMS.Articles.List.page(:post, %{page: 1, size: 20})
+
+  """
   @spec page(atom(), map()) :: T.domain_res(term())
   def page(thread, filter) do
     %{page: page, size: size} = filter
     flags = %{pending: :legal}
 
-    with {:ok, _thread} <- Gate.allow_thread(Map.get(filter, :community), thread),
+    with {:ok, _thread} <- Enable.thread?(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
+      |> Scope.scope(nil, :list, scope_context(thread))
       |> QueryBuilder.domain_query(filter)
-      |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+      |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
+      |> State.order_articles(thread, Map.get(filter, :order))
       |> ORM.paginator(~m(page size)a)
       |> add_pin_articles_ifneed(info.model, filter)
+      |> read_articles(thread, nil)
       |> normalize_article_entries(thread)
       |> done()
     end
@@ -58,8 +81,7 @@ defmodule GroupherServer.CMS.Articles.List do
   def page(thread, filter, %User{} = user) do
     with {:ok, stateless_paged_articles} <- page(thread, filter) do
       stateless_paged_articles
-      |> FrontDesk.mark_viewer_emotion_states(user)
-      |> mark_viewer_has_states(user)
+      |> read_articles(thread, user)
       |> done()
     end
   end
@@ -132,7 +154,7 @@ defmodule GroupherServer.CMS.Articles.List do
         flags = %{pending: :legal, community_id: community.id, status: nil}
 
         Post
-        |> CMS.Articles.active_scope(:post)
+        |> CMS.Articles.Trash.not_trashed_scope(:post)
         |> QueryBuilder.filter_pack(Map.merge(filter, flags))
         |> where([p], p.status in ^valid_statuses)
         |> ORM.paginator(~m(page size)a)
@@ -146,27 +168,26 @@ defmodule GroupherServer.CMS.Articles.List do
     flags = %{pending: :legal, community_id: community.id, status: status}
 
     Post
-    |> CMS.Articles.active_scope(:post)
+    |> CMS.Articles.Trash.not_trashed_scope(:post)
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))
     |> ORM.paginator(~m(page size)a)
     |> done()
   end
 
-  @spec paged_published(atom(), map(), User.t()) :: T.domain_res(term())
-  def paged_published(thread, filter, %User{} = user) do
+  @spec paged_published(atom(), map(), User.t(), User.t() | nil) :: T.domain_res(term())
+  def paged_published(thread, filter, %User{} = target_user, actor) do
     %{page: page, size: size} = filter
 
     with {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
-      |> join(:inner, [article], author in assoc(article, :author))
-      |> where([article, author], author.user_id == ^user.id)
-      |> filter_published_stage(thread)
-      |> select([article, author], article)
-      |> QueryBuilder.filter_pack(published_filter(filter))
+      |> Scope.scope(actor, :list, scope_context(thread))
+      |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
+      |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
+      |> select([article, ...], article)
+      |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
+      |> State.order_articles(thread, Map.get(filter, :order))
       |> ORM.paginator(~m(page size)a)
-      |> FrontDesk.mark_viewer_emotion_states(user)
-      |> mark_viewer_has_states(user)
+      |> maybe_mark_viewer_states(thread, actor)
       |> done()
     end
   end
@@ -175,25 +196,27 @@ defmodule GroupherServer.CMS.Articles.List do
   def count_published(thread, %User{} = user) do
     with {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.active_scope(thread)
-      |> join(:inner, [article], author in assoc(article, :author))
-      |> where([article, author], author.user_id == ^user.id)
-      |> filter_published_stage(thread)
-      |> QueryBuilder.filter_pack(published_filter(%{}))
-      |> select([article, author], count(article.id))
+      |> Scope.scope(nil, :list, scope_context(thread))
+      |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
+      |> where([_article, ...], as(:published_author).user_id == ^user.id)
+      |> select([article, ...], count(article.id))
       |> Repo.one()
       |> done()
     end
   end
 
-  defp filter_published_stage(queryable, :doc) do
-    public_stage = CMS.Const.stage(:public)
-    queryable |> where([article, _author], article.stage == ^public_stage)
+  defp maybe_mark_viewer_states(paged_articles, thread, %User{} = actor) do
+    read_articles(paged_articles, thread, actor)
   end
 
-  defp filter_published_stage(queryable, _thread), do: queryable
+  defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
 
-  defp published_filter(filter), do: Map.merge(filter, @published_flags)
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
+
+  defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
+    Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))
+  end
 
   defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do
     thread = module_to_atom(queryable)
@@ -204,11 +227,7 @@ defmodule GroupherServer.CMS.Articles.List do
            PinnedArticle
            |> join(:inner, [p], c in assoc(p, :community))
            |> join(:inner, [p], article in assoc(p, ^thread))
-           |> join(:left, [p, c, article], trashed in TrashedArticle,
-             on:
-               trashed.thread == ^thread and
-                 trashed.article_hash_id == article.article_hash_id
-           )
+           |> pin_trash_join(thread)
            |> where([p, c, article, trashed], c.slug == ^community and is_nil(trashed.id))
            |> select([p, c, article, trashed], article)
            |> ORM.find_all(%{page: 1, size: 10}) do
@@ -220,13 +239,35 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp add_pin_articles_ifneed(articles, _queryable, _filter), do: articles
 
+  defp pin_trash_join(query, :doc) do
+    join(query, :left, [p, c, article], trashed in TrashedDocArticle,
+      on:
+        trashed.community_id == article.community_id and
+          trashed.branch_id == article.branch_id and
+          trashed.article_hash_id == article.article_hash_id
+    )
+  end
+
+  defp pin_trash_join(query, thread) do
+    join(query, :left, [p, c, article], trashed in TrashedArticle,
+      on:
+        trashed.thread == ^thread and
+          trashed.article_hash_id == article.article_hash_id
+    )
+  end
+
   defp should_add_pin?(%{page: 1, sort: :desc_active} = filter) do
-    skip_pinned_fields = [:article_tag, :article_tags, :community_tag, :community_tags]
+    skip_pinned_fields = [:article_tag, :article_tags, :community_tag, :community_tags, :order]
 
     not Enum.any?(Map.keys(filter), &(&1 in skip_pinned_fields))
   end
 
   defp should_add_pin?(_filter), do: false
+
+  defp filter_for_interaction_order(%{order: order} = filter) when order in [:upvotes, :collects],
+    do: Map.drop(filter, [:order, :sort])
+
+  defp filter_for_interaction_order(filter), do: filter
 
   defp concat_articles(%{total_count: 0}, non_pinned_articles), do: non_pinned_articles
 
@@ -251,10 +292,6 @@ defmodule GroupherServer.CMS.Articles.List do
     entries =
       entries
       |> Enum.map(&normalize_article_entry(&1, thread))
-      |> CMS.Snapshot.users_in([
-        [:meta, :latest_upvoted_users],
-        [:meta, :latest_collected_users]
-      ])
 
     Map.put(articles, :entries, entries)
   end
@@ -284,29 +321,4 @@ defmodule GroupherServer.CMS.Articles.List do
   end
 
   defp ensure_active_at(article), do: article
-
-  defp mark_viewer_has_states(%{entries: []} = articles, _), do: articles
-
-  defp mark_viewer_has_states(%{entries: entries} = articles, user) do
-    entries = Enum.map(entries, &Map.merge(&1, do_mark_viewer_has_states(&1.meta, user)))
-    Map.merge(articles, %{entries: entries})
-  end
-
-  defp do_mark_viewer_has_states(nil, _) do
-    %{
-      viewer_has_collected: false,
-      viewer_has_upvoted: false,
-      viewer_has_viewed: false,
-      viewer_has_reported: false
-    }
-  end
-
-  defp do_mark_viewer_has_states(meta, %User{id: user_id}) do
-    %{
-      viewer_has_collected: Enum.member?(meta.collected_user_ids, user_id),
-      viewer_has_upvoted: Enum.member?(meta.upvoted_user_ids, user_id),
-      viewer_has_viewed: Enum.member?(meta.viewed_user_ids, user_id),
-      viewer_has_reported: Enum.member?(meta.reported_user_ids, user_id)
-    }
-  end
 end

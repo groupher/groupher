@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Item do
   `title` is the question shown in the FAQ list. `detail` is the markdown answer
   edited from the dashboard FAQ editor. `index` stores the persisted order inside
   either a grouped section or the flat FAQ list.
+
+  Business position:
+
+      CMS context
+        -> Item schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
 

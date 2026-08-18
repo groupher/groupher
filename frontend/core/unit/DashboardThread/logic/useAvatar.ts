@@ -11,6 +11,7 @@ type TRet = {
   saving: boolean
 }
 
+/** Exposes avatar state and actions through the shared React hook boundary. */
 export default function useAvatar(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()

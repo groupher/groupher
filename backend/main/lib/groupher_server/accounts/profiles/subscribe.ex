@@ -4,6 +4,14 @@ defmodule GroupherServer.Accounts.Profiles.Subscribe do
 
   Subscription writes update join rows elsewhere. This helper rebuilds the
   denormalized profile fields used by viewer state and community navigation.
+
+  Business position:
+
+      Client / Auth
+        -> GraphQL or internal API
+        -> Accounts facade
+        -> Subscribe
+        -> Repo
   """
 
   import Ecto.Query, warn: false

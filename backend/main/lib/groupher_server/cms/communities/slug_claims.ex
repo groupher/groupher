@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Communities.SlugClaims do
-  @moduledoc "Database-backed ownership for the shared community slug namespace."
+  @moduledoc """
+  Database-backed ownership for the shared community slug namespace.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> SlugClaims
+        -> Repo / Oban
+  """
 
   import Ecto.Query, warn: false
 
@@ -7,6 +16,17 @@ defmodule GroupherServer.CMS.Communities.SlugClaims do
   alias GroupherServer.CMS.Model.{CommunityApplication, CommunitySlugClaim}
   alias GroupherServer.Repo
 
+  @doc """
+  Adds a Multi step inserting the slug claim for the application carried in
+  `changes[application_key]`.
+
+  ## Examples
+
+      Ecto.Multi.new()
+      |> CMS.Communities.SlugClaims.insert_application(:claim, :application, expiry)
+      #=> %Ecto.Multi{}
+
+  """
   @spec insert_application(Multi.t(), atom(), atom(), DateTime.t()) :: Multi.t()
   def insert_application(multi, name, application_key, expires_at) do
     Multi.insert(multi, name, fn changes ->
@@ -95,5 +115,4 @@ defmodule GroupherServer.CMS.Communities.SlugClaims do
     )
     |> Repo.update_all(set: [released_at: now, expires_at: nil, updated_at: now])
   end
-
 end

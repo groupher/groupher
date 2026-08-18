@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityTagStat do
 
   These rows cache tag usage by thread/source so tag bars and dashboards avoid
   recounting joins on each request.
+
+  Business position:
+
+      CMS context
+        -> CommunityTagStat schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   use Ecto.Schema

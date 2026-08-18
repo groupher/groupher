@@ -1,3 +1,14 @@
+/**
+ * Implements the App Lib Feedback boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 export type FeedbackPost = {
   id: string
   titleEn: string
@@ -23,6 +34,7 @@ let platformSummaryCache: FeedbackPlatformSummary[] | null = null
 const platformCache = new Map<string, FeedbackPlatform>()
 const GENERATED_DATA_BASE_PATH = '/feedback-platforms'
 
+/** Returns feedback platforms for the inspire me workflow. */
 export async function getFeedbackPlatforms(): Promise<FeedbackPlatformSummary[]> {
   if (platformSummaryCache) return platformSummaryCache
 
@@ -30,6 +42,7 @@ export async function getFeedbackPlatforms(): Promise<FeedbackPlatformSummary[]>
   return platformSummaryCache
 }
 
+/** Returns feedback platform for the inspire me workflow. */
 export async function getFeedbackPlatform(platformId: string): Promise<FeedbackPlatform | null> {
   const cached = platformCache.get(platformId)
   if (cached) return cached

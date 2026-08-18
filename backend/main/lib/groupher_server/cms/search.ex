@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Search do
   @moduledoc """
-  CMS search facade.
+  Public CMS boundary for viewer-aware community discovery search.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Search
+        -> Repo / external boundary
   """
 
   alias GroupherServer.Accounts.Model.User
@@ -9,6 +16,7 @@ defmodule GroupherServer.CMS.Search do
   alias __MODULE__.Community
 
   @spec community(String.t()) :: T.domain_res(T.paged_data())
+  @doc "Runs `community` through the public `Search` boundary."
   def community(title), do: Community.search(title)
 
   @spec community(String.t(), User.t()) :: T.domain_res(T.paged_data())

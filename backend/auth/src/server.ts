@@ -1,3 +1,14 @@
+/**
+ * Starts the local Node server for Auth.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Auth module
+ *     -> OAuth provider / Phoenix Accounts
+ *     -> Session cookies or service token
+ */
+
 import { serve } from '@hono/node-server'
 
 import './env'

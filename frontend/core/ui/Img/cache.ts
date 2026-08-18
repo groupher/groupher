@@ -14,11 +14,13 @@ const MAX_CACHED_SRCS = 500
 
 const loadedSrcCache = new Set<string>()
 
+/** Reports whether loaded src at the frontend shared boundary. */
 export const hasLoadedSrc = (src: string): boolean => {
   if (!src) return false
   return loadedSrcCache.has(src)
 }
 
+/** Runs the mark loaded src operation at the frontend shared boundary. */
 export const markLoadedSrc = (src: string): void => {
   if (!src) return
 

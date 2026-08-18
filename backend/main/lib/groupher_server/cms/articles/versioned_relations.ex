@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   alias CMS.Model.{Community, CommunityTag, CoverEditInfo}
   alias Helper.{ORM, T}
 
-  @doc "Returns relation state suitable for immutable ArticleSnapshot data."
+  @doc "Returns relation state suitable for immutable DocSnapshot data."
   @spec snapshot_data(T.article()) :: map()
   def snapshot_data(article) do
     article = Repo.preload(article, :community_tags, force: true)
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
     }
   end
 
-  @doc "Copies Tags and clones Cover state into a Draft or Preview row without runtime stats."
+  @doc "Copies Tags and clones Cover state into a Draft or public row without runtime stats."
   @spec copy_to_draft(T.article(), T.article()) :: {:ok, T.article()} | {:error, term()}
   def copy_to_draft(source, target) do
     with {:ok, target} <- put_tags(target, tag_ids(source)),

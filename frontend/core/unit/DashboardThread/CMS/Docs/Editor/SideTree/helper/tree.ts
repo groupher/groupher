@@ -21,6 +21,7 @@ const mapGroups = (
     }),
   )
 
+/** Runs the find group operation at the frontend shared boundary. */
 export const findGroup = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
@@ -50,6 +51,7 @@ const LOCAL_NODE_TYPES = new Set<string>([
   SIDE_TREE_NODE_TYPE.LINK,
 ])
 
+/** Reports whether local id at the frontend shared boundary. */
 export const isLocalId = (id: string): boolean => {
   const [scope, type, timestamp, sequence, ...rest] = id.split('-')
 

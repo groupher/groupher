@@ -88,6 +88,7 @@ export const callSyncSelector = (data: TArticlePubSelector): void => {
   send(EVENT.ARTICLE_SELECTOR, { data })
 }
 
+/** Runs the auth warn operation at the frontend shared boundary. */
 export const authWarn = (option: TLoginRequest = {}): void => requestLogin(option)
 
 /**

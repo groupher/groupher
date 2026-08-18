@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
   describe "[cms doc archive]" do
     test "can archive docs", ~m(doc_long_ago)a do
-      {:ok, _} = CMS.Articles.archive(:doc)
+    assert {:ok, _} = CMS.Articles.archive(:doc)
 
       archived_docs =
         Doc
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
       archived_doc = archived_docs |> List.first()
       {:error, reason} = CMS.Articles.update(archived_doc, %{"title" => "new title"})
-      assert reason |> is_error?(:archived)
+      assert reason == :article_archived
     end
 
     test "can not delete archived doc" do

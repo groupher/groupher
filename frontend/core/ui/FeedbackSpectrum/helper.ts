@@ -29,14 +29,17 @@ const mixColor = (from: string, to: string, ratio: number): string => {
   return rgbToHex([mix(a[0], b[0], ratio), mix(a[1], b[1], ratio), mix(a[2], b[2], ratio)])
 }
 
+/** Runs the darken color operation at the frontend shared boundary. */
 export const darkenColor = (hex: string, ratio = 0.72): string => {
   const [r, g, b] = hexToRgb(hex)
 
   return rgbToHex([r * ratio, g * ratio, b * ratio])
 }
 
+/** Normalizes score into the canonical frontend shared shape. */
 export const normalizeScore = (score: number): number => clamp(score, 0, 100)
 
+/** Returns mood for the frontend shared workflow. */
 export const getMood = (score: number): TFeedbackMood => {
   const safeScore = normalizeScore(score)
   const segment = Math.min(Math.floor(safeScore / 25), MOODS.length - 2)
@@ -53,4 +56,5 @@ export const getMood = (score: number): TFeedbackMood => {
   }
 }
 
+/** Returns mood label for the frontend shared workflow. */
 export const getMoodLabel = (score: number): string => getMood(score).label

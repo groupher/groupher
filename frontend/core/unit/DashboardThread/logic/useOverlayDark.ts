@@ -11,6 +11,7 @@ type TRet = {
   edit: TEditFunc
 }
 
+/** Exposes overlay dark state and actions through the shared React hook boundary. */
 export default function useOverlayDark(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()

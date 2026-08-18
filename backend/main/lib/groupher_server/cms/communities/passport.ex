@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Communities.Passport do
   @moduledoc """
   Passport CRUD.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Passport
+        -> Repo / Oban
   """
 
   import Helper.Utils, only: [done: 1, deep_merge: 2]
@@ -14,6 +21,15 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
   alias Helper.{NestedFilter, ORM, PermissionRegistry, T}
 
+  @doc """
+  Returns all user passports that enable `key` in the community context.
+
+  ## Examples
+
+      CMS.Communities.Passport.paged_passports("groupher", "root")
+      #=> {:ok, [%Passport{}]}
+
+  """
   @spec paged_passports(term(), term()) :: T.domain_res(term())
   def paged_passports(community, key) do
     UserPassport

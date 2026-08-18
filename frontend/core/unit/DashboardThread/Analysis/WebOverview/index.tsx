@@ -32,7 +32,6 @@ export default function WebOverview({ community, data }: TProps) {
 
       <section className={s.chartSection}>
         <TrendChart
-          emptyLabel={t(WEB_OVERVIEW_TRANS.empty)}
           points={displayData.chart.points}
           title={t(WEB_OVERVIEW_TRANS.trend)}
           viewsLabel={t(WEB_OVERVIEW_TRANS.pageviews)}

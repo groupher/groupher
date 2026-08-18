@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Seeds.Tags do
   @moduledoc """
-  tags seeds
+  Creates the initial community tag groups and tag definitions.
+
+  Business position:
+
+      Seed task
+        -> Tags
+        -> CMS context
+        -> Repo
   """
 
   alias GroupherServer.CMS
@@ -27,8 +34,20 @@ defmodule GroupherServer.CMS.Seeds.Tags do
   @tag_count_range Config.tag_count_range()
   @group_count_range Config.group_count_range()
 
+  @doc "Returns a random color atom from the seed tag palette."
   def random_color, do: @tag_colors |> Enum.random() |> String.to_atom()
 
+  @doc """
+  Seeds tag groups and tags for one community thread.
+
+  `count` and `group_count` options control the created tag volume; existing
+  tags and groups are reused. Returns the ids of all tags on the thread.
+
+  ## Examples
+
+      CMS.Seeds.Tags.mock(community, :post, count: 5)
+
+  """
   @spec mock(Community.t(), atom(), keyword()) :: T.domain_res([integer()])
   def mock(%Community{} = community, thread, opts \\ [])
       when thread in [:post, :changelog, :doc, :kanban, :about] do
@@ -57,11 +76,27 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     end
   end
 
-  defp ensure_tags_count(_community, _thread, _bot, _groups, _group_by_title, target_count, current_count)
+  defp ensure_tags_count(
+         _community,
+         _thread,
+         _bot,
+         _groups,
+         _group_by_title,
+         target_count,
+         current_count
+       )
        when current_count >= target_count,
        do: :ok
 
-  defp ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, current_count) do
+  defp ensure_tags_count(
+         community,
+         thread,
+         bot,
+         groups,
+         group_by_title,
+         target_count,
+         current_count
+       ) do
     index = current_count + 1
     attrs = build_tag_attrs(thread, groups, group_by_title, target_count, index)
 

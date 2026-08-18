@@ -6,6 +6,7 @@ type TSlugifyResponse = {
   error?: string
 }
 
+/** Runs the slugify operation at the frontend shared boundary. */
 export const slugify = async (value: string): Promise<string> => {
   const response = await fetch('/api/utils/slugify', {
     method: 'POST',

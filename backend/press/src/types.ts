@@ -1,3 +1,14 @@
+/**
+ * Defines TypeScript contracts shared inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 export type OutputKind = 'markdown' | 'rss' | 'atom' | 'json_feed' | 'llms' | 'sitemap'
 export type Thread = 'post' | 'blog' | 'changelog' | 'doc'
 

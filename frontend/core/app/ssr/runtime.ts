@@ -59,6 +59,7 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   }
 }
 
+/** Returns community info for the frontend shared workflow. */
 export const getCommunityInfo = async (community$: string): Promise<TCommunityInfo> => {
   const communityInfo = await getCommunity(community$)
 
@@ -76,6 +77,7 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
   return initState
 }
 
+/** Returns locale data for the frontend shared workflow. */
 export const getLocaleData = async (
   locale: TLocale = LOCALE.EN,
   namespaces: readonly TI18nNamespace[] = ['base'],
@@ -103,6 +105,7 @@ const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   }))
 }
 
+/** Returns theme presets for the frontend shared workflow. */
 export const getThemePresets = async (): Promise<TThemePresetOption[]> => {
   return fetchThemePresets()
 }
@@ -147,6 +150,7 @@ const isDefaultPagedPostsFilter = (filter: TPagedArticlesParams) => {
   )
 }
 
+/** Returns paged posts for the frontend shared workflow. */
 export const getPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {
   if (!filter.community) {
     return null
@@ -159,6 +163,7 @@ export const getPagedPosts = async (filter: TPagedArticlesParams): Promise<TPage
   return fetchPagedPosts(filter)
 }
 
+/** Returns paged changelogs for the frontend shared workflow. */
 export const getPagedChangelogs = async (community: string): Promise<TPagedChangelogs | null> => {
   'use cache'
   cacheLife('minutes')
@@ -185,6 +190,7 @@ type TGroupedKanbanPosts = {
   rejected: TPagedPosts
 }
 
+/** Returns grouped kanban posts for the frontend shared workflow. */
 export const getGroupedKanbanPosts = async (
   community: string,
 ): Promise<TGroupedKanbanPosts | null> => {
@@ -202,6 +208,7 @@ export const getGroupedKanbanPosts = async (
   return data.groupedKanbanPosts as unknown as TGroupedKanbanPosts
 }
 
+/** Returns tag groups for the frontend shared workflow. */
 export const getTagGroups = async (
   community: string,
   thread: TThread,
@@ -227,6 +234,7 @@ export const getTagGroups = async (
   return (data.communityTagGroups || []) as unknown as TTagGroup[]
 }
 
+/** Returns tag stats for the frontend shared workflow. */
 export const getTagStats = async (
   community: string,
   thread: TThread,
@@ -250,6 +258,7 @@ export const getTagStats = async (
   return data.communityTagStats ? { ...data.communityTagStats, slug } : null
 }
 
+/** Returns post for the frontend shared workflow. */
 export const getPost = async (
   community: string,
   id: string,
@@ -277,6 +286,7 @@ export const getPost = async (
   return data.post as unknown as TPost
 }
 
+/** Returns changelog for the frontend shared workflow. */
 export const getChangelog = async (community: string, id: string): Promise<TPost | null> => {
   'use cache'
   cacheLife('minutes')
@@ -300,6 +310,7 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
   return data.changelog as unknown as TPost
 }
 
+/** Returns doc for the frontend shared workflow. */
 export const getDoc = async (community: string, id: string): Promise<TDoc | null> => {
   'use cache'
   cacheLife('minutes')
@@ -321,6 +332,7 @@ export const getDoc = async (community: string, id: string): Promise<TDoc | null
   return data.doc as unknown as TDoc
 }
 
+/** Returns doc public tree for the frontend shared workflow. */
 export const getDocPublicTree = async (community: string): Promise<TDocPublicTree | null> => {
   'use cache'
   cacheLife('minutes')
@@ -337,6 +349,7 @@ export const getDocPublicTree = async (community: string): Promise<TDocPublicTre
   return data.docPublicTree as unknown as TDocPublicTree
 }
 
+/** Returns paged comments for the frontend shared workflow. */
 export const getPagedComments = async (
   community: string,
   id: string,

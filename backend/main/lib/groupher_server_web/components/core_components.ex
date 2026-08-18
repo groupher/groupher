@@ -13,6 +13,13 @@ defmodule GroupherServerWeb.CoreComponents do
   how to customize them or feel free to swap in another framework altogether.
 
   Icons are provided by [heroicons](https://heroicons.com). See `icon/1` for usage.
+
+  Business position:
+
+      HTTP request
+        -> Phoenix router
+        -> CoreComponents
+        -> HTML/JSON response
   """
   use Phoenix.Component
   use Gettext, backend: GroupherServerWeb.Gettext

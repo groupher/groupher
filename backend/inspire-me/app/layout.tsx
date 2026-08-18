@@ -1,3 +1,14 @@
+/**
+ * Implements the App Layout boundary inside Inspire Me.
+ *
+ * Business position:
+ *
+ *   Research dataset
+ *     -> Inspire Me module
+ *     -> Vinext / Worker UI
+ *     -> researcher
+ */
+
 import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import type { Metadata } from 'next'
 

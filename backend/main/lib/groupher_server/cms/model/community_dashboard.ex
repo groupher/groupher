@@ -7,6 +7,13 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   The dashboard row stores editable presentation sections such as base info,
   wallpaper, SEO, layout, enabled threads, links, social links, and docs FAQ.
   Domain write helpers normalize section payloads before updating this schema.
+
+  Business position:
+
+      CMS context
+        -> CommunityDashboard schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 
@@ -23,8 +30,8 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
   @schema_prefix DBPrefix.cms()
 
   @required_fields ~w(community_id)a
-  @optional_fields ~w(base_info wallpaper seo layout enable thread_emotions rss header_links footer_links footer_oneline_links social_links doc_faq third_party_analytics umami_website_id)a
 
+  @doc "Returns the default payload for every community dashboard section."
   def default do
     %{
       base_info: Embeds.Dashboard.BaseInfo.default(),
@@ -93,9 +100,6 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
 
   @doc false
   def update_changeset(%CommunityDashboard{} = community_dashboard, attrs) do
-    community_dashboard
-    |> cast(attrs, @optional_fields ++ @required_fields)
-
-    # |> cast(attrs, @optional_fields ++ @required_fields)
+    cast(community_dashboard, attrs, [:umami_website_id])
   end
 end

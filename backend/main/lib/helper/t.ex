@@ -1,6 +1,12 @@
 defmodule Helper.T do
   @moduledoc """
-  custom @types
+  Shared type aliases for identifiers, paging results, and domain return values.
+
+  Business position:
+
+      Domain or web caller
+        -> T
+        -> normalized value / infrastructure
   """
 
   alias GroupherServer.{Accounts, CMS}
@@ -68,12 +74,7 @@ defmodule Helper.T do
           thread: atom(),
           title: String.t(),
           upvotes_count: integer(),
-          meta: %{
-            upvoted_user_ids: [integer()],
-            collected_user_ids: [integer()],
-            viewed_user_ids: [integer()],
-            reported_user_ids: [integer()]
-          }
+          meta: map()
         }
 
   @type paged_article_common :: %{

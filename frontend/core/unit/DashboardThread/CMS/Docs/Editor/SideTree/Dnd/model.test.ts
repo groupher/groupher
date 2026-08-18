@@ -188,4 +188,48 @@ describe('nested SideTree DnD model', () => {
 
     expect(moved[0].pages.map((item) => item.id)).toEqual(['nested', 'link', 'page'])
   })
+
+  it('preserves the original tree reference for a no-op placement', () => {
+    const before = [group('one', TAB_ID), group('two', TAB_ID)]
+
+    const after = moveSideTreeNode(
+      before,
+      'one',
+      {
+        parentNodeId: TAB_ID,
+        lane: SIDE_TREE_DND_LANE.GROUPS,
+        index: 0,
+        intent: 'before',
+        overNodeId: 'one',
+      },
+      TAB_ID,
+    )
+
+    expect(after).toBe(before)
+  })
+
+  it('moves through a deep Group chain without repeatedly canonicalizing descendants', () => {
+    const page = { id: 'page', type: SIDE_TREE_NODE_TYPE.PAGE, title: 'Page' } as const
+    let chain = group('group-199', 'group-198')
+
+    for (let depth = 198; depth >= 1; depth -= 1) {
+      chain = group(`group-${depth}`, `group-${depth - 1}`, [chain])
+    }
+
+    const root = group('group-0', TAB_ID, [chain, page])
+    const moved = moveSideTreeNode(
+      [root],
+      page.id,
+      {
+        parentNodeId: 'group-199',
+        lane: SIDE_TREE_DND_LANE.LEAVES,
+        index: 0,
+        intent: 'inside',
+        overNodeId: 'group-199',
+      },
+      TAB_ID,
+    )
+
+    expect(findNodePosition(moved, page.id)).toEqual({ parentNodeId: 'group-199', index: 0 })
+  })
 })

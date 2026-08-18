@@ -1,7 +1,15 @@
-import {
-  createServiceTokenProviderFromEnv,
-  type TServiceTokenProvider,
-} from '@groupher/service/auth'
+/**
+ * Implements the Src Origin boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
+import { createServiceAuthClientFromEnv, type TServiceAuthClient } from '@groupher/service/auth'
 
 import type { PressArticle, PressConfig, RSSFeed, SiteManifest, Thread } from './types'
 
@@ -86,10 +94,11 @@ const SITE_QUERY = `query PressSite($community: String!) {
   }
 }`
 
+/** Creates phoenix origin from typed press inputs. */
 export const createPhoenixOrigin = (
   endpoint = process.env.PHOENIX_GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql',
   fetcher: typeof fetch = fetch,
-  tokenProvider?: TServiceTokenProvider,
+  tokenProvider?: TServiceAuthClient,
 ): Origin => {
   let activeTokenProvider = tokenProvider
   const query = async <T>(
@@ -99,7 +108,7 @@ export const createPhoenixOrigin = (
   ): Promise<T> => {
     let response: Response
     try {
-      activeTokenProvider ??= createServiceTokenProviderFromEnv(process.env, fetcher)
+      activeTokenProvider ??= createServiceAuthClientFromEnv(process.env, fetcher)
       const token = await activeTokenProvider.getToken({
         resource: process.env.PHOENIX_PRESS_RESOURCE || 'https://api.groupher.com/press',
         scopes: [scope],

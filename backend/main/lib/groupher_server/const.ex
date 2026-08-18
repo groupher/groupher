@@ -5,6 +5,12 @@ defmodule GroupherServer.Const do
   Business modules should `use GroupherServer.Const` instead of depending on
   the third-party `Const` module directly, keeping the public constant API
   owned by Groupher.
+
+  Business position:
+
+      Application caller
+        -> Const
+        -> domain / infrastructure boundary
   """
 
   defmacro __using__(_opts) do

@@ -6,6 +6,14 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   only general key/value like string/boolean are supported
   int/array of type are not supported, cuz it's hard to leverage between GraphQL/Schema/Types ..
   those cases need to manually add
+
+  Business position:
+
+      Dashboard UI
+        -> GraphQL
+        -> CMS.Dashboard
+        -> Fields
+        -> CommunityDashboard / Repo
   """
 
   alias GroupherServer.CMS.Dashboard.KanbanBoards
@@ -72,11 +80,35 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     rss_feed_type: [:digest, :full]
   }
 
+  @doc "Returns the default kanban board background colors."
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
+
+  @doc "Returns the supported rainbow color values."
   def rainbow_colors, do: @rainbow_colors
+
+  @doc "Returns the available theme preset names."
   def theme_presets, do: @theme_presets
+
+  @doc """
+  Returns the enum values registered for one dashboard enum key.
+
+  ## Examples
+
+      Fields.enum_values(:post_layout)
+      #=> [:quora, :ph, :masonry, :minimal, :cover]
+
+  """
   def enum_values(key), do: Map.fetch!(@enum_values, key)
 
+  @doc """
+  Returns the layout section defaults built from the layout macro schema.
+
+  ## Examples
+
+      Fields.layout_default()
+      #=> %{theme_preset: :default, custom_theme_preset: nil, post_layout: :quora, ...}
+
+  """
   def layout_default do
     macro_schema(:layout)
     |> Enum.reduce(%{}, fn [key, _type, default], acc ->

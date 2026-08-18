@@ -16,6 +16,13 @@ defmodule GroupherServer.Messaging.Notifications do
           |
           v
       refresh mailbox status
+
+  Business position:
+
+      Domain event
+        -> Messaging facade
+        -> Notifications
+        -> inbox / notification store
   """
 
   import Ecto.Query, warn: false
@@ -35,6 +42,7 @@ defmodule GroupherServer.Messaging.Notifications do
   @notify_group_interval_hour GroupherServer.Messaging.Config.notify_group_interval_hour()
   @cut_from_users_count 3
 
+  @doc "Runs `send` through the public `Notifications` boundary."
   def send(%{action: action, user_id: user_id} = attrs, %User{} = from_user) do
     with true <- action in @notify_actions,
          true <- valid?(attrs),
@@ -59,6 +67,7 @@ defmodule GroupherServer.Messaging.Notifications do
     end
   end
 
+  @doc "Runs `revoke` through the public `Notifications` boundary."
   def revoke(attrs, %User{} = from_user) do
     attrs = attrs |> Map.put(:from_user, from_user)
 
@@ -95,6 +104,7 @@ defmodule GroupherServer.Messaging.Notifications do
     end
   end
 
+  @doc "Runs `paged` through the public `Notifications` boundary."
   def paged(%User{} = user, %{page: page, size: size} = filter) do
     read = Map.get(filter, :read, false)
 
@@ -106,6 +116,7 @@ defmodule GroupherServer.Messaging.Notifications do
     |> done
   end
 
+  @doc "Runs `unread_count` through the public `Notifications` boundary."
   def unread_count(user_id) do
     Notification
     |> where([n], n.user_id == ^user_id and n.read == false)
@@ -128,12 +139,14 @@ defmodule GroupherServer.Messaging.Notifications do
     |> done()
   end
 
+  @doc "Runs `mark_read` through the public `Notifications` boundary."
   def mark_read(ids, %User{} = user) when is_list(ids) do
     Notification
     |> where([m], m.id in ^ids and m.user_id == ^user.id and m.read == false)
     |> ORM.mark_read_all()
   end
 
+  @doc "Runs `mark_read_all` through the public `Notifications` boundary."
   def mark_read_all(%User{} = user) do
     Notification
     |> where([m], m.user_id == ^user.id and m.read == false)

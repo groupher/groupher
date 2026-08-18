@@ -5,6 +5,12 @@ defmodule Helper.Guardian.BrowserAccess do
   This module owns the browser-only issuer, audience, token type, Session claim,
   and 30-minute lifetime. Legacy bearer credentials remain under
   `Helper.Guardian` so the two protocols cannot inherit each other's claims.
+
+  Business position:
+
+      Domain or web caller
+        -> BrowserAccess
+        -> normalized value / infrastructure
   """
 
   use Guardian, otp_app: :groupher_server
@@ -51,11 +57,13 @@ defmodule Helper.Guardian.BrowserAccess do
     end
   end
 
+  @doc "Reports whether claims? according to `BrowserAccess`."
   def valid_claims?(claims) do
     claims["iss"] == @issuer and claims["aud"] == @audience and
       claims["typ"] == @token_type and is_binary(claims["sid"]) and claims["sid"] != ""
   end
 
+  @doc "Runs `expires_at` through the public `BrowserAccess` boundary."
   def expires_at(session_absolute_expires_at, now \\ DateTime.utc_now()) do
     DateTime.add(
       now,

@@ -35,6 +35,7 @@ type TRet = {
   categoryOptions: TSelectOption[]
 }
 
+/** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
   const dsb$ = useDashboard()
   const { tagGroups, settingTag, activeTagThread } = dsb$

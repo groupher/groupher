@@ -1,6 +1,17 @@
 defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   @moduledoc """
-  this is for auto subscribe community if user upvote article or upvote/emoji comment
+  Auto-subscribes an interacting user to the target content's community.
+
+  CMS emits this handler after qualifying interactions. It resolves comment
+  parents when necessary and delegates the idempotent membership write to
+  `CMS.Communities.subscribe_ifnot/2`.
+
+  Business position:
+
+      Domain write
+        -> CMS.Events
+        -> SubscribeCommunity
+        -> bounded side effect
   """
   import Ecto.Query, warn: false
 
@@ -15,6 +26,13 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   @type subscribe_result :: {:ok, struct()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
 
+  @doc """
+  Handles the `:subscribe_community` event, subscribing the interacting user to
+  the target content's community unless the relationship already exists.
+
+  Comment parents are resolved through their owning article before the
+  idempotent membership write is delegated to `CMS.Communities.subscribe_ifnot/2`.
+  """
   @spec handle(Event.t()) :: handle_result()
   @impl true
   def handle(%Event{type: :subscribe_community, payload: %{target: target, user: user}}) do
@@ -22,6 +40,7 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   end
 
   @spec handle(Community.t(), map()) :: subscribe_result()
+  @doc "Subscribes a user to a community unless the relationship already exists."
   def handle(%Community{} = community, user) do
     Communities.subscribe_ifnot(community, user)
   end

@@ -10,6 +10,13 @@ defmodule GroupherServerWeb.Middleware.PutRootSource do
   id while still calling a resolver that reads from `resolution.arguments`.
   Preserve the current argument name unless the consuming resolver contract is
   migrated at the same time.
+
+  Business position:
+
+      Resolver result
+        -> PutRootSource middleware
+        -> next middleware
+        -> GraphQL field result
   """
   @behaviour Absinthe.Middleware
 

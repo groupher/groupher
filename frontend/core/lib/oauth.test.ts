@@ -17,7 +17,7 @@ describe('signIn', () => {
     vi.stubGlobal('fetch', fetchMock)
     vi.stubGlobal('window', {
       location: {
-        href: 'https://dashboard.groupher.localhost/home/dashboard',
+        href: 'https://dashboard.groupher.localhost/home',
       },
     })
 
@@ -31,7 +31,7 @@ describe('signIn', () => {
       'csrf-token',
     )
     expect(form?.querySelector<HTMLInputElement>('input[name="callbackUrl"]')?.value).toBe(
-      'https://dashboard.groupher.localhost/home/dashboard',
+      'https://dashboard.groupher.localhost/home',
     )
     expect(submit).toHaveBeenCalledTimes(1)
   })
@@ -51,7 +51,7 @@ describe('signIn', () => {
     vi.stubGlobal('fetch', fetchMock)
     vi.stubGlobal('window', {
       location: {
-        href: 'https://dashboard.groupher.localhost/home/dashboard',
+        href: 'https://dashboard.groupher.localhost/home',
       },
     })
     const { signIn: configuredSignIn } = await import('./oauth')

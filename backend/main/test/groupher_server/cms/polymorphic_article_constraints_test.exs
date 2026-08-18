@@ -23,8 +23,8 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
   end
 
   describe "polymorphic article constraints" do
-    test "comment rejects multiple article refs", ~m(post blog user)a do
-      attrs = valid_comment_attrs(user.id, post.id)
+    test "comment rejects multiple article refs", ~m(community post blog user)a do
+      attrs = valid_comment_attrs(user.id, community.id, post)
 
       assert {:error, changeset} =
                %Comment{}
@@ -34,9 +34,9 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
       assert "is invalid" in errors_on(changeset).post_id
     end
 
-    test "comment rejects thread mismatches article ref", ~m(post user)a do
+    test "comment rejects thread mismatches article ref", ~m(community post user)a do
       attrs =
-        valid_comment_attrs(user.id, post.id)
+        valid_comment_attrs(user.id, community.id, post)
         |> Map.put(:thread, :blog)
 
       assert {:error, changeset} =
@@ -45,6 +45,18 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
                |> Repo.insert()
 
       assert "is invalid" in errors_on(changeset).thread
+    end
+
+    test "comment rejects a community that does not own its article", ~m(post user other_user)a do
+      {:ok, other_community} = mock_community(other_user)
+      attrs = valid_comment_attrs(user.id, other_community.id, post)
+
+      assert {:error, changeset} =
+               %Comment{}
+               |> Comment.changeset(attrs)
+               |> Repo.insert()
+
+      assert "is invalid" in errors_on(changeset).community_id
     end
 
     test "article upvote rejects multiple article refs", ~m(post blog user)a do
@@ -117,14 +129,16 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
     end
   end
 
-  defp valid_comment_attrs(user_id, post_id) do
+  defp valid_comment_attrs(user_id, community_id, post) do
     %{
       author_id: user_id,
+      community_id: community_id,
       body: "comment-body",
       body_html: "<p>comment-body</p>",
       inner_id: 1,
       thread: :post,
-      post_id: post_id,
+      post_id: post.id,
+      article_hash_id: post.article_hash_id,
       emotions: Embeds.CommentEmotion.default_emotions(),
       meta: Embeds.CommentMeta.default_meta()
     }

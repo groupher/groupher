@@ -30,6 +30,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
         community: article.community?.slug,
         thread: article.meta.thread,
       },
+      expectedVersion: article.version,
       title,
     }
 

@@ -21,6 +21,7 @@ type TStickyOptions = {
   showSelectColumn?: boolean
 }
 
+/** Exposes sticky columns state and actions through the shared React hook boundary. */
 export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOptions) {
   const { bg, zIndex } = useTwBelt()
   const showSelectColumn = options?.showSelectColumn ?? true

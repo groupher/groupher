@@ -1,5 +1,14 @@
 defmodule GroupherServerWeb.Schema.CMS.Press.Queries do
-  @moduledoc "Read-only GraphQL entry points consumed by the Press app and Dashboard."
+  @moduledoc """
+  Read-only GraphQL entry points consumed by the Press app and Dashboard.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Queries
+        -> resolver or domain context
+        -> GraphQL response
+  """
 
   use Helper.GqlSchemaSuite
 

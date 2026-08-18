@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
   Tags are community-scoped presentation/filter entities. Assignments to content
   are stored through `CommunityJoinTag`.
+
+  Business position:
+
+      CMS context
+        -> CommunityTag schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   alias __MODULE__
 

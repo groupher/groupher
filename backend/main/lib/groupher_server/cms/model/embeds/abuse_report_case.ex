@@ -2,7 +2,14 @@ defmodule GroupherServer.CMS.Model.Embeds.AbuseReportCase do
   @type t :: %__MODULE__{}
 
   @moduledoc """
-  abuse report user
+  Embedded reason and reporter snapshot for one abuse-report case.
+
+  Business position:
+
+      CMS context
+        -> AbuseReportCase schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
   use Ecto.Schema
   import Ecto.Changeset

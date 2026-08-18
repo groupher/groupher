@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   Phoenix remains the business lifecycle authority. This module only sends a
   best-effort cleanup request to assets-hub; failures must not make a deleted
   asset readable again.
+
+  Business position:
+
+      Dashboard / editor
+        -> CMS.Assets
+        -> Deletion
+        -> Repo / Assets Hub
   """
 
   use Tesla
@@ -18,6 +25,18 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
 
+  @doc """
+  Sends a best-effort provider delete request to assets-hub.
+
+  Failures are logged but never raised, so a deleted asset stays deleted
+  regardless of the enqueue outcome.
+
+  ## Examples
+
+      Deletion.enqueue(%CommunityAsset{id: 1, public_ref: "asset_1"})
+      #=> :ok
+
+  """
   @spec enqueue(CommunityAsset.t()) :: :ok
   def enqueue(%CommunityAsset{} = asset) do
     case safe_enqueue(asset) do
@@ -51,7 +70,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
        when is_binary(storage_key) do
     with {:ok, endpoint} <- endpoint(),
          {:ok, service_token} <-
-           GroupherServer.ServiceIdentity.Client.token(
+           GroupherServer.ServiceAuth.Client.token(
              "https://assets.groupher.com/internal",
              ["assets:object:delete"]
            ) do

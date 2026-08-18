@@ -5,6 +5,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   Every request is scoped to the server-derived Umami website ID for the current
   community. This module deliberately returns normalized Groupher data instead
   of raw Umami response bodies.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Umami
+        -> Repo / analytics provider
   """
 
   @behaviour GroupherServer.Analysis.Web.Provider
@@ -50,6 +58,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
          chart: Map.get(sections, :chart, []),
          errors: errors
        }}
+    end
+  end
+
+  @impl true
+  def active(%Community{} = community) do
+    with {:ok, request} <- request_config(community.umami_website_id),
+         {:ok, payload} <- fetch_active(request) do
+      {:ok, payload}
     end
   end
 
@@ -148,6 +164,20 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     {current, previous}
   end
 
+  @doc false
+  @spec normalize_active(map()) :: {:ok, %{visitors: non_neg_integer()}} | {:error, term()}
+  def normalize_active(body) when is_map(body) do
+    body = Map.get(body, "data") || Map.get(body, :data) || body
+    value = Map.get(body, "visitors", Map.get(body, :visitors))
+
+    case non_negative_int(value) do
+      {:ok, visitors} -> {:ok, %{visitors: visitors}}
+      :error -> {:error, {:unexpected_body, body_kind(body)}}
+    end
+  end
+
+  def normalize_active(body), do: {:error, {:unexpected_body, body_kind(body)}}
+
   defp aggregate_normalized_path_metrics(scoped_pages) do
     summary =
       Enum.reduce(scoped_pages, empty_summary(), fn row, acc ->
@@ -169,12 +199,11 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   if Mix.env() == :test do
-    def run_sections_for_test(sections, timeout \\ (@config.timeout + 1_000)),
+    def run_sections_for_test(sections, timeout \\ @config.timeout + 1_000),
       do: run_sections(sections, timeout)
   end
 
-  defp run_sections(sections, timeout \\ (@config.timeout + 1_000)) do
-
+  defp run_sections(sections, timeout \\ @config.timeout + 1_000) do
     sections
     |> Enum.map(fn {section, fun} ->
       {section, Task.async(fn -> run_section(fun) end)}
@@ -251,6 +280,12 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
       {:ok, rows} -> {:ok, normalize_timeseries_rows(rows, Map.get(range, :bucket, "day"))}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp fetch_active(%{client: client, website_id: website_id}) do
+    client
+    |> Tesla.get("/api/websites/#{website_id}/active")
+    |> parse_active()
   end
 
   defp dimension_metrics(%{client: client, website_id: website_id}, range, dimension) do
@@ -351,6 +386,18 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   defp parse_stats({:error, reason}), do: {:error, reason}
+
+  defp parse_active({:ok, %Tesla.Env{status: status, body: body}})
+       when status in 200..299 do
+    normalize_active(body)
+  end
+
+  defp parse_active({:ok, %Tesla.Env{status: status, body: body}}) do
+    Logger.warning("Umami active visitors returned HTTP #{status}: #{inspect_body(body)}")
+    {:error, {:http_error, status}}
+  end
+
+  defp parse_active({:error, reason}), do: {:error, reason}
 
   defp parse_website_id(body) when is_map(body) do
     case read_string(body, "id") || read_string(body, :id) do
@@ -624,6 +671,20 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   defp read_scalar_int(_value), do: 0
+
+  defp non_negative_int(value) when is_integer(value) and value >= 0, do: {:ok, value}
+
+  defp non_negative_int(value) when is_float(value) and value >= 0,
+    do: {:ok, trunc(value)}
+
+  defp non_negative_int(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} when int >= 0 -> {:ok, int}
+      _ -> :error
+    end
+  end
+
+  defp non_negative_int(_value), do: :error
 
   defp read_first_int(map, keys) do
     keys

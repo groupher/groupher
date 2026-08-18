@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunityApplicationEvent do
-  @moduledoc "Append-only state transition event for a community application."
+  @moduledoc """
+  Append-only state transition event for a community application.
+
+  Business position:
+
+      CMS context
+        -> CommunityApplicationEvent schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 

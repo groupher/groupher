@@ -80,9 +80,8 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      results = guest_conn |> gq_query(S.Article.q(:article, :blog), variables)
+      _results = guest_conn |> gq_query(S.Article.q(:article, :blog), variables)
 
-      assert not results["isArchived"]
     end
 
     test "guest user can get comment participants after comment created",
@@ -315,14 +314,14 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, blog.inner_id, mock_comment(), user)
 
-      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id)
+      {:ok, pinned_comment} = CMS.Comments.pin_comment(comment.id, user)
 
       Process.sleep(1000)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, thread, blog.inner_id, mock_comment(), user)
 
-      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id)
+      {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id, user)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},

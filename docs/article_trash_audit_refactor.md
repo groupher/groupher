@@ -771,8 +771,8 @@ Logs.UserActivity
 CMS.Events
   notification, mention sync and other side-effect dispatch
 
-ArticleSnapshot
-  immutable content revision for diff/restore
+DocSnapshot
+  immutable Doc content revision for diff/restore
 
 DocTreeEvent
   staged Docs Tree domain change for publish/revert

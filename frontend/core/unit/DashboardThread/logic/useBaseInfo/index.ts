@@ -29,6 +29,7 @@ type TRet = TUseInfo &
 
 type TCommunityBaseInfo = NonNullable<ResultOf<typeof S.communityBaseInfo>['community']>
 
+/** Exposes base info state and actions through the shared React hook boundary. */
 export default function useBaseInfo(): TRet {
   const dsb$ = useDashboard()
   const { slug } = useCommunity()

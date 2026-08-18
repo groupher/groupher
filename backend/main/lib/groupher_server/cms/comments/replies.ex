@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.Replies do
   @moduledoc """
   Helpers for resolving a reply thread's root comment.
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> Replies
+        -> Repo / domain event
   """
 
   alias GroupherServer.{CMS, Repo}
@@ -8,6 +16,17 @@ defmodule GroupherServer.CMS.Comments.Replies do
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
+  @doc """
+  Resolves the root comment of a reply thread.
+
+  A comment that does not reply to anything is its own root. Otherwise the root
+  is followed through `root_comment_id` or the loaded reply chain.
+
+  ## Examples
+
+      root = CMS.Comments.Replies.root_comment(comment)
+
+  """
   @spec root_comment(Comment.t()) :: Comment.t()
   def root_comment(%Comment{reply_to_comment_id: nil} = comment), do: comment
 
@@ -27,11 +46,17 @@ defmodule GroupherServer.CMS.Comments.Replies do
   end
 
   @spec root_id(T.id() | Comment.t()) :: T.domain_res(T.id())
-  def root_id(%Comment{} = comment), do: {:ok, root_comment(comment).id}
+  def root_id(comment) do
+    with {:ok, root} <- root(comment), do: {:ok, root.id}
+  end
 
-  def root_id(comment_id) do
+  @doc "Returns the root Comment with its thread coordinate for scoped reply reads."
+  @spec root(T.id() | Comment.t()) :: T.domain_res(Comment.t())
+  def root(%Comment{} = comment), do: {:ok, root_comment(comment)}
+
+  def root(comment_id) do
     with {:ok, comment} <- ORM.find(Comment, comment_id) do
-      root_id(comment)
+      {:ok, root_comment(comment)}
     end
   end
 end

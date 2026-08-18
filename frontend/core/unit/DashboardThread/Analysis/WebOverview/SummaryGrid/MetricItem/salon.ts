@@ -1,14 +1,15 @@
+import useTwBelt from '~/hooks/useTwBelt'
+
 export default function useSalon() {
+  const { cn, fg } = useTwBelt()
+
   return {
-    wrapper: 'py-4',
-    align: {
-      start: 'justify-self-start text-left',
-      center: 'justify-self-center text-center',
-      end: 'justify-self-end text-right',
-    },
+    wrapper: 'w-full py-4 text-left',
     label: 'text-digest text-xs',
     value: 'text-title mt-2 text-2xl tabular-nums',
-    positiveChange: 'mt-1 text-xs text-green-600 tabular-nums',
-    negativeChange: 'mt-1 text-xs text-red-600 tabular-nums',
+    change: 'mt-1 flex items-baseline gap-1.5 tabular-nums',
+    positiveChange: 'text-sm text-green-600',
+    negativeChange: 'text-sm text-red-600',
+    comparison: cn('text-xs', fg('hint')),
   }
 }

@@ -93,7 +93,7 @@ export const docDraft = graphql(`
 `)
 
 export const docDraftSnapshots = graphql(`
-  query docDraftSnapshots($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
+  query docDraftSnapshots($community: String!, $id: ID!, $stage: DocSnapshotStage) {
     docDraftSnapshots(community: $community, id: $id, stage: $stage) {
       id
       thread
@@ -153,6 +153,7 @@ export const updateDocDraft = graphql(`
   mutation UpdateDocDraft(
     $community: String!
     $id: ID!
+    $expectedVersion: Int!
     $title: String
     $subtitle: String
     $slug: String
@@ -161,6 +162,7 @@ export const updateDocDraft = graphql(`
     updateDocDraft(
       community: $community
       id: $id
+      expectedVersion: $expectedVersion
       title: $title
       subtitle: $subtitle
       slug: $slug

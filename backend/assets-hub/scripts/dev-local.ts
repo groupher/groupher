@@ -1,3 +1,14 @@
+/**
+ * Implements the Scripts Dev Local boundary inside Assets Hub.
+ *
+ * Business position:
+ *
+ *   Dashboard / Phoenix capability
+ *     -> Assets Hub module
+ *     -> R2 / measured result
+ *     -> Phoenix asset state
+ */
+
 import { spawn, type ChildProcess } from 'node:child_process'
 import net from 'node:net'
 

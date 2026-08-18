@@ -41,6 +41,8 @@ export default {
       env,
     )
 
+    if (target.kind === 'not-found') return new Response('Not Found', { status: 404 })
+
     return proxyRequest(request, target, env.fetcher || fetch)
   },
 }

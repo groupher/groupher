@@ -87,3 +87,24 @@ msgstr ""
 
 msgid "must be equal to %{number}"
 msgstr ""
+
+msgid "gate.read_only"
+msgstr "当前内容处于只读状态。"
+
+msgid "gate.unavailable"
+msgstr "内容不可用。"
+
+msgid "gate.permission_denied"
+msgstr "当前账号没有执行此操作的权限。"
+
+msgid "gate.lifecycle_not_loaded"
+msgstr "当前状态正在更新，请稍后重试。"
+
+msgid "gate.doc_branch_required"
+msgstr "文档分支上下文缺失，请返回后重试。"
+
+msgid "gate.article_not_mutable"
+msgstr "当前内容不可执行此操作。"
+
+msgid "gate.unknown"
+msgstr "当前操作暂不可执行。"

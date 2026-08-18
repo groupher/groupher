@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Audit do
 
   Audit records accountability only. Trash and restore logic must never read
   this table as recovery state.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Audit
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false
@@ -14,6 +21,7 @@ defmodule GroupherServer.CMS.Audit do
   alias Helper.{ORM, T}
 
   @spec record(String.t(), map()) :: {:ok, AuditLog.t()} | {:error, term()}
+  @doc "Runs `record` through the public `Audit` boundary."
   def record(action, attrs) when is_binary(action) and is_map(attrs) do
     if Actions.valid?(action) do
       {actor, attrs} = Map.pop(attrs, :actor)
@@ -32,9 +40,11 @@ defmodule GroupherServer.CMS.Audit do
   end
 
   @spec get(Ecto.UUID.t()) :: T.domain_res(AuditLog.t())
+  @doc "Runs `get` through the public `Audit` boundary."
   def get(hash_id), do: ORM.find_by(AuditLog, hash_id: hash_id)
 
   @spec list(Community.t(), map()) :: T.domain_res(map())
+  @doc "Runs `list` through the public `Audit` boundary."
   def list(%Community{} = community, filter \\ %{}) do
     page = Map.get(filter, :page, 1)
     size = Map.get(filter, :size, 20)

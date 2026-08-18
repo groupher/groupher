@@ -1,5 +1,14 @@
 defmodule GroupherServerWeb.Schema.CMS.Press.Mutations do
-  @moduledoc "Dashboard mutation boundary for CMS.Press configuration."
+  @moduledoc """
+  Dashboard mutation boundary for CMS.Press configuration.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Mutations
+        -> resolver or domain context
+        -> GraphQL response
+  """
 
   use Helper.GqlSchemaSuite
 

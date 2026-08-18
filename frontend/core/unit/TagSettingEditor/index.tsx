@@ -10,11 +10,11 @@ import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
 import { MARKER } from '~/const/marker'
 import { CHANGE_MODE } from '~/const/mode'
-import { ROUTE } from '~/const/route'
 import { DEFAULT_TAG_MARKER } from '~/const/tag'
 import useTrans from '~/hooks/useTrans'
-import { Link } from '~/platform'
+import { dsbRoutes, Link } from '~/platform'
 import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import ColorSelector from '~/ui/ColorSelector'
 import CustomScroller from '~/ui/CustomScroller'
 import Input from '~/ui/Input'
@@ -36,6 +36,7 @@ type TProps = {
 const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup = '', onDone }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const { slug: community } = useCommunity()
   const logic = useLogic({ initialGroup, onDone })
   const { initEditingTag, edit, editingTag, curCategory, categoryOptions, slugError } = logic
 
@@ -145,7 +146,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
         <div className={s.title}>{t('dsb.tags.editor.layout')}</div>
         <div className={s.desc}>
           {t('dsb.tags.editor.layout.desc_prefix')}
-          <Link href={`/dashboard/home/${ROUTE.DASHBOARD.APPEARANCE}`} className={s.navi}>
+          <Link route={dsbRoutes.appearance({ community })} className={s.navi}>
             {t('dsb.tags.editor.layout.link')}
           </Link>
           {t('dsb.tags.editor.layout.desc_suffix')}

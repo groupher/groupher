@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Policy.Model.PublishThrottle do
 
   These rows let middleware/domain code track publishing frequency per actor and
   apply rate limits without coupling that state to article tables.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> PublishThrottle
+        -> Repo / external boundary
   """
   alias __MODULE__
 

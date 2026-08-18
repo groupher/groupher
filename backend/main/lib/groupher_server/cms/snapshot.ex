@@ -5,13 +5,22 @@ defmodule GroupherServer.CMS.Snapshot do
   The default mode is stale-first: cached summaries patch the given snapshot,
   misses return the original data and enqueue one batch refresh. Use
   `mode: :blocking` when the caller needs fresh display fields in this request.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Snapshot
+        -> Repo / external boundary
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Comment
+  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias CMS.Model.{Comment, CommentLifecycle}
   alias Helper.Cache
 
   @pool :snapshot
@@ -312,10 +321,8 @@ defmodule GroupherServer.CMS.Snapshot do
   defp load_summaries(:article, thread, ids) do
     with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
       model
-      |> CMS.Articles.active_scope(thread)
-      # `active_scope/2` only excludes trashed logical articles; snapshot
-      # summaries default to the public authority row.
-      |> where([article], article.id in ^ids and article.stage == :public)
+      |> CMS.Gate.scope(nil, :list, scope_context(thread))
+      |> where([article], article.id in ^ids)
       |> Repo.all()
       |> Map.new(&{&1.id, article_summary(thread, &1)})
       |> with_unavailable(ids, &unavailable_article(thread, &1))
@@ -326,11 +333,16 @@ defmodule GroupherServer.CMS.Snapshot do
 
   defp load_summaries(:comment, thread, ids) do
     Comment
+    |> join(:inner, [comment], lifecycle in CommentLifecycle,
+      on: lifecycle.comment_id == comment.id
+    )
     |> where([comment], comment.thread == ^thread and comment.id in ^ids)
+    |> select([comment, lifecycle], {comment, lifecycle.state})
     |> Repo.all()
-    |> Map.new(&{&1.id, comment_summary(thread, &1)})
+    |> Map.new(fn {comment, state} -> {comment.id, comment_summary(thread, comment, state)} end)
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
+
 
   defp put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)
@@ -429,11 +441,11 @@ defmodule GroupherServer.CMS.Snapshot do
     }
   end
 
-  defp comment_summary(thread, %Comment{is_deleted: true} = comment) do
+  defp comment_summary(thread, %Comment{} = comment, :deleted) do
     thread |> unavailable_comment(comment.id) |> Map.put(:body_digest, Comment.delete_hint())
   end
 
-  defp comment_summary(thread, %Comment{} = comment) do
+  defp comment_summary(thread, %Comment{} = comment, _state) do
     %{
       id: comment.id,
       body_digest: digest(comment.body),
@@ -471,6 +483,9 @@ defmodule GroupherServer.CMS.Snapshot do
   defp cache_key(:user, _thread, id), do: "snapshot:user:#{id}"
   defp cache_key(:article, thread, id), do: "snapshot:article:#{thread}:#{id}"
   defp cache_key(:comment, thread, id), do: "snapshot:comment:#{thread}:#{id}"
+
+  defp scope_context(:doc), do: DocScope.public_main()
+  defp scope_context(thread), do: ArticleScope.public(thread)
 
   defp enqueue(kind, refs, opts) do
     case GroupherServer.Jobs.snapshot_refresh(kind, refs, opts) do

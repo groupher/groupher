@@ -80,6 +80,7 @@ export const parseEditorValue = (json?: string | null): TRichEditorValue => {
  */
 export const serializeEditorValue = (value: TRichEditorValue): string => JSON.stringify(value)
 
+/** Runs the draft signature operation at the frontend shared boundary. */
 export const draftSignature = ({
   bodyJson,
   subtitle,
@@ -87,6 +88,7 @@ export const draftSignature = ({
 }: Pick<TEditorDraft, 'bodyJson' | 'subtitle' | 'title'>): string =>
   `${title}\n${subtitle}\n${bodyJson}`
 
+/** Runs the compose editor draft operation at the frontend shared boundary. */
 export const composeEditorDraft = ({
   bodyValue,
   docId,
@@ -102,6 +104,7 @@ export const composeEditorDraft = ({
   title,
 })
 
+/** Runs the compose empty editor draft operation at the frontend shared boundary. */
 export const composeEmptyEditorDraft = (): TEditorDraft =>
   composeEditorDraft({
     bodyValue: EMPTY_EDITOR_VALUE,
@@ -111,6 +114,7 @@ export const composeEmptyEditorDraft = (): TEditorDraft =>
     title: '',
   })
 
+/** Runs the compose saved draft operation at the frontend shared boundary. */
 export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
   bodyValue: draft.bodyValue,
   bodyJson: draft.bodyJson,
@@ -120,12 +124,15 @@ export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
   title: draft.title,
 })
 
+/** Runs the compose empty saved draft operation at the frontend shared boundary. */
 export const composeEmptySavedDraft = (): TSavedDraft =>
   composeSavedDraft(composeEmptyEditorDraft())
 
+/** Resolves draft source without leaking frontend shared routing details to callers. */
 export const resolveDraftSource = (draft?: Pick<TDocDraftDTO, 'stage'> | null): TDocDraftSource =>
   draft?.stage === ARTICLE_STAGE.DRAFT ? 'draft' : 'public'
 
+/** Runs the compose editor draft meta operation at the frontend shared boundary. */
 export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
 ): TEditorDraftMeta => ({
@@ -135,6 +142,7 @@ export const composeEditorDraftMeta = (
   updatedAt: source?.updatedAt ?? null,
 })
 
+/** Reports whether draft dirty at the frontend shared boundary. */
 export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): boolean => {
   if (!draft.docId) return false
   if (draft.docId !== savedDraft.docId) return true
@@ -148,6 +156,7 @@ export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): bool
   )
 }
 
+/** Runs the compose draft save input operation at the frontend shared boundary. */
 export const composeDraftSaveInput = (draft: TEditorDraft, slug: string) => ({
   value: draft.bodyValue,
   id: draft.docId,
@@ -156,6 +165,7 @@ export const composeDraftSaveInput = (draft: TEditorDraft, slug: string) => ({
   title: draft.title.trim(),
 })
 
+/** Runs the compose draft publish state operation at the frontend shared boundary. */
 export const composeDraftPublishState = (publishState: TSideTreePage['publishState']) => ({
   ...(publishState ?? {}),
   hasDraft: true,
@@ -163,6 +173,7 @@ export const composeDraftPublishState = (publishState: TSideTreePage['publishSta
   status: ARTICLE_STAGE.DRAFT,
 })
 
+/** Runs the compose editor draft from session operation at the frontend shared boundary. */
 export const composeEditorDraftFromSession = (session: TDocDraftSession): TEditorDraft =>
   composeEditorDraft({
     bodyValue: session.body,
@@ -172,6 +183,7 @@ export const composeEditorDraftFromSession = (session: TDocDraftSession): TEdito
     title: session.title,
   })
 
+/** Runs the compose doc draft info operation at the frontend shared boundary. */
 export const composeDocDraftInfo = ({
   bodyStats,
   draft,
@@ -191,6 +203,7 @@ export const composeDocDraftInfo = ({
   wordCount: bodyStats.wordCount,
 })
 
+/** Runs the compose empty draft editor store patch operation at the frontend shared boundary. */
 export const composeEmptyDraftEditorStorePatch = () => ({
   baselineValue: EMPTY_EDITOR_VALUE,
   bodyValue: EMPTY_EDITOR_VALUE,
@@ -204,6 +217,7 @@ export const composeEmptyDraftEditorStorePatch = () => ({
   saveStatus: 'idle' as const,
 })
 
+/** Runs the compose draft editor store patch operation at the frontend shared boundary. */
 export const composeDraftEditorStorePatch = ({
   bodyStats,
   draft,

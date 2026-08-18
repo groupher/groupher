@@ -4,6 +4,13 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
   The source of truth remains articles plus community tag associations. These
   counters are updated on write paths and can be rebuilt from source data.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> TagStats
+        -> Repo / Oban
   """
 
   import Ecto.Query, warn: false
@@ -18,12 +25,39 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   @tracked_threads [:post, :blog, :changelog]
   @default_thread :post
 
+  @doc """
+  Increments the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.TagStats.inc(article, tag)
+      #=> {:ok, :pass}
+
+  """
   @spec inc(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
   def inc(article, tag), do: do_update(article, tag, 1)
 
+  @doc """
+  Decrements the cached counters for one community tag.
+
+  ## Examples
+
+      CMS.Communities.TagStats.dec(article, tag)
+      #=> {:ok, :pass}
+
+  """
   @spec dec(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
   def dec(article, tag), do: do_update(article, tag, -1)
 
+  @doc """
+  Applies multiple tag counter deltas in one batch upsert.
+
+  ## Examples
+
+      CMS.Communities.TagStats.update_many(article, [{tag, 1}, {other_tag, -1}])
+      #=> {:ok, :pass}
+
+  """
   @spec update_many(Ecto.Schema.t(), [{CommunityTag.t(), -1 | 1}]) :: T.domain_res(:pass)
   def update_many(_article, []), do: done(:pass)
 
@@ -123,7 +157,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     thread
     |> article_schema()
-    |> CMS.Articles.active_scope(thread)
+    |> CMS.Articles.Trash.not_trashed_scope(thread)
     |> join(:inner, [a], t in assoc(a, :community_tags))
     |> where([_a, t], t.id == ^tag.id)
     |> where([a, _t], a.pending != ^@audit_illegal)

@@ -5,6 +5,7 @@ import useTrans from '~/hooks/useTrans'
 import { FORMAT_CONFIGS } from './constant'
 import type { TFormat } from './constant'
 
+/** Exposes formats state and actions through the shared React hook boundary. */
 export default function useFormats(): TFormat[] {
   const { t } = useTrans()
 

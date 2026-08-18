@@ -1,6 +1,17 @@
 defmodule GroupherServer.CMS.CommunityApplications.Config do
-  @moduledoc "Runtime policy values for the V1 application flow."
+  @moduledoc """
+  Runtime policy values for the V1 application flow.
 
+  Business position:
+
+      Apply UI / reviewer
+        -> GraphQL resolver
+        -> CMS.CommunityApplications
+        -> Config
+        -> Repo / Oban
+  """
+
+  @doc "Returns the TTL in days before a submitted Application expires."
   @spec submitted_ttl_days() :: pos_integer()
   def submitted_ttl_days do
     :groupher_server

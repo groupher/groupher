@@ -1,3 +1,14 @@
+/**
+ * Implements the Drizzle.config boundary inside Press.
+ *
+ * Business position:
+ *
+ *   Browser / Gateway
+ *     -> Press module
+ *     -> cache / Phoenix projection
+ *     -> public response
+ */
+
 import 'dotenv/config'
 import { defineConfig } from 'drizzle-kit'
 

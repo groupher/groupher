@@ -1,6 +1,13 @@
 defmodule GroupherServer.CMS.Marker do
   @moduledoc """
   Shared visual marker contract for tag and docs tree icons.
+
+  Business position:
+
+      GraphQL resolver / job
+        -> CMS facade
+        -> Marker
+        -> Repo / external boundary
   """
 
   import Ecto.Changeset
@@ -20,6 +27,7 @@ defmodule GroupherServer.CMS.Marker do
         }
 
   @spec normalize_changeset(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  @doc "Runs `normalize_changeset` through the public `Marker` boundary."
   def normalize_changeset(changeset, field \\ :marker) do
     case get_change(changeset, field, :__missing__) do
       :__missing__ ->
@@ -37,6 +45,7 @@ defmodule GroupherServer.CMS.Marker do
   end
 
   @spec normalize(map()) :: {:ok, marker()} | {:error, String.t()}
+  @doc "Runs `normalize` through the public `Marker` boundary."
   def normalize(%{} = marker) do
     case marker_type(marker) do
       :icon -> normalize_icon(marker)
@@ -48,6 +57,7 @@ defmodule GroupherServer.CMS.Marker do
   def normalize(_), do: {:error, "marker is invalid"}
 
   @spec field(map() | nil, atom()) :: term()
+  @doc "Runs `field` through the public `Marker` boundary."
   def field(nil, _field), do: nil
 
   def field(marker, :type) when is_map(marker) do

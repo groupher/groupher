@@ -15,6 +15,7 @@ type TPostLayoutConfig = {
 
 const seg = DSB_ROUTE.POST
 
+/** Creates post layout from typed frontend shared inputs. */
 export default function createPostLayout({
   path,
   title,

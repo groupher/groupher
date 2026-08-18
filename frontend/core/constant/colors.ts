@@ -22,6 +22,7 @@ const DEFAULT_CUSTOM_COLOR = {
   [THEME.DARK]: '#ffffff',
 } as const
 
+/** Returns default custom color for the frontend shared workflow. */
 export const getDefaultCustomColor = (theme: TThemeName): string => {
   return DEFAULT_CUSTOM_COLOR[theme]
 }

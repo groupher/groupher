@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   use GroupherServer.TestMate
 
-  alias CMS.CanCan
-  alias CMS.Comments.{Numbering, Replies, ViewerState}
+  alias CMS.Communities.Enable
+  alias CMS.Comments.{Numbering, Replies}
+  alias CMS.Interactions.State
   alias Helper.ORM
 
   setup do
@@ -121,7 +122,11 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
       # 测试 mark_has_upvoted
       paged_comments = %{entries: [updated_comment]}
-      marked_comments = ViewerState.mark_has_upvoted(paged_comments, user2)
+
+      marked_comments = %{
+        paged_comments
+        | entries: State.read(:comment, paged_comments.entries, user2, [])
+      }
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == true
     end
@@ -133,21 +138,26 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
       # 测试 mark_has_upvoted with nil viewer
       paged_comments = %{entries: [comment]}
-      marked_comments = ViewerState.mark_has_upvoted(paged_comments, nil)
 
-      assert marked_comments == paged_comments
+      marked_comments = %{
+        paged_comments
+        | entries: State.read(:comment, paged_comments.entries, nil, [])
+      }
+
+      assert List.first(marked_comments.entries).viewer_has_upvoted == false
+      assert List.first(marked_comments.entries).viewer_has_reported == false
     end
   end
 
   describe "allow_comment/2" do
     test "should return true if article is not comment locked", ~m(post user)a do
-      assert {:ok, ^post} = CanCan.allow_comment(post, user)
+      assert {:ok, ^post} = Enable.comment?(post)
     end
 
     test "should return false if article is comment locked", ~m(post user)a do
       # 锁定评论
       {:ok, locked_post} = CMS.Articles.lock_comments(post)
-      assert {:error, :article_comments_locked} = CanCan.allow_comment(locked_post, user)
+      assert {:error, :article_comments_locked} = Enable.comment?(locked_post)
     end
   end
 end

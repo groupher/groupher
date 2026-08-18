@@ -5,6 +5,13 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
   Search identity is deliberately separate from the public ArticlePath or
   CommentPath stored in `locator`. Platform adapters may use `ref` as their
   object id, but callers must use `locator` for navigation and domain reads.
+
+  Business position:
+
+      Resolver / Oban
+        -> CMS.SearchArtiments
+        -> Artiment
+        -> search platform
   """
 
   @type artiment_type :: :article | :comment
@@ -72,6 +79,18 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
                 plain_text_truncated: false
               ]
 
+  @doc """
+  Builds the deterministic search ref for an article artiment.
+
+  The ref is derived from the thread and the article hash id; it is stable
+  across rebuilds and used as the platform object id.
+
+  ## Examples
+
+      Artiment.article_ref(:post, "a1b2c3")
+      #=> "ARTICLE:POST:a1b2c3"
+
+  """
   @spec article_ref(thread(), Ecto.UUID.t()) :: String.t()
   def article_ref(thread, article_hash_id) do
     "ARTICLE:#{encode_thread(thread)}:#{article_hash_id}"

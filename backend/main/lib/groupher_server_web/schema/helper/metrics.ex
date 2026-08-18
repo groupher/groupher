@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Metrics do
   @moduledoc """
-  common types might be used in all context
+  Cross-context GraphQL metric objects and the `BigInt` scalar.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Metrics
+        -> resolver or domain context
+        -> GraphQL response
   """
   import GroupherServerWeb.Schema.Helper.Fields
 

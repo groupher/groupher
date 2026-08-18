@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema.Helper.Fields do
   @moduledoc """
-  general fields used in GraphQL schema definition
+  Reusable Absinthe field macros for pagination, dashboard settings, and relations.
+
+  Business position:
+
+      Client
+        -> Absinthe schema / Fields
+        -> resolver or domain context
+        -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
@@ -21,6 +28,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro general_article_fields do
     quote do
       field(:inner_id, :id)
+      field(:version, non_null(:integer))
       field(:title, :string)
       field(:document, :article_document, resolve: dataloader(CMS, :document))
       field(:digest, :string)
@@ -51,8 +59,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:viewer_has_viewed, :boolean)
       field(:viewer_has_reported, :boolean)
 
-      field(:is_archived, :boolean)
-      field(:archived_at, :datetime)
+      field(:lifecycle, :article_lifecycle, resolve: dataloader(CMS, :lifecycle))
 
       field(:copy_right, :string)
       field(:link_addr, :string)
@@ -98,7 +105,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   @doc """
   general emotion enum for articles
-  #NOTE: xxx_user_logins field is not support for gq-endpoint
+  # NOTE: internal reaction projections are not exposed through GraphQL.
   """
   defmacro emotion_values(metric \\ :article) do
     emotions =
@@ -189,9 +196,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:viewer_has_reported, :boolean)
       field(:reply_to_comment, :comment, resolve: dataloader(CMS, :reply_to_comment))
 
-      field(:is_deleted, :boolean)
-      field(:is_archived, :boolean)
-      field(:archived_at, :datetime)
+      field(:lifecycle, :comment_lifecycle, resolve: dataloader(CMS, :lifecycle))
 
       timestamp_fields()
     end

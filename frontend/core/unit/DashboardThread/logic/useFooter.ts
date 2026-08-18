@@ -14,6 +14,7 @@ type TRet = {
 } & TLinkState &
   TDerived
 
+/** Exposes footer state and actions through the shared React hook boundary. */
 export default function useFooter(): TRet {
   const dsb$ = useDashboard()
 

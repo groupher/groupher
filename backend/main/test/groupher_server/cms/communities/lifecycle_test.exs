@@ -2,20 +2,17 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
+  require CMS.Const
 
   alias CMS.Communities.Lifecycle
-  alias CMS.Communities.Read
-  alias CMS.Model.{AuditLog, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias CMS.Model.{AuditLog, Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   test "projects blocker combinations into the strictest public state" do
     assert :active = Lifecycle.resolve_state([])
 
-    assert :read_only =
-             Lifecycle.resolve_state([%{blocker_type: :billing_read_only}])
-
     assert :suspended =
              Lifecycle.resolve_state([
-               %{blocker_type: :billing_read_only},
                %{blocker_type: :moderation_suspend}
              ])
 
@@ -34,13 +31,92 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
              Repo.get_by!(CommunityLifecycle, community_id: community.id)
   end
 
+  test "read modes expose one shared Community state matrix" do
+    matrix = %{
+      public: [:active, :read_only],
+      owner_management: [
+        :setting_up,
+        :setup_failed,
+        :active,
+        :read_only,
+        :suspended,
+        :archived,
+        :pending_destroy
+      ],
+      moderator_management: [
+        :setting_up,
+        :setup_failed,
+        :active,
+        :read_only,
+        :suspended,
+        :archived,
+        :pending_destroy
+      ],
+      operations: [
+        :setting_up,
+        :setup_failed,
+        :active,
+        :read_only,
+        :suspended,
+        :archived,
+        :pending_destroy,
+        :destroy
+      ]
+    }
+
+    for {mode, readable_states} <- matrix,
+        state <- CMS.Const.lifecycle_state_values() do
+      resource = %CommunityLifecycle{state: state}
+      expected = state in readable_states
+
+      assert {:ok, ^expected} = Lifecycle.can_read_mode(resource, mode, %{})
+    end
+  end
+
   test "capabilities follow the Lifecycle state matrix" do
     assert {:ok, true} = Lifecycle.can_read(%CommunityLifecycle{state: :active})
     assert {:ok, true} = Lifecycle.can_read(%CommunityLifecycle{state: :read_only})
     assert {:ok, false} = Lifecycle.can_write(%CommunityLifecycle{state: :read_only})
     assert {:ok, true} = Lifecycle.can_manage(%CommunityLifecycle{state: :archived})
-    assert {:ok, false} = Lifecycle.can_reclaim(%CommunityLifecycle{state: :suspended})
+    assert {:ok, false} = Lifecycle.can_destroy(%CommunityLifecycle{state: :suspended})
     assert {:ok, false} = Lifecycle.can_read(%CommunityLifecycle{state: :destroy})
+  end
+
+  test "state capabilities do not query blockers and reclaim consumes loaded blockers" do
+    handler_id = "lifecycle-capability-query-#{System.unique_integer([:positive])}"
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+    parent = self()
+
+    :ok =
+      :telemetry.attach(
+        handler_id,
+        event,
+        fn _event, _measurements, _metadata, _config -> send(parent, :capability_query) end,
+        nil
+      )
+
+    on_exit(fn -> :telemetry.detach(handler_id) end)
+
+    assert {:ok, true} = Lifecycle.can_read(%CommunityLifecycle{state: :active})
+    assert {:ok, true} = Lifecycle.can_manage(%CommunityLifecycle{state: :archived})
+
+    lifecycle = %CommunityLifecycle{
+      state: :active,
+      blockers: [
+        %CommunityLifecycleBlocker{blocker_type: :ops_legal_hold, ended_at: nil}
+      ]
+    }
+
+    assert {:ok, false} = Lifecycle.can_destroy(lifecycle)
+    refute_receive :capability_query
+  end
+
+  test "reclaim requires blockers when the materialized state is eligible" do
+    assert {:error, :lifecycle_not_loaded} =
+             Lifecycle.can_destroy(%CommunityLifecycle{state: :active})
+
+    assert {:ok, true} =
+             Lifecycle.can_destroy(%CommunityLifecycle{state: :active}, %{active_blockers: []})
   end
 
   test "applying and releasing a blocker is idempotent and recomputes state" do
@@ -53,12 +129,12 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert {:ok, blocker} =
              Lifecycle.apply_blocker(
                community.slug,
-               %{blocker_type: :billing_read_only, cause_code: "trial_grace"},
+               %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
                operation_ref: operation_ref
              )
 
     assert blocker.lifecycle_id == lifecycle.id
-    assert Repo.get!(CommunityLifecycle, lifecycle.id).state == :read_only
+    assert Repo.get!(CommunityLifecycle, lifecycle.id).state == :suspended
 
     assert %AuditLog{operation_ref: ^operation_ref} =
              Repo.get_by!(AuditLog,
@@ -69,7 +145,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert {:ok, same_blocker} =
              Lifecycle.apply_blocker(
                community.slug,
-               %{blocker_type: :billing_read_only, cause_code: "trial_grace"},
+               %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
                operation_ref: Ecto.UUID.generate()
              )
 
@@ -79,14 +155,14 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert {:error, %Ecto.Changeset{}} =
              Lifecycle.apply_blocker(
                community.slug,
-               %{blocker_type: :billing_suspend, cause_code: "same_operation"},
+               %{blocker_type: :moderation_archive, cause_code: "same_operation"},
                operation_ref: operation_ref
              )
 
     assert {:ok, _released} =
              Lifecycle.release_blocker(
                community.slug,
-               :billing_read_only,
+               :moderation_suspend,
                nil,
                operation_ref: Ecto.UUID.generate()
              )
@@ -99,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     {:ok, community} = mock_community(user)
 
     assert {:error, :invalid_operation_ref} =
-             Lifecycle.archive(community.slug, operation_ref: "op_owner_archive")
+             Lifecycle.request_destroy(community.slug, operation_ref: "op_owner_archive")
 
     assert Repo.aggregate(CommunityLifecycleBlocker, :count) == 0
 
@@ -114,7 +190,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    assert {:ok, blocker} = Lifecycle.archive(community.slug)
+    assert {:ok, blocker} = Lifecycle.request_destroy(community.slug)
 
     audit =
       Repo.get_by!(AuditLog,
@@ -160,14 +236,14 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    for state <- [:read_only, :suspended, :archived, :scheduled_reclaim, :destroy] do
+    for state <- [:read_only, :suspended, :archived, :pending_destroy, :destroy] do
       _lifecycle =
         Repo.get_by!(CommunityLifecycle, community_id: community.id)
         |> CommunityLifecycle.changeset(%{state: state})
         |> Repo.update!()
 
       visible? =
-        Read.scope()
+        CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
         |> where([candidate], candidate.id == ^community.id)
         |> Repo.exists?()
 
@@ -184,7 +260,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     future = DateTime.add(DateTime.utc_now(:second), 3600, :second)
 
     assert {:ok, blocker} =
-             Lifecycle.archive(community.slug,
+             Lifecycle.request_destroy(community.slug,
                recover_until: future,
                operation_ref: Ecto.UUID.generate()
              )
@@ -202,7 +278,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
              Lifecycle.restore(community.slug, operation_ref: Ecto.UUID.generate())
 
     assert {:ok, blocker} =
-             Lifecycle.archive(community.slug,
+             Lifecycle.request_destroy(community.slug,
                recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
                operation_ref: Ecto.UUID.generate()
              )
@@ -222,21 +298,21 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     lifecycle = Repo.get_by!(CommunityLifecycle, community_id: community.id)
 
     assert {:ok, _archive} =
-             Lifecycle.archive(community.slug,
+             Lifecycle.request_destroy(community.slug,
                recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
                operation_ref: Ecto.UUID.generate()
              )
 
     assert {:ok, _scheduled} =
-             Lifecycle.schedule_reclaim(community.slug, operation_ref: Ecto.UUID.generate())
+             Lifecycle.schedule_destroy(community.slug, operation_ref: Ecto.UUID.generate())
 
     assert {:ok, cancelled} =
-             Lifecycle.cancel_reclaim(community.slug, operation_ref: Ecto.UUID.generate())
+             Lifecycle.cancel_destroy(community.slug, operation_ref: Ecto.UUID.generate())
 
     assert cancelled.state == :archived
 
     assert {:ok, _scheduled} =
-             Lifecycle.schedule_reclaim(community.slug, operation_ref: Ecto.UUID.generate())
+             Lifecycle.schedule_destroy(community.slug, operation_ref: Ecto.UUID.generate())
 
     assert {:ok, destroyed} =
              Lifecycle.destroy(community.slug, operation_ref: Ecto.UUID.generate())
@@ -282,7 +358,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     Repo.get_by!(CommunityLifecycle, community_id: community.id)
 
     assert {:ok, _archive} =
-             Lifecycle.archive(community.slug,
+             Lifecycle.request_destroy(community.slug,
                recover_until: DateTime.add(DateTime.utc_now(:second), -1, :second),
                operation_ref: Ecto.UUID.generate()
              )
@@ -294,7 +370,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
                operation_ref: Ecto.UUID.generate()
              )
 
-    assert {:error, :reclaim_blocked} =
-             Lifecycle.schedule_reclaim(community.slug, operation_ref: Ecto.UUID.generate())
+    assert {:error, :destroy_blocked} =
+             Lifecycle.schedule_destroy(community.slug, operation_ref: Ecto.UUID.generate())
   end
 end

@@ -1,8 +1,15 @@
 defmodule GroupherServer.CMS.Communities.Categories do
   @moduledoc """
   Category helpers for communities.
+
+  Business position:
+
+      Client / reviewer
+        -> CMS.Communities
+        -> Categories
+        -> Repo / Oban
   """
-  import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
+  import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS}
@@ -12,6 +19,22 @@ defmodule GroupherServer.CMS.Communities.Categories do
   alias Helper.{ORM, T}
   alias Helper.Validator.Slug
 
+  @doc """
+  Creates a Category, optionally scoped to a community.
+
+  When `attrs` carries a `:community` slug key the category is bound to that
+  community; otherwise it is created standalone. The author is resolved from
+  the user and the slug is normalized.
+
+  ## Examples
+
+      CMS.Communities.Categories.create(%{title: "Tv", community: "groupher"}, %User{id: 1})
+      #=> {:ok, %Category{}}
+
+      CMS.Communities.Categories.create(%{title: "Tv"}, %User{id: 1})
+      #=> {:ok, %Category{}}
+
+  """
   @spec create(map(), User.t()) :: T.domain_res(term())
   def create(%{community: community} = attrs, %User{id: user_id}) do
     with {:ok, _} <- ORM.find_by(Community, slug: community),

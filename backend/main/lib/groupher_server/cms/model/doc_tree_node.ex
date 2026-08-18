@@ -16,6 +16,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   logical `node_id` in the same Community, Branch, and Stage, never its physical
   `id`. Only root Tabs have a nil parent. Pins use the same field but remain in
   the Tab's independent pin lane.
+
+  Business position:
+
+      CMS context
+        -> DocTreeNode schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
   """
 
   alias __MODULE__
@@ -27,7 +34,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   alias GroupherServer.CMS
   alias CMS.Marker
-  alias CMS.Model.{Community, ArticleBranch}
+  alias CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -46,7 +53,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   schema "doc_tree_nodes" do
     belongs_to(:community, Community)
-    belongs_to(:branch, ArticleBranch)
+    belongs_to(:branch, DocBranch)
 
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)

@@ -5,6 +5,14 @@ defmodule GroupherServer.Analysis.Web do
   This context resolves the trusted community analytics identity before it
   delegates to the vendor adapter. It returns Dashboard DTOs only: Umami
   credentials, raw response shapes, and website IDs never cross this boundary.
+
+  Business position:
+
+      Main / Dashboard
+        -> GraphQL
+        -> Analysis
+        -> Web
+        -> Repo / analytics provider
   """
 
   alias __MODULE__.Config
@@ -12,9 +20,10 @@ defmodule GroupherServer.Analysis.Web do
   alias __MODULE__.Provider.Umami
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias Helper.Transaction
+  alias Helper.{Cache, Transaction}
 
   @config Config.base()
+  @active_cache_seconds 30
 
   @type page_dimension :: :path | :entry | :exit | :title | :query
   @type source_dimension :: :referrer | :channel | :domain
@@ -64,6 +73,29 @@ defmodule GroupherServer.Analysis.Web do
       end
     else
       {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
+    end
+  end
+
+  @doc """
+  Returns the current active visitor count for one community.
+
+  The provider result is cached briefly by the trusted Umami website identity
+  so multiple dashboard clients do not all refresh the same upstream value.
+  """
+  @spec active(Community.t()) :: {:ok, %{visitors: non_neg_integer()}} | {:error, term()}
+  def active(%Community{} = community) do
+    provider = provider()
+
+    with {:ok, community_analysis} <- prepare_community(community, provider),
+         website_id when is_binary(website_id) <- community_analysis.umami_website_id,
+         {:ok, payload} <-
+           Cache.get_or_fetch(
+             :common,
+             "analysis.active.#{website_id}",
+             [expire_sec: @active_cache_seconds],
+             fn -> provider.active(community_analysis) end
+           ) do
+      {:ok, payload}
     end
   end
 
@@ -138,6 +170,7 @@ defmodule GroupherServer.Analysis.Web do
   end
 
   @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
+  @doc "Runs `tracking_website_id` through the public `Web` boundary."
   def tracking_website_id(%Community{} = community) do
     with {:ok, dashboard} <- dashboard_for(community) do
       {:ok, dashboard.umami_website_id}
@@ -185,7 +218,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Write.ensure_exist(community)
+  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Writer.ensure_exist(community)
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do

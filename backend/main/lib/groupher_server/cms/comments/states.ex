@@ -1,6 +1,14 @@
 defmodule GroupherServer.CMS.Comments.States do
   @moduledoc """
   State operations for comments (pin, fold).
+
+  Business position:
+
+      Client
+        -> GraphQL
+        -> CMS.Comments
+        -> States
+        -> Repo / domain event
   """
 
   import Ecto.Query, warn: false
@@ -12,51 +20,42 @@ defmodule GroupherServer.CMS.Comments.States do
   alias Helper.{Multi, ORM, T}
 
   alias CMS.FrontDesk
+  alias CMS.Gate
   alias CMS.Model.{Comment, PinnedComment}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
+  @doc """
+  Pins a comment to the top of the article's comment list.
+
+  The actor-less variant always fails; use `pin/2` with the acting user.
+
+  ## Examples
+
+      CMS.Comments.States.pin(comment_id)
+      #=> {:error, :actor_required}
+
+  """
   @spec pin(T.id()) :: T.domain_res(Comment.t())
-  def pin(comment_id) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id),
-         {:ok, comment} <- maybe_existing_pinned_comment(comment),
-         {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, article} <- FrontDesk.article_of(comment, preload: [author: :user]),
-         {:ok, info} <- match(thread) do
-      Multi.new()
-      |> Multi.run(:checked_pined_comments_count, fn _, _ ->
-        pined_comments_query =
-          from(p in PinnedComment,
-            where: field(p, ^info.foreign_key) == ^article.id
-          )
+  def pin(_comment_id), do: {:error, :actor_required}
 
-        check_pined_comments_count(pined_comments_query)
-      end)
-      |> Multi.run(:update_comment_flag, fn _, _ ->
-        ORM.update(comment, %{is_pinned: true})
-      end)
-      |> Multi.run(:add_pined_comment, fn _, _ ->
-        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, article.id)
-
-        PinnedComment |> ORM.create(attrs)
-      end)
-      |> Repo.transaction()
-      |> result()
+  @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
+  def pin(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+         {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
+         {:ok, comment} <- Gate.access_check(user, :pin, comment) do
+      pin_unlocked(comment, article)
     end
   end
 
   @spec undo_pin(T.id()) :: T.domain_res(Comment.t())
-  def undo_pin(comment_id) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id) do
-      Multi.new()
-      |> Multi.run(:update_comment_flag, fn _, _ ->
-        ORM.update(comment, %{is_pinned: false})
-      end)
-      |> Multi.run(:remove_pined_comment, fn _, _ ->
-        ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
-      end)
-      |> Repo.transaction()
-      |> result()
+  def undo_pin(_comment_id), do: {:error, :actor_required}
+
+  @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
+  def undo_pin(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+         {:ok, comment} <- Gate.access_check(user, :pin, comment) do
+      undo_pin_unlocked(comment)
     end
   end
 
@@ -90,6 +89,44 @@ defmodule GroupherServer.CMS.Comments.States do
 
       meta = article.meta |> Map.put(:folded_comment_count, total_count)
       article |> ORM.update_meta(meta)
+    end)
+    |> Repo.transaction()
+    |> result()
+  end
+
+  defp pin_unlocked(%Comment{} = comment, article) do
+    with {:ok, comment} <- maybe_existing_pinned_comment(comment),
+         {:ok, thread} <- FrontDesk.thread_of(comment),
+         {:ok, info} <- match(thread) do
+      Multi.new()
+      |> Multi.run(:checked_pined_comments_count, fn _, _ ->
+        pined_comments_query =
+          from(p in PinnedComment,
+            where: field(p, ^info.foreign_key) == ^article.id
+          )
+
+        check_pined_comments_count(pined_comments_query)
+      end)
+      |> Multi.run(:update_comment_flag, fn _, _ ->
+        ORM.update(comment, %{is_pinned: true})
+      end)
+      |> Multi.run(:add_pined_comment, fn _, _ ->
+        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, article.id)
+
+        PinnedComment |> ORM.create(attrs)
+      end)
+      |> Repo.transaction()
+      |> result()
+    end
+  end
+
+  defp undo_pin_unlocked(%Comment{} = comment) do
+    Multi.new()
+    |> Multi.run(:update_comment_flag, fn _, _ ->
+      ORM.update(comment, %{is_pinned: false})
+    end)
+    |> Multi.run(:remove_pined_comment, fn _, _ ->
+      ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
     end)
     |> Repo.transaction()
     |> result()

@@ -5,6 +5,7 @@ import { removeDraft } from '../persistence'
 import type { ApplyDraft } from '../spec'
 import { emptyDraft } from '../store'
 
+/** Exposes apply draft state and actions through the shared React hook boundary. */
 export const useApplyDraft = (accountRef: string) => {
   const store = useApplyStore()
   const snapshot = useSnapshot(store)

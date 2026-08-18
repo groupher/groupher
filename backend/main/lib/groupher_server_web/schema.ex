@@ -1,6 +1,13 @@
 defmodule GroupherServerWeb.Schema do
   @moduledoc """
-  schema index for all modules
+  Root Absinthe schema assembling Groupher's account, CMS, analysis, and helper APIs.
+
+  Business position:
+
+      HTTP / WebSocket client
+        -> Phoenix endpoint
+        -> Schema
+        -> web or domain boundary
   """
   use Absinthe.Schema
   import GroupherServerWeb.Schema.Helper.Imports

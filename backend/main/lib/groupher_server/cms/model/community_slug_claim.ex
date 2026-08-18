@@ -1,5 +1,14 @@
 defmodule GroupherServer.CMS.Model.CommunitySlugClaim do
-  @moduledoc "Single namespace claim shared by applications and communities."
+  @moduledoc """
+  Single namespace claim shared by applications and communities.
+
+  Business position:
+
+      CMS context
+        -> CommunitySlugClaim schema/changeset
+        -> GroupherServer.Repo
+        -> PostgreSQL
+  """
 
   use Ecto.Schema
 

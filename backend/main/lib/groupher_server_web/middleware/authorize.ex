@@ -3,7 +3,17 @@
 # ---
 defmodule GroupherServerWeb.Middleware.Authorize do
   @moduledoc """
-  authorize gateway, mainly for login check
+  Rejects GraphQL fields that require a current authenticated user.
+
+  It also projects credential-verification failures from the context into the
+  shared GraphQL error contract.
+
+  Business position:
+
+      Absinthe context
+        -> Authorize
+        -> authenticated resolver or auth error
+        -> GraphQL response
   """
 
   @behaviour Absinthe.Middleware
