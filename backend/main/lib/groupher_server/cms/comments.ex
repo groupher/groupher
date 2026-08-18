@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Comments do
 
   alias Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias CMS.FrontDesk
   alias CMS.Model.{Comment, Community}
   alias Helper.T
 
@@ -133,24 +132,6 @@ defmodule GroupherServer.CMS.Comments do
   def undo_mark_comment_solution(comment_id, %User{} = user),
     do: Writer.undo_mark_solution(comment_id, user)
 
-  @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `upvote_comment` through the public `Comments` boundary."
-  def upvote_comment(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, canonical} <- CMS.Interactions.upvote(comment, user) do
-      {:ok, CMS.Interactions.State.read(canonical, user)}
-    end
-  end
-
-  @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `undo_upvote_comment` through the public `Comments` boundary."
-  def undo_upvote_comment(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, canonical} <- CMS.Interactions.undo_upvote(comment, user) do
-      {:ok, CMS.Interactions.State.read(canonical, user)}
-    end
-  end
-
   @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `reply_comment` through the public `Comments` boundary."
   def reply_comment(comment_id, body, %User{} = user),
@@ -177,28 +158,6 @@ defmodule GroupherServer.CMS.Comments do
   @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `unfold_comment` through the public `Comments` boundary."
   def unfold_comment(comment_id, %User{} = user), do: States.unfold(comment_id, user)
-
-  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `emotion_to_comment` through the public `Comments` boundary."
-  def emotion_to_comment(comment_id, emotion, %User{} = user),
-    do: interaction_emotion(comment_id, emotion, user, :add)
-
-  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `undo_emotion_to_comment` through the public `Comments` boundary."
-  def undo_emotion_to_comment(comment_id, emotion, %User{} = user),
-    do: interaction_emotion(comment_id, emotion, user, :remove)
-
-  defp interaction_emotion(comment_id, emotion, user, operation) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         result <-
-           if(operation == :add,
-             do: CMS.Interactions.emotion(comment, emotion, user),
-             else: CMS.Interactions.undo_emotion(comment, emotion, user)
-           ),
-         {:ok, canonical} <- result do
-      {:ok, CMS.Interactions.State.read(canonical, user)}
-    end
-  end
 
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   @doc "Runs `set_comment_illegal` through the public `Comments` boundary."

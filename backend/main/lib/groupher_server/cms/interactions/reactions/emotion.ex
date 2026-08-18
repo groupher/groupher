@@ -1,6 +1,6 @@
-defmodule GroupherServer.CMS.Interactions.Emotion do
+defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   @moduledoc """
-  Owns idempotent Article/Comment emotion commands and safe vocabulary decoding.
+  Owns the complete idempotent Article and Comment emotion flow.
 
       CMS.Interactions
         -> Gate canonical Artiment
@@ -14,46 +14,49 @@ defmodule GroupherServer.CMS.Interactions.Emotion do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.{Config, Matcher}
+  alias CMS.Articles.MutationLock
   alias CMS.Communities.Enable
-  alias CMS.Interactions.{ErrorCat, State}
+  alias CMS.Interactions.{ErrorCat, ReadState}
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias CMS.{Events, Gate}
   alias Helper.{Later, T}
 
-  @doc "Applies an emotion as an idempotent set-state command."
+  @doc """
+  Applies an emotion as an idempotent set-state command.
+
+  ## Examples
+
+      Reactions.Emotion.add(comment, :heart, actor)
+
+  """
   @spec add(struct(), atom(), User.t()) :: T.domain_res(struct())
   def add(artiment, emotion, %User{} = actor), do: mutate(artiment, emotion, actor, :add)
 
-  @doc "Removes an emotion as an idempotent set-state command."
+  @doc """
+  Removes an emotion as an idempotent set-state command.
+
+  ## Examples
+
+      Reactions.Emotion.remove(comment, :heart, actor)
+
+  """
   @spec remove(struct(), atom(), User.t()) :: T.domain_res(struct())
   def remove(artiment, emotion, %User{} = actor),
     do: mutate(artiment, emotion, actor, :remove)
 
-  @doc "Decodes a persisted emotion without creating runtime atoms."
-  @spec decode(String.t(), :article | :comment) ::
-          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
-  def decode(value, kind) when is_binary(value) and kind in [:article, :comment] do
-    vocabulary = if kind == :article, do: Config.emotions(), else: Config.comment_emotions()
-
-    case Enum.find(vocabulary, &(Atom.to_string(&1) == value)) do
-      emotion when is_atom(emotion) and not is_nil(emotion) -> {:ok, emotion}
-      nil -> {:error, GroupherServer.CMS.Interactions.ErrorCat.unknown_emotion()}
-    end
-  end
-
-  def decode(_value, _kind), do: {:error, GroupherServer.CMS.Interactions.ErrorCat.unknown_emotion()}
-
   defp mutate(input, emotion, actor, operation) when is_atom(emotion) do
-    Repo.transaction(fn ->
-      with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
-           {:ok, info} <- Matcher.match_interaction(canonical),
-           {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
-           {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-           :ok <- sync_state(canonical, emotion, actor, operation, change) do
-        {canonical, change}
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
+    MutationLock.observe_transaction(fn ->
+      Repo.transaction(fn ->
+        with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
+             {:ok, info} <- Matcher.match_interaction(canonical),
+             {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
+             {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
+             :ok <- sync_state(canonical, emotion, actor, operation, change) do
+          {canonical, change}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end)
     |> after_commit(operation, actor)
   end
@@ -68,6 +71,53 @@ defmodule GroupherServer.CMS.Interactions.Emotion do
   defp allow_emotion(article, info, emotion) do
     Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
   end
+
+  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: :ok
+
+  defp sync_state(canonical, emotion, actor, operation, :changed) do
+    result =
+      if operation == :add,
+        do: ReadState.add_emotion(canonical, emotion, actor),
+        else: ReadState.remove_emotion(canonical, emotion, actor)
+
+    case result do
+      {:ok, _projection} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp after_commit({:ok, {canonical, :changed}}, :add, actor) do
+    if match?(%Comment{}, canonical) do
+      Later.run({Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]})
+    end
+
+    {:ok, canonical}
+  end
+
+  defp after_commit({:ok, {canonical, _change}}, _operation, _actor), do: {:ok, canonical}
+  defp after_commit({:error, reason}, _operation, _actor), do: {:error, reason}
+
+  @doc """
+  Safely decodes a persisted emotion using the bounded vocabulary.
+
+  ## Examples
+
+      Reactions.Emotion.decode("heart", :article)
+      #=> {:ok, :heart}
+
+  """
+  @spec decode(String.t(), :article | :comment) ::
+          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  def decode(value, kind) when is_binary(value) and kind in [:article, :comment] do
+    vocabulary = if kind == :article, do: Config.emotions(), else: Config.comment_emotions()
+
+    case Enum.find(vocabulary, &(Atom.to_string(&1) == value)) do
+      emotion when is_atom(emotion) and not is_nil(emotion) -> {:ok, emotion}
+      nil -> {:error, ErrorCat.unknown_emotion()}
+    end
+  end
+
+  def decode(_value, _kind), do: {:error, ErrorCat.unknown_emotion()}
 
   defp change_fact(%Comment{} = comment, _info, emotion, actor, :add) do
     insert_fact(
@@ -142,31 +192,6 @@ defmodule GroupherServer.CMS.Interactions.Emotion do
     end
   end
 
-  defp sync_state(_canonical, _emotion, _actor, _operation, :unchanged), do: :ok
-
-  defp sync_state(canonical, emotion, actor, operation, :changed) do
-    result =
-      if operation == :add,
-        do: State.add_emotion(canonical, emotion, actor),
-        else: State.remove_emotion(canonical, emotion, actor)
-
-    case result do
-      {:ok, _projection} -> :ok
-      {:error, _reason} = error -> error
-    end
-  end
-
   defp author_user_id(%{author: %{user_id: user_id}}), do: user_id
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
-
-  defp after_commit({:ok, {canonical, :changed}}, :add, actor) do
-    if match?(%Comment{}, canonical) do
-      Later.run({Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]})
-    end
-
-    {:ok, canonical}
-  end
-
-  defp after_commit({:ok, {canonical, _change}}, _operation, _actor), do: {:ok, canonical}
-  defp after_commit({:error, reason}, _operation, _actor), do: {:error, reason}
 end

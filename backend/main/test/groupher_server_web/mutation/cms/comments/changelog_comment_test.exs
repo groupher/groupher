@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
 
       variables = %{
         comment: comment_path(community, changelog, :changelog, comment),

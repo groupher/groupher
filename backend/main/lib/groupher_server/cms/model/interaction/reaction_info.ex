@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
       import Ecto.Changeset
 
       alias Helper.Constant.DBPrefix
+      alias GroupherServer.CMS.Model
 
       @schema_prefix DBPrefix.cms()
       @target_id unquote(target_id)
@@ -38,9 +39,9 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
       schema unquote(table) do
         belongs_to(unquote(target), unquote(target_schema), foreign_key: unquote(target_id))
 
-        field(:viewed_user_ids, GroupherServer.CMS.Model.Interaction.RoaringBitmap)
-        field(:upvoted_user_ids, GroupherServer.CMS.Model.Interaction.RoaringBitmap)
-        field(:reported_user_ids, GroupherServer.CMS.Model.Interaction.RoaringBitmap)
+        field(:viewed_user_ids, Model.Interaction.RoaringBitmap)
+        field(:upvoted_user_ids, Model.Interaction.RoaringBitmap)
+        field(:reported_user_ids, Model.Interaction.RoaringBitmap)
         field(:upvotes_count, :integer, default: 0)
         field(:latest_upvoted_users, {:array, :map}, default: [])
         unquote(collection_fields)

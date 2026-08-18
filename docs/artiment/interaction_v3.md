@@ -1,4 +1,4 @@
-# Artiment reactions v3：mutation admission 与可扩展性收口
+# Artiment Interaction V3：mutation admission 与可扩展性收口
 
 > 状态：Phase 1–3 的 correctness、Gate context、thread/fact registry 与 emotion bounded decode 已落地并通过 focused regression；Phase 4 仅保留 Audit SQL builder 拆分和 moderation 兼容字段清理等显式债务。
 
@@ -11,13 +11,15 @@
 - [x] Phase 1–3 的 scope、registry、bounded emotion decode 已落地；
 - [ ] Phase 4：Audit SQL builder 拆分、`meta.reported_count` moderation 兼容字段迁移清单。
 
-> 前置文档：[reactions](./reactions.md) 定义 fact、bitmap 和 projection；
-> [reactions v2](./reactions_v2.md) 定义 projection count、批量读取和排序；
+> 前置文档：[Interaction V1](./interaction_v1.md) 定义 fact、bitmap 和 projection；
+> [Interaction V2](./interaction_v2.md) 定义 projection count、批量读取和排序；
 > 本文只处理 interaction mutation 准入、thread metadata、Audit 和运行时协议的收口。
 >
 > 跨领域合同：[Gate V2](../community/gate_v2.md) 负责 actor/action 准入，
 > [Community Lifecycle](../community/lifecycle.md) 负责 Community 状态能力，
 > [Gate V3](../community/gate_v3.md) 负责 Article/Doc Draft、Public 和 Lifecycle 的后续边界。
+>
+> 后续内部架构收口见 [Interaction V4](./interaction_v4.md)。
 
 ## 0. 结论
 
@@ -580,7 +582,7 @@ registry constraint test 按 target/FK 展开核对。
 
 账号全局 suspended、Community membership ban/mute 与 Community Lifecycle suspended 是三种不同事实。
 若 Gate V2 已有前两类 actor policy，应在对应 Gate 测试中覆盖并由 interaction 复用；若当前没有明确
-事实来源和 Decision，它们属于 Gate V2 的独立产品合同，Reactions V3 不临时发明 banned-user policy。
+事实来源和 Decision，它们属于 Gate V2 的独立产品合同，Interaction V3 不临时发明 banned-user policy。
 
 ### 5.2 Comment inheritance
 
@@ -629,7 +631,7 @@ v3 完成必须同时满足：
 9. Audit 仍能以 fact 为准原子修复 projection，但 SQL construction 可独立验证；
 10. `meta.reported_count` 有明确迁移清单，不再被描述为常规 reaction count；
 11. 不引入 `GenericLifecycle`、interaction 自有可见性 policy 或第二套 Gate；
-12. reactions v1/v2、Gate 和 Lifecycle 文档互相指向同一现行合同。
+12. Interaction V1/V2、Gate 和 Lifecycle 文档互相指向同一现行合同。
 13. Gate Decision 经既有 GraphQL middleware 暴露稳定错误，前端失败时回滚 optimistic state；
 14. fact 唯一约束、fact/projection 原子回滚和副作用不泄漏均有真实事务测试；
 15. Phase 1 对不可写状态的 add/remove 一律 deny，未来 undo-own-relation 必须另立显式合同。

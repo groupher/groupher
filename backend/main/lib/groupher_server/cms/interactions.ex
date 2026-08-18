@@ -4,79 +4,181 @@ defmodule GroupherServer.CMS.Interactions do
 
       GraphQL / service Reader
         -> CMS.Interactions
-        -> Interaction query or command
-        -> fact and derived state
+        -> Reaction / ReadState / Scope / ViewEvents
+        -> authoritative facts and derived read state
 
-  V4 is introduced in phases. Query scope is the first public operation moved
-  here; mutation commands are added as their transaction contracts migrate.
+  The facade owns the stable Interaction reaction and read contracts. SQL,
+  fact writers, derived ReadState, worker maintenance, and response assembly stay
+  behind their respective domain owners.
   """
 
   alias GroupherServer.Accounts.Model.User
 
-  alias GroupherServer.CMS.Interactions.{
-    Collect,
-    Emotion,
-    Report,
-    Scope,
-    Upvote,
-    View,
-    ViewerState
-  }
+  alias GroupherServer.CMS.Interactions.{Reactions, ReadState, Scope, ViewEvents}
 
-  @doc "Reports an Artiment using the immutable reporter identity."
+  @doc """
+  Reports an Artiment using the immutable reporter identity.
+
+  ## Examples
+
+      CMS.Interactions.report(comment, "spam", %{}, actor)
+
+  """
   @spec report(struct(), String.t(), term(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate report(artiment, reason, attrs, actor), to: Report, as: :add
+  defdelegate report(artiment, reason, attrs, actor), to: Reactions
 
-  @doc "Removes the current actor's Artiment report idempotently."
+  @doc """
+  Removes the current actor's Artiment report idempotently.
+
+  ## Examples
+
+      CMS.Interactions.undo_report(comment, actor)
+
+  """
   @spec undo_report(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_report(artiment, actor), to: Report, as: :remove
+  defdelegate undo_report(artiment, actor), to: Reactions
 
-  @doc "Returns typed Interaction state for one Artiment and optional viewer."
-  @spec viewer_state(struct(), User.t() | nil, keyword()) :: struct()
-  defdelegate viewer_state(artiment, viewer, opts \\ []), to: ViewerState, as: :one
+  @doc """
+  Returns typed Interaction state for one Artiment and optional viewer.
 
-  @doc "Returns typed Interaction states keyed by Artiment type and physical id."
+  ## Examples
+
+      CMS.Interactions.viewer_state(article, viewer)
+
+  """
+  @spec viewer_state(struct(), User.t() | nil, keyword()) :: map() | {:error, term()}
+  defdelegate viewer_state(artiment, viewer, opts \\ []), to: ReadState
+
+  @doc """
+  Returns typed Interaction states keyed by Artiment type and physical id.
+
+  ## Examples
+
+      CMS.Interactions.viewer_states([article, comment], viewer)
+
+  """
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map()
-  defdelegate viewer_states(artiments, viewer, opts \\ []), to: ViewerState, as: :many
+  defdelegate viewer_states(artiments, viewer, opts \\ []), to: ReadState
 
-  @doc "Records a durable Article view without taking the aggregate mutation lock."
+  @doc """
+  Returns lightweight fixed counts keyed by Artiment type and physical id.
+
+  ## Examples
+
+      CMS.Interactions.counts([article, comment])
+
+  """
+  @spec counts([struct()]) :: map() | {:error, GroupherServer.ErrorCat.Error.t()}
+  defdelegate counts(artiments), to: ReadState
+
+  @doc """
+  Records a durable Article view without taking the aggregate mutation lock.
+
+  ## Examples
+
+      CMS.Interactions.record_view(article, viewer, event_id)
+
+  """
   @spec record_view(struct(), User.t() | nil, Ecto.UUID.t() | nil) ::
           {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate record_view(article, viewer, event_id), to: View, as: :record
+  defdelegate record_view(article, viewer, event_id), to: ViewEvents, as: :record
 
-  @doc "Collects an Article idempotently and returns the canonical Article."
+  @doc """
+  Collects an Article idempotently and returns the canonical Article.
+
+  ## Examples
+
+      CMS.Interactions.collect(article, actor)
+
+  """
   @spec collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate collect(article, actor), to: Collect, as: :add
+  defdelegate collect(article, actor), to: Reactions
 
-  @doc "Removes an Article collect idempotently and returns the canonical Article."
+  @doc """
+  Removes an Article collect idempotently and returns the canonical Article.
+
+  ## Examples
+
+      CMS.Interactions.undo_collect(article, actor)
+
+  """
   @spec undo_collect(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_collect(article, actor), to: Collect, as: :remove
+  defdelegate undo_collect(article, actor), to: Reactions
 
-  @doc "Returns public paged users who collected an already-scoped Article."
+  @doc """
+  Returns public paged users who collected an already-scoped Article.
+
+  ## Examples
+
+      CMS.Interactions.collected_users(article, %{page: 1, size: 20})
+
+  """
   @spec collected_users(struct(), map()) :: {:ok, term()} | {:error, term()}
-  defdelegate collected_users(article, filter), to: Collect, as: :users
+  defdelegate collected_users(article, filter), to: Reactions
 
-  @doc "Applies an Artiment emotion idempotently and returns the canonical Artiment."
+  @doc """
+  Applies an Artiment emotion idempotently and returns the canonical Artiment.
+
+  ## Examples
+
+      CMS.Interactions.emotion(comment, :heart, actor)
+
+  """
   @spec emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor), to: Emotion, as: :add
+  defdelegate emotion(artiment, emotion, actor), to: Reactions
 
-  @doc "Removes an Artiment emotion idempotently and returns the canonical Artiment."
+  @doc """
+  Removes an Artiment emotion idempotently and returns the canonical Artiment.
+
+  ## Examples
+
+      CMS.Interactions.undo_emotion(comment, :heart, actor)
+
+  """
   @spec undo_emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor), to: Emotion, as: :remove
+  defdelegate undo_emotion(artiment, emotion, actor), to: Reactions
 
-  @doc "Adds an Artiment upvote idempotently and returns the canonical Artiment."
+  @doc """
+  Adds an Artiment upvote idempotently and returns the canonical Artiment.
+
+  ## Examples
+
+      CMS.Interactions.upvote(article, actor)
+
+  """
   @spec upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor), to: Upvote, as: :add
+  defdelegate upvote(artiment, actor), to: Reactions
 
-  @doc "Removes an Artiment upvote idempotently and returns the canonical Artiment."
+  @doc """
+  Removes an Artiment upvote idempotently and returns the canonical Artiment.
+
+  ## Examples
+
+      CMS.Interactions.undo_upvote(article, actor)
+
+  """
   @spec undo_upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor), to: Upvote, as: :remove
+  defdelegate undo_upvote(artiment, actor), to: Reactions
 
-  @doc "Returns public paged users who upvoted an already-scoped Article."
+  @doc """
+  Returns public paged users who upvoted an already-scoped Article.
+
+  ## Examples
+
+      CMS.Interactions.upvoted_users(article, %{page: 1, size: 20})
+
+  """
   @spec upvoted_users(struct(), map()) :: {:ok, term()} | {:error, term()}
-  defdelegate upvoted_users(article, filter), to: Upvote, as: :users
+  defdelegate upvoted_users(article, filter), to: Reactions
 
-  @doc "Compiles Interaction-owned ordering into an Article queryable."
+  @doc """
+  Compiles Interaction-owned ordering into an Article queryable.
+
+  ## Examples
+
+      CMS.Interactions.scope(Post, order: :upvotes)
+
+  """
   @spec scope(Ecto.Queryable.t(), keyword()) ::
           {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   defdelegate scope(queryable, opts), to: Scope

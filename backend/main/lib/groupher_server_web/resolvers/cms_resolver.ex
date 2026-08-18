@@ -29,7 +29,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias Accounts.Model.User
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
-  alias CMS.Model.{Author, Category, Community, CoverEditInfo}
+  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
   require CMS.Const
@@ -1489,13 +1489,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp article_path_community(_), do: {:error, "invalid article input"}
 
-  defp hydrate_interaction({:ok, artiment}, user),
-    do: {:ok, CMS.Interactions.State.read(artiment, user)}
+  defp hydrate_interaction({:ok, %Comment{} = comment}, user),
+    do: CMS.Comments.InteractionResponse.one(comment, user)
+
+  defp hydrate_interaction({:ok, article}, user),
+    do: CMS.Articles.InteractionResponse.one(article, user)
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 
-  defp hydrate_report_interaction({:ok, artiment}, user),
-    do: {:ok, CMS.Interactions.State.read(artiment, user, surface: :report)}
+  defp hydrate_report_interaction({:ok, %Comment{} = comment}, user),
+    do: CMS.Comments.InteractionResponse.one(comment, user, surface: :report)
+
+  defp hydrate_report_interaction({:ok, article}, user),
+    do: CMS.Articles.InteractionResponse.one(article, user, surface: :report)
 
   defp hydrate_report_interaction({:error, _reason} = error, _user), do: error
 

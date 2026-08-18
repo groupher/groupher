@@ -366,7 +366,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      CMS.Comments.upvote_comment(comment.id, user)
+      CMS.Interactions.upvote(comment, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
 
@@ -384,8 +384,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
@@ -404,10 +404,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, author_user} = ORM.find(User, changelog.author.user.id)
 
-      CMS.Comments.upvote_comment(comment.id, author_user)
+      CMS.Interactions.upvote(comment, author_user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
-      comment = CMS.Interactions.State.read(comment, author_user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
     end
 
@@ -422,7 +422,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
 
       assert comment.viewer_has_upvoted
     end
@@ -438,16 +439,18 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
 
       assert comment.viewer_has_upvoted
-      assert CMS.Interactions.State.read(comment, user).viewer_has_upvoted
+      assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
 
       refute comment.viewer_has_upvoted
-      assert CMS.Interactions.State.read(comment, user).viewer_has_upvoted
+      assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
     end
 
     test "user upvote an already-upvoted comment is idempotent", ~m(community user changelog)a do
@@ -460,8 +463,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      CMS.Comments.upvote_comment(comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      CMS.Interactions.upvote(comment, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
     end
 
     test "upvote comment should inc the comment's upvotes_count",
@@ -478,11 +481,11 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       {:ok, comment} = ORM.find(Comment, comment.id)
       assert comment.upvotes_count == 0
 
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user2)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
-      comment = CMS.Interactions.State.read(comment)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, nil)
       assert comment.upvotes_count == 2
     end
 
@@ -496,12 +499,13 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      CMS.Comments.upvote_comment(comment.id, user)
+      CMS.Interactions.upvote(comment, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -516,10 +520,12 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
           user
         )
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -536,10 +542,10 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.upvote_comment(parent_comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user2)
-      {:ok, _} = CMS.Comments.upvote_comment(replied_comment.id, user3)
+      {:ok, _} = CMS.Interactions.upvote(parent_comment, user)
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user)
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user2)
+      {:ok, _} = CMS.Interactions.upvote(replied_comment, user3)
 
       filter = %{page: 1, size: 20}
 
@@ -551,7 +557,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
       assert parent.upvotes_count == 1
       assert reply.upvotes_count == 3
 
-      {:ok, _} = CMS.Comments.undo_upvote_comment(replied_comment.id, user2)
+      {:ok, _} = CMS.Interactions.undo_upvote(replied_comment, user2)
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(:changelog, changelog.id, filter, :replies)

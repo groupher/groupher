@@ -66,9 +66,9 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {:ok, user3} = db_insert(:user, nickname: "third nickname")
       {community, post, _attrs, _author} = mock_article(:post)
 
-      {:ok, _} = CMS.Articles.upvote(post, user1)
-      {:ok, _} = CMS.Articles.upvote(post, user2)
-      {:ok, _} = CMS.Articles.upvote(post, user3)
+      {:ok, _} = CMS.Interactions.upvote(post, user1)
+      {:ok, _} = CMS.Interactions.upvote(post, user2)
+      {:ok, _} = CMS.Interactions.upvote(post, user3)
 
       {:ok, first_page} =
         CMS.Articles.page(:post, %{

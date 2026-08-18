@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
   alias CMS.SearchArtiments.Artiment
-  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -44,7 +43,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          true <- is_binary(article.article_hash_id),
          true <- not is_nil(article.inner_id) do
       ref = Artiment.article_ref(thread, article.article_hash_id)
-      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+      counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       {:ok,
        %Artiment{

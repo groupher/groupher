@@ -14,7 +14,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
   describe "[user upvoted articles]" do
     test "user can get paged upvoted common articles", ~m(user post)a do
-      {:ok, _} = CMS.Articles.upvote(post, user)
+      {:ok, _} = CMS.Interactions.upvote(post, user)
 
       filter = %{page: 1, size: 20}
       {:ok, articles} = Accounts.paged_articles(user, filter)
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
     end
 
     test "user can get paged upvoted posts by thread filter", ~m(user post)a do
-      {:ok, _} = CMS.Articles.upvote(post, user)
+      {:ok, _} = CMS.Interactions.upvote(post, user)
 
       filter = %{thread: :post, page: 1, size: 20}
       {:ok, articles} = Accounts.paged_articles(user, filter)
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
     end
 
     test "invalid thread filter returns explicit error", ~m(user post)a do
-      {:ok, _} = CMS.Articles.upvote(post, user)
+      {:ok, _} = CMS.Interactions.upvote(post, user)
 
       filter = %{thread: "INVALID", page: 1, size: 20}
 

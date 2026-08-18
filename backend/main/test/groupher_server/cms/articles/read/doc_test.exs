@@ -104,8 +104,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       assert doc.id == doc2.id
-      assert :ok = CMS.Interactions.View.project(event_id)
-      assert CMS.Interactions.State.read(doc2, user).viewer_has_viewed
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.viewer_state(doc2, user).viewer_has_viewed
     end
 
     test "read doc should update views and meta viewed_user_list",
@@ -126,8 +126,8 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, _} = CMS.Articles.read(article_community(doc), :doc, doc.inner_id, user, event_id)
 
-      assert :ok = CMS.Interactions.View.project(event_id)
-      assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert CMS.Interactions.viewer_state(doc, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
@@ -141,10 +141,10 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       {:ok, created} = ORM.find(Doc, doc.id)
-      assert :ok = CMS.Interactions.View.project(event_id)
+      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
       assert created.views == 1
-      assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
-      assert CMS.Interactions.State.read(doc, user2).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(doc, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(doc, user2).viewer_has_viewed
     end
 
     test "read doc should contains viewer_has_xxx state",
@@ -182,9 +182,9 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert not doc.viewer_has_upvoted
       assert not doc.viewer_has_reported
 
-      {:ok, _} = CMS.Articles.upvote(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user)
       {:ok, doc} = ORM.find(Doc, doc.id)
-      {:ok, _} = CMS.Articles.collect(doc, user)
+      {:ok, _} = CMS.Interactions.collect(doc, user)
       {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
 
       {:ok, doc} =

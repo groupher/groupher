@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
       import Ecto.Changeset
 
       alias Helper.Constant.DBPrefix
+      alias GroupherServer.CMS.Model
 
       @schema_prefix DBPrefix.cms()
       @target_id unquote(target_id)
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
         belongs_to(unquote(target), unquote(target_schema), foreign_key: unquote(target_id))
 
         field(:emotion, :string)
-        field(:user_ids, GroupherServer.CMS.Model.Interaction.RoaringBitmap)
+        field(:user_ids, Model.Interaction.RoaringBitmap)
         field(:users_count, :integer, default: 0)
         field(:latest_users, {:array, :map}, default: [])
 

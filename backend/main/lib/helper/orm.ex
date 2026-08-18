@@ -39,7 +39,6 @@ defmodule Helper.ORM do
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
-  alias CMS.Interactions.State
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
@@ -711,7 +710,7 @@ defmodule Helper.ORM do
 
   defp export_article_info(thread, article) do
     author = article.author.user
-    counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+    counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
     %{
       thread: thread,

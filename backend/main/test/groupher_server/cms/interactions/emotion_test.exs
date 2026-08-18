@@ -1,7 +1,7 @@
-defmodule GroupherServer.Test.CMS.Interactions.EmotionTest do
+defmodule GroupherServer.Test.CMS.Interactions.ReactionsEmotionTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Interactions.Emotion
+  alias GroupherServer.CMS.Interactions.Reactions.Emotion
   alias GroupherServer.ErrorCat.Error
 
   test "accepts configured emotions without creating atoms" do

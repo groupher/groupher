@@ -12,8 +12,6 @@ defmodule GroupherServer.CMS.Comments.Reader do
   """
 
   import Ecto.Query, warn: false
-  import Helper.Utils, only: [done: 1]
-
   alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
 
@@ -22,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
   alias CMS.Gate.Context.Scope.Comment, as: CommentScope
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Comment
-  alias CMS.Interactions.State
+  alias CMS.Comments.InteractionResponse
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
@@ -45,15 +43,22 @@ defmodule GroupherServer.CMS.Comments.Reader do
   end
 
   @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{thread: thread} = comment),
-    do: read_by_id(comment.id, nil, thread)
+  def one_comment(%Comment{thread: thread} = comment) do
+    with {:ok, comment} <- read_by_id(comment.id, nil, thread) do
+      add_viewer_states(comment, nil)
+    end
+  end
 
-  def one_comment(%{article: article_path, inner_id: inner_id}),
-    do: read_by_path(article_path, inner_id, nil) |> normalize_error()
+  def one_comment(%{article: article_path, inner_id: inner_id}) do
+    with {:ok, comment} <- read_by_path(article_path, inner_id, nil) |> normalize_error() do
+      add_viewer_states(comment, nil)
+    end
+  end
 
   def one_comment(id) do
-    with %Comment{thread: thread} <- Repo.get(Comment, id) do
-      read_by_id(id, nil, thread)
+    with %Comment{thread: thread} <- Repo.get(Comment, id),
+         {:ok, comment} <- read_by_id(id, nil, thread) do
+      add_viewer_states(comment, nil)
     else
       nil -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
@@ -130,7 +135,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
   end
 
   defp add_viewer_states(comment, user) do
-    comment |> State.read(user) |> done
+    InteractionResponse.one(comment, user)
   end
 
   defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)

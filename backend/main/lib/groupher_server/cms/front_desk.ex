@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.Helper.ArticlePath
   alias CMS.Model.{Comment, Community, CommunityTag}
-  alias CMS.Interactions.State
+  alias CMS.Articles.InteractionResponse
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
@@ -289,7 +289,7 @@ defmodule GroupherServer.CMS.FrontDesk do
            |> Repo.one()
            |> done(),
          {:ok, article} <- ORM.fill_meta(article) do
-      {:ok, State.read(article)}
+      InteractionResponse.one(article, nil)
     else
       {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end

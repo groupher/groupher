@@ -1,6 +1,6 @@
-defmodule GroupherServer.CMS.Interactions.Report do
+defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   @moduledoc """
-  Executes Article and Comment report commands inside the Interaction boundary.
+  Owns the complete Article and Comment report flow.
 
       CMS.Interactions
         -> Gate canonical Artiment and aggregate MutationLock
@@ -11,38 +11,51 @@ defmodule GroupherServer.CMS.Interactions.Report do
   meta is a separate account moderation mechanism.
   """
 
-  import Ecto.Query
-
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Matcher
+  alias CMS.Articles.MutationLock
   alias CMS.Comments.States, as: CommentStates
-  alias CMS.Interactions.{ErrorCat, State}
+  import Ecto.Query
+
+  alias CMS.Interactions.{ErrorCat, ReadState}
   alias CMS.Model.{AbuseReport, Comment, Embeds}
   alias CMS.{Gate}
   alias Helper.T
 
   @report_threshold_for_fold Comment.report_threshold_for_fold()
 
-  @doc "Adds one report fact for the immutable reporter identity."
+  @doc """
+  Adds one report fact for the immutable reporter identity.
+
+  ## Examples
+
+      Reactions.Report.add(comment, "spam", %{}, actor)
+
+  """
   @spec add(struct(), String.t(), term(), User.t()) :: T.domain_res(struct())
   def add(artiment, reason, attrs, %User{} = actor) do
     mutate(artiment, actor, fn canonical, info ->
-      with {:ok, report} <- load_report(info, canonical.id),
-           {:ok, report} <- add_case(report, info, canonical.id, reason, attrs, actor),
-           {:ok, _projection} <- State.add_report(canonical, actor),
+      with {:ok, report} <- add_fact(info, canonical.id, reason, attrs, actor),
+           {:ok, _projection} <- ReadState.add_report(canonical, actor),
            :ok <- maybe_fold_comment(canonical, report, actor) do
         canonical
       end
     end)
   end
 
-  @doc "Removes the current reporter's fact idempotently."
+  @doc """
+  Removes the current reporter's fact idempotently.
+
+  ## Examples
+
+      Reactions.Report.remove(comment, actor)
+
+  """
   @spec remove(struct(), User.t()) :: T.domain_res(struct())
   def remove(artiment, %User{} = actor) do
     mutate(artiment, actor, fn canonical, info ->
-      with {:ok, report} <- load_report(info, canonical.id),
-           {:ok, changed?} <- remove_case(report, actor),
+      with {:ok, changed?} <- remove_fact(info, canonical.id, actor),
            :ok <- maybe_remove_state(canonical, actor, changed?) do
         canonical
       end
@@ -50,19 +63,52 @@ defmodule GroupherServer.CMS.Interactions.Report do
   end
 
   defp mutate(input, actor, command) do
-    Repo.transaction(fn ->
-      with {:ok, canonical} <- Gate.access_check(actor, :report, input),
-           {:ok, info} <- Matcher.match_interaction(canonical),
-           {:ok, result} <- normalize_command(command.(canonical, info)) do
-        result
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
+    MutationLock.observe_transaction(fn ->
+      Repo.transaction(fn ->
+        with {:ok, canonical} <- Gate.access_check(actor, :report, input),
+             {:ok, info} <- Matcher.match_interaction(canonical),
+             {:ok, result} <- normalize_command(command.(canonical, info)) do
+          result
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end)
   end
 
   defp normalize_command({:error, _reason} = error), do: error
   defp normalize_command(result), do: {:ok, result}
+
+  defp maybe_remove_state(_canonical, _actor, false), do: :ok
+
+  defp maybe_remove_state(canonical, actor, true) do
+    case ReadState.remove_report(canonical, actor) do
+      {:ok, _projection} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp maybe_fold_comment(%Comment{} = comment, report, _actor)
+       when report.report_cases_count >= @report_threshold_for_fold do
+    case CommentStates.fold_for_report(comment) do
+      {:ok, _comment} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp maybe_fold_comment(_artiment, _report, _actor), do: :ok
+
+  defp add_fact(info, content_id, reason, attrs, actor) do
+    with {:ok, report} <- load_report(info, content_id) do
+      add_case(report, info, content_id, reason, attrs, actor)
+    end
+  end
+
+  defp remove_fact(info, content_id, actor) do
+    with {:ok, report} <- load_report(info, content_id) do
+      remove_case(report, actor)
+    end
+  end
 
   defp load_report(info, content_id) do
     from(report in AbuseReport,
@@ -128,25 +174,6 @@ defmodule GroupherServer.CMS.Interactions.Report do
       {:ok, false}
     end
   end
-
-  defp maybe_remove_state(_canonical, _actor, false), do: :ok
-
-  defp maybe_remove_state(canonical, actor, true) do
-    case State.remove_report(canonical, actor) do
-      {:ok, _projection} -> :ok
-      {:error, _reason} = error -> error
-    end
-  end
-
-  defp maybe_fold_comment(%Comment{} = comment, report, _actor)
-       when report.report_cases_count >= @report_threshold_for_fold do
-    case CommentStates.fold_for_report(comment) do
-      {:ok, _comment} -> :ok
-      {:error, _reason} = error -> error
-    end
-  end
-
-  defp maybe_fold_comment(_artiment, _report, _actor), do: :ok
 
   defp reported_by?(report, user_id),
     do: Enum.any?(report.report_cases, &(reporter_user_id(&1) == user_id))

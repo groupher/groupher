@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "login user can undo emotion to a post", ~m(community post user owner_conn)a do
-      {:ok, _} = CMS.Articles.emotion(post, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
@@ -85,8 +85,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "same user different emotions create one record per emotion", ~m(post user)a do
-      {:ok, _} = CMS.Articles.emotion(post, :beer, user)
-      {:ok, _} = CMS.Articles.emotion(post, :heart, user)
+      {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(post, :heart, user)
 
       {:ok, records} = ORM.find_all(ArticleUserEmotion, %{page: 1, size: 10})
       assert records.total_count == 2

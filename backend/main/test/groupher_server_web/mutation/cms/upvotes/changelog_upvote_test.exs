@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
     end
 
     test "login user can undo upvote to a changelog", ~m(user_conn community changelog user)a do
-      {:ok, _} = CMS.Articles.upvote(changelog, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user)
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}

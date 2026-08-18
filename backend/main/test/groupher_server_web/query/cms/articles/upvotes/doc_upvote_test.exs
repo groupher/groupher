@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.Query.Upvotes.DocUpvote do
   describe "[upvoted users]" do
     test "guest can get upvoted users list after upvote to a doc",
          ~m(guest_conn community doc user user2)a do
-      {:ok, _} = CMS.Articles.upvote(doc, user)
-      {:ok, _} = CMS.Articles.upvote(doc, user2)
+      {:ok, _} = CMS.Interactions.upvote(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user2)
 
       variables = %{
         article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},

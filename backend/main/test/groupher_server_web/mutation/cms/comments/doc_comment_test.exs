@@ -186,7 +186,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
 
       variables = %{comment: comment_path(community, doc, :doc, comment), emotion: "BEER"}
       comment = owner_conn |> gq_mutation(S.Comment.m(:undo_emotion_to_comment), variables)

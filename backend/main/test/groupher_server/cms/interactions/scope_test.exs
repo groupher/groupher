@@ -25,6 +25,18 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
     assert length(query.order_bys) == 1
   end
 
+  test "interaction ordering replaces an existing order so it remains the primary order" do
+    base = from(post in Post, order_by: [asc: post.title])
+
+    assert {:ok, query} = Interactions.scope(base, order: :upvotes)
+    assert length(query.order_bys) == 1
+
+    [order] = query.order_bys
+    rendered = Macro.to_string(order.expr)
+    assert rendered =~ "upvotes_count"
+    refute rendered =~ "title"
+  end
+
   test "returns validated passthrough queries unchanged" do
     base = Ecto.Queryable.to_query(Doc)
 

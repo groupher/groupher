@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Query.Collects.BlogCollect do
   describe "[collect users]" do
     test "guest can get collected users list after collect a blog",
          ~m(guest_conn community blog user user2)a do
-      {:ok, _} = CMS.Articles.collect(blog, user)
-      {:ok, _} = CMS.Articles.collect(blog, user2)
+      {:ok, _} = CMS.Interactions.collect(blog, user)
+      {:ok, _} = CMS.Interactions.collect(blog, user2)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},

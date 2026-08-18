@@ -1,9 +1,8 @@
-defmodule GroupherServer.Test.CMS.Interactions.ViewTest do
+defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS.Model.ViewEvent
-  alias GroupherServer.CMS.Interactions.State
-  alias GroupherServer.CMS.Interactions.View
+  alias GroupherServer.CMS.Interactions.ViewEvents
   alias GroupherServer.Repo
 
   test "view event ids are unique and target types are constrained" do
@@ -70,7 +69,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewTest do
                }
              ])
 
-    assert {1, nil} = View.delete_expired()
+    assert {1, nil} = ViewEvents.delete_expired()
     assert is_nil(Repo.get(ViewEvent, processed_id))
     assert %ViewEvent{} = Repo.get(ViewEvent, pending_id)
   end
@@ -101,7 +100,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewTest do
              pending_view_events_count: 2,
              failed_view_events_count: 1,
              view_worker_lag_seconds: lag
-           } = View.metrics()
+           } = ViewEvents.metrics()
 
     assert is_integer(lag)
   end
@@ -110,20 +109,19 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewTest do
     {_community, post, _attrs, user} = mock_article(:post)
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} = View.record(post, user, event_id)
-    assert :ok = View.project(event_id)
-    assert :ok = View.project(event_id)
+    assert {:ok, ^event_id} = ViewEvents.record(post, user, event_id)
+    assert :ok = ViewEvents.project(event_id)
+    assert :ok = ViewEvents.project(event_id)
 
     assert Repo.get!(post.__struct__, post.id).views == 1
 
-    [hydrated] = State.read(:post, [post], user, [])
-    assert hydrated.viewer_has_viewed
+    assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
   end
 
   test "an invalid event id returns a declared ErrorCat error" do
     {_community, post, _attrs, user} = mock_article(:post)
 
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_event_id}} =
-             View.record(post, user, "not-a-uuid")
+             ViewEvents.record(post, user, "not-a-uuid")
   end
 end

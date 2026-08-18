@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
     end
 
     test "upvote persists only the matching article ref", ~m(post user)a do
-      {:ok, _post} = CMS.Articles.upvote(post, user)
+      {:ok, _post} = CMS.Interactions.upvote(post, user)
 
       assert {:ok, upvote} =
                ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: :post, post_id: post.id})
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
     end
 
     test "collect persists only the matching article ref", ~m(post user)a do
-      {:ok, _collect} = CMS.Articles.collect(post, user)
+      {:ok, _collect} = CMS.Interactions.collect(post, user)
 
       assert {:ok, collect} =
                ORM.find_by(ArticleCollect, %{user_id: user.id, thread: :post, post_id: post.id})

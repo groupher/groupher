@@ -1,4 +1,4 @@
-# Artiment reactions v2：projection count 与 list 路径
+# Artiment Interaction V2：projection count 与 list 路径
 
 > 状态：核心 v2 已落地；moderation report surface 与 Gate 阈值规则保留为后续 TODO。
 > 互动排序采用常规 projection count + `NULLS LAST` 模式，性能压测按数据规模和线上指标需要另行执行。
@@ -12,7 +12,7 @@
 > 测试边界。
 >
 > 后续 mutation admission、thread metadata、Audit 和 emotion 协议的已知问题与演进方案见
-> [reactions v3](./reactions_v3.md)。v2 仍是 projection count 与 list 路径的现行合同。
+> [Interaction V3](./interaction_v3.md)。V2 仍是 projection count 与 list 路径的现行合同。
 
 ## 0. 当前前提与 cutover
 

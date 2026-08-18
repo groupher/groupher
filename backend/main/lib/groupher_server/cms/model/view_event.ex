@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.ViewEvent do
 
   Business position:
 
-      CMS.Interactions.View -> ViewEvent -> cms.view_events
+      CMS.Interactions.ViewEvents -> ViewEvent -> cms.view_events
   """
 
   use Ecto.Schema

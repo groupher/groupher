@@ -18,7 +18,14 @@ defmodule GroupherServer.CMS.Interactions.Scope do
 
   @type result :: {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
 
-  @doc "Validates the order and returns a composed Article query without executing it."
+  @doc """
+  Validates the order and returns a composed Article query without executing it.
+
+  ## Examples
+
+      Scope.scope(Post, order: :upvotes)
+
+  """
   @spec scope(Ecto.Queryable.t(), keyword()) :: result()
   def scope(queryable, opts) when is_list(opts) do
     order = Keyword.get(opts, :order)
@@ -69,13 +76,17 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     do: {:ok, order_by_count(query, info, :collects_count)}
 
   defp order_by_count(query, info, count_field) do
-    from(article in query,
-      left_join: reaction_info in ^info.reaction_info_model,
-      on: field(reaction_info, ^info.foreign_key) == article.id,
-      order_by: [
-        desc_nulls_last: field(reaction_info, ^count_field),
-        desc_nulls_last: article.id
-      ]
-    )
+    query
+    |> exclude(:order_by)
+    |> then(fn query ->
+      from(article in query,
+        left_join: reaction_info in ^info.reaction_info_model,
+        on: field(reaction_info, ^info.foreign_key) == article.id,
+        order_by: [
+          desc_nulls_last: field(reaction_info, ^count_field),
+          desc_nulls_last: article.id
+        ]
+      )
+    end)
   end
 end

@@ -1,4 +1,4 @@
-# Artiment 互动存储模型
+# Artiment Interaction V1：互动存储模型
 
 > 状态：已实现并验证。reaction/emotion bitmap projection、durable view event、
 > ShadowSync、每日 projection audit、retention/telemetry 与 PostgreSQL 14 本机迁移均已落地；
@@ -32,7 +32,7 @@ JSONB 字段，也不引入双写、双读或运行时兼容分支。
 需要迁移。不做 backfill，不保留双写、双读或运行时兼容分支。
 
 > v1 定义互动事实、projection schema 与 bitmap 语义；projection 的统一读写边界、批量 response
-> 组装与 list 路径由 [reactions v2](./reactions_v2.md) 的 `CMS.Interactions.State` 负责。
+> 组装与 list 路径由 [Interaction V2](./interaction_v2.md) 的 `CMS.Interactions.State` 负责。
 > v2 的实现入口统一为 `CMS.Interactions.State`、`CMS.Interactions.ViewEvents`、
 > `CMS.Interactions.Config` 与 `CMS.Interactions.Schema.*`；旧 `CMS.Reactions.Store` 和
 > `CMS.Comments.ViewerState` 已移除，Trash 专属的 `hydrate_entries` 不属于互动读路径。
@@ -324,7 +324,7 @@ bitmap @> user_id          -- 是否包含某个用户
 ```
 
 v1 的 bitmap 基线对应关系（v2 启用后，count 读取以
-[reactions v2](./reactions_v2.md) 的物化 count 列为准）：
+[Interaction V2](./interaction_v2.md) 的物化 count 列为准）：
 
 ```text
 upvoteCount       -> rb64_cardinality(upvoted_user_ids)
@@ -353,13 +353,13 @@ bitmap 不能替代总 views counter，也不能记录匿名用户。`rb64_cardi
 
 不是所有 bitmap 更新都异步：
 
-| 互动 | 写入方式 | 语义 |
-| --- | --- | --- |
-| upvote | fact row + bitmap + latest snapshot 同步事务 | 操作完成后立即反映 viewer state、count 和 latest users |
-| collect | fact row + bitmap + latest snapshot 同步事务 | 操作完成后立即反映收藏状态和 latest users |
-| emotion | fact row + bitmap + latest snapshot 同步事务 | 操作完成后立即反映 emotion 状态和 latest users |
-| report | `abuse_reports` + `reported_user_ids` 同步事务 | 立即阻止重复举报 |
-| view | event + Oban 异步聚合 | 允许短暂最终一致，降低最高频写入的行锁竞争 |
+| 互动    | 写入方式                                       | 语义                                                   |
+| ------- | ---------------------------------------------- | ------------------------------------------------------ |
+| upvote  | fact row + bitmap + latest snapshot 同步事务   | 操作完成后立即反映 viewer state、count 和 latest users |
+| collect | fact row + bitmap + latest snapshot 同步事务   | 操作完成后立即反映收藏状态和 latest users              |
+| emotion | fact row + bitmap + latest snapshot 同步事务   | 操作完成后立即反映 emotion 状态和 latest users         |
+| report  | `abuse_reports` + `reported_user_ids` 同步事务 | 立即阻止重复举报                                       |
+| view    | event + Oban 异步聚合                          | 允许短暂最终一致，降低最高频写入的行锁竞争             |
 
 同步互动必须在同一数据库事务内完成 fact 写入和 bitmap projection 更新。Oban 不参与
 upvote、collect、emotion、report 的正常请求链路。

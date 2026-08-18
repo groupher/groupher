@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     test "upvote hook should work on changelog", ~m(user2 changelog)a do
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, article} = CMS.Articles.upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "upvote hook should work on changelog comment", ~m(user2 changelog comment)a do
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
       {:ok, comment} = preload_author(comment)
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
@@ -60,10 +60,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     test "undo upvote hook should work on changelog", ~m(user2 changelog)a do
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, article} = CMS.Articles.upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, article} = CMS.Articles.undo_upvote(changelog, user2)
+      {:ok, article} = CMS.Interactions.undo_upvote(changelog, user2)
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
@@ -73,11 +73,11 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "undo upvote hook should work on changelog comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment} = preload_author(comment)
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     test "collect hook should work on changelog", ~m(user2 changelog)a do
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, _} = CMS.Articles.collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =
@@ -111,10 +111,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     test "undo collect hook should work on changelog", ~m(user2 changelog)a do
       {:ok, changelog} = preload_author(changelog)
 
-      {:ok, _} = CMS.Articles.collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
 
-      {:ok, _} = CMS.Articles.undo_collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.undo_collect(changelog, user2)
       Events.emit(:notify_undo_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =

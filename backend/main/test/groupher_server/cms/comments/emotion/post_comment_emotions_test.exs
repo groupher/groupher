@@ -31,9 +31,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :popcorn, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :popcorn, user)
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(
@@ -73,9 +73,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
 
       first_comment = List.first(all_comment)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user2)
-      {:ok, comment} = CMS.Comments.emotion_to_comment(first_comment.id, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(first_comment, :beer, user2)
+      {:ok, comment} = CMS.Interactions.emotion(first_comment, :beer, user)
+      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
 
       assert comment.emotions.viewer_has_downvoteed == true
       assert comment.emotions.viewer_has_beered == true
@@ -89,8 +90,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, reply_comment} =
         CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content"), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(reply_comment.id, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(reply_comment, :downvote, user)
 
       filter = %{page: 1, size: 10}
 
@@ -114,7 +115,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
     #     })
 
     #   {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
-    #   {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
+    #   {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
 
     #   {:ok, subscriber} =
     #     ORM.find_by(CommunitySubscriber, %{
@@ -142,10 +143,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
 
-      emotions = CMS.Interactions.State.read(parent_comment, user).emotions
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
+      emotions = parent_comment.emotions
 
       assert emotions.downvote_count == 2
       assert user_exist_in?(user, emotions.latest_downvote_users)
@@ -156,19 +158,21 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user2)
 
-      emotions = CMS.Interactions.State.read(parent_comment, user).emotions
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
+      emotions = parent_comment.emotions
 
       assert emotions.downvote_count == 2
       assert user_exist_in?(user, emotions.latest_downvote_users)
       assert user_exist_in?(user2, emotions.latest_downvote_users)
 
-      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user2)
+      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user2)
 
-      emotions = CMS.Interactions.State.read(parent_comment, user).emotions
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
+      emotions = parent_comment.emotions
       assert emotions.downvote_count == 0
       assert not user_exist_in?(user, emotions.latest_downvote_users)
       assert not user_exist_in?(user2, emotions.latest_downvote_users)
@@ -178,10 +182,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
 
-      parent_comment = CMS.Interactions.State.read(parent_comment, user)
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
 
       assert parent_comment.emotions.downvote_count == 1
       assert user_exist_in?(user, parent_comment.emotions.latest_downvote_users)
@@ -192,8 +196,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :heart, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -219,7 +223,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.undo_emotion_to_comment(parent_comment.id, :downvote, user)
+      {:ok, _} = CMS.Interactions.undo_emotion(parent_comment, :downvote, user)
 
       {:error, _} =
         ORM.find_by(CommentUserEmotion, %{
@@ -234,11 +238,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user2)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user3)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user2)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user3)
 
-      emotions = CMS.Interactions.State.read(parent_comment, user).emotions
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
+      emotions = parent_comment.emotions
 
       assert emotions.beer_count == 3
       assert user_exist_in?(user, emotions.latest_beer_users)
@@ -250,13 +255,14 @@ defmodule GroupherServer.Test.CMS.Comments.PostCommentEmotions do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :beer, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :heart, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(parent_comment.id, :orz, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :heart, user)
+      {:ok, _} = CMS.Interactions.emotion(parent_comment, :orz, user)
 
-      emotions = CMS.Interactions.State.read(parent_comment, user).emotions
+      {:ok, parent_comment} = CMS.Comments.InteractionResponse.one(parent_comment, user)
+      emotions = parent_comment.emotions
 
       assert emotions.downvote_count == 1
       assert user_exist_in?(user, emotions.latest_downvote_users)

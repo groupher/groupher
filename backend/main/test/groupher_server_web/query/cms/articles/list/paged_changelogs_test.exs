@@ -72,9 +72,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
          ~m(guest_conn changelog_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
-      {:ok, _} = CMS.Articles.upvote(changelog_last_week, user)
-      {:ok, _} = CMS.Articles.upvote(changelog_last_week, user2)
-      {:ok, _} = CMS.Articles.upvote(changelog_last_week, user3)
+      {:ok, _} = CMS.Interactions.upvote(changelog_last_week, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog_last_week, user2)
+      {:ok, _} = CMS.Interactions.upvote(changelog_last_week, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
@@ -316,8 +316,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           user
         )
 
-      {:ok, _} = CMS.Articles.upvote(changelog, user)
-      {:ok, _} = CMS.Articles.collect(changelog, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user)
+      {:ok, _} = CMS.Interactions.collect(changelog, user)
       {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)

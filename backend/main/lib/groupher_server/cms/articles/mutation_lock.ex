@@ -21,6 +21,30 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   alias GroupherServer.CMS.Interactions.ErrorCat, as: InteractionErrorCat
   alias Helper.{T, Transaction}
 
+  @observer_key {__MODULE__, :transaction_observer}
+
+  @doc false
+  @spec observe_transaction((-> term())) :: term()
+  def observe_transaction(fun) when is_function(fun, 0) do
+    previous = Process.get(@observer_key)
+    Process.put(@observer_key, [])
+
+    try do
+      fun.()
+    after
+      completed_at = System.monotonic_time()
+      observations = Process.get(@observer_key, [])
+
+      if is_nil(previous),
+        do: Process.delete(@observer_key),
+        else: Process.put(@observer_key, previous)
+
+      Enum.each(observations, fn {acquired_at, metadata} ->
+        emit_hold(completed_at - acquired_at, metadata)
+      end)
+    end
+  end
+
   @doc "Uses an already-loaded Article struct to select its aggregate lock identity."
   @spec with_article(Community.t(), struct(), (-> term())) ::
           {:ok, term()} | {:error, term()}
@@ -122,6 +146,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
 
   defp lock(lock_key, fun) do
     started_at = System.monotonic_time()
+    metadata = lock_metadata(lock_key)
 
     Transaction.lock_global(lock_key, fn ->
       acquired_at = System.monotonic_time()
@@ -129,18 +154,37 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
       :telemetry.execute(
         [:groupher, :cms, :articles, :mutation_lock, :wait],
         %{duration: acquired_at - started_at},
-        %{lock_key_hash: :erlang.phash2(lock_key)}
+        metadata
       )
 
       try do
         fun.()
       after
-        :telemetry.execute(
-          [:groupher, :cms, :articles, :mutation_lock, :hold],
-          %{duration: System.monotonic_time() - acquired_at},
-          %{lock_key_hash: :erlang.phash2(lock_key)}
-        )
+        observe_hold(acquired_at, metadata)
       end
     end)
+  end
+
+  defp observe_hold(acquired_at, metadata) do
+    case Process.get(@observer_key) do
+      observations when is_list(observations) ->
+        Process.put(@observer_key, [{acquired_at, metadata} | observations])
+
+      _ ->
+        emit_hold(System.monotonic_time() - acquired_at, metadata)
+    end
+  end
+
+  defp emit_hold(duration, metadata) do
+    :telemetry.execute(
+      [:groupher, :cms, :articles, :mutation_lock, :hold],
+      %{duration: duration},
+      metadata
+    )
+  end
+
+  defp lock_metadata(lock_key) do
+    scope = if String.starts_with?(lock_key, "doc_article_lifecycle:"), do: :doc, else: :article
+    %{aggregate: scope, lock_key_hash: :erlang.phash2(lock_key)}
   end
 end

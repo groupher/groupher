@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ReportTest do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS.Interactions.ErrorCat
-  alias GroupherServer.CMS.Interactions.ViewerState.ArticleReport
 
   test "report identity uses immutable user id rather than login" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -18,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReportTest do
 
     assert {:ok, _canonical} = CMS.Interactions.undo_report(post, renamed_user)
 
-    assert %ArticleReport{reported_count: 0, viewer_has_reported: false} =
+    assert %{reported_count: 0, viewer_has_reported: false} =
              CMS.Interactions.viewer_state(post, renamed_user, surface: :report)
   end
 
@@ -29,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReportTest do
     assert {:ok, _canonical} = CMS.Interactions.undo_report(post, user)
     assert {:ok, _canonical} = CMS.Interactions.undo_report(post, user)
 
-    assert %ArticleReport{reported_count: 0, viewer_has_reported: false} =
+    assert %{reported_count: 0, viewer_has_reported: false} =
              CMS.Interactions.viewer_state(post, user, surface: :report)
   end
 end

@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
 
   alias Accounts.Model.User
   alias CMS.{Interactions}
+  alias CMS.Articles.InteractionResponse
   alias CMS.Gate.Scope
   alias CMS.Articles.ErrorCat
   alias CMS.Communities.Enable
@@ -51,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
     with {:ok, _thread} <- Enable.thread?(community.slug, thread),
          {:ok, article} <- if_article_legal(community, thread, inner_id) do
       with {:ok, article} <- do_read_article(article, community, thread, nil, nil) do
-        {:ok, Interactions.State.read(article)}
+        InteractionResponse.one(article, nil)
       end
     end
   end
@@ -72,7 +73,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
         do_read_article(article, community, thread, user, event_id)
       end)
       |> Multi.run(:set_viewer_has_states, fn _, %{normal_read: article} ->
-        {:ok, Interactions.State.read(article, user)}
+        InteractionResponse.one(article, user)
       end)
       |> Repo.transaction()
       |> result()

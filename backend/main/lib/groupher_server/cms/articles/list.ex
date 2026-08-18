@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Dashboard.KanbanBoards
   alias CMS.Interactions
-  alias CMS.Interactions.State
+  alias CMS.Articles.InteractionResponse
   alias CMS.Artiment.Enums
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
@@ -61,7 +61,12 @@ defmodule GroupherServer.CMS.Articles.List do
 
   """
   @spec page(atom(), map()) :: T.domain_res(term())
-  def page(thread, filter) do
+  def page(thread, filter), do: do_page(thread, filter, nil)
+
+  @spec page(atom(), map(), User.t()) :: T.domain_res(term())
+  def page(thread, filter, %User{} = user), do: do_page(thread, filter, user)
+
+  defp do_page(thread, filter, viewer) do
     %{page: page, size: size} = filter
     flags = %{pending: :legal}
 
@@ -76,17 +81,8 @@ defmodule GroupherServer.CMS.Articles.List do
       query
       |> ORM.paginator(~m(page size)a)
       |> add_pin_articles_ifneed(info.model, filter)
-      |> read_articles(thread, nil)
       |> normalize_article_entries(thread)
-      |> done()
-    end
-  end
-
-  @spec page(atom(), map(), User.t()) :: T.domain_res(term())
-  def page(thread, filter, %User{} = user) do
-    with {:ok, stateless_paged_articles} <- page(thread, filter) do
-      stateless_paged_articles
-      |> read_articles(thread, user)
+      |> read_articles(viewer)
       |> done()
     end
   end
@@ -214,8 +210,8 @@ defmodule GroupherServer.CMS.Articles.List do
     end
   end
 
-  defp maybe_mark_viewer_states(paged_articles, thread, %User{} = actor) do
-    read_articles(paged_articles, thread, actor)
+  defp maybe_mark_viewer_states(paged_articles, _thread, %User{} = actor) do
+    read_articles(paged_articles, actor)
   end
 
   defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
@@ -223,8 +219,11 @@ defmodule GroupherServer.CMS.Articles.List do
   defp scope_context(:doc), do: DocScope.public_main()
   defp scope_context(thread), do: ArticleScope.public(thread)
 
-  defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
-    Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))
+  defp read_articles(%{entries: entries} = paged_articles, actor) do
+    case InteractionResponse.many(entries, actor) do
+      {:ok, entries} -> Map.put(paged_articles, :entries, entries)
+      {:error, _reason} = error -> error
+    end
   end
 
   defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do

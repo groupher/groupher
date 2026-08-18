@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
-  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.CMS.Seeds.{Articles, Communities}
 
   describe "[articles seeds]" do
@@ -18,7 +17,7 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
 
       [first | _] = articles
       {:ok, reloaded_post} = ORM.find(Post, first.id)
-      counts = State.counts(:post, [first.id]) |> Map.fetch!(first.id)
+      counts = CMS.Interactions.counts([first]) |> Map.fetch!({:post, first.id})
 
       comments_count =
         from(c in Comment, where: c.post_id == ^first.id)

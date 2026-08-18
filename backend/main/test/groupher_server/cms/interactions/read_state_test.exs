@@ -1,9 +1,8 @@
-defmodule GroupherServer.Test.CMS.Interactions.StateTest do
+defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.ErrorCat.Error
 
   alias GroupherServer.Accounts.Model.Achievement
@@ -18,17 +17,17 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     PostReactionInfo
   }
 
-  alias GroupherServer.CMS.Interactions.View
+  alias GroupherServer.CMS.Interactions.ViewEvents
   alias GroupherServer.Repo
 
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
     post = Repo.preload(post, author: :user)
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert 1 == upvotes_count(post.id)
 
-    assert {:ok, _} = CMS.Articles.undo_upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.undo_upvote(post, user)
     assert 0 == upvotes_count(post.id)
   end
 
@@ -36,9 +35,9 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
     {:ok, other_user} = db_insert(:user)
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
-    assert {:ok, _} = CMS.Articles.emotion(post, :beer, user)
-    assert {:ok, _} = CMS.Articles.collect(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.emotion(post, :beer, user)
+    assert {:ok, _} = CMS.Interactions.collect(post, user)
 
     Repo.get_by!(ArticleLifecycle,
       community_id: community.id,
@@ -49,22 +48,22 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     |> Repo.update!()
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.undo_upvote(post, user)
+             CMS.Interactions.undo_upvote(post, user)
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.undo_emotion(post, :beer, user)
+             CMS.Interactions.undo_emotion(post, :beer, user)
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.undo_collect(post, user)
+             CMS.Interactions.undo_collect(post, user)
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.upvote(post, other_user)
+             CMS.Interactions.upvote(post, other_user)
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.emotion(post, :beer, other_user)
+             CMS.Interactions.emotion(post, :beer, other_user)
 
     assert {:error, %{primary: %{reason: :article_archived}}} =
-             CMS.Articles.collect(post, other_user)
+             CMS.Interactions.collect(post, other_user)
 
     assert Repo.exists?(
              from(row in ArticleUpvote,
@@ -114,7 +113,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
       |> Repo.update!()
 
       assert {:error, %{primary: %{reason: :ancestor_community_not_writable}}} =
-               CMS.Articles.upvote(post, user)
+               CMS.Interactions.upvote(post, user)
 
       refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))
     end
@@ -123,10 +122,10 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
   test "duplicate upvote is idempotent and leaves projection, achievement and fact unchanged" do
     {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
     baseline = Repo.get_by!(Achievement, user_id: post.author.user_id)
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert 1 == upvotes_count(post.id)
     assert 1 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
 
@@ -153,7 +152,12 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     """)
 
     try do
-      assert {:error, %Error{reason: :projection_not_updated}} = CMS.Articles.upvote(post, user)
+      assert {:error,
+              %Error{
+                namespace: {:cms, :interaction},
+                reason: :projection_not_updated,
+                code: 4912
+              }} = CMS.Interactions.upvote(post, user)
     after
       Repo.query!("DROP TRIGGER #{trigger_name} ON cms.post_reaction_infos")
       Repo.query!("DROP FUNCTION cms.#{function_name}()")
@@ -163,12 +167,12 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     assert is_nil(upvotes_count(post.id))
   end
 
-  test "State.read returns projection counts rather than main-record counts" do
+  test "viewer_state returns projection counts rather than main-record counts" do
     {_community, post, _attrs, user} = mock_article(:post)
     post = Repo.preload(post, author: :user)
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
-    [hydrated] = State.read(:post, [post], user, [])
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
+    hydrated = CMS.Interactions.viewer_state(post, user)
 
     assert hydrated.upvotes_count == 1
     assert hydrated.viewer_has_upvoted
@@ -181,7 +185,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
 
     results =
       [user, second_user]
-      |> Enum.map(fn voter -> Task.async(fn -> CMS.Articles.upvote(post, voter) end) end)
+      |> Enum.map(fn voter -> Task.async(fn -> CMS.Interactions.upvote(post, voter) end) end)
       |> Enum.map(&Task.await(&1, 5_000))
 
     assert Enum.all?(results, &match?({:ok, _}, &1))
@@ -192,11 +196,11 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, post, _attrs, user} = mock_article(:post)
     post = Repo.preload(post, author: :user)
 
-    assert {:ok, _} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Interactions.upvote(post, user)
 
     results =
       1..2
-      |> Enum.map(fn _ -> Task.async(fn -> CMS.Articles.undo_upvote(post, user) end) end)
+      |> Enum.map(fn _ -> Task.async(fn -> CMS.Interactions.undo_upvote(post, user) end) end)
       |> Enum.map(&Task.await(&1, 5_000))
 
     assert Enum.all?(results, &match?({:ok, _}, &1))
@@ -208,18 +212,17 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, first, _attrs, user} = mock_article(:post)
     {_community, second, _attrs, _other_user} = mock_article(:post)
 
-    assert {:ok, _} = CMS.Articles.upvote(first, user)
+    assert {:ok, _} = CMS.Interactions.upvote(first, user)
 
-    hydrated = State.read(:post, [first, second], user, [])
-    by_id = Map.new(hydrated, &{&1.id, &1})
+    by_id = CMS.Interactions.viewer_states([first, second], user)
 
-    assert by_id[first.id].upvotes_count == 1
-    assert by_id[first.id].viewer_has_upvoted
-    assert by_id[second.id].upvotes_count == 0
-    refute by_id[second.id].viewer_has_upvoted
+    assert by_id[{:post, first.id}].upvotes_count == 1
+    assert by_id[{:post, first.id}].viewer_has_upvoted
+    assert by_id[{:post, second.id}].upvotes_count == 0
+    refute by_id[{:post, second.id}].viewer_has_upvoted
 
     {:ok, other_user} = db_insert(:user)
-    [other_view] = State.read(:post, [first], other_user, [])
+    other_view = CMS.Interactions.viewer_state(first, other_user)
     refute other_view.viewer_has_upvoted
   end
 
@@ -228,7 +231,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, zero, _attrs, _other_user} = mock_article(:post)
     {_community, absent, _attrs, _third_user} = mock_article(:post)
 
-    assert {:ok, _} = CMS.Articles.upvote(positive, user)
+    assert {:ok, _} = CMS.Interactions.upvote(positive, user)
     assert {:ok, _} = Repo.insert(%PostReactionInfo{post_id: zero.id})
 
     {:ok, ordered_query} =
@@ -244,12 +247,12 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, post, _attrs, user} = mock_article(:post)
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} = View.record(post, user, event_id)
-    [viewer] = State.read(:post, [post], user, [])
+    assert {:ok, ^event_id} = ViewEvents.record(post, user, event_id)
+    viewer = CMS.Interactions.viewer_state(post, user)
     assert viewer.viewer_has_viewed
 
     {:ok, other_user} = db_insert(:user)
-    [other_view] = State.read(:post, [post], other_user, [])
+    other_view = CMS.Interactions.viewer_state(post, other_user)
     refute other_view.viewer_has_viewed
   end
 
@@ -258,7 +261,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, second, _attrs, _other_user} = mock_article(:post)
 
     {_hydrated, queries} =
-      capture_queries(fn -> State.read(:post, [first, second], user, []) end)
+      capture_queries(fn -> CMS.Interactions.viewer_states([first, second], user) end)
 
     select_count =
       Enum.count(queries, fn query ->
