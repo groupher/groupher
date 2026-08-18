@@ -219,6 +219,7 @@ Access Context 的 required field 必须真实存在。以下情况统一拒绝�
 类型查不到 canonical row 返回 `resource_not_found`；输入 struct 与数据库或父链身份
 不一致返回 `gate_resource_mismatch`。不得再把任意非 Community/Comment 值兜底交给
 Article 检查，也不得让 pattern mismatch 泄漏为 `FunctionClauseError`。
+
 - Access Context 类型与 policy 资源类型不一致。
 
 错误继续转换为 `Gate.Decision`；Context struct 本身不承载用户可见错误文案。

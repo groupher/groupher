@@ -59,16 +59,16 @@ context 内流转。它不是错误码声明，也不能直接作为 GraphQL/HTT
 
 ## 2. 和旧机制的差异
 
-| 旧机制 | ErrorCat v2 |
-| --- | --- |
-| 全局 Helper.ErrorCode、Helper.Const 保存 code | 每个 context 的 catalog 声明自己的错误 |
-| 业务代码散落整数和 reason atom | catalog 生成构造函数 |
-| reason 可能只靠 atom 识别 | namespace + reason 才是错误身份 |
-| 保留码依赖额外数字列表 | @reserved 也是完整的 ErrorCat 定义 |
-| 运行时才发现未知错误 | catalog 和全局注册表在编译期校验 |
-| Web catalog 容纳不明确的通用业务错误 | Web catalog 只保留协议层错误 |
-| valid?/1 只比较 code | valid?/1 比较完整定义，忽略 details |
-| formatter 猜测 raw atom 或整数含义 | formatter 只接受已构造的 ErrorCat.Error |
+| 旧机制                                        | ErrorCat v2                             |
+| --------------------------------------------- | --------------------------------------- |
+| 全局 Helper.ErrorCode、Helper.Const 保存 code | 每个 context 的 catalog 声明自己的错误  |
+| 业务代码散落整数和 reason atom                | catalog 生成构造函数                    |
+| reason 可能只靠 atom 识别                     | namespace + reason 才是错误身份         |
+| 保留码依赖额外数字列表                        | @reserved 也是完整的 ErrorCat 定义      |
+| 运行时才发现未知错误                          | catalog 和全局注册表在编译期校验        |
+| Web catalog 容纳不明确的通用业务错误          | Web catalog 只保留协议层错误            |
+| valid?/1 只比较 code                          | valid?/1 比较完整定义，忽略 details     |
+| formatter 猜测 raw atom 或整数含义            | formatter 只接受已构造的 ErrorCat.Error |
 
 ## 3. Namespace
 
@@ -212,16 +212,16 @@ GroupherServerWeb.ErrorCat 只声明 Web / API 协议层错误：
 
 以下 8 个仍有 producer 的旧通用错误必须从 Web catalog 移除，按真实 producer 审计后落到领域 catalog：
 
-| 旧 reason | 迁移规则 |
-| --- | --- |
-| :not_exist | 已按调用点拆到 Accounts Profiles/Fans、Articles、Comments、Communities、Assets 等 producer |
-| :already_did | Accounts.Fans 的 follow producer，当前落在 {:account, :fans} |
-| :self_conflict | Accounts.Fans 的 follow producer，当前落在 {:account, :fans} |
-| :react_fails | Accounts.Fans 的 follow producer，当前落在 {:account, :fans} |
-| :already_exist | 当前落在 Accounts.CollectFolders |
-| :update_fails | 当前落在 CMS.Comments |
-| :delete_fails | 当前落在 CMS.Comments |
-| :create_fails | 当前落在 CMS.Comments |
+| 旧 reason      | 迁移规则                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| :not_exist     | 已按调用点拆到 Accounts Profiles/Fans、Articles、Comments、Communities、Assets 等 producer |
+| :already_did   | Accounts.Fans 的 follow producer，当前落在 {:account, :fans}                               |
+| :self_conflict | Accounts.Fans 的 follow producer，当前落在 {:account, :fans}                               |
+| :react_fails   | Accounts.Fans 的 follow producer，当前落在 {:account, :fans}                               |
+| :already_exist | 当前落在 Accounts.CollectFolders                                                           |
+| :update_fails  | 当前落在 CMS.Comments                                                                      |
+| :delete_fails  | 当前落在 CMS.Comments                                                                      |
+| :create_fails  | 当前落在 CMS.Comments                                                                      |
 
 `:editor_data_parse` 已随本次重构移除，当前没有 producer，也不进入任何 catalog。
 
@@ -242,10 +242,10 @@ GroupherServerWeb.ErrorCat 只声明 Web / API 协议层错误：
 
 archived 可以分别属于 Article 和 Comment：
 
-| namespace | reason | 目标 code |
-| --- | --- | ---: |
-| {:cms, :article} | :archived | 6004 |
-| {:cms, :comment} | :archived | 4411 |
+| namespace        | reason    | 目标 code |
+| ---------------- | --------- | --------: |
+| {:cms, :article} | :archived |      6004 |
+| {:cms, :comment} | :archived |      4411 |
 
 迁移表必须记录两条，不能因为 reason 同名而合并。
 
@@ -491,74 +491,74 @@ details 只用于附加上下文，不参与 definition 的身份比较。是否
 
 迁移表必须逐条覆盖现有 code：
 
-| 旧 code | 旧 reason | 最终 namespace | 最终 reason | 最终 code | 状态 |
-| ---: | --- | --- | --- | ---: | --- |
-| 4000 | :default_error_code | {:web} | :default | 4000 | reserved |
-| 4001 | :custom | {:web} | :custom | 4001 | reserved |
-| 4002 | :pagination | {:web} | :pagination | 4002 | migrated |
-| 4003 | :not_exist | 多个 producer | 各自的 :not_exist | 4303 / 4412 / 4802 / 5504 / 5601 / 6011 | split |
-| 4004 | :already_did | {:account, :fans} | :already_did | 4803 | reassigned |
-| 4005 | :self_conflict | {:account, :fans} | :self_conflict | 4801 | reassigned |
-| 4006 | :react_fails | {:account, :fans} | :react_fails | 4804 | reassigned |
-| 4007 | :already_exist | {:account, :collection} | :already_exist | 4701 | reassigned |
-| 4008 | :update_fails | {:cms, :comment} | :update_fails | 4404 | reassigned |
-| 4009 | :delete_fails | {:cms, :comment} | :delete_fails | 4406 | reassigned |
-| 4010 | :create_fails | {:cms, :comment} | :create_fails | 4405 | reassigned |
-| 4014 | :editor_data_parse | — | — | — | removed |
-| 4301 | :account_login | {:account, :authentication} | :account_login | 4301 | migrated |
-| 4017 | :service_auth | {:web} | :service_auth | 4017 | migrated |
-| 4018 | :oauth_unlink | {:account, :authentication} | :oauth_unlink | 4302 | reassigned |
-| 4102 | :changeset | {:web} | :changeset | 4102 | migrated |
-| 4302 | :passport | {:cms, :passport} | :passport | 4351 | reassigned |
-| 4201 | :throttle_interval | {:cms, :gate, :rate_limit} | :throttle_interval | 4201 | migrated |
-| 4202 | :throttle_hour | {:cms, :gate, :rate_limit} | :throttle_hour | 4202 | migrated |
-| 4203 | :throttle_day | {:cms, :gate, :rate_limit} | :throttle_day | 4203 | migrated |
-| 4401 | :create_comment | {:cms, :comment} | :create_comment | 4401 | migrated |
-| 4402 | :comment_already_upvote | {:cms, :comment} | :comment_already_upvote | 4402 | migrated |
-| 4403 | :comment_pin_limit | {:cms, :comment} | :comment_pin_limit | 4403 | migrated |
-| 4501 | :too_much_pinned_article | {:cms, :article} | :too_much_pinned_article | 6001 | reassigned |
-| 4502 | :already_collected_in_folder | {:account, :collection} | :already_collected_in_folder | 4702 | reassigned |
-| 4503 | :delete_no_empty_collect_folder | {:account, :collection} | :delete_no_empty_collect_folder | 4703 | reassigned |
-| 4504 | :private_collect_folder | {:account, :collection} | :private_collect_folder | 4704 | reassigned |
-| 4505 | :mirror_article | {:cms, :article} | :mirror_article | 6002 | reassigned |
-| 4506 | :invalid_domain_tag | {:cms, :community} | :invalid_domain_tag | 5506 | reassigned |
-| 4507 | :undo_sink_old_article | {:cms, :article} | :undo_sink_old_article | 6003 | reassigned |
-| 4508 | :article_comments_locked | {:cms, :gate} | :article_comments_locked | 4615 | merged |
-| 4509 | :require_questioner | {:cms, :comment} | :require_questioner | 4409 | reassigned |
-| 4511 | :archived | {:cms, :article} / {:cms, :comment} | :archived | 6004 / 4411 | split |
-| 4513 | :invalid_blog_title | {:cms, :article} | :invalid_blog_title | 6005 | reassigned |
-| 4514 | :already_upvoted | {:cms, :article} | :already_upvoted | 6006 | reassigned |
-| 4515 | :pending | {:cms, :article} | :pending | 6007 | reassigned |
-| 4516 | :article_not_found | {:cms, :article} | :article_not_found | 6008 | reassigned |
-| 4601 | :resource_not_found | {:cms, :gate} | :resource_not_found | 4601 | migrated |
-| 4602 | :gate_resource_mismatch | {:cms, :gate} | :gate_resource_mismatch | 4602 | migrated |
-| 4603 | :doc_branch_required | {:cms, :gate} | :doc_branch_required | 4603 | migrated |
-| 4604 | :lifecycle_not_found | {:cms, :gate} | :lifecycle_not_found | 4604 | migrated |
-| 4605 | :ancestor_community_not_writable | {:cms, :gate} | :ancestor_community_not_writable | 4605 | migrated |
-| 4606 | :ancestor_article_archived | {:cms, :gate} | :ancestor_article_archived | 4606 | migrated |
-| 4607 | :ancestor_article_deleted | {:cms, :gate} | :ancestor_article_deleted | 4607 | migrated |
-| 4608 | :ancestor_article_destroyed | {:cms, :gate} | :ancestor_article_destroyed | 4608 | migrated |
-| 4609 | :article_archived | {:cms, :gate} | :article_archived | 4609 | migrated |
-| 4610 | :article_deleted | {:cms, :gate} | :article_deleted | 4610 | migrated |
-| 4611 | :article_destroyed | {:cms, :gate} | :article_destroyed | 4611 | migrated |
-| 4612 | :article_not_mutable | {:cms, :gate} | :article_not_mutable | 4612 | migrated |
-| 4613 | :comment_deleted | {:cms, :gate} | :comment_deleted | 4613 | migrated |
-| 4614 | :comment_destroyed | {:cms, :gate} | :comment_destroyed | 4614 | migrated |
-| 4615 | :article_comments_locked | {:cms, :gate} | :article_comments_locked | 4615 | migrated |
-| 4616 | :permission_denied | {:cms, :gate} | :permission_denied | 4616 | migrated |
-| 4617 | :unknown_action | {:cms, :gate} | :unknown_action | 4617 | migrated |
-| 4618 | :lifecycle_not_loaded | {:cms, :gate} | :lifecycle_not_loaded | 4618 | migrated |
-| 4619 | :scope_root_mismatch | {:cms, :gate} | :scope_root_mismatch | 4619 | migrated |
-| 4620 | :scope_binding_conflict | {:cms, :gate} | :scope_binding_conflict | 4620 | migrated |
-| 4621 | :scope_context_missing | {:cms, :gate} | :scope_context_missing | 4621 | migrated |
-| 4622 | :unknown_policy_mode | {:cms, :gate} | :unknown_policy_mode | 4622 | migrated |
-| 4623 | :scope_policy_actor_mismatch | {:cms, :gate} | :scope_policy_actor_mismatch | 4623 | migrated |
-| 4699 | :gate_unknown | {:cms, :gate} | :gate_unknown | 4699 | reserved |
-| 5501 | :community_root_only | {:cms, :community} | :community_root_only | 5501 | migrated |
-| 5502 | :passport_community_not_match | {:cms, :community} | :passport_community_not_match | 5502 | migrated |
-| 5503 | :one_community_only | {:cms, :community} | :one_community_only | 5503 | migrated |
-| 6001 | :emotion_not_allowed | {:cms, :article} | :emotion_not_allowed | 6009 | reassigned |
-| 6002 | :thread_not_visible | {:cms, :article} | :thread_not_visible | 6010 | reassigned |
+| 旧 code | 旧 reason                        | 最终 namespace                      | 最终 reason                      |                               最终 code | 状态       |
+| ------: | -------------------------------- | ----------------------------------- | -------------------------------- | --------------------------------------: | ---------- |
+|    4000 | :default_error_code              | {:web}                              | :default                         |                                    4000 | reserved   |
+|    4001 | :custom                          | {:web}                              | :custom                          |                                    4001 | reserved   |
+|    4002 | :pagination                      | {:web}                              | :pagination                      |                                    4002 | migrated   |
+|    4003 | :not_exist                       | 多个 producer                       | 各自的 :not_exist                | 4303 / 4412 / 4802 / 5504 / 5601 / 6011 | split      |
+|    4004 | :already_did                     | {:account, :fans}                   | :already_did                     |                                    4803 | reassigned |
+|    4005 | :self_conflict                   | {:account, :fans}                   | :self_conflict                   |                                    4801 | reassigned |
+|    4006 | :react_fails                     | {:account, :fans}                   | :react_fails                     |                                    4804 | reassigned |
+|    4007 | :already_exist                   | {:account, :collection}             | :already_exist                   |                                    4701 | reassigned |
+|    4008 | :update_fails                    | {:cms, :comment}                    | :update_fails                    |                                    4404 | reassigned |
+|    4009 | :delete_fails                    | {:cms, :comment}                    | :delete_fails                    |                                    4406 | reassigned |
+|    4010 | :create_fails                    | {:cms, :comment}                    | :create_fails                    |                                    4405 | reassigned |
+|    4014 | :editor_data_parse               | —                                   | —                                |                                       — | removed    |
+|    4301 | :account_login                   | {:account, :authentication}         | :account_login                   |                                    4301 | migrated   |
+|    4017 | :service_auth                    | {:web}                              | :service_auth                    |                                    4017 | migrated   |
+|    4018 | :oauth_unlink                    | {:account, :authentication}         | :oauth_unlink                    |                                    4302 | reassigned |
+|    4102 | :changeset                       | {:web}                              | :changeset                       |                                    4102 | migrated   |
+|    4302 | :passport                        | {:cms, :passport}                   | :passport                        |                                    4351 | reassigned |
+|    4201 | :throttle_interval               | {:cms, :gate, :rate_limit}          | :throttle_interval               |                                    4201 | migrated   |
+|    4202 | :throttle_hour                   | {:cms, :gate, :rate_limit}          | :throttle_hour                   |                                    4202 | migrated   |
+|    4203 | :throttle_day                    | {:cms, :gate, :rate_limit}          | :throttle_day                    |                                    4203 | migrated   |
+|    4401 | :create_comment                  | {:cms, :comment}                    | :create_comment                  |                                    4401 | migrated   |
+|    4402 | :comment_already_upvote          | {:cms, :comment}                    | :comment_already_upvote          |                                    4402 | migrated   |
+|    4403 | :comment_pin_limit               | {:cms, :comment}                    | :comment_pin_limit               |                                    4403 | migrated   |
+|    4501 | :too_much_pinned_article         | {:cms, :article}                    | :too_much_pinned_article         |                                    6001 | reassigned |
+|    4502 | :already_collected_in_folder     | {:account, :collection}             | :already_collected_in_folder     |                                    4702 | reassigned |
+|    4503 | :delete_no_empty_collect_folder  | {:account, :collection}             | :delete_no_empty_collect_folder  |                                    4703 | reassigned |
+|    4504 | :private_collect_folder          | {:account, :collection}             | :private_collect_folder          |                                    4704 | reassigned |
+|    4505 | :mirror_article                  | {:cms, :article}                    | :mirror_article                  |                                    6002 | reassigned |
+|    4506 | :invalid_domain_tag              | {:cms, :community}                  | :invalid_domain_tag              |                                    5506 | reassigned |
+|    4507 | :undo_sink_old_article           | {:cms, :article}                    | :undo_sink_old_article           |                                    6003 | reassigned |
+|    4508 | :article_comments_locked         | {:cms, :gate}                       | :article_comments_locked         |                                    4615 | merged     |
+|    4509 | :require_questioner              | {:cms, :comment}                    | :require_questioner              |                                    4409 | reassigned |
+|    4511 | :archived                        | {:cms, :article} / {:cms, :comment} | :archived                        |                             6004 / 4411 | split      |
+|    4513 | :invalid_blog_title              | {:cms, :article}                    | :invalid_blog_title              |                                    6005 | reassigned |
+|    4514 | :already_upvoted                 | {:cms, :article}                    | :already_upvoted                 |                                    6006 | reassigned |
+|    4515 | :pending                         | {:cms, :article}                    | :pending                         |                                    6007 | reassigned |
+|    4516 | :article_not_found               | {:cms, :article}                    | :article_not_found               |                                    6008 | reassigned |
+|    4601 | :resource_not_found              | {:cms, :gate}                       | :resource_not_found              |                                    4601 | migrated   |
+|    4602 | :gate_resource_mismatch          | {:cms, :gate}                       | :gate_resource_mismatch          |                                    4602 | migrated   |
+|    4603 | :doc_branch_required             | {:cms, :gate}                       | :doc_branch_required             |                                    4603 | migrated   |
+|    4604 | :lifecycle_not_found             | {:cms, :gate}                       | :lifecycle_not_found             |                                    4604 | migrated   |
+|    4605 | :ancestor_community_not_writable | {:cms, :gate}                       | :ancestor_community_not_writable |                                    4605 | migrated   |
+|    4606 | :ancestor_article_archived       | {:cms, :gate}                       | :ancestor_article_archived       |                                    4606 | migrated   |
+|    4607 | :ancestor_article_deleted        | {:cms, :gate}                       | :ancestor_article_deleted        |                                    4607 | migrated   |
+|    4608 | :ancestor_article_destroyed      | {:cms, :gate}                       | :ancestor_article_destroyed      |                                    4608 | migrated   |
+|    4609 | :article_archived                | {:cms, :gate}                       | :article_archived                |                                    4609 | migrated   |
+|    4610 | :article_deleted                 | {:cms, :gate}                       | :article_deleted                 |                                    4610 | migrated   |
+|    4611 | :article_destroyed               | {:cms, :gate}                       | :article_destroyed               |                                    4611 | migrated   |
+|    4612 | :article_not_mutable             | {:cms, :gate}                       | :article_not_mutable             |                                    4612 | migrated   |
+|    4613 | :comment_deleted                 | {:cms, :gate}                       | :comment_deleted                 |                                    4613 | migrated   |
+|    4614 | :comment_destroyed               | {:cms, :gate}                       | :comment_destroyed               |                                    4614 | migrated   |
+|    4615 | :article_comments_locked         | {:cms, :gate}                       | :article_comments_locked         |                                    4615 | migrated   |
+|    4616 | :permission_denied               | {:cms, :gate}                       | :permission_denied               |                                    4616 | migrated   |
+|    4617 | :unknown_action                  | {:cms, :gate}                       | :unknown_action                  |                                    4617 | migrated   |
+|    4618 | :lifecycle_not_loaded            | {:cms, :gate}                       | :lifecycle_not_loaded            |                                    4618 | migrated   |
+|    4619 | :scope_root_mismatch             | {:cms, :gate}                       | :scope_root_mismatch             |                                    4619 | migrated   |
+|    4620 | :scope_binding_conflict          | {:cms, :gate}                       | :scope_binding_conflict          |                                    4620 | migrated   |
+|    4621 | :scope_context_missing           | {:cms, :gate}                       | :scope_context_missing           |                                    4621 | migrated   |
+|    4622 | :unknown_policy_mode             | {:cms, :gate}                       | :unknown_policy_mode             |                                    4622 | migrated   |
+|    4623 | :scope_policy_actor_mismatch     | {:cms, :gate}                       | :scope_policy_actor_mismatch     |                                    4623 | migrated   |
+|    4699 | :gate_unknown                    | {:cms, :gate}                       | :gate_unknown                    |                                    4699 | reserved   |
+|    5501 | :community_root_only             | {:cms, :community}                  | :community_root_only             |                                    5501 | migrated   |
+|    5502 | :passport_community_not_match    | {:cms, :community}                  | :passport_community_not_match    |                                    5502 | migrated   |
+|    5503 | :one_community_only              | {:cms, :community}                  | :one_community_only              |                                    5503 | migrated   |
+|    6001 | :emotion_not_allowed             | {:cms, :article}                    | :emotion_not_allowed             |                                    6009 | reassigned |
+|    6002 | :thread_not_visible              | {:cms, :article}                    | :thread_not_visible              |                                    6010 | reassigned |
 
 表中没有待 producer 审计项；同名 reason 已按 producer 分别记录落点。4301 当前继续分配给
 account_login 只是目标分配结果，不构成对旧 code 的兼容承诺。
