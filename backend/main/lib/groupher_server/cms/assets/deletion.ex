@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   require Logger
 
   alias GroupherServer.CMS.Model.CommunityAsset
+  alias GroupherServer.CMS.Assets.ErrorCat
 
   @timeout 10_000
 
@@ -43,7 +44,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
       :ok ->
         :ok
 
-      {:error, :skipped} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :skipped}} ->
         :ok
 
       {:error, reason} ->
@@ -60,10 +61,10 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     do_enqueue(asset)
   rescue
     exception ->
-      {:error, {:exception, Exception.message(exception)}}
+      {:error, ErrorCat.delete_enqueue_failed(Exception.message(exception))}
   catch
     kind, reason ->
-      {:error, {kind, reason}}
+      {:error, ErrorCat.delete_enqueue_failed({kind, reason})}
   end
 
   defp do_enqueue(%CommunityAsset{storage: "r2", storage_key: storage_key} = asset)
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     end
   end
 
-  defp do_enqueue(_asset), do: {:error, :skipped}
+  defp do_enqueue(_asset), do: {:error, ErrorCat.skipped()}
 
   defp request(endpoint, service_token, asset) do
     body = %{
@@ -108,11 +109,10 @@ defmodule GroupherServer.CMS.Assets.Deletion do
         :ok
 
       {:ok, %Tesla.Env{status: status, body: body}} ->
-        {:error,
-         {:assets_hub_delete_enqueue, %{status: status, body: body, duration_ms: duration_ms}}}
+        {:error, ErrorCat.delete_enqueue_failed(%{status: status, body: body, duration_ms: duration_ms})}
 
       {:error, reason} ->
-        {:error, {:assets_hub_delete_enqueue, %{reason: reason, duration_ms: duration_ms}}}
+        {:error, ErrorCat.delete_enqueue_failed(%{reason: reason, duration_ms: duration_ms})}
     end
   end
 
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
         nil
     end)
     |> case do
-      nil -> {:error, :skipped}
+      nil -> {:error, ErrorCat.skipped()}
       endpoint -> {:ok, endpoint}
     end
   end

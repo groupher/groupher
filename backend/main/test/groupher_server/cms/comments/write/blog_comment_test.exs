@@ -253,7 +253,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
-      {:error, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
       assert 1 == length(comment.upvotes)
@@ -300,12 +300,12 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert CMS.Interactions.State.read(comment, user).viewer_has_upvoted
     end
 
-    test "user upvote a already-upvoted comment fails", ~m(community user blog)a do
+    test "user upvote an already-upvoted comment is idempotent", ~m(community user blog)a do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       CMS.Comments.upvote_comment(comment.id, user)
-      {:error, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
     end
 
     test "upvote comment should inc the comment's upvotes_count",
@@ -454,7 +454,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, extra_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      assert {:error, {:comment_pin_limit, @pinned_comment_limit}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :comment_pin_limit,
+                details: @pinned_comment_limit
+              }} =
                CMS.Comments.pin_comment(extra_comment.id, user)
     end
   end
@@ -883,7 +887,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:error, reason} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      assert reason |> is_error?(:article_comments_locked)
+      assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} = CMS.Articles.undo_lock_comments(blog)
 
@@ -899,7 +903,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} = CMS.Articles.lock_comments(blog)
 
       {:error, reason} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
-      assert reason |> is_error?(:article_comments_locked)
+      assert reason |> is_error?({{:cms, :gate}, :article_comments_locked})
 
       {:ok, _} = CMS.Articles.undo_lock_comments(blog)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)

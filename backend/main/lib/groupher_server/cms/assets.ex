@@ -156,7 +156,7 @@ defmodule GroupherServer.CMS.Assets do
       #=> {:ok, %CommunityAsset{status: :deleted}}
 
       CMS.Assets.delete(community, referenced_asset.id)
-      #=> {:error, {:custom, "asset is still referenced"}}
+      #=> {:error, ErrorCat.custom("asset is still referenced")}
 
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())

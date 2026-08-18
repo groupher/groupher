@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.PostEmotionInfo do
       CMS.Interactions.State -> PostEmotionInfo -> cms.post_emotion_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.EmotionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.EmotionInfo,
     table: "post_emotion_infos",
     target: :post,
     target_schema: GroupherServer.CMS.Model.Post

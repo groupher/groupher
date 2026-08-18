@@ -68,11 +68,14 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   end
 
   test "rejects an empty query" do
-    assert {:error, {:custom, "search text is required"}} = Query.new(%{text: "  "})
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{reason: :custom, details: "search text is required"}} =
+             Query.new(%{text: "  "})
   end
 
   test "rejects invalid filters instead of silently broadening the query" do
-    assert {:error, {:custom, "invalid search filter enum"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid search filter enum"}} =
              Query.new(%{text: "search", filters: %{threads: [:doc, :invalid]}})
   end
 

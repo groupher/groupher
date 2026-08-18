@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Policy do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo
 
@@ -47,6 +48,13 @@ defmodule GroupherServer.CMS.CommunityApplications.Policy do
         result(true, nil, %{})
     end
   end
+
+  @doc "Converts a denied policy result into its declared Community ErrorCat value."
+  def denial_error(%{allowed: false, reason_code: :active_application_exists}),
+    do: ErrorCat.active_application_exists()
+
+  def denial_error(%{allowed: false, reason_code: :apply_not_allowed}),
+    do: ErrorCat.apply_not_allowed()
 
   defp blocking_application?(user_id) do
     statuses = CommunityApplication.blocking_statuses()

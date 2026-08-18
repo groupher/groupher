@@ -15,13 +15,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
-  import Helper.ErrorCode
-
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Communities.TagStats
   alias CMS.FrontDesk
+  alias CMS.Communities.ErrorCat
   alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, QueryBuilder, T}
 
@@ -218,7 +217,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if length(tags) == length(casted_tag_ids) do
       {:ok, tags}
     else
-      raise_error(:invalid_domain_tag, "tag not in same community & thread")
+      invalid_domain_tag("tag not in same community & thread")
     end
   end
 
@@ -373,7 +372,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     title = String.trim(group_title)
 
     if title === "" do
-      raise_error(:invalid_domain_tag, "tag group required")
+      invalid_domain_tag("tag group required")
     else
       CommunityTagGroup
       |> where([g], g.community_id == ^community.id)
@@ -391,7 +390,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp find_group_in_thread(_, _, _, _),
-    do: raise_error(:invalid_domain_tag, "tag group required")
+    do: invalid_domain_tag("tag group required")
 
   defp find_group_in_thread(%Community{} = community, thread, group_id)
        when not is_nil(group_id) do
@@ -404,7 +403,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     |> Repo.one()
     |> case do
       %CommunityTagGroup{} = group -> {:ok, group}
-      _ -> raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+      _ -> invalid_domain_tag("tag group not in same community & thread")
     end
   end
 
@@ -439,7 +438,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if length(ids) == MapSet.size(MapSet.new(ids)) do
       {:ok, normalized}
     else
-      raise_error(:invalid_domain_tag, "duplicate ids in reindex payload")
+      invalid_domain_tag("duplicate ids in reindex payload")
     end
   end
 
@@ -450,10 +449,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if group_ids == indexed_ids do
       :ok
     else
-      raise_error(
-        :invalid_domain_tag,
-        "reindex payload must contain exactly the tags in the group"
-      )
+      invalid_domain_tag("reindex payload must contain exactly the tags in the group")
     end
   end
 
@@ -472,7 +468,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if MapSet.new(ids) == valid_ids do
       :ok
     else
-      raise_error(:invalid_domain_tag, "tag not in same community & thread")
+      invalid_domain_tag("tag not in same community & thread")
     end
   end
 
@@ -491,7 +487,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if MapSet.new(group_ids) == valid_group_ids do
       :ok
     else
-      raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+      invalid_domain_tag("tag group not in same community & thread")
     end
   end
 
@@ -510,7 +506,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     if MapSet.new(ids) == valid_ids do
       :ok
     else
-      raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+      invalid_domain_tag("tag group not in same community & thread")
     end
   end
 
@@ -597,14 +593,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp expect_updated_rows({:ok, %{num_rows: expected}}, expected), do: {:ok, :pass}
 
   defp expect_updated_rows({:ok, _result}, _expected),
-    do: raise_error(:invalid_domain_tag, "reindex target changed")
+    do: invalid_domain_tag("reindex target changed")
 
   defp expect_updated_rows({:error, reason}, _expected), do: {:error, reason}
 
   defp cast_id!(id) do
     case Ecto.Type.cast(:id, id) do
       {:ok, casted_id} -> casted_id
-      :error -> raise_error(:invalid_domain_tag, "invalid tag group id")
+      :error -> invalid_domain_tag("invalid tag group id")
     end
   end
 
@@ -669,4 +665,6 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp result({:ok, result}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
   defp result({:error, result}), do: {:error, result}
+
+  defp invalid_domain_tag(details), do: {:error, ErrorCat.invalid_domain_tag(details)}
 end

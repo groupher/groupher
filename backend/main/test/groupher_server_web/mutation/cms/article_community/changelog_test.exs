@@ -47,13 +47,25 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Changelog do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:mirror_article),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Article.m(:mirror_article),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       assert rule_conn
-             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:mirror_article),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "auth user can mirror multi changelog to other communities",

@@ -106,14 +106,14 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              update_variables,
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :blog),
              %{community: context.community.slug, id: draft["id"]},
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     assert {:ok, stored_draft} =
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              variables,
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     owner_draft =

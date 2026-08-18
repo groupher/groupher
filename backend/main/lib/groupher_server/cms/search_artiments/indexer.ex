@@ -73,9 +73,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
            |> where([article], article.id == ^article_id)
            |> Repo.one() do
       case Projection.Article.project(thread, article) do
-        {:ok, artiment} -> SearchArtiments.upsert([artiment])
-        {:error, {:not_searchable, _}} -> delete_article(thread, article.article_hash_id)
-        error -> error
+        {:ok, artiment} ->
+          SearchArtiments.upsert([artiment])
+
+        {:error, %GroupherServer.ErrorCat.Error{reason: :not_searchable}} ->
+          delete_article(thread, article.article_hash_id)
+
+        error ->
+          error
       end
     else
       nil -> :ok

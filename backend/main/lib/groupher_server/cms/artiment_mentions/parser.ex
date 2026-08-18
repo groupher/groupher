@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.{Artiment.Threads, ArtimentMentions.Config, FrontDesk}
+  alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
   alias CMS.Model.Comment
 
   @threads Config.threads()
@@ -128,7 +128,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     end
   end
 
-  defp inline_mention_type(_), do: {:error, :invalid_mention_type}
+  defp inline_mention_type(_), do: {:error, ErrorCat.invalid_mention_type()}
 
   defp inline_mention_value(:user, %{"value" => value}) when is_binary(value) do
     case String.split(value, ":", parts: 2) do
@@ -237,11 +237,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       comment_id = URI.decode_query(query || "") |> Map.get("comment_id")
 
       case comment_id do
-        nil -> {:error, :invalid_comment_link}
+        nil -> {:error, ErrorCat.invalid_comment_link()}
         comment_id -> {:ok, %{scope: :internal, type: :comment, value: comment_id}}
       end
     rescue
-      _ -> {:error, :invalid_comment_link}
+      _ -> {:error, ErrorCat.invalid_comment_link()}
     end
   end
 
@@ -516,7 +516,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
       normalized ->
         case Enum.find(Threads.article_enums(), &(Atom.to_string(&1) == normalized)) do
-          nil -> {:error, :invalid_mention_type}
+          nil -> {:error, ErrorCat.invalid_mention_type()}
           thread -> {:ok, thread}
         end
     end
@@ -526,12 +526,12 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
     normalized = String.downcase(slug)
 
     case Enum.find(Threads.article_enums(), fn thread -> Atom.to_string(thread) == normalized end) do
-      nil -> {:error, :invalid_thread}
+      nil -> {:error, ErrorCat.invalid_thread()}
       thread -> {:ok, thread}
     end
   end
 
-  defp parse_thread_slug(_), do: {:error, :invalid_thread}
+  defp parse_thread_slug(_), do: {:error, ErrorCat.invalid_thread()}
 
   defp site_article_link?(url),
     do: Enum.any?(@valid_article_prefix, &String.starts_with?(url, &1))

@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
         -> web or domain boundary
   """
   import ShortMaps
-  import Helper.ErrorCode
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   alias GroupherServer.{Accounts, CMS}
 
@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def user(_root, %{user: user}, _info), do: Accounts.Profiles.read_user(user)
-  def user(_root, _args, _info), do: raise_error(:account_login, "need user login name")
+  def user(_root, _args, _info), do: {:error, ErrorCat.account_login("need user login name")}
 
   def paged_users(_root, ~m(filter)a, %{context: %{cur_user: cur_user}}) do
     Accounts.Profiles.paged_users(filter, cur_user)
@@ -101,7 +101,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   defp browser_session_result({:error, reason}) do
     {message, code} =
-      case reason do
+      case error_reason(reason) do
         :session_expired ->
           {"Browser Session expired.", "SESSION_EXPIRED"}
 
@@ -125,6 +125,10 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   defp browser_session_result(result), do: result
+
+  defp error_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp error_reason(reason) when is_atom(reason), do: reason
+  defp error_reason(_reason), do: :unknown
 
   def linked_oauth_accounts(_root, _args, %{context: %{cur_user: cur_user}}) do
     Accounts.Profiles.linked_oauth_accounts(cur_user.login)

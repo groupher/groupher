@@ -13,10 +13,25 @@ defmodule GroupherServer.CMS.Interactions.Audit do
       InteractionAudit job -> Interactions.Audit -> fact table + bitmap repair
   """
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Interactions.Registry
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Artiment.Matcher
+
+  alias CMS.Model.{
+    ArticleCollect,
+    ArticleUpvote,
+    ArticleUserEmotion,
+    CommentUpvote,
+    CommentUserEmotion
+  }
 
   @article_threads ~w(post blog changelog doc)
+  @fact_models %{
+    upvote: ArticleUpvote,
+    collect: ArticleCollect,
+    emotion: ArticleUserEmotion,
+    comment_upvote: CommentUpvote,
+    comment_emotion: CommentUserEmotion
+  }
 
   @doc "Verifies bitmap/count projections against fact tables and repairs drift atomically."
   @spec verify_and_repair() :: {:ok, %{repairs: non_neg_integer()}} | {:error, term()}
@@ -25,13 +40,13 @@ defmodule GroupherServer.CMS.Interactions.Audit do
       repairs =
         Enum.reduce(@article_threads, 0, fn thread, total ->
           total +
-            repair_fixed(thread, Registry.fact(:upvote).table, "upvoted_user_ids") +
-            repair_fixed(thread, Registry.fact(:collect).table, "collected_user_ids") +
-            repair_emotions(thread, Registry.fact(:emotion).table) +
+            repair_fixed(thread, fact_table(:upvote), "upvoted_user_ids") +
+            repair_fixed(thread, fact_table(:collect), "collected_user_ids") +
+            repair_emotions(thread, fact_table(:emotion)) +
             repair_reports(thread)
         end) +
-          repair_fixed("comment", Registry.fact(:comment_upvote).table, "upvoted_user_ids") +
-          repair_emotions("comment", Registry.fact(:comment_emotion).table) +
+          repair_fixed("comment", fact_table(:comment_upvote), "upvoted_user_ids") +
+          repair_emotions("comment", fact_table(:comment_emotion)) +
           repair_reports("comment")
 
       %{repairs: repairs}
@@ -48,7 +63,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_fixed(thread, fact_table, bitmap_column) do
     target_column = target_column(thread)
-    info_table = Registry.target(String.to_existing_atom(thread)).reaction.__schema__(:source)
+    info_table = interaction_info(thread).reaction_info_model.__schema__(:source)
     fact_filter = if thread == "comment", do: "WHERE TRUE", else: "WHERE thread = '#{thread}'"
     count_column = fixed_count_column(bitmap_column)
 
@@ -82,7 +97,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_emotions(thread, fact_table) do
     target_column = target_column(thread)
-    info_table = Registry.target(String.to_existing_atom(thread)).emotion.__schema__(:source)
+    info_table = interaction_info(thread).emotion_info_model.__schema__(:source)
     fact_filter = "WHERE #{target_column} IS NOT NULL"
 
     insert_missing_emotion_infos(info_table, target_column, fact_table, fact_filter)
@@ -98,7 +113,7 @@ defmodule GroupherServer.CMS.Interactions.Audit do
 
   defp repair_reports(thread) do
     target_column = target_column(thread)
-    info_table = Registry.target(String.to_existing_atom(thread)).reaction.__schema__(:source)
+    info_table = interaction_info(thread).reaction_info_model.__schema__(:source)
     report_filter = "WHERE #{target_column} IS NOT NULL"
 
     insert_missing_report_infos(info_table, target_column, report_filter)
@@ -343,7 +358,15 @@ defmodule GroupherServer.CMS.Interactions.Audit do
     count
   end
 
-  defp target_column(thread), do: Registry.target_column(String.to_existing_atom(thread))
+  defp interaction_info(thread) do
+    {:ok, info} = Matcher.match_interaction(String.to_existing_atom(thread))
+    info
+  end
+
+  defp fact_table(interaction),
+    do: @fact_models |> Map.fetch!(interaction) |> then(& &1.__schema__(:source))
+
+  defp target_column(thread), do: interaction_info(thread).foreign_key |> Atom.to_string()
 
   defp fixed_count_column("upvoted_user_ids"), do: "upvotes_count"
   defp fixed_count_column("collected_user_ids"), do: "collects_count"

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Document, Lifecycle, Lock}
+  alias CMS.Articles.{Document, Lifecycle, MutationLock}
   alias CMS.Docs.Branch
   alias CMS.Docs.Trash, as: DocTrash
   alias CMS.Communities.TagStats
@@ -135,7 +135,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
   def trash(_article, _actor, _opts \\ [])
 
   def trash(%Doc{}, _actor, _opts),
-    do: {:error, {:custom, "Doc deletion must go through the Docs Tree lifecycle"}}
+    do:
+      {:error,
+       GroupherServer.ErrorCat.custom("Doc deletion must go through the Docs Tree lifecycle")}
 
   def trash(article, actor, opts) do
     result =
@@ -147,13 +149,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
           nil ->
             with {:ok, canonical} <- CMS.Gate.access_check(actor, :delete, article) do
-              Lock.run_for_article(community, thread, article, fn ->
+              MutationLock.with_article(community, article, fn ->
                 do_trash(community, thread, canonical.article_hash_id, actor, opts)
               end)
             end
         end
       else
-        nil -> {:error, {:not_exist, "Article Community"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Article Community")}
         error -> error
       end
 
@@ -338,19 +340,23 @@ defmodule GroupherServer.CMS.Articles.Trash do
            %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
         doc_ids = doc_action_article_hash_ids(action, branch)
 
-        Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+        MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
           with false <- action_has_other_children?(action.id, item.id, :doc),
                {:ok, [doc]} <-
                  DocTrash.restore_action_articles(action, community, branch, actor, opts),
                :ok <- delete_empty_action(action.id) do
             {:ok, doc}
           else
-            true -> {:error, {:custom, "Trash action must be restored as one group"}}
-            error -> error
+            true ->
+              {:error,
+               GroupherServer.ErrorCat.custom("Trash action must be restored as one group")}
+
+            error ->
+              error
           end
         end)
       else
-        nil -> {:error, {:not_exist, "Trash Community"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -365,7 +371,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
           do_restore(item.id, community, actor, opts)
         end)
       else
-        nil -> {:error, {:not_exist, "Trash Community"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -383,7 +389,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
            %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
         doc_ids = doc_action_article_hash_ids(action, branch)
 
-        Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+        MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
           with false <- action_has_other_children?(action.id, item.id, :doc),
                {:ok, :done} <-
                  DocTrash.permanently_delete_action_articles(
@@ -397,14 +403,17 @@ defmodule GroupherServer.CMS.Articles.Trash do
             {:ok, %{done: true}}
           else
             true ->
-              {:error, {:custom, "Trash action must be permanently deleted as one group"}}
+              {:error,
+               GroupherServer.ErrorCat.custom(
+                 "Trash action must be permanently deleted as one group"
+               )}
 
             error ->
               error
           end
         end)
       else
-        nil -> {:error, {:not_exist, "Trash Community"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -421,7 +430,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       sync_search(result, {:delete, item.thread, item.article_hash_id})
     else
-      nil -> {:error, {:not_exist, "Trash Community"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
       error -> error
     end
   end
@@ -434,7 +443,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     |> Repo.one()
     |> case do
       %TrashedArticle{} = item -> {:ok, hydrate(item)}
-      nil -> {:error, {:not_exist, "TrashedArticle"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
@@ -504,7 +513,9 @@ defmodule GroupherServer.CMS.Articles.Trash do
       )
       |> Repo.delete_all()
 
-    if count in [0, 1], do: :ok, else: {:error, {:custom, "invalid Trash action cleanup"}}
+    if count in [0, 1],
+      do: :ok,
+      else: {:error, GroupherServer.ErrorCat.custom("invalid Trash action cleanup")}
   end
 
   defp do_trash(community, thread, article_hash_id, actor, opts) do
@@ -607,7 +618,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
     case item do
       nil ->
-        {:error, {:not_exist, "TrashedArticle"}}
+        {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
 
       %TrashedArticle{} = item ->
         action =
@@ -621,8 +632,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
              :ok <- delete_empty_action(action.id) do
           {:ok, article}
         else
-          true -> {:error, {:custom, "Trash action must be restored as one group"}}
-          error -> error
+          true ->
+            {:error, GroupherServer.ErrorCat.custom("Trash action must be restored as one group")}
+
+          error ->
+            error
         end
     end
   end
@@ -661,7 +675,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   defp run_item_locked(%Community{} = community, %TrashedArticle{} = item, fun) do
-    Lock.run(community, item.thread, item.article_hash_id, fun)
+    MutationLock.with_article(community, item.thread, item.article_hash_id, fun)
   end
 
   defp do_permanently_delete(item_id, community, actor, opts) do
@@ -688,8 +702,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
              :ok <- delete_empty_action(action.id) do
           {:ok, %{done: true}}
         else
-          true -> {:error, {:custom, "Trash action must be permanently deleted as one group"}}
-          error -> error
+          true ->
+            {:error,
+             GroupherServer.ErrorCat.custom(
+               "Trash action must be permanently deleted as one group"
+             )}
+
+          error ->
+            error
         end
     end
   end
@@ -836,7 +856,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> preload([:community_tags, :communities, author: :user])
       |> Repo.one()
       |> case do
-        nil -> {:error, {:not_exist, "logical Article"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("logical Article")}
         article -> {:ok, article}
       end
     end
@@ -861,7 +881,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       case Enum.find(article_hash_ids, &(not Map.has_key?(articles_by_hash_id, &1))) do
         nil -> {:ok, articles_by_hash_id}
-        _missing_id -> {:error, {:not_exist, "logical Article"}}
+        _missing_id -> {:error, CMS.Articles.ErrorCat.not_exist("logical Article")}
       end
     end
   end
@@ -932,13 +952,21 @@ defmodule GroupherServer.CMS.Articles.Trash do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
          {:ok, state} <- Lifecycle.state(article.community_id, thread, article.article_hash_id) do
       if state == :archived,
-        do: {:error, {:archived, "article is archived, can not be deleted"}},
+        do:
+          {:error,
+           GroupherServer.CMS.Articles.ErrorCat.archived(
+             "article is archived, can not be deleted"
+           )},
         else: {:ok, state}
     end
   end
 
   defp ensure_standalone_trash_supported(:doc),
-    do: {:error, {:custom, "Docs Articles must be moved to Trash through their Tree node"}}
+    do:
+      {:error,
+       GroupherServer.ErrorCat.custom(
+         "Docs Articles must be moved to Trash through their Tree node"
+       )}
 
   defp ensure_standalone_trash_supported(_thread), do: :ok
 

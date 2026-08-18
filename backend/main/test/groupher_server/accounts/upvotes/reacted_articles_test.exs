@@ -44,7 +44,9 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
       {:ok, _} = CMS.Articles.upvote(post, user)
 
       filter = %{thread: "INVALID", page: 1, size: 20}
-      assert {:error, {:custom, "invalid thread"}} = Accounts.paged_articles(user, filter)
+
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
+               Accounts.paged_articles(user, filter)
     end
   end
 end

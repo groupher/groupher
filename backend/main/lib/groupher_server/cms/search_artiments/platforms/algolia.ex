@@ -14,7 +14,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   require Logger
 
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Query, Result}
+  alias GroupherServer.CMS.{ErrorCat, SearchArtiments}
+  alias SearchArtiments.{Artiment, Config, Query, Result}
 
   @timeout 5_000
   @task_poll_interval 100
@@ -80,7 +81,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   @impl true
   def search(%Query{sort: sort}) when sort != :relevance do
-    {:error, {:custom, "Algolia sort replicas are not configured"}}
+    {:error, GroupherServer.ErrorCat.custom("Algolia sort replicas are not configured")}
   end
 
   def search(%Query{} = query) do
@@ -245,10 +246,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
           end
 
         {:ok, response} ->
-          {:error, {:search_platform, %{message: "invalid Algolia response", response: response}}}
+          {:error,
+           ErrorCat.search_platform(%{message: "invalid Algolia response", response: response})}
 
         :ok ->
-          {:error, {:search_platform, "empty Algolia admin response"}}
+          {:error, ErrorCat.search_platform("empty Algolia admin response")}
 
         error ->
           error
@@ -284,18 +286,21 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   defp validate_object_ids(response, expected) do
     {:error,
-     {:search_platform,
-      %{message: "unexpected Algolia batch response", expected: expected, response: response}}}
+     ErrorCat.search_platform(%{
+       message: "unexpected Algolia batch response",
+       expected: expected,
+       response: response
+     })}
   end
 
   defp fetch_task_id(%{"taskID" => task_id}) when is_integer(task_id), do: {:ok, task_id}
 
   defp fetch_task_id(response) do
-    {:error, {:search_platform, %{message: "missing Algolia taskID", response: response}}}
+    {:error, ErrorCat.search_platform(%{message: "missing Algolia taskID", response: response})}
   end
 
   defp wait_for_task(_task_id, 0),
-    do: {:error, {:search_platform, "timed out waiting for Algolia indexing task"}}
+    do: {:error, ErrorCat.search_platform("timed out waiting for Algolia indexing task")}
 
   defp wait_for_task(task_id, attempts_left) do
     case request(
@@ -314,7 +319,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
       {:ok, response} ->
         {:error,
-         {:search_platform, %{message: "invalid Algolia task status", response: response}}}
+         ErrorCat.search_platform(%{message: "invalid Algolia task status", response: response})}
 
       error ->
         error
@@ -390,15 +395,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   end
 
   defp parse_response({:ok, %Tesla.Env{status: status, body: body}}) do
-    {:error, {:search_platform, %{status: status, body: body}}}
+    {:error, ErrorCat.search_platform(%{status: status, body: body})}
   end
 
-  defp parse_response({:error, reason}), do: {:error, {:search_platform, reason}}
+  defp parse_response({:error, reason}), do: {:error, ErrorCat.search_platform(reason)}
 
   defp required_config(key) do
     case Keyword.get(config(), key) do
       value when is_binary(value) and value != "" -> {:ok, value}
-      _ -> {:error, {:search_platform, "missing Algolia #{key}"}}
+      _ -> {:error, ErrorCat.search_platform("missing Algolia #{key}")}
     end
   end
 

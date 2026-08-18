@@ -17,7 +17,7 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
   @doc "Allows ordinary mutations and requires a bounded publisher scope for BodyBag writes."
@@ -45,7 +45,7 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
     handle_absinthe_error(
       resolution,
       "BodyBag requires an authorized Groupher publisher service",
-      ecode(:service_auth)
+      ErrorCat.code(GroupherServerWeb.ErrorCat.service_auth())
     )
   end
 end

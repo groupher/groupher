@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias CMS.Articles.{
     Document,
     Draft,
-    Lock,
+    MutationLock,
     States,
     VersionedRelations,
     Write
@@ -108,13 +108,13 @@ defmodule GroupherServer.CMS.Articles.Publish do
                {:ok, updated_draft} <- States.update_edit_status(updated_draft) do
             {:ok, updated_draft}
           else
-            {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+            {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
             error -> error
           end
         end
       )
     else
-      nil -> {:error, {:not_exist, "Article Community"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("Article Community")}
       error -> error
     end
   end
@@ -130,12 +130,12 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
   defp run_locked(%Community{} = community, :doc, article_hash_id, branch_ref, fun) do
     with {:ok, branch} <- Branch.resolve(community, branch_ref) do
-      Lock.run_doc(community, branch.id, article_hash_id, fun)
+      MutationLock.with_article(community, :doc, branch.id, article_hash_id, fun)
     end
   end
 
   defp run_locked(%Community{} = community, thread, article_hash_id, _branch_ref, fun) do
-    Lock.run(community, thread, article_hash_id, fun)
+    MutationLock.with_article(community, thread, article_hash_id, fun)
   end
 
   defp do_publish(%Community{} = community, thread, article_hash_id, %User{} = user, branch_ref) do
@@ -161,7 +161,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          :ok <- run_after_publish(public_article, first_publish?) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
-      {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+      {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
       error -> error
     end
   end
@@ -169,7 +169,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
   defp validate_publish_branch(:doc, _branch), do: :ok
 
   defp validate_publish_branch(_thread, branch) do
-    if is_nil(branch), do: :ok, else: {:error, {:custom, "ordinary Articles have no branch"}}
+    if is_nil(branch),
+      do: :ok,
+      else: {:error, GroupherServer.ErrorCat.custom("ordinary Articles have no branch")}
   end
 
   defp apply_draft(%Community{} = community, thread, branch, draft) do
@@ -312,7 +314,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
   end
 
   defp validate_version(%{slug: slug}) when is_binary(slug) do
-    if Slug.valid?(slug), do: :ok, else: {:error, {:custom, "Article slug is invalid"}}
+    if Slug.valid?(slug),
+      do: :ok,
+      else: {:error, GroupherServer.ErrorCat.custom("Article slug is invalid")}
   end
 
   defp validate_version(_article), do: :ok

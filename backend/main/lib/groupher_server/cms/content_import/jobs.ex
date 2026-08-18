@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.ErrorCat
   alias GroupherServer.CMS.ContentImport.Process
   alias GroupherServer.CMS.ContentImport.Persistence.Connection
   alias GroupherServer.CMS.ContentImport.Persistence.Job
@@ -101,16 +102,18 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   end
 
   @doc "Loads the internal Job record without projecting it for GraphQL."
-  @spec get_record(pos_integer(), Ecto.UUID.t()) :: {:ok, Job.t()} | {:error, :not_found}
+  @spec get_record(pos_integer(), Ecto.UUID.t()) ::
+          {:ok, Job.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def get_record(community_id, job_ref) do
     case Repo.get_by(Job, community_id: community_id, hash_id: job_ref) do
       %Job{} = job -> {:ok, job}
-      nil -> {:error, :not_found}
+      nil -> {:error, ErrorCat.content_import_job_not_found()}
     end
   end
 
   @doc "Locks one community Job for a staging, failure, cancel, or apply transaction."
-  @spec lock_job(pos_integer(), Ecto.UUID.t()) :: {:ok, Job.t()} | {:error, :not_found}
+  @spec lock_job(pos_integer(), Ecto.UUID.t()) ::
+          {:ok, Job.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def lock_job(community_id, job_ref) do
     case Repo.one(
            from(job in Job,
@@ -119,7 +122,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
            )
          ) do
       %Job{} = job -> {:ok, job}
-      nil -> {:error, :not_found}
+      nil -> {:error, ErrorCat.content_import_job_not_found()}
     end
   end
 
@@ -229,17 +232,22 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
       cond do
         not is_binary(external_ref) or external_ref == "" ->
-          {:halt, {:error, {:custom, "sourceRef is required"}}}
+          {:halt, {:error, GroupherServer.ErrorCat.custom("sourceRef is required")}}
 
         MapSet.member?(refs, external_ref) ->
-          {:halt, {:error, {:custom, "source documents contain a duplicate sourceRef"}}}
+          {:halt,
+           {:error,
+            GroupherServer.ErrorCat.custom("source documents contain a duplicate sourceRef")}}
 
         not is_map(target) ->
-          {:halt, {:error, {:custom, "source document is missing from confirmed TargetTree"}}}
+          {:halt,
+           {:error,
+            GroupherServer.ErrorCat.custom("source document is missing from confirmed TargetTree")}}
 
         not is_binary(source_hash) or
             not String.match?(source_hash, ~r/\Asource-md-v1:[0-9a-f]{64}\z/) ->
-          {:halt, {:error, {:custom, "source document hash contract is invalid"}}}
+          {:halt,
+           {:error, GroupherServer.ErrorCat.custom("source document hash contract is invalid")}}
 
         true ->
           item = %{
@@ -263,14 +271,19 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
       end
     end)
     |> case do
-      {:ok, [], _refs} -> {:error, {:custom, "Select at least one document to import"}}
-      {:ok, items, _refs} -> {:ok, Enum.reverse(items)}
-      error -> error
+      {:ok, [], _refs} ->
+        {:error, GroupherServer.ErrorCat.custom("Select at least one document to import")}
+
+      {:ok, items, _refs} ->
+        {:ok, Enum.reverse(items)}
+
+      error ->
+        error
     end
   end
 
   defp build_item_attrs(_documents, _target_tree, _source_info),
-    do: {:error, {:custom, "source documents must be a list"}}
+    do: {:error, GroupherServer.ErrorCat.custom("source documents must be a list")}
 
   defp insert_items(job, attrs) do
     Enum.reduce_while(attrs, :ok, fn attrs, :ok ->
@@ -320,7 +333,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
                    connection_key: branch
                  ) do
               %Connection{} = connection -> {:ok, connection}
-              nil -> {:error, :content_import_connection_create_failed}
+              nil -> {:error, ErrorCat.content_import_connection_create_failed()}
             end
         end
     end
@@ -346,7 +359,10 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
         job.target_tree == Map.fetch!(input, :target_tree) and
         persisted_items == requested_items
 
-    if same?, do: :ok, else: {:error, {:custom, "previewRef is already bound to another intent"}}
+    if same?,
+      do: :ok,
+      else:
+        {:error, GroupherServer.ErrorCat.custom("previewRef is already bound to another intent")}
   end
 
   defp counts(target_tree) do

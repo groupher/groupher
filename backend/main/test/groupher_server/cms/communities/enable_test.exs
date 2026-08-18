@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
       assert {:ok, :post_comment} = Enable.emotion?(community.slug, :comment, :post, :beer)
       assert {:ok, :post} = Enable.emotion?(community.slug, :article, :post, :upvote)
 
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :upvote)
     end
 
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
           post_comment: [:heart]
         })
 
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :beer)
 
       assert {:ok, :post_comment} =
@@ -41,17 +41,17 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
           post: [:heart]
         })
 
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :article, :post, :beer)
 
       assert {:ok, :post} = Enable.emotion?(community.slug, :article, :post, :heart)
     end
 
     test "returns false for unsupported emotion keys", ~m(community)a do
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :not_exist)
 
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :article, :post, :not_exist)
     end
 
@@ -62,7 +62,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
     end
 
     test "allow_emotion returns cancan error key for disallowed emotions", ~m(community)a do
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :upvote)
 
       {:ok, _} =
@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
           post_comment: [:heart]
         })
 
-      assert {:error, :emotion_not_allowed} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                Enable.emotion?(community.slug, :comment, :post, :beer)
     end
   end
@@ -81,7 +81,8 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
     end
 
     test "allow_thread rejects non-atom threads", ~m(community)a do
-      assert {:error, {:custom, "invalid thread"}} = Enable.thread?(community.slug, "POST")
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
+               Enable.thread?(community.slug, "POST")
     end
 
     test "allow_thread returns cancan error key when disabled", ~m(community)a do
@@ -90,7 +91,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
           post: false
         })
 
-      assert {:error, :thread_not_visible} =
+      assert {:error, %ErrorCat.Error{reason: :thread_not_visible}} =
                Enable.thread?(community.slug, :post)
     end
   end

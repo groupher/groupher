@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Interactions.RoaringBitmapTest do
+defmodule GroupherServer.Test.CMS.Model.Interaction.RoaringBitmapTest do
   use GroupherServer.DataCase, async: true
 
   alias Ecto.Adapters.SQL

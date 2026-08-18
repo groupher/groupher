@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   """
 
   import Ecto.Query, warn: false
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
   import Helper.Utils, only: [keys_to_atoms: 1]
 
   alias GroupherServer.{Accounts, Messaging, Repo}
@@ -241,8 +241,14 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
         |> lock("FOR UPDATE")
         |> Repo.one()
         |> case do
-          %User{} = locked_user -> locked_user
-          nil -> Repo.rollback(message: "user no longer exists", code: ecode(:account_login))
+          %User{} = locked_user ->
+            locked_user
+
+          nil ->
+            Repo.rollback(
+              message: "user no longer exists",
+              code: ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+            )
         end
 
       {:error, reason} ->

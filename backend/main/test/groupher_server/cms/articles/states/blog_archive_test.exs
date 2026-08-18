@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
 
       archived_blog = archived_blogs |> List.first()
       {:error, reason} = CMS.Articles.update(archived_blog, %{"title" => "new title"})
-      assert reason == :article_archived
+      assert %GroupherServer.ErrorCat.Error{reason: :article_archived} = reason
     end
 
     test "can not delete archived blog" do

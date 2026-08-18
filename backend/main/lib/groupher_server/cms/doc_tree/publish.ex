@@ -209,8 +209,11 @@ defmodule GroupherServer.CMS.DocTree.Publish do
            ) do
       {:ok, %{done: true, affected_count: length(drafts)}}
     else
-      false -> {:error, {:custom, "Draft subtree root must be a Tab or Group."}}
-      error -> error
+      false ->
+        {:error, GroupherServer.ErrorCat.custom("Draft subtree root must be a Tab or Group.")}
+
+      error ->
+        error
     end
   end
 
@@ -324,8 +327,11 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              ) do
         {:ok, %{snapshot: snapshot, checklist_item: item}}
       else
-        nil -> {:error, {:custom, "Selected docs publish item no longer exists."}}
-        error -> error
+        nil ->
+          {:error, GroupherServer.ErrorCat.custom("Selected docs publish item no longer exists.")}
+
+        error ->
+          error
       end
     end)
   end
@@ -368,7 +374,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, tree_checklist_item_ids)
 
     if length(events) != length(tree_checklist_item_ids) do
-      {:error, {:custom, "Selected tree publish item no longer exists."}}
+      {:error, GroupherServer.ErrorCat.custom("Selected tree publish item no longer exists.")}
     else
       doc_snapshots =
         DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
@@ -415,7 +421,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          MapSet.disjoint?(selected_doc_ids, deleted_doc_ids) do
       :ok
     else
-      {:error, {:custom, "Selected docs publish item is also selected for tree deletion."}}
+      {:error,
+       GroupherServer.ErrorCat.custom(
+         "Selected docs publish item is also selected for tree deletion."
+       )}
     end
   end
 
@@ -445,7 +454,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, restore_tree_checklist_item_ids)
 
     if length(events) != length(restore_tree_checklist_item_ids) do
-      {:error, {:custom, "Selected tree restore item no longer exists."}}
+      {:error, GroupherServer.ErrorCat.custom("Selected tree restore item no longer exists.")}
     else
       Restore.restore_tree_events(community, branch, events, user)
     end

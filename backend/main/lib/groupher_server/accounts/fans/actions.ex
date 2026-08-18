@@ -14,13 +14,12 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   aligned before user pages are revalidated.
   """
 
-  import Helper.ErrorCode
-
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Accounts.{Events, FrontDesk}
   alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias Helper.{Multi, Later, ORM, T}
+  alias GroupherServer.Accounts.Fans.ErrorCat
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do
@@ -52,8 +51,11 @@ defmodule GroupherServer.Accounts.Fans.Actions do
       |> result()
       |> revalidate_users([user.login, target_user.login])
     else
-      false -> {:error, [message: "can't follow yourself", code: ecode(:self_conflict)]}
-      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
+      false ->
+        {:error, ErrorCat.self_conflict("can't follow yourself")}
+
+      {:error, reason} ->
+        {:error, ErrorCat.not_exist(reason)}
     end
   end
 
@@ -82,8 +84,11 @@ defmodule GroupherServer.Accounts.Fans.Actions do
       |> result()
       |> revalidate_users([user.login, target_user.login])
     else
-      false -> {:error, [message: "can't undo follow yourself", code: ecode(:self_conflict)]}
-      {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
+      false ->
+        {:error, ErrorCat.self_conflict("can't undo follow yourself")}
+
+      {:error, reason} ->
+        {:error, ErrorCat.not_exist(reason)}
     end
   end
 
@@ -131,31 +136,31 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   end
 
   defp result({:error, :create_follower, %Ecto.Changeset{}, _steps}) do
-    {:error, [message: "already followed", code: ecode(:already_did)]}
+    {:error, ErrorCat.already_did("already followed")}
   end
 
   defp result({:error, :create_follower, _result, _steps}) do
-    {:error, [message: "already followed", code: ecode(:already_did)]}
+    {:error, ErrorCat.already_did("already followed")}
   end
 
   defp result({:error, :create_following, _result, _steps}) do
-    {:error, [message: "follow fails", code: ecode(:react_fails)]}
+    {:error, ErrorCat.react_fails("follow fails")}
   end
 
   defp result({:error, :delete_follower, _result, _steps}) do
-    {:error, [message: "already unfollowed", code: ecode(:already_did)]}
+    {:error, ErrorCat.already_did("already unfollowed")}
   end
 
   defp result({:error, :delete_following, _result, _steps}) do
-    {:error, [message: "unfollow fails", code: ecode(:react_fails)]}
+    {:error, ErrorCat.react_fails("unfollow fails")}
   end
 
   defp result({:error, :minus_achievement, _result, _steps}) do
-    {:error, [message: "follow acieve fails", code: ecode(:react_fails)]}
+    {:error, ErrorCat.react_fails("follow acieve fails")}
   end
 
   defp result({:error, :add_achievement, _result, _steps}) do
-    {:error, [message: "follow acieve fails", code: ecode(:react_fails)]}
+    {:error, ErrorCat.react_fails("follow acieve fails")}
   end
 
   defp revalidate_users({:ok, _result} = response, logins) do

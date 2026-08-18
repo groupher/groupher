@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ecode(:thread_not_visible)
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
              )
     end
 
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 
@@ -221,14 +221,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_0,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_neg_1,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 

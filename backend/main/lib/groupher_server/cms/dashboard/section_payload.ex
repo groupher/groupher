@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
 
   import Helper.Utils, only: [strip_struct: 1, deep_merge: 2]
 
+  alias GroupherServer.ErrorCat
   alias GroupherServer.CMS.Dashboard.LinkValidator
   alias GroupherServer.CMS.Model.{CommunityDashboard, Embeds}
 
@@ -116,7 +117,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     if is_list(args) and Enum.all?(args, &LinkValidator.valid_tree?/1) do
       {:ok, args}
     else
-      {:error, {:custom, "invalid dashboard links"}}
+      {:error, ErrorCat.custom("invalid dashboard links")}
     end
   end
 
@@ -124,7 +125,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     if is_list(args) and LinkValidator.valid_children?(args) do
       {:ok, args}
     else
-      {:error, {:custom, "invalid dashboard links"}}
+      {:error, ErrorCat.custom("invalid dashboard links")}
     end
   end
 
@@ -145,7 +146,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
   end
 
   def prepare(%CommunityDashboard{}, :third_party_analytics, _args),
-    do: {:error, {:custom, "invalid third-party analytics config"}}
+    do: {:error, ErrorCat.custom("invalid third-party analytics config")}
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}

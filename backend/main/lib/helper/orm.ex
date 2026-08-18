@@ -35,6 +35,7 @@ defmodule Helper.ORM do
   import Helper.ErrorHandler
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.ErrorCat
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
@@ -168,7 +169,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1, preload: :author)
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   def find(queryable, id, preload: preload) do
     queryable
@@ -186,7 +187,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1)
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   @spec find(Ecto.Queryable.t(), T.id()) :: {:ok, any()} | {:error, T.error()}
   def find(queryable, id) do
@@ -204,14 +205,18 @@ defmodule Helper.ORM do
       {:ok, %User{}}
 
       iex> ORM.find_by(User, login: "missing")
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   def find_by(queryable, clauses) do
     queryable
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
+        {:error,
+         ErrorCat.custom(%{
+           reason: :not_exist,
+           message: not_found_formatter(queryable, clauses)
+         })}
 
       result ->
         {:ok, result}
@@ -232,7 +237,11 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
+        {:error,
+         ErrorCat.custom(%{
+           reason: :not_exist,
+           message: not_found_formatter(queryable, clauses)
+         })}
 
       result ->
         {:ok, result}

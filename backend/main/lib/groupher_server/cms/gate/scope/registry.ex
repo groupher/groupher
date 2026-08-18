@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Registry do
   alias GroupherServer.CMS.Gate.Scope.Comment, as: CommentCompiler
   alias GroupherServer.CMS.Gate.Scope.Community, as: CommunityCompiler
   alias GroupherServer.CMS.Gate.Scope.Document, as: DocumentCompiler
+  alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Model.{ArticleDocument, Blog, Changelog, Post}
   alias GroupherServer.CMS.Model.Doc, as: DocModel
 
@@ -20,7 +21,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Registry do
   Dispatches a query to the resource compiler selected by its root schema.
 
   The typed Scope Context must match the root schema; any other combination, or
-  an unknown root, returns `{:error, :scope_root_mismatch}`.
+  an unknown root, returns `{:error, CMS.Gate.ErrorCat.scope_root_mismatch()}`.
 
   ## Examples
 
@@ -28,13 +29,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Registry do
       #=> Ecto.Query.t()
 
       Registry.compile(query, actor, :read, Post, %Community{policy_mode: :public})
-      #=> {:error, :scope_root_mismatch}
+      #=> {:error, CMS.Gate.ErrorCat.scope_root_mismatch()}
 
   """
   def compile(query, actor, action, root, %Community{} = context) do
     if root == GroupherServer.CMS.Model.Community,
       do: CommunityCompiler.scope(query, actor, action, context),
-      else: {:error, :scope_root_mismatch}
+      else: {:error, ErrorCat.scope_root_mismatch()}
   end
 
   def compile(query, actor, action, root, %Article{} = context)
@@ -51,5 +52,5 @@ defmodule GroupherServer.CMS.Gate.Scope.Registry do
     do: DocumentCompiler.scope(query, actor, action, context)
 
   def compile(_query, _actor, _action, _root, _context),
-    do: {:error, :scope_root_mismatch}
+    do: {:error, ErrorCat.scope_root_mismatch()}
 end

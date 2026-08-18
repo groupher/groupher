@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Communities.Enable do
       {:ok, :post_comment}
 
       iex> CMS.Communities.Enable.allow_emotion("groupher", :comment, :post, :upvote)
-      {:error, :emotion_not_allowed}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :emotion_not_allowed}}
 
   Business position:
 
@@ -45,6 +45,8 @@ defmodule GroupherServer.CMS.Communities.Enable do
 
   alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
   @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
@@ -61,45 +63,47 @@ defmodule GroupherServer.CMS.Communities.Enable do
       #=> {:ok, :post}
 
       CMS.Communities.Enable.allow_thread("groupher", :kanban)
-      #=> {:error, :thread_not_visible}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :thread_not_visible}}
 
   """
   @spec allow_thread(map() | String.t() | nil, atom()) ::
-          {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
+          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def allow_thread(community, thread) when is_atom(thread) do
     with {:ok, thread} <- Threads.to_atom(thread) do
       case thread_visible?(community, thread) do
         true -> done(thread)
-        false -> {:error, :thread_not_visible}
+        false -> {:error, ArticleErrorCat.thread_not_visible()}
       end
     end
   end
 
-  def allow_thread(_community, _thread), do: {:error, {:custom, "invalid thread"}}
+  def allow_thread(_community, _thread),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid thread")}
 
   @spec allow_emotion(String.t() | nil, scope(), atom(), atom()) ::
-          {:ok, atom()} | {:error, atom() | {:custom, String.t()}}
+          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def allow_emotion(community_slug, scope, thread, emotion) when is_atom(thread) do
     with {:ok, thread} <- Threads.to_atom(thread) do
       thread_key = thread_key(scope, thread)
 
       case emotion_allowed?(community_slug, scope, thread, emotion) do
         true -> done(thread_key)
-        false -> {:error, :emotion_not_allowed}
+        false -> {:error, ArticleErrorCat.emotion_not_allowed()}
       end
     end
   end
 
   def allow_emotion(_community_slug, _scope, _thread, _emotion),
-    do: {:error, {:custom, "invalid thread"}}
+    do: {:error, GroupherServer.ErrorCat.custom("invalid thread")}
 
-  @spec allow_comment(map(), term()) :: {:ok, map()} | {:error, atom()}
+  @spec allow_comment(map(), term()) ::
+          {:ok, map()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def allow_comment(%{meta: %{is_comment_locked: false}} = article, _user), do: done(article)
 
   def allow_comment(%{meta: %{is_comment_locked: true}}, _user),
-    do: {:error, :article_comments_locked}
+    do: {:error, GateErrorCat.article_comments_locked()}
 
-  def allow_comment(_article, _user), do: {:error, :article_comments_locked}
+  def allow_comment(_article, _user), do: {:error, GateErrorCat.article_comments_locked()}
 
   @spec emotions_whitelist() :: [atom()]
   def emotions_whitelist, do: @emotions_whitelist

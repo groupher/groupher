@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert updated["innerId"] == to_string(post.inner_id)
     end
 
-    test "duplicate upvote returns error and count does not increase",
+    test "duplicate upvote is idempotent and count does not increase",
          ~m(user_conn community post user)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
@@ -76,12 +76,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["upvotesCount"] == 1
 
-      assert user_conn
-             |> mutation_error?(
-               S.Article.m(:upvote_article, :post),
-               variables,
-               ecode(:already_upvoted)
-             )
+      unchanged = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
+      assert unchanged["upvotesCount"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
       assert current_post.upvotes_count == 1
@@ -107,7 +103,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

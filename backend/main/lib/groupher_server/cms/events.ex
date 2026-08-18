@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Events do
   """
 
   alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS.ErrorCat
 
   @type event_result :: {:ok, term()} | {:error, term()}
 
@@ -55,5 +56,5 @@ defmodule GroupherServer.CMS.Events do
     {:ok, __MODULE__.Notify}
   end
 
-  defp route(type), do: {:error, {:invalid_event_type, type}}
+  defp route(type), do: {:error, ErrorCat.invalid_event_type(type)}
 end

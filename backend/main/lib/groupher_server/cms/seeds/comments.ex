@@ -92,7 +92,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
       users
       |> Enum.each(fn user ->
         emotion = @comment_emotions |> Enum.random()
-        {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, emotion, user)
+        {:ok, _} = CMS.Interactions.emotion(comment, emotion, user)
       end)
     end
   end
@@ -102,7 +102,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
 
     Enum.each(1..target_count, fn _ ->
       {:ok, user} = db_insert(:user)
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
+      {:ok, _} = CMS.Interactions.upvote(comment, user)
     end)
 
     ORM.find(Comment, comment.id)
@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   defp seed_emotions(%Comment{} = comment) do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@comment_emotions),
-         {:ok, _} <- CMS.Comments.emotion_to_comment(comment.id, emotion, user),
+         {:ok, _} <- CMS.Interactions.emotion(comment, emotion, user),
          {:ok, comment} <- ORM.find(Comment, comment.id),
          emotions <- randomize_emotions(comment.emotions),
          {:ok, comment} <- ORM.update_embed(comment, :emotions, emotions) do

@@ -140,7 +140,8 @@ defmodule GroupherServer.Test.Helper.ORM do
     test "should have error code if not found", ~m(community)a do
       {:error, reason} = CMS.FrontDesk.article(community, :post, 3845)
 
-      assert error_code(reason) == ecode(:article_not_found)
+      assert error_code(reason) ==
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.article_not_found())
     end
   end
 
@@ -180,7 +181,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc(post, :title)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "dec should return error for non-existent field", ~m(community user)a do
@@ -188,7 +189,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.dec(post, :not_a_field)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "dec should below 0", ~m(community user)a do
@@ -387,7 +388,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
       {:error, reason} = ORM.update_meta(post, %{"stats.views" => 42})
 
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 
@@ -413,7 +414,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc_meta(post, :thread)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "inc_meta should return error for non-existent field", ~m(community user)a do
@@ -421,7 +422,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc_meta(post, :non_existent_field)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 end

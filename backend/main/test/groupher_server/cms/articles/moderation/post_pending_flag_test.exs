@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
           post_m.inner_id
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "author can read it's own pending post", ~m(community user)a do
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
           user2
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "pending post can set/unset pending", ~m(post_m)a do

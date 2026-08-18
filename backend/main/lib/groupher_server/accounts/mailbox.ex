@@ -21,7 +21,7 @@ defmodule GroupherServer.Accounts.Mailbox do
   import Helper.ErrorHandler, only: [not_found_formatter: 2]
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Messaging, Repo}
+  alias GroupherServer.{ErrorCat, Messaging, Repo}
   alias GroupherServer.Accounts.Model.{Embeds, User}
   alias GroupherServer.FrontDesk.Cache, as: FrontDeskCache
   alias Helper.Constant.DBPrefix
@@ -178,8 +178,14 @@ defmodule GroupherServer.Accounts.Mailbox do
     found_user_ids = users |> MapSet.new(& &1.id)
 
     case Enum.find(user_ids, &(not MapSet.member?(found_user_ids, &1))) do
-      nil -> {:ok, users}
-      missing_user_id -> {:error, {:not_exist, not_found_formatter(User, missing_user_id)}}
+      nil ->
+        {:ok, users}
+
+      missing_user_id ->
+        {:error,
+         GroupherServer.Accounts.Profiles.ErrorCat.not_exist(
+           not_found_formatter(User, missing_user_id)
+         )}
     end
   end
 
@@ -214,8 +220,9 @@ defmodule GroupherServer.Accounts.Mailbox do
 
       {:ok, %{num_rows: count}} ->
         {:error,
-         {:update_fails,
-          "mailbox batch update affected #{count} of #{length(users)} expected users"}}
+         ErrorCat.custom(
+           "mailbox batch update affected #{count} of #{length(users)} expected users"
+         )}
 
       {:error, reason} ->
         {:error, reason}

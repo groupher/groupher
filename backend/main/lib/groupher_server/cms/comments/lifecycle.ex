@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Model.CommentLifecycle
+  alias GroupherServer.CMS.Comments.ErrorCat
 
   @states [:visible, :deleted, :destroy]
   @allowed_transitions %{
@@ -29,11 +30,12 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
       CMS.Comments.Lifecycle.state(comment_id)
 
   """
-  @spec state(integer()) :: {:ok, CommentLifecycle.state()} | {:error, :lifecycle_not_found}
+  @spec state(integer()) ::
+          {:ok, CommentLifecycle.state()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def state(comment_id) do
     case Repo.get_by(CommentLifecycle, comment_id: comment_id) do
       %CommentLifecycle{state: state} -> {:ok, state}
-      nil -> {:error, :lifecycle_not_found}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 
@@ -50,7 +52,8 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   end
 
   @spec transition(integer(), CommentLifecycle.state()) ::
-          {:ok, CommentLifecycle.t()} | {:error, :lifecycle_not_found | Ecto.Changeset.t()}
+          {:ok, CommentLifecycle.t()}
+          | {:error, GroupherServer.ErrorCat.Error.t() | Ecto.Changeset.t()}
   def transition(comment_id, state) when is_integer(comment_id) and state in @states do
     lifecycle =
       CommentLifecycle
@@ -60,7 +63,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
     case lifecycle do
       nil ->
-        {:error, :lifecycle_not_found}
+        {:error, ErrorCat.lifecycle_not_found()}
 
       %CommentLifecycle{} = lifecycle ->
         transition(lifecycle, state)
@@ -84,7 +87,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
       })
       |> Repo.update()
     else
-      {:error, :lifecycle_state_conflict}
+      {:error, ErrorCat.lifecycle_state_conflict()}
     end
   end
 

@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -228,21 +228,21 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ecode(:passport)
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                S.Article.m(:update_article, :blog),
                variables,
-               ecode(:passport)
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
              )
     end
   end

@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _folder} = CollectFolders.create(%{title: "test folder"}, user)
       {:error, reason} = CollectFolders.create(%{title: "test folder"}, user)
 
-      assert reason |> is_error?(:already_exist)
+      assert reason |> is_error?({{:account, :collection}, :already_exist})
     end
 
     test "user can delete a empty collect folder", ~m(user)a do
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       {:error, reason} = CollectFolders.delete(folder.id)
 
-      assert reason |> is_error?(:delete_no_empty_collect_folder)
+      assert reason |> is_error?({{:account, :collection}, :delete_no_empty_collect_folder})
     end
 
     test "user can get public collect-folder list", ~m(user)a do
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, folder} = CollectFolders.add(post, folder.id, user)
       {:error, reason} = CollectFolders.add(post, folder.id, user)
 
-      assert reason |> is_error?(:already_collected_in_folder)
+      assert reason |> is_error?({{:account, :collection}, :already_collected_in_folder})
     end
 
     test "collect-folder should in article_collect's meta info too", ~m(user post)a do
@@ -269,7 +269,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:error, reason} =
         CollectFolders.paged_articles(folder.id, %{page: 1, size: 10}, user2)
 
-      assert reason |> is_error?(:private_collect_folder)
+      assert reason |> is_error?({{:account, :collection}, :private_collect_folder})
     end
   end
 end

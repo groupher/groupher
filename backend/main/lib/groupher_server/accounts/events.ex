@@ -14,6 +14,8 @@ defmodule GroupherServer.Accounts.Events do
         -> Repo
   """
 
+  alias GroupherServer.ErrorCat
+
   @type event_result :: {:ok, map()} | {:error, any()}
 
   @spec emit(atom(), map()) :: event_result()
@@ -26,5 +28,5 @@ defmodule GroupherServer.Accounts.Events do
     __MODULE__.Notify.handle(:undo, :follow, user, from_user)
   end
 
-  def emit(type, _payload), do: {:error, {:invalid_event_type, type}}
+  def emit(type, _payload), do: {:error, ErrorCat.custom("invalid account event: #{type}")}
 end

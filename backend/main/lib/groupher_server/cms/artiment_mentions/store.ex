@@ -289,10 +289,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   def mentioned_by(mentioned_type, mentioned_id, %{page: page, size: size} = filter) do
     case normalize_type(mentioned_type) do
       :url ->
-        {:error, {:custom, "mentioned_by only supports internal targets"}}
+        {:error, GroupherServer.ErrorCat.custom("mentioned_by only supports internal targets")}
 
       nil ->
-        {:error, {:custom, "invalid mentioned type"}}
+        {:error, GroupherServer.ErrorCat.custom("invalid mentioned type")}
 
       normalized_type ->
         ArtimentMention
@@ -441,7 +441,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     case Repo.preload(article, :document, force: true) |> get_in([:document, :json]) do
       nil -> {:ok, []}
       json when is_binary(json) -> PlateJSON.decode(json)
-      _ -> {:error, {:custom, "invalid json body"}}
+      _ -> {:error, GroupherServer.ErrorCat.custom("invalid json body")}
     end
   end
 

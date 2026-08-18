@@ -13,14 +13,12 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   import Helper.Utils, only: [done: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.{FrontDesk, Interactions.State}
+  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.CMS.Interactions.ErrorCat
   alias Helper.{Multi, ORM, T, Transaction}
 
   alias Accounts.Model.User
-  alias CMS.Model.{AbuseReport, Comment, Embeds}
-
-  @report_threshold_for_fold Comment.report_threshold_for_fold()
+  alias GroupherServer.CMS.Model.{AbuseReport, Embeds}
 
   @doc """
   Files an abuse report against one user account.
@@ -65,95 +63,6 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
       |> Repo.transaction()
       |> result()
     end)
-  end
-
-  @spec article(T.article(), String.t(), map(), User.t()) :: T.domain_res(T.article())
-  def article(target_article, reason, attr, %User{} = user) do
-    with {:ok, thread} <- FrontDesk.thread_of(target_article) do
-      Multi.new()
-      |> Multi.run(:create_abuse_report, fn _, _ ->
-        create_report(thread, target_article.id, reason, attr, user)
-      end)
-      |> Multi.run(:sync_projection, fn _, _ ->
-        sync_projection(target_article, :report, user, :add)
-      end)
-      |> Multi.run(:hydrate, fn _, _ ->
-        {:ok, State.read(target_article, user, surface: :report)}
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
-  end
-
-  @spec undo_article(T.article(), User.t()) :: T.domain_res(T.article())
-  def undo_article(target_article, %User{} = user) do
-    {:ok, thread} = FrontDesk.thread_of(target_article)
-
-    Multi.new()
-    |> Multi.run(:delete_abuse_report, fn _, _ ->
-      delete_report(thread, target_article.id, user)
-    end)
-    |> Multi.run(:sync_projection, fn _, _ ->
-      sync_projection(target_article, :report, user, :remove)
-    end)
-    |> Multi.run(:hydrate, fn _, _ ->
-      {:ok, State.read(target_article, user, surface: :report)}
-    end)
-    |> Repo.transaction()
-    |> result()
-  end
-
-  @spec comment(Comment.t(), String.t(), map(), User.t()) :: T.domain_res(Comment.t())
-  def comment(%Comment{} = target_comment, reason, attr, %User{} = user) do
-    Multi.new()
-    |> Multi.run(:create_abuse_report, fn _, _ ->
-      create_report(:comment, target_comment.id, reason, attr, user)
-    end)
-    |> Multi.run(:sync_projection, fn _, _ ->
-      sync_projection(target_comment, :report, user, :add)
-    end)
-    |> Multi.run(:fold_comment_report_too_many, fn _, %{create_abuse_report: abuse_report} ->
-      if abuse_report.report_cases_count >= @report_threshold_for_fold,
-        do: CMS.Comments.fold_comment(target_comment.id, user),
-        else: {:ok, target_comment}
-    end)
-    |> Multi.run(:hydrate, fn _, _ ->
-      {:ok, State.read(target_comment, user, surface: :report)}
-    end)
-    |> Multi.run(:sync_embed_replies, fn _, %{hydrate: comment} ->
-      FrontDesk.sync_embed_replies(comment)
-    end)
-    |> Repo.transaction()
-    |> result()
-  end
-
-  @spec undo_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def undo_comment(%Comment{} = target_comment, %User{} = user) do
-    Multi.new()
-    |> Multi.run(:delete_abuse_report, fn _, _ ->
-      delete_report(:comment, target_comment.id, user)
-    end)
-    |> Multi.run(:sync_projection, fn _, _ ->
-      sync_projection(target_comment, :report, user, :remove)
-    end)
-    |> Multi.run(:hydrate, fn _, _ ->
-      {:ok, State.read(target_comment, user, surface: :report)}
-    end)
-    |> Multi.run(:sync_embed_replies, fn _, %{hydrate: comment} ->
-      FrontDesk.sync_embed_replies(comment)
-    end)
-    |> Repo.transaction()
-    |> result()
-  end
-
-  defp sync_projection(%Comment{} = comment, :report, user, operation) do
-    {:ok, _projection} = State.write(comment, :report, user, operation)
-    {:ok, :pass}
-  end
-
-  defp sync_projection(article, :report, user, operation) do
-    {:ok, _projection} = State.write(article, :report, user, operation)
-    {:ok, :pass}
   end
 
   defp create_report(type, content_id, reason, attr, %User{} = user) do
@@ -251,12 +160,10 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
 
         if not reported_before,
           do: {:ok, report},
-          else: {:error, {:already_exist, "#{login} already reported"}}
+          else: {:error, ErrorCat.already_reported("#{login} already reported")}
     end
   end
 
-  defp result({:ok, %{sync_embed_replies: result}}), do: result |> done()
-  defp result({:ok, %{hydrate: result}}), do: result |> done()
   defp result({:ok, %{update_report_meta: result}}), do: result |> done()
   defp result({:ok, %{update_content_reported_flag: result}}), do: result |> done()
 

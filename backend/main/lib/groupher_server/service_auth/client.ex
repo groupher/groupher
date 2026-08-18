@@ -1,4 +1,5 @@
 defmodule GroupherServer.ServiceAuth.Client do
+  alias GroupherServerWeb.ErrorCat
   @moduledoc """
   Fetches and caches short-lived Auth service tokens for Phoenix.
 
@@ -65,7 +66,7 @@ defmodule GroupherServer.ServiceAuth.Client do
       :ets.insert(@cache_table, {key, token, now + expires_in})
       {:ok, token}
     else
-      _ -> {:error, :service_token_unavailable}
+      _ -> {:error, ErrorCat.service_token_unavailable()}
     end
   end
 

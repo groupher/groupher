@@ -22,11 +22,54 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   test "rejects reserved slugs before claiming them", %{user: user} do
     upload = finalized_logo(user, "reserved")
 
-    assert {:error, :reserved_slug} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :reserved_slug}} =
              CMS.CommunityApplications.submit(
                application_attrs(upload, "home"),
                user,
                "idem_home"
+             )
+
+    assert {:error,
+            [
+              message: "reserved_slug",
+              extensions: %{reasonCode: "reserved_slug"}
+            ]} =
+             GroupherServerWeb.Resolvers.CMS.submit_community_application(
+               nil,
+               %{
+                 input: application_attrs(upload, "home"),
+                 idempotency_key: "idem_home_resolver"
+               },
+               %{context: %{cur_user: user}}
+             )
+  end
+
+  test "feature policy denials stay typed across submit and logo intent", %{user: user} do
+    policy_module = CMS.CommunityApplications.Policy
+    previous = Application.get_env(:groupher_server, policy_module)
+    Application.put_env(:groupher_server, policy_module, enabled: false)
+
+    on_exit(fn ->
+      if previous == nil do
+        Application.delete_env(:groupher_server, policy_module)
+      else
+        Application.put_env(:groupher_server, policy_module, previous)
+      end
+    end)
+
+    upload = finalized_logo(user, "feature-disabled")
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :apply_not_allowed}} =
+             CMS.CommunityApplications.submit(
+               application_attrs(upload, "feature-disabled"),
+               user,
+               "idem_feature_disabled"
+             )
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :apply_not_allowed}} =
+             CMS.CommunityApplications.create_logo_upload_intent(
+               %{filename: "logo.png", mime_type: "image/png", size_bytes: 1024},
+               user
              )
   end
 
@@ -56,7 +99,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
     second_upload = finalized_logo(user, "second")
 
-    assert {:error, :active_application_exists} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :active_application_exists}} =
              CMS.CommunityApplications.submit(
                application_attrs(second_upload, "apply-second"),
                user,
@@ -79,7 +122,14 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
       |> Task.await_many(10_000)
 
     assert Enum.count(results, &match?({:ok, %CommunityApplication{}}, &1)) == 1
-    assert Enum.count(results, &match?({:error, :active_application_exists}, &1)) == 1
+
+    assert Enum.count(
+             results,
+             &match?(
+               {:error, %GroupherServer.ErrorCat.Error{reason: :active_application_exists}},
+               &1
+             )
+           ) == 1
 
     assert Repo.aggregate(
              from(a in CommunityApplication,
@@ -187,14 +237,14 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   test "review operations enforce permission and optimistic version", %{user: user} do
     application = submit_application(user, "review-guard")
 
-    assert {:error, :review_permission_denied} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :review_permission_denied}} =
              CMS.CommunityApplications.start_review(
                application.public_ref,
                user,
                application.version
              )
 
-    assert {:error, :application_state_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :application_state_conflict}} =
              CMS.CommunityApplications.start_review(
                application.public_ref,
                reviewer(user),
@@ -231,7 +281,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     {:ok, other_user} = db_insert(:user)
     _competing = submit_application(other_user, "retry-claimed")
 
-    assert {:error, :slug_claimed} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :slug_claimed}} =
              CMS.CommunityApplications.retry_creation(
                failed.public_ref,
                review_user,
@@ -274,7 +324,13 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
     refute Enum.any?(entries, &(&1.slug == setting_up.slug))
     assert {:ok, %{entries: []}} = CMS.Search.community(setting_up.slug)
-    assert {:error, {:not_exist, "Public Community"}} = CMS.Press.site_manifest(setting_up.slug)
+
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :community},
+              reason: :not_exist,
+              details: "Public Community"
+            }} = CMS.Press.site_manifest(setting_up.slug)
 
     assert {:ok, failed} =
              CMS.Communities.mark_setup_failed(
@@ -384,7 +440,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     from(upload in CommunityApplicationLogoUpload, where: upload.application_id == ^approved.id)
     |> Repo.update_all(set: [status: :expired])
 
-    assert {:error, :asset_not_ready} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :asset_not_ready}} =
              CMS.Communities.create_from_application(approved.public_ref, "rollback_test")
 
     assert Repo.get!(CommunityApplication, approved.id).status == :approved
@@ -400,7 +456,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
   test "invalid form fields do not masquerade as an authorization failure", %{user: user} do
     upload = finalized_logo(user, "invalid-input")
 
-    assert {:error, :invalid_application_input} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_application_input}} =
              CMS.CommunityApplications.submit(
                application_attrs(upload, "invalid-input")
                |> Map.put(:title, String.duplicate("x", 81)),

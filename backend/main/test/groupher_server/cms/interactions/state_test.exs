@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
   import Ecto.Query
 
   alias GroupherServer.CMS.Interactions.State
+  alias GroupherServer.ErrorCat.Error
 
   alias GroupherServer.Accounts.Model.Achievement
 
@@ -17,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     PostReactionInfo
   }
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Interactions.View
   alias GroupherServer.Repo
 
   test "upvote count is materialized in the projection and decremented on undo" do
@@ -119,13 +120,13 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     end
   end
 
-  test "unique fact constraint failure leaves projection, achievement and fact unchanged" do
+  test "duplicate upvote is idempotent and leaves projection, achievement and fact unchanged" do
     {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
 
     assert {:ok, _} = CMS.Articles.upvote(post, user)
     baseline = Repo.get_by!(Achievement, user_id: post.author.user_id)
 
-    assert {:error, {:already_upvoted, _}} = CMS.Articles.upvote(post, user)
+    assert {:ok, _} = CMS.Articles.upvote(post, user)
     assert 1 == upvotes_count(post.id)
     assert 1 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
 
@@ -152,7 +153,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     """)
 
     try do
-      assert {:error, :projection_not_updated} = CMS.Articles.upvote(post, user)
+      assert {:error, %Error{reason: :projection_not_updated}} = CMS.Articles.upvote(post, user)
     after
       Repo.query!("DROP TRIGGER #{trigger_name} ON cms.post_reaction_infos")
       Repo.query!("DROP FUNCTION cms.#{function_name}()")
@@ -187,6 +188,22 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     assert 2 == upvotes_count(post.id)
   end
 
+  test "concurrent undo only removes projection state for the transaction that deletes the fact" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    post = Repo.preload(post, author: :user)
+
+    assert {:ok, _} = CMS.Articles.upvote(post, user)
+
+    results =
+      1..2
+      |> Enum.map(fn _ -> Task.async(fn -> CMS.Articles.undo_upvote(post, user) end) end)
+      |> Enum.map(&Task.await(&1, 5_000))
+
+    assert Enum.all?(results, &match?({:ok, _}, &1))
+    assert 0 == upvotes_count(post.id)
+    assert 0 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
+  end
+
   test "read batches projection state and keeps viewer membership isolated" do
     {_community, first, _attrs, user} = mock_article(:post)
     {_community, second, _attrs, _other_user} = mock_article(:post)
@@ -214,11 +231,11 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     assert {:ok, _} = CMS.Articles.upvote(positive, user)
     assert {:ok, _} = Repo.insert(%PostReactionInfo{post_id: zero.id})
 
-    ids =
+    {:ok, ordered_query} =
       from(post in Post, where: post.id in ^[positive.id, zero.id, absent.id])
-      |> State.order_articles(:post, :upvotes)
-      |> select([post], post.id)
-      |> Repo.all()
+      |> CMS.Interactions.scope(order: :upvotes)
+
+    ids = ordered_query |> select([post], post.id) |> Repo.all()
 
     assert ids == [positive.id, zero.id, absent.id]
   end
@@ -227,7 +244,7 @@ defmodule GroupherServer.Test.CMS.Interactions.StateTest do
     {_community, post, _attrs, user} = mock_article(:post)
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} = ViewEvents.record(post, user, event_id)
+    assert {:ok, ^event_id} = View.record(post, user, event_id)
     [viewer] = State.read(:post, [post], user, [])
     assert viewer.viewer_has_viewed
 

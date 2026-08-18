@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
         -> search platform
   """
 
+  alias GroupherServer.CMS.ErrorCat
+
   @type artiment_type :: :article | :comment
   @type thread :: :post | :blog | :changelog | :doc
 
@@ -165,7 +167,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
        }}
     end
   rescue
-    error in ArgumentError -> {:error, {:invalid_search_artiment, Exception.message(error)}}
+    error in ArgumentError -> {:error, ErrorCat.invalid_search_artiment(Exception.message(error))}
   end
 
   defp encode_type(:article), do: "ARTICLE"
@@ -173,7 +175,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
 
   defp decode_type("ARTICLE"), do: {:ok, :article}
   defp decode_type("COMMENT"), do: {:ok, :comment}
-  defp decode_type(_), do: {:error, {:invalid_search_artiment, "invalid type"}}
+  defp decode_type(_), do: {:error, ErrorCat.invalid_search_artiment("invalid type")}
 
   defp encode_thread(thread), do: thread |> Atom.to_string() |> String.upcase()
 
@@ -181,7 +183,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
     {:ok, value |> String.downcase() |> String.to_existing_atom()}
   end
 
-  defp decode_thread(_), do: {:error, {:invalid_search_artiment, "invalid thread"}}
+  defp decode_thread(_), do: {:error, ErrorCat.invalid_search_artiment("invalid thread")}
 
   defp encode_locator(%{article: article} = locator) do
     %{
@@ -207,7 +209,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
          inner_id when is_binary(inner_id) <- locator["innerId"] do
       {:ok, %{community: community, thread: thread, inner_id: inner_id}}
     else
-      _ -> {:error, {:invalid_search_artiment, "invalid article locator"}}
+      _ -> {:error, ErrorCat.invalid_search_artiment("invalid article locator")}
     end
   end
 
@@ -224,11 +226,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
           {:ok, result}
       end
     else
-      _ -> {:error, {:invalid_search_artiment, "invalid comment locator"}}
+      _ -> {:error, ErrorCat.invalid_search_artiment("invalid comment locator")}
     end
   end
 
-  defp decode_locator(_, _), do: {:error, {:invalid_search_artiment, "invalid locator"}}
+  defp decode_locator(_, _), do: {:error, ErrorCat.invalid_search_artiment("invalid locator")}
 
   defp encode_datetime(nil), do: nil
   defp encode_datetime(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)
@@ -236,12 +238,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
   defp decode_datetime(value) when is_binary(value) do
     case DateTime.from_iso8601(value) do
       {:ok, datetime, _offset} -> {:ok, datetime}
-      _ -> {:error, {:invalid_search_artiment, "invalid datetime"}}
+      _ -> {:error, ErrorCat.invalid_search_artiment("invalid datetime")}
     end
   end
 
   defp decode_datetime(%DateTime{} = datetime), do: {:ok, datetime}
-  defp decode_datetime(_), do: {:error, {:invalid_search_artiment, "missing datetime"}}
+  defp decode_datetime(_), do: {:error, ErrorCat.invalid_search_artiment("missing datetime")}
 
   defp decode_optional_datetime(nil), do: {:ok, nil}
   defp decode_optional_datetime(value), do: decode_datetime(value)

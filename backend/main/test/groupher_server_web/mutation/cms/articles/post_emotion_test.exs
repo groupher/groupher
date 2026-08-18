@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
              |> mutation_error?(
                S.Article.m(:emotion_article, :post),
                variables,
-               ecode(:emotion_not_allowed)
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.emotion_not_allowed())
              )
     end
   end

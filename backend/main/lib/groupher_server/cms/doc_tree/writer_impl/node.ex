@@ -42,7 +42,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
     |> Repo.one()
     |> case do
       %DocTreeNode{} = node -> {:ok, node}
-      _ -> {:error, {:custom, "doc tree node not found"}}
+      _ -> {:error, GroupherServer.ErrorCat.custom("doc tree node not found")}
     end
   end
 
@@ -53,8 +53,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
          :ok <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
-      false -> {:error, {:custom, "navigation parent must be a tab or group"}}
-      error -> error
+      false ->
+        {:error, GroupherServer.ErrorCat.custom("navigation parent must be a tab or group")}
+
+      error ->
+        error
     end
   end
 
@@ -65,7 +68,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
          :ok <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
-      false -> {:error, {:custom, "page and link parents must be a group"}}
+      false -> {:error, GroupherServer.ErrorCat.custom("page and link parents must be a group")}
       error -> error
     end
   end
@@ -76,7 +79,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
          true <- parent.type == :tab do
       {:ok, parent}
     else
-      false -> {:error, {:custom, "doc tree parent must be a tab"}}
+      false -> {:error, GroupherServer.ErrorCat.custom("doc tree parent must be a tab")}
       error -> error
     end
   end
@@ -120,16 +123,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   end
 
   def validate_target(_community, _branch, _node, _parent_node_id),
-    do: {:error, {:custom, "invalid docs tree target"}}
+    do: {:error, GroupherServer.ErrorCat.custom("invalid docs tree target")}
 
   defp reject_cycle(_community, _branch, %{type: type}, _parent) when type != :group, do: :ok
 
   defp reject_cycle(_community, _branch, %{node_id: node_id}, %{node_id: node_id}),
-    do: {:error, {:custom, "a group can not be its own parent"}}
+    do: {:error, GroupherServer.ErrorCat.custom("a group can not be its own parent")}
 
   defp reject_cycle(community, branch, node, parent) do
     if descendant?(community, branch, node.node_id, parent.node_id),
-      do: {:error, {:custom, "a group can not move below one of its descendants"}},
+      do:
+        {:error,
+         GroupherServer.ErrorCat.custom("a group can not move below one of its descendants")},
       else: :ok
   end
 
@@ -157,7 +162,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   defp validate_max_depth(depth) when depth <= @max_depth, do: :ok
 
   defp validate_max_depth(_depth),
-    do: {:error, {:custom, "Docs Tree exceeds maximum depth of #{@max_depth}"}}
+    do:
+      {:error, GroupherServer.ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}
 
   defp node_depth(placements, node_id) do
     placements
@@ -168,7 +174,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   defp walk_ancestor_depth(parents, current, depth, seen) do
     cond do
       MapSet.member?(seen, current) ->
-        {:error, {:custom, "Docs Tree contains a parent cycle"}}
+        {:error, GroupherServer.ErrorCat.custom("Docs Tree contains a parent cycle")}
 
       true ->
         case Map.fetch(parents, current) do
@@ -184,14 +190,14 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
             )
 
           :error ->
-            {:error, {:custom, "Docs Tree parent chain is incomplete"}}
+            {:error, GroupherServer.ErrorCat.custom("Docs Tree parent chain is incomplete")}
         end
     end
   end
 
   defp subtree_height(children_by_parent, node_id, seen) do
     if MapSet.member?(seen, node_id) do
-      {:error, {:custom, "Docs Tree contains a parent cycle"}}
+      {:error, GroupherServer.ErrorCat.custom("Docs Tree contains a parent cycle")}
     else
       children_by_parent
       |> Map.get(node_id, [])

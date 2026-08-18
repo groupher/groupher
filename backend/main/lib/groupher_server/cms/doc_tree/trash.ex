@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.Lock
+  alias CMS.Articles.MutationLock
   alias CMS.Docs.Branch
   alias CMS.Docs.Trash, as: DocTrash
   alias CMS.DocTree.Events
@@ -84,7 +84,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            {:ok, items} <- prepare_restore_items(community, branch, action, items, args),
            doc_ids <- action_doc_ids(action, branch),
            {:ok, result} <-
-             Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+             MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
                restore_action(community, branch, action, items, actor)
              end),
            {:ok, state} <- Operation.bump_revision(community, state, result.tree_event_count) do
@@ -133,7 +133,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           current ->
             doc_ids = action_doc_ids(current, branch)
 
-            Lock.run_doc_many(community, root_item.branch_id, doc_ids, fn ->
+            MutationLock.with_articles(community, :doc, root_item.branch_id, doc_ids, fn ->
               with {:ok, :done} <-
                      DocTrash.permanently_delete_action_articles(
                        current,
@@ -167,7 +167,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       end)
     else
       nil -> {:ok, %{done: true}}
-      _ -> {:error, {:custom, "Trash action is not a Docs Tree action"}}
+      _ -> {:error, GroupherServer.ErrorCat.custom("Trash action is not a Docs Tree action")}
     end
   end
 
@@ -230,7 +230,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     |> Repo.one()
     |> case do
       %TrashAction{} = action -> {:ok, action}
-      nil -> {:error, {:not_exist, "Docs Trash action"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("Docs Trash action")}
     end
   end
 
@@ -253,12 +253,17 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   defp load_actor(args) do
     case Map.get(args, :actor_id) do
       nil ->
-        {:error, {:custom, "Docs Trash restore requires an authenticated actor"}}
+        {:error,
+         GroupherServer.ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
 
       actor_id ->
         case Repo.get(User, actor_id) do
-          %User{} = actor -> {:ok, actor}
-          nil -> {:error, {:custom, "Docs Trash restore requires an authenticated actor"}}
+          %User{} = actor ->
+            {:ok, actor}
+
+          nil ->
+            {:error,
+             GroupherServer.ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
         end
     end
   end
@@ -295,7 +300,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           error
       end
     else
-      {:error, {:custom, "Docs Trash root node is missing"}}
+      {:error, GroupherServer.ErrorCat.custom("Docs Trash root node is missing")}
     end
   end
 
@@ -349,8 +354,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
         true ->
           {:error,
-           {:custom,
-            "The original Docs Tree parent no longer exists; select a new parent before restoring."}}
+           ErrorCat.custom(
+             "The original Docs Tree parent no longer exists; select a new parent before restoring."
+           )}
       end
     end
   end
@@ -387,10 +393,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
         :ok
 
       {_type, nil} ->
-        {:error, {:custom, "The selected restore parent does not exist in every restored stage."}}
+        {:error,
+         GroupherServer.ErrorCat.custom(
+           "The selected restore parent does not exist in every restored stage."
+         )}
 
       _ ->
-        {:error, {:custom, "The selected node can not parent this Docs Tree item."}}
+        {:error,
+         GroupherServer.ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
     end
   end
 
@@ -473,7 +483,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       end)
 
     if conflicts?,
-      do: {:error, {:custom, "A Docs Tree node with the same identity already exists"}},
+      do:
+        {:error,
+         GroupherServer.ErrorCat.custom("A Docs Tree node with the same identity already exists")},
       else: :ok
   end
 

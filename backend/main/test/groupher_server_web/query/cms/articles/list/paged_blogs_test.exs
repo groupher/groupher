@@ -195,7 +195,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              |> query_error?(
                S.Article.q(:paged_articles, :blog),
                variables,
-               ecode(:thread_not_visible)
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
              )
     end
 
@@ -203,7 +203,11 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{page: 1, size: 200}}
 
       assert guest_conn
-             |> query_error?(S.Article.q(:paged_articles, :blog), variables, ecode(:pagination))
+             |> query_error?(
+               S.Article.q(:paged_articles, :blog),
+               variables,
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+             )
     end
 
     test "request 0 or neg-size fails", ~m(guest_conn)a do
@@ -214,14 +218,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
              |> query_error?(
                S.Article.q(:paged_articles, :blog),
                variables_0,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :blog),
                variables_neg_1,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 

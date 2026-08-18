@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
              |> query_error?(
                @origin_info_query,
                %{publicRef: "asset_origin_query"},
-               ecode(:service_auth)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.service_auth())
              )
     end
   end

@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
   alias GroupherServer.Accounts.Model.User
 
   alias CMS.FrontDesk
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.Gate.Context.Scope.Comment, as: CommentScope
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Comment
@@ -35,12 +36,12 @@ defmodule GroupherServer.CMS.Comments.Reader do
   """
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
-    FrontDesk.comment(comment_id)
+    FrontDesk.comment(comment_id) |> normalize_error()
   end
 
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
-    FrontDesk.full_comment(comment_id)
+    FrontDesk.full_comment(comment_id) |> normalize_error()
   end
 
   @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
@@ -48,13 +49,13 @@ defmodule GroupherServer.CMS.Comments.Reader do
     do: read_by_id(comment.id, nil, thread)
 
   def one_comment(%{article: article_path, inner_id: inner_id}),
-    do: read_by_path(article_path, inner_id, nil)
+    do: read_by_path(article_path, inner_id, nil) |> normalize_error()
 
   def one_comment(id) do
     with %Comment{thread: thread} <- Repo.get(Comment, id) do
       read_by_id(id, nil, thread)
     else
-      nil -> {:error, :not_exist}
+      nil -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
 
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
   end
 
   def one_comment(%{article: article_path, inner_id: inner_id}, %User{} = user) do
-    with {:ok, comment} <- read_by_path(article_path, inner_id, user) do
+    with {:ok, comment} <- read_by_path(article_path, inner_id, user) |> normalize_error() do
       add_viewer_states(comment, user)
     end
   end
@@ -76,9 +77,29 @@ defmodule GroupherServer.CMS.Comments.Reader do
          {:ok, comment} <- read_by_id(id, user, thread) do
       add_viewer_states(comment, user)
     else
-      nil -> {:error, :not_exist}
+      nil -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
+
+  defp normalize_error(
+         {:error,
+          %GroupherServer.ErrorCat.Error{
+            reason: :custom,
+            details: %{reason: :not_exist, message: message}
+          }}
+       ),
+       do: {:error, CommentErrorCat.not_exist(to_string(message))}
+
+  defp normalize_error(
+         {:error,
+          %GroupherServer.ErrorCat.Error{
+            reason: :custom,
+            details: %{reason: :not_exist}
+          }}
+       ),
+       do: {:error, CommentErrorCat.not_exist("comment not found")}
+
+  defp normalize_error(result), do: result
 
   defp read_by_id(id, actor, thread) do
     Comment
@@ -120,9 +141,9 @@ defmodule GroupherServer.CMS.Comments.Reader do
   defp parse_inner_id(value) when is_binary(value) do
     case Integer.parse(value) do
       {integer, ""} when integer >= 0 -> {:ok, integer}
-      _ -> {:error, {:comment_not_found, "comment not found"}}
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
 
-  defp parse_inner_id(_value), do: {:error, {:comment_not_found, "comment not found"}}
+  defp parse_inner_id(_value), do: {:error, CommentErrorCat.not_exist("comment not found")}
 end

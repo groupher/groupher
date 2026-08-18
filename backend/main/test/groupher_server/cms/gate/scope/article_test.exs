@@ -48,12 +48,12 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
   end
 
   test "Article scope validates an explicit thread against the root schema" do
-    assert {:error, :scope_root_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
              CMS.Gate.scope(Post, nil, :read, ArticleScope.public(:blog))
   end
 
   test "Doc scope requires an explicit branch and makes public main policy visible" do
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Doc, nil, :read, %{thread: :doc})
 
     query = CMS.Gate.scope(Doc, nil, :read, DocScope.public_branch(42))
@@ -81,10 +81,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert "draft" in params
     assert ["draft_only", "published", "archived"] in params
 
-    assert {:error, :scope_policy_actor_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(Post, nil, :read_draft, ArticleScope.draft(:post, :operations))
 
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(
                Post,
                :operations,
@@ -116,17 +116,17 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
              "destroy"
            ] in params
 
-    assert {:error, :scope_policy_actor_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(ArticleDocument, nil, :read, DocumentScope.draft(42, :operations))
 
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentScope{
                thread: :doc,
                stage: :draft,
                policy_mode: :public
              })
 
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentScope{
                thread: :doc,
                stage: :draft,

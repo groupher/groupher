@@ -31,24 +31,46 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       followed = user_conn |> gq_mutation(@query, variables)
       assert followed["login"] == user2.login
 
-      assert user_conn |> mutation_error?(@query, variables, ecode(:already_did))
+      assert user_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Fans.ErrorCat.already_did())
+             )
     end
 
     test "login user follow self fails", ~m(user_conn user)a do
       variables = %{login: user.login}
-      assert user_conn |> mutation_error?(@query, variables, ecode(:self_conflict))
+
+      assert user_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Fans.ErrorCat.self_conflict())
+             )
     end
 
     test "login user follow no-exist user fails", ~m(user_conn)a do
       variables = %{login: non_exist_login()}
 
-      assert user_conn |> mutation_error?(@query, variables, ecode(:not_exist))
+      assert user_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.not_exist())
+             )
     end
 
     test "unauth user follow other user fails", ~m(guest_conn)a do
       {:ok, user2} = db_insert(:user)
       variables = %{login: user2.login}
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+
+      assert guest_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
 
     @query S.Social.m(:undo_follow)

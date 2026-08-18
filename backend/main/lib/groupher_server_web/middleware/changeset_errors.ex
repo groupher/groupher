@@ -16,13 +16,16 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
 
   @behaviour Absinthe.Middleware
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
 
   alias GroupherServerWeb.Gettext, as: Translator
 
   def call(%{errors: [%Ecto.Changeset{} = changeset]} = resolution, _) do
     resolution
-    |> handle_absinthe_error(transform_errors(changeset), ecode(:changeset))
+    |> handle_absinthe_error(
+      transform_errors(changeset),
+      ErrorCat.code(GroupherServerWeb.ErrorCat.changeset())
+    )
   end
 
   def call(resolution, _), do: resolution

@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Gate do
 
   @doc "Builds a read query with a resource-specific Scope Context."
   @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   def scope(queryable, actor, action, context),
     do: Scope.scope(queryable, actor, action, context)
 

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias CMS.FrontDesk
   alias CMS.Model.{Blog, Changelog, Community, CommunityTag, CommunityTagStat, Post}
   alias Helper.{Constant, Datetime, ORM, T}
@@ -337,7 +338,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
           done(true)
 
         false ->
-          {:error, {:invalid_domain_tag, "article and tag not in same community or thread"}}
+          {:error, ErrorCat.invalid_domain_tag("article and tag not in same community or thread")}
       end
     end
   end

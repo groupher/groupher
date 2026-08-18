@@ -20,13 +20,18 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
       {:ok, _} = Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+
       assert notifications.total_count == 1
     end
 
     test "returns error for unknown event type" do
-      assert {:error, {:invalid_event_type, :unknown_type}} ==
-               Events.emit(:unknown_type, %{})
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :invalid_event_type,
+                details: :unknown_type
+              }} = Events.emit(:unknown_type, %{})
     end
   end
 end

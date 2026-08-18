@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   alias GroupherServer.{Analysis, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
   alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
@@ -70,10 +71,10 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
         cond do
           is_nil(application) ->
-            Repo.rollback(:application_not_found)
+            Repo.rollback(ErrorCat.application_not_found())
 
           application.version != expected_version ->
-            Repo.rollback(:application_state_conflict)
+            Repo.rollback(ErrorCat.application_state_conflict())
 
           true ->
             with {:ok, _lifecycle} <-
@@ -112,7 +113,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
                   application
 
                 {:error, :application, %Ecto.Changeset{}, _changes} ->
-                  Repo.rollback(:active_application_exists)
+                  Repo.rollback(ErrorCat.active_application_exists())
 
                 {:error, _step, reason, _changes} ->
                   Repo.rollback(reason)
@@ -136,13 +137,13 @@ defmodule GroupherServer.CMS.Communities.Setup do
 
       cond do
         is_nil(application) ->
-          Repo.rollback(:application_not_found)
+          Repo.rollback(ErrorCat.application_not_found())
 
         application.status == :setup_failed ->
           application
 
         application.status != :setting_up ->
-          Repo.rollback(:application_state_conflict)
+          Repo.rollback(ErrorCat.application_state_conflict())
 
         true ->
           with {:ok, _lifecycle} <-
@@ -195,7 +196,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
           application
 
         application.status != :setting_up ->
-          Repo.rollback(:application_state_conflict)
+          Repo.rollback(ErrorCat.application_state_conflict())
 
         true ->
           with {:ok, _lifecycle} <-
@@ -254,28 +255,28 @@ defmodule GroupherServer.CMS.Communities.Setup do
   defp ensure_analysis(community) do
     case Analysis.Web.provision_community(community) do
       {:ok, _} -> :ok
-      {:error, :not_configured} -> :ok
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_configured}} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end
 
   defp fetch_community(slug) do
     case Repo.get_by(Community, slug: slug) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       community -> {:ok, community}
     end
   end
 
   defp fetch_application(community_id) do
     case Repo.get_by(CommunityApplication, community_id: community_id) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
 
   defp fetch_user(user_id) do
     case Repo.get(User, user_id) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       user -> {:ok, user}
     end
   end
@@ -300,7 +301,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
-      _ -> {:error, :review_permission_denied}
+      _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
 end

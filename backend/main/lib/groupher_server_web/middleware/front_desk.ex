@@ -19,12 +19,16 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   @behaviour Absinthe.Middleware
 
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
 
   alias GroupherServer.{CMS, FrontDesk, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.{Comment, Community}
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
@@ -70,7 +74,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, community_key, community)}
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          CommunityErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(CommunityErrorCat.not_exist())
+        )
     end
   end
 
@@ -79,8 +87,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:ok, arguments} ->
         do_fetch_article(%{resolution | arguments: arguments}, opts)
 
-      {:error, :invalid_article_path} ->
-        resolution |> handle_absinthe_error("invalid article input", ecode(:custom))
+      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} ->
+        resolution
+        |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
     end
   end
 
@@ -103,7 +112,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          ArticleErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ArticleErrorCat.not_exist())
+        )
     end
   end
 
@@ -123,10 +136,18 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       %{resolution | arguments: updated_arguments}
     else
       :error ->
-        resolution |> handle_absinthe_error("article editor thread is required", ecode(:custom))
+        resolution
+        |> handle_absinthe_error(
+          "article editor thread is required",
+          ErrorCat.code(ErrorCat.custom())
+        )
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          ArticleErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ArticleErrorCat.not_exist())
+        )
     end
   end
 
@@ -141,7 +162,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: updated_arguments}
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          CommentErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(CommentErrorCat.not_exist())
+        )
     end
   end
 
@@ -195,7 +220,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, :user, user)}
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          ProfileErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ProfileErrorCat.not_exist())
+        )
     end
   end
 
@@ -203,7 +232,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     if Keyword.get(opts, :optional, false) do
       resolution
     else
-      resolution |> handle_absinthe_error("user not found", ecode(:not_exist))
+      resolution
+      |> handle_absinthe_error(
+        "user not found",
+        ErrorCat.code(ProfileErrorCat.not_exist("user not found"))
+      )
     end
   end
 
@@ -213,12 +246,21 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         %{resolution | arguments: Map.put(arguments, :users, users)}
 
       {:error, err_msg} ->
-        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+        resolution
+        |> handle_absinthe_error(
+          ProfileErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ProfileErrorCat.not_exist())
+        )
     end
   end
 
   defp fetch_users(resolution),
-    do: resolution |> handle_absinthe_error("users not found", ecode(:not_exist))
+    do:
+      resolution
+      |> handle_absinthe_error(
+        "users not found",
+        ErrorCat.code(ProfileErrorCat.not_exist("users not found"))
+      )
 
   defp load_users(users) do
     users =
@@ -242,4 +284,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   defp load_user(login) when is_binary(login), do: FrontDesk.user(login)
 
   defp load_user(_), do: {:error, "user not found"}
+
+  defp error_details(%ErrorCat.Error{details: %{message: message}}) when is_binary(message),
+    do: message
+
+  defp error_details(%ErrorCat.Error{details: details}) when is_binary(details), do: details
+  defp error_details(details) when is_binary(details), do: details
+  defp error_details(_), do: nil
 end

@@ -6,6 +6,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
   alias CMS.Communities.Enable
   alias CMS.Comments.{Numbering, Replies}
   alias CMS.Interactions.State
+  alias GroupherServer.ErrorCat.Error
   alias Helper.ORM
 
   setup do
@@ -44,7 +45,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_floor(post, :post_id)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
     end
   end
 
@@ -78,7 +79,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_inner_id(post, :post_id)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
     end
   end
 
@@ -157,7 +158,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
     test "should return false if article is comment locked", ~m(post user)a do
       # 锁定评论
       {:ok, locked_post} = CMS.Articles.lock_comments(post)
-      assert {:error, :article_comments_locked} = Enable.comment?(locked_post)
+      assert {:error, %Error{reason: :article_comments_locked}} = Enable.comment?(locked_post)
     end
   end
 end

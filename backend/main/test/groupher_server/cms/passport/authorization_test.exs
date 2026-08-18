@@ -15,14 +15,14 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
   test "passport check returns a stable denial" do
     reviewer = %{cur_passport: %{"global" => %{}}}
 
-    assert {:error, :permission_denied} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
              Authorization.check(reviewer, "community.application.review", %{})
   end
 
   test "authorize returns a review denial for an unprivileged passport" do
     reviewer = %{cur_passport: %{"global" => %{}}}
 
-    assert {:error, :review_permission_denied} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :review_permission_denied}} =
              Authorization.authorize(reviewer, "community.application.review")
   end
 end

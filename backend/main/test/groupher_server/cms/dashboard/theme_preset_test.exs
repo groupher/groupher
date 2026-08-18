@@ -72,19 +72,39 @@ defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
                "shared" => %{"glowFixed" => false}
              })
 
-    assert {:error, {:custom, "invalid theme overwrite key: \"light.unknownToken\""}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "invalid theme overwrite key: \"light.unknownToken\""
+            }} =
              ThemePreset.validate_overwrite(%{"light" => %{"unknownToken" => "#fff"}})
 
-    assert {:error, {:custom, "invalid theme overwrite value: light.gaussBlur"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "invalid theme overwrite value: light.gaussBlur"
+            }} =
              ThemePreset.validate_overwrite(%{"light" => %{"gaussBlur" => "72"}})
 
-    assert {:error, {:custom, "invalid theme overwrite value: light.primaryColor"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "invalid theme overwrite value: light.primaryColor"
+            }} =
              ThemePreset.validate_overwrite(%{"light" => %{"primaryColor" => "YELLOW"}})
 
-    assert {:error, {:custom, "invalid theme overwrite value: dark.glowOpacity"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "invalid theme overwrite value: dark.glowOpacity"
+            }} =
              ThemePreset.validate_overwrite(%{"dark" => %{"glowOpacity" => 101}})
 
-    assert {:error, {:custom, "invalid theme overwrite value: light.pageBgHue"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "invalid theme overwrite value: light.pageBgHue"
+            }} =
              ThemePreset.validate_overwrite(%{"light" => %{"pageBgHue" => -1}})
   end
 

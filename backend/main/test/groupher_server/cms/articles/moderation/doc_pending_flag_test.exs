@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
           docs_m.inner_id
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "author can read it's own pending doc", ~m(community user)a do
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.DocPendingFlag do
           user2
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "pending doc can set/unset pending", ~m(docs_m)a do

@@ -73,7 +73,7 @@ defmodule Helper.SiteFavicon do
           with {:ok, safe_location} <- UrlSafety.validate_http_url(merged_location) do
             req(safe_location)
           else
-            _ -> {:error, :unsafe_url}
+            _ -> {:error, GroupherServerWeb.ErrorCat.unsafe_url()}
           end
 
         _ ->

@@ -160,7 +160,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
     assert {:ok, _parent_card} = CMS.DocCover.add_card(community, group.node.id, user)
 
-    assert {:error, {:custom, message}} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
              CMS.DocCover.add_card(community, nested_group.node.id, user)
 
     assert message =~ "ancestor Cover Card"
@@ -169,7 +169,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
   test "Cover Card sources must be published Groups", ~m(user community page)a do
     assert {:ok, %{done: true}} = publish_all_changes(community, user)
 
-    assert {:error, {:custom, "A Cover Card must reference a published Group."}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "A Cover Card must reference a published Group."
+            }} =
              CMS.DocCover.add_card(community, page.node.id, user)
   end
 

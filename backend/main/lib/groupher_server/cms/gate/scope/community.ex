@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   alias GroupherServer.CMS.{Communities, Const}
   alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Model.{CommunityLifecycle, CommunityModerator}
   alias Helper.Constant
 
@@ -39,13 +40,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   @doc "Compiles Community Lifecycle and actor predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Community.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, policy_mode} <- policy_mode(context),
          :ok <- validate_actor(policy_mode, actor) do
       if lifecycle_join?(query) do
-        {:error, Const.gate_error(:scope_binding_conflict)}
+        {:error, ErrorCat.scope_binding_conflict()}
       else
         query =
           from(community in query,
@@ -60,7 +61,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
     end
   end
 
-  def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
+  def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.unknown_action()}
 
   # Gate owns this join. Reusing an arbitrary caller join would require guessing
   # whether its join condition has exactly the same policy semantics.
@@ -116,13 +117,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
       from([gate_lifecycle: lifecycle] in query, where: lifecycle.state in ^operations_states)
     else
-      {:error, Const.gate_error(:scope_policy_actor_mismatch)}
+      {:error, ErrorCat.scope_policy_actor_mismatch()}
     end
   end
 
   defp policy_mode(%{policy_mode: mode}) when mode in @policy_modes, do: {:ok, mode}
-  defp policy_mode(%{}), do: {:error, Const.gate_error(:scope_context_missing)}
-  defp policy_mode(_context), do: {:error, Const.gate_error(:unknown_policy_mode)}
+  defp policy_mode(%{}), do: {:error, ErrorCat.scope_context_missing()}
+  defp policy_mode(_context), do: {:error, ErrorCat.unknown_policy_mode()}
 
   defp validate_actor(:public, _actor), do: :ok
 
@@ -130,13 +131,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
     do:
       if(operations_actor?(actor),
         do: :ok,
-        else: {:error, Const.gate_error(:scope_policy_actor_mismatch)}
+        else: {:error, ErrorCat.scope_policy_actor_mismatch()}
       )
 
   defp validate_actor(mode, %{id: actor_id})
        when mode in [:owner_management, :moderator_management] and is_integer(actor_id), do: :ok
 
-  defp validate_actor(_mode, _actor), do: {:error, Const.gate_error(:scope_policy_actor_mismatch)}
+  defp validate_actor(_mode, _actor), do: {:error, ErrorCat.scope_policy_actor_mismatch()}
 
   defp operations_actor?(:operations), do: true
   defp operations_actor?(%{type: :operations}), do: true

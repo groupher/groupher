@@ -7,6 +7,7 @@ defmodule GroupherServer.Analysis.WebTest do
   alias GroupherServer.Analysis.Web.Config
   alias GroupherServer.Analysis.Web.Provider.Umami
   alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.ErrorCat.Error
 
   describe "config" do
     test "returns static base config without reading runtime env" do
@@ -135,7 +136,8 @@ defmodule GroupherServer.Analysis.WebTest do
     end
 
     test "rejects an invalid active visitor response" do
-      assert {:error, {:unexpected_body, :map}} = Umami.normalize_active(%{"visitors" => -1})
+      assert {:error, %Error{reason: :unexpected_external_response}} =
+               Umami.normalize_active(%{"visitors" => -1})
     end
   end
 
@@ -225,7 +227,8 @@ defmodule GroupherServer.Analysis.WebTest do
         Application.put_env(:groupher_server, :web_analysis, previous)
       end)
 
-      assert {:error, :not_configured} = Web.provision_community(%Community{slug: "home"})
+      assert {:error, %Error{reason: :not_configured}} =
+               Web.provision_community(%Community{slug: "home"})
     end
 
     test "returns unavailable DTO when Umami is not configured" do

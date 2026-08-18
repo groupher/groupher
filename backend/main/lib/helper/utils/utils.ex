@@ -15,7 +15,7 @@ defmodule Helper.Utils do
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
 
   import Helper.Validator.Guards, only: [g_none_empty_str: 1]
 
@@ -84,29 +84,41 @@ defmodule Helper.Utils do
   end
 
   @doc "Normalizes common ORM and boolean results into Groupher result tuples."
-  def done(false), do: {:error, :not_exist}
+  def done(false), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   def done(true), do: {:ok, true}
-  def done(nil), do: {:error, :not_exist}
+  def done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   def done({n, nil}) when is_integer(n), do: {:ok, %{done: true}}
   def done(:ok), do: {:ok, :pass}
   def done([]), do: {:ok, []}
   def done(result), do: {:ok, result}
   def done(nil, :boolean), do: {:ok, false}
   def done(_, :boolean), do: {:ok, true}
-  def done(nil, err_msg) when is_binary(err_msg), do: {:error, {:custom, err_msg}}
-  def done(nil, err_msg), do: {:error, {:custom, err_msg}}
+
+  def done(nil, err_msg) when is_binary(err_msg),
+    do: {:error, GroupherServer.ErrorCat.custom(err_msg)}
+
+  def done(nil, err_msg), do: {:error, GroupherServer.ErrorCat.custom(err_msg)}
   def done({:ok, _}, with: result), do: {:ok, result}
   def done({:error, reason}, with: _result), do: {:error, normalize_error(reason)}
 
   def done({:ok, result}, :trans), do: result
   def done({:error, reason}, :trans), do: throw({:error, normalize_error(reason)})
-  def done(nil, queryable, id), do: {:error, {:not_exist, not_found_formatter(queryable, id)}}
+
+  def done(nil, queryable, id),
+    do:
+      {:error,
+       ErrorCat.custom(%{
+         reason: :not_exist,
+         message: not_found_formatter(queryable, id)
+       })}
+
   def done(result, _, _), do: {:ok, result}
 
-  defp normalize_error({reason, _meta} = error) when is_atom(reason), do: error
-  defp normalize_error(reason) when is_atom(reason), do: reason
-  defp normalize_error(reason) when is_binary(reason), do: {:custom, reason}
-  defp normalize_error(reason), do: {:custom, reason}
+  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+  defp normalize_error({reason, _meta}), do: ErrorCat.custom(%{reason: reason})
+  defp normalize_error(reason) when is_atom(reason), do: ErrorCat.custom(%{reason: reason})
+  defp normalize_error(reason) when is_binary(reason), do: ErrorCat.custom(reason)
+  defp normalize_error(reason), do: ErrorCat.custom(reason)
 
   # for delete_all, update_all
   # see: https://groups.google.com/forum/#!topic/elixir-ecto/1g5Pp6ceqFE
@@ -136,6 +148,18 @@ defmodule Helper.Utils do
   end
 
   @doc "Projects a domain failure into Absinthe's error result shape."
+  def handle_absinthe_error(
+        resolution,
+        %GroupherServer.ErrorCat.Error{reason: reason, details: details, code: error_code},
+        _code
+      )
+      when is_integer(error_code) do
+    message = if is_binary(details), do: details, else: Atom.to_string(reason)
+
+    resolution
+    |> Absinthe.Resolution.put_result({:error, message: message, extensions: %{code: error_code}})
+  end
+
   def handle_absinthe_error(resolution, {reason, meta}, code) when is_integer(code) do
     message = if is_binary(meta), do: meta, else: Atom.to_string(reason)
 
@@ -152,13 +176,17 @@ defmodule Helper.Utils do
     # %{resolution | value: [], errors: transform_errors(changeset)}
     resolution
     # |> Absinthe.Resolution.put_result({:error, err_msg})
-    |> Absinthe.Resolution.put_result({:error, message: err_msg, extensions: %{code: ecode()}})
+    |> Absinthe.Resolution.put_result(
+      {:error, message: err_msg, extensions: %{code: ErrorCat.code(ErrorCat.default())}}
+    )
   end
 
   def handle_absinthe_error(resolution, err_msg) when is_binary(err_msg) do
     resolution
     # |> Absinthe.Resolution.put_result({:error, err_msg})
-    |> Absinthe.Resolution.put_result({:error, message: err_msg, extensions: %{code: ecode()}})
+    |> Absinthe.Resolution.put_result(
+      {:error, message: err_msg, extensions: %{code: ErrorCat.code(ErrorCat.default())}}
+    )
   end
 
   @doc "Repeats a scalar value and preserves the legacy single-integer-list string form."

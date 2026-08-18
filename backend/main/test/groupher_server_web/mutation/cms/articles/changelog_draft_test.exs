@@ -119,14 +119,14 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :changelog),
              update_variables,
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :changelog),
              %{community: context.community.slug, id: draft["id"]},
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     assert {:ok, stored_draft} =
@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :changelog),
              variables,
-             ecode(:passport)
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
            )
 
     owner_draft =

@@ -28,6 +28,7 @@ defmodule GroupherServerWeb.Context do
 
   alias Accounts.Model.User
   alias Accounts.Profiles.BrowserSessions
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
   alias GroupherServerWeb.ServiceAuth.Verifier
@@ -127,7 +128,7 @@ defmodule GroupherServerWeb.Context do
          true <- BrowserSessions.active_for_user?(cur_user.id, claims["sid"]) do
       {:ok, cur_user}
     else
-      false -> {:error, :session_revoked}
+      false -> {:error, ProfileErrorCat.session_revoked()}
       error -> error
     end
   end

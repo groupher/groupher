@@ -19,6 +19,8 @@ defmodule Helper.UrlSafety do
 
   import Bitwise
 
+  alias GroupherServerWeb.ErrorCat
+
   @blocked_hosts MapSet.new([
                    "localhost",
                    "localhost.",
@@ -42,12 +44,13 @@ defmodule Helper.UrlSafety do
       {:ok, "https://example.com/page"}
 
       iex> UrlSafety.validate_http_url("http://127.0.0.1/admin")
-      {:error, :blocked_ip}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :blocked_ip}}
 
       iex> UrlSafety.validate_http_url("http://localhost:8080")
-      {:error, :blocked_host}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :blocked_host}}
   """
-  @spec validate_http_url(String.t(), keyword()) :: {:ok, String.t()} | {:error, atom()}
+  @spec validate_http_url(String.t(), keyword()) ::
+          {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def validate_http_url(url, opts \\ [])
 
   def validate_http_url(url, opts) when is_binary(url) do
@@ -62,26 +65,26 @@ defmodule Helper.UrlSafety do
     end
   end
 
-  def validate_http_url(_, _), do: {:error, :invalid_url}
+  def validate_http_url(_, _), do: {:error, ErrorCat.invalid_url()}
 
   defp parse_url(url) do
     case URI.new(String.trim(url)) do
       {:ok, %URI{} = uri} -> {:ok, uri}
-      {:error, _} -> {:error, :invalid_url}
+      {:error, _} -> {:error, ErrorCat.invalid_url()}
     end
   end
 
   defp validate_scheme(%URI{scheme: scheme}) when scheme in ["http", "https"], do: :ok
-  defp validate_scheme(_), do: {:error, :invalid_scheme}
+  defp validate_scheme(_), do: {:error, ErrorCat.invalid_scheme()}
 
-  defp normalize_host(nil), do: {:error, :missing_host}
+  defp normalize_host(nil), do: {:error, ErrorCat.missing_host()}
 
   defp normalize_host(host) do
     host
     |> String.trim()
     |> String.downcase()
     |> case do
-      "" -> {:error, :missing_host}
+      "" -> {:error, ErrorCat.missing_host()}
       normalized -> {:ok, normalized}
     end
   end
@@ -89,13 +92,13 @@ defmodule Helper.UrlSafety do
   defp validate_host(host) do
     cond do
       MapSet.member?(@blocked_hosts, host) ->
-        {:error, :blocked_host}
+        {:error, ErrorCat.blocked_host()}
 
       String.ends_with?(host, ".localhost") ->
-        {:error, :blocked_host}
+        {:error, ErrorCat.blocked_host()}
 
       String.ends_with?(host, ".local") ->
-        {:error, :blocked_host}
+        {:error, ErrorCat.blocked_host()}
 
       true ->
         validate_ip_host(host)
@@ -105,8 +108,10 @@ defmodule Helper.UrlSafety do
   defp validate_ip_host(host) do
     case :inet.parse_address(String.to_charlist(host)) do
       {:ok, ip} ->
-        if blocked_ip?(ip), do: {:error, :blocked_ip}, else: :ok
+        if blocked_ip?(ip), do: {:error, ErrorCat.blocked_ip()}, else: :ok
 
+      # `:einval` is the return value of the Erlang address parser, not an
+      # application error crossing this module's boundary.
       {:error, :einval} ->
         :ok
     end
@@ -118,7 +123,7 @@ defmodule Helper.UrlSafety do
         blocked_ips = Enum.filter(ips, &blocked_ip?/1)
 
         if blocked_ips != [] do
-          {:error, :blocked_ip}
+          {:error, ErrorCat.blocked_ip()}
         else
           :ok
         end
@@ -135,10 +140,10 @@ defmodule Helper.UrlSafety do
         {:error, reason} -> {:error, reason}
       end
     rescue
-      _ -> {:error, :resolve_failed}
+      _ -> {:error, ErrorCat.resolve_failed()}
     catch
-      :exit, _ -> {:error, :resolve_failed}
-      _ -> {:error, :resolve_failed}
+      :exit, _ -> {:error, ErrorCat.resolve_failed()}
+      _ -> {:error, ErrorCat.resolve_failed()}
     end
   end
 

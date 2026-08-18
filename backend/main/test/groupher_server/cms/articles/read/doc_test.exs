@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       assert doc.id == doc2.id
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = CMS.Interactions.View.project(event_id)
       assert CMS.Interactions.State.read(doc2, user).viewer_has_viewed
     end
 
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, _} = CMS.Articles.read(article_community(doc), :doc, doc.inner_id, user, event_id)
 
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = CMS.Interactions.View.project(event_id)
       assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       {:ok, created} = ORM.find(Doc, doc.id)
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = CMS.Interactions.View.project(event_id)
       assert created.views == 1
       assert CMS.Interactions.State.read(doc, user).viewer_has_viewed
       assert CMS.Interactions.State.read(doc, user2).viewer_has_viewed
@@ -269,7 +269,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, doc_last_year} = db_insert(:doc, %{title: "last year", inserted_at: @last_year})
 
       {:error, reason} = CMS.Articles.undo_sink(doc_last_year)
-      is_error?(reason, :undo_sink_old_article)
+      is_error?(reason, {{:cms, :article}, :undo_sink_old_article})
     end
   end
 

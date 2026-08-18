@@ -11,11 +11,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.ErrorCat, as: GlobalErrorCat
+  alias GroupherServerWeb.ErrorCat
 
   alias Accounts.Model.User
   alias CMS.Passport
   alias CMS.Model.{Community, CommunityModerator}
   alias CMS.{Communities, FrontDesk}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Passport.Registry
   alias Helper.{Multi, ORM, PermissionConfig, T, Transaction}
 
@@ -35,8 +38,8 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           |> result()
         end)
 
-      {:error, :community_root_only} ->
-        {:error, {:community_root_only, "only community root can add moderator"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+        {:error, CommunityErrorCat.community_root_only("only community root can add moderator")}
     end
   end
 
@@ -80,8 +83,8 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           end
         end)
 
-      {:error, :community_root_only} ->
-        {:error, {:community_root_only, "only community root can add moderator"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+        {:error, CommunityErrorCat.community_root_only("only community root can add moderator")}
     end
   end
 
@@ -102,7 +105,8 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         update_passport(community, rules, target_user, cur_user)
 
       {:error, reason} ->
-        {:error, reason}
+        {:error,
+         CommunityErrorCat.not_exist("community #{community_slug} not found: #{inspect(reason)}")}
     end
   end
 
@@ -120,23 +124,27 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
       Communities.Reader.fetch(community.slug, inc_views: false)
     else
-      {:error, :community_root_only} ->
-        {:error, {:community_root_only, "only community root can update moderator"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+        {:error,
+         CommunityErrorCat.community_root_only("only community root can update moderator")}
 
-      {:error, :passport_community_not_match} ->
-        {:error, {:passport_community_not_match, "can only update passport in #{community.slug}"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :passport_community_not_match}} ->
+        {:error,
+         CommunityErrorCat.passport_community_not_match(
+           "can only update passport in #{community.slug}"
+         )}
 
-      {:error, :one_community_only} ->
-        {:error, {:one_community_only, "can only passport once community a time"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :one_community_only}} ->
+        {:error, CommunityErrorCat.one_community_only("can only passport once community a time")}
 
       {:error, {reason, message}} when is_atom(reason) and is_binary(message) ->
-        {:error, {reason, message}}
+        {:error, GlobalErrorCat.custom(message)}
 
       {:error, reason} ->
-        {:error, {:custom, "update passport error: #{inspect(reason)}"}}
+        {:error, GroupherServer.ErrorCat.custom("update passport error: #{inspect(reason)}")}
 
       reason ->
-        {:error, {:custom, "update passport error: #{inspect(reason)}"}}
+        {:error, GroupherServer.ErrorCat.custom("update passport error: #{inspect(reason)}")}
     end
   end
 
@@ -181,11 +189,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           result(error)
       end
     else
-      {:error, :community_root_only} ->
-        {:error, {:community_root_only, "only community root can remove moderator"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+        {:error,
+         CommunityErrorCat.community_root_only("only community root can remove moderator")}
 
       {:error, reason} ->
-        {:error, reason}
+        {:error,
+         CommunityErrorCat.not_exist("community #{community_slug} not found: #{inspect(reason)}")}
     end
   end
 
@@ -297,7 +307,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       global_god?(cur_user) ||
         community_root_passport?(cur_user, community_slug)
 
-    if is_root, do: {:ok, true}, else: {:error, :community_root_only}
+    if is_root, do: {:ok, true}, else: {:error, CommunityErrorCat.community_root_only()}
   end
 
   defp community_root_passport?(cur_user, community_slug) when is_binary(community_slug) do
@@ -347,10 +357,10 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
         if passport_community == community_slug,
           do: {:ok, :match},
-          else: {:error, :passport_community_not_match}
+          else: {:error, CommunityErrorCat.passport_community_not_match()}
 
       _ ->
-        {:error, :one_community_only}
+        {:error, CommunityErrorCat.one_community_only()}
     end
   end
 
@@ -375,16 +385,16 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   end
 
   defp result({:error, :stamp_passport, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, {:changeset, result}}
+    do: {:error, ErrorCat.changeset(result)}
 
   defp result({:error, :stamp_passport, _result, _steps}),
-    do: {:error, {:custom, "stamp passport error"}}
+    do: {:error, GlobalErrorCat.custom("stamp passport error")}
 
   defp result({:error, {:stamp_passport, _user_id}, %Ecto.Changeset{} = result, _steps}),
-    do: {:error, {:changeset, result}}
+    do: {:error, ErrorCat.changeset(result)}
 
   defp result({:error, {:stamp_passport, _user_id}, _result, _steps}),
-    do: {:error, {:custom, "stamp passport error"}}
+    do: {:error, GlobalErrorCat.custom("stamp passport error")}
 
   defp result({:error, _, result, _steps}) do
     {:error, result}

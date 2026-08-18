@@ -82,12 +82,14 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         end
 
       false ->
-        {:error, {:invalid_opts, "full_community mock opts must be a keyword list"}}
+        {:error,
+         GroupherServer.ErrorCat.custom("full_community mock opts must be a keyword list")}
     end
   end
 
   def mock(_slug, _opts),
-    do: {:error, {:invalid_opts, "full_community mock opts must be a keyword list"}}
+    do:
+      {:error, GroupherServer.ErrorCat.custom("full_community mock opts must be a keyword list")}
 
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do

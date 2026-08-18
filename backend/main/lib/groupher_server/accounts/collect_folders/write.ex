@@ -15,12 +15,13 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  import Helper.ErrorCode
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Accounts.CollectFolders.ErrorCat
 
   alias Accounts.Model.{CollectFolder, Embeds, User}
+  alias CMS.Model.ArticleCollect
   alias Helper.{Datetime, Multi, ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
@@ -39,7 +40,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
         CollectFolder |> ORM.create(args)
 
       {:ok, folder} ->
-        raise_error(:already_exist, "#{folder.title} already exists")
+        {:error, ErrorCat.already_exist("#{folder.title} already exists")}
     end
   end
 
@@ -56,7 +57,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     with {:ok, folder} <- ORM.find(CollectFolder, id) do
       case Enum.empty?(folder.collects) do
         true -> CollectFolder |> ORM.find_delete!(id)
-        false -> raise_error(:delete_no_empty_collect_folder, "#{folder.title} is not empty")
+        false -> {:error, ErrorCat.delete_no_empty_collect_folder("#{folder.title} is not empty")}
       end
     end
   end
@@ -69,7 +70,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:add_article_collect, fn _, _ ->
-        CMS.Articles.collect_ifneed(article, user)
+        ensure_article_collect(article, user)
       end)
       |> Multi.run(:add_to_collect_folder, fn _, %{add_article_collect: article_collect} ->
         collects = [article_collect] ++ folder.collects
@@ -80,7 +81,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
                                                      add_article_collect: article_collect,
                                                      add_to_collect_folder: folder
                                                    } ->
-        CMS.Articles.set_collect_folder(article_collect, folder)
+        set_collect_folder(article_collect, folder)
       end)
       |> Repo.transaction()
       |> result()
@@ -94,7 +95,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
          true <- user.id == folder.user_id do
       Multi.new()
       |> Multi.run(:del_article_collect, fn _, _ ->
-        CMS.Articles.undo_collect_ifneed(article, user)
+        maybe_remove_article_collect(article, user)
       end)
       |> Multi.run(:rm_from_collect_folder, fn _, %{del_article_collect: article_collect} ->
         collects = Enum.reject(folder.collects, &(&1.id == article_collect.id))
@@ -105,7 +106,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
                                                        del_article_collect: article_collect,
                                                        rm_from_collect_folder: folder
                                                      } ->
-        CMS.Articles.undo_set_collect_folder(article_collect, folder)
+        undo_set_collect_folder(article_collect, folder)
       end)
       |> Repo.transaction()
       |> result()
@@ -119,9 +120,48 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
         Enum.any?(collects, fn c -> article.id == Map.get(c, info.foreign_key) end)
 
       case already_collected do
-        true -> raise_error(:already_collected_in_folder, "already collected in this folder")
+        true -> {:error, ErrorCat.already_collected_in_folder("already collected in this folder")}
         false -> {:ok, :pass}
       end
+    end
+  end
+
+  defp ensure_article_collect(article, user) do
+    with {:ok, _canonical} <- CMS.Interactions.collect(article, user) do
+      ORM.find_by(ArticleCollect, article_collect_args(article, user.id))
+    end
+  end
+
+  defp maybe_remove_article_collect(article, user) do
+    with {:ok, article_collect} <-
+           ORM.find_by(ArticleCollect, article_collect_args(article, user.id)) do
+      if length(article_collect.collect_folders) <= 1 do
+        with {:ok, _canonical} <- CMS.Interactions.undo_collect(article, user) do
+          {:ok, article_collect}
+        end
+      else
+        {:ok, article_collect}
+      end
+    end
+  end
+
+  defp article_collect_args(article, user_id) do
+    {:ok, thread} = thread_of(article)
+    {:ok, info} = match(thread)
+
+    %{thread: thread, user_id: user_id}
+    |> Map.put(info.foreign_key, article.id)
+  end
+
+  defp set_collect_folder(%ArticleCollect{} = collect, folder) do
+    collect_folders = Enum.uniq(collect.collect_folders ++ [folder])
+    ORM.update_embed(collect, :collect_folders, collect_folders)
+  end
+
+  defp undo_set_collect_folder(%ArticleCollect{} = collect, folder) do
+    case Enum.reject(collect.collect_folders, &(&1.id == folder.id)) do
+      [] -> {:ok, :pass}
+      collect_folders -> ORM.update_embed(collect, :collect_folders, collect_folders)
     end
   end
 

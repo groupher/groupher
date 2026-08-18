@@ -76,8 +76,11 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   def update_doc(%Doc{}, _attrs), do: body_bag_required_error()
 
-  defp document_already_exists_error, do: {:error, {:custom, "document already exists"}}
-  defp body_bag_required_error, do: {:error, {:custom, "Article BodyBag is required"}}
+  defp document_already_exists_error,
+    do: {:error, GroupherServer.ErrorCat.custom("document already exists")}
+
+  defp body_bag_required_error,
+    do: {:error, GroupherServer.ErrorCat.custom("Article BodyBag is required")}
 
   defp article_document_exists?(%Doc{} = article) do
     {:ok, count} =

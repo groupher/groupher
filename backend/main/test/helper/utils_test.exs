@@ -216,4 +216,19 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
       assert nil == 8848 |> Utils.module_to_atom()
     end
   end
+
+  test "handle_absinthe_error keeps the code owned by a typed ErrorCat value" do
+    error = CMS.Communities.ErrorCat.active_application_exists("already active")
+
+    result =
+      Helper.Utils.handle_absinthe_error(
+        %Absinthe.Resolution{},
+        error,
+        9999
+      )
+
+    assert result.errors == [
+             [message: "already active", extensions: %{code: error.code}]
+           ]
+  end
 end

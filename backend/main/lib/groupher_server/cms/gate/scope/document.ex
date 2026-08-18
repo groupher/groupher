@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
   alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Gate.ErrorCat
 
   require Const
 
@@ -26,7 +27,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
 
   @doc "Compiles ArticleDocument ancestor and branch predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Document.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, %{thread: thread} = context)
       when action in @actions do
@@ -53,13 +54,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
   end
 
   def scope(_query, _actor, action, _context) when action in @actions,
-    do: {:error, Const.gate_error(:scope_context_missing)}
+    do: {:error, ErrorCat.scope_context_missing()}
 
-  def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
+  def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp policy_mode(%{policy_mode: mode})
        when mode in [:public, :owner_management, :moderator_management, :operations],
        do: {:ok, mode}
 
-  defp policy_mode(_context), do: {:error, Const.gate_error(:scope_context_missing)}
+  defp policy_mode(_context), do: {:error, ErrorCat.scope_context_missing()}
 end

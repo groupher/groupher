@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
 
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community, CommunityCategory}
+  alias CMS.Communities.ErrorCat
   alias Helper.{ORM, T}
   alias Helper.Validator.Slug
 
@@ -61,7 +62,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
          true <- category_in_community?(community.id, category.id) do
       category |> ORM.update(~m(title)a)
     else
-      false -> {:error, :forbidden}
+      false -> {:error, ErrorCat.forbidden()}
     end
   end
 
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Communities.Categories do
          true <- category_in_community?(community.id, category.id) do
       category |> ORM.delete()
     else
-      false -> {:error, :forbidden}
+      false -> {:error, ErrorCat.forbidden()}
     end
   end
 

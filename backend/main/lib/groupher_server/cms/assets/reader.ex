@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Assets.ErrorCat
   alias CMS.Artiment.Threads
   alias CMS.Model.{ArticleDocumentAssetRef, Community, CommunityAsset}
   alias Helper.{ORM, T}
@@ -145,12 +146,12 @@ defmodule GroupherServer.CMS.Assets.Reader do
     |> where([asset], asset.status == :active)
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "asset not found"}}
+      nil -> {:error, ErrorCat.not_exist("asset not found")}
       asset -> {:ok, asset}
     end
   end
 
-  def origin_info(_), do: {:error, {:not_exist, "asset not found"}}
+  def origin_info(_), do: {:error, ErrorCat.not_exist("asset not found")}
 
   defp normalize_filter(nil),
     do: %{
@@ -380,7 +381,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
     |> CommunityAsset.active_query(asset_id)
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "asset not found"}}
+      nil -> {:error, ErrorCat.not_exist("asset not found")}
       asset -> {:ok, asset}
     end
   end

@@ -249,7 +249,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def community_asset_origin_info(_root, %{public_ref: public_ref}, _info) do
     case CMS.Assets.origin_info(public_ref) do
       {:ok, asset} -> {:ok, asset}
-      {:error, {:not_exist, _}} -> {:ok, nil}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} -> {:ok, nil}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -905,7 +905,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          {:ok, ^thread} <- CMS.Trash.action_thread(action) do
       CMS.Trash.permanently_delete_action(action, user)
     else
-      _ -> {:error, {:not_exist, "TrashAction"}}
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashAction")}
     end
   end
 
@@ -1012,16 +1012,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     if item.community_id == community.id and item.thread == thread do
       :ok
     else
-      {:error, {:not_exist, "TrashedArticle"}}
+      {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do
-    CMS.AbuseReports.article(article, reason, attr, user)
+    CMS.Interactions.report(article, reason, attr, user) |> hydrate_report_interaction(user)
   end
 
   def undo_report_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.AbuseReports.undo_article(article, user)
+    CMS.Interactions.undo_report(article, user) |> hydrate_report_interaction(user)
   end
 
   def mentions(_root, %{source: source} = args, _info) do
@@ -1050,27 +1050,27 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def undo_sink_article(_root, ~m(article)a, _info), do: CMS.Articles.undo_sink(article)
 
   def upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.upvote(article, user)
+    CMS.Interactions.upvote(article, user) |> hydrate_interaction(user)
   end
 
   def undo_upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.undo_upvote(article, user)
+    CMS.Interactions.undo_upvote(article, user) |> hydrate_interaction(user)
   end
 
   def upvoted_users(_root, ~m(article filter)a, _info) do
-    CMS.Articles.upvoted_users(article, filter)
+    CMS.Interactions.upvoted_users(article, filter)
   end
 
   def collected_users(_root, ~m(article filter)a, _info) do
-    CMS.Articles.collected_users(article, filter)
+    CMS.Interactions.collected_users(article, filter)
   end
 
   def emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.emotion(article, emotion, user)
+    CMS.Interactions.emotion(article, emotion, user) |> hydrate_interaction(user)
   end
 
   def undo_emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Articles.undo_emotion(article, emotion, user)
+    CMS.Interactions.undo_emotion(article, emotion, user) |> hydrate_interaction(user)
   end
 
   # #######################
@@ -1325,31 +1325,31 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.upvote_comment(comment.id, user)
+    CMS.Interactions.upvote(comment, user) |> hydrate_interaction(user)
   end
 
   def undo_upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_upvote_comment(comment.id, user)
+    CMS.Interactions.undo_upvote(comment, user) |> hydrate_interaction(user)
   end
 
   def report_comment(_root, ~m(comment reason attr)a, %{context: %{cur_user: user}}) do
-    CMS.AbuseReports.comment(comment, reason, attr, user)
+    CMS.Interactions.report(comment, reason, attr, user) |> hydrate_report_interaction(user)
   end
 
   def undo_report_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
-    CMS.AbuseReports.undo_comment(comment, user)
+    CMS.Interactions.undo_report(comment, user) |> hydrate_report_interaction(user)
   end
 
   def emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
         context: %{cur_user: user}
       }) do
-    CMS.Comments.emotion_to_comment(comment.id, emotion, user)
+    CMS.Interactions.emotion(comment, emotion, user) |> hydrate_interaction(user)
   end
 
   def undo_emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
         context: %{cur_user: user}
       }) do
-    CMS.Comments.undo_emotion_to_comment(comment.id, emotion, user)
+    CMS.Interactions.undo_emotion(comment, emotion, user) |> hydrate_interaction(user)
   end
 
   def mark_comment_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
@@ -1489,6 +1489,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp article_path_community(_), do: {:error, "invalid article input"}
 
+  defp hydrate_interaction({:ok, artiment}, user),
+    do: {:ok, CMS.Interactions.State.read(artiment, user)}
+
+  defp hydrate_interaction({:error, _reason} = error, _user), do: error
+
+  defp hydrate_report_interaction({:ok, artiment}, user),
+    do: {:ok, CMS.Interactions.State.read(artiment, user, surface: :report)}
+
+  defp hydrate_report_interaction({:error, _reason} = error, _user), do: error
+
   defp normalize_application_filter(filter) do
     filter
     |> maybe_put_actor_id(:applicant_ref, :applicant_id)
@@ -1537,11 +1547,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     {:error,
      [
        message: reason_code,
-       extensions: %{code: Helper.ErrorCode.ecode(:custom), reasonCode: reason_code}
+       extensions: %{
+         code: GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom()),
+         reasonCode: reason_code
+       }
      ]}
   end
 
   defp normalize_reason({reason, _metadata}) when is_atom(reason), do: reason
+  defp normalize_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
   defp normalize_reason(reason) when is_atom(reason), do: reason
   defp normalize_reason(_), do: :apply_not_allowed
 

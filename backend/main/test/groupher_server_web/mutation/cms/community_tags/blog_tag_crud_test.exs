@@ -84,12 +84,26 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@create_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     @update_tag_query S.CommunityTag.m(:update_community_tag)
@@ -151,12 +165,26 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@delete_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
   end
 end

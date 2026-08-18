@@ -30,9 +30,23 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
     end
   end
 
-  # domain tuple errors
+  # Legacy tuple errors are not part of the ErrorCat contract. Keep the
+  # transport safe without guessing a domain code from their contents.
   def call(%{errors: [error]} = resolution, _) when is_tuple(error) do
-    case Helper.GQLError.encode(error) do
+    case GroupherServer.ErrorCat.gq_format(
+           GroupherServer.ErrorCat.custom("Unexpected legacy domain error.")
+         ) do
+      {:error, [message: message, code: code]} ->
+        %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
+
+      _ ->
+        resolution
+    end
+  end
+
+  # typed ErrorCat domain errors
+  def call(%{errors: [%GroupherServer.ErrorCat.Error{} = error]} = resolution, _) do
+    case GroupherServer.ErrorCat.gq_format(error) do
       {:error, [message: message, code: code]} ->
         %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
 

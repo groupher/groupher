@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
     test "validates all users before writing any mailbox", ~m(user user2)a do
       {:ok, user} = ORM.update_embed(user, :mailbox, mailbox_status(7))
 
-      assert {:error, {:not_exist, _}} =
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} =
                Accounts.Mailbox.update_status_many([user.id, -1, user2.id])
 
       persisted_user = Repo.get!(User, user.id)
@@ -127,15 +127,17 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
       stale_cached_user = %{user | mailbox: mailbox_struct(user.mailbox, 99)}
       {:ok, true} = FrontDeskCache.put_user(stale_cached_user)
 
+      rollback_error = GroupherServer.ErrorCat.custom("forced rollback")
+
       result =
         Ecto.Multi.new()
         |> Ecto.Multi.run(:update_mailbox, fn _, _ ->
           Accounts.Mailbox.update_status_many_in_transaction([user.id])
         end)
-        |> Ecto.Multi.run(:force_rollback, fn _, _ -> {:error, :forced_rollback} end)
+        |> Ecto.Multi.run(:force_rollback, fn _, _ -> {:error, rollback_error} end)
         |> Repo.transaction()
 
-      assert {:error, :force_rollback, :forced_rollback, _changes} = result
+      assert {:error, :force_rollback, ^rollback_error, _changes} = result
 
       persisted_user = Repo.get!(User, user.id)
       assert persisted_user.mailbox.unread_total_count == 7

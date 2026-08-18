@@ -44,7 +44,12 @@ defmodule GroupherServer.Test.CMS.Press do
     |> CommunityLifecycle.changeset(%{state: :setting_up})
     |> Repo.update!()
 
-    assert {:error, {:not_exist, "Public Community"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :community},
+              reason: :not_exist,
+              details: "Public Community"
+            }} =
              CMS.Press.article(%{
                community: community.slug,
                thread: :post,
@@ -56,7 +61,12 @@ defmodule GroupherServer.Test.CMS.Press do
     {community, doc, _attrs, _user} = mock_article(:doc)
     path = %{community: community.slug, thread: :doc, inner_id: doc.inner_id}
 
-    assert {:error, {:not_exist, "Published Doc"}} = CMS.Press.article(path)
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :article},
+              reason: :not_exist,
+              details: "Published Doc"
+            }} = CMS.Press.article(path)
 
     nodes = [
       %{node_id: "tab-1", type: :tab, title: "Docs", index: 0},
@@ -249,7 +259,8 @@ defmodule GroupherServer.Test.CMS.Press do
   end
 
   test "feed validation rejects disabled or invalid configuration", ~m(community user)a do
-    assert {:error, {:custom, "Press output is disabled"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{reason: :custom, details: "Press output is disabled"}} =
              CMS.Press.community_rss_feed(community)
 
     assert {:error, %Ecto.Changeset{}} =

@@ -62,7 +62,11 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert Repo.get_by(Doc, article_hash_id: page.node.doc_id)
     assert {:error, _} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
 
-    assert {:error, {:custom, "Trash action must be restored as one group"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "Trash action must be restored as one group"
+            }} =
              CMS.Articles.restore_trashed(membership, user)
 
     assert {:ok, restored} =
@@ -384,8 +388,11 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       })
 
     assert {:error,
-            {:custom,
-             "The original Docs Tree parent no longer exists; select a new parent before restoring."}} =
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details:
+                "The original Docs Tree parent no longer exists; select a new parent before restoring."
+            }} =
              CMS.DocTree.restore_trash_item(community, child_trash_item.id, %{
                base_revision: parent_deleted.revision,
                actor_id: user.id

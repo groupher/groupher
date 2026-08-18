@@ -223,7 +223,9 @@ defmodule GroupherServer.CMS.Docs.Trash do
       |> order_by([doc], asc: doc.id)
       |> Repo.all()
 
-    if docs == [], do: {:error, {:not_exist, "physical Doc"}}, else: {:ok, docs}
+    if docs == [],
+      do: {:error, CMS.Articles.ErrorCat.not_exist("physical Doc")},
+      else: {:ok, docs}
   end
 
   defp purge_physical_docs(docs) do
@@ -258,15 +260,21 @@ defmodule GroupherServer.CMS.Docs.Trash do
     |> Repo.one()
     |> case do
       %Doc{} = doc -> {:ok, doc}
-      nil -> {:error, {:not_exist, "logical Doc"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("logical Doc")}
     end
   end
 
   defp restore_state(community, branch, article_hash_id) do
     case Lifecycle.state(community.id, branch.id, article_hash_id) do
-      {:ok, :archived} -> {:error, {:archived, "Doc is archived, can not be deleted"}}
-      {:ok, state} -> {:ok, state}
-      error -> error
+      {:ok, :archived} ->
+        {:error,
+         GroupherServer.CMS.Articles.ErrorCat.archived("Doc is archived, can not be deleted")}
+
+      {:ok, state} ->
+        {:ok, state}
+
+      error ->
+        error
     end
   end
 

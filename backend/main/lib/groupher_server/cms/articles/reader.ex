@@ -13,8 +13,6 @@ defmodule GroupherServer.CMS.Articles.Reader do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-  import Helper.ErrorCode
-
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -22,6 +20,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   alias Accounts.Model.User
   alias CMS.{Interactions}
   alias CMS.Gate.Scope
+  alias CMS.Articles.ErrorCat
   alias CMS.Communities.Enable
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
@@ -83,7 +82,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   defp do_read_article(article, %Community{} = community, thread, user, event_id) do
     Multi.new()
     |> Multi.run(:record_view, fn _, _ ->
-      Interactions.ViewEvents.record(article, user, event_id)
+      Interactions.record_view(article, user, event_id)
     end)
     |> Multi.run(:load_html, fn _, _ ->
       article |> Repo.preload(:document) |> done()
@@ -149,7 +148,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
         {:ok, DocScope.public_branch(branch_id)}
 
       nil ->
-        {:error, {:not_exist, "Doc main branch"}}
+        {:error, CMS.Articles.ErrorCat.not_exist("Doc main branch")}
     end
   end
 
@@ -162,8 +161,8 @@ defmodule GroupherServer.CMS.Articles.Reader do
     |> where([article], article.community_id == ^community_id and article.inner_id == ^inner_id)
     |> Repo.exists?()
     |> case do
-      true -> raise_error(:pending, "this article is under audition")
-      false -> {:error, {:not_exist, model}}
+      true -> pending("this article is under audition")
+      false -> {:error, CMS.Articles.ErrorCat.not_exist(model)}
     end
   end
 
@@ -173,12 +172,12 @@ defmodule GroupherServer.CMS.Articles.Reader do
   defp if_article_legal(%{pending: @audit_illegal} = article, %User{id: user_id}) do
     case article.author.user_id == user_id do
       true -> {:ok, article}
-      false -> raise_error(:pending, "this article is under audition")
+      false -> pending("this article is under audition")
     end
   end
 
   defp if_article_legal(%{pending: @audit_illegal}) do
-    raise_error(:pending, "this article is under audition")
+    pending("this article is under audition")
   end
 
   defp if_article_legal(article), do: {:ok, article}
@@ -197,4 +196,6 @@ defmodule GroupherServer.CMS.Articles.Reader do
   defp result({:ok, %{set_viewer_has_states: article}}), do: {:ok, article}
   defp result({:ok, %{update_article_meta: article}}), do: {:ok, article}
   defp result({:error, _step, reason, _changes}), do: {:error, reason}
+
+  defp pending(details), do: {:error, ErrorCat.pending(details)}
 end

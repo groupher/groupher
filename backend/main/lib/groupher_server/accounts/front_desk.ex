@@ -12,6 +12,8 @@ defmodule GroupherServer.Accounts.FrontDesk do
   """
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias GroupherServer.ErrorCat, as: GlobalErrorCat
   alias Helper.{Cache, ORM}
 
   @cache_pool :user_login
@@ -41,9 +43,16 @@ defmodule GroupherServer.Accounts.FrontDesk do
   end
 
   defp cache_userid(login) do
-    with {:ok, user} <- ORM.find_by(User, %{login: login}) do
-      Cache.put(@cache_pool, login, user.id)
-      {:ok, user.id}
+    case ORM.find_by(User, %{login: login}) do
+      {:ok, user} ->
+        Cache.put(@cache_pool, login, user.id)
+        {:ok, user.id}
+
+      {:error, %GlobalErrorCat.Error{details: %{reason: :not_exist, message: message}}} ->
+        {:error, ProfileErrorCat.not_exist(message)}
+
+      {:error, error} ->
+        {:error, error}
     end
   end
 

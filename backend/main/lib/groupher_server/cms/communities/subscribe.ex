@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
   alias Accounts.Model.User
   alias CMS.Communities
   alias CMS.Model.{Community, CommunitySubscriber}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias Helper.{Multi, ORM, T}
 
   @doc """
@@ -59,7 +60,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
       |> result()
     else
       false ->
-        {:error, {:custom, "can not unsubscribe home community"}}
+        {:error, GroupherServer.ErrorCat.custom("can not unsubscribe home community")}
 
       error ->
         error
@@ -97,6 +98,20 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
   end
 
   defp result({:error, _, result, _steps}) do
-    {:error, result}
+    {:error, normalize_error(result)}
   end
+
+  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+
+  defp normalize_error(%Ecto.Changeset{} = changeset),
+    do: GroupherServerWeb.ErrorCat.changeset(changeset)
+
+  defp normalize_error({reason, message}) when is_atom(reason) and is_binary(message),
+    do: CommunityErrorCat.not_exist(message)
+
+  defp normalize_error(reason) when is_atom(reason),
+    do: GroupherServer.ErrorCat.custom("community subscription failed: #{reason}")
+
+  defp normalize_error(error),
+    do: GroupherServer.ErrorCat.custom("community subscription failed: #{inspect(error)}")
 end

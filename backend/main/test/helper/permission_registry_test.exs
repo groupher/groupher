@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   end
 
   test "unknown action returns unknown_action error" do
-    assert {:error, :unknown_action} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
              PermissionRegistry.requirement("this_action_does_not_exist")
   end
 

@@ -82,7 +82,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       if delete_restore_event?(event) do
         {:cont, :ok}
       else
-        {:halt, {:error, {:custom, "Only deleted tree publish items can be restored."}}}
+        {:halt,
+         {:error,
+          GroupherServer.ErrorCat.custom("Only deleted tree publish items can be restored.")}}
       end
     end)
   end
@@ -115,7 +117,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   end
 
   defp restore_nodes_from_delete_event(_event),
-    do: {:error, {:custom, "Deleted tree item can not be restored."}}
+    do: {:error, GroupherServer.ErrorCat.custom("Deleted tree item can not be restored.")}
 
   defp restore_draft_nodes(%Community{} = community, branch, nodes) do
     Result.map_while_ok(nodes, &restore_draft_node(community, branch, &1))
@@ -127,8 +129,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
          {:ok, restored_node} <- ORM.create(DocTreeNode, attrs) do
       {:ok, restored_node}
     else
-      %DocTreeNode{} -> {:error, {:custom, "Deleted tree item has already been restored."}}
-      error -> error
+      %DocTreeNode{} ->
+        {:error, GroupherServer.ErrorCat.custom("Deleted tree item has already been restored.")}
+
+      error ->
+        error
     end
   end
 
@@ -218,8 +223,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   defp node_type_atom(type) do
     case Map.fetch(@event_node_types, type) do
-      {:ok, atom} -> {:ok, atom}
-      :error -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
+      {:ok, atom} ->
+        {:ok, atom}
+
+      :error ->
+        {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree node type: #{type}")}
     end
   end
 end

@@ -28,10 +28,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.Result do
       #=> {:ok, [2, 4, 6]}
 
       Result.map_while_ok([1, 2, 3], fn
-        2 -> {:error, :boom}
+        2 -> {:error, GroupherServer.ErrorCat.custom("boom")}
         x -> {:ok, x}
       end)
-      #=> {:error, :boom}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
 
   """
   def map_while_ok(enumerable, fun) do

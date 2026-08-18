@@ -115,17 +115,25 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"what.ever" => true}})
 
       assert user_conn
-             |> mutation_error?(@save_custom_theme_preset_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @save_custom_theme_preset_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
 
       assert rule_conn
-             |> mutation_error?(@save_custom_theme_preset_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @save_custom_theme_preset_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "save custom theme preset rejects non-custom preset saves", ~m(community)a do
@@ -469,13 +477,25 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"what.ever" => true}})
 
       assert user_conn
-             |> mutation_error?(@select_theme_preset_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @select_theme_preset_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@select_theme_preset_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @select_theme_preset_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       assert rule_conn
-             |> mutation_error?(@select_theme_preset_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @select_theme_preset_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
   end
 end

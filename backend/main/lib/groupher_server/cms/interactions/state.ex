@@ -17,7 +17,9 @@ defmodule GroupherServer.CMS.Interactions.State do
   alias GroupherServer.Accounts.Model.User
 
   alias CMS.{FrontDesk, ShadowSync}
-  alias CMS.Interactions.{Config, Registry, RoaringBitmap}
+  alias CMS.Artiment.Matcher
+  alias CMS.Interactions.{Config, Emotion}
+  alias CMS.Model.Interaction.RoaringBitmap
 
   alias CMS.Model.{
     Comment,
@@ -31,63 +33,59 @@ defmodule GroupherServer.CMS.Interactions.State do
   @type fixed_reaction :: :collect | :report | :upvote | :view
   @type operation :: :add | :remove
 
+  @doc false
+  def add_upvote(%Comment{} = comment, actor),
+    do: sync_comment_fixed(comment, :upvote, actor, :add)
+
+  def add_upvote(article, actor), do: sync_article_fixed(article, :upvote, actor, :add)
+
+  @doc false
+  def remove_upvote(%Comment{} = comment, actor),
+    do: sync_comment_fixed(comment, :upvote, actor, :remove)
+
+  def remove_upvote(article, actor), do: sync_article_fixed(article, :upvote, actor, :remove)
+
+  @doc false
+  def add_collect(article, actor), do: sync_article_fixed(article, :collect, actor, :add)
+
+  @doc false
+  def remove_collect(article, actor), do: sync_article_fixed(article, :collect, actor, :remove)
+
+  @doc false
+  def add_emotion(%Comment{} = comment, emotion, actor),
+    do: sync_comment_emotion(comment, emotion, actor, :add)
+
+  def add_emotion(article, emotion, actor),
+    do: sync_article_emotion(article, emotion, actor, :add)
+
+  @doc false
+  def remove_emotion(%Comment{} = comment, emotion, actor),
+    do: sync_comment_emotion(comment, emotion, actor, :remove)
+
+  def remove_emotion(article, emotion, actor),
+    do: sync_article_emotion(article, emotion, actor, :remove)
+
+  @doc false
+  def add_report(%Comment{} = comment, actor),
+    do: sync_comment_fixed(comment, :report, actor, :add)
+
+  def add_report(article, actor), do: sync_article_fixed(article, :report, actor, :add)
+
+  @doc false
+  def remove_report(%Comment{} = comment, actor),
+    do: sync_comment_fixed(comment, :report, actor, :remove)
+
+  def remove_report(article, actor), do: sync_article_fixed(article, :report, actor, :remove)
+
   @doc "Reads materialized fixed-reaction counts keyed by physical target id."
   @spec counts(:comment | :post | :blog | :changelog | :doc, [integer()]) :: %{integer() => map()}
   def counts(:comment, target_ids), do: fixed_counts(:comment, target_ids)
   def counts(thread, target_ids), do: fixed_counts(thread, target_ids)
 
-  @doc "Updates a projection after the owning fact mutation succeeds."
-  @spec write(term(), :collect | :report | :upvote | {:emotion, atom()}, User.t(), operation()) ::
-          {:ok, map()} | {:error, term()}
-  def write(target, {:emotion, emotion}, %User{} = user, operation)
-      when operation in [:add, :remove] do
-    case target do
-      %Comment{} -> sync_comment_emotion(target, emotion, user, operation)
-      _ -> sync_article_emotion(target, emotion, user, operation)
-    end
-  end
-
-  def write(%Comment{} = comment, reaction, %User{} = user, operation)
-      when reaction in [:report, :upvote] and operation in [:add, :remove],
-      do: sync_comment_fixed(comment, reaction, user, operation)
-
-  def write(article, reaction, %User{} = user, operation)
-      when reaction in [:collect, :report, :upvote] and operation in [:add, :remove],
-      do: sync_article_fixed(article, reaction, user, operation)
-
   @doc "Merges asynchronously projected view viewers; views do not use write/4."
   @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
   def merge_viewed_users(thread, target_id, user_ids),
     do: project_article_views(thread, target_id, user_ids)
-
-  @doc "Adds projection-backed interaction ordering before article pagination."
-  @spec order_articles(Ecto.Queryable.t(), :post | :blog | :changelog | :doc, atom() | nil) ::
-          Ecto.Queryable.t()
-  def order_articles(queryable, _thread, order) when order in [nil, :publish, :comments, :views],
-    do: queryable
-
-  def order_articles(queryable, thread, :upvotes),
-    do: order_articles_by_count(queryable, thread, :upvotes_count)
-
-  def order_articles(queryable, thread, :collects),
-    do: order_articles_by_count(queryable, thread, :collects_count)
-
-  def order_articles(queryable, _thread, _order), do: queryable
-
-  defp order_articles_by_count(queryable, thread, count_field) do
-    info = Registry.target(thread)
-    schema = info.reaction
-    target_id = info.target_id
-
-    from(article in queryable,
-      left_join: info in ^schema,
-      on: field(info, ^target_id) == article.id,
-      order_by: [
-        desc_nulls_last: field(info, ^count_field),
-        desc_nulls_last: article.id
-      ]
-    )
-  end
 
   @doc "Reads and merges interaction state for a list of articles or comments."
   @spec read(:comment | :post | :blog | :changelog | :doc, [term()], User.t() | nil, keyword()) ::
@@ -147,7 +145,7 @@ defmodule GroupherServer.CMS.Interactions.State do
   def sync_article_fixed(article, reaction, %User{} = user, operation)
       when reaction in [:collect, :report, :upvote, :view] and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_fixed(Registry.target(thread), article.id, reaction, user, operation)
+      sync_fixed(interaction_info(thread), article.id, reaction, user, operation)
     end
   end
 
@@ -155,10 +153,10 @@ defmodule GroupherServer.CMS.Interactions.State do
   @spec project_article_views(atom(), integer(), [integer()]) :: :ok | {:error, term()}
   def project_article_views(thread, target_id, user_ids)
       when thread in [:post, :blog, :changelog, :doc] and is_list(user_ids) do
-    info = Registry.target(thread)
+    info = interaction_info(thread)
     reaction_info = lock_reaction_info(info, target_id)
 
-    from(info in info.reaction, where: info.id == ^reaction_info.id)
+    from(info in info.reaction_info_model, where: info.id == ^reaction_info.id)
     |> update(
       [info],
       set: [
@@ -176,7 +174,7 @@ defmodule GroupherServer.CMS.Interactions.State do
           {:ok, map()} | {:error, term()}
   def sync_comment_fixed(comment, reaction, %User{} = user, operation)
       when reaction in [:report, :upvote, :view] and operation in [:add, :remove] do
-    sync_fixed(Registry.target(:comment), comment.id, reaction, user, operation)
+    sync_fixed(interaction_info(:comment), comment.id, reaction, user, operation)
   end
 
   @doc "Synchronizes one article emotion projection after its fact row changes."
@@ -185,7 +183,7 @@ defmodule GroupherServer.CMS.Interactions.State do
   def sync_article_emotion(article, emotion, %User{} = user, operation)
       when is_atom(emotion) and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_emotion(Registry.target(thread), article.id, emotion, user, operation)
+      sync_emotion(interaction_info(thread), article.id, emotion, user, operation)
     end
   end
 
@@ -194,17 +192,18 @@ defmodule GroupherServer.CMS.Interactions.State do
           {:ok, map()} | {:error, term()}
   def sync_comment_emotion(comment, emotion, %User{} = user, operation)
       when is_atom(emotion) and operation in [:add, :remove] do
-    sync_emotion(Registry.target(:comment), comment.id, emotion, user, operation)
+    sync_emotion(interaction_info(:comment), comment.id, emotion, user, operation)
   end
 
   @doc "Returns materialized fixed-reaction counts keyed by physical target id."
   @spec fixed_counts(:comment | :post | :blog | :changelog | :doc, [integer()]) :: %{
           integer() => map()
         }
-  def fixed_counts(:comment, target_ids), do: fixed_counts_for(Registry.target(:comment), target_ids)
+  def fixed_counts(:comment, target_ids),
+    do: fixed_counts_for(interaction_info(:comment), target_ids)
 
   def fixed_counts(thread, target_ids) when thread in [:post, :blog, :changelog, :doc],
-    do: fixed_counts_for(Registry.target(thread), target_ids)
+    do: fixed_counts_for(interaction_info(thread), target_ids)
 
   @doc "Returns durable, not-yet-projected view targets for one viewer."
   @spec pending_viewed_ids(:post | :blog | :changelog | :doc, [integer()], integer()) ::
@@ -228,10 +227,10 @@ defmodule GroupherServer.CMS.Interactions.State do
       %{}
     else
       query =
-        from(info_row in info.reaction,
-          where: field(info_row, ^info.target_id) in ^target_ids,
+        from(info_row in info.reaction_info_model,
+          where: field(info_row, ^info.foreign_key) in ^target_ids,
           select: %{
-            target_id: field(info_row, ^info.target_id),
+            target_id: field(info_row, ^info.foreign_key),
             upvotes_count: info_row.upvotes_count
           }
         )
@@ -264,7 +263,7 @@ defmodule GroupherServer.CMS.Interactions.State do
 
         {thread, items} ->
           items
-          |> merge_article_states(Registry.target(thread), user, opts)
+          |> merge_article_states(interaction_info(thread), user, opts)
           |> Enum.map(&{{thread, &1.id}, &1})
       end)
       |> Map.new()
@@ -298,7 +297,7 @@ defmodule GroupherServer.CMS.Interactions.State do
     # the top-level entries win so their preloaded associations are preserved.
     hydrated_by_id =
       all_comments
-      |> merge_comment_states(Registry.target(:comment), user, author_upvoted_ids, opts)
+      |> merge_comment_states(interaction_info(:comment), user, author_upvoted_ids, opts)
       |> Map.new(&{&1.id, &1})
 
     top_level_by_id = Map.new(comments, &{&1.id, &1})
@@ -350,7 +349,7 @@ defmodule GroupherServer.CMS.Interactions.State do
 
     with :ok <-
            update_projection!(
-             info.reaction,
+             info.reaction_info_model,
              reaction_info.id,
              bitmap_field,
              user.id,
@@ -369,7 +368,7 @@ defmodule GroupherServer.CMS.Interactions.State do
 
     with :ok <-
            update_projection!(
-             info.emotion,
+             info.emotion_info_model,
              emotion_info.id,
              :user_ids,
              user.id,
@@ -384,7 +383,9 @@ defmodule GroupherServer.CMS.Interactions.State do
 
   defp merge_article_states(articles, info, user, opts) do
     fixed_by_target = fixed_stats_by_target(info, Enum.map(articles, & &1.id), user, opts)
-    emotions_by_target = emotion_stats_by_target(info, Enum.map(articles, & &1.id), user, :article)
+
+    emotions_by_target =
+      emotion_stats_by_target(info, Enum.map(articles, & &1.id), user, :article)
 
     Enum.map(articles, fn article ->
       fixed = Map.get(fixed_by_target, article.id, empty_reaction_state(info))
@@ -401,7 +402,9 @@ defmodule GroupherServer.CMS.Interactions.State do
 
   defp merge_comment_states(comments, info, user, author_upvoted_ids, opts) do
     fixed_by_target = fixed_stats_by_target(info, Enum.map(comments, & &1.id), user, opts)
-    emotions_by_target = emotion_stats_by_target(info, Enum.map(comments, & &1.id), user, :comment)
+
+    emotions_by_target =
+      emotion_stats_by_target(info, Enum.map(comments, & &1.id), user, :comment)
 
     Enum.map(comments, fn comment ->
       fixed = Map.get(fixed_by_target, comment.id, empty_reaction_state(info))
@@ -417,11 +420,11 @@ defmodule GroupherServer.CMS.Interactions.State do
   end
 
   defp fixed_stats_by_target(info, target_ids, user, opts) do
-    target_id_field = info.target_id
+    target_id_field = info.foreign_key
     user_id = if match?(%User{}, user), do: user.id
 
     query =
-      from(info_row in info.reaction,
+      from(info_row in info.reaction_info_model,
         where: field(info_row, ^target_id_field) in ^target_ids,
         select: %{
           target_id: field(info_row, ^target_id_field),
@@ -449,7 +452,7 @@ defmodule GroupherServer.CMS.Interactions.State do
   end
 
   defp emotion_stats_by_target(
-         %{emotion: schema, target_id: target_id_field},
+         %{emotion_info_model: schema, foreign_key: target_id_field},
          target_ids,
          user,
          emotion_kind
@@ -475,7 +478,7 @@ defmodule GroupherServer.CMS.Interactions.State do
   end
 
   defp emotion_embed(row, emotion_kind) do
-    case Registry.decode_emotion(row.emotion, emotion_kind) do
+    case Emotion.decode(row.emotion, emotion_kind) do
       {:ok, emotion} ->
         %{
           :"#{emotion}_count" => row.count,
@@ -483,7 +486,7 @@ defmodule GroupherServer.CMS.Interactions.State do
           :"viewer_has_#{emotion}ed" => Map.get(row, :viewer_has_reacted, false)
         }
 
-      {:error, :unknown_emotion} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_emotion}} ->
         :telemetry.execute([:groupher, :cms, :interactions, :unknown_emotion], %{count: 1}, %{
           emotion: row.emotion,
           kind: emotion_kind
@@ -551,7 +554,7 @@ defmodule GroupherServer.CMS.Interactions.State do
   end
 
   defp lock_reaction_info(
-         %{reaction: schema, target_id: target_id_field} = reaction_info,
+         %{reaction_info_model: schema, foreign_key: target_id_field} = reaction_info,
          target_id
        ) do
     insert_info(schema, target_id_field, target_id)
@@ -571,7 +574,11 @@ defmodule GroupherServer.CMS.Interactions.State do
     |> Repo.one!()
   end
 
-  defp lock_emotion_info(%{emotion: schema, target_id: target_id_field}, target_id, emotion) do
+  defp lock_emotion_info(
+         %{emotion_info_model: schema, foreign_key: target_id_field},
+         target_id,
+         emotion
+       ) do
     insert_emotion_info(schema, target_id_field, target_id, emotion)
 
     from(info in schema,
@@ -639,7 +646,7 @@ defmodule GroupherServer.CMS.Interactions.State do
 
     case from(info in schema, where: info.id == ^info_id) |> Repo.update_all(updates) do
       {1, _} -> :ok
-      {0, _} -> {:error, :projection_not_updated}
+      {0, _} -> {:error, GroupherServer.CMS.Articles.ErrorCat.projection_not_updated()}
     end
   end
 
@@ -651,6 +658,11 @@ defmodule GroupherServer.CMS.Interactions.State do
   defp bitmap_field(:report), do: :reported_user_ids
   defp bitmap_field(:upvote), do: :upvoted_user_ids
   defp bitmap_field(:view), do: :viewed_user_ids
+
+  defp interaction_info(artiment) do
+    {:ok, info} = Matcher.match_interaction(artiment)
+    info
+  end
 
   defp count_field(:upvote), do: :upvotes_count
   defp count_field(:collect), do: :collects_count

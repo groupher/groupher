@@ -22,6 +22,25 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias CMS.Interactions.ErrorCat
+
+  alias CMS.Model.{
+    Blog,
+    BlogEmotionInfo,
+    BlogReactionInfo,
+    Changelog,
+    ChangelogEmotionInfo,
+    ChangelogReactionInfo,
+    Comment,
+    CommentEmotionInfo,
+    CommentReactionInfo,
+    Doc,
+    DocEmotionInfo,
+    DocReactionInfo,
+    Post,
+    PostEmotionInfo,
+    PostReactionInfo
+  }
 
   @type match_info :: %{
           model: module(),
@@ -31,7 +50,16 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
           default_meta: map() | nil
         }
 
-  @spec match(map()) :: {:ok, match_info()} | {:error, {:custom, String.t()}}
+  @type interaction_info :: %{
+          artiment: :post | :blog | :changelog | :doc | :comment,
+          model: module(),
+          foreign_key: atom(),
+          reaction_info_model: module(),
+          emotion_info_model: module(),
+          collection?: boolean()
+        }
+
+  @spec match(map()) :: {:ok, match_info()} | {:error, GroupherServer.ErrorCat.custom(String.t())}
   @doc "Resolves matcher metadata from an artiment or metadata map."
   def match(%{thread: thread}) when is_atom(thread) do
     match(thread)
@@ -41,7 +69,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
     match(thread)
   end
 
-  def match(%{}), do: {:error, {:custom, "invalid article"}}
+  def match(%{}), do: {:error, GroupherServer.ErrorCat.custom("invalid article")}
 
   @spec match(:account) :: {:ok, match_info()}
   def match(:account) do
@@ -75,6 +103,64 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
      }}
   end
 
+  @doc "Resolves the complete Interaction metadata for an Artiment kind, schema, or struct."
+  @spec match_interaction(atom() | struct()) ::
+          {:ok, interaction_info()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  def match_interaction(%Post{}), do: match_interaction(:post)
+  def match_interaction(Post), do: match_interaction(:post)
+
+  def match_interaction(%Blog{}), do: match_interaction(:blog)
+  def match_interaction(Blog), do: match_interaction(:blog)
+
+  def match_interaction(%Changelog{}), do: match_interaction(:changelog)
+  def match_interaction(Changelog), do: match_interaction(:changelog)
+
+  def match_interaction(%Doc{}), do: match_interaction(:doc)
+  def match_interaction(Doc), do: match_interaction(:doc)
+
+  def match_interaction(%Comment{}), do: match_interaction(:comment)
+  def match_interaction(Comment), do: match_interaction(:comment)
+
+  def match_interaction(:post) do
+    interaction_info(:post, Post, PostReactionInfo, PostEmotionInfo, true)
+  end
+
+  def match_interaction(:blog) do
+    interaction_info(:blog, Blog, BlogReactionInfo, BlogEmotionInfo, true)
+  end
+
+  def match_interaction(:changelog) do
+    interaction_info(
+      :changelog,
+      Changelog,
+      ChangelogReactionInfo,
+      ChangelogEmotionInfo,
+      true
+    )
+  end
+
+  def match_interaction(:doc) do
+    interaction_info(:doc, Doc, DocReactionInfo, DocEmotionInfo, true)
+  end
+
+  def match_interaction(:comment) do
+    interaction_info(:comment, Comment, CommentReactionInfo, CommentEmotionInfo, false)
+  end
+
+  def match_interaction(_artiment), do: {:error, ErrorCat.unsupported_artiment()}
+
   thread_matches()
   thread_query_matches()
+
+  defp interaction_info(artiment, model, reaction_info_model, emotion_info_model, collection?) do
+    {:ok,
+     %{
+       artiment: artiment,
+       model: model,
+       foreign_key: :"#{artiment}_id",
+       reaction_info_model: reaction_info_model,
+       emotion_info_model: emotion_info_model,
+       collection?: collection?
+     }}
+  end
 end

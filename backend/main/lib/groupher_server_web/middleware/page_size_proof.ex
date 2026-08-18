@@ -19,7 +19,7 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
   @behaviour Absinthe.Middleware
 
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
 
   @max_page_size GroupherServerWeb.Config.page_size()
   @inner_page_size GroupherServerWeb.Config.inner_page_size()
@@ -31,8 +31,12 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
 
   def call(resolution, args) do
     case valid_size(resolution.arguments) do
-      {:error, msg} -> resolution |> handle_absinthe_error(msg, ecode(:pagination))
-      arguments -> %{resolution | arguments: set_sort_ifneed(arguments, args)}
+      {:error, msg} ->
+        resolution
+        |> handle_absinthe_error(msg, ErrorCat.code(GroupherServerWeb.ErrorCat.pagination()))
+
+      arguments ->
+        %{resolution | arguments: set_sort_ifneed(arguments, args)}
     end
   end
 

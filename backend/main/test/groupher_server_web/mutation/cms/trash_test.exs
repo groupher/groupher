@@ -44,10 +44,21 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     variables = %{article: article_path(community, post, :post)}
     schema = S.Article.m(:trash_article)
 
-    assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
+    assert guest_conn
+           |> mutation_error?(
+             schema,
+             variables,
+             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+           )
 
     unrelated = simu_conn(:user, cms: %{community.slug => %{"post.edit" => true}})
-    assert unrelated |> mutation_error?(schema, variables, ecode(:passport))
+
+    assert unrelated
+           |> mutation_error?(
+             schema,
+             variables,
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+           )
 
     moderator = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
     assert gq_mutation(moderator, schema, variables)["id"]
@@ -62,7 +73,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     variables = %{article: article_path(community_b, post_b, :post)}
 
     assert conn
-           |> mutation_error?(S.Article.m(:trash_article), variables, ecode(:passport))
+           |> mutation_error?(
+             S.Article.m(:trash_article),
+             variables,
+             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+           )
 
     assert {:ok, _} = CMS.Articles.read(community_b, :post, post_b.inner_id)
   end

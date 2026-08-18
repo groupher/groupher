@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       {:ok, %{community: "home", thread: :post, inner_id: "12"}}
 
       iex> ArticlePath.parse(%{community: "home", thread: :blog, inner_id: "12"}, thread: :post)
-      {:error, :invalid_article_path}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}}
 
       iex> ArticlePath.parse_arguments(%{article: %{community: "home", thread: :post, inner_id: "12"}})
       {:ok, %{article: %{community: "home", thread: :post, inner_id: "12"}, article_path: %{community: "home", thread: :post, inner_id: "12"}}}
@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
   """
 
   alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.ErrorCat
 
   @type t :: %{
           community: String.t(),
@@ -49,7 +50,8 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       iex> ArticlePath.parse(%{community: "home", thread: :post, inner_id: "12"}, thread: :post)
       {:ok, %{community: "home", thread: :post, inner_id: "12"}}
   """
-  @spec parse(map(), keyword()) :: {:ok, t()} | {:error, :invalid_article_path}
+  @spec parse(map(), keyword()) ::
+          {:ok, t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def parse(article_path, opts \\ [])
 
   def parse(%{community: community, thread: thread, inner_id: inner_id}, opts) do
@@ -61,11 +63,11 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
          :ok <- validate_fixed_thread(thread, fixed_thread) do
       {:ok, %{community: community, thread: thread, inner_id: inner_id}}
     else
-      _ -> {:error, :invalid_article_path}
+      _ -> {:error, ErrorCat.invalid_article_path()}
     end
   end
 
-  def parse(_, _), do: {:error, :invalid_article_path}
+  def parse(_, _), do: {:error, ErrorCat.invalid_article_path()}
 
   @doc """
   Parses the article path embedded in resolver or middleware arguments.
@@ -77,7 +79,8 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       iex> ArticlePath.parse_arguments(%{article: %{community: "home", thread: :post, inner_id: "12"}})
       {:ok, %{article: %{community: "home", thread: :post, inner_id: "12"}, article_path: %{community: "home", thread: :post, inner_id: "12"}}}
   """
-  @spec parse_arguments(map(), keyword()) :: {:ok, map()} | {:error, :invalid_article_path}
+  @spec parse_arguments(map(), keyword()) ::
+          {:ok, map()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def parse_arguments(arguments, opts \\ []) when is_map(arguments) do
     # Prefer an already parsed value so Passport and article loading can share
     # the same path without repeating validation or changing middleware order.

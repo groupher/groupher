@@ -69,9 +69,11 @@ defmodule GroupherServer.Test.Helper.Cache do
     test "get_or_fetch does not cache loader errors" do
       key = "get-or-fetch-error-#{System.unique_integer([:positive])}"
 
-      assert {:error, :upstream_unavailable} =
+      upstream_error = GroupherServer.ErrorCat.custom("upstream unavailable")
+
+      assert {:error, ^upstream_error} =
                Cache.get_or_fetch(@pool, key, [expire_sec: 30], fn ->
-                 {:error, :upstream_unavailable}
+                 {:error, upstream_error}
                end)
 
       assert {:ok, 7} =
@@ -90,7 +92,11 @@ defmodule GroupherServer.Test.Helper.Cache do
     test "get_or_fetch converts loader exceptions to errors without caching" do
       key = "get-or-fetch-exception-#{System.unique_integer([:positive])}"
 
-      assert {:error, {:exception, "loader failed"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: %{reason: :exception, message: "loader failed"}
+              }} =
                Cache.get_or_fetch(@pool, key, [expire_sec: 30], fn ->
                  raise "loader failed"
                end)

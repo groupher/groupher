@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :doc),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :doc),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

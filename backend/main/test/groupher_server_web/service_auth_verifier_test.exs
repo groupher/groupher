@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
   end
 
   test "rejects the same signature for another audience", %{key: key} do
-    assert {:error, :invalid_service_token} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_service_token}} =
              key
              |> token(%{"aud" => "press:internal-api"})
              |> Verifier.verify()

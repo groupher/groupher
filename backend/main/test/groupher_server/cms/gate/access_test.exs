@@ -8,21 +8,31 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
   alias CMS.Gate.Context.Access.Community, as: CommunityAccess
   alias CMS.Model.{ArticleLifecycle, Comment, CommentLifecycle, CommunityLifecycle}
 
+  test "access_check rejects unsupported resources without raising" do
+    assert {:error, %Decision{primary: %{reason: :unsupported_resource}}} =
+             CMS.Gate.access_check(nil, :upvote, %{community_id: 1})
+
+    assert {:error, %Decision{primary: %{reason: :unsupported_resource}}} =
+             CMS.Gate.Access.Check.article(nil, :upvote, %{community_id: 1})
+  end
+
   test "community access rejects unregistered actions" do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    assert {:error, :unknown_action} = CMS.Gate.Access.check_access(user, :purge, community)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.Access.Policy.community(user, :purge, community)
 
-    assert {:error, :unknown_action} =
-             CMS.Gate.Access.Community.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.Access.Policy.community(
                user,
                :purge,
                community,
                community_context(community)
              )
 
-    assert {:error, :unknown_action} = CMS.Gate.Access.check_access(user, :read_draft, community)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.Access.Policy.community(user, :read_draft, community)
   end
 
   test "community command actions use the manage relation preflight" do
@@ -37,14 +47,14 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     community = %{community | lifecycle: lifecycle}
 
-    assert :ok = CMS.Gate.Access.check_access(owner, :restore, community)
-    assert :ok = CMS.Gate.Access.check_access(owner, :schedule_destroy, community)
+    assert :ok = CMS.Gate.Access.Policy.community(owner, :restore, community)
+    assert :ok = CMS.Gate.Access.Policy.community(owner, :schedule_destroy, community)
 
-    assert {:error, :permission_denied} =
-             CMS.Gate.Access.check_access(other_user, :destroy, community)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
+             CMS.Gate.Access.Policy.community(other_user, :destroy, community)
 
-    assert {:error, :permission_denied} =
-             CMS.Gate.Access.Community.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
+             CMS.Gate.Access.Policy.community(
                other_user,
                :request_destroy,
                community,
@@ -64,14 +74,22 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     community = %{community | lifecycle: lifecycle}
 
-    assert :ok = CMS.Gate.Access.check_access(nil, :read, community)
-    assert :ok = CMS.Gate.Access.check_access(owner, :read, community)
+    assert :ok = CMS.Gate.Access.Policy.community(nil, :read, community)
+    assert :ok = CMS.Gate.Access.Policy.community(owner, :read, community)
 
     assert :ok =
-             CMS.Gate.Access.check_access(owner, :read, community, community_context(community))
+             CMS.Gate.Access.Policy.community(
+               owner,
+               :read,
+               community,
+               community_context(community)
+             )
 
-    assert {:error, :unknown_action} = CMS.Gate.Access.check_access(other_user, :write, community)
-    assert {:error, :unknown_action} = CMS.Gate.Access.check_access(owner, :manage, community)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.Access.Policy.community(other_user, :write, community)
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.Access.Policy.community(owner, :manage, community)
   end
 
   test "Document management access uses the same writable Community guard" do
@@ -124,16 +142,16 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       article_lifecycle: %ArticleLifecycle{state: :archived}
     }
 
-    assert {:error, :article_archived} =
-             CMS.Gate.Access.Article.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :article_archived}} =
+             CMS.Gate.Access.Policy.article(
                user,
                :publish,
                article,
                archived_context
              )
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Article.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.article(
                user,
                :create_comment,
                article,
@@ -141,7 +159,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              )
 
     decision =
-      CMS.Gate.Access.Article.check_access(user, :publish, article, archived_context)
+      CMS.Gate.Access.Policy.article(user, :publish, article, archived_context)
       |> Decision.from_result(archived_context)
 
     refute decision.allowed
@@ -154,7 +172,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
            } =
              decision.primary
 
-    assert {:error, :article_archived} = {:error, Decision.primary_reason(decision)}
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :article_archived}} =
+             {:error, Decision.primary_error(decision)}
   end
 
   test "article interactions use the same Article and Community admission matrix" do
@@ -181,7 +200,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     for action <- [:upvote, :emotion, :collect] do
       assert :ok =
-               CMS.Gate.Access.Article.check_access(
+               CMS.Gate.Access.Policy.article(
                  user,
                  action,
                  article,
@@ -195,8 +214,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
     }
 
     for action <- [:upvote, :emotion, :collect] do
-      assert {:error, :article_archived} =
-               CMS.Gate.Access.Article.check_access(
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :article_archived}} =
+               CMS.Gate.Access.Policy.article(
                  user,
                  action,
                  article,
@@ -215,16 +234,16 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
         community_lifecycle: read_only_community.lifecycle
     }
 
-    assert {:error, :ancestor_community_not_writable} =
-             CMS.Gate.Access.Article.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+             CMS.Gate.Access.Policy.article(
                user,
                :upvote,
                article,
                read_only_context
              )
 
-    assert {:error, :article_not_mutable} =
-             CMS.Gate.Access.Article.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :article_not_mutable}} =
+             CMS.Gate.Access.Policy.article(
                user,
                :upvote,
                article,
@@ -260,8 +279,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       article_lifecycle: %ArticleLifecycle{state: :published}
     }
 
-    assert {:error, :ancestor_community_not_writable} =
-             CMS.Gate.Access.Article.check_access(user, :create_comment, article, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+             CMS.Gate.Access.Policy.article(user, :create_comment, article, context)
   end
 
   test "comment reply preserves the ancestor lifecycle rejection" do
@@ -288,28 +307,28 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
       comment_lifecycle: %CommentLifecycle{state: :visible}
     }
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(
                user,
                :reply_comment,
                %Comment{},
                context
              )
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(user, :edit, %Comment{}, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(user, :edit, %Comment{}, context)
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(user, :delete, %Comment{}, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(user, :delete, %Comment{}, context)
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(user, :upvote, %Comment{}, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(user, :upvote, %Comment{}, context)
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(user, :emotion, %Comment{}, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(user, :emotion, %Comment{}, context)
 
-    assert {:error, :ancestor_article_archived} =
-             CMS.Gate.Access.Comment.check_access(user, :pin, %Comment{}, context)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_article_archived}} =
+             CMS.Gate.Access.Policy.comment(user, :pin, %Comment{}, context)
   end
 
   test "viewer-aware community read hides suspended communities from non-owners" do
@@ -327,7 +346,12 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
              from(candidate in CMS.Model.Community, where: candidate.id == ^community.id)
            )
 
-    assert {:error, {:not_exist, "Community"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :community},
+              reason: :not_exist,
+              details: "Community"
+            }} =
              CMS.Communities.Reader.fetch(community.slug, owner, inc_views: false)
 
     assert {:ok, _} =
@@ -336,7 +360,12 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
                policy_mode: :owner_management
              )
 
-    assert {:error, {:not_exist, "Community"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :community},
+              reason: :not_exist,
+              details: "Community"
+            }} =
              CMS.Communities.Reader.fetch(community.slug, other_user, inc_views: false)
   end
 

@@ -22,9 +22,22 @@ defmodule GroupherServer.Test.Helper.Transaction do
     end
 
     test "returns business error from callback" do
-      assert {:error, :locked_failed} =
+      locked_error = GroupherServer.ErrorCat.custom("locked failed")
+
+      assert {:error, ^locked_error} =
                Transaction.lock_global("test:transaction:lock_global:error", fn ->
-                 {:error, :locked_failed}
+                 {:error, locked_error}
+               end)
+    end
+
+    test "unwraps an Ecto.Multi changeset error without replacing it" do
+      changeset =
+        Ecto.Changeset.change(%Community{})
+        |> Ecto.Changeset.add_error(:slug, "has already been taken")
+
+      assert {:error, ^changeset} =
+               Transaction.lock_global("test:transaction:multi:changeset", fn ->
+                 {:error, {:error, :community, changeset, %{}}}
                end)
     end
   end
@@ -44,7 +57,11 @@ defmodule GroupherServer.Test.Helper.Transaction do
     end
 
     test "returns resource_not_found for missing row" do
-      assert {:error, {:resource_not_found, Community}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: %{reason: :resource_not_found, resource: Community}
+              }} =
                Transaction.lock_row(%Community{id: -1}, fn _ -> :ok end)
     end
 

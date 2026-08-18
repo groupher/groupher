@@ -23,6 +23,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}
@@ -1715,14 +1717,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     end
   end
 
-  defp moderator_community_slug(_), do: {:error, :community_not_found}
+  defp moderator_community_slug(_),
+    do: {:error, CommunityErrorCat.not_exist("community not found")}
 
   defp moderator_user_id(%{user_id: user_id}) when not is_nil(user_id), do: {:ok, user_id}
 
   defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id),
     do: {:ok, user_id}
 
-  defp moderator_user_id(_), do: {:error, :user_not_found}
+  defp moderator_user_id(_), do: {:error, AuthErrorCat.not_exist("user not found")}
 
   defp moderator_root?(passport, community_slug) do
     get_in(passport, [community_slug, "root"]) == true

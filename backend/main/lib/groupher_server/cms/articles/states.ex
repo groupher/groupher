@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Articles.States do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-  import Helper.ErrorCode
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Articles.ErrorCat
 
   alias CMS.Comments.Writer
   alias CMS.Artiment.Enums
@@ -123,7 +123,7 @@ defmodule GroupherServer.CMS.Articles.States do
          {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do
       ORM.update(article, %{active_at: article.meta.last_active_at})
     else
-      false -> raise_error(:undo_sink_old_article, "can not undo sink old article")
+      false -> undo_sink_old_article("can not undo sink old article")
     end
   end
 
@@ -189,7 +189,7 @@ defmodule GroupherServer.CMS.Articles.States do
 
     case article.community.id == target_community.id do
       true ->
-        raise_error(:mirror_article, "can not unmirror original community")
+        mirror_article("can not unmirror original community")
 
       false ->
         community_tags = tags_without_community(article, target_community)
@@ -317,7 +317,7 @@ defmodule GroupherServer.CMS.Articles.States do
     pinned_articles = query |> Repo.all()
 
     case length(pinned_articles) >= @max_pinned_article_count_per_thread do
-      true -> raise_error(:too_much_pinned_article, "too much pinned article")
+      true -> too_much_pinned_article("too much pinned article")
       _ -> {:ok, :pass}
     end
   end
@@ -330,4 +330,8 @@ defmodule GroupherServer.CMS.Articles.States do
   defp result({:ok, %{set_target_tags: result}}), do: result |> done()
   defp result({:ok, %{mirror_target_community: result}}), do: result |> done()
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp undo_sink_old_article(details), do: {:error, ErrorCat.undo_sink_old_article(details)}
+  defp mirror_article(details), do: {:error, ErrorCat.mirror_article(details)}
+  defp too_much_pinned_article(details), do: {:error, ErrorCat.too_much_pinned_article(details)}
 end

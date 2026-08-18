@@ -15,13 +15,15 @@ defmodule GroupherServer.CMS.Gate.Decision do
   Example:
 
       iex> decision = deny(:permission_denied)
-      iex> {:error, :permission_denied} = {:error, primary_reason(decision)}
+      iex> {:error, error} = {:error, primary_error(decision)}
   """
 
-  alias Helper.ErrorCode
+  alias GroupherServer.ErrorCat
+  alias GroupherServer.ErrorCat.Error
 
   @type violation :: %{
           reason: atom(),
+          error: Error.t(),
           err_code: non_neg_integer(),
           source: atom(),
           retryable: boolean(),
@@ -61,11 +63,13 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :scope_binding_conflict,
     :scope_context_missing,
     :unknown_policy_mode,
-    :scope_policy_actor_mismatch
+    :scope_policy_actor_mismatch,
+    :unsupported_resource
   ]
 
   @priority [
     :resource_not_found,
+    :unsupported_resource,
     :gate_resource_mismatch,
     :doc_branch_required,
     :lifecycle_not_found,
@@ -91,34 +95,46 @@ defmodule GroupherServer.CMS.Gate.Decision do
     do: %__MODULE__{allowed: true, context: context, primary: nil, violations: []}
 
   @doc "Builds a denied Decision from one or more internal reasons."
-  @spec deny(atom() | [atom()], map()) :: t()
-  def deny(reasons, context \\ %{}) do
-    violations = reasons |> List.wrap() |> Enum.uniq() |> Enum.map(&metadata/1)
+  @spec deny(Error.t() | [Error.t()], map()) :: t()
+  def deny(errors, context \\ %{}) do
+    violations =
+      errors
+      |> List.wrap()
+      |> Enum.uniq_by(fn error -> {error.namespace, error.reason} end)
+      |> Enum.map(&metadata/1)
 
     %__MODULE__{
       allowed: false,
       context: context,
-      primary: Enum.min_by(violations, &priority/1, fn -> metadata(:gate_unknown) end),
+      primary: Enum.min_by(violations, &priority/1, fn -> metadata(ErrorCat.gate_unknown()) end),
       violations: violations
     }
   end
 
   @doc "Converts a policy result into a structured Decision."
-  @spec from_result(:ok | {:error, atom()}, map()) :: t()
+  @spec from_result(:ok | {:error, Error.t()}, map()) :: t()
   def from_result(:ok, context), do: allow(context)
-  def from_result({:error, reason}, context) when is_atom(reason), do: deny(reason, context)
+
+  def from_result({:error, %Error{} = error}, context), do: deny(error, context)
 
   @doc "Returns the selected primary reason, or `:ok` for an allowed Decision."
   @spec primary_reason(t()) :: atom()
   def primary_reason(%__MODULE__{allowed: true}), do: :ok
   def primary_reason(%__MODULE__{primary: %{reason: reason}}), do: reason
 
-  defp metadata(reason) do
-    reason = if reason in @known_reasons, do: reason, else: :gate_unknown
+  @doc "Returns the selected declared ErrorCat value, or nil for an allowed Decision."
+  @spec primary_error(t()) :: Error.t() | nil
+  def primary_error(%__MODULE__{allowed: true}), do: nil
+  def primary_error(%__MODULE__{primary: %{error: %Error{} = error}}), do: error
+
+  defp metadata(%Error{} = error) do
+    reason = if error.reason in @known_reasons, do: error.reason, else: :gate_unknown
+    error = if reason == error.reason, do: error, else: ErrorCat.gate_unknown()
 
     %{
       reason: reason,
-      err_code: ErrorCode.ecode(reason),
+      error: error,
+      err_code: error.code,
       source: source(reason),
       retryable: retryable?(reason),
       actions: actions(reason)

@@ -122,7 +122,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
              field,
              Map.get(attrs, field)
            ) do
-        {:halt, {:error, {:custom, "A trashed tree item with this title is pending restore."}}}
+        {:halt,
+         {:error,
+          GroupherServer.ErrorCat.custom(
+            "A trashed tree item with this title is pending restore."
+          )}}
       else
         {:cont, :ok}
       end

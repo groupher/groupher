@@ -233,7 +233,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "standalone Doc Trash is rejected so Tree placement cannot become dangling" do
     {_community, doc, _attrs, user} = mock_article(:doc)
 
-    assert {:error, {:custom, message}} = CMS.Articles.trash(doc, user)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+             CMS.Articles.trash(doc, user)
+
     assert message =~ "Docs Tree lifecycle"
   end
 

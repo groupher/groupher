@@ -554,12 +554,14 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
       insert_incoming_mentions(community, post, 2, old_updated_at)
 
-      assert {:error, :forced_rollback} =
+      rollback_error = GroupherServer.ErrorCat.custom("forced rollback")
+
+      assert {:error, ^rollback_error} =
                Repo.transaction(fn ->
                  assert {:ok, :pass} =
                           ArtimentMentions.mark_target_state(post, :permanently_deleted)
 
-                 Repo.rollback(:forced_rollback)
+                 Repo.rollback(rollback_error)
                end)
 
       Enum.each(incoming_mentions(post), fn mention ->

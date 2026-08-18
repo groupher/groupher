@@ -56,24 +56,52 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @create_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@create_category_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @create_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@create_category_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @create_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "unauth user update category fails", ~m(category user_conn guest_conn community)a do
       variables = %{community: community.slug, id: category.id, title: "new title"}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @update_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@update_category_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @update_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @update_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     @set_category_query S.Category.m(:set_category)
@@ -127,19 +155,47 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
-      assert user_conn |> mutation_error?(@set_category_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @set_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@set_category_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @set_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@set_category_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @set_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
-      assert user_conn |> mutation_error?(@unset_category_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @unset_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@unset_category_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @unset_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@unset_category_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @unset_category_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
   end
 
@@ -212,13 +268,25 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       assert rule_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "create duplicated community fails", %{community: community} do
@@ -232,7 +300,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
       assert rule_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:changeset))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServerWeb.ErrorCat.changeset())
+             )
     end
 
     @request_destroy_community_query S.Community.m(:request_destroy_community)
@@ -252,13 +324,25 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       assert rule_conn
-             |> mutation_error?(@create_community_query, variables, ecode(:passport))
+             |> mutation_error?(
+               @create_community_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "delete non-exist community fails" do
@@ -378,7 +462,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @update_moderator_query,
                variables,
-               ecode(:community_root_only)
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.community_root_only())
              )
 
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
@@ -421,12 +505,26 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = %{user: user.login, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@set_moderator_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@set_moderator_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@set_moderator_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @set_moderator_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
   end
 
@@ -456,13 +554,23 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       login_conn = simu_conn(:user, user)
       variables = %{community: non_exist_slug()}
 
-      assert login_conn |> mutation_error?(@subscribe_query, variables, ecode(:not_exist))
+      assert login_conn
+             |> mutation_error?(
+               @subscribe_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.not_exist())
+             )
     end
 
     test "guest user subscribe community fails", ~m(guest_conn community)a do
       variables = %{community: community.slug}
 
-      assert guest_conn |> mutation_error?(@subscribe_query, variables, ecode(:account_login))
+      assert guest_conn
+             |> mutation_error?(
+               @subscribe_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
 
     @unsubscribe_query S.Community.m(:unsubscribe_community)
@@ -516,7 +624,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       variables = %{community: community.slug}
 
       assert guest_conn
-             |> mutation_error?(@unsubscribe_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @unsubscribe_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
   end
 end

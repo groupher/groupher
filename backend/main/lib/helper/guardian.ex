@@ -14,6 +14,8 @@ defmodule Helper.Guardian do
   """
   use Guardian, otp_app: :groupher_server
 
+  alias GroupherServer.Accounts.Profiles.ErrorCat
+
   @token_expiration 24 * 30
   @legacy_issuer "groupher_server"
   @spec subject_for_token(atom | %{id: any}, any) :: {:ok, binary}
@@ -43,7 +45,7 @@ defmodule Helper.Guardian do
          {:ok, resource} <- resource_from_claims(claims) do
       {:ok, resource, claims}
     else
-      false -> {:error, :invalid_legacy_access_claims}
+      false -> {:error, ErrorCat.invalid_legacy_access_claims()}
       error -> error
     end
   end

@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Draft
+  alias CMS.Articles.{Draft, ErrorCat}
   alias CMS.Model.{ArticleDocument, Community}
 
   @doc """
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
          {:ok, public} <- Draft.read_public(community, thread, article_hash_id, opts) do
       {:ok, compare(draft, public).changed}
     else
-      {:error, {:not_exist, _}} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
         case Draft.read(community, thread, article_hash_id, opts) do
           {:ok, _draft} -> {:ok, true}
           _ -> {:ok, false}
@@ -83,14 +83,14 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
           {:ok, public} ->
             {:ok, compare(draft, public)}
 
-          {:error, {:not_exist, _}} ->
+          {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
             {:ok, %{changed: true, document_changed: true, fields: %{}}}
 
           error ->
             error
         end
 
-      {:error, {:not_exist, _}} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
         {:ok, %{changed: false, document_changed: false, fields: %{}}}
 
       error ->
@@ -101,7 +101,7 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
   defp document(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
       case Repo.get_by(ArticleDocument, article_id: article.id, thread: thread) do
-        nil -> {:error, :document_not_found}
+        nil -> {:error, ErrorCat.document_not_found()}
         document -> {:ok, document}
       end
     end

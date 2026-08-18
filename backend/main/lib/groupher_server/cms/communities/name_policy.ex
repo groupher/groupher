@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS.Model.{Community, CommunitySlugClaim}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.Repo
 
   @reserved ~w(
@@ -47,15 +48,15 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   def normalize(_), do: nil
 
   @doc "Checks whether a normalized name is available in the shared namespace."
-  @spec check(term(), keyword()) :: {:ok, String.t()} | {:error, atom()}
+  @spec check(term(), keyword()) :: {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def check(slug, opts \\ []) do
     with {:ok, slug} <- format_check(slug) do
       cond do
         blocking_claim = blocking_claim(slug, opts) ->
-          {:error, claim_reason(blocking_claim)}
+          {:error, claim_error(blocking_claim)}
 
         Repo.exists?(from(c in Community, where: c.slug == ^slug)) ->
-          {:error, :slug_claimed}
+          {:error, ErrorCat.slug_claimed()}
 
         true ->
           {:ok, slug}
@@ -64,16 +65,16 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   end
 
   @doc "Normalizes and validates syntax/reserved routes without checking occupancy."
-  @spec format_check(term()) :: {:ok, String.t()} | {:error, atom()}
+  @spec format_check(term()) :: {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def format_check(slug) do
     slug = normalize(slug)
 
     cond do
       not is_binary(slug) or byte_size(slug) > 30 or not Regex.match?(@slug_pattern, slug) ->
-        {:error, :invalid_slug}
+        {:error, ErrorCat.invalid_slug()}
 
       slug in @reserved ->
-        {:error, :reserved_slug}
+        {:error, ErrorCat.reserved_slug()}
 
       true ->
         {:ok, slug}
@@ -122,10 +123,10 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
     )
   end
 
-  defp claim_reason(%CommunitySlugClaim{status: :reserved}), do: :reserved_slug
-  defp claim_reason(%CommunitySlugClaim{status: :disputed}), do: :slug_disputed
-  defp claim_reason(%CommunitySlugClaim{status: :cooldown}), do: :slug_in_cooldown
-  defp claim_reason(%CommunitySlugClaim{}), do: :slug_claimed
+  defp claim_error(%CommunitySlugClaim{status: :reserved}), do: ErrorCat.reserved_slug()
+  defp claim_error(%CommunitySlugClaim{status: :disputed}), do: ErrorCat.slug_disputed()
+  defp claim_error(%CommunitySlugClaim{status: :cooldown}), do: ErrorCat.slug_in_cooldown()
+  defp claim_error(%CommunitySlugClaim{}), do: ErrorCat.slug_claimed()
 
   @spec reserved_slugs() :: [String.t()]
   def reserved_slugs, do: @reserved

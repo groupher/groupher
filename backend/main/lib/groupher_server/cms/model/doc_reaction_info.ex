@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.DocReactionInfo do
       CMS.Interactions.State -> DocReactionInfo -> cms.doc_reaction_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.ReactionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "doc_reaction_infos",
     target: :doc,
     target_schema: GroupherServer.CMS.Model.Doc,

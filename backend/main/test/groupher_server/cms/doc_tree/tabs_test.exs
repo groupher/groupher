@@ -61,7 +61,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, {:not_exist, "Community"}} = CMS.DocTree.read_public(community)
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :community},
+                reason: :not_exist,
+                details: "Community"
+              }} = CMS.DocTree.read_public(community)
     end
 
     test "renames and reorders tabs through the generic tree mutations" do

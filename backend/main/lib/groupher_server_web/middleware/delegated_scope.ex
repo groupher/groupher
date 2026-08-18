@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Middleware.DelegatedScope do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
   @impl Absinthe.Middleware
@@ -36,7 +36,7 @@ defmodule GroupherServerWeb.Middleware.DelegatedScope do
     handle_absinthe_error(
       resolution,
       "service and user delegation is not authorized for this operation",
-      ecode(:service_auth)
+      ErrorCat.code(GroupherServerWeb.ErrorCat.service_auth())
     )
   end
 end

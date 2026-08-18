@@ -123,9 +123,18 @@ defmodule GroupherServer.CMS.Events.Audition do
   defp apply_moderation(fun) when is_function(fun, 0) do
     case fun.() do
       # Background jobs may run after community/content cleanup.
-      {:error, :not_exist} -> {:ok, :pass}
-      {:error, {:not_exist, _}} -> {:ok, :pass}
-      result -> result
+      {:error,
+       %GroupherServer.ErrorCat.Error{
+         reason: :custom,
+         details: %{reason: :not_exist}
+       }} ->
+        {:ok, :pass}
+
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
+        {:ok, :pass}
+
+      result ->
+        result
     end
   rescue
     # Stale structs are expected in async jobs when target rows were deleted.

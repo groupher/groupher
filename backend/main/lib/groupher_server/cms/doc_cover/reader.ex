@@ -115,7 +115,7 @@ defmodule GroupherServer.CMS.DocCover.Reader do
     end
   end
 
-  defp authorize_view(_community, :dashboard, _actor), do: {:error, :actor_required}
+  defp authorize_view(_community, :dashboard, _actor), do: {:error, GroupherServer.Accounts.Profiles.ErrorCat.account_login()}
 
   defp card_item(
          _community,

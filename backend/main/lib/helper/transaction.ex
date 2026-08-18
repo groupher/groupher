@@ -29,6 +29,7 @@ defmodule Helper.Transaction do
 
   import Ecto.Query, warn: false
   alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
+  alias GroupherServer.ErrorCat
   alias GroupherServer.Repo
 
   @article_schemas [Post, Blog, Changelog, Doc]
@@ -45,8 +46,8 @@ defmodule Helper.Transaction do
       end
     end)
   catch
-    {:error, reason} -> {:error, reason}
-    other -> {:error, {:unexpected_error, other}}
+    {:error, reason} -> {:error, normalize_error(reason)}
+    other -> {:error, ErrorCat.custom(%{reason: :unexpected_error, details: other})}
   end
 
   def lock_row(queryable, fun) when is_list(queryable) do
@@ -63,8 +64,8 @@ defmodule Helper.Transaction do
       end
     end)
   catch
-    {:error, reason} -> {:error, reason}
-    other -> {:error, {:unexpected_error, other}}
+    {:error, reason} -> {:error, normalize_error(reason)}
+    other -> {:error, ErrorCat.custom(%{reason: :unexpected_error, details: other})}
   end
 
   @doc """
@@ -88,8 +89,8 @@ defmodule Helper.Transaction do
       end
     end)
   catch
-    {:error, reason} -> {:error, reason}
-    other -> {:error, {:unexpected_error, other}}
+    {:error, reason} -> {:error, normalize_error(reason)}
+    other -> {:error, ErrorCat.custom(%{reason: :unexpected_error, details: other})}
   end
 
   # Generates consistent sort key for queryable to prevent deadlocks
@@ -105,7 +106,9 @@ defmodule Helper.Transaction do
     |> Repo.one!()
   rescue
     Ecto.NoResultsError ->
-      throw({:error, {:resource_not_found, article.__struct__}})
+      throw(
+        {:error, ErrorCat.custom(%{reason: :resource_not_found, resource: article.__struct__})}
+      )
   end
 
   # Generic queryable locking
@@ -116,7 +119,9 @@ defmodule Helper.Transaction do
     |> Repo.one!()
   rescue
     Ecto.NoResultsError ->
-      throw({:error, {:resource_not_found, queryable.__struct__}})
+      throw(
+        {:error, ErrorCat.custom(%{reason: :resource_not_found, resource: queryable.__struct__})}
+      )
   end
 
   defp normalize_lock_key(lock_key) when is_integer(lock_key), do: lock_key
@@ -125,4 +130,12 @@ defmodule Helper.Transaction do
     <<key::signed-64, _::binary>> = :crypto.hash(:sha256, lock_key)
     key
   end
+
+  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+  defp normalize_error(%GroupherServer.CMS.Gate.Decision{} = decision), do: decision
+  defp normalize_error(%Ecto.Changeset{} = changeset), do: changeset
+  defp normalize_error({:error, _step, reason, _changes}), do: normalize_error(reason)
+
+  defp normalize_error(reason),
+    do: ErrorCat.custom(%{reason: :transaction_failed, details: reason})
 end

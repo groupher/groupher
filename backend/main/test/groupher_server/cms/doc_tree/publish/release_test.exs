@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, :ancestor_community_not_writable} =
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_community_not_writable}} =
                CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
     end
 
@@ -245,8 +245,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       refute Repo.exists?(public_scope)
 
       dashboard_scope =
-        CMS.Gate.scope(CMS.Model.Doc, :operations, :read,
-          DocScope.public_branch(branch.id, policy_mode: :operations))
+        CMS.Gate.scope(
+          CMS.Model.Doc,
+          :operations,
+          :read,
+          DocScope.public_branch(branch.id, policy_mode: :operations)
+        )
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       assert Repo.exists?(dashboard_scope)
@@ -266,7 +270,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     test "rejects explicit empty publish selection while changes exist", ~m(user community)a do
       release_count_before = release_count(community)
 
-      assert {:error, {:custom, "No publish changes selected."}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "No publish changes selected."
+              }} =
                CMS.DocTree.publish_changes(
                  community,
                  %{doc_change_ids: [], tree_change_ids: []},
@@ -422,7 +430,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       assert rename_change
 
-      assert {:error, {:custom, "Only deleted tree publish items can be restored."}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "Only deleted tree publish items can be restored."
+              }} =
                CMS.DocTree.publish_changes(
                  community,
                  %{
@@ -503,8 +515,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     |> where([e], e.node_id == ^node_id)
     |> Repo.one()
     |> case do
-      %CMS.Model.DocTreeEvent{} = event -> {:ok, event}
-      nil -> {:error, {:custom, "Tree create event not found."}}
+      %CMS.Model.DocTreeEvent{} = event ->
+        {:ok, event}
+
+      nil ->
+        {:error, GroupherServer.ErrorCat.custom("Tree create event not found.")}
     end
   end
 end

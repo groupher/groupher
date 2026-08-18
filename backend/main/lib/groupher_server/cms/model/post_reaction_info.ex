@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.PostReactionInfo do
       CMS.Interactions.State -> PostReactionInfo -> cms.post_reaction_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.ReactionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "post_reaction_infos",
     target: :post,
     target_schema: GroupherServer.CMS.Model.Post,

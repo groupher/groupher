@@ -327,7 +327,12 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
                base_revision: tree.revision
              })
 
-    assert {:error, {:not_exist, _model}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              namespace: {:cms, :article},
+              reason: :not_exist,
+              details: _model
+            }} =
              Draft.read(community, :doc, first_doc_ref, Branch.main_slug())
 
     assert {:ok, [_trash_item]} =
@@ -394,10 +399,18 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, replayed} = Jobs.cancel(community, job.job_ref)
     assert replayed.status == :cancelled
 
-    assert {:error, {:content_import_job_not_ready, :cancelled}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :content_import_job_not_ready,
+              details: :cancelled
+            }} =
              Writer.apply(community, job.job_ref)
 
-    assert {:error, {:custom, "ImportJob is not stageable from cancelled"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "ImportJob is not stageable from cancelled"
+            }} =
              Staging.stage(community, job.job_ref, [
                %{external_ref: "docs/start.md", body_bag: body_bag("Late body", "a")}
              ])
@@ -503,7 +516,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
 
     record = Repo.get_by!(Job, hash_id: job.job_ref)
 
-    assert {:error, {:custom, "previewRef is already bound to another intent"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "previewRef is already bound to another intent"
+            }} =
              Jobs.create(community, actor, %{
                bad_smells: [],
                dataset_ref: record.dataset_ref,
@@ -603,7 +620,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert failed.status == :failed
     assert failed.error_code == "no_importable_content"
 
-    assert {:error, {:content_import_job_not_ready, :failed}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :content_import_job_not_ready,
+              details: :failed
+            }} =
              Writer.apply(community, job.job_ref)
   end
 
@@ -619,7 +640,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, state} = Reader.ensure_draft_state(community, branch_id: branch.id)
     assert {:ok, _state} = Revision.bump_tree_draft(community, state)
 
-    assert {:error, {:custom, "The Docs target changed after Review"}} =
+    assert {:error,
+            %GroupherServer.ErrorCat.Error{
+              reason: :custom,
+              details: "The Docs target changed after Review"
+            }} =
              Writer.apply(community, job.job_ref)
 
     assert Repo.get_by!(Job, hash_id: job.job_ref).status == :ready
@@ -644,7 +669,9 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     items =
       Enum.map(1..5, &%{external_ref: "docs/#{&1}.md", skipped: %{code: "content_too_large"}})
 
-    assert {:error, {:custom, message}} = Staging.stage(community, Ecto.UUID.generate(), items)
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+             Staging.stage(community, Ecto.UUID.generate(), items)
+
     assert message =~ "between 1 and 4"
   end
 

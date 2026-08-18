@@ -23,7 +23,9 @@ defmodule GroupherServer.TestMate do
       import GroupherServer.Test.ConnSimulator
       import GroupherServer.Test.AssertHelper
       import Ecto.Query, warn: false
-      import Helper.ErrorCode
+      import GroupherServer.ErrorCat
+
+      alias GroupherServer.ErrorCat
 
       import Helper.Utils,
         only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]

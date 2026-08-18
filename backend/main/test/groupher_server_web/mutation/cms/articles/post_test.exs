@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -222,17 +222,25 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(S.Article.m(:update_article, :post), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:update_article, :post),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
 
       assert rule_conn
-             |> mutation_error?(S.Article.m(:update_article, :post), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:update_article, :post),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     test "user with A community rule cannot update B community post", ~m(user)a do
@@ -253,7 +261,11 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       }
 
       assert rule_conn
-             |> mutation_error?(S.Article.m(:update_article, :post), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:update_article, :post),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       {:ok, found} = CMS.FrontDesk.article(community_b, :post, post_b.inner_id)
       refute found.title == "cross-community-update-#{unique_num}"

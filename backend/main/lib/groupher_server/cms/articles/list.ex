@@ -30,12 +30,15 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Dashboard.KanbanBoards
+  alias CMS.Interactions
   alias CMS.Interactions.State
   alias CMS.Artiment.Enums
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
   require CMS.Const
+
+  @interaction_orders CMS.Interactions.Const.interaction_order_values()
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
   @kanban_rejected_statuses [
@@ -63,12 +66,14 @@ defmodule GroupherServer.CMS.Articles.List do
     flags = %{pending: :legal}
 
     with {:ok, _thread} <- Enable.thread?(Map.get(filter, :community), thread),
-         {:ok, info} <- match(thread) do
-      info.model
-      |> Scope.scope(nil, :list, scope_context(thread))
-      |> QueryBuilder.domain_query(filter)
-      |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
-      |> State.order_articles(thread, Map.get(filter, :order))
+         {:ok, info} <- match(thread),
+         {:ok, query} <-
+           info.model
+           |> Scope.scope(nil, :list, scope_context(thread))
+           |> QueryBuilder.domain_query(filter)
+           |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
+           |> Interactions.scope(order: Map.get(filter, :order)) do
+      query
       |> ORM.paginator(~m(page size)a)
       |> add_pin_articles_ifneed(info.model, filter)
       |> read_articles(thread, nil)
@@ -178,14 +183,18 @@ defmodule GroupherServer.CMS.Articles.List do
   def paged_published(thread, filter, %User{} = target_user, actor) do
     %{page: page, size: size} = filter
 
-    with {:ok, info} <- match(thread) do
-      info.model
-      |> Scope.scope(actor, :list, scope_context(thread))
-      |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
-      |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
-      |> select([article, ...], article)
-      |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
-      |> State.order_articles(thread, Map.get(filter, :order))
+    with {:ok, info} <- match(thread),
+         {:ok, query} <-
+           info.model
+           |> Scope.scope(actor, :list, scope_context(thread))
+           |> join(:inner, [article, ...], author in assoc(article, :author),
+             as: :published_author
+           )
+           |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
+           |> select([article, ...], article)
+           |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
+           |> Interactions.scope(order: Map.get(filter, :order)) do
+      query
       |> ORM.paginator(~m(page size)a)
       |> maybe_mark_viewer_states(thread, actor)
       |> done()
@@ -264,7 +273,7 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp should_add_pin?(_filter), do: false
 
-  defp filter_for_interaction_order(%{order: order} = filter) when order in [:upvotes, :collects],
+  defp filter_for_interaction_order(%{order: order} = filter) when order in @interaction_orders,
     do: Map.drop(filter, [:order, :sort])
 
   defp filter_for_interaction_order(filter), do: filter

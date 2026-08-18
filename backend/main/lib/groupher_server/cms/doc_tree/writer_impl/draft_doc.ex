@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
   alias CMS.Articles.Draft
@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
     |> Repo.exists?()
     |> case do
       true -> :ok
-      false -> {:error, {:custom, "doc draft not found in this community"}}
+      false -> {:error, ErrorCat.custom("doc draft not found in this community")}
     end
   end
 
@@ -118,7 +118,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   defp validate_update_attrs(%{title: _title} = attrs) do
     if Map.has_key?(attrs, :slug),
       do: :ok,
-      else: {:error, {:custom, "slug is required when updating a Doc title"}}
+      else: {:error, ErrorCat.custom("slug is required when updating a Doc title")}
   end
 
   defp validate_update_attrs(_attrs), do: :ok

@@ -96,23 +96,23 @@ msgstr ""
 msgid "must be equal to %{number}"
 msgstr ""
 
-msgid "gate.read_only"
+msgid "cms.gate.read_only"
 msgstr "The content is read-only."
 
-msgid "gate.unavailable"
+msgid "cms.gate.unavailable"
 msgstr "The content is unavailable."
 
-msgid "gate.permission_denied"
+msgid "cms.gate.permission_denied"
 msgstr "You do not have permission to perform this action."
 
-msgid "gate.lifecycle_not_loaded"
+msgid "cms.gate.lifecycle_not_loaded"
 msgstr "The current state is still updating. Please try again."
 
-msgid "gate.doc_branch_required"
+msgid "cms.gate.doc_branch_required"
 msgstr "The document branch context is missing. Please go back and try again."
 
-msgid "gate.article_not_mutable"
+msgid "cms.gate.article_not_mutable"
 msgstr "This content cannot be changed by the current action."
 
-msgid "gate.unknown"
+msgid "cms.gate.unknown"
 msgstr "This action is currently unavailable."

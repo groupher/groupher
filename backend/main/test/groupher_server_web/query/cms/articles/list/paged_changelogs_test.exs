@@ -200,7 +200,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables,
-               ecode(:thread_not_visible)
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
              )
     end
 
@@ -211,7 +211,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 
@@ -223,14 +223,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables_0,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables_neg_1,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 

@@ -381,7 +381,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
       :ok
     else
       false -> {:error, "requires a read-only base preset"}
-      {:error, {:custom, reason}} -> {:error, reason}
+      {:error, %GroupherServer.ErrorCat.Error{details: reason}} -> {:error, reason}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -450,7 +450,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
       #=> {:ok, %{"light" => %{"gaussBlur" => 72}}}
 
       ThemePreset.validate_overwrite(%{"light" => %{"gaussBlur" => "bad"}})
-      #=> {:error, {:custom, "invalid theme overwrite value: light.gaussBlur"}}
+      #=> {:error, GroupherServer.ErrorCat.custom("invalid theme overwrite value: light.gaussBlur")}
 
   """
   def validate_overwrite(overwrite) when is_map(overwrite) do
@@ -476,7 +476,8 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
     end
   end
 
-  def validate_overwrite(_), do: {:error, {:custom, "theme overwrite must be a map"}}
+  def validate_overwrite(_),
+    do: {:error, GroupherServer.ErrorCat.custom("theme overwrite must be a map")}
 
   @doc """
   Merge incoming Custom overwrite into the existing saved overwrite.
@@ -529,7 +530,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   defp validate_section(_section, section_overwrite, _allowed_keys, _acc)
        when not is_map(section_overwrite),
-       do: {:halt, {:error, {:custom, "theme overwrite section must be a map"}}}
+       do:
+         {:halt,
+          {:error, GroupherServer.ErrorCat.custom("theme overwrite section must be a map")}}
 
   defp validate_section(section, section_overwrite, allowed_keys, acc) do
     section_overwrite
@@ -607,6 +610,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   defp valid_hex_color?(value), do: Regex.match?(~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, value)
 
-  defp invalid_key(key), do: {:error, {:custom, "invalid theme overwrite key: #{inspect(key)}"}}
-  defp invalid_value(key), do: {:error, {:custom, "invalid theme overwrite value: #{key}"}}
+  defp invalid_key(key),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid theme overwrite key: #{inspect(key)}")}
+
+  defp invalid_value(key),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid theme overwrite value: #{key}")}
 end

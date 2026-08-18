@@ -9,12 +9,13 @@ defmodule GroupherServer.CMS.Passport.Authorization do
   """
 
   alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.CMS.Passport.ErrorCat
 
   @doc """
   Asks whether one normalized passport grants an action in a community.
 
   The decision is delegated to `Passport.Registry`. Actions outside the
-  registered catalog resolve to `{:error, :unknown_action}`.
+  registered catalog resolve to an `ErrorCat.Error` with reason `:unknown_action`.
 
   ## Examples
 
@@ -22,7 +23,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       #=> {:ok, true}
 
       Authorization.allowed?(passport, "community-slug", "unknown.action")
-      #=> {:error, :unknown_action}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}}
 
   """
   def allowed?(passport, community, action),
@@ -41,10 +42,10 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       #=> {:ok, true}
 
       Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
-      #=> {:error, :permission_denied}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}}
 
       Authorization.check(user, "unknown.action", %{})
-      #=> {:error, :unknown_passport_action}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_passport_action}}
 
   """
   def check(user, action, context \\ %{}) when is_map(context) do
@@ -52,17 +53,24 @@ defmodule GroupherServer.CMS.Passport.Authorization do
     community = context |> Map.get(:community, Map.get(context, "community")) |> community_slug()
 
     case allowed?(passport, community, action) do
-      {:ok, true} -> {:ok, true}
-      {:ok, false} -> {:error, :permission_denied}
-      {:error, :unknown_action} -> {:error, :unknown_passport_action}
-      {:error, reason} -> {:error, reason}
+      {:ok, true} ->
+        {:ok, true}
+
+      {:ok, false} ->
+        {:error, ErrorCat.permission_denied()}
+
+      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
+        {:error, ErrorCat.unknown_passport_action()}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
   def authorize(user, action) do
     case check(user, action, %{}) do
       {:ok, true} -> :ok
-      _ -> {:error, :review_permission_denied}
+      _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
 

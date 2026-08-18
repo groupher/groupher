@@ -9,12 +9,12 @@ defmodule GroupherServer.Jobs.ViewEventRetention do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Interactions.View
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
-    _ = ViewEvents.delete_expired()
-    :telemetry.execute([:groupher, :cms, :reactions, :view_metrics], ViewEvents.metrics(), %{})
+    _ = View.delete_expired()
+    :telemetry.execute([:groupher, :cms, :interactions, :view_metrics], View.metrics(), %{})
     :ok
   end
 end

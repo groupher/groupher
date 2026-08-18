@@ -65,10 +65,14 @@ defmodule GroupherServer.CMS.Communities do
          %{
            normalized_slug: NamePolicy.normalize(slug),
            available: false,
-           reason_code: Atom.to_string(reason)
+           reason_code: reason_code(reason)
          }}
     end
   end
+
+  defp reason_code(%GroupherServer.ErrorCat.Error{reason: reason}), do: Atom.to_string(reason)
+  defp reason_code(reason) when is_atom(reason), do: Atom.to_string(reason)
+  defp reason_code(_reason), do: "unknown"
 
   # List
   @spec paged(map()) :: T.domain_res(T.paged_data())

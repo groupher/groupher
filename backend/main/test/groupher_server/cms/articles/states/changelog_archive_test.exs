@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
 
       archived_changelog = archived_changelogs |> List.first()
       {:error, reason} = CMS.Articles.update(archived_changelog, %{"title" => "new title"})
-      assert reason == :article_archived
+      assert %GroupherServer.ErrorCat.Error{reason: :article_archived} = reason
     end
 
     test "can not delete archived changelog" do

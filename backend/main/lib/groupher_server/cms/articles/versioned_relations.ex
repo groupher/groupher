@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
       case option(attrs, :community_tag_ids) || option(attrs, :community_tags) do
         nil -> {:ok, article}
         tag_ids when is_list(tag_ids) -> put_tags(article, tag_ids)
-        _ -> {:error, {:custom, "Article community tags are invalid"}}
+        _ -> {:error, GroupherServer.ErrorCat.custom("Article community tags are invalid")}
       end
     end
   end
@@ -144,7 +144,10 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
         |> Ecto.Changeset.put_assoc(:community_tags, tags)
         |> Repo.update()
       else
-        {:error, {:custom, "Article community tags do not belong to its Community and thread"}}
+        {:error,
+         GroupherServer.ErrorCat.custom(
+           "Article community tags do not belong to its Community and thread"
+         )}
       end
     end
   end
@@ -155,7 +158,8 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
         CMS.Covers.upsert_article_cover(article, attrs)
 
       has_option?(attrs, :cover_url) or has_option?(attrs, :cover_url_dark) ->
-        {:error, {:custom, "Article cover URLs require editable Cover state"}}
+        {:error,
+         GroupherServer.ErrorCat.custom("Article cover URLs require editable Cover state")}
 
       true ->
         {:ok, article}
