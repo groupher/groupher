@@ -81,4 +81,25 @@ defmodule GroupherServer.ErrorCatTest do
       ErrorCat.gq_format(:unknown_reason)
     end
   end
+
+  test "rejects an ErrorCat struct whose definition fields were changed" do
+    error = GroupherServer.CMS.Articles.ErrorCat.archived()
+
+    for changed <- [
+          %{error | code: 9999},
+          %{error | message_key: "wrong.message"},
+          %{error | retryable: true},
+          %{error | actions: [:retry]}
+        ] do
+      assert_raise ArgumentError, ~r/invalid ErrorCat\.Error/, fn ->
+        ErrorCat.gq_format(changed)
+      end
+    end
+  end
+
+  test "allows details to vary when formatting a declared error" do
+    error = GroupherServer.CMS.Articles.ErrorCat.archived(%{message: "read only"})
+
+    assert {:error, [message: "read only", code: 6004]} = ErrorCat.gq_format(error)
+  end
 end

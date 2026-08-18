@@ -3,7 +3,8 @@ defmodule GroupherServer.ErrorCat do
   Global ErrorCat registry and lookup API.
 
   Contexts own declarations; this module owns only the global namespace/range
-  contract, reserved definitions, and cross-catalog validation.
+  contract, reserved definitions, cross-catalog validation, and standard error
+  formatting for protocol boundaries such as GraphQL.
   """
 
   alias GroupherServer.ErrorCat.{Error, Registry, Validator}
@@ -124,7 +125,14 @@ defmodule GroupherServer.ErrorCat do
   def gq_format({:error, [message: _message, code: _code]} = error), do: error
   def gq_format({:error, error}), do: gq_format(error)
 
-  def gq_format(%Error{reason: reason, details: details, code: code}) do
+  def gq_format(%Error{} = error) do
+    unless valid?(error) do
+      raise ArgumentError,
+            "invalid ErrorCat.Error at the GraphQL boundary: #{inspect(error)}"
+    end
+
+    %{reason: reason, details: details, code: code} = error
+
     message =
       cond do
         is_binary(details) -> details

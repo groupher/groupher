@@ -150,11 +150,10 @@ defmodule Helper.Utils do
   @doc "Projects a domain failure into Absinthe's error result shape."
   def handle_absinthe_error(
         resolution,
-        %GroupherServer.ErrorCat.Error{reason: reason, details: details, code: error_code},
+        %GroupherServer.ErrorCat.Error{} = error,
         _code
-      )
-      when is_integer(error_code) do
-    message = if is_binary(details), do: details, else: Atom.to_string(reason)
+      ) do
+    {:error, [message: message, code: error_code]} = ErrorCat.gq_format(error)
 
     resolution
     |> Absinthe.Resolution.put_result({:error, message: message, extensions: %{code: error_code}})
