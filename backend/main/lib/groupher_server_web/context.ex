@@ -124,7 +124,7 @@ defmodule GroupherServerWeb.Context do
 
   defp authorize_delegated_browser_token(token) do
     with {:ok, claims} <- BrowserAccess.decode_claims(token),
-         {:ok, cur_user} <- load_user(%{"id" => claims["sub"]}),
+         {:ok, cur_user} <- load_user(%{id: claims["sub"]}),
          true <- BrowserSessions.active_for_user?(cur_user.id, claims["sid"]) do
       {:ok, cur_user}
     else

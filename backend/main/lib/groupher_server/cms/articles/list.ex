@@ -36,8 +36,6 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
-  require CMS.Const
-
   @interaction_orders CMS.Interactions.Const.interaction_order_values()
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})

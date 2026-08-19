@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
   use GroupherServer.TestMate
 
-  require CMS.Const
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = empty_docs_community(user)

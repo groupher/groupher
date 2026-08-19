@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  require CMS.Const
-
   alias CMS.Model.{
     ArticleDocument,
     Blog,
@@ -21,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   alias CMS.Gate.Context.Scope.Document, as: DocumentScope
 
   test "Comment all-thread scope is constructed only by all_public" do
-    assert_raise FunctionClauseError, fn -> CommentScope.for_thread(:all) end
+    assert_raise FunctionClauseError, fn -> apply(CommentScope, :for_thread, [:all]) end
 
     assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
   end

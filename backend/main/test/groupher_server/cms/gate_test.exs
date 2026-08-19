@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.CMS.Gate do
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
-  require CMS.Const
-
   test "root facade exposes only scope and access_check" do
     Code.ensure_loaded!(CMS.Gate)
 

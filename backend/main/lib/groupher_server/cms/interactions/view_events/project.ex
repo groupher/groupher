@@ -89,8 +89,6 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Project do
     end
   end
 
-  defp project_viewed_users(_target_type, _target_id, []), do: :ok
-
   defp project_viewed_users(target_type, target_id, events) do
     user_ids = events |> Enum.map(& &1.user_id) |> Enum.reject(&is_nil/1) |> Enum.uniq()
 

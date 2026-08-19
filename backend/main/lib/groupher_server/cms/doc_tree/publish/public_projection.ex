@@ -259,8 +259,6 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
       {:error, _} ->
         {:error, GroupherServer.ErrorCat.custom("Publish docs before publishing tree.")}
 
-      error ->
-        error
     end
   end
 

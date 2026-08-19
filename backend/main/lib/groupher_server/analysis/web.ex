@@ -18,7 +18,6 @@ defmodule GroupherServer.Analysis.Web do
 
   alias __MODULE__.Config
   alias __MODULE__.Community, as: AnalysisCommunity
-  alias __MODULE__.Provider.Umami
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.{Cache, Transaction}
@@ -208,7 +207,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp provider, do: @config.provider || Umami
+  defp provider, do: @config.provider
 
   defp prepare_community(%Community{} = community, provider) do
     with :ok <- ensure_runtime_configured(),

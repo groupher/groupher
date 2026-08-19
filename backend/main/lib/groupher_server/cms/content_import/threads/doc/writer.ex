@@ -179,8 +179,6 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     |> Enum.uniq()
   end
 
-  defp load_target_states(_community, _branch, []), do: {:ok, %{}}
-
   defp load_target_states(community, branch, items) do
     target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()
 

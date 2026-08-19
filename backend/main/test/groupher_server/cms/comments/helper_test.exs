@@ -147,10 +147,12 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   describe "allow_comment/2" do
     test "should return true if article is not comment locked", ~m(post user)a do
+      _ = user
       assert {:ok, ^post} = Enable.comment?(post)
     end
 
     test "should return false if article is comment locked", ~m(post user)a do
+      _ = user
       # 锁定评论
       {:ok, locked_post} = CMS.Articles.lock_comments(post)
       assert {:error, %Error{reason: :article_comments_locked}} = Enable.comment?(locked_post)

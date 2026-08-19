@@ -125,8 +125,6 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   def validate_target(_community, _branch, _node, _parent_node_id),
     do: {:error, GroupherServer.ErrorCat.custom("invalid docs tree target")}
 
-  defp reject_cycle(_community, _branch, %{type: type}, _parent) when type != :group, do: :ok
-
   defp reject_cycle(_community, _branch, %{node_id: node_id}, %{node_id: node_id}),
     do: {:error, GroupherServer.ErrorCat.custom("a group can not be its own parent")}
 

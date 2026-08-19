@@ -331,7 +331,6 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp public_branch(community, :doc), do: Branch.resolve(community, Branch.main_slug())
-  defp public_branch(_community, _thread), do: {:ok, nil}
 
   defp ensure_current_public_article(:doc, article) do
     visible =

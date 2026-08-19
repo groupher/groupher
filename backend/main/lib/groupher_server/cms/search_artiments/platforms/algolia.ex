@@ -245,10 +245,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
             :ok
           end
 
-        {:ok, response} ->
-          {:error,
-           ErrorCat.search_platform(%{message: "invalid Algolia response", response: response})}
-
         :ok ->
           {:error, ErrorCat.search_platform("empty Algolia admin response")}
 

@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  require CMS.Const
-
   alias CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope

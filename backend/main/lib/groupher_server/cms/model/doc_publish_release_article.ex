@@ -40,8 +40,6 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
   alias CMS.Model.{DocPublishRelease, DocSnapshot}
   alias Helper.Constant.DBPrefix
 
-  require CMS.Const
-
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 

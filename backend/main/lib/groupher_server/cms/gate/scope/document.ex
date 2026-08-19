@@ -14,12 +14,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.ArticleDocument), nil, :read, context)
   """
 
-  alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Gate.ErrorCat
-
-  require Const
 
   @behaviour Policy
 

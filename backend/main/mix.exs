@@ -7,7 +7,7 @@ defmodule GroupherServer.Mixfile do
     [
       app: :groupher_server,
       version: "2.1.10",
-      elixir: "~> 1.19",
+      elixir: "~> 1.20",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers() ++ [:error_cat],
       dialyzer: [plt_add_deps: :app_tree, ignore_warnings: ".dialyzer_ignore.exs"],

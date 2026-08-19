@@ -175,9 +175,10 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator_user3} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user3.id})
 
-      assert not is_nil(moderator_user)
-      assert not is_nil(moderator_user2)
-      assert not is_nil(moderator_user3)
+      assert moderator_user
+      assert moderator_user2
+      assert moderator_user3
+
     end
 
     test "remove moderator deletes only the community-scoped passport rules",
