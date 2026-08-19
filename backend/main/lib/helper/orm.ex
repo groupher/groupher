@@ -5,7 +5,7 @@ defmodule Helper.ORM do
   ## Function Groups
 
   - Query and pagination:
-    `paginator/2`, `cursor_paginator/1`, `embeds_paginator/2`,
+    `paginator/2`, `embeds_paginator/2`,
     `find/2`, `find/3`, `find_by/2`, `find_by/3`, `find_all/2`, `count/1`, `count/2`
   - Create and update:
     `create/2`, `update/2`, `update/3`, `find_update/3`, `update_by/3`,
@@ -121,18 +121,6 @@ defmodule Helper.ORM do
     result = queryable |> Repo.paginate(page: page, page_size: size)
     total_count = result.total_entries
     result |> Map.put(:total_count, total_count) |> Map.drop([:total_entries])
-  end
-
-  @doc """
-  Returns cursor-based pagination result.
-
-  ## Examples
-
-      iex> ORM.cursor_paginator(Post)
-      {:ok, %{entries: [...], metadata: %{after: _cursor}}}
-  """
-  def cursor_paginator(queryable) do
-    queryable |> Quarto.paginate([limit: 10], Repo)
   end
 
   # NOTE: should have limit length for list, otherwise it will cause mem issues

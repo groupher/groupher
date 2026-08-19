@@ -8,6 +8,7 @@ import Config
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
+config :groupher_server, :allow_test_service_auth, false
 
 config :groupher_server, :web_analysis,
   website_id: nil,
@@ -38,7 +39,7 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 config :groupher_server, :mix_test_watch,
-  exclude: [~r/docs\/.*/, ~r/deps\/.*/, ~r/mix.exs/],
+  exclude: [~r/docs\/.*/E, ~r/deps\/.*/E, ~r/mix.exs/E],
   clear: true
 
 config :pre_commit, commands: ["format"], verbose: false

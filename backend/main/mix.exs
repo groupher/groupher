@@ -82,8 +82,6 @@ defmodule GroupherServer.Mixfile do
       {:tesla, "~> 1.21"},
       {:finch, "~> 0.23"},
       {:scrivener_ecto, "~> 3.1.0"},
-      # enhanced cursor based pagination
-      {:quarto, "~> 1.1.7"},
       {:guardian, "~> 2.4.1"},
       {:dataloader, "~> 2.0.2"},
       {:mix_test_watch, "~> 1.4.0", only: :dev, runtime: false},
