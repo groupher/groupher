@@ -62,6 +62,9 @@ const testLogin = async (page: Page, login = 'e2e'): Promise<void> => {
     { authOrigin: AUTH_ORIGIN, headers: AUTH_HEADERS, loginName: login },
   )
   expect(result.status).toBe(204)
+  await page.evaluate(async (moduleUrl) => {
+    await import(/* @vite-ignore */ moduleUrl)
+  }, authClientModule)
 }
 
 const clearAccessCookie = async (context: BrowserContext): Promise<void> => {
@@ -183,7 +186,19 @@ test.describe('Auth V1 browser protocol', () => {
       await clearAccessCookie(contextB)
       const revokedResult = await runProtectedOperation(pageB)
       expect(revokedResult.error).toContain('status 401')
-      await expect(pageB.getByRole('button', { name: /Github/i })).toBeVisible()
+      await expect
+        .poll(
+          () =>
+            pageB.evaluate(() =>
+              Boolean(
+                (window as Window & { __groupherAuthLoginRequest?: unknown })
+                  .__groupherAuthLoginRequest,
+              ),
+            ),
+          { timeout: 15_000 },
+        )
+        .toBe(true)
+      await expect(pageB.getByRole('button', { name: /Github/i })).toBeVisible({ timeout: 15_000 })
 
       const remainingCookies = await contextB.cookies()
       expect(remainingCookies.some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)
