@@ -159,6 +159,10 @@ test.describe('Auth V1 browser protocol', () => {
         pageA.goto(`${DASH_ORIGIN}/home/overview`),
         pageB.goto(`${DASH_ORIGIN}/home/overview`),
       ])
+      await Promise.all([
+        expect(pageA.getByTestId('dashboard-overview-title')).toBeVisible(),
+        expect(pageB.getByTestId('dashboard-overview-title')).toBeVisible(),
+      ])
       const state = await readState(request)
       const browserB = state.sessions.find((session) => session.browserFamily === 'E2E Browser B')
       expect(browserB).toBeDefined()
