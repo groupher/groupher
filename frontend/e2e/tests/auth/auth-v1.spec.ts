@@ -62,9 +62,6 @@ const testLogin = async (page: Page, login = 'e2e'): Promise<void> => {
     { authOrigin: AUTH_ORIGIN, headers: AUTH_HEADERS, loginName: login },
   )
   expect(result.status).toBe(204)
-  await page.evaluate(async (moduleUrl) => {
-    await import(/* @vite-ignore */ moduleUrl)
-  }, authClientModule)
 }
 
 const clearAccessCookie = async (context: BrowserContext): Promise<void> => {
