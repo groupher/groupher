@@ -40,7 +40,12 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   end
 
   test "doc_tree requires login", %{guest_conn: guest_conn, community: community} do
-    assert guest_conn |> query_error?(@query, %{community: community.slug}, ecode(:account_login))
+    assert guest_conn
+           |> query_error?(
+             @query,
+             %{community: community.slug},
+             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+           )
   end
 
   test "authorized user can query doc_tree", %{
@@ -110,7 +115,11 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
 
   test "doc tree trash requires login", %{guest_conn: guest_conn, community: community} do
     assert guest_conn
-           |> query_error?(@trash_query, %{community: community.slug}, ecode(:account_login))
+           |> query_error?(
+             @trash_query,
+             %{community: community.slug},
+             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+           )
   end
 
   test "guest can query doc_public_tree without seeing drafts", %{

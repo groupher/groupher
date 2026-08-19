@@ -65,10 +65,18 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       }
 
       assert user_conn
-             |> mutation_error?(S.Comment.m(:update_comment), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Comment.m(:update_comment),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(S.Comment.m(:update_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:update_comment),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
 
@@ -90,10 +98,18 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
 
       assert user_conn
-             |> mutation_error?(S.Comment.m(:delete_comment), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Comment.m(:delete_comment),
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(S.Comment.m(:delete_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:delete_comment),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
@@ -116,7 +132,11 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
 
       assert guest_conn
-             |> mutation_error?(S.Comment.m(:upvote_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:upvote_comment),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
       result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
 
@@ -143,7 +163,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              |> mutation_error?(
                S.Comment.m(:undo_upvote_comment),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
@@ -218,7 +238,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
           user
         )
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :beer, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :beer, user)
 
       variables = %{
         comment: comment_path(community, changelog, :changelog, comment),
@@ -299,7 +319,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              |> mutation_error?(
                S.Article.m(:lock_comment, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -332,7 +352,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              |> mutation_error?(
                S.Article.m(:unlock_comment, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end
@@ -368,7 +388,11 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
 
       assert guest_conn
-             |> mutation_error?(S.Comment.m(:pin_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:pin_comment),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
 
     test "can undo pin a changelog's comment", ~m(owner_conn community changelog user)a do
@@ -404,7 +428,11 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
       variables = %{comment: comment_path(community, changelog, :changelog, comment)}
 
       assert guest_conn
-             |> mutation_error?(S.Comment.m(:undo_pin_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:undo_pin_comment),
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
   end
 end

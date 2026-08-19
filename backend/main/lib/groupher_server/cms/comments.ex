@@ -13,17 +13,16 @@ defmodule GroupherServer.CMS.Comments do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Model.{Comment, Community}
   alias Helper.T
 
   alias __MODULE__.{
     States,
     Writer,
-    Emotion,
     List,
     Moderation,
-    Reader,
-    Upvotes
+    Reader
   }
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
@@ -110,7 +109,7 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec update_comment(Comment.t(), String.t()) :: T.domain_res(Comment.t())
   @doc "Updates comment through the `Comments` write boundary."
-  def update_comment(%Comment{}, _body), do: {:error, :actor_required}
+  def update_comment(%Comment{}, _body), do: {:error, AuthErrorCat.account_login()}
 
   @spec update_comment(Comment.t(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def update_comment(%Comment{} = comment, body, %User{} = user),
@@ -118,7 +117,7 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec delete_comment(Comment.t()) :: T.domain_res(Comment.t())
   @doc "Removes comment through the `Comments` boundary."
-  def delete_comment(%Comment{}), do: {:error, :actor_required}
+  def delete_comment(%Comment{}), do: {:error, AuthErrorCat.account_login()}
 
   @spec delete_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def delete_comment(%Comment{} = comment, %User{} = user), do: Writer.delete(comment, user)
@@ -133,15 +132,6 @@ defmodule GroupherServer.CMS.Comments do
   def undo_mark_comment_solution(comment_id, %User{} = user),
     do: Writer.undo_mark_solution(comment_id, user)
 
-  @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `upvote_comment` through the public `Comments` boundary."
-  def upvote_comment(comment_id, %User{} = user), do: Upvotes.upvote(comment_id, user)
-
-  @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `undo_upvote_comment` through the public `Comments` boundary."
-  def undo_upvote_comment(comment_id, %User{} = user),
-    do: Upvotes.undo(comment_id, user)
-
   @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `reply_comment` through the public `Comments` boundary."
   def reply_comment(comment_id, body, %User{} = user),
@@ -149,14 +139,14 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   @doc "Runs `pin_comment` through the public `Comments` boundary."
-  def pin_comment(_comment_id), do: {:error, :actor_required}
+  def pin_comment(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec pin_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def pin_comment(comment_id, %User{} = user), do: States.pin(comment_id, user)
 
   @spec undo_pin_comment(T.id()) :: T.domain_res(Comment.t())
   @doc "Runs `undo_pin_comment` through the public `Comments` boundary."
-  def undo_pin_comment(_comment_id), do: {:error, :actor_required}
+  def undo_pin_comment(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec undo_pin_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_pin_comment(comment_id, %User{} = user), do: States.undo_pin(comment_id, user)
@@ -168,16 +158,6 @@ defmodule GroupherServer.CMS.Comments do
   @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `unfold_comment` through the public `Comments` boundary."
   def unfold_comment(comment_id, %User{} = user), do: States.unfold(comment_id, user)
-
-  @spec emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `emotion_to_comment` through the public `Comments` boundary."
-  def emotion_to_comment(comment_id, emotion, %User{} = user),
-    do: Emotion.set(comment_id, emotion, user)
-
-  @spec undo_emotion_to_comment(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
-  @doc "Runs `undo_emotion_to_comment` through the public `Comments` boundary."
-  def undo_emotion_to_comment(comment_id, emotion, %User{} = user),
-    do: Emotion.undo(comment_id, emotion, user)
 
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   @doc "Runs `set_comment_illegal` through the public `Comments` boundary."

@@ -95,6 +95,10 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     }
 
     assert guest_conn
-           |> query_error?(S.Article.q(:article, :blog), variables, ecode(:thread_not_visible))
+           |> query_error?(
+             S.Article.q(:article, :blog),
+             variables,
+             ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+           )
   end
 end

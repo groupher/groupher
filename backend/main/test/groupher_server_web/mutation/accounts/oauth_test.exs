@@ -63,7 +63,12 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     test "can not signin oauth without server trust", ~m(untrusted_guest_conn)a do
       variables = %{provider: gql_oauth_provider(@valid_github_profile)}
 
-      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:service_auth))
+      assert untrusted_guest_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServerWeb.ErrorCat.service_auth())
+             )
     end
   end
 

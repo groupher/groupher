@@ -23,6 +23,8 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.CMS.Policy.Config
   alias GroupherServer.CMS.Policy.Model.PublishThrottle, as: ThrottleRecord
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.CMS.Gate.RateLimit.ErrorCat
   alias Helper.{Datetime, ORM}
 
   @interval_minutes Config.publish_throttle().interval_minutes
@@ -30,7 +32,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   @day_total Config.publish_throttle().day_limit
 
   @doc "Checks whether the actor may publish within the configured limits."
-  @spec check(map(), keyword()) :: {:ok, :publish} | {:error, atom()}
+  @spec check(map(), keyword()) :: {:ok, :publish} | {:error, GroupherServer.ErrorCat.Error.t()}
   def check(user, opts \\ [])
 
   def check(user, opts) when is_map(user) do
@@ -49,7 +51,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
     end
   end
 
-  def check(_user, _opts), do: {:error, :missing_user}
+  def check(_user, _opts), do: {:error, AuthErrorCat.account_login()}
 
   defp interval_check(%ThrottleRecord{last_publish_time: last_publish_time}, opts) do
     interval = Keyword.get(opts, :interval) || @interval_minutes
@@ -57,19 +59,19 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
 
     if DateTime.before?(latest_valid_time, Datetime.now()),
       do: {:ok, :interval_check},
-      else: {:error, :interval_check}
+      else: {:error, ErrorCat.throttle_interval()}
   end
 
   defp hour_limit_check(%ThrottleRecord{hour_count: hour_count}, opts) do
     limit = Keyword.get(opts, :hour_limit) || @hour_limit
 
-    if hour_count < limit, do: {:ok, :hour_limit_check}, else: {:error, :hour_limit_check}
+    if hour_count < limit, do: {:ok, :hour_limit_check}, else: {:error, ErrorCat.throttle_hour()}
   end
 
   defp day_limit_check(%ThrottleRecord{date_count: day_count}, opts) do
     limit = Keyword.get(opts, :day_limit) || @day_total
 
-    if day_count < limit, do: {:ok, :day_limit_check}, else: {:error, :day_limit_check}
+    if day_count < limit, do: {:ok, :day_limit_check}, else: {:error, ErrorCat.throttle_day()}
   end
 
   @doc "Records a successful publish for the actor."

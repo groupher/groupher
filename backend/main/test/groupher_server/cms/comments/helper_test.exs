@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   alias CMS.Communities.Enable
   alias CMS.Comments.{Numbering, Replies}
-  alias CMS.Interactions.State
+  alias GroupherServer.ErrorCat.Error
   alias Helper.ORM
 
   setup do
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_floor(post, :post_id)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
     end
   end
 
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_inner_id(post, :post_id)
-      assert error_code(reason) == ecode(:update_fails)
+      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
     end
   end
 
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       # 点赞评论
-      {:ok, _} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, _} = CMS.Interactions.upvote(comment, user2)
 
       # 重新加载评论以获取更新的 meta 字段
       {:ok, updated_comment} = ORM.find(comment.__struct__, comment.id)
@@ -123,10 +123,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       # 测试 mark_has_upvoted
       paged_comments = %{entries: [updated_comment]}
 
-      marked_comments = %{
-        paged_comments
-        | entries: State.read(:comment, paged_comments.entries, user2, [])
-      }
+      {:ok, entries} = CMS.Comments.InteractionResponse.many(paged_comments.entries, user2)
+      marked_comments = %{paged_comments | entries: entries}
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == true
     end
@@ -139,10 +137,8 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       # 测试 mark_has_upvoted with nil viewer
       paged_comments = %{entries: [comment]}
 
-      marked_comments = %{
-        paged_comments
-        | entries: State.read(:comment, paged_comments.entries, nil, [])
-      }
+      {:ok, entries} = CMS.Comments.InteractionResponse.many(paged_comments.entries, nil)
+      marked_comments = %{paged_comments | entries: entries}
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == false
       assert List.first(marked_comments.entries).viewer_has_reported == false
@@ -151,13 +147,15 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   describe "allow_comment/2" do
     test "should return true if article is not comment locked", ~m(post user)a do
+      _ = user
       assert {:ok, ^post} = Enable.comment?(post)
     end
 
     test "should return false if article is comment locked", ~m(post user)a do
+      _ = user
       # 锁定评论
       {:ok, locked_post} = CMS.Articles.lock_comments(post)
-      assert {:error, :article_comments_locked} = Enable.comment?(locked_post)
+      assert {:error, %Error{reason: :article_comments_locked}} = Enable.comment?(locked_post)
     end
   end
 end

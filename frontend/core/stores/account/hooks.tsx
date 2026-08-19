@@ -44,6 +44,15 @@ export default function Hooks() {
   )
 
   useEffect(() => {
+    const handleLogout = () => {
+      store.commit({ user: null, loading: false })
+    }
+
+    window.addEventListener('groupher-auth:logout', handleLogout)
+    return () => window.removeEventListener('groupher-auth:logout', handleLogout)
+  }, [store])
+
+  useEffect(() => {
     if (!shouldFetchMe) {
       // `store.loading` becomes false after the probe resolves. Do not treat
       // that post-probe render as an anonymous initial state and erase the

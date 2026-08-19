@@ -44,10 +44,8 @@ if System.get_env("PHX_SERVER") do
 end
 
 if config_env() in [:prod, :seed_prod] do
-  config :groupher_server, :allow_test_service_auth, false
-
   if Application.get_env(:groupher_server, :allow_test_service_auth, false) do
-    raise "test service identity must never be enabled in production"
+    raise "test service auth must never be enabled in production"
   end
 
   # The secret key base is used to sign/encrypt cookies and other secrets.

@@ -17,8 +17,14 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
       assert fetched.id == comment.id
     end
 
-    test "fetch_comment returns not_exist tuple on missing comment" do
-      assert {:error, {:not_exist, reason}} = CMS.Comments.fetch_comment(9_999_999)
+    test "fetch_comment returns ErrorCat error on missing comment" do
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :comment},
+                reason: :not_exist,
+                details: reason
+              }} = CMS.Comments.fetch_comment(9_999_999)
+
       assert is_binary(reason)
     end
 
@@ -33,7 +39,11 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
     end
 
     test "fetch_full_comment returns not_exist tuple on missing comment" do
-      assert {:error, :not_exist} = CMS.Comments.fetch_full_comment(9_999_999)
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :comment},
+                reason: :not_exist
+              }} = CMS.Comments.fetch_full_comment(9_999_999)
     end
   end
 end

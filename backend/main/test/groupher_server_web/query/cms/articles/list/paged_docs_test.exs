@@ -75,9 +75,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
          ~m(guest_conn doc_last_week user user2 user3)a do
       variables = %{filter: %{page: 1, size: 20, order: "UPVOTES"}}
 
-      {:ok, _} = CMS.Articles.upvote(doc_last_week, user)
-      {:ok, _} = CMS.Articles.upvote(doc_last_week, user2)
-      {:ok, _} = CMS.Articles.upvote(doc_last_week, user3)
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user)
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user2)
+      {:ok, _} = CMS.Interactions.upvote(doc_last_week, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ecode(:thread_not_visible)
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
              )
     end
 
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 
@@ -221,14 +221,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_0,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_neg_1,
-               ecode(:pagination)
+               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
              )
     end
 
@@ -314,8 +314,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
           user
         )
 
-      {:ok, _} = CMS.Articles.upvote(doc, user)
-      {:ok, _} = CMS.Articles.collect(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user)
+      {:ok, _} = CMS.Interactions.collect(doc, user)
       {:ok, _} = CMS.AbuseReports.article(doc, "reason", "attr_info", user)
 
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)

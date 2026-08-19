@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
   """
 
   alias GroupherServer.CMS.Passport
+  alias GroupherServer.CMS.Communities.ErrorCat
 
   @doc """
   Authorizes a reviewer map against a passport grant.
@@ -22,14 +23,14 @@ defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
       #=> :ok
 
       CMS.CommunityApplications.ReviewAuth.authorize(%User{id: 1}, "community_application_review")
-      #=> {:error, :review_permission_denied}
+      #=> {:error, CMS.Communities.ErrorCat.review_permission_denied()}
 
   """
-  @spec authorize(map(), String.t()) :: :ok | {:error, atom()}
+  @spec authorize(map(), String.t()) :: :ok | {:error, GroupherServer.ErrorCat.Error.t()}
   def authorize(reviewer, grant) when is_map(reviewer) and is_binary(grant) do
     case Passport.check(reviewer, grant, %{}) do
       {:ok, true} -> :ok
-      _ -> {:error, :review_permission_denied}
+      _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
 end

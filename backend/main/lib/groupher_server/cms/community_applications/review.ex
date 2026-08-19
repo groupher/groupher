@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
   alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
@@ -211,7 +212,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   defp fetch(public_ref) do
     case Repo.get_by(CommunityApplication, public_ref: public_ref) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
@@ -223,21 +224,21 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
              lock: "FOR UPDATE"
            )
          ) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
 
   defp expected_version(%{version: version}, version), do: :ok
-  defp expected_version(_, _), do: {:error, :application_state_conflict}
+  defp expected_version(_, _), do: {:error, ErrorCat.application_state_conflict()}
 
   defp unwrap_nested_transaction({:ok, %{application: application}}), do: application
 
   defp unwrap_nested_transaction({:error, :claim, %Ecto.Changeset{}, _changes}),
-    do: Repo.rollback(:slug_claimed)
+    do: Repo.rollback(ErrorCat.slug_claimed())
 
   defp unwrap_nested_transaction({:error, :application, %Ecto.Changeset{}, _changes}),
-    do: Repo.rollback(:active_application_exists)
+    do: Repo.rollback(ErrorCat.active_application_exists())
 
   defp unwrap_nested_transaction({:error, _step, reason, _changes}), do: Repo.rollback(reason)
 
@@ -257,7 +258,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
-      _ -> {:error, :review_permission_denied}
+      _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
 end

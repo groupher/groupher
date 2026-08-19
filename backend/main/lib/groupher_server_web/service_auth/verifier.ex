@@ -1,4 +1,5 @@
 defmodule GroupherServerWeb.ServiceAuth.Verifier do
+  alias GroupherServerWeb.ErrorCat
   @moduledoc """
   Verifies Auth-issued service access JWTs locally from a bounded JWKS cache.
 
@@ -43,7 +44,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
          token_id: claims["jti"]
        }}
     else
-      _ -> {:error, :invalid_service_token}
+      _ -> {:error, ErrorCat.invalid_service_token()}
     end
   end
 
@@ -53,7 +54,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
          {:ok, header} <- Jason.decode(json) do
       {:ok, header}
     else
-      _ -> {:error, :malformed_token}
+      _ -> {:error, ErrorCat.malformed_token()}
     end
   end
 
@@ -65,7 +66,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
       {:ok, JOSE.JWK.from_map(key)}
     else
       key when is_map(key) -> {:ok, JOSE.JWK.from_map(key)}
-      _ -> {:error, :unknown_kid}
+      _ -> {:error, ErrorCat.unknown_kid()}
     end
   end
 
@@ -88,7 +89,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
     end
   end
 
-  defp cached_remote_jwks(_, _), do: {:error, :jwks_unavailable}
+  defp cached_remote_jwks(_, _), do: {:error, ErrorCat.jwks_unavailable()}
 
   defp fetch_jwks(url, now) do
     case Req.get(url, receive_timeout: 3_000, retry: false) do
@@ -97,7 +98,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
         {:ok, keys}
 
       _ ->
-        {:error, :jwks_unavailable}
+        {:error, ErrorCat.jwks_unavailable()}
     end
   end
 
@@ -130,6 +131,6 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
         claims["exp"] >= now - @clock_skew_seconds and
         claims["exp"] - claims["iat"] <= @max_token_ttl_seconds
 
-    if valid, do: :ok, else: {:error, :invalid_claims}
+    if valid, do: :ok, else: {:error, ErrorCat.invalid_claims()}
   end
 end

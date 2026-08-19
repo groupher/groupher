@@ -257,12 +257,12 @@ Interaction mutation 仍必须消费 Gate，而不是把“Interaction 自己拥
 绕过准入。Article 的 upvote、emotion、collect 及撤销路径已接入 `Gate.access_check/3` 和 Article
 action matrix；Phase 1 对 Article/Community 不可写状态的 add/remove 一律拒绝，并复用 Gate 返回的
 canonical Article。其事务边界、thread metadata 与后续阶段统一记录在
-[Artiment reactions v3](../artiment/reactions_v3.md)。
+[Artiment Interaction V3](../artiment/interaction_v3.md)。
 
 此外，普通 Scope 的 `policy_mode` 不应把调用方遗漏的 management context 静默解释为 public；public
 Reader 和 owner/moderator/operations Reader 必须分别显式选择 mode。`:read_draft` 当前是通过 scoped
 query 验证可见性的 authorization-read 例外，不取得 mutation 使用的 Lifecycle `FOR UPDATE` lock；
-它不提供 mutation serialization 保证。上述两项应按 reactions v3 Phase 2 收口，不能由 Interaction
+它不提供 mutation serialization 保证。上述两项应按 Interaction V3 Phase 2 收口，不能由 Interaction
 模块自行补一套 policy。
 
 ## 4. Mutation 的实际形态

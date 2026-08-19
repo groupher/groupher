@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.CommunityApplications.{Config, LogoUploads, Policy, Transitions}
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo
@@ -95,7 +96,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     else
       {:hit, application} -> {:ok, application}
       {:error, _} = error -> error
-      %{allowed: false, reason_code: reason_code} -> {:error, reason_code}
+      %{allowed: false} = policy -> {:error, Policy.denial_error(policy)}
     end
   end
 
@@ -208,7 +209,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
        }}
     else
       {:error, _} = error -> error
-      _ -> {:error, :invalid_application_input}
+      _ -> {:error, ErrorCat.invalid_application_input()}
     end
   end
 
@@ -216,7 +217,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
     case Repo.get_by(CommunityApplication, user_id: user_id, idempotency_key: key) do
       nil -> :miss
       %{input_fingerprint: ^fingerprint} = application -> {:hit, application}
-      _ -> {:error, :idempotency_conflict}
+      _ -> {:error, ErrorCat.idempotency_conflict()}
     end
   end
 
@@ -230,14 +231,19 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
          fingerprint
        ) do
     case idempotency_lookup(user_id, key, fingerprint) do
-      {:hit, application} -> {:ok, application}
-      {:error, :idempotency_conflict} -> {:error, :idempotency_conflict}
-      :miss -> {:error, :active_application_exists}
+      {:hit, application} ->
+        {:ok, application}
+
+      {:error, %GroupherServer.ErrorCat.Error{reason: :idempotency_conflict}} ->
+        {:error, ErrorCat.idempotency_conflict()}
+
+      :miss ->
+        {:error, ErrorCat.active_application_exists()}
     end
   end
 
   defp normalize_submit_result({:error, :slug_claim, _changeset, _changes}, _, _, _),
-    do: {:error, :slug_claimed}
+    do: {:error, ErrorCat.slug_claimed()}
 
   defp normalize_submit_result({:error, _step, reason, _changes}, _, _, _), do: {:error, reason}
 
@@ -248,13 +254,13 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
              lock: "FOR UPDATE"
            )
          ) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
 
   defp expected_version(%{version: version}, version), do: :ok
-  defp expected_version(_, _), do: {:error, :application_state_conflict}
+  defp expected_version(_, _), do: {:error, ErrorCat.application_state_conflict()}
 
   defp unwrap_nested_transaction({:ok, %{application: application}}), do: application
   defp unwrap_nested_transaction({:error, _step, reason, _changes}), do: Repo.rollback(reason)

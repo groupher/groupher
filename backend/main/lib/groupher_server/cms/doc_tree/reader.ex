@@ -156,7 +156,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
           |> Repo.one()
           |> case do
             %Doc{} = doc -> {:ok, doc}
-            nil -> {:error, {:not_exist, "Doc draft"}}
+            nil -> {:error, CMS.Articles.ErrorCat.not_exist("Doc draft")}
           end
 
         {:error, reason} ->
@@ -225,7 +225,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
         |> Repo.one()
         |> case do
           %Community{} = public_community -> {:ok, public_community}
-          nil -> {:error, {:not_exist, "Community"}}
+          nil -> {:error, CMS.Communities.ErrorCat.not_exist("Community")}
         end
 
       {:error, reason} ->
@@ -241,7 +241,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
         |> Repo.one()
         |> case do
           %Community{} = scoped -> {:ok, scoped}
-          nil -> {:error, {:not_exist, "Community"}}
+          nil -> {:error, CMS.Communities.ErrorCat.not_exist("Community")}
         end
 
       {:error, reason} ->

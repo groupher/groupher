@@ -14,26 +14,33 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
       iex> {:ok, :post} = thread_for(GroupherServer.CMS.Model.Post)
   """
 
-  alias GroupherServer.CMS.Interactions.Registry
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Gate.ErrorCat
 
   @doc "Returns the canonical Article schema for a resource thread."
-  @spec fetch(atom()) :: {:ok, module()} | {:error, :scope_context_missing}
+  @spec fetch(atom()) :: {:ok, module()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def fetch(thread) when is_atom(thread) do
-    try do
-      {:ok, Registry.article_schema(thread)}
-    rescue
-      KeyError -> {:error, :scope_context_missing}
+    case Matcher.match_interaction(thread) do
+      {:ok, %{artiment: artiment, model: model}}
+      when artiment in [:post, :blog, :changelog, :doc] ->
+        {:ok, model}
+
+      _ ->
+        {:error, ErrorCat.scope_context_missing()}
     end
   end
 
-  def fetch(_thread), do: {:error, :scope_context_missing}
+  def fetch(_thread), do: {:error, ErrorCat.scope_context_missing()}
 
   @doc "Returns the resource thread represented by a canonical Article schema."
-  @spec thread_for(module()) :: {:ok, atom()} | {:error, :scope_root_mismatch}
+  @spec thread_for(module()) :: {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def thread_for(schema) when is_atom(schema) do
-    case Registry.thread_for(schema) do
-      {:ok, thread} -> {:ok, thread}
-      :error -> {:error, :scope_root_mismatch}
+    case Matcher.match_interaction(schema) do
+      {:ok, %{artiment: artiment}} when artiment in [:post, :blog, :changelog, :doc] ->
+        {:ok, artiment}
+
+      _ ->
+        {:error, ErrorCat.scope_root_mismatch()}
     end
   end
 end

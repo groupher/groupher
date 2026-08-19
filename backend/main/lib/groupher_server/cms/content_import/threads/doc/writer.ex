@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
+  alias GroupherServer.CMS.ErrorCat
   alias GroupherServer.CMS.DocTree
   alias GroupherServer.CMS.DocTree.Import, as: DocTreeImport
   alias GroupherServer.CMS.DocTree.Reader, as: DocTreeReader
@@ -65,14 +66,14 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
         {:error, reason} -> Repo.rollback(reason)
       end
     else
-      nil -> Repo.rollback(:content_import_actor_not_found)
+      nil -> Repo.rollback(ErrorCat.content_import_actor_not_found())
       {:error, reason} -> Repo.rollback(reason)
       reason -> Repo.rollback(reason)
     end
   end
 
   defp apply_locked(_community, job),
-    do: Repo.rollback({:content_import_job_not_ready, job.status})
+    do: Repo.rollback(ErrorCat.content_import_job_not_ready(job.status))
 
   defp apply_to_main_draft(community, branch, actor, job) do
     with :ok <-
@@ -108,7 +109,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
            |> Repo.update() do
       {:ok, Jobs.project(completed)}
     else
-      false -> {:error, :content_import_has_no_ready_documents}
+      false -> {:error, ErrorCat.content_import_has_no_ready_documents()}
       {:error, reason} -> {:error, reason}
       reason -> {:error, reason}
     end
@@ -131,7 +132,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
       |> Map.new(&{&1.external_ref, &1})
 
     missing = Enum.find(ready_items, &(not Map.has_key?(bodies, &1.external_ref)))
-    if missing, do: {:error, :content_import_staged_body_missing}, else: {:ok, bodies}
+    if missing, do: {:error, ErrorCat.content_import_staged_body_missing()}, else: {:ok, bodies}
   end
 
   # Source mappings are the stable identity of an imported Doc. A Docs Tree
@@ -154,7 +155,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
         {:cont, :ok}
       else
         {:ok, %{conflict: true}} ->
-          {:halt, {:error, {:custom, "The Docs Trash changed during import"}}}
+          {:halt,
+           {:error, GroupherServer.ErrorCat.custom("The Docs Trash changed during import")}}
 
         {:error, reason} ->
           {:halt, {:error, reason}}
@@ -176,8 +178,6 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     |> Repo.all()
     |> Enum.uniq()
   end
-
-  defp load_target_states(_community, _branch, []), do: {:ok, %{}}
 
   defp load_target_states(community, branch, items) do
     target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()

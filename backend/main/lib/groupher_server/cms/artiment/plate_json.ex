@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Artiment.PlateJSON do
+  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Decodes the canonical Plate JSON envelope without deriving content formats.
 
@@ -24,10 +25,10 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
          true <- is_list(value) do
       {:ok, value}
     else
-      false -> {:error, :invalid_plate_json}
+      false -> {:error, ErrorCat.invalid_plate_json()}
       {:error, _reason} = error -> error
     end
   end
 
-  def decode(_body), do: {:error, :invalid_body}
+  def decode(_body), do: {:error, ErrorCat.invalid_body()}
 end

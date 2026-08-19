@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.Seeds.CommentsTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
-  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.CMS.Seeds.{Comments, Communities}
 
   describe "[comments seeds]" do
@@ -21,7 +20,7 @@ defmodule GroupherServer.Test.Seeds.CommentsTest do
 
       [first | _] = comments
       {:ok, first} = ORM.find(Comment, first.id)
-      counts = State.counts(:comment, [first.id]) |> Map.fetch!(first.id)
+      counts = CMS.Interactions.counts([first]) |> Map.fetch!({:comment, first.id})
 
       assert counts.upvotes_count > 0
 

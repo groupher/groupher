@@ -69,7 +69,7 @@ defmodule GroupherServer.CMS.DocTree do
       :page -> Writer.create_page(community, args, user)
       :link -> Writer.create_link(community, args)
       :pin -> Writer.create_pin(community, args)
-      _ -> {:error, {:custom, "unsupported docs tree node type"}}
+      _ -> {:error, GroupherServer.ErrorCat.custom("unsupported docs tree node type")}
     end
   end
 

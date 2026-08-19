@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()
@@ -66,8 +67,15 @@ defmodule GroupherServer.CMS.Communities.Reader do
          {:ok, community} <- maybe_inc_views(community, opt) do
       viewer_has_states({:ok, community}, user)
     else
-      {:error, :not_exist} -> {:error, {:not_exist, "Community"}}
-      {:error, reason} -> {:error, reason}
+      {:error,
+       %GroupherServer.ErrorCat.Error{
+         reason: :custom,
+         details: %{reason: :not_exist}
+       }} ->
+        {:error, CommunityErrorCat.not_exist("Community")}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

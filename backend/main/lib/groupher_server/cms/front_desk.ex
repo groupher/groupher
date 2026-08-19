@@ -22,10 +22,12 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Artiment.Threads
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Comments.Replies
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.Helper.ArticlePath
   alias CMS.Model.{Comment, Community, CommunityTag}
-  alias CMS.Interactions.State
+  alias CMS.Articles.InteractionResponse
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
@@ -194,12 +196,12 @@ defmodule GroupherServer.CMS.FrontDesk do
          {:ok, article} <- get(info.model, article_id, preload: preload) do
       {:ok, article}
     else
-      nil -> {:error, {:custom, "invalid article"}}
+      nil -> {:error, GroupherServer.ErrorCat.custom("invalid article")}
       {:error, _} = error -> error
     end
   end
 
-  def article_of(_, _opts), do: {:error, {:custom, "only support comment"}}
+  def article_of(_, _opts), do: {:error, GroupherServer.ErrorCat.custom("only support comment")}
 
   @doc "get thread of comment or article"
   @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
@@ -212,8 +214,8 @@ defmodule GroupherServer.CMS.FrontDesk do
     Threads.to_atom(thread)
   end
 
-  @spec thread_of(any()) :: {:error, {:custom, String.t()}}
-  def thread_of(_), do: {:error, {:custom, "invalid article"}}
+  @spec thread_of(any()) :: {:error, GroupherServer.ErrorCat.custom(String.t())}
+  def thread_of(_), do: {:error, GroupherServer.ErrorCat.custom("invalid article")}
 
   @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
   @doc "Synchronizes embed replies through the `FrontDesk` boundary."
@@ -287,43 +289,48 @@ defmodule GroupherServer.CMS.FrontDesk do
            |> Repo.one()
            |> done(),
          {:ok, article} <- ORM.fill_meta(article) do
-      {:ok, State.read(article)}
+      InteractionResponse.one(article, nil)
     else
-      {:error, _} -> {:error, {:article_not_found, "article not found"}}
+      {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end
   end
 
   defp public_scope_context(%Community{} = community, :doc, opts) do
     with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
-      {:ok, DocScope.public_branch(branch.id, include_illegal: Keyword.get(opts, :include_illegal, false))}
+      {:ok,
+       DocScope.public_branch(branch.id,
+         include_illegal: Keyword.get(opts, :include_illegal, false)
+       )}
     end
   end
 
   defp public_scope_context(_community, thread, opts),
-    do: {:ok, ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
+    do:
+      {:ok,
+       ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
 
   defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 
   defp parse_comment_inner_id(value) when is_binary(value) do
     case Integer.parse(value) do
       {int, ""} when int >= 0 -> {:ok, int}
-      _ -> {:error, {:comment_not_found, "comment not found"}}
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
 
-  defp parse_comment_inner_id(_), do: {:error, {:comment_not_found, "comment not found"}}
+  defp parse_comment_inner_id(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
   defp parse_comment_path(%{article: article_path, inner_id: inner_id}) do
     {:ok, article_path, inner_id}
   end
 
-  defp parse_comment_path(_), do: {:error, {:comment_not_found, "comment not found"}}
+  defp parse_comment_path(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
 
   @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do
     query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
 
-    with {:ok, comment} <- Repo.one(query) |> done(),
+    with {:ok, comment} <- Repo.one(query) |> comment_done(),
          {:ok, thread} <- thread_of(comment) do
       do_extract_article_info(thread, Map.get(comment, thread))
     end
@@ -348,6 +355,11 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   defp done({:ok, _} = result), do: result
   defp done({:error, _} = result), do: result
-  defp done(nil), do: {:error, :not_exist}
+  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
   defp done(result), do: {:ok, result}
+
+  defp comment_done({:ok, _} = result), do: result
+  defp comment_done({:error, _} = result), do: result
+  defp comment_done(nil), do: {:error, CommentErrorCat.not_exist("comment not found")}
+  defp comment_done(result), do: {:ok, result}
 end

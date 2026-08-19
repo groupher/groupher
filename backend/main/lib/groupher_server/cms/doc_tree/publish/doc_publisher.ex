@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.Lock
+  alias CMS.Articles.MutationLock
   alias CMS.DocTree.Events
   alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      Lock.run_doc(community, branch.id, public_doc.article_hash_id, fn ->
+      MutationLock.with_article(community, :doc, branch.id, public_doc.article_hash_id, fn ->
         with {:ok, _canonical_doc} <- CMS.Gate.access_check(user, :edit, public_doc) do
           case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
             {:ok, draft} ->
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
               )
           end
         else
-          {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+          {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
         end
       end)
     end
@@ -151,7 +151,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     |> Repo.one()
     |> case do
       %DocTreeNode{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "Doc tree node(draft) not found"}}
+      nil -> {:error, GroupherServer.ErrorCat.custom("Doc tree node(draft) not found")}
     end
   end
 
@@ -163,8 +163,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         find_page_by_doc_id(community, branch, doc_id, CMS.Const.stage(:draft))
 
     case page do
-      %DocTreeNode{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs page has not been added to the side tree"}}
+      %DocTreeNode{} = node ->
+        {:ok, node}
+
+      nil ->
+        {:error, GroupherServer.ErrorCat.custom("docs page has not been added to the side tree")}
     end
   end
 
@@ -209,7 +212,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   defp collect_ancestors(nodes, node_id, ancestors, seen) do
     cond do
       MapSet.member?(seen, node_id) ->
-        {:error, {:custom, "docs navigation contains a cycle"}}
+        {:error, GroupherServer.ErrorCat.custom("docs navigation contains a cycle")}
 
       parent = Map.get(nodes, node_id) ->
         collect_ancestors(
@@ -220,7 +223,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         )
 
       true ->
-        {:error, {:custom, "docs page ancestor does not exist"}}
+        {:error, GroupherServer.ErrorCat.custom("docs page ancestor does not exist")}
     end
   end
 

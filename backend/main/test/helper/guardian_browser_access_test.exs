@@ -45,7 +45,7 @@ defmodule Helper.Guardian.BrowserAccessTest do
   test "expired persisted Session cannot issue a browser access token" do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    assert {:error, :session_expired} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :session_expired}} =
              BrowserAccess.encode(%{id: 42}, @session_ref, now, now)
   end
 end

@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
   alias GroupherServer.CMS.Dashboard.BaseInfo
 
   alias Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
   require Logger
@@ -55,7 +56,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
     update_unlocked(community, args, actor)
   end
 
-  def update(%Community{}, _args, _actor), do: {:error, :actor_required}
+  def update(%Community{}, _args, _actor), do: {:error, AuthErrorCat.account_login()}
 
   defp update_unlocked(%Community{} = community, args, actor) do
     with {:ok, _canonical} <- CMS.Gate.access_check(actor, :update, community),
@@ -76,7 +77,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
     end
   end
 
-  def sync_base_info(%Community{}, _args, _actor), do: {:error, :actor_required}
+  def sync_base_info(%Community{}, _args, _actor), do: {:error, AuthErrorCat.account_login()}
 
   defp sync_base_info_unlocked(%Community{} = community, args) do
     args = BaseInfo.take_community_fields(args)
@@ -105,7 +106,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
       {:ok, _website_id} ->
         :ok
 
-      {:error, :not_configured} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :not_configured}} ->
         :ok
 
       {:error, reason} ->

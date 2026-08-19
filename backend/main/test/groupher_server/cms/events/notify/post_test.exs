@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     test "upvote hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, article} = CMS.Articles.upvote(post, user2)
+      {:ok, article} = CMS.Interactions.upvote(post, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     end
 
     test "upvote hook should work on post comment", ~m(user2 post comment)a do
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
       {:ok, comment} = preload_author(comment)
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
@@ -58,10 +58,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     test "undo upvote hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, article} = CMS.Articles.upvote(post, user2)
+      {:ok, article} = CMS.Interactions.upvote(post, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, article} = CMS.Articles.undo_upvote(post, user2)
+      {:ok, article} = CMS.Interactions.undo_upvote(post, user2)
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
@@ -70,11 +70,11 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     end
 
     test "undo upvote hook should work on post comment", ~m(user2 comment)a do
-      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.upvote(comment, user2)
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
+      {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
       {:ok, comment} = preload_author(comment)
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     test "collect hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, _} = CMS.Articles.collect(post, user2)
+      {:ok, _} = CMS.Interactions.collect(post, user2)
       Events.emit(:notify_collect, %{article: post, from_user: user2})
 
       {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
@@ -107,10 +107,10 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
     test "undo collect hook should work on post", ~m(user2 post)a do
       {:ok, post} = preload_author(post)
 
-      {:ok, _} = CMS.Articles.upvote(post, user2)
+      {:ok, _} = CMS.Interactions.upvote(post, user2)
       Events.emit(:notify_collect, %{article: post, from_user: user2})
 
-      {:ok, _} = CMS.Articles.undo_upvote(post, user2)
+      {:ok, _} = CMS.Interactions.undo_upvote(post, user2)
       Events.emit(:notify_undo_collect, %{article: post, from_user: user2})
 
       {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})

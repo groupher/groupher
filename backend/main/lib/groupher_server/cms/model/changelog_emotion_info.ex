@@ -4,10 +4,10 @@ defmodule GroupherServer.CMS.Model.ChangelogEmotionInfo do
 
   Business position:
 
-      CMS.Interactions.State -> ChangelogEmotionInfo -> cms.changelog_emotion_infos
+      CMS.Interactions.ReadState -> ChangelogEmotionInfo -> cms.changelog_emotion_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.EmotionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.EmotionInfo,
     table: "changelog_emotion_infos",
     target: :changelog,
     target_schema: GroupherServer.CMS.Model.Changelog

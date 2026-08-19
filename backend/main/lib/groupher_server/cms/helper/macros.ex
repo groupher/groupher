@@ -13,8 +13,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   alias GroupherServer.CMS
 
-  require CMS.Const
-
   alias CMS.Model.{
     ArticleCollect,
     ArticleUpvote,

@@ -78,7 +78,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   def update(communities, thread) when is_list(communities) do
     case Enum.all?(Enum.uniq(communities), &({:ok, _} = update(&1, thread))) do
       true -> {:ok, :pass}
-      false -> {:error, {:custom, "update_community_count_field"}}
+      false -> {:error, GroupherServer.ErrorCat.custom("update_community_count_field")}
     end
   end
 
@@ -131,7 +131,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  def count(_community, _type), do: {:error, {:custom, "invalid count type"}}
+  def count(_community, _type), do: {:error, GroupherServer.ErrorCat.custom("invalid count type")}
 
   defp recount_articles_count(meta) do
     @threads |> Enum.reduce(0, &(&2 + Map.get(meta, :"#{plural(&1)}_count")))

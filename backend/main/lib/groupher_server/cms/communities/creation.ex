@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.CommunityApplications.Transitions
   alias GroupherServer.CMS.Communities.Jobs.Setup
 
@@ -51,13 +52,13 @@ defmodule GroupherServer.CMS.Communities.Creation do
 
       cond do
         is_nil(application) ->
-          Repo.rollback(:application_not_found)
+          Repo.rollback(ErrorCat.application_not_found())
 
         application.status in [:setting_up, :created, :setup_failed] and application.community_id ->
           application
 
         application.status != :approved ->
-          Repo.rollback(:application_state_conflict)
+          Repo.rollback(ErrorCat.application_state_conflict())
 
         true ->
           with {:ok, _slug} <-
@@ -94,14 +95,14 @@ defmodule GroupherServer.CMS.Communities.Creation do
            public_ref: application.logo_asset_ref,
            status: :finalized
          ) do
-      nil -> {:error, :asset_not_ready}
+      nil -> {:error, ErrorCat.asset_not_ready()}
       upload -> {:ok, upload}
     end
   end
 
   defp fetch_user(user_id) do
     case Repo.get(User, user_id) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       user -> {:ok, user}
     end
   end
@@ -168,7 +169,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
     |> Repo.transaction()
     |> case do
       {:ok, %{claim: {1, _}}} -> {:ok, :promoted}
-      {:ok, %{claim: {0, _}}} -> {:error, :slug_claimed}
+      {:ok, %{claim: {0, _}}} -> {:error, ErrorCat.slug_claimed()}
       {:error, _step, reason, _changes} -> {:error, reason}
     end
   end

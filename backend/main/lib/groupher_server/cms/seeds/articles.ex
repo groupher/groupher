@@ -158,7 +158,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     if target_count > 0 do
       Enum.each(1..target_count, fn _ ->
         {:ok, user} = db_insert(:user)
-        {:ok, _} = CMS.Articles.upvote(article, user)
+        {:ok, _} = CMS.Interactions.upvote(article, user)
       end)
     end
 
@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   defp seed_emotions(article) do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@article_emotions),
-         {:ok, _} <- CMS.Articles.emotion(article, emotion, user),
+         {:ok, _} <- CMS.Interactions.emotion(article, emotion, user),
          {:ok, article} <- ORM.find(article.__struct__, article.id),
          emotions <- randomize_emotions(article.emotions),
          {:ok, article} <- ORM.update_embed(article, :emotions, emotions) do

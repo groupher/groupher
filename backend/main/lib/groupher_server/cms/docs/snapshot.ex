@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Draft, Lock, VersionedRelations, Writer}
+  alias CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
   alias CMS.Docs.Branch
   alias CMS.Gate.Decision
   alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
       |> Repo.one()
       |> case do
         %DocSnapshot{} = snapshot -> {:ok, snapshot}
-        nil -> {:error, {:not_exist, "Doc Snapshot #{snapshot_hash_id}"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Doc Snapshot #{snapshot_hash_id}")}
       end
     end
   end
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
            {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
         checkpoint_article(draft, CMS.Const.doc_snapshot_action(:checkpoint), user, opts)
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
       end
     end)
   end
@@ -158,19 +158,19 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
              ) do
         {:ok, draft}
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
       end
     end)
   end
 
   defp run_locked(%Community{} = community, :doc, article_hash_id, branch_ref, fun) do
     with {:ok, branch} <- Branch.resolve(community, branch_ref) do
-      Lock.run_doc(community, branch.id, article_hash_id, fun)
+      MutationLock.with_article(community, :doc, branch.id, article_hash_id, fun)
     end
   end
 
   defp run_locked(%Community{} = community, thread, article_hash_id, _branch_ref, fun) do
-    Lock.run(community, thread, article_hash_id, fun)
+    MutationLock.with_article(community, thread, article_hash_id, fun)
   end
 
   defp snapshot_attrs(article, document, action, author_id, opts) do
@@ -286,7 +286,8 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
   end
 
   defp create_restored_draft(_community, _thread, _snapshot, nil, _opts) do
-    {:error, {:custom, "DocSnapshot restore requires a user to create a Draft"}}
+    {:error,
+     GroupherServer.ErrorCat.custom("DocSnapshot restore requires a user to create a Draft")}
   end
 
   defp create_restored_draft(community, thread, snapshot, %User{} = user, opts) do

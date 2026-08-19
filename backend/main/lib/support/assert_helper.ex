@@ -12,9 +12,11 @@ defmodule GroupherServer.Test.AssertHelper do
         -> endpoint / fixture / Repo
   """
 
-  import Helper.ErrorCode, only: [ecode: 1]
   import Phoenix.ConnTest
   import Helper.Utils, only: [map_key_stringify: 1]
+
+  alias GroupherServer.ErrorCat
+  alias GroupherServer.ErrorCat.Error
 
   @endpoint GroupherServerWeb.Endpoint
 
@@ -41,13 +43,12 @@ defmodule GroupherServer.Test.AssertHelper do
     })
   end
 
-  def is_error?(reason, code) when is_atom(code) do
-    error_code(reason) == ecode(code)
+  def is_error?(error, {namespace, reason}) when is_tuple(namespace) and is_atom(reason) do
+    error_code(error) == ErrorCat.definition(namespace, reason).code
   end
 
   def error_code(reason) when is_list(reason), do: Keyword.get(reason, :code)
-  def error_code({reason, _meta}) when is_atom(reason), do: ecode(reason)
-  def error_code(reason) when is_atom(reason), do: ecode(reason)
+  def error_code(%Error{code: code}), do: code
   def error_code(_), do: nil
 
   def assert_v(:inner_page_size), do: @inner_page_size

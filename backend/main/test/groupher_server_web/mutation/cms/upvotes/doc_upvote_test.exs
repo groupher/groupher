@@ -28,12 +28,12 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :doc),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
     test "login user can undo upvote to a doc", ~m(user_conn community doc user)a do
-      {:ok, _} = CMS.Articles.upvote(doc, user)
+      {:ok, _} = CMS.Interactions.upvote(doc, user)
 
       variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :doc),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

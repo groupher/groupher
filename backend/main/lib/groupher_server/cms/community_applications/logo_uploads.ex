@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Assets.Capability
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.CommunityApplications.{Config, Policy}
   alias GroupherServer.CMS.Model.CommunityApplicationLogoUpload
   alias GroupherServer.Repo
@@ -88,7 +89,7 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
          }}
       end
     else
-      %{allowed: false, reason_code: reason_code} -> {:error, reason_code}
+      %{allowed: false} = policy -> {:error, Policy.denial_error(policy)}
       error -> error
     end
   end
@@ -107,13 +108,13 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
 
       cond do
         is_nil(upload) ->
-          Repo.rollback(:asset_not_found)
+          Repo.rollback(ErrorCat.asset_not_found())
 
         upload.status in [:finalized, :promoted] ->
           upload
 
         upload.status != :pending or DateTime.compare(upload.expires_at, now) != :gt ->
-          Repo.rollback(:asset_not_ready)
+          Repo.rollback(ErrorCat.asset_not_ready())
 
         true ->
           attrs = %{
@@ -139,20 +140,20 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
   end
 
   @spec fetch_finalized(String.t(), User.t()) ::
-          {:ok, CommunityApplicationLogoUpload.t()} | {:error, atom()}
+          {:ok, CommunityApplicationLogoUpload.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def fetch_finalized(public_ref, %User{id: user_id}) when is_binary(public_ref) do
     case Repo.get_by(CommunityApplicationLogoUpload, public_ref: public_ref) do
       nil ->
-        {:error, :asset_not_found}
+        {:error, ErrorCat.asset_not_found()}
 
       %{user_id: owner_id} when owner_id != user_id ->
-        {:error, :asset_not_owned}
+        {:error, ErrorCat.asset_not_owned()}
 
       %{status: status} when status != :finalized ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       %{application_id: application_id} when not is_nil(application_id) ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       upload ->
         {:ok, upload}
@@ -195,13 +196,13 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
 
     cond do
       is_nil(filename) ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       mime_type not in @allowed_mime_types ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       not is_integer(size_bytes) or size_bytes <= 0 or size_bytes > @max_size_bytes ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       true ->
         {:ok, %{filename: filename, mime_type: mime_type, size_bytes: size_bytes}}
@@ -211,13 +212,13 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
   defp validate_completion(upload, attrs) do
     cond do
       not is_binary(attrs.storage) or not is_binary(attrs.storage_key) or not is_binary(attrs.url) ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       not is_binary(attrs.content_hash) or not String.starts_with?(attrs.content_hash, "sha256:") ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       attrs.mime_type != upload.mime_type or attrs.size_bytes != upload.size_bytes ->
-        {:error, :asset_not_ready}
+        {:error, ErrorCat.asset_not_ready()}
 
       true ->
         :ok

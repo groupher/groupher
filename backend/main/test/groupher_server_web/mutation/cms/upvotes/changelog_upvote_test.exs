@@ -32,12 +32,12 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
     test "login user can undo upvote to a changelog", ~m(user_conn community changelog user)a do
-      {:ok, _} = CMS.Articles.upvote(changelog, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user)
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

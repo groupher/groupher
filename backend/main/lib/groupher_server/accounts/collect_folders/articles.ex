@@ -15,10 +15,10 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
         -> Repo
   """
 
-  import Helper.ErrorCode
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.Accounts.Model.{CollectFolder, User}
+  alias GroupherServer.Accounts.CollectFolders.ErrorCat
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
@@ -28,7 +28,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   def paged(folder_id, filter) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
       case folder.private do
-        true -> raise_error(:private_collect_folder, "#{folder.title} is private")
+        true -> {:error, ErrorCat.private_collect_folder("#{folder.title} is private")}
         false -> do_paged(folder, filter)
       end
     end
@@ -40,7 +40,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
       is_valid_request = if folder.private, do: folder.user_id == cur_user_id, else: true
 
       case is_valid_request do
-        false -> raise_error(:private_collect_folder, "#{folder.title} is private")
+        false -> {:error, ErrorCat.private_collect_folder("#{folder.title} is private")}
         true -> do_paged(folder, filter)
       end
     end

@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
              |> mutation_error?(
                S.Article.m(:sink_article, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
              |> mutation_error?(
                S.Article.m(:undo_sink_article, :changelog),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

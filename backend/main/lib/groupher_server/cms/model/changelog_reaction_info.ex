@@ -4,10 +4,10 @@ defmodule GroupherServer.CMS.Model.ChangelogReactionInfo do
 
   Business position:
 
-      CMS.Interactions.State -> ChangelogReactionInfo -> cms.changelog_reaction_infos
+      CMS.Interactions.ReadState -> ChangelogReactionInfo -> cms.changelog_reaction_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.ReactionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.ReactionInfo,
     table: "changelog_reaction_infos",
     target: :changelog,
     target_schema: GroupherServer.CMS.Model.Changelog,

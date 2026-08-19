@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
   describe "[upvoted users]" do
     test "guest can get upvoted users list after upvote to a changelog",
          ~m(guest_conn community changelog user user2)a do
-      {:ok, _} = CMS.Articles.upvote(changelog, user)
-      {:ok, _} = CMS.Articles.upvote(changelog, user2)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user2)
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},

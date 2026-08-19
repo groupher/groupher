@@ -48,6 +48,7 @@ defmodule Helper.PermissionRegistry do
   """
 
   alias Helper.PermissionConfig
+  alias GroupherServer.CMS.Passport.ErrorCat
 
   @root_passport_item_count 10_000
   @contexts PermissionConfig.contexts()
@@ -56,19 +57,19 @@ defmodule Helper.PermissionRegistry do
   @doc """
   Returns permission requirement metadata for an action.
   """
-  @spec requirement(String.t()) :: {:ok, map()} | {:error, :unknown_action}
+  @spec requirement(String.t()) :: {:ok, map()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def requirement(action) when is_binary(action) do
     case Map.get(@action_requirements, action) do
-      nil -> {:error, :unknown_action}
+      nil -> {:error, ErrorCat.unknown_action()}
       requirement -> {:ok, requirement}
     end
   end
 
-  def requirement(_), do: {:error, :unknown_action}
+  def requirement(_), do: {:error, ErrorCat.unknown_action()}
 
   @doc "Checks a registered action against one normalized user passport."
   @spec allowed?(map() | nil, String.t() | nil, String.t()) ::
-          {:ok, boolean()} | {:error, :unknown_action | :community_required}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def allowed?(passport, community, action) when is_binary(action) do
     with {:ok, requirement} <- requirement(action) do
       rules = normalize_rules(passport)
@@ -90,7 +91,7 @@ defmodule Helper.PermissionRegistry do
                 get_in(rules, [community, to_string(requirement.context), grant]) == true)}
 
         requirement.scope == :context ->
-          {:error, :community_required}
+          {:error, ErrorCat.community_required()}
 
         true ->
           {:ok, false}
@@ -100,7 +101,7 @@ defmodule Helper.PermissionRegistry do
     ArgumentError -> {:ok, false}
   end
 
-  def allowed?(_, _, _), do: {:error, :unknown_action}
+  def allowed?(_, _, _), do: {:error, ErrorCat.unknown_action()}
 
   @doc """
   Returns supported moderator titles.

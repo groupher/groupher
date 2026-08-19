@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   """
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
   alias CMS.SearchArtiments.Artiment
-  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
 
   Reloads the article with community, document, and author data before building
   the canonical projection with live interaction counts. Non-public articles
-  return `{:error, {:not_searchable, _}}`; incomplete articles return an
+  return an `ErrorCat.Error` with reason `:not_searchable`; incomplete articles return an
   invalid projection error.
 
   ## Examples
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          true <- is_binary(article.article_hash_id),
          true <- not is_nil(article.inner_id) do
       ref = Artiment.article_ref(thread, article.article_hash_id)
-      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+      counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       {:ok,
        %Artiment{
@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
        }}
     else
       {:error, _} = error -> error
-      _ -> {:error, {:invalid_search_artiment, "Article projection is incomplete"}}
+      _ -> {:error, ErrorCat.invalid_search_artiment("Article projection is incomplete")}
     end
   end
 
@@ -80,7 +80,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
     if article.stage == CMS.Const.stage(:public) and article.pending == @legal do
       :ok
     else
-      {:error, {:not_searchable, "Article is not publicly searchable"}}
+      {:error, ErrorCat.not_searchable("Article is not publicly searchable")}
     end
   end
 

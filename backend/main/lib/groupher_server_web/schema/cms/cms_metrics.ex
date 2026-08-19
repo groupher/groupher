@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   require Enums
   require Threads
+  require CMS.Interactions.Const
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -142,12 +143,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:least_words)
   end
 
-  enum :article_order_enum do
-    value(:upvotes)
-    value(:comments)
-    value(:views)
-    value(:publish)
-  end
+  enum(:article_order_enum, do: enum_values(CMS.Interactions.Const.order_values_ast()))
 
   enum(:article_cat_enum, do: enum_values(Enums.cat()))
   enum(:article_status_enum, do: enum_values(Enums.status()))

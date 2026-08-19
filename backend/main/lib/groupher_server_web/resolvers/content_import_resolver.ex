@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
   alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
+  alias GroupherServer.CMS.Passport.ErrorCat
   alias GroupherServer.CMS.Model.Community
   alias GroupherServer.CMS.Passport.Registry
 
@@ -23,9 +24,14 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
         %{context: %{cur_user: %{cur_passport: passport}}}
       ) do
     case Registry.allowed?(passport, community, action) do
-      {:ok, allowed} -> {:ok, allowed}
-      {:error, :unknown_action} -> {:error, "unknown Passport action #{action}"}
-      {:error, :community_required} -> {:error, "community is required for action #{action}"}
+      {:ok, allowed} ->
+        {:ok, allowed}
+
+      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
+        {:error, ErrorCat.unknown_action("unknown Passport action #{action}")}
+
+      {:error, %GroupherServer.ErrorCat.Error{reason: :community_required}} ->
+        {:error, ErrorCat.community_required("community is required for action #{action}")}
     end
   end
 

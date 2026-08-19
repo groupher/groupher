@@ -4,10 +4,10 @@ defmodule GroupherServer.CMS.Model.BlogEmotionInfo do
 
   Business position:
 
-      CMS.Interactions.State -> BlogEmotionInfo -> cms.blog_emotion_infos
+      CMS.Interactions.ReadState -> BlogEmotionInfo -> cms.blog_emotion_infos
   """
 
-  use GroupherServer.CMS.Interactions.Schema.EmotionInfoSchema,
+  use GroupherServer.CMS.Model.Interaction.EmotionInfo,
     table: "blog_emotion_infos",
     target: :blog,
     target_schema: GroupherServer.CMS.Model.Blog

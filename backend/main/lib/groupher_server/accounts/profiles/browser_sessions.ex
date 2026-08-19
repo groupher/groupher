@@ -13,6 +13,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
   alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.{BrowserSession, User}
+  alias GroupherServer.Accounts.Profiles.ErrorCat
   alias Helper.Guardian.BrowserAccess
 
   @absolute_ttl_seconds 90 * 24 * 60 * 60
@@ -117,7 +118,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
          {:ok, _result} <- revoke_ref(session.ref, "user_revoke") do
       {:ok, %{done: true}}
     else
-      true -> {:error, :current_session}
+      true -> {:error, ErrorCat.current_session()}
       error -> error
     end
   end
@@ -145,15 +146,15 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
     |> Repo.one()
     |> case do
       %BrowserSession{status: :revoked} ->
-        {:error, :session_revoked}
+        {:error, ErrorCat.session_revoked()}
 
       %BrowserSession{absolute_expires_at: expires_at} = session ->
         if DateTime.compare(expires_at, now) == :gt,
           do: {:ok, session},
-          else: {:error, :session_expired}
+          else: {:error, ErrorCat.session_expired()}
 
       nil ->
-        {:error, :session_not_found}
+        {:error, ErrorCat.session_not_found()}
     end
   end
 
@@ -177,7 +178,7 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
     }
   end
 
-  defp present_session(nil), do: {:error, :session_not_found}
+  defp present_session(nil), do: {:error, ErrorCat.session_not_found()}
   defp present_session(session), do: {:ok, session}
 
   defp metadata_fields do

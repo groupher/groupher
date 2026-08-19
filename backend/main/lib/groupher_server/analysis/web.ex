@@ -1,4 +1,5 @@
 defmodule GroupherServer.Analysis.Web do
+  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Groupher-owned Web Analysis context.
 
@@ -17,7 +18,6 @@ defmodule GroupherServer.Analysis.Web do
 
   alias __MODULE__.Config
   alias __MODULE__.Community, as: AnalysisCommunity
-  alias __MODULE__.Provider.Umami
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.{Cache, Transaction}
@@ -207,7 +207,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp provider, do: @config.provider || Umami
+  defp provider, do: @config.provider
 
   defp prepare_community(%Community{} = community, provider) do
     with :ok <- ensure_runtime_configured(),
@@ -223,12 +223,12 @@ defmodule GroupherServer.Analysis.Web do
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
       token when is_binary(token) and token != "" -> :ok
-      _ -> {:error, :not_configured}
+      _ -> {:error, ErrorCat.not_configured()}
     end
   end
 
   defp ensure_persisted_community(%Community{id: id}) when is_integer(id), do: :ok
-  defp ensure_persisted_community(%Community{}), do: {:error, :community_not_persisted}
+  defp ensure_persisted_community(%Community{}), do: {:error, ErrorCat.community_not_persisted()}
 
   defp ensure_umami_website_id(
          %Community{} = community,
@@ -256,7 +256,7 @@ defmodule GroupherServer.Analysis.Web do
   defp reload_dashboard(%CommunityDashboard{id: id}) do
     case Repo.get(CommunityDashboard, id) do
       %CommunityDashboard{} = dashboard -> {:ok, dashboard}
-      nil -> {:error, :dashboard_not_found}
+      nil -> {:error, ErrorCat.dashboard_not_found()}
     end
   end
 
@@ -398,6 +398,8 @@ defmodule GroupherServer.Analysis.Web do
   defp empty_summary, do: %{pageviews: 0, visitors: 0, visits: 0, bounces: 0, total_time: 0}
 
   defp error_payload(reason, section) do
+    reason = error_reason(reason)
+
     %{
       code: error_code(reason),
       message: error_message(reason),
@@ -405,6 +407,9 @@ defmodule GroupherServer.Analysis.Web do
       provider_status: provider_status(reason)
     }
   end
+
+  defp error_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp error_reason(reason), do: reason
 
   defp error_code(:not_configured), do: "not_configured"
   defp error_code({:http_error, _status}), do: "provider_http_error"

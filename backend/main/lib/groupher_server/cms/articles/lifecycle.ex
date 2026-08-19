@@ -13,8 +13,9 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Repo
-  alias GroupherServer.CMS.Interactions.Registry
+  alias GroupherServer.CMS.Artiment.Matcher
   alias GroupherServer.CMS.Model.ArticleLifecycle
+  alias GroupherServer.CMS.Articles.ErrorCat
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -67,7 +68,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   end
 
   @spec state(integer(), atom(), Ecto.UUID.t()) ::
-          {:ok, ArticleLifecycle.state()} | {:error, :lifecycle_not_found}
+          {:ok, ArticleLifecycle.state()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def state(community_id, thread, article_hash_id) do
     case Repo.get_by(ArticleLifecycle,
            community_id: community_id,
@@ -75,7 +76,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
            article_hash_id: article_hash_id
          ) do
       %ArticleLifecycle{state: state} -> {:ok, state}
-      nil -> {:error, :lifecycle_not_found}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 
@@ -108,7 +109,8 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   end
 
   @spec transition(integer(), atom(), Ecto.UUID.t(), ArticleLifecycle.state()) ::
-          {:ok, ArticleLifecycle.t()} | {:error, :lifecycle_not_found | Ecto.Changeset.t()}
+          {:ok, ArticleLifecycle.t()}
+          | {:error, GroupherServer.ErrorCat.Error.t() | Ecto.Changeset.t()}
   def transition(community_id, thread, article_hash_id, state) when state in @states do
     lifecycle =
       ArticleLifecycle
@@ -122,7 +124,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
     case lifecycle do
       nil ->
-        {:error, :lifecycle_not_found}
+        {:error, ErrorCat.lifecycle_not_found()}
 
       %ArticleLifecycle{} = lifecycle ->
         transition(lifecycle, state)
@@ -147,7 +149,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
       })
       |> Repo.update()
     else
-      {:error, :lifecycle_state_conflict}
+      {:error, ErrorCat.lifecycle_state_conflict()}
     end
   end
 
@@ -208,5 +210,8 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   defp state_time(state, state, now, _current), do: now
   defp state_time(_state, _target, _now, current), do: current
 
-  defp thread_table(thread), do: Registry.article_table(thread)
+  defp thread_table(thread) do
+    {:ok, %{model: model}} = Matcher.match_interaction(thread)
+    model.__schema__(:source)
+  end
 end

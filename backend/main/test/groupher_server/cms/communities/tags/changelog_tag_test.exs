@@ -26,11 +26,22 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
     end
 
     test "create article tag with extra & marker data", ~m(community article_tag_attrs user)a do
-      tag_attrs = Map.merge(article_tag_attrs, %{extra: ["menuID", "menuID2"], marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}})
+      tag_attrs =
+        Map.merge(article_tag_attrs, %{
+          extra: ["menuID", "menuID2"],
+          marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
+        })
+
       {:ok, article_tag} = CMS.Communities.create_tag(community, :changelog, tag_attrs, user)
 
       assert article_tag.extra == ["menuID", "menuID2"]
-      assert article_tag.marker == %{type: :icon, provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
+
+      assert article_tag.marker == %{
+               type: :icon,
+               provider: "lucide",
+               name: "tag",
+               src: "/icons/lucide/tag.svg"
+             }
     end
 
     test "can update an article tag", ~m(community article_tag_attrs user)a do
@@ -127,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
         Map.merge(changelog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
       {:error, reason} = CMS.Articles.create(community, :changelog, changelog_with_tags, user)
-      is_error?(reason, :invalid_domain_tag)
+      is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end
 

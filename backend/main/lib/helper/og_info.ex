@@ -32,11 +32,11 @@ defmodule Helper.OgInfo do
          favicon <- adapter.parse_favicon(resp.body, location) do
       og |> Map.merge(%{favicon: favicon}) |> fmt_field(host) |> done
     else
-      {:error, reason}
+      {:error, %GroupherServer.ErrorCat.Error{reason: reason}}
       when reason in [:invalid_url, :invalid_scheme, :missing_host, :blocked_host, :blocked_ip] ->
         {:error, "unsafe url blocked"}
 
-      {:error, :unsafe_url} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :unsafe_url}} ->
         {:error, "unsafe url blocked"}
 
       {:error, %Req.TransportError{reason: :nxdomain}} ->
@@ -47,7 +47,7 @@ defmodule Helper.OgInfo do
 
       # {:error, false} ->
       #   {:error,
-      #    [message: "only community root can add moderator", code: ecode(:community_root_only)]}
+      #    [message: "only community root can add moderator", code: ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.community_root_only())]}
       false ->
         {:error, "invalid open graph info"}
 

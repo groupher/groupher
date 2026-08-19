@@ -157,7 +157,7 @@ defmodule GroupherServer.CMS.Press do
     end
   end
 
-  def article(_), do: {:error, {:custom, "invalid Press Article path"}}
+  def article(_), do: {:error, GroupherServer.ErrorCat.custom("invalid Press Article path")}
 
   @spec community_rss_feed(Community.t() | String.t(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
@@ -193,7 +193,8 @@ defmodule GroupherServer.CMS.Press do
     end
   end
 
-  def thread_rss_feed(_, _, _), do: {:error, {:custom, "invalid Press Feed thread"}}
+  def thread_rss_feed(_, _, _),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid Press Feed thread")}
 
   @spec site_manifest(Community.t() | String.t()) :: {:ok, map()} | {:error, term()}
   @doc "Runs `site_manifest` through the public `Press` boundary."
@@ -229,8 +230,8 @@ defmodule GroupherServer.CMS.Press do
       |> preload([article, ...], [:document, :community_tags, author: :user])
       |> Repo.one()
       |> case do
-        nil -> {:error, {:not_exist, "Press Article"}}
-        %{document: nil} -> {:error, {:not_exist, "Press Article document"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article")}
+        %{document: nil} -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article document")}
         article -> ensure_current_public_article(:doc, article)
       end
     end
@@ -245,8 +246,8 @@ defmodule GroupherServer.CMS.Press do
       |> preload([article], [:document, :community_tags, author: :user])
       |> Repo.one()
       |> case do
-        nil -> {:error, {:not_exist, "Press Article"}}
-        %{document: nil} -> {:error, {:not_exist, "Press Article document"}}
+        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article")}
+        %{document: nil} -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article document")}
         article -> ensure_current_public_article(thread, article)
       end
     end
@@ -330,7 +331,6 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp public_branch(community, :doc), do: Branch.resolve(community, Branch.main_slug())
-  defp public_branch(_community, _thread), do: {:ok, nil}
 
   defp ensure_current_public_article(:doc, article) do
     visible =
@@ -342,7 +342,9 @@ defmodule GroupherServer.CMS.Press do
       |> where([node], node.doc_id == ^article.article_hash_id)
       |> Repo.exists?()
 
-    if visible, do: {:ok, article}, else: {:error, {:not_exist, "Published Doc"}}
+    if visible,
+      do: {:ok, article},
+      else: {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
   end
 
   defp ensure_current_public_article(_thread, article), do: {:ok, article}
@@ -483,7 +485,7 @@ defmodule GroupherServer.CMS.Press do
     Community
     |> Repo.get_by(slug: slug)
     |> case do
-      nil -> {:error, {:not_exist, "Community"}}
+      nil -> {:error, CMS.Communities.ErrorCat.not_exist("Community")}
       community -> {:ok, Repo.preload(community, [:dashboard, :lifecycle])}
     end
   end
@@ -496,7 +498,7 @@ defmodule GroupherServer.CMS.Press do
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "Public Community"}}
+      nil -> {:error, CMS.Communities.ErrorCat.not_exist("Public Community")}
       community -> {:ok, community}
     end
   end
@@ -507,7 +509,7 @@ defmodule GroupherServer.CMS.Press do
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "Public Community"}}
+      nil -> {:error, CMS.Communities.ErrorCat.not_exist("Public Community")}
       community -> {:ok, community}
     end
   end
@@ -569,13 +571,13 @@ defmodule GroupherServer.CMS.Press do
   defp ensure_feed_thread(config, thread) do
     if to_string(thread) in config.feed_threads,
       do: :ok,
-      else: {:error, {:custom, "Press Feed thread is disabled"}}
+      else: {:error, GroupherServer.ErrorCat.custom("Press Feed thread is disabled")}
   end
 
   defp ensure_thread_enabled(community, thread) do
     if thread_enabled?(community, thread),
       do: :ok,
-      else: {:error, {:custom, "Community thread is disabled"}}
+      else: {:error, GroupherServer.ErrorCat.custom("Community thread is disabled")}
   end
 
   defp thread_enabled?(community, thread) do
@@ -584,7 +586,9 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp ensure_enabled(config, field) do
-    if Map.get(config, field), do: :ok, else: {:error, {:custom, "Press output is disabled"}}
+    if Map.get(config, field),
+      do: :ok,
+      else: {:error, GroupherServer.ErrorCat.custom("Press output is disabled")}
   end
 
   defp bounded_limit(value, configured) when is_integer(value), do: min(max(value, 1), configured)

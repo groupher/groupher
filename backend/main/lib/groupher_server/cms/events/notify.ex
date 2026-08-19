@@ -182,7 +182,17 @@ defmodule GroupherServer.CMS.Events.Notify do
   end
 
   # Background jobs may arrive after related content is deleted; skip quietly.
-  defp handle_missing_target({:error, :not_exist}), do: {:ok, :pass}
-  defp handle_missing_target({:error, {:not_exist, _}}), do: {:ok, :pass}
+  defp handle_missing_target(
+         {:error,
+          %GroupherServer.ErrorCat.Error{
+            reason: :custom,
+            details: %{reason: :not_exist}
+          }}
+       ),
+       do: {:ok, :pass}
+
+  defp handle_missing_target({:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}}),
+    do: {:ok, :pass}
+
   defp handle_missing_target({:error, _} = error), do: error
 end

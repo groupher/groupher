@@ -37,24 +37,24 @@ defmodule GroupherServer.CMS.AbuseReports do
   @spec article(T.article(), String.t(), map(), User.t()) :: T.domain_res(T.article())
   @doc "Runs `article` through the public `AbuseReports` boundary."
   def article(target_article, reason, attr, %User{} = user) do
-    Report.article(target_article, reason, attr, user)
+    CMS.Interactions.report(target_article, reason, attr, user)
   end
 
   @spec undo_article(T.article(), User.t()) :: T.domain_res(T.article())
   @doc "Runs `undo_article` through the public `AbuseReports` boundary."
   def undo_article(target_article, %User{} = user) do
-    Report.undo_article(target_article, user)
+    CMS.Interactions.undo_report(target_article, user)
   end
 
   @spec comment(Comment.t(), String.t(), map(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `comment` through the public `AbuseReports` boundary."
   def comment(%Comment{} = target_comment, reason, attr, %User{} = user) do
-    Report.comment(target_comment, reason, attr, user)
+    CMS.Interactions.report(target_comment, reason, attr, user)
   end
 
   @spec undo_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
   @doc "Runs `undo_comment` through the public `AbuseReports` boundary."
   def undo_comment(%Comment{} = target_comment, %User{} = user) do
-    Report.undo_comment(target_comment, user)
+    CMS.Interactions.undo_report(target_comment, user)
   end
 end

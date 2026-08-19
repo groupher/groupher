@@ -1,21 +1,34 @@
 defmodule GroupherServer.CMS.Gate.Access.Policy do
   @moduledoc """
-  Contract implemented by resource Access policies.
+  Applies resource-state admission rules to already-loaded Gate contexts.
 
-  Loaders provide the typed Access Context; policies only decide whether the
-  requested action is admitted. Decision conversion remains private to Gate.
+  Policy functions do not query, lock, or open transactions. Each function is
+  named after the resource whose rules it applies.
 
-      Access.Check.*
-        -> Access policy
-        -> :ok | {:error, reason}
+  Business position:
+
+      typed Access Context
+        -> Access.Policy resource function
+        -> allow or declared Gate error
+        -> Access.Check Decision conversion
   """
 
-  @doc "Checks one actor/action/resource tuple against a typed Access Context."
+  alias __MODULE__.{Article, Comment, Community}
+  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
 
-  @callback check_access(
-              actor :: term(),
-              action :: atom(),
-              resource :: map(),
-              context :: struct()
-            ) :: :ok | {:error, atom()}
+  @doc false
+  def article(actor, action, resource, context),
+    do: Article.check_access(actor, action, resource, context)
+
+  @doc false
+  def comment(actor, action, resource, context),
+    do: Comment.check_access(actor, action, resource, context)
+
+  @doc false
+  def community(actor, action, resource),
+    do: Community.check_access(actor, action, resource)
+
+  @doc false
+  def community(actor, action, resource, %CommunityContext{} = context),
+    do: Community.check_access(actor, action, resource, context)
 end

@@ -43,7 +43,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
          ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error, :invalid_dsb_section} = CMS.Dashboard.update(community, %{})
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_dsb_section}} =
+               CMS.Dashboard.update(community, %{})
     end
 
     test "can update base info in community dashboard", ~m(community_attrs user)a do
@@ -589,13 +590,16 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     test "rejects non-list dashboard link payloads", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error, {:custom, "invalid dashboard links"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
 
-      assert {:error, {:custom, "invalid dashboard links"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
 
-      assert {:error, {:custom, "invalid dashboard links"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
     end
 

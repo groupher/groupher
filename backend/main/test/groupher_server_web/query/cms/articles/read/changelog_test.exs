@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
            |> query_error?(
              S.Article.q(:article, :changelog),
              variables,
-             ecode(:thread_not_visible)
+             ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
            )
   end
 end

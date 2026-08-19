@@ -41,8 +41,20 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
-      assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+
+      assert user_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Comments.ErrorCat.require_questioner())
+             )
+
+      assert guest_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
 
     @query S.Comment.m(:undo_mark_comment_solution)
@@ -73,8 +85,20 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
-      assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
+
+      assert user_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Comments.ErrorCat.require_questioner())
+             )
+
+      assert guest_conn
+             |> mutation_error?(
+               @query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
     end
   end
 end

@@ -42,7 +42,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   @behaviour Absinthe.Middleware
 
   import Helper.Utils
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
 
   alias GroupherServer.FrontDesk
   alias GroupherServer.Accounts.Model.User
@@ -70,12 +70,15 @@ defmodule GroupherServerWeb.Middleware.Passport do
       {:ok, requirement} ->
         case maybe_put_article_path(resolution, opts) do
           {:ok, resolution} -> check_requirement(resolution, requirement)
-          {:error, :invalid_article_path} -> invalid_article_path(resolution)
+          {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} -> invalid_article_path(resolution)
         end
 
-      {:error, :unknown_action} ->
+      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
         resolution
-        |> handle_absinthe_error("PassportError: unknown action #{action}.", ecode(:passport))
+        |> handle_absinthe_error(
+          "PassportError: unknown action #{action}.",
+          ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+        )
     end
   end
 
@@ -87,7 +90,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
            true <- has_permission?(cur_passport, resolution, requirement) do
         resolution
       else
-        {:error, :missing_passport} ->
+        {:error, %GroupherServer.ErrorCat.Error{reason: :missing_passport}} ->
           passport_denied(resolution)
 
         false ->
@@ -103,7 +106,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
       # locator for permission checks. It must not load the article here.
       case ArticlePath.parse_arguments(arguments, Keyword.take(opts, [:thread])) do
         {:ok, arguments} -> {:ok, %{resolution | arguments: arguments}}
-        {:error, :invalid_article_path} -> {:error, :invalid_article_path}
+        {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path} = error} ->
+          {:error, error}
       end
     else
       {:ok, resolution}
@@ -114,19 +118,22 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp missing_action(resolution) do
     resolution
-    |> handle_absinthe_error("PassportError: action is required.", ecode(:passport))
+    |> handle_absinthe_error(
+      "PassportError: action is required.",
+      ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+    )
   end
 
   defp invalid_article_path(resolution) do
     resolution
-    |> handle_absinthe_error("invalid article input", ecode(:custom))
+    |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
   end
 
   defp passport_denied(resolution) do
     resolution
     |> handle_absinthe_error(
       "PassportError: your passport not qualified.",
-      ecode(:passport)
+      ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
     )
   end
 
@@ -138,7 +145,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
        when is_map(cur_passport),
        do: {:ok, cur_passport}
 
-  defp fetch_cur_passport(_), do: {:error, :missing_passport}
+  defp fetch_cur_passport(_), do: {:error, GroupherServer.CMS.ErrorCat.missing_passport()}
 
   defp has_permission?(cur_passport, resolution, requirement) do
     normalized_passport = Registry.normalize_rules(cur_passport)
@@ -183,7 +190,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp resolve_grant(_, _), do: {:error, :invalid_requirement}
+  defp resolve_grant(_, _), do: {:error, GroupherServer.CMS.ErrorCat.invalid_requirement()}
 
   defp fetch_thread(%{arguments: %{article_path: %{thread: thread}}}) when is_atom(thread),
     do: {:ok, Atom.to_string(thread)}
@@ -192,7 +199,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
     do: {:ok, Atom.to_string(thread)}
 
   defp fetch_thread(%{arguments: %{thread: thread}}) when is_binary(thread), do: {:ok, thread}
-  defp fetch_thread(_), do: {:error, :missing_thread}
+  defp fetch_thread(_), do: {:error, GroupherServer.CMS.ErrorCat.missing_thread()}
 
   defp fetch_community_slug(%{arguments: %{article_path: %{community: %{slug: slug}}}})
        when is_binary(slug),
@@ -212,7 +219,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
        when is_binary(community),
        do: {:ok, community}
 
-  defp fetch_community_slug(_), do: {:error, :missing_community}
+  defp fetch_community_slug(_), do: {:error, GroupherServer.CMS.ErrorCat.missing_community()}
 
   defp has_global_permission?(passport, permission) do
     get_in(passport, ["global", permission]) == true

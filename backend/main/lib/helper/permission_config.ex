@@ -1,4 +1,5 @@
 defmodule Helper.PermissionConfig do
+  alias GroupherServer.CMS.Passport.ErrorCat
   @moduledoc """
   Centralized permission configuration for CMS authorization.
 
@@ -288,7 +289,7 @@ defmodule Helper.PermissionConfig do
   def default_passport_for_role("god"), do: {:ok, %{"global" => %{"god" => true}}}
   def default_passport_for_role("root"), do: {:ok, %{"global" => %{}}}
   def default_passport_for_role("moderator"), do: {:ok, %{"global" => %{}}}
-  def default_passport_for_role(_), do: {:error, :unknown_role}
+  def default_passport_for_role(_), do: {:error, ErrorCat.unknown_role()}
 
   def default_passport_for_role(role, community_slug) when is_binary(community_slug) do
     with {:ok, rules} <- default_passport_for_role(role) do

@@ -16,6 +16,8 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias Helper.Constant
 
   require Const
@@ -84,7 +86,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @doc "Checks a Community Lifecycle state for an explicit read policy mode."
   @spec can_read_mode(Community.t() | CommunityLifecycle.t(), read_mode(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def can_read_mode(resource, mode, _context)
       when mode in [:public, :owner_management, :moderator_management, :operations] do
     with {:ok, lifecycle} <- lifecycle_from(resource) do
@@ -92,7 +94,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end
   end
 
-  def can_read_mode(_resource, _mode, _context), do: {:error, :unknown_policy_mode}
+  def can_read_mode(_resource, _mode, _context), do: {:error, GateErrorCat.unknown_policy_mode()}
 
   @doc "Projects active blockers into the materialized Lifecycle state."
   @spec resolve_state([CommunityLifecycleBlocker.t() | map()]) :: atom()
@@ -109,19 +111,19 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @doc "Answers a state-only capability without interpreting actor identity."
   @spec can_read(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def can_read(resource, context \\ %{}), do: capability(resource, :read, context)
 
   @spec can_write(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def can_write(resource, context \\ %{}), do: capability(resource, :write, context)
 
   @spec can_manage(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def can_manage(resource, context \\ %{}), do: capability(resource, :manage, context)
 
   @spec can_destroy(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, atom()}
+          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def can_destroy(resource, context \\ %{}), do: capability(resource, :destroy, context)
 
   @doc "Creates a Lifecycle changeset for a guarded state transition."
@@ -185,15 +187,15 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       lifecycle = lock_for_transition(community_ref)
 
       if is_nil(lifecycle) do
-        Repo.rollback(:lifecycle_not_found)
+        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
       else
         expected_version = Keyword.get(opts, :expected_version)
 
         if expected_version && lifecycle.version != expected_version do
-          Repo.rollback(:lifecycle_state_conflict)
+          Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
         else
           if state != :__reconcile__ and not allowed_transition?(lifecycle.state, state) do
-            Repo.rollback(:lifecycle_state_conflict)
+            Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
           else
             attrs = Keyword.get(opts, :attrs, %{})
 
@@ -222,7 +224,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
                       {:error, reason} -> Repo.rollback(reason)
                     end
                   else
-                    Repo.rollback(:missing_lifecycle_audit_action)
+                    Repo.rollback(CommunityErrorCat.missing_lifecycle_audit_action())
                   end
                 end
 
@@ -245,7 +247,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       lifecycle = lock_for_transition_or_bootstrap(community_ref, opts)
 
       if is_nil(lifecycle) do
-        Repo.rollback(:lifecycle_not_found)
+        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
       else
         ensure_not_destroyed!(lifecycle)
         ensure_expected_version!(lifecycle, opts)
@@ -286,7 +288,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       lifecycle = lock_for_transition(community_ref)
 
       if is_nil(lifecycle) do
-        Repo.rollback(:lifecycle_not_found)
+        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
       else
         ensure_not_destroyed!(lifecycle)
         ensure_expected_version!(lifecycle, opts)
@@ -302,11 +304,11 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
           |> Repo.one()
 
         if is_nil(blocker) do
-          Repo.rollback(:blocker_not_found)
+          Repo.rollback(CommunityErrorCat.blocker_not_found())
         else
           if Keyword.get(opts, :check_recover_until, false) and
                not recovery_window_active?(blocker, DateTime.utc_now(:second)) do
-            Repo.rollback(:archive_recovery_window_expired)
+            Repo.rollback(CommunityErrorCat.archive_recovery_window_expired())
           end
 
           now = DateTime.utc_now(:second)
@@ -378,7 +380,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       ensure_expected_version!(lifecycle, opts)
 
       unless lifecycle.state == :archived do
-        Repo.rollback(:lifecycle_state_conflict)
+        Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
       end
 
       blockers = active_blockers(lifecycle.id)
@@ -413,7 +415,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       ensure_expected_version!(lifecycle, opts)
 
       unless lifecycle.state == :pending_destroy do
-        Repo.rollback(:lifecycle_state_conflict)
+        Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
       end
 
       state = resolve_state(active_blockers(lifecycle.id))
@@ -446,7 +448,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       ensure_expected_version!(lifecycle, opts)
 
       unless lifecycle.state == :pending_destroy do
-        Repo.rollback(:lifecycle_state_conflict)
+        Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
       end
 
       now = DateTime.utc_now(:second)
@@ -537,15 +539,16 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
        when is_list(blockers),
        do: {:ok, Enum.filter(blockers, &is_nil(&1.ended_at))}
 
-  defp capability_blockers(_lifecycle, _context), do: {:error, :lifecycle_not_loaded}
+  defp capability_blockers(_lifecycle, _context),
+    do: {:error, GateErrorCat.lifecycle_not_loaded()}
 
   defp lifecycle_from(%CommunityLifecycle{} = lifecycle), do: {:ok, lifecycle}
 
   defp lifecycle_from(%Community{lifecycle: %CommunityLifecycle{} = lifecycle}),
     do: {:ok, lifecycle}
 
-  defp lifecycle_from(%Community{}), do: {:error, :lifecycle_not_loaded}
-  defp lifecycle_from(_), do: {:error, :lifecycle_not_loaded}
+  defp lifecycle_from(%Community{}), do: {:error, GateErrorCat.lifecycle_not_loaded()}
+  defp lifecycle_from(_), do: {:error, GateErrorCat.lifecycle_not_loaded()}
 
   defp allowed_transition?(from, to), do: to in Map.get(@allowed_transitions, from, [])
 
@@ -699,11 +702,11 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp blocker_type(%{blocker_type: type}), do: type
   defp blocker_type(%{"blocker_type" => type}), do: type
 
-  defp ensure_lifecycle!(nil), do: Repo.rollback(:lifecycle_not_found)
+  defp ensure_lifecycle!(nil), do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
   defp ensure_lifecycle!(%CommunityLifecycle{}), do: :ok
 
   defp ensure_not_destroyed!(%CommunityLifecycle{state: :destroy}),
-    do: Repo.rollback(:lifecycle_state_conflict)
+    do: Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
 
   defp ensure_not_destroyed!(%CommunityLifecycle{}), do: :ok
 
@@ -711,7 +714,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     case Keyword.get(opts, :expected_version) do
       nil -> :ok
       ^version -> :ok
-      _ -> Repo.rollback(:lifecycle_state_conflict)
+      _ -> Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
     end
   end
 
@@ -720,17 +723,17 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp ensure_state_allowed!(%CommunityLifecycle{state: state}, allowed_states)
        when is_list(allowed_states) do
     unless state in allowed_states do
-      Repo.rollback(:lifecycle_state_conflict)
+      Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
     end
   end
 
   defp ensure_destroy_allowed!(blockers, now) do
     cond do
       Enum.any?(blockers, &(blocker_type(&1) in @destroy_blockers)) ->
-        Repo.rollback(:destroy_blocked)
+        Repo.rollback(CommunityErrorCat.destroy_blocked())
 
       Enum.any?(blockers, &recovery_window_active?(&1, now)) ->
-        Repo.rollback(:archive_recovery_window_active)
+        Repo.rollback(CommunityErrorCat.archive_recovery_window_active())
 
       true ->
         :ok
@@ -781,10 +784,10 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp resolve_operation_ref!(ref) when is_binary(ref) do
     case Regex.match?(@uuid_pattern, ref) && Ecto.UUID.cast(ref) do
       {:ok, uuid} -> uuid
-      :error -> Repo.rollback(:invalid_operation_ref)
-      false -> Repo.rollback(:invalid_operation_ref)
+      :error -> Repo.rollback(CommunityErrorCat.invalid_operation_ref())
+      false -> Repo.rollback(CommunityErrorCat.invalid_operation_ref())
     end
   end
 
-  defp resolve_operation_ref!(_), do: Repo.rollback(:invalid_operation_ref)
+  defp resolve_operation_ref!(_), do: Repo.rollback(CommunityErrorCat.invalid_operation_ref())
 end

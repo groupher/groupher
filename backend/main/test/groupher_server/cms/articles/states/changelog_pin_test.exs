@@ -38,7 +38,9 @@ defmodule GroupherServer.Test.CMS.Articles.ChangelogPin do
         CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       {:error, reason} = CMS.Articles.pin(community, new_changelog)
-      assert error_code(reason) == ecode(:too_much_pinned_article)
+
+      assert error_code(reason) ==
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.too_much_pinned_article())
     end
 
     test "can undo pin to a changelog", ~m(community changelog)a do

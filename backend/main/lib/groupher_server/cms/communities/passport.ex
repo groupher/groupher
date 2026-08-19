@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.Passport, as: UserPassport
+  alias GroupherServer.CMS.Communities.ErrorCat
 
   alias Helper.{NestedFilter, ORM, PermissionRegistry, T}
 
@@ -83,8 +84,8 @@ defmodule GroupherServer.CMS.Communities.Passport do
           UserPassport |> ORM.create(~m(user_id rules)a)
       end
     else
-      {:error, :invalid_passport_shape} ->
-        {:error, {:invalid_passport_shape, "passport rules must contain global"}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_passport_shape}} ->
+        {:error, ErrorCat.invalid_passport_shape("passport rules must contain global")}
     end
   end
 
@@ -122,7 +123,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
         {:ok, PermissionRegistry.normalize_rules(rules)}
 
       _ ->
-        {:error, :invalid_passport_shape}
+        {:error, ErrorCat.invalid_passport_shape()}
     end
   end
 
@@ -139,7 +140,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   defp validate_erase_path([community]) when is_binary(community) and community != "global",
     do: {:ok, [community]}
 
-  defp validate_erase_path(_), do: {:error, :invalid_passport_shape}
+  defp validate_erase_path(_), do: {:error, ErrorCat.invalid_passport_shape()}
 
   defp reject_invalid_rules(rules) when is_map(rules) do
     cleaned =

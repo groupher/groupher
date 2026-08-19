@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Audit do
 
       ORM.create(AuditLog, attrs)
     else
-      {:error, {:custom, "unknown CMS audit action: #{action}"}}
+      {:error, GroupherServer.ErrorCat.custom("unknown CMS audit action: #{action}")}
     end
   end
 

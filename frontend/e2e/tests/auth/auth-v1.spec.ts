@@ -159,6 +159,10 @@ test.describe('Auth V1 browser protocol', () => {
         pageA.goto(`${DASH_ORIGIN}/home/overview`),
         pageB.goto(`${DASH_ORIGIN}/home/overview`),
       ])
+      await Promise.all([
+        expect(pageA.getByTestId('dashboard-overview-title')).toBeVisible(),
+        expect(pageB.getByTestId('dashboard-overview-title')).toBeVisible(),
+      ])
       const state = await readState(request)
       const browserB = state.sessions.find((session) => session.browserFamily === 'E2E Browser B')
       expect(browserB).toBeDefined()
@@ -179,7 +183,19 @@ test.describe('Auth V1 browser protocol', () => {
       await clearAccessCookie(contextB)
       const revokedResult = await runProtectedOperation(pageB)
       expect(revokedResult.error).toContain('status 401')
-      await expect(pageB.getByRole('button', { name: /Github/i })).toBeVisible()
+      await expect
+        .poll(
+          () =>
+            pageB.evaluate(() =>
+              Boolean(
+                (window as Window & { __groupherAuthLoginRequest?: unknown })
+                  .__groupherAuthLoginRequest,
+              ),
+            ),
+          { timeout: 15_000 },
+        )
+        .toBe(true)
+      await expect(pageB.getByRole('button', { name: /Github/i })).toBeVisible({ timeout: 15_000 })
 
       const remainingCookies = await contextB.cookies()
       expect(remainingCookies.some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)

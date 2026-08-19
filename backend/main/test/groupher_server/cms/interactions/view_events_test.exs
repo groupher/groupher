@@ -2,7 +2,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS.Model.ViewEvent
-  alias GroupherServer.CMS.Interactions.State
   alias GroupherServer.CMS.Interactions.ViewEvents
   alias GroupherServer.Repo
 
@@ -116,7 +115,13 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
 
     assert Repo.get!(post.__struct__, post.id).views == 1
 
-    [hydrated] = State.read(:post, [post], user, [])
-    assert hydrated.viewer_has_viewed
+    assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
+  end
+
+  test "an invalid event id returns a declared ErrorCat error" do
+    {_community, post, _attrs, user} = mock_article(:post)
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_event_id}} =
+             ViewEvents.record(post, user, "not-a-uuid")
   end
 end

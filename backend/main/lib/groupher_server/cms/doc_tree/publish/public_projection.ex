@@ -215,16 +215,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
             end
 
           nil ->
-            {:error, {:custom, "Publish the parent navigation node first."}}
+            {:error, GroupherServer.ErrorCat.custom("Publish the parent navigation node first.")}
 
           %DocTreeNode{} ->
-            {:error, {:custom, "Navigation parent must be a Tab or Group."}}
+            {:error, GroupherServer.ErrorCat.custom("Navigation parent must be a Tab or Group.")}
         end
     end
   end
 
   defp ensure_public_parent(_community, _branch, _node),
-    do: {:error, {:custom, "Navigation parent is required."}}
+    do: {:error, GroupherServer.ErrorCat.custom("Navigation parent is required.")}
 
   defp public_attrs_from_event_node(
          %Community{} = community,
@@ -256,8 +256,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          hidden: Map.get(node, "hidden", false)
        }}
     else
-      {:error, _} -> {:error, {:custom, "Publish docs before publishing tree."}}
-      error -> error
+      {:error, _} ->
+        {:error, GroupherServer.ErrorCat.custom("Publish docs before publishing tree.")}
+
     end
   end
 
@@ -422,14 +423,17 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   defp field_atom(field) do
     case Map.fetch(@event_public_fields, field) do
       {:ok, atom} -> {:ok, atom}
-      :error -> {:error, {:custom, "Unsupported docs tree field: #{field}"}}
+      :error -> {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree field: #{field}")}
     end
   end
 
   defp node_type_atom(type) do
     case Map.fetch(@event_node_types, type) do
-      {:ok, atom} -> {:ok, atom}
-      :error -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
+      {:ok, atom} ->
+        {:ok, atom}
+
+      :error ->
+        {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree node type: #{type}")}
     end
   end
 end

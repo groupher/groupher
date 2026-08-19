@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
       assert report.report_cases_count == 1
       assert List.first(report_cases).user.login == user.login
 
-      doc = CMS.Interactions.State.read(doc, user, surface: :report)
+      {:ok, doc} = CMS.Articles.InteractionResponse.one(doc, user, surface: :report)
       assert doc.meta.reported_count == 1
       assert doc.viewer_has_reported
     end
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 0
 
-      refute CMS.Interactions.State.read(doc, user).viewer_has_reported
+      refute CMS.Interactions.viewer_state(doc, user).viewer_has_reported
     end
 
     test "can undo a existed report", ~m(user user2 doc)a do
@@ -62,8 +62,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
       {:ok, all_reports} = CMS.AbuseReports.paged_reports(filter)
       assert all_reports.total_count == 1
 
-      assert CMS.Interactions.State.read(doc, user2).viewer_has_reported
-      refute CMS.Interactions.State.read(doc, user).viewer_has_reported
+      assert CMS.Interactions.viewer_state(doc, user2).viewer_has_reported
+      refute CMS.Interactions.viewer_state(doc, user).viewer_has_reported
     end
 
     test "can undo a report with other user report it too", ~m(user user2 doc)a do

@@ -48,10 +48,10 @@ defmodule GroupherServer.CMS.Artiment.Threads do
       #=> {:ok, :post}
 
       Threads.to_atom(:unknown)
-      #=> {:error, {:custom, "invalid thread"}}
+      #=> {:error, GroupherServer.ErrorCat.custom("invalid thread")}
 
   """
   def to_atom(value) when is_atom(value) and value in @values, do: {:ok, value}
 
-  def to_atom(_), do: {:error, {:custom, "invalid thread"}}
+  def to_atom(_), do: {:error, GroupherServer.ErrorCat.custom("invalid thread")}
 end

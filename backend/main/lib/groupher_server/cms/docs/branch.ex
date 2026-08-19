@@ -32,13 +32,15 @@ defmodule GroupherServer.CMS.Docs.Branch do
       #=> {:ok, %DocBranch{slug: "main"}}
 
       Branch.resolve(community, "missing")
-      #=> {:error, {:custom, "Doc branch not found"}}
+      #=> {:error, GroupherServer.ErrorCat.custom("Doc branch not found")}
 
   """
   def resolve(%Community{} = community, %DocBranch{} = branch) do
     if branch.community_id == community.id,
       do: {:ok, branch},
-      else: {:error, {:custom, "Doc branch does not belong to the requested scope"}}
+      else:
+        {:error,
+         GroupherServer.ErrorCat.custom("Doc branch does not belong to the requested scope")}
   end
 
   def resolve(%Community{} = community, ref) when is_map(ref) or is_list(ref) do
@@ -63,11 +65,12 @@ defmodule GroupherServer.CMS.Docs.Branch do
     |> Repo.one()
     |> case do
       %DocBranch{} = branch -> {:ok, branch}
-      nil -> {:error, {:custom, "Doc branch not found"}}
+      nil -> {:error, GroupherServer.ErrorCat.custom("Doc branch not found")}
     end
   end
 
-  def resolve(_community, _ref), do: {:error, {:custom, "Doc branch is invalid"}}
+  def resolve(_community, _ref),
+    do: {:error, GroupherServer.ErrorCat.custom("Doc branch is invalid")}
 
   def branch_id(%Community{} = community, ref) do
     with {:ok, branch} <- resolve(community, ref), do: {:ok, branch.id}

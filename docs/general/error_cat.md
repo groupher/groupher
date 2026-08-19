@@ -1,14 +1,14 @@
 # Error Code 与 ErrorCat
 
+> 本文已被 docs/general/error_cat_v2.md 取代，仅保留作为历史设计记录，不再作为实现依据。
+
 ## 1. 文档状态
 
-本文记录错误码机制已经确定的目标契约。当前仓库仍可能存在旧的
-`Helper.Const.error_code/1` 和 `Helper.ErrorCode.ecode/1` 实现；它们不是目标架构，
-也不保留兼容层。
+本文记录错误码机制已经确定并落地的契约。`Helper.Const` 的错误码 enum 和
+`Helper.ErrorCode` 已删除，不保留兼容层。
 
-本文描述的是尚未完成实现的目标设计，不代表 `ErrorCat` 当前已经存在。
-旧的数字 code 只作为迁移盘点，不属于新协议的历史兼容范围；切换时可以为新 catalog
-重新分配 code。新 ErrorCat code 一旦发布，才进入不可复用规则。
+旧的数字 code 只作为迁移盘点，不属于新协议的历史兼容范围；本次不迁移历史数据，也不
+要求旧客户端兼容。新 ErrorCat code 一旦发布，才进入不可复用规则。
 
 目标是一次性切换到 `ErrorCat`：
 
@@ -32,14 +32,14 @@ enum(error_code,
 )
 ```
 
-业务代码通过以下方式取数字码：
+迁移前业务代码通过以下方式取数字码：
 
 ```elixir
 Helper.ErrorCode.ecode(:article_archived)
 # => 4609
 ```
 
-当前链路大致是：
+迁移前链路大致是：
 
 ```text
 业务模块
@@ -47,6 +47,16 @@ Helper.ErrorCode.ecode(:article_archived)
   -> Helper.ErrorCode.ecode(reason)
   -> Helper.Const.error_code(reason)
   -> GraphQL extensions.code
+```
+
+当前链路是：
+
+```text
+业务模块
+  -> 所属 catalog 的生成构造函数
+  -> %GroupherServer.ErrorCat.Error{}
+  -> ErrorCat.definition/1
+  -> GraphQL / HTTP adapter
 ```
 
 但同一个 reason 的其他信息还散落在业务模块、Decision、GraphQL formatter、resolver
@@ -525,22 +535,23 @@ namespace + reason
 
 ## 13. 现有错误清单的迁移落点
 
-以下清单盘点 `backend/main/lib/helper/const.ex` 当前的 reason，并给出新 catalog
+以下清单盘点迁移前 `backend/main/lib/helper/const.ex` 中的 reason，并给出新 catalog
 的目标 namespace。表中的旧 code 只用于定位现状，迁移时不要求保留。
-“按 producer 拆分”不是一个 namespace，而是明确的迁移待办：必须逐个检查调用点，
-不提供默认的 `{:web}` 归属，避免把 Accounts 或 CMS 的领域错误误归到 Web。
+本表只保留迁移索引；最终、逐条的落点以 `error_cat_v2.md` 为准。
 
 | 目标 namespace                | 当前 reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 旧 code 盘点                                               |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `{:web}`                      | `pagination`、`changeset`、`service_auth`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `4002`、`4102`、`4017`                                     |
-| 按 producer 拆分（迁移待办）  | `not_exist`、`already_did`、`self_conflict`、`react_fails`、`already_exist`、`update_fails`、`delete_fails`、`create_fails`、`editor_data_parse`                                                                                                                                                                                                                                                                                                                                                                                                                            | `4003..4010`、`4014`                                       |
+| `{:web}`                      | `pagination`、`changeset`、`service_auth`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `4002`、`4102`、`4017`                                     |
 | `{:cms, :gate, :rate_limit}`  | `throttle_interval`、`throttle_hour`、`throttle_day`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `4201..4203`                                               |
-| `{:account, :authentication}` | `account_login`、`oauth_unlink`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `4301`、`4018`                                             |
+| `{:account, :authentication}` | `account_login`、`oauth_unlink`、`not_exist`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `4301`、`4018`、`4003`                                     |
 | `{:cms, :passport}`           | `passport`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `4302`                                                     |
-| `{:cms, :comment}`            | `create_comment`、`comment_already_upvote`、`comment_pin_limit`、`require_questioner`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `4401..4403`、`4509`                                       |
-| `{:account, :collection}`     | `already_collected_in_folder`、`delete_no_empty_collect_folder`、`private_collect_folder`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `4502..4504`                                               |
-| `{:cms, :community}`          | `invalid_domain_tag`、`community_root_only`、`passport_community_not_match`、`one_community_only`                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `4506`、`5501..5503`                                       |
-| `{:cms, :article}`            | `too_much_pinned_article`、`mirror_article`、`undo_sink_old_article`、`archived`、`invalid_blog_title`、`already_upvoted`、`pending`、`article_not_found`、`emotion_not_allowed`、`thread_not_visible`                                                                                                                                                                                                                                                                                                                                                                      | `4501`、`4505`、`4507`、`4511`、`4513..4516`、`6001..6002` |
+| `{:cms, :comment}`            | `create_comment`、`comment_already_upvote`、`comment_pin_limit`、`require_questioner`、`not_exist`、`update_fails`、`create_fails`、`delete_fails`                                                                                                                                                                                                                                                                                                                                                                                                                         | `4401..4403`、`4509`、`4003`、`4008..4010`                  |
+| `{:account, :collection}`     | `already_exist`、`already_collected_in_folder`、`delete_no_empty_collect_folder`、`private_collect_folder`                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `4007`、`4502..4504`                                        |
+| `{:account, :fans}`           | `already_did`、`self_conflict`、`react_fails`、`not_exist`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `4003..4006`                                               |
+| `{:cms, :asset}`              | `not_exist`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `4003`                                                      |
+| `{:cms, :interaction}`        | `already_reported` 及交互状态错误                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | 新增 catalog                                               |
+| `{:cms, :community}`          | `invalid_domain_tag`、`community_root_only`、`passport_community_not_match`、`one_community_only`、`not_exist`                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `4506`、`5501..5503`、`4003`                               |
+| `{:cms, :article}`            | `too_much_pinned_article`、`mirror_article`、`undo_sink_old_article`、`archived`、`invalid_blog_title`、`already_upvoted`、`pending`、`article_not_found`、`emotion_not_allowed`、`thread_not_visible`、`not_exist`                                                                                                                                                                                                                                                                                                                                              | `4501`、`4505`、`4507`、`4511`、`4513..4516`、`6001..6002`、`4003` |
 | `{:cms, :gate}`               | `resource_not_found`、`gate_resource_mismatch`、`doc_branch_required`、`lifecycle_not_found`、`ancestor_community_not_writable`、`ancestor_article_archived`、`ancestor_article_deleted`、`ancestor_article_destroyed`、`article_archived`、`article_deleted`、`article_destroyed`、`article_not_mutable`、`comment_deleted`、`comment_destroyed`、`article_comments_locked`、`permission_denied`、`unknown_action`、`lifecycle_not_loaded`、`scope_root_mismatch`、`scope_binding_conflict`、`scope_context_missing`、`unknown_policy_mode`、`scope_policy_actor_mismatch` | `4601..4623`、另有重复旧 code `4508`                       |
 
 当前 `article_comments_locked` 在旧 `Helper.Const` 中同时出现为 `4508` 和 `4615`。

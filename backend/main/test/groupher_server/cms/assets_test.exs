@@ -207,7 +207,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       {:ok, asset} =
         CMS.Assets.register_to_community(community, image_asset_attrs("existing.png", 50), user)
 
-      assert {:error, {:custom, "asset_id and asset are mutually exclusive"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "asset_id and asset are mutually exclusive"
+              }} =
                CMS.Assets.link_refs(
                  post,
                  %{
@@ -240,7 +244,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       for usage <- [:cover, "cover_dark"] do
-        assert {:error, {:custom, "asset usage is invalid"}} =
+        assert {:error,
+                %GroupherServer.ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
                  CMS.Assets.link_refs(
                    post,
                    %{
@@ -388,7 +393,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           user
         )
 
-      assert {:error, {:custom, "community asset storage quota exceeded"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "community asset storage quota exceeded"
+              }} =
                CMS.Assets.create_upload_intent(
                  community,
                  image_asset_attrs("quota-next.png", 1),
@@ -404,7 +413,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           user
         )
 
-      assert {:error, {:custom, "community asset storage quota exceeded"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "community asset storage quota exceeded"
+              }} =
                CMS.Assets.complete_upload(%{
                  asset_public_ref: "asset_quota_complete",
                  community_id: community.id,
@@ -449,10 +462,20 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       {:ok, deleted_asset} = CMS.Assets.delete(community, asset.id)
       assert deleted_asset.status == :deleted
 
-      assert {:error, {:not_exist, "asset not found"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :asset},
+                reason: :not_exist,
+                details: "asset not found"
+              }} =
                CMS.Assets.origin_info(asset.public_ref)
 
-      assert {:error, {:not_exist, "asset not found"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :asset},
+                reason: :not_exist,
+                details: "asset not found"
+              }} =
                CMS.Assets.origin_info("asset_missing")
     end
 
@@ -469,7 +492,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           community: community
         )
 
-      assert {:error, {:custom, "asset is still referenced"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "asset is still referenced"
+              }} =
                CMS.Assets.delete(community, ref.asset_id)
 
       assert {:ok, %CommunityAsset{}} = ORM.find(CommunityAsset, ref.asset_id)

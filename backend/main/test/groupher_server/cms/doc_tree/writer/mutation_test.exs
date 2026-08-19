@@ -263,7 +263,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           actor_id: user.id
         })
 
-      assert {:error, {:custom, "A trashed tree item with this title is pending restore."}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "A trashed tree item with this title is pending restore."
+              }} =
                CMS.DocTree.update_node(community, api_payload.node.id, %{
                  title: "Guides",
                  slug: "guides",
@@ -484,7 +488,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
 
-      assert {:error, {:custom, "base_revision is required"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                reason: :custom,
+                details: "base_revision is required"
+              }} =
                CMS.DocTree.create_group(community, %{
                  parent_node_id: root_doc_tab_node_id(community),
                  title: "One",
@@ -762,8 +770,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
     |> where([e], e.node_id == ^node_id)
     |> Repo.one()
     |> case do
-      %DocTreeEvent{} = event -> {:ok, event}
-      nil -> {:error, {:custom, "Tree create event not found."}}
+      %DocTreeEvent{} = event ->
+        {:ok, event}
+
+      nil ->
+        {:error, GroupherServer.ErrorCat.custom("Tree create event not found.")}
     end
   end
 
@@ -778,8 +789,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
     |> where([e], e.node_id == ^node_id)
     |> Repo.one()
     |> case do
-      %DocTreeEvent{} = event -> {:ok, event}
-      nil -> {:error, {:custom, "Tree move event not found."}}
+      %DocTreeEvent{} = event ->
+        {:ok, event}
+
+      nil ->
+        {:error, GroupherServer.ErrorCat.custom("Tree move event not found.")}
     end
   end
 

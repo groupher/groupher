@@ -35,7 +35,12 @@ defmodule GroupherServer.Test.CMS.Communities.Reader do
       |> CMS.Model.CommunityLifecycle.changeset(%{state: :suspended})
       |> Repo.update!()
 
-      assert {:error, {:not_exist, "Community"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :community},
+                reason: :not_exist,
+                details: "Community"
+              }} =
                CMS.Communities.fetch(community.slug, user2)
 
       assert Repo.get!(CMS.Model.Community, community.id).views == 0

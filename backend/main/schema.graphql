@@ -3385,10 +3385,11 @@ enum SortEnum {
 }
 
 enum ArticleOrderEnum {
-  UPVOTES
+  PUBLISH
   COMMENTS
   VIEWS
-  PUBLISH
+  UPVOTES
+  COLLECTS
 }
 
 enum ArticleCatEnum {

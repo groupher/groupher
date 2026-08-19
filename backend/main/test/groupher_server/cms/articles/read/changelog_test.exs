@@ -110,7 +110,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       assert changelog.id == changelog2.id
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
-      assert CMS.Interactions.State.read(changelog2, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(changelog2, user).viewer_has_viewed
     end
 
     test "read changelog should update views and meta viewed_user_list",
@@ -139,7 +139,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
         )
 
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
-      assert CMS.Interactions.State.read(changelog, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
@@ -155,8 +155,8 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, created} = ORM.find(Changelog, changelog.id)
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
       assert created.views == 1
-      assert CMS.Interactions.State.read(changelog, user).viewer_has_viewed
-      assert CMS.Interactions.State.read(changelog, user2).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(changelog, user2).viewer_has_viewed
     end
 
     test "read changelog should contains viewer_has_xxx state",
@@ -198,9 +198,9 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert not changelog.viewer_has_upvoted
       assert not changelog.viewer_has_reported
 
-      {:ok, _} = CMS.Articles.upvote(changelog, user)
+      {:ok, _} = CMS.Interactions.upvote(changelog, user)
       {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      {:ok, _} = CMS.Articles.collect(changelog, user)
+      {:ok, _} = CMS.Interactions.collect(changelog, user)
       {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
       {:ok, changelog} =
@@ -286,7 +286,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
         db_insert(:changelog, %{title: "last year", inserted_at: @last_year})
 
       {:error, reason} = CMS.Articles.undo_sink(changelog_last_year)
-      is_error?(reason, :undo_sink_old_article)
+      is_error?(reason, {{:cms, :article}, :undo_sink_old_article})
     end
   end
 

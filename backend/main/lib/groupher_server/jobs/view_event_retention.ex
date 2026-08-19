@@ -14,7 +14,7 @@ defmodule GroupherServer.Jobs.ViewEventRetention do
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
     _ = ViewEvents.delete_expired()
-    :telemetry.execute([:groupher, :cms, :reactions, :view_metrics], ViewEvents.metrics(), %{})
+    :telemetry.execute([:groupher, :cms, :interactions, :view_metrics], ViewEvents.metrics(), %{})
     :ok
   end
 end

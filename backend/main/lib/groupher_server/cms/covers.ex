@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Covers do
   """
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServerWeb.ErrorCat
   alias CMS.Model.{CoverBackground, CoverEditInfo}
   alias Helper.{ORM, T}
 
@@ -157,13 +158,13 @@ defmodule GroupherServer.CMS.Covers do
     cond do
       not Map.has_key?(attrs, :cover_edit_info) and
           (present?(cover_url) or present?(cover_url_dark)) ->
-        {:error, {:changeset, "cover url requires cover_edit_info"}}
+        {:error, ErrorCat.changeset("cover url requires cover_edit_info")}
 
       not is_nil(cover_edit_info) and not present?(cover_url) ->
-        {:error, {:changeset, "cover_edit_info requires cover_url"}}
+        {:error, ErrorCat.changeset("cover_edit_info requires cover_url")}
 
       is_nil(cover_edit_info) and (present?(cover_url) or present?(cover_url_dark)) ->
-        {:error, {:changeset, "cover url requires cover_edit_info"}}
+        {:error, ErrorCat.changeset("cover url requires cover_edit_info")}
 
       true ->
         :ok
@@ -177,7 +178,8 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  defp prepare_cover_edit_info(_, _), do: {:error, {:changeset, "cover_edit_info is invalid"}}
+  defp prepare_cover_edit_info(_, _),
+    do: {:error, ErrorCat.changeset("cover_edit_info is invalid")}
 
   defp prepare_cover_config(config, reusable_background_ids) when is_map(config) do
     with {:ok, background_id} <- resolve_background_id(config, reusable_background_ids),
@@ -193,7 +195,7 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  defp prepare_cover_config(_, _), do: {:error, {:changeset, "cover config is invalid"}}
+  defp prepare_cover_config(_, _), do: {:error, ErrorCat.changeset("cover config is invalid")}
 
   defp resolve_background_id(%{background_id: id}, reusable_background_ids) when not is_nil(id),
     do: resolve_reusable_background_id(id, reusable_background_ids)
@@ -204,7 +206,7 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  defp resolve_background_id(_, _), do: {:error, {:changeset, "background is required"}}
+  defp resolve_background_id(_, _), do: {:error, ErrorCat.changeset("background is required")}
 
   defp resolve_original_background_id(%{original_background_id: id}, reusable_background_ids)
        when not is_nil(id),
@@ -222,7 +224,7 @@ defmodule GroupherServer.CMS.Covers do
   defp resolve_reusable_background_id(id, reusable_background_ids) do
     case MapSet.member?(reusable_background_ids, to_string(id)) do
       true -> {:ok, id}
-      false -> {:error, {:changeset, "background is invalid"}}
+      false -> {:error, ErrorCat.changeset("background is invalid")}
     end
   end
 

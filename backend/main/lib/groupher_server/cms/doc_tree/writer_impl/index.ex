@@ -260,6 +260,4 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
          |> where([n], n.parent_node_id == ^parent_node_id)
          |> where([n], n.type in [:group, :page, :link])
 
-  defp where_sibling_scope(query, nil, nil),
-    do: where(query, [n], is_nil(n.parent_node_id))
 end

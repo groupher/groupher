@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
   alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
   alias Helper.Constant
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   @doc "Compiles Article or Doc visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), ArticleContext.t() | DocContext.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context)
       when (is_struct(context, ArticleContext) or is_struct(context, DocContext)) and
@@ -49,11 +50,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  def scope(_query, _actor, _action, _context), do: {:error, :scope_context_missing}
+  def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.scope_context_missing()}
 
   @doc false
   @spec moderation_diagnostic_scope(Ecto.Queryable.t(), atom()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   def moderation_diagnostic_scope(queryable, thread) do
     query = Ecto.Queryable.to_query(queryable)
     branch_id = if thread == :doc, do: :main, else: nil
@@ -63,7 +64,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
          %Ecto.Query{} = query <- base_scope(query, thread, :public, branch_id) do
       where(query, [article, ...], article.pending == ^@audit_illegal)
     else
-      false -> {:error, :scope_root_mismatch}
+      false -> {:error, ErrorCat.scope_root_mismatch()}
       {:error, _reason} = error -> error
     end
   end
@@ -116,7 +117,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   defp doc_branch_scope(_query, _branch_id, _policy_mode),
-    do: {:error, :scope_context_missing}
+    do: {:error, ErrorCat.scope_context_missing()}
 
   defp policy_mode(%ArticleContext{policy_mode: mode}, :read_draft)
        when mode in @management_policy_modes,
@@ -134,12 +135,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
        when mode in [:public | @management_policy_modes],
        do: {:ok, mode}
 
-  defp policy_mode(_context, _action), do: {:error, :scope_context_missing}
+  defp policy_mode(_context, _action), do: {:error, ErrorCat.scope_context_missing()}
 
   defp stage(%ArticleContext{stage: :draft}, :read_draft), do: {:ok, :draft}
   defp stage(%DocContext{stage: :draft}, :read_draft), do: {:ok, :draft}
-  defp stage(%ArticleContext{}, :read_draft), do: {:error, :scope_context_missing}
-  defp stage(%DocContext{}, :read_draft), do: {:error, :scope_context_missing}
+  defp stage(%ArticleContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
+  defp stage(%DocContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
 
   defp stage(%ArticleContext{stage: stage}, _action) when stage in [:public, :draft],
     do: {:ok, stage}
@@ -147,13 +148,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp stage(%DocContext{stage: stage}, _action) when stage in [:public, :draft],
     do: {:ok, stage}
 
-  defp stage(_context, _action), do: {:error, :scope_context_missing}
+  defp stage(_context, _action), do: {:error, ErrorCat.scope_context_missing()}
 
   defp branch_id(%DocContext{branch_id: branch_id}, :doc) when is_integer(branch_id),
     do: {:ok, branch_id}
 
   defp branch_id(%DocContext{branch_policy: :main}, :doc), do: {:ok, :main}
-  defp branch_id(%DocContext{}, :doc), do: {:error, :scope_context_missing}
+  defp branch_id(%DocContext{}, :doc), do: {:error, ErrorCat.scope_context_missing()}
   defp branch_id(%ArticleContext{}, _thread), do: {:ok, nil}
 
   defp apply_stage(query, :public, actor, _policy_mode, context) do
@@ -168,7 +169,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   end
 
   defp apply_stage(_query, :draft, _actor, :public, _context),
-    do: {:error, :scope_policy_actor_mismatch}
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
 
   defp apply_stage(query, :draft, _actor, _policy_mode, _context) do
     {:ok,
@@ -226,7 +227,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
          true <- expected_schema == schema do
       {:ok, thread}
     else
-      _ -> {:error, :scope_root_mismatch}
+      _ -> {:error, ErrorCat.scope_root_mismatch()}
     end
   end
 

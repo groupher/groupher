@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   """
 
   alias GroupherServer.CMS.Artiment.PlateJSON
+  alias GroupherServer.CMS.Comments.ErrorCat
 
   @digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
@@ -27,14 +28,14 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
 
   Returns the raw `json`, the sanitized-by-construction `html`, and a plain-text
   `digest` truncated to the configured digest length. Non-string input returns
-  `{:error, :invalid_body}`.
+  `{:error, %GroupherServer.ErrorCat.Error{reason: :invalid_body}}`.
 
   ## Examples
 
       {:ok, payload} = CMS.Comments.BodyCodec.parse(body)
 
       CMS.Comments.BodyCodec.parse(nil)
-      #=> {:error, :invalid_body}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_body}}
 
   """
   @spec parse(String.t()) :: {:ok, payload()} | {:error, term()}
@@ -48,10 +49,12 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
          html: Enum.map_join(ast, "", &block_to_html/1),
          digest: String.slice(plain_text, 0, @digest_length)
        }}
+    else
+      {:error, _} -> {:error, ErrorCat.invalid_body()}
     end
   end
 
-  def parse(_body), do: {:error, :invalid_body}
+  def parse(_body), do: {:error, ErrorCat.invalid_body()}
 
   defp plain_blocks(nodes), do: Enum.map(nodes, &block_to_plain/1)
 

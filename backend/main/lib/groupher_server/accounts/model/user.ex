@@ -77,6 +77,9 @@ defmodule GroupherServer.Accounts.Model.User do
     # Ta 关注了你
     field(:viewer_been_followed, :boolean, default: false, virtual: true)
 
+    # Request-scoped passport loaded for authorization; never persisted.
+    field(:cur_passport, :map, virtual: true)
+
     field(:followings_count, :integer, default: 0)
     field(:followers_count, :integer, default: 0)
 

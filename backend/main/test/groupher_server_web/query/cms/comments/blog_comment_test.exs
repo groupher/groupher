@@ -58,8 +58,8 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
     {:ok, comment} =
       CMS.Comments.create_comment(community, thread, blog.inner_id, mock_comment(), user)
 
-    {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
-    {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
+    {:ok, _} = CMS.Interactions.upvote(comment, user)
+    {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
 
     variables = %{comment: comment_path(community, blog, :blog, comment)}
     results = user_conn |> gq_query(@query, variables)
@@ -483,9 +483,9 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       upvote_comment = all_comment |> Enum.at(3)
       upvote_comment2 = all_comment |> Enum.at(4)
-      {:ok, _} = CMS.Comments.upvote_comment(upvote_comment.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(upvote_comment2.id, user)
-      {:ok, _} = CMS.Comments.upvote_comment(upvote_comment2.id, user2)
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment, user)
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user)
+      {:ok, _} = CMS.Interactions.upvote(upvote_comment2, user2)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
@@ -523,7 +523,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
         end)
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
-      {:ok, _} = CMS.Comments.upvote_comment(random_comment.id, author_user)
+      {:ok, _} = CMS.Interactions.upvote(random_comment, author_user)
 
       {:ok, author_comment} =
         CMS.Comments.create_comment(
@@ -534,7 +534,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
           author_user
         )
 
-      {:ok, _} = CMS.Comments.upvote_comment(author_comment.id, author_user)
+      {:ok, _} = CMS.Interactions.upvote(author_comment, author_user)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
@@ -580,9 +580,9 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       comment = all_comment |> Enum.at(0)
       comment2 = all_comment |> Enum.at(1)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user2)
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :beer, user2)
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(comment2, :beer, user2)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
@@ -645,8 +645,8 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       comment = all_comment |> Enum.at(0)
       comment2 = all_comment |> Enum.at(1)
 
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
-      {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :downvote, user2)
+      {:ok, _} = CMS.Interactions.emotion(comment, :downvote, user)
+      {:ok, _} = CMS.Interactions.emotion(comment2, :downvote, user2)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
@@ -682,7 +682,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
 
       random_comment = all_comments |> Enum.at(Enum.random(0..(total_count - 1)))
 
-      {:ok, _} = CMS.Comments.upvote_comment(random_comment.id, user)
+      {:ok, _} = CMS.Interactions.upvote(random_comment, user)
 
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},

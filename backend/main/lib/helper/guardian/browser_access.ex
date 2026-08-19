@@ -15,6 +15,8 @@ defmodule Helper.Guardian.BrowserAccess do
 
   use Guardian, otp_app: :groupher_server
 
+  alias GroupherServer.Accounts.Profiles.ErrorCat
+
   @access_ttl_seconds 30 * 60
   @issuer "groupher:phoenix"
   @audience "phoenix:browser-api"
@@ -32,7 +34,7 @@ defmodule Helper.Guardian.BrowserAccess do
     ttl = min(@access_ttl_seconds, remaining)
 
     if ttl <= 0 do
-      {:error, :session_expired}
+      {:error, ErrorCat.session_expired()}
     else
       encode_and_sign(
         source,
@@ -52,7 +54,7 @@ defmodule Helper.Guardian.BrowserAccess do
          true <- valid_claims?(claims) do
       {:ok, claims}
     else
-      false -> {:error, :invalid_browser_access_claims}
+      false -> {:error, ErrorCat.invalid_browser_access_claims()}
       error -> error
     end
   end

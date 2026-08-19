@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
 
   alias GroupherServer.Repo
   alias GroupherServer.CMS.Model.{DocBranch, DocLifecycle}
+  alias GroupherServer.CMS.Articles.ErrorCat
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -35,7 +36,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
       #=> {:ok, :published}
 
       Lifecycle.state(community.id, branch.id, "missing")
-      #=> {:error, :lifecycle_not_found}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_not_found}}
 
   """
   def state(community_id, branch_id, article_hash_id) do
@@ -45,7 +46,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
            article_hash_id: article_hash_id
          ) do
       %DocLifecycle{state: state} -> {:ok, state}
-      nil -> {:error, :lifecycle_not_found}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
       |> Repo.one()
 
     case lifecycle do
-      nil -> {:error, :lifecycle_not_found}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
       %DocLifecycle{} = lifecycle -> transition(lifecycle, state)
     end
   end
@@ -98,7 +99,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
       })
       |> Repo.update()
     else
-      {:error, :lifecycle_state_conflict}
+      {:error, ErrorCat.lifecycle_state_conflict()}
     end
   end
 

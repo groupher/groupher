@@ -15,15 +15,17 @@ defmodule GroupherServer.Test.CMS.Articles.Document do
     end
 
     test "returns custom error shape when document already exists", ~m(doc)a do
-      assert {:error, {:custom, "document already exists"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{reason: :custom, details: "document already exists"}} =
                CMS.Articles.Document.create(doc, %{body_bag: mock_body_bag(@plate_body)})
 
-      assert {:error, {:custom, "document already exists"}} =
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{reason: :custom, details: "document already exists"}} =
                CMS.Articles.Document.create_doc(doc, %{body_bag: mock_body_bag(@plate_body)})
     end
 
     test "returns invalid article errors" do
-      assert {:error, {:custom, "invalid article"}} =
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid article"}} =
                CMS.Articles.Document.create(%{}, %{body_bag: mock_body_bag(@plate_body)})
     end
   end

@@ -5,7 +5,7 @@ defmodule Helper.ORM do
   ## Function Groups
 
   - Query and pagination:
-    `paginator/2`, `cursor_paginator/1`, `embeds_paginator/2`,
+    `paginator/2`, `embeds_paginator/2`,
     `find/2`, `find/3`, `find_by/2`, `find_by/3`, `find_all/2`, `count/1`, `count/2`
   - Create and update:
     `create/2`, `update/2`, `update/3`, `find_update/3`, `update_by/3`,
@@ -35,10 +35,10 @@ defmodule Helper.ORM do
   import Helper.ErrorHandler
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.ErrorCat
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
   alias Accounts.Model.User
-  alias CMS.Interactions.State
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
@@ -123,18 +123,6 @@ defmodule Helper.ORM do
     result |> Map.put(:total_count, total_count) |> Map.drop([:total_entries])
   end
 
-  @doc """
-  Returns cursor-based pagination result.
-
-  ## Examples
-
-      iex> ORM.cursor_paginator(Post)
-      {:ok, %{entries: [...], metadata: %{after: _cursor}}}
-  """
-  def cursor_paginator(queryable) do
-    queryable |> Quarto.paginate([limit: 10], Repo)
-  end
-
   # NOTE: should have limit length for list, otherwise it will cause mem issues
   @doc """
   Paginates a normal list (commonly used for embeds).
@@ -168,7 +156,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1, preload: :author)
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   def find(queryable, id, preload: preload) do
     queryable
@@ -186,7 +174,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1)
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   @spec find(Ecto.Queryable.t(), T.id()) :: {:ok, any()} | {:error, T.error()}
   def find(queryable, id) do
@@ -204,14 +192,18 @@ defmodule Helper.ORM do
       {:ok, %User{}}
 
       iex> ORM.find_by(User, login: "missing")
-      {:error, {:not_exist, _}}
+      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
   """
   def find_by(queryable, clauses) do
     queryable
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
+        {:error,
+         ErrorCat.custom(%{
+           reason: :not_exist,
+           message: not_found_formatter(queryable, clauses)
+         })}
 
       result ->
         {:ok, result}
@@ -232,7 +224,11 @@ defmodule Helper.ORM do
     |> Repo.get_by(clauses)
     |> case do
       nil ->
-        {:error, {:not_exist, not_found_formatter(queryable, clauses)}}
+        {:error,
+         ErrorCat.custom(%{
+           reason: :not_exist,
+           message: not_found_formatter(queryable, clauses)
+         })}
 
       result ->
         {:ok, result}
@@ -702,7 +698,7 @@ defmodule Helper.ORM do
 
   defp export_article_info(thread, article) do
     author = article.author.user
-    counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+    counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
     %{
       thread: thread,

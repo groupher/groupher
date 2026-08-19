@@ -20,7 +20,7 @@ export type ArticleDocumentAssetUsage = 'ATTACHMENT' | 'COVER' | 'COVER_DARK' | 
 
 export type ArticleLifecycleState = 'ARCHIVED' | 'DELETED' | 'DESTROY' | 'DRAFT_ONLY' | 'PUBLISHED'
 
-export type ArticleOrderEnum = 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
+export type ArticleOrderEnum = 'COLLECTS' | 'COMMENTS' | 'PUBLISH' | 'UPVOTES' | 'VIEWS'
 
 export type ArticlePathInput = {
   community: string

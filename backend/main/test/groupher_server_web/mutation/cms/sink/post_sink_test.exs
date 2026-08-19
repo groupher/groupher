@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              |> mutation_error?(
                S.Article.m(:sink_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
 
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              |> mutation_error?(
                S.Article.m(:undo_sink_article, :post),
                variables,
-               ecode(:account_login)
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
              )
     end
   end

@@ -7,7 +7,7 @@
 - [Gate V2：统一读取范围与操作准入](./gate_v2.md)
 - [Gate V3：Article Core 与 Doc Release 边界](./gate_v3.md)
 - [Community Lifecycle](./lifecycle.md)
-- [Artiment reactions v2](../artiment/reactions_v2.md)
+- [Artiment Interaction V2](../artiment/interaction_v2.md)
 
 ## 1. 结论
 
@@ -182,16 +182,16 @@ Gate.access_check
 
 建议 action：
 
-| action | actor | resource | 说明 |
-| --- | --- | --- | --- |
-| `:report` | 登录用户 | Account / Article / Comment | 提交自己的举报 |
-| `:withdraw_report` | reporter | ReportFact | 只撤销自己的 active fact |
-| `:read_own_report` | reporter | ReportFact | 查看自己的举报状态 |
-| `:read_review_queue` | moderator / operations | ReviewCase query | 读取被授权社区的审核队列 |
-| `:claim_review` | moderator | ReviewCase | claim 一张 open case |
-| `:release_review` | claimant / operations | ReviewCase | 释放 claim |
-| `:resolve_review` | claimant / operations | ReviewCase | 写正式审核结论 |
-| `:reopen_review` | moderator / operations | ReviewCase | 按策略重开已关闭 case |
+| action               | actor                  | resource                    | 说明                     |
+| -------------------- | ---------------------- | --------------------------- | ------------------------ |
+| `:report`            | 登录用户               | Account / Article / Comment | 提交自己的举报           |
+| `:withdraw_report`   | reporter               | ReportFact                  | 只撤销自己的 active fact |
+| `:read_own_report`   | reporter               | ReportFact                  | 查看自己的举报状态       |
+| `:read_review_queue` | moderator / operations | ReviewCase query            | 读取被授权社区的审核队列 |
+| `:claim_review`      | moderator              | ReviewCase                  | claim 一张 open case     |
+| `:release_review`    | claimant / operations  | ReviewCase                  | 释放 claim               |
+| `:resolve_review`    | claimant / operations  | ReviewCase                  | 写正式审核结论           |
+| `:reopen_review`     | moderator / operations | ReviewCase                  | 按策略重开已关闭 case    |
 
 Reporter 不能通过普通 Interaction response 读取其他 reporter、审核内部 note、risk score 或处理人。普通 public list 不能打开 moderation surface。
 

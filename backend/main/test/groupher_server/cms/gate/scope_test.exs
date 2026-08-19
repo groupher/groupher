@@ -3,8 +3,6 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  require CMS.Const
-
   alias CMS.Model.{
     ArticleDocument,
     Blog,
@@ -21,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   alias CMS.Gate.Context.Scope.Document, as: DocumentScope
 
   test "Comment all-thread scope is constructed only by all_public" do
-    assert_raise FunctionClauseError, fn -> CommentScope.for_thread(:all) end
+    assert_raise FunctionClauseError, fn -> apply(CommentScope, :for_thread, [:all]) end
 
     assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
   end
@@ -58,10 +56,10 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   end
 
   test "Comment rejects an unknown thread and Document requires a thread" do
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Comment, nil, :read, %{thread: :unknown})
 
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, nil, :read, %{})
   end
 
@@ -87,10 +85,10 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     article_query = from(post in Post, join: community in assoc(post, :community))
     comment_query = from(comment in Comment, join: community in assoc(comment, :community))
 
-    assert {:error, :scope_binding_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(article_query, nil, :read, ArticleScope.public(:post))
 
-    assert {:error, :scope_binding_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(comment_query, nil, :read, CommentScope.all_public())
   end
 

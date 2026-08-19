@@ -17,11 +17,13 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias Helper.{Multi, ORM, T}
 
   alias CMS.FrontDesk
   alias CMS.Gate
   alias CMS.Model.{Comment, PinnedComment}
+  alias CMS.Comments.ErrorCat
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -33,11 +35,11 @@ defmodule GroupherServer.CMS.Comments.States do
   ## Examples
 
       CMS.Comments.States.pin(comment_id)
-      #=> {:error, :actor_required}
+      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :account_login}}
 
   """
   @spec pin(T.id()) :: T.domain_res(Comment.t())
-  def pin(_comment_id), do: {:error, :actor_required}
+  def pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def pin(comment_id, %User{} = user) do
@@ -49,7 +51,7 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   @spec undo_pin(T.id()) :: T.domain_res(Comment.t())
-  def undo_pin(_comment_id), do: {:error, :actor_required}
+  def undo_pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
   @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_pin(comment_id, %User{} = user) do
@@ -72,6 +74,20 @@ defmodule GroupherServer.CMS.Comments.States do
   def unfold(comment_id, %User{} = _user) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
       do_fold_comment(comment, false)
+    end
+  end
+
+  @doc false
+  @spec fold_for_report(Comment.t()) :: T.domain_res(Comment.t())
+  def fold_for_report(%Comment{} = comment) do
+    with {:ok, folded_comment} <- ORM.update(comment, %{is_folded: true}),
+         {:ok, thread} <- FrontDesk.thread_of(comment),
+         {:ok, article} <- FrontDesk.article_of(comment),
+         {:ok, %{total_count: total_count}} <-
+           CMS.Comments.List.paged_folded_comments(thread, article.id, %{page: 1, size: 1}),
+         {:ok, _article} <-
+           ORM.update_meta(article, Map.put(article.meta, :folded_comment_count, total_count)) do
+      {:ok, folded_comment}
     end
   end
 
@@ -135,7 +151,7 @@ defmodule GroupherServer.CMS.Comments.States do
   defp check_pined_comments_count(pined_comments_query) do
     case ORM.count(pined_comments_query) do
       {:ok, pined_comments_count} when pined_comments_count >= @pinned_comment_limit ->
-        {:error, {:comment_pin_limit, @pinned_comment_limit}}
+        {:error, ErrorCat.comment_pin_limit(@pinned_comment_limit)}
 
       {:ok, _} ->
         {:ok, :pass}
@@ -147,11 +163,11 @@ defmodule GroupherServer.CMS.Comments.States do
       {:ok, _record} ->
         case is_pinned do
           true ->
-            {:error, {:already_pinned, comment}}
+            {:error, ErrorCat.already_pinned(comment)}
 
           false ->
             case ORM.update(comment, %{is_pinned: true}) do
-              {:ok, updated} -> {:error, {:already_pinned, updated}}
+              {:ok, updated} -> {:error, ErrorCat.already_pinned(updated)}
               {:error, reason} -> {:error, reason}
             end
         end
@@ -163,11 +179,18 @@ defmodule GroupherServer.CMS.Comments.States do
 
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
-  defp result({:error, {:already_pinned, result}}), do: {:ok, result}
 
-  defp result({:error, :update_comment_flag, _result, _steps}), do: {:error, :update_fails}
-  defp result({:error, :add_pined_comment, _result, _steps}), do: {:error, :create_fails}
-  defp result({:error, :remove_pined_comment, _result, _steps}), do: {:error, :delete_fails}
+  defp result({:error, %GroupherServer.ErrorCat.Error{reason: :already_pinned, details: result}}),
+    do: {:ok, result}
+
+  defp result({:error, :update_comment_flag, _result, _steps}),
+    do: {:error, ErrorCat.update_fails()}
+
+  defp result({:error, :add_pined_comment, _result, _steps}),
+    do: {:error, ErrorCat.create_fails()}
+
+  defp result({:error, :remove_pined_comment, _result, _steps}),
+    do: {:error, ErrorCat.delete_fails()}
 
   defp result({:error, _, result, _steps}), do: {:error, result}
 end

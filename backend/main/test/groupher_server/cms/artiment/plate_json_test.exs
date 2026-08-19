@@ -13,7 +13,11 @@ defmodule GroupherServer.Test.CMS.Artiment.PlateJSON do
 
   test "rejects malformed JSON and non-list roots" do
     assert {:error, %Jason.DecodeError{}} = PlateJSON.decode("not-json")
-    assert {:error, :invalid_plate_json} = PlateJSON.decode(~s({"type":"p"}))
-    assert {:error, :invalid_body} = PlateJSON.decode(nil)
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_plate_json}} =
+             PlateJSON.decode(~s({"type":"p"}))
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_body}} =
+             PlateJSON.decode(nil)
   end
 end

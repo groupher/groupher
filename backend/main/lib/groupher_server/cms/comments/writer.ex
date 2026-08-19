@@ -14,17 +14,18 @@ defmodule GroupherServer.CMS.Comments.Writer do
   import Ecto.Query, warn: false
 
   import Helper.Utils, only: [done: 1]
-  import Helper.ErrorCode
-
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
 
   alias CMS.{FrontDesk, Gate}
+  alias CMS.Comments.ErrorCat
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Gate.Decision
 
-  alias CMS.Articles.Lock
+  alias CMS.Articles.MutationLock
   alias CMS.Comments.{BodyCodec, Lifecycle, Numbering, Participants, Replies, States}
   alias CMS.Events
   alias CMS.Artiment.Enums
@@ -76,7 +77,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp do_create(thread, article, body, %User{} = user, info) do
     article = Repo.preload(article, [[author: :user], :community])
 
-    Lock.run_for_article(article.community, thread, article, fn ->
+    MutationLock.with_article(article.community, article, fn ->
       create_unlocked(thread, article, body, user, info)
     end)
   end
@@ -120,13 +121,10 @@ defmodule GroupherServer.CMS.Comments.Writer do
       |> sync_article_metrics(article)
     else
       {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
-        raise_error(:article_comments_locked, "this article is forbid comment")
-
-      {:error, :article_comments_locked} ->
-        raise_error(:article_comments_locked, "this article is forbid comment")
+        article_comments_locked("this article is forbid comment")
 
       {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_reason(decision)}
+        {:error, Decision.primary_error(decision)}
 
       error ->
         error
@@ -142,15 +140,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
            FrontDesk.article_of(replying_comment, preload: [[author: :user], :community]),
          {:ok, info} <- match(thread),
          parent_comment <- Replies.root_comment(replying_comment) do
-      Lock.run_for_article(article.community, thread, article, fn ->
+      MutationLock.with_article(article.community, article, fn ->
         reply_unlocked(thread, article, body, user, info, replying_comment, parent_comment)
       end)
+      |> normalize_reply_result()
     else
       {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
-        raise_error(:article_comments_locked, "this article is forbid comment")
-
-      {:error, :article_comments_locked} ->
-        raise_error(:article_comments_locked, "this article is forbid comment")
+        article_comments_locked("this article is forbid comment")
 
       {:error, error} ->
         {:error, error}
@@ -214,11 +210,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
       |> result()
       |> sync_article_metrics(article)
     else
-      {:error, :article_comments_locked} ->
-        raise_error(:article_comments_locked, "this article is forbid comment")
-
       {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_reason(decision)}
+        {:error, Decision.primary_error(decision)}
 
       error ->
         error
@@ -226,7 +219,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   @spec update(Comment.t(), String.t()) :: T.domain_res(Comment.t())
-  def update(%Comment{}, _body), do: {:error, :actor_required}
+  def update(%Comment{}, _body), do: {:error, AuthErrorCat.account_login()}
 
   @spec update(Comment.t(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def update(%Comment{} = comment, body, %User{} = user) do
@@ -236,7 +229,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   @spec delete(Comment.t()) :: T.domain_res(Comment.t())
-  def delete(%Comment{}), do: {:error, :actor_required}
+  def delete(%Comment{}), do: {:error, AuthErrorCat.account_login()}
 
   @spec delete(Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def delete(%Comment{} = comment, %User{} = user) do
@@ -286,7 +279,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   defp do_delete(%{is_archived: true}),
-    do: raise_error(:archived, "comment is archived, can not be edit or delete")
+    do: archived("comment is archived, can not be edit or delete")
 
   defp do_delete(%Comment{} = comment) do
     with {:ok, article} <- FrontDesk.article_of(comment) do
@@ -356,7 +349,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
         |> result()
 
       false ->
-        raise_error(:require_questioner, "oops, questioner only")
+        require_questioner("oops, questioner only")
     end
   end
 
@@ -372,7 +365,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   @spec archive_comments() :: T.domain_res(term())
   def archive_comments do
-    {:error, :comment_archive_retired}
+    {:error, ErrorCat.comment_archive_retired()}
   end
 
   @spec batch_update_question_flag(Post.t(), boolean()) :: T.domain_res(term())
@@ -511,8 +504,28 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}
 
   defp result({:error, :create_comment, result, _steps}) do
-    raise_error(:create_comment, result)
+    create_comment(result)
   end
 
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp article_comments_locked(details),
+    do: {:error, GateErrorCat.article_comments_locked(details)}
+
+  defp normalize_reply_result(
+         {:error, %GroupherServer.ErrorCat.Error{reason: :article_comments_locked}}
+       ),
+       do: article_comments_locked("this article is forbid comment")
+
+  defp normalize_reply_result({:error, %Decision{primary: %{reason: :article_comments_locked}}}),
+    do: article_comments_locked("this article is forbid comment")
+
+  defp normalize_reply_result({:error, %Decision{} = decision}),
+    do: {:error, Decision.primary_error(decision)}
+
+  defp normalize_reply_result(result), do: result
+
+  defp archived(details), do: {:error, ErrorCat.archived(details)}
+  defp require_questioner(details), do: {:error, ErrorCat.require_questioner(details)}
+  defp create_comment(details), do: {:error, ErrorCat.create_comment(details)}
 end

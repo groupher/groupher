@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
   alias Helper.Constant
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   @doc "Compiles thread-aware Comment visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with :ok <- validate_thread(context),
@@ -45,18 +46,18 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     end
   end
 
-  def scope(_query, _actor, _action, _context), do: {:error, :unknown_action}
+  def scope(_query, _actor, _action, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp validate_thread(%{thread: :all}), do: :ok
 
   defp validate_thread(%{thread: :doc, branch_policy: :main}), do: :ok
 
-  defp validate_thread(%{thread: :doc}), do: {:error, :scope_context_missing}
+  defp validate_thread(%{thread: :doc}), do: {:error, ErrorCat.scope_context_missing()}
 
   defp validate_thread(%{thread: thread}) do
     case ArticleSchema.fetch(thread) do
       {:ok, _schema} -> :ok
-      {:error, _reason} -> {:error, :scope_context_missing}
+      {:error, _reason} -> {:error, ErrorCat.scope_context_missing()}
     end
   end
 

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   alias CMS.Model.{Comment, PinnedComment}
   alias CMS.Comments.Replies
-  alias CMS.Interactions.State
+  alias CMS.Comments.InteractionResponse
   alias Helper.{Later, ORM, QueryBuilder, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
@@ -229,11 +229,10 @@ defmodule GroupherServer.CMS.Comments.List do
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
       |> then(fn paged ->
-        Map.put(
-          paged,
-          :entries,
-          State.read(:comment, paged.entries, user, article_author_id: article_author_id)
-        )
+        case InteractionResponse.many(paged.entries, user, article_author_id: article_author_id) do
+          {:ok, entries} -> Map.put(paged, :entries, entries)
+          {:error, _reason} = error -> error
+        end
       end)
       |> done()
     end
@@ -261,13 +260,12 @@ defmodule GroupherServer.CMS.Comments.List do
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
       |> then(fn paged ->
-        Map.put(
-          paged,
-          :entries,
-          State.read(:comment, paged.entries, user,
-            article_author_id: article_author_id(root_comment)
-          )
-        )
+        case InteractionResponse.many(paged.entries, user,
+               article_author_id: article_author_id(root_comment)
+             ) do
+          {:ok, entries} -> Map.put(paged, :entries, entries)
+          {:error, _reason} = error -> error
+        end
       end)
       |> done()
     end

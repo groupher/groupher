@@ -15,8 +15,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, ArticleDocumentAssetRef, Community, CommunityAsset}
   alias Helper.{ORM, T}
@@ -73,7 +74,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
       #=> {:ok, %CommunityAsset{status: :deleted}}
 
       Writer.delete(community, referenced_asset.id)
-      #=> {:error, {:custom, "asset is still referenced"}}
+      #=> {:error, ErrorCat.custom("asset is still referenced")}
 
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
@@ -88,7 +89,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
              }) do
         asset
       else
-        true -> Repo.rollback({:custom, "asset is still referenced"})
+        true -> Repo.rollback(ErrorCat.custom("asset is still referenced"))
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
@@ -191,8 +192,12 @@ defmodule GroupherServer.CMS.Assets.Writer do
         end
       end)
     else
-      false -> {:error, {:custom, "Article asset refs can only copy within one thread"}}
-      error -> error
+      false ->
+        {:error,
+         GroupherServer.ErrorCat.custom("Article asset refs can only copy within one thread")}
+
+      error ->
+        error
     end
   end
 
@@ -373,7 +378,8 @@ defmodule GroupherServer.CMS.Assets.Writer do
     end
   end
 
-  defp create_ref(_, _, _, _, _), do: {:error, {:custom, "asset ref is invalid"}}
+  defp create_ref(_, _, _, _, _),
+    do: {:error, GroupherServer.ErrorCat.custom("asset ref is invalid")}
 
   defp resolve_asset(community_id, input, user) do
     asset_id = get_attr(input, :asset_id)
@@ -381,7 +387,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
     cond do
       not is_nil(asset_id) and is_map(asset_attrs) ->
-        {:error, {:custom, "asset_id and asset are mutually exclusive"}}
+        {:error, GroupherServer.ErrorCat.custom("asset_id and asset are mutually exclusive")}
 
       not is_nil(asset_id) ->
         find_active_asset_for_update(community_id, asset_id)
@@ -392,7 +398,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
         end
 
       true ->
-        {:error, {:custom, "asset is required"}}
+        {:error, GroupherServer.ErrorCat.custom("asset is required")}
     end
   end
 
@@ -402,7 +408,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "asset not found"}}
+      nil -> {:error, AssetErrorCat.not_exist("asset not found")}
       asset -> {:ok, asset}
     end
   end
@@ -490,7 +496,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
-      nil -> {:error, {:not_exist, "article document not found"}}
+      nil -> {:error, AssetErrorCat.not_exist("article document not found")}
       document -> {:ok, document}
     end
   end
@@ -533,19 +539,19 @@ defmodule GroupherServer.CMS.Assets.Writer do
     @all_usages
     |> Enum.find(&(to_string(&1) == usage))
     |> case do
-      nil -> {:error, {:custom, "asset usage is invalid"}}
+      nil -> {:error, GroupherServer.ErrorCat.custom("asset usage is invalid")}
       usage -> {:ok, usage}
     end
   end
 
-  defp normalize_usage(_), do: {:error, {:custom, "asset usage is invalid"}}
+  defp normalize_usage(_), do: {:error, GroupherServer.ErrorCat.custom("asset usage is invalid")}
 
   defp normalize_body_usage(usage) do
     with {:ok, usage} <- normalize_usage(usage),
          true <- usage in @body_usages do
       {:ok, usage}
     else
-      false -> {:error, {:custom, "asset usage is invalid"}}
+      false -> {:error, GroupherServer.ErrorCat.custom("asset usage is invalid")}
       {:error, _} = error -> error
     end
   end

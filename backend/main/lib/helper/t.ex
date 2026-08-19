@@ -14,7 +14,7 @@ defmodule Helper.T do
   alias Accounts.Model.User
   alias CMS.Model.{Blog, Changelog, Doc, Post}
 
-  @type error_reason :: atom()
+  @type error_reason :: atom() | GroupherServer.ErrorCat.Error.t()
   @type error_meta :: term()
   @type error :: error_reason() | {error_reason(), error_meta()}
 

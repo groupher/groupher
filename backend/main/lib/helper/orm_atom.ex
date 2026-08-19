@@ -14,6 +14,7 @@ defmodule Helper.ORMAtom do
   import Helper.Utils, only: [strip_struct: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.ErrorCat
 
   alias Accounts.Model.User
   alias CMS.Model.{Comment, Community}
@@ -23,7 +24,7 @@ defmodule Helper.ORMAtom do
   @default_community_meta CMS.Model.Embeds.CommunityMeta.default_meta()
   @default_comment_meta CMS.Model.Embeds.CommentMeta.default_meta()
 
-  defp update_error(message), do: {:error, {:update_fails, message}}
+  defp update_error(message), do: {:error, ErrorCat.custom(message)}
 
   @doc """
   Increments a top-level integer field by `1`.
@@ -107,7 +108,7 @@ defmodule Helper.ORMAtom do
                 {:ok, updated_queryable, new_val}
 
               {0, []} ->
-                {:error, :not_found}
+                {:error, ErrorCat.custom(%{reason: :not_found})}
             end
           end
         end
@@ -165,7 +166,7 @@ defmodule Helper.ORMAtom do
 
   def update_meta(%{} = changes, %{} = _queryable) when not is_struct(changes) do
     # 处理 map 形式的 queryable（实际上是 changes），保持向后兼容
-    {:error, :invalid_queryable}
+    {:error, ErrorCat.custom(%{reason: :invalid_queryable})}
   end
 
   def update_meta(queryable, changes) when is_map(changes) do
@@ -262,14 +263,18 @@ defmodule Helper.ORMAtom do
       {:ok, _type} ->
         update_error("schema field #{field} must be integer")
 
-      {:error, :field_not_found} ->
+      {:error,
+       %ErrorCat.Error{
+         reason: :custom,
+         details: %{reason: :field_not_found}
+       }} ->
         update_error("schema field #{field} does not exist")
     end
   end
 
   defp schema_field_type(schema_module, field) do
     case schema_module.__schema__(:type, field) do
-      nil -> {:error, :field_not_found}
+      nil -> {:error, ErrorCat.custom(%{reason: :field_not_found})}
       type -> {:ok, type}
     end
   end
@@ -316,7 +321,7 @@ defmodule Helper.ORMAtom do
   defp get_primary_key(schema_module) do
     case schema_module.__schema__(:primary_key) do
       [key] -> {:ok, key}
-      _ -> {:error, :no_primary_key}
+      _ -> {:error, ErrorCat.custom(%{reason: :no_primary_key})}
     end
   end
 
@@ -379,7 +384,7 @@ defmodule Helper.ORMAtom do
         {:ok, record}
 
       {0, []} ->
-        {:error, :not_found}
+        {:error, ErrorCat.custom(%{reason: :not_found})}
     end
   end
 

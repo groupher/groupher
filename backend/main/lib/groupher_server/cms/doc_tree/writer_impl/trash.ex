@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.Lock
+  alias CMS.Articles.MutationLock
   alias CMS.Docs.Trash
   alias CMS.DocTree.Events
   alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
-    Lock.run_doc_many(community, branch.id, doc_ids, fn ->
+    MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
       with {:ok, action} <-
              Trash.create_action(community, actor, %{
                root_type: "doc_tree_#{draft_root.type}",
@@ -188,7 +188,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
           {count, _items} ->
             {:error,
-             {:custom, "Docs Tree Trash stored #{count} of #{length(rows)} expected snapshots"}}
+             GroupherServer.ErrorCat.custom(
+               "Docs Tree Trash stored #{count} of #{length(rows)} expected snapshots"
+             )}
         end
 
       {:error, changeset} ->
@@ -226,7 +228,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
         if count == length(ids),
           do: :ok,
-          else: {:error, {:custom, "Docs Tree changed during Trash"}}
+          else: {:error, GroupherServer.ErrorCat.custom("Docs Tree changed during Trash")}
     end
   end
 

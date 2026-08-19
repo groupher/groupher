@@ -79,7 +79,7 @@ with {:ok, target_comment} <- CMS.Comments.fetch_comment(comment_id) do
         |> Enum.take(Enum.random(1..min(3, length(allowed_emotions))))
 
       Enum.reduce(picks, acc, fn emotion, inner_acc ->
-        case CMS.Comments.emotion_to_comment(comment_id, emotion, user) do
+        case CMS.Interactions.emotion(target_comment, emotion, user) do
           {:ok, _comment} ->
             [{user.login, emotion} | inner_acc]
 

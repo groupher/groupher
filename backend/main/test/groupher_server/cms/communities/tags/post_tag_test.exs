@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
           user
         )
 
-      assert {:error, {:invalid_domain_tag, _}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
                CMS.Communities.reindex_tags(community, :post, group.id, [
                  %{id: tag1.id, index: 9}
                ])
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       attrs = Map.put(article_tag_attrs, :group_id, group.id)
       {:ok, tag} = CMS.Communities.create_tag(community, :post, attrs, user)
 
-      assert {:error, {:invalid_domain_tag, _}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
                CMS.Communities.reindex_tags(community, :post, [
                  %{id: tag.id, group_id: group.id, index: 1},
                  %{id: tag.id, group_id: group.id, index: 2}
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       other_attrs = Map.put(unique_community_tag_attrs(attrs, "other"), :group_id, other_group.id)
       {:ok, other_tag} = CMS.Communities.create_tag(other_community, :post, other_attrs, user)
 
-      assert {:error, {:invalid_domain_tag, _}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} =
                CMS.Communities.reindex_tags(community, :post, [
                  %{id: other_tag.id, group_id: group.id, index: 8}
                ])
@@ -211,11 +211,22 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
     end
 
     test "create article tag with extra & marker data", ~m(community article_tag_attrs user)a do
-      tag_attrs = Map.merge(article_tag_attrs, %{extra: ["menuID", "menuID2"], marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}})
+      tag_attrs =
+        Map.merge(article_tag_attrs, %{
+          extra: ["menuID", "menuID2"],
+          marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
+        })
+
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, tag_attrs, user)
 
       assert article_tag.extra == ["menuID", "menuID2"]
-      assert article_tag.marker == %{type: :icon, provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
+
+      assert article_tag.marker == %{
+               type: :icon,
+               provider: "lucide",
+               name: "tag",
+               src: "/icons/lucide/tag.svg"
+             }
     end
 
     test "can update an article tag", ~m(community article_tag_attrs user)a do
@@ -382,7 +393,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
       {:error, reason} = CMS.Articles.create(community, :post, post_with_tags, user)
-      is_error?(reason, :invalid_domain_tag)
+      is_error?(reason, {{:cms, :community}, :invalid_domain_tag})
     end
   end
 
@@ -564,7 +575,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
          ~m(community post article_tag_attrs user)a do
       {:ok, blog_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
 
-      assert {:error, {:invalid_domain_tag, _}} = TagStats.inc(post, blog_tag)
+      assert {:error, %ErrorCat.Error{reason: :invalid_domain_tag}} = TagStats.inc(post, blog_tag)
     end
   end
 end

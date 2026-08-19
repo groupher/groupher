@@ -85,12 +85,26 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@create_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @create_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     @update_tag_query S.CommunityTag.m(:update_community_tag_2)
@@ -174,7 +188,11 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn
-             |> mutation_error?(@update_tag_query, variables, ecode(:invalid_domain_tag))
+             |> mutation_error?(
+               @update_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+             )
     end
 
     @delete_tag_query S.CommunityTag.m(:delete_community_tag_2)
@@ -202,12 +220,26 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       variables = %{id: community_tag.id, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      assert user_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
 
       assert guest_conn
-             |> mutation_error?(@delete_tag_query, variables, ecode(:account_login))
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             )
 
-      assert rule_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
+      assert rule_conn
+             |> mutation_error?(
+               @delete_tag_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             )
     end
 
     @update_group_query S.CommunityTag.m(:update_community_tag_group)
@@ -228,7 +260,11 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn
-             |> mutation_error?(@update_group_query, variables, ecode(:invalid_domain_tag))
+             |> mutation_error?(
+               @update_group_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+             )
     end
 
     @delete_group_query S.CommunityTag.m(:delete_community_tag_group)
@@ -248,7 +284,11 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       assert rule_conn
-             |> mutation_error?(@delete_group_query, variables, ecode(:invalid_domain_tag))
+             |> mutation_error?(
+               @delete_group_query,
+               variables,
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+             )
     end
   end
 end

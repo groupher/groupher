@@ -18,7 +18,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.SearchArtiments
   alias CMS.SearchArtiments.{Artiment, Projection}
-  alias CMS.Interactions.State
   alias Helper.Constant
 
   require CMS.Const
@@ -73,9 +72,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
            |> where([article], article.id == ^article_id)
            |> Repo.one() do
       case Projection.Article.project(thread, article) do
-        {:ok, artiment} -> SearchArtiments.upsert([artiment])
-        {:error, {:not_searchable, _}} -> delete_article(thread, article.article_hash_id)
-        error -> error
+        {:ok, artiment} ->
+          SearchArtiments.upsert([artiment])
+
+        {:error, %GroupherServer.ErrorCat.Error{reason: :not_searchable}} ->
+          delete_article(thread, article.article_hash_id)
+
+        error ->
+          error
       end
     else
       nil -> :ok
@@ -93,7 +97,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   def sync_article_metrics(thread, article_id) do
     with {:ok, info} <- match(thread),
          article when not is_nil(article) <- searchable_article(info.model, thread, article_id) do
-      counts = State.counts(thread, [article.id]) |> Map.get(article.id, %{})
+      counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       SearchArtiments.update_metrics([
         {Artiment.article_ref(thread, article.article_hash_id),

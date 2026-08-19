@@ -15,5 +15,5 @@ defmodule GroupherServer.CMS.Gate.Scope.Policy do
               actor :: term(),
               action :: atom(),
               context :: struct()
-            ) :: Ecto.Query.t() | {:error, atom()}
+            ) :: Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
 end

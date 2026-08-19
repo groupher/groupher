@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema do
   end
 
   def middleware(middleware, _field, %{identifier: :mutation}) do
-    middleware ++ [M.GQLResultFmt, M.ChangesetErrors]
+    middleware ++ [M.GQLResultFmt, M.ChangesetErrors, M.GeneralError]
   end
 
   def middleware(middleware, _field, _object) do

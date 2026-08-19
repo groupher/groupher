@@ -23,7 +23,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Document, Lock, VersionedRelations, Writer}
+  alias CMS.Articles.{Document, MutationLock, VersionedRelations, Writer}
+  alias CMS.Articles.ErrorCat
   alias CMS.Articles.Lifecycle, as: ArticleLifecycle
   alias CMS.Docs.Branch
   alias CMS.Docs.Lifecycle, as: DocLifecycle
@@ -133,7 +134,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
           if is_nil(branch) or Branch.main?(branch) do
             read_public(community, thread, article_hash_id, branch_ref)
           else
-            {:error, {:not_exist, "Draft"}}
+            {:error, CMS.Articles.ErrorCat.not_exist("Draft")}
           end
 
         error ->
@@ -219,7 +220,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
         update_unlocked(community, thread, article_hash_id, attrs, update_opts)
       else
-        {:error, %Decision{} = decision} -> {:error, Decision.primary_reason(decision)}
+        {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
         {:error, reason} -> {:error, reason}
       end
     end)
@@ -272,12 +273,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   defp run_locked(%Community{} = community, :doc, article_hash_id, branch_ref, fun) do
     with {:ok, branch} <- resolve_doc_branch(community, branch_ref) do
-      Lock.run_doc(community, branch.id, article_hash_id, fun)
+      MutationLock.with_article(community, :doc, branch.id, article_hash_id, fun)
     end
   end
 
   defp run_locked(%Community{} = community, thread, article_hash_id, _branch_ref, fun) do
-    Lock.run(community, thread, article_hash_id, fun)
+    MutationLock.with_article(community, thread, article_hash_id, fun)
   end
 
   defp create_draft_row(model, thread, attrs) do
@@ -320,7 +321,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
         |> where([article], article.stage == ^stage)
         |> Repo.one()
         |> case do
-          nil -> {:error, {:not_exist, model}}
+          nil -> {:error, CMS.Articles.ErrorCat.not_exist(model)}
           article -> {:ok, article}
         end
 
@@ -406,10 +407,10 @@ defmodule GroupherServer.CMS.Articles.Draft do
     required? = Keyword.get(opts, :require_version?, false)
 
     cond do
-      required? and not is_integer(expected_version) -> {:error, :draft_version_required}
+      required? and not is_integer(expected_version) -> {:error, ErrorCat.draft_version_required()}
       is_nil(expected_version) -> :ok
       expected_version == draft.version -> :ok
-      true -> {:error, :draft_conflict}
+      true -> {:error, ErrorCat.draft_conflict()}
     end
   end
 
@@ -464,7 +465,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   defp parse_body(%{body_bag: body_bag}, thread), do: BodyBag.cast(body_bag, thread: thread)
 
   defp parse_body(_attrs, _thread),
-    do: {:error, {:custom, "Article draft BodyBag is required"}}
+    do: {:error, GroupherServer.ErrorCat.custom("Article draft BodyBag is required")}
 
   defp maybe_parse_body(%{body_bag: body_bag}, thread),
     do: BodyBag.cast(body_bag, thread: thread)

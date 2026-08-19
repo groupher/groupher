@@ -59,7 +59,7 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
           changelog_m.inner_id
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "author can read it's own pending changelog", ~m(community user)a do
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
           user2
         )
 
-      assert reason |> is_error?(:pending)
+      assert reason |> is_error?({{:cms, :article}, :pending})
     end
 
     test "pending changelog can set/unset pending", ~m(changelog_m)a do

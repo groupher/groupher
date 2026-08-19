@@ -15,7 +15,8 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
 
   @behaviour Absinthe.Middleware
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  import Helper.ErrorCode
+  alias GroupherServer.ErrorCat
+  alias GroupherServer.ErrorCat.Error
 
   alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishThrottle
 
@@ -23,17 +24,26 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
     with {:ok, _} <- PublishThrottle.check(cur_user, opt) do
       resolution
     else
-      {:error, :interval_check} ->
+      {:error, %Error{reason: :throttle_interval}} ->
         resolution
-        |> handle_absinthe_error("throttle_interval", ecode(:throttle_interval))
+        |> handle_absinthe_error(
+          "throttle_interval",
+          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_interval())
+        )
 
-      {:error, :hour_limit_check} ->
+      {:error, %Error{reason: :throttle_hour}} ->
         resolution
-        |> handle_absinthe_error("throttle_hour", ecode(:throttle_hour))
+        |> handle_absinthe_error(
+          "throttle_hour",
+          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_hour())
+        )
 
-      {:error, :day_limit_check} ->
+      {:error, %Error{reason: :throttle_day}} ->
         resolution
-        |> handle_absinthe_error("throttle_day", ecode(:throttle_day))
+        |> handle_absinthe_error(
+          "throttle_day",
+          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_day())
+        )
 
       {:error, _error} ->
         # publish first time ignore
@@ -43,6 +53,9 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
 
   def call(resolution, _) do
     resolution
-    |> handle_absinthe_error("Authorize: need login", ecode(:account_login))
+    |> handle_absinthe_error(
+      "Authorize: need login",
+      ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+    )
   end
 end

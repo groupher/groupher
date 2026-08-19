@@ -1,4 +1,5 @@
 defmodule GroupherServer.Messaging.Notify do
+  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Placeholder dispatch boundary for future async notification delivery.
 
@@ -21,5 +22,5 @@ defmodule GroupherServer.Messaging.Notify do
     {:ok, :pass}
   end
 
-  def dispatch(_, _), do: {:error, :invalid_notify_payload}
+  def dispatch(_, _), do: {:error, ErrorCat.invalid_notify_payload()}
 end

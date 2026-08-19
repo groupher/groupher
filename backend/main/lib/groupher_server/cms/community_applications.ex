@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Const
   alias GroupherServer.CMS.Passport
+  alias GroupherServer.CMS.Communities.ErrorCat
 
   alias GroupherServer.CMS.CommunityApplications.{
     LogoUploads,
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
       {:ok, true} -> :ok
-      _ -> {:error, :review_permission_denied}
+      _ -> {:error, ErrorCat.review_permission_denied()}
     end
   end
 

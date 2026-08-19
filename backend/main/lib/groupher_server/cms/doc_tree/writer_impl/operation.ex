@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   end
 
   defp revision_check(%DocsSiteState{}, nil),
-    do: {:error, {:custom, "base_revision is required"}}
+    do: {:error, GroupherServer.ErrorCat.custom("base_revision is required")}
 
   defp revision_check(%DocsSiteState{} = state, revision)
        when revision == state.tree_lock_version,

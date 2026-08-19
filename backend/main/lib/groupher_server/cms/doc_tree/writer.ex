@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Draft, Lock}
+  alias CMS.Articles.{Draft, MutationLock}
   alias CMS.DocTree.{Events, Reader}
 
   alias CMS.DocTree.Writer.{
@@ -354,8 +354,12 @@ defmodule GroupherServer.CMS.DocTree.Writer do
            Index.affected_nodes(community, branch, node.parent_node_id, node.type)
          )}
       else
-        false -> {:error, {:custom, "only Group, Page, and Link nodes can be duplicated"}}
-        error -> error
+        false ->
+          {:error,
+           GroupherServer.ErrorCat.custom("only Group, Page, and Link nodes can be duplicated")}
+
+        error ->
+          error
       end
     end)
   end
@@ -437,7 +441,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
          args
        ) do
     with %User{} = actor <- Repo.get(User, Map.get(args, :actor_id)) do
-      Lock.run_doc(community, branch.id, node.doc_id, fn ->
+      MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
         with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
              source <- Repo.preload(source, :document),
              %{json: json} = document when is_binary(json) <- source.document,
@@ -470,12 +474,13 @@ defmodule GroupherServer.CMS.DocTree.Writer do
             slug: slug
           )
         else
-          nil -> {:error, {:custom, "Source Doc content is missing"}}
+          nil -> {:error, GroupherServer.ErrorCat.custom("Source Doc content is missing")}
           error -> error
         end
       end)
     else
-      nil -> {:error, {:custom, "Duplicate Page requires an authenticated actor"}}
+      nil ->
+        {:error, GroupherServer.ErrorCat.custom("Duplicate Page requires an authenticated actor")}
     end
   end
 
@@ -569,12 +574,12 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   defp load_actor(args, error_message) do
     case Map.get(args, :actor_id) do
       nil ->
-        {:error, {:custom, error_message}}
+        {:error, GroupherServer.ErrorCat.custom(error_message)}
 
       actor_id ->
         case Repo.get(User, actor_id) do
           %User{} = actor -> {:ok, actor}
-          nil -> {:error, {:custom, error_message}}
+          nil -> {:error, GroupherServer.ErrorCat.custom(error_message)}
         end
     end
   end

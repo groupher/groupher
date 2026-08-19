@@ -21,10 +21,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
   end
 
   test "scope rejects an omitted policy mode instead of defaulting to public" do
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Community, nil, :read, %{})
 
-    assert {:error, :scope_context_missing} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Post, nil, :read, %{thread: :post})
   end
 
@@ -49,10 +49,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
              "pending_destroy"
            ] in owner_params
 
-    assert {:error, :scope_policy_actor_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(Community, nil, :read, CommunityScope.owner_management())
 
-    assert {:error, :scope_policy_actor_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(Community, owner, :read, CommunityScope.operations())
   end
 
@@ -108,10 +108,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
   end
 
   test "scope rejects unsupported roots, actions, and reserved bindings" do
-    assert {:error, :scope_root_mismatch} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
              CMS.Gate.scope(CommunityLifecycle, nil, :read, CommunityScope.public())
 
-    assert {:error, :unknown_action} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
              CMS.Gate.scope(Community, nil, :publish, CommunityScope.public())
 
     query =
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
         on: lifecycle.community_id == community.id
       )
 
-    assert {:error, :scope_binding_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(query, nil, :read, CommunityScope.public())
   end
 
@@ -137,10 +137,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
         left_join: lifecycle in assoc(community, :lifecycle)
       )
 
-    assert {:error, :scope_binding_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(direct_join, nil, :read, CommunityScope.public())
 
-    assert {:error, :scope_binding_conflict} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
              CMS.Gate.scope(association_join, nil, :read, CommunityScope.public())
   end
 end

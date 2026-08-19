@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update(community, key, SectionPayload.section_args(key, args))
   end
 
-  def update(%Community{}, _args), do: {:error, :invalid_dsb_section}
+  def update(%Community{}, _args), do: {:error, GroupherServer.CMS.Communities.ErrorCat.invalid_dsb_section()}
 
   @spec update(Community.t(), atom(), map() | list()) :: T.domain_res(CommunityDashboard.t())
   @doc "Updates one explicit dashboard section, including base-info synchronization."

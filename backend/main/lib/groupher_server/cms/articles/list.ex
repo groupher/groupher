@@ -30,12 +30,13 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Dashboard.KanbanBoards
-  alias CMS.Interactions.State
+  alias CMS.Interactions
+  alias CMS.Articles.InteractionResponse
   alias CMS.Artiment.Enums
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
-  require CMS.Const
+  @interaction_orders CMS.Interactions.Const.interaction_order_values()
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
   @kanban_rejected_statuses [
@@ -58,30 +59,28 @@ defmodule GroupherServer.CMS.Articles.List do
 
   """
   @spec page(atom(), map()) :: T.domain_res(term())
-  def page(thread, filter) do
+  def page(thread, filter), do: do_page(thread, filter, nil)
+
+  @spec page(atom(), map(), User.t()) :: T.domain_res(term())
+  def page(thread, filter, %User{} = user), do: do_page(thread, filter, user)
+
+  defp do_page(thread, filter, viewer) do
     %{page: page, size: size} = filter
     flags = %{pending: :legal}
 
     with {:ok, _thread} <- Enable.thread?(Map.get(filter, :community), thread),
-         {:ok, info} <- match(thread) do
-      info.model
-      |> Scope.scope(nil, :list, scope_context(thread))
-      |> QueryBuilder.domain_query(filter)
-      |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
-      |> State.order_articles(thread, Map.get(filter, :order))
+         {:ok, info} <- match(thread),
+         {:ok, query} <-
+           info.model
+           |> Scope.scope(nil, :list, scope_context(thread))
+           |> QueryBuilder.domain_query(filter)
+           |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
+           |> Interactions.scope(order: Map.get(filter, :order)) do
+      query
       |> ORM.paginator(~m(page size)a)
       |> add_pin_articles_ifneed(info.model, filter)
-      |> read_articles(thread, nil)
       |> normalize_article_entries(thread)
-      |> done()
-    end
-  end
-
-  @spec page(atom(), map(), User.t()) :: T.domain_res(term())
-  def page(thread, filter, %User{} = user) do
-    with {:ok, stateless_paged_articles} <- page(thread, filter) do
-      stateless_paged_articles
-      |> read_articles(thread, user)
+      |> read_articles(viewer)
       |> done()
     end
   end
@@ -178,14 +177,18 @@ defmodule GroupherServer.CMS.Articles.List do
   def paged_published(thread, filter, %User{} = target_user, actor) do
     %{page: page, size: size} = filter
 
-    with {:ok, info} <- match(thread) do
-      info.model
-      |> Scope.scope(actor, :list, scope_context(thread))
-      |> join(:inner, [article, ...], author in assoc(article, :author), as: :published_author)
-      |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
-      |> select([article, ...], article)
-      |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
-      |> State.order_articles(thread, Map.get(filter, :order))
+    with {:ok, info} <- match(thread),
+         {:ok, query} <-
+           info.model
+           |> Scope.scope(actor, :list, scope_context(thread))
+           |> join(:inner, [article, ...], author in assoc(article, :author),
+             as: :published_author
+           )
+           |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
+           |> select([article, ...], article)
+           |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
+           |> Interactions.scope(order: Map.get(filter, :order)) do
+      query
       |> ORM.paginator(~m(page size)a)
       |> maybe_mark_viewer_states(thread, actor)
       |> done()
@@ -205,8 +208,8 @@ defmodule GroupherServer.CMS.Articles.List do
     end
   end
 
-  defp maybe_mark_viewer_states(paged_articles, thread, %User{} = actor) do
-    read_articles(paged_articles, thread, actor)
+  defp maybe_mark_viewer_states(paged_articles, _thread, %User{} = actor) do
+    read_articles(paged_articles, actor)
   end
 
   defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
@@ -214,8 +217,11 @@ defmodule GroupherServer.CMS.Articles.List do
   defp scope_context(:doc), do: DocScope.public_main()
   defp scope_context(thread), do: ArticleScope.public(thread)
 
-  defp read_articles(%{entries: entries} = paged_articles, thread, actor) do
-    Map.put(paged_articles, :entries, State.read(thread, entries, actor, []))
+  defp read_articles(%{entries: entries} = paged_articles, actor) do
+    case InteractionResponse.many(entries, actor) do
+      {:ok, entries} -> Map.put(paged_articles, :entries, entries)
+      {:error, _reason} = error -> error
+    end
   end
 
   defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do
@@ -264,7 +270,7 @@ defmodule GroupherServer.CMS.Articles.List do
 
   defp should_add_pin?(_filter), do: false
 
-  defp filter_for_interaction_order(%{order: order} = filter) when order in [:upvotes, :collects],
+  defp filter_for_interaction_order(%{order: order} = filter) when order in @interaction_orders,
     do: Map.drop(filter, [:order, :sort])
 
   defp filter_for_interaction_order(filter), do: filter

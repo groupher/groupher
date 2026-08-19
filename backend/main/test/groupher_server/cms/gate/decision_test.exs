@@ -4,11 +4,15 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
   use GroupherServer.TestMate, async: false
 
   alias CMS.Gate.Decision
+  alias GroupherServer.ErrorCat
   alias GroupherServerWeb.Middleware.GQLResultFmt
 
   test "structured decisions preserve reasons and choose the stable primary" do
     decision =
-      Decision.deny([:permission_denied, :ancestor_article_archived], %{request_id: "req"})
+      Decision.deny(
+        [CMS.Gate.ErrorCat.permission_denied(), CMS.Gate.ErrorCat.ancestor_article_archived()],
+        %{request_id: "req"}
+      )
 
     refute decision.allowed
     assert decision.context == %{request_id: "req"}
@@ -39,7 +43,7 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
   end
 
   test "unknown reasons fail closed to the reserved Gate code" do
-    metadata = Decision.deny(:unexpected_gate_reason).primary
+    metadata = Decision.deny(ErrorCat.gate_unknown()).primary
 
     assert metadata.reason == :gate_unknown
     assert metadata.err_code == 4699

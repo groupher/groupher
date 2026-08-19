@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
     {:ok, _} = Assignment.erase_passport(["javascript", "cms", "non-exist"], user)
     {:ok, _} = Assignment.erase_passport(["non-exist", "cms", "post.trash"], user)
 
-    assert {:error, :invalid_passport_shape} =
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_passport_shape}} =
              Assignment.erase_passport(["non-exist", "non-exist"], user)
   end
 end

@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
       assert post.id == post2.id
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
-      assert CMS.Interactions.State.read(post2, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(post2, user).viewer_has_viewed
     end
 
     test "read post should update views and meta viewed_user_list",
@@ -136,7 +136,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
         )
 
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
-      assert CMS.Interactions.State.read(post, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
@@ -152,8 +152,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, created} = ORM.find(Post, post.id)
       assert :ok = CMS.Interactions.ViewEvents.project(event_id)
       assert created.views == 1
-      assert CMS.Interactions.State.read(post, user).viewer_has_viewed
-      assert CMS.Interactions.State.read(post, user2).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
+      assert CMS.Interactions.viewer_state(post, user2).viewer_has_viewed
     end
 
     ## comment article_upvote:L60 if run this test
@@ -210,9 +210,9 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert not post.viewer_has_upvoted
       assert not post.viewer_has_reported
 
-      {:ok, _} = CMS.Articles.upvote(post, user)
+      {:ok, _} = CMS.Interactions.upvote(post, user)
       {:ok, post} = ORM.find(Post, post.id)
-      {:ok, _} = CMS.Articles.collect(post, user)
+      {:ok, _} = CMS.Interactions.collect(post, user)
       {:ok, _} = CMS.AbuseReports.article(post, "reason", "attr_info", user)
 
       {:ok, post} =
@@ -297,7 +297,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post_last_year} = db_insert(:post, %{title: "last year", inserted_at: @last_year})
 
       {:error, reason} = CMS.Articles.undo_sink(post_last_year)
-      is_error?(reason, :undo_sink_old_article)
+      is_error?(reason, {{:cms, :article}, :undo_sink_old_article})
     end
   end
 

@@ -123,7 +123,10 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:error, reason} =
         CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      assert error_code(reason) == ecode(:passport_community_not_match)
+      assert error_code(reason) ==
+               ErrorCat.code(
+                 GroupherServer.CMS.Communities.ErrorCat.passport_community_not_match()
+               )
     end
 
     test "can not update multi community passport", ~m(user user2 community)a do
@@ -150,7 +153,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:error, reason} =
         CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
-      assert error_code(reason) == ecode(:one_community_only)
+      assert error_code(reason) ==
+               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.one_community_only())
     end
 
     test "can add multi moderators to a community", ~m(user user2 community)a do
@@ -171,9 +175,10 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator_user3} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user3.id})
 
-      assert not is_nil(moderator_user)
-      assert not is_nil(moderator_user2)
-      assert not is_nil(moderator_user3)
+      assert moderator_user
+      assert moderator_user2
+      assert moderator_user3
+
     end
 
     test "remove moderator deletes only the community-scoped passport rules",

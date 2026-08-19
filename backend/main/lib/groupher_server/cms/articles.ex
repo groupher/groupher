@@ -24,19 +24,16 @@ defmodule GroupherServer.CMS.Articles do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Enums
-  alias CMS.Model.{ArticleCollect, Community}
+  alias CMS.Model.Community
 
   alias __MODULE__.{
-    Collects,
     Draft,
     List,
     Moderation,
     Publish,
-    Emotions,
     Reader,
     States,
-    Trash,
-    Upvotes
+    Trash
   }
 
   # Read
@@ -332,65 +329,4 @@ defmodule GroupherServer.CMS.Articles do
   @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
   @doc "Runs `undo_lock_comments` through the public `Articles` boundary."
   def undo_lock_comments(article), do: States.undo_lock_comments(article)
-
-  # Emotions
-
-  @spec emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `emotion` through the public `Articles` boundary."
-  def emotion(article, emotion, %User{} = user), do: Emotions.emotion(article, emotion, user)
-
-  @spec undo_emotion(T.article(), atom(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `undo_emotion` through the public `Articles` boundary."
-  def undo_emotion(article, emotion, %User{} = user) do
-    Emotions.undo_emotion(article, emotion, user)
-  end
-
-  # Upvotes
-
-  @spec upvote(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `upvote` through the public `Articles` boundary."
-  def upvote(article, %User{} = user), do: Upvotes.upvote(article, user)
-
-  @spec undo_upvote(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `undo_upvote` through the public `Articles` boundary."
-  def undo_upvote(article, %User{} = user), do: Upvotes.undo_upvote(article, user)
-
-  @spec upvoted_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
-  @doc "Runs `upvoted_users` through the public `Articles` boundary."
-  def upvoted_users(article, filter), do: Upvotes.upvoted_users(article, filter)
-
-  # Collects
-
-  @spec collect(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `collect` through the public `Articles` boundary."
-  def collect(article, %User{} = user), do: Collects.collect(article, user)
-
-  @spec collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `collect_ifneed` through the public `Articles` boundary."
-  def collect_ifneed(article, %User{} = user), do: Collects.collect_ifneed(article, user)
-
-  @spec undo_collect(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `undo_collect` through the public `Articles` boundary."
-  def undo_collect(article, %User{} = user), do: Collects.undo_collect(article, user)
-
-  @spec undo_collect_ifneed(T.article(), User.t()) :: T.domain_res(T.article())
-  @doc "Runs `undo_collect_ifneed` through the public `Articles` boundary."
-  def undo_collect_ifneed(article, %User{} = user),
-    do: Collects.undo_collect_ifneed(article, user)
-
-  @spec collected_users(T.article(), map()) :: T.domain_res(T.paged_users() | T.paged_data())
-  @doc "Runs `collected_users` through the public `Articles` boundary."
-  def collected_users(article, filter), do: Collects.collected_users(article, filter)
-
-  @spec set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(ArticleCollect.t())
-  @doc "Runs `set_collect_folder` through the public `Articles` boundary."
-  def set_collect_folder(%ArticleCollect{} = collect, folder) do
-    Collects.set_collect_folder(collect, folder)
-  end
-
-  @spec undo_set_collect_folder(ArticleCollect.t(), term()) :: T.domain_res(ArticleCollect.t())
-  @doc "Runs `undo_set_collect_folder` through the public `Articles` boundary."
-  def undo_set_collect_folder(%ArticleCollect{} = collect, folder) do
-    Collects.undo_set_collect_folder(collect, folder)
-  end
 end

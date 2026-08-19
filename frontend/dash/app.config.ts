@@ -9,6 +9,8 @@ import { defineConfig } from 'vite'
 
 const dashRoot = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.join(dashRoot, '../..')
+const dashPort = Number.parseInt(process.env.PORT || '3005', 10)
+const isDevelopment = process.env.NODE_ENV !== 'production'
 
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? 'https://dash.groupher.com/' : '/',
@@ -20,13 +22,13 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   server: {
-    port: Number.parseInt(process.env.PORT || '3005', 10),
+    port: dashPort,
     strictPort: true,
     allowedHosts: ['dash.groupher.localhost', 'main.groupher.localhost', 'groupher.localhost'],
     ws: {
-      protocol: 'wss',
+      protocol: isDevelopment ? 'ws' : 'wss',
       host: 'dash.groupher.localhost',
-      clientPort: 443,
+      clientPort: isDevelopment ? dashPort : 443,
       path: '__dash_hmr',
     },
     fs: {

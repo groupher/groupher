@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
   describe "[collect users]" do
     test "guest can get collected users list after collect a changelog",
          ~m(guest_conn community changelog user user2)a do
-      {:ok, _} = CMS.Articles.collect(changelog, user)
-      {:ok, _} = CMS.Articles.collect(changelog, user2)
+      {:ok, _} = CMS.Interactions.collect(changelog, user)
+      {:ok, _} = CMS.Interactions.collect(changelog, user2)
 
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},

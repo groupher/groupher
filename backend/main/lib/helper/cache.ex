@@ -10,6 +10,8 @@ defmodule Helper.Cache do
   """
   import Cachex.Spec
 
+  alias GroupherServer.ErrorCat
+
   @cache_pool Helper.Cache.Config.pool()
 
   @doc "Runs `config` through the public `Cache` boundary."
@@ -112,8 +114,11 @@ defmodule Helper.Cache do
               case safe_load(loader) do
                 {:ok, value} = result ->
                   case put(pool, key, value, options) do
-                    {:ok, _} -> result
-                    {:error, reason} -> {:error, {:cache_write_failed, reason}}
+                    {:ok, _} ->
+                      result
+
+                    {:error, reason} ->
+                      {:error, ErrorCat.custom(%{reason: :cache_write_failed, details: reason})}
                   end
 
                 {:error, reason} ->
@@ -126,12 +131,17 @@ defmodule Helper.Cache do
 
   defp safe_load(loader) do
     try do
-      loader.()
+      case loader.() do
+        {:ok, _value} = result -> result
+        {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, error}
+        {:error, reason} -> {:error, ErrorCat.custom(%{reason: :loader_failed, details: reason})}
+        value -> {:error, ErrorCat.custom(%{reason: :invalid_loader_result, details: value})}
+      end
     rescue
-      error -> {:error, {:exception, Exception.message(error)}}
+      error -> {:error, ErrorCat.custom(%{reason: :exception, message: Exception.message(error)})}
     catch
-      :exit, reason -> {:error, {:exit, reason}}
-      kind, reason -> {:error, {kind, reason}}
+      :exit, reason -> {:error, ErrorCat.custom(%{reason: :exit, details: reason})}
+      kind, reason -> {:error, ErrorCat.custom(%{reason: kind, details: reason})}
     end
   end
 

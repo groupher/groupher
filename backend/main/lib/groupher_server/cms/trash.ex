@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Trash do
   def get_action(ref) do
     case Repo.get_by(TrashAction, hash_id: ref) do
       %TrashAction{} = action -> {:ok, action}
-      nil -> {:error, {:not_exist, "TrashAction"}}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashAction")}
     end
   end
 
@@ -42,11 +42,11 @@ defmodule GroupherServer.CMS.Trash do
       root_type == "article" ->
         case Repo.get_by(TrashedArticle, trash_action_id: action.id) do
           %TrashedArticle{thread: thread} -> {:ok, thread}
-          nil -> {:error, {:not_exist, "TrashedArticle"}}
+          nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
         end
 
       true ->
-        {:error, {:custom, "Unsupported Trash action type: #{root_type}"}}
+        {:error, GroupherServer.ErrorCat.custom("Unsupported Trash action type: #{root_type}")}
     end
   end
 
@@ -64,7 +64,8 @@ defmodule GroupherServer.CMS.Trash do
         permanently_delete_article_action(action, actor, opts)
 
       true ->
-        {:error, {:custom, "Unsupported Trash action type: #{action.root_type}"}}
+        {:error,
+         GroupherServer.ErrorCat.custom("Unsupported Trash action type: #{action.root_type}")}
     end
   end
 

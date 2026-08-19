@@ -19,16 +19,13 @@ defmodule GroupherServer.CMS.Gate.Scope do
       iex> {:ok, %Ecto.Query{}} = scope(GroupherServer.CMS.Model.Community, nil, :read, context)
   """
 
-  alias GroupherServer.CMS.Const
-
   alias GroupherServer.CMS.Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
   alias GroupherServer.CMS.Gate.Scope.Registry
-
-  require Const
+  alias GroupherServer.CMS.Gate.ErrorCat
 
   @doc "Compiles the requested read policy into the supplied queryable."
   @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::
-          Ecto.Query.t() | {:error, atom()}
+          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   def scope(queryable, actor, action, %Community{} = context) do
     query = Ecto.Queryable.to_query(queryable)
 
@@ -60,7 +57,7 @@ defmodule GroupherServer.CMS.Gate.Scope do
   end
 
   def scope(_queryable, _actor, _action, _context),
-    do: {:error, Const.gate_error(:scope_context_missing)}
+    do: {:error, ErrorCat.scope_context_missing()}
 
   defp root_schema(%Ecto.Query{from: %{source: {_source, schema}}}), do: schema
   defp root_schema(_query), do: nil

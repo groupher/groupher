@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
       #=> {:ok, %Query{text: "elixir", page: 1, size: 20, sort: :relevance}}
 
       Query.new(%{text: ""})
-      #=> {:error, {:custom, "search text is required"}}
+      #=> {:error, GroupherServer.ErrorCat.custom("search text is required")}
 
   """
   @spec new(map()) :: {:ok, t()} | {:error, term()}
@@ -101,7 +101,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     end
   end
 
-  defp normalize_filters(_), do: {:error, {:custom, "invalid search filters"}}
+  defp normalize_filters(_),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid search filters")}
 
   defp normalize_enum_list(nil, _allowed), do: {:ok, []}
 
@@ -109,11 +110,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     if Enum.all?(values, &(&1 in allowed)) do
       {:ok, Enum.uniq(values)}
     else
-      {:error, {:custom, "invalid search filter enum"}}
+      {:error, GroupherServer.ErrorCat.custom("invalid search filter enum")}
     end
   end
 
-  defp normalize_enum_list(_, _), do: {:error, {:custom, "invalid search filter enum"}}
+  defp normalize_enum_list(_, _),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid search filter enum")}
 
   defp normalize_string_list(nil), do: {:ok, []}
 
@@ -121,17 +123,18 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     if Enum.all?(values, &(is_binary(&1) and &1 != "")) do
       {:ok, Enum.uniq(values)}
     else
-      {:error, {:custom, "invalid search filter string"}}
+      {:error, GroupherServer.ErrorCat.custom("invalid search filter string")}
     end
   end
 
-  defp normalize_string_list(_), do: {:error, {:custom, "invalid search filter string"}}
+  defp normalize_string_list(_),
+    do: {:error, GroupherServer.ErrorCat.custom("invalid search filter string")}
 
-  defp validate_text(""), do: {:error, {:custom, "search text is required"}}
+  defp validate_text(""), do: {:error, GroupherServer.ErrorCat.custom("search text is required")}
   defp validate_text(_text), do: :ok
 
   defp validate_sort(sort) when sort in @sorts, do: :ok
-  defp validate_sort(_sort), do: {:error, {:custom, "invalid search sort"}}
+  defp validate_sort(_sort), do: {:error, GroupherServer.ErrorCat.custom("invalid search sort")}
 
   defp positive_integer(value, _default) when is_integer(value) and value > 0, do: value
   defp positive_integer(_, default), do: default

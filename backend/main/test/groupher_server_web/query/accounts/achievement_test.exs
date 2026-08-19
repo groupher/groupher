@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     @query S.Account.q(:user_4)
     test "inc user's achievement after user's post got collected", ~m(guest_conn user)a do
       {:ok, post} = db_insert(:post)
-      {:ok, _article_collect} = CMS.Articles.collect(post, user)
+      {:ok, _article_collect} = CMS.Interactions.collect(post, user)
 
       {:ok, post} = Post |> ORM.find(post.id, preload: [author: :user])
       author_user_login = post.author.user.login
@@ -119,14 +119,14 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       {:ok, users} = db_insert_multi(:user, total_count)
 
       Enum.each(users, fn user ->
-        {:ok, _article_collect} = CMS.Articles.collect(post, user)
+        {:ok, _article_collect} = CMS.Interactions.collect(post, user)
       end)
 
       {:ok, post} = Post |> ORM.find(post.id, preload: [author: :user])
       author_user_login = post.author.user.login
 
       user = users |> Enum.shuffle() |> List.first()
-      {:ok, _article_collect} = CMS.Articles.undo_collect(post, user)
+      {:ok, _article_collect} = CMS.Interactions.undo_collect(post, user)
 
       variables = %{login: author_user_login}
       results = guest_conn |> gq_query(@query, variables)

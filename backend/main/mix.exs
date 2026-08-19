@@ -7,8 +7,9 @@ defmodule GroupherServer.Mixfile do
     [
       app: :groupher_server,
       version: "2.1.10",
-      elixir: "~> 1.19",
+      elixir: "~> 1.20",
       elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: Mix.compilers() ++ [:error_cat],
       dialyzer: [plt_add_deps: :app_tree, ignore_warnings: ".dialyzer_ignore.exs"],
       test_coverage: [tool: ExCoveralls],
       start_permanent: Mix.env() == :prod,
@@ -81,8 +82,6 @@ defmodule GroupherServer.Mixfile do
       {:tesla, "~> 1.21"},
       {:finch, "~> 0.23"},
       {:scrivener_ecto, "~> 3.1.0"},
-      # enhanced cursor based pagination
-      {:quarto, "~> 1.1.7"},
       {:guardian, "~> 2.4.1"},
       {:dataloader, "~> 2.0.2"},
       {:mix_test_watch, "~> 1.4.0", only: :dev, runtime: false},

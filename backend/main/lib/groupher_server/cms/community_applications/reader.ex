@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.ErrorCat
 
   alias GroupherServer.CMS.Model.{
     Community,
@@ -80,7 +81,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
     {:ok, %{entries: Enum.take(entries, first), has_next_page: length(entries) > first}}
   end
 
-  @spec owned(String.t(), User.t()) :: {:ok, CommunityApplication.t()} | {:error, atom()}
+  @spec owned(String.t(), User.t()) :: {:ok, CommunityApplication.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def owned(public_ref, %User{id: user_id}) when is_binary(public_ref) do
     case Repo.one(
            from(application in CommunityApplication,
@@ -88,12 +89,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
              preload: [:community, :logo_upload]
            )
          ) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
 
-  @spec review_detail(String.t()) :: {:ok, CommunityApplication.t()} | {:error, atom()}
+  @spec review_detail(String.t()) :: {:ok, CommunityApplication.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def review_detail(public_ref) when is_binary(public_ref) do
     case Repo.one(
            from(application in CommunityApplication,
@@ -101,7 +102,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
              preload: [:user, :reviewer, :community, :logo_upload]
            )
          ) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       application -> {:ok, application}
     end
   end
@@ -168,7 +169,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
            public_ref: upload_ref
          ) do
       nil ->
-        {:error, :asset_not_found}
+        {:error, ErrorCat.asset_not_found()}
 
       upload ->
         community_asset_ref =
@@ -274,7 +275,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
 
   defp fetch(schema, id) do
     case Repo.get(schema, id) do
-      nil -> {:error, :application_not_found}
+      nil -> {:error, ErrorCat.application_not_found()}
       record -> {:ok, record}
     end
   end

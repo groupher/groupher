@@ -33,7 +33,9 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
       {:ok, new_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
       {:error, reason} = CMS.Articles.pin(community, new_post)
-      assert error_code(reason) == ecode(:too_much_pinned_article)
+
+      assert error_code(reason) ==
+               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.too_much_pinned_article())
     end
 
     test "can undo pin to a post", ~m(community post)a do
