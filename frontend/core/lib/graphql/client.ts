@@ -5,7 +5,13 @@ import {
 } from '@groupher/contracts/auth'
 import type { CombinedError } from 'urql'
 
-import { AuthRequestError, resolveAuthFailure, withAuthRetry } from '~/auth'
+import {
+  AuthRequestError,
+  invalidateAuthState,
+  requestLogin,
+  resolveAuthFailure,
+  withAuthRetry,
+} from '~/auth'
 
 const ACCOUNT_LOGIN_ERROR_CODE = 4301
 
@@ -120,8 +126,13 @@ export const createAuthFetch =
         async () => {
           const response = await fetcher(attempt++ === 0 ? input : replayInput, init)
           const failure = await responseAuthFailure(response)
-          if (resolveAuthFailure(failure) === 'refresh') {
+          const action = resolveAuthFailure(failure)
+          if (action === 'refresh') {
             throw new GraphQLAuthResponseError(response, failure)
+          }
+          if (action === 'login') {
+            invalidateAuthState()
+            requestLogin()
           }
           return response
         },

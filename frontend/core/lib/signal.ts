@@ -28,6 +28,10 @@ export const sendAsync = (msg: string, data = {}): void => {
  */
 export const logout = (): void => {
   send(EVENT.LOGOUT)
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('groupher-auth:logout'))
+  }
 }
 
 /**

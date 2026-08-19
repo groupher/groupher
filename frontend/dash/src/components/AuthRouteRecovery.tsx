@@ -1,4 +1,3 @@
-import { useRouter } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 
 import { invalidateAuthState, refreshSession, requestLogin } from '~/auth'
@@ -6,7 +5,6 @@ import { invalidateAuthState, refreshSession, requestLogin } from '~/auth'
 import { authRouteRecoveryKey } from '../utils/auth-route-recovery'
 
 export default function AuthRouteRecovery() {
-  const router = useRouter()
   const attempted = useRef(false)
   const [failed, setFailed] = useState(false)
 
@@ -38,18 +36,14 @@ export default function AuthRouteRecovery() {
         return
       }
 
-      try {
-        await router.invalidate({ forcePending: true, sync: true })
-        sessionStorage.removeItem(recoveryKey)
-      } catch {
-        fail(false)
-      }
+      sessionStorage.removeItem(recoveryKey)
+      window.location.reload()
     })()
 
     return () => {
       active = false
     }
-  }, [router])
+  }, [])
 
   return (
     <div className='column-center min-h-80 w-full justify-center px-6 py-12' role='status'>
