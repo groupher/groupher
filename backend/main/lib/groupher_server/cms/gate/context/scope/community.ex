@@ -2,11 +2,11 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
   @moduledoc """
   Explicit read intent for Community queries.
 
-  The constructor records the requested policy mode; the Community compiler
+  The constructor records the requested policy mode; the Community Scope query
   still verifies the actor against that mode. It does not load or own a
   Community Lifecycle.
 
-      Reader -> Community scope context -> Gate.scope -> Community compiler
+      Reader -> Community scope context -> Gate.scope -> Community Scope query
 
   Examples:
 

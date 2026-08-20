@@ -19,13 +19,15 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Const
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Passport.Registry
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Const
+  alias CMS.Communities.Lifecycle
+  alias CMS.Gate
+  alias Gate.Context.Access.Community, as: CommunityContext
+  alias Gate.ErrorCat
+  alias CMS.Passport.Registry
+  alias CMS.Model.Community
 
   require Const
 

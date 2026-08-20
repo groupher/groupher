@@ -18,13 +18,15 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{Communities}
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.{Communities}
+  alias CMS.Communities.Enable
+  alias CMS.Gate
+  alias Gate.Context.Access.Article, as: ArticleContext
+  alias Gate.Context.Access.Doc, as: DocContext
+  alias Gate.ErrorCat
+  alias CMS.Model.Community
 
   @actions [
     :publish,

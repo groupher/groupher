@@ -37,7 +37,7 @@ Gate.access_check(actor, :read_draft, resource, raw_map)
 
 Gate.scope(queryable, actor, action, raw_map)
   -> 调用方通过 raw map 声明读取意图
-  -> 各资源 Scope compiler 分散校验 map 字段
+  -> 各资源 Scope query 分散校验 map 字段
   -> 返回带准入条件的 Ecto.Query
 ```
 
@@ -52,7 +52,7 @@ Gate.access_check(actor, action, resource)
 
 Gate.scope(queryable, actor, action, scope_context)
   -> 校验资源专属 Scope Context
-  -> resource compiler
+  -> resource Scope query
   -> 返回带准入条件的 Ecto.Query
 ```
 
@@ -228,7 +228,7 @@ Article 检查，也不得让 pattern mismatch 泄漏为 `FunctionClauseError`�
 
 ### 4.1 定位
 
-Scope Context 是调用方对读取目的的显式声明，由 Scope compiler 校验并编译成 SQL 条件。
+Scope Context 是调用方对读取目的的显式声明，由 Scope query 校验并构造 SQL 条件。
 
 它与 Access Context 的关键区别是：
 
@@ -298,11 +298,11 @@ Doc 和 Document 使用显式 branch selector：
 
 Comment Context 不提供隐式 thread 缺省。单 thread 查询必须显式传入 `thread`；Doc Comment public read 还必须使用 `branch_policy: :main`。`branch_policy` 只允许与 `thread: :doc` 组合，`thread: :post` 等普通 Article thread 搭配任何 branch selector 都必须 fail closed。Comment 暂不支持任意 `branch_id`，因为当前 Comment read model 只定义 official main Doc branch 的公共读取。
 
-跨 thread 的公共 Comment 查询必须使用显式的 `Context.Scope.Comment.all_public()`，由 compiler 分别处理普通 ArticleLifecycle 与 main DocBranch/DocLifecycle。该入口会修复当前 `%{}` 走普通 ArticleLifecycle fallback、导致 Doc Comment 无法进入公共聚合结果的实现错误，因此是明确的 correctness fix，不是对现状查询结果的机械保持。不得把空 Context 或 `thread: nil` 解释成 all-thread，也不得继续使用普通 ArticleLifecycle fallback 代替 Doc policy。
+跨 thread 的公共 Comment 查询必须使用显式的 `Context.Scope.Comment.all_public()`，由 Comment Scope query 分别处理普通 ArticleLifecycle 与 main DocBranch/DocLifecycle。该入口会修复当前 `%{}` 走普通 ArticleLifecycle fallback、导致 Doc Comment 无法进入公共聚合结果的实现错误，因此是明确的 correctness fix，不是对现状查询结果的机械保持。不得把空 Context 或 `thread: nil` 解释成 all-thread，也不得继续使用普通 ArticleLifecycle fallback 代替 Doc policy。
 
 ### 4.3 mode 不是权限凭证
 
-调用方传入 `policy_mode: :owner_management` 只是在声明“需要 owner management 读取语义”。Scope compiler 仍必须验证 actor 确实是 owner；不能因为 mode 的值而提升 actor 权限。
+调用方传入 `policy_mode: :owner_management` 只是在声明“需要 owner management 读取语义”。Scope query 仍必须验证 actor 确实是 owner；不能因为 mode 的值而提升 actor 权限。
 
 public、owner、moderator 和 operations 都必须显式选择，不根据 actor 身份自动升级读取范围。
 
@@ -324,7 +324,7 @@ Context.Scope.Document.public_branch(branch_id)
 Context.Scope.Document.draft(branch_id, :owner_management)
 ```
 
-constructor 负责拒绝 `stage: :draft` 配合 `policy_mode: :public` 等非法组合。`Gate.scope/4` 和资源 compiler 通过 struct pattern 直接读取 Scope Context，不增加通用 getter 或把 Context 转回 map。
+constructor 负责拒绝 `stage: :draft` 配合 `policy_mode: :public` 等非法组合。`Gate.scope/4` 和资源 Scope query 通过 struct pattern 直接读取 Scope Context，不增加通用 getter 或把 Context 转回 map。
 
 Access Context 不提供对应的公共 constructor；它只能由 `Gate.Access.Load.*` 根据数据库权威事实构造。
 
@@ -374,12 +374,12 @@ CMS.Gate
 ### Phase 0：最小 Scope Context 与 read_draft Access 旁路收口
 
 1. 先定义最小可用的 `Gate.Context.Scope.Article`、`Gate.Context.Scope.Doc` 及其 `draft` constructor；
-2. 让 `Gate.scope/4` 和 Article/Doc compiler 接受这两种 typed Context；尚未迁移的调用方暂时继续走现有 raw map 透传路径，Phase 0 不负责把 map 转换为 typed Context；
+2. 让 `Gate.scope/4` 和 Article/Doc Scope query 接受这两种 typed Context；尚未迁移的调用方暂时继续走现有 raw map 透传路径，Phase 0 不负责把 map 转换为 typed Context；
 3. 将 `Articles.read_draft` 收口为通过 `Gate.scope/4` 构造原始 Draft 查询；
 4. 普通 Article 使用 `Gate.Context.Scope.Article.draft/2`，Doc 使用 `Gate.Context.Scope.Doc.draft/2`；
 5. 在 scoped query 上追加 logical id、branch 等资源定位条件后执行一次 `Repo.one`；
 6. 删除 `Gate.access_check/4`、`Access.access_check/4` 和 `Access.access_check/3` 的 `:read_draft` 特例；
-7. 从 Access action matrix 删除 `:read_draft`，同时保留 Scope Article/Doc compiler 的 `:read_draft` action；
+7. 从 Access action matrix 删除 `:read_draft`，同时保留 Scope Article/Doc query 的 `:read_draft` action；
 8. 增加 query-count 测试，证明 Draft read 不再执行“先加载、再 `Repo.exists?`”的第二次授权查询；
 9. 同步更新 `gate_v3.md` 的 Draft read 契约、调用图和验收项，明确旧 Access 契约已被 V4 supersede。
 
@@ -419,7 +419,7 @@ V3 同步更新范围固定为：
 8. 清点所有 list/count/exists/publish caller；
 9. 所有调用方迁移完成后，删除 raw map 支持。
 
-Phase 0 的 raw map 兼容仍是现有透传路径，不是 map-to-typed adapter。进入 Phase 2 后，raw map 兼容才收口到 `Gate.Scope` 顶层：顶层根据 root schema 将合法 map 转换为对应 typed Scope Context，资源 compiler 从各自迁移开始只接受 Context struct。缺字段、未知字段、非法枚举和资源类型错配必须 fail closed，不得在 struct 校验失败后退回 map。Comment 迁移前暂时维持原实现；迁移 `Comment.all_public()` 时必须在同一个原子改动中替换 `%{}` 调用方，并让 adapter 从该改动起拒绝 `%{}`。adapter 任何时候都不得把 `%{}` 推断为跨 thread 查询。
+Phase 0 的 raw map 兼容仍是现有透传路径，不是 map-to-typed adapter。进入 Phase 2 后，raw map 兼容才收口到 `Gate.Scope` 顶层：顶层根据 root schema 将合法 map 转换为对应 typed Scope Context，资源 Scope query 从各自迁移开始只接受 Context struct。缺字段、未知字段、非法枚举和资源类型错配必须 fail closed，不得在 struct 校验失败后退回 map。Comment 迁移前暂时维持原实现；迁移 `Comment.all_public()` 时必须在同一个原子改动中替换 `%{}` 调用方，并让 adapter 从该改动起拒绝 `%{}`。adapter 任何时候都不得把 `%{}` 推断为跨 thread 查询。
 
 过渡期 `Gate.scope/4` spec 接受 `map() | Gate.Context.Scope.t()`；全部调用方迁移完成后，spec 收紧为只接受 `Gate.Context.Scope.t()`。Scope Context 不能直接一次性 fail closed 后再等待调用方修复。删除 map 支持前，必须证明所有调用链已显式迁移，避免查询函数收到 `{:error, :scope_context_missing}` 后继续被当作 `Ecto.Query` 使用。
 
@@ -435,7 +435,7 @@ Phase 0 的 raw map 兼容仍是现有透传路径，不是 map-to-typed adapter
 2. 已将 Passport Registry、Assignment、Authorization 移出 Gate；
 3. 已将 `Gate.PublishThrottle` 迁为 `Gate.RateLimit.Publish`；
 4. 已将 `Scope.AncestorCommunity` 改名为 `Scope.CommunityChain`；
-5. 已增加 `Scope.Registry`，集中 root schema 到 compiler 的映射；
+5. 已增加 `Scope.Query`，集中 root schema 到资源 Scope query 的映射；
 6. 已按生产 ownership 移动并拆分对应测试，不改变原断言语义。
 
 ### Phase 4：契约收口
@@ -610,7 +610,7 @@ cms/
 
 - `Gate.Context.Access`、`Gate.Context.Scope` 及全部资源 Context；
 - `Gate.Access`、`Gate.Access.Check`、`Gate.Access.Load`、`Gate.Access.Policy` 和 Access/Scope 边界；
-- `Gate.Scope.Registry`、`Gate.Scope.CommunityChain` 和各资源 Scope compiler；
+- `Gate.Scope.Query`、`Gate.Scope.CommunityChain` 和各资源 Scope query；
 - `Gate.RateLimit.Publish`、`CMS.Passport.*`、`Communities.Enable` 等本次迁移模块。
 
 每个 `@moduledoc` 必须说明：
@@ -637,7 +637,7 @@ Scope Context 的 flow 至少表达：
 Reader
   -> Gate.Context.Scope.*
   -> Gate.scope
-  -> resource scope compiler
+  -> resource Scope query
   -> Ecto.Query
 ```
 
@@ -731,7 +731,7 @@ Gate 内部调用。
 
 ## 12. Scope 协议和 CommunityChain
 
-每个资源 Scope compiler 实现同一个 behavior：
+每个资源 Scope query 实现同一个 behavior：
 
 ```elixir
 defmodule GroupherServer.CMS.Gate.Scope.Policy do
@@ -744,7 +744,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Policy do
 end
 ```
 
-`Scope.Registry` 负责从 root schema 选择 Community、Article、Doc、Comment 或 Document compiler，并校验对应的 `Gate.Context.Scope.*` 类型。behavior 只统一调用协议，不把各资源 Scope Context 合并为一个通用 struct。
+`Scope.Query` 负责从 root schema 选择 Community、Article、Doc、Comment 或 Document Scope query，并校验对应的 `Gate.Context.Scope.*` 类型。behavior 只统一调用协议，不把各资源 Scope Context 合并为一个通用 struct。
 
 原 `Scope.AncestorCommunity` 已收口为 `Scope.CommunityChain`。它负责为 Article、Doc、Comment 和 Document 查询构造共同的 Community 祖先查询链：
 
@@ -830,7 +830,7 @@ policy/publish_throttle_test.exs   -> gate/rate_limit/publish_test.exs
 test/groupher_server/cms/
 ├── gate_test.exs                 facade、Access、Decision、Allow、Passport 混合测试
 ├── gate/
-│   └── scope_test.exs           所有资源 Scope compiler 的混合测试
+│   └── scope_test.exs           所有资源 Scope query 的混合测试
 ├── can_can/
 │   └── communities_test.exs     thread/emotion enable 测试
 ├── communities/

@@ -14,14 +14,16 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
         -> typed Access Context
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Gate.Access.Load.Queries
-  alias GroupherServer.CMS.Gate.Context.Access.{Article, Comment, Doc}
-  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.Comment, as: CommentModel
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Matcher
+  alias CMS.Gate
+  alias Gate.Access.Load.Queries
+  alias Gate.Context.Access.{Article, Comment, Doc}
+  alias Gate.Context.Access.Community, as: CommunityContext
+  alias Gate.ErrorCat
+  alias CMS.Model.Comment, as: CommentModel
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     Community,

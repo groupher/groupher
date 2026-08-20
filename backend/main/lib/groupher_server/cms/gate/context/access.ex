@@ -16,7 +16,9 @@ defmodule GroupherServer.CMS.Gate.Context.Access do
   structs returned by Gate loaders; callers must not construct `%Context.Access{}`.
   """
 
-  alias GroupherServer.CMS.Gate.Context.Access.{Article, Comment, Community, Doc}
+  alias GroupherServer.CMS
+  alias CMS.Gate
+  alias Gate.Context.Access.{Article, Comment, Community, Doc}
 
   @type t :: Community.t() | Article.t() | Doc.t() | Comment.t()
 end

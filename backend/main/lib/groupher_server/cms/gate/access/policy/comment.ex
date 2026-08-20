@@ -17,12 +17,14 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Access.Comment, as: CommentContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.{CommentLifecycle, Community}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Communities.Enable
+  alias CMS.Gate
+  alias Gate.Context.Access.Comment, as: CommentContext
+  alias Gate.ErrorCat
+  alias CMS.Model.{CommentLifecycle, Community}
 
   @actions [:reply_comment, :edit, :delete, :upvote, :emotion, :report, :pin]
 

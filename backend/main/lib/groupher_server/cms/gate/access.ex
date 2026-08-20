@@ -16,10 +16,12 @@ defmodule GroupherServer.CMS.Gate.Access do
   `:ok` or `{:error, reason}`.
   """
 
-  alias GroupherServer.CMS.Gate.Access.Check
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
+  alias GroupherServer.CMS
+  alias CMS.Gate
+  alias Gate.Access.Check
+  alias Gate.Decision
+  alias Gate.ErrorCat
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
 
   @doc false
   @spec access_check(term(), atom(), term()) ::

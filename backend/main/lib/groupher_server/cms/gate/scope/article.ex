@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Gate.Scope.Article do
   @moduledoc """
-  Compiles complete public Article visibility into one query.
+  Builds complete public Article visibility into one query.
 
   Business position:
 
@@ -11,14 +11,15 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Gate
+  alias Gate.Context.Scope.Article, as: ArticleContext
+  alias Gate.Context.Scope.Doc, as: DocContext
+  alias Gate.Scope.Policy
+  alias Gate.ErrorCat
+  alias Gate.Scope.{ArticleSchema, CommunityChain}
+  alias CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
   alias Helper.Constant
 
   require CMS.Const

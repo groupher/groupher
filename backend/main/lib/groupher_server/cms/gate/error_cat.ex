@@ -89,4 +89,7 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
   error(:unknown_policy_mode, code: 4622)
   error(:scope_policy_actor_mismatch, code: 4623)
   error(:unsupported_resource, code: 4625)
+  error(:throttle_interval, code: 4626)
+  error(:throttle_hour, code: 4627)
+  error(:throttle_day, code: 4628)
 end

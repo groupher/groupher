@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
   the official main branch. `all_public/0` is the explicit cross-thread public
   query and is not inferred from an empty context.
 
-      Reader -> Comment scope context -> Gate.scope -> Comment compiler
+      Reader -> Comment scope context -> Gate.scope -> Comment Scope query
 
   Examples:
 

@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
   It mirrors Article/Doc stage and branch semantics while keeping the
   ArticleDocument root schema distinct from Article rows.
 
-      Reader -> Document scope context -> Gate.scope -> Document compiler
+      Reader -> Document scope context -> Gate.scope -> Document Scope query
 
   Examples:
 

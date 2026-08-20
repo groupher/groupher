@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Gate.Scope.Comment do
   @moduledoc """
-  Compiles complete public Comment visibility through its stable Community relation.
+  Builds complete public Comment visibility through its stable Community relation.
 
   Business position:
 
@@ -16,12 +16,14 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
+  alias CMS.Gate
+  alias Gate.Scope.{ArticleSchema, CommunityChain}
+  alias Gate.ErrorCat
+  alias Gate.Scope.Policy
+
   alias Helper.Constant
 
   require CMS.Const
@@ -32,7 +34,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   @actions [:read, :list]
 
-  @doc "Compiles thread-aware Comment visibility predicates into an Ecto query."
+  @doc "Builds thread-aware Comment visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
           Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy

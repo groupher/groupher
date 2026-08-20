@@ -18,7 +18,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     CommunityLifecycle,

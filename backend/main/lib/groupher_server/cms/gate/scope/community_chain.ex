@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   Gate owns the reserved joins. Existing Community/Lifecycle joins are rejected
   because their join predicates cannot be assumed to express the same policy.
 
-  The exported query helpers are internal compiler seams. Product callers use
+  The exported query helpers are internal Scope query seams. Product callers use
   `CMS.Gate.scope/4` and never call this module directly.
 
   Business position:
@@ -17,10 +17,12 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.{Communities, Const}
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.{Communities, Const}
+  alias CMS.Gate
+  alias Gate.ErrorCat
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     Community,
@@ -284,7 +286,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   defp apply_document_policy(_query, _policy_mode, _stage),
     do: {:error, ErrorCat.scope_context_missing()}
 
-  @doc "Rejects joins and aliases owned by the Gate Scope compiler."
+  @doc "Rejects joins and aliases owned by the Gate Scope query."
   @spec reject_conflicting_scope_joins(Ecto.Query.t(), [module()]) ::
           :ok | {:error, GroupherServer.ErrorCat.Error.t()}
   def reject_conflicting_scope_joins(%Ecto.Query{aliases: aliases, joins: joins}, owned_schemas) do

@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
       iex> {:ok, :post} = thread_for(GroupherServer.CMS.Model.Post)
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Matcher
+  alias CMS.Gate
+  alias Gate.ErrorCat
 
   @doc "Returns the canonical Article schema for a resource thread."
   @spec fetch(atom()) :: {:ok, module()} | {:error, GroupherServer.ErrorCat.Error.t()}

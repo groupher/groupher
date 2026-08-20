@@ -11,7 +11,6 @@ defmodule GroupherServer.ErrorCat do
 
   @ranges %{
     {:web} => 4000..4199,
-    {:cms, :gate, :rate_limit} => 4200..4299,
     {:account, :authentication} => 4300..4349,
     {:cms, :passport} => 4350..4399,
     {:cms, :comment} => 4400..4499,
@@ -59,7 +58,6 @@ defmodule GroupherServer.ErrorCat do
     GroupherServer.Accounts.Fans.ErrorCat,
     GroupherServer.CMS.ErrorCat,
     GroupherServer.CMS.Gate.ErrorCat,
-    GroupherServer.CMS.Gate.RateLimit.ErrorCat,
     GroupherServer.CMS.Passport.ErrorCat,
     GroupherServer.CMS.Comments.ErrorCat,
     GroupherServer.CMS.Interactions.ErrorCat,

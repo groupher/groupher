@@ -351,7 +351,7 @@ Doc scope
 
 当前 `lifecycle_scope/2` 无条件 join `ArticleLifecycle`，因此不能只在调用点切换参数；需要改造 scope 编译器本身。不要通过条件 join、union 或 view 保留双 Lifecycle 来源。
 
-Doc Scope 的 branch 必须来自显式 policy context，不由 scope compiler 猜测或调用 `Branch.resolve`：
+Doc Scope 的 branch 必须来自显式 policy context，不由 Scope query 猜测或调用 `Branch.resolve`：
 
 ```elixir
 # Public URL / Press / Feed
@@ -367,10 +367,10 @@ DocScope.public_main()
 规则：
 
 - `context.branch_id` 是查询目标的 canonical id，不是“它已经是 main branch”的可信证明；
-- public policy 编译为对 `DocBranch` 的 join，并在查询中断言 `doc_branch.type == :main`。因此 scope compiler 不执行 Repo、不主动查询 branch，也不需要在编译期把非 main 判定为异常；调用方执行返回的 query 后，非 main 输入自然得到空 public scope。缺失 `branch_id` 仍然是 `:scope_context_missing`，除非使用显式的 `branch_policy: :main`；
+- public policy 编译为对 `DocBranch` 的 join，并在查询中断言 `doc_branch.type == :main`。因此 Scope query 不执行 Repo、不主动查询 branch，也不需要在构造 Query 时把非 main 判定为异常；调用方执行返回的 query 后，非 main 输入自然得到空 public scope。缺失 `branch_id` 仍然是 `:scope_context_missing`，除非使用显式的 `branch_policy: :main`；
 - 跨社区的公共聚合读取和维护任务可以显式使用 `branch_policy: :main`。例如没有固定 Community 的公共 Doc 列表可以使用它；这不是单 Community 请求的隐式 fallback；
 - Dashboard 的 management policy 必须显式传入 branch，可读取被授权 workspace 的 Draft 或 branch 内 Public；
-- Scope compiler 只消费 canonical `branch_id` 并编译 join，不执行 Repo、不解析 slug，也不取得 advisory lock；
+- Scope query 只消费 canonical `branch_id` 并构造 join，不执行 Repo、不解析 slug，也不取得 advisory lock；
 - Draft read 和 Public read 是不同的 stage + branch policy，不能共用隐式 main fallback；Draft read 必须经过 `:read_draft`。
 
 ## 5. Article Core
@@ -724,9 +724,9 @@ Doc scope
   -> DocLifecycle
 ```
 
-Scope compiler 的输入约定是：面向单个 Community 的 Doc 请求必须提供 `context.branch_id`；Public scope 会 join `DocBranch` 并在 SQL 中过滤 `type = :main`，而不是把调用方传入的 id 当作 main 的证明；Dashboard management scope 接受调用方已解析且已授权的 branch。跨社区的公共聚合读取或维护任务可以传 `branch_policy: :main`，由编译器按每个 Article 所属 Community join main branch；`Articles.List` 在没有固定 Community 的公共 Doc 列表中属于这一类。branch slug 到 canonical id 的解析属于 Reader/service policy，不属于 Scope compiler；单个请求缺少 `branch_id` 不得默认回退到 main。
+Scope query 的输入约定是：面向单个 Community 的 Doc 请求必须提供 `context.branch_id`；Public scope 会 join `DocBranch` 并在 SQL 中过滤 `type = :main`，而不是把调用方传入的 id 当作 main 的证明；Dashboard management scope 接受调用方已解析且已授权的 branch。跨社区的公共聚合读取或维护任务可以传 `branch_policy: :main`，由 Query 按每个 Article 所属 Community join main branch；`Articles.List` 在没有固定 Community 的公共 Doc 列表中属于这一类。branch slug 到 canonical id 的解析属于 Reader/service policy，不属于 Scope query；单个请求缺少 `branch_id` 不得默认回退到 main。
 
-因此 public scope 的 main 校验属于查询语义：compiler 只负责编译 `DocBranch` join/WHERE，Repo 只在调用方最终执行 query 时运行。若 service 需要把非法 context 立即报告为 policy error，可以在调用 Scope 前做显式的 branch policy 校验，但这不是 compiler 的职责。
+因此 public scope 的 main 校验属于查询语义：Scope query 只负责构造 `DocBranch` join/WHERE，Repo 只在调用方最终执行 query 时运行。若 service 需要把非法 context 立即报告为 policy error，可以在调用 Scope 前做显式的 branch policy 校验，但这不是 Scope query 的职责。
 
 不要使用条件 join、union、view 或兼容窗口来保留两套 Lifecycle 来源。代码和 schema 应在同一目标结构下直接切换。
 
@@ -923,7 +923,7 @@ matrix、祖先 Lifecycle 检查和同事务 fact/projection 写入。普通 Art
 22. Draft 更新使用 `expected_version` 做 optimistic guard，冲突不得 last-write-wins。
 23. TrashAction 的 child 判断、空 action 清理、restore 和 permanent-delete 覆盖 `TrashedDocArticle`。
 24. Post、Blog、Changelog 的唯一约束明确为 `(community_id, article_hash_id, stage)`。
-25. Public Doc Scope 通过 `DocBranch` join/WHERE 强制 `type = :main`；Scope compiler 不执行 Repo，branch policy context 的解析和 query 执行由调用方负责。
+25. Public Doc Scope 通过 `DocBranch` join/WHERE 强制 `type = :main`；Scope query 不执行 Repo，branch policy context 的解析和 query 执行由调用方负责。
 26. 每个 branch 内的 Doc Publish 都创建 branch-local `DocPublishRelease` 并推进同一 branch 的 `DocsSiteState` published cursor；只有 main branch Release 对公共 URL、Press、Feed 和匿名 public Scope 可见。
 27. 普通 Article 和 Doc 的 `permanently_delete` 都先转换到 `destroy`，完成 aggregate 清理后删除 Lifecycle 行；不引入 recreate、generation 或兼容状态。
 

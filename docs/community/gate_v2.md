@@ -13,7 +13,7 @@
 
 截至 2026-08-15，Gate V2 已经具备以下基础：
 
-- Community、Article、Comment、Document 的 Scope compiler 已建立，并统一通过 `Gate.scope/4` 接收资源专属 typed Scope Context；
+- Community、Article、Comment、Document 的 Scope query 实现已建立，并统一通过 `Gate.scope/4` 接收资源专属 typed Scope Context；
 - Article Lifecycle、Comment Lifecycle、Community Lifecycle 已分出状态权威；
 - Comment 的 Interaction 已由独立模块承载，reaction V2 作为 Gate 的既定下游基线；
 - Article、Comment 的主要 mutation 已开始使用锁定后的生命周期事实；
@@ -326,7 +326,7 @@ queryable
 
 不提供 actor-first、运行时参数猜测或多个含义相同的入口。
 
-### 5.2 Scope compiler ownership
+### 5.2 Scope query ownership
 
 ```text
 CommunityChain
@@ -351,7 +351,7 @@ Scope 组合前必须拒绝冲突 binding。内部函数命名为 reject_conflic
 
 ### 5.2.1 Scope context 的职责
 
-Scope 接收的 context 不是一个可以随意塞入资源或权限结果的 map。它只承载 Scope compiler 无法从 queryable 本身可靠推导的 policy 输入。
+Scope 接收的 context 不是一个可以随意塞入资源或权限结果的 map。它只承载 Scope query 无法从 queryable 本身可靠推导的 policy 输入。
 
 ```text
 Queryable facts
@@ -541,7 +541,7 @@ community_applications/write.ex -> community_applications/writer.ex
 4. 删除裸 `exist?` 查询；社区名字可用性统一走 `Communities.check_name/1-2 -> NamePolicy.check/1`，由命名空间 policy 判断，而不是返回数据库是否存在；
 5. 将不属于读写服务的函数拆出。
 
-### Phase 2：完成 Scope compiler
+### Phase 2：完成 Scope query
 
 1. Community、Article、Comment、Document 的 public Scope 统一 queryable-first；
 2. Community public read 删除后置 Gate 判断；
@@ -631,7 +631,7 @@ Community 读取和命名检查也已完成一次性切换：业务调用只使�
 
 ### Scope
 
-- Scope compiler 有明确 join ownership；
+- Scope query 有明确 join ownership；
 - duplicate alias/schema/anonymous join 返回 scope_binding_conflict；
 - Article、Comment、Document 不重复注入 lifecycle join；
 - queryable-first 顺序固定。

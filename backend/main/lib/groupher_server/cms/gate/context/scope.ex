@@ -11,7 +11,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope do
   resource modules, such as `Context.Scope.Article.public/2`.
   """
 
-  alias GroupherServer.CMS.Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
+  alias GroupherServer.CMS
+  alias CMS.Gate
+  alias Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
 
   @type t :: Community.t() | Article.t() | Doc.t() | Comment.t() | Document.t()
 end

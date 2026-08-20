@@ -14,15 +14,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Document do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.ArticleDocument), nil, :read, context)
   """
 
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Gate
+  alias Gate.Scope.{ArticleSchema, CommunityChain}
+  alias Gate.Scope.Policy
+  alias Gate.ErrorCat
 
   @behaviour Policy
 
   @actions [:read, :list]
 
-  @doc "Compiles ArticleDocument ancestor and branch predicates into an Ecto query."
+  @doc "Builds ArticleDocument ancestor and branch predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Document.t()) ::
           Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy

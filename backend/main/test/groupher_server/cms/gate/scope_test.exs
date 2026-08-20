@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
+
   alias CMS.Model.{
     ArticleDocument,
     Blog,
@@ -61,6 +62,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, nil, :read, %{})
+  end
+
+  test "Scope rejects an unknown Context struct as a root mismatch" do
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read, %GroupherServer.Accounts.Model.User{})
   end
 
   test "ArticleDocument scope compiles every parent table" do
