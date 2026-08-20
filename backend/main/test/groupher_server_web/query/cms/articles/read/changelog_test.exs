@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS.Articles.ErrorCat
 
   setup do
     {community, changelog, changelog_attrs, user} = mock_article(:changelog)
@@ -114,7 +115,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
            |> query_error?(
              S.Article.q(:article, :changelog),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+             ErrorCat.code(ErrorCat.thread_not_visible())
            )
   end
 end

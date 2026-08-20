@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     CommunityLifecycle,
     DocPublishRelease,
     DocTreeNode,
@@ -12,7 +12,10 @@ defmodule GroupherServer.Test.CMS.Press do
     PressConfig
   }
 
+  alias Ecto.Changeset
+  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServerWeb.Schema
+  alias Helper.Constant.CMS, as: CMSConst
 
   setup do
     {community, post, attrs, user} = mock_article(:post)
@@ -37,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
   test "origin projections hide communities that are not publicly active", ~m(community post)a do
     community
-    |> Ecto.Changeset.change(pending: Helper.Constant.CMS.pending(:applying))
+    |> Changeset.change(pending: CMSConst.pending(:applying))
     |> Repo.update!()
 
     Repo.get_by!(CommunityLifecycle, community_id: community.id)
@@ -216,7 +219,7 @@ defmodule GroupherServer.Test.CMS.Press do
   end
 
   test "Docs Feed exposes only the latest main-branch publish release", ~m(community user)a do
-    {:ok, branch} = CMS.Docs.Branch.resolve(community, nil)
+    {:ok, branch} = Branch.resolve(community, nil)
     published_at = DateTime.utc_now(:second)
 
     for release_number <- 1..2 do

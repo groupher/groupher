@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS.Passport.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -119,14 +120,14 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :changelog),
              update_variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :changelog),
              %{community: context.community.slug, id: draft["id"]},
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     assert {:ok, stored_draft} =
@@ -169,7 +170,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :changelog),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     owner_draft =

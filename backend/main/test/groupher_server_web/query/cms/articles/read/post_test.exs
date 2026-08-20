@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS.Articles.ErrorCat
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)
@@ -47,6 +48,25 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
     assert results["innerId"] == to_string(post.inner_id)
     assert is_valid_kv?(results, "title", :string)
+  end
+
+  test "anonymous readers receive only the safe Article OperationLog",
+       ~m(guest_conn community post)a do
+    variables = %{
+      article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+      filter: %{page: 1, size: 20}
+    }
+
+    result = guest_conn |> gq_query(S.Article.q(:operation_logs), variables)
+
+    assert result["totalCount"] >= 1
+    created = Enum.find(result["entries"], &(&1["action"] == "created"))
+    assert created["id"]
+    assert created["subject"]["type"] == "post"
+    assert created["subject"]["ref"] == post.article_hash_id
+    assert created["changes"] == %{}
+    refute Map.has_key?(created, "metadata")
+    refute Map.has_key?(created, "source")
   end
 
   test "pending state should in meta", ~m(guest_conn user_conn community user post_attrs)a do
@@ -98,7 +118,7 @@ defmodule GroupherServer.Test.Query.Articles.Post do
            |> query_error?(
              S.Article.q(:article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+             ErrorCat.code(ErrorCat.thread_not_visible())
            )
   end
 end

@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Analysis do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   @overview_query S.Analysis.q(:overview)
   @active_visitors_query S.Analysis.q(:active_visitors)
@@ -88,7 +89,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @summary_query,
                %{community: community.slug, days: 7},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -97,7 +98,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @overview_query,
                %{community: community.slug, days: 7},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -106,7 +107,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @active_visitors_query,
                %{community: community.slug},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -115,6 +116,5 @@ defmodule GroupherServer.Test.Query.Analysis do
 
       assert is_nil(result)
     end
-
   end
 end

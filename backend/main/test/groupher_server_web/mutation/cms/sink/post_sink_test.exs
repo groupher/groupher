@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Sink.PostSink do
   @moduledoc false
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -37,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              |> mutation_error?(
                S.Article.m(:sink_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -67,7 +68,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
              |> mutation_error?(
                S.Article.m(:undo_sink_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
   end

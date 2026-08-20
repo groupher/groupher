@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.PinnedArticle
+  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Model.PinnedArticle
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 
@@ -35,7 +36,7 @@ defmodule GroupherServer.Test.CMS.Articles.PostPin do
       {:error, reason} = CMS.Articles.pin(community, new_post)
 
       assert error_code(reason) ==
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.too_much_pinned_article())
+               ErrorCat.code(ErrorCat.too_much_pinned_article())
     end
 
     test "can undo pin to a post", ~m(community post)a do

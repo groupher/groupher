@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
   @moduledoc false
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog, preload: [author: :user])
@@ -32,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -59,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
   end

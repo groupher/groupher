@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -56,7 +57,7 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
              |> mutation_error?(
                @update_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
   end

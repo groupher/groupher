@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.ArticleUserEmotion
+  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Model.ArticleUserEmotion
 
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
@@ -114,7 +115,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
              |> mutation_error?(
                S.Article.m(:emotion_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.emotion_not_allowed())
+               ErrorCat.code(ErrorCat.emotion_not_allowed())
              )
     end
   end
