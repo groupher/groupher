@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
         -> search platform
   """
 
-  alias GroupherServer.CMS.SearchArtiments.Artiment
+  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config}
 
   @type sort :: :relevance
 
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
 
   @max_size 100
   @types [:article, :comment]
-  @threads [:post, :blog, :changelog, :doc]
+  @threads Config.article_threads()
   @sorts [:relevance]
 
   @doc """

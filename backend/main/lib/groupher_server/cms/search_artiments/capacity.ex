@@ -17,9 +17,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
+  alias CMS.SearchArtiments.Config
   alias Helper.Constant
 
   require CMS.Const
+  @article_threads Config.article_threads()
 
   @legal Constant.CMS.pending(:legal)
 
@@ -39,7 +41,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   end
 
   defp article_counts do
-    Map.new([:post, :blog, :changelog, :doc], fn thread ->
+    Map.new(@article_threads, fn thread ->
       {:ok, info} = match(thread)
 
       count =

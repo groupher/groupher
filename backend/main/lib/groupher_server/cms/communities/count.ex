@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Constant, ORM, T, Transaction}
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Communities.Config.threads()
 
   @doc """
   update community_tags_count / thread / article_count / subscribers_count of a community

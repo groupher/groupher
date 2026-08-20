@@ -32,6 +32,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     DocLifecycle
   }
 
+  alias CMS.Gate.Config
+
+  @article_threads Config.ordinary_article_threads()
+
   @doc false
   def community(%Community{} = community) do
     case Queries.community_lifecycle(community.id) do
@@ -85,7 +89,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
         thread,
         %{community_id: community_id, article_hash_id: hash_id} = resource
       )
-      when thread in [:post, :blog, :changelog] and community_id == community.id do
+      when thread in @article_threads and community_id == community.id do
     with {:ok, %{model: model}} <- Matcher.match_interaction(thread),
          canonical when not is_nil(canonical) <- Queries.resource(model, resource.id),
          true <- same_article_identity?(canonical, resource),

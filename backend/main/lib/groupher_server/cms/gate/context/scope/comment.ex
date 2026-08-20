@@ -14,7 +14,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
       iex> %__MODULE__{thread: :all, policy_mode: :public} = all_public()
   """
 
-  @threads [:post, :blog, :changelog, :doc]
+  alias GroupherServer.CMS.Gate.Config
+
+  @threads Config.article_threads()
   @enforce_keys [:thread, :policy_mode]
   defstruct [:thread, :policy_mode, :branch_policy]
 

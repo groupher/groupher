@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.{Config, Matcher}
+  alias CMS.Artiment.Matcher
   alias CMS.Articles.MutationLock
   alias CMS.Communities.Enable
-  alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias CMS.{Events, Gate}
   alias Helper.{Later, T}

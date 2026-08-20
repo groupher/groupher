@@ -25,13 +25,14 @@ defmodule GroupherServer.CMS.Press do
   alias CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.Model.{Community, Doc, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
+  alias CMS.Press.Config, as: PressConfigContract
   alias Helper.Later
 
   require Logger
 
   require CMS.Const
 
-  @threads [:post, :blog, :changelog, :doc]
+  @threads PressConfigContract.article_threads()
   @public_stage CMS.Const.stage(:public)
   @site_host get_config(:general, :site_host)
   @manifest_limit 500

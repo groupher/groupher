@@ -46,11 +46,12 @@ defmodule GroupherServer.CMS.Communities.Enable do
   alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServer.CMS.Communities.Config
   alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
-  @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
-  @default_thread_emotions GroupherServer.CMS.Artiment.Config.default_thread_emotions()
+  @threads Config.threads()
+  @emotions_whitelist Config.emotions_whitelist()
+  @default_thread_emotions Config.default_thread_emotions()
 
   @type scope :: :article | :comment
 

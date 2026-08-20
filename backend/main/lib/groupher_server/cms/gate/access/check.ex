@@ -24,7 +24,9 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   alias CMS.Model.{Blog, Changelog, Comment, Community, Post}
   alias CMS.Model.Doc, as: DocModel
   alias CMS.{Articles, FrontDesk}
+  alias CMS.Gate.Config
   alias GroupherServer.Repo
+  @article_threads Config.article_threads()
 
   @article_models [Post, Blog, Changelog, DocModel]
 
@@ -112,7 +114,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   defp context_resource(%ArticleContext{article: article}), do: article
   defp context_resource(%DocContext{doc: doc}), do: doc
 
-  defp article_thread(%{thread: thread}) when thread in [:post, :blog, :changelog, :doc],
+  defp article_thread(%{thread: thread}) when thread in @article_threads,
     do: {:ok, thread}
 
   defp article_thread(resource), do: FrontDesk.thread_of(resource)

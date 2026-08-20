@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   alias Helper.{Constant, Datetime, ORM, T}
 
   @audit_illegal Constant.CMS.pending(:illegal)
-  @tracked_threads [:post, :blog, :changelog]
+  @tracked_threads GroupherServer.CMS.Communities.Config.ordinary_article_threads()
   @default_thread :post
 
   @doc """

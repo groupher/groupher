@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   import Ecto.Query
 
   alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Interactions.{Const, ErrorCat}
+  alias GroupherServer.CMS.Interactions.{Config, Const, ErrorCat}
 
-  @article_types [:post, :blog, :changelog, :doc]
+  @article_types Config.article_threads()
   @passthrough_orders [nil | Const.passthrough_order_values()]
 
   @type result :: {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}

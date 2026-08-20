@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
-  @threads [:post, :blog, :changelog]
+  @threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
   @required_fields ~w(
     trash_action_id community_id thread article_hash_id restore_state deleted_at
   )a

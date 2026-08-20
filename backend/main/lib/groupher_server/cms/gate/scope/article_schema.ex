@@ -17,14 +17,17 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
   alias GroupherServer.CMS
   alias CMS.Artiment.Matcher
   alias CMS.Gate
+  alias CMS.Gate.Config
   alias Gate.ErrorCat
+
+  @article_threads Config.article_threads()
 
   @doc "Returns the canonical Article schema for a resource thread."
   @spec fetch(atom()) :: {:ok, module()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def fetch(thread) when is_atom(thread) do
     case Matcher.match_interaction(thread) do
       {:ok, %{artiment: artiment, model: model}}
-      when artiment in [:post, :blog, :changelog, :doc] ->
+      when artiment in @article_threads ->
         {:ok, model}
 
       _ ->
@@ -38,7 +41,7 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
   @spec thread_for(module()) :: {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def thread_for(schema) when is_atom(schema) do
     case Matcher.match_interaction(schema) do
-      {:ok, %{artiment: artiment}} when artiment in [:post, :blog, :changelog, :doc] ->
+      {:ok, %{artiment: artiment}} when artiment in @article_threads ->
         {:ok, artiment}
 
       _ ->

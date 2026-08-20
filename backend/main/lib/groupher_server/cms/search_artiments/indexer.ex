@@ -17,10 +17,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias CMS.Gate.Context.Scope.Article, as: ArticleScope
   alias CMS.Gate.Context.Scope.Doc, as: DocScope
   alias CMS.SearchArtiments
-  alias CMS.SearchArtiments.{Artiment, Projection}
+  alias CMS.SearchArtiments.{Artiment, Config, Projection}
   alias Helper.Constant
 
   require CMS.Const
+  @article_threads Config.article_threads()
 
   @batch_size 500
   @legal Constant.CMS.pending(:legal)
@@ -116,7 +117,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @doc "Rebuilds all public Article projections with bounded database batches."
   @spec reindex_articles() :: :ok | {:error, term()}
   def reindex_articles do
-    Enum.reduce_while([:post, :blog, :changelog, :doc], :ok, fn thread, :ok ->
+    Enum.reduce_while(@article_threads, :ok, fn thread, :ok ->
       case reindex_thread(thread, 0) do
         :ok -> {:cont, :ok}
         error -> {:halt, error}
