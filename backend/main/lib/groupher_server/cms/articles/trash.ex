@@ -18,16 +18,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Document, Lifecycle, MutationLock}
-  alias CMS.Docs.Branch
-  alias CMS.Docs.Trash, as: DocTrash
-  alias CMS.Communities.TagStats
+  alias GroupherServer.CMS.Articles.{Document, Lifecycle, MutationLock}
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Docs.Trash, as: DocTrash
 
-  alias CMS.Model.{
-    ArtimentMention,
+  alias GroupherServer.CMS.Model.{
     ArticleLifecycle,
+    ArtimentMention,
     Community,
     Doc,
     DocBranch,
@@ -37,7 +35,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
     TrashedDocTreeNode
   }
 
-  alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Publish
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{Constant, ORM, T}
 
   require CMS.Const
@@ -186,8 +187,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
         actor,
         opts
       ) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, opts) do
-      CMS.Docs.Trash.attach(action, community, branch, article_hash_id, actor, opts)
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocTrash.attach(action, community, branch, article_hash_id, actor, opts)
     end
   end
 

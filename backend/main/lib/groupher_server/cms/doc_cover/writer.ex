@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
              {:ok, replacement_index} <-
                replace_descendant_cards(community, published_group),
              {:ok, cover_card} <-
-               CMS.DocCover.Sync.ensure_cover_card(community, published_group),
+               CoverSync.ensure_cover_card(community, published_group),
              :ok <- place_cover_card(community, cover_card, replacement_index) do
           card_result(cover_card, published_group, replacement_index)
         else
@@ -318,7 +318,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       |> Repo.one()
 
     if is_nil(draft) or
-         not CMS.DocTree.ChangeDetection.draft_content_changed?(draft, latest_public_snapshot) do
+         not ChangeDetection.draft_content_changed?(draft, latest_public_snapshot) do
       :ok
     else
       {:error,
@@ -380,7 +380,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   end
 
   defp resolve_published_node(%Community{} = community, draft_node_id) do
-    case CMS.DocTree.Publish.public_node_for_draft(community, draft_node_id) do
+    case DocTreePublish.public_node_for_draft(community, draft_node_id) do
       {:ok, published} ->
         {:ok, published}
 

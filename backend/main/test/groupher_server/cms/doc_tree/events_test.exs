@@ -4,7 +4,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.{DocTreeEvent, DocTreeNode}
+  alias GroupherServer.CMS.DocTree.Events, as: DocTreeEvents
+  alias GroupherServer.CMS.Model.{DocTreeEvent, DocTreeNode}
 
   require CMS.Const
 
@@ -27,7 +28,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
 
     test "records staged events in order", ~m(user community)a do
       assert {:ok, [first, second]} =
-               CMS.DocTree.Events.record_staged_many(
+               DocTreeEvents.record_staged_many(
                  community,
                  [
                    node_create_event("page-1"),
@@ -46,7 +47,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
     end
 
     test "records no staged events from an empty list", ~m(user community)a do
-      assert CMS.DocTree.Events.record_staged_many(community, [], user.id) == {:ok, []}
+      assert DocTreeEvents.record_staged_many(community, [], user.id) == {:ok, []}
     end
 
     test "publishes only selected staged tree events", ~m(user community)a do
@@ -54,7 +55,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       {:ok, second} = record_node_create(community, "page-2", user)
 
       assert {:ok, snapshot} =
-               CMS.DocTree.Events.publish_snapshot(
+               DocTreeEvents.publish_snapshot(
                  community,
                  user.id,
                  "selected",
@@ -74,7 +75,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       doc_id = Ecto.UUID.generate()
 
       {:ok, doc_event} =
-        CMS.DocTree.Events.record_staged(
+        DocTreeEvents.record_staged(
           community,
           CMS.Const.tree_event(:node_update),
           %{},
@@ -86,7 +87,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
 
       {:ok, legacy_event} = record_node_create(community, "page-1", user, doc_id)
 
-      assert CMS.DocTree.Events.discard_doc_bound_staged(community, [doc_id]) == 2
+      assert DocTreeEvents.discard_doc_bound_staged(community, [doc_id]) == 2
 
       {:ok, doc_event} = ORM.find(DocTreeEvent, doc_event.id)
       {:ok, legacy_event} = ORM.find(DocTreeEvent, legacy_event.id)
@@ -109,7 +110,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       doc_id = Ecto.UUID.generate()
 
       assert {:ok, group_event} =
-               CMS.DocTree.Events.record_staged(
+               DocTreeEvents.record_staged(
                  community,
                  CMS.Const.tree_event(:node_move),
                  %{
@@ -122,7 +123,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
                )
 
       assert {:ok, page_event} =
-               CMS.DocTree.Events.record_staged(
+               DocTreeEvents.record_staged(
                  community,
                  CMS.Const.tree_event(:node_move),
                  %{
@@ -148,15 +149,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       before_pin = pin_node(title: "GitHub")
       after_pin = pin_node(title: "Groupher")
 
-      assert %{type: "pin.add"} = CMS.DocTree.Events.create_event(before_pin)
-      assert %{type: "pin.remove"} = CMS.DocTree.Events.delete_event(before_pin)
-      assert %{type: "pin.reorder"} = CMS.DocTree.Events.move_event(before_pin, nil, 0, nil, 1)
-      assert [%{type: "pin.update"}] = CMS.DocTree.Events.update_events(before_pin, after_pin)
+      assert %{type: "pin.add"} = DocTreeEvents.create_event(before_pin)
+      assert %{type: "pin.remove"} = DocTreeEvents.delete_event(before_pin)
+      assert %{type: "pin.reorder"} = DocTreeEvents.move_event(before_pin, nil, 0, nil, 1)
+      assert [%{type: "pin.update"}] = DocTreeEvents.update_events(before_pin, after_pin)
     end
   end
 
   defp record_node_create(community, node_id, user, doc_id \\ Ecto.UUID.generate()) do
-    CMS.DocTree.Events.record_staged(
+    DocTreeEvents.record_staged(
       community,
       CMS.Const.tree_event(:node_create),
       node_create_payload(node_id, doc_id),
