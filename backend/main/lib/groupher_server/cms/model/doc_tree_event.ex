@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocBranch, DocTreeSnapshot}
+  alias GroupherServer.CMS
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

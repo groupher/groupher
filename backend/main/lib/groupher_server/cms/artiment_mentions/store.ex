@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Repo
 
   alias CMS.{
     Artiment.Matcher,

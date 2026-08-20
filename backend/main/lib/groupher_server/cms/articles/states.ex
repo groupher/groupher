@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias CMS.Artiment.Enums
   alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
   alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
-  alias CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.Repo
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}

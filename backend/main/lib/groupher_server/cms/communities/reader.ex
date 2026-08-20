@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Repo
 
   alias Accounts.Model.User
   alias CMS.Gate

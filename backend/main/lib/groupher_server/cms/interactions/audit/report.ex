@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Interactions.Audit.Report do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Artiment.Matcher
+  alias GroupherServer.Repo
 
   @report_threads ~w(post blog changelog doc comment)
 

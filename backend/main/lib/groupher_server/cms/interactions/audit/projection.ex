@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Interactions.Audit.Projection do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Artiment.Matcher
+  alias GroupherServer.Repo
 
   alias CMS.Model.{
     ArticleCollect,

@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Articles.MutationLock
-  alias CMS.Comments.States, as: CommentStates
+  alias GroupherServer.Repo
   import Ecto.Query
 
   alias CMS.Interactions.{ErrorCat, ReadState}

@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Communities.ErrorCat
   alias CMS.FrontDesk
-  alias CMS.Model.{Blog, Changelog, Community, CommunityTag, CommunityTagStat, Post}
+  alias GroupherServer.Repo
   alias Helper.{Constant, Datetime, ORM, T}
 
   @audit_illegal Constant.CMS.pending(:illegal)

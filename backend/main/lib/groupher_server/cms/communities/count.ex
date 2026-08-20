@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   import Helper.Utils, only: [plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Repo
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityTag}

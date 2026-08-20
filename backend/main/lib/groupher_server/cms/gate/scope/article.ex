@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias Gate.Scope.Policy
   alias Gate.ErrorCat
   alias Gate.Scope.{ArticleSchema, CommunityChain}
-  alias CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
+  alias GroupherServer.CMS
   alias Helper.Constant
 
   require CMS.Const

@@ -15,6 +15,7 @@ defmodule GroupherServer.Accounts.Helper.Loader do
   """
   import Ecto.Query, warn: false
 
+  alias GroupherServer.Repo
   alias Helper.QueryBuilder
   alias GroupherServer.{CMS, Repo}
 

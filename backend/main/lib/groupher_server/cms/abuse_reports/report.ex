@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.Repo
   alias GroupherServer.CMS.Interactions.ErrorCat
   alias Helper.{Multi, ORM, T, Transaction}
 

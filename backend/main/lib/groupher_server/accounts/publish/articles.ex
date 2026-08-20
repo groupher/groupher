@@ -17,7 +17,7 @@ defmodule GroupherServer.Accounts.Publish.Articles do
 
   import Helper.Utils, only: [plural: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User

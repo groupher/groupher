@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   import GroupherServer.CMS.FrontDesk, only: [author_of: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias Helper.{Guardian, ORM, PermissionRegistry}

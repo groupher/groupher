@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat}
   alias CMS.Interactions.Reactions.Emotion
   alias CMS.Model.Interaction.RoaringBitmap
-  alias CMS.Model.ViewEvent
+  alias GroupherServer.Repo
 
   require RoaringBitmap
 

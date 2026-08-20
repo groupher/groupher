@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
-  alias CMS.Model.Comment
+  alias GroupherServer.Repo
 
   @threads Config.threads()
   @valid_article_prefix Config.valid_article_prefixes()

@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias CMS.Communities.Enable
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
-  alias CMS.{Events, Gate}
+  alias GroupherServer.Repo
   alias Helper.{Later, T}
 
   @doc """

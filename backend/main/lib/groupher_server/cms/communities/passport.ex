@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.Repo
 
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.Passport, as: UserPassport

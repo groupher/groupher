@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Search.Community do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS}
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias CMS.Model.Community

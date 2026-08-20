@@ -19,6 +19,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   alias Accounts.{Events, FrontDesk}
   alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias Helper.{Multi, Later, ORM, T}
+  alias GroupherServer.Repo
   alias GroupherServer.Accounts.Fans.ErrorCat
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()

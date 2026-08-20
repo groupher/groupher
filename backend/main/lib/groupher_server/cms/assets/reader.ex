@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Assets.ErrorCat
   alias CMS.Artiment.Threads
-  alias CMS.Model.{ArticleDocumentAssetRef, Community, CommunityAsset}
+  alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
   @default_page 1

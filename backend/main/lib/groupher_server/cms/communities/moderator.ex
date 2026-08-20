@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Repo
   alias GroupherServer.ErrorCat, as: GlobalErrorCat
   alias GroupherServerWeb.ErrorCat
 

@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community}

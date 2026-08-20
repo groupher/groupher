@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.DocTree.Revision do
 
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocsSiteState}
+  alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
   @doc """

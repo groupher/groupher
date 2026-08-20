@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.MatcherMacros
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias CMS.Interactions.ErrorCat

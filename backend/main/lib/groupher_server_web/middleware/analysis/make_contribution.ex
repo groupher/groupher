@@ -20,7 +20,7 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
 
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
-  alias GroupherServer.{Accounts, Analysis}
+  alias GroupherServer.Analysis
 
   alias Accounts.Model.User
 

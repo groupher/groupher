@@ -21,6 +21,7 @@ defmodule GroupherServer.Analysis.Web do
   alias __MODULE__.Community, as: AnalysisCommunity
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias GroupherServer.Repo
   alias Helper.{Cache, Transaction}
 
   @config Config.base()

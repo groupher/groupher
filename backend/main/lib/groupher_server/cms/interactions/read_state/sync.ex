@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   alias CMS.FrontDesk
   alias CMS.Interactions.{Config, ErrorCat}
   alias CMS.Model.{Comment, Embeds}
-  alias CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.Repo
 
   require RoaringBitmap
 

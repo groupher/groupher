@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   alias CMS.Gate
   alias Gate.Scope.{ArticleSchema, CommunityChain}
   alias Gate.ErrorCat
-  alias Gate.Scope.Policy
+  alias GroupherServer.CMS
 
   alias Helper.Constant
 

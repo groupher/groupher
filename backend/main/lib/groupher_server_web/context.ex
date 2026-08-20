@@ -24,7 +24,7 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias Accounts.Profiles.BrowserSessions

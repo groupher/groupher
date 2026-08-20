@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Maintenance do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Interactions.Config
-  alias CMS.Model.ViewEvent
+  alias GroupherServer.Repo
 
   @doc """
   Deletes processed events older than the configured retention window.

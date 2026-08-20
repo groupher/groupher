@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles do
 
   alias Helper.T
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
   alias Accounts.Model.User
   alias CMS.Artiment.Enums
