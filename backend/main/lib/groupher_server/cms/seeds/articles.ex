@@ -174,9 +174,8 @@ defmodule GroupherServer.CMS.Seeds.Articles do
          emotion <- Enum.random(@article_emotions),
          {:ok, _} <- CMS.Interactions.emotion(article, emotion, user),
          {:ok, article} <- ORM.find(article.__struct__, article.id),
-         emotions <- randomize_emotions(article.emotions),
-         {:ok, article} <- ORM.update_embed(article, :emotions, emotions) do
-      {:ok, article}
+         emotions <- randomize_emotions(article.emotions) do
+      ORM.update_embed(article, :emotions, emotions)
     end
   end
 

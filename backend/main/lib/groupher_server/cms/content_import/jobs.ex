@@ -132,21 +132,23 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   def fail(%Community{} = community, job_ref, code, message)
       when is_binary(code) and is_binary(message) do
     Repo.transaction(fn ->
-      with {:ok, job} <- lock_job(community.id, job_ref) do
-        if job.status in [:completed, :cancelled] do
-          project(job)
-        else
-          job
-          |> Job.changeset(%{
-            error_code: String.slice(code, 0, 120),
-            error_message: String.slice(message, 0, 2_000),
-            status: :failed
-          })
-          |> Repo.update!()
-          |> project()
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      case lock_job(community.id, job_ref) do
+        {:ok, job} ->
+          if job.status in [:completed, :cancelled] do
+            project(job)
+          else
+            job
+            |> Job.changeset(%{
+              error_code: String.slice(code, 0, 120),
+              error_message: String.slice(message, 0, 2_000),
+              status: :failed
+            })
+            |> Repo.update!()
+            |> project()
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end
@@ -155,23 +157,25 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   @spec cancel(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def cancel(%Community{} = community, job_ref) do
     Repo.transaction(fn ->
-      with {:ok, job} <- lock_job(community.id, job_ref) do
-        if job.status == :completed do
-          project(job)
-        else
-          Repo.delete_all(from(body in StagedBody, where: body.job_id == ^job.id))
+      case lock_job(community.id, job_ref) do
+        {:ok, job} ->
+          if job.status == :completed do
+            project(job)
+          else
+            Repo.delete_all(from(body in StagedBody, where: body.job_id == ^job.id))
 
-          job
-          |> Job.changeset(%{
-            error_code: nil,
-            error_message: nil,
-            status: :cancelled
-          })
-          |> Repo.update!()
-          |> project()
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+            job
+            |> Job.changeset(%{
+              error_code: nil,
+              error_message: nil,
+              status: :cancelled
+            })
+            |> Repo.update!()
+            |> project()
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end

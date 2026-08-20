@@ -70,20 +70,21 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
   defp mutation_params?(_), do: false
 
   defp mutation_operation?(query, operation_name) do
-    with {:ok, %{input: %Absinthe.Language.Document{definitions: definitions}}} <-
-           Absinthe.Phase.Parse.run(query, []) do
-      operations =
-        Enum.filter(definitions, &match?(%Absinthe.Language.OperationDefinition{}, &1))
+    case Absinthe.Phase.Parse.run(query, []) do
+      {:ok, %{input: %Absinthe.Language.Document{definitions: definitions}}} ->
+        operations =
+          Enum.filter(definitions, &match?(%Absinthe.Language.OperationDefinition{}, &1))
 
-      case operation_name do
-        name when is_binary(name) and name != "" ->
-          Enum.any?(operations, &(&1.name == name and &1.operation == :mutation))
+        case operation_name do
+          name when is_binary(name) and name != "" ->
+            Enum.any?(operations, &(&1.name == name and &1.operation == :mutation))
 
-        _ ->
-          Enum.any?(operations, &(&1.operation == :mutation))
-      end
-    else
-      _ -> false
+          _ ->
+            Enum.any?(operations, &(&1.operation == :mutation))
+        end
+
+      _ ->
+        false
     end
   end
 

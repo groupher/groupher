@@ -25,6 +25,27 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
   end
 
+  test "Comment thread scope validates Doc branch and policy coordinates" do
+    assert %CommentScope{thread: :doc, branch_policy: :main} =
+             CommentScope.for_thread(:doc, branch_policy: :main)
+
+    assert_raise ArgumentError, ~r/requires branch_policy/, fn ->
+      CommentScope.for_thread(:doc)
+    end
+
+    assert_raise ArgumentError, ~r/only accepts branch_policy/, fn ->
+      CommentScope.for_thread(:doc, branch_policy: :preview)
+    end
+
+    assert_raise ArgumentError, ~r/only Doc Comment scope/, fn ->
+      CommentScope.for_thread(:post, branch_policy: :main)
+    end
+
+    assert_raise ArgumentError, ~r/invalid Comment scope policy mode/, fn ->
+      CommentScope.for_thread(:post, policy_mode: :unknown)
+    end
+  end
+
   test "Comment scope uses stable community_id and accepts an optional thread coordinate" do
     contextless =
       Comment

@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
   # 1. if has filter:first and filter:size -> makesure it not too large
   # 2. if not has filter: marge to default first: 5
   # 3. large size should trigger error
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
+  def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(resolution, args) do
     case valid_size(resolution.arguments) do

@@ -103,9 +103,8 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp seed_posts(%Community{} = community) do
-    with {:ok, posts} <- seed_articles(community, :post, @post_titles),
-         {:ok, posts} <- set_kanban_statuses(posts) do
-      {:ok, posts}
+    with {:ok, posts} <- seed_articles(community, :post, @post_titles) do
+      set_kanban_statuses(posts)
     end
   end
 

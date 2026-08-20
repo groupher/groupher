@@ -228,8 +228,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     parents = Map.new(nodes, &{&1.node_id, &1.parent_node_id})
 
     nodes
-    |> Enum.filter(&(&1.type == @tree_node_type_page))
-    |> Enum.filter(&MapSet.member?(draft_doc_ids, &1.doc_id))
+    |> Enum.filter(fn node ->
+      node.type == @tree_node_type_page and MapSet.member?(draft_doc_ids, node.doc_id)
+    end)
     |> Enum.reduce(MapSet.new(), fn page, acc ->
       collect_ancestor_ids(parents, page.parent_node_id, acc)
     end)
@@ -294,9 +295,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
            doc_id: doc_id
          }
        ) do
-    with %Doc{} <- draft_or_public_doc(community, branch, doc_id) do
-      {true, nil}
-    else
+    case draft_or_public_doc(community, branch, doc_id) do
+      %Doc{} -> {true, nil}
       _ -> {false, "Publish the page content first."}
     end
   end

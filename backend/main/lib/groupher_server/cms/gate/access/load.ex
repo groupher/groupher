@@ -151,12 +151,14 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   end
 
   defp same_comment_identity?(canonical, input, article, community, thread) do
-    with {:ok, %{foreign_key: foreign_key}} <- Matcher.match_interaction(thread) do
-      canonical.community_id == community.id and canonical.thread == thread and
-        canonical.article_hash_id == article.article_hash_id and
-        Map.get(canonical, foreign_key) == article.id and canonical.id == input.id
-    else
-      _ -> false
+    case Matcher.match_interaction(thread) do
+      {:ok, %{foreign_key: foreign_key}} ->
+        canonical.community_id == community.id and canonical.thread == thread and
+          canonical.article_hash_id == article.article_hash_id and
+          Map.get(canonical, foreign_key) == article.id and canonical.id == input.id
+
+      _ ->
+        false
     end
   end
 end

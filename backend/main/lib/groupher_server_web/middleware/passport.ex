@@ -50,7 +50,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.CMS.Passport.Registry
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
+  def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
   end
 
@@ -69,8 +69,11 @@ defmodule GroupherServerWeb.Middleware.Passport do
     case Registry.requirement(action) do
       {:ok, requirement} ->
         case maybe_put_article_path(resolution, opts) do
-          {:ok, resolution} -> check_requirement(resolution, requirement)
-          {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} -> invalid_article_path(resolution)
+          {:ok, resolution} ->
+            check_requirement(resolution, requirement)
+
+          {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} ->
+            invalid_article_path(resolution)
         end
 
       {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
@@ -105,7 +108,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
       # Passport runs before article loading, so it can only prepare the public
       # locator for permission checks. It must not load the article here.
       case ArticlePath.parse_arguments(arguments, Keyword.take(opts, [:thread])) do
-        {:ok, arguments} -> {:ok, %{resolution | arguments: arguments}}
+        {:ok, arguments} ->
+          {:ok, %{resolution | arguments: arguments}}
+
         {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path} = error} ->
           {:error, error}
       end

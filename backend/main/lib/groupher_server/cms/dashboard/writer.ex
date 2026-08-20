@@ -35,7 +35,8 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update(community, key, SectionPayload.section_args(key, args))
   end
 
-  def update(%Community{}, _args), do: {:error, GroupherServer.CMS.Communities.ErrorCat.invalid_dsb_section()}
+  def update(%Community{}, _args),
+    do: {:error, GroupherServer.CMS.Communities.ErrorCat.invalid_dsb_section()}
 
   @spec update(Community.t(), atom(), map() | list()) :: T.domain_res(CommunityDashboard.t())
   @doc "Updates one explicit dashboard section, including base-info synchronization."
@@ -67,9 +68,8 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
           T.domain_res(CommunityDashboard.t())
   @doc "Ensures a dashboard exists and replaces one non-base-info section."
   def update_section(%Community{} = community, key, args) do
-    with {:ok, community_dashboard} <- ensure_exist(community),
-         {:ok, community_dashboard} <- replace_section(community_dashboard, key, args) do
-      {:ok, community_dashboard}
+    with {:ok, community_dashboard} <- ensure_exist(community) do
+      replace_section(community_dashboard, key, args)
     end
   end
 

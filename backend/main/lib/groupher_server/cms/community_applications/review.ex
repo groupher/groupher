@@ -147,34 +147,36 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
     now = DateTime.utc_now(:second)
 
     Repo.transaction(fn ->
-      with {:ok, application} <- lock(public_ref) do
-        if application.status == :creation_failed do
-          application
-        else
-          Multi.new()
-          |> Transitions.add(
-            :application,
-            :event,
-            application,
-            :creation_failed,
-            %{
-              last_job_error: job_error(reason, operation_ref, now),
-              expires_at: nil
-            },
-            %{
-              type: :job,
-              operation_ref: operation_ref,
-              reason_code: "community_creation_failed",
-              metadata: %{"worker" => "CreateCommunity"},
-              occurred_at: now
-            }
-          )
-          |> SlugClaims.release_application(:claim, application, now)
-          |> Repo.transaction()
-          |> unwrap_nested_transaction()
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      case lock(public_ref) do
+        {:ok, application} ->
+          if application.status == :creation_failed do
+            application
+          else
+            Multi.new()
+            |> Transitions.add(
+              :application,
+              :event,
+              application,
+              :creation_failed,
+              %{
+                last_job_error: job_error(reason, operation_ref, now),
+                expires_at: nil
+              },
+              %{
+                type: :job,
+                operation_ref: operation_ref,
+                reason_code: "community_creation_failed",
+                metadata: %{"worker" => "CreateCommunity"},
+                occurred_at: now
+              }
+            )
+            |> SlugClaims.release_application(:claim, application, now)
+            |> Repo.transaction()
+            |> unwrap_nested_transaction()
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end

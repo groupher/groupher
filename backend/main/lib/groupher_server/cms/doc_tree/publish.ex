@@ -98,71 +98,118 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
     with {:ok, branch} <- Branch.resolve(community, args) do
-      Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
-        Repo.transaction(fn ->
-          with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community) do
-            current_checklist = checklist(community, branch_id: branch.id)
-
-            with {:ok, selection} <- Selection.from_input(args, current_checklist),
-                 tree_checklist_item_ids <-
-                   include_doc_shell_tree_checklist_item_ids(
-                     community,
-                     branch,
-                     args,
-                     selection.doc_checklist_item_ids,
-                     selection.tree_checklist_item_ids
-                   ),
-                 selection <-
-                   Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
-                 {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
-              case publish_flow do
-                @publish_flow_noop ->
-                  publish_payload(true, nil, current_checklist)
-
-                @publish_flow_restore ->
-                  case restore_selected_changes(
-                         community,
-                         branch,
-                         selection.restore_tree_checklist_item_ids,
-                         user
-                       ) do
-                    {:ok, result} -> result
-                    {:error, reason} -> Repo.rollback(reason)
-                    reason -> Repo.rollback(reason)
-                  end
-
-                @publish_flow_publish ->
-                  case publish_selected_changes(
-                         community,
-                         branch,
-                         current_checklist,
-                         selection.doc_checklist_item_ids,
-                         selection.tree_checklist_item_ids,
-                         selection.restore_tree_checklist_item_ids,
-                         user,
-                         sync_cover?
-                       ) do
-                    {:ok, result} -> result
-                    {:error, reason} -> Repo.rollback(reason)
-                    reason -> Repo.rollback(reason)
-                  end
-              end
-            else
-              {:error, reason} -> Repo.rollback(reason)
-              reason -> Repo.rollback(reason)
-            end
-          else
-            {:error, reason} -> Repo.rollback(reason)
-            reason -> Repo.rollback(reason)
-          end
-        end)
-        |> case do
-          {:ok, result} -> {:ok, result}
-          {:error, reason} -> {:error, reason}
-        end
-      end)
+      publish_changes_for_branch(community, branch, args, user, sync_cover?)
     end
   end
+
+  defp publish_changes_for_branch(community, branch, args, user, sync_cover?) do
+    Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
+      Repo.transaction(fn ->
+        publish_changes_locked(community, branch, args, user, sync_cover?)
+      end)
+      |> normalize_transaction_result()
+    end)
+  end
+
+  defp publish_changes_locked(community, branch, args, user, sync_cover?) do
+    case CMS.Gate.access_check(user, :manage_docs, community) do
+      {:ok, _canonical} -> prepare_publish_flow(community, branch, args, user, sync_cover?)
+      {:error, reason} -> Repo.rollback(reason)
+      reason -> Repo.rollback(reason)
+    end
+  end
+
+  defp prepare_publish_flow(community, branch, args, user, sync_cover?) do
+    current_checklist = checklist(community, branch_id: branch.id)
+
+    with {:ok, selection} <- Selection.from_input(args, current_checklist),
+         selection <- enrich_selection(community, branch, args, selection),
+         {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
+      execute_publish_flow(
+        publish_flow,
+        community,
+        branch,
+        current_checklist,
+        selection,
+        user,
+        sync_cover?
+      )
+    else
+      {:error, reason} -> Repo.rollback(reason)
+      reason -> Repo.rollback(reason)
+    end
+  end
+
+  defp enrich_selection(community, branch, args, selection) do
+    tree_checklist_item_ids =
+      include_doc_shell_tree_checklist_item_ids(
+        community,
+        branch,
+        args,
+        selection.doc_checklist_item_ids,
+        selection.tree_checklist_item_ids
+      )
+
+    Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids)
+  end
+
+  defp execute_publish_flow(
+         @publish_flow_noop,
+         _community,
+         _branch,
+         current_checklist,
+         _selection,
+         _user,
+         _sync_cover?
+       ),
+       do: publish_payload(true, nil, current_checklist)
+
+  defp execute_publish_flow(
+         @publish_flow_restore,
+         community,
+         branch,
+         _current_checklist,
+         selection,
+         user,
+         _sync_cover?
+       ) do
+    restore_selected_changes(
+      community,
+      branch,
+      selection.restore_tree_checklist_item_ids,
+      user
+    )
+    |> rollback_unless_ok()
+  end
+
+  defp execute_publish_flow(
+         @publish_flow_publish,
+         community,
+         branch,
+         current_checklist,
+         selection,
+         user,
+         sync_cover?
+       ) do
+    publish_selected_changes(
+      community,
+      branch,
+      current_checklist,
+      selection.doc_checklist_item_ids,
+      selection.tree_checklist_item_ids,
+      selection.restore_tree_checklist_item_ids,
+      user,
+      sync_cover?
+    )
+    |> rollback_unless_ok()
+  end
+
+  defp rollback_unless_ok({:ok, result}), do: result
+  defp rollback_unless_ok({:error, reason}), do: Repo.rollback(reason)
+  defp rollback_unless_ok(reason), do: Repo.rollback(reason)
+
+  defp normalize_transaction_result({:ok, result}), do: {:ok, result}
+  defp normalize_transaction_result({:error, reason}), do: {:error, reason}
 
   @doc """
   Moves a published doc page back to draft by creating a new draft row sharing

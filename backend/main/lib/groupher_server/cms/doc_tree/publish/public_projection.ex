@@ -233,32 +233,31 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        ) do
     doc_id = node[@doc_tree_json_key_doc_id]
 
-    with {:ok, _draft} <-
-           ORM.find_by(Doc,
-             doc_id: doc_id,
-             branch_id: branch.id,
-             community_id: community.id
-           ) do
-      {:ok,
-       %{
-         community_id: community.id,
-         branch_id: branch.id,
-         node_id: node["id"],
-         stage: CMS.Const.stage(:public),
-         type: @tree_node_type_page,
-         parent_node_id: node["parentNodeId"],
-         doc_id: doc_id,
-         title: node["title"],
-         index: node["index"] || 0,
-         href: node["href"],
-         marker: node["marker"],
-         badge: node["badge"],
-         hidden: Map.get(node, "hidden", false)
-       }}
-    else
+    case ORM.find_by(Doc,
+           doc_id: doc_id,
+           branch_id: branch.id,
+           community_id: community.id
+         ) do
+      {:ok, _draft} ->
+        {:ok,
+         %{
+           community_id: community.id,
+           branch_id: branch.id,
+           node_id: node["id"],
+           stage: CMS.Const.stage(:public),
+           type: @tree_node_type_page,
+           parent_node_id: node["parentNodeId"],
+           doc_id: doc_id,
+           title: node["title"],
+           index: node["index"] || 0,
+           href: node["href"],
+           marker: node["marker"],
+           badge: node["badge"],
+           hidden: Map.get(node, "hidden", false)
+         }}
+
       {:error, _} ->
         {:error, GroupherServer.ErrorCat.custom("Publish docs before publishing tree.")}
-
     end
   end
 

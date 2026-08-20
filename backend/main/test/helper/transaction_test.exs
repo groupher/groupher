@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Helper.Transaction do
 
     test "works with integer lock key" do
       assert {:ok, :ok} =
-               Transaction.lock_global(2_026_030_8, fn ->
+               Transaction.lock_global(20_260_308, fn ->
                  :ok
                end)
     end

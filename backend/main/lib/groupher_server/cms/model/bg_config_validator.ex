@@ -96,56 +96,51 @@ defmodule GroupherServer.CMS.Model.BgConfigValidator do
 
   defp validate_effect(changeset, field) do
     validate_change(changeset, field, fn ^field, value ->
-      blur_intensity = map_get(value, "blurIntensity")
-      brightness = map_get(value, "brightness")
-      saturation = map_get(value, "saturation")
-
-      cond do
-        not is_map(value) ->
-          [{field, "must be an object"}]
-
-        not is_integer(blur_intensity) or blur_intensity < 0 or blur_intensity > 100 ->
-          [{field, "has unsupported blur intensity"}]
-
-        not is_integer(brightness) or brightness < 60 or brightness > 140 ->
-          [{field, "has unsupported brightness"}]
-
-        not is_integer(saturation) or saturation < 0 or saturation > 160 ->
-          [{field, "has unsupported saturation"}]
-
-        true ->
-          []
-      end
+      validate_effect_value(field, value)
     end)
+  end
+
+  defp validate_effect_value(field, value) when not is_map(value),
+    do: [{field, "must be an object"}]
+
+  defp validate_effect_value(field, value) do
+    checks = [
+      {map_get(value, "blurIntensity"), 0..100, "has unsupported blur intensity"},
+      {map_get(value, "brightness"), 60..140, "has unsupported brightness"},
+      {map_get(value, "saturation"), 0..160, "has unsupported saturation"}
+    ]
+
+    case Enum.find(checks, fn {number, range, _message} ->
+           not is_integer(number) or number not in range
+         end) do
+      nil -> []
+      {_number, _range, message} -> [{field, message}]
+    end
   end
 
   defp validate_texture(changeset, field) do
     validate_change(changeset, field, fn ^field, value ->
-      enabled = map_get(value, "enabled")
-      type = map_get(value, "type")
-      intensity = map_get(value, "intensity")
-      params = map_get(value, "params")
-
-      cond do
-        not is_map(value) ->
-          [{field, "must be an object"}]
-
-        not is_boolean(enabled) ->
-          [{field, "has unsupported enabled"}]
-
-        type not in @texture_types ->
-          [{field, "has unsupported type"}]
-
-        not is_integer(intensity) or intensity < 0 or intensity > 100 ->
-          [{field, "has unsupported intensity"}]
-
-        not is_nil(params) and not is_map(params) ->
-          [{field, "has unsupported params"}]
-
-        true ->
-          []
-      end
+      validate_texture_value(field, value)
     end)
+  end
+
+  defp validate_texture_value(field, value) when not is_map(value),
+    do: [{field, "must be an object"}]
+
+  defp validate_texture_value(field, value) do
+    checks = [
+      {is_boolean(map_get(value, "enabled")), "has unsupported enabled"},
+      {map_get(value, "type") in @texture_types, "has unsupported type"},
+      {is_integer(map_get(value, "intensity")) and map_get(value, "intensity") in 0..100,
+       "has unsupported intensity"},
+      {is_nil(map_get(value, "params")) or is_map(map_get(value, "params")),
+       "has unsupported params"}
+    ]
+
+    case Enum.find(checks, fn {valid, _message} -> not valid end) do
+      nil -> []
+      {_valid, message} -> [{field, message}]
+    end
   end
 
   defp validate_gradient(changeset, field) do

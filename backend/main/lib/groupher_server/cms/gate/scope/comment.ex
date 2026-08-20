@@ -72,7 +72,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp maybe_filter_thread(query, _context), do: query
 
-  defp lifecycle_scope(query, %{thread: :doc}) do
+  defp lifecycle_scope(query, %{thread: :doc}), do: doc_lifecycle_scope(query)
+
+  defp lifecycle_scope(query, %{thread: :all}), do: all_lifecycle_scope(query)
+
+  defp lifecycle_scope(query, _context), do: threaded_lifecycle_scope(query)
+
+  defp doc_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
@@ -93,7 +99,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
-  defp lifecycle_scope(query, %{thread: :all}) do
+  # The branching here is a single SQL predicate covering Post and Doc rows;
+  # splitting it would duplicate the query and change the join semantics.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
+  defp all_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
@@ -123,7 +132,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
-  defp lifecycle_scope(query, _context) do
+  defp threaded_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,

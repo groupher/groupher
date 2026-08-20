@@ -44,14 +44,16 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def apply(%Community{} = community, job_ref) do
     Repo.transaction(fn ->
-      with {:ok, job} <- Jobs.lock_job(community.id, job_ref) do
-        if job.status == :completed do
-          Jobs.project(job)
-        else
-          apply_locked(community, job)
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      case Jobs.lock_job(community.id, job_ref) do
+        {:ok, job} ->
+          if job.status == :completed do
+            Jobs.project(job)
+          else
+            apply_locked(community, job)
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end

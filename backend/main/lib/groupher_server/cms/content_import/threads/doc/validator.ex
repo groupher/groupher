@@ -119,33 +119,29 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
   defp filter_target_children(pages, ready_external_refs) do
     pages
-    |> Enum.reduce({[], false}, fn child, {kept, ready?} ->
-      case child["type"] do
-        "page" ->
-          if MapSet.member?(ready_external_refs, child["sourceId"]),
-            do: {[child | kept], true},
-            else: {kept, ready?}
-
-        "link" ->
-          {[child | kept], ready?}
-
-        "group" ->
-          {nested, nested_ready?} =
-            filter_target_children(Map.get(child, "pages", []), ready_external_refs)
-
-          if nested_ready?,
-            do: {[Map.put(child, "pages", nested) | kept], true},
-            else: {kept, ready?}
-
-        _ ->
-          {kept, ready?}
-      end
-    end)
+    |> Enum.reduce({[], false}, &filter_target_child(&1, &2, ready_external_refs))
     |> then(fn {pages, ready?} ->
       pages = Enum.reverse(pages)
       if ready?, do: {pages, true}, else: {[], false}
     end)
   end
+
+  defp filter_target_child(%{"type" => "page"} = child, {kept, ready?}, ready_refs) do
+    if MapSet.member?(ready_refs, child["sourceId"]),
+      do: {[child | kept], true},
+      else: {kept, ready?}
+  end
+
+  defp filter_target_child(%{"type" => "link"} = child, {kept, ready?}, _ready_refs),
+    do: {[child | kept], ready?}
+
+  defp filter_target_child(%{"type" => "group"} = child, {kept, ready?}, ready_refs) do
+    {nested, nested_ready?} = filter_target_children(Map.get(child, "pages", []), ready_refs)
+
+    if nested_ready?, do: {[Map.put(child, "pages", nested) | kept], true}, else: {kept, ready?}
+  end
+
+  defp filter_target_child(_child, accumulator, _ready_refs), do: accumulator
 
   defp collect_target_pages(pages) do
     Enum.flat_map(pages, fn
@@ -200,57 +196,79 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     do: {:error, GroupherServer.ErrorCat.custom("SourceTree exceeds depth #{@max_depth}")}
 
   defp validate_source_nodes(nodes, depth, state) when is_list(nodes) do
-    Enum.reduce_while(nodes, {:ok, state}, fn node, {:ok, current} ->
-      count = current.count + 1
-
-      cond do
-        count > @max_nodes ->
-          {:halt,
-           {:error, GroupherServer.ErrorCat.custom("SourceTree exceeds #{@max_nodes} nodes")}}
-
-        not is_map(node) ->
-          {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree contains an invalid node")}}
-
-        not valid_text?(node["sourceId"]) or not valid_text?(node["title"]) ->
-          {:halt,
-           {:error,
-            GroupherServer.ErrorCat.custom("SourceTree node identity and title are required")}}
-
-        MapSet.member?(current.ids, node["sourceId"]) ->
-          {:halt,
-           {:error, GroupherServer.ErrorCat.custom("SourceTree contains a duplicate sourceId")}}
-
-        true ->
-          next = %{count: count, ids: MapSet.put(current.ids, node["sourceId"])}
-
-          case node["type"] do
-            type when type in ["scope", "section"] ->
-              case validate_source_nodes(node["pages"], depth + 1, next) do
-                {:ok, state} -> {:cont, {:ok, state}}
-                error -> {:halt, error}
-              end
-
-            "page" ->
-              if valid_text?(node["route"]) and valid_text?(node["sourcePath"]),
-                do: {:cont, {:ok, next}},
-                else:
-                  {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree page is invalid")}}
-
-            "link" ->
-              if valid_text?(node["href"]),
-                do: {:cont, {:ok, next}},
-                else:
-                  {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree link is invalid")}}
-
-            _ ->
-              {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree node type is invalid")}}
-          end
-      end
-    end)
+    Enum.reduce_while(nodes, {:ok, state}, &validate_source_node_step(&1, &2, depth))
   end
 
   defp validate_source_nodes(_nodes, _depth, _state),
     do: {:error, GroupherServer.ErrorCat.custom("SourceTree pages must be a list")}
+
+  defp validate_source_node_step(node, {:ok, current}, depth) do
+    count = current.count + 1
+
+    if count > @max_nodes do
+      {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree exceeds #{@max_nodes} nodes")}}
+    else
+      case validate_source_node(node, depth, current, count) do
+        {:ok, next} -> {:cont, {:ok, next}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end
+  end
+
+  defp validate_source_node(node, _depth, _current, _count) when not is_map(node),
+    do: {:error, GroupherServer.ErrorCat.custom("SourceTree contains an invalid node")}
+
+  defp validate_source_node(node, depth, current, _count) do
+    cond do
+      not valid_text?(node["sourceId"]) or not valid_text?(node["title"]) ->
+        {:error,
+         GroupherServer.ErrorCat.custom("SourceTree node identity and title are required")}
+
+      MapSet.member?(current.ids, node["sourceId"]) ->
+        {:error, GroupherServer.ErrorCat.custom("SourceTree contains a duplicate sourceId")}
+
+      true ->
+        next = %{count: current.count + 1, ids: MapSet.put(current.ids, node["sourceId"])}
+        validate_source_node_type(node, next, depth)
+    end
+  end
+
+  defp validate_source_node_type(%{"type" => type, "pages" => pages}, next, depth)
+       when type in ["scope", "section"],
+       do: validate_source_nodes(pages, depth + 1, next)
+
+  defp validate_source_node_type(
+         %{"type" => "page", "route" => route, "sourcePath" => path},
+         next,
+         _depth
+       )
+       when is_binary(route) and is_binary(path),
+       do: validate_source_page(route, path, next)
+
+  defp validate_source_node_type(%{"type" => "link", "href" => href}, next, _depth)
+       when is_binary(href),
+       do: validate_source_link(href, next)
+
+  defp validate_source_node_type(%{"type" => "page"}, _next, _depth),
+    do: {:error, GroupherServer.ErrorCat.custom("SourceTree page is invalid")}
+
+  defp validate_source_node_type(%{"type" => "link"}, _next, _depth),
+    do: {:error, GroupherServer.ErrorCat.custom("SourceTree link is invalid")}
+
+  defp validate_source_node_type(_node, _next, _depth),
+    do: {:error, GroupherServer.ErrorCat.custom("SourceTree node type is invalid")}
+
+  defp validate_source_page(route, path, next) do
+    if valid_text?(route) and valid_text?(path),
+      do: {:ok, next},
+      else: {:error, GroupherServer.ErrorCat.custom("SourceTree page is invalid")}
+  end
+
+  defp validate_source_link(href, next) do
+    if valid_text?(href),
+      do: {:ok, next},
+      else: {:error, GroupherServer.ErrorCat.custom("SourceTree link is invalid")}
+  end
 
   defp validate_source_match(info, %{"source" => source}) do
     if info["framework"] == source["framework"] and
@@ -356,30 +374,38 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
        )
        when is_list(tabs) do
     tabs
-    |> Enum.reduce_while({:ok, MapSet.new()}, fn tab, {:ok, ids} ->
-      groups = tab["groups"]
-
-      if is_map(tab) and is_list(groups) and valid_text?(tab["sourceId"]) and
-           Enum.all?(groups, &(&1["type"] == "group")) do
-        case validate_target_children(groups, branch_slug, mapping_refs, ids, 1) do
-          {:ok, ids} -> {:cont, {:ok, ids}}
-          error -> {:halt, error}
-        end
-      else
-        {:halt,
-         {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid tab")}}
-      end
-    end)
-    |> case do
-      {:ok, _ids} -> :ok
-      error -> error
-    end
+    |> validate_target_tabs(branch_slug, mapping_refs)
+    |> normalize_target_validation()
   end
 
   defp validate_target_tree(_, _, _),
     do:
       {:error,
        GroupherServer.ErrorCat.custom("confirmed TargetTree does not match source intent")}
+
+  defp validate_target_tabs(tabs, branch_slug, mapping_refs) do
+    Enum.reduce_while(tabs, {:ok, MapSet.new()}, fn tab, {:ok, ids} ->
+      validate_target_tab(tab, branch_slug, mapping_refs, ids)
+    end)
+  end
+
+  defp validate_target_tab(tab, branch_slug, mapping_refs, ids) do
+    groups = tab["groups"]
+
+    if is_map(tab) and is_list(groups) and valid_text?(tab["sourceId"]) and
+         Enum.all?(groups, &(&1["type"] == "group")) do
+      case validate_target_children(groups, branch_slug, mapping_refs, ids, 1) do
+        {:ok, next} -> {:cont, {:ok, next}}
+        error -> {:halt, error}
+      end
+    else
+      {:halt,
+       {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid tab")}}
+    end
+  end
+
+  defp normalize_target_validation({:ok, _ids}), do: :ok
+  defp normalize_target_validation(error), do: error
 
   defp validate_target_children(_pages, _branch_slug, _mapping_refs, _ids, depth)
        when depth > @max_depth,
@@ -389,51 +415,94 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
   defp validate_target_children(pages, branch_slug, mapping_refs, ids, depth) do
     Enum.reduce_while(pages, {:ok, ids}, fn child, {:ok, current} ->
-      if not is_map(child) do
-        {:halt,
-         {:error,
-          GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}}
-      else
-        source_id = child["sourceId"]
-
-        cond do
-          not valid_text?(source_id) ->
-            {:halt,
-             {:error,
-              GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}}
-
-          MapSet.member?(current, source_id) ->
-            {:halt,
-             {:error,
-              GroupherServer.ErrorCat.custom("confirmed TargetTree contains a duplicate sourceId")}}
-
-          child["type"] == "group" and is_list(child["pages"]) ->
-            case validate_target_children(
-                   child["pages"],
-                   branch_slug,
-                   mapping_refs,
-                   MapSet.put(current, source_id),
-                   depth + 1
-                 ) do
-              {:ok, next} -> {:cont, {:ok, next}}
-              error -> {:halt, error}
-            end
-
-          child["type"] == "page" and
-              child["docId"] ==
-                Map.get(mapping_refs, source_id, target_ref(branch_slug, source_id)) ->
-            {:cont, {:ok, MapSet.put(current, source_id)}}
-
-          child["type"] == "link" and valid_text?(child["href"]) ->
-            {:cont, {:ok, MapSet.put(current, source_id)}}
-
-          true ->
-            {:halt,
-             {:error,
-              GroupherServer.ErrorCat.custom("confirmed TargetTree child intent is invalid")}}
-        end
+      case validate_target_child(child, branch_slug, mapping_refs, current, depth) do
+        {:ok, next} -> {:cont, {:ok, next}}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+  end
+
+  defp validate_target_child(child, _branch_slug, _mapping_refs, _ids, _depth)
+       when not is_map(child),
+       do:
+         {:error,
+          GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}
+
+  defp validate_target_child(child, branch_slug, mapping_refs, ids, depth) do
+    source_id = child["sourceId"]
+
+    cond do
+      not valid_text?(source_id) ->
+        invalid_target_child()
+
+      MapSet.member?(ids, source_id) ->
+        duplicate_target_child()
+
+      true ->
+        validate_target_child_type(child, branch_slug, mapping_refs, ids, depth, source_id)
+    end
+  end
+
+  defp validate_target_child_type(
+         %{"type" => "group", "pages" => pages},
+         branch_slug,
+         mapping_refs,
+         ids,
+         depth,
+         source_id
+       )
+       when is_list(pages),
+       do:
+         validate_target_children(
+           pages,
+           branch_slug,
+           mapping_refs,
+           MapSet.put(ids, source_id),
+           depth + 1
+         )
+
+  defp validate_target_child_type(
+         %{"type" => "page", "docId" => doc_id},
+         branch_slug,
+         mapping_refs,
+         ids,
+         _depth,
+         source_id
+       ) do
+    if doc_id == Map.get(mapping_refs, source_id, target_ref(branch_slug, source_id)),
+      do: {:ok, MapSet.put(ids, source_id)},
+      else: invalid_target_intent()
+  end
+
+  defp validate_target_child_type(
+         %{"type" => "link", "href" => href},
+         _branch_slug,
+         _mapping_refs,
+         ids,
+         _depth,
+         source_id
+       )
+       when is_binary(href),
+       do: validate_target_link(href, ids, source_id)
+
+  defp validate_target_child_type(_child, _branch_slug, _mapping_refs, _ids, _depth, _source_id),
+    do: invalid_target_intent()
+
+  defp invalid_target_child,
+    do: {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}
+
+  defp duplicate_target_child,
+    do:
+      {:error,
+       GroupherServer.ErrorCat.custom("confirmed TargetTree contains a duplicate sourceId")}
+
+  defp invalid_target_intent,
+    do: {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree child intent is invalid")}
+
+  defp validate_target_link(href, ids, source_id) do
+    if valid_text?(href),
+      do: {:ok, MapSet.put(ids, source_id)},
+      else: invalid_target_intent()
   end
 
   defp source_mapping_refs(community, info) do

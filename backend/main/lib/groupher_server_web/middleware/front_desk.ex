@@ -30,7 +30,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
   alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
+  def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
   end
 

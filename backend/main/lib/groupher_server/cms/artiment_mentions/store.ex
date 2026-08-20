@@ -454,9 +454,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp artiment_url(%{artiment: %Comment{} = comment, parent_article: article})
        when is_map(article) do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      "#{article_url(thread, article.id)}?comment_id=#{comment.id}"
-    else
+    case FrontDesk.thread_of(article) do
+      {:ok, thread} -> "#{article_url(thread, article.id)}?comment_id=#{comment.id}"
       _ -> nil
     end
   end
@@ -464,9 +463,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp artiment_url(%{artiment: %Comment{}}), do: nil
 
   defp artiment_url(%{artiment: article}) do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      article_url(thread, article.id)
-    else
+    case FrontDesk.thread_of(article) do
+      {:ok, thread} -> article_url(thread, article.id)
       _ -> nil
     end
   end

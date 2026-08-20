@@ -76,9 +76,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         with {:ok, community} <- Communities.mock(slug),
              {:ok, _} <- seed_about_dashboard(community, slug),
              {:ok, posts} <- seed_threads(community, opts),
-             {:ok, _} <- seed_post_states_and_cats(posts),
-             {:ok, updated_community} <- CMS.Communities.fetch(community.slug, inc_views: false) do
-          {:ok, updated_community}
+             {:ok, _} <- seed_post_states_and_cats(posts) do
+          CMS.Communities.fetch(community.slug, inc_views: false)
         end
 
       false ->

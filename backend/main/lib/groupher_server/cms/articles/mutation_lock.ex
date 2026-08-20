@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   alias GroupherServer.CMS.Interactions.ErrorCat, as: InteractionErrorCat
   alias Helper.{T, Transaction}
 
+  @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
+
   @observer_key {__MODULE__, :transaction_observer}
 
   @doc false
@@ -57,7 +59,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
           branch_id -> with_article(community, :doc, branch_id, article.article_hash_id, fun)
         end
 
-      {:ok, %{artiment: thread}} when thread in [:post, :blog, :changelog] ->
+      {:ok, %{artiment: thread}} when thread in @article_threads ->
         with_article(community, thread, article.article_hash_id, fun)
 
       _ ->
@@ -72,7 +74,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     do: {:error, ErrorCat.doc_branch_required()}
 
   def with_article(%Community{} = community, thread, article_hash_id, fun)
-      when thread in [:post, :blog, :changelog] and is_binary(article_hash_id) and
+      when thread in @article_threads and is_binary(article_hash_id) and
              is_function(fun, 0) do
     lock(key(community, thread, article_hash_id), fun)
   end
@@ -100,7 +102,7 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
     do: {:error, ErrorCat.doc_branch_required()}
 
   def with_articles(%Community{} = community, thread, article_hash_ids, fun)
-      when thread in [:post, :blog, :changelog] and is_list(article_hash_ids) and
+      when thread in @article_threads and is_list(article_hash_ids) and
              is_function(fun, 0) do
     article_hash_ids
     |> clean_identities()

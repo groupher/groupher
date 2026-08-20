@@ -139,10 +139,7 @@ defmodule GroupherServer.CMS.Articles.List do
       when is_list(statuses) do
     %{page: page, size: size} = filter
 
-    valid_statuses =
-      statuses
-      |> Enum.filter(&is_atom/1)
-      |> Enum.filter(&(&1 in Map.keys(@article_status)))
+    valid_statuses = Enum.filter(statuses, &(is_atom(&1) and &1 in Map.keys(@article_status)))
 
     case valid_statuses do
       [] ->

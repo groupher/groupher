@@ -1,5 +1,6 @@
 defmodule GroupherServerWeb.ServiceAuth.Verifier do
   alias GroupherServerWeb.ErrorCat
+
   @moduledoc """
   Verifies Auth-issued service access JWTs locally from a bounded JWKS cache.
 
@@ -123,14 +124,31 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
     audiences = Keyword.get(config, :audiences, [])
 
     valid =
-      claims["iss"] == issuer and claims["aud"] in audiences and
-        is_binary(claims["sub"]) and String.starts_with?(claims["sub"], "service:") and
-        is_binary(claims["scope"]) and is_binary(claims["jti"]) and
-        is_integer(claims["iat"]) and is_integer(claims["nbf"]) and is_integer(claims["exp"]) and
-        claims["iat"] <= now + @clock_skew_seconds and claims["nbf"] <= now + @clock_skew_seconds and
-        claims["exp"] >= now - @clock_skew_seconds and
-        claims["exp"] - claims["iat"] <= @max_token_ttl_seconds
+      Enum.all?([
+        claims["iss"] == issuer,
+        claims["aud"] in audiences,
+        valid_subject?(claims["sub"]),
+        is_binary(claims["scope"]),
+        is_binary(claims["jti"]),
+        valid_time_claims?(claims, now),
+        valid_token_ttl?(claims)
+      ])
 
     if valid, do: :ok, else: {:error, ErrorCat.invalid_claims()}
+  end
+
+  defp valid_subject?(subject),
+    do: is_binary(subject) and String.starts_with?(subject, "service:")
+
+  defp valid_time_claims?(claims, now) do
+    is_integer(claims["iat"]) and is_integer(claims["nbf"]) and is_integer(claims["exp"]) and
+      claims["iat"] <= now + @clock_skew_seconds and
+      claims["nbf"] <= now + @clock_skew_seconds and
+      claims["exp"] >= now - @clock_skew_seconds
+  end
+
+  defp valid_token_ttl?(claims) do
+    is_integer(claims["iat"]) and is_integer(claims["exp"]) and
+      claims["exp"] - claims["iat"] <= @max_token_ttl_seconds
   end
 end

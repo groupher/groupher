@@ -318,12 +318,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         |> get_in([community_slug, "root"]) == true
 
       _ ->
-        with {:ok, passport} <- Passport.get_passport(cur_user) do
-          passport
-          |> Registry.normalize_rules()
-          |> get_in([community_slug, "root"]) == true
-        else
-          _ -> false
+        case Passport.get_passport(cur_user) do
+          {:ok, passport} ->
+            passport
+            |> Registry.normalize_rules()
+            |> get_in([community_slug, "root"]) == true
+
+          _ ->
+            false
         end
     end
   end
@@ -338,12 +340,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         |> get_in(["global", "god"]) == true
 
       _ ->
-        with {:ok, passport} <- Passport.get_passport(cur_user) do
-          passport
-          |> Registry.normalize_rules()
-          |> get_in(["global", "god"]) == true
-        else
-          _ -> false
+        case Passport.get_passport(cur_user) do
+          {:ok, passport} ->
+            passport
+            |> Registry.normalize_rules()
+            |> get_in(["global", "god"]) == true
+
+          _ ->
+            false
         end
     end
   end

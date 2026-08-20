@@ -22,9 +22,10 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishThrottle
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
-    with {:ok, _} <- PublishThrottle.check(cur_user, opt) do
-      resolution
-    else
+    case PublishThrottle.check(cur_user, opt) do
+      {:ok, _} ->
+        resolution
+
       {:error, %Error{reason: :throttle_interval}} ->
         resolution
         |> handle_absinthe_error(

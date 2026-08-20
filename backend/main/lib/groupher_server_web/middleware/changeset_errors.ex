@@ -36,8 +36,7 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
       changeset.changes
       |> Map.values()
       |> List.flatten()
-      |> Enum.filter(&is_map/1)
-      |> Enum.filter(fn x -> x.valid? == false end)
+      |> Enum.filter(fn x -> is_map(x) and x.valid? == false end)
       |> List.first()
 
     transform_errors(first_errored_embed_changeset)

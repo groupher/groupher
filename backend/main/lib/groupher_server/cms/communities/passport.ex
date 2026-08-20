@@ -68,22 +68,23 @@ defmodule GroupherServer.CMS.Communities.Passport do
   """
   @spec stamp_passport(term(), User.t()) :: T.domain_res(term())
   def stamp_passport(rules, %User{id: user_id}) do
-    with {:ok, rules} <- validate_shape(rules) do
-      case ORM.find_by(UserPassport, user_id: user_id) do
-        {:ok, passport} ->
-          merged_rules =
-            passport.rules
-            |> PermissionRegistry.normalize_rules()
-            |> deep_merge(rules)
-            |> reject_invalid_rules()
+    case validate_shape(rules) do
+      {:ok, rules} ->
+        case ORM.find_by(UserPassport, user_id: user_id) do
+          {:ok, passport} ->
+            merged_rules =
+              passport.rules
+              |> PermissionRegistry.normalize_rules()
+              |> deep_merge(rules)
+              |> reject_invalid_rules()
 
-          passport |> ORM.update(%{rules: merged_rules})
+            passport |> ORM.update(%{rules: merged_rules})
 
-        {:error, _} ->
-          rules = rules |> reject_invalid_rules()
-          UserPassport |> ORM.create(~m(user_id rules)a)
-      end
-    else
+          {:error, _} ->
+            rules = rules |> reject_invalid_rules()
+            UserPassport |> ORM.create(~m(user_id rules)a)
+        end
+
       {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_passport_shape}} ->
         {:error, ErrorCat.invalid_passport_shape("passport rules must contain global")}
     end

@@ -34,17 +34,15 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   @spec copy_to_draft(T.article(), T.article()) :: {:ok, T.article()} | {:error, term()}
   def copy_to_draft(source, target) do
     with {:ok, target} <- put_tags(target, tag_ids(source)),
-         {:ok, target} <- replace_cover(target, cover_data(source)),
-         {:ok, target} <-
-           ORM.update(
-             target,
-             %{
-               cover_url: source.cover_url,
-               cover_url_dark: source.cover_url_dark
-             },
-             strict: false
-           ) do
-      {:ok, target}
+         {:ok, target} <- replace_cover(target, cover_data(source)) do
+      ORM.update(
+        target,
+        %{
+          cover_url: source.cover_url,
+          cover_url_dark: source.cover_url_dark
+        },
+        strict: false
+      )
     end
   end
 
@@ -84,17 +82,15 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   @spec restore(T.article(), map()) :: {:ok, T.article()} | {:error, term()}
   def restore(article, data) when is_map(data) do
     with {:ok, article} <- put_tags(article, data_value(data, :community_tag_ids, [])),
-         {:ok, article} <- replace_cover(article, data_value(data, :cover)),
-         {:ok, article} <-
-           ORM.update(
-             article,
-             %{
-               cover_url: data_value(data, :cover_url),
-               cover_url_dark: data_value(data, :cover_url_dark)
-             },
-             strict: false
-           ) do
-      {:ok, article}
+         {:ok, article} <- replace_cover(article, data_value(data, :cover)) do
+      ORM.update(
+        article,
+        %{
+          cover_url: data_value(data, :cover_url),
+          cover_url_dark: data_value(data, :cover_url_dark)
+        },
+        strict: false
+      )
     end
   end
 

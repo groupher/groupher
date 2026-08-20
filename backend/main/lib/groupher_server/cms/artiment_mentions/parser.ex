@@ -417,13 +417,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp load_articles(_thread, []), do: %{}
 
   defp load_articles(thread, ids) do
-    with {:ok, info} <- match(thread) do
-      info.model
-      |> where([a], a.id in ^ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, &1})
-    else
-      _ -> %{}
+    case match(thread) do
+      {:ok, info} ->
+        info.model
+        |> where([a], a.id in ^ids)
+        |> Repo.all()
+        |> Map.new(&{&1.id, &1})
+
+      _ ->
+        %{}
     end
   end
 

@@ -1,5 +1,6 @@
 defmodule GroupherServer.Analysis.Web.Provider.Umami do
   alias GroupherServer.CMS.ErrorCat
+
   @moduledoc """
   Umami adapter for Groupher Web Analysis.
 
@@ -64,9 +65,8 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   @impl true
   def active(%Community{} = community) do
-    with {:ok, request} <- request_config(community.umami_website_id),
-         {:ok, payload} <- fetch_active(request) do
-      {:ok, payload}
+    with {:ok, request} <- request_config(community.umami_website_id) do
+      fetch_active(request)
     end
   end
 
@@ -116,9 +116,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   def create_website(%Community{community: slug}) do
     with {:ok, request} <- request_config(nil) do
       case find_existing_website_id(request, slug, "groupher.com") do
-        {:ok, website_id} -> {:ok, website_id}
-        {:error, %GroupherServer.ErrorCat.Error{reason: :external_not_found}} -> post_website(request, slug, "groupher.com")
-        {:error, reason} -> {:error, reason}
+        {:ok, website_id} ->
+          {:ok, website_id}
+
+        {:error, %GroupherServer.ErrorCat.Error{reason: :external_not_found}} ->
+          post_website(request, slug, "groupher.com")
+
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
@@ -407,7 +412,8 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end
   end
 
-  defp parse_website_id(body), do: {:error, ErrorCat.unexpected_external_response(body_kind(body))}
+  defp parse_website_id(body),
+    do: {:error, ErrorCat.unexpected_external_response(body_kind(body))}
 
   defp parse_website_rows({:ok, %Tesla.Env{status: status, body: body}})
        when status in 200..299 do

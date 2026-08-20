@@ -16,6 +16,15 @@
 - 纯粹的数据契约引用可以直接使用上游 canonical Config，不为了形式增加无意义的 facade。
 - facade 只能表达本模块的语义边界；例如 Gate 的 `ordinary_article_threads` 可以在 Gate Config 中排除 `:doc`，而不能把这个排除规则塞回 Article Config。
 
+## ErrorCat
+
+- ErrorCat catalog 函数是错误值构造器，返回 `%GroupherServer.ErrorCat.Error{}`；不在 catalog 内部包装 `{:error, ...}`。
+- Domain / Context / 内部公共 API 的失败结果统一为 `{:error, %GroupherServer.ErrorCat.Error{}}`，不返回 `{:error, :atom_reason}`、裸 `%ErrorCat.Error{}` 或自定义 keyword 错误。
+- `Repo.rollback/1`、Gate decision 等专用边界可以接收裸 ErrorCat 错误值；边界离开该调用后仍要恢复为标准 result tuple。
+- GraphQL 只在 resolver / middleware 协议边界调用 `ErrorCat.gq_format/1`；领域层不返回 GraphQL keyword 格式。
+- 错误 reason 优先在所属 context 的 ErrorCat catalog 声明，并分配唯一 code；`GroupherServer.ErrorCat.custom/1` 只用于尚未建立领域 catalog 的过渡边界，不得作为新领域的默认做法。
+- 进行 ErrorCat 改造时，同步收紧 `Helper.T.domain_res/1` 等类型契约和相关测试，不保留 atom error 的隐性兼容面。
+
 ## 建议补充方向
 
 - 模块边界与目录约定

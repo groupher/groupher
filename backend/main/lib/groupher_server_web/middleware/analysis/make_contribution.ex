@@ -24,7 +24,7 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
 
   alias Accounts.Model.User
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
+  def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: nil, errors: _} = resolution, _), do: resolution
 

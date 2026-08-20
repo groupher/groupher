@@ -1,5 +1,6 @@
 defmodule GroupherServer.Analysis.Web do
   alias GroupherServer.CMS.ErrorCat
+
   @moduledoc """
   Groupher-owned Web Analysis context.
 
@@ -46,12 +47,16 @@ defmodule GroupherServer.Analysis.Web do
     range = resolve_range(args)
     provider = provider()
 
-    with {:ok, community_analysis} <- prepare_community(community, provider) do
-      case provider.summary(community_analysis, range) do
-        {:ok, payload} -> {:ok, ready_summary_payload(payload, community_analysis, range)}
-        {:error, reason} -> {:ok, unavailable_summary_payload(community_analysis, range, reason)}
-      end
-    else
+    case prepare_community(community, provider) do
+      {:ok, community_analysis} ->
+        case provider.summary(community_analysis, range) do
+          {:ok, payload} ->
+            {:ok, ready_summary_payload(payload, community_analysis, range)}
+
+          {:error, reason} ->
+            {:ok, unavailable_summary_payload(community_analysis, range, reason)}
+        end
+
       {:error, reason} ->
         {:ok,
          unavailable_summary_payload(AnalysisCommunity.from_community(community), range, reason)}
@@ -66,13 +71,15 @@ defmodule GroupherServer.Analysis.Web do
     range = resolve_range(args)
     provider = provider()
 
-    with {:ok, community_analysis} <- prepare_community(community, provider) do
-      case provider.overview(community_analysis, range) do
-        {:ok, payload} -> {:ok, trends_overview_payload(payload, range)}
-        {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
-      end
-    else
-      {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
+    case prepare_community(community, provider) do
+      {:ok, community_analysis} ->
+        case provider.overview(community_analysis, range) do
+          {:ok, payload} -> {:ok, trends_overview_payload(payload, range)}
+          {:error, reason} -> {:ok, unavailable_overview_payload(range, reason)}
+        end
+
+      {:error, reason} ->
+        {:ok, unavailable_overview_payload(range, reason)}
     end
   end
 
@@ -87,15 +94,13 @@ defmodule GroupherServer.Analysis.Web do
     provider = provider()
 
     with {:ok, community_analysis} <- prepare_community(community, provider),
-         website_id when is_binary(website_id) <- community_analysis.umami_website_id,
-         {:ok, payload} <-
-           Cache.get_or_fetch(
-             :common,
-             "analysis.active.#{website_id}",
-             [expire_sec: @active_cache_seconds],
-             fn -> provider.active(community_analysis) end
-           ) do
-      {:ok, payload}
+         website_id when is_binary(website_id) <- community_analysis.umami_website_id do
+      Cache.get_or_fetch(
+        :common,
+        "analysis.active.#{website_id}",
+        [expire_sec: @active_cache_seconds],
+        fn -> provider.active(community_analysis) end
+      )
     end
   end
 
@@ -150,31 +155,32 @@ defmodule GroupherServer.Analysis.Web do
     range = resolve_range(args)
     provider = provider()
 
-    with {:ok, community_analysis} <- prepare_community(community, provider) do
-      case provider.traffic(community_analysis, range) do
-        {:ok, traffic} ->
-          {:ok,
-           %{
-             status: "ok",
-             timezone: Map.get(traffic, :timezone, "UTC"),
-             cells: Map.get(traffic, :cells, []),
-             error: nil
-           }}
+    case prepare_community(community, provider) do
+      {:ok, community_analysis} ->
+        case provider.traffic(community_analysis, range) do
+          {:ok, traffic} ->
+            {:ok,
+             %{
+               status: "ok",
+               timezone: Map.get(traffic, :timezone, "UTC"),
+               cells: Map.get(traffic, :cells, []),
+               error: nil
+             }}
 
-        {:error, reason} ->
-          {:ok, unavailable_traffic_payload(reason)}
-      end
-    else
-      {:error, reason} -> {:ok, unavailable_traffic_payload(reason)}
+          {:error, reason} ->
+            {:ok, unavailable_traffic_payload(reason)}
+        end
+
+      {:error, reason} ->
+        {:ok, unavailable_traffic_payload(reason)}
     end
   end
 
   @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
   @doc "Runs `tracking_website_id` through the public `Web` boundary."
   def tracking_website_id(%Community{} = community) do
-    with {:ok, dashboard} <- dashboard_for(community) do
-      {:ok, dashboard.umami_website_id}
-    else
+    case dashboard_for(community) do
+      {:ok, dashboard} -> {:ok, dashboard.umami_website_id}
       {:error, _reason} -> {:ok, nil}
     end
   end
@@ -197,13 +203,15 @@ defmodule GroupherServer.Analysis.Web do
     range = resolve_range(args)
     provider = provider()
 
-    with {:ok, community_analysis} <- prepare_community(community, provider) do
-      case query.(community_analysis, range) do
-        {:ok, items} -> {:ok, %{status: "ok", items: items, error: nil}}
-        {:error, reason} -> {:ok, unavailable_items_payload(section, reason)}
-      end
-    else
-      {:error, reason} -> {:ok, unavailable_items_payload(section, reason)}
+    case prepare_community(community, provider) do
+      {:ok, community_analysis} ->
+        case query.(community_analysis, range) do
+          {:ok, items} -> {:ok, %{status: "ok", items: items, error: nil}}
+          {:error, reason} -> {:ok, unavailable_items_payload(section, reason)}
+        end
+
+      {:error, reason} ->
+        {:ok, unavailable_items_payload(section, reason)}
     end
   end
 

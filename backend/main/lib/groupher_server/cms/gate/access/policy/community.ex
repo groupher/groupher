@@ -61,9 +61,8 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
              :cancel_destroy,
              :destroy
            ] ->
-        with {:ok, true} <- lifecycle_allowed(community, :command, context),
-             :ok <- relation_allowed(command_relation_allowed?(user, community, action)) do
-          :ok
+        with {:ok, true} <- lifecycle_allowed(community, :command, context) do
+          relation_allowed(command_relation_allowed?(user, community, action))
         end
 
       :manage_docs ->

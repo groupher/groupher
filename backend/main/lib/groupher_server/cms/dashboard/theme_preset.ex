@@ -408,9 +408,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   end
 
   defp validate_custom_base_preset(base_preset) do
-    with {:ok, preset} <- parse_known_preset(base_preset) do
-      {:ok, preset}
-    end
+    parse_known_preset(base_preset)
   end
 
   defp parse_known_preset(base_preset) when is_binary(base_preset) do
