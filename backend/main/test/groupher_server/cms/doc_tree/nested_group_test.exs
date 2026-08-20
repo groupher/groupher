@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{Doc, DocsSiteState}
+  alias GroupherServer.CMS.Model.{Doc, DocsSiteState}
 
   require CMS.Const
 

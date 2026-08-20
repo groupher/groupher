@@ -23,9 +23,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+  alias GroupherServer.CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+  alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Repo
 
   @threads Config.threads()

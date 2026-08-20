@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.CommentLifecycle
   alias GroupherServer.CMS.Comments.ErrorCat
+  alias GroupherServer.CMS.Model.CommentLifecycle
+  alias GroupherServer.Repo
 
   @states [:visible, :deleted, :destroy]
   @allowed_transitions %{

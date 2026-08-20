@@ -15,12 +15,12 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
-  alias GroupherServer.CMS.Passport
+  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
+  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
   alias GroupherServer.CMS.Model.CommunityApplication
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.Repo
 
   require Const

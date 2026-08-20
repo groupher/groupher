@@ -13,21 +13,21 @@ defmodule GroupherServer.CMS.FrontDesk do
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
 
-  alias Accounts.Model.User
-  alias CMS.Docs.Branch
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Artiment.Threads
-  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias CMS.Comments.Replies
-  alias CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias CMS.Helper.ArticlePath
-  alias CMS.Model.{Comment, Community, CommunityTag}
-  alias CMS.Articles.InteractionResponse
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServer.CMS.Articles.InteractionResponse
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias GroupherServer.CMS.Comments.Replies
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.{Comment, Community, CommunityTag}
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()

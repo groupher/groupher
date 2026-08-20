@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       CMS.Interactions -> Reactions -> Upvote / Emotion / Collect / Report
   """
 
-  alias GroupherServer.Accounts.Model.User
   alias __MODULE__.{Collect, Emotion, Report, Upvote}
+  alias GroupherServer.Accounts.Model.User
 
   @doc """
   Adds an Artiment upvote idempotently.

@@ -27,10 +27,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo}
 
-  alias CMS.DocTree.Publish.{
+  alias GroupherServer.CMS.DocTree.Publish.{
     Checklist,
     DocPublisher,
     PublicProjection,
@@ -39,12 +39,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
-  alias CMS.Docs.Branch
-  alias CMS.DocPublishRelease
+  alias GroupherServer.CMS.DocPublishRelease
+  alias GroupherServer.CMS.Docs.Branch
 
   require CMS.Const
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
     Doc,
     DocTreeEvent,

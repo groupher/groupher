@@ -24,9 +24,9 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Docs.Branch
-  alias CMS.DocTree.{Reader, Revision}
-  alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.DocTree.{Reader, Revision}
+  alias GroupherServer.CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
   @doc """

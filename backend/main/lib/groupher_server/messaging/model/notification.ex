@@ -16,12 +16,9 @@ defmodule GroupherServer.Messaging.Model.Notification do
 
   use Ecto.Schema
   import Ecto.Changeset
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Artiment.Threads
-  alias CMS.Model.Embeds
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.messaging()

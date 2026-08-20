@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Comments.Replies do
 
   alias GroupherServer.Repo
 
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.{ORM, T}
 
   @doc """

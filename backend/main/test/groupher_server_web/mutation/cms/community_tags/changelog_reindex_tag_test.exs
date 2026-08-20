@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogReindexTag do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.CommunityTag
+  alias GroupherServer.CMS.Model.CommunityTag
 
   setup do
     {:ok, changelog} = db_insert(:changelog)

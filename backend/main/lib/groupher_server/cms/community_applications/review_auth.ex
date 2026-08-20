@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.CommunityApplications.ReviewAuth do
         -> Repo / Oban
   """
 
-  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Passport
 
   @doc """
   Authorizes a reviewer map against a passport grant.

@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Maintenance do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Interactions.Config
+  alias GroupherServer.CMS.Interactions.Config
+  alias GroupherServer.CMS.Model.ViewEvent
   alias GroupherServer.Repo
 
   @doc """

@@ -25,12 +25,12 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.BodyBag
-  alias CMS.Articles.Draft
-  alias CMS.DocTree.{Reader, Revision}
-  alias CMS.Model.{Community, Doc}
+  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias GroupherServer.CMS.Articles.Draft
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.DocTree.{Reader, Revision}
+  alias GroupherServer.CMS.Model.{Community, Doc}
   alias Helper.Validator.Slug
 
   require CMS.Const

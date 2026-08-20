@@ -24,8 +24,8 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Docs.Branch
-  alias CMS.Model.{Community, DocTreeNode}
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
 

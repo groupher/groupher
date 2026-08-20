@@ -17,9 +17,7 @@ defmodule GroupherServer.CMS.Model.CommunityJoinBlog do
   use Ecto.Schema
   use Accessible
 
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Blog, Community}
+  alias GroupherServer.CMS.Model.{Blog, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

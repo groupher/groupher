@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{AbuseReport, Comment}
+  alias GroupherServer.CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, QueryBuilder, T}
 
   import Helper.Utils, only: [done: 1]

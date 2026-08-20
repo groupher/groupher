@@ -27,10 +27,9 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias CMS.Artiment.Threads
-  alias CMS.Hash
-  alias CMS.Model.{ArticleDocumentAssetRef, Community}
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Hash
+  alias GroupherServer.CMS.Model.{ArticleDocumentAssetRef, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

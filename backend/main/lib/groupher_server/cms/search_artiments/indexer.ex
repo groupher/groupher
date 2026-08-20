@@ -14,10 +14,10 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.SearchArtiments
-  alias CMS.SearchArtiments.{Artiment, Config, Projection}
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.SearchArtiments
+  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Projection}
   alias Helper.Constant
 
   require CMS.Const

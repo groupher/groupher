@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.CMS.Model.Post
   alias GroupherServer.CMS.Model.Embeds.ArticleMeta
+  alias GroupherServer.CMS.Model.Post
   alias GroupherServer.CMS.SearchArtiments
   alias GroupherServer.CMS.SearchArtiments.{Artiment, Indexer, Query}
   alias Helper.TestFakes.SearchArtiments, as: SearchPlatform

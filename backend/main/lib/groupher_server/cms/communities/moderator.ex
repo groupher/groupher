@@ -10,17 +10,16 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         -> Repo / Oban
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.Repo
   alias GroupherServer.ErrorCat, as: GlobalErrorCat
+  alias GroupherServer.Repo
   alias GroupherServerWeb.ErrorCat
 
-  alias Accounts.Model.User
-  alias CMS.Passport
-  alias CMS.Model.{Community, CommunityModerator}
-  alias CMS.{Communities, FrontDesk}
-  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias CMS.Passport.Registry
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.{Communities, FrontDesk}
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.CMS.Model.{Community, CommunityModerator}
+  alias GroupherServer.CMS.Passport
+  alias GroupherServer.CMS.Passport.Registry
   alias Helper.{Multi, ORM, PermissionConfig, T, Transaction}
 
   @doc """

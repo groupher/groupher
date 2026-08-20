@@ -17,11 +17,11 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Repo}
   alias GroupherServer.Accounts.CollectFolders.ErrorCat
+  alias GroupherServer.{CMS, Repo}
 
-  alias Accounts.Model.{CollectFolder, Embeds, User}
-  alias CMS.Model.ArticleCollect
+  alias GroupherServer.Accounts.Model.{CollectFolder, Embeds, User}
+  alias GroupherServer.CMS.Model.ArticleCollect
   alias Helper.{Datetime, Multi, ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()

@@ -19,10 +19,8 @@ defmodule GroupherServer.CMS.Gate.Scope do
       iex> {:ok, %Ecto.Query{}} = scope(GroupherServer.CMS.Model.Community, nil, :read, context)
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Gate
-  alias Gate.Scope.Query
-  alias Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.Scope.Query
 
   @doc "Builds the requested read scope into the supplied queryable."
   @spec scope(Ecto.Queryable.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.t()) ::

@@ -18,8 +18,8 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   alias GroupherServer.Repo
 
-  alias CMS.FrontDesk
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.{Multi, ORM, QueryBuilder, T}
 
   @audit_legal Helper.Constant.CMS.pending(:legal)

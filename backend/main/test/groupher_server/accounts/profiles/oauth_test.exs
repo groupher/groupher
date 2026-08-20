@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Accounts.Oauth do
   use GroupherServer.TestMate
   import Helper.Utils
 
-  alias Accounts.Model.{BrowserSession, OauthProvider}
+  alias GroupherServer.Accounts.Model.{BrowserSession, OauthProvider}
 
   # @valid_user mock_attrs(:user)
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"}) |> map_key_stringify

@@ -105,9 +105,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
 
     field(:contributes, :contribute_map)
 
-    # TODO, for msg-bell UI
-    # field :has_messges,
-    # 1. has_mentions ?
     # 2. has_system_messages ?
     # 3. has_notifications ?
     # 4. has_watches ?

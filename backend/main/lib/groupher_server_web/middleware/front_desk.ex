@@ -21,14 +21,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   import Helper.Utils, only: [handle_absinthe_error: 3]
   alias GroupherServer.ErrorCat
 
-  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.{Comment, Community}
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
   alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.{Comment, Community}
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution

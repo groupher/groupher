@@ -43,10 +43,10 @@ defmodule GroupherServer.CMS.Communities.Enable do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Communities.Config
+  alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
 
   @threads Config.threads()

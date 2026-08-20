@@ -23,9 +23,7 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
 
-  alias GroupherServer.CMS
-
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

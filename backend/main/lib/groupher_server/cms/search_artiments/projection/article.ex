@@ -11,8 +11,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ErrorCat
-  alias CMS.SearchArtiments.Artiment
+  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS.SearchArtiments.Artiment
   alias Helper.Constant
 
   require CMS.Const

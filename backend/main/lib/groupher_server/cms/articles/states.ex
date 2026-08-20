@@ -15,14 +15,14 @@ defmodule GroupherServer.CMS.Articles.States do
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.ErrorCat
-
-  alias CMS.Comments.Writer
-  alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
-  alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
+  alias GroupherServer.CMS.Articles.ErrorCat
   alias GroupherServer.Repo
+
+  alias GroupherServer.CMS.{Articles.Lifecycle, Communities, FrontDesk}
+  alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Comments.Writer
+  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}

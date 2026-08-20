@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Seeds.{Articles, Communities, Config, Tags}
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleUpvote,
     ArticleUserEmotion,
     Changelog,

@@ -26,20 +26,18 @@ defmodule GroupherServerWeb.Context do
 
   alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias Accounts.Profiles.BrowserSessions
-  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.BrowserSessions
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias GroupherServerWeb.ServiceAuth.Verifier
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
-  alias GroupherServerWeb.ServiceAuth.Verifier
 
   def init(opts), do: opts
 
   def call(conn, _) do
     conn = fetch_cookies(conn)
     context = build_context(conn)
-    # put_private(conn, :absinthe, %{context: context})
-    # TODO: use https://github.com/absinthe-graphql/absinthe/pull/497/files
     Absinthe.Plug.put_options(conn, context: context)
   end
 
@@ -186,7 +184,6 @@ defmodule GroupherServerWeb.Context do
     end
   end
 
-  # TODO gather role info from CMS or other context
   defp check_passport(%User{} = user) do
     case CMS.Communities.get_passport(%User{id: user.id}) do
       {:ok, passport} -> {:ok, Map.put(user, :cur_passport, passport)}

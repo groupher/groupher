@@ -2,8 +2,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Communities.TagStats
-  alias CMS.Model.{CommunityTag, CommunityTagStat}
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.Model.{CommunityTag, CommunityTagStat}
 
   alias GroupherServer.CMS
 

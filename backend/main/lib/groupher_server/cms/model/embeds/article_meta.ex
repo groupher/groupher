@@ -18,9 +18,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
   use Accessible
   import Ecto.Changeset
 
-  alias GroupherServer.CMS
-
-  alias CMS.Artiment.Threads
+  alias GroupherServer.CMS.Artiment.Threads
 
   @optional_fields ~w(thread is_edited is_comment_locked comments_participant_user_ids reported_count upvoted_user_ids is_sunk can_undo_sink last_active_at is_legal illegal_reason illegal_words next_floor next_comment_inner_id)a
 

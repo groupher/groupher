@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Docs.Branch do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.{Community, DocBranch}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{Community, DocBranch}
   alias Helper.{ORM, Transaction}
 
   require CMS.Const

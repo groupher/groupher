@@ -14,12 +14,12 @@ defmodule GroupherServer.Analysis.Contribution do
   import Helper.Utils
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
+  alias GroupherServer.{CMS, FrontDesk, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Model.Community
   alias __MODULE__.Model.{CommunityContribute, UserContribute}
-  alias Helper.{Multi, Cache, Datetime, Later, ORM, QueryBuilder}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
+  alias Helper.{Cache, Datetime, Later, Multi, ORM, QueryBuilder}
 
   @community_contribute_days __MODULE__.Config.community_contribute_days()
   @user_contribute_months __MODULE__.Config.user_contribute_months()

@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.Blog do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

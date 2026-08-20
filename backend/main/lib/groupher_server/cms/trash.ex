@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.{TrashAction, TrashedArticle}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{TrashAction, TrashedArticle}
   alias Helper.T
 
   @default_batch_size 50

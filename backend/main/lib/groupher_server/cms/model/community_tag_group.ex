@@ -19,10 +19,8 @@ defmodule GroupherServer.CMS.Model.CommunityTagGroup do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS
-
-  alias CMS.Artiment.Threads
-  alias CMS.Model.{Community, CommunityTag}
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.{Community, CommunityTag}
   alias Helper.Constant.DBPrefix
 
   @required_fields ~w(thread title community_id)a

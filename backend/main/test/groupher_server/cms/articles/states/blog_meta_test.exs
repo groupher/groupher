@@ -49,13 +49,5 @@ defmodule GroupherServer.Test.CMS.BlogMeta do
 
       assert not blog.meta.is_comment_locked
     end
-
-    # TODO:
-    # test "blog with image should have imageCount in meta" do
-    # end
-
-    # TODO:
-    # test "blog with video should have imageCount in meta" do
-    # end
   end
 end

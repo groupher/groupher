@@ -12,8 +12,8 @@ defmodule GroupherServer.Support.Factory.Articles do
         -> endpoint / fixture / Repo
   """
 
-  alias GroupherServer.Support.FakeData
   alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.Support.FakeData
   alias Helper.Datetime
 
   defmacro __using__(_opts) do

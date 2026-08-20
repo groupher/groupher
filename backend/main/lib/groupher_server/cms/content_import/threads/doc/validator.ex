@@ -23,8 +23,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
+  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.Model.{Community, DocBranch, DocsSiteState}
 
   @max_depth CMS.Const.doc_tree_max_depth()

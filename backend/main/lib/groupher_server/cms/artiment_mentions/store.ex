@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   alias GroupherServer.Repo
 
-  alias CMS.{
+  alias GroupherServer.CMS.{
     Artiment.Matcher,
     Artiment.PlateJSON,
     ArtimentMentions.Config,
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     FrontDesk
   }
 
-  alias CMS.Model.{ArtimentMention, Comment}
+  alias GroupherServer.CMS.Model.{ArtimentMention, Comment}
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads Config.threads()

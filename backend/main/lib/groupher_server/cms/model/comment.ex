@@ -28,11 +28,9 @@ defmodule GroupherServer.CMS.Model.Comment do
       articles_thread_matches_ref_constraint: 2
     ]
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Artiment.Threads
-  alias CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

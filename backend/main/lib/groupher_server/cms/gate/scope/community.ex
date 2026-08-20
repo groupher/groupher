@@ -23,12 +23,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias CMS.Communities
-  alias CMS.Gate
-  alias Gate.Scope.Policy
-  alias Gate.ErrorCat
-  alias CMS.Model.{CommunityLifecycle, CommunityModerator}
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Model.{CommunityLifecycle, CommunityModerator}
   alias Helper.Constant
 
   @behaviour Policy

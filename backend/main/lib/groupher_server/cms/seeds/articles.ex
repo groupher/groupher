@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   import GroupherServer.Support.Factory
   alias GroupherServer.CMS
 
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
   alias Helper.{ORM, T}
 
   alias GroupherServer.CMS.Seeds.{Comments, Config, Tags}

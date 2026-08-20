@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Draft, ErrorCat}
-  alias CMS.Model.{ArticleDocument, Community}
+  alias GroupherServer.CMS.Articles.{Draft, ErrorCat}
+  alias GroupherServer.CMS.Model.{ArticleDocument, Community}
 
   @doc """
   Compares one draft head with the public head and returns the transient change

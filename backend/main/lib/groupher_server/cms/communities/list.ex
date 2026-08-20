@@ -12,11 +12,11 @@ defmodule GroupherServer.CMS.Communities.List do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS}
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
 
-  alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
   alias Helper.{ORM, T}
 
   @doc """

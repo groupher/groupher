@@ -13,9 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Enums do
 
   import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_enum: 1, enum_values: 1]
 
-  alias GroupherServer.CMS
-
-  alias CMS.Dashboard.KanbanBoards
+  alias GroupherServer.CMS.Dashboard.KanbanBoards
 
   require KanbanBoards
 

@@ -17,12 +17,10 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias CMS.{Communities, Const}
-  alias CMS.Gate
-  alias Gate.ErrorCat
+  alias GroupherServer.CMS.{Communities, Const}
+  alias GroupherServer.CMS.Gate.ErrorCat
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     Community,

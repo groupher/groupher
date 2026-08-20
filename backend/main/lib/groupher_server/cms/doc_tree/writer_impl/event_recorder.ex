@@ -28,8 +28,8 @@ defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.Events
-  alias CMS.Model.{Community, DocTreeNode}
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
 

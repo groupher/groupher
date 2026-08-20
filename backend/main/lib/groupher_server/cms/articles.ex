@@ -22,9 +22,9 @@ defmodule GroupherServer.CMS.Articles do
 
   alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias CMS.Artiment.Enums
-  alias CMS.Model.Community
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Model.Community
 
   alias __MODULE__.{
     Draft,

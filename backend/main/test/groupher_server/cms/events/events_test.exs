@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
   use GroupherServer.TestMate
 
-  alias CMS.Events
+  alias GroupherServer.CMS.Events
   alias GroupherServer.Messaging
 
   setup do

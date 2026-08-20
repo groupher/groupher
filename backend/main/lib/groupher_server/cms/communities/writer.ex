@@ -11,13 +11,13 @@ defmodule GroupherServer.CMS.Communities.Writer do
   """
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, Analysis, CMS}
+  alias GroupherServer.{Analysis, CMS}
   alias GroupherServer.CMS.Communities.{Lifecycle, Moderator, Reader}
   alias GroupherServer.CMS.Dashboard.BaseInfo
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias CMS.Model.{Community, CommunityDashboard, Embeds}
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
   require Logger
 

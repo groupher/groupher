@@ -26,9 +26,9 @@ defmodule GroupherServer.CMS.DocCover do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.DocCover.{Reader, Sync, Writer}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, DocCoverPinnedDoc, DocCoverCard}
+  alias GroupherServer.CMS.DocCover.{Reader, Sync, Writer}
+  alias GroupherServer.CMS.Model.{Community, DocCoverCard, DocCoverPinnedDoc}
   alias GroupherServer.CMS.Model.DocTreeNode
   alias Helper.T
 

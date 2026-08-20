@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseTreeEvent do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{DocTreeEvent, DocPublishRelease}
+  alias GroupherServer.CMS.Model.{DocPublishRelease, DocTreeEvent}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
   # google: must appear in the GROUP BY clause or be used in an aggregate function
   alias GroupherServer.Analysis
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
   def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 

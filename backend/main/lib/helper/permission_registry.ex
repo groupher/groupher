@@ -47,8 +47,8 @@ defmodule Helper.PermissionRegistry do
         -> normalized value / infrastructure
   """
 
-  alias Helper.PermissionConfig
   alias GroupherServer.CMS.Passport.ErrorCat
+  alias Helper.PermissionConfig
 
   @root_passport_item_count 10_000
   @contexts PermissionConfig.contexts()

@@ -8,14 +8,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Query do
       Gate.scope/4 -> Scope.Query.build/5 -> resource Scope -> Ecto.Query
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Gate
-  alias Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
-  alias Gate.ErrorCat
-  alias CMS.Model.{ArticleDocument, Blog, Changelog, Post}
-  alias CMS.Model.Comment, as: CommentModel
-  alias CMS.Model.Community, as: CommunityModel
-  alias CMS.Model.Doc, as: DocModel
+  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Model.{ArticleDocument, Blog, Changelog, Post}
+  alias GroupherServer.CMS.Model.Comment, as: CommentModel
+  alias GroupherServer.CMS.Model.Community, as: CommunityModel
+  alias GroupherServer.CMS.Model.Doc, as: DocModel
 
   @doc "Builds a resource Scope query selected by root schema and Context type."
   def build(query, actor, action, CommunityModel, %Community{} = context),

@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Communities.NamePolicyTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Communities.NamePolicy
-  alias CMS.Model.CommunitySlugClaim
+  alias GroupherServer.CMS.Communities.NamePolicy
+  alias GroupherServer.CMS.Model.CommunitySlugClaim
 
   setup do
     {:ok, user} = db_insert(:user)

@@ -2,9 +2,6 @@ defmodule GroupherServer.Test.Accounts.Mailbox do
   @moduledoc false
 
   use GroupherServer.TestMate, async: false
-  # TODO import Service.Utils move both helper and github
-  # import Helper.Utils
-
   alias GroupherServer.{Accounts, FrontDesk, Messaging}
   alias GroupherServer.FrontDesk.Cache, as: FrontDeskCache
   alias GroupherServer.Messaging.Model.{Mention, Notification}

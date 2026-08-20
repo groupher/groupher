@@ -14,17 +14,15 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
         -> Gate.Decision
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Gate
-  alias Gate.Access.{Load, Policy}
-  alias Gate.Context.Access.Article, as: ArticleContext
-  alias Gate.Context.Access.Doc, as: DocContext
-  alias Gate.Decision
-  alias Gate.ErrorCat
-  alias CMS.Model.{Blog, Changelog, Comment, Community, Post}
-  alias CMS.Model.Doc, as: DocModel
-  alias CMS.{Articles, FrontDesk}
-  alias CMS.Gate.Config
+  alias GroupherServer.CMS.{Articles, FrontDesk}
+  alias GroupherServer.CMS.Gate.Access.{Load, Policy}
+  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Post}
+  alias GroupherServer.CMS.Model.Doc, as: DocModel
   alias GroupherServer.Repo
   @article_threads Config.article_threads()
 

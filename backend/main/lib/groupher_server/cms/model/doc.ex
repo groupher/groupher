@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   require CMS.Const
 
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
   alias Helper.HTML
 

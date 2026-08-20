@@ -33,8 +33,8 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

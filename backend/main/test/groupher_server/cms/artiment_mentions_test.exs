@@ -4,8 +4,8 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   use GroupherServer.TestMate, async: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias CMS.ArtimentMentions
-  alias CMS.Model.ArtimentMention
+  alias GroupherServer.CMS.ArtimentMentions
+  alias GroupherServer.CMS.Model.ArtimentMention
 
   @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 

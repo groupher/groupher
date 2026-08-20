@@ -19,14 +19,12 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias CMS.Gate
-  alias CMS.Passport.Registry
-  alias CMS.Policy.Config
-  alias CMS.Policy.Model.PublishThrottle, as: ThrottleRecord
-  alias Gate.ErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.CMS.Policy.Config
+  alias GroupherServer.CMS.Policy.Model.PublishThrottle, as: ThrottleRecord
   alias Helper.{Datetime, ORM}
 
   @interval_minutes Config.publish_throttle().interval_minutes

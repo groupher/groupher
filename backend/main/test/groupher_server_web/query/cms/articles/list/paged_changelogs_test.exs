@@ -334,7 +334,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     end
   end
 
-  # TODO test  sort, tag, community, when ...
   @doc """
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """

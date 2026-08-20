@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Events.Notify do
         -> Notify
         -> bounded side effect
   """
-  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
+  alias GroupherServer.{CMS, Messaging, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Events.Event
-  alias CMS.FrontDesk
-  alias CMS.Model.Comment
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.Comment
 
   @behaviour CMS.Events.Handler
 

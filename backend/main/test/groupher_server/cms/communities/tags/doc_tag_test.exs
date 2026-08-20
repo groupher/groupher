@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.CommunityTag
+  alias GroupherServer.CMS.Model.CommunityTag
 
   alias GroupherServer.CMS
 

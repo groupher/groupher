@@ -38,8 +38,8 @@ defmodule GroupherServer.CMS.DocTree.Import do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.{Reader, Revision}
-  alias CMS.Model.{Community, DocBranch, DocTreeNode}
+  alias GroupherServer.CMS.DocTree.{Reader, Revision}
+  alias GroupherServer.CMS.Model.{Community, DocBranch, DocTreeNode}
 
   require CMS.Const
 

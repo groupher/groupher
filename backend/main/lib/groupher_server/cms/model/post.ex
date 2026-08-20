@@ -23,8 +23,8 @@ defmodule GroupherServer.CMS.Model.Post do
 
   alias GroupherServer.CMS
 
-  alias CMS.Artiment.Enums
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

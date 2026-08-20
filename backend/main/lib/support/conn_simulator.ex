@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   alias GroupherServer.CMS
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias Helper.{Guardian, ORM, PermissionRegistry}
 
   @spec simu_conn(:guest | :invalid_token | :user) :: Plug.Conn.t()

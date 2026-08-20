@@ -14,9 +14,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy do
   """
 
   alias __MODULE__.{Article, Comment, Community}
-  alias GroupherServer.CMS
-  alias CMS.Gate
-  alias Gate.Context.Access.Community, as: CommunityContext
+  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
 
   @doc false
   def article(actor, action, resource, context),

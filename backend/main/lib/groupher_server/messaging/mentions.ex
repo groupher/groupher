@@ -27,7 +27,7 @@ defmodule GroupherServer.Messaging.Mentions do
 
   alias GroupherServer.{Accounts, Repo}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Messaging.Model.Mention

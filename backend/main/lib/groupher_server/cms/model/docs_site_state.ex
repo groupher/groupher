@@ -36,9 +36,8 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
 
   import Ecto.Changeset
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Model.{Community, DocBranch, DocTreeSnapshot}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.{Community, DocBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

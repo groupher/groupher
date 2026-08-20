@@ -14,11 +14,9 @@ defmodule GroupherServer.CMS.Gate.Scope.ArticleSchema do
       iex> {:ok, :post} = thread_for(GroupherServer.CMS.Model.Post)
   """
 
-  alias GroupherServer.CMS
-  alias CMS.Artiment.Matcher
-  alias CMS.Gate
-  alias CMS.Gate.Config
-  alias Gate.ErrorCat
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS.Gate.ErrorCat
 
   @article_threads Config.article_threads()
 

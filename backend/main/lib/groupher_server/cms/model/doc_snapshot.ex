@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.{Author, Community, DocBranch}
+  alias GroupherServer.CMS.Model.{Author, Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

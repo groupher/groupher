@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Search do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Search
+  alias GroupherServer.CMS.Search
 
   defp create_community!(user, attrs) do
     community_attrs = mock_attrs(:community, attrs)

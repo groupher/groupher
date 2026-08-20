@@ -34,9 +34,9 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   import Ecto.Changeset
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Model.{Community, DocBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const

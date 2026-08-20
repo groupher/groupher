@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   """
 
   alias GroupherServer.CMS
-  alias CMS.Comments.AuthorRelationState
+  alias GroupherServer.CMS.Comments.AuthorRelationState
 
   @doc """
   Assembles one Comment with Interaction and Article-author relation fields.

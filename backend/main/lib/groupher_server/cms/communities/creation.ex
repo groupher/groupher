@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Communities.Creation do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.CommunityApplications.Transitions
   alias GroupherServer.CMS.Communities.Jobs.Setup
+  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
+  alias GroupherServer.CMS.CommunityApplications.Transitions
 
   alias GroupherServer.CMS.Model.{
     CommunityApplication,

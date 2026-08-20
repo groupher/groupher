@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
   """
 
   alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Model.Community
   alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Interactions.ErrorCat, as: InteractionErrorCat
+  alias GroupherServer.CMS.Model.Community
   alias Helper.{T, Transaction}
 
   @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]

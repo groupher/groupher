@@ -16,11 +16,8 @@ defmodule GroupherServer.CMS.Model.CommentUpvote do
 
   use Ecto.Schema
   import Ecto.Changeset
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Model.Comment
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -17,11 +17,8 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
   use Ecto.Schema
   use Accessible
   import Ecto.Changeset
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.{Embeds, User}
-  alias CMS.Model.ArticleCollect
+  alias GroupherServer.Accounts.Model.{Embeds, User}
+  alias GroupherServer.CMS.Model.ArticleCollect
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()

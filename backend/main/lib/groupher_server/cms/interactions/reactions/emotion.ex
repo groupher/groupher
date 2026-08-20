@@ -11,13 +11,13 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.Articles.MutationLock
-  alias CMS.Communities.Enable
-  alias CMS.Interactions.{Config, ErrorCat, ReadState}
-  alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS.{Events, Gate}
+  alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias GroupherServer.CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias GroupherServer.Repo
   alias Helper.{Later, T}
 

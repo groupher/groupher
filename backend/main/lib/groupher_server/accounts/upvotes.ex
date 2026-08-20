@@ -16,9 +16,8 @@ defmodule GroupherServer.Accounts.Upvotes do
   import ShortMaps
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
 
-  alias CMS.Model.ArticleUpvote
+  alias GroupherServer.CMS.Model.ArticleUpvote
   alias Helper.{ORM, QueryBuilder}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()

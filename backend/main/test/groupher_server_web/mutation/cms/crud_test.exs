@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
+  alias GroupherServer.CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
 
   setup do
     {:ok, category} = db_insert(:category)

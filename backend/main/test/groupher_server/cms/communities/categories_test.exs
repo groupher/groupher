@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Communities.Categories do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Model.Category
+  alias GroupherServer.CMS.Model.Category
 
   setup do
     {:ok, user} = db_insert(:user)

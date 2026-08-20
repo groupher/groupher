@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
   alias GroupherServer.Repo
 
-  alias Accounts.Model.User
-  alias GroupherServer.CMS.Model.Passport, as: UserPassport
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Model.Passport, as: UserPassport
 
   alias Helper.{NestedFilter, ORM, PermissionRegistry, T}
 

@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
   alias Helper.ORM
 
   require CMS.Const

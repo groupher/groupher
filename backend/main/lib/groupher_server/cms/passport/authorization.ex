@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       Gate policy -> CMS.Passport.Authorization -> allow or deny
   """
 
-  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.CMS.Passport.ErrorCat
+  alias GroupherServer.CMS.Passport.Registry
 
   @doc """
   Asks whether one normalized passport grants an action in a community.

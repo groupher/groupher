@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.CommunityTag
+  alias GroupherServer.CMS.Model.CommunityTag
 
   setup do
     {:ok, user} = db_insert(:user)

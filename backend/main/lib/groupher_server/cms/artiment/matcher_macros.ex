@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Artiment.Config
 
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
 
   @threads Config.threads()
 

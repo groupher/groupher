@@ -14,10 +14,10 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
-  alias CMS.SearchArtiments.Config
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
+  alias GroupherServer.CMS.SearchArtiments.Config
   alias Helper.Constant
 
   require CMS.Const

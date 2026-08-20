@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
 

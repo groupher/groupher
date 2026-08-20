@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.{DocPublishRelease, DocSnapshot}
+  alias GroupherServer.CMS.Model.{DocPublishRelease, DocSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   """
 
   alias GroupherServer.CMS
-  alias CMS.DocTree.Publish.Result
+  alias GroupherServer.CMS.DocTree.Publish.Result
 
   require CMS.Const
 

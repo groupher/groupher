@@ -9,12 +9,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat}
-  alias CMS.Interactions.Reactions.Emotion
-  alias CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Interactions.{Config, DefaultViewerState, ErrorCat}
+  alias GroupherServer.CMS.Interactions.Reactions.Emotion
+  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.CMS.Model.ViewEvent
   alias GroupherServer.Repo
 
   require RoaringBitmap

@@ -12,15 +12,15 @@ defmodule GroupherServer.CMS.Comments.Reader do
   """
 
   import Ecto.Query, warn: false
-  alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS
 
-  alias CMS.FrontDesk
-  alias CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Helper.ArticlePath
-  alias CMS.Model.Comment
-  alias CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias GroupherServer.CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 

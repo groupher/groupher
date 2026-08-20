@@ -17,9 +17,8 @@ defmodule GroupherServer.Accounts.Helper.Loader do
 
   alias GroupherServer.Repo
   alias Helper.QueryBuilder
-  alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Model.CommunitySubscriber
+  alias GroupherServer.CMS.Model.CommunitySubscriber
 
   @doc "Returns the Accounts Ecto Dataloader source."
   def data, do: Dataloader.Ecto.new(Repo, query: &query/2)

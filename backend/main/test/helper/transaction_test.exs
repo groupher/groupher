@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Helper.Transaction do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
   alias Helper.Transaction
 
   describe "lock_global/2" do

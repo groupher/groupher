@@ -16,10 +16,10 @@ defmodule GroupherServer.Accounts.Profiles.Subscribe do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
+  alias GroupherServer.{FrontDesk, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Model.CommunitySubscriber
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.CommunitySubscriber
   alias Helper.ORM
 
   def update_subscribe_state(%User{} = user) do

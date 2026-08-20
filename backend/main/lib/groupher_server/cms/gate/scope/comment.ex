@@ -16,13 +16,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
-  alias CMS.Gate
-  alias Gate.Scope.{ArticleSchema, CommunityChain}
-  alias Gate.ErrorCat
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias GroupherServer.CMS.Gate.Scope.Policy
+  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
 
   alias Helper.Constant
 

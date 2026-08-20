@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
 
   use GroupherServer.TestMate
 
-  alias CMS.Communities.Enable
+  alias GroupherServer.CMS.Communities.Enable
 
   setup do
     {:ok, user} = db_insert(:user)
