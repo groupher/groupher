@@ -55,6 +55,12 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
             message: Translator |> Gettext.dgettext("errors", err_msg.raw, count: err_msg.count)
           }
 
+        Map.has_key?(err_msg, :number) ->
+          %{
+            key: Translator |> Gettext.dgettext("fields", "#{key}"),
+            message: Translator |> Gettext.dgettext("errors", err_msg.raw, number: err_msg.number)
+          }
+
         true ->
           %{
             key: Translator |> Gettext.dgettext("fields", "#{key}"),
@@ -70,12 +76,18 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
         String.replace(acc, "%{#{key}}", to_string(value))
       end)
 
-    # TODO handle: number type
     cond do
       String.contains?(msg, "%{count}") ->
         %{
           msg: err_string,
           count: Keyword.get(opts, :count),
+          raw: msg
+        }
+
+      String.contains?(msg, "%{number}") ->
+        %{
+          msg: err_string,
+          number: Keyword.get(opts, :number),
           raw: msg
         }
 
