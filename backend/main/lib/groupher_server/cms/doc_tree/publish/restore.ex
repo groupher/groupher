@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.DocTree.Publish.Restore do
+  require GroupherServer.CMS.DocTree.Const
+
   @moduledoc """
   Restores staged tree-delete items back into the draft tree.
 
@@ -22,29 +24,30 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.DocTree.Publish.Result
-  alias CMS.DocTree.Revision
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.Activity.EventRef
+  alias GroupherServer.CMS.DocTree.Publish.Result
+  alias GroupherServer.CMS.DocTree.Revision
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
+    DocsSiteState,
     DocTreeEvent,
-    DocTreeNode,
-    DocsSiteState
+    DocTreeNode
   }
 
   alias Helper.ORM
 
   require CMS.Const
 
-  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
-  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
-  @tree_node_type_link CMS.Const.tree_node_type(:link)
-  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.DocTree.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
+  @tree_node_type_link CMS.DocTree.Const.tree_node_type(:link)
+  @tree_node_type_pin CMS.DocTree.Const.tree_node_type(:pin)
   @tree_node_type_group_key to_string(@tree_node_type_group)
   @tree_node_type_page_key to_string(@tree_node_type_page)
   @tree_node_type_link_key to_string(@tree_node_type_link)
@@ -90,7 +93,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   end
 
   defp delete_restore_event?(%DocTreeEvent{event_type: type}),
-    do: type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)]
+    do:
+      type in [
+        CMS.DocTree.Const.tree_event(:node_delete),
+        CMS.DocTree.Const.tree_event(:pin_remove)
+      ]
 
   defp restore_tree_delete_events(%Community{} = community, branch, events) do
     Result.map_while_ok(events, &restore_tree_delete_event(community, branch, &1))
@@ -168,7 +175,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   end
 
   defp mark_restored_delete_event_discarded(%DocTreeEvent{} = event) do
-    case ORM.update(event, %{status: CMS.Const.tree_event_status(:discarded)}) do
+    case ORM.update(event, %{status: CMS.DocTree.Const.tree_event_status(:discarded)}) do
       {:ok, _event} -> :ok
       error -> error
     end
@@ -177,41 +184,33 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   defp create_restore_audit(%Community{} = community, branch, %User{} = user, restore_entries) do
     nodes = Enum.flat_map(restore_entries, & &1.nodes)
 
-    CMS.Audit.record("doc_tree.restored", %{
-      community_id: community.id,
-      actor: user,
-      resource_type: "doc_tree_event",
-      resource_ref: restore_entries |> List.first() |> then(& &1.event.id) |> to_string(),
-      resource_snapshot: %{
-        branch_id: branch.id,
-        restored_event_ids: Enum.map(restore_entries, & &1.event.id),
-        restored_node_ids: restored_node_ids(nodes),
-        items:
-          Enum.flat_map(restore_entries, fn %{event: event, nodes: nodes} ->
-            Enum.map(nodes, &audit_item(event, &1))
-          end)
+    operation_ref =
+      EventRef.derive(
+        {:doc_tree_restore, community.id, branch.id, Enum.map(restore_entries, & &1.event.id)}
+      )
+
+    Activity.log(
+      %{
+        activity_type: :doc_tree,
+        community_id: community.id,
+        ref: restore_entries |> List.first() |> then(& &1.event.id) |> to_string(),
+        branch_ref: branch.id
       },
-      source: "api",
-      metadata: %{legacy_publish_restore: true}
-    })
-  end
-
-  defp restored_node_ids(nodes) do
-    nodes
-    |> Enum.map(& &1["id"])
-    |> Enum.reject(&is_nil/1)
-    |> Enum.map(&to_string/1)
-  end
-
-  defp audit_item(%DocTreeEvent{} = event, node) do
-    %{
-      "eventId" => event.id,
-      "nodeId" => node["id"],
-      "type" => node[@doc_tree_json_key_type],
-      "parentNodeId" => node["parentNodeId"],
-      "title" => node["title"],
-      "docId" => node[@doc_tree_json_key_doc_id]
-    }
+      :restored,
+      actor: user,
+      source: :api,
+      operation_ref: operation_ref,
+      metadata: %{
+        node_count: length(nodes),
+        doc_count:
+          nodes
+          |> Enum.map(& &1.doc_id)
+          |> Enum.reject(&is_nil/1)
+          |> Enum.uniq()
+          |> length(),
+        legacy_publish_restore: true
+      }
+    )
   end
 
   defp mark_tree_restore_revision(%Community{} = community, branch, restore_count) do

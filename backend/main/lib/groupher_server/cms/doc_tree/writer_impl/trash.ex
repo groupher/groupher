@@ -16,13 +16,13 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.MutationLock
-  alias CMS.Docs.Trash
-  alias CMS.DocTree.Events
-  alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
-  alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Docs.Trash
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
+  alias GroupherServer.CMS.SearchArtiments.Indexer
 
   require CMS.Const
 
@@ -60,22 +60,14 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
                branch_id: branch.id
              ),
            :ok <- delete_nodes(draft_nodes ++ public_nodes),
-           {:ok, _audit} <-
-             CMS.Audit.record("doc_tree.trashed", %{
-               community_id: community.id,
+           {:ok, _activity} <-
+             Activity.log(draft_root, :trashed,
                actor: actor,
-               resource_type: "doc_tree_#{draft_root.type}",
-               resource_ref: draft_root.node_id,
-               resource_snapshot: %{
-                 title: draft_root.title,
-                 type: draft_root.type,
-                 node_count: length(trash_nodes),
-                 doc_count: length(doc_ids)
-               },
                operation_ref: action.hash_id,
-               source: "api",
-               metadata: %{}
-             }) do
+               source: :api,
+               occurred_at: action.deleted_at,
+               metadata: %{node_count: length(trash_nodes), doc_count: length(doc_ids)}
+             ) do
         Enum.each(doc_ids, &Indexer.enqueue_delete(:doc, &1))
 
         {:ok,

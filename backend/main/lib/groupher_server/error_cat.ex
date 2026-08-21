@@ -21,7 +21,8 @@ defmodule GroupherServer.ErrorCat do
     {:cms, :interaction} => 4900..4999,
     {:cms, :community} => 5500..5599,
     {:cms, :asset} => 5600..5699,
-    {:cms, :article} => 6000..6099
+    {:cms, :article} => 6000..6099,
+    {:activity} => 6100..6199
   }
 
   @reserved [
@@ -63,7 +64,8 @@ defmodule GroupherServer.ErrorCat do
     GroupherServer.CMS.Interactions.ErrorCat,
     GroupherServer.CMS.Communities.ErrorCat,
     GroupherServer.CMS.Assets.ErrorCat,
-    GroupherServer.CMS.Articles.ErrorCat
+    GroupherServer.CMS.Articles.ErrorCat,
+    GroupherServer.Activity.ErrorCat
   ]
 
   def ranges, do: @ranges

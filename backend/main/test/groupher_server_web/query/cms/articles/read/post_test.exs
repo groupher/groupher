@@ -50,21 +50,21 @@ defmodule GroupherServer.Test.Query.Articles.Post do
     assert is_valid_kv?(results, "title", :string)
   end
 
-  test "anonymous readers receive only the safe Article OperationLog",
+  test "anonymous readers receive only the safe Article ArticleLog",
        ~m(guest_conn community post)a do
     variables = %{
       article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-      filter: %{page: 1, size: 20}
+      filter: %{page: 1}
     }
 
-    result = guest_conn |> gq_query(S.Article.q(:operation_logs), variables)
+    result = guest_conn |> gq_query(S.Article.q(:article_logs), variables)
 
     assert result["totalCount"] >= 1
     created = Enum.find(result["entries"], &(&1["action"] == "created"))
     assert created["id"]
     assert created["subject"]["type"] == "post"
     assert created["subject"]["ref"] == post.article_hash_id
-    assert created["changes"] == %{}
+    assert created["payload"] == %{}
     refute Map.has_key?(created, "metadata")
     refute Map.has_key?(created, "source")
   end

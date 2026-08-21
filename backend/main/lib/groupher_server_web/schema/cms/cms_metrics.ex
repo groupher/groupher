@@ -14,13 +14,13 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   import GroupherServerWeb.Schema.Helper.Fields
   import Helper.Utils, only: [module_to_atom: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
+  alias GroupherServer.CMS.Artiment.Const, as: ArtimentConst
+  alias GroupherServer.CMS.Artiment.Threads
 
-  alias CMS.Artiment.{Enums, Threads}
-
-  require Enums
+  require ArticlesConst
+  require ArtimentConst
   require Threads
-  require CMS.Interactions.Const
 
   @doc """
   only used for reaction result, like: upvote/collect/watch ...
@@ -143,10 +143,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:least_words)
   end
 
-  enum(:article_order_enum, do: enum_values(CMS.Interactions.Const.order_values_ast()))
+  enum(:article_order_enum, do: enum_values(ArticlesConst.order_values_ast()))
 
-  enum(:article_cat_enum, do: enum_values(Enums.cat()))
-  enum(:article_status_enum, do: enum_values(Enums.status()))
+  enum(:article_cat_enum, do: enum_values(ArtimentConst.cat_values_ast()))
+  enum(:article_status_enum, do: enum_values(ArtimentConst.status_values_ast()))
 
   import_types(GroupherServerWeb.Schema.CMS.Dashboard.Metrics)
 
@@ -223,12 +223,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:thread, :thread)
   end
 
-  input_object :audit_log_filter do
-    pagination_args()
-    field(:action, :string)
-    field(:resource_type, :string)
-  end
-
   @desc "article_filter doc"
   input_object :article_filter do
     @desc "limit of records (default 20), if first > 30, only return 30 at most"
@@ -242,6 +236,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     # @desc "Matching a tag"
     # @desc "Added to the menu after this date"
     # field(:added_after, :datetime)
+  end
+
+  input_object :article_log_filter do
+    field(:page, :integer, default_value: 1)
   end
 
   # @desc "article_filter doc"

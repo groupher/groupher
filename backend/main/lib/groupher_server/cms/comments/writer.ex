@@ -16,31 +16,50 @@ defmodule GroupherServer.CMS.Comments.Writer do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.{Activity, CMS, Repo}
 
-  alias CMS.{FrontDesk, Gate}
-  alias CMS.Comments.ErrorCat
-  alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Gate.Decision
+  alias GroupherServer.CMS.Comments.ErrorCat
+  alias GroupherServer.CMS.{FrontDesk, Gate}
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
 
-  alias CMS.Articles.MutationLock
-  alias CMS.Comments.{BodyCodec, Lifecycle, Numbering, Participants, Replies, States}
-  alias CMS.Events
-  alias CMS.Artiment.Enums
-  alias CMS.Model.{Comment, CommentReply, Community, Embeds, PinnedComment, Post}
-  alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Artiment.Const
 
-  alias Helper.{Multi, Later, ORM, T}
+  alias GroupherServer.CMS.Comments.{
+    BodyCodec,
+    Lifecycle,
+    Numbering,
+    Participants,
+    Replies,
+    States
+  }
+
+  alias GroupherServer.CMS.Events
+
+  alias GroupherServer.CMS.Model.{
+    Comment,
+    CommentReply,
+    Community,
+    Embeds,
+    PinnedComment,
+    Post,
+    PostSolution
+  }
+
+  alias GroupherServer.CMS.SearchArtiments.Indexer
+
+  alias Helper.{Later, Multi, ORM, T}
 
   @max_parent_replies_count Comment.max_parent_replies_count()
   @default_emotions Embeds.CommentEmotion.default_persisted_emotions()
   @default_comment_meta Embeds.CommentMeta.default_meta()
   @delete_hint Comment.delete_hint()
 
-  @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat Const.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status Const.status_values() |> Enum.into(%{}, &{&1, &1})
 
   @doc """
   Creates a top-level comment on an article identified by community, thread,
@@ -55,19 +74,18 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   """
   @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
-          T.domain_res(Comment.t())
+          T.domain_res(map())
   def create(%Community{} = community, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
            FrontDesk.article(community, thread, article_id,
              preload: [[author: :user], :community]
-           ),
-         {:ok, comment} <- do_create(thread, article, body, user, info) do
-      {:ok, comment}
+           ) do
+      do_create(thread, article, body, user, info)
     end
   end
 
-  @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(map())
   def create(thread, article, body, %User{} = user) do
     with {:ok, info} <- match(thread) do
       do_create(thread, article, body, user, info)
@@ -83,43 +101,44 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   defp create_unlocked(thread, article, body, %User{} = user, info) do
-    with {:ok, _canonical_article} <- Gate.access_check(user, :create_comment, article) do
-      Multi.new()
-      |> Multi.run(:create_comment, fn _, _ ->
-        insert_comment(body, thread, info.foreign_key, article, user)
-      end)
-      |> Multi.run(:create_lifecycle, fn _, %{create_comment: comment} ->
-        Lifecycle.ensure_created(comment.id)
-      end)
-      |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
-        {:ok, article} = FrontDesk.article_of(comment)
-        ORM.inc(article, :comments_count)
-      end)
-      |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
-        set_question_flag_ifneed(article, comment)
-      end)
-      |> Multi.run(:add_participator, fn _, _ ->
-        Participants.add_to_article(article, user)
-      end)
-      |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
-        case comment.author_id == article.author.user.id do
-          true -> {:ok, :pass}
-          false -> CMS.Articles.update_active_timestamp(thread, article)
-        end
-      end)
-      |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
-        Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
-        Later.run({Events, :emit, [:audition, %{artiment: comment}]})
+    case Gate.access_check(user, :create_comment, article) do
+      {:ok, _canonical_article} ->
+        Multi.new()
+        |> Multi.run(:create_comment, fn _, _ ->
+          insert_comment(body, thread, info.foreign_key, article, user)
+        end)
+        |> Multi.run(:create_lifecycle, fn _, %{create_comment: comment} ->
+          Lifecycle.ensure_created(comment.id)
+        end)
+        |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
+          {:ok, article} = FrontDesk.article_of(comment)
+          ORM.inc(article, :comments_count)
+        end)
+        |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
+          set_question_flag_ifneed(article, comment)
+        end)
+        |> Multi.run(:add_participator, fn _, _ ->
+          Participants.add_to_article(article, user)
+        end)
+        |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
+          case comment.author_id == article.author.user.id do
+            true -> {:ok, :pass}
+            false -> CMS.Articles.update_active_timestamp(thread, article)
+          end
+        end)
+        |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
+          Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
+          Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
+          Later.run({Events, :emit, [:audition, %{artiment: comment}]})
 
-        Later.run(
-          {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
-        )
-      end)
-      |> Repo.transaction()
-      |> result()
-      |> sync_article_metrics(article)
-    else
+          Later.run(
+            {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
+          )
+        end)
+        |> Repo.transaction()
+        |> result()
+        |> sync_article_metrics(article)
+
       {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
         article_comments_locked("this article is forbid comment")
 
@@ -131,7 +150,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(map())
   def reply(comment_id, body, %User{} = user) do
     with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id),
          replying_comment <- Repo.preload(target_comment, reply_to_comment: :author),
@@ -162,54 +181,58 @@ defmodule GroupherServer.CMS.Comments.Writer do
          replying_comment,
          parent_comment
        ) do
-    with {:ok, _canonical_comment} <- Gate.access_check(user, :reply_comment, replying_comment) do
-      Multi.new()
-      |> Multi.run(:create_reply_comment, fn _, _ ->
-        insert_comment(body, thread, info.foreign_key, article, user, replying_comment)
-      end)
-      |> Multi.run(:create_lifecycle, fn _, %{create_reply_comment: comment} ->
-        Lifecycle.ensure_created(comment.id)
-      end)
-      |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        {:ok, article} = FrontDesk.article_of(replied_comment)
-        ORM.inc(article, :comments_count)
-      end)
-      |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
-        CommentReply
-        |> ORM.create(%{comment_id: replied_comment.id, reply_to_comment_id: replying_comment.id})
-      end)
-      |> Multi.run(:add_participator, fn _, _ ->
-        Participants.add_to_article(article, user)
-      end)
-      |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
-        update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
-      end)
-      |> Multi.run(:add_reply_to_comment, fn _, %{create_reply_comment: replied_comment} ->
-        replied_comment
-        |> Repo.preload(:reply_to_comment)
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:reply_to_comment, replying_comment)
-        |> Repo.update()
-      end)
-      |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to_comment: replied_comment} ->
-        add_replies_ifneed(parent_comment, replied_comment)
-      end)
-      |> Multi.run(:inc_replies_count, fn _, %{add_reply_to_comment: replied_comment} ->
-        with {:ok, _parent_comment} <- ORM.inc(parent_comment, :replies_count) do
-          {:ok, replied_comment}
-        end
-      end)
-      |> Multi.run(:after_events, fn _, %{add_reply_to_comment: replied_comment} ->
-        Later.run(
-          {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
-        )
+    case Gate.access_check(user, :reply_comment, replying_comment) do
+      {:ok, _canonical_comment} ->
+        Multi.new()
+        |> Multi.run(:create_reply_comment, fn _, _ ->
+          insert_comment(body, thread, info.foreign_key, article, user, replying_comment)
+        end)
+        |> Multi.run(:create_lifecycle, fn _, %{create_reply_comment: comment} ->
+          Lifecycle.ensure_created(comment.id)
+        end)
+        |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
+          {:ok, article} = FrontDesk.article_of(replied_comment)
+          ORM.inc(article, :comments_count)
+        end)
+        |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
+          CommentReply
+          |> ORM.create(%{
+            comment_id: replied_comment.id,
+            reply_to_comment_id: replying_comment.id
+          })
+        end)
+        |> Multi.run(:add_participator, fn _, _ ->
+          Participants.add_to_article(article, user)
+        end)
+        |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
+          update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
+        end)
+        |> Multi.run(:add_reply_to_comment, fn _, %{create_reply_comment: replied_comment} ->
+          replied_comment
+          |> Repo.preload(:reply_to_comment)
+          |> Ecto.Changeset.change()
+          |> Ecto.Changeset.put_assoc(:reply_to_comment, replying_comment)
+          |> Repo.update()
+        end)
+        |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to_comment: replied_comment} ->
+          add_replies_ifneed(parent_comment, replied_comment)
+        end)
+        |> Multi.run(:inc_replies_count, fn _, %{add_reply_to_comment: replied_comment} ->
+          with {:ok, _parent_comment} <- ORM.inc(parent_comment, :replies_count) do
+            {:ok, replied_comment}
+          end
+        end)
+        |> Multi.run(:after_events, fn _, %{add_reply_to_comment: replied_comment} ->
+          Later.run(
+            {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
+          )
 
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: replied_comment}]})
-      end)
-      |> Repo.transaction()
-      |> result()
-      |> sync_article_metrics(article)
-    else
+          Later.run({Events, :emit, [:sync_mentions, %{artiment: replied_comment}]})
+        end)
+        |> Repo.transaction()
+        |> result()
+        |> sync_article_metrics(article)
+
       {:error, %Decision{} = decision} ->
         {:error, Decision.primary_error(decision)}
 
@@ -325,32 +348,133 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp do_mark_comment_solution(post, %Comment{} = comment, %User{} = user, is_solution) do
     case user.id == post.author.user.id do
       true ->
-        Multi.new()
-        |> Multi.run(:clear_solution_flags, fn _, _ ->
-          batch_update_solution_flag(post, false)
-        end)
-        |> Multi.run(:pin_comment, fn _, _ ->
-          if is_solution do
-            States.pin(comment.id, user)
+        operation_ref = Ecto.UUID.generate()
+        occurred_at = DateTime.utc_now(:second)
+        community = Repo.get!(Community, post.community_id)
+
+        MutationLock.with_article(community, post, fn ->
+          current =
+            PostSolution
+            |> where([solution], solution.post_id == ^post.id)
+            |> lock("FOR UPDATE")
+            |> Repo.one()
+
+          if is_solution and match?(%PostSolution{}, current) and current.comment_id == comment.id do
+            FrontDesk.get(Comment, comment.id)
           else
-            States.undo_pin(comment.id, user)
+            Multi.new()
+            |> Multi.run(:clear_solution_flags, fn _, _ ->
+              batch_update_solution_flag(post, false)
+            end)
+            |> Multi.run(:pin_comment, fn _, _ ->
+              activity_opts = [operation_ref: operation_ref, occurred_at: occurred_at]
+
+              pin_or_unpin_comment(comment.id, user, is_solution, activity_opts)
+            end)
+            |> Multi.run(:mark_solution, fn _, %{pin_comment: updated_comment} ->
+              ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
+            end)
+            |> Multi.run(:write_solution, fn _, _ ->
+              write_solution(current, post, comment, user, is_solution, occurred_at)
+            end)
+            |> Multi.run(:update_post_state, fn _, _ ->
+              update_post_state_for_solution(post, comment, is_solution)
+            end)
+            |> Multi.run(:activity, fn _, _ ->
+              record_solution_activity(
+                current,
+                post,
+                comment,
+                user,
+                is_solution,
+                operation_ref,
+                occurred_at
+              )
+            end)
+            |> Multi.run(:sync_embed_replies, &sync_embed_replies_step/2)
+            |> Repo.transaction()
+            |> result()
           end
         end)
-        |> Multi.run(:mark_solution, fn _, %{pin_comment: updated_comment} ->
-          ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
-        end)
-        |> Multi.run(:update_post_state, fn _, _ ->
-          update_post_state_for_solution(post, comment, is_solution)
-        end)
-        |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: updated_comment} ->
-          FrontDesk.sync_embed_replies(updated_comment)
-        end)
-        |> Repo.transaction()
-        |> result()
 
       false ->
         require_questioner("oops, questioner only")
     end
+  end
+
+  defp pin_or_unpin_comment(comment_id, user, true, activity_opts),
+    do: States.pin(comment_id, user, activity_opts)
+
+  defp pin_or_unpin_comment(comment_id, user, false, activity_opts),
+    do: States.undo_pin(comment_id, user, activity_opts)
+
+  defp sync_embed_replies_step(_, %{mark_solution: updated_comment}),
+    do: FrontDesk.sync_embed_replies(updated_comment)
+
+  defp write_solution(nil, _post, _comment, _user, false, _occurred_at),
+    do: {:ok, :unchanged}
+
+  defp write_solution(%PostSolution{} = current, _post, _comment, _user, false, _occurred_at),
+    do: Repo.delete(current)
+
+  defp write_solution(nil, post, comment, user, true, occurred_at) do
+    %PostSolution{}
+    |> PostSolution.changeset(%{
+      post_id: post.id,
+      comment_id: comment.id,
+      accepted_by_id: user.id,
+      accepted_at: occurred_at
+    })
+    |> Repo.insert()
+  end
+
+  defp write_solution(%PostSolution{} = current, _post, comment, user, true, occurred_at) do
+    current
+    |> PostSolution.changeset(%{
+      comment_id: comment.id,
+      accepted_by_id: user.id,
+      accepted_at: occurred_at
+    })
+    |> Repo.update()
+  end
+
+  defp record_solution_activity(nil, _post, _comment, _user, false, _operation_ref, _at),
+    do: {:ok, :skipped}
+
+  defp record_solution_activity(
+         %PostSolution{comment_id: comment_id},
+         _post,
+         %Comment{id: comment_id},
+         _user,
+         true,
+         _operation_ref,
+         _at
+       ),
+       do: {:ok, :skipped}
+
+  defp record_solution_activity(current, post, comment, user, is_solution, operation_ref, at) do
+    {action, changes} =
+      cond do
+        not is_solution ->
+          {:solution_revoked, %{}}
+
+        is_nil(current) ->
+          {:solution_accepted, %{}}
+
+        true ->
+          previous = Repo.get!(Comment, current.comment_id)
+
+          {:solution_replaced,
+           %{previous_comment_ref: to_string(previous.inner_id || previous.id)}}
+      end
+
+    Activity.log(post, action,
+      actor: user,
+      target: comment,
+      operation_ref: operation_ref,
+      occurred_at: at,
+      payload: changes
+    )
   end
 
   @spec update_user_in_comments_participants(User.t()) :: T.domain_res(term())
@@ -497,8 +621,12 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   defp sync_article_metrics(result, _article), do: result
 
-  defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}
-  defp result({:ok, %{inc_replies_count: result}}), do: {:ok, result}
+  defp result({:ok, %{set_question_flag_ifneed: comment, update_comments_count: article}}),
+    do: {:ok, %{comment: comment, article: article}}
+
+  defp result({:ok, %{inc_replies_count: comment, update_comments_count: article}}),
+    do: {:ok, %{comment: comment, article: article}}
+
   defp result({:ok, %{delete_comment: result}}), do: {:ok, result}
   defp result({:ok, %{mark_solution: result}}), do: {:ok, result}
   defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}

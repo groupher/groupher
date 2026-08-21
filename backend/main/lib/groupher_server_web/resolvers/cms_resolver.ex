@@ -24,15 +24,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, FrontDesk}
+  alias GroupherServer.{Activity, CMS, FrontDesk}
   alias GroupherServer.Analysis.Web, as: AnalysisWeb
 
-  alias Accounts.Model.User
-  alias CMS.Helper.{ArticlePath, EmotionFormatter}
-  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Helper.{ArticlePath, EmotionFormatter}
+  alias GroupherServer.CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
   require CMS.Const
+
+  def article_logs(_root, %{article: article} = args, info) do
+    actor = Map.get(info.context, :cur_user)
+    filter = Map.get(args, :filter, %{})
+    Activity.list_article_logs(article, actor, filter)
+  end
 
   # #######################
   # community ..
@@ -69,9 +75,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       |> Map.put(:after, Map.get(args, :after))
       |> normalize_application_filter()
 
-    with {:ok, page} <- CMS.CommunityApplications.review_queue(filter, reviewer) do
-      {:ok, connection(page.entries, page.has_next_page, &application_cursor/1)}
-    else
+    case CMS.CommunityApplications.review_queue(filter, reviewer) do
+      {:ok, page} -> {:ok, connection(page.entries, page.has_next_page, &application_cursor/1)}
       error -> application_result(error)
     end
   end
@@ -150,9 +155,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.CommunityApplications.application_community(application) |> application_result()
 
   def community_application_events(application, args, _info) do
-    with {:ok, page} <- CMS.CommunityApplications.events(application, args) do
-      {:ok, connection(page.entries, page.has_next_page, &event_cursor/1)}
-    else
+    case CMS.CommunityApplications.events(application, args) do
+      {:ok, page} -> {:ok, connection(page.entries, page.has_next_page, &event_cursor/1)}
       error -> application_result(error)
     end
   end
@@ -645,10 +649,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       }) do
     with {:ok, _canonical} <- CMS.Gate.access_check(user, :request_destroy, community),
          {:ok, _blocker} <-
-           CMS.Communities.request_destroy(community.slug, operation_ref: Ecto.UUID.generate()),
-         {:ok, archived} <-
-           CMS.Communities.fetch(community.slug, :operations, inc_views: false) do
-      {:ok, archived}
+           CMS.Communities.request_destroy(community.slug, operation_ref: Ecto.UUID.generate()) do
+      CMS.Communities.fetch(community.slug, :operations, inc_views: false)
     end
   end
 
@@ -927,10 +929,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          :ok <- verify_trash_scope(item, community, thread) do
       {:ok, item}
     end
-  end
-
-  def cms_audit_logs(_root, %{community: %Community{} = community} = args, _info) do
-    CMS.Audit.list(community, Map.get(args, :filter) || %{})
   end
 
   def analysis_web_summary(_root, %{community: %Community{} = community} = args, _info) do
@@ -1226,9 +1224,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, unsubscribed_community} <- CMS.Communities.unsubscribe(community, cur_user) do
-      {:ok, unsubscribed_community}
-    end
+    CMS.Communities.unsubscribe(community, cur_user)
   end
 
   def paged_community_subscribers(_root, ~m(community filter)a, %{context: %{cur_user: cur_user}}) do
@@ -1309,7 +1305,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def create_comment(_root, %{article: article, article_path: %{thread: thread}, body: body}, %{
         context: %{cur_user: user}
       }) do
-    CMS.Comments.create_comment(thread, article, body, user)
+    CMS.Comments.create_comment_payload(thread, article, body, user)
   end
 
   def update_comment(_root, ~m(body comment)a, %{context: %{cur_user: user}}) do
@@ -1321,7 +1317,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def reply_comment(_root, %{comment: comment, body: body}, %{context: %{cur_user: user}}) do
-    CMS.Comments.reply_comment(comment.id, body, user)
+    CMS.Comments.reply_comment_payload(comment.id, body, user)
   end
 
   def upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do

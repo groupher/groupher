@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Trash do
       |> Repo.all()
 
     Enum.reduce(actions, %{deleted: 0, failed: []}, fn action, result ->
-      case permanently_delete_action(action, nil, source: "scheduler") do
+      case permanently_delete_action(action, :system, source: "scheduler") do
         {:ok, _} ->
           %{result | deleted: result.deleted + 1}
 

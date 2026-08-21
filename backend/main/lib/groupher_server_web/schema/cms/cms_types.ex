@@ -22,14 +22,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias CMS.Marker
-  alias CMS.Dashboard.ThemePreset
-  alias CMS.Model.{Community, CoverBackground}
-  alias Helper.ORM
+  alias GroupherServer.CMS.Dashboard.ThemePreset
+  alias GroupherServer.CMS.Dashboard.ThirdPartyAnalytics
+  alias GroupherServer.CMS.Marker
+  alias GroupherServer.CMS.Model.{Community, CoverBackground}
+  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServerWeb.Schema
+  alias Helper.ORM
 
   import_types(Schema.CMS.Metrics)
 
@@ -343,22 +344,33 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :audit_log do
-    field(:id, non_null(:id), resolve: fn log, _, _ -> {:ok, log.hash_id} end)
-    field(:actor_type, non_null(:string))
-    field(:actor_snapshot, non_null(:json))
-    field(:action, non_null(:string))
-    field(:resource_type, non_null(:string))
-    field(:resource_ref, non_null(:string))
-    field(:resource_snapshot, non_null(:json))
-    field(:operation_ref, :id)
-    field(:source, non_null(:string))
-    field(:metadata, non_null(:json))
+  object :activity_resource_ref do
+    field(:type, non_null(:string), resolve: fn ref, _, _ -> {:ok, to_string(ref.type)} end)
+    field(:ref, non_null(:id))
+    field(:title, :string)
+    field(:inner_id, :id)
+  end
+
+  object :article_log_actor do
+    field(:type, non_null(:string), resolve: fn actor, _, _ -> {:ok, to_string(actor.type)} end)
+    field(:id, :id)
+    field(:login, :string)
+    field(:nickname, :string)
+    field(:avatar, :string)
+  end
+
+  object :article_log do
+    field(:id, non_null(:id))
+    field(:action, non_null(:string), resolve: fn log, _, _ -> {:ok, to_string(log.action)} end)
+    field(:actor, non_null(:article_log_actor))
+    field(:subject, non_null(:activity_resource_ref))
+    field(:target, :activity_resource_ref)
+    field(:payload, non_null(:json))
     field(:occurred_at, non_null(:datetime))
   end
 
-  object :paged_audit_logs do
-    field(:entries, non_null(list_of(non_null(:audit_log))))
+  object :paged_article_logs do
+    field(:entries, non_null(list_of(non_null(:article_log))))
     pagination_fields()
   end
 
@@ -625,6 +637,16 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_from_index, :integer)
     field(:deleted_at, :datetime)
     field(:restored_at, :datetime)
+  end
+
+  object :comment_mutation_article do
+    field(:inner_id, non_null(:integer))
+    field(:comments_count, non_null(:integer))
+  end
+
+  object :comment_mutation_payload do
+    field(:comment, non_null(:comment))
+    field(:article, non_null(:comment_mutation_article))
   end
 
   object :doc_publish_changes_payload do
@@ -1286,10 +1308,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field :enabled_third_party_analytics, list_of(:dsb_third_party_analytics) do
       resolve(fn dashboard, _, _ ->
-        {:ok,
-         GroupherServer.CMS.Dashboard.ThirdPartyAnalytics.enabled_valid_configs(
-           dashboard.third_party_analytics
-         )}
+        {:ok, ThirdPartyAnalytics.enabled_valid_configs(dashboard.third_party_analytics)}
       end)
     end
   end
@@ -1297,20 +1316,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_moderator do
     field(:is_root, :boolean) do
       resolve(fn moderator, _, _ ->
-        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
-          {:ok, moderator_root?(passport, community_slug)}
-        else
-          _ -> {:ok, false}
+        case moderator_passport_context(moderator) do
+          {:ok, {passport, community_slug}} ->
+            {:ok, moderator_root?(passport, community_slug)}
+
+          _ ->
+            {:ok, false}
         end
       end)
     end
 
     field(:passport_item_count, :integer) do
       resolve(fn moderator, _, _ ->
-        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
-          {:ok, moderator_passport_item_count(passport, community_slug)}
-        else
-          _ -> {:ok, fallback_moderator_passport_item_count(moderator)}
+        case moderator_passport_context(moderator) do
+          {:ok, {passport, community_slug}} ->
+            {:ok, moderator_passport_item_count(passport, community_slug)}
+
+          _ ->
+            {:ok, fallback_moderator_passport_item_count(moderator)}
         end
       end)
     end

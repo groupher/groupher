@@ -20,6 +20,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    @desc "Safe product ArticleLog for one readable Article"
+    field :article_logs, non_null(:paged_article_logs) do
+      arg(:article, non_null(:article_path_input))
+      arg(:filter, :article_log_filter)
+
+      middleware(M.FrontDesk, :article)
+      resolve(&R.CMS.article_logs/3)
+    end
+
     @desc "Current user's Apply admission state and blocking application"
     field :community_application_state, non_null(:community_application_state) do
       middleware(M.Authorize, :login)
@@ -81,18 +90,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "article.trash.read")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.trashed_article/3)
-    end
-
-    @desc "Append-only CMS audit log"
-    field :cms_audit_logs, :paged_audit_logs do
-      arg(:community, non_null(:string))
-      arg(:filter, :audit_log_filter)
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "audit.read")
-      middleware(M.FrontDesk, :community)
-      middleware(M.PageSizeProof)
-      resolve(&R.CMS.cms_audit_logs/3)
     end
 
     @desc "Built-in community Web Analysis summary"

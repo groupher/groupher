@@ -15,15 +15,15 @@ defmodule GroupherServer.CMS.Comments.States do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.{Activity, CMS, Repo}
   alias Helper.{Multi, ORM, T}
 
-  alias CMS.FrontDesk
-  alias CMS.Gate
-  alias CMS.Model.{Comment, PinnedComment}
-  alias CMS.Comments.ErrorCat
+  alias GroupherServer.CMS.Comments.ErrorCat
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -43,10 +43,15 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def pin(comment_id, %User{} = user) do
+    pin(comment_id, user, operation_ref: Ecto.UUID.generate())
+  end
+
+  @doc false
+  def pin(comment_id, %User{} = user, opts) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
          {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
          {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-      pin_unlocked(comment, article)
+      pin_unlocked(comment, article, user, opts)
     end
   end
 
@@ -55,9 +60,15 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_pin(comment_id, %User{} = user) do
+    undo_pin(comment_id, user, operation_ref: Ecto.UUID.generate())
+  end
+
+  @doc false
+  def undo_pin(comment_id, %User{} = user, opts) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
+         {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
          {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-      undo_pin_unlocked(comment)
+      undo_pin_unlocked(comment, article, user, opts)
     end
   end
 
@@ -110,7 +121,7 @@ defmodule GroupherServer.CMS.Comments.States do
     |> result()
   end
 
-  defp pin_unlocked(%Comment{} = comment, article) do
+  defp pin_unlocked(%Comment{} = comment, article, user, opts) do
     with {:ok, comment} <- maybe_existing_pinned_comment(comment),
          {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, info} <- match(thread) do
@@ -131,18 +142,24 @@ defmodule GroupherServer.CMS.Comments.States do
 
         PinnedComment |> ORM.create(attrs)
       end)
+      |> Multi.run(:activity, fn _, _ ->
+        record_pin_activity(comment, article, :comment_pinned, user, opts)
+      end)
       |> Repo.transaction()
       |> result()
     end
   end
 
-  defp undo_pin_unlocked(%Comment{} = comment) do
+  defp undo_pin_unlocked(%Comment{} = comment, article, user, opts) do
     Multi.new()
     |> Multi.run(:update_comment_flag, fn _, _ ->
       ORM.update(comment, %{is_pinned: false})
     end)
     |> Multi.run(:remove_pined_comment, fn _, _ ->
       ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
+    end)
+    |> Multi.run(:activity, fn _, _ ->
+      record_pin_activity(comment, article, :comment_unpinned, user, opts)
     end)
     |> Repo.transaction()
     |> result()
@@ -176,6 +193,16 @@ defmodule GroupherServer.CMS.Comments.States do
         {:ok, comment}
     end
   end
+
+  defp record_pin_activity(%Comment{thread: :post} = comment, _article, action, user, opts) do
+    Activity.log(comment, action,
+      actor: user,
+      operation_ref: Keyword.fetch!(opts, :operation_ref),
+      occurred_at: Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
+    )
+  end
+
+  defp record_pin_activity(_comment, _article, _action, _user, _opts), do: {:ok, :skipped}
 
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}

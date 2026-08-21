@@ -3,10 +3,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.PinnedComment
+  alias GroupherServer.Activity.Model.PostLog
+  alias GroupherServer.CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.Model.{PinnedComment, PostSolution}
 
-  @article_cat Constant.CMS.article_cat()
-  @article_status Constant.CMS.article_status()
+  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
+  @article_status GroupherServer.CMS.Artiment.Const.status_map()
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
 
@@ -322,7 +324,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       CMS.Interactions.upvote(comment, author_user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, author_user)
+      {:ok, comment} = InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
     end
 
@@ -334,15 +336,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, author_user} = ORM.find(User, post.author.user.id)
 
       {:ok, comment} = CMS.Interactions.upvote(comment, author_user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, author_user)
+      {:ok, comment} = InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
 
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
       assert comment.meta.is_article_author_upvoted
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
       assert comment.meta.is_article_author_upvoted
     end
 
@@ -352,7 +354,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} = CMS.Interactions.upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
 
       assert comment.viewer_has_upvoted
     end
@@ -364,13 +366,13 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, _} = CMS.Interactions.upvote(comment, user)
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
 
       assert comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
 
       refute comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
@@ -396,7 +398,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, _} = CMS.Interactions.upvote(comment, user2)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, nil)
+      {:ok, comment} = InteractionResponse.one(comment, nil)
       assert comment.upvotes_count == 2
     end
 
@@ -410,7 +412,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert 1 == length(comment.upvotes)
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -419,11 +421,11 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -1034,6 +1036,15 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       assert post.status == @article_status.resolved
       assert post.solution_digest == "comment"
+
+      solution = Repo.get_by!(PostSolution, post_id: post.id)
+      assert solution.comment_id == comment.id
+      assert solution.accepted_by_id == post_author.id
+
+      activity = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :solution_accepted)
+      assert activity.subject_type == "post"
+      assert activity.target_type == "comment"
+      assert activity.target_ref == to_string(comment.inner_id)
     end
 
     test "can not mark a comment as solution when its community is suspended",
@@ -1095,6 +1106,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, post} = ORM.find(Post, post.id)
       assert post.status == @article_status.default
+      refute Repo.get_by(PostSolution, post_id: post.id)
+
+      assert Repo.get_by!(PostLog, action: :solution_revoked).target_ref ==
+               to_string(comment.inner_id)
     end
 
     test "non-post-author can not undo mark a comment as solution", ~m(user community)a do
@@ -1113,7 +1128,8 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       reason |> is_error?({{:cms, :comment}, :require_questioner})
     end
 
-    test "can only mark one best comment as solution", ~m(user community)a do
+    test "accepts, skips duplicate, replaces and revokes one Post solution",
+         ~m(user community)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
@@ -1127,14 +1143,39 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
       {:ok, _} = CMS.Comments.mark_comment_solution(comment1.id, post_author)
+      {:ok, _} = CMS.Comments.mark_comment_solution(comment1.id, post_author)
       {:ok, comment2} = CMS.Comments.mark_comment_solution(comment2.id, post_author)
+      {:ok, _} = CMS.Comments.undo_mark_comment_solution(comment2.id, post_author)
 
       answers =
         from(c in Comment, where: c.post_id == ^post.id and c.is_solution == true)
         |> Repo.all()
 
-      assert answers |> length == 1
-      assert answers |> List.first() |> Map.get(:id) == comment2.id
+      assert answers == []
+
+      refute Repo.get_by(PostSolution, post_id: post.id)
+
+      replacement = Repo.get_by!(PostLog, action: :solution_replaced)
+      assert replacement.payload["previous_comment_ref"] == to_string(comment1.inner_id)
+
+      assert Repo.get_by!(PostLog,
+               action: :comment_pinned,
+               operation_ref: replacement.operation_ref
+             )
+
+      solution_events =
+        PostLog
+        |> where([log], log.post_ref == ^post.article_hash_id)
+        |> where([log], log.action in [:solution_accepted, :solution_replaced, :solution_revoked])
+        |> order_by([log], asc: log.id)
+        |> select([log], {log.action, log.target_ref})
+        |> Repo.all()
+
+      assert solution_events == [
+               {:solution_accepted, to_string(comment1.inner_id)},
+               {:solution_replaced, to_string(comment2.inner_id)},
+               {:solution_revoked, to_string(comment2.inner_id)}
+             ]
     end
 
     test "update a solution should also update post's solution digest", ~m(user community)a do

@@ -16,6 +16,16 @@
 - 纯粹的数据契约引用可以直接使用上游 canonical Config，不为了形式增加无意义的 facade。
 - facade 只能表达本模块的语义边界；例如 Gate 的 `ordinary_article_threads` 可以在 Gate Config 中排除 `:doc`，而不能把这个排除规则塞回 Article Config。
 
+## Const
+
+- `GroupherServer.Const` 只封装项目使用的常量机制，不承载跨 Context 的业务枚举。
+- 封闭业务词汇由实际 owner 的 `Const` 声明；业务实现依赖所属领域的 Const，不能把领域枚举提升到全局 Helper。
+- 同一 Context 下存在明确子领域时，Const 继续遵守子领域所有权；例如 Gate、Communities、Docs、DocTree 分别拥有自己的授权、生命周期、Branch 和 Tree 词汇，不集中堆入 `CMS.Const`。
+- 只有真正被多个子领域共同拥有的词汇才放在 Context 根 Const；创建空模块或纯转发 facade 不能改善边界。
+- 消费方只是读取上游公开数据契约时可以直接引用 owner Const；只有组合出本模块自己的策略、子集或完整协议时，才建立本地 Const facade。
+- Migration 保存创建当时冻结的 DDL 常量，不运行时调用业务 Const；通过测试保证 Ecto Enum、领域校验与数据库 CHECK 没有漂移。
+- 数据库 schema prefix 等纯基础设施常量可以保留在共享 Helper，但其中不得混入审核状态、生命周期状态等业务语义。
+
 ## ErrorCat
 
 - ErrorCat catalog 函数是错误值构造器，返回 `%GroupherServer.ErrorCat.Error{}`；不在 catalog 内部包装 `{:error, ...}`。

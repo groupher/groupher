@@ -70,6 +70,9 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
 
+  "Safe product ArticleLog for one readable Article"
+  articleLogs(article: ArticlePathInput!, filter: ArticleLogFilter): PagedArticleLogs!
+
   "Current user's Apply admission state and blocking application"
   communityApplicationState: CommunityApplicationState!
 
@@ -90,9 +93,6 @@ type RootQueryType {
 
   "One current Article Trash membership"
   trashedArticle(id: ID!, community: String!, thread: Thread!): TrashedArticle
-
-  "Append-only CMS audit log"
-  cmsAuditLogs(community: String!, filter: AuditLogFilter): PagedAuditLogs
 
   "Built-in community Web Analysis summary"
   analysisWebSummary(community: String!, days: Int): AnalysisWebSummary
@@ -697,7 +697,7 @@ type RootMutationType {
   undoLockDocComment(article: ArticlePathInput!): Article
 
   "write a comment"
-  createComment(article: ArticlePathInput!, body: String!): Comment
+  createComment(article: ArticlePathInput!, body: String!): CommentMutationPayload
 
   "update a comment"
   updateComment(comment: CommentPathInput!, body: String!): Comment
@@ -706,7 +706,7 @@ type RootMutationType {
   deleteComment(comment: CommentPathInput!): Comment
 
   "reply to a comment"
-  replyComment(comment: CommentPathInput!, body: String!): Comment
+  replyComment(comment: CommentPathInput!, body: String!): CommentMutationPayload
 
   "upvote to a comment"
   upvoteComment(comment: CommentPathInput!): Comment
@@ -1657,22 +1657,33 @@ type PagedTrashedArticles {
   pageNumber: Int
 }
 
-type AuditLog {
+type ActivityResourceRef {
+  type: String!
+  ref: ID!
+  title: String
+  innerId: ID
+}
+
+type ArticleLogActor {
+  type: String!
+  id: ID
+  login: String
+  nickname: String
+  avatar: String
+}
+
+type ArticleLog {
   id: ID!
-  actorType: String!
-  actorSnapshot: Json!
   action: String!
-  resourceType: String!
-  resourceRef: String!
-  resourceSnapshot: Json!
-  operationRef: ID
-  source: String!
-  metadata: Json!
+  actor: ArticleLogActor!
+  subject: ActivityResourceRef!
+  target: ActivityResourceRef
+  payload: Json!
   occurredAt: DateTime!
 }
 
-type PagedAuditLogs {
-  entries: [AuditLog!]!
+type PagedArticleLogs {
+  entries: [ArticleLog!]!
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1934,6 +1945,16 @@ type DocTreeTrashItem {
   deletedFromIndex: Int
   deletedAt: DateTime
   restoredAt: DateTime
+}
+
+type CommentMutationArticle {
+  innerId: Int!
+  commentsCount: Int!
+}
+
+type CommentMutationPayload {
+  comment: Comment!
+  article: CommentMutationArticle!
 }
 
 type DocPublishChangesPayload {
@@ -3489,11 +3510,8 @@ input TrashFilter {
   thread: Thread
 }
 
-input AuditLogFilter {
+input ArticleLogFilter {
   page: Int
-  size: Int
-  action: String
-  resourceType: String
 }
 
 "posts_filter doc"
@@ -3516,8 +3534,6 @@ input PagedPostsFilter {
   communityTags: [String]
 
   community: String
-
-  author: String
 
   sort: SortEnum
 }
@@ -3550,8 +3566,6 @@ input PagedChangelogsFilter {
 
   community: String
 
-  author: String
-
   sort: SortEnum
 }
 
@@ -3576,8 +3590,6 @@ input PagedDocsFilter {
 
   community: String
 
-  author: String
-
   sort: SortEnum
 }
 
@@ -3592,7 +3604,6 @@ input PagedBlogsFilter {
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
-  author: String
   sort: SortEnum
 }
 
