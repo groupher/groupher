@@ -40,8 +40,5 @@
   "devDependencies": {
     "@types/tar-stream": "^3",
     "cross-env": "^10.1.0"
-  },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   }
 }

@@ -23,8 +23,5 @@
   },
   "dependencies": {
     "@groupher/contracts": "1.0.0"
-  },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.app.json ./global.d.ts"
   }
 }

@@ -2,6 +2,7 @@
   "name": "@groupher/inspire-me",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "generate:data": "node scripts/generate-feedback-data.mjs",
     "dev": "yarn generate:data && vinext dev",
@@ -32,9 +33,5 @@
     "tailwindcss": "4.3.3",
     "vite": "^8.2.0",
     "wrangler": "^4.118.0"
-  },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
-  },
-  "type": "module"
+  }
 }
