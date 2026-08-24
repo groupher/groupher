@@ -42,7 +42,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
         scroll={false}
         className={s.title}
-        data-preview-id={String(article.innerId)}
+        previewId={article.innerId}
       >
         {article.title}
       </Link>

@@ -26,7 +26,7 @@ const PostItem: FC<TProps> = ({ article }) => {
         className={s.digest}
         href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
         scroll={false}
-        data-preview-id={String(article.innerId)}
+        previewId={article.innerId}
       >
         {article.digest}
       </Link>

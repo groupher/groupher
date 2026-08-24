@@ -21,11 +21,12 @@ export type TPlatformSearchValue = string | number | boolean | null | undefined
 
 export type TPlatformSearch = Record<string, TPlatformSearchValue>
 
-export type TRouteTarget = TDsbRouteTarget
+export type TRouteTarget = TDsbRouteTarget | TCommunityRouteTarget
 
 export type TPlatformLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   href?: string
   route?: TRouteTarget
+  previewId?: string | number
   prefetch?: boolean
   replace?: boolean
   scroll?: boolean
@@ -55,6 +56,15 @@ export type TDsbRouteTarget = {
   preserveSearchKeys?: readonly string[]
 }
 
+export type TCommunityRouteTarget = {
+  app: 'community'
+  community: string
+  path: string
+  search?: TPlatformSearch
+  searchSchema?: readonly string[]
+  preserveSearchKeys?: readonly string[]
+}
+
 export type TPlatformNavi = {
   /** Identifies the DSB product adapter; it is not emitted as a URL segment. */
   dsbRootSegment?: TDsbRouteRootSegment
@@ -63,14 +73,14 @@ export type TPlatformNavi = {
     search: string
     searchParams: URLSearchParams
   }
-  to: (target: TDsbRouteTarget, options?: TNaviOptions) => void
+  to: (target: TRouteTarget, options?: TNaviOptions) => void
   push: (href: string, options?: { scroll?: boolean }) => void
   replace: (href: string, options?: { scroll?: boolean }) => void
   back: () => void
   forward: () => void
   refresh: () => void
   prefetch: (href: string) => Promise<void>
-  isActive: (target: TDsbRouteTarget) => boolean
+  isActive: (target: TRouteTarget) => boolean
 }
 
 export type TPlatform = {

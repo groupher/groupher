@@ -15,6 +15,7 @@ export default function TanStackPlatformLink({
   onFocus,
   onMouseEnter,
   prefetch,
+  previewId,
   replace,
   scroll,
   preserveSearch,
@@ -22,13 +23,14 @@ export default function TanStackPlatformLink({
   ...props
 }: TPlatformLinkProps) {
   const { navi } = usePlatform()
-  const finalHref = route
-    ? resolveDsbRoute(route, {
-        rootSegment: 'dash',
-        currentSearch: navi.location.searchParams,
-        preserveSearch,
-      })
-    : href
+  const finalHref =
+    route?.app === 'dsb'
+      ? resolveDsbRoute(route, {
+          rootSegment: 'dash',
+          currentSearch: navi.location.searchParams,
+          preserveSearch,
+        })
+      : href
 
   if (!finalHref) throw new Error('PlatformLink requires either href or route')
 
@@ -54,6 +56,7 @@ export default function TanStackPlatformLink({
     return (
       <a
         {...props}
+        data-preview-id={previewId === undefined ? undefined : String(previewId)}
         href={finalHref}
         target={target}
         onClick={handleClick}
@@ -74,6 +77,7 @@ export default function TanStackPlatformLink({
   return (
     <TanStackLink
       {...props}
+      data-preview-id={previewId === undefined ? undefined : String(previewId)}
       to={finalHref}
       target={target}
       onClick={onClick}
