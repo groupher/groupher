@@ -2,11 +2,11 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   @moduledoc """
   Authoritative accepted-answer relation for one Post.
 
-  Comment flags and Post digest/status are projections maintained by the
-  Comments command; this row is the single current fact used to distinguish
-  accept, replace and revoke transitions.
+  This row is the single current fact used to distinguish accept, replace and
+  revoke transitions. Comment/Post response fields are virtual Reader
+  projections; pin and workflow status remain independent domains.
 
-      Comments command -> PostSolution authority -> Post and Comment projections
+      Comments Command -> PostSolution authority -> batched Reader projections
   """
 
   use Ecto.Schema
@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
+  @type t :: %__MODULE__{}
+
   schema "post_solutions" do
     belongs_to(:post, Post)
     belongs_to(:comment, Comment)
@@ -29,13 +31,26 @@ defmodule GroupherServer.CMS.Model.PostSolution do
     timestamps(type: :utc_datetime)
   end
 
+  @doc """
+  Validates one live solution relation written by the Comments command.
+
+  ## Examples
+
+      PostSolution.changeset(%PostSolution{}, attrs)
+  """
+  @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(solution, attrs) do
     solution
     |> cast(attrs, [:post_id, :comment_id, :accepted_by_id, :accepted_at])
     |> validate_required([:post_id, :comment_id, :accepted_by_id, :accepted_at])
     |> unique_constraint(:post_id)
+    |> unique_constraint(:comment_id)
     |> foreign_key_constraint(:post_id)
     |> foreign_key_constraint(:comment_id)
+    |> foreign_key_constraint(:comment_id,
+      name: :post_solutions_comment_belongs_to_post_fkey,
+      message: "must belong to the selected post"
+    )
     |> foreign_key_constraint(:accepted_by_id)
   end
 end

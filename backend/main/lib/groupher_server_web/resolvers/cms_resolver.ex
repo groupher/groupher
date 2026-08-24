@@ -1348,12 +1348,26 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Interactions.undo_emotion(comment, emotion, user) |> hydrate_interaction(user)
   end
 
-  def mark_comment_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.mark_comment_solution(comment.id, user)
+  @doc """
+  Accepts the resolved Comment as its QA Post's current solution.
+
+  ## Examples
+
+      accept_solution(root, %{comment: comment}, resolution)
+  """
+  def accept_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.accept_solution(comment.id, user)
   end
 
-  def undo_mark_comment_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_mark_comment_solution(comment.id, user)
+  @doc """
+  Revokes the resolved Comment when it is the current solution.
+
+  ## Examples
+
+      revoke_solution(root, %{comment: comment}, resolution)
+  """
+  def revoke_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.revoke_solution(comment.id, user)
   end
 
   def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),

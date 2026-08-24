@@ -1,5 +1,12 @@
 defmodule GroupherServer.CMS.Gate.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Stable domain errors for CMS Gate loading, policy, and callback contracts.
+
+      Gate Load / Policy / with_check
+        -> Gate.ErrorCat constructor
+        -> Decision or normalized Command error
+        -> GraphQL error adapter
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms, :gate}
 
@@ -92,4 +99,6 @@ defmodule GroupherServer.CMS.Gate.ErrorCat do
   error(:throttle_interval, code: 4626)
   error(:throttle_hour, code: 4627)
   error(:throttle_day, code: 4628)
+  error(:unexpected_callback_result, code: 4629)
+  error(:solution_not_supported, code: 4630)
 end

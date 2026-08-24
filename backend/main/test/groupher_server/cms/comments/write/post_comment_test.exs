@@ -3,13 +3,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Activity.Model.PostLog
   alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Model.{PinnedComment, PostSolution}
+  alias GroupherServer.CMS.Model.PinnedComment
 
   @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
-
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
 
   @delete_hint Comment.delete_hint()
@@ -985,7 +982,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
     test "update comment with is_question should batch update exist comments is_for_question field",
          ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
+      post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, comment1} =
@@ -1016,210 +1013,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert not comment1.is_for_question
       assert not comment2.is_for_question
       assert not comment3.is_for_question
-    end
-
-    test "can mark a comment as solution", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
-
-      assert comment.is_solution
-
-      {:ok, post} = ORM.find(Post, post.id)
-
-      assert post.status == @article_status.resolved
-      assert post.solution_digest == "comment"
-
-      solution = Repo.get_by!(PostSolution, post_id: post.id)
-      assert solution.comment_id == comment.id
-      assert solution.accepted_by_id == post_author.id
-
-      activity = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :solution_accepted)
-      assert activity.subject_type == "post"
-      assert activity.target_type == "comment"
-      assert activity.target_ref == to_string(comment.inner_id)
-    end
-
-    test "can not mark a comment as solution when its community is suspended",
-         ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:ok, _blocker} =
-        CMS.Communities.Lifecycle.apply_blocker(
-          community.slug,
-          %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
-          operation_ref: Ecto.UUID.generate()
-        )
-
-      assert {:error, %CMS.Gate.Decision{primary: %{reason: :ancestor_community_not_writable}}} =
-               CMS.Comments.mark_comment_solution(comment.id, post_author)
-
-      {:ok, unchanged_comment} = ORM.find(Comment, comment.id)
-      refute unchanged_comment.is_solution
-    end
-
-    test "non-post-author can not mark a comment as solution", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-      {:ok, random_user} = db_insert(:user)
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:error, reason} = CMS.Comments.mark_comment_solution(comment.id, random_user)
-
-      reason |> is_error?({{:cms, :comment}, :require_questioner})
-    end
-
-    test "can undo mark a comment as solution", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
-      assert comment.is_pinned
-
-      {:ok, comment} = CMS.Comments.undo_mark_comment_solution(comment.id, post_author)
-
-      assert not comment.is_solution
-      assert not comment.is_pinned
-
-      {:ok, post} = ORM.find(Post, post.id)
-      assert post.status == @article_status.default
-      refute Repo.get_by(PostSolution, post_id: post.id)
-
-      assert Repo.get_by!(PostLog, action: :solution_revoked).target_ref ==
-               to_string(comment.inner_id)
-    end
-
-    test "non-post-author can not undo mark a comment as solution", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-      {:ok, random_user} = db_insert(:user)
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:error, reason} = CMS.Comments.undo_mark_comment_solution(comment.id, random_user)
-
-      reason |> is_error?({{:cms, :comment}, :require_questioner})
-    end
-
-    test "accepts, skips duplicate, replaces and revokes one Post solution",
-         ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-
-      {:ok, comment1} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:ok, comment2} =
-        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
-
-      {:ok, _} = CMS.Comments.mark_comment_solution(comment1.id, post_author)
-      {:ok, _} = CMS.Comments.mark_comment_solution(comment1.id, post_author)
-      {:ok, comment2} = CMS.Comments.mark_comment_solution(comment2.id, post_author)
-      {:ok, _} = CMS.Comments.undo_mark_comment_solution(comment2.id, post_author)
-
-      answers =
-        from(c in Comment, where: c.post_id == ^post.id and c.is_solution == true)
-        |> Repo.all()
-
-      assert answers == []
-
-      refute Repo.get_by(PostSolution, post_id: post.id)
-
-      replacement = Repo.get_by!(PostLog, action: :solution_replaced)
-      assert replacement.payload["previous_comment_ref"] == to_string(comment1.inner_id)
-
-      assert Repo.get_by!(PostLog,
-               action: :comment_pinned,
-               operation_ref: replacement.operation_ref
-             )
-
-      solution_events =
-        PostLog
-        |> where([log], log.post_ref == ^post.article_hash_id)
-        |> where([log], log.action in [:solution_accepted, :solution_replaced, :solution_revoked])
-        |> order_by([log], asc: log.id)
-        |> select([log], {log.action, log.target_ref})
-        |> Repo.all()
-
-      assert solution_events == [
-               {:solution_accepted, to_string(comment1.inner_id)},
-               {:solution_replaced, to_string(comment2.inner_id)},
-               {:solution_revoked, to_string(comment2.inner_id)}
-             ]
-    end
-
-    test "update a solution should also update post's solution digest", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      post_author = post.author.user
-
-      {:ok, comment} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          post.inner_id,
-          mock_comment("solution"),
-          post_author
-        )
-
-      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
-
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      assert post.solution_digest == "solution"
-
-      {:ok, _} = CMS.Comments.update_comment(comment, mock_comment("new solution"), post_author)
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
-      assert post.solution_digest == "new solution"
-    end
-  end
-
-  describe "[update user info in comments_participants]" do
-    test "basic find", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-
-      {:ok, _} =
-        CMS.Comments.create_comment(
-          community,
-          :post,
-          post.inner_id,
-          mock_comment("solution"),
-          user
-        )
-
-      CMS.Comments.update_user_in_comments_participants(user)
     end
   end
 end

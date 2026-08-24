@@ -524,7 +524,6 @@ details 只用于附加上下文，不参与 definition 的身份比较。是否
 |    4506 | :invalid_domain_tag              | {:cms, :community}                  | :invalid_domain_tag              |                                    5506 | reassigned |
 |    4507 | :undo_sink_old_article           | {:cms, :article}                    | :undo_sink_old_article           |                                    6003 | reassigned |
 |    4508 | :article_comments_locked         | {:cms, :gate}                       | :article_comments_locked         |                                    4615 | merged     |
-|    4509 | :require_questioner              | {:cms, :comment}                    | :require_questioner              |                                    4409 | reassigned |
 |    4511 | :archived                        | {:cms, :article} / {:cms, :comment} | :archived                        |                             6004 / 4411 | split      |
 |    4513 | :invalid_blog_title              | {:cms, :article}                    | :invalid_blog_title              |                                    6005 | reassigned |
 |    4514 | :already_upvoted                 | {:cms, :article}                    | :already_upvoted                 |                                    6006 | reassigned |

@@ -78,16 +78,16 @@ type Documents = {
   '\n  fragment CommentAuthorFields on User {\n    login\n    nickname\n    avatar\n    bio\n    shortbio\n  }\n': typeof types.CommentAuthorFieldsFragmentDoc
   '\n  fragment CommentEmotionFields on EmotionStat {\n    type\n    count\n    viewerHasReacted\n    latestUsers {\n      login\n      nickname\n      avatar\n    }\n  }\n': typeof types.CommentEmotionFieldsFragmentDoc
   '\n  fragment CommentMetaFields on CommentMeta {\n    isLegal\n    illegalReason\n    illegalWords\n    isArticleAuthorUpvoted\n    isReplyToOthers\n  }\n': typeof types.CommentMetaFieldsFragmentDoc
-  '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n': typeof types.CommentFieldsFragmentDoc
-  '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n': typeof types.CommentReplyFieldsFragmentDoc
+  '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n': typeof types.CommentFieldsFragmentDoc
+  '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n': typeof types.CommentReplyFieldsFragmentDoc
   '\n  fragment CommentPageFields on PagedComments {\n    totalPages\n    totalCount\n    pageSize\n    pageNumber\n  }\n': typeof types.CommentPageFieldsFragmentDoc
   '\n  query PagedComments($article: ArticlePathInput!, $mode: CommentsMode, $filter: CommentsFilter!) {\n    pagedComments(article: $article, mode: $mode, filter: $filter) {\n      entries {\n        ...CommentFields\n        replyToComment {\n          ...CommentFields\n        }\n        replies {\n          ...CommentReplyFields\n        }\n      }\n      ...CommentPageFields\n    }\n  }\n': typeof types.PagedCommentsDocument
   '\n  query PagedCommentReplies($comment: CommentPathInput!, $filter: CommentsFilter!) {\n    pagedCommentReplies(comment: $comment, filter: $filter) {\n      entries {\n        ...CommentReplyFields\n      }\n      totalPages\n      totalCount\n      pageSize\n      pageNumber\n    }\n  }\n': typeof types.PagedCommentRepliesDocument
-  '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n': typeof types.CreateCommentDocument
+  '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      comment {\n        ...CommentFields\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n': typeof types.CreateCommentDocument
   '\n  mutation UpdateComment($comment: CommentPathInput!, $body: String!) {\n    updateComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n      replyToComment {\n        innerId\n      }\n    }\n  }\n': typeof types.UpdateCommentDocument
   '\n  query CommentsState($article: ArticlePathInput!, $freshkey: String) {\n    commentsState(article: $article, freshkey: $freshkey) {\n      totalCount\n      isViewerJoined\n      participantsCount\n      participants {\n        login\n        nickname\n        avatar\n      }\n    }\n  }\n': typeof types.CommentsStateDocument
   '\n  query OneComment($comment: CommentPathInput!) {\n    oneComment(comment: $comment) {\n      innerId\n      body\n    }\n  }\n': typeof types.OneCommentDocument
-  '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n': typeof types.ReplyCommentDocument
+  '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      comment {\n        ...CommentFields\n        replyToComment {\n          ...CommentFields\n        }\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n': typeof types.ReplyCommentDocument
   '\n  mutation DeleteComment($comment: CommentPathInput!) {\n    deleteComment(comment: $comment) {\n      innerId\n    }\n  }\n': typeof types.DeleteCommentDocument
   '\n  mutation UpvoteComment($comment: CommentPathInput!) {\n    upvoteComment(comment: $comment) {\n      innerId\n      meta {\n        isArticleAuthorUpvoted\n      }\n      upvotesCount\n      viewerHasUpvoted\n      replyToComment {\n        innerId\n      }\n    }\n  }\n': typeof types.UpvoteCommentDocument
   '\n  mutation UndoUpvoteComment($comment: CommentPathInput!) {\n    undoUpvoteComment(comment: $comment) {\n      innerId\n      meta {\n        isArticleAuthorUpvoted\n      }\n      upvotesCount\n      viewerHasUpvoted\n      replyToComment {\n        innerId\n      }\n    }\n  }\n': typeof types.UndoUpvoteCommentDocument
@@ -330,9 +330,9 @@ const documents: Documents = {
     types.CommentEmotionFieldsFragmentDoc,
   '\n  fragment CommentMetaFields on CommentMeta {\n    isLegal\n    illegalReason\n    illegalWords\n    isArticleAuthorUpvoted\n    isReplyToOthers\n  }\n':
     types.CommentMetaFieldsFragmentDoc,
-  '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n':
+  '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n':
     types.CommentFieldsFragmentDoc,
-  '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n':
+  '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n':
     types.CommentReplyFieldsFragmentDoc,
   '\n  fragment CommentPageFields on PagedComments {\n    totalPages\n    totalCount\n    pageSize\n    pageNumber\n  }\n':
     types.CommentPageFieldsFragmentDoc,
@@ -340,7 +340,7 @@ const documents: Documents = {
     types.PagedCommentsDocument,
   '\n  query PagedCommentReplies($comment: CommentPathInput!, $filter: CommentsFilter!) {\n    pagedCommentReplies(comment: $comment, filter: $filter) {\n      entries {\n        ...CommentReplyFields\n      }\n      totalPages\n      totalCount\n      pageSize\n      pageNumber\n    }\n  }\n':
     types.PagedCommentRepliesDocument,
-  '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n':
+  '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      comment {\n        ...CommentFields\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n':
     types.CreateCommentDocument,
   '\n  mutation UpdateComment($comment: CommentPathInput!, $body: String!) {\n    updateComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n      replyToComment {\n        innerId\n      }\n    }\n  }\n':
     types.UpdateCommentDocument,
@@ -348,7 +348,7 @@ const documents: Documents = {
     types.CommentsStateDocument,
   '\n  query OneComment($comment: CommentPathInput!) {\n    oneComment(comment: $comment) {\n      innerId\n      body\n    }\n  }\n':
     types.OneCommentDocument,
-  '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n':
+  '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      comment {\n        ...CommentFields\n        replyToComment {\n          ...CommentFields\n        }\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n':
     types.ReplyCommentDocument,
   '\n  mutation DeleteComment($comment: CommentPathInput!) {\n    deleteComment(comment: $comment) {\n      innerId\n    }\n  }\n':
     types.DeleteCommentDocument,
@@ -976,14 +976,14 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n',
-): (typeof documents)['\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n']
+  source: '\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n',
+): (typeof documents)['\n  fragment CommentFields on Comment {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n',
-): (typeof documents)['\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n']
+  source: '\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n',
+): (typeof documents)['\n  fragment CommentReplyFields on CommentReply {\n    innerId\n    bodyHtml\n    author {\n      ...CommentAuthorFields\n    }\n    meta {\n      ...CommentMetaFields\n    }\n    emotions {\n      ...CommentEmotionFields\n    }\n    isPinned\n    isSolution\n    floor\n    upvotesCount\n    isArticleAuthor\n    viewerHasUpvoted\n    viewerHasReported\n    repliesCount\n    insertedAt\n    updatedAt\n    replyToComment {\n      ...CommentFields\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1006,8 +1006,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n',
-): (typeof documents)['\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n']
+  source: '\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      comment {\n        ...CommentFields\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation CreateComment($article: ArticlePathInput!, $body: String!) {\n    createComment(article: $article, body: $body) {\n      comment {\n        ...CommentFields\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1030,8 +1030,8 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
-  source: '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n',
-): (typeof documents)['\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      innerId\n      bodyHtml\n    }\n  }\n']
+  source: '\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      comment {\n        ...CommentFields\n        replyToComment {\n          ...CommentFields\n        }\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n',
+): (typeof documents)['\n  mutation ReplyComment($comment: CommentPathInput!, $body: String!) {\n    replyComment(comment: $comment, body: $body) {\n      comment {\n        ...CommentFields\n        replyToComment {\n          ...CommentFields\n        }\n      }\n      article {\n        innerId\n        commentsCount\n      }\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

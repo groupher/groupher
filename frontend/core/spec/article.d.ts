@@ -86,6 +86,9 @@ type TBaseArticle = {
 
 export type TPost = TBaseArticle & {
   digest?: string
+  isSolved?: boolean
+  solutionCommentId?: TID
+  solutionDigest?: string
 }
 
 export type TChangelog = TBaseArticle & {
@@ -137,6 +140,7 @@ export type TComment = {
   innerId: string
   thread?: TThread
   isPinned?: boolean
+  isSolution?: boolean
   floor?: number
   bodyHtml?: string
   insertedAt?: string

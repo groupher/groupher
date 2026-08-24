@@ -1,5 +1,12 @@
 defmodule GroupherServer.CMS.Comments.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Stable domain errors returned by Comments commands and readers.
+
+      Comments Command / Reader
+        -> Comments.ErrorCat constructor
+        -> declared namespace + code + safe details
+        -> GraphQL error adapter
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms, :comment}
 
@@ -11,10 +18,10 @@ defmodule GroupherServer.CMS.Comments.ErrorCat do
   error(:delete_fails, code: 4406)
   error(:invalid_body, code: 4407)
   error(:lifecycle_not_found, code: 4408)
-  error(:require_questioner, code: 4409)
   error(:archived, code: 4411)
   error(:not_exist, code: 4412)
   error(:lifecycle_state_conflict, code: 4413)
-  error(:comment_archive_retired, code: 4414)
+  error(:required_job_enqueue_failed, code: 4414)
   error(:already_pinned, code: 4415)
+  error(:solution_target_mismatch, code: 4416)
 end

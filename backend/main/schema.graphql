@@ -726,11 +726,11 @@ type RootMutationType {
   "undo emotion to a comment"
   undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!): Comment
 
-  "mark a comment as question post's best solution"
-  markCommentSolution(comment: CommentPathInput!): Comment
+  "accept a comment as a QA post's current solution"
+  acceptSolution(comment: CommentPathInput!): Comment
 
-  "mark a comment as question post's best solution"
-  undoMarkCommentSolution(comment: CommentPathInput!): Comment
+  "revoke a comment when it is a QA post's current solution"
+  revokeSolution(comment: CommentPathInput!): Comment
 
   "pin a comment"
   pinComment(comment: CommentPathInput!): Comment
@@ -2339,6 +2339,9 @@ type Post implements Article {
   commentsCount: Int
   cat: ArticleCatEnum
   status: ArticleStatusEnum
+  isSolved: Boolean!
+  solutionCommentId: ID
+  solutionDigest: String
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2958,6 +2961,7 @@ type CommentReply {
   lifecycle: CommentLifecycle
   insertedAt: DateTime
   updatedAt: DateTime
+  isSolution: Boolean
 }
 
 type Comment {

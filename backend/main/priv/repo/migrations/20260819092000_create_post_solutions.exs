@@ -14,7 +14,22 @@ defmodule GroupherServer.Repo.Migrations.CreatePostSolutions do
       timestamps()
     end
 
+    create(unique_index(:comments, [:id, :post_id], prefix: "cms"))
     create(unique_index(:post_solutions, [:post_id], prefix: "cms"))
-    create(index(:post_solutions, [:comment_id], prefix: "cms"))
+    create(unique_index(:post_solutions, [:comment_id], prefix: "cms"))
+
+    execute(
+      """
+      ALTER TABLE cms.post_solutions
+      ADD CONSTRAINT post_solutions_comment_belongs_to_post_fkey
+      FOREIGN KEY (comment_id, post_id)
+      REFERENCES cms.comments (id, post_id)
+      ON DELETE CASCADE
+      """,
+      """
+      ALTER TABLE cms.post_solutions
+      DROP CONSTRAINT IF EXISTS post_solutions_comment_belongs_to_post_fkey
+      """
+    )
   end
 end

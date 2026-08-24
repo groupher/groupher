@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.Post do
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
 
   @optional_fields ~w(
-    copy_right solution_digest updated_at inserted_at active_at
+    copy_right updated_at inserted_at active_at
     cat status inner_id
   )a ++ @article_cast_fields
 
@@ -50,7 +50,9 @@ defmodule GroupherServer.CMS.Model.Post do
     field(:cat, Ecto.Enum, values: Enums.cat_values())
     field(:status, Ecto.Enum, values: Enums.status_values())
 
-    field(:solution_digest, :string)
+    field(:is_solved, :boolean, virtual: true, default: false)
+    field(:solution_comment_id, :id, virtual: true)
+    field(:solution_digest, :string, virtual: true)
 
     article_tags_field(:post)
     article_communities_field(:post)
@@ -60,7 +62,7 @@ defmodule GroupherServer.CMS.Model.Post do
   @doc "Returns the Post fields copied by Draft and Publish."
   @spec version_fields() :: [atom()]
   def version_fields do
-    ~w(title digest link_addr copy_right cat status solution_digest cover_url cover_url_dark)a
+    ~w(title digest link_addr copy_right cat status cover_url cover_url_dark)a
   end
 
   @doc "Builds a Post changeset for creation."

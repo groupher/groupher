@@ -40,6 +40,15 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   end
 
   @spec ensure_created(integer()) :: {:ok, CommentLifecycle.t()} | {:error, term()}
+  @doc """
+  Creates the initial visible Lifecycle row for a newly inserted Comment.
+
+  This primitive is called inside the owning Comment command transaction.
+
+  ## Examples
+
+      Comments.Lifecycle.ensure_created(comment.id)
+  """
   def ensure_created(comment_id) when is_integer(comment_id) do
     %CommentLifecycle{}
     |> CommentLifecycle.changeset(%{
@@ -54,6 +63,19 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
   @spec transition(integer(), CommentLifecycle.state()) ::
           {:ok, CommentLifecycle.t()}
           | {:error, GroupherServer.ErrorCat.Error.t() | Ecto.Changeset.t()}
+  @doc """
+  Locks and transitions an existing Comment Lifecycle row. When passed an
+  already locked `CommentLifecycle` struct, it performs only the transition.
+
+  This is a command-internal primitive, not a standalone delete or destroy
+  business operation. Callers that change Comment visibility must reconcile
+  parent aggregate relations before invoking it.
+
+  ## Examples
+
+      Comments.Lifecycle.transition(comment.id, :deleted)
+      Comments.Lifecycle.transition(locked_lifecycle, :deleted)
+  """
   def transition(comment_id, state) when is_integer(comment_id) and state in @states do
     lifecycle =
       CommentLifecycle
@@ -70,7 +92,6 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
     end
   end
 
-  @doc "Transitions a Comment Lifecycle row already locked by its command loader."
   @spec transition(CommentLifecycle.t(), CommentLifecycle.state()) ::
           {:ok, CommentLifecycle.t()} | {:error, Ecto.Changeset.t() | :lifecycle_state_conflict}
   def transition(%CommentLifecycle{} = lifecycle, state) when state in @states do

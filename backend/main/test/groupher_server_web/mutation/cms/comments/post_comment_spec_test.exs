@@ -6,6 +6,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
   setup do
     {community, post, _, user} = mock_article(:post)
 
+    {:ok, post} =
+      CMS.Articles.set_cat(post, GroupherServer.CMS.Artiment.Const.cat_map().qa)
+
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
     owner_conn = simu_conn(:user, user)
@@ -14,8 +17,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
   end
 
   describe "[post only: article comment solution]" do
-    @query S.Comment.m(:mark_comment_solution)
-    test "questioner can mark a post comment as solution", ~m(community post)a do
+    @query S.Comment.m(:accept_solution)
+    test "questioner can accept a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
 
@@ -32,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       assert result["isSolution"]
     end
 
-    test "other user can not mark a post comment as solution",
+    test "other user can not accept a post comment as solution",
          ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -46,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Comments.ErrorCat.require_questioner())
+               ErrorCat.code(GroupherServer.CMS.Gate.ErrorCat.permission_denied())
              )
 
       assert guest_conn
@@ -57,15 +60,15 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
              )
     end
 
-    @query S.Comment.m(:undo_mark_comment_solution)
-    test "questioner can undo mark a post comment as solution", ~m(community post)a do
+    @query S.Comment.m(:revoke_solution)
+    test "questioner can revoke a post comment solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      {:ok, comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
+      {:ok, comment} = CMS.Comments.accept_solution(comment.id, post_author)
 
       questioner_conn = simu_conn(:user, post_author)
 
@@ -76,7 +79,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       assert not result["isSolution"]
     end
 
-    test "other user can not undo mark a post comment as solution",
+    test "other user can not revoke a post comment solution",
          ~m(guest_conn user_conn community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -90,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Comments.ErrorCat.require_questioner())
+               ErrorCat.code(GroupherServer.CMS.Gate.ErrorCat.permission_denied())
              )
 
       assert guest_conn

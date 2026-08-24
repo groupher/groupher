@@ -39,11 +39,6 @@ defmodule Helper.Scheduler do
     |> done
   end
 
-  @doc "Archives comments that meet the CMS retention policy."
-  def archive_comments do
-    CMS.Comments.archive_comments()
-  end
-
   @doc "Permanently deletes Trash actions whose retention window has elapsed."
   def purge_expired_trash do
     CMS.Trash.purge_due()

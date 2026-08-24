@@ -99,7 +99,6 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       }
 
       _results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
-
     end
 
     test "guest user can get comment participants after comment created",
@@ -357,7 +356,12 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
     test "if solution in pinned comments, solution should always on top",
          ~m(guest_conn community user)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, is_question: true})
+      post_attrs =
+        mock_attrs(:post, %{
+          community_id: community.id,
+          cat: GroupherServer.CMS.Artiment.Const.cat_map().qa
+        })
+
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       total_count = 20
@@ -389,7 +393,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
           post_author
         )
 
-      {:ok, solution_comment} = CMS.Comments.mark_comment_solution(comment.id, post_author)
+      {:ok, solution_comment} = CMS.Comments.accept_solution(comment.id, post_author)
 
       Process.sleep(1000)
 

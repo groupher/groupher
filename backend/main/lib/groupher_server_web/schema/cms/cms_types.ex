@@ -1024,6 +1024,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:cat, :article_cat_enum)
     field(:status, :article_status_enum)
+    field(:is_solved, non_null(:boolean))
+    field(:solution_comment_id, :id)
+    field(:solution_digest, :string)
 
     timestamp_fields(:article)
   end
@@ -1473,6 +1476,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :comment_reply do
     comment_general_fields()
+    field(:is_solution, :boolean)
   end
 
   object :comment do
