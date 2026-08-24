@@ -136,13 +136,13 @@ type TCommentScope = {
 
 不再只依赖 operation name 正则和 `variables.article`。应将 mutation 分成几类：
 
-| mutation 形态 | 变量来源 | 应失效的公开缓存 |
-| --- | --- | --- |
-| 文章路径 mutation | `variables.article` | 文章详情、对应文章列表、必要时评论 |
-| 评论路径 mutation | `variables.comment.article` | 文章详情、文章列表、评论 |
-| 恢复文章 mutation | `community + id` | 对应 thread 的文章详情和列表 |
-| 文档发布 mutation | `community + input` | DOC 列表、文档树；有明确 doc id 时再补详情 |
-| DocTree mutation | `community` 及 node/change 参数 | 文档树；按可确定的 doc id 补文档详情 |
+| mutation 形态     | 变量来源                        | 应失效的公开缓存                           |
+| ----------------- | ------------------------------- | ------------------------------------------ |
+| 文章路径 mutation | `variables.article`             | 文章详情、对应文章列表、必要时评论         |
+| 评论路径 mutation | `variables.comment.article`     | 文章详情、文章列表、评论                   |
+| 恢复文章 mutation | `community + id`                | 对应 thread 的文章详情和列表               |
+| 文档发布 mutation | `community + input`             | DOC 列表、文档树；有明确 doc id 时再补详情 |
+| DocTree mutation  | `community` 及 node/change 参数 | 文档树；按可确定的 doc id 补文档详情       |
 
 未知 mutation 必须保持安全默认值：不猜测资源、不生成跨 community 的 tag。
 
