@@ -96,16 +96,16 @@ article/comment 在 blocking 模式下遇到不存在或不可用的记录时，
 
 ## API
 
-| API | 用途 |
-| --- | --- |
-| `users/2` | 刷新一组轻量 user snapshot |
-| `users_in/3` | 批量刷新多个 item 的指定 user snapshot 路径 |
-| `articles/3` | 按 thread 刷新一组 article snapshot |
-| `articles_in/4` | 按 thread 批量刷新多个 item 的指定 article 路径 |
-| `comments/3` | 按 thread 刷新一组 comment snapshot |
-| `comments_in/4` | 按 thread 批量刷新多个 item 的指定 comment 路径 |
-| `refresh_async/3` | 由事件或 read miss 发起 best-effort 批量刷新 |
-| `perform_refresh/3` | Oban worker 使用的同步执行入口 |
+| API                 | 用途                                            |
+| ------------------- | ----------------------------------------------- |
+| `users/2`           | 刷新一组轻量 user snapshot                      |
+| `users_in/3`        | 批量刷新多个 item 的指定 user snapshot 路径     |
+| `articles/3`        | 按 thread 刷新一组 article snapshot             |
+| `articles_in/4`     | 按 thread 批量刷新多个 item 的指定 article 路径 |
+| `comments/3`        | 按 thread 刷新一组 comment snapshot             |
+| `comments_in/4`     | 按 thread 批量刷新多个 item 的指定 comment 路径 |
+| `refresh_async/3`   | 由事件或 read miss 发起 best-effort 批量刷新    |
+| `perform_refresh/3` | Oban worker 使用的同步执行入口                  |
 
 `*_in` 的字段既可写成顶层 atom，也可写成嵌套 path：
 
@@ -163,11 +163,11 @@ key 因调用点不同而呈现难以推断的过期行为。
 
 当前几类数据的差异如下：
 
-| 场景 | 完整参与关系 | 最近用户展示缓存 | Snapshot 接入 |
-| --- | --- | --- | --- |
-| article upvote/collect | `*_user_ids` | `latest_*_users` | 已接入文章列表 |
-| comment upvote/report | `*_user_ids` | 当前没有对应通用 latest users | 未接入 |
-| article/comment emotion | 独立 fact row，同时 embed 中还保存完整 `*_user_logins` | `latest_<emotion>_users` | 未接入 |
+| 场景                    | 完整参与关系                                           | 最近用户展示缓存              | Snapshot 接入  |
+| ----------------------- | ------------------------------------------------------ | ----------------------------- | -------------- |
+| article upvote/collect  | `*_user_ids`                                           | `latest_*_users`              | 已接入文章列表 |
+| comment upvote/report   | `*_user_ids`                                           | 当前没有对应通用 latest users | 未接入         |
+| article/comment emotion | 独立 fact row，同时 embed 中还保存完整 `*_user_logins` | `latest_<emotion>_users`      | 未接入         |
 
 对 emotion 而言，改进方向不是简单把不断增长的 `*_user_logins` 换成同样不断增长的
 `*_user_ids`。更清晰的边界是：

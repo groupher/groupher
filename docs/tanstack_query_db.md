@@ -97,15 +97,15 @@ hydration、logout、账号切换和 cache eviction 生命周期，并违反当�
 
 能力判断：
 
-| 需求 | Query-only 中间方案 | 与 TanStack DB 的实际差距 |
-| --- | --- | --- |
-| 同一实体跨已加载 shape 更新 | typed shape adapters + `setQueriesData` | 依赖约束和测试，不是结构性 normalized collection |
-| article/comment + viewer 派生视图 | 纯 selector/useMemo | 当前产品范围内足够，没有增量 live-query engine |
-| optimistic rollback | cancel + snapshot + patch + restore | 需要手工列出事务涉及的 Query cache |
-| 每实体 pending | 统一 `mutationKey` 后使用 `useMutationState` | mutation 入口必须先统一 |
-| 临时 comment/reply | pending ID + replace/remove | temp-to-server reconcile 仍是业务规则 |
-| 快速 toggle 意图合并 | 每实体 queue 保存最后期望状态 | DB transaction 也不会自动理解 Groupher toggle 意图 |
-| 服务端分页/排序/筛选 | patch 可确定字段后 invalidate/refetch | 不提供谓词下推和增量查询，但当前 20/30 条分页不需要 |
+| 需求                              | Query-only 中间方案                          | 与 TanStack DB 的实际差距                           |
+| --------------------------------- | -------------------------------------------- | --------------------------------------------------- |
+| 同一实体跨已加载 shape 更新       | typed shape adapters + `setQueriesData`      | 依赖约束和测试，不是结构性 normalized collection    |
+| article/comment + viewer 派生视图 | 纯 selector/useMemo                          | 当前产品范围内足够，没有增量 live-query engine      |
+| optimistic rollback               | cancel + snapshot + patch + restore          | 需要手工列出事务涉及的 Query cache                  |
+| 每实体 pending                    | 统一 `mutationKey` 后使用 `useMutationState` | mutation 入口必须先统一                             |
+| 临时 comment/reply                | pending ID + replace/remove                  | temp-to-server reconcile 仍是业务规则               |
+| 快速 toggle 意图合并              | 每实体 queue 保存最后期望状态                | DB transaction 也不会自动理解 Groupher toggle 意图  |
+| 服务端分页/排序/筛选              | patch 可确定字段后 invalidate/refetch        | 不提供谓词下推和增量查询，但当前 20/30 条分页不需要 |
 
 结论是：该三步可以在不增加运行时依赖、不新建账号/hydration/logout 生命周期的前提下，达到
 当前产品所需的 Query Collection 子集效果；不能宣称与 TanStack DB 整体能力等价。实现规模

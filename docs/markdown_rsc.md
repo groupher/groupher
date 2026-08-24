@@ -68,9 +68,7 @@ const getContent = createServerFn()
     const tag = await readPublicTag(data.tagId)
 
     return {
-      Content: await renderServerComponent(
-        <Markdown>{tag.content}</Markdown>,
-      ),
+      Content: await renderServerComponent(<Markdown>{tag.content}</Markdown>),
     }
   })
 
