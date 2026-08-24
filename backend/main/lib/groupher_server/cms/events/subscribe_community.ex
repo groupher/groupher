@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   alias GroupherServer.CMS
 
-  alias CMS.Communities
-  alias CMS.Events.Event
-  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
 
   @behaviour CMS.Events.Handler
 
@@ -74,6 +75,6 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   @spec comment_parent_article(module(), integer() | String.t()) ::
           {:ok, struct()} | {:error, map()}
   defp comment_parent_article(article, id) do
-    GroupherServer.CMS.FrontDesk.get(article, id, preload: [[author: :user], :community])
+    FrontDesk.get(article, id, preload: [[author: :user], :community])
   end
 end

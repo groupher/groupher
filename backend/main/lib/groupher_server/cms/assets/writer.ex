@@ -15,11 +15,18 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias GroupherServer.CMS.Assets.ErrorCat, as: AssetErrorCat
+  alias GroupherServer.CMS.FrontDesk
+
+  alias GroupherServer.CMS.Model.{
+    ArticleDocument,
+    ArticleDocumentAssetRef,
+    Community,
+    CommunityAsset
+  }
+
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Assets.ErrorCat, as: AssetErrorCat
-  alias CMS.FrontDesk
-  alias CMS.Model.{ArticleDocument, ArticleDocumentAssetRef, Community, CommunityAsset}
+  alias GroupherServer.{ErrorCat, Repo}
   alias Helper.{ORM, T}
 
   @body_usages ~w(inline attachment embed)a
@@ -159,33 +166,11 @@ defmodule GroupherServer.CMS.Assets.Writer do
           |> where([ref], ref.article_document_id == ^source_document.id)
           |> Repo.all()
 
-        Enum.reduce_while(source_refs, {:ok, []}, fn source_ref, {:ok, copied} ->
-          attrs =
-            source_ref
-            |> Map.from_struct()
-            |> Map.take([
-              :asset_id,
-              :usage,
-              :block_id,
-              :block_type,
-              :position,
-              :title,
-              :alt,
-              :source,
-              :meta
-            ])
-            |> Map.merge(%{
-              community_id: target.community_id,
-              article_document_id: target_document.id,
-              article_id: target.id,
-              thread: target_thread
-            })
-
-          case ORM.create(ArticleDocumentAssetRef, attrs) do
-            {:ok, ref} -> {:cont, {:ok, [ref | copied]}}
-            {:error, reason} -> {:halt, {:error, reason}}
-          end
-        end)
+        Enum.reduce_while(
+          source_refs,
+          {:ok, []},
+          &copy_article_ref(&1, &2, target, target_document, target_thread)
+        )
         |> case do
           {:ok, copied} -> Enum.reverse(copied)
           {:error, reason} -> Repo.rollback(reason)
@@ -198,6 +183,34 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
       error ->
         error
+    end
+  end
+
+  defp copy_article_ref(source_ref, {:ok, copied}, target, target_document, target_thread) do
+    attrs =
+      source_ref
+      |> Map.from_struct()
+      |> Map.take([
+        :asset_id,
+        :usage,
+        :block_id,
+        :block_type,
+        :position,
+        :title,
+        :alt,
+        :source,
+        :meta
+      ])
+      |> Map.merge(%{
+        community_id: target.community_id,
+        article_document_id: target_document.id,
+        article_id: target.id,
+        thread: target_thread
+      })
+
+    case ORM.create(ArticleDocumentAssetRef, attrs) do
+      {:ok, ref} -> {:cont, {:ok, [ref | copied]}}
+      {:error, reason} -> {:halt, {:error, reason}}
     end
   end
 
@@ -290,15 +303,19 @@ defmodule GroupherServer.CMS.Assets.Writer do
       true ->
         @cover_specs
         |> Enum.flat_map(fn spec ->
-          if has_attr?(attrs, spec.asset_key) or has_attr?(attrs, spec.asset_id_key) do
-            case cover_ref_input(attrs, spec) do
-              nil -> [{spec.usage, []}]
-              input -> [{spec.usage, [input]}]
-            end
-          else
-            []
-          end
+          cover_ref_spec(attrs, spec)
         end)
+    end
+  end
+
+  defp cover_ref_spec(attrs, spec) do
+    if has_attr?(attrs, spec.asset_key) or has_attr?(attrs, spec.asset_id_key) do
+      case cover_ref_input(attrs, spec) do
+        nil -> [{spec.usage, []}]
+        input -> [{spec.usage, [input]}]
+      end
+    else
+      []
     end
   end
 

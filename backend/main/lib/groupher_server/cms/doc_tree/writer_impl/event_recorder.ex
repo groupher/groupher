@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Records staged tree events and converts delete/discard counts into deltas.
 
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
            Events.record_staged_many(community, events, Map.get(args, :actor_id),
              branch_id: branch.id
            ) do
-      {:ok, Enum.count(events, &(&1.owner == CMS.Const.tree_event_owner(:tree)))}
+      {:ok, Enum.count(events, &(&1.owner == CMS.DocTree.Const.tree_event_owner(:tree)))}
     end
   end
 
@@ -81,7 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
   def doc_owned_create_event(%DocTreeNode{} = node) do
     node
     |> Events.create_event()
-    |> Map.merge(%{owner: CMS.Const.tree_event_owner(:doc), doc_id: node.doc_id})
+    |> Map.merge(%{owner: CMS.DocTree.Const.tree_event_owner(:doc), doc_id: node.doc_id})
   end
 
   defp public_nodes_exist?(_community, _branch, []), do: false

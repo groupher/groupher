@@ -21,13 +21,9 @@ defmodule GroupherServer.CMS.Model.Post do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS
-
-  alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Artiment.Const
   alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
-
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -47,8 +43,8 @@ defmodule GroupherServer.CMS.Model.Post do
     field(:copy_right, :string)
 
     # DB stores string, Ecto exposes atoms
-    field(:cat, Ecto.Enum, values: Enums.cat_values())
-    field(:status, Ecto.Enum, values: Enums.status_values())
+    field(:cat, Ecto.Enum, values: Const.cat_values())
+    field(:status, Ecto.Enum, values: Const.status_values())
 
     field(:is_solved, :boolean, virtual: true, default: false)
     field(:solution_comment_id, :id, virtual: true)

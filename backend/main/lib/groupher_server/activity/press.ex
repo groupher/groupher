@@ -25,7 +25,7 @@ defmodule GroupherServer.Activity.Press do
       )
   }
 
-  def contracts, do: @contracts
+  def contracts, do: Event.classify_contracts(@contracts)
   def schema, do: PressLog
   def stream_field, do: :press_ref
   def resource_type, do: :press

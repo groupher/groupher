@@ -11,10 +11,11 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   import Ecto.Query
 
   alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Interactions.{Config, Const, ErrorCat}
+  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
+  alias GroupherServer.CMS.Interactions.{Config, ErrorCat}
 
   @article_types Config.article_threads()
-  @passthrough_orders [nil | Const.passthrough_order_values()]
+  @passthrough_orders [nil | ArticlesConst.native_order_values()]
 
   @type result :: {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
 
@@ -41,7 +42,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     do: {:error, ErrorCat.unsupported_artiment_query("scope options must be a keyword list")}
 
   defp validate_order(order) do
-    if Const.valid_order?(order),
+    if ArticlesConst.valid_order?(order),
       do: :ok,
       else: {:error, ErrorCat.unsupported_order(inspect(order))}
   end

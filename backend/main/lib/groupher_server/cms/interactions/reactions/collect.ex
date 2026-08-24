@@ -9,16 +9,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         -> post-commit notification
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
   import Ecto.Query
 
-  alias CMS.Artiment.Matcher
-  alias CMS.Articles.MutationLock
-  alias CMS.FrontDesk
-  alias CMS.Interactions.{ErrorCat, ReadState}
-  alias CMS.Model.{ArticleCollect, Author}
-  alias CMS.{Events, Gate}
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.{Events, Gate}
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Interactions.{ErrorCat, ReadState}
+  alias GroupherServer.CMS.Model.{ArticleCollect, Author}
   alias Helper.{Later, T}
 
   @doc """
@@ -117,10 +117,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   """
   @spec users(struct(), map()) :: {:ok, term()} | {:error, term()}
   def users(article, filter) when is_map(filter) do
-    with {:ok, %{collection?: true}} <- Matcher.match_interaction(article) do
-      FrontDesk.load_reaction_users(ArticleCollect, article, filter)
-    else
-      _ -> {:error, ErrorCat.unsupported_artiment("collected_users only supports Article")}
+    case Matcher.match_interaction(article) do
+      {:ok, %{collection?: true}} ->
+        FrontDesk.load_reaction_users(ArticleCollect, article, filter)
+
+      _ ->
+        {:error, ErrorCat.unsupported_artiment("collected_users only supports Article")}
     end
   end
 

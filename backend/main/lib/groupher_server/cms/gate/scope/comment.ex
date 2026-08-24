@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Gate.Scope.Comment do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Builds complete public Comment visibility through its stable Community relation.
 
@@ -23,13 +24,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
 
-  alias Helper.Constant
 
-  require CMS.Const
 
   @behaviour Policy
 
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
@@ -86,7 +85,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       as: :gate_doc_branch,
       on:
         branch.community_id == comment.community_id and
-          branch.type == ^CMS.Const.doc_branch_type(:main),
+          branch.type == ^CMS.Docs.Const.doc_branch_type(:main),
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
@@ -117,7 +116,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       as: :gate_doc_branch,
       on:
         branch.community_id == comment.community_id and
-          branch.type == ^CMS.Const.doc_branch_type(:main) and comment.thread == ^:doc,
+          branch.type == ^CMS.Docs.Const.doc_branch_type(:main) and comment.thread == ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:

@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Docs.Snapshot do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Stores the append-only revision timeline for Docs.
 
@@ -18,16 +19,15 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
-  alias CMS.Docs.Branch
-  alias CMS.Gate.Decision
-  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
   alias Helper.{ORM, T}
 
-  require CMS.Const
 
   @default_limit 30
   @common_snapshot_fields [:title, :digest, :slug, :subtitle]
@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
       with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
            {:ok, actor} <- snapshot_actor(user, draft),
            {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
-        checkpoint_article(draft, CMS.Const.doc_snapshot_action(:checkpoint), user, opts)
+        checkpoint_article(draft, CMS.Docs.Const.doc_snapshot_action(:checkpoint), user, opts)
       else
         {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
       end
@@ -114,6 +114,26 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
            ORM.find_by(ArticleDocument, article_id: article.id, thread: thread),
          {:ok, body_bag} <- BodyBag.from_document(document) do
       {:ok, version_state(article, document, body_bag)}
+    end
+  end
+
+  @doc "Returns whether the current Doc Draft exactly matches its latest restore checkpoint."
+  @spec restored_draft?(T.article()) :: boolean()
+  def restored_draft?(draft) do
+    latest =
+      DocSnapshot
+      |> where([snapshot], snapshot.community_id == ^draft.community_id)
+      |> where([snapshot], snapshot.branch_id == ^draft.branch_id)
+      |> where([snapshot], snapshot.article_hash_id == ^draft.article_hash_id)
+      |> order_by([snapshot], desc: snapshot.revision_number, desc: snapshot.id)
+      |> limit(1)
+      |> Repo.one()
+
+    with %DocSnapshot{action: :restore, version_hash: version_hash} <- latest,
+         {:ok, %{version_hash: ^version_hash}} <- current_state(draft) do
+      true
+    else
+      _ -> false
     end
   end
 
@@ -152,7 +172,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
            {:ok, _restore_snapshot} <-
              checkpoint_article(
                draft,
-               CMS.Const.doc_snapshot_action(:restore),
+               CMS.Docs.Const.doc_snapshot_action(:restore),
                user,
                source_snapshot_id: source_snapshot.id
              ) do
@@ -238,7 +258,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
   end
 
   defp maybe_create_snapshot(attrs, action)
-       when action == CMS.Const.doc_snapshot_action(:checkpoint) do
+       when action == CMS.Docs.Const.doc_snapshot_action(:checkpoint) do
     case latest_snapshot(attrs.branch_id, attrs.article_hash_id) do
       %DocSnapshot{version_hash: version_hash} = snapshot
       when version_hash == attrs.version_hash ->

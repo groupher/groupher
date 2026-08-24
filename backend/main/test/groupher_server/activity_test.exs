@@ -134,6 +134,12 @@ defmodule GroupherServer.Test.ActivityTest do
     assert Activity.Changelog.contracts().release_rescheduled.producer_status == :contract_only
     assert Activity.Changelog.contracts().release_withdrawn.producer_status == :contract_only
 
+    assert GroupherServer.Activity.Event.classification(:release_rescheduled).category ==
+             :publishing
+
+    assert GroupherServer.Activity.Event.classification(:moderation_review_started).category ==
+             :moderation
+
     for {handler, actions} <- [
           {Activity.Post,
            [
@@ -231,10 +237,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:ok, result} = Activity.list_community_logs(community, manager, %{page: 1})
 
-    assert Enum.any?(result.entries, fn entry ->
-             entry.action == :moderation_review_started and
-               entry.metadata == %{case_ref: "review-case-1"}
-           end)
+    refute Enum.any?(result.entries, &(&1.action == :moderation_review_started))
   end
 
   test "ArticleLog authorizes Article reads and projects only safe fields" do
@@ -389,6 +392,26 @@ defmodule GroupherServer.Test.ActivityTest do
       expected_actions = Ecto.Enum.values(schema, :action) |> Enum.map(&to_string/1)
       assert check_values(table, :action) == expected_actions
     end
+
+    for handler <- Activity.CommunityLog.handlers(),
+        {action, contract} <- handler.contracts(),
+        Map.has_key?(contract.surfaces, :community_log),
+        contract.producer_status == :active do
+      assert contract.classification.category in [
+               :content,
+               :publishing,
+               :lifecycle,
+               :engagement,
+               :moderation,
+               :community
+             ]
+
+      assert is_boolean(contract.classification.high_risk),
+             "missing classification for #{inspect({handler, action})}"
+
+      assert String.starts_with?(contract.presentation.message_key, "activity."),
+             "missing product copy key for #{inspect({handler, action})}"
+    end
   end
 
   test "CommunityLog aggregates Community streams with audit.read and stable safe envelopes" do
@@ -499,7 +522,8 @@ defmodule GroupherServer.Test.ActivityTest do
     community_entry = Enum.find(result.entries, &(&1.action == :activated))
     assert community_entry.id == Repo.get_by!(CommunityLog, action: :activated).hash_id
     assert community_entry.metadata == %{state: "active"}
-    refute Map.has_key?(community_entry, :operation_ref)
+    assert community_entry.event_ref
+    assert community_entry.operation_ref
 
     assert {:ok, blog_result} =
              Activity.list_community_logs(community, manager, %{
@@ -556,6 +580,172 @@ defmodule GroupherServer.Test.ActivityTest do
     first_ids = MapSet.new(first_page.entries, & &1.id)
     second_ids = MapSet.new(second_page.entries, & &1.id)
     assert MapSet.disjoint?(first_ids, second_ids)
+  end
+
+  test "CommunityLog stats fill zero UTC day buckets and share list filters" do
+    {community, _post, _attrs, owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    start = DateTime.new!(Date.add(Date.utc_today(), -2), ~T[00:00:00], "Etc/UTC")
+
+    assert {:ok, _} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :activated,
+               actor: owner,
+               occurred_at: start
+             )
+
+    assert {:ok, _} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :activated,
+               actor: owner,
+               occurred_at: DateTime.add(start, 2, :day)
+             )
+
+    before = DateTime.add(start, 3, :day)
+
+    assert {:ok, stats} =
+             Activity.get_community_log_stats(community, manager, %{
+               occurred_after: start,
+               occurred_before: before,
+               actions: ["activated"]
+             })
+
+    assert stats.granularity == :day
+    assert stats.timezone == "Etc/UTC"
+    assert stats.total_count == 2
+    assert Enum.map(stats.buckets, & &1.count) == [1, 0, 1]
+
+    assert {:ok, empty} =
+             Activity.list_community_logs(community, manager, %{
+               resource_types: ["community"],
+               actions: ["created"]
+             })
+
+    assert empty.total_count == 0
+  end
+
+  test "CommunityLog projects parent event refs for detail relations" do
+    {community, _post, _attrs, manager} = mock_article(:post)
+
+    assert {:ok, parent} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :activated,
+               actor: manager
+             )
+
+    assert {:ok, _child} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :setup_retried,
+               actor: manager,
+               parent_event_ref: parent.event_ref
+             )
+
+    {:ok, manager} = db_insert(:user)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    assert {:ok, result} = Activity.list_community_logs(community, manager, %{page: 1})
+    child = Enum.find(result.entries, &(&1.action == :setup_retried))
+    assert child.parent_event_ref == parent.event_ref
+  end
+
+  test "CommunityLog detail reads parent and child events outside the current page" do
+    {community, _post, _attrs, manager} = mock_article(:post)
+
+    assert {:ok, parent} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :activated,
+               actor: manager
+             )
+
+    assert {:ok, child} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :setup_retried,
+               actor: manager,
+               parent_event_ref: parent.event_ref
+             )
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    assert {:ok, detail} = Activity.get_community_log_event(community, manager, child.event_ref)
+    assert detail.event_ref == child.event_ref
+    assert detail.parent_event.event_ref == parent.event_ref
+
+    assert {:ok, parent_detail} =
+             Activity.get_community_log_event(community, manager, parent.event_ref)
+
+    assert [%{event_ref: child_ref}] = parent_detail.child_events
+    assert child_ref == child.event_ref
+  end
+
+  test "CommunityLog rejects invalid and unbounded time windows" do
+    {community, _post, _attrs, manager} = mock_article(:post)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    after_datetime = DateTime.utc_now()
+    before_datetime = DateTime.add(after_datetime, -1, :second)
+
+    assert {:error, _} =
+             Activity.list_community_logs(community, manager, %{
+               occurred_after: after_datetime,
+               occurred_before: before_datetime
+             })
+
+    assert {:error, _} =
+             Activity.get_community_log_stats(community, manager, %{
+               occurred_after: after_datetime,
+               occurred_before: DateTime.add(after_datetime, 367, :day)
+             })
+  end
+
+  test "CommunityLog exports the bounded filtered result as JSON and CSV" do
+    {community, _post, _attrs, _owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    assert {:ok, _} =
+             Activity.log(
+               %{activity_type: :community, community_id: community.id, ref: community.slug},
+               :activated,
+               actor: manager
+             )
+
+    filter = %{actions: ["activated"]}
+    assert {:ok, json} = Activity.export_community_logs(community, manager, filter, :json)
+    assert json.mime_type == "application/json"
+    assert json.exported_count == 1
+    assert json.content =~ "activated"
+
+    assert {:ok, csv} = Activity.export_community_logs(community, manager, filter, :csv)
+    assert csv.mime_type == "text/csv"
+    assert csv.content =~ "event_ref,operation_ref,parent_event_ref"
+    assert csv.exported_count == 1
   end
 
   defp check_values(table, field) do

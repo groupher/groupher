@@ -374,6 +374,116 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
+  object :community_activity_event do
+    field(:id, non_null(:id))
+    field(:event_ref, :id, resolve: fn event, _, _ -> {:ok, uuid_ref(event.event_ref)} end)
+
+    field(:operation_ref, :id,
+      resolve: fn event, _, _ -> {:ok, uuid_ref(event.operation_ref)} end
+    )
+
+    field(:parent_event_ref, :id,
+      resolve: fn event, _, _ -> {:ok, uuid_ref(event.parent_event_ref)} end
+    )
+
+    field(:message_key, non_null(:string))
+
+    field(:parent_event, :community_activity_event)
+
+    field(:child_events, non_null(list_of(non_null(:community_activity_event))))
+
+    field(:action, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.action)} end
+    )
+
+    field(:category, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.category)} end
+    )
+
+    field(:high_risk, non_null(:boolean))
+
+    field(:resource, non_null(:activity_resource_ref))
+    field(:actor, non_null(:article_log_actor))
+    field(:subject, non_null(:activity_resource_ref))
+    field(:target, :activity_resource_ref)
+
+    field(:source, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.source)} end
+    )
+
+    field(:payload, non_null(:json))
+    field(:metadata, non_null(:json))
+    field(:occurred_at, non_null(:datetime))
+  end
+
+  object :paged_community_activity do
+    field(:entries, non_null(list_of(non_null(:community_activity_event))))
+    pagination_fields()
+  end
+
+  object :community_activity_bucket do
+    field(:started_at, non_null(:datetime))
+    field(:ended_at, non_null(:datetime))
+    field(:count, non_null(:integer))
+  end
+
+  object :community_activity_stats do
+    field(:granularity, non_null(:string),
+      resolve: fn stats, _, _ -> {:ok, to_string(stats.granularity)} end
+    )
+
+    field(:timezone, non_null(:string))
+    field(:total_count, non_null(:integer))
+    field(:buckets, non_null(list_of(non_null(:community_activity_bucket))))
+  end
+
+  object :community_activity_action do
+    field(:action, non_null(:string), resolve: fn item, _, _ -> {:ok, to_string(item.action)} end)
+
+    field(:message_key, non_null(:string))
+
+    field(:category, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, to_string(item.category)} end
+    )
+
+    field(:high_risk, non_null(:boolean))
+  end
+
+  object :community_activity_resource_config do
+    field(:resource_type, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, to_string(item.resource_type)} end
+    )
+
+    field(:actions, non_null(list_of(non_null(:community_activity_action))))
+  end
+
+  object :community_activity_config do
+    field(:resources, non_null(list_of(non_null(:community_activity_resource_config))))
+
+    field(:sources, non_null(list_of(non_null(:string))),
+      resolve: fn config, _, _ -> {:ok, Enum.map(config.sources, &to_string/1)} end
+    )
+  end
+
+  object :community_activity_export do
+    field(:content, non_null(:string))
+    field(:filename, non_null(:string))
+    field(:mime_type, non_null(:string))
+    field(:total_count, non_null(:integer))
+    field(:exported_count, non_null(:integer))
+  end
+
+  defp uuid_ref(nil), do: nil
+
+  defp uuid_ref(value) when is_binary(value) and byte_size(value) == 16 do
+    case Ecto.UUID.load(value) do
+      {:ok, ref} -> ref
+      :error -> value
+    end
+  end
+
+  defp uuid_ref(value), do: value
+
   enum :doc_tree_node_type do
     value(:tab)
     value(:group)

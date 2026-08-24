@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.Communities.Reader do
   @moduledoc false
+  alias GroupherServer.CMS.Model.CommunityLifecycle
   use GroupherServer.TestMate
 
   setup do
@@ -31,8 +32,8 @@ defmodule GroupherServer.Test.CMS.Communities.Reader do
     end
 
     test "denied viewer reads do not inc views", ~m(community user2)a do
-      Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: community.id)
-      |> CMS.Model.CommunityLifecycle.changeset(%{state: :suspended})
+      Repo.get_by!(CommunityLifecycle, community_id: community.id)
+      |> CommunityLifecycle.changeset(%{state: :suspended})
       |> Repo.update!()
 
       assert {:error,

@@ -18,6 +18,7 @@ defmodule GroupherServerWeb.ConnCase do
         -> endpoint / fixture / Repo
   """
 
+  alias Ecto.Adapters.SQL.Sandbox
   use ExUnit.CaseTemplate
 
   using do
@@ -39,12 +40,12 @@ defmodule GroupherServerWeb.ConnCase do
     async? = tags[:async] == true
 
     owner =
-      Ecto.Adapters.SQL.Sandbox.start_owner!(GroupherServer.Repo,
+      Sandbox.start_owner!(GroupherServer.Repo,
         shared: not async?,
         ownership_timeout: 900_000
       )
 
-    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(owner) end)
+    on_exit(fn -> Sandbox.stop_owner(owner) end)
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end

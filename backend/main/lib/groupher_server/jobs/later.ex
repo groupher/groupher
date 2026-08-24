@@ -10,9 +10,11 @@ defmodule GroupherServer.Jobs.Later do
         -> context / service
   """
 
+  alias GroupherServer.Jobs.Config
+
   use Oban.Worker,
-    queue: GroupherServer.Jobs.Config.queue(:later),
-    max_attempts: GroupherServer.Jobs.Config.max_attempts(:later)
+    queue: Config.queue(:later),
+    max_attempts: Config.max_attempts(:later)
 
   alias GroupherServer.Jobs.Codec
 

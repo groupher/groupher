@@ -7,10 +7,12 @@ defmodule GroupherServer.CMS.Docs do
   Docs branch/editor -> snapshot and tree boundaries -> public Docs release
   """
 
-  alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Docs.Snapshot
-  alias CMS.Model.{Community, DocSnapshot}
+  alias GroupherServer.CMS
+  alias GroupherServer.CMS.Articles.Diff
+  alias GroupherServer.CMS.Articles.Publish
+  alias GroupherServer.CMS.Docs.Snapshot
+  alias GroupherServer.CMS.Model.{Community, DocSnapshot}
   alias Helper.T
 
   @doc "Reads the current Doc editor head in the selected branch."
@@ -56,15 +58,14 @@ defmodule GroupherServer.CMS.Docs do
           T.domain_res(DocSnapshot.t())
   def publish_draft(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
     with {:ok, %{snapshot: snapshot}} <-
-           CMS.Articles.Publish.publish(community, :doc, doc_id, user, opts) do
+           Publish.publish(community, :doc, doc_id, user, opts) do
       {:ok, snapshot}
     end
   end
 
   @doc "Compares two immutable Doc revisions."
-  def diff_snapshots(left, right), do: CMS.Articles.Diff.compare(left, right)
+  def diff_snapshots(left, right), do: Diff.compare(left, right)
 
   @doc "Compares a current Doc Article row to an immutable Doc revision."
-  def diff_current(article, snapshot), do: CMS.Articles.Diff.compare_current(article, snapshot)
-
+  def diff_current(article, snapshot), do: Diff.compare_current(article, snapshot)
 end

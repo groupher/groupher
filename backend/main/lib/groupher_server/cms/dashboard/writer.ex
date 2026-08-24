@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   """
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.Dashboard.{BaseInfo, SectionPayload}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T, Transaction}
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   end
 
   def update(%Community{}, _args),
-    do: {:error, GroupherServer.CMS.Communities.ErrorCat.invalid_dsb_section()}
+    do: {:error, ErrorCat.invalid_dsb_section()}
 
   @spec update(Community.t(), atom(), map() | list()) :: T.domain_res(CommunityDashboard.t())
   @doc "Updates one explicit dashboard section, including base-info synchronization."

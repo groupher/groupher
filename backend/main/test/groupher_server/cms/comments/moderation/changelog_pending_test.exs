@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogPendingFlag do
 
   use GroupherServer.TestMate
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)

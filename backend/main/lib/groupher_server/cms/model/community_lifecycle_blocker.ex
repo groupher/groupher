@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycleBlocker do
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   An active or ended restriction contributing to a Community Lifecycle state.
 
@@ -14,7 +15,8 @@ defmodule GroupherServer.CMS.Model.CommunityLifecycleBlocker do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.{Const, Model}
+  alias GroupherServer.CMS.Communities.Const
+  alias GroupherServer.CMS.Model
   alias GroupherServer.CMS.Model.CommunityLifecycle
   alias Helper.Constant.DBPrefix
 

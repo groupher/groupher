@@ -9,10 +9,10 @@
 #   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
 #   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-20260316-slim - for the release image
 #   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.20.3-erlang-28.3.3-ubuntu-noble-20260810
+#   - Ex: hexpm/elixir:1.20.3-erlang-29.0.5-ubuntu-noble-20260810
 #
 ARG ELIXIR_VERSION=1.20.3
-ARG OTP_VERSION=28.3.3
+ARG OTP_VERSION=29.0.5
 ARG BUILDER_OS_VERSION=ubuntu-noble-20260810
 ARG DEBIAN_VERSION=bullseye-20260316-slim
 

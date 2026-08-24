@@ -15,7 +15,7 @@ defmodule GroupherServer.Activity.DocTree do
     permanently_deleted: Event.contract([], [:doc_count], [:community_log])
   }
 
-  def contracts, do: @contracts
+  def contracts, do: Event.classify_contracts(@contracts)
   def schema, do: DocTreeLog
   def stream_field, do: :doc_tree_ref
   def resource_type, do: :doc_tree

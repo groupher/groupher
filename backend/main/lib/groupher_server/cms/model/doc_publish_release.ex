@@ -26,15 +26,14 @@ defmodule GroupherServer.CMS.Model.DocPublishRelease do
 
   import Ecto.Changeset
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
     DocBranch,
-    DocTreeSnapshot,
     DocPublishReleaseArticle,
-    DocPublishReleaseTreeEvent
+    DocPublishReleaseTreeEvent,
+    DocTreeSnapshot
   }
 
   alias Helper.Constant.DBPrefix

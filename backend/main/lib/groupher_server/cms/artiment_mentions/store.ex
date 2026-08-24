@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Store do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Stores the product-level mention graph for CMS artiments.
 
@@ -71,7 +72,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   }
 
   alias GroupherServer.CMS.Model.{ArtimentMention, Comment}
-  alias Helper.{ORM, QueryBuilder, T}
+  alias Helper.{ORM, T}
 
   @threads Config.threads()
   @mention_types Config.mention_types()

@@ -18,12 +18,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
   alias GroupherServer.CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
   alias GroupherServer.CMS.SearchArtiments.Config
-  alias Helper.Constant
 
   require CMS.Const
   @article_threads Config.article_threads()
 
-  @legal Constant.CMS.pending(:legal)
+  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Measures the source volume used for search platform cost estimates.

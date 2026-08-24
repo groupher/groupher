@@ -170,6 +170,25 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
     field(:error, :analysis_web_error)
   end
 
+  object :analysis_visitor_location_region do
+    field(:code, :string)
+    field(:visitors, :integer)
+  end
+
+  object :analysis_visitor_location_country do
+    field(:code, :string)
+    field(:visitors, :integer)
+    field(:percentage, :float)
+    field(:regions, list_of(:analysis_visitor_location_region))
+  end
+
+  object :analysis_visitor_location_map do
+    field(:status, :string)
+    field(:range, :analysis_web_range)
+    field(:countries, list_of(:analysis_visitor_location_country))
+    field(:error, :analysis_web_error)
+  end
+
   object :analysis_trend_traffic_section do
     field(:status, :string)
     field(:timezone, :string)

@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Communities.Setup do
+  require GroupherServer.CMS.Gate.Const
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Idempotent initialization and recovery for a newly created Community.
 
@@ -13,13 +15,14 @@ defmodule GroupherServer.CMS.Communities.Setup do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
-  alias GroupherServer.{Analysis, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
+  alias GroupherServer.{Analysis, CMS, Repo}
   alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
-  alias GroupherServer.CMS.Passport
   alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
+  alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
+  alias GroupherServer.CMS.CommunityApplications.Transitions
+  alias GroupherServer.CMS.Gate.Const
+  alias GroupherServer.CMS.Passport
 
   alias GroupherServer.CMS.Model.{
     Community,
@@ -27,11 +30,10 @@ defmodule GroupherServer.CMS.Communities.Setup do
     CommunityModerator
   }
 
-  alias Helper.Constant
 
   require Const
 
-  @community_normal Constant.CMS.pending(:normal)
+  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
 
   @doc """
   Runs idempotent initialization for a newly created Community.
@@ -77,49 +79,50 @@ defmodule GroupherServer.CMS.Communities.Setup do
             Repo.rollback(ErrorCat.application_state_conflict())
 
           true ->
-            with {:ok, _lifecycle} <-
-                   Lifecycle.transition(
-                     application.community_id,
-                     :setting_up,
-                     operation_ref: operation_ref,
-                     audit_action: "community.setup_retried",
-                     attrs: %{failed_at: nil, last_error: nil}
-                   ) do
-              Multi.new()
-              |> Transitions.add(
-                :application,
-                :event,
-                application,
-                :setting_up,
-                %{last_job_error: nil, setup_started_at: now},
-                %{
-                  type: :reviewer,
-                  id: reviewer.id,
-                  operation_ref: operation_ref,
-                  occurred_at: now
-                }
-              )
-              |> Multi.insert(
-                :setup_job,
-                SetupJob.new(%{
-                  community_ref: application.slug,
-                  application_ref: application.public_ref,
-                  operation_ref: operation_ref
-                })
-              )
-              |> Repo.transaction()
-              |> case do
-                {:ok, %{application: application}} ->
-                  application
+            case Lifecycle.transition(
+                   application.community_id,
+                   :setting_up,
+                   operation_ref: operation_ref,
+                   audit_action: "community.setup_retried",
+                   attrs: %{failed_at: nil, last_error: nil}
+                 ) do
+              {:ok, _lifecycle} ->
+                Multi.new()
+                |> Transitions.add(
+                  :application,
+                  :event,
+                  application,
+                  :setting_up,
+                  %{last_job_error: nil, setup_started_at: now},
+                  %{
+                    type: :reviewer,
+                    id: reviewer.id,
+                    operation_ref: operation_ref,
+                    occurred_at: now
+                  }
+                )
+                |> Multi.insert(
+                  :setup_job,
+                  SetupJob.new(%{
+                    community_ref: application.slug,
+                    application_ref: application.public_ref,
+                    operation_ref: operation_ref
+                  })
+                )
+                |> Repo.transaction()
+                |> case do
+                  {:ok, %{application: application}} ->
+                    application
 
-                {:error, :application, %Ecto.Changeset{}, _changes} ->
-                  Repo.rollback(ErrorCat.active_application_exists())
+                  {:error, :application, %Ecto.Changeset{}, _changes} ->
+                    Repo.rollback(ErrorCat.active_application_exists())
 
-                {:error, _step, reason, _changes} ->
-                  Repo.rollback(reason)
-              end
-            else
-              {:error, reason} -> Repo.rollback(reason)
+                  {:error, _step, reason, _changes} ->
+                    Repo.rollback(reason)
+                end
+
+              {:error, reason} ->
+                Repo.rollback(reason)
             end
         end
       end)
@@ -146,36 +149,37 @@ defmodule GroupherServer.CMS.Communities.Setup do
           Repo.rollback(ErrorCat.application_state_conflict())
 
         true ->
-          with {:ok, _lifecycle} <-
-                 Lifecycle.transition(
-                   application.community_id,
-                   :setup_failed,
-                   operation_ref: operation_ref,
-                   audit_action: "community.setup_failed",
-                   attrs: %{failed_at: now, last_error: error}
-                 ) do
-            Multi.new()
-            |> Transitions.add(
-              :application,
-              :event,
-              application,
-              :setup_failed,
-              %{last_job_error: error},
-              %{
-                type: :job,
-                operation_ref: operation_ref,
-                reason_code: "community_setup_failed",
-                metadata: %{"worker" => "Setup", "attempt" => attempt},
-                occurred_at: now
-              }
-            )
-            |> Repo.transaction()
-            |> case do
-              {:ok, %{application: application}} -> application
-              {:error, _step, reason, _changes} -> Repo.rollback(reason)
-            end
-          else
-            {:error, reason} -> Repo.rollback(reason)
+          case Lifecycle.transition(
+                 application.community_id,
+                 :setup_failed,
+                 operation_ref: operation_ref,
+                 audit_action: "community.setup_failed",
+                 attrs: %{failed_at: now, last_error: error}
+               ) do
+            {:ok, _lifecycle} ->
+              Multi.new()
+              |> Transitions.add(
+                :application,
+                :event,
+                application,
+                :setup_failed,
+                %{last_job_error: error},
+                %{
+                  type: :job,
+                  operation_ref: operation_ref,
+                  reason_code: "community_setup_failed",
+                  metadata: %{"worker" => "Setup", "attempt" => attempt},
+                  occurred_at: now
+                }
+              )
+              |> Repo.transaction()
+              |> case do
+                {:ok, %{application: application}} -> application
+                {:error, _step, reason, _changes} -> Repo.rollback(reason)
+              end
+
+            {:error, reason} ->
+              Repo.rollback(reason)
           end
       end
     end)
@@ -199,39 +203,40 @@ defmodule GroupherServer.CMS.Communities.Setup do
           Repo.rollback(ErrorCat.application_state_conflict())
 
         true ->
-          with {:ok, _lifecycle} <-
-                 Lifecycle.transition(
-                   community.id,
-                   :active,
-                   operation_ref: operation_ref,
-                   audit_action: "community.activated",
-                   attrs: %{activated_at: now, failed_at: nil, last_error: nil}
-                 ) do
-            Multi.new()
-            |> Transitions.add(
-              :application,
-              :event,
-              application,
-              :created,
-              %{completed_at: now, last_job_error: nil},
-              %{
-                type: :job,
-                operation_ref: operation_ref,
-                metadata: %{"worker" => "Setup"},
-                occurred_at: now
-              }
-            )
-            |> Multi.update(
-              :community,
-              Community.update_changeset(community, %{pending: @community_normal})
-            )
-            |> Repo.transaction()
-            |> case do
-              {:ok, %{application: application}} -> application
-              {:error, _step, reason, _changes} -> Repo.rollback(reason)
-            end
-          else
-            {:error, reason} -> Repo.rollback(reason)
+          case Lifecycle.transition(
+                 community.id,
+                 :active,
+                 operation_ref: operation_ref,
+                 audit_action: "community.activated",
+                 attrs: %{activated_at: now, failed_at: nil, last_error: nil}
+               ) do
+            {:ok, _lifecycle} ->
+              Multi.new()
+              |> Transitions.add(
+                :application,
+                :event,
+                application,
+                :created,
+                %{completed_at: now, last_job_error: nil},
+                %{
+                  type: :job,
+                  operation_ref: operation_ref,
+                  metadata: %{"worker" => "Setup"},
+                  occurred_at: now
+                }
+              )
+              |> Multi.update(
+                :community,
+                Community.update_changeset(community, %{pending: @community_normal})
+              )
+              |> Repo.transaction()
+              |> case do
+                {:ok, %{application: application}} -> application
+                {:error, _step, reason, _changes} -> Repo.rollback(reason)
+              end
+
+            {:error, reason} ->
+              Repo.rollback(reason)
           end
       end
     end)

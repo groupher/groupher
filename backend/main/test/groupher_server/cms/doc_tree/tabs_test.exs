@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.DocsSiteState
+  alias GroupherServer.CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Model.DocsSiteState
 
   describe "[doc tree tabs]" do
     test "creates an empty independent tab and allows deleting the last tab" do
@@ -55,7 +56,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
       {:ok, community} = create_community(user)
 
       {:ok, _blocker} =
-        CMS.Communities.Lifecycle.apply_blocker(
+        Lifecycle.apply_blocker(
           community.slug,
           %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
           operation_ref: Ecto.UUID.generate()

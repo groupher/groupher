@@ -3,8 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   use GroupherServer.TestMate
 
-  alias CMS.FrontDesk
-  alias CMS.Model.ArticleDocument
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Model.ArticleDocument
   @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   setup do
@@ -104,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       assert doc.id == doc2.id
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(doc2, user).viewer_has_viewed
     end
 
@@ -126,7 +128,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, _} = CMS.Articles.read(article_community(doc), :doc, doc.inner_id, user, event_id)
 
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(doc, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
@@ -141,7 +143,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
         )
 
       {:ok, created} = ORM.find(Doc, doc.id)
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert created.views == 1
       assert CMS.Interactions.viewer_state(doc, user).viewer_has_viewed
       assert CMS.Interactions.viewer_state(doc, user2).viewer_has_viewed
@@ -304,13 +306,13 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
 
       {:ok, action} =
-        CMS.Articles.Trash.create_action(community, user, %{
+        Trash.create_action(community, user, %{
           root_type: "doc_tree_page",
           root_ref: "document-delete-test"
         })
 
       {:ok, trash_item} =
-        CMS.Articles.Trash.attach(action, community, :doc, doc.article_hash_id, user)
+        Trash.attach(action, community, :doc, doc.article_hash_id, user)
 
       {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
 

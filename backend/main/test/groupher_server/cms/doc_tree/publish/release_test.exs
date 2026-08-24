@@ -1,10 +1,14 @@
 defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
   require CMS.Const
 
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
 
   describe "[doc publish release]" do
     setup do
@@ -54,7 +58,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
 
       {:ok, _blocker} =
-        CMS.Communities.Lifecycle.apply_blocker(
+        Lifecycle.apply_blocker(
           community.slug,
           %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
           operation_ref: Ecto.UUID.generate()
@@ -71,16 +75,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     test "hides doc-bound page create tree events and archives them with doc publish",
          ~m(user community group_payload page_payload)a do
       {:ok, legacy_event} =
-        CMS.DocTree.Events.record_staged(
+        Events.record_staged(
           community,
-          CMS.Const.tree_event(:node_create),
+          CMS.DocTree.Const.tree_event(:node_create),
           %{
-            CMS.Const.doc_tree_json_key(:node) => %{
-              CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
+            CMS.DocTree.Const.doc_tree_json_key(:node) => %{
+              CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
+              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
-              CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
+              CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
           },
@@ -100,22 +104,22 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert next_checklist.total_count == 0
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
-      assert legacy_event.status == CMS.Const.tree_event_status(:published)
+      assert legacy_event.status == CMS.DocTree.Const.tree_event_status(:published)
     end
 
     test "tree-only publish does not auto-publish doc-bound page creates",
          ~m(user community group_payload page_payload)a do
       {:ok, legacy_event} =
-        CMS.DocTree.Events.record_staged(
+        Events.record_staged(
           community,
-          CMS.Const.tree_event(:node_create),
+          CMS.DocTree.Const.tree_event(:node_create),
           %{
-            CMS.Const.doc_tree_json_key(:node) => %{
-              CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
+            CMS.DocTree.Const.doc_tree_json_key(:node) => %{
+              CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
+              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
-              CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
+              CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
           },
@@ -136,7 +140,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                )
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
-      assert legacy_event.status == CMS.Const.tree_event_status(:staged)
+      assert legacy_event.status == CMS.DocTree.Const.tree_event_status(:staged)
     end
 
     test "explicit doc publish also clears its parent group shell event",
@@ -149,7 +153,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert next_checklist.total_count == 0
 
       {:ok, group_event} = tree_create_event(community, group_payload.node.id)
-      assert group_event.status == CMS.Const.tree_event_status(:published)
+      assert group_event.status == CMS.DocTree.Const.tree_event_status(:published)
     end
 
     test "publishes selected changes as one release",
@@ -181,7 +185,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     test "publishes a non-main branch into its own release and site cursor",
          ~m(user community)a do
       {:ok, branch} =
-        CMS.Docs.Branch.create_preview(
+        Branch.create_preview(
           community,
           %{slug: "preview-release"},
           user
@@ -510,8 +514,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
   defp tree_create_event(community, node_id) do
     CMS.Model.DocTreeEvent
     |> where([e], e.community_id == ^community.id)
-    |> where([e], e.owner == ^CMS.Const.tree_event_owner(:tree))
-    |> where([e], e.event_type == ^CMS.Const.tree_event(:node_create))
+    |> where([e], e.owner == ^CMS.DocTree.Const.tree_event_owner(:tree))
+    |> where([e], e.event_type == ^CMS.DocTree.Const.tree_event(:node_create))
     |> where([e], e.node_id == ^node_id)
     |> Repo.one()
     |> case do

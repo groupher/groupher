@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocCover.Writer do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Write operations for the save-immediate docs cover.
 
@@ -26,25 +27,28 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.DocCover.Sync, as: CoverSync
+  alias GroupherServer.CMS.DocTree.ChangeDetection
+  alias GroupherServer.CMS.DocTree.Publish, as: DocTreePublish
 
   require CMS.Const
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
+    Doc,
     DocCoverCard,
     DocCoverItem,
-    DocSnapshot,
-    Doc,
     DocCoverPinnedDoc,
+    DocSnapshot,
     DocTreeNode
   }
 
   alias Helper.{ORM, T}
 
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
 
   @doc """
   Adds one published Group as a Cover Card.
@@ -76,7 +80,8 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end)
   end
 
-  def add_card(%Community{}, _draft_group_node_id, _actor), do: {:error, AuthErrorCat.account_login()}
+  def add_card(%Community{}, _draft_group_node_id, _actor),
+    do: {:error, AuthErrorCat.account_login()}
 
   defp with_docs_access(%User{} = actor, %Community{} = community, fun) do
     with {:ok, _canonical} <- CMS.Gate.access_check(actor, :manage_docs, community) do
@@ -104,7 +109,8 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     end)
   end
 
-  def remove_card(%Community{}, _draft_group_node_id, _actor), do: {:error, AuthErrorCat.account_login()}
+  def remove_card(%Community{}, _draft_group_node_id, _actor),
+    do: {:error, AuthErrorCat.account_login()}
 
   defp card_result(%DocCoverCard{} = card, published_group, index \\ nil) do
     %{
@@ -220,17 +226,25 @@ defmodule GroupherServer.CMS.DocCover.Writer do
             {:ok, pinned_doc}
 
           {:error, _} ->
-            with :ok <- ensure_clean_published(community, page) do
-              ORM.create(DocCoverPinnedDoc, %{
-                community_id: community.id,
-                node_id: page.id,
-                index: next_pinned_index(community),
-                appearance: %{"light" => %{}, "dark" => %{}}
-              })
-            end
+            create_pinned_doc(community, page)
         end
       end
     end)
+  end
+
+  defp create_pinned_doc(community, page) do
+    case ensure_clean_published(community, page) do
+      :ok ->
+        ORM.create(DocCoverPinnedDoc, %{
+          community_id: community.id,
+          node_id: page.id,
+          index: next_pinned_index(community),
+          appearance: %{"light" => %{}, "dark" => %{}}
+        })
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -268,13 +282,17 @@ defmodule GroupherServer.CMS.DocCover.Writer do
           pinned_by_node_id = Map.new(pinned_docs, &{&1.node.node_id, &1})
           pinned_docs = Enum.map(node_ids, &Map.fetch!(pinned_by_node_id, to_string(&1)))
 
-          case batch_reindex_pinned_docs(community, pinned_docs) do
-            :ok -> {:ok, :pass}
-            error -> error
-          end
+          reindex_pinned_docs(community, pinned_docs)
         end
       end)
     end)
+  end
+
+  defp reindex_pinned_docs(community, pinned_docs) do
+    case batch_reindex_pinned_docs(community, pinned_docs) do
+      :ok -> {:ok, :pass}
+      error -> error
+    end
   end
 
   @doc "Updates the Light/Dark appearance for one pinned card."

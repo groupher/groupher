@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Articles.Moderation do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Article moderation helpers.
 
@@ -19,14 +20,15 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias GroupherServer.Repo
 
-  alias CMS.Communities.TagStats
-  alias CMS.FrontDesk
-  alias CMS.SearchArtiments.Indexer
-  alias Helper.{Multi, Constant, ORM, QueryBuilder, T}
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias Helper.{Multi, ORM, T}
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
+  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Returns a paged list of audit-failed articles for one thread.
@@ -43,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
     with {:ok, info} <- match(thread) do
       info.model
-      |> CMS.Articles.Trash.not_trashed_scope(thread)
+      |> Trash.not_trashed_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> done()
@@ -182,7 +184,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   defp sync_search(result, _action), do: result
 
   defp counted_in_tag_stats?(article) do
-    not CMS.Articles.Trash.trashed_article?(article) and
+    not Trash.trashed_article?(article) and
       Map.get(article, :pending) != @audit_illegal
   end
 end

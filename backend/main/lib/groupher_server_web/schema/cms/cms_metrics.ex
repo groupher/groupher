@@ -242,6 +242,37 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:page, :integer, default_value: 1)
   end
 
+  input_object :community_activity_filter do
+    field(:page, :integer, default_value: 1)
+    field(:resource_types, list_of(non_null(:string)))
+    field(:actions, list_of(non_null(:string)))
+    field(:categories, list_of(non_null(:string)))
+    field(:actor_ref, :id)
+    field(:source, :string)
+    field(:occurred_after, :datetime)
+    field(:occurred_before, :datetime)
+    field(:subject_query, :string)
+    field(:event_ref, :id)
+    field(:operation_ref, :id)
+  end
+
+  input_object :community_activity_stats_filter do
+    field(:resource_types, list_of(non_null(:string)))
+    field(:actions, list_of(non_null(:string)))
+    field(:categories, list_of(non_null(:string)))
+    field(:actor_ref, :id)
+    field(:source, :string)
+    field(:occurred_after, non_null(:datetime))
+    field(:occurred_before, non_null(:datetime))
+    field(:subject_query, :string)
+    field(:operation_ref, :id)
+  end
+
+  enum :community_activity_export_format do
+    value(:json)
+    value(:csv)
+  end
+
   # @desc "article_filter doc"
   # input_object :paged_article_filter do
   #   @desc "limit of records (default 20), if first > 30, only return 30 at most"

@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.Versioning.Doc do
   @moduledoc false
 
+  alias GroupherServer.CMS.Articles.Publish
   use GroupherServer.TestMate
 
   test "keeps Doc snapshots and branch-local publication in the Docs boundary" do
@@ -23,7 +24,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Doc do
     assert Enum.any?(listed, &(&1.id == first.id))
 
     {:ok, %{article: published, snapshot: publish_snapshot}} =
-      CMS.Articles.Publish.publish(
+      Publish.publish(
         community,
         :doc,
         public.article_hash_id,

@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.CommunityApplications do
+  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Public facade for the Community Application aggregate.
 
@@ -12,7 +13,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Const
+  alias GroupherServer.CMS.Gate.Const
   alias GroupherServer.CMS.Passport
 
   alias GroupherServer.CMS.CommunityApplications.{

@@ -3,10 +3,11 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  alias CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Gate.Context.Scope.Document, as: DocumentScope
+  alias Ecto.Adapters.SQL
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Document, as: DocumentScope
+  alias GroupherServer.CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
 
   test "Article scope compiles complete public visibility for every thread" do
     for {thread, schema} <- article_schemas() do
@@ -142,7 +143,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert sql =~ "user_id"
   end
 
-  defp to_sql(query), do: Ecto.Adapters.SQL.to_sql(:all, Repo, query)
+  defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   defp article_schemas,
     do: [post: Post, blog: Blog, changelog: Changelog, doc: Doc]

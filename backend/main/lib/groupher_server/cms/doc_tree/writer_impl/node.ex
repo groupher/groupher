@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Writer.Node do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Finds draft tree nodes and validates structural parent rules.
 
@@ -24,7 +25,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
 
   require CMS.Const
 
-  @max_depth CMS.Const.doc_tree_max_depth()
+  @max_depth CMS.DocTree.Const.max_depth()
 
   @doc "Adds a stable logical node id when create attributes do not already provide one."
   def put_new_node_id(attrs), do: Map.put_new(attrs, :node_id, new_node_id())

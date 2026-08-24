@@ -16,7 +16,10 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Repo}
+  alias GroupherServer.{
+    Repo
+  }
+
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Assets.{Capability, Writer}
@@ -124,14 +127,18 @@ defmodule GroupherServer.CMS.Assets.Upload do
           community_id ->
             lock_community!(community_id)
 
-            with :ok <- ensure_capacity(community_id, attrs.size_bytes),
-                 {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
-              asset
-            else
-              {:error, reason} -> Repo.rollback(reason)
-            end
+            complete_asset(community_id, attrs)
         end
       end)
+    end
+  end
+
+  defp complete_asset(community_id, attrs) do
+    with :ok <- ensure_capacity(community_id, attrs.size_bytes),
+         {:ok, asset} <- Writer.register(%Community{id: community_id}, attrs, nil) do
+      asset
+    else
+      {:error, reason} -> Repo.rollback(reason)
     end
   end
 

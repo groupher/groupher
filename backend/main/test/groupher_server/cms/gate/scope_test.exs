@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
   import Ecto.Query
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleDocument,
     Blog,
     Changelog,
@@ -15,9 +15,10 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     Post
   }
 
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Gate.Context.Scope.Document, as: DocumentScope
+  alias Ecto.Adapters.SQL
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Document, as: DocumentScope
 
   test "Comment all-thread scope is constructed only by all_public" do
     assert_raise FunctionClauseError, fn -> apply(CommentScope, :for_thread, [:all]) end
@@ -174,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     for query <- queries do
       {sql, params} = to_sql(query)
-      result = Ecto.Adapters.SQL.query!(Repo, "EXPLAIN " <> sql, params)
+      result = SQL.query!(Repo, "EXPLAIN " <> sql, params)
 
       assert result.rows != []
       assert Enum.all?(result.rows, fn [line] -> is_binary(line) end)
@@ -234,7 +235,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     refute Enum.any?(hidden_comments, &(&1.id == comment.id))
   end
 
-  defp to_sql(query), do: Ecto.Adapters.SQL.to_sql(:all, Repo, query)
+  defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   defp article_schemas,
     do: [post: Post, blog: Blog, changelog: Changelog, doc: Doc]

@@ -128,7 +128,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
 
     test "accepts depth 32 and rejects deeper creates and subtree moves", context do
       ~m(community tab advanced page)a = context
-      max_depth = CMS.Const.doc_tree_max_depth()
+      max_depth = CMS.DocTree.Const.max_depth()
 
       {deepest_node_id, revision, nodes_by_depth} =
         Enum.reduce(3..max_depth, {advanced.node.id, page.revision, %{}}, fn depth,

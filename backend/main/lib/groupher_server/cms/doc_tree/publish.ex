@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Publish do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Publish workflows for docs and docs tree snapshots.
 
@@ -42,7 +43,6 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   alias GroupherServer.CMS.DocPublishRelease
   alias GroupherServer.CMS.Docs.Branch
 
-  require CMS.Const
 
   alias GroupherServer.CMS.Model.{
     Community,
@@ -53,12 +53,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   alias Helper.{T, Transaction}
 
-  @publish_flow_noop CMS.Const.doc_publish_flow(:noop)
-  @publish_flow_publish CMS.Const.doc_publish_flow(:publish)
-  @publish_flow_restore CMS.Const.doc_publish_flow(:restore)
+  @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
+  @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
+  @publish_flow_restore CMS.DocTree.Const.doc_publish_flow(:restore)
   @tree_delete_event_types [
-    CMS.Const.tree_event(:node_delete),
-    CMS.Const.tree_event(:pin_remove)
+    CMS.DocTree.Const.tree_event(:node_delete),
+    CMS.DocTree.Const.tree_event(:pin_remove)
   ]
 
   @doc """
@@ -515,8 +515,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.branch_id == ^branch.id)
-    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-    |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
+    |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+    |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
     |> where([e], e.id in ^event_ids)
     |> order_by([e], asc: e.seq, asc: e.id)
     |> Repo.all()

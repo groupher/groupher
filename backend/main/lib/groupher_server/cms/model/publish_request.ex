@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.PublishRequest do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Review gate for future publish workflows.
 
@@ -37,7 +38,6 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
   alias GroupherServer.CMS
   alias Helper.Constant.DBPrefix
 
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
     field(:target_id, :string)
 
     field(:status, Ecto.Enum,
-      values: CMS.Const.publish_request_status_values(),
-      default: CMS.Const.publish_request_status(:pending)
+      values: CMS.DocTree.Const.publish_request_status_values(),
+      default: CMS.DocTree.Const.publish_request_status(:pending)
     )
 
     field(:base_snapshot_id, :id)
@@ -79,8 +79,8 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
     request
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:target_type, CMS.Const.publish_request_target_type_enum_values())
-    |> validate_inclusion(:status, CMS.Const.publish_request_status_enum_values())
+    |> validate_inclusion(:target_type, CMS.DocTree.Const.publish_request_target_type_enum_values())
+    |> validate_inclusion(:status, CMS.DocTree.Const.publish_request_status_enum_values())
     |> validate_length(:target_id, min: 1, max: 120)
     |> foreign_key_constraint(:requested_by_id)
     |> foreign_key_constraint(:reviewed_by_id)

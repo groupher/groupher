@@ -3,9 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
-    AuditLog,
     Doc,
     DocsSiteState,
     DocTreeNode,
@@ -13,6 +12,9 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     TrashedDocArticle,
     TrashedDocTreeNode
   }
+
+  alias GroupherServer.Activity.Model.DocTreeLog
+  alias GroupherServer.CMS.ArtimentMentions.Config
 
   test "deleting and restoring a published Page moves both Tree stages as one action" do
     {:ok, user} = db_insert(:user)
@@ -191,11 +193,11 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
            ) == 2
 
     assert Repo.aggregate(
-             from(log in AuditLog, where: log.operation_ref == ^action.hash_id),
+             from(log in DocTreeLog, where: log.operation_ref == ^action.hash_id),
              :count
            ) == 1
 
-    assert Repo.get_by!(AuditLog, operation_ref: action.hash_id).action == "doc_tree.trashed"
+    assert Repo.get_by!(DocTreeLog, operation_ref: action.hash_id).action == :trashed
 
     assert {:ok, _} =
              CMS.DocTree.restore_trash_item(community, trash_item.id, %{
@@ -256,10 +258,10 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     refute Repo.get_by(TrashedDocTreeNode, trash_action_id: action.id)
     refute Repo.get_by(TrashedDocArticle, trash_action_id: action.id)
 
-    assert Repo.get_by(AuditLog,
-             action: "doc_tree.permanently_deleted",
+    assert Repo.get_by(DocTreeLog,
+             action: :permanently_deleted,
              operation_ref: action.hash_id,
-             source: "scheduler"
+             source: :scheduler
            )
 
     assert {:ok, %{done: true}} = CMS.Trash.permanently_delete_action(action, user)
@@ -298,8 +300,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
           "id" => "copied-mention",
           "children" => [
             %{
-              "text" =>
-                ~s(<a href="#{GroupherServer.CMS.ArtimentMentions.Config.site_host()}/blog/#{target.id}">target</a>)
+              "text" => ~s(<a href="#{Config.site_host()}/blog/#{target.id}">target</a>)
             }
           ]
         }

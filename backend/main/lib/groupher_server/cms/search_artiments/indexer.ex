@@ -18,13 +18,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
   alias GroupherServer.CMS.SearchArtiments
   alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Projection}
-  alias Helper.Constant
 
   require CMS.Const
   @article_threads Config.article_threads()
 
   @batch_size 500
-  @legal Constant.CMS.pending(:legal)
+  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Enqueues a background upsert job for one article.

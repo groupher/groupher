@@ -33,7 +33,7 @@ defmodule GroupherServer.Messaging.Notifications do
 
   alias GroupherServer.{Accounts, Repo}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.Embeds
   alias GroupherServer.Messaging.Model.Notification
   alias Helper.{Datetime, Multi, ORM}
@@ -75,20 +75,7 @@ defmodule GroupherServer.Messaging.Notifications do
       {:ok, notifications} ->
         Multi.new()
         |> Multi.run(:revoke_notifications, fn _, _ ->
-          Enum.each(notifications, fn notify ->
-            case length(notify.from_users) == 1 do
-              true ->
-                ORM.delete(notify)
-
-              false ->
-                from_users =
-                  notify.from_users
-                  |> normalize_embed_users()
-                  |> Enum.reject(&(&1.login == from_user.login))
-
-                notify |> ORM.update_embed(:from_users, from_users)
-            end
-          end)
+          Enum.each(notifications, &revoke_notification(&1, from_user))
           |> done
         end)
         |> Multi.run(:update_user_mailbox_status, fn _, _ ->
@@ -101,6 +88,21 @@ defmodule GroupherServer.Messaging.Notifications do
 
       {:error, _reason} ->
         {:ok, :pass}
+    end
+  end
+
+  defp revoke_notification(notify, from_user) do
+    case length(notify.from_users) == 1 do
+      true ->
+        ORM.delete(notify)
+
+      false ->
+        from_users =
+          notify.from_users
+          |> normalize_embed_users()
+          |> Enum.reject(&(&1.login == from_user.login))
+
+        ORM.update_embed(notify, :from_users, from_users)
     end
   end
 

@@ -5,8 +5,8 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
 
   @total_count 35
 
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {:ok, user} = db_insert(:user)

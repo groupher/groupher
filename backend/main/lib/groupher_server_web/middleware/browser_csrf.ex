@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
         -> GraphQL field result
   """
 
+  alias Absinthe.Phase.Parse
   import Plug.Conn
 
   @behaviour Plug
@@ -70,7 +71,7 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
   defp mutation_params?(_), do: false
 
   defp mutation_operation?(query, operation_name) do
-    case Absinthe.Phase.Parse.run(query, []) do
+    case Parse.run(query, []) do
       {:ok, %{input: %Absinthe.Language.Document{definitions: definitions}}} ->
         operations =
           Enum.filter(definitions, &match?(%Absinthe.Language.OperationDefinition{}, &1))

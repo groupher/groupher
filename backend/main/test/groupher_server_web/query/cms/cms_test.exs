@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.Category
+  alias GroupherServer.CMS.Model.Category
 
   defp create_community!(user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community, attrs)
@@ -47,7 +47,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert check["reasonCode"] == "slug_claimed"
     end
 
-    test "reports reserved names as unavailable", do: assert_name_unavailable("home", "reserved_slug")
+    test "reports reserved names as unavailable",
+      do: assert_name_unavailable("home", "reserved_slug")
 
     defp assert_name_unavailable(slug, reason) do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})

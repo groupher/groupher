@@ -687,17 +687,17 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def q(:operation_logs) do
+  def q(:article_logs) do
     """
-    query($article: ArticlePathInput!, $filter: OperationLogFilter) {
-      articleOperationLogs(article: $article, filter: $filter) {
+    query($article: ArticlePathInput!, $filter: ArticleLogFilter) {
+      articleLogs(article: $article, filter: $filter) {
         entries {
           id
           action
           actor { type id nickname avatar }
           subject { type ref title innerId }
           target { type ref title innerId }
-          changes
+          payload
           occurredAt
         }
         pageNumber

@@ -14,13 +14,13 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   aligned before user pages are revalidated.
   """
 
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.FrontDesk, as: RootFrontDesk
-  alias Accounts.{Events, FrontDesk}
-  alias Accounts.Model.{User, UserFollower, UserFollowing}
-  alias Helper.{Multi, Later, ORM, T}
-  alias GroupherServer.Repo
+  alias GroupherServer.Accounts.Achievements
+  alias GroupherServer.Accounts.{Events, FrontDesk}
   alias GroupherServer.Accounts.Fans.ErrorCat
+  alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
+  alias GroupherServer.Repo
+  alias Helper.{Later, Multi, ORM, T}
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do
@@ -43,7 +43,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
         update_user_follow_info(target_user, user, :add)
       end)
       |> Multi.run(:add_achievement, fn _, _ ->
-        GroupherServer.Accounts.Achievements.achieve(%User{id: target_user.id}, :inc, :follow)
+        Achievements.achieve(%User{id: target_user.id}, :inc, :follow)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
         Later.run({Events, :emit, [:follow, %{user: user, from_user: follower}]})
@@ -76,7 +76,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
         update_user_follow_info(target_user, user, :remove)
       end)
       |> Multi.run(:minus_achievement, fn _, _ ->
-        GroupherServer.Accounts.Achievements.achieve(%User{id: target_user.id}, :dec, :follow)
+        Achievements.achieve(%User{id: target_user.id}, :dec, :follow)
       end)
       |> Multi.run(:after_hooks, fn _, _ ->
         Later.run({Events, :emit, [:undo_follow, %{user: user, from_user: follower}]})

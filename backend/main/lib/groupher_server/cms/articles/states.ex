@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias GroupherServer.Repo
 
   alias GroupherServer.CMS.{Articles.Lifecycle, Communities, FrontDesk}
-  alias GroupherServer.CMS.Artiment.Enums
+  alias GroupherServer.CMS.Artiment.Const
   alias GroupherServer.CMS.Comments.Writer
   alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
   alias GroupherServer.CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Articles.States do
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
   @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
-  @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat Const.cat_values() |> Enum.into(%{}, &{&1, &1})
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 

@@ -4,8 +4,8 @@ defmodule Scripts.MigratePassportRules do
   import Ecto.Query, warn: false
 
   alias Ecto.Changeset
-  alias GroupherServer.Repo
   alias GroupherServer.CMS.Model.Passport
+  alias GroupherServer.Repo
   alias Helper.PermissionRegistry
 
   @empty_rules %{"global" => %{}, "cms" => %{}}

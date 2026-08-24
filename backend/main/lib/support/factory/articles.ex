@@ -382,10 +382,7 @@ defmodule GroupherServer.Support.Factory.Articles do
       text,
       default_emotions
     )
-    |> Map.merge(%{
-      digest: String.slice(text, 100, 150),
-      solution_digest: String.slice(text, 1, 150)
-    })
+    |> Map.put(:digest, String.slice(text, 100, 150))
   end
 
   def changelog_base(default_article_meta, default_emotions) do
@@ -402,7 +399,6 @@ defmodule GroupherServer.Support.Factory.Articles do
     )
     |> Map.merge(%{
       digest: String.slice(text, 100, 150),
-      solution_digest: String.slice(text, 1, 150),
       length: String.length(text)
     })
   end
@@ -421,7 +417,6 @@ defmodule GroupherServer.Support.Factory.Articles do
     )
     |> Map.merge(%{
       digest: String.slice(text, 100, 150),
-      solution_digest: String.slice(text, 1, 150),
       length: String.length(text)
     })
   end

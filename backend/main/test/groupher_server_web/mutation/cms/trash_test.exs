@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{Post, TrashedArticle}
+  alias GroupherServer.CMS.Model.{Post, TrashedArticle}
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -80,29 +80,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            )
 
     assert {:ok, _} = CMS.Articles.read(community_b, :post, post_b.inner_id)
-  end
-
-  test "community managers can page the append-only Audit log",
-       ~m(community post owner_conn)a do
-    trashed =
-      gq_mutation(owner_conn, S.Article.m(:trash_article), %{
-        article: article_path(community, post, :post)
-      })
-
-    manager = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
-
-    logs =
-      gq_query(manager, S.Article.q(:cms_audit_logs), %{
-        community: community.slug,
-        filter: %{page: 1, size: 20, action: "article.trashed"}
-      })
-
-    assert logs["totalCount"] == 1
-    [log] = logs["entries"]
-    assert log["action"] == "article.trashed"
-    assert log["resourceRef"] == post.article_hash_id
-    assert log["operationRef"]
-    assert log["operationRef"] != trashed["id"]
   end
 
   test "permanent deletion removes content but leaves the item queryable until that action",

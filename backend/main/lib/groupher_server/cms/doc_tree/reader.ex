@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Reader do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Reader helpers for the docs editor tree.
 
@@ -17,26 +18,27 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Docs.Branch
-  alias CMS.DocTree.{ChangeDetection, Events}
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.DocTree.{ChangeDetection, Events}
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
 
   require CMS.Const
 
-  alias CMS.Model.{
-    DocSnapshot,
-    Doc,
+  alias GroupherServer.CMS.Model.{
     Community,
+    Doc,
     DocCoverCard,
     DocCoverItem,
     DocCoverPinnedDoc,
+    DocPublishRelease,
+    DocSnapshot,
     DocsSiteState,
     DocTreeEvent,
-    DocTreeNode,
-    DocPublishRelease
+    DocTreeNode
   }
 
+  alias GroupherServer.CMS.Articles.Trash
   alias Helper.{ORM, T, Transaction}
 
   @doc """
@@ -69,7 +71,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
             Enum.map(
               Events.staged_events(community,
                 branch_id: branch.id,
-                owner: CMS.Const.tree_event_owner(:tree)
+                owner: CMS.DocTree.Const.tree_event_owner(:tree)
               ),
               &event_to_map/1
             ),
@@ -143,7 +145,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     with {:ok, branch} <- Branch.resolve(community, opts) do
       query =
         Doc
-        |> CMS.Articles.Trash.not_trashed_scope(:doc)
+        |> Trash.not_trashed_scope(:doc)
         |> CMS.Gate.scope(actor, :read_draft, DocScope.draft(branch.id, policy_mode))
 
       case query do
@@ -515,7 +517,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
     draft_versions =
       Doc
-      |> CMS.Articles.Trash.not_trashed_scope(:doc)
+      |> Trash.not_trashed_scope(:doc)
       |> where([v], v.community_id == ^community.id)
       |> where([v], v.branch_id == ^branch.id)
       |> where([v], v.article_hash_id in ^doc_ids)

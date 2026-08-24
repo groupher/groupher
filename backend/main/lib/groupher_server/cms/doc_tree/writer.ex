@@ -18,13 +18,13 @@ defmodule GroupherServer.CMS.DocTree.Writer do
       doc_tree_events(owner=doc, doc_id)  ->  Doc publish
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
-  alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Draft, MutationLock}
-  alias CMS.DocTree.{Events, Reader}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Articles.{Draft, MutationLock}
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.DocTree.{Events, Reader}
 
-  alias CMS.DocTree.Writer.{
+  alias GroupherServer.CMS.DocTree.Writer.{
     DraftDoc,
     EventRecorder,
     Identity,
@@ -34,12 +34,13 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     Trash
   }
 
-  alias CMS.Model.{
-    Doc,
+  alias GroupherServer.CMS.Model.{
     Community,
+    Doc,
     DocTreeNode
   }
 
+  alias GroupherServer.CMS.Docs.Branch
   alias Helper.{ORM, T}
 
   require CMS.Const
@@ -276,7 +277,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   """
   @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
   def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, args) do
+    with {:ok, branch} <- Branch.resolve(community, args) do
       DraftDoc.update(community, branch, doc_id, args, user)
     end
   end
@@ -440,45 +441,46 @@ defmodule GroupherServer.CMS.DocTree.Writer do
          %DocTreeNode{type: :page} = node,
          args
        ) do
-    with %User{} = actor <- Repo.get(User, Map.get(args, :actor_id)) do
-      MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
-        with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
-             source <- Repo.preload(source, :document),
-             %{json: json} = document when is_binary(json) <- source.document,
-             {:ok, body_bag} <- BodyBag.from_document(document),
-             title <-
-               Map.get(args, :duplicate_title) ||
-                 Identity.unique_copy_title(
+    case Repo.get(User, Map.get(args, :actor_id)) do
+      %User{} = actor ->
+        MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
+          with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
+               source <- Repo.preload(source, :document),
+               %{json: json} = document when is_binary(json) <- source.document,
+               {:ok, body_bag} <- BodyBag.from_document(document),
+               title <-
+                 Map.get(args, :duplicate_title) ||
+                   Identity.unique_copy_title(
+                     community,
+                     branch,
+                     node.parent_node_id,
+                     node.title
+                   ),
+               slug <- Identity.unique_doc_slug(community, branch, source.slug),
+               {:ok, draft} <-
+                 Draft.create(
                    community,
-                   branch,
-                   node.parent_node_id,
-                   node.title
+                   :doc,
+                   %{
+                     branch_id: branch.id,
+                     title: title,
+                     slug: slug,
+                     subtitle: source.subtitle,
+                     body_bag: body_bag
+                   },
+                   actor
                  ),
-             slug <- Identity.unique_doc_slug(community, branch, source.slug),
-             {:ok, draft} <-
-               Draft.create(
-                 community,
-                 :doc,
-                 %{
-                   branch_id: branch.id,
-                   title: title,
-                   slug: slug,
-                   subtitle: source.subtitle,
-                   body_bag: body_bag
-                 },
-                 actor
-               ),
-             {:ok, _mentions} <- CMS.ArtimentMentions.sync(draft) do
-          duplicate_tree_node(community, branch, node, args, draft.article_hash_id,
-            title: title,
-            slug: slug
-          )
-        else
-          nil -> {:error, GroupherServer.ErrorCat.custom("Source Doc content is missing")}
-          error -> error
-        end
-      end)
-    else
+               {:ok, _mentions} <- CMS.ArtimentMentions.sync(draft) do
+            duplicate_tree_node(community, branch, node, args, draft.article_hash_id,
+              title: title,
+              slug: slug
+            )
+          else
+            nil -> {:error, GroupherServer.ErrorCat.custom("Source Doc content is missing")}
+            error -> error
+          end
+        end)
+
       nil ->
         {:error, GroupherServer.ErrorCat.custom("Duplicate Page requires an authenticated actor")}
     end

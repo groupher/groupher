@@ -5,7 +5,8 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.Post
+  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Model.Post
   alias Helper.Utils
 
   describe "map atom value up upcase str" do
@@ -218,7 +219,7 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
   end
 
   test "handle_absinthe_error keeps the code owned by a typed ErrorCat value" do
-    error = CMS.Communities.ErrorCat.active_application_exists("already active")
+    error = ErrorCat.active_application_exists("already active")
 
     result =
       Helper.Utils.handle_absinthe_error(

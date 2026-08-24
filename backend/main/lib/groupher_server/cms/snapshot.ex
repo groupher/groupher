@@ -18,9 +18,10 @@ defmodule GroupherServer.CMS.Snapshot do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Model.{Comment, CommentLifecycle}
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Model.{Comment, CommentLifecycle}
   alias Helper.Cache
 
   @pool :snapshot
@@ -319,15 +320,17 @@ defmodule GroupherServer.CMS.Snapshot do
   end
 
   defp load_summaries(:article, thread, ids) do
-    with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
-      model
-      |> CMS.Gate.scope(nil, :list, scope_context(thread))
-      |> where([article], article.id in ^ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, article_summary(thread, &1)})
-      |> with_unavailable(ids, &unavailable_article(thread, &1))
-    else
-      _ -> %{}
+    case Matcher.match(thread) do
+      {:ok, %{model: model}} ->
+        model
+        |> CMS.Gate.scope(nil, :list, scope_context(thread))
+        |> where([article], article.id in ^ids)
+        |> Repo.all()
+        |> Map.new(&{&1.id, article_summary(thread, &1)})
+        |> with_unavailable(ids, &unavailable_article(thread, &1))
+
+      _ ->
+        %{}
     end
   end
 
@@ -342,7 +345,6 @@ defmodule GroupherServer.CMS.Snapshot do
     |> Map.new(fn {comment, state} -> {comment.id, comment_summary(thread, comment, state)} end)
     |> with_unavailable(ids, &unavailable_comment(thread, &1))
   end
-
 
   defp put_summaries(summary_by_id, kind, thread, opts) when is_map(summary_by_id) do
     ttl_seconds = Keyword.get(opts, :ttl, @default_ttl_seconds)

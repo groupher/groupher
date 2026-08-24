@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.CMS.Articles.Document do
   @moduledoc false
 
+  alias GroupherServer.CMS.Articles.Document
   use GroupherServer.TestMate
 
   @plate_body Jason.encode!([
@@ -17,16 +18,16 @@ defmodule GroupherServer.Test.CMS.Articles.Document do
     test "returns custom error shape when document already exists", ~m(doc)a do
       assert {:error,
               %GroupherServer.ErrorCat.Error{reason: :custom, details: "document already exists"}} =
-               CMS.Articles.Document.create(doc, %{body_bag: mock_body_bag(@plate_body)})
+               Document.create(doc, %{body_bag: mock_body_bag(@plate_body)})
 
       assert {:error,
               %GroupherServer.ErrorCat.Error{reason: :custom, details: "document already exists"}} =
-               CMS.Articles.Document.create_doc(doc, %{body_bag: mock_body_bag(@plate_body)})
+               Document.create_doc(doc, %{body_bag: mock_body_bag(@plate_body)})
     end
 
     test "returns invalid article errors" do
       assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid article"}} =
-               CMS.Articles.Document.create(%{}, %{body_bag: mock_body_bag(@plate_body)})
+               Document.create(%{}, %{body_bag: mock_body_bag(@plate_body)})
     end
   end
 end

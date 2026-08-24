@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Communities.Creation do
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Atomic Community identity creation from one approved Application.
 
@@ -25,9 +26,8 @@ defmodule GroupherServer.CMS.Communities.Creation do
     CommunityApplicationLogoUpload
   }
 
-  alias Helper.Constant
 
-  @community_applying Constant.CMS.pending(:applying)
+  @community_applying GroupherServer.CMS.Communities.Const.pending_state(:applying)
 
   @doc """
   Creates a Community from one approved Application inside a single transaction.

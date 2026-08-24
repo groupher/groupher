@@ -21,7 +21,7 @@ defmodule GroupherServer.Activity.Community do
     lifecycle_reconciled: Event.contract([], [:state, :reason], [:community_log])
   }
 
-  def contracts, do: @contracts
+  def contracts, do: Event.classify_contracts(@contracts)
   def schema, do: CommunityLog
   def stream_field, do: :community_ref
   def resource_type, do: :community

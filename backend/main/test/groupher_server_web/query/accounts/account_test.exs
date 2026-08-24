@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.CommunitySubscriber
+  alias GroupherServer.CMS.Model.CommunitySubscriber
+  alias Helper.Guardian.BrowserAccess
 
   @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
@@ -41,7 +42,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       session_expires_at = DateTime.add(DateTime.utc_now(), 3600, :second)
 
       {:ok, token, _claims} =
-        Helper.Guardian.BrowserAccess.encode(
+        BrowserAccess.encode(
           user,
           Ecto.UUID.generate(),
           session_expires_at

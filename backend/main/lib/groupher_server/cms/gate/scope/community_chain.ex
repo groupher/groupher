@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Compiles the public ancestor-Community boundary for CMS child resources.
 
@@ -17,7 +19,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.{Communities, Const}
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Docs.Const
   alias GroupherServer.CMS.Gate.ErrorCat
 
   alias GroupherServer.CMS.Model.{
@@ -30,12 +33,11 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     DocLifecycle
   }
 
-  alias Helper.Constant
 
   require Const
 
-  @community_normal Constant.CMS.pending(:normal)
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
   @document_public_article_states [:published, :archived]
   @document_draft_article_states [:draft_only, :published, :archived]
   @reserved_aliases [

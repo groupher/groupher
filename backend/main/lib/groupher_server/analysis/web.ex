@@ -17,15 +17,20 @@ defmodule GroupherServer.Analysis.Web do
         -> Repo / analytics provider
   """
 
-  alias __MODULE__.Config
   alias __MODULE__.Community, as: AnalysisCommunity
-  alias GroupherServer.{CMS, Repo}
+  alias __MODULE__.Config
+  alias GroupherServer.CMS.Dashboard.Writer
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias GroupherServer.Repo
   alias Helper.{Cache, Transaction}
 
   @config Config.base()
   @active_cache_seconds 30
+  @visitor_location_days 30
+  @visitor_location_cache_seconds 15 * 60
+  @visitor_location_error_cache_seconds 30
+  @visitor_region_limit 10
+  @visitor_region_countries ~w(CN US CA RU AU BR IN ID)
 
   @type page_dimension :: :path | :entry | :exit | :title | :query
   @type source_dimension :: :referrer | :channel | :domain
@@ -148,6 +153,22 @@ defmodule GroupherServer.Analysis.Web do
     end)
   end
 
+  @doc "Returns the public, fixed-window visitor distribution for the About page."
+  @spec visitor_location_map(Community.t()) :: {:ok, map()}
+  def visitor_location_map(%Community{} = community) do
+    range = resolve_range(%{days: @visitor_location_days})
+
+    with {:ok, dashboard} <- dashboard_for(community) do
+      if visitor_location_map_enabled?(dashboard) do
+        load_visitor_location_map(community, dashboard, range)
+      else
+        {:ok, %{status: "ok", range: range, countries: [], error: nil}}
+      end
+    else
+      {:error, reason} -> {:ok, unavailable_visitor_location_payload(range, reason)}
+    end
+  end
+
   @doc """
   Returns the UTC weekly traffic heatmap.
   """
@@ -218,6 +239,137 @@ defmodule GroupherServer.Analysis.Web do
 
   defp provider, do: @config.provider
 
+  defp load_visitor_location_map(community, dashboard, range) do
+    provider = provider()
+
+    with :ok <- ensure_runtime_configured(),
+         website_id when is_binary(website_id) <- dashboard.umami_website_id do
+      community_analysis = AnalysisCommunity.from_community(community, website_id)
+      key = "analysis.visitor_location_map.#{website_id}"
+
+      case cached_visitor_locations(key, fn ->
+             provider.visitor_locations(community_analysis, range)
+           end) do
+        {:ok, payload} -> {:ok, visitor_location_payload(payload, range)}
+        {:error, reason} -> {:ok, unavailable_visitor_location_payload(range, reason)}
+      end
+    else
+      nil -> {:ok, unavailable_visitor_location_payload(range, ErrorCat.not_configured())}
+      {:error, reason} -> {:ok, unavailable_visitor_location_payload(range, reason)}
+    end
+  end
+
+  defp cached_visitor_locations(key, loader) do
+    result =
+      Cache.get_or_fetch(:common, key, [expire_sec: @visitor_location_error_cache_seconds], fn ->
+        {:ok, loader.()}
+      end)
+
+    case result do
+      {:ok, {:ok, payload}} ->
+        Cache.put(:common, key, {:ok, payload}, expire_sec: @visitor_location_cache_seconds)
+        {:ok, payload}
+
+      {:ok, {:error, reason}} ->
+        {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp visitor_location_map_enabled?(%CommunityDashboard{enable: enable}) do
+    not is_nil(enable) and enable.about == true and enable.visitor_location_map == true
+  end
+
+  defp visitor_location_payload(payload, range) do
+    countries =
+      visitor_countries(Map.get(payload, :countries, []), Map.get(payload, :regions, []))
+
+    region_error = Map.get(payload, :region_error)
+
+    %{
+      status: "ok",
+      range: range,
+      countries: countries,
+      error: if(region_error, do: error_payload(region_error, "region"), else: nil)
+    }
+  end
+
+  @doc false
+  def visitor_countries(country_rows, region_rows) do
+    countries =
+      country_rows
+      |> Enum.filter(fn row ->
+        String.match?(Map.get(row, :code, ""), ~r/^[A-Z]{2}$/) and
+          Map.get(row, :visitors, 0) > 0
+      end)
+      |> Enum.group_by(& &1.code, & &1.visitors)
+      |> Enum.map(fn {code, visitors} -> %{code: code, visitors: Enum.sum(visitors)} end)
+
+    total_visitors = Enum.sum(Enum.map(countries, & &1.visitors))
+    top_countries = countries |> Enum.sort_by(& &1.visitors, :desc) |> Enum.take(5)
+    top_visitors = Enum.sum(Enum.map(top_countries, & &1.visitors))
+
+    displayed =
+      Enum.map(top_countries, fn country ->
+        Map.merge(country, %{
+          percentage: percentage_of(country.visitors, total_visitors),
+          regions: visitor_regions(region_rows, country.code)
+        })
+      end)
+
+    other_visitors = max(total_visitors - top_visitors, 0)
+
+    if other_visitors > 0 do
+      displayed_percentage = Enum.sum(Enum.map(displayed, & &1.percentage))
+      other_percentage = Float.round(100.0 - displayed_percentage, 1)
+
+      displayed =
+        if other_percentage < 0,
+          do: adjust_last_percentage(displayed, other_percentage),
+          else: displayed
+
+      displayed ++
+        [
+          %{
+            code: "OTHER",
+            visitors: other_visitors,
+            percentage: max(other_percentage, 0.0),
+            regions: []
+          }
+        ]
+    else
+      adjust_last_percentage(
+        displayed,
+        Float.round(100.0 - Enum.sum(Enum.map(displayed, & &1.percentage)), 1)
+      )
+    end
+  end
+
+  defp adjust_last_percentage([], _adjustment), do: []
+
+  defp adjust_last_percentage(rows, adjustment) do
+    List.update_at(rows, -1, fn row ->
+      Map.update!(row, :percentage, &Float.round(&1 + adjustment, 1))
+    end)
+  end
+
+  defp visitor_regions(_rows, country_code) when country_code not in @visitor_region_countries,
+    do: []
+
+  defp visitor_regions(rows, country_code) do
+    rows
+    |> Enum.filter(&(&1.country_code == country_code and &1.visitors > 0))
+    |> Enum.group_by(& &1.code, & &1.visitors)
+    |> Enum.map(fn {code, visitors} -> %{code: code, visitors: Enum.sum(visitors)} end)
+    |> Enum.sort_by(& &1.visitors, :desc)
+    |> Enum.take(@visitor_region_limit)
+  end
+
+  defp percentage_of(_value, 0), do: 0.0
+  defp percentage_of(value, total), do: Float.round(value / total * 100, 1)
+
   defp prepare_community(%Community{} = community, provider) do
     with :ok <- ensure_runtime_configured(),
          :ok <- ensure_persisted_community(community),
@@ -227,7 +379,7 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  defp dashboard_for(%Community{} = community), do: CMS.Dashboard.Writer.ensure_exist(community)
+  defp dashboard_for(%Community{} = community), do: Writer.ensure_exist(community)
 
   defp ensure_runtime_configured do
     case Config.runtime().api_token do
@@ -361,6 +513,15 @@ defmodule GroupherServer.Analysis.Web do
 
   defp unavailable_traffic_payload(reason) do
     %{status: "unavailable", timezone: "UTC", cells: [], error: error_payload(reason, "traffic")}
+  end
+
+  defp unavailable_visitor_location_payload(range, reason) do
+    %{
+      status: "unavailable",
+      range: range,
+      countries: [],
+      error: error_payload(reason, "country")
+    }
   end
 
   defp overview_status([]), do: "ok"

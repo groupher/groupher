@@ -21,17 +21,17 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.ContentImport.Process
   alias GroupherServer.CMS.ContentImport.Persistence.Connection
   alias GroupherServer.CMS.ContentImport.Persistence.Job
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
+  alias GroupherServer.CMS.ContentImport.Process
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.ErrorCat
   alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.Repo
 
   @doc "Creates or idempotently resumes the Job bound to one confirmed Preview intent."
   @spec create(Community.t(), User.t(), map()) :: {:ok, map()} | {:error, term()}
@@ -50,11 +50,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
                preview_ref: Map.fetch!(input, :preview_ref)
              ) do
           %Job{} = job ->
-            with :ok <- assert_same_job(job, input, source_info, item_attrs) do
-              project(job)
-            else
-              {:error, reason} -> Repo.rollback(reason)
-            end
+            resume_job(job, input, source_info, item_attrs)
 
           nil ->
             attrs = %{
@@ -81,14 +77,25 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
               thread: :doc
             }
 
-            with {:ok, job} <- %Job{} |> Job.changeset(attrs) |> Repo.insert(),
-                 :ok <- insert_items(job, item_attrs) do
-              project(job)
-            else
-              {:error, reason} -> Repo.rollback(reason)
-            end
+            create_new_job(attrs, item_attrs)
         end
       end)
+    end
+  end
+
+  defp resume_job(job, input, source_info, item_attrs) do
+    case assert_same_job(job, input, source_info, item_attrs) do
+      :ok -> project(job)
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp create_new_job(attrs, item_attrs) do
+    with {:ok, job} <- %Job{} |> Job.changeset(attrs) |> Repo.insert(),
+         :ok <- insert_items(job, item_attrs) do
+      project(job)
+    else
+      {:error, reason} -> Repo.rollback(reason)
     end
   end
 

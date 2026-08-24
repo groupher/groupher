@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
     row
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_subset(:actions, CMS.Const.release_article_action_enum_values())
+    |> validate_subset(:actions, CMS.DocPublishRelease.Const.release_article_action_enum_values())
     |> foreign_key_constraint(:release_id)
     |> foreign_key_constraint(:snapshot_id)
   end

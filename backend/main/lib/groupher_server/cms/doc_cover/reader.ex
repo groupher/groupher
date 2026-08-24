@@ -14,22 +14,24 @@ defmodule GroupherServer.CMS.DocCover.Reader do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.{Community, Doc, DocCoverPinnedDoc, DocCoverCard, DocTreeNode}
+  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{Community, Doc, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
   alias Helper.T
 
   require CMS.Const
+  require GroupherServer.CMS.DocCover.Const
 
   @type view :: :public | :dashboard
 
   @doc "Allowed cover read views."
-  def view_values, do: CMS.Const.cover_view_enum_values()
+  def view_values, do: CMS.DocCover.Const.cover_view_enum_values()
 
   @doc "Reads Group Cards and pinned docs for one community."
   @spec read(Community.t(), view(), User.t() | nil) :: T.domain_res(map())
-  def read(%Community{} = community, view \\ CMS.Const.cover_view(:public), actor \\ nil)
-      when view in CMS.Const.cover_view_values() do
+  def read(%Community{} = community, view \\ CMS.DocCover.Const.cover_view(:public), actor \\ nil)
+      when view in CMS.DocCover.Const.cover_view_values() do
     with :ok <- authorize_view(community, view, actor) do
       do_read(community, view)
     end
@@ -115,7 +117,7 @@ defmodule GroupherServer.CMS.DocCover.Reader do
     end
   end
 
-  defp authorize_view(_community, :dashboard, _actor), do: {:error, GroupherServer.Accounts.Profiles.ErrorCat.account_login()}
+  defp authorize_view(_community, :dashboard, _actor), do: {:error, ErrorCat.account_login()}
 
   defp card_item(
          _community,
@@ -215,13 +217,15 @@ defmodule GroupherServer.CMS.DocCover.Reader do
         %DocTreeNode{type: type} = node when type in [:page, :link] ->
           node
           |> node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id)
-          |> then(fn item -> if displayable_item?(item), do: [item], else: [] end)
+          |> displayable_item()
 
         _node ->
           []
       end)
     end
   end
+
+  defp displayable_item(item), do: if(displayable_item?(item), do: [item], else: [])
 
   defp node_map(
          %DocTreeNode{} = node,

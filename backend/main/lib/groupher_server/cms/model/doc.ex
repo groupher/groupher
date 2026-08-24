@@ -19,9 +19,7 @@ defmodule GroupherServer.CMS.Model.Doc do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS
 
-  require CMS.Const
 
   alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix

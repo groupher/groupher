@@ -14,12 +14,12 @@ defmodule GroupherServer.Support.Factory do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Messaging}
+  alias GroupherServer.{CMS, Messaging}
   alias GroupherServer.Support.FakeData
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Author,
     Blog,
     Category,
@@ -32,6 +32,7 @@ defmodule GroupherServer.Support.Factory do
     Post
   }
 
+  alias GroupherServer.CMS.Docs.Branch
   alias Helper.ORM
 
   require CMS.Const
@@ -247,7 +248,7 @@ defmodule GroupherServer.Support.Factory do
   defp maybe_put_default_article_community(record), do: record
 
   defp maybe_put_default_doc_branch(%Doc{branch_id: nil} = article) do
-    {:ok, branch} = CMS.Docs.Branch.resolve(article.community, CMS.Docs.Branch.main_slug())
+    {:ok, branch} = Branch.resolve(article.community, Branch.main_slug())
 
     %{
       article

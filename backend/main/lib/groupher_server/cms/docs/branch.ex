@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Docs.Branch do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Resolves the Docs-only workspace branch coordinate.
 
@@ -12,7 +13,6 @@ defmodule GroupherServer.CMS.Docs.Branch do
   alias GroupherServer.CMS.Model.{Community, DocBranch}
   alias Helper.{ORM, Transaction}
 
-  require CMS.Const
 
   @main_slug "main"
 
@@ -76,8 +76,8 @@ defmodule GroupherServer.CMS.Docs.Branch do
     with {:ok, branch} <- resolve(community, ref), do: {:ok, branch.id}
   end
 
-  def main?(%DocBranch{type: type}), do: type == CMS.Const.doc_branch_type(:main)
-  def preview?(%DocBranch{type: type}), do: type == CMS.Const.doc_branch_type(:preview)
+  def main?(%DocBranch{type: type}), do: type == CMS.Docs.Const.doc_branch_type(:main)
+  def preview?(%DocBranch{type: type}), do: type == CMS.Docs.Const.doc_branch_type(:preview)
 
   def create_preview(%Community{} = community, attrs, %User{} = user) do
     source_ref = option(attrs, :source_branch_id) || @main_slug
@@ -89,8 +89,8 @@ defmodule GroupherServer.CMS.Docs.Branch do
         created_by_id: user.id,
         slug: option(attrs, :slug),
         title: option(attrs, :title) || option(attrs, :slug),
-        type: CMS.Const.doc_branch_type(:preview),
-        status: CMS.Const.doc_branch_status(:active)
+        type: CMS.Docs.Const.doc_branch_type(:preview),
+        status: CMS.Docs.Const.doc_branch_status(:active)
       })
     end
   end
@@ -106,8 +106,8 @@ defmodule GroupherServer.CMS.Docs.Branch do
             community_id: community.id,
             slug: @main_slug,
             title: @main_slug,
-            type: CMS.Const.doc_branch_type(:main),
-            status: CMS.Const.doc_branch_status(:active)
+            type: CMS.Docs.Const.doc_branch_type(:main),
+            status: CMS.Docs.Const.doc_branch_status(:active)
           })
       end
     end)

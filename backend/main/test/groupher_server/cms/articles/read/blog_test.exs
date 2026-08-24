@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.ArticleDocument
+  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Model.ArticleDocument
   @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
 
   setup do
@@ -104,7 +105,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
         )
 
       assert blog.id == blog2.id
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(blog2, user).viewer_has_viewed
     end
 
@@ -126,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       {:ok, _} = CMS.Articles.read(article_community(blog), :blog, blog.inner_id, user, event_id)
 
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(blog, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
@@ -141,7 +142,7 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
         )
 
       {:ok, created} = ORM.find(Blog, blog.id)
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert created.views == 1
       assert CMS.Interactions.viewer_state(blog, user).viewer_has_viewed
       assert CMS.Interactions.viewer_state(blog, user2).viewer_has_viewed

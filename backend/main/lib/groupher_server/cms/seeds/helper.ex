@@ -17,11 +17,12 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias CMS.Model.{Category, Community}
-  alias CMS.Artiment.Threads
-  alias CMS.Seeds.SeedsConfig
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.{Category, Community}
+  alias GroupherServer.CMS.Seeds.SeedsConfig
 
+  alias GroupherServer.CMS.Seeds.Tags
   alias Helper.ORM
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
@@ -51,7 +52,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
     {:ok, thread} = Threads.to_atom(slug)
 
     Enum.each(
-      CMS.Seeds.Tags.get(community, thread, type),
+      Tags.get(community, thread, type),
       &CMS.Communities.create_tag(community, thread, &1, bot)
     )
   end

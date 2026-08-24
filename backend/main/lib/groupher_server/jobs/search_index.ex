@@ -10,10 +10,12 @@ defmodule GroupherServer.Jobs.SearchIndex do
         -> context / service
   """
 
+  alias GroupherServer.Jobs.Config
+
   use Oban.Worker,
-    queue: GroupherServer.Jobs.Config.queue(:search_index),
-    max_attempts: GroupherServer.Jobs.Config.max_attempts(:search_index),
-    unique: GroupherServer.Jobs.Config.unique(:search_index)
+    queue: Config.queue(:search_index),
+    max_attempts: Config.max_attempts(:search_index),
+    unique: Config.unique(:search_index)
 
   alias GroupherServer.CMS.SearchArtiments.Indexer
 

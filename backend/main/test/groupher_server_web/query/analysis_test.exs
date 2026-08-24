@@ -13,6 +13,7 @@ defmodule GroupherServer.Test.Query.Analysis do
   @traffic_query S.Analysis.q(:traffic)
   @summary_query S.Analysis.q(:summary)
   @tracking_query S.Analysis.q(:tracking_website_id)
+  @visitor_location_map_query S.Analysis.q(:visitor_location_map)
 
   setup do
     {community, _post, _attrs, _user} = mock_article(:post)
@@ -115,6 +116,20 @@ defmodule GroupherServer.Test.Query.Analysis do
       result = guest_conn |> gq_query(@tracking_query, %{community: community.slug})
 
       assert is_nil(result)
+    end
+
+    test "guest can query a disabled public visitor map without provisioning Umami",
+         ~m(guest_conn community)a do
+      result =
+        guest_conn
+        |> gq_query(@visitor_location_map_query, %{community: community.slug})
+
+      assert result == %{
+               "status" => "ok",
+               "range" => %{"days" => 30},
+               "countries" => [],
+               "error" => nil
+             }
     end
   end
 end

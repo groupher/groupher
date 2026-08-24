@@ -38,5 +38,5 @@ defmodule GroupherServer.Activity.Doc do
       Event.contract([], [:case_ref, :decision], [:community_log]) |> Event.contract_only()
   }
 
-  def contracts, do: @contracts
+  def contracts, do: Event.classify_contracts(@contracts)
 end

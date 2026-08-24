@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocPublishRelease do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Persists release history for one unified docs publish.
 
@@ -23,28 +24,29 @@ defmodule GroupherServer.CMS.DocPublishRelease do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.DocTree.Events
-  alias CMS.DocTree.Publish.{Checklist, PublicProjection, Result}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.DocTree.Publish.{Checklist, PublicProjection, Result}
 
-  alias CMS.Model.{
-    DocSnapshot,
+  alias GroupherServer.CMS.Model.{
     Community,
-    DocTreeEvent,
-    DocTreeNode,
-    DocsSiteState,
     DocPublishRelease,
     DocPublishReleaseArticle,
-    DocPublishReleaseTreeEvent
+    DocPublishReleaseTreeEvent,
+    DocSnapshot,
+    DocsSiteState,
+    DocTreeEvent,
+    DocTreeNode
   }
 
+  alias GroupherServer.CMS.DocTree.Snapshot
   alias Helper.ORM
 
   require CMS.Const
 
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
 
   @doc "Creates the Docs-only release that binds published Doc and Tree snapshots."
   def create(
@@ -55,7 +57,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
         %{events: tree_events, doc_snapshots: doc_snapshots}
       ) do
     release_number = next_release_number(community, branch)
-    tree_json = CMS.DocTree.Snapshot.published_json(community, branch_id: branch.id)
+    tree_json = Snapshot.published_json(community, branch_id: branch.id)
     event_ids = Enum.map(tree_events, & &1.id)
 
     with {:ok, tree_snapshot} <-
@@ -223,7 +225,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          %Community{} = community,
          branch,
          %DocTreeEvent{
-           event_type: CMS.Const.tree_event(:node_delete),
+           event_type: CMS.DocTree.Const.tree_event(:node_delete),
            node_type: @tree_node_type_group,
            node_id: id
          } = event
@@ -242,7 +244,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          %Community{} = community,
          branch,
          %DocTreeEvent{
-           event_type: CMS.Const.tree_event(:node_delete),
+           event_type: CMS.DocTree.Const.tree_event(:node_delete),
            node_type: @tree_node_type_page
          } = event
        ) do

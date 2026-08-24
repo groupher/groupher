@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.FrontDesk do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   CMS domain front desk for reading/fetching and helper operations.
 
@@ -28,7 +29,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.{Comment, Community, CommunityTag}
-  alias Helper.{ORM, QueryBuilder, T}
+  alias Helper.{ORM, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
 

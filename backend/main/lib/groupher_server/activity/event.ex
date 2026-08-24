@@ -18,7 +18,22 @@ defmodule GroupherServer.Activity.Event do
             [:actor, :subject, :target, :payload, :occurred_at]
 
           :community_log ->
-            [:resource, :actor, :subject, :target, :source, :payload, :metadata, :occurred_at]
+            [
+              :resource,
+              :actor,
+              :subject,
+              :target,
+              :source,
+              :payload,
+              :metadata,
+              :occurred_at,
+              :event_ref,
+              :operation_ref,
+              :parent_event_ref,
+              :category,
+              :high_risk,
+              :message_key
+            ]
         end
 
       exposed_metadata = if surface == :article_log, do: [], else: metadata
@@ -38,6 +53,11 @@ defmodule GroupherServer.Activity.Event do
         accepted_metadata: metadata
       },
       surfaces: Map.new(surfaces, surface_contract),
+      subject_search:
+        if(:community_log in surfaces,
+          do: [:subject_ref, :subject_snapshot_title],
+          else: [:subject_ref]
+        ),
       producer_status: :active,
       retention: :long_term
     }
@@ -45,6 +65,63 @@ defmodule GroupherServer.Activity.Event do
 
   @doc "Marks a declared event contract that intentionally has no V1 producer."
   def contract_only(contract), do: Map.put(contract, :producer_status, :contract_only)
+
+  @presentation_keys %{
+    created: %{message_key: "activity.created"},
+    title_changed: %{message_key: "activity.title_changed"},
+    body_updated: %{message_key: "activity.body_updated"},
+    published: %{message_key: "activity.published"},
+    publish_restored: %{message_key: "activity.publish_restored"},
+    released: %{message_key: "activity.released"},
+    release_rescheduled: %{message_key: "activity.release_rescheduled"},
+    release_withdrawn: %{message_key: "activity.release_withdrawn"},
+    trashed: %{message_key: "activity.trashed"},
+    restored: %{message_key: "activity.restored"},
+    archived: %{message_key: "activity.archived"},
+    permanently_deleted: %{message_key: "activity.permanently_deleted"},
+    destroy_scheduled: %{message_key: "activity.destroy_scheduled"},
+    destroy_cancelled: %{message_key: "activity.destroy_cancelled"},
+    destroyed: %{message_key: "activity.destroyed"},
+    lifecycle_reconciled: %{message_key: "activity.lifecycle_reconciled"},
+    comment_created: %{message_key: "activity.comment_created"},
+    comment_updated: %{message_key: "activity.comment_updated"},
+    comment_pinned: %{message_key: "activity.comment_pinned"},
+    comment_unpinned: %{message_key: "activity.comment_unpinned"},
+    solution_accepted: %{message_key: "activity.solution_accepted"},
+    solution_replaced: %{message_key: "activity.solution_replaced"},
+    solution_revoked: %{message_key: "activity.solution_revoked"},
+    blocker_created: %{message_key: "activity.blocker_created"},
+    blocker_released: %{message_key: "activity.blocker_released"},
+    blocker_terminated: %{message_key: "activity.blocker_terminated"},
+    setup_failed: %{message_key: "activity.setup_failed"},
+    setup_retried: %{message_key: "activity.setup_retried"},
+    activated: %{message_key: "activity.activated"},
+    config_updated: %{message_key: "activity.config_updated"},
+    draft_updated: %{message_key: "activity.draft_updated"},
+    moderation_review_started: %{message_key: "activity.moderation_review_started"},
+    moderation_review_resolved: %{message_key: "activity.moderation_review_resolved"}
+  }
+
+  @doc "Adds the shared product classification to handler-owned action contracts."
+  def classify_contracts(contracts) do
+    Map.new(contracts, fn {action, contract} ->
+      {action,
+       contract
+       |> Map.put(:classification, classification(action))
+       |> Map.put(:presentation, presentation(action))}
+    end)
+  end
+
+  @doc "Returns the explicit product copy key for an action contract."
+  def presentation(action),
+    do: Map.get(@presentation_keys, action, %{message_key: "activity.unknown"})
+
+  def classification(action) do
+    %{
+      category: category_for(action),
+      high_risk: action in [:permanently_deleted, :destroyed, :blocker_terminated]
+    }
+  end
 
   def log(handler, resource, action, opts) do
     with :ok <- validate_action(action),
@@ -104,6 +181,28 @@ defmodule GroupherServer.Activity.Event do
           :metadata in fields
         )
         |> maybe_put(:occurred_at, log.occurred_at, :occurred_at in fields)
+        |> maybe_put(:event_ref, public_uuid(log.event_ref), :event_ref in fields)
+        |> maybe_put(:operation_ref, public_uuid(log.operation_ref), :operation_ref in fields)
+        |> maybe_put(
+          :parent_event_ref,
+          public_uuid(log.parent_event_ref),
+          :parent_event_ref in fields
+        )
+        |> maybe_put(
+          :category,
+          classification(contract, log.action).category,
+          :category in fields
+        )
+        |> maybe_put(
+          :high_risk,
+          classification(contract, log.action).high_risk,
+          :high_risk in fields
+        )
+        |> maybe_put(
+          :message_key,
+          presentation(contract, log.action).message_key,
+          :message_key in fields
+        )
 
       {:ok, result}
     else
@@ -114,9 +213,75 @@ defmodule GroupherServer.Activity.Event do
 
   def surface_actions(handler, surface) do
     handler.contracts()
-    |> Enum.filter(fn {_action, contract} -> Map.has_key?(contract.surfaces, surface) end)
+    |> Enum.filter(fn {_action, contract} ->
+      Map.has_key?(contract.surfaces, surface) and contract.producer_status == :active
+    end)
     |> Enum.map(&elem(&1, 0))
   end
+
+  defp classification(contract, action),
+    do: Map.get(contract, :classification, classification(action))
+
+  defp presentation(contract, action),
+    do: Map.get(contract, :presentation, presentation(action))
+
+  defp public_uuid(nil), do: nil
+
+  defp public_uuid(value) when is_binary(value) and byte_size(value) == 16 do
+    case Ecto.UUID.load(value) do
+      {:ok, ref} -> ref
+      :error -> value
+    end
+  end
+
+  defp public_uuid(value), do: value
+
+  defp category_for(action)
+       when action in [:created, :title_changed, :body_updated],
+       do: :content
+
+  defp category_for(action)
+       when action in [
+              :published,
+              :publish_restored,
+              :released,
+              :release_rescheduled,
+              :release_withdrawn
+            ],
+       do: :publishing
+
+  defp category_for(action)
+       when action in [
+              :trashed,
+              :restored,
+              :archived,
+              :permanently_deleted,
+              :destroy_scheduled,
+              :destroy_cancelled,
+              :destroyed,
+              :lifecycle_reconciled
+            ],
+       do: :lifecycle
+
+  defp category_for(action)
+       when action in [
+              :comment_pinned,
+              :comment_unpinned,
+              :solution_accepted,
+              :solution_replaced,
+              :solution_revoked
+            ],
+       do: :engagement
+
+  defp category_for(action)
+       when action in [:blocker_created, :blocker_released, :blocker_terminated],
+       do: :moderation
+
+  defp category_for(action)
+       when action in [:moderation_review_started, :moderation_review_resolved],
+       do: :moderation
+
+  defp category_for(_action), do: :community
 
   def actor_attrs(%User{} = actor) do
     %{

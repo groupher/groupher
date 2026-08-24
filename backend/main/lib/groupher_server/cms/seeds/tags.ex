@@ -12,8 +12,9 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
   alias GroupherServer.CMS
 
-  alias CMS.Seeds.Config
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS.Seeds.Config
+  alias GroupherServer.CMS.Seeds.Helper
   alias Helper.T
 
   @tag_colors ["red", "orange", "yellow", "green", "cyan", "blue", "purple", "pink"]
@@ -55,7 +56,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     group_count = Keyword.get(opts, :group_count, random_range(@group_count_range))
     groups = @seed_groups |> Enum.take(group_count)
 
-    with {:ok, bot} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
+    with {:ok, bot} <- Helper.seed_bot(),
          {:ok, existing_groups} <- CMS.Communities.tag_groups(tag_filter(community.id, thread)) do
       existing_tags = flatten_group_tags(existing_groups)
 

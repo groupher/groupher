@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
   use GroupherServer.TestMate
 
+  alias GroupherServer.Activity.Model.DocLog
+  alias GroupherServer.CMS.Docs.Branch
+
   @plate_body Jason.encode!([
                 %{"type" => "h1", "children" => [%{"text" => "Draft Title"}]},
                 %{"type" => "p", "children" => [%{"text" => "saved draft body"}]}
@@ -476,6 +479,21 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       assert Enum.any?(draft_after_restore, &(&1["id"] == site_draft_version["id"]))
       assert Enum.any?(draft_after_restore, &(&1["id"] == later_site_draft_version["id"]))
+
+      assert %{"done" => true, "release" => %{"id" => _}} =
+               user_conn
+               |> gq_mutation(S.Doc.m(:publish_changes), %{
+                 community: community.slug,
+                 input: %{docChangeIds: ["doc:#{doc_id}"], treeChangeIds: []}
+               })
+
+      restored_publish =
+        Repo.get_by!(DocLog,
+          doc_ref: to_string(doc_id),
+          action: :publish_restored
+        )
+
+      assert restored_publish.metadata["snapshot_ref"]
     end
 
     test "rejects invalid persisted draft slug on publish",
@@ -527,7 +545,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
   defp empty_docs_community(user), do: create_empty_docs_community(user)
 
   defp expected_version(community, doc_id) do
-    {:ok, branch} = CMS.Docs.Branch.resolve(community, nil)
+    {:ok, branch} = Branch.resolve(community, nil)
 
     draft_version =
       Repo.one(
@@ -543,14 +561,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
     draft_version ||
       Repo.one!(
-      from(d in CMS.Model.Doc,
-        where:
-          d.community_id == ^community.id and
-            d.branch_id == ^branch.id and
-            d.article_hash_id == ^doc_id and
-            d.stage == :public,
-        select: d.version
-      )
+        from(d in CMS.Model.Doc,
+          where:
+            d.community_id == ^community.id and
+              d.branch_id == ^branch.id and
+              d.article_hash_id == ^doc_id and
+              d.stage == :public,
+          select: d.version
+        )
       )
   end
 end

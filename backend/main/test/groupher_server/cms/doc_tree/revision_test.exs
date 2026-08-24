@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.CMS.DocTree.Revision do
   @moduledoc false
 
+  alias GroupherServer.CMS.DocTree.Revision
   use GroupherServer.TestMate
 
   describe "[doc tree revision]" do
@@ -14,7 +15,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Revision do
 
     test "bumps tree draft counters together", ~m(community state)a do
       assert {:ok, next_state} =
-               CMS.DocTree.Revision.bump_tree_draft(community, state, staged_event_delta: 2)
+               Revision.bump_tree_draft(community, state, staged_event_delta: 2)
 
       assert next_state.tree_lock_version == state.tree_lock_version + 1
       assert next_state.site_draft_version == state.site_draft_version + 1
@@ -22,7 +23,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Revision do
     end
 
     test "bumps site draft without changing tree lock counter", ~m(community state)a do
-      assert {:ok, next_state} = CMS.DocTree.Revision.bump_site_draft(community)
+      assert {:ok, next_state} = Revision.bump_site_draft(community)
 
       assert next_state.site_draft_version == state.site_draft_version + 1
       assert next_state.tree_lock_version == state.tree_lock_version

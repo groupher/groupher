@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.DocTree.Events do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -9,12 +10,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
 
   require CMS.Const
 
-  @node_key CMS.Const.doc_tree_json_key(:node)
-  @id_key CMS.Const.doc_tree_json_key(:id)
-  @type_key CMS.Const.doc_tree_json_key(:type)
-  @doc_id_key CMS.Const.doc_tree_json_key(:doc_id)
-  @page_type to_string(CMS.Const.tree_node_type(:page))
-  @group_type to_string(CMS.Const.tree_node_type(:group))
+  @node_key CMS.DocTree.Const.doc_tree_json_key(:node)
+  @id_key CMS.DocTree.Const.doc_tree_json_key(:id)
+  @type_key CMS.DocTree.Const.doc_tree_json_key(:type)
+  @doc_id_key CMS.DocTree.Const.doc_tree_json_key(:doc_id)
+  @page_type to_string(CMS.DocTree.Const.tree_node_type(:page))
+  @group_type to_string(CMS.DocTree.Const.tree_node_type(:group))
   @node_id_key "nodeId"
   @node_type_key "nodeType"
 
@@ -38,11 +39,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
                )
 
       assert second.seq == first.seq + 1
-      assert first.status == CMS.Const.tree_event_status(:staged)
-      assert first.owner == CMS.Const.tree_event_owner(:tree)
-      assert first.event_type == CMS.Const.tree_event(:node_create)
+      assert first.status == CMS.DocTree.Const.tree_event_status(:staged)
+      assert first.owner == CMS.DocTree.Const.tree_event_owner(:tree)
+      assert first.event_type == CMS.DocTree.Const.tree_event(:node_create)
       assert first.node_id == "page-1"
-      assert first.node_type == CMS.Const.tree_node_type(:page)
+      assert first.node_type == CMS.DocTree.Const.tree_node_type(:page)
       assert first.doc_id
     end
 
@@ -65,9 +66,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       {:ok, first} = ORM.find(DocTreeEvent, first.id)
       {:ok, second} = ORM.find(DocTreeEvent, second.id)
 
-      assert first.status == CMS.Const.tree_event_status(:published)
+      assert first.status == CMS.DocTree.Const.tree_event_status(:published)
       assert first.snapshot_id == snapshot.id
-      assert second.status == CMS.Const.tree_event_status(:staged)
+      assert second.status == CMS.DocTree.Const.tree_event_status(:staged)
       assert is_nil(second.snapshot_id)
     end
 
@@ -77,11 +78,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       {:ok, doc_event} =
         DocTreeEvents.record_staged(
           community,
-          CMS.Const.tree_event(:node_update),
+          CMS.DocTree.Const.tree_event(:node_update),
           %{},
           %{},
           user.id,
-          owner: CMS.Const.tree_event_owner(:doc),
+          owner: CMS.DocTree.Const.tree_event_owner(:doc),
           doc_id: doc_id
         )
 
@@ -92,8 +93,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       {:ok, doc_event} = ORM.find(DocTreeEvent, doc_event.id)
       {:ok, legacy_event} = ORM.find(DocTreeEvent, legacy_event.id)
 
-      assert doc_event.status == CMS.Const.tree_event_status(:discarded)
-      assert legacy_event.status == CMS.Const.tree_event_status(:discarded)
+      assert doc_event.status == CMS.DocTree.Const.tree_event_status(:discarded)
+      assert legacy_event.status == CMS.DocTree.Const.tree_event_status(:discarded)
     end
 
     test "records selector columns from staged payload", ~m(user community)a do
@@ -102,7 +103,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       assert {:ok, event} = record_node_create(community, "page-1", user, doc_id)
 
       assert event.node_id == "page-1"
-      assert event.node_type == CMS.Const.tree_node_type(:page)
+      assert event.node_type == CMS.DocTree.Const.tree_node_type(:page)
       assert event.doc_id == doc_id
     end
 
@@ -112,7 +113,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       assert {:ok, group_event} =
                DocTreeEvents.record_staged(
                  community,
-                 CMS.Const.tree_event(:node_move),
+                 CMS.DocTree.Const.tree_event(:node_move),
                  %{
                    @node_id_key => "group-1",
                    @node_type_key => @group_type,
@@ -125,7 +126,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       assert {:ok, page_event} =
                DocTreeEvents.record_staged(
                  community,
-                 CMS.Const.tree_event(:node_move),
+                 CMS.DocTree.Const.tree_event(:node_move),
                  %{
                    @node_id_key => "page-1",
                    @node_type_key => @page_type,
@@ -137,11 +138,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
                )
 
       assert group_event.node_id == "group-1"
-      assert group_event.node_type == CMS.Const.tree_node_type(:group)
+      assert group_event.node_type == CMS.DocTree.Const.tree_node_type(:group)
       assert is_nil(group_event.doc_id)
 
       assert page_event.node_id == "page-1"
-      assert page_event.node_type == CMS.Const.tree_node_type(:page)
+      assert page_event.node_type == CMS.DocTree.Const.tree_node_type(:page)
       assert page_event.doc_id == doc_id
     end
 
@@ -159,7 +160,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
   defp record_node_create(community, node_id, user, doc_id \\ Ecto.UUID.generate()) do
     DocTreeEvents.record_staged(
       community,
-      CMS.Const.tree_event(:node_create),
+      CMS.DocTree.Const.tree_event(:node_create),
       node_create_payload(node_id, doc_id),
       %{},
       user.id
@@ -170,7 +171,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
 
   defp node_create_event(node_id, doc_id) do
     %{
-      type: CMS.Const.tree_event(:node_create),
+      type: CMS.DocTree.Const.tree_event(:node_create),
       payload: node_create_payload(node_id, doc_id),
       inverse: %{}
     }
@@ -192,7 +193,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       Enum.into(attrs, %{
         node_id: "pin-1",
         stage: CMS.Const.stage(:draft),
-        type: CMS.Const.tree_node_type(:pin),
+        type: CMS.DocTree.Const.tree_node_type(:pin),
         title: "Pin",
         href: "https://example.com",
         parent_node_id: nil,

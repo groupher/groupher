@@ -9,32 +9,29 @@ defmodule GroupherServer.CMS.Communities do
         -> Communities
         -> Repo / external boundary
   """
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.T
 
   alias __MODULE__.{
     Categories,
     Count,
+    Creation,
     List,
     Members,
     Moderator,
+    NamePolicy,
     Reader,
+    Setup,
     SlugClaims,
     Subscribe,
-    TagStats,
     Tags,
-    Writer,
-    Creation,
-    Setup,
-    NamePolicy
+    TagStats,
+    Writer
   }
 
-  alias CMS.Passport
-  alias CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Passport
 
   # Read
   @spec fetch(String.t()) :: T.domain_res(Community.t())

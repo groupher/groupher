@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Events do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Event log for Tree staged changes.
 
@@ -31,21 +32,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Docs.Branch
-  alias CMS.DocTree.Snapshot
-  alias CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.DocTree.Snapshot
+  alias GroupherServer.CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
   alias Helper.{ORM, T}
 
-  require CMS.Const
 
   @tree_fields ~w(title marker badge hidden href)a
-  @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
-  @doc_tree_json_key_id CMS.Const.doc_tree_json_key(:id)
-  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
-  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
-  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @doc_tree_json_key_node CMS.DocTree.Const.doc_tree_json_key(:node)
+  @doc_tree_json_key_id CMS.DocTree.Const.doc_tree_json_key(:id)
+  @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.DocTree.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
+  @tree_node_type_pin CMS.DocTree.Const.tree_node_type(:pin)
 
   @doc """
   Records one staged Tree event.
@@ -53,10 +53,10 @@ defmodule GroupherServer.CMS.DocTree.Events do
   ## Examples
 
       iex> Events.record_staged(community, "node.rename", payload, inverse)
-      {:ok, %DocTreeEvent{owner: CMS.Const.tree_event_owner(:tree)}}
+      {:ok, %DocTreeEvent{owner: CMS.DocTree.Const.tree_event_owner(:tree)}}
 
-      iex> Events.record_staged(community, "node.create", payload, inverse, user.id, owner: CMS.Const.tree_event_owner(:doc), doc_id: draft.doc_id)
-      {:ok, %DocTreeEvent{owner: CMS.Const.tree_event_owner(:doc)}}
+      iex> Events.record_staged(community, "node.create", payload, inverse, user.id, owner: CMS.DocTree.Const.tree_event_owner(:doc), doc_id: draft.doc_id)
+      {:ok, %DocTreeEvent{owner: CMS.DocTree.Const.tree_event_owner(:doc)}}
   """
   @spec record_staged(Community.t(), String.t(), map(), map(), integer() | nil, keyword()) ::
           T.domain_res(DocTreeEvent.t())
@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
         event_type: event_type,
         payload: payload,
         inverse_payload: inverse_payload,
-        status: CMS.Const.tree_event_status(:staged),
+        status: CMS.DocTree.Const.tree_event_status(:staged),
         owner: Keyword.get(opts, :owner, :tree),
         author_id: author_id
       }
@@ -123,7 +123,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   ## Examples
 
       iex> Events.record_staged_many(community, [%{type: "node.rename", payload: %{}, inverse: %{}}])
-      {:ok, [%DocTreeEvent{owner: CMS.Const.tree_event_owner(:tree)}]}
+      {:ok, [%DocTreeEvent{owner: CMS.DocTree.Const.tree_event_owner(:tree)}]}
   """
   @spec record_staged_many(Community.t(), list(map()), integer() | nil, keyword()) ::
           T.domain_res(list(DocTreeEvent.t()))
@@ -148,19 +148,19 @@ defmodule GroupherServer.CMS.DocTree.Events do
             |> Enum.into([])
             |> Keyword.merge(branch_id: branch.id)
 
-          case insert_staged_event(
-                 community,
-                 branch,
-                 type,
-                 payload,
-                 inverse,
-                 author_id,
-                 opts,
-                 next_seq + index
-               ) do
-            {:ok, event} -> {:cont, {:ok, [event | acc]}}
-            error -> {:halt, error}
-          end
+          record_staged_event(
+            community,
+            branch,
+            %{
+              type: type,
+              payload: payload,
+              inverse: inverse,
+              author_id: author_id,
+              opts: opts,
+              seq: next_seq + index
+            },
+            acc
+          )
         end)
         |> case do
           {:ok, events} -> Enum.reverse(events)
@@ -171,6 +171,16 @@ defmodule GroupherServer.CMS.DocTree.Events do
       end
     end)
     |> transaction_result()
+  end
+
+  defp record_staged_event(community, branch, event_attrs, acc) do
+    %{type: type, payload: payload, inverse: inverse, author_id: author_id, opts: opts, seq: seq} =
+      event_attrs
+
+    case insert_staged_event(community, branch, type, payload, inverse, author_id, opts, seq) do
+      {:ok, event} -> {:cont, {:ok, [event | acc]}}
+      error -> {:halt, error}
+    end
   end
 
   @doc """
@@ -184,7 +194,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.branch_id == ^branch.id)
-    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
+    |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
     |> maybe_filter_owner(owner)
     |> order_by([e], asc: e.seq, asc: e.id)
     |> Repo.all()
@@ -205,8 +215,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.branch_id == ^branch.id)
-    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-    |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
+    |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+    |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
     |> Repo.aggregate(:count, :id)
   end
 
@@ -308,11 +318,11 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^snapshot.branch_id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:published),
+          status: CMS.DocTree.Const.tree_event_status(:published),
           snapshot_id: snapshot.id,
           updated_at: DateTime.utc_now(:second)
         ]
@@ -342,12 +352,12 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^snapshot.branch_id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
       |> where([e], e.id in ^ids)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:published),
+          status: CMS.DocTree.Const.tree_event_status(:published),
           snapshot_id: snapshot.id,
           updated_at: DateTime.utc_now(:second)
         ]
@@ -387,12 +397,12 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:doc))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:doc))
       |> where([e], e.doc_id == ^doc_id)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:published),
+          status: CMS.DocTree.Const.tree_event_status(:published),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -401,14 +411,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-      |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
+      |> where([e], e.event_type == CMS.DocTree.Const.tree_event(:node_create))
       |> where([e], e.node_type == ^@tree_node_type_page)
       |> where([e], e.doc_id == ^doc_id)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:published),
+          status: CMS.DocTree.Const.tree_event_status(:published),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -434,13 +444,13 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-      |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
+      |> where([e], e.event_type == CMS.DocTree.Const.tree_event(:node_create))
       |> where([e], e.node_id in ^node_ids)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:published),
+          status: CMS.DocTree.Const.tree_event_status(:published),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -465,12 +475,12 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:doc))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:doc))
       |> where([e], e.doc_id in ^doc_ids)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:discarded),
+          status: CMS.DocTree.Const.tree_event_status(:discarded),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -479,14 +489,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-      |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
+      |> where([e], e.event_type == CMS.DocTree.Const.tree_event(:node_create))
       |> where([e], e.node_type == ^@tree_node_type_page)
       |> where([e], e.doc_id in ^doc_ids)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:discarded),
+          status: CMS.DocTree.Const.tree_event_status(:discarded),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -512,13 +522,13 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.branch_id == ^branch.id)
-      |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-      |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-      |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
+      |> where([e], e.status == CMS.DocTree.Const.tree_event_status(:staged))
+      |> where([e], e.owner == CMS.DocTree.Const.tree_event_owner(:tree))
+      |> where([e], e.event_type == CMS.DocTree.Const.tree_event(:node_create))
       |> where([e], e.node_id in ^node_ids)
       |> Repo.update_all(
         set: [
-          status: CMS.Const.tree_event_status(:discarded),
+          status: CMS.DocTree.Const.tree_event_status(:discarded),
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -538,7 +548,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       DocTreeEvent
       |> where([event], event.community_id == ^community.id)
       |> where([event], event.branch_id == ^branch.id)
-      |> where([event], event.status == CMS.Const.tree_event_status(:staged))
+      |> where([event], event.status == CMS.DocTree.Const.tree_event_status(:staged))
       |> where(
         [event],
         event.node_id in ^node_ids or (not is_nil(event.doc_id) and event.doc_id in ^doc_ids)
@@ -546,13 +556,13 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
     tree_count =
       base
-      |> where([event], event.owner == CMS.Const.tree_event_owner(:tree))
+      |> where([event], event.owner == CMS.DocTree.Const.tree_event_owner(:tree))
       |> Repo.aggregate(:count, :id)
 
     base
     |> Repo.update_all(
       set: [
-        status: CMS.Const.tree_event_status(:discarded),
+        status: CMS.DocTree.Const.tree_event_status(:discarded),
         updated_at: DateTime.utc_now(:second)
       ]
     )
@@ -619,7 +629,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       before,
       after_node,
       "title",
-      CMS.Const.tree_event(:group_rename),
+      CMS.DocTree.Const.tree_event(:group_rename),
       before_value,
       after_value
     )
@@ -630,7 +640,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       before,
       after_node,
       "title",
-      update_event_type(before, CMS.Const.tree_event(:node_rename)),
+      update_event_type(before, CMS.DocTree.Const.tree_event(:node_rename)),
       before_value,
       after_value
     )
@@ -641,7 +651,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       before,
       after_node,
       "marker",
-      update_event_type(before, CMS.Const.tree_event(:node_marker_update)),
+      update_event_type(before, CMS.DocTree.Const.tree_event(:node_marker_update)),
       before_value,
       after_value
     )
@@ -652,7 +662,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       before,
       after_node,
       "href",
-      update_event_type(before, CMS.Const.tree_event(:link_href_update)),
+      update_event_type(before, CMS.DocTree.Const.tree_event(:link_href_update)),
       before_value,
       after_value
     )
@@ -665,7 +675,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       before,
       after_node,
       field_name,
-      update_event_type(before, CMS.Const.tree_event(:node_update)),
+      update_event_type(before, CMS.DocTree.Const.tree_event(:node_update)),
       before_value,
       after_value
     )
@@ -680,20 +690,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
   end
 
   defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :create),
-    do: CMS.Const.tree_event(:pin_add)
+    do: CMS.DocTree.Const.tree_event(:pin_add)
 
   defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :delete),
-    do: CMS.Const.tree_event(:pin_remove)
+    do: CMS.DocTree.Const.tree_event(:pin_remove)
 
   defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :move),
-    do: CMS.Const.tree_event(:pin_reorder)
+    do: CMS.DocTree.Const.tree_event(:pin_reorder)
 
-  defp node_event_type(%DocTreeNode{}, :create), do: CMS.Const.tree_event(:node_create)
-  defp node_event_type(%DocTreeNode{}, :delete), do: CMS.Const.tree_event(:node_delete)
-  defp node_event_type(%DocTreeNode{}, :move), do: CMS.Const.tree_event(:node_move)
+  defp node_event_type(%DocTreeNode{}, :create), do: CMS.DocTree.Const.tree_event(:node_create)
+  defp node_event_type(%DocTreeNode{}, :delete), do: CMS.DocTree.Const.tree_event(:node_delete)
+  defp node_event_type(%DocTreeNode{}, :move), do: CMS.DocTree.Const.tree_event(:node_move)
 
   defp update_event_type(%DocTreeNode{type: @tree_node_type_pin}, _fallback),
-    do: CMS.Const.tree_event(:pin_update)
+    do: CMS.DocTree.Const.tree_event(:pin_update)
 
   defp update_event_type(%DocTreeNode{}, fallback), do: fallback
 
@@ -761,11 +771,11 @@ defmodule GroupherServer.CMS.DocTree.Events do
   end
 
   defp normalize_node_type(type) when is_atom(type) do
-    if type in CMS.Const.tree_node_type_values(), do: type, else: nil
+    if type in CMS.DocTree.Const.tree_node_type_values(), do: type, else: nil
   end
 
   defp normalize_node_type(type) when is_binary(type) do
-    Enum.find(CMS.Const.tree_node_type_values(), &(to_string(&1) == type))
+    Enum.find(CMS.DocTree.Const.tree_node_type_values(), &(to_string(&1) == type))
   end
 
   defp normalize_node_type(_), do: nil

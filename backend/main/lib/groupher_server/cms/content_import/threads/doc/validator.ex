@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Validates SourceTree and confirmed Docs target intent without parsing source files.
 
@@ -27,7 +28,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.Model.{Community, DocBranch, DocsSiteState}
 
-  @max_depth CMS.Const.doc_tree_max_depth()
+  @max_depth CMS.DocTree.Const.max_depth()
   @max_nodes 6_000
 
   @doc "Validates SourceTree and returns a read-only TargetTree, counts, conflicts, and revision."

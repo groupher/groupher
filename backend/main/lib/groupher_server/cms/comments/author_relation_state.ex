@@ -65,23 +65,24 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
   defp upvoted_ids_for_thread(comments, thread) do
     comment_ids = Enum.map(comments, & &1.id)
 
-    with {:ok, %{model: article_model, foreign_key: foreign_key}} <-
-           Matcher.match_interaction(thread) do
-      from(comment in Comment,
-        join: article in ^article_model,
-        on: field(comment, ^foreign_key) == article.id,
-        join: author in Author,
-        on: author.id == article.author_id,
-        join: info in CommentReactionInfo,
-        on: info.comment_id == comment.id,
-        where: comment.id in ^comment_ids,
-        where: RoaringBitmap.contains(info.upvoted_user_ids, author.user_id),
-        select: comment.id
-      )
-      |> Repo.all()
-      |> MapSet.new()
-    else
-      _ -> MapSet.new()
+    case Matcher.match_interaction(thread) do
+      {:ok, %{model: article_model, foreign_key: foreign_key}} ->
+        from(comment in Comment,
+          join: article in ^article_model,
+          on: field(comment, ^foreign_key) == article.id,
+          join: author in Author,
+          on: author.id == article.author_id,
+          join: info in CommentReactionInfo,
+          on: info.comment_id == comment.id,
+          where: comment.id in ^comment_ids,
+          where: RoaringBitmap.contains(info.upvoted_user_ids, author.user_id),
+          select: comment.id
+        )
+        |> Repo.all()
+        |> MapSet.new()
+
+      _ ->
+        MapSet.new()
     end
   end
 end

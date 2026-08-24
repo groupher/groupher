@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, CommunityTag, CoverEditInfo}
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.Model.{Community, CommunityTag, CoverEditInfo}
   alias Helper.{ORM, T}
 
   @doc "Returns relation state suitable for immutable DocSnapshot data."
@@ -107,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
     |> Repo.preload(:community_tags, force: true)
     |> Map.fetch!(:community_tags)
     |> Enum.reduce_while({:ok, :pass}, fn tag, {:ok, :pass} ->
-      case CMS.Communities.TagStats.inc(article, tag) do
+      case TagStats.inc(article, tag) do
         {:ok, :pass} -> {:cont, {:ok, :pass}}
         error -> {:halt, error}
       end

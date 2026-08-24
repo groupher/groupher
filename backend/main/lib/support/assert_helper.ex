@@ -17,6 +17,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   alias GroupherServer.ErrorCat
   alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.Support.Factory.Articles
 
   @endpoint GroupherServerWeb.Endpoint
 
@@ -257,7 +258,7 @@ defmodule GroupherServer.Test.AssertHelper do
               "enabled"
             )
 
-          body_bag = GroupherServer.Support.Factory.Articles.body_bag(body)
+          body_bag = Articles.body_bag(body)
           {conn, Map.put(variables, :bodyBag, body_bag)}
 
         {_body, variables} ->

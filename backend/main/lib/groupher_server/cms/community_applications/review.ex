@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.CommunityApplications.Review do
+  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Reviewer decisions and recovery transitions for community applications.
 
@@ -18,7 +19,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
   alias GroupherServer.CMS.Communities.ErrorCat
   alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
-  alias GroupherServer.CMS.{CommunityApplications.Transitions, Const}
+  alias GroupherServer.CMS.CommunityApplications.Transitions
+  alias GroupherServer.CMS.Gate.Const
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.CMS.Passport
   alias GroupherServer.Repo

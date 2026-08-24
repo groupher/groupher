@@ -21,10 +21,13 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
 
   alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias CMS.Interactions.ErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Interactions.ErrorCat
 
-  alias CMS.Model.{
+  alias GroupherServer.Accounts.Model.Embeds.UserMeta
+  alias GroupherServer.CMS.Model.Embeds.CommentMeta
+
+  alias GroupherServer.CMS.Model.{
     Blog,
     BlogEmotionInfo,
     BlogReactionInfo,
@@ -78,7 +81,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
        model: User,
        foreign_key: :account_id,
        preload: :account,
-       default_meta: Accounts.Model.Embeds.UserMeta.default_meta()
+       default_meta: UserMeta.default_meta()
      }}
   end
 
@@ -89,7 +92,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
        model: CMS.Model.Comment,
        foreign_key: :comment_id,
        preload: :comment,
-       default_meta: CMS.Model.Embeds.CommentMeta.default_meta()
+       default_meta: CommentMeta.default_meta()
      }}
   end
 

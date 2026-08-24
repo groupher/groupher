@@ -44,11 +44,11 @@ defmodule GroupherServerWeb.Middleware.Passport do
   import Helper.Utils
   alias GroupherServer.ErrorCat
 
-  alias GroupherServer.FrontDesk
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.FrontDesk
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
@@ -174,9 +174,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp check_scope_permission(passport, resolution, %{scope: :global} = requirement) do
-    with {:ok, grant} <- resolve_grant(requirement, resolution) do
-      has_global_permission?(passport, grant)
-    else
+    case resolve_grant(requirement, resolution) do
+      {:ok, grant} -> has_global_permission?(passport, grant)
       _ -> false
     end
   end

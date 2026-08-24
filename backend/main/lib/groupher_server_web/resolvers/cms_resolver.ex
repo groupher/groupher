@@ -40,6 +40,46 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     Activity.list_article_logs(article, actor, filter)
   end
 
+  def community_activity(_root, %{community: %Community{} = community} = args, info) do
+    actor = Map.get(info.context, :cur_user)
+    filter = Map.get(args, :filter, %{})
+    Activity.list_community_logs(community, actor, filter)
+  end
+
+  def community_activity_stats(
+        _root,
+        %{community: %Community{} = community, filter: filter},
+        info
+      ) do
+    actor = Map.get(info.context, :cur_user)
+    Activity.get_community_log_stats(community, actor, filter)
+  end
+
+  def community_activity_config(_root, %{community: %Community{} = community}, info) do
+    Activity.get_community_log_config(community, Map.get(info.context, :cur_user))
+  end
+
+  def community_activity_export(
+        _root,
+        %{community: %Community{} = community, format: format} = args,
+        info
+      ) do
+    Activity.export_community_logs(
+      community,
+      Map.get(info.context, :cur_user),
+      Map.get(args, :filter, %{}),
+      format
+    )
+  end
+
+  def community_activity_event(
+        _root,
+        %{community: %Community{} = community, event_ref: event_ref},
+        info
+      ) do
+    Activity.get_community_log_event(community, Map.get(info.context, :cur_user), event_ref)
+  end
+
   # #######################
   # community ..
   # #######################
@@ -937,6 +977,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def analysis_tracking_website_id(_root, %{community: %Community{} = community}, _info) do
     AnalysisWeb.tracking_website_id(community)
+  end
+
+  def analysis_visitor_location_map(_root, %{community: %Community{} = community}, _info) do
+    AnalysisWeb.visitor_location_map(community)
   end
 
   def analysis_trends_overview(_root, %{community: %Community{} = community} = args, _info) do

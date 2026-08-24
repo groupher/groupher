@@ -1,12 +1,13 @@
 defmodule GroupherServer.Test.Query.Flags.DocsFlags do
   @moduledoc false
 
+  alias GroupherServer.CMS.Articles.Trash
   use GroupherServer.TestMate
 
   @total_count 35
   @page_size GroupherServerWeb.Config.page_size()
 
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -94,18 +95,18 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       {:ok, _} = CMS.Articles.pin(community, random_doc)
 
       {:ok, action} =
-        CMS.Articles.Trash.create_action(community, nil, %{
+        Trash.create_action(community, :system, %{
           root_type: "doc_tree_page",
           root_ref: "active-scope-test"
         })
 
       {:ok, _} =
-        CMS.Articles.Trash.attach(
+        Trash.attach(
           action,
           community,
           :doc,
           random_doc.article_hash_id,
-          nil
+          :system
         )
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)

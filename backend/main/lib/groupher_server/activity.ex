@@ -87,4 +87,26 @@ defmodule GroupherServer.Activity do
   @doc "Lists the Community management surface across Activity streams."
   def list_community_logs(community, actor, filter \\ %{}),
     do: CommunityLog.list(community, actor, filter)
+
+  @spec get_community_log_stats(Community.t(), struct(), map()) ::
+          {:ok, map()} | {:error, term()}
+  @doc "Returns UTC daily CommunityLog counts for the same filter boundary as list_community_logs/3."
+  def get_community_log_stats(community, actor, filter \\ %{}),
+    do: CommunityLog.stats(community, actor, filter)
+
+  @spec get_community_log_config(Community.t(), struct()) :: {:ok, map()} | {:error, term()}
+  @doc "Returns active CommunityLog actions for dashboard filter controls."
+  def get_community_log_config(community, actor), do: CommunityLog.config(community, actor)
+
+  @spec export_community_logs(Community.t(), struct(), map(), atom()) ::
+          {:ok, map()} | {:error, term()}
+  @doc "Exports the current CommunityLog filter as a bounded JSON or CSV document."
+  def export_community_logs(community, actor, filter, format),
+    do: CommunityLog.export_logs(community, actor, filter, format)
+
+  @spec get_community_log_event(Community.t(), struct(), String.t()) ::
+          {:ok, map() | nil} | {:error, term()}
+  @doc "Reads one safe CommunityLog event with related parent and child events."
+  def get_community_log_event(community, actor, event_ref),
+    do: CommunityLog.get_event_detail(community, actor, event_ref)
 end

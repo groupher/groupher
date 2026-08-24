@@ -15,7 +15,6 @@ defmodule GroupherServer.Test.CMS.Press do
   alias Ecto.Changeset
   alias GroupherServer.CMS.Docs.Branch
   alias GroupherServerWeb.Schema
-  alias Helper.Constant.CMS, as: CMSConst
 
   setup do
     {community, post, attrs, user} = mock_article(:post)
@@ -40,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
   test "origin projections hide communities that are not publicly active", ~m(community post)a do
     community
-    |> Changeset.change(pending: CMSConst.pending(:applying))
+    |> Changeset.change(pending: GroupherServer.CMS.Communities.Const.pending_state(:applying))
     |> Repo.update!()
 
     Repo.get_by!(CommunityLifecycle, community_id: community.id)

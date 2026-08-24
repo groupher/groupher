@@ -17,11 +17,11 @@ defmodule GroupherServer.CMS.Search.Community do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS}
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
 
-  alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
   alias Helper.ORM
 
   @search_items_count 15
@@ -43,7 +43,10 @@ defmodule GroupherServer.CMS.Search.Community do
 
   def search(title, %User{} = user) do
     with {:ok, communities} <-
-           do_search_communities(CMS.Gate.scope(Community, user, :list, CommunityScope.public()), title) do
+           do_search_communities(
+             CMS.Gate.scope(Community, user, :list, CommunityScope.public()),
+             title
+           ) do
       %{entries: entries} = communities
 
       entries =

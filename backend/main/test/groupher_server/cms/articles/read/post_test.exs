@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   use GroupherServer.TestMate
 
-  alias CMS.FrontDesk
-  alias CMS.Model.ArticleDocument
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Model.ArticleDocument
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
@@ -106,7 +107,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
         )
 
       assert post.id == post2.id
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(post2, user).viewer_has_viewed
     end
 
@@ -135,7 +136,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
           event_id
         )
 
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
@@ -150,7 +151,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
         )
 
       {:ok, created} = ORM.find(Post, post.id)
-      assert :ok = CMS.Interactions.ViewEvents.project(event_id)
+      assert :ok = ViewEvents.project(event_id)
       assert created.views == 1
       assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
       assert CMS.Interactions.viewer_state(post, user2).viewer_has_viewed

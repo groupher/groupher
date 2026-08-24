@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
+  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Community access composition across Lifecycle, relations and Passport.
 
@@ -19,16 +20,13 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.{Accounts, CMS}
-  alias Accounts.Model.User
-  alias CMS.Const
-  alias CMS.Communities.Lifecycle
-  alias CMS.Gate
-  alias Gate.Context.Access.Community, as: CommunityContext
-  alias Gate.ErrorCat
-  alias CMS.Passport.Registry
-  alias CMS.Model.Community
-
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Gate.Const
+  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
+  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS.Passport.Registry
   require Const
 
   @actions Const.gate_action_values()
@@ -80,9 +78,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   def check_access(_user, _action, _community, _context), do: {:error, ErrorCat.unknown_action()}
 
   defp read_allowed?(%Community{} = community, context) do
-    with {:ok, true} <- Lifecycle.can_read(community, context) do
-      :ok
-    else
+    case Lifecycle.can_read(community, context) do
+      {:ok, true} ->
+        :ok
+
       {:ok, false} ->
         {:error, ErrorCat.permission_denied()}
 

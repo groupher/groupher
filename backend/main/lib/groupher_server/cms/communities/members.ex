@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Communities.Members do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Members helpers for communities.
 
@@ -14,7 +15,7 @@ defmodule GroupherServer.CMS.Communities.Members do
   import ShortMaps
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
-  alias Helper.{ORM, QueryBuilder, T}
+  alias Helper.{ORM, T}
 
   @doc """
   return paged community subscribers

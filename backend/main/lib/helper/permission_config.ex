@@ -1,5 +1,7 @@
 defmodule Helper.PermissionConfig do
+  alias GroupherServer.CMS.Artiment.Config
   alias GroupherServer.CMS.Passport.ErrorCat
+
   @moduledoc """
   Centralized permission configuration for CMS authorization.
 
@@ -31,7 +33,7 @@ defmodule Helper.PermissionConfig do
   @doc """
   Returns configured article thread slugs.
   """
-  def threads, do: GroupherServer.CMS.Artiment.Config.threads() |> Enum.map(&to_string/1)
+  def threads, do: Config.threads() |> Enum.map(&to_string/1)
 
   @doc """
   Returns valid system-level grants.

@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Snapshot do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Canonical JSON snapshots for docs Tree publish history.
 
@@ -30,9 +31,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   require CMS.Const
 
   @tree_version 3
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_pin CMS.DocTree.Const.tree_node_type(:pin)
 
   @doc """
   Returns canonical draft-tree JSON for one community.
@@ -101,7 +102,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       "type" => to_string(node.type),
       "title" => node.title,
       "parentNodeId" => node.parent_node_id,
-      CMS.Const.doc_tree_json_key(:doc_id) => article_ref_id(node),
+      CMS.DocTree.Const.doc_tree_json_key(:doc_id) => article_ref_id(node),
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,

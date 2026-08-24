@@ -4,16 +4,17 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
   import Ecto.Query
 
   alias GroupherServer.CMS.Interactions
+  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
   alias GroupherServer.CMS.Interactions.Const
   alias GroupherServer.CMS.Model.{Comment, Doc, Post, PostReactionInfo}
   alias GroupherServer.ErrorCat.Error
 
   test "keeps the complete order vocabulary in one owner" do
     assert Const.interaction_order_values() == [:upvotes, :collects]
-    assert Const.passthrough_order_values() == [:publish, :comments, :views]
-    assert Const.order_values() == [:publish, :comments, :views, :upvotes, :collects]
-    assert Const.valid_order?(nil)
-    refute Const.valid_order?(:unknown)
+    assert ArticlesConst.native_order_values() == [:publish, :comments, :views]
+    assert ArticlesConst.order_values() == [:publish, :comments, :views, :upvotes, :collects]
+    assert ArticlesConst.valid_order?(nil)
+    refute ArticlesConst.valid_order?(:unknown)
   end
 
   test "infers the Article schema and compiles reaction ordering" do
