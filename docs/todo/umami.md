@@ -14,7 +14,7 @@ Web Analysis 的底层采集和查询引擎。
 Umami 是 vendor deployment，不需要为了符合 Groupher Context 结构而 fork 或重写
 其内部领域模型。Groupher 只维护必要的查询边界、权限和展示适配。
 
-当前 v1 计划以 `docs/web-analysis/v1.md` 为准：先使用一个 `groupher.com` 全站
+当前 v1 计划以 [`web_analysis_v1.md`](./web_analysis_v1.md) 为准：先使用一个 `groupher.com` 全站
 Umami website，通过社区 path scope 过滤 Dashboard 查询。每社区一个 Umami website
 不是 v1 默认方案，只有 path 过滤无法满足隔离、性能、删除/导出或分享需求时再评估。
 

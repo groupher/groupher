@@ -31,6 +31,7 @@ GET /health
 - `auth`
 - `landing`
 - `main`
+- `community`
 - `dashboard`
 - `dash`
 - `inspire-me`
@@ -72,7 +73,8 @@ producer，也不能共享 service id。
 - `version`：构建版本、commit sha 或本地 `dev`。
 - `environment`：运行环境，例如 `development | mock | preview | production`。
 - `timestamp`：服务生成响应时的 UTC 时间。
-- `uptimeMs`：当前进程运行时长。
+- `uptimeMs`：当前进程或 runtime instance 的运行时长；Cloudflare Workers 中表示当前
+  isolate 的运行时长，isolate 切换后允许重置，不能当作稳定的 deployment age。
 - `checks`：可选的细分检查结果，v1 可以为空。
 
 ## Status

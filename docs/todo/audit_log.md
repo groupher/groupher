@@ -6,8 +6,8 @@
 
 - [Report 与审核聚合设计](../community/report_design.md)
 - [Community Lifecycle](../community/lifecycle.md)
-- [Command：复杂领域操作的组织边界](./command.md)
-- [Post Solution](./post_solution.md)
+- [Command：复杂领域操作的组织边界](../artiment/command.md)
+- [Post Solution](../artiment/post_solution.md)
 
 ## 1. 背景
 
@@ -290,4 +290,3 @@ GraphQL 只暴露 ActivityLog DTO，不直接暴露 `AuditLog` schema。
 - `operation_ref` 能关联或聚合一次完整业务操作；
 - 当前状态由 Lifecycle、PostSolution、ReviewCase、Interaction 等 owner 查询；
 - 初期不引入没有性能证据的 ActivityLog 数据表。
-

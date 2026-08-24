@@ -34,7 +34,7 @@ Umami 仍然是供应商应用。不要为了 Groupher 的产品建模去 fork �
 
 ## 当前基线
 
-v1 在`docs/web-analysis/v1.md`中定义了内建 Web Analysis 模型：
+v1 在 [`web_analysis_v1.md`](./web_analysis_v1.md) 中定义了内建 Web Analysis 模型：
 
 - 为`groupher.com`使用一个全局 Umami website；
 - 社区分析通过路由路径作用域推导，例如`/home`；

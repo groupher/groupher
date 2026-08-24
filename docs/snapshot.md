@@ -201,5 +201,5 @@ key 因调用点不同而呈现难以推断的过期行为。
 仓库中还有 article immutable snapshot 和 doc tree snapshot，它们用于版本历史或发布状态，
 语义与本模块不同。`CMS.Snapshot` 是可丢弃、可重建的展示刷新服务，不是内容版本模型。
 
-更早的设计过程保留在 [`snapshot_update_system.md`](./snapshot_update_system.md)。本文描述
+更早的设计过程保留在 [`snapshot_update_system.md`](./todo/snapshot_update_system.md)。本文描述
 当前模块的实际行为和使用边界，应作为接入该模块时的入口文档。

@@ -334,7 +334,7 @@ Mix.Tasks.Compile.ErrorCat 负责全局校验：
         retryable: false,
         actions: [],
         message_key: "cms.gate.gate_unknown"
-      }
+      },
     ]
 
 每项必须包含 namespace、reason、code、retryable、actions、message_key。reserved definition/2 与普通 entry 完全同形，不能只返回 namespace、reason、code 的残缺 map。
@@ -346,7 +346,7 @@ Mix.Tasks.Compile.ErrorCat 负责全局校验：
 - 普通 entry 占用 reserved code 必须编译失败；
 - 普通 entry 不能伪装成 reserved entry；
 - reserved reason 不能在同一 namespace 被普通 entry 再次声明；
-- default、custom、gate_unknown 必须出现在 reserved 清单和迁移清单中。
+- default、custom 和 gate_unknown 必须出现在 reserved 清单中。
 
 ## 9. Runtime API
 

@@ -4,8 +4,8 @@
 >
 > 本文档涵盖链接和取消链接外部 OAuth 身份
 > 已通过身份验证的 Groupher 用户。初始登录和 Browser Session
-> 生命周期仍然由 [`v1.md`](./v1.md) 定义。第一方服务身份
-> 和用户委托仍然由 [`v2.md`](./v2.md) 定义。
+> 生命周期仍然由 [`Auth V1`](../auth/v1.md) 定义。第一方服务身份
+> 和用户委托仍然由 [`Auth V2`](../auth/v2.md) 定义。
 
 ## 目标
 
@@ -1422,8 +1422,8 @@ monitoring results, execution time, and final status
 
 ## 相关文档
 
-- [`docs/auth/v1.md`](./v1.md)：Browser Auth 和 Session 生命周期。
-- [`docs/auth/v2.md`](./v2.md)：服务身份和用户委托。
+- [`docs/auth/v1.md`](../auth/v1.md)：Browser Auth 和 Session 生命周期。
+- [`docs/auth/v2.md`](../auth/v2.md)：服务身份和用户委托。
 - [`docs/oauth/overview.md`](../oauth/overview.md)：OAuth场景边界。
 - [Auth.js 数据库模型]([[[K188]]]): Auth.js
   用户/帐户适配器语义和帐户链接上下文。

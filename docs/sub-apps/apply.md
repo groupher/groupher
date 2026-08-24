@@ -6,7 +6,7 @@
 >
 > 当前状态：V1 目标合同已确认；后端继续使用 Phoenix
 
-详细实现合同见 [`docs/apply/v1.md`](../apply/v1.md)。本文只保留稳定的部署定位和
+详细实现合同见 [`docs/todo/apply_v1.md`](../todo/apply_v1.md)。本文只保留稳定的部署定位和
 子应用边界；前端运行时、Phoenix Application 模型、Community Creation/Setup、
 迁移顺序和验收标准以 V1 文档为准。
 
