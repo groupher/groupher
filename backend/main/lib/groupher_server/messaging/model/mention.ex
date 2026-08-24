@@ -18,8 +18,8 @@ defmodule GroupherServer.Messaging.Model.Mention do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.messaging()

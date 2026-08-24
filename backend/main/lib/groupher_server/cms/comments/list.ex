@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Comments.List do
+  alias GroupherServer.CMS.QueryBuilder
+
   @moduledoc """
   List/paged operations for comments.
 
@@ -18,16 +20,16 @@ defmodule GroupherServer.CMS.Comments.List do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.{CMS, Jobs, Repo}
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
 
-  alias CMS.Model.{Comment, PinnedComment}
-  alias CMS.Comments.Replies
-  alias CMS.Comments.InteractionResponse
-  alias Helper.{Later, ORM, QueryBuilder, T}
+  alias GroupherServer.CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.Comments.Replies
+  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
+  alias Helper.{ORM, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
   @published_article_preloads [
@@ -66,6 +68,13 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
+  @doc """
+  Returns one Article's Comment state with viewer participation.
+
+  ## Examples
+
+      Comments.List.comments_state(:post, post_id, viewer)
+  """
   def comments_state(thread, article_id, %User{} = user) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, state} <- comments_state(thread, article_id) do
@@ -86,9 +95,29 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
+  @spec paged_comments(T.thread(), T.id(), map(), atom()) :: T.domain_res(T.paged_data())
+  @doc """
+  Returns a page of Comments without viewer state.
+
+  ## Examples
+
+      Comments.List.paged_comments(:post, post_id, filters, :replies)
+  """
+  def paged_comments(thread, article_id, filters, mode),
+    do: paged_comments(thread, article_id, filters, mode, nil)
+
   @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
           T.domain_res(T.paged_data())
-  def paged_comments(thread, article_id, filters, mode, user \\ nil)
+  @doc """
+  Returns a page of Comments hydrated for an optional viewer.
+
+  The `:timeline` mode includes flat visible Comments; `:replies` returns root
+  Comments with their embedded reply projection.
+
+  ## Examples
+
+      Comments.List.paged_comments(:post, post_id, filters, :replies, viewer)
+  """
 
   def paged_comments(thread, article_id, filters, :timeline, user) do
     where_query = dynamic([c], not c.is_folded and not c.is_pinned)
@@ -111,6 +140,13 @@ defmodule GroupherServer.CMS.Comments.List do
 
   @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
+  @doc """
+  Returns a user's published Comments across all public Article threads.
+
+  ## Examples
+
+      Comments.List.paged_published_comments(target_user, filters, viewer)
+  """
   def paged_published_comments(%User{id: user_id}, filter, actor) do
     %{page: page, size: size} = filter
 
@@ -129,6 +165,13 @@ defmodule GroupherServer.CMS.Comments.List do
 
   @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
+  @doc """
+  Returns a user's published Comments in one Article thread.
+
+  ## Examples
+
+      Comments.List.paged_published_comments(target_user, :post, filters, viewer)
+  """
   def paged_published_comments(%User{id: user_id}, thread, filter, actor) do
     %{page: page, size: size} = filter
 
@@ -149,6 +192,13 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
+  @doc """
+  Returns folded Comments without viewer state.
+
+  ## Examples
+
+      Comments.List.paged_folded_comments(:post, post_id, filters)
+  """
   def paged_folded_comments(thread, article_id, filters) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, nil)
@@ -156,33 +206,69 @@ defmodule GroupherServer.CMS.Comments.List do
 
   @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
           T.domain_res(T.paged_data())
+  @doc """
+  Returns folded Comments hydrated for a viewer.
+
+  ## Examples
+
+      Comments.List.paged_folded_comments(:post, post_id, filters, viewer)
+  """
   def paged_folded_comments(thread, article_id, filters, %User{} = user) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
-  @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
-  def paged_comment_replies(comment_id, filters, user \\ nil)
+  @spec paged_comment_replies(T.id(), map()) :: T.domain_res(T.paged_data())
+  @doc """
+  Returns replies under one root Comment without viewer state.
 
+  ## Examples
+
+      Comments.List.paged_comment_replies(comment_id, filters)
+  """
+  def paged_comment_replies(comment_id, filters),
+    do: paged_comment_replies(comment_id, filters, nil)
+
+  @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
+  @doc """
+  Returns replies under one root Comment hydrated for an optional viewer.
+
+  ## Examples
+
+      Comments.List.paged_comment_replies(comment_id, filters, viewer)
+  """
   def paged_comment_replies(comment_id, filters, user) do
     do_paged_comment_replies(comment_id, filters, user)
   end
 
   @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())
+  @doc """
+  Returns distinct Comment participants and schedules a best-effort projection
+  repair when the persisted count differs.
+
+  ## Examples
+
+      Comments.List.paged_comments_participants(:post, post_id, filters)
+  """
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
          {:ok, article} <- public_article(info.model, thread, article_id),
          {:ok, paged_data} <-
            do_paged_comments_participants(thread, thread_query, filters) do
-      if article.comments_participants_count !== paged_data.total_count do
-        Later.run(
-          {ORM, :update, [article, %{comments_participants_count: paged_data.total_count}]}
-        )
-      end
+      case article.comments_participants_count !== paged_data.total_count do
+        true ->
+          :ok =
+            Jobs.enqueue_best_effort(:reconcile_comments_participants, article.id, fn ->
+              Jobs.reconcile_comments_participants(article, paged_data.total_count)
+            end)
 
-      paged_data |> done
+          done(paged_data)
+
+        false ->
+          done(paged_data)
+      end
     end
   end
 
@@ -225,18 +311,42 @@ defmodule GroupherServer.CMS.Comments.List do
       |> CMS.Gate.scope(user, :list, comment_scope(thread))
       |> where(^thread_query)
       |> where(^where_query)
+      |> prioritize_solution(thread)
       |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
       |> then(fn paged ->
         case InteractionResponse.many(paged.entries, user, article_author_id: article_author_id) do
-          {:ok, entries} -> Map.put(paged, :entries, entries)
-          {:error, _reason} = error -> error
+          {:ok, entries} ->
+            Map.put(paged, :entries, prioritize_hydrated_solution(entries, thread))
+
+          {:error, _reason} = error ->
+            error
         end
       end)
       |> done()
     end
   end
+
+  defp prioritize_solution(query, :post) do
+    query
+    |> join(:left, [comment, ...], solution in GroupherServer.CMS.Model.PostSolution,
+      on: solution.comment_id == comment.id,
+      as: :post_solution
+    )
+    |> prepend_order_by([_comment, ...], desc: not is_nil(as(:post_solution).id))
+  end
+
+  defp prioritize_solution(query, _thread), do: query
+
+  defp prioritize_hydrated_solution(entries, :post) do
+    case Enum.split_with(entries, & &1.is_solution) do
+      {[], _rest} -> entries
+      {solutions, rest} -> solutions ++ rest
+    end
+  end
+
+  defp prioritize_hydrated_solution(entries, _thread), do: entries
 
   defp do_paged_comment_replies(comment_id, filters, user) do
     %{page: page, size: size} = filters
@@ -280,7 +390,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
         _ ->
           pinned_comments =
-            sort_solution_to_front(thread, pinned_comments)
+            pinned_comments
             |> Enum.slice(0, @pinned_comment_limit)
             |> Repo.preload(reply_to_comment: :author)
 
@@ -296,15 +406,17 @@ defmodule GroupherServer.CMS.Comments.List do
   defp add_pinned_comments_ifneed(paged_comments, _thread, _article_id, _), do: paged_comments
 
   defp article_author_id(thread, article_id) do
-    with {:ok, %{model: model}} <- match(thread) do
-      from(article in model,
-        join: author in assoc(article, :author),
-        where: article.id == ^article_id,
-        select: author.user_id
-      )
-      |> Repo.one()
-    else
-      _ -> nil
+    case match(thread) do
+      {:ok, %{model: model}} ->
+        from(article in model,
+          join: author in assoc(article, :author),
+          where: article.id == ^article_id,
+          select: author.user_id
+        )
+        |> Repo.one()
+
+      _ ->
+        nil
     end
   end
 
@@ -335,19 +447,4 @@ defmodule GroupherServer.CMS.Comments.List do
     |> Repo.all()
     |> done
   end
-
-  defp sort_solution_to_front(:post, pinned_comments) do
-    solution_index = Enum.find_index(pinned_comments, & &1.is_solution)
-
-    case is_nil(solution_index) do
-      true ->
-        pinned_comments
-
-      false ->
-        {solution_comment, rest_comments} = List.pop_at(pinned_comments, solution_index)
-        [solution_comment] ++ rest_comments
-    end
-  end
-
-  defp sort_solution_to_front(_, pinned_comments), do: pinned_comments
 end

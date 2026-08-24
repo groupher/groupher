@@ -24,8 +24,8 @@ defmodule GroupherServer.CMS.Events do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.Events.Event
   alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS.Events.Event
 
   @type event_result :: {:ok, term()} | {:error, term()}
 

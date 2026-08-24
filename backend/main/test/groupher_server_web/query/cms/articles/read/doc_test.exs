@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS.Articles.ErrorCat
 
   setup do
     {community, doc, doc_attrs, user} = mock_article(:doc)
@@ -98,7 +99,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
            |> query_error?(
              S.Article.q(:article, :doc),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+             ErrorCat.code(ErrorCat.thread_not_visible())
            )
   end
 end

@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   use GroupherServer.TestMate
 
-  alias CMS.Events
+  alias GroupherServer.CMS.Events
   alias GroupherServer.Messaging
 
   setup do
@@ -44,7 +44,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -82,7 +83,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
       {:ok, comment} = preload_author(comment)
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -159,7 +161,9 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 
       comment = Repo.preload(comment, :author)
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 

@@ -19,12 +19,13 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS
+  alias GroupherServer.CMS.{
+    Marker
+  }
 
-  alias CMS.Artiment.Threads
-  alias CMS.{Marker}
-  alias CMS.Model.{Author, Community, CommunityTagGroup}
-  alias CMS.Dashboard.Fields, as: Dashboard
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
+  alias GroupherServer.CMS.Model.{Author, Community, CommunityTagGroup}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

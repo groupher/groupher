@@ -1,7 +1,7 @@
 import { loadLocale } from '@dash/server/locale'
 import { loadThemeSeed } from '@dash/server/theme'
 import { prePaintRuntimeSeedScript, prePaintThemeDetectScript } from '@dash/utils/first-paint'
-import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
 import '../../../core/tailwind/global.css'
@@ -11,8 +11,9 @@ import ThemeStoreProvider from '~/stores/theme/provider'
 import AuthLoginModal from '~/ui/AuthLoginModal'
 
 import { TanStackPlatformProvider } from '../platform/tanStackPlatform'
+import type { TRouterContext } from '../router-context'
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<TRouterContext>()({
   loader: async () => {
     const [locale, theme] = await Promise.all([loadLocale({ data: {} }), loadThemeSeed()])
     return { locale, renderedAt: Date.now(), theme }

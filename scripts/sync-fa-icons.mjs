@@ -12,7 +12,7 @@ const optimizedSourceDir = path.join(assetsRoot, 'generated/optimized')
 const spriteSourceDir = path.join(assetsRoot, 'generated/sprites')
 const providerLogoSourceDir = path.join(assetsRoot, 'raw/providers')
 const providers = ['fa', 'lucide', 'heroicons', 'phosphor']
-const allowedApps = ['main', 'dashboard', 'dash', 'landing']
+const allowedApps = ['main', 'dashboard', 'dash', 'landing', 'community']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 

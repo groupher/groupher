@@ -18,16 +18,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.{Document, Lifecycle, MutationLock}
-  alias CMS.Docs.Branch
-  alias CMS.Docs.Trash, as: DocTrash
-  alias CMS.Communities.TagStats
+  alias GroupherServer.CMS.Articles.{Document, Lifecycle, MutationLock}
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Docs.Trash, as: DocTrash
 
-  alias CMS.Model.{
-    ArtimentMention,
+  alias GroupherServer.CMS.Model.{
     ArticleLifecycle,
+    ArtimentMention,
     Community,
     Doc,
     DocBranch,
@@ -37,12 +35,15 @@ defmodule GroupherServer.CMS.Articles.Trash do
     TrashedDocTreeNode
   }
 
-  alias CMS.SearchArtiments.Indexer
-  alias Helper.{Constant, ORM, T}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Publish
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias Helper.{ORM, T}
 
   require CMS.Const
 
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
   @default_retention_days 30
 
   @doc """
@@ -110,24 +111,26 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   @spec trashed_article?(map()) :: boolean()
   def trashed_article?(article) do
-    with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
-      case thread do
-        :doc ->
-          TrashedDocArticle
-          |> where([item], item.community_id == ^article.community_id)
-          |> where([item], item.branch_id == ^article.branch_id)
-          |> where([item], item.article_hash_id == ^article.article_hash_id)
-          |> Repo.exists?()
+    case CMS.FrontDesk.thread_of(article) do
+      {:ok, thread} ->
+        case thread do
+          :doc ->
+            TrashedDocArticle
+            |> where([item], item.community_id == ^article.community_id)
+            |> where([item], item.branch_id == ^article.branch_id)
+            |> where([item], item.article_hash_id == ^article.article_hash_id)
+            |> Repo.exists?()
 
-        _ ->
-          TrashedArticle
-          |> where([item], item.community_id == ^article.community_id)
-          |> where([item], item.thread == ^thread)
-          |> where([item], item.article_hash_id == ^article.article_hash_id)
-          |> Repo.exists?()
-      end
-    else
-      _ -> false
+          _ ->
+            TrashedArticle
+            |> where([item], item.community_id == ^article.community_id)
+            |> where([item], item.thread == ^thread)
+            |> where([item], item.article_hash_id == ^article.article_hash_id)
+            |> Repo.exists?()
+        end
+
+      _ ->
+        false
     end
   end
 
@@ -149,9 +152,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
           nil ->
             with {:ok, canonical} <- CMS.Gate.access_check(actor, :delete, article) do
-              MutationLock.with_article(community, article, fn ->
-                do_trash(community, thread, canonical.article_hash_id, actor, opts)
-              end)
+              MutationLock.with_article(
+                community,
+                article,
+                fn -> do_trash(community, thread, canonical.article_hash_id, actor, opts) end
+              )
             end
         end
       else
@@ -186,8 +191,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
         actor,
         opts
       ) do
-    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, opts) do
-      CMS.Docs.Trash.attach(action, community, branch, article_hash_id, actor, opts)
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocTrash.attach(action, community, branch, article_hash_id, actor, opts)
     end
   end
 
@@ -204,10 +209,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
         {:ok, item}
 
       nil ->
-        with {:ok, article} <- representative_article(community, thread, article_hash_id),
-             {:ok, item} <-
-               attach_article(action, community, thread, article_hash_id, article, actor, opts) do
-          {:ok, item}
+        with {:ok, article} <- representative_article(community, thread, article_hash_id) do
+          attach_article(action, community, thread, article_hash_id, article, actor, opts)
         end
     end
   end
@@ -242,33 +245,46 @@ defmodule GroupherServer.CMS.Articles.Trash do
     missing_ids = Enum.reject(article_hash_ids, &Map.has_key?(existing_by_hash_id, &1))
 
     with {:ok, articles_by_hash_id} <- representative_articles(community, thread, missing_ids) do
-      article_hash_ids
-      |> Enum.reduce_while({:ok, []}, fn article_hash_id, {:ok, items} ->
-        case Map.fetch(existing_by_hash_id, article_hash_id) do
-          {:ok, item} ->
-            {:cont, {:ok, [item | items]}}
-
-          :error ->
-            article = Map.fetch!(articles_by_hash_id, article_hash_id)
-
-            case attach_article(
-                   action,
-                   community,
-                   thread,
-                   article_hash_id,
-                   article,
-                   actor,
-                   opts
-                 ) do
-              {:ok, item} -> {:cont, {:ok, [item | items]}}
-              error -> {:halt, error}
-            end
-        end
-      end)
+      Enum.reduce_while(
+        article_hash_ids,
+        {:ok, []},
+        &attach_many_item(&1, &2, %{
+          action: action,
+          community: community,
+          thread: thread,
+          existing_by_hash_id: existing_by_hash_id,
+          articles_by_hash_id: articles_by_hash_id,
+          actor: actor,
+          opts: opts
+        })
+      )
       |> case do
         {:ok, items} -> {:ok, Enum.reverse(items)}
         error -> error
       end
+    end
+  end
+
+  defp attach_many_item(article_hash_id, {:ok, items}, context) do
+    case Map.fetch(context.existing_by_hash_id, article_hash_id) do
+      {:ok, item} ->
+        {:cont, {:ok, [item | items]}}
+
+      :error ->
+        article = Map.fetch!(context.articles_by_hash_id, article_hash_id)
+
+        case attach_article(
+               context.action,
+               context.community,
+               context.thread,
+               article_hash_id,
+               article,
+               context.actor,
+               context.opts
+             ) do
+          {:ok, item} -> {:cont, {:ok, [item | items]}}
+          error -> {:halt, error}
+        end
     end
   end
 
@@ -546,17 +562,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
                  Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
                {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
                :ok <- update_visibility_stats(article, thread, :trash),
-               {:ok, _audit} <-
-                 CMS.Audit.record("article.trashed", %{
-                   community_id: community.id,
-                   actor: actor,
-                   resource_type: to_string(thread),
-                   resource_ref: article_hash_id,
-                   resource_snapshot: article_snapshot(article, thread),
+               {:ok, _activity} <-
+                 Activity.log(article, :trashed,
+                   actor: activity_actor(actor),
                    operation_ref: action.hash_id,
-                   source: Keyword.get(opts, :source, "api"),
-                   metadata: %{}
-                 }) do
+                   source: activity_source(opts),
+                   occurred_at: action.deleted_at
+                 ) do
             {:ok, item}
           end
       end
@@ -590,19 +602,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
            Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
          :ok <- update_visibility_stats(article, thread, :trash),
-         {:ok, _audit} <-
-           maybe_record_audit(
-             "article.trashed",
-             %{
-               community_id: community.id,
-               actor: actor,
-               resource_type: to_string(thread),
-               resource_ref: article_hash_id,
-               resource_snapshot: article_snapshot(article, thread),
-               operation_ref: action.hash_id,
-               source: Keyword.get(opts, :source, "api"),
-               metadata: Keyword.get(opts, :metadata, %{})
-             },
+         {:ok, _activity} <-
+           maybe_record_activity(
+             article,
+             :trashed,
+             actor,
+             action.hash_id,
+             action.deleted_at,
              opts
            ) do
       {:ok, item}
@@ -646,7 +652,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
            representative_article(community, item.thread, item.article_hash_id),
          {:ok, _canonical} <- CMS.Gate.access_check(actor, :restore, article),
          {:ok, _} <- Repo.delete(item),
-         {:ok, _lifecycle} <-
+         {:ok, lifecycle} <-
            Lifecycle.transition(
              community.id,
              item.thread,
@@ -655,19 +661,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
            ),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :active),
          :ok <- update_visibility_stats(article, item.thread, :restore),
-         {:ok, _audit} <-
-           maybe_record_audit(
-             "article.restored",
-             %{
-               community_id: community.id,
-               actor: actor,
-               resource_type: to_string(item.thread),
-               resource_ref: item.article_hash_id,
-               resource_snapshot: article_snapshot(article, item.thread),
-               operation_ref: action.hash_id,
-               source: Keyword.get(opts, :source, "api"),
-               metadata: Keyword.get(opts, :metadata, %{})
-             },
+         {:ok, _activity} <-
+           maybe_record_activity(
+             article,
+             :restored,
+             actor,
+             action.hash_id,
+             lifecycle.changed_at,
              opts
            ) do
       {:ok, article}
@@ -719,7 +719,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
            representative_article(community, item.thread, item.article_hash_id),
          {:ok, physical_articles} <-
            physical_articles(community, item.thread, item.article_hash_id),
-         {:ok, _lifecycle} <-
+         {:ok, lifecycle} <-
            Lifecycle.transition(community.id, item.thread, item.article_hash_id, :destroy),
          :ok <- purge_article_aggregate(item.thread, item.article_hash_id, physical_articles),
          {_, _} <-
@@ -732,23 +732,17 @@ defmodule GroupherServer.CMS.Articles.Trash do
              )
            ),
          {:ok, _} <- Repo.delete(item),
-         {:ok, _audit} <-
-           maybe_record_audit(
-             "article.permanently_deleted",
-             %{
-               community_id: community.id,
-               actor: actor,
-               resource_type: to_string(item.thread),
-               resource_ref: item.article_hash_id,
-               resource_snapshot: article_snapshot(article, item.thread),
-               operation_ref: action.hash_id,
-               source: Keyword.get(opts, :source, "api"),
-               metadata: Keyword.get(opts, :metadata, %{})
-             },
+         {:ok, _activity} <-
+           maybe_record_activity(
+             article,
+             :permanently_deleted,
+             actor,
+             action.hash_id,
+             lifecycle.changed_at,
              opts
            ),
          {:ok, _user} <-
-           GroupherServer.Accounts.Publish.update_states(article.author.user, item.thread) do
+           Publish.update_states(article.author.user, item.thread) do
       Indexer.enqueue_delete(item.thread, item.article_hash_id)
       {:ok, :done}
     end
@@ -908,18 +902,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
     public_stage = CMS.Const.stage(:public)
 
     articles_by_hash_id =
-      with {:ok, info} <- match(thread) do
-        info.model
-        |> where([article], article.community_id == ^community.id)
-        |> where([article], article.article_hash_id in ^article_hash_ids)
-        |> order_by([article], desc: article.stage == ^public_stage)
-        |> preload([:community_tags, :communities, author: :user])
-        |> Repo.all()
-        |> Enum.reduce(%{}, fn article, acc ->
-          Map.put_new(acc, article.article_hash_id, article)
-        end)
-      else
-        _ -> %{}
+      case match(thread) do
+        {:ok, info} ->
+          info.model
+          |> where([article], article.community_id == ^community.id)
+          |> where([article], article.article_hash_id in ^article_hash_ids)
+          |> order_by([article], desc: article.stage == ^public_stage)
+          |> preload([:community_tags, :communities, author: :user])
+          |> Repo.all()
+          |> Enum.reduce(%{}, fn article, acc ->
+            Map.put_new(acc, article.article_hash_id, article)
+          end)
+
+        _ ->
+          %{}
       end
 
     mention_counts =
@@ -998,21 +994,34 @@ defmodule GroupherServer.CMS.Articles.Trash do
     article.stage == CMS.Const.stage(:public) and article.pending != @audit_illegal
   end
 
-  defp article_snapshot(article, thread) do
-    %{
-      title: article.title,
-      thread: thread,
-      author_id: article.author_id
-    }
-  end
-
   defp actor_id(%User{id: id}), do: id
   defp actor_id(_actor), do: nil
 
-  defp maybe_record_audit(action, attrs, opts) do
-    if Keyword.get(opts, :audit, true),
-      do: CMS.Audit.record(action, attrs),
-      else: {:ok, :skipped}
+  defp activity_actor(:operations), do: :system
+  defp activity_actor(actor), do: actor
+
+  defp maybe_record_activity(resource, action, actor, operation_ref, occurred_at, opts) do
+    if Keyword.get(opts, :audit, true) do
+      Activity.log(resource, action,
+        actor: activity_actor(actor),
+        operation_ref: operation_ref,
+        source: activity_source(opts),
+        occurred_at: occurred_at
+      )
+    else
+      {:ok, :skipped}
+    end
+  end
+
+  defp activity_source(opts) do
+    case Keyword.get(opts, :source, :api) do
+      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
+      "api" -> :api
+      "admin" -> :admin
+      "worker" -> :worker
+      "scheduler" -> :scheduler
+      "maintenance" -> :maintenance
+    end
   end
 
   defp maybe_filter_thread(query, nil), do: query

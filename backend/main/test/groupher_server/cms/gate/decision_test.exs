@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Gate.Decision
+  alias GroupherServer.CMS.Gate.Decision
   alias GroupherServer.ErrorCat
   alias GroupherServerWeb.Middleware.GQLResultFmt
 

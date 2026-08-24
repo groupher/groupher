@@ -23,10 +23,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.Repo
 
   @threads Config.threads()
   @valid_article_prefix Config.valid_article_prefixes()
@@ -417,13 +417,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp load_articles(_thread, []), do: %{}
 
   defp load_articles(thread, ids) do
-    with {:ok, info} <- match(thread) do
-      info.model
-      |> where([a], a.id in ^ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, &1})
-    else
-      _ -> %{}
+    case match(thread) do
+      {:ok, info} ->
+        info.model
+        |> where([a], a.id in ^ids)
+        |> Repo.all()
+        |> Map.new(&{&1.id, &1})
+
+      _ ->
+        %{}
     end
   end
 

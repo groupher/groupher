@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Accounts.Achievement do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias Accounts.Model.Achievement
+  alias GroupherServer.Accounts.Model.Achievement
 
   @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
   @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()
@@ -19,7 +19,8 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
   describe "[Accounts Achievement communities]" do
     test "normal user should have a empty editable communities list", ~m(user)a do
-      {:ok, results} = Accounts.Achievements.paged_moderatorable_communities(user, %{page: 1, size: 20})
+      {:ok, results} =
+        Accounts.Achievements.paged_moderatorable_communities(user, %{page: 1, size: 20})
 
       assert results |> is_valid_pagination?(:raw)
       assert results.total_count == 0
@@ -32,7 +33,6 @@ defmodule GroupherServer.Test.Accounts.Achievement do
 
       community_attrs = mock_attrs(:community)
       {:ok, community2} = CMS.Communities.create(community_attrs, user2)
-
 
       {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
       {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)

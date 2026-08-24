@@ -22,19 +22,21 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Articles.Draft
-  alias GroupherServer.CMS.Docs.{Branch, Lifecycle}
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Artiment.Matcher
   alias GroupherServer.CMS.ContentImport.{ImportSourceMapping, Jobs}
   alias GroupherServer.CMS.ContentImport.Persistence.Job
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
-  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS.Docs.{Branch, Lifecycle}
   alias GroupherServer.CMS.DocTree
   alias GroupherServer.CMS.DocTree.Import, as: DocTreeImport
   alias GroupherServer.CMS.DocTree.Reader, as: DocTreeReader
+  alias GroupherServer.CMS.ErrorCat
   alias GroupherServer.CMS.Model.{Community, TrashAction, TrashedDocArticle}
   alias Helper.Transaction
 
@@ -44,14 +46,16 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
   def apply(%Community{} = community, job_ref) do
     Repo.transaction(fn ->
-      with {:ok, job} <- Jobs.lock_job(community.id, job_ref) do
-        if job.status == :completed do
-          Jobs.project(job)
-        else
-          apply_locked(community, job)
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      case Jobs.lock_job(community.id, job_ref) do
+        {:ok, job} ->
+          if job.status == :completed do
+            Jobs.project(job)
+          else
+            apply_locked(community, job)
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end
@@ -182,7 +186,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   defp load_target_states(community, branch, items) do
     target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()
 
-    with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(:doc) do
+    with {:ok, %{model: model}} <- Matcher.match(:doc) do
       draft_refs =
         target_refs
         |> target_refs_by_stage(model, community, branch, CMS.Const.stage(:draft))
@@ -211,7 +215,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   defp target_refs_by_stage(target_refs, model, community, branch, stage) do
     model
-    |> CMS.Articles.Trash.not_trashed_scope(:doc)
+    |> Trash.not_trashed_scope(:doc)
     |> where([article], article.article_hash_id in ^target_refs)
     |> where([article], article.community_id == ^community.id)
     |> where([article], article.branch_id == ^branch.id)

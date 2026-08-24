@@ -30,8 +30,8 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
 
       import Ecto.Changeset
 
-      alias Helper.Constant.DBPrefix
       alias GroupherServer.CMS.Model
+      alias Helper.Constant.DBPrefix
 
       @schema_prefix DBPrefix.cms()
       @target_id unquote(target_id)

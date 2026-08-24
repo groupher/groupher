@@ -14,8 +14,9 @@ defmodule GroupherServer.CMS.Seeds.Communities do
 
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Seeds.Domain
+  alias GroupherServer.CMS.Seeds.Helper, as: SeedHelper
 
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
   alias Helper.{ORM, T}
 
   @community_types [:pl, :framework]
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
     slug = slug |> to_string() |> String.trim()
     title = Keyword.get(opts, :title, String.capitalize(slug))
 
-    with {:ok, user} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
+    with {:ok, user} <- SeedHelper.seed_bot(),
          {:ok, community} <- find_or_create(slug, title, user),
          {:ok, _} <- ensure_about_enabled(community) do
       CMS.Communities.fetch(community.slug, inc_views: false)

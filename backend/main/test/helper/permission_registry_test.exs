@@ -41,6 +41,33 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
              PermissionRegistry.requirement("this_action_does_not_exist")
   end
 
+  test "allowed? checks global grants and god bypass" do
+    assert {:ok, true} =
+             PermissionRegistry.allowed?(
+               %{"global" => %{"community.create" => true}},
+               nil,
+               "community.create"
+             )
+
+    assert {:ok, false} =
+             PermissionRegistry.allowed?(%{"global" => %{}}, nil, "community.create")
+
+    assert {:ok, true} =
+             PermissionRegistry.allowed?(%{"global" => %{"god" => true}}, nil, "post.update")
+  end
+
+  test "allowed? checks context grants and requires a community" do
+    passport = %{
+      "global" => %{},
+      "demo" => %{"cms" => %{"post.edit" => true}}
+    }
+
+    assert {:ok, true} = PermissionRegistry.allowed?(passport, "demo", "post.update")
+
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :community_required}} =
+             PermissionRegistry.allowed?(passport, nil, "post.update")
+  end
+
   test "valid_rules? accepts normalized shape only" do
     normalized = %{
       "global" => %{"category.set" => true, "community.update" => true},

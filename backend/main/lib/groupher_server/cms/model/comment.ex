@@ -28,11 +28,9 @@ defmodule GroupherServer.CMS.Model.Comment do
       articles_thread_matches_ref_constraint: 2
     ]
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Artiment.Threads
-  alias CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -41,14 +39,13 @@ defmodule GroupherServer.CMS.Model.Comment do
   @threads GroupherServer.CMS.Artiment.Config.threads()
 
   @required_fields ~w(body author_id community_id article_hash_id)a
-  @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question is_solution pending)a
+  @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question pending)a
   @updatable_fields ~w(
     body_html
     is_folded
     floor
     is_pinned
     is_for_question
-    is_solution
     replies_count
     pending
     inserted_at
@@ -107,7 +104,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:floor, :integer, default: 0)
 
     field(:is_for_question, :boolean, default: false)
-    field(:is_solution, :boolean, default: false)
+    field(:is_solution, :boolean, default: false, virtual: true)
 
     # 是否是评论文章的作者
     field(:is_article_author, :boolean, default: false)

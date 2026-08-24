@@ -70,6 +70,24 @@ type RootQueryType {
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
 
+  "Safe product ArticleLog for one readable Article"
+  articleLogs(article: ArticlePathInput!, filter: ArticleLogFilter): PagedArticleLogs!
+
+  "Safe Community Activity timeline across readable resource streams"
+  communityActivity(community: String!, filter: CommunityActivityFilter): PagedCommunityActivity!
+
+  "UTC daily Community Activity counts for the timeline overview"
+  communityActivityStats(community: String!, filter: CommunityActivityStatsFilter!): CommunityActivityStats!
+
+  "Active Community Activity actions available to the current manager"
+  communityActivityConfig(community: String!): CommunityActivityConfig!
+
+  "Exports the current Community Activity filter"
+  communityActivityExport(community: String!, filter: CommunityActivityFilter, format: CommunityActivityExportFormat!): CommunityActivityExport!
+
+  "Reads one safe Community Activity event by event reference"
+  communityActivityEvent(community: String!, eventRef: ID!): CommunityActivityEvent
+
   "Current user's Apply admission state and blocking application"
   communityApplicationState: CommunityApplicationState!
 
@@ -91,14 +109,14 @@ type RootQueryType {
   "One current Article Trash membership"
   trashedArticle(id: ID!, community: String!, thread: Thread!): TrashedArticle
 
-  "Append-only CMS audit log"
-  cmsAuditLogs(community: String!, filter: AuditLogFilter): PagedAuditLogs
-
   "Built-in community Web Analysis summary"
   analysisWebSummary(community: String!, days: Int): AnalysisWebSummary
 
   "Public Umami website id for built-in community Analysis tracking"
   analysisTrackingWebsiteId(community: String!): String
+
+  "Public visitor distribution for an enabled community About page"
+  analysisVisitorLocationMap(community: String!): AnalysisVisitorLocationMap
 
   "Built-in community Analysis Trends summary and chart"
   analysisTrendsOverview(community: String!, days: Int): AnalysisTrendsOverview
@@ -697,7 +715,7 @@ type RootMutationType {
   undoLockDocComment(article: ArticlePathInput!): Article
 
   "write a comment"
-  createComment(article: ArticlePathInput!, body: String!): Comment
+  createComment(article: ArticlePathInput!, body: String!): CommentMutationPayload
 
   "update a comment"
   updateComment(comment: CommentPathInput!, body: String!): Comment
@@ -706,7 +724,7 @@ type RootMutationType {
   deleteComment(comment: CommentPathInput!): Comment
 
   "reply to a comment"
-  replyComment(comment: CommentPathInput!, body: String!): Comment
+  replyComment(comment: CommentPathInput!, body: String!): CommentMutationPayload
 
   "upvote to a comment"
   upvoteComment(comment: CommentPathInput!): Comment
@@ -726,11 +744,11 @@ type RootMutationType {
   "undo emotion to a comment"
   undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!): Comment
 
-  "mark a comment as question post's best solution"
-  markCommentSolution(comment: CommentPathInput!): Comment
+  "accept a comment as a QA post's current solution"
+  acceptSolution(comment: CommentPathInput!): Comment
 
-  "mark a comment as question post's best solution"
-  undoMarkCommentSolution(comment: CommentPathInput!): Comment
+  "revoke a comment when it is a QA post's current solution"
+  revokeSolution(comment: CommentPathInput!): Comment
 
   "pin a comment"
   pinComment(comment: CommentPathInput!): Comment
@@ -753,7 +771,7 @@ type RootMutationType {
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
+    community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean, visitorLocationMap: Boolean
   ): Dsb
 
   "update thread-specific emotion settings in dashboard"
@@ -1227,6 +1245,25 @@ type AnalysisTrendLocationSection {
   error: AnalysisWebError
 }
 
+type AnalysisVisitorLocationRegion {
+  code: String
+  visitors: Int
+}
+
+type AnalysisVisitorLocationCountry {
+  code: String
+  visitors: Int
+  percentage: Float
+  regions: [AnalysisVisitorLocationRegion]
+}
+
+type AnalysisVisitorLocationMap {
+  status: String
+  range: AnalysisWebRange
+  countries: [AnalysisVisitorLocationCountry]
+  error: AnalysisWebError
+}
+
 type AnalysisTrendTrafficSection {
   status: String
   timezone: String
@@ -1657,26 +1694,104 @@ type PagedTrashedArticles {
   pageNumber: Int
 }
 
-type AuditLog {
+type ActivityResourceRef {
+  type: String!
+  ref: ID!
+  title: String
+  innerId: ID
+}
+
+type ArticleLogActor {
+  type: String!
+  id: ID
+  login: String
+  nickname: String
+  avatar: String
+}
+
+type ArticleLog {
   id: ID!
-  actorType: String!
-  actorSnapshot: Json!
   action: String!
-  resourceType: String!
-  resourceRef: String!
-  resourceSnapshot: Json!
-  operationRef: ID
-  source: String!
-  metadata: Json!
+  actor: ArticleLogActor!
+  subject: ActivityResourceRef!
+  target: ActivityResourceRef
+  payload: Json!
   occurredAt: DateTime!
 }
 
-type PagedAuditLogs {
-  entries: [AuditLog!]!
+type PagedArticleLogs {
+  entries: [ArticleLog!]!
   totalCount: Int
   pageSize: Int
   totalPages: Int
   pageNumber: Int
+}
+
+type CommunityActivityEvent {
+  id: ID!
+  eventRef: ID
+  operationRef: ID
+  parentEventRef: ID
+  messageKey: String!
+  parentEvent: CommunityActivityEvent
+  childEvents: [CommunityActivityEvent!]!
+  action: String!
+  category: String!
+  highRisk: Boolean!
+  resource: ActivityResourceRef!
+  actor: ArticleLogActor!
+  subject: ActivityResourceRef!
+  target: ActivityResourceRef
+  source: String!
+  payload: Json!
+  metadata: Json!
+  occurredAt: DateTime!
+}
+
+type PagedCommunityActivity {
+  entries: [CommunityActivityEvent!]!
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type CommunityActivityBucket {
+  startedAt: DateTime!
+  endedAt: DateTime!
+  count: Int!
+}
+
+type CommunityActivityStats {
+  granularity: String!
+  timezone: String!
+  totalCount: Int!
+  buckets: [CommunityActivityBucket!]!
+}
+
+type CommunityActivityAction {
+  action: String!
+  messageKey: String!
+  category: String!
+  highRisk: Boolean!
+}
+
+type CommunityActivityResourceConfig {
+  resourceType: String!
+  actions: [CommunityActivityAction!]!
+}
+
+type CommunityActivityConfig {
+  resources: [CommunityActivityResourceConfig!]!
+  sources: [String!]!
+}
+
+type CommunityActivityExport {
+  content: String!
+  filename: String!
+  mimeType: String!
+  totalCount: Int!
+  exportedCount: Int!
 }
 
 enum DocTreeNodeType {
@@ -1934,6 +2049,16 @@ type DocTreeTrashItem {
   deletedFromIndex: Int
   deletedAt: DateTime
   restoredAt: DateTime
+}
+
+type CommentMutationArticle {
+  innerId: Int!
+  commentsCount: Int!
+}
+
+type CommentMutationPayload {
+  comment: Comment!
+  article: CommentMutationArticle!
 }
 
 type DocPublishChangesPayload {
@@ -2318,6 +2443,9 @@ type Post implements Article {
   commentsCount: Int
   cat: ArticleCatEnum
   status: ArticleStatusEnum
+  isSolved: Boolean!
+  solutionCommentId: ID
+  solutionDigest: String
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2618,6 +2746,7 @@ type DsbEnable {
   aboutLocation: Boolean
   aboutLinks: Boolean
   aboutMediaReport: Boolean
+  visitorLocationMap: Boolean
 }
 
 type DsbThreadEmotions {
@@ -2937,6 +3066,7 @@ type CommentReply {
   lifecycle: CommentLifecycle
   insertedAt: DateTime
   updatedAt: DateTime
+  isSolution: Boolean
 }
 
 type Comment {
@@ -3489,11 +3619,39 @@ input TrashFilter {
   thread: Thread
 }
 
-input AuditLogFilter {
+input ArticleLogFilter {
   page: Int
-  size: Int
-  action: String
-  resourceType: String
+}
+
+input CommunityActivityFilter {
+  page: Int
+  resourceTypes: [String!]
+  actions: [String!]
+  categories: [String!]
+  actorRef: ID
+  source: String
+  occurredAfter: DateTime
+  occurredBefore: DateTime
+  subjectQuery: String
+  eventRef: ID
+  operationRef: ID
+}
+
+input CommunityActivityStatsFilter {
+  resourceTypes: [String!]
+  actions: [String!]
+  categories: [String!]
+  actorRef: ID
+  source: String
+  occurredAfter: DateTime!
+  occurredBefore: DateTime!
+  subjectQuery: String
+  operationRef: ID
+}
+
+enum CommunityActivityExportFormat {
+  JSON
+  CSV
 }
 
 "posts_filter doc"
@@ -3516,8 +3674,6 @@ input PagedPostsFilter {
   communityTags: [String]
 
   community: String
-
-  author: String
 
   sort: SortEnum
 }
@@ -3550,8 +3706,6 @@ input PagedChangelogsFilter {
 
   community: String
 
-  author: String
-
   sort: SortEnum
 }
 
@@ -3576,8 +3730,6 @@ input PagedDocsFilter {
 
   community: String
 
-  author: String
-
   sort: SortEnum
 }
 
@@ -3592,7 +3744,6 @@ input PagedBlogsFilter {
   order: ArticleOrderEnum
   communityTags: [String]
   community: String
-  author: String
   sort: SortEnum
 }
 

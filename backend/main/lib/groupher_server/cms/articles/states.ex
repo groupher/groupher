@@ -15,21 +15,21 @@ defmodule GroupherServer.CMS.Articles.States do
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.Repo
 
-  alias CMS.Comments.Writer
-  alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
-  alias CMS.{Articles.Lifecycle, Communities, FrontDesk}
-  alias CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.CMS.{Articles.Lifecycle, Communities, FrontDesk}
+  alias GroupherServer.CMS.Artiment.Const
+  alias GroupherServer.CMS.Comments.Writer
+  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
 
   alias Ecto.Multi
   alias Helper.{Datetime, ORM, T}
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
   @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
-  @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat Const.cat_values() |> Enum.into(%{}, &{&1, &1})
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 

@@ -26,10 +26,9 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
       articles_thread_matches_ref_constraint: 2
     ]
 
-  alias GroupherServer.Accounts
   alias GroupherServer.CMS.Artiment.Threads
 
-  alias Accounts.Model.{CollectFolder, User}
+  alias GroupherServer.Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

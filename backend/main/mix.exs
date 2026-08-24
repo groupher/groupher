@@ -101,8 +101,10 @@ defmodule GroupherServer.Mixfile do
       {:cachex, "~> 4.1"},
       # postgres-backed job queue
       {:oban, "~> 2.23"},
-      # cron-like scheduler job
-      {:quantum, "~> 3.5"},
+      # OTP 29 compatibility fix landed upstream after the latest Hex release.
+      {:quantum,
+       git: "https://github.com/quantum-elixir/quantum-core.git",
+       ref: "f6d838cbdc9f8893653df33f6a0f89c4e42768a3"},
       {:html_sanitize_ex, "~> 1.5"},
       {:accessible, "~> 0.3.0"},
       {:floki, "~> 0.38.4"},

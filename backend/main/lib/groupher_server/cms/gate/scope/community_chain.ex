@@ -1,11 +1,13 @@
 defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Compiles the public ancestor-Community boundary for CMS child resources.
 
   Gate owns the reserved joins. Existing Community/Lifecycle joins are rejected
   because their join predicates cannot be assumed to express the same policy.
 
-  The exported query helpers are internal compiler seams. Product callers use
+  The exported query helpers are internal Scope query seams. Product callers use
   `CMS.Gate.scope/4` and never call this module directly.
 
   Business position:
@@ -17,7 +19,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.{Communities, Const}
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Docs.Const
   alias GroupherServer.CMS.Gate.ErrorCat
 
   alias GroupherServer.CMS.Model.{
@@ -30,12 +33,11 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     DocLifecycle
   }
 
-  alias Helper.Constant
 
   require Const
 
-  @community_normal Constant.CMS.pending(:normal)
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
   @document_public_article_states [:published, :archived]
   @document_draft_article_states [:draft_only, :published, :archived]
   @reserved_aliases [
@@ -284,7 +286,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   defp apply_document_policy(_query, _policy_mode, _stage),
     do: {:error, ErrorCat.scope_context_missing()}
 
-  @doc "Rejects joins and aliases owned by the Gate Scope compiler."
+  @doc "Rejects joins and aliases owned by the Gate Scope query."
   @spec reject_conflicting_scope_joins(Ecto.Query.t(), [module()]) ::
           :ok | {:error, GroupherServer.ErrorCat.Error.t()}
   def reject_conflicting_scope_joins(%Ecto.Query{aliases: aliases, joins: joins}, owned_schemas) do

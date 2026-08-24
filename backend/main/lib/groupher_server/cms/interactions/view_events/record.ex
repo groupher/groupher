@@ -5,12 +5,12 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Record do
       Article Reader -> Record -> ViewEvent + projection job
   """
 
-  alias GroupherServer.{CMS, Jobs, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.Interactions.ErrorCat
-  alias CMS.Interactions.ViewEvents.Project
-  alias CMS.Model.ViewEvent
+  alias GroupherServer.{CMS, Jobs, Repo}
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Interactions.ErrorCat
+  alias GroupherServer.CMS.Interactions.ViewEvents.Project
+  alias GroupherServer.CMS.Model.ViewEvent
 
   @doc """
   Records one durable Article view without taking the aggregate lock.
@@ -23,21 +23,23 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Record do
   @spec record(struct(), User.t() | nil, Ecto.UUID.t() | nil) ::
           {:ok, Ecto.UUID.t()} | {:error, term()}
   def record(article, viewer, event_id) do
-    with {:ok, %{collection?: true}} <- Matcher.match_interaction(article) do
-      Repo.transaction(fn ->
-        case do_record(article, viewer, event_id) do
-          {:ok, recorded_event_id} -> recorded_event_id
-          {:error, reason} -> Repo.rollback(reason)
-          _ -> Repo.rollback(ErrorCat.view_event_insert_failed())
+    case Matcher.match_interaction(article) do
+      {:ok, %{collection?: true}} ->
+        Repo.transaction(fn ->
+          case do_record(article, viewer, event_id) do
+            {:ok, recorded_event_id} -> recorded_event_id
+            {:error, reason} -> Repo.rollback(reason)
+            _ -> Repo.rollback(ErrorCat.view_event_insert_failed())
+          end
+        end)
+        |> case do
+          {:ok, recorded_event_id} -> {:ok, recorded_event_id}
+          {:error, %GroupherServer.ErrorCat.Error{}} = error -> error
+          {:error, _reason} -> {:error, ErrorCat.view_event_insert_failed()}
         end
-      end)
-      |> case do
-        {:ok, recorded_event_id} -> {:ok, recorded_event_id}
-        {:error, %GroupherServer.ErrorCat.Error{}} = error -> error
-        {:error, _reason} -> {:error, ErrorCat.view_event_insert_failed()}
-      end
-    else
-      _ -> {:error, ErrorCat.unsupported_artiment("record_view only supports Article")}
+
+      _ ->
+        {:error, ErrorCat.unsupported_artiment("record_view only supports Article")}
     end
   end
 

@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Middleware.ForceLoader do
     # resolution
   end
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
+  def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(resolution, _) do
     resolution

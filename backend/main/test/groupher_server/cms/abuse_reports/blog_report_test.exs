@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
   @moduledoc false
 
+  alias GroupherServer.CMS.Articles.InteractionResponse
   use GroupherServer.TestMate
 
   setup do
@@ -37,7 +38,7 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert report.report_cases_count == 1
       assert List.first(report_cases).user.login == user.login
 
-      {:ok, blog} = CMS.Articles.InteractionResponse.one(blog, user, surface: :report)
+      {:ok, blog} = InteractionResponse.one(blog, user, surface: :report)
       assert blog.meta.reported_count == 1
       assert blog.viewer_has_reported
     end

@@ -81,14 +81,6 @@ export const DEFAULT_DOC_FAQ = {
   ],
 }
 
-export const DEFAULT_OVERVIEW = {
-  views: 0,
-  subscribersCount: 0,
-  postsCount: 0,
-  changelogsCount: 0,
-  docsCount: 0,
-}
-
 const EMPTY_MEDIA_REPORT = {
   index: 0,
   title: '',

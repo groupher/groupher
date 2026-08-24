@@ -8,18 +8,18 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Artiment.Enums
-  alias GroupherServer.Repo
+  alias GroupherServer.CMS.Artiment.Const
   alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
+  alias GroupherServer.Repo
   alias Helper.ORM
 
-  alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
+  alias GroupherServer.CMS.Model.{Changelog, Comment, Community, Doc, Post}
 
   require CMS.Const
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
-      allowed_cats = [nil | Enums.cat_values()]
+      allowed_cats = [nil | Const.cat_values()]
       allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
 
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"
@@ -58,6 +58,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       comments_count =
         from(c in Comment, where: c.post_id == ^post.id) |> count()
+
       post_counts = CMS.Interactions.counts([post]) |> Map.fetch!({:post, post.id})
 
       assert comments_count >= 23
@@ -90,6 +91,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
             order_by: [asc: c.id]
           )
         )
+
       comment_counts =
         CMS.Interactions.counts([top_comment]) |> Map.fetch!({:comment, top_comment.id})
 
@@ -115,8 +117,8 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert dashboard.base_info.techstack != ""
       assert dashboard.base_info.city != ""
       assert dashboard.layout.kanban_bg_colors == Dashboard.kanban_bg_colors_default()
-      assert length(dashboard.social_links) > 0
-      assert length(dashboard.media_reports) > 0
+      assert dashboard.social_links != []
+      assert dashboard.media_reports != []
       assert dashboard.enable.about == true
       assert dashboard.enable.about_techstack == true
       assert dashboard.enable.about_location == true

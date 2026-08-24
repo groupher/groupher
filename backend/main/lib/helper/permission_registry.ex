@@ -47,8 +47,8 @@ defmodule Helper.PermissionRegistry do
         -> normalized value / infrastructure
   """
 
-  alias Helper.PermissionConfig
   alias GroupherServer.CMS.Passport.ErrorCat
+  alias Helper.PermissionConfig
 
   @root_passport_item_count 10_000
   @contexts PermissionConfig.contexts()
@@ -72,36 +72,41 @@ defmodule Helper.PermissionRegistry do
           {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def allowed?(passport, community, action) when is_binary(action) do
     with {:ok, requirement} <- requirement(action) do
-      rules = normalize_rules(passport)
-
-      cond do
-        get_in(rules, ["global", "god"]) == true ->
-          {:ok, true}
-
-        requirement.scope == :global ->
-          grant = Map.get(requirement, :grant)
-          {:ok, is_binary(grant) and get_in(rules, ["global", grant]) == true}
-
-        requirement.scope == :context and is_binary(community) and community != "" ->
-          grant = Map.get(requirement, :grant)
-
-          {:ok,
-           get_in(rules, [community, "root"]) == true or
-             (is_binary(grant) and
-                get_in(rules, [community, to_string(requirement.context), grant]) == true)}
-
-        requirement.scope == :context ->
-          {:error, ErrorCat.community_required()}
-
-        true ->
-          {:ok, false}
-      end
+      allowed_requirement?(normalize_rules(passport), community, requirement)
     end
   rescue
     ArgumentError -> {:ok, false}
   end
 
   def allowed?(_, _, _), do: {:error, ErrorCat.unknown_action()}
+
+  defp allowed_requirement?(rules, community, requirement) do
+    if get_in(rules, ["global", "god"]) == true do
+      {:ok, true}
+    else
+      allowed_without_god?(rules, community, requirement)
+    end
+  end
+
+  defp allowed_without_god?(rules, _community, %{scope: :global} = requirement) do
+    grant = Map.get(requirement, :grant)
+    {:ok, is_binary(grant) and get_in(rules, ["global", grant]) == true}
+  end
+
+  defp allowed_without_god?(rules, community, %{scope: :context} = requirement)
+       when is_binary(community) and community != "" do
+    grant = Map.get(requirement, :grant)
+
+    {:ok,
+     get_in(rules, [community, "root"]) == true or
+       (is_binary(grant) and
+          get_in(rules, [community, to_string(requirement.context), grant]) == true)}
+  end
+
+  defp allowed_without_god?(_rules, _community, %{scope: :context}),
+    do: {:error, ErrorCat.community_required()}
+
+  defp allowed_without_god?(_rules, _community, _requirement), do: {:ok, false}
 
   @doc """
   Returns supported moderator titles.

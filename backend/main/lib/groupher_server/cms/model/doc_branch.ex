@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.DocBranch do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Docs-only workspace branch.
 
@@ -21,7 +22,6 @@ defmodule GroupherServer.CMS.Model.DocBranch do
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -37,8 +37,8 @@ defmodule GroupherServer.CMS.Model.DocBranch do
 
     field(:slug, :string)
     field(:title, :string)
-    field(:type, Ecto.Enum, values: CMS.Const.doc_branch_type_values())
-    field(:status, Ecto.Enum, values: CMS.Const.doc_branch_status_values())
+    field(:type, Ecto.Enum, values: CMS.Docs.Const.doc_branch_type_values())
+    field(:status, Ecto.Enum, values: CMS.Docs.Const.doc_branch_status_values())
 
     timestamps(type: :utc_datetime)
   end
@@ -50,8 +50,8 @@ defmodule GroupherServer.CMS.Model.DocBranch do
     |> validate_length(:slug, min: 1, max: 80)
     |> validate_length(:title, min: 1, max: 100)
     |> Slug.validate_changeset(:slug)
-    |> validate_inclusion(:type, CMS.Const.doc_branch_type_enum_values())
-    |> validate_inclusion(:status, CMS.Const.doc_branch_status_enum_values())
+    |> validate_inclusion(:type, CMS.Docs.Const.doc_branch_type_enum_values())
+    |> validate_inclusion(:status, CMS.Docs.Const.doc_branch_status_enum_values())
     |> validate_source_scope()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:source_branch_id)

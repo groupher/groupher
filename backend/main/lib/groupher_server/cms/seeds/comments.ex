@@ -17,8 +17,8 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   alias GroupherServer.CMS
   alias GroupherServer.Support.FakeData
 
-  alias CMS.Model.{Comment, Community}
-  alias CMS.Seeds.Config
+  alias GroupherServer.CMS.Model.{Comment, Community}
+  alias GroupherServer.CMS.Seeds.Config
 
   alias Helper.{ORM, T}
 
@@ -117,9 +117,8 @@ defmodule GroupherServer.CMS.Seeds.Comments do
          emotion <- Enum.random(@comment_emotions),
          {:ok, _} <- CMS.Interactions.emotion(comment, emotion, user),
          {:ok, comment} <- ORM.find(Comment, comment.id),
-         emotions <- randomize_emotions(comment.emotions),
-         {:ok, comment} <- ORM.update_embed(comment, :emotions, emotions) do
-      {:ok, comment}
+         emotions <- randomize_emotions(comment.emotions) do
+      ORM.update_embed(comment, :emotions, emotions)
     end
   end
 

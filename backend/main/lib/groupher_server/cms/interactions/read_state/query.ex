@@ -9,15 +9,18 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.Interactions.{DefaultViewerState, ErrorCat}
-  alias CMS.Interactions.Reactions.Emotion
-  alias CMS.Model.Interaction.RoaringBitmap
-  alias CMS.Model.ViewEvent
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Interactions.{Config, DefaultViewerState, ErrorCat}
+  alias GroupherServer.CMS.Interactions.Reactions.Emotion
+  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.CMS.Model.ViewEvent
+  alias GroupherServer.Repo
 
   require RoaringBitmap
+
+  @article_threads Config.article_threads()
+  @supported_threads [:comment | @article_threads]
 
   @doc """
   Returns Interaction read state for one Artiment.
@@ -90,7 +93,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   end
 
   defp viewer_rows(thread, target_ids, viewer, opts)
-       when thread in [:comment, :post, :blog, :changelog, :doc] and is_list(target_ids) do
+       when thread in @supported_threads and is_list(target_ids) do
     target_ids = Enum.uniq(target_ids)
     info = interaction_info(thread)
     kind = if thread == :comment, do: :comment, else: :article
@@ -144,7 +147,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     |> maybe_add_report(state, opts)
   end
 
-  defp build(state, type, opts) when type in [:post, :blog, :changelog, :doc] do
+  defp build(state, type, opts) when type in @article_threads do
     DefaultViewerState.article()
     |> Map.merge(%{
       upvotes_count: value(state, :upvotes_count, 0),

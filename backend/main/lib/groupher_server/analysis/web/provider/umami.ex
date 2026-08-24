@@ -1,5 +1,6 @@
 defmodule GroupherServer.Analysis.Web.Provider.Umami do
   alias GroupherServer.CMS.ErrorCat
+
   @moduledoc """
   Umami adapter for Groupher Web Analysis.
 
@@ -29,6 +30,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   @source_dimensions [:referrer, :channel, :domain]
   @environment_dimensions [:browser, :os, :device, :language, :screen]
   @location_dimensions [:country, :region, :city]
+  @visitor_location_limit 500
 
   plug(Tesla.Middleware.JSON, engine: Jason)
 
@@ -64,9 +66,8 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   @impl true
   def active(%Community{} = community) do
-    with {:ok, request} <- request_config(community.umami_website_id),
-         {:ok, payload} <- fetch_active(request) do
-      {:ok, payload}
+    with {:ok, request} <- request_config(community.umami_website_id) do
+      fetch_active(request)
     end
   end
 
@@ -105,6 +106,35 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   end
 
   @impl true
+  def visitor_locations(%Community{} = community, range) do
+    with {:ok, request} <- request_config(community.umami_website_id) do
+      {sections, errors} =
+        run_sections(
+          country: fn -> dimension_metrics(request, range, :country, @visitor_location_limit) end,
+          region: fn -> dimension_metrics(request, range, :region, @visitor_location_limit) end
+        )
+
+      case Map.fetch(sections, :country) do
+        {:ok, country_rows} ->
+          region_error =
+            errors |> Enum.find_value(fn {section, reason} -> section == :region && reason end)
+
+          {:ok,
+           %{
+             countries: normalize_visitor_country_rows(country_rows),
+             regions: normalize_visitor_region_rows(Map.get(sections, :region, [])),
+             region_error: region_error
+           }}
+
+        :error ->
+          {:error,
+           errors |> Enum.find_value(fn {section, reason} -> section == :country && reason end) ||
+             :country_unavailable}
+      end
+    end
+  end
+
+  @impl true
   def traffic(%Community{} = community, range) do
     with {:ok, request} <- request_config(community.umami_website_id),
          {:ok, rows} <- weekly_sessions(request, range) do
@@ -116,9 +146,14 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
   def create_website(%Community{community: slug}) do
     with {:ok, request} <- request_config(nil) do
       case find_existing_website_id(request, slug, "groupher.com") do
-        {:ok, website_id} -> {:ok, website_id}
-        {:error, %GroupherServer.ErrorCat.Error{reason: :external_not_found}} -> post_website(request, slug, "groupher.com")
-        {:error, reason} -> {:error, reason}
+        {:ok, website_id} ->
+          {:ok, website_id}
+
+        {:error, %GroupherServer.ErrorCat.Error{reason: :external_not_found}} ->
+          post_website(request, slug, "groupher.com")
+
+        {:error, reason} ->
+          {:error, reason}
       end
     end
   end
@@ -289,14 +324,17 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     |> parse_active()
   end
 
-  defp dimension_metrics(%{client: client, website_id: website_id}, range, dimension) do
+  defp dimension_metrics(request, range, dimension),
+    do: dimension_metrics(request, range, dimension, @config.metrics_limit)
+
+  defp dimension_metrics(%{client: client, website_id: website_id}, range, dimension, limit) do
     client
     |> Tesla.get("/api/websites/#{website_id}/metrics/expanded",
       query: [
         startAt: Map.fetch!(range, :start_at),
         endAt: Map.fetch!(range, :end_at),
         type: Atom.to_string(dimension),
-        limit: @config.metrics_limit
+        limit: limit
       ]
     )
     |> parse_rows("metrics/expanded type=#{dimension}")
@@ -407,7 +445,8 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
     end
   end
 
-  defp parse_website_id(body), do: {:error, ErrorCat.unexpected_external_response(body_kind(body))}
+  defp parse_website_id(body),
+    do: {:error, ErrorCat.unexpected_external_response(body_kind(body))}
 
   defp parse_website_rows({:ok, %Tesla.Env{status: status, body: body}})
        when status in 200..299 do
@@ -560,6 +599,63 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
 
   defp normalize_location_rows(rows, :country), do: Enum.map(rows, &Map.put(&1, :code, &1.value))
   defp normalize_location_rows(rows, _dimension), do: Enum.map(rows, &Map.put(&1, :code, nil))
+
+  @doc false
+  def normalize_visitor_country_rows(rows) when is_list(rows) do
+    rows
+    |> Enum.map(fn row ->
+      code = row |> dimension_name() |> String.trim() |> String.upcase()
+      %{code: code, visitors: read_int(row, "visitors")}
+    end)
+    |> Enum.filter(fn %{code: code, visitors: visitors} ->
+      String.match?(code, ~r/^[A-Z]{2}$/) and visitors > 0
+    end)
+  end
+
+  @doc false
+  def normalize_visitor_region_rows(rows) when is_list(rows) do
+    rows
+    |> Enum.map(&normalize_visitor_region_row/1)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp normalize_visitor_region_row(row) do
+    raw_region = row |> dimension_name() |> String.trim() |> String.upcase()
+
+    explicit_country =
+      ["country", :country, "countryCode", :country_code]
+      |> Enum.find_value(fn key -> read_string(row, key) end)
+      |> case do
+        value when is_binary(value) -> value |> String.trim() |> String.upcase()
+        _ -> nil
+      end
+
+    normalized = String.replace(raw_region, "_", "-")
+
+    code =
+      cond do
+        String.match?(normalized, ~r/^[A-Z]{2}-[A-Z0-9]{1,3}$/) ->
+          normalized
+
+        String.match?(explicit_country || "", ~r/^[A-Z]{2}$/) and
+            String.match?(normalized, ~r/^[A-Z0-9]{1,3}$/) ->
+          "#{explicit_country}-#{normalized}"
+
+        true ->
+          nil
+      end
+
+    case code do
+      <<country_code::binary-size(2), "-", _::binary>> ->
+        visitors = read_int(row, "visitors")
+        if visitors > 0, do: %{code: code, country_code: country_code, visitors: visitors}
+
+      _ ->
+        nil
+    end
+  end
+
+  defp dimension_name(row), do: read_string(row, "name") || read_string(row, :name) || ""
 
   defp normalize_timeseries_rows(rows, bucket) do
     rows

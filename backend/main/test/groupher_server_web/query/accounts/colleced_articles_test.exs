@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.CollectFolders.ErrorCat
 
   @total_count 20
 
@@ -91,9 +92,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
            |> query_error?(
              @query,
              variables,
-             ErrorCat.code(
-               GroupherServer.Accounts.CollectFolders.ErrorCat.private_collect_folder()
-             )
+             ErrorCat.code(ErrorCat.private_collect_folder())
            )
   end
 

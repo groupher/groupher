@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
   use GroupherServer.TestMate
 
-  alias CMS.Events
+  alias GroupherServer.CMS.Events
   alias GroupherServer.Messaging
 
   setup do
@@ -24,7 +24,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       {:ok, article} = CMS.Interactions.upvote(post, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -42,7 +43,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -64,7 +66,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       {:ok, article} = CMS.Interactions.undo_upvote(post, user2)
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -79,7 +82,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
       {:ok, comment} = preload_author(comment)
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -92,7 +96,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       {:ok, _} = CMS.Interactions.collect(post, user2)
       Events.emit(:notify_collect, %{article: post, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -113,7 +118,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       {:ok, _} = CMS.Interactions.undo_upvote(post, user2)
       Events.emit(:notify_undo_collect, %{article: post, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -129,7 +135,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, post.author.user, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -153,7 +160,9 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
       Events.emit(:notify_reply, %{reply_comment: replied_comment, from_user: user3})
 
       comment = Repo.preload(comment, :author)
-      {:ok, notifications} = Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
+
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 

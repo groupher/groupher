@@ -559,26 +559,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def q(:cms_audit_logs) do
-    """
-    query($community: String!, $filter: AuditLogFilter) {
-      cmsAuditLogs(community: $community, filter: $filter) {
-        entries {
-          id
-          actorType
-          action
-          resourceType
-          resourceRef
-          source
-          operationRef
-          occurredAt
-        }
-        totalCount
-      }
-    }
-    """
-  end
-
   def q(:collected_users) do
     """
     query($article: ArticlePathInput!, $filter: PagiFilter!) {
@@ -702,6 +682,28 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         totalCount
         pageSize
         pageNumber
+      }
+    }
+    """
+  end
+
+  def q(:article_logs) do
+    """
+    query($article: ArticlePathInput!, $filter: ArticleLogFilter) {
+      articleLogs(article: $article, filter: $filter) {
+        entries {
+          id
+          action
+          actor { type id nickname avatar }
+          subject { type ref title innerId }
+          target { type ref title innerId }
+          payload
+          occurredAt
+        }
+        pageNumber
+        pageSize
+        totalCount
+        totalPages
       }
     }
     """

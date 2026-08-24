@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Publish.Selection do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Normalizes publish input into one explicit selection.
 
@@ -23,18 +24,17 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   """
 
   alias GroupherServer.CMS
-  alias CMS.DocTree.Publish.Result
+  alias GroupherServer.CMS.DocTree.Publish.Result
 
-  require CMS.Const
 
-  @publish_input_key_doc_changes CMS.Const.doc_publish_input_key(:doc_change_ids)
-  @publish_input_key_tree_changes CMS.Const.doc_publish_input_key(:tree_change_ids)
-  @publish_input_key_restore_tree_changes CMS.Const.doc_publish_input_key(
+  @publish_input_key_doc_changes CMS.DocTree.Const.doc_publish_input_key(:doc_change_ids)
+  @publish_input_key_tree_changes CMS.DocTree.Const.doc_publish_input_key(:tree_change_ids)
+  @publish_input_key_restore_tree_changes CMS.DocTree.Const.doc_publish_input_key(
                                             :restore_tree_change_ids
                                           )
-  @publish_flow_noop CMS.Const.doc_publish_flow(:noop)
-  @publish_flow_publish CMS.Const.doc_publish_flow(:publish)
-  @publish_flow_restore CMS.Const.doc_publish_flow(:restore)
+  @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
+  @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
+  @publish_flow_restore CMS.DocTree.Const.doc_publish_flow(:restore)
 
   @doc """
   Normalizes publish input into one explicit checklist selection.

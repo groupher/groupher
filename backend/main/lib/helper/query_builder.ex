@@ -14,15 +14,7 @@ defmodule Helper.QueryBuilder do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Artiment.{Enums, Threads}
-  alias Helper.{Constant, Datetime}
-
-  @article_cat Enums.cat_values()
-  @article_status Enums.status_values()
-  @threads Threads.enums()
-
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
+  alias Helper.Datetime
 
   @doc """
   load inner user field
@@ -59,25 +51,9 @@ defmodule Helper.QueryBuilder do
   def filter_pack(queryable, filter) when is_map(filter) do
     # The lower the position, the lower the priority.
     queryable
-    |> handle_order_logic(filter)
     |> handle_sort_logic(filter)
     |> handle_timestamp_logic(filter)
-    |> handle_article_relate_logic(filter)
-    |> handle_community_relate_logic(filter)
     |> handle_general_logic(filter)
-  end
-
-  defp handle_order_logic(queryable, filter) do
-    Enum.reduce(filter, queryable, fn
-      {:order, nil}, queryable ->
-        queryable
-
-      {:order, key}, queryable when is_atom(key) ->
-        queryable |> trans_articles_order(key)
-
-      {_, _}, queryable ->
-        queryable
-    end)
   end
 
   defp handle_sort_logic(queryable, filter) do
@@ -153,111 +129,6 @@ defmodule Helper.QueryBuilder do
     end)
   end
 
-  defp handle_article_relate_logic(queryable, filter) do
-    Enum.reduce(filter, queryable, fn
-      {:length, :most_words}, queryable ->
-        queryable |> order_by(desc: :length)
-
-      {:length, :least_words}, queryable ->
-        queryable |> order_by(asc: :length)
-
-      {:article_tag, tag_name}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community_tags),
-          where: t.slug == ^tag_name
-        )
-
-      {:community_tag, tag_name}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community_tags),
-          where: t.slug == ^tag_name
-        )
-
-      {:article_tags, tag_name_list}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community_tags),
-          where: t.slug in ^tag_name_list,
-          distinct: q.id,
-          group_by: q.id
-        )
-
-      {:community_tags, tag_name_list}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community_tags),
-          where: t.slug in ^tag_name_list,
-          distinct: q.id,
-          group_by: q.id
-        )
-
-      {:cat, nil}, queryable ->
-        queryable
-
-      {:status, nil}, queryable ->
-        queryable
-
-      {:cat, cat}, queryable ->
-        queryable |> trans_article_cat(cat)
-
-      {:status, status}, queryable ->
-        queryable |> trans_article_status(status)
-
-      {:pending, :legal}, queryable ->
-        queryable |> where([p], p.pending != ^@audit_illegal)
-
-      {:pending, :audit_failed}, queryable ->
-        queryable |> where([p], p.pending == ^@audit_failed)
-
-      {_, _}, queryable ->
-        queryable
-    end)
-  end
-
-  @doc "Handles the supported `QueryBuilder` input at this public boundary."
-  def handle_community_relate_logic(queryable, filter) do
-    Enum.reduce(filter, queryable, fn
-      {:category, category_slug}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :categories),
-          where: t.slug == ^category_slug
-        )
-
-      {:thread, thread}, queryable ->
-        case is_atom(thread) and thread in @threads do
-          true -> from(q in queryable, where: q.thread == ^thread)
-          false -> from(q in queryable, where: false)
-        end
-
-      {:community_id, community_id}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community),
-          where: t.id == ^community_id
-        )
-
-      {:community_slug, community_slug}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :community),
-          where: t.slug == ^community_slug
-        )
-
-      {:community, community_slug}, queryable ->
-        from(
-          q in queryable,
-          join: t in assoc(q, :communities),
-          where: t.slug == ^community_slug
-        )
-
-      {_, _}, queryable ->
-        queryable
-    end)
-  end
-
   defp handle_general_logic(queryable, filter) do
     Enum.reduce(filter, queryable, fn
       {:first, first}, queryable ->
@@ -275,43 +146,4 @@ defmodule Helper.QueryBuilder do
     |> select([p], p)
     |> order_by([_, s], {^direction, fragment("count(?)", s.id)})
   end
-
-  defp trans_article_cat(queryable, cat) when is_atom(cat) do
-    case cat in @article_cat do
-      true -> queryable |> where([p], p.cat == ^cat)
-      false -> queryable |> where([p], p.id == -1)
-    end
-  end
-
-  defp trans_article_status(queryable, status) when is_atom(status) do
-    case status in @article_status do
-      true -> queryable |> where([p], p.status == ^status)
-      false -> queryable |> where([p], p.id == -1)
-    end
-  end
-
-  defp trans_articles_order(queryable, :upvotes) do
-    # Article interaction ordering is projection-backed and requires the
-    # concrete thread. CMS.Articles.List delegates it to Interactions.scope/2.
-    queryable
-  end
-
-  defp trans_articles_order(queryable, :comments) do
-    queryable |> order_by(desc: :comments_count)
-  end
-
-  defp trans_articles_order(queryable, :views) do
-    queryable |> order_by(desc: :views, desc: :inserted_at)
-  end
-
-  defp trans_articles_order(queryable, :publish) do
-    queryable |> order_by(desc: :inserted_at)
-  end
-
-  defp trans_articles_order(queryable, _), do: queryable
-
-  @doc """
-  handle spec needs for CMS query filter
-  """
-  def domain_query(queryable, _filter), do: queryable
 end

@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   @query S.DocTree.q(:doc_tree)
 
@@ -44,7 +45,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
            |> query_error?(
              @query,
              %{community: community.slug},
-             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             ErrorCat.code(ErrorCat.account_login())
            )
   end
 
@@ -118,7 +119,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
            |> query_error?(
              @trash_query,
              %{community: community.slug},
-             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             ErrorCat.code(ErrorCat.account_login())
            )
   end
 

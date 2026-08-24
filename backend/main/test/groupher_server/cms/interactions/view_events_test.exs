@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.ViewEvent
   alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.Model.ViewEvent
   alias GroupherServer.Repo
 
   test "view event ids are unique and target types are constrained" do

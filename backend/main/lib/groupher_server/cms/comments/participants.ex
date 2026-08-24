@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Comments.Participants do
 
   import Helper.Utils, only: [strip_struct: 1]
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Repo
 
-  alias CMS.Model.{Comment, Embeds}
+  alias GroupherServer.CMS.Model.{Comment, Embeds}
   alias Helper.{ORM, T}
 
   @max_participator_count Comment.max_participator_count()

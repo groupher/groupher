@@ -29,8 +29,9 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   """
 
   alias Ecto.Multi
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocsSiteState}
+  alias GroupherServer.CMS.DocTree.Reader
+  alias GroupherServer.CMS.Model.{Community, DocsSiteState}
+  alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
   @doc """
@@ -72,7 +73,7 @@ defmodule GroupherServer.CMS.DocTree.Revision do
 
   @spec bump_site_draft(Community.t()) :: T.domain_res(DocsSiteState.t())
   def bump_site_draft(%Community{} = community) do
-    with {:ok, state} <- CMS.DocTree.Reader.ensure_draft_state(community) do
+    with {:ok, state} <- Reader.ensure_draft_state(community) do
       bump_site_draft(community, state)
     end
   end

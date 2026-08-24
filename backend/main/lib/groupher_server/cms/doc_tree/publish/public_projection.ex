@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Applies staged tree events to public doc tree rows.
 
@@ -19,18 +20,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
   alias Helper.ORM
 
   require CMS.Const
 
-  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
-  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
-  @tree_node_type_link CMS.Const.tree_node_type(:link)
-  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.DocTree.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
+  @tree_node_type_link CMS.DocTree.Const.tree_node_type(:link)
+  @tree_node_type_pin CMS.DocTree.Const.tree_node_type(:pin)
   @tree_node_type_group_key to_string(@tree_node_type_group)
   @tree_node_type_page_key to_string(@tree_node_type_page)
   @tree_node_type_link_key to_string(@tree_node_type_link)
@@ -63,7 +64,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   def preapply_tree_delete_events(%Community{} = community, branch, events) do
     events
     |> Enum.filter(
-      &(&1.event_type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)])
+      &(&1.event_type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)])
     )
     |> apply_tree_events(community, branch)
   end
@@ -136,7 +137,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)] do
+       when type in [CMS.DocTree.Const.tree_event(:node_create), CMS.DocTree.Const.tree_event(:pin_add)] do
     event_node = event.payload["node"] || %{}
     draft = draft_node_by_node_id(community, branch, event_node["id"])
     node = authoritative_placement(event_node, draft)
@@ -153,7 +154,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)] do
+       when type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)] do
     node = event.payload["node"] || %{}
 
     delete_public_node_by_node_id(community, branch, node["id"], node["type"])
@@ -164,7 +165,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)] do
+       when type in [CMS.DocTree.Const.tree_event(:node_move), CMS.DocTree.Const.tree_event(:pin_reorder)] do
     payload = event.payload
 
     update_public_node_by_node_id(
@@ -233,32 +234,31 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        ) do
     doc_id = node[@doc_tree_json_key_doc_id]
 
-    with {:ok, _draft} <-
-           ORM.find_by(Doc,
-             doc_id: doc_id,
-             branch_id: branch.id,
-             community_id: community.id
-           ) do
-      {:ok,
-       %{
-         community_id: community.id,
-         branch_id: branch.id,
-         node_id: node["id"],
-         stage: CMS.Const.stage(:public),
-         type: @tree_node_type_page,
-         parent_node_id: node["parentNodeId"],
-         doc_id: doc_id,
-         title: node["title"],
-         index: node["index"] || 0,
-         href: node["href"],
-         marker: node["marker"],
-         badge: node["badge"],
-         hidden: Map.get(node, "hidden", false)
-       }}
-    else
+    case ORM.find_by(Doc,
+           doc_id: doc_id,
+           branch_id: branch.id,
+           community_id: community.id
+         ) do
+      {:ok, _draft} ->
+        {:ok,
+         %{
+           community_id: community.id,
+           branch_id: branch.id,
+           node_id: node["id"],
+           stage: CMS.Const.stage(:public),
+           type: @tree_node_type_page,
+           parent_node_id: node["parentNodeId"],
+           doc_id: doc_id,
+           title: node["title"],
+           index: node["index"] || 0,
+           href: node["href"],
+           marker: node["marker"],
+           badge: node["badge"],
+           hidden: Map.get(node, "hidden", false)
+         }}
+
       {:error, _} ->
         {:error, GroupherServer.ErrorCat.custom("Publish docs before publishing tree.")}
-
     end
   end
 

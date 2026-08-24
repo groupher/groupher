@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Communities.Tags do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Owns community-tag creation, update, grouping, and article assignment workflows.
 
@@ -15,14 +16,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Communities.TagStats
-  alias CMS.FrontDesk
-  alias CMS.Communities.ErrorCat
-  alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
-  alias Helper.{Datetime, Multi, ORM, QueryBuilder, T}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.{Community, CommunityTag, CommunityTagGroup}
+  alias Helper.{Datetime, Multi, ORM, T}
 
   @doc """
   create a community tag
@@ -129,17 +130,21 @@ defmodule GroupherServer.CMS.Communities.Tags do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
       Repo.transaction(fn ->
-        case ORM.delete(group) do
-          {:ok, deleted_group} ->
-            case CMS.Communities.update_count_field(community, :community_tags_count) do
-              {:ok, _} -> deleted_group
-              {:error, reason} -> Repo.rollback(reason)
-            end
-
-          {:error, reason} ->
-            Repo.rollback(reason)
-        end
+        delete_group_and_update_count(community, group)
       end)
+    end
+  end
+
+  defp delete_group_and_update_count(community, group) do
+    case ORM.delete(group) do
+      {:ok, deleted_group} ->
+        case CMS.Communities.update_count_field(community, :community_tags_count) do
+          {:ok, _} -> deleted_group
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+      {:error, reason} ->
+        Repo.rollback(reason)
     end
   end
 

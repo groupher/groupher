@@ -39,7 +39,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
           href={`/${slug}/${THREAD_PATH.CHANGELOG}/${article.innerId}`}
           className={s.title}
           scroll={false}
-          data-preview-id={String(article.innerId)}
+          previewId={article.innerId}
         >
           {article.title}
           <div className={s.version}>v3.21</div>

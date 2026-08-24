@@ -1,4 +1,5 @@
 defmodule GroupherServer.ErrorCat.Domain do
+  # credo:disable-for-this-file Credo.Check.Design.AliasUsage
   @moduledoc "DSL used by a context-owned ErrorCat catalog."
 
   defmacro __using__(opts) do
@@ -57,6 +58,8 @@ defmodule GroupherServer.ErrorCat.Domain do
           code: unquote(code),
           retryable: unquote(retryable),
           actions: unquote(Macro.escape(actions)),
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          # credo:disable-line Credo.Check.Design.AliasUsage
           message_key:
             unquote(message_key) ||
               GroupherServer.ErrorCat.Validator.default_message_key(
@@ -77,7 +80,11 @@ defmodule GroupherServer.ErrorCat.Domain do
       |> Enum.map(fn entry ->
         entry
         |> Map.put(:namespace, namespace)
-        |> Map.update!(:message_key, &(&1 || GroupherServer.ErrorCat.Validator.default_message_key(namespace, entry.reason)))
+        |> Map.update!(
+          :message_key,
+          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
+          &(&1 || GroupherServer.ErrorCat.Validator.default_message_key(namespace, entry.reason))
+        )
       end)
 
     definition_clauses =
@@ -90,6 +97,8 @@ defmodule GroupherServer.ErrorCat.Domain do
     quote do
       @doc false
       def entries, do: unquote(Macro.escape(definitions))
+
+      defdelegate code(error), to: GroupherServer.ErrorCat
 
       unquote_splicing(definition_clauses)
 

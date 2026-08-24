@@ -26,7 +26,7 @@ const Header: FC<TProps> = ({ article }) => {
           className={s.title}
           href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
           scroll={false}
-          data-preview-id={String(article.innerId)}
+          previewId={article.innerId}
         >
           {title}
         </Link>

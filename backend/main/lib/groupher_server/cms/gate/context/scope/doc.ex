@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
   `branch_id` and `branch_policy: :main` are mutually exclusive. Public reads
   use the main policy; draft and editor reads name a concrete branch.
 
-      Reader -> Doc scope context -> Gate.scope -> Article Doc compiler
+      Reader -> Doc scope context -> Gate.scope -> Doc Scope query
 
   Examples:
 

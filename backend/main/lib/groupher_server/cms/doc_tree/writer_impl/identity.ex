@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
   alias Helper.Validator.Slug
 
   require CMS.Const

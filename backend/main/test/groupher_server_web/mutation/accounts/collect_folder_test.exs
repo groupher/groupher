@@ -2,8 +2,9 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias Accounts.Model.CollectFolder
-  alias CMS.Model.ArticleCollect
+  alias GroupherServer.Accounts.Model.CollectFolder
+  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.CMS.Model.ArticleCollect
 
   setup do
     {community, post, _, user} = mock_article(:post)
@@ -42,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 

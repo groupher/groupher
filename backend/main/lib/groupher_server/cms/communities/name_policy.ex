@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.{Community, CommunitySlugClaim}
   alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Model.{Community, CommunitySlugClaim}
   alias GroupherServer.Repo
 
   @reserved ~w(
@@ -48,7 +48,8 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   def normalize(_), do: nil
 
   @doc "Checks whether a normalized name is available in the shared namespace."
-  @spec check(term(), keyword()) :: {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec check(term(), keyword()) ::
+          {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
   def check(slug, opts \\ []) do
     with {:ok, slug} <- format_check(slug) do
       cond do

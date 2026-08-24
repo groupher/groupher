@@ -12,11 +12,12 @@ defmodule GroupherServer.CMS.Communities.List do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS}
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.QueryBuilder
 
-  alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
   alias Helper.{ORM, T}
 
   @doc """
@@ -46,6 +47,12 @@ defmodule GroupherServer.CMS.Communities.List do
   @spec page(map()) :: T.domain_res(term())
   def page(filter) do
     filter = filter |> Enum.reject(fn {_k, v} -> is_nil(v) end) |> Enum.into(%{})
-    CMS.Gate.scope(Community, nil, :list, CommunityScope.public()) |> ORM.find_all(filter)
+    %{page: page, size: size} = filter
+
+    Community
+    |> CMS.Gate.scope(nil, :list, CommunityScope.public())
+    |> QueryBuilder.filter_pack(filter)
+    |> ORM.paginator(page: page, size: size)
+    |> done()
   end
 end

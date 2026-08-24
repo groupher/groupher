@@ -10,15 +10,17 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.FrontDesk
-  alias CMS.Interactions.{Config, ErrorCat}
-  alias CMS.Model.{Comment, Embeds}
-  alias CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Interactions.{Config, ErrorCat}
+  alias GroupherServer.CMS.Model.{Comment, Embeds}
+  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
+  alias GroupherServer.Repo
 
   require RoaringBitmap
+
+  @article_threads Config.article_threads()
 
   @doc """
   Applies an already-created upvote fact.
@@ -138,7 +140,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   """
   @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
   def merge_viewed_users(thread, target_id, user_ids)
-      when thread in [:post, :blog, :changelog, :doc] and is_list(user_ids) do
+      when thread in @article_threads and is_list(user_ids) do
     info = interaction_info(thread)
     reaction_info = lock_reaction_info(info, target_id)
 

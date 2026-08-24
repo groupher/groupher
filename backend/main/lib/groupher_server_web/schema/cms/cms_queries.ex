@@ -20,6 +20,70 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
+    @desc "Safe product ArticleLog for one readable Article"
+    field :article_logs, non_null(:paged_article_logs) do
+      arg(:article, non_null(:article_path_input))
+      arg(:filter, :article_log_filter)
+
+      middleware(M.FrontDesk, :article)
+      resolve(&R.CMS.article_logs/3)
+    end
+
+    @desc "Safe Community Activity timeline across readable resource streams"
+    field :community_activity, non_null(:paged_community_activity) do
+      arg(:community, non_null(:string))
+      arg(:filter, :community_activity_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_activity/3)
+    end
+
+    @desc "UTC daily Community Activity counts for the timeline overview"
+    field :community_activity_stats, non_null(:community_activity_stats) do
+      arg(:community, non_null(:string))
+      arg(:filter, non_null(:community_activity_stats_filter))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_activity_stats/3)
+    end
+
+    @desc "Active Community Activity actions available to the current manager"
+    field :community_activity_config, non_null(:community_activity_config) do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_activity_config/3)
+    end
+
+    @desc "Exports the current Community Activity filter"
+    field :community_activity_export, non_null(:community_activity_export) do
+      arg(:community, non_null(:string))
+      arg(:filter, :community_activity_filter)
+      arg(:format, non_null(:community_activity_export_format))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_activity_export/3)
+    end
+
+    @desc "Reads one safe Community Activity event by event reference"
+    field :community_activity_event, :community_activity_event do
+      arg(:community, non_null(:string))
+      arg(:event_ref, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_activity_event/3)
+    end
+
     @desc "Current user's Apply admission state and blocking application"
     field :community_application_state, non_null(:community_application_state) do
       middleware(M.Authorize, :login)
@@ -83,18 +147,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.trashed_article/3)
     end
 
-    @desc "Append-only CMS audit log"
-    field :cms_audit_logs, :paged_audit_logs do
-      arg(:community, non_null(:string))
-      arg(:filter, :audit_log_filter)
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "audit.read")
-      middleware(M.FrontDesk, :community)
-      middleware(M.PageSizeProof)
-      resolve(&R.CMS.cms_audit_logs/3)
-    end
-
     @desc "Built-in community Web Analysis summary"
     field :analysis_web_summary, :analysis_web_summary do
       arg(:community, non_null(:string))
@@ -112,6 +164,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.analysis_tracking_website_id/3)
+    end
+
+    @desc "Public visitor distribution for an enabled community About page"
+    field :analysis_visitor_location_map, :analysis_visitor_location_map do
+      arg(:community, non_null(:string))
+
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.analysis_visitor_location_map/3)
     end
 
     @desc "Built-in community Analysis Trends summary and chart"

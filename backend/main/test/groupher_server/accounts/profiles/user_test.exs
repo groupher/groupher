@@ -3,11 +3,6 @@ defmodule GroupherServer.Test.Accounts.Profiles.User do
 
   use GroupherServer.TestMate
 
-  # TODO import Service.Utils move both helper and github
-
-  # @valid_user mock_attrs(:user)
-  # @valid_github_profile mock_attrs(:github_profile) |> map_key_stringify
-
   describe "[update user]" do
     test "update user with valid attrs" do
       {:ok, user} = db_insert(:user)

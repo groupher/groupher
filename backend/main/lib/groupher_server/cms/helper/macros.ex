@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Helper.Macros do
+  require GroupherServer.CMS.Const
   @moduledoc """
   Defines shared artiment schema fields and CMS changeset validation macros.
 
@@ -13,10 +14,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleCollect,
-    ArticleUpvote,
     ArticleLifecycle,
+    ArticleUpvote,
     Author,
     Comment,
     Community,
@@ -211,8 +212,8 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:article_hash_id, Ecto.UUID)
 
       field(:stage, Ecto.Enum,
-        values: CMS.Const.stage_values(),
-        default: CMS.Const.stage(:public)
+        values: unquote(CMS.Const.stage_values()),
+        default: unquote(CMS.Const.stage(:public))
       )
 
       field(:body_hash, :string)
@@ -228,8 +229,8 @@ defmodule GroupherServer.CMS.Helper.Macros do
       belongs_to(:branch, DocBranch)
 
       field(:stage, Ecto.Enum,
-        values: CMS.Const.stage_values(),
-        default: CMS.Const.stage(:public)
+        values: unquote(CMS.Const.stage_values()),
+        default: unquote(CMS.Const.stage(:public))
       )
 
       field(:body_hash, :string)

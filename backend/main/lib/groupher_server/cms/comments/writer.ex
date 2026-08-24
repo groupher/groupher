@@ -1,53 +1,64 @@
 defmodule GroupherServer.CMS.Comments.Writer do
   @moduledoc """
-  CRUD operations for comments.
+  Creation and reply orchestration for Comments writes.
 
   Business position:
 
       Client
         -> GraphQL
         -> CMS.Comments
-        -> Writer
-        -> Repo / domain event
+        -> Writer create/reply
+        -> Gate.Access.with_check
+        -> canonical aggregate transaction + required audition job
+        -> commit
+        -> best-effort mention / notification / subscription jobs
   """
 
   import Ecto.Query, warn: false
-
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.{CMS, Jobs, Repo}
 
-  alias CMS.{FrontDesk, Gate}
-  alias CMS.Comments.ErrorCat
-  alias CMS.Gate.ErrorCat, as: GateErrorCat
-  alias CMS.Gate.Decision
+  alias GroupherServer.CMS.Comments.ErrorCat
+  alias GroupherServer.CMS.{FrontDesk, Gate}
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
+  alias GroupherServer.CMS.Artiment.Const
 
-  alias CMS.Articles.MutationLock
-  alias CMS.Comments.{BodyCodec, Lifecycle, Numbering, Participants, Replies, States}
-  alias CMS.Events
-  alias CMS.Artiment.Enums
-  alias CMS.Model.{Comment, CommentReply, Community, Embeds, PinnedComment, Post}
-  alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.CMS.Comments.{
+    BodyCodec,
+    JobPolicy,
+    Lifecycle,
+    Numbering,
+    Participants,
+    Replies
+  }
 
-  alias Helper.{Multi, Later, ORM, T}
+  alias GroupherServer.CMS.Model.{
+    Comment,
+    CommentReply,
+    Community,
+    Embeds,
+    Post
+  }
+
+  alias GroupherServer.CMS.SearchArtiments.Indexer
+
+  alias Helper.{ORM, T}
 
   @max_parent_replies_count Comment.max_parent_replies_count()
   @default_emotions Embeds.CommentEmotion.default_persisted_emotions()
   @default_comment_meta Embeds.CommentMeta.default_meta()
-  @delete_hint Comment.delete_hint()
-
-  @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat Const.cat_values() |> Enum.into(%{}, &{&1, &1})
 
   @doc """
   Creates a top-level comment on an article identified by community, thread,
   and article id.
 
-  Runs under the article lock and coordinates lifecycle creation, counters,
-  participants, mention sync, and audit events in one transaction.
+  Runs lifecycle creation, counters, participants and required audition enqueue
+  in one Article transaction. Optional mention, notification and subscription
+  jobs are scheduled only after commit.
 
   ## Examples
 
@@ -55,19 +66,28 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   """
   @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
-          T.domain_res(Comment.t())
+          T.domain_res(map())
   def create(%Community{} = community, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
            FrontDesk.article(community, thread, article_id,
              preload: [[author: :user], :community]
-           ),
-         {:ok, comment} <- do_create(thread, article, body, user, info) do
-      {:ok, comment}
+           ) do
+      do_create(thread, article, body, user, info)
     end
   end
 
-  @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(map())
+  @doc """
+  Creates a top-level Comment from an already resolved Article identity.
+
+  The Article is reloaded canonically inside the aggregate transaction before
+  authorization or writes occur.
+
+  ## Examples
+
+      CMS.Comments.Writer.create(:post, post, body, actor)
+  """
   def create(thread, article, body, %User{} = user) do
     with {:ok, info} <- match(thread) do
       do_create(thread, article, body, user, info)
@@ -77,298 +97,81 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp do_create(thread, article, body, %User{} = user, info) do
     article = Repo.preload(article, [[author: :user], :community])
 
-    MutationLock.with_article(article.community, article, fn ->
-      create_unlocked(thread, article, body, user, info)
+    Gate.Access.with_check(user, :create_comment, article, fn canonical ->
+      create_locked(thread, canonical, body, user, info)
     end)
+    |> normalize_comments_locked()
+    |> sync_article_metrics()
+    |> enqueue_create_followups(user, article.community)
   end
 
-  defp create_unlocked(thread, article, body, %User{} = user, info) do
-    with {:ok, _canonical_article} <- Gate.access_check(user, :create_comment, article) do
-      Multi.new()
-      |> Multi.run(:create_comment, fn _, _ ->
-        insert_comment(body, thread, info.foreign_key, article, user)
-      end)
-      |> Multi.run(:create_lifecycle, fn _, %{create_comment: comment} ->
-        Lifecycle.ensure_created(comment.id)
-      end)
-      |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
-        {:ok, article} = FrontDesk.article_of(comment)
-        ORM.inc(article, :comments_count)
-      end)
-      |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
-        set_question_flag_ifneed(article, comment)
-      end)
-      |> Multi.run(:add_participator, fn _, _ ->
-        Participants.add_to_article(article, user)
-      end)
-      |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
-        case comment.author_id == article.author.user.id do
-          true -> {:ok, :pass}
-          false -> CMS.Articles.update_active_timestamp(thread, article)
-        end
-      end)
-      |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
-        Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
-        Later.run({Events, :emit, [:audition, %{artiment: comment}]})
-
-        Later.run(
-          {Events, :emit, [:subscribe_community, %{target: article.community, user: user}]}
-        )
-      end)
-      |> Repo.transaction()
-      |> result()
-      |> sync_article_metrics(article)
-    else
-      {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
-        article_comments_locked("this article is forbid comment")
-
-      {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_error(decision)}
-
-      error ->
-        error
+  defp create_locked(thread, article, body, %User{} = user, info) do
+    with {:ok, comment} <- create_comment_record(body, thread, info.foreign_key, article, user),
+         {:ok, _lifecycle} <- Lifecycle.ensure_created(comment.id),
+         {:ok, counted_article} <- ORM.inc(article, :comments_count),
+         {:ok, projected_comment} <- set_question_flag_ifneed(article, comment),
+         {:ok, _participants} <- Participants.add_to_article(article, user),
+         {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
+         {:ok, _job} <- JobPolicy.audition(projected_comment) do
+      {:ok, %{comment: projected_comment, article: counted_article}}
     end
   end
 
-  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @doc """
+  Creates a reply after reloading and authorizing its target Comment inside the
+  parent Article aggregate transaction.
+
+  ## Examples
+
+      CMS.Comments.Writer.reply(comment_id, body, actor)
+  """
+  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(map())
   def reply(comment_id, body, %User{} = user) do
-    with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id),
-         replying_comment <- Repo.preload(target_comment, reply_to_comment: :author),
+    with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id) do
+      Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical ->
+        reply_locked(canonical, body, user)
+      end)
+      |> normalize_comments_locked()
+      |> sync_article_metrics()
+      |> enqueue_reply_followups(user)
+    end
+  end
+
+  defp reply_locked(canonical, body, %User{} = user) do
+    with replying_comment <- Repo.preload(canonical, reply_to_comment: :author),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
          {:ok, article} <-
            FrontDesk.article_of(replying_comment, preload: [[author: :user], :community]),
          {:ok, info} <- match(thread),
-         parent_comment <- Replies.root_comment(replying_comment) do
-      MutationLock.with_article(article.community, article, fn ->
-        reply_unlocked(thread, article, body, user, info, replying_comment, parent_comment)
-      end)
-      |> normalize_reply_result()
-    else
-      {:error, %Decision{primary: %{reason: :article_comments_locked}}} ->
-        article_comments_locked("this article is forbid comment")
-
-      {:error, error} ->
-        {:error, error}
+         parent_comment <- Replies.root_comment(replying_comment),
+         {:ok, replied_comment} <-
+           insert_comment(body, thread, info.foreign_key, article, user, replying_comment),
+         {:ok, _lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
+         {:ok, counted_article} <- ORM.inc(article, :comments_count),
+         {:ok, _reply_relation} <-
+           ORM.create(CommentReply, %{
+             comment_id: replied_comment.id,
+             reply_to_comment_id: replying_comment.id
+           }),
+         {:ok, _participants} <- Participants.add_to_article(article, user),
+         {:ok, reply_with_meta} <-
+           update_reply_to_others_state(parent_comment, replying_comment, replied_comment),
+         {:ok, associated_reply} <- associate_reply(reply_with_meta, replying_comment),
+         {:ok, _embedded_parent} <- add_replies_ifneed(parent_comment, associated_reply),
+         {:ok, _parent} <- ORM.inc(parent_comment, :replies_count),
+         {:ok, _job} <- JobPolicy.audition(associated_reply) do
+      {:ok, %{comment: associated_reply, article: counted_article}}
     end
-  end
-
-  defp reply_unlocked(
-         thread,
-         article,
-         body,
-         %User{} = user,
-         info,
-         replying_comment,
-         parent_comment
-       ) do
-    with {:ok, _canonical_comment} <- Gate.access_check(user, :reply_comment, replying_comment) do
-      Multi.new()
-      |> Multi.run(:create_reply_comment, fn _, _ ->
-        insert_comment(body, thread, info.foreign_key, article, user, replying_comment)
-      end)
-      |> Multi.run(:create_lifecycle, fn _, %{create_reply_comment: comment} ->
-        Lifecycle.ensure_created(comment.id)
-      end)
-      |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
-        {:ok, article} = FrontDesk.article_of(replied_comment)
-        ORM.inc(article, :comments_count)
-      end)
-      |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
-        CommentReply
-        |> ORM.create(%{comment_id: replied_comment.id, reply_to_comment_id: replying_comment.id})
-      end)
-      |> Multi.run(:add_participator, fn _, _ ->
-        Participants.add_to_article(article, user)
-      end)
-      |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
-        update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
-      end)
-      |> Multi.run(:add_reply_to_comment, fn _, %{create_reply_comment: replied_comment} ->
-        replied_comment
-        |> Repo.preload(:reply_to_comment)
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:reply_to_comment, replying_comment)
-        |> Repo.update()
-      end)
-      |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to_comment: replied_comment} ->
-        add_replies_ifneed(parent_comment, replied_comment)
-      end)
-      |> Multi.run(:inc_replies_count, fn _, %{add_reply_to_comment: replied_comment} ->
-        with {:ok, _parent_comment} <- ORM.inc(parent_comment, :replies_count) do
-          {:ok, replied_comment}
-        end
-      end)
-      |> Multi.run(:after_events, fn _, %{add_reply_to_comment: replied_comment} ->
-        Later.run(
-          {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
-        )
-
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: replied_comment}]})
-      end)
-      |> Repo.transaction()
-      |> result()
-      |> sync_article_metrics(article)
-    else
-      {:error, %Decision{} = decision} ->
-        {:error, Decision.primary_error(decision)}
-
-      error ->
-        error
-    end
-  end
-
-  @spec update(Comment.t(), String.t()) :: T.domain_res(Comment.t())
-  def update(%Comment{}, _body), do: {:error, AuthErrorCat.account_login()}
-
-  @spec update(Comment.t(), String.t(), User.t()) :: T.domain_res(Comment.t())
-  def update(%Comment{} = comment, body, %User{} = user) do
-    with {:ok, comment} <- Gate.access_check(user, :edit, comment) do
-      do_update(comment, body)
-    end
-  end
-
-  @spec delete(Comment.t()) :: T.domain_res(Comment.t())
-  def delete(%Comment{}), do: {:error, AuthErrorCat.account_login()}
-
-  @spec delete(Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def delete(%Comment{} = comment, %User{} = user) do
-    with {:ok, comment} <- Gate.access_check(user, :delete, comment) do
-      do_delete(comment)
-    end
-  end
-
-  defp do_update(%Comment{is_solution: true} = comment, body) do
-    with {:ok, post} <- FrontDesk.get(Post, comment.post_id),
-         {:ok, payload} <- BodyCodec.parse(body) do
-      Multi.new()
-      |> Multi.run(:update_parent_post, fn _, _ ->
-        ORM.update(post, %{solution_digest: payload.digest})
-      end)
-      |> Multi.run(:update_comment, fn _, _ ->
-        ORM.update(comment, %{body: payload.json, body_html: payload.html})
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{update_comment: updated_comment} ->
-        FrontDesk.sync_embed_replies(updated_comment)
-      end)
-      |> Multi.run(:after_events, fn _, %{update_comment: updated_comment} ->
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: updated_comment}]})
-        Later.run({Events, :emit, [:audition, %{artiment: updated_comment}]})
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
-  end
-
-  defp do_update(%Comment{} = comment, body) do
-    with {:ok, payload} <- BodyCodec.parse(body) do
-      Multi.new()
-      |> Multi.run(:update_comment, fn _, _ ->
-        ORM.update(comment, %{body: payload.json, body_html: payload.html})
-      end)
-      |> Multi.run(:sync_embed_replies, fn _, %{update_comment: updated_comment} ->
-        FrontDesk.sync_embed_replies(updated_comment)
-      end)
-      |> Multi.run(:after_events, fn _, %{update_comment: updated_comment} ->
-        Later.run({Events, :emit, [:sync_mentions, %{artiment: updated_comment}]})
-        Later.run({Events, :emit, [:audition, %{artiment: updated_comment}]})
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
-  end
-
-  defp do_delete(%{is_archived: true}),
-    do: archived("comment is archived, can not be edit or delete")
-
-  defp do_delete(%Comment{} = comment) do
-    with {:ok, article} <- FrontDesk.article_of(comment) do
-      Multi.new()
-      |> Multi.run(:update_comments_count, fn _, _ ->
-        ORM.dec(article, :comments_count)
-      end)
-      |> Multi.run(:remove_pined_comment, fn _, _ ->
-        ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
-      end)
-      |> Multi.run(:delete_lifecycle, fn _, _ ->
-        Lifecycle.transition(comment.id, :deleted)
-      end)
-      |> Multi.run(:delete_comment, fn _, _ ->
-        ORM.update(comment, %{body_html: @delete_hint, is_deleted: true})
-      end)
-      |> Repo.transaction()
-      |> result()
-      |> sync_article_metrics(article)
-    end
-  end
-
-  @spec mark_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def mark_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, post} <- FrontDesk.get(Post, comment.post_id, preload: [author: :user]) do
-      with {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-        do_mark_comment_solution(post, comment, user, true)
-      end
-    end
-  end
-
-  @spec undo_mark_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def undo_mark_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, post} <- FrontDesk.get(Post, comment.post_id, preload: [author: :user]) do
-      with {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-        do_mark_comment_solution(post, comment, user, false)
-      end
-    end
-  end
-
-  defp do_mark_comment_solution(post, %Comment{} = comment, %User{} = user, is_solution) do
-    case user.id == post.author.user.id do
-      true ->
-        Multi.new()
-        |> Multi.run(:clear_solution_flags, fn _, _ ->
-          batch_update_solution_flag(post, false)
-        end)
-        |> Multi.run(:pin_comment, fn _, _ ->
-          if is_solution do
-            States.pin(comment.id, user)
-          else
-            States.undo_pin(comment.id, user)
-          end
-        end)
-        |> Multi.run(:mark_solution, fn _, %{pin_comment: updated_comment} ->
-          ORM.update(updated_comment, %{is_solution: is_solution, is_for_question: true})
-        end)
-        |> Multi.run(:update_post_state, fn _, _ ->
-          update_post_state_for_solution(post, comment, is_solution)
-        end)
-        |> Multi.run(:sync_embed_replies, fn _, %{mark_solution: updated_comment} ->
-          FrontDesk.sync_embed_replies(updated_comment)
-        end)
-        |> Repo.transaction()
-        |> result()
-
-      false ->
-        require_questioner("oops, questioner only")
-    end
-  end
-
-  @spec update_user_in_comments_participants(User.t()) :: T.domain_res(term())
-  def update_user_in_comments_participants(%User{login: login}) do
-    from(a in CMS.Model.Post,
-      cross_join: cp in fragment("jsonb_array_elements(?)", a.comments_participants),
-      where: fragment("?->>'login' = ?", cp, ^login)
-    )
-    |> Repo.all()
-    |> done()
-  end
-
-  @spec archive_comments() :: T.domain_res(term())
-  def archive_comments do
-    {:error, ErrorCat.comment_archive_retired()}
   end
 
   @spec batch_update_question_flag(Post.t(), boolean()) :: T.domain_res(term())
+  @doc """
+  Refreshes the question-category projection for every Comment under one Post.
+
+  ## Examples
+
+      CMS.Comments.Writer.batch_update_question_flag(post, true)
+  """
   def batch_update_question_flag(%Post{} = post, is_question) do
     from(c in Comment, where: c.post_id == ^post.id)
     |> Repo.update_all(set: [is_for_question: is_question])
@@ -388,37 +191,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   defp set_question_flag_ifneed(_, comment), do: {:ok, comment}
-
-  defp batch_update_solution_flag(%Post{} = post, is_question) do
-    from(c in Comment,
-      where: c.post_id == ^post.id,
-      update: [set: [is_solution: ^is_question]]
-    )
-    |> Repo.update_all([])
-
-    {:ok, :pass}
-  end
-
-  defp update_post_state_for_solution(post, comment, is_solution) do
-    solution_digest =
-      if is_solution do
-        case BodyCodec.parse(comment.body) do
-          {:ok, payload} -> payload.digest
-          _ -> comment.body_html
-        end
-      else
-        nil
-      end
-
-    case ORM.update(post, %{solution_digest: solution_digest}) do
-      {:ok, updated_post} ->
-        status = if is_solution, do: @article_status.resolved, else: @article_status.default
-        CMS.Articles.set_status(updated_post, status)
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
 
   defp insert_comment(
          body,
@@ -448,6 +220,28 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
       Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
     end
+  end
+
+  defp create_comment_record(body, thread, foreign_key, article, user) do
+    case insert_comment(body, thread, foreign_key, article, user) do
+      {:ok, comment} -> {:ok, comment}
+      {:error, details} -> create_comment(details)
+    end
+  end
+
+  defp update_active_timestamp(thread, article, comment) do
+    case comment.author_id == article.author.user.id do
+      true -> {:ok, :pass}
+      false -> CMS.Articles.update_active_timestamp(thread, article)
+    end
+  end
+
+  defp associate_reply(replied_comment, replying_comment) do
+    replied_comment
+    |> Repo.preload(:reply_to_comment)
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_assoc(:reply_to_comment, replying_comment)
+    |> Repo.update()
   end
 
   defp root_comment_id(nil), do: nil
@@ -486,46 +280,70 @@ defmodule GroupherServer.CMS.Comments.Writer do
         ORM.update(replied_comment, %{meta: new_meta})
 
       false ->
-        {:ok, :pass}
+        {:ok, replied_comment}
     end
   end
 
-  defp sync_article_metrics({:ok, _value} = result, article) do
+  defp sync_article_metrics({:ok, %{article: article}} = result) do
     _ = Indexer.enqueue_metrics(article)
     result
   end
 
-  defp sync_article_metrics(result, _article), do: result
+  defp sync_article_metrics(result), do: result
 
-  defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}
-  defp result({:ok, %{inc_replies_count: result}}), do: {:ok, result}
-  defp result({:ok, %{delete_comment: result}}), do: {:ok, result}
-  defp result({:ok, %{mark_solution: result}}), do: {:ok, result}
-  defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}
+  defp enqueue_create_followups(
+         {:ok, %{comment: %Comment{} = comment}} = result,
+         %User{} = actor,
+         %Community{} = community
+       ) do
+    :ok =
+      Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
+        Jobs.sync_mentions(comment)
+      end)
 
-  defp result({:error, :create_comment, result, _steps}) do
-    create_comment(result)
+    :ok =
+      Jobs.enqueue_best_effort(:notify_comment, comment.id, fn ->
+        Jobs.notify_comment(comment, actor)
+      end)
+
+    :ok =
+      Jobs.enqueue_best_effort(:subscribe_community, community.id, fn ->
+        Jobs.subscribe_community(community, actor)
+      end)
+
+    result
   end
 
-  defp result({:error, _, result, _steps}), do: {:error, result}
+  defp enqueue_create_followups(result, _actor, _community), do: result
+
+  defp enqueue_reply_followups(
+         {:ok, %{comment: %Comment{} = comment}} = result,
+         %User{} = actor
+       ) do
+    :ok =
+      Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
+        Jobs.sync_mentions(comment)
+      end)
+
+    :ok =
+      Jobs.enqueue_best_effort(:notify_reply, comment.id, fn ->
+        Jobs.notify_reply(comment, actor)
+      end)
+
+    result
+  end
+
+  defp enqueue_reply_followups(result, _actor), do: result
 
   defp article_comments_locked(details),
     do: {:error, GateErrorCat.article_comments_locked(details)}
 
-  defp normalize_reply_result(
+  defp normalize_comments_locked(
          {:error, %GroupherServer.ErrorCat.Error{reason: :article_comments_locked}}
        ),
        do: article_comments_locked("this article is forbid comment")
 
-  defp normalize_reply_result({:error, %Decision{primary: %{reason: :article_comments_locked}}}),
-    do: article_comments_locked("this article is forbid comment")
+  defp normalize_comments_locked(result), do: result
 
-  defp normalize_reply_result({:error, %Decision{} = decision}),
-    do: {:error, Decision.primary_error(decision)}
-
-  defp normalize_reply_result(result), do: result
-
-  defp archived(details), do: {:error, ErrorCat.archived(details)}
-  defp require_questioner(details), do: {:error, ErrorCat.require_questioner(details)}
   defp create_comment(details), do: {:error, ErrorCat.create_comment(details)}
 end

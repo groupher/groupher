@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import useCommunity from '~/stores/community/hooks'
@@ -17,7 +17,6 @@ import type { TDraftEditorState } from './useDraftEditorState'
 export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
   const { activePage, draftSource, editable, invalid, loadStatus, savedDraft, saveStatus } =
     draftState
   const latestDocIdRef = useRef(savedDraft.docId || activePage?.docId || '')
@@ -68,7 +67,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
 
       setSnapshotStatus((current) => ({ ...current, creating: true }))
 
-      mutate(S.checkpointDocDraftSnapshot, { community, id: docId })
+      browserQuery(S.checkpointDocDraftSnapshot, { community, id: docId })
         .then(() => {
           if (latestDocIdRef.current !== docId) return
 
@@ -95,7 +94,6 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
     editable,
     invalid,
     loadStatus.loading,
-    mutate,
     savedDraft.docId,
     savedDraft.revisionSignature,
     retryAt,

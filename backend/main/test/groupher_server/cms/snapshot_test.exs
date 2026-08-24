@@ -3,6 +3,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
   use GroupherServer.TestMate, async: false
 
+  alias GroupherServer.CMS.Comments.Lifecycle
   alias GroupherServer.CMS.Snapshot
   alias Helper.Cache
 
@@ -291,7 +292,7 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment("fresh"), user)
 
-      {:ok, _deleted_lifecycle} = CMS.Comments.Lifecycle.transition(comment.id, :deleted)
+      {:ok, _deleted_lifecycle} = Lifecycle.transition(comment.id, :deleted)
 
       snapshot = %{id: comment.id, body_digest: "old digest", article_id: post.id, thread: :post}
 

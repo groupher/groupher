@@ -111,21 +111,26 @@ defmodule Helper.Cache do
               {:ok, value}
 
             {:error, nil} ->
-              case safe_load(loader) do
-                {:ok, value} = result ->
-                  case put(pool, key, value, options) do
-                    {:ok, _} ->
-                      result
-
-                    {:error, reason} ->
-                      {:error, ErrorCat.custom(%{reason: :cache_write_failed, details: reason})}
-                  end
-
-                {:error, reason} ->
-                  {:error, reason}
-              end
+              load_and_store(pool, key, options, loader)
           end
         end)
+    end
+  end
+
+  defp store_loaded_value(pool, key, value, options, result) do
+    case put(pool, key, value, options) do
+      {:ok, _} ->
+        result
+
+      {:error, reason} ->
+        {:error, ErrorCat.custom(%{reason: :cache_write_failed, details: reason})}
+    end
+  end
+
+  defp load_and_store(pool, key, options, loader) do
+    case safe_load(loader) do
+      {:ok, value} = result -> store_loaded_value(pool, key, value, options, result)
+      {:error, reason} -> {:error, reason}
     end
   end
 

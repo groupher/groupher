@@ -1,7 +1,8 @@
-import type { AnyVariables, DocumentInput } from '@urql/core'
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import type { DocumentNode } from 'graphql'
 import { useCallback } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
@@ -10,7 +11,9 @@ import { reloadDocPublishChecklist } from '../helper'
 import { formatMutationError } from './helper'
 import type { TDocTreeMutationData, TDocTreeMutationPayload, TDocTreeState } from './spec'
 
-export type TSideTreeMutationSchema = DocumentInput<TDocTreeMutationData, AnyVariables>
+export type TSideTreeMutationSchema =
+  | DocumentNode
+  | TypedDocumentNode<TDocTreeMutationData, Record<string, unknown>>
 
 type TParams = {
   revisionRef: { current: number | null }
@@ -28,7 +31,6 @@ export default function useSideTreePersistence({
 }: TParams) {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
 
   const persist = useCallback(
     async (
@@ -37,7 +39,7 @@ export default function useSideTreePersistence({
       pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     ): Promise<TDocTreeMutationPayload | null | undefined> => {
       try {
-        const data = await mutate<TDocTreeMutationData>(schema, {
+        const data = await browserQuery<TDocTreeMutationData>(schema, {
           community,
           baseRevision: revisionRef.current,
           ...variables,
@@ -64,16 +66,16 @@ export default function useSideTreePersistence({
         return null
       }
     },
-    [community, mutate, reload, revisionRef, setTreeState, t],
+    [community, reload, revisionRef, setTreeState, t],
   )
 
   const persistCoverAction = useCallback(
     async (
-      schema: DocumentInput<unknown, AnyVariables>,
+      schema: DocumentNode | TypedDocumentNode<unknown, Record<string, unknown>>,
       variables: Record<string, unknown>,
     ): Promise<boolean> => {
       try {
-        await mutate(schema, { community, ...variables })
+        await browserQuery(schema, { community, ...variables })
         reload()
         return true
       } catch (err) {
@@ -83,7 +85,7 @@ export default function useSideTreePersistence({
         return false
       }
     },
-    [community, mutate, reload, setCoverWarning],
+    [community, reload, setCoverWarning],
   )
 
   return {

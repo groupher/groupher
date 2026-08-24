@@ -20,11 +20,11 @@ defmodule GroupherServerWeb.Middleware.Analysis.MakeContribution do
 
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
-  alias GroupherServer.{Accounts, Analysis}
+  alias GroupherServer.Analysis
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
+  def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: nil, errors: _} = resolution, _), do: resolution
 

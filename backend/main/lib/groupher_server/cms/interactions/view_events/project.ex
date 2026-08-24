@@ -7,10 +7,10 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Project do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Artiment.Matcher
-  alias CMS.Interactions.{Config, ErrorCat, ReadState}
-  alias CMS.Model.ViewEvent
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias GroupherServer.CMS.Model.ViewEvent
+  alias GroupherServer.Repo
 
   @doc """
   Projects one event idempotently, batching pending events for the same Article.

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 
 import { KANBAN_BOARD } from '~/const/thread'
+import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import type { TPagedPosts } from '~/spec'
 
 import Sections from '../Sections'
@@ -21,6 +22,10 @@ vi.mock('~/hooks/useKanbanPosts', () => ({
     done: emptyPosts,
     rejected: emptyPosts,
   }),
+}))
+
+vi.mock('~/hooks/useKanbanBgColors', () => ({
+  default: () => ['neutral', 'neutral', 'neutral', 'neutral', 'neutral'],
 }))
 
 vi.mock('~/hooks/useLayout', () => ({
@@ -76,7 +81,12 @@ vi.mock('../../KanbanItem/EmptyItem', () => ({
 
 describe('<Sections />', () => {
   it('renders only configured boards', () => {
-    render(<Sections />)
+    const Wrapper = makeStoreWrapper()
+    render(
+      <Wrapper>
+        <Sections />
+      </Wrapper>,
+    )
 
     expect(screen.getByText('article.status.todo')).toBeInTheDocument()
     expect(screen.getByText('article.status.done')).toBeInTheDocument()

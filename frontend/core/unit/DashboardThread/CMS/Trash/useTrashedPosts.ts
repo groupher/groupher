@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
@@ -27,7 +27,6 @@ const EMPTY_PAGE: TPagedTrashedPosts = {
 /** Exposes trashed posts state and actions through the shared React hook boundary. */
 export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null) {
   const { slug: community } = useCommunity()
-  const { query, mutate } = useGraphQLClient()
   const { t } = useTrans()
   const requestSequence = useRef(0)
   const [page, setPage] = useState(1)
@@ -41,11 +40,11 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       setLoading(true)
 
       try {
-        const data = await query<TTrashedPostsData>(
-          S.trashedPosts,
-          { community, page: targetPage, size: PAGE_SIZE },
-          { requestPolicy: 'network-only' },
-        )
+        const data = await browserQuery<TTrashedPostsData>(S.trashedPosts, {
+          community,
+          page: targetPage,
+          size: PAGE_SIZE,
+        })
 
         if (sequence !== requestSequence.current) return
         setPagedPosts(data.trashedArticles ?? EMPTY_PAGE)
@@ -56,7 +55,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
         if (sequence === requestSequence.current) setLoading(false)
       }
     },
-    [community, query],
+    [community],
   )
 
   const hasInitialData = Boolean(initialData)
@@ -82,7 +81,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       setActiveActionId(id)
 
       try {
-        const data = await mutate<TRestoreTrashedPostData>(S.restoreTrashedPost, {
+        const data = await browserQuery<TRestoreTrashedPostData>(S.restoreTrashedPost, {
           community,
           id,
         })
@@ -98,7 +97,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
         setActiveActionId(null)
       }
     },
-    [activeActionId, community, mutate, refreshAfterRemoval, t],
+    [activeActionId, community, refreshAfterRemoval, t],
   )
 
   const permanentlyDelete = useCallback(
@@ -107,7 +106,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       setActiveActionId(id)
 
       try {
-        const data = await mutate<TPermanentlyDeleteTrashedPostData>(
+        const data = await browserQuery<TPermanentlyDeleteTrashedPostData>(
           S.permanentlyDeleteTrashedPost,
           { community, id },
         )
@@ -123,7 +122,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
         setActiveActionId(null)
       }
     },
-    [activeActionId, community, mutate, refreshAfterRemoval, t],
+    [activeActionId, community, refreshAfterRemoval, t],
   )
 
   return {

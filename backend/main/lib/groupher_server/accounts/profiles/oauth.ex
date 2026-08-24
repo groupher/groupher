@@ -17,12 +17,12 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   alias GroupherServer.ErrorCat
   import Helper.Utils, only: [keys_to_atoms: 1]
 
-  alias GroupherServer.{Accounts, Messaging, Repo}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
+  alias GroupherServer.{Messaging, Repo}
 
-  alias Accounts.FrontDesk
-  alias Accounts.Model.{Achievement, OauthProvider, Social, User}
-  alias Accounts.Profiles.BrowserSessions
+  alias GroupherServer.Accounts.FrontDesk
+  alias GroupherServer.Accounts.Model.{Achievement, OauthProvider, Social, User}
+  alias GroupherServer.Accounts.Profiles.BrowserSessions
   alias Helper.{Multi, ORM}
 
   def link_oauth(login, provider) do
@@ -49,15 +49,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
               Repo.rollback(oauth_provider_already_linked_error())
 
             {:error, _} ->
-              case create_profile(user, provider) do
-                {:ok, _binding} ->
-                  # Account audit persistence is deferred until an
-                  # Accounts-owned append-only audit sink exists.
-                  user
-
-                {:error, changeset} ->
-                  Repo.rollback(classify_link_insert_error(changeset, provider, user))
-              end
+              link_new_provider(user, provider)
           end
       end
     end)
@@ -68,6 +60,13 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp link_new_provider(user, provider) do
+    case create_profile(user, provider) do
+      {:ok, _binding} -> user
+      {:error, changeset} -> Repo.rollback(classify_link_insert_error(changeset, provider, user))
     end
   end
 

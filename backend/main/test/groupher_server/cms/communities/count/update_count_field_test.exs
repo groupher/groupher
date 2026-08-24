@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.CMS.Communities.Count.UpdateCountField do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
 
   setup do
     {:ok, user} = db_insert(:user)

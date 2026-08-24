@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.DocTreeNode do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Versioned docs tree node.
 
@@ -33,8 +34,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Marker
-  alias CMS.Model.{Community, DocBranch}
+  alias GroupherServer.CMS.Marker
+  alias GroupherServer.CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -58,7 +59,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
-    field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
+    field(:type, Ecto.Enum, values: CMS.DocTree.Const.tree_node_type_values())
     field(:parent_node_id, :string)
     field(:title, :string)
     field(:index, :integer, default: 0)
@@ -70,7 +71,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     timestamps(type: :utc_datetime)
   end
 
-  def node_types, do: CMS.Const.tree_node_type_enum_values()
+  def node_types, do: CMS.DocTree.Const.tree_node_type_enum_values()
   def stages, do: CMS.Const.stage_enum_values()
 
   @doc """

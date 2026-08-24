@@ -10,10 +10,10 @@ defmodule GroupherServer.CMS.AbuseReports do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias CMS.Model.Comment
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.T
 
   alias __MODULE__.{List, Report}

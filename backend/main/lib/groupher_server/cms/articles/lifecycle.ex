@@ -12,10 +12,12 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Activity, Repo}
+  alias GroupherServer.CMS.Articles.ErrorCat
   alias GroupherServer.CMS.Artiment.Matcher
   alias GroupherServer.CMS.Model.ArticleLifecycle
-  alias GroupherServer.CMS.Articles.ErrorCat
+
+  @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -43,7 +45,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   created after the one-time migration backfill.
   """
   @spec ensure_thread_backfill(atom(), DateTime.t()) :: non_neg_integer()
-  def ensure_thread_backfill(thread, now) when thread in [:post, :blog, :changelog] do
+  def ensure_thread_backfill(thread, now) when thread in @article_threads do
     table = thread_table(thread)
 
     """
@@ -83,7 +85,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @spec ensure_created(integer(), atom(), Ecto.UUID.t(), keyword()) ::
           {:ok, ArticleLifecycle.t()} | {:error, term()}
   def ensure_created(community_id, thread, article_hash_id, opts \\ [])
-      when is_integer(community_id) and thread in [:post, :blog, :changelog] do
+      when is_integer(community_id) and thread in @article_threads do
     attrs = %{
       community_id: community_id,
       thread: thread,
@@ -156,7 +158,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @doc "Archives stale public heads through the Lifecycle authority."
   @spec archive_before(atom(), module(), DateTime.t(), DateTime.t()) :: non_neg_integer()
   def archive_before(thread, article_model, threshold, _now)
-      when thread in [:post, :blog, :changelog] do
+      when thread in @article_threads do
     operation_ref = Ecto.UUID.generate()
 
     {:ok, count} =
@@ -187,16 +189,19 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
         Enum.reduce_while(lifecycles, 0, fn lifecycle, count ->
           with {:ok, archived} <- transition(lifecycle, :archived),
-               {:ok, _audit} <-
-                 GroupherServer.CMS.Audit.record("article.archived", %{
-                   community_id: archived.community_id,
-                   resource_type: to_string(thread),
-                   resource_ref: archived.article_hash_id,
-                   resource_snapshot: %{from_state: lifecycle.state, to_state: archived.state},
+               {:ok, _activity} <-
+                 Activity.log(
+                   %{
+                     thread: thread,
+                     community_id: archived.community_id,
+                     article_hash_id: archived.article_hash_id
+                   },
+                   :archived,
                    operation_ref: operation_ref,
-                   source: "maintenance",
+                   source: :maintenance,
+                   occurred_at: archived.changed_at,
                    metadata: %{batch: true}
-                 }) do
+                 ) do
             {:cont, count + 1}
           else
             {:error, reason} -> Repo.rollback(reason)

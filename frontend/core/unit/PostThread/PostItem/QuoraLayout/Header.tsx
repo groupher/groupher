@@ -58,7 +58,7 @@ const Header: FC<TProps> = ({ article }) => {
           className={s.title}
           href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
           scroll={false}
-          data-preview-id={String(innerId)}
+          previewId={innerId}
         >
           <ArticleReadLabel viewed={article.viewerHasViewed} />
           {title}

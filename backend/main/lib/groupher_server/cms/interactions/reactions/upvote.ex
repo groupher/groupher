@@ -9,18 +9,20 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         -> post-commit events and search metrics
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Articles.MutationLock
   import Ecto.Query
 
-  alias CMS.Artiment.Matcher
-  alias CMS.FrontDesk
-  alias CMS.Interactions.{ErrorCat, ReadState}
-  alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
-  alias CMS.SearchArtiments.Indexer
-  alias CMS.{Events, Gate}
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.{Events, Gate}
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias GroupherServer.CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
+  alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{Later, T}
+
+  @article_threads Config.article_threads()
 
   @type change :: :changed | :unchanged
 
@@ -127,7 +129,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   @spec users(struct(), map()) :: {:ok, term()} | {:error, term()}
   def users(article, filter) when is_map(filter) do
     case Matcher.match_interaction(article) do
-      {:ok, %{artiment: artiment}} when artiment in [:post, :blog, :changelog, :doc] ->
+      {:ok, %{artiment: artiment}} when artiment in @article_threads ->
         FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
 
       _ ->

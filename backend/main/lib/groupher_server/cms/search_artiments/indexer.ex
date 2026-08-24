@@ -14,16 +14,16 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.SearchArtiments
-  alias CMS.SearchArtiments.{Artiment, Projection}
-  alias Helper.Constant
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.SearchArtiments
+  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Projection}
 
   require CMS.Const
+  @article_threads Config.article_threads()
 
   @batch_size 500
-  @legal Constant.CMS.pending(:legal)
+  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Enqueues a background upsert job for one article.
@@ -116,7 +116,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @doc "Rebuilds all public Article projections with bounded database batches."
   @spec reindex_articles() :: :ok | {:error, term()}
   def reindex_articles do
-    Enum.reduce_while([:post, :blog, :changelog, :doc], :ok, fn thread, :ok ->
+    Enum.reduce_while(@article_threads, :ok, fn thread, :ok ->
       case reindex_thread(thread, 0) do
         :ok -> {:cont, :ok}
         error -> {:halt, error}

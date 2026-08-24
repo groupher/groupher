@@ -1,14 +1,15 @@
 defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
+  require GroupherServer.CMS.Communities.Const
   @moduledoc false
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  require CMS.Const
 
-  alias CMS.Model.{Community, CommunityLifecycle}
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias Ecto.Adapters.SQL
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle}
 
-  defp to_sql(query), do: Ecto.Adapters.SQL.to_sql(:all, Repo, query)
+  defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   test "Community scope compiles the public lifecycle boundary" do
     query = CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
@@ -89,7 +90,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
     {:ok, owner} = db_insert(:user)
     {:ok, community} = mock_community(owner)
 
-    for state <- CMS.Const.lifecycle_state_values() do
+    for state <- CMS.Communities.Const.lifecycle_state_values() do
       Repo.get_by!(CommunityLifecycle, community_id: community.id)
       |> CommunityLifecycle.changeset(%{state: state})
       |> Repo.update!()

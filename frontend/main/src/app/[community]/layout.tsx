@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { GlobalProvider, GraphQLProvider } from '~/app/providers'
+import { GlobalProvider, QueryProvider } from '~/app/providers'
 import { getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import { I18N_NS } from '~/i18n/namespaces'
@@ -56,11 +56,11 @@ export default async ({ children, params }) => {
         locale={locale}
         localeData={JSON.stringify(localeData)}
       >
-        <GraphQLProvider>
+        <QueryProvider>
           <GlobalProvider>
             <Client>{children}</Client>
           </GlobalProvider>
-        </GraphQLProvider>
+        </QueryProvider>
       </MainProvider>
     </>
   )

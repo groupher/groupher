@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
         -> PostgreSQL
   """
   alias GroupherServer.CMS
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
 
   @supported_emotions CMS.Artiment.Config.emotions()
 

@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Query.Analysis do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   @overview_query S.Analysis.q(:overview)
   @active_visitors_query S.Analysis.q(:active_visitors)
@@ -12,6 +13,7 @@ defmodule GroupherServer.Test.Query.Analysis do
   @traffic_query S.Analysis.q(:traffic)
   @summary_query S.Analysis.q(:summary)
   @tracking_query S.Analysis.q(:tracking_website_id)
+  @visitor_location_map_query S.Analysis.q(:visitor_location_map)
 
   setup do
     {community, _post, _attrs, _user} = mock_article(:post)
@@ -88,7 +90,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @summary_query,
                %{community: community.slug, days: 7},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -97,7 +99,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @overview_query,
                %{community: community.slug, days: 7},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -106,7 +108,7 @@ defmodule GroupherServer.Test.Query.Analysis do
              |> query_error?(
                @active_visitors_query,
                %{community: community.slug},
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -116,5 +118,18 @@ defmodule GroupherServer.Test.Query.Analysis do
       assert is_nil(result)
     end
 
+    test "guest can query a disabled public visitor map without provisioning Umami",
+         ~m(guest_conn community)a do
+      result =
+        guest_conn
+        |> gq_query(@visitor_location_map_query, %{community: community.slug})
+
+      assert result == %{
+               "status" => "ok",
+               "range" => %{"days" => 30},
+               "countries" => [],
+               "error" => nil
+             }
+    end
   end
 end

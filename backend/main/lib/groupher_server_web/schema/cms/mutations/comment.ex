@@ -13,7 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
   object :cms_comment_mutations do
     @desc "write a comment"
-    field :create_comment, :comment do
+    field :create_comment, :comment_mutation_payload do
       arg(:article, non_null(:article_path_input))
       arg(:body, non_null(:string))
 
@@ -47,7 +47,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     end
 
     @desc "reply to a comment"
-    field :reply_comment, :comment do
+    field :reply_comment, :comment_mutation_payload do
       arg(:comment, non_null(:comment_path_input))
       arg(:body, non_null(:string))
 
@@ -115,22 +115,22 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       resolve(&R.CMS.undo_emotion_to_comment/3)
     end
 
-    @desc "mark a comment as question post's best solution"
-    field :mark_comment_solution, :comment do
+    @desc "accept a comment as a QA post's current solution"
+    field :accept_solution, :comment do
       arg(:comment, non_null(:comment_path_input))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.mark_comment_solution/3)
+      resolve(&R.CMS.accept_solution/3)
     end
 
-    @desc "mark a comment as question post's best solution"
-    field :undo_mark_comment_solution, :comment do
+    @desc "revoke a comment when it is a QA post's current solution"
+    field :revoke_solution, :comment do
       arg(:comment, non_null(:comment_path_input))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :comment)
-      resolve(&R.CMS.undo_mark_comment_solution/3)
+      resolve(&R.CMS.revoke_solution/3)
     end
 
     @desc "pin a comment"

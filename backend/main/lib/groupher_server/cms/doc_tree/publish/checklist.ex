@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Builds the publish checklist shown by the docs ActionSnackbar.
 
@@ -19,21 +20,21 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.Events
+  alias GroupherServer.CMS.DocTree.Events
 
-  alias CMS.Model.{
-    DocSnapshot,
+  alias GroupherServer.CMS.Model.{
     Community,
     Doc,
+    DocSnapshot,
     DocTreeEvent,
     DocTreeNode
   }
 
   require CMS.Const
 
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
 
   @doc """
   Builds the publish checklist for one docs branch.
@@ -63,7 +64,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     events =
       Events.staged_events(community,
         branch_id: branch.id,
-        owner: CMS.Const.tree_event_owner(:tree)
+        owner: CMS.DocTree.Const.tree_event_owner(:tree)
       )
 
     doc_bound_event_ids = doc_bound_tree_event_ids(community, branch, events)
@@ -76,21 +77,21 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   end
 
   def tree_event_action(%DocTreeEvent{event_type: type})
-      when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)],
+      when type in [CMS.DocTree.Const.tree_event(:node_create), CMS.DocTree.Const.tree_event(:pin_add)],
       do: "created"
 
   def tree_event_action(%DocTreeEvent{event_type: type})
-      when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)],
+      when type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)],
       do: "deleted"
 
   def tree_event_action(%DocTreeEvent{event_type: type})
-      when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)],
+      when type in [CMS.DocTree.Const.tree_event(:node_move), CMS.DocTree.Const.tree_event(:pin_reorder)],
       do: "moved"
 
   def tree_event_action(%DocTreeEvent{event_type: type})
       when type in [
-             CMS.Const.tree_event(:group_rename),
-             CMS.Const.tree_event(:node_rename)
+             CMS.DocTree.Const.tree_event(:group_rename),
+             CMS.DocTree.Const.tree_event(:node_rename)
            ],
       do: "renamed"
 
@@ -100,27 +101,27 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
         event_type: type,
         payload: %{"node" => node}
       })
-      when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)],
+      when type in [CMS.DocTree.Const.tree_event(:node_create), CMS.DocTree.Const.tree_event(:pin_add)],
       do: "Added #{node["title"] || node["id"]}"
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
         payload: %{"node" => node}
       })
-      when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)],
+      when type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)],
       do: "Deleted #{node["title"] || node["id"]}"
 
   def tree_event_label(%DocTreeEvent{
         event_type: type,
         payload: payload
       })
-      when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)],
+      when type in [CMS.DocTree.Const.tree_event(:node_move), CMS.DocTree.Const.tree_event(:pin_reorder)],
       do: "Moved #{payload["title"] || payload["nodeId"]}"
 
   def tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
       when type in [
-             CMS.Const.tree_event(:group_rename),
-             CMS.Const.tree_event(:node_rename)
+             CMS.DocTree.Const.tree_event(:group_rename),
+             CMS.DocTree.Const.tree_event(:node_rename)
            ] do
     "Renamed #{payload["before"] || payload["title"]} -> #{payload["after"]}"
   end
@@ -165,7 +166,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     events =
       Events.staged_events(community,
         branch_id: branch.id,
-        owner: CMS.Const.tree_event_owner(:tree)
+        owner: CMS.DocTree.Const.tree_event_owner(:tree)
       )
 
     doc_bound_event_ids = doc_bound_tree_event_ids(community, branch, events)
@@ -228,8 +229,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     parents = Map.new(nodes, &{&1.node_id, &1.parent_node_id})
 
     nodes
-    |> Enum.filter(&(&1.type == @tree_node_type_page))
-    |> Enum.filter(&MapSet.member?(draft_doc_ids, &1.doc_id))
+    |> Enum.filter(fn node ->
+      node.type == @tree_node_type_page and MapSet.member?(draft_doc_ids, node.doc_id)
+    end)
     |> Enum.reduce(MapSet.new(), fn page, acc ->
       collect_ancestor_ids(parents, page.parent_node_id, acc)
     end)
@@ -244,7 +246,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_create),
+         event_type: CMS.DocTree.Const.tree_event(:node_create),
          node_type: @tree_node_type_page,
          doc_id: doc_id
        })
@@ -254,7 +256,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp page_create_event_doc_id(_event), do: nil
 
   defp group_create_event_id(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_create),
+         event_type: CMS.DocTree.Const.tree_event(:node_create),
          node_type: @tree_node_type_group,
          node_id: group_node_id
        })
@@ -264,7 +266,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp group_create_event_id(_event), do: nil
 
   defp tab_create_event_id(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_create),
+         event_type: CMS.DocTree.Const.tree_event(:node_create),
          node_type: @tree_node_type_tab,
          node_id: tab_node_id
        }),
@@ -289,14 +291,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
          %Community{} = community,
          branch,
          %DocTreeEvent{
-           event_type: CMS.Const.tree_event(:node_create),
+           event_type: CMS.DocTree.Const.tree_event(:node_create),
            node_type: @tree_node_type_page,
            doc_id: doc_id
          }
        ) do
-    with %Doc{} <- draft_or_public_doc(community, branch, doc_id) do
-      {true, nil}
-    else
+    case draft_or_public_doc(community, branch, doc_id) do
+      %Doc{} -> {true, nil}
       _ -> {false, "Publish the page content first."}
     end
   end

@@ -22,14 +22,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias CMS.Marker
-  alias CMS.Dashboard.ThemePreset
-  alias CMS.Model.{Community, CoverBackground}
-  alias Helper.ORM
+  alias GroupherServer.CMS.Dashboard.ThemePreset
+  alias GroupherServer.CMS.Dashboard.ThirdPartyAnalytics
+  alias GroupherServer.CMS.Marker
+  alias GroupherServer.CMS.Model.{Community, CoverBackground}
+  alias GroupherServer.CMS.Passport.Registry
   alias GroupherServerWeb.Schema
+  alias Helper.ORM
 
   import_types(Schema.CMS.Metrics)
 
@@ -343,24 +344,145 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :audit_log do
-    field(:id, non_null(:id), resolve: fn log, _, _ -> {:ok, log.hash_id} end)
-    field(:actor_type, non_null(:string))
-    field(:actor_snapshot, non_null(:json))
-    field(:action, non_null(:string))
-    field(:resource_type, non_null(:string))
-    field(:resource_ref, non_null(:string))
-    field(:resource_snapshot, non_null(:json))
-    field(:operation_ref, :id)
-    field(:source, non_null(:string))
+  object :activity_resource_ref do
+    field(:type, non_null(:string), resolve: fn ref, _, _ -> {:ok, to_string(ref.type)} end)
+    field(:ref, non_null(:id))
+    field(:title, :string)
+    field(:inner_id, :id)
+  end
+
+  object :article_log_actor do
+    field(:type, non_null(:string), resolve: fn actor, _, _ -> {:ok, to_string(actor.type)} end)
+    field(:id, :id)
+    field(:login, :string)
+    field(:nickname, :string)
+    field(:avatar, :string)
+  end
+
+  object :article_log do
+    field(:id, non_null(:id))
+    field(:action, non_null(:string), resolve: fn log, _, _ -> {:ok, to_string(log.action)} end)
+    field(:actor, non_null(:article_log_actor))
+    field(:subject, non_null(:activity_resource_ref))
+    field(:target, :activity_resource_ref)
+    field(:payload, non_null(:json))
+    field(:occurred_at, non_null(:datetime))
+  end
+
+  object :paged_article_logs do
+    field(:entries, non_null(list_of(non_null(:article_log))))
+    pagination_fields()
+  end
+
+  object :community_activity_event do
+    field(:id, non_null(:id))
+    field(:event_ref, :id, resolve: fn event, _, _ -> {:ok, uuid_ref(event.event_ref)} end)
+
+    field(:operation_ref, :id,
+      resolve: fn event, _, _ -> {:ok, uuid_ref(event.operation_ref)} end
+    )
+
+    field(:parent_event_ref, :id,
+      resolve: fn event, _, _ -> {:ok, uuid_ref(event.parent_event_ref)} end
+    )
+
+    field(:message_key, non_null(:string))
+
+    field(:parent_event, :community_activity_event)
+
+    field(:child_events, non_null(list_of(non_null(:community_activity_event))))
+
+    field(:action, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.action)} end
+    )
+
+    field(:category, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.category)} end
+    )
+
+    field(:high_risk, non_null(:boolean))
+
+    field(:resource, non_null(:activity_resource_ref))
+    field(:actor, non_null(:article_log_actor))
+    field(:subject, non_null(:activity_resource_ref))
+    field(:target, :activity_resource_ref)
+
+    field(:source, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.source)} end
+    )
+
+    field(:payload, non_null(:json))
     field(:metadata, non_null(:json))
     field(:occurred_at, non_null(:datetime))
   end
 
-  object :paged_audit_logs do
-    field(:entries, non_null(list_of(non_null(:audit_log))))
+  object :paged_community_activity do
+    field(:entries, non_null(list_of(non_null(:community_activity_event))))
     pagination_fields()
   end
+
+  object :community_activity_bucket do
+    field(:started_at, non_null(:datetime))
+    field(:ended_at, non_null(:datetime))
+    field(:count, non_null(:integer))
+  end
+
+  object :community_activity_stats do
+    field(:granularity, non_null(:string),
+      resolve: fn stats, _, _ -> {:ok, to_string(stats.granularity)} end
+    )
+
+    field(:timezone, non_null(:string))
+    field(:total_count, non_null(:integer))
+    field(:buckets, non_null(list_of(non_null(:community_activity_bucket))))
+  end
+
+  object :community_activity_action do
+    field(:action, non_null(:string), resolve: fn item, _, _ -> {:ok, to_string(item.action)} end)
+
+    field(:message_key, non_null(:string))
+
+    field(:category, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, to_string(item.category)} end
+    )
+
+    field(:high_risk, non_null(:boolean))
+  end
+
+  object :community_activity_resource_config do
+    field(:resource_type, non_null(:string),
+      resolve: fn item, _, _ -> {:ok, to_string(item.resource_type)} end
+    )
+
+    field(:actions, non_null(list_of(non_null(:community_activity_action))))
+  end
+
+  object :community_activity_config do
+    field(:resources, non_null(list_of(non_null(:community_activity_resource_config))))
+
+    field(:sources, non_null(list_of(non_null(:string))),
+      resolve: fn config, _, _ -> {:ok, Enum.map(config.sources, &to_string/1)} end
+    )
+  end
+
+  object :community_activity_export do
+    field(:content, non_null(:string))
+    field(:filename, non_null(:string))
+    field(:mime_type, non_null(:string))
+    field(:total_count, non_null(:integer))
+    field(:exported_count, non_null(:integer))
+  end
+
+  defp uuid_ref(nil), do: nil
+
+  defp uuid_ref(value) when is_binary(value) and byte_size(value) == 16 do
+    case Ecto.UUID.load(value) do
+      {:ok, ref} -> ref
+      :error -> value
+    end
+  end
+
+  defp uuid_ref(value), do: value
 
   enum :doc_tree_node_type do
     value(:tab)
@@ -625,6 +747,16 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_from_index, :integer)
     field(:deleted_at, :datetime)
     field(:restored_at, :datetime)
+  end
+
+  object :comment_mutation_article do
+    field(:inner_id, non_null(:integer))
+    field(:comments_count, non_null(:integer))
+  end
+
+  object :comment_mutation_payload do
+    field(:comment, non_null(:comment))
+    field(:article, non_null(:comment_mutation_article))
   end
 
   object :doc_publish_changes_payload do
@@ -1002,6 +1134,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:cat, :article_cat_enum)
     field(:status, :article_status_enum)
+    field(:is_solved, non_null(:boolean))
+    field(:solution_comment_id, :id)
+    field(:solution_digest, :string)
 
     timestamp_fields(:article)
   end
@@ -1286,10 +1421,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field :enabled_third_party_analytics, list_of(:dsb_third_party_analytics) do
       resolve(fn dashboard, _, _ ->
-        {:ok,
-         GroupherServer.CMS.Dashboard.ThirdPartyAnalytics.enabled_valid_configs(
-           dashboard.third_party_analytics
-         )}
+        {:ok, ThirdPartyAnalytics.enabled_valid_configs(dashboard.third_party_analytics)}
       end)
     end
   end
@@ -1297,20 +1429,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_moderator do
     field(:is_root, :boolean) do
       resolve(fn moderator, _, _ ->
-        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
-          {:ok, moderator_root?(passport, community_slug)}
-        else
-          _ -> {:ok, false}
+        case moderator_passport_context(moderator) do
+          {:ok, {passport, community_slug}} ->
+            {:ok, moderator_root?(passport, community_slug)}
+
+          _ ->
+            {:ok, false}
         end
       end)
     end
 
     field(:passport_item_count, :integer) do
       resolve(fn moderator, _, _ ->
-        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
-          {:ok, moderator_passport_item_count(passport, community_slug)}
-        else
-          _ -> {:ok, fallback_moderator_passport_item_count(moderator)}
+        case moderator_passport_context(moderator) do
+          {:ok, {passport, community_slug}} ->
+            {:ok, moderator_passport_item_count(passport, community_slug)}
+
+          _ ->
+            {:ok, fallback_moderator_passport_item_count(moderator)}
         end
       end)
     end
@@ -1450,6 +1586,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :comment_reply do
     comment_general_fields()
+    field(:is_solution, :boolean)
   end
 
   object :comment do

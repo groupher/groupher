@@ -15,9 +15,7 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS
-
-  alias CMS.Model.{Community, Post}
+  alias GroupherServer.CMS.Model.{Community, Post}
   alias Helper.{ORM, T}
 
   @doc """

@@ -220,7 +220,14 @@ export const community = graphql(`
           kanban
           changelog
           doc
+          docLastUpdate
+          docReaction
           about
+          aboutTechstack
+          aboutLocation
+          aboutLinks
+          aboutMediaReport
+          visitorLocationMap
         }
       }
     }

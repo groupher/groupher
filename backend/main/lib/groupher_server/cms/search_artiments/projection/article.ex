@@ -11,13 +11,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ErrorCat
-  alias CMS.SearchArtiments.Artiment
-  alias Helper.Constant
+  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS.SearchArtiments.Artiment
 
   require CMS.Const
 
-  @legal Constant.CMS.pending(:legal)
+  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Projects one public article into a Search Artiment.

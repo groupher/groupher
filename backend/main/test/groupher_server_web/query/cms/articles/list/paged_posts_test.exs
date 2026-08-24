@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
   use GroupherServer.TestMate
 
-  @article_cat Constant.CMS.article_cat()
-  @article_status Constant.CMS.article_status()
+  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
+  @article_status GroupherServer.CMS.Artiment.Const.status_map()
 
   @page_size GroupherServerWeb.Config.page_size()
 
@@ -378,7 +378,6 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
   end
 
-  # TODO test  sort, tag, community, when ...
   @doc """
   test: FILTER when [TODAY] [THIS_WEEK] [THIS_MONTH] [THIS_YEAR]
   """

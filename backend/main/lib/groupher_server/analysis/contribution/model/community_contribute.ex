@@ -18,9 +18,7 @@ defmodule GroupherServer.Analysis.Contribution.Model.CommunityContribute do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias GroupherServer.CMS
-
-  alias CMS.Model.Community
+  alias GroupherServer.CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.statistics()

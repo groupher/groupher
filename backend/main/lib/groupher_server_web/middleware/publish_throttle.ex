@@ -15,34 +15,36 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
 
   @behaviour Absinthe.Middleware
   import Helper.Utils, only: [handle_absinthe_error: 3]
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
   alias GroupherServer.ErrorCat
   alias GroupherServer.ErrorCat.Error
 
   alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishThrottle
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
-    with {:ok, _} <- PublishThrottle.check(cur_user, opt) do
-      resolution
-    else
+    case PublishThrottle.check(cur_user, opt) do
+      {:ok, _} ->
+        resolution
+
       {:error, %Error{reason: :throttle_interval}} ->
         resolution
         |> handle_absinthe_error(
           "throttle_interval",
-          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_interval())
+          ErrorCat.code(GateErrorCat.throttle_interval())
         )
 
       {:error, %Error{reason: :throttle_hour}} ->
         resolution
         |> handle_absinthe_error(
           "throttle_hour",
-          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_hour())
+          ErrorCat.code(GateErrorCat.throttle_hour())
         )
 
       {:error, %Error{reason: :throttle_day}} ->
         resolution
         |> handle_absinthe_error(
           "throttle_day",
-          ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_day())
+          ErrorCat.code(GateErrorCat.throttle_day())
         )
 
       {:error, _error} ->

@@ -24,7 +24,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const { expandComment } = useActions()
   const { t } = useTrans()
 
-  const isSolution = false //
+  const isSolution = data.isSolution
   const { meta } = data
   const { isLegal, illegalReason, illegalWords } = meta
 

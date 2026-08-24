@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.DocSnapshot do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Immutable revision checkpoint for Doc content.
 
@@ -23,7 +24,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.{Author, Community, DocBranch}
+  alias GroupherServer.CMS.Model.{Author, Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -48,7 +49,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
     field(:hash_id, Ecto.UUID, autogenerate: true)
     field(:article_hash_id, Ecto.UUID)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
-    field(:action, Ecto.Enum, values: CMS.Const.doc_snapshot_action_values())
+    field(:action, Ecto.Enum, values: CMS.Docs.Const.doc_snapshot_action_values())
     field(:title, :string)
     field(:slug, :string)
     field(:subtitle, :string)
@@ -70,7 +71,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
 
   @doc "Returns the allowed lifecycle actions recorded by a Snapshot."
   @spec actions() :: [atom()]
-  def actions, do: CMS.Const.doc_snapshot_action_enum_values()
+  def actions, do: CMS.Docs.Const.doc_snapshot_action_enum_values()
 
   @doc """
   Builds an immutable Doc Snapshot changeset.
@@ -84,7 +85,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:stage, CMS.Const.stage_enum_values())
-    |> validate_inclusion(:action, CMS.Const.doc_snapshot_action_enum_values())
+    |> validate_inclusion(:action, CMS.Docs.Const.doc_snapshot_action_enum_values())
     |> validate_number(:revision_number, greater_than: 0)
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:subtitle, max: @max_subtitle_length)

@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.{TrashAction, TrashedArticle}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{TrashAction, TrashedArticle}
   alias Helper.T
 
   @default_batch_size 50
@@ -89,7 +89,7 @@ defmodule GroupherServer.CMS.Trash do
       |> Repo.all()
 
     Enum.reduce(actions, %{deleted: 0, failed: []}, fn action, result ->
-      case permanently_delete_action(action, nil, source: "scheduler") do
+      case permanently_delete_action(action, :system, source: "scheduler") do
         {:ok, _} ->
           %{result | deleted: result.deleted + 1}
 

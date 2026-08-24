@@ -4,8 +4,10 @@
  *
  */
 
+import { lazy, Suspense } from 'react'
+
+import useDidMount from '~/hooks/useDidMount'
 import useTrans from '~/hooks/useTrans'
-import Markdown from '~/render/Markdown'
 import type { TColorName, TSpace } from '~/spec'
 import TagNode from '~/ui/TagNode'
 
@@ -14,10 +16,13 @@ import useLogic from './useLogic'
 
 type TProps = TSpace
 
+const Markdown = lazy(() => import('~/render/Markdown'))
+
 export default function TagNote({ ...spacing }: TProps) {
   const { tag, stats } = useLogic()
   const { t } = useTrans()
   const s = useSalon({ ...spacing })
+  const didMount = useDidMount()
 
   if (!tag?.title) return null
 
@@ -51,7 +56,11 @@ export default function TagNote({ ...spacing }: TProps) {
           <span className={s.statNum}>{contentsCount}</span>
         </div>
       </div>
-      <Markdown>{tag.desc || ''}</Markdown>
+      {tag.desc && didMount ? (
+        <Suspense fallback={null}>
+          <Markdown>{tag.desc}</Markdown>
+        </Suspense>
+      ) : null}
     </div>
   )
 }

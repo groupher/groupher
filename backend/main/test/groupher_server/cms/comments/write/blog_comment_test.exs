@@ -3,7 +3,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.PinnedComment
+  alias GroupherServer.CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.Comments.Lifecycle
+  alias GroupherServer.CMS.Model.PinnedComment
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
 
@@ -269,7 +271,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       CMS.Interactions.upvote(comment, author_user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, author_user)
+      {:ok, comment} = InteractionResponse.one(comment, author_user)
       assert comment.meta.is_article_author_upvoted
     end
 
@@ -279,7 +281,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, comment} = CMS.Interactions.upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
 
       assert comment.viewer_has_upvoted
     end
@@ -291,13 +293,13 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       {:ok, _} = CMS.Interactions.upvote(comment, user)
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
 
       assert comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user2)
+      {:ok, comment} = InteractionResponse.one(comment, user2)
 
       refute comment.viewer_has_upvoted
       assert CMS.Interactions.viewer_state(comment, user).viewer_has_upvoted
@@ -323,7 +325,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       {:ok, _} = CMS.Interactions.upvote(comment, user2)
 
       {:ok, comment} = ORM.find(Comment, comment.id)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, nil)
+      {:ok, comment} = InteractionResponse.one(comment, nil)
       assert comment.upvotes_count == 2
     end
 
@@ -337,7 +339,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
       assert 1 == length(comment.upvotes)
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -347,11 +349,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
 
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user)
-      {:ok, comment} = CMS.Comments.InteractionResponse.one(comment, user)
+      {:ok, comment} = InteractionResponse.one(comment, user)
       assert 0 == comment.upvotes_count
     end
 
@@ -802,7 +804,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         )
 
       assert exist_in?(deleted_comment, paged_comments.entries)
-      assert {:ok, :deleted} = CMS.Comments.Lifecycle.state(deleted_comment.id)
+      assert {:ok, :deleted} = Lifecycle.state(deleted_comment.id)
       assert deleted_comment.body_html == @delete_hint
     end
 
@@ -913,24 +915,6 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
       {:ok, _} = CMS.Articles.undo_lock_comments(blog)
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user)
-    end
-  end
-
-  describe "[update user info in comments_participants]" do
-    test "basic find", ~m(user community)a do
-      blog_attrs = mock_attrs(:blog, %{community_id: community.id, is_question: true})
-      {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
-
-      {:ok, _} =
-        CMS.Comments.create_comment(
-          community,
-          :blog,
-          blog.inner_id,
-          mock_comment("solution"),
-          user
-        )
-
-      CMS.Comments.update_user_in_comments_participants(user)
     end
   end
 end

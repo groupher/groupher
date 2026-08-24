@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Comments.Moderation do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Moderation operations for comments.
 
@@ -16,15 +17,15 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Repo
 
-  alias CMS.FrontDesk
-  alias CMS.Model.Comment
-  alias Helper.{Multi, ORM, QueryBuilder, T}
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.Comment
+  alias Helper.{Multi, ORM, T}
 
-  @audit_legal Helper.Constant.CMS.pending(:legal)
-  @audit_illegal Helper.Constant.CMS.pending(:illegal)
-  @audit_failed Helper.Constant.CMS.pending(:audit_failed)
+  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Marks a comment as audited illegal with the given audit details.

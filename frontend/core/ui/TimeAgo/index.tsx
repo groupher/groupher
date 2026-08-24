@@ -27,11 +27,7 @@ export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
   const { locale } = useLocale()
   const initialNow = useInitialNow()
 
-  const [now, setNow] = useState<number | null>(() => {
-    const runtimeNow = getRuntimeInitialNow()
-
-    return initialNow ?? runtimeNow ?? null
-  })
+  const [now, setNow] = useState<number | null>(() => initialNow ?? null)
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())

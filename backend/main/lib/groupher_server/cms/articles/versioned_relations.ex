@@ -16,7 +16,8 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, CommunityTag, CoverEditInfo}
+  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS.Model.{Community, CommunityTag, CoverEditInfo}
   alias Helper.{ORM, T}
 
   @doc "Returns relation state suitable for immutable DocSnapshot data."
@@ -34,17 +35,15 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   @spec copy_to_draft(T.article(), T.article()) :: {:ok, T.article()} | {:error, term()}
   def copy_to_draft(source, target) do
     with {:ok, target} <- put_tags(target, tag_ids(source)),
-         {:ok, target} <- replace_cover(target, cover_data(source)),
-         {:ok, target} <-
-           ORM.update(
-             target,
-             %{
-               cover_url: source.cover_url,
-               cover_url_dark: source.cover_url_dark
-             },
-             strict: false
-           ) do
-      {:ok, target}
+         {:ok, target} <- replace_cover(target, cover_data(source)) do
+      ORM.update(
+        target,
+        %{
+          cover_url: source.cover_url,
+          cover_url_dark: source.cover_url_dark
+        },
+        strict: false
+      )
     end
   end
 
@@ -84,17 +83,15 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   @spec restore(T.article(), map()) :: {:ok, T.article()} | {:error, term()}
   def restore(article, data) when is_map(data) do
     with {:ok, article} <- put_tags(article, data_value(data, :community_tag_ids, [])),
-         {:ok, article} <- replace_cover(article, data_value(data, :cover)),
-         {:ok, article} <-
-           ORM.update(
-             article,
-             %{
-               cover_url: data_value(data, :cover_url),
-               cover_url_dark: data_value(data, :cover_url_dark)
-             },
-             strict: false
-           ) do
-      {:ok, article}
+         {:ok, article} <- replace_cover(article, data_value(data, :cover)) do
+      ORM.update(
+        article,
+        %{
+          cover_url: data_value(data, :cover_url),
+          cover_url_dark: data_value(data, :cover_url_dark)
+        },
+        strict: false
+      )
     end
   end
 
@@ -111,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
     |> Repo.preload(:community_tags, force: true)
     |> Map.fetch!(:community_tags)
     |> Enum.reduce_while({:ok, :pass}, fn tag, {:ok, :pass} ->
-      case CMS.Communities.TagStats.inc(article, tag) do
+      case TagStats.inc(article, tag) do
         {:ok, :pass} -> {:cont, {:ok, :pass}}
         error -> {:halt, error}
       end

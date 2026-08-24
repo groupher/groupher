@@ -3,15 +3,16 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleLifecycle,
     ArtimentMention,
-    AuditLog,
     Comment,
     Post,
     TrashAction,
     TrashedArticle
   }
+
+  alias GroupherServer.Activity.Model.PostLog
 
   @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 
@@ -33,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert trash_ref == item.hash_id
     action = Repo.get!(TrashAction, item.trash_action_id)
-    assert Repo.get_by(AuditLog, action: "article.trashed", operation_ref: action.hash_id)
+    assert Repo.get_by(PostLog, action: :trashed, operation_ref: action.hash_id)
 
     assert {:ok, restored} = CMS.Articles.restore_trashed(item, user)
     assert restored.article_hash_id == post.article_hash_id
@@ -128,9 +129,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              article_hash_id: post.article_hash_id
            )
 
-    assert Repo.get_by(AuditLog,
-             action: "article.permanently_deleted",
-             resource_ref: post.article_hash_id
+    assert Repo.get_by(PostLog,
+             action: :permanently_deleted,
+             post_ref: post.article_hash_id
            )
 
     assert {:ok, %{entries: []}} =
@@ -223,10 +224,10 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     refute Repo.get(Post, post.id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
-    assert Repo.get_by(AuditLog,
-             action: "article.permanently_deleted",
-             resource_ref: post.article_hash_id,
-             source: "scheduler"
+    assert Repo.get_by(PostLog,
+             action: :permanently_deleted,
+             post_ref: post.article_hash_id,
+             source: :scheduler
            )
   end
 

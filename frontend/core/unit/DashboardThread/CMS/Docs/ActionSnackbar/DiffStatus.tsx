@@ -3,8 +3,8 @@
 import { type FC, lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
+import { browserQuery } from '~/graphql/client'
 import useEvent from '~/hooks/useEvent'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import MergeSVG from '~/icons/Merge'
 import useCommunity from '~/stores/community/hooks'
@@ -23,7 +23,6 @@ const DiffStatus: FC = () => {
   const s = useSalon()
   const { t } = useTrans()
   const { slug: community } = useCommunity()
-  const { query } = useGraphQLClient()
   const { bodyValue, docDraftInfo } = useDocsEditor()
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -47,12 +46,12 @@ const DiffStatus: FC = () => {
 
     try {
       const [draftData, publishedData] = await Promise.all([
-        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+        browserQuery<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
           community,
           id: docDraftId,
           stage: 'DRAFT',
         }),
-        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+        browserQuery<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
           community,
           id: docDraftId,
           stage: 'PUBLIC',
@@ -68,7 +67,7 @@ const DiffStatus: FC = () => {
     } finally {
       setLoading(false)
     }
-  }, [community, docDraftId, query])
+  }, [community, docDraftId])
 
   useEffect(() => {
     void loadRevisions()

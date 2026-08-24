@@ -9,6 +9,20 @@ defmodule GroupherServer.CMS.Interactions.Config do
         -> application runtime configuration
   """
 
+  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+
+  @doc "Returns Article threads recognized by Interaction projections."
+  @spec article_threads() :: [atom()]
+  def article_threads, do: ArtimentConfig.threads()
+
+  @doc "Returns Article emotion types recognized by Interaction projections."
+  @spec emotions() :: [atom()]
+  def emotions, do: ArtimentConfig.emotions()
+
+  @doc "Returns Comment emotion types recognized by Interaction projections."
+  @spec comment_emotions() :: [atom()]
+  def comment_emotions, do: ArtimentConfig.comment_emotions()
+
   @doc """
   Returns the maximum number of durable view events projected per job.
 

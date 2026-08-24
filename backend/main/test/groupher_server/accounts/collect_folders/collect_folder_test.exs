@@ -4,10 +4,10 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
   use GroupherServer.TestMate
 
   alias GroupherServer.{Accounts, CMS}
-  alias Accounts.CollectFolders
+  alias GroupherServer.Accounts.CollectFolders
 
-  alias Accounts.Model.Embeds
-  alias CMS.Model.ArticleCollect
+  alias GroupherServer.Accounts.Model.Embeds
+  alias GroupherServer.CMS.Model.ArticleCollect
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
 

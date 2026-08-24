@@ -49,13 +49,5 @@ defmodule GroupherServer.Test.CMS.DocMeta do
 
       assert not doc.meta.is_comment_locked
     end
-
-    # TODO:
-    # test "doc with image should have imageCount in meta" do
-    # end
-
-    # TODO:
-    # test "doc with video should have imageCount in meta" do
-    # end
   end
 end

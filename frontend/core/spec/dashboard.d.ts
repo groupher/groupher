@@ -176,6 +176,7 @@ export type TEnableConf = {
   aboutLocation: boolean
   aboutLinks: boolean
   aboutMediaReport: boolean
+  visitorLocationMap: boolean
 }
 
 export type TNameAlias = {

@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Gate.Scope.Community do
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Compiles Community read/list visibility rules into an Ecto query.
 
@@ -11,7 +12,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
       Community read/list request
         -> Gate.Scope
-        -> Community scope compiler
+        -> Community Scope query
         -> lifecycle-constrained query
         -> community read model
 
@@ -24,14 +25,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{CommunityLifecycle, CommunityModerator}
-  alias Helper.Constant
 
   @behaviour Policy
 
-  @community_normal Constant.CMS.pending(:normal)
+  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
   @actions [:read, :list]
   @lifecycle_binding :gate_lifecycle
   @policy_modes Communities.Lifecycle.read_modes()

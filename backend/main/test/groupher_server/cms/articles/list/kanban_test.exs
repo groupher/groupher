@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
   use GroupherServer.TestMate
 
-  @article_cat Constant.CMS.article_cat()
-  @article_status Constant.CMS.article_status()
+  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
+  @article_status GroupherServer.CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)

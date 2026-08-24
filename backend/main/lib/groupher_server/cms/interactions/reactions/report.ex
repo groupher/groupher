@@ -11,16 +11,19 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Report do
   meta is a separate account moderation mechanism.
   """
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.Matcher
-  alias CMS.Articles.MutationLock
-  alias CMS.Comments.States, as: CommentStates
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Comments.States, as: CommentStates
+  alias GroupherServer.Repo
   import Ecto.Query
 
-  alias CMS.Interactions.{ErrorCat, ReadState}
-  alias CMS.Model.{AbuseReport, Comment, Embeds}
-  alias CMS.{Gate}
+  alias GroupherServer.CMS.{
+    Gate
+  }
+
+  alias GroupherServer.CMS.Interactions.{ErrorCat, ReadState}
+  alias GroupherServer.CMS.Model.{AbuseReport, Comment, Embeds}
   alias Helper.T
 
   @report_threshold_for_fold Comment.report_threshold_for_fold()

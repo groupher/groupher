@@ -16,8 +16,8 @@ defmodule GroupherServer.CMS.DocCover.Sync do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocCoverCard, DocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, DocCoverCard, DocTreeNode}
+  alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
   @doc """

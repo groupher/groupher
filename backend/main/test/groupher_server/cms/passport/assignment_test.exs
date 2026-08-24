@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Passport.Assignment do
 
   use GroupherServer.TestMate
 
-  alias CMS.Passport.Assignment
+  alias GroupherServer.CMS.Passport.Assignment
 
   setup do
     {:ok, [user, user2]} = db_insert_multi(:user, 2)

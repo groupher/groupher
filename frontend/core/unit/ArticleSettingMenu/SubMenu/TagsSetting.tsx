@@ -1,10 +1,12 @@
+import { useQuery } from '@tanstack/react-query'
 import { equals, includes, reject, uniq } from 'ramda'
 import { type FC, useEffect, useState } from 'react'
-import { useMutation, useQuery } from 'urql'
 
 // import { mockTags } from '~/mock'
 import { THREAD } from '~/const/thread'
 import useViewingArticle from '~/hooks/useViewingArticle'
+import { Q } from '~/query'
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import { updateViewingArticle } from '~/signal'
 import type { TColorName, TID, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -30,18 +32,10 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const { slug: community } = useCommunity()
   const { article } = useViewingArticle()
 
-  const [result] = useQuery({
-    query: S.communityTagGroups,
-    variables: {
-      community,
-      thread: THREAD.POST,
-    },
-    requestPolicy: 'cache-and-network',
-  })
-  const [updatePostRes, updatePost] = useMutation(S.updatePost)
+  const result = useQuery(Q.article.tagGroups(community, THREAD.POST))
+  const [updatePostRes, updatePost] = useArticleSettingMutation(S.updatePost)
 
-  const tags = (result.data?.communityTagGroups?.flatMap((group) => group.tags) ||
-    []) as unknown as TTag[]
+  const tags = (result.data?.flatMap((group) => group.tags) || []) as unknown as TTag[]
 
   useEffect(() => {
     const originTags = article.communityTags || []

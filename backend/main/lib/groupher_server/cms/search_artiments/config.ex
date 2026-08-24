@@ -10,6 +10,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Config do
         -> search platform
   """
 
+  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+
+  @doc "Returns Article threads indexed and queried by SearchArtiments."
+  @spec article_threads() :: [atom()]
+  def article_threads, do: ArtimentConfig.threads()
+
   @type t :: %__MODULE__{
           platform: module(),
           queue: module(),

@@ -14,8 +14,8 @@ defmodule GroupherServer.CMS.Helper.Loader do
   """
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.Author
+  alias GroupherServer.CMS.Model.Author
+  alias GroupherServer.Repo
 
   @doc "Returns the CMS Ecto Dataloader source."
   def data, do: Dataloader.Ecto.new(Repo, query: &query/2)

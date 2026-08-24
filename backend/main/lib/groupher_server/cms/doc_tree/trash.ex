@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Trash do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Product Trash drawer for Docs Tree actions.
 
@@ -16,15 +17,15 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, ErrorCat, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.MutationLock
-  alias CMS.Docs.Branch
-  alias CMS.Docs.Trash, as: DocTrash
-  alias CMS.DocTree.Events
-  alias CMS.DocTree.Writer.{EventRecorder, Index, Operation}
+  alias GroupherServer.{Activity, CMS, ErrorCat, Repo}
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Docs.Trash, as: DocTrash
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.DocTree.Writer.{EventRecorder, Index, Operation}
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
     DocTreeNode,
     TrashAction,
@@ -32,10 +33,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     TrashedDocTreeNode
   }
 
-  alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{ORM, T, Transaction}
 
-  require CMS.Const
 
   @doc "Lists current Docs Trash actions for one branch under an explicit read policy."
   @spec list(Community.t(), keyword() | map()) :: T.domain_res(list(map()))
@@ -133,41 +133,46 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           current ->
             doc_ids = action_doc_ids(current, branch)
 
-            MutationLock.with_articles(community, :doc, root_item.branch_id, doc_ids, fn ->
-              with {:ok, :done} <-
-                     DocTrash.permanently_delete_action_articles(
-                       current,
-                       community,
-                       branch,
-                       actor,
-                       source: Keyword.get(opts, :source, "api"),
-                       audit: false,
-                       metadata: %{
-                         trash_root_type: current.root_type,
-                         trash_root_ref: current.root_ref
-                       }
-                     ),
-                   :ok <- delete_tree_memberships(current.id),
-                   {:ok, _audit} <-
-                     CMS.Audit.record("doc_tree.permanently_deleted", %{
-                       community_id: community.id,
-                       actor: actor,
-                       resource_type: current.root_type,
-                       resource_ref: current.root_ref,
-                       resource_snapshot: %{doc_count: length(doc_ids)},
-                       operation_ref: current.hash_id,
-                       source: Keyword.get(opts, :source, "api"),
-                       metadata: %{}
-                     }),
-                   :ok <- CMS.Articles.Trash.delete_empty_action(current.id) do
-                {:ok, %{done: true}}
+            MutationLock.with_articles(
+              community,
+              :doc,
+              root_item.branch_id,
+              doc_ids,
+              fn ->
+                permanently_delete_locked(current, community, branch, actor, doc_ids, opts)
               end
-            end)
+            )
         end
       end)
     else
       nil -> {:ok, %{done: true}}
       _ -> {:error, GroupherServer.ErrorCat.custom("Trash action is not a Docs Tree action")}
+    end
+  end
+
+  defp permanently_delete_locked(current, community, branch, actor, doc_ids, opts) do
+    with {:ok, :done} <-
+           DocTrash.permanently_delete_action_articles(
+             current,
+             community,
+             branch,
+             actor,
+             source: Keyword.get(opts, :source, "api"),
+             audit: false,
+             metadata: %{trash_root_type: current.root_type, trash_root_ref: current.root_ref}
+           ),
+         :ok <- delete_tree_memberships(current.id),
+         {:ok, _activity} <-
+           Activity.log(
+             %{activity_type: :doc_tree, community_id: community.id, ref: current.root_ref},
+             :permanently_deleted,
+             actor: actor,
+             operation_ref: current.hash_id,
+             source: activity_source(opts),
+             metadata: %{doc_count: length(doc_ids)}
+           ),
+         :ok <- CMS.Articles.Trash.delete_empty_action(current.id) do
+      {:ok, %{done: true}}
     end
   end
 
@@ -185,27 +190,27 @@ defmodule GroupherServer.CMS.DocTree.Trash do
          {:ok, events} <-
            record_restore_events(community, branch, items, draft_nodes, public_nodes, actor),
          :ok <- delete_tree_memberships(action.id),
-         {:ok, _audit} <-
-           CMS.Audit.record("doc_tree.restored", %{
-             community_id: community.id,
-             actor: actor,
-             resource_type: action.root_type,
-             resource_ref: action.root_ref,
-             resource_snapshot: %{
-               node_count: length(items),
-               doc_count: length(articles)
+         {:ok, _activity} <-
+           Activity.log(
+             %{
+               activity_type: :doc_tree,
+               community_id: community.id,
+               ref: action.root_ref,
+               branch_ref: branch.id
              },
+             :restored,
+             actor: actor,
              operation_ref: action.hash_id,
-             source: "api",
-             metadata: %{}
-           }),
+             source: :api,
+             metadata: %{node_count: length(items), doc_count: length(articles)}
+           ),
          :ok <- CMS.Articles.Trash.delete_empty_action(action.id) do
       {:ok,
        %{
          articles: articles,
          draft_nodes: draft_nodes,
          public_nodes: public_nodes,
-         tree_event_count: Enum.count(events, &(&1.owner == CMS.Const.tree_event_owner(:tree)))
+         tree_event_count: Enum.count(events, &(&1.owner == CMS.DocTree.Const.tree_event_owner(:tree)))
        }}
     end
   end
@@ -601,6 +606,17 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   end
 
   defp parent_id(%DocTreeNode{} = node), do: node.parent_node_id
+
+  defp activity_source(opts) do
+    case Keyword.get(opts, :source, :api) do
+      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
+      "api" -> :api
+      "admin" -> :admin
+      "worker" -> :worker
+      "scheduler" -> :scheduler
+      "maintenance" -> :maintenance
+    end
+  end
 
   defp type_rank(:tab), do: 0
   defp type_rank(:group), do: 1

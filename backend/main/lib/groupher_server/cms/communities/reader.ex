@@ -17,13 +17,13 @@ defmodule GroupherServer.CMS.Communities.Reader do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Repo
 
-  alias Accounts.Model.User
-  alias CMS.Gate
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Model.{Community, CommunityDashboard}
-  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()

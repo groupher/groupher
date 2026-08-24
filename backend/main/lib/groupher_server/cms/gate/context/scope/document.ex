@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
   It mirrors Article/Doc stage and branch semantics while keeping the
   ArticleDocument root schema distinct from Article rows.
 
-      Reader -> Document scope context -> Gate.scope -> Document compiler
+      Reader -> Document scope context -> Gate.scope -> Document Scope query
 
   Examples:
 
@@ -13,6 +13,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
       iex> %__MODULE__{thread: :doc, branch_policy: :main} = public_main()
   """
 
+  alias GroupherServer.CMS.Gate.Config
+
+  @ordinary_threads Config.ordinary_article_threads()
   @modes [:public, :owner_management, :moderator_management, :operations]
   @enforce_keys [:thread, :stage, :policy_mode]
   defstruct [:thread, :stage, :policy_mode, :branch_id, :branch_policy]
@@ -26,7 +29,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
         }
 
   @doc "Builds a public ArticleDocument read intent for an ordinary thread."
-  def public(thread) when thread in [:post, :blog, :changelog],
+  def public(thread) when thread in @ordinary_threads,
     do: %__MODULE__{thread: thread, stage: :public, policy_mode: :public}
 
   @doc "Builds a public ArticleDocument read intent for the Doc main branch."
@@ -47,7 +50,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
       branch_id when is_integer(branch_id) ->
         %__MODULE__{thread: :doc, stage: :draft, policy_mode: policy_mode, branch_id: branch_id}
 
-      thread when thread in [:post, :blog, :changelog] ->
+      thread when thread in @ordinary_threads ->
         %__MODULE__{thread: thread, stage: :draft, policy_mode: policy_mode}
     end
   end

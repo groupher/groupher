@@ -13,8 +13,8 @@ defmodule GroupherServer.FrontDesk do
         -> FrontDesk
         -> domain / infrastructure boundary
   """
-  alias GroupherServer.{Accounts, CMS}
   alias __MODULE__.Cache
+  alias GroupherServer.{Accounts, CMS}
 
   @doc "Loads a community from its public slug."
   def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)

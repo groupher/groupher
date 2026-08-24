@@ -16,14 +16,24 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias CMS.FrontDesk
-  alias CMS.Model.{Blog, Changelog, Community, CommunityTag, CommunityTagStat, Post}
-  alias Helper.{Constant, Datetime, ORM, T}
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.FrontDesk
 
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @tracked_threads [:post, :blog, :changelog]
+  alias GroupherServer.CMS.Model.{
+    Blog,
+    Changelog,
+    Community,
+    CommunityTag,
+    CommunityTagStat,
+    Post
+  }
+
+  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.Repo
+  alias Helper.{Datetime, ORM, T}
+
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @tracked_threads GroupherServer.CMS.Communities.Config.ordinary_article_threads()
   @default_thread :post
 
   @doc """
@@ -158,7 +168,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     thread
     |> article_schema()
-    |> CMS.Articles.Trash.not_trashed_scope(thread)
+    |> Trash.not_trashed_scope(thread)
     |> join(:inner, [a], t in assoc(a, :community_tags))
     |> where([_a, t], t.id == ^tag.id)
     |> where([a, _t], a.pending != ^@audit_illegal)

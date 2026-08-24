@@ -79,7 +79,6 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
     field(:reported_count, :integer, default: 0)
     field(:reported_user_ids, {:array, :integer}, default: [])
 
-    # TODO: 怎样处理历史数据 ？
     field(:follower_user_ids, {:array, :integer}, default: [])
     field(:following_user_ids, {:array, :integer}, default: [])
 

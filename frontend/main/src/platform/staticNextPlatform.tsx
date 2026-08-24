@@ -1,7 +1,6 @@
 'use client'
 
 import NextImage from 'next/image'
-import NextLink from 'next/link'
 import NextScript from 'next/script'
 import type { ComponentType, ReactNode } from 'react'
 
@@ -9,14 +8,15 @@ import {
   PlatformProvider,
   type TPlatform,
   type TPlatformImageProps,
-  type TPlatformLinkProps,
   type TPlatformScriptProps,
 } from '~/platform'
+
+import MainPlatformLink from './Link'
 
 const staticPlatform: TPlatform = {
   components: {
     Image: NextImage as ComponentType<TPlatformImageProps>,
-    Link: NextLink as ComponentType<TPlatformLinkProps>,
+    Link: MainPlatformLink,
     Script: NextScript as ComponentType<TPlatformScriptProps>,
   },
   navi: {

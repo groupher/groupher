@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Model.TrashAction do
   Current grouping for one user-visible Trash operation.
 
   The row exists only while at least one Article or Docs Tree child remains in
-  Trash. Historical facts live in `AuditLog`, not here.
+  Trash. Historical facts live in `Activity`, not here.
 
   Business position:
 
@@ -19,12 +19,14 @@ defmodule GroupherServer.CMS.Model.TrashAction do
   import Ecto.Changeset
 
   alias GroupherServer.Accounts.Model.User
+
   alias GroupherServer.CMS.Model.{
     Community,
     TrashedArticle,
     TrashedDocArticle,
     TrashedDocTreeNode
   }
+
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -18,8 +18,9 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   require Logger
 
-  alias GroupherServer.CMS.Model.CommunityAsset
   alias GroupherServer.CMS.Assets.ErrorCat
+  alias GroupherServer.CMS.Model.CommunityAsset
+  alias GroupherServer.ServiceAuth.Client
 
   @timeout 10_000
 
@@ -71,7 +72,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
        when is_binary(storage_key) do
     with {:ok, endpoint} <- endpoint(),
          {:ok, service_token} <-
-           GroupherServer.ServiceAuth.Client.token(
+           Client.token(
              "https://assets.groupher.com/internal",
              ["assets:object:delete"]
            ) do
@@ -109,7 +110,8 @@ defmodule GroupherServer.CMS.Assets.Deletion do
         :ok
 
       {:ok, %Tesla.Env{status: status, body: body}} ->
-        {:error, ErrorCat.delete_enqueue_failed(%{status: status, body: body, duration_ms: duration_ms})}
+        {:error,
+         ErrorCat.delete_enqueue_failed(%{status: status, body: body, duration_ms: duration_ms})}
 
       {:error, reason} ->
         {:error, ErrorCat.delete_enqueue_failed(%{reason: reason, duration_ms: duration_ms})}

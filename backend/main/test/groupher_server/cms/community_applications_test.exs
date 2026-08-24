@@ -3,10 +3,12 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias CMS.CommunityApplications.Jobs.CreateCommunity
-  alias CMS.Communities.Jobs.Setup
+  alias GroupherServer.Activity.Model.CommunityLog
+  alias GroupherServer.CMS.Communities.Jobs.Setup
+  alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
+  alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Community,
     CommunityApplication,
     CommunityApplicationLogoUpload,
@@ -34,7 +36,7 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
               message: "reserved_slug",
               extensions: %{reasonCode: "reserved_slug"}
             ]} =
-             GroupherServerWeb.Resolvers.CMS.submit_community_application(
+             ResolverCMS.submit_community_application(
                nil,
                %{
                  input: application_attrs(upload, "home"),
@@ -78,7 +80,11 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     attrs = application_attrs(upload, "apply-first")
 
     assert {:ok, application} =
-             CMS.CommunityApplications.submit(attrs, user, "idem_first_application")
+             CMS.CommunityApplications.submit(
+               attrs,
+               user,
+               "idem_first_application"
+             )
 
     assert application.status == :submitted
     assert application.logo_asset_ref == upload.public_ref
@@ -93,7 +99,11 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     assert claim_expiry == application.expires_at
 
     assert {:ok, same_application} =
-             CMS.CommunityApplications.submit(attrs, user, "idem_first_application")
+             CMS.CommunityApplications.submit(
+               attrs,
+               user,
+               "idem_first_application"
+             )
 
     assert same_application.id == application.id
 
@@ -117,7 +127,9 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
         {application_attrs(second_upload, "concurrent-second"), "idem_concurrent_second"}
       ]
       |> Enum.map(fn {attrs, key} ->
-        Task.async(fn -> CMS.CommunityApplications.submit(attrs, user, key) end)
+        Task.async(fn ->
+          CMS.CommunityApplications.submit(attrs, user, key)
+        end)
       end)
       |> Task.await_many(10_000)
 
@@ -150,7 +162,11 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              )
 
     assert {:ok, cancelled} =
-             CMS.CommunityApplications.cancel(application.public_ref, user, application.version)
+             CMS.CommunityApplications.cancel(
+               application.public_ref,
+               user,
+               application.version
+             )
 
     assert cancelled.status == :cancelled
     assert CMS.CommunityApplications.can_apply(user).allowed
@@ -323,7 +339,9 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              CMS.Communities.paged(%{page: 1, size: 100})
 
     refute Enum.any?(entries, &(&1.slug == setting_up.slug))
-    assert {:ok, %{entries: []}} = CMS.Search.community(setting_up.slug)
+
+    assert {:ok, %{entries: []}} =
+             CMS.Search.community(setting_up.slug)
 
     assert {:error,
             %GroupherServer.ErrorCat.Error{
@@ -346,15 +364,19 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              :setup_failed
 
     assert Repo.exists?(
-             from(audit in CMS.Model.AuditLog,
+             from(audit in CommunityLog,
                where:
                  audit.community_id == ^failed.community_id and
-                   audit.action == "community.setup_failed"
+                   audit.action == :setup_failed
              )
            )
 
     assert {:ok, retried} =
-             CMS.Communities.retry_setup(approved.public_ref, review_user, failed.version)
+             CMS.Communities.retry_setup(
+               approved.public_ref,
+               review_user,
+               failed.version
+             )
 
     assert retried.status == :setting_up
 
@@ -362,10 +384,10 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
              :setting_up
 
     assert Repo.exists?(
-             from(audit in CMS.Model.AuditLog,
+             from(audit in CommunityLog,
                where:
                  audit.community_id == ^failed.community_id and
-                   audit.action == "community.setup_retried"
+                   audit.action == :setup_retried
              )
            )
 
@@ -374,10 +396,10 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
 
     assert {:ok, _uuid} = Ecto.UUID.cast(setup_operation_ref)
 
-    assert %CMS.Model.AuditLog{operation_ref: ^setup_operation_ref} =
-             Repo.get_by!(CMS.Model.AuditLog,
+    assert %CommunityLog{operation_ref: ^setup_operation_ref} =
+             Repo.get_by!(CommunityLog,
                community_id: failed.community_id,
-               action: "community.setup_retried"
+               action: :setup_retried
              )
 
     assert %CMS.Model.CommunityApplicationEvent{operation_ref: ^setup_operation_ref} =
@@ -397,17 +419,25 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     lifecycle = Repo.get_by!(CMS.Model.CommunityLifecycle, community_id: created.community_id)
     assert lifecycle.state == :active
 
-    assert %CMS.Model.AuditLog{operation_ref: ^setup_operation_ref} =
-             Repo.get_by!(CMS.Model.AuditLog,
+    assert %CommunityLog{operation_ref: ^setup_operation_ref} =
+             Repo.get_by!(CommunityLog,
                community_id: created.community_id,
-               action: "community.activated"
+               action: :activated
              )
 
-    assert {:ok, public_community} = CMS.FrontDesk.community(created.slug)
+    assert {:ok, public_community} =
+             CMS.FrontDesk.community(created.slug)
+
     assert public_community.id == created.community_id
-    assert {:ok, %{entries: [search_result]}} = CMS.Search.community(created.slug)
+
+    assert {:ok, %{entries: [search_result]}} =
+             CMS.Search.community(created.slug)
+
     assert search_result.id == created.community_id
-    assert {:ok, %{community: %{slug: slug}}} = CMS.Press.site_manifest(created.slug)
+
+    assert {:ok, %{community: %{slug: slug}}} =
+             CMS.Press.site_manifest(created.slug)
+
     assert slug == created.slug
     assert Repo.aggregate(from(c in Community, where: c.slug == ^created.slug), :count) == 1
 
@@ -441,7 +471,10 @@ defmodule GroupherServer.Test.CMS.CommunityApplicationsTest do
     |> Repo.update_all(set: [status: :expired])
 
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :asset_not_ready}} =
-             CMS.Communities.create_from_application(approved.public_ref, "rollback_test")
+             CMS.Communities.create_from_application(
+               approved.public_ref,
+               "rollback_test"
+             )
 
     assert Repo.get!(CommunityApplication, approved.id).status == :approved
     refute Repo.exists?(from(c in Community, where: c.slug == ^approved.slug))

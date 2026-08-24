@@ -17,9 +17,10 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   import GroupherServer.Support.Factory
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Model.{Changelog, Community, Doc, Post}
   alias GroupherServer.CMS.Seeds.{Communities, FullCommunity}
   alias GroupherServer.CMS.Seeds.Helper, as: SeedHelper
-  alias CMS.Model.{Changelog, Community, Doc, Post}
   alias Helper.{ORM, T}
 
   @slug "home"
@@ -103,9 +104,8 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp seed_posts(%Community{} = community) do
-    with {:ok, posts} <- seed_articles(community, :post, @post_titles),
-         {:ok, posts} <- set_kanban_statuses(posts) do
-      {:ok, posts}
+    with {:ok, posts} <- seed_articles(community, :post, @post_titles) do
+      set_kanban_statuses(posts)
     end
   end
 
@@ -126,12 +126,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
             {:cont, {:ok, [article | acc]}}
 
           :error ->
-            attrs = mock_attrs(thread, %{community_id: community.id, title: title})
-
-            case CMS.Articles.create(community, thread, attrs, author) do
-              {:ok, article} -> {:cont, {:ok, [article | acc]}}
-              {:error, reason} -> {:halt, {:error, reason}}
-            end
+            seed_new_article(community, thread, title, author, acc)
         end
       end)
       |> case do
@@ -141,12 +136,21 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     end
   end
 
+  defp seed_new_article(community, thread, title, author, acc) do
+    attrs = mock_attrs(thread, %{community_id: community.id, title: title})
+
+    case CMS.Articles.create(community, thread, attrs, author) do
+      {:ok, article} -> {:cont, {:ok, [article | acc]}}
+      {:error, reason} -> {:halt, {:error, reason}}
+    end
+  end
+
   defp schema_for(:post), do: Post
   defp schema_for(:changelog), do: Changelog
 
   defp existing_articles_by_title(schema, thread, community_id, titles) do
     schema
-    |> CMS.Articles.Trash.not_trashed_scope(thread)
+    |> Trash.not_trashed_scope(thread)
     |> join(:inner, [item], community in assoc(item, :communities))
     |> where([item, community], community.id == ^community_id and item.title in ^titles)
     |> Repo.all()
@@ -179,7 +183,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp count_kanban_posts(community_id) do
-    active_posts = CMS.Articles.Trash.not_trashed_scope(Post, :post)
+    active_posts = Trash.not_trashed_scope(Post, :post)
 
     Repo.aggregate(
       from(post in active_posts,
@@ -191,7 +195,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   end
 
   defp count(schema, thread, community_id) do
-    active_articles = CMS.Articles.Trash.not_trashed_scope(schema, thread)
+    active_articles = Trash.not_trashed_scope(schema, thread)
 
     Repo.aggregate(
       from(item in active_articles,

@@ -10,10 +10,9 @@ defmodule GroupherServer.CMS.Seeds do
         -> Seeds
         -> Repo / external boundary
   """
-  alias GroupherServer.CMS
   alias Helper.T
 
-  alias CMS.Model.{Comment, Community}
+  alias GroupherServer.CMS.Model.{Comment, Community}
 
   alias __MODULE__.{Articles, CleanUp, Comments, Communities, FullCommunity, LiteHome}
 

@@ -17,8 +17,8 @@ defmodule GroupherServer.CMS.Events.Audition do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Events.Event
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.AuditBot
 
   @behaviour GroupherServer.CMS.Events.Handler

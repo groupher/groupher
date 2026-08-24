@@ -11,7 +11,7 @@ import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
-import { useRouter } from '~/platform'
+import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -28,7 +28,6 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({ article }) => {
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
-  const { push } = useRouter()
   const { slug } = useCommunity()
 
   const [titleIdx] = useState(() => getRandomInt(0, 7))
@@ -40,14 +39,14 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <button
-        type='button'
+      <Link
+        href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
+        scroll={false}
         className={s.title}
-        data-preview-id={String(article.innerId)}
-        onClick={() => push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })}
+        previewId={article.innerId}
       >
         {article.title}
-      </button>
+      </Link>
       <div className={s.footer}>
         <div className='row-center'>
           <Upvote

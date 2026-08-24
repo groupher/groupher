@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
 
   use GroupherServer.TestMate
 
-  alias CMS.Passport.Authorization
+  alias GroupherServer.CMS.Passport.Authorization
 
   test "passport check accepts a normalized global reviewer passport" do
     reviewer = %{cur_passport: %{"global" => %{"community.application.review" => true}}}

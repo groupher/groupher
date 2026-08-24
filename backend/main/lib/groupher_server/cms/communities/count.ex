@@ -13,13 +13,14 @@ defmodule GroupherServer.CMS.Communities.Count do
   import Helper.Utils, only: [plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.Repo
 
-  alias Accounts.Model.User
-  alias CMS.Model.{Community, CommunityTag}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Model.{Community, CommunityTag}
   alias Helper.{Constant, ORM, T, Transaction}
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads GroupherServer.CMS.Communities.Config.threads()
 
   @doc """
   update community_tags_count / thread / article_count / subscribers_count of a community
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
     with {:ok, info} <- match(thread) do
-      active_articles = CMS.Articles.Trash.not_trashed_scope(info.model, thread)
+      active_articles = Trash.not_trashed_scope(info.model, thread)
 
       {:ok, thread_article_count} =
         from(a in active_articles,

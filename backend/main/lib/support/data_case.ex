@@ -18,12 +18,12 @@ defmodule GroupherServer.DataCase do
         -> endpoint / fixture / Repo
   """
 
+  alias Ecto.Adapters.SQL.Sandbox
   use ExUnit.CaseTemplate
 
   using do
     quote do
       alias GroupherServer.Repo
-
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
@@ -32,10 +32,10 @@ defmodule GroupherServer.DataCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(GroupherServer.Repo)
+    :ok = Sandbox.checkout(GroupherServer.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(GroupherServer.Repo, {:shared, self()})
+      Sandbox.mode(GroupherServer.Repo, {:shared, self()})
     end
 
     :ok

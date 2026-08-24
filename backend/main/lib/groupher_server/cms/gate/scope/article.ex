@@ -1,6 +1,7 @@
 defmodule GroupherServer.CMS.Gate.Scope.Article do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
-  Compiles complete public Article visibility into one query.
+  Builds complete public Article visibility into one query.
 
   Business position:
 
@@ -15,19 +16,17 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
-  alias Helper.Constant
 
-  require CMS.Const
 
   @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
   @draft_lifecycle_states [:draft_only, :published, :archived]
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :read_draft, :list]
   @management_policy_modes [:owner_management, :moderator_management, :operations]
@@ -98,7 +97,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     case policy_mode do
       :public ->
         from([article, ...] in query,
-          where: as(:gate_doc_branch).type == ^CMS.Const.doc_branch_type(:main)
+          where: as(:gate_doc_branch).type == ^CMS.Docs.Const.doc_branch_type(:main)
         )
 
       _ ->
@@ -112,7 +111,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
       as: :gate_doc_branch,
       on:
         branch.id == article.branch_id and branch.community_id == article.community_id and
-          branch.type == ^CMS.Const.doc_branch_type(:main)
+          branch.type == ^CMS.Docs.Const.doc_branch_type(:main)
     )
   end
 

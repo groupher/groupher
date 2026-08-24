@@ -20,11 +20,11 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   import ShortMaps
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Passport.Registry
   alias GroupherServer.CMS.Policy.Config
   alias GroupherServer.CMS.Policy.Model.PublishThrottle, as: ThrottleRecord
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Gate.RateLimit.ErrorCat
   alias Helper.{Datetime, ORM}
 
   @interval_minutes Config.publish_throttle().interval_minutes

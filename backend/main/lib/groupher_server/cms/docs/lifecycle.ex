@@ -7,9 +7,9 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{DocBranch, DocLifecycle}
   alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Model.{DocBranch, DocLifecycle}
+  alias GroupherServer.Repo
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]

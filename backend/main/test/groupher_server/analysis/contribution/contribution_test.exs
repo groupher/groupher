@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.Analysis.Contribution do
   use GroupherServer.TestMate
 
   # alias Helper.{Cache, Later, ORM}
+  alias GroupherServer.Analysis.Contribution.Model.{CommunityContribute, UserContribute}
   alias GroupherServer.Analysis
   alias Helper.Cache
-  alias Analysis.Contribution.Model.{CommunityContribute, UserContribute}
 
   @community_contribute_days GroupherServer.Analysis.Contribution.Config.community_contribute_days()
 

@@ -6,7 +6,7 @@
 
 - [Gate V2：统一读取范围与操作准入](../community/gate_v2.md)
 - [Gate V4：资源级强类型 Context](../community/gate_v4.md)
-- [AuditLog 与 ActivityLog](./audit_log.md)
+- [AuditLog 与 ActivityLog](../todo/audit_log.md)
 - [Post Solution](./post_solution.md)
 
 ## 1. 背景
@@ -287,4 +287,3 @@ Command 测试围绕业务结果，而不是只验证函数被调用：
 - Command 不构造 Gate Policy Context；
 - 失败、并发、重试和幂等有测试合同；
 - 没有为了模式而引入 Command Bus、DSL 或全仓机械重构。
-

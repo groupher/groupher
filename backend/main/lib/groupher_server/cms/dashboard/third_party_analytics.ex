@@ -142,9 +142,7 @@ defmodule GroupherServer.CMS.Dashboard.ThirdPartyAnalytics do
   end
 
   def enabled_valid_configs(configs) when is_list(configs) do
-    configs
-    |> Enum.filter(fn config -> Map.get(config, :enabled) end)
-    |> Enum.filter(&valid_config?/1)
+    Enum.filter(configs, fn config -> Map.get(config, :enabled) and valid_config?(config) end)
   end
 
   def enabled_valid_configs(_configs), do: []

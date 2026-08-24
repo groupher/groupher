@@ -7,20 +7,21 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Docs.Lifecycle
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.CMS.Docs.Lifecycle
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleDocument,
     Community,
     Doc,
     DocBranch,
     DocLifecycle,
-    TrashedDocArticle,
-    TrashAction
+    TrashAction,
+    TrashedDocArticle
   }
 
+  alias GroupherServer.CMS.Articles.Trash
   alias Helper.ORM
 
   @doc """
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   """
   def create_action(community, actor, attrs),
-    do: CMS.Articles.Trash.create_action(community, actor, attrs)
+    do: Trash.create_action(community, actor, attrs)
 
   @doc """
   Attaches many docs to one trash action inside a branch.
@@ -138,7 +139,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
         {:ok, item}
 
       nil ->
-        with {:ok, _doc} <- representative_doc(community, branch, article_hash_id),
+        with {:ok, doc} <- representative_doc(community, branch, article_hash_id),
              {:ok, restore_state} <- restore_state(community, branch, article_hash_id),
              {:ok, item} <-
                ORM.create(TrashedDocArticle, %{
@@ -152,8 +153,8 @@ defmodule GroupherServer.CMS.Docs.Trash do
                }),
              {:ok, _lifecycle} <-
                Lifecycle.transition(community.id, branch.id, article_hash_id, :deleted),
-             {:ok, _audit} <-
-               maybe_audit("article.trashed", community, actor, article_hash_id, action, opts) do
+             {:ok, _activity} <-
+               maybe_activity(:trashed, doc, actor, action, action.deleted_at, opts) do
           {:ok, item}
         end
     end
@@ -162,7 +163,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
   defp restore(%TrashedDocArticle{} = item, community, branch, actor, opts) do
     with {:ok, doc} <- representative_doc(community, branch, item.article_hash_id),
          {:ok, _canonical} <- CMS.Gate.access_check(actor, :restore, doc),
-         {:ok, _lifecycle} <-
+         {:ok, lifecycle} <-
            Lifecycle.transition(
              community.id,
              branch.id,
@@ -170,23 +171,17 @@ defmodule GroupherServer.CMS.Docs.Trash do
              item.restore_state
            ),
          {:ok, _} <- Repo.delete(item),
-         {:ok, _audit} <-
-           maybe_audit(
-             "article.restored",
-             community,
-             actor,
-             item.article_hash_id,
-             item.trash_action_id,
-             opts
-           ) do
+         {:ok, action} <- load_action(item.trash_action_id),
+         {:ok, _activity} <-
+           maybe_activity(:restored, doc, actor, action, lifecycle.changed_at, opts) do
       {:ok, doc}
     end
   end
 
   defp permanently_delete(%TrashedDocArticle{} = item, community, branch, actor, opts) do
-    with {:ok, _doc} <- representative_doc(community, branch, item.article_hash_id),
+    with {:ok, doc} <- representative_doc(community, branch, item.article_hash_id),
          {:ok, docs} <- physical_docs(community, branch, item.article_hash_id),
-         {:ok, _lifecycle} <-
+         {:ok, lifecycle} <-
            Lifecycle.transition(community.id, branch.id, item.article_hash_id, :destroy),
          :ok <- purge_physical_docs(docs),
          {_, _} <-
@@ -199,13 +194,14 @@ defmodule GroupherServer.CMS.Docs.Trash do
              )
            ),
          {:ok, _} <- Repo.delete(item),
-         {:ok, _audit} <-
-           maybe_audit(
-             "article.permanently_deleted",
-             community,
+         {:ok, action} <- load_action(item.trash_action_id),
+         {:ok, _activity} <-
+           maybe_activity(
+             :permanently_deleted,
+             doc,
              actor,
-             item.article_hash_id,
-             item.trash_action_id,
+             action,
+             lifecycle.changed_at,
              opts
            ) do
       {:ok, :done}
@@ -278,30 +274,34 @@ defmodule GroupherServer.CMS.Docs.Trash do
     end
   end
 
-  defp maybe_audit(action, community, actor, article_hash_id, %TrashAction{} = trash_action, opts) do
+  defp maybe_activity(action, doc, actor, %TrashAction{} = trash_action, occurred_at, opts) do
     if Keyword.get(opts, :audit, true) do
-      CMS.Audit.record(action, %{
-        community_id: community.id,
+      Activity.log(doc, action,
         actor: actor,
-        resource_type: "doc",
-        resource_ref: article_hash_id,
-        resource_snapshot: %{},
         operation_ref: trash_action.hash_id,
-        source: Keyword.get(opts, :source, "api"),
-        metadata: Keyword.get(opts, :metadata, %{})
-      })
+        source: activity_source(opts),
+        occurred_at: occurred_at
+      )
     else
       {:ok, :skipped}
     end
   end
 
-  defp maybe_audit(action, community, actor, article_hash_id, action_id, opts) do
+  defp load_action(action_id) do
     case Repo.get(TrashAction, action_id) do
-      %TrashAction{} = trash_action ->
-        maybe_audit(action, community, actor, article_hash_id, trash_action, opts)
+      %TrashAction{} = trash_action -> {:ok, trash_action}
+      nil -> {:error, GroupherServer.ErrorCat.custom("Trash action does not exist")}
+    end
+  end
 
-      nil ->
-        {:ok, :skipped}
+  defp activity_source(opts) do
+    case Keyword.get(opts, :source, :api) do
+      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
+      "api" -> :api
+      "admin" -> :admin
+      "worker" -> :worker
+      "scheduler" -> :scheduler
+      "maintenance" -> :maintenance
     end
   end
 

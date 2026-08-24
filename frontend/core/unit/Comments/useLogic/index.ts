@@ -2,12 +2,13 @@ import { useContext } from 'react'
 import { useSnapshot } from 'valtio'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import type { TCommentsState } from '~/spec'
+import type { TCommentsState, TPagedComments } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 
-import { API_MODE } from '../constant'
 import type { TEditState } from '../spec'
+import { areAllCommentsFolded } from './fold'
+import useCommentQueryState from './queryState'
 
 const useCommentsStore = () => {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
@@ -20,25 +21,26 @@ const useCommentsStore = () => {
 
 /** Exposes comments root state state and actions through the shared React hook boundary. */
 export const useCommentsRootState = () => {
-  const commentsStore = useCommentsStore()
-  const comments = useSnapshot(commentsStore)
+  const { data, query } = useCommentQueryState()
 
   return {
-    initialized: comments.initialized,
-    totalCount: comments.pagedComments.totalCount,
+    initialized: !query.isPending,
+    totalCount: data?.totalCount || 0,
   }
 }
 
 /** Exposes comments list state state and actions through the shared React hook boundary. */
 export const useCommentsListState = () => {
-  const commentsStore = useCommentsStore()
-  const comments = useSnapshot(commentsStore)
+  const { comments, data, query } = useCommentQueryState()
 
   return {
     mode: comments.mode,
     apiMode: comments.apiMode,
-    loading: comments.loading,
-    pagedComments: comments.pagedComments as TCommentsStore['pagedComments'],
+    loading: query.isFetching,
+    pagedComments: (data || {
+      entries: [],
+      totalCount: 0,
+    }) as TPagedComments,
     foldedCommentIds: comments.foldedCommentIds as TCommentsStore['foldedCommentIds'],
     repliesLoadingByParentId:
       comments.repliesLoadingByParentId as TCommentsStore['repliesLoadingByParentId'],
@@ -72,29 +74,21 @@ export const useCommentsHeadState = () => {
   const commentsStore = useCommentsStore()
   const comments = useSnapshot(commentsStore)
   const { article } = useViewingArticle()
-
-  const totalCount =
-    comments.apiMode === API_MODE.ARTICLE
-      ? comments.totalCount === -1
-        ? article.commentsCount
-        : comments.totalCount
-      : comments.pagedPublishedComments.totalCount
+  const { data, query, summaryQuery } = useCommentQueryState()
+  const totalCount = summaryQuery.data?.totalCount ?? data?.totalCount ?? article.commentsCount
 
   const basicState: TCommentsState = {
-    isViewerJoined: comments.isViewerJoined,
-    participantsCount: comments.participantsCount,
+    isViewerJoined: summaryQuery.data?.isViewerJoined ?? false,
+    participantsCount: summaryQuery.data?.participantsCount ?? 0,
     totalCount,
-    participants: comments.participants as TCommentsState['participants'],
+    participants: summaryQuery.data?.participants || [],
   }
 
   return {
     mode: comments.mode,
     apiMode: comments.apiMode,
-    loading: comments.loading,
-    isAllFolded:
-      comments.pagedComments.totalCount === 0
-        ? false
-        : comments.foldedCommentIds.length === comments.pagedComments.totalCount,
+    loading: query.isFetching,
+    isAllFolded: areAllCommentsFolded(data?.entries || [], comments.foldedCommentIds),
     basicState,
     commentBody: comments.commentBody,
     submitState: {

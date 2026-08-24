@@ -132,7 +132,8 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       [:about_techstack, :boolean, true],
       [:about_location, :boolean, true],
       [:about_links, :boolean, true],
-      [:about_media_report, :boolean, true]
+      [:about_media_report, :boolean, true],
+      [:visitor_location_map, :boolean, false]
     ]
   end
 

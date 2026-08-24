@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
+import { browserQuery } from '~/graphql/client'
 import { sortByKey } from '~/helper'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TModerator, TUser } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -52,7 +52,6 @@ type TRet = {
 export default function useAdmins(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
-  const { query, mutate } = useGraphQLClient()
   const { moderators: originalModerators, activeModerator } = dsb$
   const hydrationSignatureRef = useRef('')
 
@@ -90,11 +89,10 @@ export default function useAdmins(): TRet {
             const login = moderator.user?.login
             if (!login || !moderatorNeedsHydration(moderator)) return moderator
 
-            const res = await query<{ user?: { passportString?: string } }, { login: string }>(
-              S.userPassport,
-              { login },
-              { requestPolicy: 'network-only' },
-            )
+            const res = await browserQuery<
+              { user?: { passportString?: string } },
+              { login: string }
+            >(S.userPassport, { login })
             const passportJson = safeParsePassport(res?.user?.passportString ?? '{}')
             const globalRules = ruleMapFrom(passportJson.global)
             const communityPassport = communityPassportFrom(passportJson, slug)
@@ -117,7 +115,7 @@ export default function useAdmins(): TRet {
         console.error('## hydrate moderators passport error: ', error)
       }
     },
-    [community$, dsb$, query],
+    [community$, dsb$],
   )
 
   useEffect(() => {
@@ -137,7 +135,7 @@ export default function useAdmins(): TRet {
       const keyword = name.trim()
       if (!keyword) return []
 
-      const data = await query<{ searchUsers: { entries: TUser[] } }, { name: string }>(
+      const data = await browserQuery<{ searchUsers: { entries: TUser[] } }, { name: string }>(
         S.searchUsers,
         { name: keyword },
       )
@@ -146,7 +144,7 @@ export default function useAdmins(): TRet {
         (user) => user.login && !moderatorLoginSet.has(user.login),
       )
     },
-    [moderatorLoginSet, query],
+    [moderatorLoginSet],
   )
 
   const addAdmins = useCallback(
@@ -154,7 +152,7 @@ export default function useAdmins(): TRet {
       const validUsers = users.filter((user) => user.login && !moderatorLoginSet.has(user.login))
       if (!community$.slug || !validUsers.length) return
 
-      const data = await mutate<
+      const data = await browserQuery<
         { addModerators: { moderators: TModerator[] } },
         { community: string; users: string[] }
       >(S.addModerators, {
@@ -196,7 +194,7 @@ export default function useAdmins(): TRet {
         console.error('## revalidate community cache error: ', error)
       }
     },
-    [community$, dsb$, moderatorLoginSet, mutate, originalModerators],
+    [community$, dsb$, moderatorLoginSet, originalModerators],
   )
 
   return {

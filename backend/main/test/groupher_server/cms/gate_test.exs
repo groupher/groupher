@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.Gate do
   @moduledoc false
+  alias GroupherServer.CMS.Gate.Context.Scope.Article
   use GroupherServer.TestMate, async: false
 
   test "root facade exposes only scope and access_check" do
@@ -20,7 +21,7 @@ defmodule GroupherServer.Test.CMS.Gate do
                CMS.Model.Post,
                nil,
                :read_draft,
-               CMS.Gate.Context.Scope.Article.draft(:post, :owner_management)
+               Article.draft(:post, :owner_management)
              )
   end
 end

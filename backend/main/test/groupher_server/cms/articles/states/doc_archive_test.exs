@@ -1,5 +1,6 @@
 defmodule GroupherServer.Test.CMS.DocArchive do
   @moduledoc false
+  alias GroupherServer.CMS.Articles.Trash
   use GroupherServer.TestMate
 
   @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
@@ -59,18 +60,18 @@ defmodule GroupherServer.Test.CMS.DocArchive do
       community = Repo.get!(Community, archived_doc.community_id)
 
       {:ok, action} =
-        CMS.Articles.Trash.create_action(community, nil, %{
+        Trash.create_action(community, :system, %{
           root_type: "doc_tree_page",
           root_ref: "archive-test"
         })
 
       {:error, reason} =
-        CMS.Articles.Trash.attach(
+        Trash.attach(
           action,
           community,
           :doc,
           archived_doc.article_hash_id,
-          nil
+          :system
         )
 
       assert reason |> is_error?({{:cms, :article}, :archived})

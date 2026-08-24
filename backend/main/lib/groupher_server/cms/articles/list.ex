@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Articles.List do
+  alias GroupherServer.CMS.QueryBuilder
+
   @moduledoc """
   Article listing helpers.
 
@@ -22,23 +24,33 @@ defmodule GroupherServer.CMS.Articles.List do
       module_to_atom: 1
     ]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Gate.Scope
-  alias CMS.Communities.Enable
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Dashboard.KanbanBoards
-  alias CMS.Interactions
-  alias CMS.Articles.InteractionResponse
-  alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle, TrashedDocArticle}
-  alias Helper.{ORM, QueryBuilder, T}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Articles.InteractionResponse
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Artiment.Const
+  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS.Dashboard.KanbanBoards
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Gate.Scope
+  alias GroupherServer.CMS.Interactions
+
+  alias GroupherServer.CMS.Model.{
+    Community,
+    Embeds,
+    PinnedArticle,
+    Post,
+    TrashedArticle,
+    TrashedDocArticle
+  }
+
+  alias Helper.{ORM, T}
 
   @interaction_orders CMS.Interactions.Const.interaction_order_values()
 
-  @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status Const.status_values() |> Enum.into(%{}, &{&1, &1})
   @kanban_rejected_statuses [
     @article_status.reject,
     @article_status.reject_dup,
@@ -139,10 +151,7 @@ defmodule GroupherServer.CMS.Articles.List do
       when is_list(statuses) do
     %{page: page, size: size} = filter
 
-    valid_statuses =
-      statuses
-      |> Enum.filter(&is_atom/1)
-      |> Enum.filter(&(&1 in Map.keys(@article_status)))
+    valid_statuses = Enum.filter(statuses, &(is_atom(&1) and &1 in Map.keys(@article_status)))
 
     case valid_statuses do
       [] ->
@@ -153,7 +162,7 @@ defmodule GroupherServer.CMS.Articles.List do
         flags = %{pending: :legal, community_id: community.id, status: nil}
 
         Post
-        |> CMS.Articles.Trash.not_trashed_scope(:post)
+        |> Trash.not_trashed_scope(:post)
         |> QueryBuilder.filter_pack(Map.merge(filter, flags))
         |> where([p], p.status in ^valid_statuses)
         |> ORM.paginator(~m(page size)a)
@@ -167,7 +176,7 @@ defmodule GroupherServer.CMS.Articles.List do
     flags = %{pending: :legal, community_id: community.id, status: status}
 
     Post
-    |> CMS.Articles.Trash.not_trashed_scope(:post)
+    |> Trash.not_trashed_scope(:post)
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))
     |> ORM.paginator(~m(page size)a)
     |> done()
@@ -212,7 +221,8 @@ defmodule GroupherServer.CMS.Articles.List do
     read_articles(paged_articles, actor)
   end
 
-  defp maybe_mark_viewer_states(paged_articles, _thread, _actor), do: paged_articles
+  defp maybe_mark_viewer_states(paged_articles, _thread, nil),
+    do: read_articles(paged_articles, nil)
 
   defp scope_context(:doc), do: DocScope.public_main()
   defp scope_context(thread), do: ArticleScope.public(thread)

@@ -1,5 +1,4 @@
 import { type FC, useEffect, useState } from 'react'
-import { useMutation } from 'urql'
 
 import { ARTICLE_STATUS } from '~/const/gtd'
 import { POST_STATUS_MENU_ITEMS } from '~/const/menu'
@@ -9,6 +8,7 @@ import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import { updateViewingArticle } from '~/signal'
 import { toast } from '~/ui/Toaster'
 
@@ -34,7 +34,7 @@ const StatusSetting: FC<TProps> = ({ onBack }) => {
   const [status, setStatus] = useState(article.status)
   const { touched, setTouched, resetTouched } = useTouched()
 
-  const [result, setPostStatus] = useMutation(S.setPostStatus)
+  const [result, setPostStatus] = useArticleSettingMutation(S.setPostStatus)
 
   useEffect(() => {
     setStatus(article.status)

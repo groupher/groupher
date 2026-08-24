@@ -1,10 +1,22 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { type MutableRefObject, useContext, useEffect, useRef } from 'react'
 
 import { ANCHOR } from '~/const/dom'
 import { scrollIntoEle } from '~/dom'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
-import type { TComment, TEmotion, TEmotionRawType, TEmotionType, TID, TPagedComments } from '~/spec'
+import { stripCommentViewerState } from '~/lib/commentViewerState'
+import { articleKeys, mutationKeys, Q, viewerKeys } from '~/query'
+import { patchArticleEverywhere } from '~/query/mutation/article'
+import {
+  insertPendingComment,
+  insertPendingReply,
+  isCommentQueryForArticle,
+  patchCommentEverywhere,
+  reconcileCreatedComment,
+} from '~/query/mutation/comment'
+import type { TComment, TID } from '~/spec'
+import useAccount from '~/stores/account/hooks'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import { isWordsCountValid } from '~/ui/WordsCounter/helper'
@@ -18,20 +30,15 @@ import useHelper from './useHelper'
 export type TRet = {
   loadComments: (page?: number) => void
   loadCommentReplies: (innerId: TID) => void
-  loadCommentsState: () => void
-  loadPublishedComments: () => void
+  createComment: () => void
   openUpdateEditor: (comment: TComment) => void
   onPageChange: (page: number) => void
   onMentionSearch: (name: string) => void
-  deleteComment: () => void
-  handleEmotion: (comment: TComment, name: TEmotionType, viewerHasReacted: boolean) => void
-  handleUpvote: (comment: TComment, viewerHasUpvoted: boolean) => void
   replyComment: () => void
   updateComment: () => void
 }
 
 let repliesPagiNo: Record<string, number> = {}
-const PAGI_SIZE = 30
 
 /** Exposes query state and actions through the shared React hook boundary. */
 export default function useQuery(): TRet {
@@ -40,16 +47,25 @@ export default function useQuery(): TRet {
     throw new Error('useQuery must be used within a Comments store provider')
   }
   const { article } = useViewingArticle()
-  const { addToReplies, upvoteEmotion, updateOneComment, published, resetPublish } = useHelper()
+  const account = useAccount()
+  const { addToReplies, published, resetPublish } = useHelper()
 
-  const { query, mutate } = useGraphQLClient()
+  const queryClient = useQueryClient()
 
   const isMountedRef = useRef(true)
   const commentsRequestRef = useRef(0)
-  const stateRequestRef = useRef(0)
   const repliesRequestRef = useRef(0)
 
   const articlePath = `${article.community?.slug || ''}:${article.meta.thread}:${article.innerId}`
+  const commentScope = {
+    community: article.community.slug,
+    thread: article.meta.thread,
+    articleInnerId: article.innerId,
+  }
+  const commentQueryFilter = {
+    predicate: (query: Parameters<typeof isCommentQueryForArticle>[0]) =>
+      isCommentQueryForArticle(query, commentScope),
+  }
   const latestArticlePathRef = useRef(articlePath)
 
   useEffect(() => {
@@ -62,7 +78,6 @@ export default function useQuery(): TRet {
     return () => {
       isMountedRef.current = false
       commentsRequestRef.current += 1
-      stateRequestRef.current += 1
       repliesRequestRef.current += 1
     }
   }, [])
@@ -90,65 +105,173 @@ export default function useQuery(): TRet {
     innerId: typeof commentOrInnerId === 'object' ? commentOrInnerId.innerId : commentOrInnerId,
   })
 
-  const loadCommentsState = (): void => {
-    const requestArticlePath = latestArticlePathRef.current
-    const requestId = stateRequestRef.current + 1
-    stateRequestRef.current = requestId
+  const createCommentMutation = useMutation({
+    mutationKey: mutationKeys.article(articlePath, 'create-comment'),
+    scope: { id: `article:${articlePath}:create-comment` },
+    retry: false,
+    mutationFn: async ({
+      articleInput,
+      body,
+    }: {
+      articleInput: ReturnType<typeof buildArticlePath>
+      body: string
+      pending: TComment
+    }) => {
+      const { createComment } = await browserQuery(S.createComment, {
+        article: articleInput,
+        body,
+      })
+      if (!createComment) throw new Error('Create comment response is empty')
+      return createComment
+    },
+    onMutate: async ({ pending }) => {
+      await Promise.all([
+        queryClient.cancelQueries(commentQueryFilter),
+        queryClient.cancelQueries({ queryKey: articleKeys.all }),
+      ])
+      const comments = queryClient.getQueriesData(commentQueryFilter)
+      const articles = queryClient.getQueriesData({ queryKey: articleKeys.all })
+      insertPendingComment(queryClient, commentScope, pending)
+      patchArticleEverywhere(queryClient, buildArticlePath(), (current) => ({
+        ...current,
+        commentsCount: current.commentsCount + 1,
+      }))
+      commentsStore.commit({ publishing: true })
+      return { articles, comments }
+    },
+    onError: (_error, _variables, snapshot) => {
+      for (const [key, data] of snapshot?.comments || []) queryClient.setQueryData(key, data)
+      for (const [key, data] of snapshot?.articles || []) queryClient.setQueryData(key, data)
+      commentsStore.commit({ publishing: false })
+    },
+    onSuccess: (payload, { pending }) => {
+      reconcileCreatedComment(
+        queryClient,
+        commentScope,
+        pending.innerId,
+        stripCommentViewerState(payload.comment as unknown as TComment),
+        buildArticlePath(),
+        payload.article.commentsCount,
+      )
+      published()
+      setTimeout(() => resetPublish(EDIT_MODE.CREATE), 500)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' })
+      void queryClient.invalidateQueries({ queryKey: viewerKeys.all, refetchType: 'none' })
+    },
+  })
 
-    const params = {
-      article: buildArticlePath(),
-      freshkey: uid.gen(),
-    }
+  const replyCommentMutation = useMutation({
+    mutationKey: mutationKeys.article(articlePath, 'reply-comment'),
+    scope: { id: `article:${articlePath}:reply-comment` },
+    retry: false,
+    mutationFn: async ({
+      commentInput,
+      body,
+    }: {
+      commentInput: ReturnType<typeof buildCommentPath>
+      body: string
+      parentId: TID
+      pending: TComment
+    }) => {
+      const { replyComment } = await browserQuery(S.replyComment, {
+        comment: commentInput,
+        body,
+      })
+      if (!replyComment) throw new Error('Reply comment response is empty')
+      return replyComment
+    },
+    onMutate: async ({ parentId, pending }) => {
+      await Promise.all([
+        queryClient.cancelQueries(commentQueryFilter),
+        queryClient.cancelQueries({ queryKey: articleKeys.all }),
+      ])
+      const comments = queryClient.getQueriesData(commentQueryFilter)
+      const articles = queryClient.getQueriesData({ queryKey: articleKeys.all })
+      insertPendingReply(queryClient, commentScope, parentId, pending)
+      patchArticleEverywhere(queryClient, buildArticlePath(), (current) => ({
+        ...current,
+        commentsCount: current.commentsCount + 1,
+      }))
+      commentsStore.commit({ publishing: true })
+      return { articles, comments }
+    },
+    onError: (_error, _variables, snapshot) => {
+      for (const [key, data] of snapshot?.comments || []) queryClient.setQueryData(key, data)
+      for (const [key, data] of snapshot?.articles || []) queryClient.setQueryData(key, data)
+      commentsStore.commit({ publishing: false })
+    },
+    onSuccess: (payload, { pending }) => {
+      reconcileCreatedComment(
+        queryClient,
+        commentScope,
+        pending.innerId,
+        stripCommentViewerState(payload.comment as unknown as TComment),
+        buildArticlePath(),
+        payload.article.commentsCount,
+      )
+      published()
+      setTimeout(() => resetPublish(EDIT_MODE.REPLY), 500)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' })
+      void queryClient.invalidateQueries({ queryKey: viewerKeys.all, refetchType: 'none' })
+    },
+  })
 
-    // console.log('## loadCommentsState args: ', params)
-    query(S.commentsState, params).then(({ commentsState }) => {
-      if (shouldIgnoreResult(requestId, stateRequestRef, requestArticlePath)) return
-      commentsStore.commit({ ...commentsState })
-    })
-  }
-
-  const loadPublishedComments = (_page = 1): void => {
-    console.log('## TODO')
-  }
+  const updateCommentMutation = useMutation({
+    mutationKey: mutationKeys.article(articlePath, 'update-comment'),
+    scope: { id: `article:${articlePath}:update-comment` },
+    retry: false,
+    mutationFn: async ({
+      commentInput,
+      body,
+    }: {
+      commentInput: ReturnType<typeof buildCommentPath>
+      body: string
+    }) => {
+      const { updateComment } = await browserQuery(S.updateComment, {
+        comment: commentInput,
+        body,
+      })
+      if (!updateComment) throw new Error('Update comment response is empty')
+      return updateComment as unknown as TComment
+    },
+    onMutate: () => {
+      commentsStore.commit({ publishing: true })
+    },
+    onError: () => {
+      commentsStore.commit({ publishing: false })
+    },
+    onSuccess: (confirmed) => {
+      patchCommentEverywhere(queryClient, commentScope, confirmed.innerId, (current) => ({
+        ...current,
+        ...stripCommentViewerState(confirmed),
+      }))
+      published()
+      setTimeout(() => resetPublish(EDIT_MODE.UPDATE), 500)
+    },
+    onSettled: () => queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' }),
+  })
 
   const loadComments = (page = 1): void => {
-    const requestArticlePath = latestArticlePathRef.current
-    const requestId = commentsRequestRef.current + 1
-    commentsRequestRef.current = requestId
-
-    commentsStore.commit({ loading: true })
-
-    const params = {
-      article: buildArticlePath(),
-      mode: commentsStore.mode,
-      filter: { page, size: PAGI_SIZE },
-    }
-    // console.log('## loadComments args: ', params)
-
-    query(S.pagedComments, params)
-      .then(({ pagedComments }) => {
-        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticlePath)) return
-
-        repliesPagiNo = {}
-        commentsStore.commit({
-          pagedComments: pagedComments as unknown as TPagedComments,
-          loading: false,
-          initialized: true,
-        })
-
-        if (commentsStore.needRefreshState) {
-          loadCommentsState()
-        }
-      })
-      .catch(() => {
-        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticlePath)) return
-        commentsStore.commit({ loading: false })
-      })
+    commentsStore.commit({ page })
+    repliesPagiNo = {}
+    void queryClient.fetchQuery(
+      Q.comment.list(
+        article.community.slug,
+        article.meta.thread,
+        article.innerId,
+        page,
+        commentsStore.mode,
+      ),
+    )
   }
 
   const openUpdateEditor = (comment: TComment): void => {
     commentsStore.commit({ showUpdateEditor: true })
-    query(S.oneComment, { comment: buildCommentPath(comment) }).then(({ oneComment }) => {
+    browserQuery(S.oneComment, { comment: buildCommentPath(comment) }).then(({ oneComment }) => {
       commentsStore.commit({ updateInnerId: oneComment.innerId, updateBody: oneComment.body })
     })
   }
@@ -176,7 +299,7 @@ export default function useQuery(): TRet {
       },
     })
     console.log('## loadCommentReplies args: ', params)
-    query(S.pagedCommentReplies, params).then(({ pagedCommentReplies }) => {
+    browserQuery(S.pagedCommentReplies, params).then(({ pagedCommentReplies }) => {
       if (shouldIgnoreResult(requestId, repliesRequestRef, requestArticlePath)) return
 
       addToReplies(innerId, pagedCommentReplies.entries as unknown as TComment[])
@@ -199,10 +322,8 @@ export default function useQuery(): TRet {
   const onPageChange = (page = 1): void => {
     const { apiMode } = commentsStore
     if (apiMode === API_MODE.ARTICLE) {
-      commentsStore.commit({ needRefreshState: false })
+      commentsStore.commit({ page })
       loadComments(page)
-    } else {
-      loadPublishedComments(page)
     }
 
     scrollIntoEle(ANCHOR.COMMENTS_ID)
@@ -217,84 +338,45 @@ export default function useQuery(): TRet {
     // }
   }
 
-  const deleteComment = (): void => {
-    console.log('## TODO: deleteComment')
-    // mutate(S.deleteComment, {
-    //   thread: snap.activeThread,
-    // })
-  }
-
-  const handleEmotion = (
-    comment: TComment,
-    name: TEmotionType,
-    viewerHasReacted: boolean,
-  ): void => {
-    const commentPath = buildCommentPath(comment)
-    const emotion = name.toUpperCase() as Exclude<TEmotionRawType, 'UPVOTE'>
-    const nextEmotions = updateEmotionState(comment.emotions || [], name, !viewerHasReacted)
-
-    if (viewerHasReacted) {
-      upvoteEmotion(comment, nextEmotions)
-      mutate(S.undoEmotionToComment, { comment: commentPath, emotion }).then(
-        ({ undoEmotionToComment }) => {
-          upvoteEmotion(undoEmotionToComment, undoEmotionToComment.emotions)
-        },
-      )
-    } else {
-      upvoteEmotion(comment, nextEmotions)
-      mutate(S.emotionToComment, { comment: commentPath, emotion }).then(({ emotionToComment }) => {
-        upvoteEmotion(emotionToComment, emotionToComment.emotions)
-      })
-    }
-  }
-
-  const handleUpvote = (comment: TComment, viewerHasUpvoted: boolean): void => {
-    const { upvotesCount } = comment
-    const commentPath = buildCommentPath(comment)
-
-    const updateBack = (upvoteComment: TComment) => {
-      const { upvotesCount, viewerHasUpvoted, meta } = upvoteComment
-
-      updateOneComment(upvoteComment, {
-        upvotesCount,
-        viewerHasUpvoted,
-        meta,
-      })
-    }
-
-    if (viewerHasUpvoted) {
-      updateOneComment(comment, {
-        upvotesCount: upvotesCount + 1,
-        viewerHasUpvoted: !viewerHasUpvoted,
-      })
-      mutate(S.upvoteComment, { comment: commentPath }).then(({ upvoteComment }) =>
-        updateBack(upvoteComment),
-      )
-    } else {
-      updateOneComment(comment, {
-        upvotesCount: upvotesCount - 1,
-        viewerHasUpvoted: !viewerHasUpvoted,
-      })
-
-      mutate(S.undoUpvoteComment, { comment: commentPath }).then(({ undoUpvoteComment }) => {
-        updateBack(undoUpvoteComment)
-      })
-    }
-  }
-
   const replyComment = (): void => {
     const { replyToComment, replyBody } = commentsStore
     if (!replyToComment) return
 
-    const params = { comment: buildCommentPath(replyToComment), body: replyBody }
-    commentsStore.commit({ publishing: true })
-    mutate(S.replyComment, params).then(() => {
-      commentsStore.commit({ needRefreshState: true })
-      loadComments()
-      published()
-      setTimeout(() => resetPublish(EDIT_MODE.REPLY), 500)
-      // stopDraftTimmer()
-      // clearDraft()
+    const pendingId = `pending:${uid.gen()}`
+    const pending = {
+      innerId: pendingId,
+      bodyHtml: replyBody,
+      author: account.user,
+      insertedAt: new Date().toISOString(),
+      upvotesCount: 0,
+      replies: [],
+      emotions: [],
+      replyToComment,
+    } as unknown as TComment
+    replyCommentMutation.mutate({
+      body: replyBody,
+      commentInput: buildCommentPath(replyToComment),
+      parentId: replyToComment.innerId,
+      pending,
+    })
+  }
+
+  const createComment = (): void => {
+    if (!isWordsCountValid(commentsStore.commentBody, 10, 1000)) return
+    const pendingId = `pending:${uid.gen()}`
+    const pending = {
+      innerId: pendingId,
+      bodyHtml: commentsStore.commentBody,
+      author: account.user,
+      insertedAt: new Date().toISOString(),
+      upvotesCount: 0,
+      replies: [],
+      emotions: [],
+    } as unknown as TComment
+    createCommentMutation.mutate({
+      articleInput: buildArticlePath(),
+      body: commentsStore.commentBody,
+      pending,
     })
   }
 
@@ -302,67 +384,20 @@ export default function useQuery(): TRet {
     if (!isWordsCountValid(commentsStore.updateBody, 10, 1000)) return
     if (!commentsStore.updateInnerId) return
 
-    const params = {
-      comment: buildCommentPath(commentsStore.updateInnerId),
+    updateCommentMutation.mutate({
+      commentInput: buildCommentPath(commentsStore.updateInnerId),
       body: commentsStore.updateBody,
-    }
-
-    console.log('## updateComment params: ', params)
-    commentsStore.commit({ publishing: true })
-    mutate(S.updateComment, params).then(({ updateComment }) => {
-      published()
-      const { bodyHtml } = updateComment
-      updateOneComment(updateComment, { bodyHtml })
-
-      setTimeout(() => resetPublish(EDIT_MODE.UPDATE), 500)
     })
   }
 
   return {
     loadComments,
     loadCommentReplies,
-    loadCommentsState,
-    loadPublishedComments,
+    createComment,
     openUpdateEditor,
     onPageChange,
     onMentionSearch,
-    deleteComment,
-    handleEmotion,
-    handleUpvote,
     replyComment,
     updateComment,
   }
-}
-
-const updateEmotionState = (
-  emotions: TEmotion[],
-  name: TEmotionType,
-  nextViewerState: boolean,
-): TEmotion[] => {
-  const emotionType = name.toUpperCase() as TEmotion['type']
-  const index = emotions.findIndex((item) => item.type === emotionType)
-
-  if (index < 0) {
-    return [
-      ...emotions,
-      {
-        type: emotionType,
-        count: nextViewerState ? 1 : 0,
-        viewerHasReacted: nextViewerState,
-        latestUsers: [],
-      },
-    ]
-  }
-
-  return emotions.map((item, itemIndex) => {
-    if (itemIndex !== index) return item
-
-    const count = item.count || 0
-
-    return {
-      ...item,
-      count: nextViewerState ? count + 1 : Math.max(count - 1, 0),
-      viewerHasReacted: nextViewerState,
-    }
-  })
 }

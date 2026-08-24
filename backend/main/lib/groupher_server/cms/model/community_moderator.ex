@@ -17,12 +17,9 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.Community
   alias Helper.Constant.DBPrefix
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Model.Community
 
   @schema_prefix DBPrefix.cms()
 

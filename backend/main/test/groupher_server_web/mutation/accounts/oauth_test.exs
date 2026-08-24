@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
   alias GroupherServer.{Accounts, Repo}
 
-  alias Accounts.Model.OauthProvider
+  alias GroupherServer.Accounts.Model.OauthProvider
 
   @test_service_auth "enabled"
 

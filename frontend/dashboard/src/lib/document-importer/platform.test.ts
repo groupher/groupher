@@ -58,10 +58,20 @@ describe('importDocumentationUrl', () => {
     expect(result.diagnostics).toEqual([])
     expect(result.value).toEqual([
       {
-        children: [{ text: 'Configure DNS' }],
-        type: 'h3',
+        type: 'steps',
+        children: [
+          {
+            type: 'step',
+            children: [
+              { type: 'step_title', children: [{ text: 'Configure DNS' }] },
+              {
+                type: 'step_content',
+                children: [expect.objectContaining({ type: 'table' })],
+              },
+            ],
+          },
+        ],
       },
-      expect.objectContaining({ type: 'table' }),
     ])
   })
 

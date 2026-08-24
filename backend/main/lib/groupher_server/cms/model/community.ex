@@ -18,22 +18,19 @@ defmodule GroupherServer.CMS.Model.Community do
   use Accessible
 
   import Ecto.Changeset
+  alias GroupherServer.Accounts.Model.User
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     Category,
+    CommunityAsset,
     CommunityCategory,
     CommunityDashboard,
     CommunityLifecycle,
     CommunityModerator,
-    PressConfig,
     CommunitySubscriber,
-    CommunityAsset,
     CommunityTagGroup,
-    Embeds
+    Embeds,
+    PressConfig
   }
 
   alias Helper.Constant.DBPrefix

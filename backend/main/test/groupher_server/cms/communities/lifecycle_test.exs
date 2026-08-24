@@ -1,12 +1,13 @@
 defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
+  require GroupherServer.CMS.Communities.Const
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  require CMS.Const
 
-  alias CMS.Communities.Lifecycle
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Model.{AuditLog, Community, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias GroupherServer.Activity.Model.CommunityLog
+  alias GroupherServer.CMS.Communities.Lifecycle
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   test "projects blocker combinations into the strictest public state" do
     assert :active = Lifecycle.resolve_state([])
@@ -65,7 +66,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     }
 
     for {mode, readable_states} <- matrix,
-        state <- CMS.Const.lifecycle_state_values() do
+        state <- CMS.Communities.Const.lifecycle_state_values() do
       resource = %CommunityLifecycle{state: state}
       expected = state in readable_states
 
@@ -136,10 +137,10 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert blocker.lifecycle_id == lifecycle.id
     assert Repo.get!(CommunityLifecycle, lifecycle.id).state == :suspended
 
-    assert %AuditLog{operation_ref: ^operation_ref} =
-             Repo.get_by!(AuditLog,
+    assert %CommunityLog{operation_ref: ^operation_ref} =
+             Repo.get_by!(CommunityLog,
                community_id: community.id,
-               action: "community.blocker_created"
+               action: :blocker_created
              )
 
     assert {:ok, same_blocker} =
@@ -180,7 +181,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert Repo.aggregate(CommunityLifecycleBlocker, :count) == 0
 
     refute Repo.exists?(
-             from(audit in AuditLog,
+             from(audit in CommunityLog,
                where: audit.community_id == ^community.id
              )
            )
@@ -193,9 +194,9 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert {:ok, blocker} = Lifecycle.request_destroy(community.slug)
 
     audit =
-      Repo.get_by!(AuditLog,
+      Repo.get_by!(CommunityLog,
         community_id: community.id,
-        action: "community.blocker_created"
+        action: :blocker_created
       )
 
     assert blocker.created_by_operation_ref == audit.operation_ref
@@ -336,19 +337,36 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
            )
 
     assert Repo.exists?(
-             from(audit in AuditLog,
+             from(audit in CommunityLog,
                where:
                  audit.community_id == ^community.id and
-                   audit.action == "community.blocker_terminated"
+                   audit.action == :blocker_terminated
              )
            )
 
     assert Repo.exists?(
-             from(audit in AuditLog,
-               where:
-                 audit.community_id == ^community.id and audit.action == "community.destroyed"
+             from(audit in CommunityLog,
+               where: audit.community_id == ^community.id and audit.action == :destroyed
              )
            )
+
+    scheduled =
+      CommunityLog
+      |> where(
+        [audit],
+        audit.community_id == ^community.id and audit.action == :destroy_scheduled
+      )
+      |> order_by([audit], desc: audit.occurred_at, desc: audit.id)
+      |> limit(1)
+      |> Repo.one!()
+
+    destroyed =
+      Repo.get_by!(CommunityLog,
+        community_id: community.id,
+        action: :destroyed
+      )
+
+    assert destroyed.parent_event_ref == scheduled.event_ref
   end
 
   test "moderation and legal blockers prevent reclaim" do

@@ -2,7 +2,6 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
-import LogSVG from '~/icons/dsb/Log'
 import TrendSVG from '~/icons/dsb/Trend'
 import DsbCovers from '~/unit/DashboardCovers'
 
@@ -27,12 +26,6 @@ function AnalysisCoversPage() {
                 desc: t('dsb.covers.item.trend.desc'),
                 seg: DSB_ROUTE.TREND,
                 Icon: TrendSVG,
-              },
-              {
-                title: t('dsb.menu.log'),
-                desc: t('dsb.covers.item.log.desc'),
-                seg: DSB_ROUTE.LOG,
-                Icon: LogSVG,
               },
             ],
           },

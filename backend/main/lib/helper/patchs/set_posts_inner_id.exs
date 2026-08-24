@@ -5,7 +5,7 @@ alias Helper.ORM
 
 alias GroupherServer.{CMS, Repo}
 
-alias CMS.Model.Post
+alias GroupherServer.CMS.Model.Post
 
 {:ok, all_posts} =
   Post

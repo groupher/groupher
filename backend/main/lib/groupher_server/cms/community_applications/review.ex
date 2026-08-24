@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.CommunityApplications.Review do
+  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Reviewer decisions and recovery transitions for community applications.
 
@@ -15,12 +16,13 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
 
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.{Const, CommunityApplications.Transitions}
-  alias GroupherServer.CMS.Passport
+  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
+  alias GroupherServer.CMS.CommunityApplications.Transitions
+  alias GroupherServer.CMS.Gate.Const
   alias GroupherServer.CMS.Model.CommunityApplication
+  alias GroupherServer.CMS.Passport
   alias GroupherServer.Repo
 
   require Const
@@ -147,34 +149,36 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
     now = DateTime.utc_now(:second)
 
     Repo.transaction(fn ->
-      with {:ok, application} <- lock(public_ref) do
-        if application.status == :creation_failed do
-          application
-        else
-          Multi.new()
-          |> Transitions.add(
-            :application,
-            :event,
-            application,
-            :creation_failed,
-            %{
-              last_job_error: job_error(reason, operation_ref, now),
-              expires_at: nil
-            },
-            %{
-              type: :job,
-              operation_ref: operation_ref,
-              reason_code: "community_creation_failed",
-              metadata: %{"worker" => "CreateCommunity"},
-              occurred_at: now
-            }
-          )
-          |> SlugClaims.release_application(:claim, application, now)
-          |> Repo.transaction()
-          |> unwrap_nested_transaction()
-        end
-      else
-        {:error, reason} -> Repo.rollback(reason)
+      case lock(public_ref) do
+        {:ok, application} ->
+          if application.status == :creation_failed do
+            application
+          else
+            Multi.new()
+            |> Transitions.add(
+              :application,
+              :event,
+              application,
+              :creation_failed,
+              %{
+                last_job_error: job_error(reason, operation_ref, now),
+                expires_at: nil
+              },
+              %{
+                type: :job,
+                operation_ref: operation_ref,
+                reason_code: "community_creation_failed",
+                metadata: %{"worker" => "CreateCommunity"},
+                occurred_at: now
+              }
+            )
+            |> SlugClaims.release_application(:claim, application, now)
+            |> Repo.transaction()
+            |> unwrap_nested_transaction()
+          end
+
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
   end

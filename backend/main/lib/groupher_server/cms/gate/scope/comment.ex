@@ -1,6 +1,7 @@
 defmodule GroupherServer.CMS.Gate.Scope.Comment do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
-  Compiles complete public Comment visibility through its stable Community relation.
+  Builds complete public Comment visibility through its stable Community relation.
 
   Business position:
 
@@ -18,21 +19,20 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
   alias GroupherServer.CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
-  alias Helper.Constant
 
-  require CMS.Const
+
 
   @behaviour Policy
 
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
-  @doc "Compiles thread-aware Comment visibility predicates into an Ecto query."
+  @doc "Builds thread-aware Comment visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
           Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
   @impl Policy
@@ -70,7 +70,13 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
 
   defp maybe_filter_thread(query, _context), do: query
 
-  defp lifecycle_scope(query, %{thread: :doc}) do
+  defp lifecycle_scope(query, %{thread: :doc}), do: doc_lifecycle_scope(query)
+
+  defp lifecycle_scope(query, %{thread: :all}), do: all_lifecycle_scope(query)
+
+  defp lifecycle_scope(query, _context), do: threaded_lifecycle_scope(query)
+
+  defp doc_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
@@ -79,7 +85,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       as: :gate_doc_branch,
       on:
         branch.community_id == comment.community_id and
-          branch.type == ^CMS.Const.doc_branch_type(:main),
+          branch.type == ^CMS.Docs.Const.doc_branch_type(:main),
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
@@ -91,7 +97,10 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
-  defp lifecycle_scope(query, %{thread: :all}) do
+  # The branching here is a single SQL predicate covering Post and Doc rows;
+  # splitting it would duplicate the query and change the join semantics.
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
+  defp all_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
@@ -107,7 +116,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       as: :gate_doc_branch,
       on:
         branch.community_id == comment.community_id and
-          branch.type == ^CMS.Const.doc_branch_type(:main) and comment.thread == ^:doc,
+          branch.type == ^CMS.Docs.Const.doc_branch_type(:main) and comment.thread == ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
@@ -121,7 +130,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
     )
   end
 
-  defp lifecycle_scope(query, _context) do
+  defp threaded_lifecycle_scope(query) do
     from(comment in query,
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,

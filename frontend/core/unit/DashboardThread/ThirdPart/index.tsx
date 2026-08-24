@@ -1,9 +1,10 @@
+import { useQuery } from '@tanstack/react-query'
 import type { FC } from 'react'
 import { useState } from 'react'
 
-import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
+import { graphqlQueryOptions } from '~/query'
 import S from '~/unit/DashboardThread/schema/integrations'
 
 import { getIntegrationIconSrc } from './constant'
@@ -17,9 +18,11 @@ const ThirdPart: FC = () => {
 
   const s = useSalon()
   const { t } = useTrans()
-  const { data } = useQuery<{ thirdPartyAnalyticsProviders: TIntegrateAnalysisTool[] }>(
-    S.thirdPartyAnalyticsProviders,
-    {},
+  const { data } = useQuery(
+    graphqlQueryOptions<{ thirdPartyAnalyticsProviders: TIntegrateAnalysisTool[] }>(
+      S.thirdPartyAnalyticsProviders,
+      {},
+    ),
   )
   const providers = data?.thirdPartyAnalyticsProviders ?? []
 

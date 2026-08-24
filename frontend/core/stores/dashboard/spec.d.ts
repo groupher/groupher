@@ -25,9 +25,6 @@ import type {
   TModerator,
   TNavActiveLayout,
   TNameAlias,
-  TOverview,
-  TPagedArticles,
-  TPagedCommunities,
   TPostLayout,
   TRSSType,
   TSizeSML,
@@ -195,8 +192,6 @@ export type TStore = TDsbFieldMap & {
   loading: boolean
   submenuCollapsed: boolean
 
-  overview: TOverview
-
   editingTag: TTag | null
   settingTag: TTag | null
   editingAlias: TNameAlias | null
@@ -208,13 +203,6 @@ export type TStore = TDsbFieldMap & {
   docFaqSaveZone: TDocFaqSaveZone
 
   queryingMediaReportIndex: number
-
-  // cms
-  batchSelectedIDs: readonly string[]
-  pagedCommunities: TPagedCommunities
-  pagedPosts: TPagedArticles
-  pagedDocs: TPagedArticles
-  pagedChangelogs: TPagedArticles
 
   // for global alert
   demoAlertEnable: boolean

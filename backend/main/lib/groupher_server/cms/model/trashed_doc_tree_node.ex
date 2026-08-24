@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Docs-only structural recovery state for one logical Tree node.
 
@@ -23,7 +24,6 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
   alias GroupherServer.CMS.Model.{Community, DocBranch, TrashAction}
   alias Helper.Constant.DBPrefix
 
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
     belongs_to(:branch, DocBranch)
     field(:node_id, :string)
     field(:doc_id, Ecto.UUID)
-    field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
+    field(:type, Ecto.Enum, values: CMS.DocTree.Const.tree_node_type_values())
     field(:draft_snapshot, :map)
     field(:public_snapshot, :map)
     belongs_to(:deleted_by, User)

@@ -14,8 +14,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   alias GroupherServer.CMS
 
-  alias CMS.Dashboard.Fields, as: Dashboard
-  alias CMS.Dashboard.KanbanBoards
+  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
+  alias GroupherServer.CMS.Dashboard.KanbanBoards
 
   @page_size GroupherServerWeb.Config.page_size()
 
@@ -231,7 +231,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:order, :article_order_enum)
       field(:community_tags, list_of(:string))
       field(:community, :string)
-      field(:author, :string)
     end
   end
 

@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
 
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
   alias GroupherServer.CMS.CommunityApplications.{Config, LogoUploads, Policy, Transitions}
   alias GroupherServer.CMS.Model.CommunityApplication
   alias GroupherServer.Repo

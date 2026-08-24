@@ -24,18 +24,28 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
   alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Model.{CommentLifecycle, Community}
 
-  @actions [:reply_comment, :edit, :delete, :upvote, :emotion, :report, :pin]
+  @actions [
+    :reply_comment,
+    :edit,
+    :delete,
+    :upvote,
+    :emotion,
+    :report,
+    :pin,
+    :accept_solution,
+    :revoke_solution
+  ]
 
   @doc "Checks Comment mutation admission without loading or locking resources."
   @spec check_access(User.t() | nil, atom(), map(), CommentContext.t()) ::
           :ok | {:error, GroupherServer.ErrorCat.Error.t()}
-  def check_access(%User{} = _user, action, _comment, %CommentContext{} = context)
+  def check_access(%User{} = user, action, _comment, %CommentContext{} = context)
       when action in @actions do
     with {:ok, community} <- community(context),
          {:ok, true} <- Communities.Lifecycle.can_write(community),
          :ok <- article_mutable(context),
          :ok <- comment_mutable(context),
-         :ok <- action_allowed(action, context) do
+         :ok <- action_allowed(user, action, context) do
       :ok
     else
       {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
@@ -77,14 +87,30 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   defp comment_mutable(_context), do: {:error, ErrorCat.lifecycle_not_loaded()}
 
-  defp action_allowed(:reply_comment, context) do
+  defp action_allowed(_user, :reply_comment, context) do
     with {:ok, article} <- article(context),
          {:ok, _} <- Enable.comment?(article) do
       :ok
     end
   end
 
-  defp action_allowed(action, _context)
+  defp action_allowed(%User{id: actor_id}, action, %{
+         article_author_user_id: actor_id,
+         article_cat: :qa
+       })
+       when action in [:accept_solution, :revoke_solution] do
+    :ok
+  end
+
+  defp action_allowed(_user, action, %{article_cat: :qa})
+       when action in [:accept_solution, :revoke_solution],
+       do: {:error, ErrorCat.permission_denied()}
+
+  defp action_allowed(_user, action, _context)
+       when action in [:accept_solution, :revoke_solution],
+       do: {:error, ErrorCat.solution_not_supported()}
+
+  defp action_allowed(_user, action, _context)
        when action in [:edit, :delete, :upvote, :emotion, :report, :pin],
        do: :ok
 end

@@ -8,7 +8,6 @@
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import useFetchPagedPosts from '~/hooks/usePagedPosts/useFetchPagedPosts'
 
 import ArticlesFilter from './ArticlesFilter'
 // import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
@@ -20,8 +19,6 @@ import ThreadSidebar from './ThreadSidebar'
 export default function PostThread() {
   const { communityLayout } = useLayout()
   const s = useSalon()
-  useFetchPagedPosts()
-
   return (
     <div className={s.wrapper}>
       <div className={s.layout}>

@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 
+import { DSB_ROUTE } from '~/const/route'
 import PulseSVG from '~/icons/Pulse'
 import Img from '~/Img'
 import { Link as PlatformLink } from '~/platform'
@@ -49,6 +50,16 @@ export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowDat
       <div className='w-full overflow-hidden whitespace-nowrap'>
         <TagsList items={rowData.communityTags ?? EMPTY_ARR} left={0} />
       </div>
+      <PlatformLink
+        route={{
+          app: 'dsb',
+          community: slug,
+          path: `${DSB_ROUTE.ACTIVITY}?subjectQuery=${encodeURIComponent(rowData.title || '')}`,
+        }}
+        className='text-accent text-xs'
+      >
+        Activity
+      </PlatformLink>
     </div>
   )
 })

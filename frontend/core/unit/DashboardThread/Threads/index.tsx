@@ -61,7 +61,7 @@ export default function Threads() {
         desc={t('dsb.threads.about.desc')}
         addon={<ToggleSwitch checked={settings.about} onChange={(c) => enableThread('about', c)} />}
       />
-      {settings.about && <AboutThread settings={settings} />}
+      <AboutThread disabled={!settings.about} settings={settings} />
     </div>
   )
 }

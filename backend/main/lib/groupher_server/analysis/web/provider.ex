@@ -47,6 +47,9 @@ defmodule GroupherServer.Analysis.Web.Provider do
   @callback location(Community.t(), map(), :country | :region | :city) ::
               {:ok, list(map())} | {:error, term()}
 
+  @doc "Returns country rows plus the optional global region enhancement for the public map."
+  @callback visitor_locations(Community.t(), map()) :: {:ok, map()} | {:error, term()}
+
   @doc "Returns normalized UTC weekly traffic cells."
   @callback traffic(Community.t(), map()) :: {:ok, map()} | {:error, term()}
 

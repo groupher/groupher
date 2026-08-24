@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS.Passport.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -106,14 +107,14 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              update_variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :blog),
              %{community: context.community.slug, id: draft["id"]},
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     assert {:ok, stored_draft} =
@@ -154,7 +155,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
            |> mutation_error?(
              S.Article.m(:update_article_draft, :blog),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(ErrorCat.passport())
            )
 
     owner_draft =

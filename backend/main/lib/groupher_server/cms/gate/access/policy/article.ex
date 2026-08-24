@@ -19,7 +19,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{Communities}
+
+  alias GroupherServer.CMS.{
+    Communities
+  }
+
   alias GroupherServer.CMS.Communities.Enable
   alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
   alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext

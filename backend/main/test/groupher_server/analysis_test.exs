@@ -141,6 +141,69 @@ defmodule GroupherServer.Analysis.WebTest do
     end
   end
 
+  describe "visitor location projection" do
+    test "normalizes known region variants without assuming every value has a country prefix" do
+      rows = [
+        %{"name" => "US_CA", "visitors" => 8},
+        %{"name" => "BJ", "country" => "CN", "visitors" => 6},
+        %{"name" => "CA", "visitors" => 4},
+        %{"name" => "unknown region", "visitors" => 3}
+      ]
+
+      assert Umami.normalize_visitor_region_rows(rows) == [
+               %{code: "US-CA", country_code: "US", visitors: 8},
+               %{code: "CN-BJ", country_code: "CN", visitors: 6}
+             ]
+    end
+
+    test "keeps Top 5 country percentages on the complete recognized-country denominator" do
+      countries =
+        for {code, visitors} <- [
+              {"US", 40},
+              {"CN", 25},
+              {"DE", 10},
+              {"JP", 8},
+              {"FR", 7},
+              {"BR", 6},
+              {"GB", 4}
+            ],
+            do: %{code: code, visitors: visitors}
+
+      result = Web.visitor_countries(countries, [])
+
+      assert Enum.map(result, & &1.code) == ["US", "CN", "DE", "JP", "FR", "OTHER"]
+      assert List.last(result) == %{code: "OTHER", visitors: 10, percentage: 10.0, regions: []}
+      assert result |> Enum.map(& &1.percentage) |> Enum.sum() |> Float.round(1) == 100.0
+    end
+
+    test "keeps rounded percentages normalized when a tiny Other share rounds below zero" do
+      countries = [
+        %{code: "US", visitors: 2_006},
+        %{code: "CN", visitors: 2_006},
+        %{code: "DE", visitors: 2_006},
+        %{code: "JP", visitors: 2_006},
+        %{code: "FR", visitors: 1_975},
+        %{code: "BR", visitors: 1}
+      ]
+
+      result = Web.visitor_countries(countries, [])
+
+      assert List.last(result).code == "OTHER"
+      assert result |> Enum.map(& &1.percentage) |> Enum.sum() |> Float.round(1) == 100.0
+    end
+
+    test "limits regions to Top 10 for allowlisted countries" do
+      regions =
+        for index <- 1..12,
+            do: %{code: "US-#{index}", country_code: "US", visitors: 20 - index}
+
+      [%{regions: selected}] = Web.visitor_countries([%{code: "US", visitors: 100}], regions)
+
+      assert length(selected) == 10
+      assert Enum.map(selected, & &1.code) == Enum.map(1..10, &"US-#{&1}")
+    end
+  end
+
   describe "Umami weekly sessions projection" do
     test "accepts Umami weekly rows returned as 24 hourly scalar values" do
       rows = [

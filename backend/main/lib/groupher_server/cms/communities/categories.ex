@@ -11,12 +11,9 @@ defmodule GroupherServer.CMS.Communities.Categories do
   """
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
   import ShortMaps
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, CommunityCategory}
-  alias CMS.Communities.ErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Model.{Category, Community, CommunityCategory}
   alias Helper.{ORM, T}
   alias Helper.Validator.Slug
 

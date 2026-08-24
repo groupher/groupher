@@ -5,20 +5,14 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($article: ArticlePathInput!, $body: String!) {
           createComment(article: $article, body: $body) {
-            innerId
-            bodyHtml
-          }
-        }
-    """
-  end
-
-  def m(:undo_mark_comment_solution) do
-    """
-    mutation($comment: CommentPathInput!) {
-          undoMarkCommentSolution(comment: $comment) {
-            innerId
-            isForQuestion
-            isSolution
+            comment {
+              innerId
+              bodyHtml
+            }
+            article {
+              innerId
+              commentsCount
+            }
           }
         }
     """
@@ -28,8 +22,14 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($article: ArticlePathInput!, $body: String!) {
       createComment(article: $article, body: $body) {
-        innerId
-        bodyHtml
+        comment {
+          innerId
+          bodyHtml
+        }
+        article {
+          innerId
+          commentsCount
+        }
       }
     }
     """
@@ -60,8 +60,14 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($comment: CommentPathInput!, $body: String!) {
       replyComment(comment: $comment, body: $body) {
-        innerId
-        bodyHtml
+        comment {
+          innerId
+          bodyHtml
+        }
+        article {
+          innerId
+          commentsCount
+        }
       }
     }
     """
@@ -179,15 +185,27 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
   end
 
-  def m(:mark_comment_solution) do
+  def m(:accept_solution) do
     """
     mutation($comment: CommentPathInput!) {
-          markCommentSolution(comment: $comment) {
-            innerId
-            isForQuestion
-            isSolution
-          }
-        }
+      acceptSolution(comment: $comment) {
+        innerId
+        isForQuestion
+        isSolution
+      }
+    }
+    """
+  end
+
+  def m(:revoke_solution) do
+    """
+    mutation($comment: CommentPathInput!) {
+      revokeSolution(comment: $comment) {
+        innerId
+        isForQuestion
+        isSolution
+      }
+    }
     """
   end
 

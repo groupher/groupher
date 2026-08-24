@@ -9,6 +9,7 @@ import useSalon from './salon/toggle_switch'
 type TProps = {
   size?: TSizeTSM
   checked?: boolean
+  disabled?: boolean
   'aria-label'?: string
   onChange?: (checked: boolean) => void
 }
@@ -16,16 +17,20 @@ type TProps = {
 const ToggleSwitch: FC<TProps> = ({
   size = SIZE.SMALL,
   checked = false,
+  disabled = false,
   'aria-label': ariaLabel,
   onChange = console.log,
 }) => {
-  const s = useSalon({ size, checked })
+  const s = useSalon({ size, checked, disabled })
 
   return (
     <button
       type='button'
       className={s.wrapper}
       aria-label={ariaLabel}
+      aria-checked={checked}
+      role='switch'
+      disabled={disabled}
       onClick={() => onChange(!checked)}
     >
       <div className={s.track}>

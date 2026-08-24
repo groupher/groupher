@@ -193,6 +193,24 @@ const checkExportedCallables = () => {
 }
 
 const checkElixirSharedFunctions = () => {
+  const boundaryFiles = [
+    'backend/main/lib/groupher_server/cms/comments/list.ex',
+    'backend/main/lib/groupher_server/cms/comments/writer.ex',
+    'backend/main/lib/groupher_server/cms/comments/lifecycle.ex',
+    'backend/main/lib/groupher_server/cms/comments/job_policy.ex',
+    'backend/main/lib/groupher_server/cms/comments/interaction_response.ex',
+    'backend/main/lib/groupher_server/cms/articles/interaction_response.ex',
+    'backend/main/lib/groupher_server/cms/articles/mutation_lock.ex',
+    'backend/main/lib/groupher_server/cms/gate/access.ex',
+    'backend/main/lib/groupher_server/cms/gate/access/check.ex',
+    'backend/main/lib/groupher_server/cms/model/post_solution.ex',
+    'backend/main/lib/groupher_server/cms/comments/commands/accept_solution.ex',
+    'backend/main/lib/groupher_server/cms/comments/commands/revoke_solution.ex',
+    'backend/main/lib/groupher_server/cms/comments/commands/update_comment.ex',
+    'backend/main/lib/groupher_server/cms/comments/commands/delete_comment.ex',
+    'backend/main/lib/groupher_server/cms/comments/commands/solution_transition.ex',
+  ].map((file) => path.join(root, file))
+
   const files = [
     ...walk(path.join(root, 'backend/main/lib/helper'), (file) => file.endsWith('.ex')),
     ...['accounts', 'cms', 'messaging', 'analysis'].flatMap((context) => {
@@ -202,28 +220,91 @@ const checkElixirSharedFunctions = () => {
         .filter((entry) => entry.isFile() && entry.name.endsWith('.ex'))
         .map((entry) => path.join(directory, entry.name))
     }),
-    ...['messaging', 'analysis', 'jobs', 'logs', 'front_desk'].map((context) =>
+    ...['messaging', 'analysis', 'jobs', 'activity', 'front_desk'].map((context) =>
       path.join(root, 'backend/main/lib/groupher_server', `${context}.ex`),
     ),
-  ]
+    ...boundaryFiles,
+  ].filter((file, index, all) => all.indexOf(file) === index)
 
   for (const file of files) {
     const lines = fs.readFileSync(file, 'utf8').split('\n')
+    const strictArity = boundaryFiles.includes(file)
     const seen = new Set()
     let previousDefinition = -1
     lines.forEach((line, index) => {
       const match = line.match(/^  def(?:macro|guard|delegate)?\s+([a-zA-Z_][a-zA-Z0-9_!?]*)/)
       if (!match) return
       const name = match[1]
+      const arity = elixirDefinitionArity(lines, index, name)
+      const identity = strictArity ? `${name}/${arity}` : name
       const prior = lines.slice(previousDefinition + 1, index).join('\n')
       previousDefinition = index
-      if (seen.has(name)) return
-      seen.add(name)
+      if (seen.has(identity)) return
+      seen.add(identity)
       if (!/^\s*@(doc|impl)\b/m.test(prior) || /^\s*@doc\s+false/m.test(prior)) {
-        fail(file, `shared public function ${name} is missing @doc or inherited @impl docs`)
+        const label = strictArity ? identity : name
+        fail(file, `shared public function ${label} is missing @doc or inherited @impl docs`)
       }
     })
   }
+}
+
+const elixirDefinitionArity = (lines, start, name) => {
+  let signature = lines[start]
+  for (let index = start + 1; index < lines.length && index <= start + 30; index += 1) {
+    if (/\bdo\b|,\s*do:/.test(signature)) break
+    signature += `\n${lines[index]}`
+  }
+
+  const nameIndex = signature.indexOf(name)
+  const openIndex = signature.indexOf('(', nameIndex + name.length)
+  if (openIndex === -1) return 0
+
+  let depth = 0
+  let closingIndex = -1
+  let quote = null
+  for (let index = openIndex; index < signature.length; index += 1) {
+    const char = signature[index]
+    const previous = signature[index - 1]
+    if (quote) {
+      if (char === quote && previous !== '\\') quote = null
+      continue
+    }
+    if (char === '"' || char === "'") {
+      quote = char
+      continue
+    }
+    if ('([{'.includes(char)) depth += 1
+    if (')]}'.includes(char)) depth -= 1
+    if (depth === 0) {
+      closingIndex = index
+      break
+    }
+  }
+
+  if (closingIndex === -1) return 'unknown'
+  const args = signature.slice(openIndex + 1, closingIndex).trim()
+  if (args === '') return 0
+
+  let arity = 1
+  depth = 0
+  quote = null
+  for (let index = 0; index < args.length; index += 1) {
+    const char = args[index]
+    const previous = args[index - 1]
+    if (quote) {
+      if (char === quote && previous !== '\\') quote = null
+      continue
+    }
+    if (char === '"' || char === "'") {
+      quote = char
+      continue
+    }
+    if ('([{'.includes(char)) depth += 1
+    if (')]}'.includes(char)) depth -= 1
+    if (char === ',' && depth === 0) arity += 1
+  }
+  return arity
 }
 
 const checkWorkspaceReadmes = () => {

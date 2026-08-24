@@ -40,17 +40,19 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
   """
   @spec parse(String.t()) :: {:ok, payload()} | {:error, term()}
   def parse(body) when is_binary(body) do
-    with {:ok, ast} <- PlateJSON.decode(body) do
-      plain_text = ast |> plain_blocks() |> Enum.reject(&(&1 == "")) |> Enum.join("\n")
+    case PlateJSON.decode(body) do
+      {:ok, ast} ->
+        plain_text = ast |> plain_blocks() |> Enum.reject(&(&1 == "")) |> Enum.join("\n")
 
-      {:ok,
-       %{
-         json: body,
-         html: Enum.map_join(ast, "", &block_to_html/1),
-         digest: String.slice(plain_text, 0, @digest_length)
-       }}
-    else
-      {:error, _} -> {:error, ErrorCat.invalid_body()}
+        {:ok,
+         %{
+           json: body,
+           html: Enum.map_join(ast, "", &block_to_html/1),
+           digest: String.slice(plain_text, 0, @digest_length)
+         }}
+
+      {:error, _} ->
+        {:error, ErrorCat.invalid_body()}
     end
   end
 

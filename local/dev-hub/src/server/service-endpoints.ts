@@ -3,6 +3,7 @@ export const LOCAL_SERVICE_ENDPOINTS = {
   assetsHubRead: 'http://127.0.0.1:8787',
   apply: 'http://127.0.0.1:3006',
   auth: 'http://127.0.0.1:3004',
+  community: 'http://127.0.0.1:3007',
   contentImport: 'http://127.0.0.1:8001',
   dash: 'http://127.0.0.1:3005',
   dashboard: 'http://127.0.0.1:3001',

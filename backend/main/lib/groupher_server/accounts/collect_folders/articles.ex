@@ -17,8 +17,8 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.Model.{CollectFolder, User}
   alias GroupherServer.Accounts.CollectFolders.ErrorCat
+  alias GroupherServer.Accounts.Model.{CollectFolder, User}
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 

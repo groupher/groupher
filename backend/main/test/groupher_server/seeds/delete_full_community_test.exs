@@ -9,7 +9,7 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
   alias GroupherServer.Repo
   alias Helper.ORM
 
-  alias CMS.Model.{
+  alias GroupherServer.CMS.Model.{
     ArticleUpvote,
     ArticleUserEmotion,
     Changelog,
@@ -54,8 +54,8 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
           )
         )
 
-      assert length(post_ids) > 0
-      assert length(comment_ids) > 0
+      assert post_ids != []
+      assert comment_ids != []
 
       assert count(from(c in CommunityDashboard, where: c.community_id == ^community.id)) > 0
       assert count(from(c in CommunityTag, where: c.community_id == ^community.id)) > 0

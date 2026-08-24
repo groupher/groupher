@@ -21,8 +21,8 @@ defmodule GroupherServer.Accounts.Mailbox do
   import Helper.ErrorHandler, only: [not_found_formatter: 2]
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{ErrorCat, Messaging, Repo}
   alias GroupherServer.Accounts.Model.{Embeds, User}
+  alias GroupherServer.{ErrorCat, Messaging, Repo}
   alias GroupherServer.FrontDesk.Cache, as: FrontDeskCache
   alias Helper.Constant.DBPrefix
 

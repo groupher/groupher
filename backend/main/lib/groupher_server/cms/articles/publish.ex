@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Articles.Publish do
+  require GroupherServer.CMS.Docs.Const
+
   @moduledoc """
   Owns the only transition from a main Draft to the permanent public runtime row.
 
@@ -27,11 +29,11 @@ defmodule GroupherServer.CMS.Articles.Publish do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.Artiment.BodyBag
 
-  alias CMS.Articles.{
+  alias GroupherServer.CMS.Articles.{
     Document,
     Draft,
     MutationLock,
@@ -40,16 +42,16 @@ defmodule GroupherServer.CMS.Articles.Publish do
     Write
   }
 
-  alias CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias CMS.Docs.{Branch, Snapshot}
-  alias CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias GroupherServer.CMS.Docs.{Branch, Snapshot}
+  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
 
-  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
-  alias CMS.SearchArtiments.Indexer
-  alias CMS.{Assets, Communities, Events, Gate}
-  alias CMS.Gate.Decision
-  alias CMS.Gate.RateLimit.Publish, as: PublishRateLimit
   alias Ecto.Multi
+  alias GroupherServer.CMS.{Assets, Communities, Events, Gate}
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishRateLimit
+  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
+  alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
 
@@ -139,14 +141,18 @@ defmodule GroupherServer.CMS.Articles.Publish do
   end
 
   defp do_publish(%Community{} = community, thread, article_hash_id, %User{} = user, branch_ref) do
+    operation_ref = Ecto.UUID.generate()
+
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
          :ok <- validate_publish_branch(thread, branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
          {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
          :ok <- validate_version(draft),
+         restored_publish? <- thread == :doc and Snapshot.restored_draft?(draft),
+         previous <- previous_public(community, thread, branch, draft),
          {:ok, public_article, first_publish?} <-
            apply_draft(community, thread, branch, draft),
-         {:ok, _lifecycle} <-
+         {:ok, lifecycle} <-
            transition_lifecycle(community, thread, draft, branch, :published),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
@@ -158,6 +164,18 @@ defmodule GroupherServer.CMS.Articles.Publish do
              first_publish?
            ),
          {:ok, snapshot} <- maybe_snapshot(thread, public_article, user),
+         :ok <-
+           record_publish_activity(
+             thread,
+             previous,
+             public_article,
+             user,
+             first_publish?,
+             restored_publish?,
+             snapshot,
+             operation_ref,
+             lifecycle.changed_at
+           ),
          :ok <- run_after_publish(public_article, first_publish?) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
@@ -165,6 +183,86 @@ defmodule GroupherServer.CMS.Articles.Publish do
       error -> error
     end
   end
+
+  defp previous_public(community, :doc, branch, draft),
+    do: unwrap_previous(Draft.read_branch_public(community, :doc, draft.article_hash_id, branch))
+
+  defp previous_public(community, thread, _branch, draft),
+    do: unwrap_previous(Draft.read_public(community, thread, draft.article_hash_id, nil))
+
+  defp unwrap_previous({:ok, article}), do: article
+  defp unwrap_previous({:error, _}), do: nil
+
+  defp record_publish_activity(
+         thread,
+         previous,
+         article,
+         user,
+         first_publish?,
+         restored_publish?,
+         snapshot,
+         operation_ref,
+         occurred_at
+       ) do
+    events =
+      []
+      |> maybe_add_created(first_publish?)
+      |> maybe_add_title_change(previous, article)
+      |> maybe_add_body_change(previous, article)
+      |> maybe_add_publish(thread, snapshot, restored_publish?)
+
+    Enum.reduce_while(events, :ok, fn {action, changes, metadata}, :ok ->
+      case Activity.log(article, action,
+             actor: user,
+             operation_ref: operation_ref,
+             occurred_at: occurred_at,
+             payload: changes,
+             metadata: metadata
+           ) do
+        {:ok, _log} -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp maybe_add_created(events, true), do: events ++ [{:created, %{}, %{}}]
+  defp maybe_add_created(events, false), do: events
+
+  defp maybe_add_title_change(events, nil, _article), do: events
+
+  defp maybe_add_title_change(events, previous, article) do
+    if previous.title == article.title,
+      do: events,
+      else: events ++ [{:title_changed, %{title: article.title}, %{}}]
+  end
+
+  defp maybe_add_body_change(events, nil, _article), do: events
+
+  defp maybe_add_body_change(events, previous, article) do
+    if previous.body_hash == article.body_hash do
+      events
+    else
+      events ++
+        [
+          {:body_updated, %{body_hash: article.body_hash, schema_version: article.schema_version},
+           %{}}
+        ]
+    end
+  end
+
+  defp maybe_add_publish(events, :doc, snapshot, restored_publish?) do
+    snapshot_ref = if snapshot, do: Map.get(snapshot, :hash_id), else: nil
+    action = if restored_publish?, do: :publish_restored, else: :published
+    events ++ [{action, %{}, %{snapshot_ref: snapshot_ref} |> compact()}]
+  end
+
+  defp maybe_add_publish(events, :changelog, _snapshot, _restored_publish?),
+    do: events ++ [{:released, %{}, %{}}]
+
+  defp maybe_add_publish(events, _thread, _snapshot, _restored_publish?), do: events
+
+  defp compact(map),
+    do: map |> Enum.reject(fn {_key, value} -> is_nil(value) end) |> Map.new()
 
   defp validate_publish_branch(:doc, _branch), do: :ok
 
@@ -335,7 +433,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   end
 
   defp maybe_snapshot(:doc, article, user),
-    do: Snapshot.checkpoint_article(article, CMS.Const.doc_snapshot_action(:publish), user)
+    do: Snapshot.checkpoint_article(article, CMS.Docs.Const.doc_snapshot_action(:publish), user)
 
   defp maybe_snapshot(_thread, _article, _user), do: {:ok, nil}
 end

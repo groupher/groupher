@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
-import useQuery from '~/hooks/useQuery'
+import { browserQuery } from '~/graphql/client'
+import { graphqlQueryOptions } from '~/query'
 import type { TDocCoverLayout } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -64,14 +65,16 @@ const collectPages = (
 export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
   const dashboard = useDashboard()
-  const { mutate } = useGraphQLClient()
-  const { data, reload: reloadCover } = useQuery<{ docCover?: TDocCovers }>(S.docCover, {
-    community,
-    view: DOC_COVER_VIEW.DASHBOARD,
-  })
-  const { data: treeData, reload: reloadTree } = useQuery<{ docTree?: { tabs?: TSideTreeTab[] } }>(
-    DashboardSchema.docTree,
-    { community },
+  const { data, refetch: reloadCover } = useQuery(
+    graphqlQueryOptions<{ docCover?: TDocCovers }>(S.docCover, {
+      community,
+      view: DOC_COVER_VIEW.DASHBOARD,
+    }),
+  )
+  const { data: treeData, refetch: reloadTree } = useQuery(
+    graphqlQueryOptions<{ docTree?: { tabs?: TSideTreeTab[] } }>(DashboardSchema.docTree, {
+      community,
+    }),
   )
   const coverData = data?.docCover ?? EMPTY_DOC_COVERS
   const docs = useMemo<TCoverDocOption[]>(
@@ -99,38 +102,38 @@ export default function useLogic(): TRet {
   )
 
   const reload = (): void => {
-    reloadCover()
-    reloadTree()
+    void reloadCover()
+    void reloadTree()
   }
 
   const pinDoc = async (nodeId: string): Promise<void> => {
-    await mutate(DashboardSchema.pinDocToCover, { community, nodeId })
+    await browserQuery(DashboardSchema.pinDocToCover, { community, nodeId })
     reload()
   }
 
   const unpinDoc = async (nodeId: string): Promise<void> => {
-    await mutate(DashboardSchema.unpinDocFromCover, { community, nodeId })
+    await browserQuery(DashboardSchema.unpinDocFromCover, { community, nodeId })
     reload()
   }
 
   const reorderPinnedDocs = async (pinnedDocs: readonly TDocCoverPinnedDoc[]): Promise<void> => {
-    await mutate(DashboardSchema.reorderDocCoverPinnedDocs, {
+    await browserQuery(DashboardSchema.reorderDocCoverPinnedDocs, {
       community,
       nodeIds: pinnedDocs.map((doc) => doc.nodeId),
     })
-    reloadCover()
+    void reloadCover()
   }
 
   const updateAppearance = async (
     nodeId: string,
     appearance: TDocCoverPinnedDocAppearance,
   ): Promise<void> => {
-    await mutate(DashboardSchema.updatePinnedDocAppearance, {
+    await browserQuery(DashboardSchema.updatePinnedDocAppearance, {
       community,
       nodeId,
       appearance: JSON.stringify(appearance),
     })
-    reloadCover()
+    void reloadCover()
   }
 
   return {

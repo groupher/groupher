@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Publishes one docs article draft and its public tree shell.
 
@@ -19,22 +20,24 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   projected by `PublicProjection`, and release history is recorded by `Release`.
   """
 
+  alias GroupherServer.CMS.DocCover.Sync
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.BodyBag
-  alias CMS.Articles.MutationLock
-  alias CMS.DocTree.Events
-  alias CMS.Gate.Decision
-  alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Articles.Draft
+  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.DocTree.Events
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
   alias Helper.{ORM, T}
 
   require CMS.Const
 
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
+  @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)
 
   @doc """
   Publishes one draft doc and its public tree shell.
@@ -88,8 +91,6 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
 
   @spec move_doc_to_draft(Community.t(), term(), T.id(), User.t()) :: T.domain_res(Doc.t())
   def move_doc_to_draft(%Community{} = community, branch, node_id, %User{} = user) do
-    alias CMS.Articles.Draft
-
     with {:ok, draft_node} <- find_draft_node(community, branch, node_id),
          {:ok, public_doc} <-
            ORM.find_by(Doc,
@@ -101,29 +102,35 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
       MutationLock.with_article(community, :doc, branch.id, public_doc.article_hash_id, fn ->
-        with {:ok, _canonical_doc} <- CMS.Gate.access_check(user, :edit, public_doc) do
-          case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
-            {:ok, draft} ->
-              {:ok, draft}
+        case CMS.Gate.access_check(user, :edit, public_doc) do
+          {:ok, _canonical_doc} ->
+            read_or_create_draft(community, branch, public_doc, document, user)
 
-            {:error, _} ->
-              Draft.create(
-                community,
-                :doc,
-                %{
-                  branch_id: branch.id,
-                  article_hash_id: public_doc.article_hash_id,
-                  title: public_doc.title,
-                  slug: public_doc.slug,
-                  body_bag: BodyBag.from_document_map(document)
-                },
-                user
-              )
-          end
-        else
-          {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
+          {:error, %Decision{} = decision} ->
+            {:error, Decision.primary_error(decision)}
         end
       end)
+    end
+  end
+
+  defp read_or_create_draft(community, branch, public_doc, document, user) do
+    case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
+      {:ok, draft} ->
+        {:ok, draft}
+
+      {:error, _} ->
+        Draft.create(
+          community,
+          :doc,
+          %{
+            branch_id: branch.id,
+            article_hash_id: public_doc.article_hash_id,
+            title: public_doc.title,
+            slug: public_doc.slug,
+            body_bag: BodyBag.from_document_map(document)
+          },
+          user
+        )
     end
   end
 
@@ -294,5 +301,5 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
          %DocTreeNode{} = page,
          true
        ),
-       do: CMS.DocCover.Sync.sync_published_page(community, group, page)
+       do: Sync.sync_published_page(community, group, page)
 end

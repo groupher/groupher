@@ -20,12 +20,10 @@ defmodule GroupherServer.CMS.Model.Blog do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS
 
-  alias CMS.Model.Embeds
+  alias GroupherServer.CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
-  require CMS.Const
 
   @timestamps_opts [type: :utc_datetime]
 

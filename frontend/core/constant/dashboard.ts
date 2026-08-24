@@ -35,6 +35,7 @@ export const DEFAULT_ENABLE = {
   aboutLocation: true,
   aboutLinks: true,
   aboutMediaReport: true,
+  visitorLocationMap: false,
 }
 
 export const TW_CARD = {

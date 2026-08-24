@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Articles.Draft do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Owns the mutable draft head for ordinary Articles and Doc content.
 
@@ -20,20 +21,22 @@ defmodule GroupherServer.CMS.Articles.Draft do
   import Ecto.Changeset, only: [put_change: 3, put_embed: 3]
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Artiment.BodyBag
-  alias CMS.Articles.{Document, MutationLock, VersionedRelations, Writer}
-  alias CMS.Articles.ErrorCat
-  alias CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias CMS.Docs.Branch
-  alias CMS.Docs.Lifecycle, as: DocLifecycle
-  alias CMS.Assets
-  alias CMS.Gate
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Gate.Decision
-  alias CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Articles.{Document, MutationLock, VersionedRelations, Writer}
+  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias GroupherServer.CMS.Articles.Trash
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Assets
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
+  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Gate.Decision
+  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
   alias Helper.{ORM, T}
 
   require CMS.Const
@@ -50,7 +53,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
           T.domain_res(T.article())
   def read(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
-         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
+         {:ok, %{model: model}} <- Matcher.match(thread) do
       find_active(
         model,
         community,
@@ -73,7 +76,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
           T.domain_res(T.article())
   def read_public(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
-         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
+         {:ok, %{model: model}} <- Matcher.match(thread) do
       find_active(
         model,
         community,
@@ -97,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
         ) :: T.domain_res(T.article())
   def read_branch_public(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- resolve_doc_branch(community, branch_ref),
-         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
+         {:ok, %{model: model}} <- Matcher.match(thread) do
       find_active(
         model,
         community,
@@ -158,7 +161,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
     attrs = normalize_attrs(attrs)
 
     with {:ok, branch} <- resolve_branch(community, thread, attrs),
-         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread),
+         {:ok, %{model: model}} <- Matcher.match(thread),
          {:ok, body_content} <- parse_body(attrs, thread),
          {:ok, draft_attrs} <- build_attrs(community, branch, attrs, body_content, author) do
       Repo.transaction(fn ->
@@ -309,7 +312,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
     query =
       model
-      |> CMS.Articles.Trash.not_trashed_scope(thread)
+      |> Trash.not_trashed_scope(thread)
       |> CMS.Gate.scope(actor, action, scope_context)
 
     case query do
@@ -407,10 +410,17 @@ defmodule GroupherServer.CMS.Articles.Draft do
     required? = Keyword.get(opts, :require_version?, false)
 
     cond do
-      required? and not is_integer(expected_version) -> {:error, ErrorCat.draft_version_required()}
-      is_nil(expected_version) -> :ok
-      expected_version == draft.version -> :ok
-      true -> {:error, ErrorCat.draft_conflict()}
+      required? and not is_integer(expected_version) ->
+        {:error, ErrorCat.draft_version_required()}
+
+      is_nil(expected_version) ->
+        :ok
+
+      expected_version == draft.version ->
+        :ok
+
+      true ->
+        {:error, ErrorCat.draft_conflict()}
     end
   end
 
@@ -513,7 +523,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   end
 
   defp source_branch(_community, :doc, %DocBranch{type: type} = branch)
-       when type == CMS.Const.doc_branch_type(:main),
+       when type == CMS.Docs.Const.doc_branch_type(:main),
        do: {:ok, branch}
 
   defp source_branch(community, :doc, %DocBranch{source_branch_id: source_branch_id})

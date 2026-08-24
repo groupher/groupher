@@ -1,4 +1,6 @@
 defmodule GroupherServer.CMS.Press do
+  require GroupherServer.CMS.Docs.Const
+
   @moduledoc """
   Side-effect-free public projection used by the Press output service.
 
@@ -17,21 +19,34 @@ defmodule GroupherServer.CMS.Press do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [get_config: 2]
 
+  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+
+  alias GroupherServer.CMS.Model.{
+    Community,
+    Doc,
+    DocBranch,
+    DocPublishRelease,
+    DocTreeNode,
+    PressConfig
+  }
+
   alias Ecto.Multi
-  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Docs.Branch
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Model.{Community, Doc, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.Activity.EventRef
+  alias GroupherServer.CMS.Press.Config, as: PressConfigContract
+  alias GroupherServer.ServiceAuth.Client
   alias Helper.Later
 
   require Logger
 
   require CMS.Const
 
-  @threads [:post, :blog, :changelog, :doc]
+  @threads PressConfigContract.article_threads()
   @public_stage CMS.Const.stage(:public)
   @site_host get_config(:general, :site_host)
   @manifest_limit 500
@@ -54,6 +69,9 @@ defmodule GroupherServer.CMS.Press do
     with {:ok, community} <- internal_community(community),
          {:ok, current} <- config(community) do
       attrs = normalize_config_attrs(attrs)
+
+      operation_ref =
+        EventRef.derive({:press_config_update, community.id, current.revision, attrs})
 
       changeset =
         case current do
@@ -80,15 +98,26 @@ defmodule GroupherServer.CMS.Press do
 
       Multi.new()
       |> Multi.insert_or_update(:config, changeset)
-      |> Multi.run(:audit, fn _, %{config: config} ->
-        CMS.Audit.record("press.config_updated", %{
+      |> Multi.run(:activity, fn _, %{config: config} ->
+        Activity.log(config, :config_updated,
           actor: actor,
-          community_id: community.id,
-          resource_type: "press_config",
-          resource_ref: community.slug,
-          resource_snapshot: config_snapshot(config),
+          source: :admin,
+          operation_ref: operation_ref,
+          stream_ref: community.slug,
+          occurred_at: config.updated_at,
+          payload:
+            changeset.changes
+            |> Map.take([
+              :markdown_enabled,
+              :feed_enabled,
+              :feed_type,
+              :feed_count,
+              :feed_threads,
+              :llms_enabled,
+              :sitemap_enabled
+            ]),
           metadata: %{revision: config.revision}
-        })
+        )
       end)
       |> Repo.transaction()
       |> case do
@@ -122,7 +151,7 @@ defmodule GroupherServer.CMS.Press do
     endpoint = System.get_env("PRESS_INTERNAL_URL")
 
     token =
-      GroupherServer.ServiceAuth.Client.token(
+      Client.token(
         System.get_env("PRESS_INTERNAL_RESOURCE") || "https://press.groupher.com/internal",
         ["press:cache:invalidate"]
       )
@@ -225,7 +254,7 @@ defmodule GroupherServer.CMS.Press do
         on: branch.id == article.branch_id
       )
       |> where([article], article.community_id == ^community.id)
-      |> where([_article, ...], as(:press_branch).type == ^CMS.Const.doc_branch_type(:main))
+      |> where([_article, ...], as(:press_branch).type == ^CMS.Docs.Const.doc_branch_type(:main))
       |> where([article], article.inner_id == ^inner_id)
       |> preload([article, ...], [:document, :community_tags, author: :user])
       |> Repo.one()
@@ -238,7 +267,7 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp current_article(community, thread, inner_id) do
-    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
+    with {:ok, info} <- Matcher.match(thread) do
       info.model
       |> CMS.Gate.scope(nil, :read, ArticleScope.public(thread))
       |> where([article], article.community_id == ^community.id)
@@ -275,7 +304,7 @@ defmodule GroupherServer.CMS.Press do
     DocPublishRelease
     |> join(:inner, [release], branch in DocBranch, on: branch.id == release.branch_id)
     |> where([release, branch], release.community_id == ^community.id)
-    |> where([_release, branch], branch.type == ^CMS.Const.doc_branch_type(:main))
+    |> where([_release, branch], branch.type == ^CMS.Docs.Const.doc_branch_type(:main))
     |> order_by([release], desc: release.release_number, desc: release.id)
     |> preload([release], [:author, :articles])
     |> limit(1)
@@ -290,43 +319,50 @@ defmodule GroupherServer.CMS.Press do
   end
 
   defp current_articles(community, :doc, limit) do
-    with {:ok, branch} <- public_branch(community, :doc) do
-      Doc
-      |> CMS.Gate.scope(nil, :list, DocScope.public_branch(branch.id))
-      |> join(:inner, [article, ...], branch in DocBranch,
-        as: :press_branch,
-        on: branch.id == article.branch_id
-      )
-      |> join(:inner, [article, ...], node in DocTreeNode,
-        on:
-          node.community_id == article.community_id and node.branch_id == article.branch_id and
-            node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
-            node.type == :page
-      )
-      |> where([article], article.community_id == ^community.id)
-      |> where([_article, ...], as(:press_branch).type == ^CMS.Const.doc_branch_type(:main))
-      |> order_by([article], desc: article.active_at, desc: article.inserted_at)
-      |> limit(^limit)
-      |> preload([article, ...], [:document, :community_tags, author: :user])
-      |> Repo.all()
-      |> Enum.reject(&is_nil(&1.document))
-    else
-      _ -> []
+    case public_branch(community, :doc) do
+      {:ok, branch} ->
+        Doc
+        |> CMS.Gate.scope(nil, :list, DocScope.public_branch(branch.id))
+        |> join(:inner, [article, ...], branch in DocBranch,
+          as: :press_branch,
+          on: branch.id == article.branch_id
+        )
+        |> join(:inner, [article, ...], node in DocTreeNode,
+          on:
+            node.community_id == article.community_id and node.branch_id == article.branch_id and
+              node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
+              node.type == :page
+        )
+        |> where([article], article.community_id == ^community.id)
+        |> where(
+          [_article, ...],
+          as(:press_branch).type == ^CMS.Docs.Const.doc_branch_type(:main)
+        )
+        |> order_by([article], desc: article.active_at, desc: article.inserted_at)
+        |> limit(^limit)
+        |> preload([article, ...], [:document, :community_tags, author: :user])
+        |> Repo.all()
+        |> Enum.reject(&is_nil(&1.document))
+
+      _ ->
+        []
     end
   end
 
   defp current_articles(community, thread, limit) do
-    with {:ok, info} <- CMS.Artiment.Matcher.match(thread) do
-      info.model
-      |> CMS.Gate.scope(nil, :list, ArticleScope.public(thread))
-      |> where([article], article.community_id == ^community.id)
-      |> order_by([article], desc: article.active_at, desc: article.inserted_at)
-      |> limit(^limit)
-      |> preload([article, ...], [:document, :community_tags, author: :user])
-      |> Repo.all()
-      |> Enum.reject(&is_nil(&1.document))
-    else
-      _ -> []
+    case Matcher.match(thread) do
+      {:ok, info} ->
+        info.model
+        |> CMS.Gate.scope(nil, :list, ArticleScope.public(thread))
+        |> where([article], article.community_id == ^community.id)
+        |> order_by([article], desc: article.active_at, desc: article.inserted_at)
+        |> limit(^limit)
+        |> preload([article, ...], [:document, :community_tags, author: :user])
+        |> Repo.all()
+        |> Enum.reject(&is_nil(&1.document))
+
+      _ ->
+        []
     end
   end
 
@@ -395,13 +431,12 @@ defmodule GroupherServer.CMS.Press do
     digest =
       release.articles
       |> Enum.sort_by(&{&1.index || 1_000_000, &1.id})
-      |> Enum.map(fn article ->
+      |> Enum.map_join("; ", fn article ->
         actions =
           if article.actions == [], do: "published", else: Enum.join(article.actions, ", ")
 
         "#{article.title} (#{actions})"
       end)
-      |> Enum.join("; ")
 
     %{
       article_ref: "#{community.slug}:docs:#{release.version_slug}",

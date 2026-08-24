@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocTreeNode}
+  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
 
@@ -259,5 +259,4 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
          query
          |> where([n], n.parent_node_id == ^parent_node_id)
          |> where([n], n.type in [:group, :page, :link])
-
 end

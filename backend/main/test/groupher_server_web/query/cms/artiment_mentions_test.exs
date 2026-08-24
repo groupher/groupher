@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   use GroupherServer.TestMate
 
-  alias CMS.ArtimentMentions
+  alias GroupherServer.CMS.ArtimentMentions
 
   @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
 

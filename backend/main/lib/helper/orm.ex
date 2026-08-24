@@ -34,12 +34,13 @@ defmodule Helper.ORM do
 
   import Helper.ErrorHandler
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
   alias GroupherServer.ErrorCat
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
 
-  alias Accounts.Model.User
-  alias CMS.Model.{Community, CommunityDashboard}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Gate
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
@@ -647,7 +648,7 @@ defmodule Helper.ORM do
       {:ok, %Community{}}
   """
   def find_community(slug) do
-    GroupherServer.CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
+    Gate.scope(Community, nil, :read, CommunityScope.public())
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)

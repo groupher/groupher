@@ -14,18 +14,18 @@
     "lint": "../../node_modules/.bin/oxlint src --threads=1",
     "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./src",
     "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./src",
+    "generate:visitor-location-data": "node ./scripts/generate-visitor-location-data.mjs",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "dependencies": {
     "@groupher/frontend-core": "1.0.0",
     "next": "16.3.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "country-state-city": "^3.2.1",
     "cross-env": "^10.1.0"
-  },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   }
 }

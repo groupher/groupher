@@ -20,7 +20,6 @@ export const DSB_ROUTE = {
   // analysis
   ANALYSIS: 'analysis',
   TREND: 'trend',
-  LOG: 'log',
   // --
   // contents
   ASSETS: 'assets',
@@ -40,6 +39,7 @@ export const DSB_ROUTE = {
   ADMINS: 'admins',
   WIDGETS: 'widgets',
   INOUT: 'inout',
+  ACTIVITY: 'activity',
 } as const
 
 export const DSB_INFO_ROUTE = {

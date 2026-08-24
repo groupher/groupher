@@ -34,12 +34,22 @@ defmodule GroupherServer.TestMate do
 
       import ShortMaps
 
+      alias GroupherServer.CMS.Model.{
+        Author,
+        Blog,
+        Changelog,
+        Comment,
+        Community,
+        Doc,
+        Embeds,
+        Post
+      }
+
       alias GroupherServer.{Accounts, CMS, Repo}
-      alias CMS.Model.{Author, Blog, Changelog, Comment, Community, Doc, Embeds, Post}
       alias GroupherServer.Test.Helper.Schema, as: S
       alias Helper.{Constant, Datetime, ORM}
 
-      alias Accounts.Model.User
+      alias GroupherServer.Accounts.Model.User
 
       @now Datetime.now(:second)
 

@@ -12,10 +12,9 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias CMS.Artiment.BodyBag
-  alias CMS.FrontDesk
-  alias CMS.Model.{ArticleDocument, Doc}
+  alias GroupherServer.CMS.Artiment.BodyBag
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.{ArticleDocument, Doc}
   alias Helper.{ORM, T}
 
   @type document_result :: {:ok, map()} | {:error, map()}

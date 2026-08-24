@@ -149,4 +149,22 @@ defmodule GroupherServer.Test.Helper.Schema.Analysis do
     }
     """
   end
+
+  def q(:visitor_location_map) do
+    """
+    query($community: String!) {
+      analysisVisitorLocationMap(community: $community) {
+        status
+        range { days }
+        countries {
+          code
+          visitors
+          percentage
+          regions { code visitors }
+        }
+        error { code message section providerStatus }
+      }
+    }
+    """
+  end
 end

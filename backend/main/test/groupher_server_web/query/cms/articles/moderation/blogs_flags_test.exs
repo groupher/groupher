@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
   @total_count 35
   @page_size GroupherServerWeb.Config.page_size()
 
-  @audit_illegal Constant.CMS.pending(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {:ok, user} = db_insert(:user)

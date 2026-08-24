@@ -14,6 +14,7 @@ const config: CodegenConfig = {
     'frontend/core/schemas/pages/community.ts',
     'frontend/core/schemas/pages/action.ts',
     'frontend/core/schemas/pages/misc.ts',
+    'frontend/core/schemas/pages/activity.ts',
     'frontend/core/unit/AboutThread/schema.ts',
     'frontend/core/unit/ChangelogThread/schema.ts',
     'frontend/core/unit/CoverEditor/schema.ts',
@@ -50,6 +51,8 @@ const config: CodegenConfig = {
     'frontend/core/unit/PostThread/schema.ts',
     'frontend/core/unit/DashboardThread/CMS/Docs/Import/schema.ts',
     'frontend/core/unit/DashboardThread/CMS/Docs/Import/fragments.ts',
+    'frontend/core/query/viewer.ts',
+    'frontend/core/query/mutation/article.ts',
   ],
   pluckConfig: {
     globalGqlIdentifierName: [],

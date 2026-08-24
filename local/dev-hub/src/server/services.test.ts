@@ -44,7 +44,7 @@ test('frontend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'frontend').map(
       (definition) => definition.id,
     ),
-    ['landing', 'main', 'dashboard', 'dash', 'apply', 'inspire-me'],
+    ['landing', 'main', 'community', 'dashboard', 'dash', 'apply', 'inspire-me'],
   )
 })
 
@@ -80,6 +80,7 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'gateway', target: 'press', label: '*.md, feed.*, llms.txt, sitemap.xml' },
       { source: 'press', target: 'phoenix', label: 'CMS.Press GraphQL projection' },
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
+      { source: 'community', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'content-import', label: '/api/docs/import/*' },
       { source: 'dashboard', target: 'assets-hub', label: 'asset upload flow' },
@@ -129,6 +130,11 @@ test('frontend app start chains match their local routing boundaries', () => {
   assert.deepEqual(startPolicies.landing, {
     defaultMode: 'chain',
     requiredDependencies: ['gateway'],
+    optionalDependencies: [],
+  })
+  assert.deepEqual(startPolicies.community, {
+    defaultMode: 'chain',
+    requiredDependencies: ['phoenix'],
     optionalDependencies: [],
   })
 

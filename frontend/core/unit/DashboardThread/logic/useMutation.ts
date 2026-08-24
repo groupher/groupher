@@ -3,9 +3,9 @@ import { useEffect, useRef } from 'react'
 
 import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
+import { browserQuery } from '~/graphql/client'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -44,7 +44,6 @@ export default function useMutation(): TRet {
   const dashboard$ = useDashboard()
   const liveDashboard$ = dashboard$.live$ ?? dashboard$
   const community$ = useCommunity()
-  const { mutate } = useGraphQLClient()
   const { t } = useTrans()
   const { subTab } = useDsbTab()
   const isDemoMode = useDsbDemoMode()
@@ -155,7 +154,7 @@ export default function useMutation(): TRet {
    * not Valtio's thing, this is hte wired React staff
    */
   const handleMutation = (schema, params, okCb = null) => {
-    mutate(schema, params)
+    browserQuery(schema, params)
       .then(async (data) => {
         toast(t('dsb.appearance.saved'))
         if (okCb) okCb(data)
@@ -317,7 +316,7 @@ export default function useMutation(): TRet {
     //     }, SEO_TW_KEYS)
     //   }
 
-    //   sr71$.mutate(S.updateDashboardSeo, { community, ...params })
+    //   sr71$.browserQuery(S.updateDashboardSeo, { community, ...params })
     //   return
     // }
 
@@ -365,8 +364,8 @@ export default function useMutation(): TRet {
       }))
 
       Promise.all([
-        mutate(S.reindexCommunityTagGroups, { community, thread, groups: groupIndex }),
-        mutate(S.reindexCommunityTags, { community, thread, tags: tagIndex }),
+        browserQuery(S.reindexCommunityTagGroups, { community, thread, groups: groupIndex }),
+        browserQuery(S.reindexCommunityTags, { community, thread, tags: tagIndex }),
       ])
         .then(() => _handleDone())
         .catch((err) => {

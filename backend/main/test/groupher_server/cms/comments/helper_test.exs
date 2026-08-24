@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   use GroupherServer.TestMate
 
-  alias CMS.Communities.Enable
-  alias CMS.Comments.{Numbering, Replies}
+  alias GroupherServer.CMS.Comments.InteractionResponse
+  alias GroupherServer.CMS.Comments.{Numbering, Replies}
+  alias GroupherServer.CMS.Communities.Enable
   alias GroupherServer.ErrorCat.Error
   alias Helper.ORM
 
@@ -123,7 +124,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       # 测试 mark_has_upvoted
       paged_comments = %{entries: [updated_comment]}
 
-      {:ok, entries} = CMS.Comments.InteractionResponse.many(paged_comments.entries, user2)
+      {:ok, entries} = InteractionResponse.many(paged_comments.entries, user2)
       marked_comments = %{paged_comments | entries: entries}
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == true
@@ -137,7 +138,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       # 测试 mark_has_upvoted with nil viewer
       paged_comments = %{entries: [comment]}
 
-      {:ok, entries} = CMS.Comments.InteractionResponse.many(paged_comments.entries, nil)
+      {:ok, entries} = InteractionResponse.many(paged_comments.entries, nil)
       marked_comments = %{paged_comments | entries: entries}
 
       assert List.first(marked_comments.entries).viewer_has_upvoted == false

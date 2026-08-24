@@ -1,10 +1,17 @@
 defmodule GroupherServer.Test.ArticleCoverHelper do
   @moduledoc false
 
+  alias GroupherServer.CMS.Articles
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.Test.Helper.Schema.Article
+
   defmacro __using__(thread: thread) do
     thread_name = thread |> to_string()
 
     quote do
+      alias GroupherServer.CMS.Articles
+      alias GroupherServer.CMS.FrontDesk
+      alias GroupherServer.Test.Helper.Schema.Article
       use GroupherServer.TestMate
 
       import GroupherServer.Test.ArticleCoverHelper
@@ -60,7 +67,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert result["coverEditInfo"]["dark"]["images"] |> length == 1
 
           {:ok, article} =
-            GroupherServer.CMS.FrontDesk.article(community, @thread, result["innerId"])
+            FrontDesk.article(community, @thread, result["innerId"])
 
           assert article.cover_url == variables.coverUrl
           assert article.cover_url_dark == variables.coverUrlDark
@@ -138,9 +145,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert result["coverEditInfo"]["canvasWidth"] == variables.coverEditInfo.canvasWidth
 
           {:ok, article} =
-            GroupherServer.CMS.FrontDesk.article(community, @thread, article.inner_id,
-              preload: :cover_edit_info
-            )
+            FrontDesk.article(community, @thread, article.inner_id, preload: :cover_edit_info)
 
           assert article.cover_url == variables.coverUrl
           assert article.cover_url_dark == variables.coverUrlDark
@@ -203,7 +208,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           trashed =
             owner_conn
             |> gq_mutation(
-              GroupherServer.Test.Helper.Schema.Article.m(:trash_article),
+              Article.m(:trash_article),
               delete_variables
             )
 
@@ -221,7 +226,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           permanent_conn
           |> gq_mutation(
-            GroupherServer.Test.Helper.Schema.Article.m(:permanently_delete_trashed_article),
+            Article.m(:permanently_delete_trashed_article),
             %{
               id: trashed["id"],
               community: community.slug,
@@ -364,15 +369,15 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
   end
 
   def cover_create_schema(thread) do
-    GroupherServer.Test.Helper.Schema.Article.m(:create_cover, thread)
+    Article.m(:create_cover, thread)
   end
 
   def cover_update_schema(thread) do
-    GroupherServer.Test.Helper.Schema.Article.m(:update_cover, thread)
+    Article.m(:update_cover, thread)
   end
 
   def cover_read_schema(thread) do
-    GroupherServer.Test.Helper.Schema.Article.q(:article, thread, """
+    Article.q(:article, thread, """
     coverUrl
     coverUrlDark
     coverEditInfo {
@@ -400,9 +405,9 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
   def cover_url(thread, suffix), do: "https://img.test/#{thread}-cover-#{suffix}.png"
 
   def publish_cover_draft(community, article, thread) do
-    with {:ok, actor} <- GroupherServer.CMS.FrontDesk.author_of(article),
+    with {:ok, actor} <- FrontDesk.author_of(article),
          {:ok, _result} <-
-           GroupherServer.CMS.Articles.publish_draft(
+           Articles.publish_draft(
              community,
              thread,
              article.article_hash_id,

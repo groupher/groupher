@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, useEffect } from 'react'
+import type { FC } from 'react'
 
 import { ANCHOR } from '~/const/dom'
 // import NoticeBar from '~/ui/NoticeBar'
@@ -26,15 +26,9 @@ type TProps = {
 
 const Comments: FC<TProps> = ({ locked: _locked = false, apiMode = API_MODE.ARTICLE }) => {
   const s = useSalon()
-  const { initialized, totalCount } = useCommentsRootState()
+  const { totalCount } = useCommentsRootState()
   const editState = useCommentsEditState()
-  const { loadComments } = useActions()
-
-  useEffect(() => {
-    if (!initialized) {
-      loadComments()
-    }
-  }, [])
+  useActions()
 
   return (
     <div id={ANCHOR.COMMENTS_ID} className={s.wrapper}>

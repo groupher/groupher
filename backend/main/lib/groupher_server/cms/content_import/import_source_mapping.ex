@@ -7,8 +7,8 @@ defmodule GroupherServer.CMS.ContentImport.ImportSourceMapping do
   See `docs/bulk-import/content-import-architecture.md`.
   """
 
-  alias GroupherServer.Repo
   alias GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping, as: Mapping
+  alias GroupherServer.Repo
 
   @replace_fields [
     :thread_ref,

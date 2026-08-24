@@ -47,6 +47,7 @@ export const CommentFields = graphql(`
       ...CommentEmotionFields
     }
     isPinned
+    isSolution
     floor
     upvotesCount
     isArticleAuthor
@@ -72,6 +73,7 @@ export const CommentReplyFields = graphql(`
       ...CommentEmotionFields
     }
     isPinned
+    isSolution
     floor
     upvotesCount
     isArticleAuthor

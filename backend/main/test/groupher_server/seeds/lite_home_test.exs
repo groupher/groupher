@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   @moduletag timeout: 300_000
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Articles.Trash
   alias GroupherServer.CMS.Seeds.LiteHome
 
   describe "[lite home seeds]" do
@@ -76,7 +77,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   defp kanban_count(community_id) do
     {:ok, total_count} =
       Post
-      |> CMS.Articles.Trash.not_trashed_scope(:post)
+      |> Trash.not_trashed_scope(:post)
       |> join(:inner, [post], community in assoc(post, :communities))
       |> where([post, community], community.id == ^community_id and not is_nil(post.status))
       |> ORM.count()
@@ -94,7 +95,7 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
 
     {:ok, total_count} =
       schema
-      |> CMS.Articles.Trash.not_trashed_scope(thread)
+      |> Trash.not_trashed_scope(thread)
       |> join(:inner, [item], community in assoc(item, :communities))
       |> where([_item, community], community.id == ^community_id)
       |> ORM.count()

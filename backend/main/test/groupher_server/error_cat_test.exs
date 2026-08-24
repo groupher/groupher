@@ -3,6 +3,7 @@ defmodule GroupherServer.ErrorCatTest do
 
   alias GroupherServer.ErrorCat
   alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.ErrorCat.Validator
 
   test "catalog declarations produce structured errors" do
     error = GroupherServer.CMS.Gate.ErrorCat.article_archived("read only")
@@ -52,6 +53,42 @@ defmodule GroupherServer.ErrorCatTest do
     assert ErrorCat.code(GroupherServerWeb.ErrorCat.pagination()) == 4002
     assert ErrorCat.code(ErrorCat.custom()) == 4001
     assert ErrorCat.code(ErrorCat.gate_unknown()) == 4699
+  end
+
+  test "reserved validation rejects incomplete definitions" do
+    assert_raise ArgumentError, ~r/reserved definition is incomplete/, fn ->
+      Validator.validate!(%{{:web} => 4000..4199}, [%{namespace: {:web}}], [])
+    end
+  end
+
+  test "reserved validation rejects invalid field types" do
+    definition = %{
+      namespace: {:web},
+      reason: "default",
+      code: 4000,
+      retryable: false,
+      actions: [],
+      message_key: "web.default"
+    }
+
+    assert_raise ArgumentError, ~r/reserved reason must be an atom/, fn ->
+      Validator.validate!(%{{:web} => 4000..4199}, [definition], [])
+    end
+  end
+
+  test "range validation rejects empty, descending, and overlapping ranges" do
+    assert_raise ArgumentError, ~r/ranges must be a non-empty map/, fn ->
+      empty_ranges = Map.new([{:empty, nil}]) |> Map.delete(:empty)
+      Validator.validate!(empty_ranges, [], [])
+    end
+
+    assert_raise ArgumentError, ~r/range must be an ascending range/, fn ->
+      Validator.validate!(%{{:web} => 4199..4000//-1}, [], [])
+    end
+
+    assert_raise ArgumentError, ~r/code ranges overlap/, fn ->
+      Validator.validate!(%{{:web} => 4000..4100, {:cms} => 4100..4200}, [], [])
+    end
   end
 
   test "unknown global definitions raise a clear argument error" do

@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
 
   use GroupherServer.TestMate
 
-  alias CMS.Articles.DraftDiff
-  alias CMS.Model.Post
+  alias GroupherServer.Activity.Model.PostLog
+  alias GroupherServer.CMS.Articles.DraftDiff
+  alias GroupherServer.CMS.Model.Post
 
   test "DraftDiff includes every Post version field" do
     public = %Post{
@@ -71,6 +72,13 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
       CMS.Articles.publish_draft(community, :post, public.article_hash_id, user)
 
     assert republished.title == "Post draft"
+
+    title_log = Repo.get_by!(PostLog, post_ref: public.article_hash_id, action: :title_changed)
+    body_log = Repo.get_by!(PostLog, post_ref: public.article_hash_id, action: :body_updated)
+    assert title_log.operation_ref == body_log.operation_ref
+    assert title_log.payload["title"] == "Post draft"
+    refute Map.has_key?(body_log.payload, "body")
+    refute Map.has_key?(body_log.payload, "html")
     assert {:error, _} = CMS.Articles.read_draft(community, :post, public.article_hash_id)
 
     assert {:ok, false} =

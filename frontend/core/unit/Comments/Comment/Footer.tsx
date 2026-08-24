@@ -4,6 +4,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
 import UserBadge from '~/icons/UserBadge'
+import useCommentReactions from '~/query/mutation/useCommentReactions'
 import { authWarn } from '~/signal'
 import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -12,7 +13,6 @@ import Upvote from '~/unit/Upvote'
 
 import { API_MODE } from '../constant'
 import type { TAPIMode } from '../spec'
-import useActions from '../useLogic/useActions'
 import Actions from './Actions'
 import useSalon from './salon/footer'
 
@@ -24,15 +24,15 @@ type TProps = {
 const Footer: FC<TProps> = ({ data, apiMode }) => {
   const s = useSalon()
 
-  const accountInfo = useAccount()
-  const { handleUpvote, handleEmotion } = useActions()
+  const { isLogin } = useAccount()
+  const { handleUpvote, handleEmotion } = useCommentReactions(data)
   const { t } = useTrans()
 
   // const { isLegal } = data.meta
   const { meta, upvotesCount, viewerHasUpvoted } = data
   const { isArticleAuthorUpvoted, isLegal } = meta
 
-  const isSolution = false
+  const isSolution = data.isSolution
   const noExtraInfo = !isSolution && !isArticleAuthorUpvoted
 
   return (
@@ -62,7 +62,7 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           type={UPVOTE_LAYOUT.COMMENT}
           count={upvotesCount}
           viewerHasUpvoted={viewerHasUpvoted}
-          onAction={(did) => handleUpvote(data, did)}
+          onAction={handleUpvote}
         />
 
         <div className='mr-2.5' />
@@ -71,8 +71,8 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
           isLegal={isLegal}
           emotions={data.emotions}
           onAction={(name, hasReacted) => {
-            if (!accountInfo) return authWarn()
-            handleEmotion(data, name, hasReacted)
+            if (!isLogin) return authWarn()
+            handleEmotion(name, hasReacted)
           }}
         />
 

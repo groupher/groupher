@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias GroupherServer.CMS.Gate.ErrorCat
 
   @throttle_interval GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
   @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit
@@ -86,7 +87,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_interval())
+             ErrorCat.code(ErrorCat.throttle_interval())
            )
 
     CMS.Policy.mock_publish_throttle_attr(
@@ -99,7 +100,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_interval())
+             ErrorCat.code(ErrorCat.throttle_interval())
            )
   end
 
@@ -129,7 +130,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_hour())
+             ErrorCat.code(ErrorCat.throttle_hour())
            )
   end
 
@@ -159,7 +160,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_hour())
+             ErrorCat.code(ErrorCat.throttle_hour())
            )
 
     CMS.Policy.mock_publish_throttle_attr(
@@ -201,7 +202,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_day())
+             ErrorCat.code(ErrorCat.throttle_day())
            )
   end
 
@@ -231,7 +232,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
            |> mutation_error?(
              S.Article.m(:create_article, :post),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Gate.RateLimit.ErrorCat.throttle_day())
+             ErrorCat.code(ErrorCat.throttle_day())
            )
 
     CMS.Policy.mock_publish_throttle_attr(

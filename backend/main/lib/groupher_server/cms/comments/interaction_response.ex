@@ -6,8 +6,12 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
       Comments Reader -> InteractionResponse -> Comment API response
   """
 
+  import Ecto.Query, warn: false
+
   alias GroupherServer.CMS
-  alias CMS.Comments.AuthorRelationState
+  alias GroupherServer.CMS.Comments.AuthorRelationState
+  alias GroupherServer.CMS.Model.PostSolution
+  alias GroupherServer.Repo
 
   @doc """
   Assembles one Comment with Interaction and Article-author relation fields.
@@ -43,11 +47,12 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
 
     with states when is_map(states) <- CMS.Interactions.viewer_states(all_comments, viewer, opts) do
       author_upvoted_ids = author_upvoted_ids(all_comments, opts)
+      solution_ids = solution_ids(all_comments)
 
       hydrated_by_id =
         Map.new(all_comments, fn comment ->
           state = Map.fetch!(states, {:comment, comment.id})
-          {comment.id, merge(comment, state, author_upvoted_ids)}
+          {comment.id, merge(comment, state, author_upvoted_ids, solution_ids)}
         end)
 
       top_level_by_id = Map.new(comments, &{&1.id, &1})
@@ -59,7 +64,13 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
               {id, hydrated}
 
             top_level ->
-              {id, merge(top_level, Map.fetch!(states, {:comment, id}), author_upvoted_ids)}
+              {id,
+               merge(
+                 top_level,
+                 Map.fetch!(states, {:comment, id}),
+                 author_upvoted_ids,
+                 solution_ids
+               )}
           end
         end)
 
@@ -74,13 +85,26 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
     end
   end
 
-  defp merge(comment, state, author_upvoted_ids) do
+  defp merge(comment, state, author_upvoted_ids, solution_ids) do
     comment
     |> Map.put(:upvotes_count, state.upvotes_count)
     |> Map.put(:viewer_has_upvoted, state.viewer_has_upvoted)
     |> Map.put(:viewer_has_reported, state.viewer_has_reported)
+    |> Map.put(:is_solution, MapSet.member?(solution_ids, comment.id))
     |> Map.put(:emotions, emotion_map(state.emotions))
     |> Map.put(:meta, comment_meta(comment, state, author_upvoted_ids))
+  end
+
+  defp solution_ids([]), do: MapSet.new()
+
+  defp solution_ids(comments) do
+    ids = Enum.map(comments, & &1.id)
+
+    PostSolution
+    |> where([solution], solution.comment_id in ^ids)
+    |> select([solution], solution.comment_id)
+    |> Repo.all()
+    |> MapSet.new()
   end
 
   defp comment_meta(comment, state, author_upvoted_ids) do

@@ -2,8 +2,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias CMS.Communities.Passport
-  alias CMS.Model.CommunityModerator
+  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.CMS.Communities.Passport
+  alias GroupherServer.CMS.Model.CommunityModerator
   alias Helper.PermissionRegistry
 
   setup do
@@ -124,9 +125,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert error_code(reason) ==
-               ErrorCat.code(
-                 GroupherServer.CMS.Communities.ErrorCat.passport_community_not_match()
-               )
+               ErrorCat.code(ErrorCat.passport_community_not_match())
     end
 
     test "can not update multi community passport", ~m(user user2 community)a do
@@ -154,7 +153,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         CMS.Communities.update_moderator_passport(community, new_passport_rules, user2, cur_user)
 
       assert error_code(reason) ==
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.one_community_only())
+               ErrorCat.code(ErrorCat.one_community_only())
     end
 
     test "can add multi moderators to a community", ~m(user user2 community)a do
@@ -178,7 +177,6 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       assert moderator_user
       assert moderator_user2
       assert moderator_user3
-
     end
 
     test "remove moderator deletes only the community-scoped passport rules",

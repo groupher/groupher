@@ -9,12 +9,12 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
         -> Subscribe
         -> Repo / Oban
   """
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.Communities
-  alias CMS.Model.{Community, CommunitySubscriber}
-  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Communities
+  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServer.CMS.Model.{Community, CommunitySubscriber}
   alias Helper.{Multi, ORM, T}
 
   @doc """

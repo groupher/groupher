@@ -2,7 +2,7 @@ import { find, forEach, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
 
 import EVENT from '~/const/event'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import { closeDrawer, send } from '~/signal'
 import type { TModerator, TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -158,7 +158,6 @@ export default function useLogic(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
   const account$ = useAccount()
-  const { mutate, query } = useGraphQLClient()
 
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
   const [selectedGlobalRules, setSelectedGlobalRules] = useState<string[]>([])
@@ -205,7 +204,7 @@ export default function useLogic(): TRet {
     }
 
     try {
-      const res = await query(S.userPassport, { login: activeModerator.login })
+      const res = await browserQuery(S.userPassport, { login: activeModerator.login })
       const { passportString = '{}', social = null } = res?.user ?? {}
       const passportJson = safeParsePassport(passportString)
       const globalRules = ruleMapFrom(passportJson.global)
@@ -241,7 +240,7 @@ export default function useLogic(): TRet {
 
   const loadAllPassportRules = (): void => {
     setLoading(true)
-    query(S.allPassportRules)
+    browserQuery(S.allPassportRules)
       .then((res) => {
         const { cms } = res.allPassportRulesString as {
           cms: { general?: unknown; community?: unknown }
@@ -292,7 +291,7 @@ export default function useLogic(): TRet {
 
     const rules = { global: globalRules, [community]: { cms: innerRules } }
 
-    mutate(S.updateModeratorPassport, {
+    browserQuery(S.updateModeratorPassport, {
       community,
       user: activeModerator.login,
       rules: JSON.stringify(rules),
@@ -329,24 +328,25 @@ export default function useLogic(): TRet {
   const deleteModerator = (): void => {
     if (!activeModerator?.login) return
 
-    mutate(S.removeModerator, { community: community$.slug, user: activeModerator.login }).then(
-      async (res) => {
-        const moderators = (res.removeModerator?.moderators ?? []).filter(
-          (moderator) => moderator.user?.login,
-        )
+    browserQuery(S.removeModerator, {
+      community: community$.slug,
+      user: activeModerator.login,
+    }).then(async (res) => {
+      const moderators = (res.removeModerator?.moderators ?? []).filter(
+        (moderator) => moderator.user?.login,
+      )
 
-        dsb$.commit({ moderators, activeModerator: null })
-        community$.commit({ moderators })
-        try {
-          await revalidateCommunityCache(community$.slug)
-        } catch (error) {
-          console.error('## revalidate community cache error: ', error)
-        }
+      dsb$.commit({ moderators, activeModerator: null })
+      community$.commit({ moderators })
+      try {
+        await revalidateCommunityCache(community$.slug)
+      } catch (error) {
+        console.error('## revalidate community cache error: ', error)
+      }
 
-        closeDrawer()
-        send(EVENT.REFRESH_MODERATORS)
-      },
-    )
+      closeDrawer()
+      send(EVENT.REFRESH_MODERATORS)
+    })
   }
 
   const isActiveModeratorRoot = useMemo(() => {

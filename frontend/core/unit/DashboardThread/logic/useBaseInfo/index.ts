@@ -1,8 +1,9 @@
 import type { ResultOf } from '@graphql-typed-document-node/core'
+import { useQuery } from '@tanstack/react-query'
 import { isEmpty, pick } from 'ramda'
 import { useEffect } from 'react'
 
-import useQuery from '~/hooks/useQuery'
+import { graphqlQueryOptions } from '~/query'
 import type { TEditFunc } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -41,10 +42,7 @@ export default function useBaseInfo(): TRet {
   const useSocialLinksData = useSocialLinks()
   const useDangerZoneData = useDangerZone()
 
-  const { data } = useQuery(S.communityBaseInfo, {
-    slug,
-    incViews: false,
-  })
+  const { data } = useQuery(graphqlQueryOptions(S.communityBaseInfo, { slug, incViews: false }))
 
   const updateBaseInfo = (community: TCommunityBaseInfo): void => {
     const { dashboard: dashboard$ } = community

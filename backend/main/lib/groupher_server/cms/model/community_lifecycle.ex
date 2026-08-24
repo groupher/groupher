@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycle do
+  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Public availability lifecycle for a community created from an application.
 
@@ -14,7 +15,7 @@ defmodule GroupherServer.CMS.Model.CommunityLifecycle do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Const
+  alias GroupherServer.CMS.Communities.Const
   alias GroupherServer.CMS.Model.{Community, CommunityApplication, CommunityLifecycleBlocker}
   alias Helper.Constant.DBPrefix
 

@@ -29,8 +29,5 @@
     "rimraf": "^6.1.3",
     "tsx": "^4.23.5",
     "typescript": "5.9.3"
-  },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   }
 }

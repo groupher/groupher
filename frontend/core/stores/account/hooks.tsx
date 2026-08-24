@@ -1,18 +1,24 @@
 'use client'
 
+import type { ResultOf } from '@graphql-typed-document-node/core'
 import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
-import { useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { use } from 'react'
 
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
-import useQuery from '~/hooks/useQuery'
+import { graphqlQueryOptions } from '~/query'
 import type { TUser } from '~/spec'
 
 import { sessionState } from '../../schemas/pages/user'
-import createStoreHook from '../createStoreHook'
-import { StoreContext } from './context'
+import { SessionSeedContext } from './context'
 
-const useBaseStore = createStoreHook(StoreContext)
+type TSessionResult = ResultOf<typeof sessionState>
+
+const makeSessionResult = (user: TUser | null): TSessionResult =>
+  ({
+    sessionState: { isValid: Boolean(user), user },
+  }) as TSessionResult
 
 // This reads only the non-sensitive hint cookie. The real Phoenix token remains
 // HttpOnly and is consumed by the same-origin GraphQL proxy when `me` is sent.
@@ -26,65 +32,44 @@ const hasSignedInHintCookie = (): boolean => {
 }
 
 export default function Hooks() {
-  const storeHook = useBaseStore()
-  const store = storeHook.live$
-  const sessionProbeStarted = useRef(false)
-  const shouldFetchMe = store.loading && hasSignedInHintCookie()
+  const seed = use(SessionSeedContext)
+  const queryClient = useQueryClient()
+  if (!seed) throw new Error('useAccount must be used within an Account store provider')
 
-  const { data, loading, error } = useQuery(sessionState, {}, { pause: !shouldFetchMe })
+  const options = graphqlQueryOptions(sessionState, {})
+  const shouldFetchMe = seed.loading !== false && hasSignedInHintCookie()
 
-  // Keep client state in sync during logout before the next refresh lands.
-  // Without this, auth-sensitive widgets can briefly render the old login state.
-  useEvent(
-    EVENT.LOGOUT,
-    () => {
-      store.commit({ user: null, loading: false })
+  const query = useQuery({
+    ...options,
+    enabled: shouldFetchMe,
+    initialData: makeSessionResult(seed.user ?? null),
+  })
+
+  const clearSession = () => {
+    queryClient.setQueryData(options.queryKey, makeSessionResult(null))
+  }
+
+  useEvent(EVENT.LOGOUT, clearSession, [queryClient])
+
+  const session = query.data?.sessionState
+  const user =
+    session?.isValid && session.user
+      ? {
+          ...session.user,
+          passport: session.user.passport as TUser['passport'],
+        }
+      : null
+  const isLogin = Boolean(user)
+
+  return {
+    user,
+    loading: shouldFetchMe && query.isFetching,
+    isLogin,
+    accountInfo: {
+      ...user,
+      isLogin,
+      isValidSession: Boolean(session?.isValid),
+      isModerator: false,
     },
-    [store],
-  )
-
-  useEffect(() => {
-    const handleLogout = () => {
-      store.commit({ user: null, loading: false })
-    }
-
-    window.addEventListener('groupher-auth:logout', handleLogout)
-    return () => window.removeEventListener('groupher-auth:logout', handleLogout)
-  }, [store])
-
-  useEffect(() => {
-    if (!shouldFetchMe) {
-      // `store.loading` becomes false after the probe resolves. Do not treat
-      // that post-probe render as an anonymous initial state and erase the
-      // user we just received.
-      if (!sessionProbeStarted.current && !store.user) {
-        store.commit({ user: null, loading: false })
-      }
-      return
-    }
-
-    sessionProbeStarted.current = true
-
-    if (error) {
-      store.commit({ loading: false })
-      return
-    }
-
-    store.commit({ loading })
-
-    if (!loading) {
-      store.commit({
-        user: data?.sessionState?.isValid
-          ? data.sessionState.user
-            ? {
-                ...data.sessionState.user,
-                passport: data.sessionState.user.passport as TUser['passport'],
-              }
-            : null
-          : null,
-      })
-    }
-  }, [shouldFetchMe, loading, error, data, store])
-
-  return storeHook
+  }
 }

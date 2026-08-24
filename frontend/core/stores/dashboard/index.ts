@@ -3,10 +3,9 @@ import { proxy } from 'valtio'
 import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
 import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
-import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 
 import { createDraftFieldActions } from '../draftFields'
-import { DEFAULT_OVERVIEW, FIELDS } from './constant'
+import { FIELDS } from './constant'
 import type { TDsbFieldMap, TDsbStoreFieldKey, TDsbTouchedFields, TInit, TStore } from './spec'
 
 const STORE_FIELD_KEYS = Object.keys(FIELDS) as TDsbStoreFieldKey[]
@@ -40,7 +39,6 @@ export default function DashboardStore(init: TInit = {}): TStore {
       loading: false,
       submenuCollapsed: false,
 
-      overview: DEFAULT_OVERVIEW,
       editingTag: null,
       settingTag: null,
       editingAlias: null,
@@ -50,11 +48,6 @@ export default function DashboardStore(init: TInit = {}): TStore {
       editingGroupIndex: null,
       docFaqSaveZone: null,
       queryingMediaReportIndex: null,
-      batchSelectedIDs: [],
-      pagedCommunities: EMPTY_PAGED_COMMUNITIES,
-      pagedPosts: EMPTY_PAGED_ARTICLES,
-      pagedDocs: EMPTY_PAGED_ARTICLES,
-      pagedChangelogs: EMPTY_PAGED_ARTICLES,
       demoAlertEnable: false,
       activeModerator: null,
       allModeratorRules: '{}',

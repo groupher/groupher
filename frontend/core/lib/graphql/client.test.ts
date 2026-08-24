@@ -27,7 +27,9 @@ vi.mock('~/auth', () => ({
   },
 }))
 
-import { createAuthFetch } from './client'
+import { parse } from 'graphql'
+
+import { browserQuery, createAuthFetch, GraphQLRequestError } from './client'
 
 describe('createAuthFetch', () => {
   afterEach(() => {
@@ -111,6 +113,34 @@ describe('createAuthFetch', () => {
 
     await expect(response.json()).resolves.toEqual({ data: { me: null } })
     expect(refreshSession).not.toHaveBeenCalled()
+    expect(fetcher).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns typed data through the same-origin browser transport', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ data: { value: 42 } }))
+    const data = await browserQuery<{ value: number }, Record<string, never>>(
+      parse('query Value { value }'),
+      {},
+      fetcher,
+    )
+
+    expect(data).toEqual({ value: 42 })
+    expect(fetcher).toHaveBeenCalledWith(
+      '/api/graphql',
+      expect.objectContaining({ method: 'POST', credentials: 'include' }),
+    )
+  })
+
+  it('throws GraphQL business errors so Query does not treat them as data', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ errors: [{ extensions: { code: 'INVALID_INPUT' }, message: 'invalid' }] }),
+      )
+
+    await expect(browserQuery(parse('mutation Save { save }'), {}, fetcher)).rejects.toBeInstanceOf(
+      GraphQLRequestError,
+    )
     expect(fetcher).toHaveBeenCalledTimes(1)
   })
 })

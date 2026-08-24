@@ -1,30 +1,16 @@
-# Post Solution：最佳回复关系设计
+# Post Solution：最佳回复关系
 
-> 状态：设计草案。本文定义目标事实和迁移原则，不表示 `PostSolution` 已实现。
+> 状态：当前实现合同。本文只描述现行事实源、命令、读取与测试边界，不包含历史数据迁移或旧 API 兼容。
 
 相关文档：
 
-- [Gate V4：资源级强类型 Context](../community/gate_v4.md)
-- [Command：复杂领域操作的组织边界](./command.md)
-- [AuditLog 与 ActivityLog](./audit_log.md)
+- [Command](./command.md)
+- [Activity V1](../activity/v1.md)
+- [Gate V4](../community/gate_v4.md)
 
-## 1. 背景
+## 1. 领域事实
 
-Groupher 当前已经支持将 Post 下的一条 Comment 标记为最佳回复。现有操作会：
-
-1. 使用 Comment 的 `:pin` Gate action 检查资源是否可写；
-2. 手工检查操作者是否为 Post 作者；
-3. 清除同一 Post 下已有的 `Comment.is_solution`；
-4. 将目标 Comment 自动置顶；
-5. 设置 `Comment.is_solution = true`；
-6. 将 Post 状态设置为 `resolved`；
-7. 将 Comment 摘要复制到 `Post.solution_digest`。
-
-现有实现具备事务、父资源状态检查、单一最佳回复和摘要同步等基础，但同一个业务事实分散在 Comment flag、PinnedComment、Post status 和 Post digest 中，且“最佳回复”和“置顶”被绑定。
-
-## 2. 核心结论
-
-最佳回复是 Post 与 Comment 之间的独立领域关系：
+最佳回复是 QA Post 与一条 Comment 之间的独立关系：
 
 ```text
 Post
@@ -32,9 +18,7 @@ Post
 Comment
 ```
 
-它不是普通 Comment update，也不是 PinnedComment，不属于 Interaction fact，也不是 ArticleLifecycle 状态。
-
-目标权威事实为：
+唯一事实源是：
 
 ```text
 PostSolution
@@ -44,222 +28,244 @@ PostSolution
   accepted_at
 ```
 
-`post_id` 必须唯一，使一篇 Post 在任意时刻最多只有一条最佳回复。Comment 必须真实属于对应 Post。
+职责划分：
 
-`PostSolution` 是窄关系：只保存“哪篇 Post 当前采纳了哪条 Comment”以及采纳责任信息，不复制 Comment 正文，不拥有 Post Lifecycle，也不保存 UI 排序状态。
+| 问题                     | 权威来源                             |
+| ------------------------ | ------------------------------------ |
+| 当前最佳回复             | `PostSolution.comment_id`            |
+| 谁在何时采纳             | `accepted_by_id` / `accepted_at`     |
+| 回复正文                 | `Comment`                            |
+| 人工置顶                 | `PinnedComment`                      |
+| Post 工作流              | `Post.status`                        |
+| Comment 是否来自 QA Post | `Comment.is_for_question` projection |
+| 历史事件                 | Activity V1 `PostLog`                |
 
-## 3. 事实源与派生字段
+不得通过 pin、Post status、摘要、Activity 或旧 Comment flag 倒推当前最佳回复。
 
-### 3.1 唯一事实源
+## 2. 数据库约束
 
-| 问题 | 权威来源 |
-| --- | --- |
-| 当前最佳回复是哪条 Comment | `PostSolution.comment_id` |
-| 谁采纳了回复 | `PostSolution.accepted_by_id` |
-| 何时采纳 | `PostSolution.accepted_at` |
-| 最佳回复正文 | `Comment` |
-| Comment 是否人工置顶 | `PinnedComment` / pin 状态 |
-| 谁何时采纳或撤销过 | `AuditLog` |
+数据库保证：
 
-不能通过 `Post.status`、`solution_digest` 或最后一条 AuditLog 反推当前最佳回复。
+- `post_solutions.post_id` 唯一，一篇 Post 最多一个当前 solution；
+- `post_solutions.comment_id` 唯一，一条 Comment 最多属于一个 solution relation；
+- `(comment_id, post_id)` 组合外键保证 Comment 属于对应 Post；
+- Post 或 Comment physical delete 时级联删除 relation；
+- User physical delete 时 `accepted_by_id` 置空。
 
-### 3.2 `Comment.is_solution`
+普通业务写入通过 `PostSolution.changeset/2` 要求完整 actor 和时间。数据库允许 actor 后续因 User 删除而变为 `nil`，不表示业务 command 可以创建匿名 relation。
 
-目标状态下不再作为持久化事实，可以保留为 Ecto/GraphQL 虚拟字段：
+## 3. 公共入口
+
+外部业务只使用：
 
 ```elixir
-field(:is_solution, :boolean, virtual: true, default: false)
+CMS.Comments.accept_solution(comment_id, actor)
+CMS.Comments.revoke_solution(comment_id, actor)
+CMS.Comments.delete_comment(comment, actor)
+CMS.Comments.update_comment(comment, body, actor)
 ```
 
-Comment Reader 在列表查询中关联 `PostSolution`，一次性映射：
+GraphQL 只暴露：
 
 ```text
-post_solutions.comment_id == comments.id
-  -> is_solution = true
+acceptSolution
+revokeSolution
 ```
 
-GraphQL 仍可返回 `isSolution`，前端不需要理解 `PostSolution`。列表必须使用 join、preload 或批量查询，禁止为每条 Comment 单独查询一次关系。
+不存在 mark/undo-mark 兼容 alias。Resolver 只适配输入和输出，不直接调用 Gate、Writer 或 `PostSolution`。
 
-### 3.3 `Post.is_solved`
+## 4. 命令与事务边界
 
-是否已解决由关系是否存在派生：
+复杂写入遵循同一条链路：
 
 ```text
-存在 PostSolution(post_id = post.id) -> is_solved = true
-否则                                  -> is_solved = false
+CMS.Comments facade
+  -> Comments.Commands.<Action>.execute
+  -> Gate.Access.with_check
+       -> MutationLock.transact_article
+            -> Repo.transact
+                 -> advisory xact lock
+                 -> canonical Load + Policy
+                 -> command callback
+            -> commit / rollback
 ```
 
-`is_solved` 可以是 Ecto/GraphQL 虚拟字段。按解决状态筛选时，Scope/Reader 使用 `EXISTS` 或 join 编译 SQL，不需要先将所有 Post 加载到内存。
+`with_check/4` callback：
 
-如果性能证据表明高频列表或统计需要物化，可以增加可重建 projection，但 projection 不是权威事实，必须与 `PostSolution` 在同一 command transaction 内更新，并提供校验或重建路径。
+- 只使用锁内重新加载的 canonical resource；
+- 只返回 `{:ok, result}` 或 `{:error, reason}`；
+- `{:error, reason}` 回滚完整 transaction；
+- 其他返回形态变成稳定的 `unexpected_callback_result`；
+- raise、throw、exit 在 rollback 后按原样传播；
+- 不得再次调用同一 aggregate 的 `Gate.access_check/3`；
+- 不得在 callback 内创建另一个业务 transaction 边界。
 
-### 3.4 `Post.solution_digest`
+create/reply 同样使用 `with_check`。它们不会保留锁外 Article、target Comment 或 root parent 作为写入依据。
 
-最佳回复摘要可由以下链路派生：
+Comments facade 保留 `article_comments_locked` 的产品错误适配；该映射不属于 Gate 通用规则。
+
+## 5. Solution transition
+
+`SolutionTransition` 是 transaction/lock 内部的共享领域步骤：
 
 ```text
-Post -> PostSolution -> Comment -> normalized digest
+current(Post)
+accept(Post, Comment, actor)
+revoke(Post, Comment, actor)
+revoke_if_current(Post, Comment, actor, operation_ref, occurred_at)
 ```
 
-目标上可以作为虚拟字段返回：
+### 5.1 Accept
 
-- Post 详情读取时关联目标 Comment；
-- 列表只有确实展示摘要时才关联；
-- Search 保存自己的可重建搜索 projection；
-- 禁止逐 Post 解析富文本或产生 N+1 查询。
+- 无 relation：创建 `PostSolution`，写 `solution_accepted`；
+- 同一 Comment 已是 solution：无副作用幂等成功；
+- 另一 Comment 是 solution：更新同一 relation，写 `solution_replaced`；
+- replacement payload 保存旧 Comment 的公开 ref。
 
-若当前 Feed、Press、Search 或列表对 `Post.solution_digest` 有明确性能依赖，可在迁移期继续将它作为 projection 保留。Comment 内容仍是正文权威，`solution_digest` 必须可重建，不能成为最佳回复关系来源。
+### 5.2 Revoke
 
-### 3.5 `Post.status = resolved`
+- 无 relation：无副作用幂等成功；
+- target 是当前 solution：删除 relation，写 `solution_revoked`；
+- target 不是当前 solution：返回 `solution_target_mismatch`，relation 不变。
 
-“已解决”不应覆盖承载其他含义的通用 Post status。目标优先返回虚拟 `is_solved`，由 `PostSolution` 派生。
+### 5.3 Delete
 
-在移除 `resolved` 前必须盘点当前 status 的完整语义和调用方：
-
-- 如果 status 只表达 solved/unsolved，可由 `PostSolution` 取代；
-- 如果 status 同时表达其他业务状态，应将 solved 维度拆开；
-- 如果列表性能确需物化，使用语义明确且可重建的 `is_solved` projection，而不是混用通用 status。
-
-### 3.6 `Comment.is_pinned`
-
-保留独立语义：
+`delete_comment` 是 soft-delete command：
 
 ```text
-Solution：作者或被授权者确认哪条回复解决了问题
-Pin：管理员希望哪条评论固定展示
+canonical Comment
+  -> 当前 solution 时原子 revoke
+  -> 删除独立 pin
+  -> Lifecycle :deleted
+  -> tombstone body
+  -> comments_count
+  -> commit
+  -> search metrics enqueue
 ```
 
-展示层可以把最佳回复排在前面，但不应通过创建普通 pin 来实现。撤销最佳回复不得取消原有人工置顶。
+删除 Comment 时移除它自己的 pin 属于删除语义，不表示 solution 与 pin 耦合。
 
-## 4. 领域操作
+当前没有 Comment soft-destroy command。`Lifecycle.transition/2` 是 command 内部 primitive，不是可以绕过 aggregate reconciliation 的业务入口。未来增加 destroy 产品能力时，必须定义自己的 relation、Activity 和 projection 合同。
 
-建议使用两个明确 action：
+Physical hard delete 由 FK cascade 清理 relation；当前没有额外的 hard-destroy Activity contract。
+
+## 6. 权限
+
+solution 使用独立 Gate action：
 
 ```text
 :accept_solution
 :revoke_solution
 ```
 
-不能继续借用 `:pin`。Gate policy 至少验证：
+当前允许条件：
 
-- actor 具备采纳或撤销权限；
-- Post 属于允许最佳回复的问答类型；
-- Comment 属于该 Post；
-- Community、Post 和 Comment Lifecycle 允许该操作；
-- target 没有被删除或永久销毁。
+- actor 已登录；
+- Community 和 Post 可写；
+- target Comment lifecycle 为 visible；
+- Post category 为 QA；
+- actor 是 Post 作者；
+- Comment 真实属于该 Post。
 
-默认产品规则可以是只有 Post 作者能够采纳；未来若允许 moderator 代为采纳，应扩展这两个 action 的 policy，而不是绕过 Gate 增加 Writer 内判断。
+Community moderator 的 solution capability 尚未接入。当前 moderator 与其他非作者一样稳定返回 `permission_denied`。
 
-## 5. Command 与事务
+## 7. 独立维度
 
-采纳不是裸字段更新，而是完整业务操作：
+Solution command 不得：
 
-```text
-AcceptSolution
-  -> 开启事务
-  -> 锁定 Post aggregate
-  -> 加载目标 Comment
-  -> Gate.access_check(actor, :accept_solution, target)
-  -> 校验 Comment/Post 归属
-  -> insert or replace PostSolution
-  -> 同步必要 projection
-  -> Audit solution.accepted / solution.replaced
-  -> commit
-  -> 提交后发送通知、更新搜索
-```
+- 创建、删除或修改普通 `PinnedComment`；
+- 覆盖 `Post.status`；
+- 写 `Comment.is_for_question`；
+- 持久化 `Comment.is_solution`；
+- 持久化 `Post.solution_digest`。
 
-撤销同理：
+因此 accept、replace 和 revoke 不会破坏人工 pin 或 Post 的 `wip`、`done` 等工作流状态。
+
+## 8. Reader projection
+
+API 保留前端需要的虚拟字段：
 
 ```text
-RevokeSolution
-  -> 锁定 Post aggregate
-  -> Gate.access_check(actor, :revoke_solution, target)
-  -> 删除当前 PostSolution
-  -> 清理或重建 projection
-  -> Audit solution.revoked
-  -> commit
+Comment.is_solution
+Post.is_solved
+Post.solution_comment_id
+Post.solution_digest
 ```
 
-整个操作必须原子完成。不得开放 `Writer.update(comment, %{is_solution: true})` 或直接插入 `PostSolution` 的业务旁路。
-
-## 6. 并发与完整性
-
-至少需要以下数据库与事务约束：
-
-- `post_id` 唯一，一篇 Post 最多一个 solution；
-- `comment_id` 根据产品规则决定是否唯一；通常一条 Comment 只能属于一个 Post，本身已能确定归属；
-- 外键或等价 changeset constraint 保证 Post、Comment 存在；
-- command 在替换/撤销时锁定所属 Post，避免并发写入产生不可预测覆盖；
-- 必须校验 Comment 的 `post_id` 与 `PostSolution.post_id` 一致，单纯两个外键不能证明归属；
-- 重复提交应定义为幂等成功或稳定 domain error，不能产生重复 Audit/Notification。
-
-## 7. 读取与前端契约
-
-前端继续消费面向产品的字段，不直接查询关系表：
-
-```graphql
-post {
-  isSolved
-  solutionDigest
-  comments {
-    entries {
-      isSolution
-      isPinned
-    }
-  }
-}
-```
-
-Reader/Resolver 负责把 `PostSolution` 关联结果映射成虚拟字段。Resolver 只做结果适配，不逐行访问数据库，也不判断权限。
-
-如果需要直接跳转到最佳回复，可额外返回稳定的 `solutionCommentId`；它同样从 `PostSolution` 派生。
-
-## 8. Audit 与 ActivityLog
-
-当前状态查 `PostSolution`，历史责任查 `AuditLog`：
+派生链路：
 
 ```text
-solution.accepted
-solution.replaced
-solution.revoked
+PostSolution.comment_id == Comment.id
+  -> Comment.is_solution
+
+Post -> PostSolution -> Comment
+  -> is_solved
+  -> solution_comment_id = Comment.inner_id
+  -> solution_digest = current Comment body digest
 ```
 
-建议 metadata 只保存必要的关联信息，例如旧/新 Comment ref；同一次替换通过一个 `operation_ref` 关联事务内记录。
+`solution_comment_id` 使用公开 Comment ref，不泄露数据库 id。Comment 正文更新后无需写 Post projection，后续 Reader 会读取当前正文。
 
-产品 UI 可通过 ActivityLog 显示：
+列表使用 join 或批量 relation 查询，一批 Comment/Post 只执行一次 solution relation 查询，禁止逐行查询。
+
+Solution 排序独立于 pin：SQL 在分页前优先当前 solution；第一页合入 pinned Comments 后，再按已 hydrate 的 `is_solution` 保持 solution 位于首位。
+
+## 9. Background job policy
+
+Comments job 使用具名 facade：
 
 ```text
-张三在 11:20 将回复 #308 标记为最佳回复
-张三在 12:10 将最佳回复从 #308 更换为 #412
+Jobs.audition
+Jobs.sync_mentions
+Jobs.notify_comment
+Jobs.notify_reply
+Jobs.subscribe_community
+Jobs.reconcile_comments_participants
 ```
 
-ActivityLog 是 AuditLog 的受控产品视图，不参与当前 solution 判断。
+必需 job：
 
-## 9. 迁移顺序
+- create/reply/update 的 audition 在 aggregate transaction 内 enqueue；
+- `{:error, changeset}` 转换为安全稳定的 `required_job_enqueue_failed`，transaction rollback；
+- DB constraint exception 不捕获，transaction rollback 后异常向上传播。
 
-1. 盘点 `is_solution`、`resolved`、`solution_digest`、pin 的所有读写调用方；
-2. 建立 `PostSolution` 和唯一性/归属约束；
-3. 建立 accept/revoke Gate action 与完整 command；
-4. 将现有最佳回复迁移为 `PostSolution`；
-5. Reader 同时读取关系并返回虚拟字段；
-6. 切换 GraphQL、Feed、Press、Search 等消费者；
-7. 停止写入 `Comment.is_solution` 和不再需要的 Post 状态；
-8. 校验关系、投影和历史数据一致性；
-9. 删除废弃字段和兼容逻辑。
+可选 job：
 
-迁移期间必须明确每个阶段的唯一权威，避免长期双写形成两个事实源。
+- mentions、notification、subscription 在 commit 后 best-effort enqueue；
+- participants count repair 在成功读取后 best-effort enqueue；
+- error、非法返回、raise、throw、exit 只记录安全分类，不泄露原始值，也不改变业务结果。
 
-## 10. 验收标准
+Comments namespace 不使用 generic `Jobs.later/1`。仓库其他模块对它的使用不属于本合同。
 
-- 一篇 Post 在数据库层最多存在一个 PostSolution；
-- solution 与 pin 完全独立；
-- `isSolution`、`isSolved` 和 `solutionDigest` 可由权威关系/内容派生；
-- Comment/Post 列表没有 N+1；
-- accept/revoke 使用独立 Gate action；
-- 非作者或未授权 moderator 不能操作；
-- Community/Post/Comment 不可写时稳定拒绝；
-- 并发采纳不会产生两个 solution；
-- 替换、撤销和重复请求有明确语义；
-- Audit 与业务变更同事务，Notification/Search 只在提交后执行；
-- 当前状态不通过 AuditLog 或 ActivityLog 倒推。
+## 10. Activity
 
+Activity V1 记录：
+
+```text
+solution_accepted
+solution_replaced
+solution_revoked
+```
+
+Activity 与 relation 变更在同一 transaction 中。Activity 只表达历史，不参与当前状态判断。
+
+自动 delete reconciliation 至少写 `solution_revoked`。当前不虚构 `comment_deleted` 或 `comment_destroyed` Activity。
+
+## 11. 验证矩阵
+
+测试必须覆盖：
+
+- accept/revoke 幂等和错误 target；
+- replacement 旧/新公开 ref；
+- pin、workflow status、question projection 独立；
+- 非 QA、非作者和不可写 lifecycle；
+- delete 当前/非当前 solution；
+- accept/replace/delete/update 并发；
+- relation 唯一与 Comment/Post 归属约束；
+- physical delete cascade；
+- callback commit、rollback、非法返回和异常传播；
+- required job 应用层 error 与数据库 exception；
+- optional job 和 read repair 不劫持业务结果；
+- Comment/Post batch projection 固定 relation 查询数；
+- GraphQL 只有 accept/revoke contract；
+- 从空数据库执行完整 migration。

@@ -21,8 +21,8 @@ defmodule GroupherServer.CMS.Model.CoverBackground do
   import Ecto.Changeset
   import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_cast_fields: 1, dsb_fields: 1]
 
-  alias Helper.Constant.DBPrefix
   alias GroupherServer.CMS.Model.BgConfigValidator
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

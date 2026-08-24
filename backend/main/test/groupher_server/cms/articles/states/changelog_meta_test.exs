@@ -54,13 +54,5 @@ defmodule GroupherServer.Test.CMS.ChangelogMeta do
 
       assert not changelog.meta.is_comment_locked
     end
-
-    # TODO:
-    # test "changelog with image should have imageCount in meta" do
-    # end
-
-    # TODO:
-    # test "changelog with video should have imageCount in meta" do
-    # end
   end
 end

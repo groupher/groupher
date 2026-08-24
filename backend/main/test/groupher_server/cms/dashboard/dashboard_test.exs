@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
   use GroupherServer.TestMate
 
+  alias GroupherServer.CMS.Model.CommunityDashboard
   alias GroupherServer.Repo
-  alias CMS.Model.CommunityDashboard
 
   @default_dashboard CommunityDashboard.default()
 

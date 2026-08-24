@@ -8,8 +8,8 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents do
       CMS.Interactions -> ViewEvents -> Record / Project / Maintenance
   """
 
-  alias GroupherServer.Accounts.Model.User
   alias __MODULE__.{Maintenance, Project, Record}
+  alias GroupherServer.Accounts.Model.User
 
   @doc """
   Records a durable Article view.

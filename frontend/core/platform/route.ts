@@ -15,7 +15,12 @@ import {
 } from '~/const/route'
 import URL_PARAM from '~/const/url_param'
 
-import type { TPlatformSearch, TRouteTarget, TDsbRouteTarget } from './context'
+import type {
+  TCommunityRouteTarget,
+  TPlatformSearch,
+  TRouteTarget,
+  TDsbRouteTarget,
+} from './context'
 
 export const DSB_SEARCH_KEYS = ['mode', 'other', ...Object.values(URL_PARAM)] as const
 
@@ -150,10 +155,10 @@ const mergeSearch = (
   options: { preserveSearch?: boolean; currentSearch?: URLSearchParams },
 ): TPlatformSearch => {
   const merged: TPlatformSearch = {}
-  const schema = dedupe([
-    ...DSB_SEARCH_KEYS,
-    ...(target.searchSchema ?? resolveSearchSchema(target.path)),
-  ])
+  const schema =
+    target.app === 'dsb'
+      ? dedupe([...DSB_SEARCH_KEYS, ...(target.searchSchema ?? resolveSearchSchema(target.path))])
+      : dedupe(target.searchSchema ?? [])
   const explicitPreserveKeys = dedupe(target.preserveSearchKeys ?? [])
   const allowedKeys = new Set([...schema, ...explicitPreserveKeys])
 
@@ -195,7 +200,7 @@ const createSection = (path: string) => {
     search?: TPlatformSearch
     searchSchema?: TSearchSchema
     preserveSearchKeys?: readonly string[]
-  }): TRouteTarget => ({
+  }): TDsbRouteTarget => ({
     app: 'dsb',
     community: input.community,
     path: trimPath(path),
@@ -206,7 +211,7 @@ const createSection = (path: string) => {
 }
 
 const createSectionWithSearch = () => {
-  return (input: TRouteMetaTarget): TRouteTarget => ({
+  return (input: TRouteMetaTarget): TDsbRouteTarget => ({
     app: 'dsb',
     community: input.community,
     path: trimPath(input.section),
@@ -234,7 +239,6 @@ export const DSB_ROUTES = {
   domain: createSection(DSB_ROUTE.DOMAIN),
   analysis: createSection(DSB_ROUTE.ANALYSIS),
   trend: createSection(DSB_ROUTE.TREND),
-  log: createSection(DSB_ROUTE.LOG),
   assets: createSection(DSB_ROUTE.ASSETS),
   tags: createSection(DSB_ROUTE.TAGS),
   post: createSection(DSB_ROUTE.POST),
@@ -291,7 +295,7 @@ export const dsbRoutes = DSB_ROUTES
 
 /** Resolves dsb route without leaking frontend shared routing details to callers. */
 export const resolveDsbRoute = (
-  target: TRouteTarget,
+  target: TDsbRouteTarget,
   options: {
     rootSegment: TDsbRouteRootSegment
     currentSearch?: URLSearchParams | string
@@ -320,7 +324,7 @@ export const resolveDsbRoute = (
 /** Reports whether active dsb route at the frontend shared boundary. */
 export const isActiveDsbRoute = (
   pathname: string,
-  target: TRouteTarget,
+  target: TDsbRouteTarget,
   rootSegment: TDsbRouteRootSegment = 'dashboard',
 ): boolean => {
   const meta = parseDsbPathname(pathname, rootSegment)
@@ -334,6 +338,36 @@ export const isActiveDsbRoute = (
   return targetPath === ''
     ? current === ''
     : current === targetPath || current.startsWith(`${targetPath}/`)
+}
+
+/** Resolves a public community route without coupling Core to a router runtime. */
+export const resolveCommunityRoute = (
+  target: TCommunityRouteTarget,
+  options: {
+    currentSearch?: URLSearchParams | string
+    preserveSearch?: boolean
+  } = {},
+): string => {
+  const path = trimPath(target.path)
+  const normalizedSegment = path.length === 0 ? '' : `/${path}`
+  const currentSearch =
+    typeof options.currentSearch === 'string'
+      ? new URLSearchParams(options.currentSearch.replace(/^\?/, ''))
+      : (options.currentSearch ?? new URLSearchParams())
+
+  return `/${target.community}${normalizedSegment}${toSearchString(
+    mergeSearch(target, { currentSearch, preserveSearch: options.preserveSearch }),
+  )}`
+}
+
+/** Reports whether a public community target owns the current pathname. */
+export const isActiveCommunityRoute = (
+  pathname: string,
+  target: TCommunityRouteTarget,
+): boolean => {
+  const current = trimPath(pathname)
+  const expected = trimPath(`${target.community}/${target.path}`)
+  return expected === current || (expected.length > 0 && current.startsWith(`${expected}/`))
 }
 
 export const DSB_ALLOWED_SEARCH_KEYS: readonly string[] = DSB_SEARCH_KEYS

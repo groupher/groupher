@@ -1,4 +1,5 @@
 defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
+  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -7,12 +8,14 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   import Ecto.Query, warn: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
+  alias GroupherServer.CMS.DocTree.Writer.Index
   alias GroupherServer.Repo
-  alias CMS.DocTree.Writer.Index
 
-  alias CMS.Model.{
-    DocBranch,
+  alias GroupherServer.CMS.Communities.Lifecycle
+
+  alias GroupherServer.CMS.Model.{
     Doc,
+    DocBranch,
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode
@@ -30,7 +33,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       {:ok, tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       {:ok, _blocker} =
-        CMS.Communities.Lifecycle.apply_blocker(
+        Lifecycle.apply_blocker(
           community.slug,
           %{blocker_type: :moderation_suspend, cause_code: "review_pending"},
           operation_ref: Ecto.UUID.generate()
@@ -708,7 +711,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
         })
 
       {:ok, link_event} = tree_create_event(community, link_payload.node.id)
-      assert link_event.status == CMS.Const.tree_event_status(:staged)
+      assert link_event.status == CMS.DocTree.Const.tree_event_status(:staged)
 
       assert {:ok, _delete_payload} =
                CMS.DocTree.delete_node(community, group.id, %{
@@ -717,7 +720,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
                })
 
       {:ok, link_event} = ORM.find(DocTreeEvent, link_event.id)
-      assert link_event.status == CMS.Const.tree_event_status(:discarded)
+      assert link_event.status == CMS.DocTree.Const.tree_event_status(:discarded)
       refute tree_delete_event_exists?(community, group.id)
     end
   end
@@ -740,8 +743,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   end
 
   defp doc_owned_create_event(community, node_id) do
-    doc_owner = CMS.Const.tree_event_owner(:doc)
-    node_create = CMS.Const.tree_event(:node_create)
+    doc_owner = CMS.DocTree.Const.tree_event_owner(:doc)
+    node_create = CMS.DocTree.Const.tree_event(:node_create)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -760,8 +763,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   end
 
   defp tree_create_event(community, node_id) do
-    tree_owner = CMS.Const.tree_event_owner(:tree)
-    node_create = CMS.Const.tree_event(:node_create)
+    tree_owner = CMS.DocTree.Const.tree_event_owner(:tree)
+    node_create = CMS.DocTree.Const.tree_event(:node_create)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -779,8 +782,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   end
 
   defp tree_move_event(community, node_id) do
-    tree_owner = CMS.Const.tree_event_owner(:tree)
-    node_move = CMS.Const.tree_event(:node_move)
+    tree_owner = CMS.DocTree.Const.tree_event_owner(:tree)
+    node_move = CMS.DocTree.Const.tree_event(:node_move)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -798,9 +801,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   end
 
   defp tree_delete_event_exists?(community, node_id) do
-    tree_owner = CMS.Const.tree_event_owner(:tree)
-    staged = CMS.Const.tree_event_status(:staged)
-    node_delete = CMS.Const.tree_event(:node_delete)
+    tree_owner = CMS.DocTree.Const.tree_event_owner(:tree)
+    staged = CMS.DocTree.Const.tree_event_status(:staged)
+    node_delete = CMS.DocTree.Const.tree_event(:node_delete)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)

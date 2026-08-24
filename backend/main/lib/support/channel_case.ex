@@ -19,6 +19,7 @@ defmodule GroupherServerWeb.ChannelCase do
         -> endpoint / fixture / Repo
   """
 
+  alias Ecto.Adapters.SQL.Sandbox
   use ExUnit.CaseTemplate
 
   using do
@@ -32,10 +33,10 @@ defmodule GroupherServerWeb.ChannelCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(GroupherServer.Repo)
+    :ok = Sandbox.checkout(GroupherServer.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(GroupherServer.Repo, {:shared, self()})
+      Sandbox.mode(GroupherServer.Repo, {:shared, self()})
     end
 
     :ok

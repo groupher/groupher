@@ -1,4 +1,5 @@
 defmodule Helper.TestFakes.SearchArtimentsQueue do
+  alias GroupherServer.CMS.SearchArtiments.Indexer
   @moduledoc false
 
   @behaviour GroupherServer.CMS.SearchArtiments.QueueAdapter
@@ -21,15 +22,16 @@ defmodule Helper.TestFakes.SearchArtimentsQueue do
   def drain do
     jobs = jobs()
     reset()
+
     Enum.map(jobs, fn
       {:upsert_article, thread, article_id} ->
-        GroupherServer.CMS.SearchArtiments.Indexer.upsert_article(thread, article_id)
+        Indexer.upsert_article(thread, article_id)
 
       {:sync_article_metrics, thread, article_id} ->
-        GroupherServer.CMS.SearchArtiments.Indexer.sync_article_metrics(thread, article_id)
+        Indexer.sync_article_metrics(thread, article_id)
 
       {:delete_article, thread, article_hash_id} ->
-        GroupherServer.CMS.SearchArtiments.Indexer.delete_article(thread, article_hash_id)
+        Indexer.delete_article(thread, article_hash_id)
     end)
   end
 

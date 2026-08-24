@@ -43,10 +43,7 @@ defmodule GroupherServer.Support.FakeData do
 
   @doc "Builds a randomized sentence containing the requested number of fixture words."
   def sentence(word_count \\ 10) when is_integer(word_count) and word_count > 0 do
-    words =
-      1..word_count
-      |> Enum.map(fn _ -> pick(@words) end)
-      |> Enum.join(" ")
+    words = Enum.map_join(1..word_count, " ", fn _ -> pick(@words) end)
 
     "#{String.capitalize(words)}."
   end

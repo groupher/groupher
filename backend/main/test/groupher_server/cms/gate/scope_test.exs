@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   use GroupherServer.TestMate, async: false
 
   import Ecto.Query
-  alias CMS.Model.{
+
+  alias GroupherServer.CMS.Model.{
     ArticleDocument,
     Blog,
     Changelog,
@@ -14,14 +15,36 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     Post
   }
 
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias CMS.Gate.Context.Scope.Document, as: DocumentScope
+  alias Ecto.Adapters.SQL
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Document, as: DocumentScope
 
   test "Comment all-thread scope is constructed only by all_public" do
     assert_raise FunctionClauseError, fn -> apply(CommentScope, :for_thread, [:all]) end
 
     assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
+  end
+
+  test "Comment thread scope validates Doc branch and policy coordinates" do
+    assert %CommentScope{thread: :doc, branch_policy: :main} =
+             CommentScope.for_thread(:doc, branch_policy: :main)
+
+    assert_raise ArgumentError, ~r/requires branch_policy/, fn ->
+      CommentScope.for_thread(:doc)
+    end
+
+    assert_raise ArgumentError, ~r/only accepts branch_policy/, fn ->
+      CommentScope.for_thread(:doc, branch_policy: :preview)
+    end
+
+    assert_raise ArgumentError, ~r/only Doc Comment scope/, fn ->
+      CommentScope.for_thread(:post, branch_policy: :main)
+    end
+
+    assert_raise ArgumentError, ~r/invalid Comment scope policy mode/, fn ->
+      CommentScope.for_thread(:post, policy_mode: :unknown)
+    end
   end
 
   test "Comment scope uses stable community_id and accepts an optional thread coordinate" do
@@ -61,6 +84,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, nil, :read, %{})
+  end
+
+  test "Scope rejects an unknown Context struct as a root mismatch" do
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read, %GroupherServer.Accounts.Model.User{})
   end
 
   test "ArticleDocument scope compiles every parent table" do
@@ -147,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     for query <- queries do
       {sql, params} = to_sql(query)
-      result = Ecto.Adapters.SQL.query!(Repo, "EXPLAIN " <> sql, params)
+      result = SQL.query!(Repo, "EXPLAIN " <> sql, params)
 
       assert result.rows != []
       assert Enum.all?(result.rows, fn [line] -> is_binary(line) end)
@@ -207,7 +235,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     refute Enum.any?(hidden_comments, &(&1.id == comment.id))
   end
 
-  defp to_sql(query), do: Ecto.Adapters.SQL.to_sql(:all, Repo, query)
+  defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   defp article_schemas,
     do: [post: Post, blog: Blog, changelog: Changelog, doc: Doc]

@@ -1,19 +1,21 @@
 'use client'
 
 import NextImage from 'next/image'
-import NextLink from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import NextScript from 'next/script'
 import { type ComponentType, type ReactNode, useMemo } from 'react'
 
 import {
   isActiveDsbRoute,
+  isActiveCommunityRoute,
   PlatformProvider,
+  resolveCommunityRoute,
   resolveDsbRoute,
   type TPlatformImageProps,
-  type TPlatformLinkProps,
   type TPlatformScriptProps,
 } from '~/platform'
+
+import MainPlatformLink from './Link'
 
 type TProps = {
   children: ReactNode
@@ -37,11 +39,20 @@ export default function NextPlatformProvider({ children }: TProps) {
         searchParams: searchParamsObj,
       },
       to: (target, options) => {
-        const href = resolveDsbRoute(target, {
-          rootSegment: 'dashboard',
-          currentSearch: searchParamsObj,
-          preserveSearch: options?.preserveSearch,
-        })
+        const href =
+          target.app === 'community'
+            ? resolveCommunityRoute(target, {
+                currentSearch: searchParamsObj,
+                preserveSearch: options?.preserveSearch,
+              })
+            : target.app === 'dsb'
+              ? resolveDsbRoute(target, {
+                  rootSegment: 'dashboard',
+                  currentSearch: searchParamsObj,
+                  preserveSearch: options?.preserveSearch,
+                })
+              : null
+        if (!href) return
         if (options?.replace) {
           void router.replace(href)
         } else {
@@ -66,7 +77,10 @@ export default function NextPlatformProvider({ children }: TProps) {
       prefetch: async (href) => {
         await router.prefetch(href)
       },
-      isActive: (target) => isActiveDsbRoute(pathname, target, 'dashboard'),
+      isActive: (target) =>
+        target.app === 'community'
+          ? isActiveCommunityRoute(pathname, target)
+          : target.app === 'dsb' && isActiveDsbRoute(pathname, target, 'dashboard'),
     }
   }, [pathname, search, router])
 
@@ -76,7 +90,7 @@ export default function NextPlatformProvider({ children }: TProps) {
         navi,
         components: {
           Image: NextImage as ComponentType<TPlatformImageProps>,
-          Link: NextLink as ComponentType<TPlatformLinkProps>,
+          Link: MainPlatformLink,
           Script: NextScript as ComponentType<TPlatformScriptProps>,
         },
       }}

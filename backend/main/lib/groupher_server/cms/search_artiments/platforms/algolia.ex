@@ -134,11 +134,13 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   defp decode_hits(hits) do
     Enum.reduce_while(hits, {:ok, []}, fn hit, {:ok, acc} ->
-      with {:ok, artiment} <- Artiment.from_platform_map(hit) do
-        entry = %{artiment: artiment, highlights: decode_highlights(hit["_highlightResult"])}
-        {:cont, {:ok, [entry | acc]}}
-      else
-        error -> {:halt, error}
+      case Artiment.from_platform_map(hit) do
+        {:ok, artiment} ->
+          entry = %{artiment: artiment, highlights: decode_highlights(hit["_highlightResult"])}
+          {:cont, {:ok, [entry | acc]}}
+
+        error ->
+          {:halt, error}
       end
     end)
     |> case do
@@ -181,8 +183,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   defp any_of(field, values) do
     values
-    |> Enum.map(&equality(field, &1))
-    |> Enum.join(" OR ")
+    |> Enum.map_join(" OR ", &equality(field, &1))
     |> then(&"(#{&1})")
   end
 
@@ -240,9 +241,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
       case request(method, path, body, :admin_api_key, false) do
         {:ok, response} when is_map(response) ->
           with :ok <- validate_object_ids(response, Keyword.get(opts, :expected_object_ids)),
-               {:ok, task_id} <- fetch_task_id(response),
-               :ok <- maybe_wait_for_task(task_id, Keyword.get(opts, :wait_for_task, false)) do
-            :ok
+               {:ok, task_id} <- fetch_task_id(response) do
+            maybe_wait_for_task(task_id, Keyword.get(opts, :wait_for_task, false))
           end
 
         :ok ->

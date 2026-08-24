@@ -1,6 +1,7 @@
 defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   @moduledoc false
   use GroupherServer.TestMate
+  alias GroupherServer.Accounts.Profiles.ErrorCat
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])
@@ -49,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              |> mutation_error?(
                S.Article.m(:upvote_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
 
@@ -103,7 +104,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
              |> mutation_error?(
                S.Article.m(:undo_upvote_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ErrorCat.account_login())
              )
     end
   end

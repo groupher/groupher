@@ -64,7 +64,8 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :scope_context_missing,
     :unknown_policy_mode,
     :scope_policy_actor_mismatch,
-    :unsupported_resource
+    :unsupported_resource,
+    :solution_not_supported
   ]
 
   @priority [
@@ -86,7 +87,8 @@ defmodule GroupherServer.CMS.Gate.Decision do
     :article_comments_locked,
     :permission_denied,
     :unknown_action,
-    :lifecycle_not_loaded
+    :lifecycle_not_loaded,
+    :solution_not_supported
   ]
 
   @doc "Builds an allowed Decision with the supplied internal context."
@@ -170,6 +172,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
        do: :lifecycle
 
   defp source(:article_comments_locked), do: :policy
+  defp source(:solution_not_supported), do: :policy
   defp source(reason) when reason in [:scope_root_mismatch, :scope_binding_conflict], do: :scope
   defp source(:scope_context_missing), do: :scope
   defp source(:unknown_policy_mode), do: :scope

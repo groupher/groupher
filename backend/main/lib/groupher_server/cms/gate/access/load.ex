@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
   alias GroupherServer.CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Model.Comment, as: CommentModel
+  alias GroupherServer.Repo
 
   alias GroupherServer.CMS.Model.{
     ArticleLifecycle,
@@ -29,6 +30,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     DocBranch,
     DocLifecycle
   }
+
+  alias GroupherServer.CMS.Gate.Config
+
+  @article_threads Config.ordinary_article_threads()
 
   @doc false
   def community(%Community{} = community) do
@@ -54,6 +59,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
       when community_id == community.id and not is_nil(branch_id) do
     with {:ok, %{model: model}} <- Matcher.match_interaction(:doc),
          canonical when not is_nil(canonical) <- Queries.resource(model, resource.id),
+         canonical <- preload_author(canonical),
          true <- same_doc_identity?(canonical, resource),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
@@ -83,9 +89,10 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
         thread,
         %{community_id: community_id, article_hash_id: hash_id} = resource
       )
-      when thread in [:post, :blog, :changelog] and community_id == community.id do
+      when thread in @article_threads and community_id == community.id do
     with {:ok, %{model: model}} <- Matcher.match_interaction(thread),
          canonical when not is_nil(canonical) <- Queries.resource(model, resource.id),
+         canonical <- preload_author(canonical),
          true <- same_article_identity?(canonical, resource),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <-
@@ -119,6 +126,8 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
          comment_lifecycle: comment_lifecycle,
          article: parent_resource(parent_context),
          article_lifecycle: parent_lifecycle(parent_context),
+         article_author_user_id: article_author_user_id(parent_context),
+         article_cat: article_cat(parent_context),
          community: parent_context.community,
          community_lifecycle: parent_context.community_lifecycle
        }}
@@ -135,6 +144,18 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   defp parent_lifecycle(%Article{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%Doc{doc_lifecycle: lifecycle}), do: lifecycle
 
+  defp preload_author(resource), do: Repo.preload(resource, author: :user)
+
+  defp article_author_user_id(parent_context) do
+    case parent_resource(parent_context) do
+      %{author: %{user_id: user_id}} -> user_id
+      %{author: %{user: %{id: user_id}}} -> user_id
+      _ -> nil
+    end
+  end
+
+  defp article_cat(parent_context), do: Map.get(parent_resource(parent_context), :cat)
+
   defp same_article_identity?(canonical, input) do
     canonical.community_id == input.community_id and
       canonical.article_hash_id == input.article_hash_id
@@ -145,12 +166,14 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   end
 
   defp same_comment_identity?(canonical, input, article, community, thread) do
-    with {:ok, %{foreign_key: foreign_key}} <- Matcher.match_interaction(thread) do
-      canonical.community_id == community.id and canonical.thread == thread and
-        canonical.article_hash_id == article.article_hash_id and
-        Map.get(canonical, foreign_key) == article.id and canonical.id == input.id
-    else
-      _ -> false
+    case Matcher.match_interaction(thread) do
+      {:ok, %{foreign_key: foreign_key}} ->
+        canonical.community_id == community.id and canonical.thread == thread and
+          canonical.article_hash_id == article.article_hash_id and
+          Map.get(canonical, foreign_key) == article.id and canonical.id == input.id
+
+      _ ->
+        false
     end
   end
 end

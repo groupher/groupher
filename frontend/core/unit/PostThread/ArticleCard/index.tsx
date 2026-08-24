@@ -39,16 +39,12 @@ const ArticleCard: FC<TProps> = ({ data }) => {
         className={s.titleLink}
         scroll={false}
         href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
-        data-preview-id={String(innerId)}
+        previewId={innerId}
       >
         {title}
       </Link>
 
-      <Link
-        scroll={false}
-        href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
-        data-preview-id={String(innerId)}
-      >
+      <Link scroll={false} href={`/${slug}/${THREAD_PATH.POST}/${innerId}`} previewId={innerId}>
         {cutRest(digest, 150)}
       </Link>
 

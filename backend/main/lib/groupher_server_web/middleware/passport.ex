@@ -44,13 +44,13 @@ defmodule GroupherServerWeb.Middleware.Passport do
   import Helper.Utils
   alias GroupherServer.ErrorCat
 
-  alias GroupherServer.FrontDesk
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.FrontDesk
 
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
+  def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
   end
 
@@ -69,8 +69,11 @@ defmodule GroupherServerWeb.Middleware.Passport do
     case Registry.requirement(action) do
       {:ok, requirement} ->
         case maybe_put_article_path(resolution, opts) do
-          {:ok, resolution} -> check_requirement(resolution, requirement)
-          {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} -> invalid_article_path(resolution)
+          {:ok, resolution} ->
+            check_requirement(resolution, requirement)
+
+          {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} ->
+            invalid_article_path(resolution)
         end
 
       {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
@@ -105,7 +108,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
       # Passport runs before article loading, so it can only prepare the public
       # locator for permission checks. It must not load the article here.
       case ArticlePath.parse_arguments(arguments, Keyword.take(opts, [:thread])) do
-        {:ok, arguments} -> {:ok, %{resolution | arguments: arguments}}
+        {:ok, arguments} ->
+          {:ok, %{resolution | arguments: arguments}}
+
         {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path} = error} ->
           {:error, error}
       end
@@ -169,9 +174,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   end
 
   defp check_scope_permission(passport, resolution, %{scope: :global} = requirement) do
-    with {:ok, grant} <- resolve_grant(requirement, resolution) do
-      has_global_permission?(passport, grant)
-    else
+    case resolve_grant(requirement, resolution) do
+      {:ok, grant} -> has_global_permission?(passport, grant)
       _ -> false
     end
   end

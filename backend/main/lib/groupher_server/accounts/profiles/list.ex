@@ -17,13 +17,11 @@ defmodule GroupherServer.Accounts.Profiles.List do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
   import ShortMaps
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Fans
-  alias Accounts.Model.User
-  alias CMS.Model.{Community, CommunitySubscriber}
-  alias Helper.{ORM, QueryBuilder}
+  alias GroupherServer.Accounts.Fans
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.QueryBuilder
+  alias GroupherServer.CMS.Model.{Community, CommunitySubscriber}
+  alias Helper.ORM
 
   @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()
 
@@ -39,7 +37,11 @@ defmodule GroupherServer.Accounts.Profiles.List do
     filter = Map.merge(filter, %{size: @default_subscribed_communities, category: "pl"})
 
     with {:ok, home_community} <- ORM.find_by(Community, slug: "home"),
-         {:ok, paged_communities} <- ORM.find_all(Community, filter) do
+         {:ok, paged_communities} <-
+           Community
+           |> QueryBuilder.filter_pack(filter)
+           |> ORM.paginator(page: filter.page, size: filter.size)
+           |> done() do
       %{
         entries: paged_communities.entries ++ [home_community],
         page_number: paged_communities.page_number,

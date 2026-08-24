@@ -34,8 +34,13 @@ const pagedCommentReplies = graphql(`
 const createComment = graphql(`
   mutation CreateComment($article: ArticlePathInput!, $body: String!) {
     createComment(article: $article, body: $body) {
-      innerId
-      bodyHtml
+      comment {
+        ...CommentFields
+      }
+      article {
+        innerId
+        commentsCount
+      }
     }
   }
 `)
@@ -79,8 +84,16 @@ const oneComment = graphql(`
 const replyComment = graphql(`
   mutation ReplyComment($comment: CommentPathInput!, $body: String!) {
     replyComment(comment: $comment, body: $body) {
-      innerId
-      bodyHtml
+      comment {
+        ...CommentFields
+        replyToComment {
+          ...CommentFields
+        }
+      }
+      article {
+        innerId
+        commentsCount
+      }
     }
   }
 `)

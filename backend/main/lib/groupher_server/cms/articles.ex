@@ -20,11 +20,11 @@ defmodule GroupherServer.CMS.Articles do
 
   alias Helper.T
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
 
-  alias Accounts.Model.User
-  alias CMS.Artiment.Enums
-  alias CMS.Model.Community
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Const
+  alias GroupherServer.CMS.Model.Community
 
   alias __MODULE__.{
     Draft,
@@ -229,11 +229,11 @@ defmodule GroupherServer.CMS.Articles do
 
   # Meta
 
-  @spec set_cat(T.article(), Enums.cat_enum() | nil) :: T.domain_res(T.article())
+  @spec set_cat(T.article(), Const.cat_enum() | nil) :: T.domain_res(T.article())
   @doc "Runs `set_cat` through the public `Articles` boundary."
   def set_cat(article, cat), do: States.set_cat(article, cat)
 
-  @spec set_status(T.article(), Enums.status_enum() | nil) :: T.domain_res(T.article())
+  @spec set_status(T.article(), Const.status_enum() | nil) :: T.domain_res(T.article())
   @doc "Runs `set_status` through the public `Articles` boundary."
   def set_status(article, status), do: States.set_status(article, status)
 

@@ -1,0 +1,21 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "groupher-community",
+  "main": "@tanstack/react-start/server-entry",
+  "compatibility_date": "2026-08-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "GRAPHQL_ENDPOINT": "http://api.groupher.localhost:4001/graphiql"
+  },
+  "env": {
+    "production": {
+      "routes": [],
+      "vars": {
+        "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
+      }
+    }
+  },
+  "routes": [{ "pattern": "community.groupher.com", "custom_domain": true }],
+  "observability": { "enabled": true }
+}

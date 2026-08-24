@@ -3,9 +3,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
   Explicit read intent for ordinary Article queries.
 
   Ordinary Articles carry a thread and stage but never a Doc branch selector.
-  The compiler owns SQL visibility and actor validation.
+  The Scope query implementation owns SQL visibility and actor validation.
 
-      Reader -> Article scope context -> Gate.scope -> Article compiler
+      Reader -> Article scope context -> Gate.scope -> Article Scope query
 
   Examples:
 
@@ -13,7 +13,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
       iex> %__MODULE__{thread: :post, stage: :draft} = draft(:post)
   """
 
-  @threads [:post, :blog, :changelog]
+  alias GroupherServer.CMS.Gate.Config
+
+  @threads Config.ordinary_article_threads()
   @modes [:public, :owner_management, :moderator_management, :operations]
   @enforce_keys [:thread, :stage, :policy_mode]
   defstruct [:thread, :stage, :policy_mode, include_illegal: false]

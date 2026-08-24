@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.Articles.Reader do
+  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Reader helpers for articles.
 
@@ -15,26 +16,29 @@ defmodule GroupherServer.CMS.Articles.Reader do
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
 
-  alias Accounts.Model.User
-  alias CMS.{Interactions}
-  alias CMS.Articles.InteractionResponse
-  alias CMS.Gate.Scope
-  alias CMS.Articles.ErrorCat
-  alias CMS.Communities.Enable
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Model.{Community, DocBranch, PinnedArticle}
-  alias Helper.{Multi, Constant, Datetime, ORM, T}
+  alias GroupherServer.Accounts.Model.User
 
-  require CMS.Const
+  alias GroupherServer.CMS.{
+    Interactions
+  }
+
+  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS.Articles.InteractionResponse
+  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Gate.Scope
+  alias GroupherServer.CMS.Model.{Community, DocBranch, PinnedArticle}
+  alias Helper.{Datetime, Multi, ORM, T}
+
 
   @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
   @threads GroupherServer.CMS.Artiment.Config.threads()
-  @audit_legal Constant.CMS.pending(:legal)
-  @audit_illegal Constant.CMS.pending(:illegal)
-  @audit_failed Constant.CMS.pending(:audit_failed)
+  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Reads one article by community, thread, and inner id for an anonymous viewer.
@@ -143,7 +147,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   defp public_scope_context(community_id, :doc) do
     case Repo.get_by(DocBranch,
            community_id: community_id,
-           type: CMS.Const.doc_branch_type(:main)
+           type: CMS.Docs.Const.doc_branch_type(:main)
          ) do
       %DocBranch{id: branch_id} ->
         {:ok, DocScope.public_branch(branch_id)}

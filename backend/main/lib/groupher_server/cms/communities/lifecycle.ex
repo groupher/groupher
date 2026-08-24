@@ -1,4 +1,7 @@
 defmodule GroupherServer.CMS.Communities.Lifecycle do
+  require GroupherServer.CMS.Communities.Const
+  require GroupherServer.CMS.Communities.Const
+
   @moduledoc """
   State, blocker and capability authority for Community availability.
 
@@ -13,12 +16,12 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Const
-  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
-  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
+  alias GroupherServer.{Activity, Repo}
+  alias GroupherServer.Activity.Model.CommunityLog
   alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias Helper.Constant
+  alias GroupherServer.CMS.Communities.Const
+  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
+  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   require Const
 
@@ -185,56 +188,63 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   def transition(community_ref, state, opts \\ []) when is_atom(state) do
     Repo.transaction(fn ->
       lifecycle = lock_for_transition(community_ref)
-
-      if is_nil(lifecycle) do
-        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
-      else
-        expected_version = Keyword.get(opts, :expected_version)
-
-        if expected_version && lifecycle.version != expected_version do
-          Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
-        else
-          if state != :__reconcile__ and not allowed_transition?(lifecycle.state, state) do
-            Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
-          else
-            attrs = Keyword.get(opts, :attrs, %{})
-
-            operation_ref =
-              if state == :__reconcile__ do
-                nil
-              else
-                resolve_operation_ref!(Keyword.get(opts, :operation_ref))
-              end
-
-            case update_lifecycle(lifecycle, state, attrs) do
-              {:ok, updated} ->
-                if state == :__reconcile__ do
-                  updated
-                else
-                  audit_action = Keyword.get(opts, :audit_action)
-
-                  if is_binary(audit_action) do
-                    case write_audit(
-                           updated,
-                           operation_ref,
-                           audit_action,
-                           %{from_state: lifecycle.state, to_state: updated.state}
-                         ) do
-                      {:ok, _audit} -> updated
-                      {:error, reason} -> Repo.rollback(reason)
-                    end
-                  else
-                    Repo.rollback(CommunityErrorCat.missing_lifecycle_audit_action())
-                  end
-                end
-
-              {:error, reason} ->
-                Repo.rollback(reason)
-            end
-          end
-        end
-      end
+      transition_locked(lifecycle, state, opts)
     end)
+  end
+
+  defp transition_locked(nil, _state, _opts),
+    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+
+  defp transition_locked(lifecycle, state, opts) do
+    case transition_preconditions(lifecycle, state, opts) do
+      {:ok, operation_ref} -> apply_transition(lifecycle, state, opts, operation_ref)
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp transition_preconditions(lifecycle, state, opts) do
+    expected_version = Keyword.get(opts, :expected_version)
+
+    cond do
+      expected_version && lifecycle.version != expected_version ->
+        {:error, CommunityErrorCat.lifecycle_state_conflict()}
+
+      state != :__reconcile__ and not allowed_transition?(lifecycle.state, state) ->
+        {:error, CommunityErrorCat.lifecycle_state_conflict()}
+
+      state == :__reconcile__ ->
+        {:ok, nil}
+
+      true ->
+        {:ok, resolve_operation_ref!(Keyword.get(opts, :operation_ref))}
+    end
+  end
+
+  defp apply_transition(lifecycle, state, opts, operation_ref) do
+    case update_lifecycle(lifecycle, state, Keyword.get(opts, :attrs, %{})) do
+      {:ok, updated} -> audit_transition(lifecycle, updated, state, opts, operation_ref)
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp audit_transition(_lifecycle, updated, :__reconcile__, _opts, _operation_ref), do: updated
+
+  defp audit_transition(lifecycle, updated, _state, opts, operation_ref) do
+    case Keyword.get(opts, :audit_action) do
+      audit_action when is_binary(audit_action) ->
+        case write_audit(
+               updated,
+               operation_ref,
+               audit_action,
+               %{from_state: lifecycle.state, to_state: updated.state}
+             ) do
+          {:ok, _audit} -> updated
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+      _ ->
+        Repo.rollback(CommunityErrorCat.missing_lifecycle_audit_action())
+    end
   end
 
   @doc "Creates or returns the active blocker for one source and recomputes state atomically."
@@ -245,37 +255,39 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
       opts = Keyword.put(opts, :operation_ref, operation_ref)
       lifecycle = lock_for_transition_or_bootstrap(community_ref, opts)
-
-      if is_nil(lifecycle) do
-        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
-      else
-        ensure_not_destroyed!(lifecycle)
-        ensure_expected_version!(lifecycle, opts)
-        ensure_state_allowed!(lifecycle, Keyword.get(opts, :allowed_states))
-
-        attrs =
-          Map.merge(%{lifecycle_id: lifecycle.id, community_id: lifecycle.community_id}, attrs)
-
-        case active_blocker(attrs) do
-          %CommunityLifecycleBlocker{} = blocker ->
-            blocker
-
-          nil ->
-            with {:ok, blocker} <- insert_blocker(attrs, opts),
-                 {:ok, _lifecycle} <-
-                   recompute_locked(
-                     lifecycle,
-                     opts,
-                     "community.blocker_created",
-                     %{blocker_type: blocker.blocker_type, cause_ref: blocker.cause_ref}
-                   ) do
-              blocker
-            else
-              {:error, reason} -> Repo.rollback(reason)
-            end
-        end
-      end
+      apply_blocker_locked(lifecycle, attrs, opts)
     end)
+  end
+
+  defp apply_blocker_locked(nil, _attrs, _opts),
+    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+
+  defp apply_blocker_locked(lifecycle, attrs, opts) do
+    ensure_not_destroyed!(lifecycle)
+    ensure_expected_version!(lifecycle, opts)
+    ensure_state_allowed!(lifecycle, Keyword.get(opts, :allowed_states))
+
+    attrs = Map.merge(%{lifecycle_id: lifecycle.id, community_id: lifecycle.community_id}, attrs)
+
+    case active_blocker(attrs) do
+      %CommunityLifecycleBlocker{} = blocker -> blocker
+      nil -> insert_and_recompute_blocker(lifecycle, attrs, opts)
+    end
+  end
+
+  defp insert_and_recompute_blocker(lifecycle, attrs, opts) do
+    with {:ok, blocker} <- insert_blocker(attrs, opts),
+         {:ok, _lifecycle} <-
+           recompute_locked(
+             lifecycle,
+             opts,
+             "community.blocker_created",
+             %{blocker_type: blocker.blocker_type, cause_ref: blocker.cause_ref}
+           ) do
+      blocker
+    else
+      {:error, reason} -> Repo.rollback(reason)
+    end
   end
 
   @doc "Releases one active blocker owned by its source and recomputes state atomically."
@@ -286,56 +298,68 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
       opts = Keyword.put(opts, :operation_ref, operation_ref)
       lifecycle = lock_for_transition(community_ref)
-
-      if is_nil(lifecycle) do
-        Repo.rollback(CommunityErrorCat.lifecycle_not_found())
-      else
-        ensure_not_destroyed!(lifecycle)
-        ensure_expected_version!(lifecycle, opts)
-
-        blocker =
-          CommunityLifecycleBlocker
-          |> where(
-            [blocker],
-            blocker.lifecycle_id == ^lifecycle.id and blocker.blocker_type == ^type and
-              is_nil(blocker.ended_at)
-          )
-          |> maybe_cause_ref(cause_ref)
-          |> Repo.one()
-
-        if is_nil(blocker) do
-          Repo.rollback(CommunityErrorCat.blocker_not_found())
-        else
-          if Keyword.get(opts, :check_recover_until, false) and
-               not recovery_window_active?(blocker, DateTime.utc_now(:second)) do
-            Repo.rollback(CommunityErrorCat.archive_recovery_window_expired())
-          end
-
-          now = DateTime.utc_now(:second)
-
-          with {:ok, blocker} <-
-                 blocker
-                 |> CommunityLifecycleBlocker.changeset(%{
-                   ended_at: now,
-                   end_type:
-                     Keyword.get(opts, :end_type, Const.lifecycle_blocker_end_type(:released)),
-                   ended_by_operation_ref: operation_ref
-                 })
-                 |> Repo.update(),
-               {:ok, _lifecycle} <-
-                 recompute_locked(
-                   lifecycle,
-                   opts,
-                   "community.blocker_released",
-                   %{blocker_type: blocker.blocker_type, cause_ref: blocker.cause_ref}
-                 ) do
-            blocker
-          else
-            {:error, reason} -> Repo.rollback(reason)
-          end
-        end
-      end
+      release_blocker_locked(lifecycle, type, cause_ref, opts)
     end)
+  end
+
+  defp release_blocker_locked(nil, _type, _cause_ref, _opts),
+    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+
+  defp release_blocker_locked(lifecycle, type, cause_ref, opts) do
+    ensure_not_destroyed!(lifecycle)
+    ensure_expected_version!(lifecycle, opts)
+
+    blocker = find_active_blocker(lifecycle, type, cause_ref)
+
+    if is_nil(blocker) do
+      Repo.rollback(CommunityErrorCat.blocker_not_found())
+    else
+      ensure_recovery_window!(blocker, opts)
+      release_blocker_record(lifecycle, blocker, opts)
+    end
+  end
+
+  defp find_active_blocker(lifecycle, type, cause_ref) do
+    CommunityLifecycleBlocker
+    |> where(
+      [blocker],
+      blocker.lifecycle_id == ^lifecycle.id and blocker.blocker_type == ^type and
+        is_nil(blocker.ended_at)
+    )
+    |> maybe_cause_ref(cause_ref)
+    |> Repo.one()
+  end
+
+  defp ensure_recovery_window!(blocker, opts) do
+    if Keyword.get(opts, :check_recover_until, false) and
+         not recovery_window_active?(blocker, DateTime.utc_now(:second)) do
+      Repo.rollback(CommunityErrorCat.archive_recovery_window_expired())
+    end
+  end
+
+  defp release_blocker_record(lifecycle, blocker, opts) do
+    now = DateTime.utc_now(:second)
+    operation_ref = Keyword.fetch!(opts, :operation_ref)
+
+    with {:ok, blocker} <-
+           blocker
+           |> CommunityLifecycleBlocker.changeset(%{
+             ended_at: now,
+             end_type: Keyword.get(opts, :end_type, Const.lifecycle_blocker_end_type(:released)),
+             ended_by_operation_ref: operation_ref
+           })
+           |> Repo.update(),
+         {:ok, _lifecycle} <-
+           recompute_locked(
+             lifecycle,
+             opts,
+             "community.blocker_released",
+             %{blocker_type: blocker.blocker_type, cause_ref: blocker.cause_ref}
+           ) do
+      blocker
+    else
+      {:error, reason} -> Repo.rollback(reason)
+    end
   end
 
   @doc "Creates the owner's destroy-request blocker and projects the Community to archived."
@@ -386,21 +410,12 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       blockers = active_blockers(lifecycle.id)
       ensure_destroy_allowed!(blockers, DateTime.utc_now(:second))
 
-      case Repo.update(transition_changeset(lifecycle, :pending_destroy)) do
-        {:ok, updated} ->
-          case write_audit(
-                 updated,
-                 operation_ref,
-                 "community.destroy_scheduled",
-                 %{from_state: lifecycle.state, to_state: updated.state}
-               ) do
-            {:ok, _audit} -> updated
-            {:error, reason} -> Repo.rollback(reason)
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
-      end
+      transition_and_audit(
+        lifecycle,
+        :pending_destroy,
+        operation_ref,
+        "community.destroy_scheduled"
+      )
     end)
   end
 
@@ -420,22 +435,30 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
       state = resolve_state(active_blockers(lifecycle.id))
 
-      case Repo.update(transition_changeset(lifecycle, state)) do
-        {:ok, updated} ->
-          case write_audit(
-                 updated,
-                 operation_ref,
-                 "community.destroy_cancelled",
-                 %{from_state: lifecycle.state, to_state: updated.state}
-               ) do
-            {:ok, _audit} -> updated
-            {:error, reason} -> Repo.rollback(reason)
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
-      end
+      transition_and_audit(lifecycle, state, operation_ref, "community.destroy_cancelled")
     end)
+  end
+
+  defp transition_and_audit(lifecycle, state, operation_ref, action) do
+    case Repo.update(transition_changeset(lifecycle, state)) do
+      {:ok, updated} ->
+        audit_transition_change(updated, lifecycle, operation_ref, action)
+
+      {:error, reason} ->
+        Repo.rollback(reason)
+    end
+  end
+
+  defp audit_transition_change(updated, lifecycle, operation_ref, action) do
+    case write_audit(
+           updated,
+           operation_ref,
+           action,
+           %{from_state: lifecycle.state, to_state: updated.state}
+         ) do
+      {:ok, _audit} -> updated
+      {:error, reason} -> Repo.rollback(reason)
+    end
   end
 
   @doc "Terminates active blockers and records the Community destroy transition atomically."
@@ -455,51 +478,54 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
       blockers = active_blockers(lifecycle.id)
       ensure_destroy_allowed!(blockers, now)
       operation_ref = resolve_operation_ref!(Keyword.get(opts, :operation_ref))
+      parent_event_ref = scheduled_destroy_event_ref(lifecycle.community_id)
 
-      Enum.each(blockers, fn blocker ->
-        case blocker
-             |> CommunityLifecycleBlocker.changeset(%{
-               ended_at: now,
-               end_type: :terminated,
-               ended_by_operation_ref: operation_ref
-             })
-             |> Repo.update() do
-          {:ok, ended} ->
-            case write_audit(
-                   lifecycle,
-                   operation_ref,
-                   "community.blocker_terminated",
-                   %{
-                     blocker_type: ended.blocker_type,
-                     cause_ref: ended.cause_ref,
-                     end_type: ended.end_type
-                   }
-                 ) do
-              {:ok, _audit} -> :ok
-              {:error, reason} -> Repo.rollback(reason)
-            end
+      terminate_blockers(blockers, lifecycle, now, operation_ref)
+      destroy_lifecycle(lifecycle, operation_ref, parent_event_ref)
+    end)
+  end
 
-          {:error, reason} ->
-            Repo.rollback(reason)
-        end
-      end)
+  defp terminate_blockers(blockers, lifecycle, now, operation_ref) do
+    Enum.each(blockers, fn blocker ->
+      attrs = %{ended_at: now, end_type: :terminated, ended_by_operation_ref: operation_ref}
 
-      case Repo.update(transition_changeset(lifecycle, :destroy)) do
-        {:ok, destroyed} ->
-          case write_audit(
-                 destroyed,
-                 operation_ref,
-                 "community.destroyed",
-                 %{from_state: lifecycle.state, to_state: destroyed.state}
-               ) do
-            {:ok, _audit} -> destroyed
-            {:error, reason} -> Repo.rollback(reason)
-          end
-
-        {:error, reason} ->
-          Repo.rollback(reason)
+      case blocker |> CommunityLifecycleBlocker.changeset(attrs) |> Repo.update() do
+        {:ok, ended} -> audit_terminated_blocker(lifecycle, operation_ref, ended)
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  defp audit_terminated_blocker(lifecycle, operation_ref, ended) do
+    attrs = %{
+      blocker_type: ended.blocker_type,
+      cause_ref: ended.cause_ref,
+      end_type: ended.end_type
+    }
+
+    case write_audit(lifecycle, operation_ref, "community.blocker_terminated", attrs) do
+      {:ok, _audit} -> :ok
+      {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp destroy_lifecycle(lifecycle, operation_ref, parent_event_ref) do
+    case Repo.update(transition_changeset(lifecycle, :destroy)) do
+      {:ok, destroyed} ->
+        case write_audit(
+               destroyed,
+               operation_ref,
+               "community.destroyed",
+               %{from_state: lifecycle.state, to_state: destroyed.state},
+               parent_event_ref
+             ) do
+          {:ok, _audit} -> destroyed
+          {:error, reason} -> Repo.rollback(reason)
+        end
+
+      {:error, reason} ->
+        Repo.rollback(reason)
+    end
   end
 
   @doc "Reconciles a Lifecycle row from its active blockers under a row lock."
@@ -576,30 +602,40 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
         lifecycle
 
       nil ->
-        if Keyword.get(opts, :bootstrap_missing, false) do
-          community = lock_community(ref)
-
-          if is_nil(community) do
-            nil
-          else
-            state =
-              if community.pending == Constant.CMS.pending(:normal),
-                do: :active,
-                else: :setting_up
-
-            %CommunityLifecycle{}
-            |> CommunityLifecycle.changeset(%{
-              community_id: community.id,
-              state: state,
-              version: 1,
-              changed_at: DateTime.utc_now(:second)
-            })
-            |> Repo.insert!()
-          end
-        else
-          nil
-        end
+        bootstrap_missing_lifecycle(ref, opts)
     end
+  end
+
+  defp bootstrap_missing_lifecycle(ref, opts) do
+    if Keyword.get(opts, :bootstrap_missing, false),
+      do: bootstrap_from_community(ref),
+      else: nil
+  end
+
+  defp bootstrap_from_community(ref) do
+    case lock_community(ref) do
+      nil -> nil
+      community -> insert_bootstrap_lifecycle(community)
+    end
+  end
+
+  defp insert_bootstrap_lifecycle(community) do
+    state = bootstrap_state(community)
+
+    %CommunityLifecycle{}
+    |> CommunityLifecycle.changeset(%{
+      community_id: community.id,
+      state: state,
+      version: 1,
+      changed_at: DateTime.utc_now(:second)
+    })
+    |> Repo.insert!()
+  end
+
+  defp bootstrap_state(community) do
+    if community.pending == GroupherServer.CMS.Communities.Const.pending_state(:normal),
+      do: :active,
+      else: :setting_up
   end
 
   defp lock_community(ref) when is_integer(ref) do
@@ -769,15 +805,71 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   defp maybe_state_timestamp(attrs, _), do: attrs
 
-  defp write_audit(lifecycle, operation_ref, action, metadata) do
-    CMS.Audit.record(action, %{
-      community_id: lifecycle.community_id,
-      resource_type: "community",
-      resource_ref: to_string(lifecycle.community_id),
-      operation_ref: operation_ref,
-      metadata: Map.put(metadata, :state, lifecycle.state)
-    })
+  defp write_audit(lifecycle, operation_ref, action, metadata, parent_event_ref \\ nil) do
+    community = Repo.get!(Community, lifecycle.community_id)
+
+    activity_action =
+      action
+      |> String.replace_prefix("community.", "")
+      |> String.to_existing_atom()
+
+    opts = [
+      source: :api,
+      occurred_at: lifecycle.changed_at,
+      metadata: activity_metadata(activity_action, lifecycle, metadata)
+    ]
+
+    opts = if operation_ref, do: Keyword.put(opts, :operation_ref, operation_ref), else: opts
+
+    opts =
+      if parent_event_ref, do: Keyword.put(opts, :parent_event_ref, parent_event_ref), else: opts
+
+    Activity.log(community, activity_action, opts)
   end
+
+  defp scheduled_destroy_event_ref(community_id) do
+    CommunityLog
+    |> where([log], log.community_id == ^community_id and log.action == :destroy_scheduled)
+    |> order_by([log], desc: log.occurred_at, desc: log.id)
+    |> limit(1)
+    |> select([log], log.event_ref)
+    |> Repo.one()
+  end
+
+  defp activity_metadata(action, _lifecycle, metadata)
+       when action in [:blocker_created, :blocker_released, :blocker_terminated] do
+    %{
+      kind: Map.get(metadata, :blocker_type),
+      ref: Map.get(metadata, :cause_ref),
+      reason: Map.get(metadata, :reason)
+    }
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Map.new()
+  end
+
+  defp activity_metadata(:setup_failed, lifecycle, metadata) do
+    %{
+      state: lifecycle.state,
+      stage: Map.get(metadata, :stage),
+      reason_code: Map.get(metadata, :reason_code)
+    }
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Map.new()
+  end
+
+  defp activity_metadata(:setup_retried, lifecycle, metadata),
+    do: %{state: lifecycle.state, stage: Map.get(metadata, :stage)} |> compact()
+
+  defp activity_metadata(:destroy_scheduled, lifecycle, _metadata),
+    do: %{state: lifecycle.state, scheduled_at: lifecycle.destroy_scheduled_at} |> compact()
+
+  defp activity_metadata(:lifecycle_reconciled, lifecycle, metadata),
+    do: %{state: lifecycle.state, reason: Map.get(metadata, :reason)} |> compact()
+
+  defp activity_metadata(_action, lifecycle, _metadata), do: %{state: lifecycle.state}
+
+  defp compact(map),
+    do: map |> Enum.reject(fn {_key, value} -> is_nil(value) end) |> Map.new()
 
   defp resolve_operation_ref!(nil), do: Ecto.UUID.generate()
 

@@ -14,14 +14,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
-  alias Helper.Constant
+  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
+  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
+  alias GroupherServer.CMS.SearchArtiments.Config
 
   require CMS.Const
+  @article_threads Config.article_threads()
 
-  @legal Constant.CMS.pending(:legal)
+  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Measures the source volume used for search platform cost estimates.
@@ -39,7 +40,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   end
 
   defp article_counts do
-    Map.new([:post, :blog, :changelog, :doc], fn thread ->
+    Map.new(@article_threads, fn thread ->
       {:ok, info} = match(thread)
 
       count =

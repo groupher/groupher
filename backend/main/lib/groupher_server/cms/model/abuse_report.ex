@@ -24,10 +24,8 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_at_most_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Model.{Comment, Embeds}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.{Comment, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

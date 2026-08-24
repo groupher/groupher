@@ -13,8 +13,8 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
   alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
-  alias GroupherServer.CMS.Passport.ErrorCat
   alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS.Passport.ErrorCat
   alias GroupherServer.CMS.Passport.Registry
 
   @doc "Checks one registered community Passport action for the current caller."

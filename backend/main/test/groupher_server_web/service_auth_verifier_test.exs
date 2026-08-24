@@ -33,6 +33,19 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
              |> Verifier.verify()
   end
 
+  test "rejects invalid service claims", %{key: key} do
+    for overrides <- [
+          %{"sub" => "user:press"},
+          %{"scope" => nil},
+          %{"iat" => (DateTime.utc_now() |> DateTime.to_unix()) + 601},
+          %{"nbf" => (DateTime.utc_now() |> DateTime.to_unix()) + 601},
+          %{"exp" => (DateTime.utc_now() |> DateTime.to_unix()) - 601}
+        ] do
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_service_token}} =
+               key |> token(overrides) |> Verifier.verify()
+    end
+  end
+
   test "recognizes only the dedicated service token type", %{key: key} do
     assert Verifier.service_token?(token(key))
     refute Verifier.service_token?(token(key, %{}, "JWT"))

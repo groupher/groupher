@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
       ReadState.Query -> DefaultViewerState -> viewer-facing map
   """
 
-  alias GroupherServer.CMS.Artiment.Config
+  alias GroupherServer.CMS.Interactions.Config
 
   @doc """
   Returns the default Article interaction fields.

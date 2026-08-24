@@ -19,7 +19,7 @@ defmodule GroupherServerWeb.Middleware.CutParticipators do
   @default_length 5
 
   @doc "Returns a bounded, newest-first unique participant list when resolution succeeds."
-  def call(%{errors: errors} = resolution, _) when length(errors) > 0, do: resolution
+  def call(%{errors: errors} = resolution, _) when errors != [], do: resolution
 
   def call(%{value: value, arguments: %{filter: %{first: first}}} = resolution, _) do
     %{resolution | value: value |> Enum.uniq() |> Enum.reverse() |> Enum.slice(0, first)}

@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS.SearchArtiments.Artiment
+  alias Helper.TestFakes.SearchArtiments
 
   defp create_community!(user, attrs) do
     community_attrs = mock_attrs(:community, attrs)
@@ -20,14 +21,14 @@ defmodule GroupherServer.Test.Query.CMS.Search do
     _community = create_community!(user, %{title: "javascript"})
     _community = create_community!(user, %{title: "java"})
 
-    Helper.TestFakes.SearchArtiments.reset()
+    SearchArtiments.reset()
 
     Enum.with_index(["react", "php", "每日妹子", "javascript", "java"], 1)
     |> Enum.each(fn {title, inner_id} ->
-      :ok = Helper.TestFakes.SearchArtiments.upsert([search_article(title, inner_id)])
+      :ok = SearchArtiments.upsert([search_article(title, inner_id)])
     end)
 
-    on_exit(&Helper.TestFakes.SearchArtiments.reset/0)
+    on_exit(&SearchArtiments.reset/0)
 
     {:ok, ~m(guest_conn user)a}
   end

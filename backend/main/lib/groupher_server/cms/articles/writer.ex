@@ -15,10 +15,10 @@ defmodule GroupherServer.CMS.Articles.Writer do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{CMS, Messaging, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Model.Author
-  alias CMS.FrontDesk
+  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.CMS.Model.Author
+  alias GroupherServer.{Messaging, Repo}
   alias Helper.{ORM, T}
 
   @doc "Notifies community administrators after the first official Article publish."

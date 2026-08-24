@@ -15,10 +15,10 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
-  alias CMS.Assets.ErrorCat
-  alias CMS.Artiment.Threads
-  alias CMS.Model.{ArticleDocumentAssetRef, Community, CommunityAsset}
+  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Assets.ErrorCat
+  alias GroupherServer.CMS.Model.{ArticleDocumentAssetRef, Community, CommunityAsset}
+  alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
   @default_page 1

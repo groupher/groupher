@@ -4,18 +4,18 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   import Ecto.Query, warn: false
   import GroupherServer.Support.Factory
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Artiment.BodyBag
   alias GroupherServer.CMS.Articles.Draft
+  alias GroupherServer.CMS.Artiment.BodyBag
   alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
   alias GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping
   alias GroupherServer.CMS.ContentImport.Persistence.Job
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
   alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
+  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.DocTree
   alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Docs.Branch
   alias GroupherServer.CMS.Model.{DocLifecycle, DocTreeNode}
+  alias GroupherServer.Repo
 
   @job_query """
   query ContentImportJob($community: String!, $jobRef: ID!) {

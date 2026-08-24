@@ -1,7 +1,5 @@
 import { proxy } from 'valtio'
 
-import { EMPTY_PAGED_COMMENTS } from '~/const/utils'
-
 import { API_MODE, MODE } from './constant'
 import type { TInit, TStore } from './spec'
 
@@ -9,23 +7,11 @@ export default function CommentsStore(init: TInit = {}): TStore {
   const createInitialState = () => ({
     mode: MODE.REPLIES,
     apiMode: API_MODE.ARTICLE,
-
-    pagedComments: EMPTY_PAGED_COMMENTS,
-    pagedPublishedComments: EMPTY_PAGED_COMMENTS,
+    page: 1,
 
     repliesParentId: null,
     repliesLoading: false,
     repliesLoadingByParentId: {},
-    loading: false,
-    needRefreshState: true,
-
-    isViewerJoined: false,
-    participantsCount: 0,
-    totalCount: -1,
-    participants: [],
-
-    initialized: false,
-
     showEditor: false,
     showUpdateEditor: false,
     showReplyEditor: false,

@@ -6,9 +6,10 @@ import { useExtraLocaleContext } from '~/stores/locale/extra-context'
 import useLocale from '~/stores/locale/hooks'
 
 type TFmt = 'titleCase' | null
+type TParams = Record<string, string | number>
 
 type TRet = {
-  t: (key: TTransKey, fmt?: TFmt) => string
+  t: (key: TTransKey, fmtOrParams?: TFmt | TParams) => string
   locale: TLocale
 }
 
@@ -25,10 +26,14 @@ const useTrans = (): TRet => {
   )
 
   const t = useCallback(
-    (key: TTransKey, fmt: TFmt = null): string => {
-      const ret = localeJson?.[key] || '--'
+    (key: TTransKey, fmtOrParams: TFmt | TParams = null): string => {
+      let ret = localeJson?.[key] || '--'
 
-      if (fmt === 'titleCase') {
+      if (typeof fmtOrParams === 'object' && fmtOrParams !== null) {
+        ret = ret.replace(/\{(\w+)\}/g, (_, name: string) => String(fmtOrParams[name] ?? ''))
+      }
+
+      if (fmtOrParams === 'titleCase') {
         return titleCase(ret)
       }
 

@@ -1,4 +1,5 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Store do
+  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Stores the product-level mention graph for CMS artiments.
 
@@ -60,9 +61,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Repo
 
-  alias CMS.{
+  alias GroupherServer.CMS.{
     Artiment.Matcher,
     Artiment.PlateJSON,
     ArtimentMentions.Config,
@@ -70,8 +71,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     FrontDesk
   }
 
-  alias CMS.Model.{ArtimentMention, Comment}
-  alias Helper.{ORM, QueryBuilder, T}
+  alias GroupherServer.CMS.Model.{ArtimentMention, Comment}
+  alias Helper.{ORM, T}
 
   @threads Config.threads()
   @mention_types Config.mention_types()
@@ -454,9 +455,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp artiment_url(%{artiment: %Comment{} = comment, parent_article: article})
        when is_map(article) do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      "#{article_url(thread, article.id)}?comment_id=#{comment.id}"
-    else
+    case FrontDesk.thread_of(article) do
+      {:ok, thread} -> "#{article_url(thread, article.id)}?comment_id=#{comment.id}"
       _ -> nil
     end
   end
@@ -464,9 +464,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   defp artiment_url(%{artiment: %Comment{}}), do: nil
 
   defp artiment_url(%{artiment: article}) do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      article_url(thread, article.id)
-    else
+    case FrontDesk.thread_of(article) do
+      {:ok, thread} -> article_url(thread, article.id)
       _ -> nil
     end
   end

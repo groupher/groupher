@@ -10,9 +10,9 @@ defmodule GroupherServer.CMS.Covers do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS.Model.{CoverBackground, CoverEditInfo}
+  alias GroupherServer.Repo
   alias GroupherServerWeb.ErrorCat
-  alias CMS.Model.{CoverBackground, CoverEditInfo}
   alias Helper.{ORM, T}
 
   @type article :: map()

@@ -1,18 +1,7 @@
-import type { TAccount, TCommunity, TUser } from '~/spec'
+import type { TUser } from '~/spec'
 
-export type TStore = {
-  user: TUser | null
-  loading: boolean
-  isLogin: boolean
-  isModerator: boolean
-  userSubscribedCommunities: TCommunity[] | null
-
-  // views
-  accountInfo: TAccount
-  // actions
-  commit: (patch: Partial<TStore>) => void
+/** Server session seed consumed by TanStack Query; it is not Valtio store state. */
+export type TInit = {
+  user?: TUser | null
+  loading?: boolean
 }
-
-export type TInit = Partial<
-  Pick<TStore, 'user' | 'loading' | 'userSubscribedCommunities' | 'isModerator'>
->

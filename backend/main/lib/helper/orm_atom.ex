@@ -16,8 +16,8 @@ defmodule Helper.ORMAtom do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias GroupherServer.ErrorCat
 
-  alias Accounts.Model.User
-  alias CMS.Model.{Comment, Community}
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Model.{Comment, Community}
 
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
@@ -100,19 +100,21 @@ defmodule Helper.ORMAtom do
               )
 
             # 执行更新并获取返回的新值
-            case Repo.update_all(update_query, []) do
-              {1, [new_val]} ->
-                updated_queryable =
-                  put_in(queryable.meta, Map.put(queryable.meta, field, new_val))
-
-                {:ok, updated_queryable, new_val}
-
-              {0, []} ->
-                {:error, ErrorCat.custom(%{reason: :not_found})}
-            end
+            update_meta_value(queryable, update_query, field)
           end
         end
       end
+    end
+  end
+
+  defp update_meta_value(queryable, update_query, field) do
+    case Repo.update_all(update_query, []) do
+      {1, [new_val]} ->
+        updated_queryable = put_in(queryable.meta, Map.put(queryable.meta, field, new_val))
+        {:ok, updated_queryable, new_val}
+
+      {0, []} ->
+        {:error, ErrorCat.custom(%{reason: :not_found})}
     end
   end
 

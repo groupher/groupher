@@ -1,9 +1,10 @@
+import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import {
   GROUPHER_AUTH_CSRF_HEADER,
   GROUPHER_AUTH_CSRF_VALUE,
   GROUPHER_AUTH_SIGNED_IN_COOKIE,
 } from '@groupher/contracts/auth'
-import type { CombinedError } from 'urql'
+import { print, type DocumentNode } from 'graphql'
 
 import {
   AuthRequestError,
@@ -14,6 +15,34 @@ import {
 } from '~/auth'
 
 const ACCOUNT_LOGIN_ERROR_CODE = 4301
+
+type TGraphQLError = {
+  message?: string
+  extensions?: { code?: unknown }
+}
+
+type TGraphQLCombinedError = {
+  graphQLErrors: TGraphQLError[]
+  networkError?: Error
+  response?: Response
+}
+
+export class GraphQLRequestError extends Error {
+  readonly errors: TGraphQLError[]
+  readonly response: Response
+
+  constructor(response: Response, errors: TGraphQLError[]) {
+    super(
+      errors
+        .map((error) => error.message)
+        .filter(Boolean)
+        .join('\n') || 'GraphQL request failed.',
+    )
+    this.name = 'GraphQLRequestError'
+    this.errors = errors
+    this.response = response
+  }
+}
 
 const hasSignedInHint = (): boolean =>
   typeof document !== 'undefined' &&
@@ -38,7 +67,7 @@ class GraphQLAuthResponseError extends Error {
 }
 
 /**
- * Browser-side fetch options shared by urql clients and imperative GraphQL
+ * Browser-side fetch options shared by TanStack Query and imperative GraphQL
  * calls. Browser code always talks to the same-origin `/api/graphql` facade;
  * cookies are still included so the Next route handler can read the Groupher
  * auth token cookie and forward only that cookie to Phoenix.
@@ -77,12 +106,14 @@ export const GRAPHQL_RETRY_OPTIONS = {
   maxDelayMs: 15000,
   randomDelay: true,
   maxNumberAttempts: 2,
-  retryIf: (err: CombinedError | undefined) =>
+  retryIf: (err: TGraphQLCombinedError | undefined) =>
     !!err?.networkError && !(err.networkError instanceof AuthRequestError),
 }
 
 /** Resolves graph qlfailure without leaking frontend shared routing details to callers. */
-export const resolveGraphQLFailure = (error: CombinedError): { code?: string; status?: number } => {
+export const resolveGraphQLFailure = (
+  error: TGraphQLCombinedError,
+): { code?: string; status?: number } => {
   const code = error.graphQLErrors
     .map((item) => item.extensions?.code)
     .map(normalizeAuthCode)
@@ -143,3 +174,30 @@ export const createAuthFetch =
       throw error
     }
   }
+
+/** Typed same-origin browser transport shared by TanStack Query and mutations. */
+export const browserQuery = async <
+  TResult,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+>(
+  document: string | DocumentNode | TypedDocumentNode<TResult, TVariables>,
+  variables: TVariables = {} as TVariables,
+  fetcher: typeof fetch = fetch,
+): Promise<TResult> => {
+  const response = await createAuthFetch(fetcher)('/api/graphql', {
+    ...GRAPHQL_FETCH_OPTIONS(),
+    method: 'POST',
+    cache: 'no-store',
+    body: JSON.stringify({
+      query: typeof document === 'string' ? document : print(document),
+      variables,
+    }),
+  })
+  const payload = (await response.json()) as { data?: TResult; errors?: TGraphQLError[] }
+
+  if (!response.ok || payload.errors?.length || !payload.data) {
+    throw new GraphQLRequestError(response, payload.errors || [])
+  }
+
+  return payload.data
+}

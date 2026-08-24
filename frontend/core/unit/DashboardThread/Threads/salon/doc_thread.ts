@@ -12,5 +12,6 @@ export default function useSalon() {
     header: 'row-center w-full',
     title: cn('text-sm', fg('title')),
     desc: cn('text-xs mt-1 w-4/5', fg('digest')),
+    warning: cn('text-xs mt-1 w-4/5', fg('hint')),
   }
 }

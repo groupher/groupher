@@ -13,11 +13,11 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   import Helper.Utils, only: [done: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.CMS.Interactions.ErrorCat
+  alias GroupherServer.Repo
   alias Helper.{Multi, ORM, T, Transaction}
 
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Model.{AbuseReport, Embeds}
 
   @doc """
