@@ -5,18 +5,6 @@ __metadata:
   version: 10
   cacheKey: 10c0
 
-"@0no-co/graphql.web@npm:^1.0.13":
-  version: 1.2.0
-  resolution: "@0no-co/graphql.web@npm:1.2.0"
-  peerDependencies:
-    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
-  peerDependenciesMeta:
-    graphql:
-      optional: true
-  checksum: 10c0/4eed600962bfab42afb49cddcfb31a47b00502f59707609cf160559920ce0f5cf8874791e4cafc465ede30ae291992f3f892bc757b2a989e80e50e358f71c518
-  languageName: node
-  linkType: hard
-
 "@adobe/css-tools@npm:^4.4.0":
   version: 4.4.4
   resolution: "@adobe/css-tools@npm:4.4.4"
@@ -3306,11 +3294,44 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@groupher/frontend-community@workspace:frontend/community":
+  version: 0.0.0-use.local
+  resolution: "@groupher/frontend-community@workspace:frontend/community"
+  dependencies:
+    "@cloudflare/vite-plugin": "npm:^1.50.0"
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/frontend-core": "npm:1.0.0"
+    "@tailwindcss/vite": "npm:4.3.3"
+    "@tanstack/query-core": "npm:5.101.4"
+    "@tanstack/react-query": "npm:^5.101.4"
+    "@tanstack/react-router": "npm:1.170.21"
+    "@tanstack/react-router-ssr-query": "npm:1.167.1"
+    "@tanstack/react-start": "npm:1.168.38"
+    "@tanstack/router-generator": "npm:1.167.24"
+    "@types/react": "npm:19.2.18"
+    "@types/react-dom": "npm:19.2.4"
+    "@vitejs/plugin-react": "npm:^6.0.5"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+    rimraf: "npm:^6.1.3"
+    vite: "npm:^8.2.0"
+    wrangler: "npm:^4.118.0"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/frontend-core@npm:1.0.0, @groupher/frontend-core@workspace:frontend/core":
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-core@workspace:frontend/core"
   dependencies:
     "@groupher/contracts": "npm:1.0.0"
+    "@tanstack/react-query": "npm:^5.101.4"
+    cobe: "npm:^2.0.1"
+    react: "npm:^19.2.8"
+    react-dom: "npm:^19.2.8"
+  peerDependencies:
+    "@tanstack/react-query": ^5.101.4
+    react: ^19.2.8
+    react-dom: ^19.2.8
   languageName: unknown
   linkType: soft
 
@@ -3321,7 +3342,10 @@ __metadata:
     "@cloudflare/vite-plugin": "npm:^1.50.0"
     "@groupher/frontend-core": "npm:1.0.0"
     "@tailwindcss/vite": "npm:4.3.3"
+    "@tanstack/query-core": "npm:5.101.4"
+    "@tanstack/react-query": "npm:^5.101.4"
     "@tanstack/react-router": "npm:1.170.21"
+    "@tanstack/react-router-ssr-query": "npm:1.167.1"
     "@tanstack/react-start": "npm:1.168.38"
     "@tanstack/router-generator": "npm:1.167.24"
     "@types/react": "npm:19.2.18"
@@ -3381,10 +3405,12 @@ __metadata:
   resolution: "@groupher/frontend-main@workspace:frontend/main"
   dependencies:
     "@groupher/frontend-core": "npm:1.0.0"
+    country-state-city: "npm:^3.2.1"
     cross-env: "npm:^10.1.0"
     next: "npm:16.3.0"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
+    server-only: "npm:^0.0.1"
   languageName: unknown
   linkType: soft
 
@@ -3573,6 +3599,7 @@ __metadata:
     "@playwright/test": "npm:^1.62.1"
     "@tailwindcss/postcss": "npm:4.3.3"
     "@tailwindcss/typography": "npm:0.5.20"
+    "@tanstack/react-query": "npm:^5.101.4"
     "@tanstack/react-table": "npm:^8.21.3"
     "@tanstack/react-virtual": "npm:^3.13.18"
     "@testing-library/dom": "npm:^10.4.1"
@@ -3586,9 +3613,6 @@ __metadata:
     "@types/react-dom": "npm:19.2.4"
     "@types/sanitize-html": "npm:^2.16.1"
     "@typescript/native-preview": "npm:7.0.0-dev.20260707.2"
-    "@urql/core": "npm:^6.0.3"
-    "@urql/exchange-retry": "npm:^2.0.0"
-    "@urql/next": "npm:^2.0.1"
     "@vercel/analytics": "npm:^2.0.1"
     "@vercel/speed-insights": "npm:^2.0.0"
     "@vitejs/plugin-react": "npm:^6.0.5"
@@ -3664,7 +3688,6 @@ __metadata:
     tsparticles-confetti: "npm:^2.12.0"
     typescript: "npm:7.0.2"
     typewriter-effect: "npm:^2.19.0"
-    urql: "npm:^5.0.3"
     use-debounce: "npm:^10.1.1"
     valtio: "npm:2.3.2"
     vite: "npm:^8.2.0"
@@ -8604,6 +8627,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.101.4":
+  version: 5.101.4
+  resolution: "@tanstack/query-core@npm:5.101.4"
+  checksum: 10c0/a407960303431e6498c6518cf6f8cc7283d3e4a95dbdc5e9fa42c217b9dd7afaffb82a4f2d36b38f578f745e8cf69ff8551abb947f5abcc0a290f3e3e75dc654
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.101.4":
+  version: 5.101.4
+  resolution: "@tanstack/react-query@npm:5.101.4"
+  dependencies:
+    "@tanstack/query-core": "npm:5.101.4"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c0/92e7c5b44740e753b05a6a19c166ea1a000df64c1bf5edb315d08a5b555a9f16a9d35288ac38f650bd38fc3015b135c392749fd6db24d09db42bfaf758d119fa
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-router-ssr-query@npm:1.167.1":
+  version: 1.167.1
+  resolution: "@tanstack/react-router-ssr-query@npm:1.167.1"
+  dependencies:
+    "@tanstack/router-ssr-query-core": "npm:1.169.1"
+  peerDependencies:
+    "@tanstack/query-core": ">=5.90.0"
+    "@tanstack/react-query": ">=5.90.0"
+    "@tanstack/react-router": ">=1.127.0"
+    react: ">=18.0.0 || >=19.0.0"
+    react-dom: ">=18.0.0 || >=19.0.0"
+  checksum: 10c0/80955aa83d3bf0ed8d3e38554f55364c82d583c36f45b30271a862f17c17fa14d3b7e5cdcda0f7f017d81913ceea28a47f45a016839c118759df9d36697f7f7e
+  languageName: node
+  linkType: hard
+
 "@tanstack/react-router@npm:1.170.21":
   version: 1.170.21
   resolution: "@tanstack/react-router@npm:1.170.21"
@@ -8801,6 +8857,16 @@ __metadata:
     webpack:
       optional: true
   checksum: 10c0/0090f4e19657d3e45bf6b53576b54c543aa2abf48b38ad9a75988e53470827a622621ce2dc817ca119e426cea3efed15c0a1cb097520704d292dc3712efe195c
+  languageName: node
+  linkType: hard
+
+"@tanstack/router-ssr-query-core@npm:1.169.1":
+  version: 1.169.1
+  resolution: "@tanstack/router-ssr-query-core@npm:1.169.1"
+  peerDependencies:
+    "@tanstack/query-core": ">=5.90.0"
+    "@tanstack/router-core": ">=1.127.0"
+  checksum: 10c0/7df9d7923c79dbb4786907b632484211690788a9df1b0912020bf899d175c759e8d3ce08fab1f9a8ee3ae924a0127433711508e7810b537022ee15420eac64e7
   languageName: node
   linkType: hard
 
@@ -9868,49 +9934,6 @@ __metadata:
     next:
       optional: true
   checksum: 10c0/61c608b7f34689596f6d0092f616856bc0d325828350048d6c36b0e6aa64564909f7d80b8c0d6549f4ef367c0e8cbe93547d4d7e6f2e7eb4fab1383e7ad84cac
-  languageName: node
-  linkType: hard
-
-"@urql/core@npm:^6.0.0":
-  version: 6.0.1
-  resolution: "@urql/core@npm:6.0.1"
-  dependencies:
-    "@0no-co/graphql.web": "npm:^1.0.13"
-    wonka: "npm:^6.3.2"
-  checksum: 10c0/44ff0d12dcef1e47338a9ff1217759d1124fa66eec1eec21ff9622e44c179b9d66fa78f462f195bfd8b790b04609abbe5a0674cbfcb0bc6d9c6fe6223d7d7b5b
-  languageName: node
-  linkType: hard
-
-"@urql/core@npm:^6.0.2, @urql/core@npm:^6.0.3":
-  version: 6.0.3
-  resolution: "@urql/core@npm:6.0.3"
-  dependencies:
-    "@0no-co/graphql.web": "npm:^1.0.13"
-    wonka: "npm:^6.3.2"
-  checksum: 10c0/1fc423d967644f60cfd41090b85708ca7c3d19da30a8e44188b1e0955787ce9fac88ab3c0caea03231041de8ad905251a90bfa49a729e34fa895d3c9117f94bb
-  languageName: node
-  linkType: hard
-
-"@urql/exchange-retry@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "@urql/exchange-retry@npm:2.0.0"
-  dependencies:
-    "@urql/core": "npm:^6.0.0"
-    wonka: "npm:^6.3.2"
-  peerDependencies:
-    "@urql/core": ^6.0.0
-  checksum: 10c0/37a4dbea6b158c73521fc58e33c2b73ad4568e221e3e2fce373a5cadb21b93f345b4a3e574646b2b1e3f598db4d6fcf62cb6d21d5abd11a3ca88d39c248894fd
-  languageName: node
-  linkType: hard
-
-"@urql/next@npm:^2.0.1":
-  version: 2.0.1
-  resolution: "@urql/next@npm:2.0.1"
-  peerDependencies:
-    next: ">=13.0.0"
-    react: ">=18.0.0"
-    urql: ^5.0.0
-  checksum: 10c0/323776cc8fdbb2734b269f4be197ebf3912c8b72980ddcce51ce5f34ca8e4f9593dbd0c49250ecb7c6cebc5e8f2a754d5211f1977c7dfa5f19dd8cfbee27ecda
   languageName: node
   linkType: hard
 
@@ -12333,6 +12356,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cobe@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "cobe@npm:2.0.1"
+  checksum: 10c0/5a878362077feb72ceedc9031e9b5c5b759b8922bc1f5090e177e981ce04fc39b4a67aaa5c736716a03a44ef453a98fbf194a1ddd2888aa8f7caf48308cacab8
+  languageName: node
+  linkType: hard
+
 "collection-visit@npm:^1.0.0":
   version: 1.0.0
   resolution: "collection-visit@npm:1.0.0"
@@ -12797,6 +12827,13 @@ __metadata:
     typescript:
       optional: true
   checksum: 10c0/1c1703be4f02a250b1d6ca3267e408ce16abfe8364193891afc94c2d5c060b69611fdc8d97af74b7e6d5d1aac0ab2fb94d6b079573146bc2d756c2484ce5f0ee
+  languageName: node
+  linkType: hard
+
+"country-state-city@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "country-state-city@npm:3.2.1"
+  checksum: 10c0/2545a000c207345514de31c20ed8a331bba9796f36ab1e6e4019ebb319bca37894180e4ade40eef9d7f2443aa60045ec3f317bfdb3f4c7b99b9c711e4688d8cb
   languageName: node
   linkType: hard
 
@@ -23318,6 +23355,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"server-only@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "server-only@npm:0.0.1"
+  checksum: 10c0/4704f0ef85da0be981af6d4ed8e739d39bcfd265b9c246a684060acda5642d0fdc6daffc2308e71e2682c5f508090978802eae0a77623c9b90a49f9ae68048d6
+  languageName: node
+  linkType: hard
+
 "set-function-length@npm:^1.2.2":
   version: 1.2.2
   resolution: "set-function-length@npm:1.2.2"
@@ -26135,19 +26179,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"urql@npm:^5.0.3":
-  version: 5.0.3
-  resolution: "urql@npm:5.0.3"
-  dependencies:
-    "@urql/core": "npm:^6.0.2"
-    wonka: "npm:^6.3.2"
-  peerDependencies:
-    "@urql/core": ^6.0.0
-    react: ">= 16.8.0"
-  checksum: 10c0/a9928d52d7e734df123b767a236caaadb25240d0c7b5d789a2885ed108a0d55f2a1222329ffd6c95a5632913b4fd8263979a821f35e423c2acd2035b89efd850
-  languageName: node
-  linkType: hard
-
 "use-callback-ref@npm:^1.3.3":
   version: 1.3.3
   resolution: "use-callback-ref@npm:1.3.3"
@@ -27026,13 +27057,6 @@ __metadata:
   dependencies:
     string-width: "npm:^7.0.0"
   checksum: 10c0/6bd6cca8cda502ef50e05353fd25de0df8c704ffc43ada7e0a9cf9a5d4f4e12520485d80e0b77cec8a21f6c3909042fcf732aa9281e5dbb98cc9384a138b2578
-  languageName: node
-  linkType: hard
-
-"wonka@npm:^6.3.2":
-  version: 6.3.5
-  resolution: "wonka@npm:6.3.5"
-  checksum: 10c0/044fe5ae26c0a32b0a1603cc0ed71ede8c9febe5bb3adab4fad5e088ceee600a84a08d0deb95a72189bbaf0d510282d183b6fb7b6e9837e7a1c9b209f788dd07
   languageName: node
   linkType: hard
 

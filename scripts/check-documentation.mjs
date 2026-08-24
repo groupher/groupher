@@ -220,7 +220,7 @@ const checkElixirSharedFunctions = () => {
         .filter((entry) => entry.isFile() && entry.name.endsWith('.ex'))
         .map((entry) => path.join(directory, entry.name))
     }),
-    ...['messaging', 'analysis', 'jobs', 'logs', 'front_desk'].map((context) =>
+    ...['messaging', 'analysis', 'jobs', 'activity', 'front_desk'].map((context) =>
       path.join(root, 'backend/main/lib/groupher_server', `${context}.ex`),
     ),
     ...boundaryFiles,

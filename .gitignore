@@ -129,6 +129,17 @@ frontend/dashboard/graphql/schema.graphql
 # TanStack Router generated output
 frontend/dash/src/routeTree.gen.ts
 frontend/dash/.tanstack/
+frontend/community/src/routeTree.gen.ts
+frontend/community/.tanstack/
+frontend/community/.output/
+frontend/community/public/worker-revision-diff.js
+frontend/community/public/icons/fa/
+frontend/community/public/icons/lucide/
+frontend/community/public/icons/heroicons/
+frontend/community/public/icons/phosphor/
+frontend/community/public/icons/providers/
+frontend/community/public/icons/*.sprite.svg
+frontend/community/public/wallpaper/
 frontend/apply/src/routeTree.gen.ts
 
 # =====================

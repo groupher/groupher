@@ -6,6 +6,7 @@ export const SERVICE_HEALTH_SERVICES = [
   'auth',
   'landing',
   'main',
+  'community',
   'dashboard',
   'dash',
   'inspire-me',

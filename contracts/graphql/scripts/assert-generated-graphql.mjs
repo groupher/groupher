@@ -30,19 +30,25 @@ const capitalize = (name) => name.replace(/^./, (character) => character.toUpper
 
 for (const relativePath of documentPaths) {
   const documentSource = fs.readFileSync(path.join(root, relativePath), 'utf8')
-  for (const [, kind, name] of documentSource.matchAll(
-    /\b(query|mutation|subscription)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
-  )) {
-    const suffix = kind[0].toUpperCase() + kind.slice(1)
-    operationMarkers.push(`export type ${capitalize(name)}${suffix}`)
-    operationMarkers.push(`export type ${capitalize(name)}${suffix}Variables`)
-    operationMarkers.push(`export const ${capitalize(name)}Document`)
-  }
-  for (const [, name] of documentSource.matchAll(
-    /\bfragment\s+([A-Za-z_][A-Za-z0-9_]*)\s+on\b/g,
-  )) {
-    fragmentMarkers.push(`export type ${name}Fragment`)
-    fragmentMarkers.push(`export const ${name}FragmentDoc`)
+  const graphqlDocuments = [...documentSource.matchAll(/\bgraphql\(\s*`([\s\S]*?)`\s*\)/g)].map(
+    ([, document]) => document,
+  )
+
+  for (const graphqlDocument of graphqlDocuments) {
+    for (const [, kind, name] of graphqlDocument.matchAll(
+      /\b(query|mutation|subscription)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
+    )) {
+      const suffix = kind[0].toUpperCase() + kind.slice(1)
+      operationMarkers.push(`export type ${capitalize(name)}${suffix}`)
+      operationMarkers.push(`export type ${capitalize(name)}${suffix}Variables`)
+      operationMarkers.push(`export const ${capitalize(name)}Document`)
+    }
+    for (const [, name] of graphqlDocument.matchAll(
+      /\bfragment\s+([A-Za-z_][A-Za-z0-9_]*)\s+on\b/g,
+    )) {
+      fragmentMarkers.push(`export type ${name}Fragment`)
+      fragmentMarkers.push(`export const ${name}FragmentDoc`)
+    }
   }
 }
 

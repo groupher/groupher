@@ -111,6 +111,12 @@ const LANDING_CHAIN_POLICY = {
   optionalDependencies: [],
 } satisfies TServiceStartPolicy
 
+const COMMUNITY_CHAIN_POLICY = {
+  defaultMode: 'chain',
+  requiredDependencies: ['phoenix'],
+  optionalDependencies: [],
+} satisfies TServiceStartPolicy
+
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'gateway',
@@ -226,6 +232,34 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessAppUrl: 'https://main.groupher.localhost/home',
     metrics: FRONTEND_METRICS,
     startPolicy: APP_CHAIN_POLICY,
+  },
+  {
+    id: 'community',
+    name: 'Community',
+    description: 'TanStack Start public community application',
+    group: 'frontend',
+    monogram: 'CM',
+    technologies: ['tanstack-start', 'react', 'typescript', 'tailwindcss'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'env-files',
+      root: fromRoot('frontend/community'),
+      environment: 'development',
+    },
+    command: 'yarn',
+    args: ['dev:community'],
+    env: {
+      GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
+      NEXT_PUBLIC_AUTH_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/api/auth`,
+    },
+    port: 3007,
+    url: 'http://127.0.0.1:3007/health',
+    appUrl: 'http://127.0.0.1:3007/home/about',
+    portlessName: 'community',
+    portlessUrl: 'https://community.groupher.localhost/health',
+    portlessAppUrl: 'https://community.groupher.localhost/home/about',
+    metrics: FRONTEND_METRICS,
+    startPolicy: COMMUNITY_CHAIN_POLICY,
   },
   {
     id: 'dashboard',
@@ -610,6 +644,13 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
   {
     id: 'main-phoenix',
     source: 'main',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'GraphQL',
+  },
+  {
+    id: 'community-phoenix',
+    source: 'community',
     target: 'phoenix',
     kind: 'api',
     label: 'GraphQL',
