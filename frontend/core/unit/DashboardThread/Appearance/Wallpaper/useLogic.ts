@@ -2,8 +2,8 @@ import { clone, equals, pick } from 'ramda'
 import { createContext, use, useEffect, useMemo, useState } from 'react'
 
 import { GRADIENT_PALETTE, GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import { browserQuery } from '~/graphql/client'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import { normalizeSignedAngle } from '~/lib/angle'
@@ -181,7 +181,6 @@ export function useLogicValue(): TWallpaperLogic {
   const { isDarkTheme } = useTheme()
   const { t } = useTrans()
 
-  const { mutate } = useGraphQLClient()
   const [tab, setTab] = useState<TTab>(() =>
     getInitialTab(pickWallpaperThemeState(wallpaper$, isDarkTheme).type),
   )
@@ -239,7 +238,7 @@ export function useLogicValue(): TWallpaperLogic {
       wallpaper,
     }
 
-    mutate(S.updateDashboardWallpaper, params)
+    browserQuery(S.updateDashboardWallpaper, params)
       .then(async () => {
         await revalidateCommunityCache(community)
         toast(t('dsb.appearance.saved'))

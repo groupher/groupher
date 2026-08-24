@@ -1,9 +1,7 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS, CAT, ORDER, STATUS } from '~/const/gtd'
-import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
 import { usePathname, useRouter, useSearchParams } from '~/platform'
-import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus, TResState } from '~/spec'
-import useArticleList from '~/stores/articleList/hooks'
+import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus } from '~/spec'
 
 type TRes = {
   cat: TArticleCat
@@ -26,8 +24,6 @@ export default function useArticlesFilter(): TRes {
   const { push } = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const store = useArticleList()
-  const loadingState = TYPE.RES_STATE.LOADING as TResState
 
   const order = toValidFilterValue(
     searchParams.get(URL_PARAM.ORDER),
@@ -77,7 +73,6 @@ export default function useArticlesFilter(): TRes {
 
     if (nextUrl === currentUrl) return
 
-    store.commit({ resState: loadingState })
     push(nextUrl)
   }
 

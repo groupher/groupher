@@ -1,9 +1,10 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { useQuery } from 'urql'
 
 import useTrans from '~/hooks/useTrans'
+import { graphqlQueryOptions } from '~/query'
 
 import useSalon from './salon'
 import { ANALYSIS_ACTIVE_VISITORS_QUERY } from './schema'
@@ -32,11 +33,10 @@ export default function RealtimeOnline({ community }: TProps) {
   const { t } = useTrans()
   const [visible, setVisible] = useState(true)
   const [state, setState] = useState<TState>(unavailableState)
-  const [result, reexecuteQuery] = useQuery<TData>({
-    query: ANALYSIS_ACTIVE_VISITORS_QUERY,
-    variables: { community },
-    pause: !visible,
-    requestPolicy: 'network-only',
+  const result = useQuery({
+    ...graphqlQueryOptions<TData>(ANALYSIS_ACTIVE_VISITORS_QUERY, { community }),
+    enabled: visible,
+    refetchOnMount: 'always',
   })
 
   useEffect(() => {
@@ -51,14 +51,14 @@ export default function RealtimeOnline({ community }: TProps) {
     if (!visible) return
 
     const interval = window.setInterval(() => {
-      reexecuteQuery({ requestPolicy: 'network-only' })
+      void result.refetch()
     }, REFRESH_INTERVAL)
 
     return () => window.clearInterval(interval)
-  }, [reexecuteQuery, visible])
+  }, [result.refetch, visible])
 
   useEffect(() => {
-    if (result.fetching) return
+    if (result.isFetching) return
 
     if (result.error || result.data?.analysisActiveVisitors === null) {
       setState((previous) =>
@@ -76,7 +76,7 @@ export default function RealtimeOnline({ community }: TProps) {
     setState((previous) =>
       previous.visitors === null ? unavailableState() : { ...previous, status: 'stale' },
     )
-  }, [result.data, result.error, result.fetching])
+  }, [result.data, result.error, result.isFetching])
 
   if (state.visitors === null) {
     return (

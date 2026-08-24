@@ -8,10 +8,11 @@ import useEnable from '../logic/useEnable'
 import useSalon from './salon/doc_thread'
 
 type TProps = {
+  disabled?: boolean
   settings: TEnableConf
 }
 
-const AboutThread: FC<TProps> = ({ settings }) => {
+const AboutThread: FC<TProps> = ({ disabled = false, settings }) => {
   const s = useSalon()
   const { enableThread } = useEnable()
   const { t } = useTrans()
@@ -24,6 +25,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
           <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutTechstack}
+            disabled={disabled}
             onChange={(c) => enableThread('aboutTechstack', c)}
           />
         </div>
@@ -36,6 +38,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
           <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutLocation}
+            disabled={disabled}
             onChange={(c) => enableThread('aboutLocation', c)}
           />
         </div>
@@ -48,6 +51,7 @@ const AboutThread: FC<TProps> = ({ settings }) => {
           <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutLinks}
+            disabled={disabled}
             onChange={(c) => enableThread('aboutLinks', c)}
           />
         </div>
@@ -60,10 +64,25 @@ const AboutThread: FC<TProps> = ({ settings }) => {
           <div className='grow' />
           <ToggleSwitch
             checked={settings.aboutMediaReport}
+            disabled={disabled}
             onChange={(c) => enableThread('aboutMediaReport', c)}
           />
         </div>
         <p className={s.desc}>{t('dsb.threads.about.media.desc')}</p>
+      </section>
+
+      <section className={s.section}>
+        <div className={s.header}>
+          <h4 className={s.title}>{t('dsb.threads.about.visitor_location_map.title')}</h4>
+          <div className='grow' />
+          <ToggleSwitch
+            checked={settings.visitorLocationMap}
+            disabled={disabled}
+            onChange={(c) => enableThread('visitorLocationMap', c)}
+          />
+        </div>
+        <p className={s.desc}>{t('dsb.threads.about.visitor_location_map.desc')}</p>
+        <p className={s.warning}>{t('dsb.threads.about.visitor_location_map.warning')}</p>
       </section>
     </div>
   )

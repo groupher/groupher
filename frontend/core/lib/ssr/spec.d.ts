@@ -39,12 +39,8 @@ export type TGroupedKanbanPostsRes = TGQSSRResult & {
   }
 }
 
-export type TRequestPolicy = 'cache-first' | 'cache-and-network' | 'network-only' | 'cache-only'
-
 export type TSSRQueryOpt = {
   skip?: boolean
-  // cache-first is the default
-  requestPolicy?: TRequestPolicy
   userHasLogin?: boolean
 }
 

@@ -1,5 +1,4 @@
 import { type FC, useState } from 'react'
-import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { updateViewingArticle } from '~/signal'
@@ -21,7 +20,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   const { article } = useViewingArticle()
   const [title, setTitle] = useState(article.title)
   const { touched, setTouched, resetTouched } = useTouched()
-  const [result, updatePost] = useMutation(S.updatePost)
+  const [result, updatePost] = useArticleSettingMutation(S.updatePost)
 
   const handleUpdate = () => {
     const params = {
@@ -72,3 +71,4 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
 }
 
 export default TitleSetting
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'

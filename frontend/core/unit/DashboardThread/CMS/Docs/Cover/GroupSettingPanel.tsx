@@ -2,7 +2,7 @@ import { equals } from 'ramda'
 import { type FC, useEffect, useMemo, useState } from 'react'
 
 import { DOC_COVER_LAYOUT } from '~/const/layout'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TDocCoverLayout, TMarkerValue } from '~/spec'
@@ -41,7 +41,6 @@ const comparableAppearance = (value: TDocCoverCardAppearance): TDocCoverCardAppe
 
 const GroupSettingPanel: FC<TProps> = ({ section, layout, community, onDone }) => {
   const { cn, bg, br, fg } = useTwBelt()
-  const { mutate } = useGraphQLClient()
   const { t } = useTrans()
   const capabilities = useMemo(() => getCapabilities(layout), [layout])
   const initialAppearance = useMemo(
@@ -79,7 +78,7 @@ const GroupSettingPanel: FC<TProps> = ({ section, layout, community, onDone }) =
     setSaving(true)
 
     try {
-      await mutate(S.updateDocCoverCardAppearance, {
+      await browserQuery(S.updateDocCoverCardAppearance, {
         community,
         id: section.id,
         appearance,

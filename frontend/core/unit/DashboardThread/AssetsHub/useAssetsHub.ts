@@ -1,11 +1,12 @@
 'use client'
 
 import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ASSETS_HUB_ENDPOINT } from '~/config'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
-import useQuery from '~/hooks/useQuery'
+import { browserQuery } from '~/graphql/client'
+import { graphqlQueryOptions } from '~/query'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DashboardThread/schema/assets'
@@ -54,7 +55,6 @@ const EMPTY_REFS_STATE: TReferencesState = {
 /** Exposes assets hub state and actions through the shared React hook boundary. */
 export default function useAssetsHub(initialData?: TPagedAssets | null): TAssetsHubLogic {
   const { slug: community } = useCommunity()
-  const { mutate, query } = useGraphQLClient()
   const [status, setStatus] = useState<string>(ASSETS_HUB_UPLOAD_STATUS.IDLE)
   const [busy, setBusy] = useState(false)
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
@@ -80,21 +80,27 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
     return filter
   }, [activeThread, searchQuery])
 
-  const { data, error, loading, reload } = useQuery<{ pagedCommunityAssets: TPagedAssets }>(
-    S.pagedCommunityAssets,
-    {
+  const {
+    data,
+    error,
+    isFetching: loading,
+    refetch: reload,
+  } = useQuery(
+    graphqlQueryOptions<{ pagedCommunityAssets: TPagedAssets }>(S.pagedCommunityAssets, {
       community,
       filter: assetFilter,
-    },
+    }),
   )
   const {
     data: statsData,
     error: statsError,
-    reload: reloadStats,
-  } = useQuery<{ communityAssetStats: TAssetStats }>(S.communityAssetStats, {
-    community,
-    filter: assetFilter,
-  })
+    refetch: reloadStats,
+  } = useQuery(
+    graphqlQueryOptions<{ communityAssetStats: TAssetStats }>(S.communityAssetStats, {
+      community,
+      filter: assetFilter,
+    }),
+  )
 
   const assets = useMemo(
     () => data?.pagedCommunityAssets?.entries ?? initialData?.entries ?? [],
@@ -126,18 +132,14 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
       })
 
       try {
-        const refData = await query<
+        const refData = await browserQuery<
           { communityAssetRefs: TPagedAssetRefs },
           { assetId: string; community: string; filter: { page: number; size: number } }
-        >(
-          S.communityAssetRefs,
-          {
-            assetId,
-            community,
-            filter: { page: 1, size: ASSETS_HUB_REFS_PAGE_SIZE },
-          },
-          { requestPolicy: 'network-only' },
-        )
+        >(S.communityAssetRefs, {
+          assetId,
+          community,
+          filter: { page: 1, size: ASSETS_HUB_REFS_PAGE_SIZE },
+        })
         const refsPage = refData.communityAssetRefs
 
         if (refsRequestId.current === requestId) {
@@ -167,7 +169,7 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
         return null
       }
     },
-    [community, query],
+    [community],
   )
 
   useEffect(() => {
@@ -207,7 +209,7 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
       try {
         const digest = await runStage(ASSETS_HUB_UPLOAD_STATUS.CHECKSUM, () => checksumSha256(file))
         const intent = await runStage(ASSETS_HUB_UPLOAD_STATUS.INTENT, () =>
-          mutate<TCreateAssetUploadIntent, TCreateAssetUploadVariables>(
+          browserQuery<TCreateAssetUploadIntent, TCreateAssetUploadVariables>(
             S.createCommunityAssetUploadIntent,
             {
               community,
@@ -286,7 +288,7 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
         setBusy(false)
       }
     },
-    [community, mutate, reload, reloadStats],
+    [community, reload, reloadStats],
   )
 
   const openPublicReadPreview = useCallback((asset: TAsset): void => {
@@ -329,7 +331,7 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
       setDeletingAssetId(asset.id)
 
       try {
-        await mutate<TDeleteResult>(S.deleteCommunityAsset, {
+        await browserQuery<TDeleteResult>(S.deleteCommunityAsset, {
           community,
           id: asset.id,
         })
@@ -346,7 +348,7 @@ export default function useAssetsHub(initialData?: TPagedAssets | null): TAssets
         setDeletingAssetId(null)
       }
     },
-    [community, loadReferences, mutate, reload, reloadStats, selectedAssetId],
+    [community, loadReferences, reload, reloadStats, selectedAssetId],
   )
 
   const selectAsset = useCallback((assetId: string): void => {

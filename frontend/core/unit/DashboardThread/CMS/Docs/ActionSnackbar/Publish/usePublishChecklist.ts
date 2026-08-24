@@ -1,8 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
-import useQuery from '~/hooks/useQuery'
+import { graphqlQueryOptions } from '~/query'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema/docs'
 
@@ -22,9 +23,11 @@ import type { TPublishChecklist, TPublishSelectedInput } from './spec'
 export default function usePublishChecklist() {
   const { slug: community } = useCommunity()
   const { setPublishRuntime } = useDocsEditor()
-  const { data: publishChecklistData, reload: reloadPublishChecklist } = useQuery<{
-    docPublishChecklist?: TPublishChecklist | null
-  }>(S.docPublishChecklist, { community })
+  const { data: publishChecklistData, refetch: reloadPublishChecklist } = useQuery(
+    graphqlQueryOptions<{ docPublishChecklist?: TPublishChecklist | null }>(S.docPublishChecklist, {
+      community,
+    }),
+  )
   const seenDocIdsRef = useRef<Set<string>>(new Set())
   const seenTreeIdsRef = useRef<Set<string>>(new Set())
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
@@ -101,7 +104,7 @@ export default function usePublishChecklist() {
     DSB_DOC_EVENT.PUBLISH_CHECKLIST_RELOAD,
     (): void => {
       setPublishRuntime?.({ checklistLoaded: false })
-      reloadPublishChecklist()
+      void reloadPublishChecklist()
     },
     [reloadPublishChecklist, setPublishRuntime],
   )

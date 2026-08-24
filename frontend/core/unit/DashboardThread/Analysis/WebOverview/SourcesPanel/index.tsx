@@ -1,7 +1,9 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { useQuery } from 'urql'
+
+import { graphqlQueryOptions } from '~/query'
 
 import { WEB_OVERVIEW_TEXT } from '../constant'
 import DimensionPanel from '../DimensionPanel'
@@ -53,16 +55,18 @@ export default function SourcesPanel({ community, days, demoData }: TProps) {
   const [dimension, setDimension] = useState<TDemoDimension>(TABS[0].key as TDemoDimension)
   const isDemo = Boolean(demoData)
 
-  const [result] = useQuery<TData>({
-    query: ANALYSIS_TREND_SOURCES_QUERY,
-    variables: { community, days, dimension },
-    pause: isDemo,
-    requestPolicy: 'cache-and-network',
+  const result = useQuery({
+    ...graphqlQueryOptions<TData>(ANALYSIS_TREND_SOURCES_QUERY, {
+      community,
+      days,
+      dimension,
+    }),
+    enabled: !isDemo,
   })
   const section =
     isDemo && demoData ? demoSourcesSection(dimension, demoData) : result.data?.analysisTrendSources
 
-  const loading = isDemo ? false : result.fetching && !section
+  const loading = isDemo ? false : result.isFetching && !section
   const error = isDemo ? null : (result.error?.message ?? section?.error?.message)
 
   return (

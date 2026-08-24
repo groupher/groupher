@@ -16,7 +16,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { usePlatform } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
@@ -78,7 +78,6 @@ const preserveMonotonicStage = (
 /** Coordinates analyze/apply requests, URL recovery, polling, reset, and UI phases. */
 export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
-  const { query } = useGraphQLClient()
   const { t } = useTrans()
   const { navi } = usePlatform()
   const searchParams = navi.location.searchParams
@@ -110,16 +109,16 @@ export default function useLogic(): TRet {
 
   const loadJob = useCallback(
     async (jobRef: string): Promise<TContentImportJob> => {
-      const data = await query<{
+      const data = await browserQuery<{
         contentImportJob: Omit<TContentImportJob, 'process'> & { process: unknown }
-      }>(S.job, { community, jobRef }, { requestPolicy: 'network-only' })
+      }>(S.job, { community, jobRef })
       const latest = {
         ...data.contentImportJob,
         process: decodeImportProcess(data.contentImportJob.process),
       }
       return latest
     },
-    [community, query],
+    [community],
   )
 
   const analyze = useCallback(async (): Promise<void> => {

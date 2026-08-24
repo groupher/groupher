@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useMutation } from 'urql'
 
 import PinSVG from '~/icons/Pin'
 import SpinSVG from '~/icons/Spin'
@@ -15,8 +14,8 @@ export default function PinItem() {
   const s = useSalon()
 
   const { article } = useArticle()
-  const [result, pinPost] = useMutation(S.pinPost)
-  const [_result2, undoPinPost] = useMutation(S.undoPinPost)
+  const [result, pinPost] = useArticleSettingMutation(S.pinPost)
+  const [_result2, undoPinPost] = useArticleSettingMutation(S.undoPinPost)
 
   const [pin, setPin] = useState(article.isPinned)
 
@@ -53,3 +52,4 @@ export default function PinItem() {
     </button>
   )
 }
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'

@@ -1,25 +1,23 @@
-import { getChangelog, getPagedComments } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
-import ArticleStoreProvider from '~/stores/article/provider'
+import ArticleQueryProvider from '~/query/ArticleQueryProvider'
+import { Q, createQueryClient, dehydrate, HydrationBoundary } from '~/query/server'
 import CommentsStoreProvider from '~/stores/comments/provider'
 
 export default async function Layout({ children, params }) {
   const params$ = await params
   const { community, id } = params$
 
-  const [changelog, pagedComments] = await Promise.all([
-    getChangelog(community, id),
-    getPagedComments(community, id, 1, THREAD.CHANGELOG),
+  const queryClient = createQueryClient()
+  await Promise.all([
+    queryClient.prefetchQuery(Q.SSR.article.detail(community, THREAD.CHANGELOG, id)),
+    queryClient.prefetchQuery(Q.SSR.comment.list(community, THREAD.CHANGELOG, id)),
   ])
 
-  const articleInitData = { changelog, thread: THREAD.CHANGELOG }
-  const commentsInitData = pagedComments
-    ? { pagedComments, totalCount: pagedComments.totalCount || 0, initialized: true }
-    : { initialized: false }
-
   return (
-    <ArticleStoreProvider initData={articleInitData}>
-      <CommentsStoreProvider initData={commentsInitData}>{children}</CommentsStoreProvider>
-    </ArticleStoreProvider>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ArticleQueryProvider community={community} innerId={id} thread={THREAD.CHANGELOG}>
+        <CommentsStoreProvider>{children}</CommentsStoreProvider>
+      </ArticleQueryProvider>
+    </HydrationBoundary>
   )
 }

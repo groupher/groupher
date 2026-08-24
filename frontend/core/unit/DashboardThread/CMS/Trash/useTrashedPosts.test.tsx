@@ -11,8 +11,11 @@ const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
 }))
 
-vi.mock('~/hooks/useGraphQLClient', () => ({
-  default: () => ({ mutate: mocks.mutate, query: mocks.query }),
+vi.mock('~/graphql/client', () => ({
+  browserQuery: (document: { definitions?: Array<{ operation?: string }> }, ...args: unknown[]) =>
+    document.definitions?.some((definition) => definition.operation === 'mutation')
+      ? mocks.mutate(document, ...args)
+      : mocks.query(document, ...args),
 }))
 
 vi.mock('~/hooks/useTrans', () => ({
@@ -52,16 +55,16 @@ describe('useTrashedPosts', () => {
     mocks.query.mockResolvedValue({ trashedArticles: page })
   })
 
-  it('loads the current community Trash page with a network-only request', async () => {
+  it('loads the current community Trash page', async () => {
     const { result } = renderHook(() => useTrashedPosts())
 
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    expect(mocks.query).toHaveBeenCalledWith(
-      S.trashedPosts,
-      { community: 'home', page: 1, size: 20 },
-      { requestPolicy: 'network-only' },
-    )
+    expect(mocks.query).toHaveBeenCalledWith(S.trashedPosts, {
+      community: 'home',
+      page: 1,
+      size: 20,
+    })
     expect(result.current.pagedPosts.entries[0]?.id).toBe('trash-1')
   })
 

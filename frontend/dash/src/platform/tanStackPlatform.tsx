@@ -50,6 +50,7 @@ export const TanStackPlatformProvider = ({ children }: TProps): ReactNode => {
         searchParams,
       },
       to: (target, options) => {
+        if (target.app !== 'dsb') return
         const href = resolveDsbRoute(target, {
           rootSegment: 'dash',
           currentSearch: searchParams,
@@ -78,7 +79,8 @@ export const TanStackPlatformProvider = ({ children }: TProps): ReactNode => {
       prefetch: async (href) => {
         await preloadResolvedPath(router, href)
       },
-      isActive: (target) => isActiveDsbRoute(currentPathname, target, 'dash'),
+      isActive: (target) =>
+        target.app === 'dsb' && isActiveDsbRoute(currentPathname, target, 'dash'),
     }
   }, [location.pathname, search, navigate, router])
 

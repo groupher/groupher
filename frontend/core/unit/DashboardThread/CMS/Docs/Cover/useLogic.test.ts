@@ -11,12 +11,11 @@ const mocks = vi.hoisted(() => ({
   reload: vi.fn(),
 }))
 
-vi.mock('~/hooks/useGraphQLClient', () => ({
-  default: () => ({ mutate: mocks.mutate }),
-}))
+vi.mock('~/graphql/client', () => ({ browserQuery: mocks.mutate }))
 
-vi.mock('~/hooks/useQuery', () => ({
-  default: () => ({ data: null, reload: mocks.reload }),
+vi.mock('@tanstack/react-query', async () => ({
+  ...(await vi.importActual('@tanstack/react-query')),
+  useQuery: () => ({ data: null, refetch: mocks.reload }),
 }))
 
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))

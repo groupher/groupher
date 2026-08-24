@@ -1,4 +1,7 @@
 export default {
+  'about.visitor_location.title': '访客分布 · 最近 {days} 天',
+  'about.visitor_location.visitors': '{count} 位访客',
+  'about.visitor_location.globe_aria': '展示访客地域分布的交互式地球',
   'comment.editor.placeholder': "// 评论内容（'Tab' 键快速插入）",
   'comment.reply.placeholder': "// 回复内容（'Tab' 键快速插入）",
   'comment.submit.publish': '发 布',

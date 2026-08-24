@@ -2,8 +2,8 @@ import { clone } from 'ramda'
 import { useEffect, useRef } from 'react'
 
 import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
+import { browserQuery } from '~/graphql/client'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -46,7 +46,6 @@ type TThemePresetMutationData = {
 export default function useThemePresetMutation(): TThemePresetMutationRet {
   const dashboard$ = useDashboard()
   const liveDashboard$ = dashboard$.live$ ?? dashboard$
-  const { mutate } = useGraphQLClient()
   const isDemoMode = useDsbDemoMode()
   const { t } = useTrans()
   const storeRef = useRef(liveDashboard$)
@@ -137,13 +136,13 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
     // saved by preset name and do not modify the saved Custom preset.
     const isCustomPreset = storeRef.current.themePreset === THEME_PRESET.CUSTOM
     const request = isCustomPreset
-      ? mutate<TThemePresetMutationData>(S.saveCustomThemePreset, {
+      ? browserQuery<TThemePresetMutationData>(S.saveCustomThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
           themePresetBase: storeRef.current.themePresetBase ?? DEFAULT_THEME_PRESET,
           themeOverwrite: JSON.stringify(storeRef.current.themeOverwrite ?? {}),
         })
-      : mutate<TThemePresetMutationData>(S.selectThemePreset, {
+      : browserQuery<TThemePresetMutationData>(S.selectThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
         })

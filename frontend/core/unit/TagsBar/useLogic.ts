@@ -1,11 +1,13 @@
+import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
 import useActiveTag from '~/hooks/useActiveTag'
+import useViewingThread from '~/hooks/useViewingThread'
 import { usePathname, useRouter, useSearchParams } from '~/platform'
-import type { TGroupedTags, TResState, TTag } from '~/spec'
-import useArticleList from '~/stores/articleList/hooks'
+import { Q } from '~/query'
+import type { TGroupedTags, TTag } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 
 type TRet = {
   tags: readonly TTag[]
@@ -24,10 +26,10 @@ export default function useLogic(): TRet {
   const { push } = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const store = useArticleList()
-  const { tagGroups } = store
+  const { slug: community } = useCommunity()
+  const thread = useViewingThread()
+  const tagGroups = useQuery(Q.article.tagGroups(community, thread)).data || []
   const activeTag = useActiveTag()
-  const loadingState = TYPE.RES_STATE.LOADING as TResState
 
   // derived data
   const { tags, groupedTags, groupKeys } = useMemo(() => {
@@ -55,7 +57,6 @@ export default function useLogic(): TRet {
     const nextQuery = nextSearchParams.toString()
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname
 
-    store.commit({ resState: loadingState })
     setTimeout(() => push(nextUrl), 0)
   }
 

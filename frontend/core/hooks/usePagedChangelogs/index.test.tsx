@@ -1,10 +1,13 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { renderHook } from '@testing-library/react'
+import type { ReactNode } from 'react'
 
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import type { TPagedChangelogs, TTagGroup } from '~/spec'
+import { articleKeys } from '~/query'
+import AccountStoreProvider from '~/stores/account/provider'
 
 let mockSearchParams = new URLSearchParams()
 
@@ -18,16 +21,37 @@ vi.mock('~/platform', async () => {
 })
 
 describe('usePagedChangelogs', () => {
-  it('builds pagedParams from searchParams and can update store', async () => {
+  it('builds pagedParams from searchParams and reads the Query cache', async () => {
     mockSearchParams = new URLSearchParams(
       `${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATUS}=${ARTICLE_STATUS.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
     )
 
-    const wrapper = makeStoreWrapper({
+    const StoreWrapper = makeStoreWrapper({
       community: { slug: 'acme' },
       articleList: true,
-      articleListInit: { pagedChangelogs: { entries: [], pageNumber: 1 } },
     })
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
+    })
+    queryClient.setQueryData(
+      articleKeys.changelogs({
+        community: 'acme',
+        page: 2,
+        size: 20,
+        communityTag: 't1',
+        cat: ARTICLE_CAT.BUG,
+        status: ARTICLE_STATUS.TODO,
+        order: ARTICLE_ORDER.UPVOTES,
+      }),
+      { entries: [], pageNumber: 2 },
+    )
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>
+        <AccountStoreProvider initData={{ loading: false, user: null }}>
+          <StoreWrapper>{children}</StoreWrapper>
+        </AccountStoreProvider>
+      </QueryClientProvider>
+    )
 
     const { result } = renderHook(() => usePagedChangelogs(), { wrapper })
 
@@ -36,28 +60,6 @@ describe('usePagedChangelogs', () => {
     expect(result.current.pagedParams.status).toBe(ARTICLE_STATUS.TODO)
     expect(result.current.pagedParams.order).toBe(ARTICLE_ORDER.UPVOTES)
 
-    act(() =>
-      result.current.update({
-        pagedChangelogs: {
-          entries: [{ id: 'c1' }],
-          pageNumber: 2,
-          pageSize: 20,
-          totalCount: 1,
-          totalPages: 1,
-        } satisfies TPagedChangelogs,
-        tagGroups: [
-          {
-            id: 'g1',
-            title: 'General',
-            index: 0,
-            tags: [{ id: 't1', title: 'Tag' }],
-          },
-        ] satisfies readonly TTagGroup[],
-      }),
-    )
-
-    await waitFor(() => {
-      expect(result.current.pagedChangelogs.entries).toHaveLength(1)
-    })
+    expect(result.current.resState).toBe('DONE')
   })
 })

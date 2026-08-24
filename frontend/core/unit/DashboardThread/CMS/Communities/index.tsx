@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import {
   type ColumnDef,
   flexRender,
@@ -22,10 +23,11 @@ import {
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
+import { graphqlQueryOptions } from '~/query'
+import { pagedCommunities as pagedCommunitiesDocument } from '~/schemas/pages/community'
 import type { TCommunity } from '~/spec'
 import TableLoading from '~/ui/Loading/Table'
 
-import useCMSInfo from '../../hooks/useCMSInfo'
 import FilterBar from '../FilterBar'
 import useSalon, { cn } from './salon'
 
@@ -34,7 +36,14 @@ const CLASSIC_ALIGN_LEFT = ['name', 'desc']
 const CLASSIC_ALIGN_RIGHT = ['timestamps']
 
 export default function Communities() {
-  const { loading, pagedCommunities } = useCMSInfo()
+  const query = useQuery(
+    graphqlQueryOptions(pagedCommunitiesDocument, {
+      filter: { page: 1, size: 20 },
+      userHasLogin: false,
+    }),
+  )
+  const pagedCommunities = query.data?.pagedCommunities
+  const loading = !pagedCommunities && query.isFetching
   const s = useSalon({ loading: false })
   const { t } = useTrans()
 
@@ -44,7 +53,7 @@ export default function Communities() {
 
   // useMount(loadCommunities)
 
-  const data = (pagedCommunities.entries ?? []) as TCommunity[]
+  const data = (pagedCommunities?.entries ?? []) as TCommunity[]
   const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
 
   const columns = useMemo<ColumnDef<TCommunity, unknown>[]>(() => {

@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 
 import { KANBAN_BOARD } from '~/const/thread'
+import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import type { TPagedPosts } from '~/spec'
 
 import { useColumnsData } from '../Columns'
@@ -21,6 +22,10 @@ vi.mock('~/hooks/useKanbanPosts', () => ({
     done: emptyPosts,
     rejected: emptyPosts,
   }),
+}))
+
+vi.mock('~/hooks/useKanbanBgColors', () => ({
+  default: () => ['neutral', 'neutral', 'neutral', 'neutral', 'neutral'],
 }))
 
 vi.mock('~/hooks/useLayout', () => ({
@@ -72,7 +77,7 @@ vi.mock('../../KanbanItem/EmptyItem', () => ({
 
 describe('useColumnsData', () => {
   it('returns only configured boards', () => {
-    const { result } = renderHook(() => useColumnsData())
+    const { result } = renderHook(() => useColumnsData(), { wrapper: makeStoreWrapper() })
 
     expect(result.current.map((column) => column.key)).toEqual(['todo', 'done'])
   })

@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react'
 
 import TYPE from '~/const/type'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import CloseLightSVG from '~/icons/CloseLight'
 import FileTextSVG from '~/icons/FileText'
 import RotateSVG from '~/icons/Rotate'
@@ -117,7 +117,6 @@ const TrashDrawer: FC<TProps> = ({
   onRestored,
 }) => {
   const s = useSalon()
-  const { mutate } = useGraphQLClient()
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [parentRequiredId, setParentRequiredId] = useState<string | null>(null)
   const [selectedParentByItem, setSelectedParentByItem] = useState<Record<string, string>>({})
@@ -131,7 +130,7 @@ const TrashDrawer: FC<TProps> = ({
     setRestoringId(item.id)
 
     try {
-      const data = await mutate<TDocTreeMutationData>(S.restoreDocTreeTrashItem, {
+      const data = await browserQuery<TDocTreeMutationData>(S.restoreDocTreeTrashItem, {
         community,
         id: item.id,
         baseRevision,

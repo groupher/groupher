@@ -1,10 +1,9 @@
 'use client'
 
-import { type ReactNode, useRef } from 'react'
+import type { ReactNode } from 'react'
 
-import setupStore from '.'
-import { StoreContext } from './context'
-import type { TInit, TStore } from './spec'
+import { SessionSeedContext } from './context'
+import type { TInit } from './spec'
 
 type TProps = {
   children: ReactNode
@@ -12,9 +11,9 @@ type TProps = {
 }
 
 export default function Provider({ children, initData }: TProps) {
-  const storeRef = useRef<TStore | null>(null)
-
-  storeRef.current ??= setupStore(initData)
-
-  return <StoreContext.Provider value={storeRef.current}>{children}</StoreContext.Provider>
+  return (
+    <SessionSeedContext.Provider value={initData ?? { loading: true, user: null }}>
+      {children}
+    </SessionSeedContext.Provider>
+  )
 }

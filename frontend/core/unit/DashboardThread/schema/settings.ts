@@ -117,19 +117,49 @@ export const updateDashboardEnable = graphql(`
   mutation UpdateDashboardEnable(
     $community: String!
     $post: Boolean
+    $blog: Boolean
+    $kanban: Boolean
     $changelog: Boolean
+    $doc: Boolean
+    $docLastUpdate: Boolean
+    $docReaction: Boolean
     $about: Boolean
+    $aboutTechstack: Boolean
+    $aboutLocation: Boolean
+    $aboutLinks: Boolean
+    $aboutMediaReport: Boolean
+    $visitorLocationMap: Boolean
   ) {
     updateDashboardEnable(
       community: $community
       post: $post
+      blog: $blog
+      kanban: $kanban
       changelog: $changelog
+      doc: $doc
+      docLastUpdate: $docLastUpdate
+      docReaction: $docReaction
       about: $about
+      aboutTechstack: $aboutTechstack
+      aboutLocation: $aboutLocation
+      aboutLinks: $aboutLinks
+      aboutMediaReport: $aboutMediaReport
+      visitorLocationMap: $visitorLocationMap
     ) {
       enable {
         post
+        blog
+        kanban
         changelog
+        doc
+        docLastUpdate
+        docReaction
         about
+        aboutTechstack
+        aboutLocation
+        aboutLinks
+        aboutMediaReport
+        visitorLocationMap
       }
     }
   }

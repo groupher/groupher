@@ -1,24 +1,14 @@
-import { getGroupedKanbanPosts } from '~/app/ssr'
-import { THREAD } from '~/const/thread'
-import ArticleListStoreProvider from '~/stores/articleList/provider'
+import { Q, createQueryClient, dehydrate, HydrationBoundary } from '~/query/server'
 import KanbanThread from '~/unit/KanbanThread'
 
 export default async function CommunityKanbanPage({ params }) {
   const params$ = await params
-  const groupedKanbanPosts = await getGroupedKanbanPosts(params$.community)
-
-  const initData = {
-    backlog: groupedKanbanPosts?.backlog,
-    todo: groupedKanbanPosts?.todo,
-    wip: groupedKanbanPosts?.wip,
-    done: groupedKanbanPosts?.done,
-    rejected: groupedKanbanPosts?.rejected,
-    thread: THREAD.KANBAN,
-  }
+  const queryClient = createQueryClient()
+  await queryClient.prefetchQuery(Q.SSR.article.kanban(params$.community))
 
   return (
-    <ArticleListStoreProvider initData={initData}>
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <KanbanThread />
-    </ArticleListStoreProvider>
+    </HydrationBoundary>
   )
 }

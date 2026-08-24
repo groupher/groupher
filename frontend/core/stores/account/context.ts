@@ -2,7 +2,7 @@
 
 import { createContext } from 'react'
 
-import type { TStore } from './spec'
+import type { TInit } from './spec'
 
-export const StoreContext = createContext<TStore | null>(null)
-StoreContext.displayName = 'Account'
+export const SessionSeedContext = createContext<TInit | null>(null)
+SessionSeedContext.displayName = 'AccountSessionSeed'

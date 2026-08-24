@@ -1,7 +1,9 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { useQuery } from 'urql'
+
+import { graphqlQueryOptions } from '~/query'
 
 import {
   TRAFFIC_GRID_TEMPLATE,
@@ -39,11 +41,9 @@ export default function TrafficPanel({ community, days, demoData }: TProps) {
   const [visible, setVisible] = useState(false)
   const isDemo = Boolean(demoData)
 
-  const [result] = useQuery<TData>({
-    query: ANALYSIS_TREND_TRAFFIC_QUERY,
-    variables: { community, days },
-    pause: !visible || isDemo,
-    requestPolicy: 'cache-and-network',
+  const result = useQuery({
+    ...graphqlQueryOptions<TData>(ANALYSIS_TREND_TRAFFIC_QUERY, { community, days }),
+    enabled: visible && !isDemo,
   })
   const section =
     isDemo && demoData ? demoTrafficSection(demoData) : result.data?.analysisTrendTraffic
@@ -79,7 +79,7 @@ export default function TrafficPanel({ community, days, demoData }: TProps) {
     <section ref={ref} className={s.wrapper}>
       <h3 className={s.title}>{WEB_OVERVIEW_TEXT.traffic}</h3>
 
-      {!isDemo && (!visible || (result.fetching && !section)) ? (
+      {!isDemo && (!visible || (result.isFetching && !section)) ? (
         <div className={s.state}>Loading analytics…</div>
       ) : !isDemo && result.error ? (
         <div className={s.error}>{result.error?.message}</div>

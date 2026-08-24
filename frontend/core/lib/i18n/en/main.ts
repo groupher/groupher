@@ -1,4 +1,7 @@
 export default {
+  'about.visitor_location.title': 'Visitor distribution · Last {days} days',
+  'about.visitor_location.visitors': '{count} visitors',
+  'about.visitor_location.globe_aria': 'Interactive globe showing visitor locations',
   'comment.editor.placeholder': "// Comment (press 'Tab' to insert quickly)",
   'comment.reply.placeholder': "// Reply (press 'Tab' to insert quickly)",
   'comment.submit.publish': 'Publish',

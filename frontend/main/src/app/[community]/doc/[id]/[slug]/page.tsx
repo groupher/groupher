@@ -11,5 +11,5 @@ export default async function Page({ params }: TProps) {
   const { community } = await params
   const initialTree = await getDocPublicTree(community)
 
-  return <DocThread initialTree={initialTree} />
+  return <DocThread article initialTree={initialTree} />
 }

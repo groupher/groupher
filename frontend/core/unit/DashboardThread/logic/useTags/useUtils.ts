@@ -2,7 +2,7 @@ import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -25,7 +25,6 @@ type TRet = {
 export default function useUtils(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
-  const { query, mutate } = useGraphQLClient()
 
   const { original } = dsb$
 
@@ -36,7 +35,7 @@ export default function useUtils(): TRet {
     const params = { community, thread }
 
     dsb$.commit({ loading: true })
-    query(S.communityTagGroups, params).then((data) => {
+    browserQuery(S.communityTagGroups, params).then((data) => {
       const tagGroups = (data.communityTagGroups ?? []).map((group) => ({
         ...group,
         tags: (group.tags ?? []).map((tag) => ({
@@ -58,7 +57,7 @@ export default function useUtils(): TRet {
     dsb$.commit({ saving: true })
 
     try {
-      await mutate(S.createCommunityTagGroup, {
+      await browserQuery(S.createCommunityTagGroup, {
         thread,
         title: trimmedTitle,
         community: community$.slug,
@@ -85,7 +84,7 @@ export default function useUtils(): TRet {
     try {
       const slug = await slugify(trimmedTitle)
 
-      await mutate(S.createCommunityTag, {
+      await browserQuery(S.createCommunityTag, {
         thread,
         title: trimmedTitle,
         slug,
@@ -112,7 +111,7 @@ export default function useUtils(): TRet {
       const slug = await slugify(title)
       const nextTag = { ...tag, title, slug }
 
-      await mutate<unknown, TUpdateCommunityTagVariables>(S.updateCommunityTag, {
+      await browserQuery<unknown, TUpdateCommunityTagVariables>(S.updateCommunityTag, {
         ...nextTag,
         id: tag.id,
         community: community$.slug,
@@ -150,7 +149,7 @@ export default function useUtils(): TRet {
     dsb$.commit({ saving: true })
 
     try {
-      await mutate(S.updateCommunityTagGroup, {
+      await browserQuery(S.updateCommunityTagGroup, {
         id: groupId,
         community,
         thread: activeTagThread,

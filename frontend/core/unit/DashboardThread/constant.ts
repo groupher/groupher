@@ -241,6 +241,11 @@ export const MENU: TDsbMenu = {
         title: 'dsb.menu.inout',
         slug: DSB_ROUTE.INOUT,
       },
+      {
+        icon: 'log',
+        title: 'dsb.menu.activity',
+        slug: DSB_ROUTE.ACTIVITY,
+      },
     ],
   },
 
@@ -254,11 +259,6 @@ export const MENU: TDsbMenu = {
         icon: 'trend',
         title: 'dsb.menu.trend',
         slug: DSB_ROUTE.TREND,
-      },
-      {
-        icon: 'log',
-        title: 'dsb.menu.log',
-        slug: DSB_ROUTE.LOG,
       },
     ],
   },

@@ -1,7 +1,7 @@
 import type { FC } from 'react'
-import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import { updateViewingArticle } from '~/signal'
 import { toast } from '~/ui/Toaster'
 
@@ -19,7 +19,7 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
 
   const { article } = useViewingArticle()
   const { resetTouched } = useTouched()
-  const [result, updatePost] = useMutation(S.updatePost)
+  const [result, updatePost] = useArticleSettingMutation(S.updatePost)
 
   const handleUpdate = () => {
     const params = {

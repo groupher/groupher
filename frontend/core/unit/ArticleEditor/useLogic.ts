@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { proxy, useSnapshot } from 'valtio'
 
 import { ARTICLE_CAT } from '~/const/gtd'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { isWordsCountValid } from '~/ui/WordsCounter/helper'
@@ -87,7 +87,6 @@ const store = proxy<TStore>({
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
   const community$ = useCommunity()
-  const { query } = useGraphQLClient()
 
   const onPublish = (): void => {
     console.log('## onPublish')
@@ -136,7 +135,7 @@ export default function useLogic(): TRet {
     const params = { slug }
     // console.log('## loadCommunity: ', params)
 
-    query(S.community, params).then((res) => {
+    browserQuery(S.community, params).then((res) => {
       console.log('## loadCommunity: ', res)
     })
   }
@@ -146,7 +145,7 @@ export default function useLogic(): TRet {
     // const { thread, viewingArticle } = store
     // const { id } = viewingArticle
 
-    // sr71$.query(S[thread], { id })
+    // sr71$.browserQuery(S[thread], { id })
   }
 
   const reset = (): void => {

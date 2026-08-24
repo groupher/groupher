@@ -1,11 +1,12 @@
+import { useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ARTICLE_STAGE, type TArticleStage } from '~/const/article'
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
-import useQuery from '~/hooks/useQuery'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
+import { graphqlQueryOptions } from '~/query'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DashboardThread/schema/docs'
@@ -118,20 +119,21 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const { t } = useTrans()
   const { currentDocId, syncDocIdToUrl } = useDocEditorUrl()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
-  const { data, reload } = useQuery<{
-    docTree?: {
-      revision: number
-      treeState?: TDocTreeState | null
-      stagedEvents?: TDocTreeEvent[] | null
-      tabs: TDocTreeNodeDTO[]
-    }
-  }>(S.docTree, { community })
+  const { data, refetch: reload } = useQuery(
+    graphqlQueryOptions<{
+      docTree?: {
+        revision: number
+        treeState?: TDocTreeState | null
+        stagedEvents?: TDocTreeEvent[] | null
+        tabs: TDocTreeNodeDTO[]
+      }
+    }>(S.docTree, { community }),
+  )
   const {
     data: trashData,
-    loading: trashLoading,
-    reload: reloadTrash,
-  } = useQuery<TDocTreeTrashData>(S.docTreeTrashItems, { community })
+    isFetching: trashLoading,
+    refetch: reloadTrash,
+  } = useQuery(graphqlQueryOptions<TDocTreeTrashData>(S.docTreeTrashItems, { community }))
   const trashItems = trashData?.docTreeTrashItems ?? []
   const initialTabs = useMemo(() => initialData?.tabs.map(mapTab) ?? [], [initialData])
   const initialActiveTab = findTabByDocId(initialTabs, currentDocId) ?? initialTabs[0] ?? null
@@ -169,7 +171,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persist(S.deleteDocTreeNode, { id: nodeId }, (data) => data?.deleteDocTreeNode).then(
       (payload) => {
         if (!payload || payload.conflict) return
-        reloadTrash()
+        void reloadTrash()
       },
     )
   }
@@ -293,7 +295,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       })
       .catch((err) => {
         console.error(`## doc tree ${errorLabel} error: `, err)
-        reload()
+        void reload()
       })
       .finally(onSettled)
   }
@@ -854,7 +856,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       })
       .catch((err) => {
         console.error('## doc tree duplicate child error: ', err)
-        reload()
+        void reload()
       })
   }
 
@@ -886,7 +888,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      mutate<TMoveDocToDraftData>(S.moveDocToDraft, { community, id: childId })
+      browserQuery<TMoveDocToDraftData>(S.moveDocToDraft, { community, id: childId })
         .then((data) => {
           const payload = data?.moveDocToDraft
           const current = findChild(readGroups(), childId)
@@ -919,7 +921,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       action === SIDE_TREE_NODE_MENU_ACTION.UNPIN_FROM_COVER
     ) {
       const pinning = action === SIDE_TREE_NODE_MENU_ACTION.PIN_TO_COVER
-      mutate(pinning ? S.pinDocToCover : S.unpinDocFromCover, {
+      browserQuery(pinning ? S.pinDocToCover : S.unpinDocFromCover, {
         community,
         nodeId: childId,
       })
@@ -1060,7 +1062,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       })
       .catch((err) => {
         console.error('## doc tree create tab error: ', err)
-        reload()
+        void reload()
       })
   }
 

@@ -23,22 +23,21 @@ const mocks = vi.hoisted(() => ({
   syncDocIdToUrl: vi.fn(),
 }))
 
-vi.mock('~/hooks/useGraphQLClient', () => ({
-  default: () => ({ mutate: mocks.mutate }),
-}))
+vi.mock('~/graphql/client', () => ({ browserQuery: mocks.mutate }))
 
-vi.mock('~/hooks/useQuery', () => ({
-  default: () => {
+vi.mock('@tanstack/react-query', async () => ({
+  ...(await vi.importActual('@tanstack/react-query')),
+  useQuery: () => {
     const isTrashQuery = mocks.queryCallCount % 2 === 1
     mocks.queryCallCount += 1
 
     return isTrashQuery
       ? {
           data: { docTreeTrashItems: [] },
-          loading: false,
-          reload: mocks.reloadTrash,
+          isFetching: false,
+          refetch: mocks.reloadTrash,
         }
-      : { data: null, loading: false, reload: mocks.reload }
+      : { data: null, isFetching: false, refetch: mocks.reload }
   },
 }))
 

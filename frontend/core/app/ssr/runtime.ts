@@ -4,9 +4,10 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { TAG_THREADS, THREAD } from '~/const/thread'
-import { gqFetchTyped } from '~/graphql/server'
+import { publicQuery } from '~/graphql/server'
 import type { TI18nNamespace } from '~/i18n'
 import { loadLocaleFile } from '~/i18n'
+import { stripPagedCommentViewerState } from '~/lib/commentViewerState'
 import { changelog as changelogQuery, pagedChangelogs } from '~/schemas/pages/changelog'
 import { pagedComments } from '~/schemas/pages/comment'
 import { community as communityQuery } from '~/schemas/pages/community'
@@ -35,7 +36,7 @@ const getCommunity = async (community: string): Promise<TCommunityInfo> => {
   cacheLife('days')
   cacheTag(CACHE_TAG.communityCache(community))
 
-  const { data, errors } = await gqFetchTyped(communityQuery, {
+  const { data, errors } = await publicQuery(communityQuery, {
     slug: community,
     userHasLogin: false,
   })
@@ -92,7 +93,7 @@ const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   'use cache'
   cacheLife('days')
 
-  const { data, errors } = await gqFetchTyped(themePresets, {})
+  const { data, errors } = await publicQuery(themePresets, {})
 
   if (errors || !data?.themePresets) {
     console.log('## error details theme presets', errors)
@@ -118,8 +119,10 @@ const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPost
     cat: filter.cat as PagedPostsFilter['cat'],
     status: filter.status as PagedPostsFilter['status'],
     order: filter.order as PagedPostsFilter['order'],
+    when: filter.when as PagedPostsFilter['when'],
+    sort: filter.sort as PagedPostsFilter['sort'],
   }
-  const { data, errors } = await gqFetchTyped(pagedPosts, {
+  const { data, errors } = await publicQuery(pagedPosts, {
     filter: graphqlFilter,
     userHasLogin: false,
   })
@@ -169,7 +172,7 @@ export const getPagedChangelogs = async (community: string): Promise<TPagedChang
   cacheLife('minutes')
   cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
 
-  const { data, errors } = await gqFetchTyped(pagedChangelogs, {
+  const { data, errors } = await publicQuery(pagedChangelogs, {
     filter: { community, page: 1 },
     userHasLogin: false,
   })
@@ -198,7 +201,7 @@ export const getGroupedKanbanPosts = async (
   cacheLife('minutes')
   cacheTag(CACHE_TAG.articlesCache(community, THREAD.KANBAN))
 
-  const { data, errors } = await gqFetchTyped(groupedKanbanPosts, { community })
+  const { data, errors } = await publicQuery(groupedKanbanPosts, { community })
 
   if (errors) {
     console.log('## error details', errors)
@@ -221,7 +224,7 @@ export const getTagGroups = async (
   const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return []
 
-  const { data, errors } = await gqFetchTyped(communityTagGroups, {
+  const { data, errors } = await publicQuery(communityTagGroups, {
     community,
     thread: gqlThread,
   })
@@ -245,7 +248,7 @@ export const getTagStats = async (
   const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return null
 
-  const { data, errors } = await gqFetchTyped(communityTagStats, {
+  const { data, errors } = await publicQuery(communityTagStats, {
     community,
     thread: gqlThread,
     slug,
@@ -266,9 +269,8 @@ export const getPost = async (
 ): Promise<TPost | null> => {
   'use cache'
   cacheLife('minutes')
-
-  // cacheTag(CACHE_TAG.articlesCache(community, thread))
-  const { data, errors } = await gqFetchTyped(postQuery, {
+  cacheTag(CACHE_TAG.articleCache(community, thread, id))
+  const { data, errors } = await publicQuery(postQuery, {
     article: {
       innerId: id,
       community,
@@ -290,9 +292,8 @@ export const getPost = async (
 export const getChangelog = async (community: string, id: string): Promise<TPost | null> => {
   'use cache'
   cacheLife('minutes')
-
-  // cacheTag(CACHE_TAG.articlesCache(community, THREAD.CHANGELOG))
-  const { data, errors } = await gqFetchTyped(changelogQuery, {
+  cacheTag(CACHE_TAG.articleCache(community, THREAD.CHANGELOG, id))
+  const { data, errors } = await publicQuery(changelogQuery, {
     article: {
       innerId: id,
       community,
@@ -314,8 +315,9 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
 export const getDoc = async (community: string, id: string): Promise<TDoc | null> => {
   'use cache'
   cacheLife('minutes')
+  cacheTag(CACHE_TAG.articleCache(community, THREAD.DOC, id))
 
-  const { data, errors } = await gqFetchTyped(docQuery, {
+  const { data, errors } = await publicQuery(docQuery, {
     article: {
       innerId: id,
       community,
@@ -337,7 +339,7 @@ export const getDocPublicTree = async (community: string): Promise<TDocPublicTre
   'use cache'
   cacheLife('minutes')
 
-  const { data, errors } = await gqFetchTyped(docPublicTree, {
+  const { data, errors } = await publicQuery(docPublicTree, {
     community,
   })
 
@@ -358,8 +360,9 @@ export const getPagedComments = async (
 ): Promise<TPagedComments | null> => {
   'use cache'
   cacheLife('minutes')
+  cacheTag(CACHE_TAG.commentsCache(community, thread, id))
 
-  const { data, errors } = await gqFetchTyped(pagedComments, {
+  const { data, errors } = await publicQuery(pagedComments, {
     article: {
       innerId: id,
       community,
@@ -374,5 +377,5 @@ export const getPagedComments = async (
     return null
   }
 
-  return data.pagedComments as unknown as TPagedComments
+  return stripPagedCommentViewerState(data.pagedComments as unknown as TPagedComments)
 }

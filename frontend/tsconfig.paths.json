@@ -17,6 +17,8 @@
       "~/render/*": ["./core/render/*"],
       "~/platform": ["./core/platform"],
       "~/platform/*": ["./core/platform/*"],
+      "~/query": ["./core/query"],
+      "~/query/*": ["./core/query/*"],
       "~/stores": ["./core/stores"],
       "~/stores/*": ["./core/stores/*"],
       "~/lib": ["./core/lib"],
@@ -63,7 +65,8 @@
       "~/proxies/*": ["./core/app/proxies/*"],
       "~/tailwind": ["./core/tailwind"],
       "~/tailwind/*": ["./core/tailwind/*"],
-      "@dash/*": ["./dash/src/*"]
+      "@dash/*": ["./dash/src/*"],
+      "@community/*": ["./community/src/*"]
     }
   }
 }

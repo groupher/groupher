@@ -7,6 +7,7 @@
 import type { FC } from 'react'
 
 import { COMMUNITY_LAYOUT } from '~/const/layout'
+import useEnable from '~/hooks/useEnable'
 import useLayout from '~/hooks/useLayout'
 import Markdown from '~/render/Markdown'
 import useCommunity from '~/stores/community/hooks'
@@ -16,6 +17,7 @@ import ExtraInfo from './ExtraInfo'
 import Members from './Members'
 import useSalon, { cn } from './salon'
 import Sidebar from './Sidebar'
+import VisitorLocationMap from './VisitorLocationMap'
 
 type TProps = {
   isSidebarLayout?: boolean
@@ -31,6 +33,7 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
 
   const { communityLayout } = useLayout()
   const { moderators } = useCommunity()
+  const enable = useEnable()
 
   return (
     <div className={s.wrapper}>
@@ -41,6 +44,12 @@ const AboutThreadContainer: FC<TProps> = ({ isSidebarLayout = false }) => {
             <Markdown>{INTRO}</Markdown>
           </div>
         </div>
+
+        {enable.visitorLocationMap && (
+          <div className={s.intro}>
+            <VisitorLocationMap />
+          </div>
+        )}
 
         {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && <ExtraInfo />}
 

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import { closeDrawer, send } from '~/signal'
 import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -41,8 +41,6 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
   const { tagGroups, settingTag, activeTagThread } = dsb$
 
   const community$ = useCommunity()
-
-  const { mutate } = useGraphQLClient()
 
   const [editingTag, setEditingTag] = useState<TTag | null>(null)
   const [mode, setMode] = useState<TChangeMode>(CHANGE_MODE.UPDATE)
@@ -115,7 +113,7 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     setProcessing(true)
     const { id, thread, community } = tag
 
-    mutate(S.deleteCommunityTag, { id, community: community.slug, thread })
+    browserQuery(S.deleteCommunityTag, { id, community: community.slug, thread })
       .then((res) => {
         console.log('## deleteCommunityTag: ', res)
         _handleDone()
@@ -136,7 +134,7 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
       return
     }
 
-    mutate(S.updateCommunityTag, {
+    browserQuery(S.updateCommunityTag, {
       id: editingTag.id ?? '',
       color: editingTag.color as TColorName,
       title: editingTag.title,
@@ -178,7 +176,7 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
       marker: editingTag.marker,
     }
 
-    mutate(S.createCommunityTag, params)
+    browserQuery(S.createCommunityTag, params)
       .then((res) => {
         console.log('## createCommunityTag: ', res)
         _handleDone()

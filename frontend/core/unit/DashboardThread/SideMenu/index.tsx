@@ -1,12 +1,15 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { keys } from 'ramda'
 import { useEffect, useMemo, useReducer } from 'react'
 
 import { DSB_POST_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
+import { Q } from '~/query'
 import type { TDsbPath } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import useDashboardStore from '~/stores/dashboard/hooks'
 import Sticky from '~/ui/Sticky'
 
@@ -91,7 +94,9 @@ const sideMenuReducer = (state: TSideMenuState, action: TSideMenuAction): TSideM
 
 export default function SideMenu() {
   const { mainTab } = useDsbTab()
-  const { commit, pagedPosts, submenuCollapsed } = useDashboardStore()
+  const { commit, submenuCollapsed } = useDashboardStore()
+  const { slug: community } = useCommunity()
+  const postsQuery = useQuery(Q.article.posts({ community, page: 1, size: 20 }))
   const groupKeys = keys(MENU)
   const resolvedMenuView =
     SUBMENU_ROUTE_VIEW[mainTab as keyof typeof SUBMENU_ROUTE_VIEW] ?? MENU_VIEW.MAIN
@@ -105,9 +110,9 @@ export default function SideMenu() {
   const activeMainTab = (optimisticMainTab ?? mainTab) as TDsbPath
   const postEndSlots = useMemo(
     () => ({
-      [DSB_POST_ROUTE.CONTENT]: <MenuItemCount value={pagedPosts.totalCount ?? 0} />,
+      [DSB_POST_ROUTE.CONTENT]: <MenuItemCount value={postsQuery.data?.totalCount ?? 0} />,
     }),
-    [pagedPosts.totalCount],
+    [postsQuery.data?.totalCount],
   )
 
   useEffect(() => {

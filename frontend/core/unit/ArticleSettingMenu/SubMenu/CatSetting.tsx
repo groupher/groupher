@@ -1,5 +1,4 @@
 import { type FC, useState } from 'react'
-import { useMutation } from 'urql'
 
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
 import { toGTDLabelKey } from '~/fmt'
@@ -28,7 +27,7 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
 
   const { touched, setTouched, resetTouched } = useTouched()
 
-  const [result, setPostCat] = useMutation(S.setPostCat)
+  const [result, setPostCat] = useArticleSettingMutation(S.setPostCat)
 
   const handleCat = () => {
     const params = {
@@ -90,3 +89,4 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
 }
 
 export default CatSetting
+import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'

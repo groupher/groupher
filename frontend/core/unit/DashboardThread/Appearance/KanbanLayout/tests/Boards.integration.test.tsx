@@ -30,12 +30,7 @@ vi.mock('~/hooks/useDsbTab', () => ({
   default: () => ({ subTab: 'basic' }),
 }))
 
-vi.mock('~/hooks/useGraphQLClient', () => ({
-  default: () => ({
-    mutate: vi.fn(),
-    query: vi.fn(),
-  }),
-}))
+vi.mock('~/graphql/client', () => ({ browserQuery: vi.fn() }))
 
 function Probe() {
   const { kanbanBoards, original } = useDashboard()

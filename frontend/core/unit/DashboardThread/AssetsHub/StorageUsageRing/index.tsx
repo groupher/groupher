@@ -1,8 +1,9 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import useQuery from '~/hooks/useQuery'
+import { graphqlQueryOptions } from '~/query'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema/assets'
 
@@ -15,9 +16,11 @@ export default function StorageUsageRing() {
   const s = useSalon()
   const [showDetail, setShowDetail] = useState(false)
   const { slug: community } = useCommunity()
-  const { data } = useQuery<{ communityAssetStats: TAssetStats }>(S.communityAssetStats, {
-    community,
-  })
+  const { data } = useQuery(
+    graphqlQueryOptions<{ communityAssetStats: TAssetStats }>(S.communityAssetStats, {
+      community,
+    }),
+  )
   const stats = data?.communityAssetStats
   const used = stats?.storageBytes ?? 0
   const limit = stats?.storageLimitBytes ?? 0

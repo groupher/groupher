@@ -3,6 +3,7 @@ import { type FC, memo, useCallback } from 'react'
 import { ICON } from '~/config'
 import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/menu/More'
+import useCommentModeration from '~/query/mutation/useCommentModeration'
 import { authWarn } from '~/signal'
 import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -21,6 +22,7 @@ const Actions: FC<TProps> = ({ data }) => {
 
   const accountInfo = useAccount()
   const { openUpdateEditor, openReplyEditor } = useActions()
+  const { deleteComment, reportComment } = useCommentModeration(data)
 
   const menuOptions = [
     // {
@@ -59,7 +61,7 @@ const Actions: FC<TProps> = ({ data }) => {
 
   const handleAction = useCallback(
     (key) => {
-      if (!accountInfo) return authWarn()
+      if (!accountInfo.isLogin) return authWarn()
 
       switch (key) {
         case 'share': {
@@ -69,20 +71,20 @@ const Actions: FC<TProps> = ({ data }) => {
           return console.log('## todo: quote')
         }
         case 'report': {
-          return console.log('## todo: report')
+          return reportComment()
         }
         case 'edit': {
           return openUpdateEditor(data)
         }
         case 'delete': {
-          return console.log('## todo: delete')
+          return deleteComment()
         }
         default: {
           return
         }
       }
     },
-    [data, accountInfo, openUpdateEditor],
+    [accountInfo.isLogin, data, deleteComment, openUpdateEditor, reportComment],
   )
 
   return (
@@ -92,7 +94,7 @@ const Actions: FC<TProps> = ({ data }) => {
           type='button'
           className={s.replyAction}
           onClick={() => {
-            if (!accountInfo) return authWarn()
+            if (!accountInfo.isLogin) return authWarn()
 
             openReplyEditor(data)
           }}

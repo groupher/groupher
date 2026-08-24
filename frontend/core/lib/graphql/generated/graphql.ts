@@ -91,6 +91,34 @@ export type CommunitiesFilter = {
   sort?: SortEnum | null | undefined
 }
 
+export type CommunityActivityExportFormat = 'CSV' | 'JSON'
+
+export type CommunityActivityFilter = {
+  actions?: Array<string> | null | undefined
+  actorRef?: string | number | null | undefined
+  categories?: Array<string> | null | undefined
+  eventRef?: string | number | null | undefined
+  occurredAfter?: unknown
+  occurredBefore?: unknown
+  operationRef?: string | number | null | undefined
+  page?: number | null | undefined
+  resourceTypes?: Array<string> | null | undefined
+  source?: string | null | undefined
+  subjectQuery?: string | null | undefined
+}
+
+export type CommunityActivityStatsFilter = {
+  actions?: Array<string> | null | undefined
+  actorRef?: string | number | null | undefined
+  categories?: Array<string> | null | undefined
+  occurredAfter: unknown
+  occurredBefore: unknown
+  operationRef?: string | number | null | undefined
+  resourceTypes?: Array<string> | null | undefined
+  source?: string | null | undefined
+  subjectQuery?: string | null | undefined
+}
+
 export type CommunityAssetFilter = {
   assetType?: CommunityAssetType | null | undefined
   page?: number | null | undefined
@@ -329,7 +357,6 @@ export type MarkerType = 'EMOJI' | 'ICON'
 
 /** changelogs_filter doc */
 export type PagedChangelogsFilter = {
-  author?: string | null | undefined
   cat?: ArticleCatEnum | null | undefined
   community?: string | null | undefined
   communityTag?: string | null | undefined
@@ -345,7 +372,6 @@ export type PagedChangelogsFilter = {
 
 /** docs_filter doc */
 export type PagedDocsFilter = {
-  author?: string | null | undefined
   cat?: ArticleCatEnum | null | undefined
   community?: string | null | undefined
   communityTag?: string | null | undefined
@@ -361,7 +387,6 @@ export type PagedDocsFilter = {
 
 /** posts_filter doc */
 export type PagedPostsFilter = {
-  author?: string | null | undefined
   cat?: ArticleCatEnum | null | undefined
   community?: string | null | undefined
   communityTag?: string | null | undefined
@@ -448,6 +473,152 @@ export type UpdatePressConfigInput = {
 
 export type WhenEnum = 'THIS_MONTH' | 'THIS_WEEK' | 'THIS_YEAR' | 'TODAY'
 
+export type QueryUpvotePostMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUpvotePostMutation = {
+  upvotePost:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type QueryUndoUpvotePostMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUndoUpvotePostMutation = {
+  undoUpvotePost:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type QueryUpvoteChangelogMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUpvoteChangelogMutation = {
+  upvoteChangelog:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type QueryUndoUpvoteChangelogMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUndoUpvoteChangelogMutation = {
+  undoUpvoteChangelog:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type QueryUpvoteDocMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUpvoteDocMutation = {
+  upvoteDoc:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type QueryUndoUpvoteDocMutationVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type QueryUndoUpvoteDocMutation = {
+  undoUpvoteDoc:
+    | { innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | { viewerHasUpvoted: boolean | null; innerId: string | null; upvotesCount: number | null }
+    | { innerId: string | null; upvotesCount: number | null }
+    | null
+}
+
+export type ViewerArticleStatesQueryVariables = Exact<{
+  filter: PagedPostsFilter
+}>
+
+export type ViewerArticleStatesQuery = {
+  pagedPosts: {
+    entries: Array<{
+      innerId: string | null
+      viewerHasViewed: boolean | null
+      viewerHasUpvoted: boolean | null
+      community: { slug: string | null } | null
+      meta: { thread: Thread | null } | null
+    } | null> | null
+  } | null
+}
+
+export type ViewerChangelogStatesQueryVariables = Exact<{
+  filter: PagedChangelogsFilter
+}>
+
+export type ViewerChangelogStatesQuery = {
+  pagedChangelogs: {
+    entries: Array<{
+      innerId: string | null
+      viewerHasViewed: boolean | null
+      viewerHasUpvoted: boolean | null
+      community: { slug: string | null } | null
+      meta: { thread: Thread | null } | null
+    } | null> | null
+  } | null
+}
+
+export type PostViewerStateQueryVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type PostViewerStateQuery = {
+  post: {
+    innerId: string | null
+    viewerHasCollected: boolean | null
+    viewerHasUpvoted: boolean | null
+  }
+}
+
+export type ChangelogViewerStateQueryVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type ChangelogViewerStateQuery = {
+  changelog: {
+    innerId: string | null
+    viewerHasCollected: boolean | null
+    viewerHasUpvoted: boolean | null
+  }
+}
+
+export type DocViewerStateQueryVariables = Exact<{
+  article: ArticlePathInput
+}>
+
+export type DocViewerStateQuery = {
+  doc: {
+    innerId: string | null
+    viewerHasCollected: boolean | null
+    viewerHasUpvoted: boolean | null
+  }
+}
+
 export type SetCommunityTagMutationVariables = Exact<{
   article: ArticlePathInput
   tagId: string | number
@@ -490,6 +661,168 @@ export type UndoFollowMutationVariables = Exact<{
 
 export type UndoFollowMutation = {
   undoFollow: { login: string | null; viewerHasFollowed: boolean | null } | null
+}
+
+export type CommunityActivityConfigQueryVariables = Exact<{
+  community: string
+}>
+
+export type CommunityActivityConfigQuery = {
+  communityActivityConfig: {
+    sources: Array<string>
+    resources: Array<{
+      resourceType: string
+      actions: Array<{ action: string; messageKey: string; category: string; highRisk: boolean }>
+    }>
+  }
+}
+
+export type CommunityActivityExportQueryVariables = Exact<{
+  community: string
+  filter?: CommunityActivityFilter | null | undefined
+  format: CommunityActivityExportFormat
+}>
+
+export type CommunityActivityExportQuery = {
+  communityActivityExport: {
+    content: string
+    filename: string
+    mimeType: string
+    totalCount: number
+    exportedCount: number
+  }
+}
+
+export type CommunityActivityEventQueryVariables = Exact<{
+  community: string
+  eventRef: string | number
+}>
+
+export type CommunityActivityEventQuery = {
+  communityActivityEvent: {
+    id: string
+    eventRef: string | null
+    operationRef: string | null
+    parentEventRef: string | null
+    messageKey: string
+    action: string
+    category: string
+    highRisk: boolean
+    source: string
+    payload: unknown
+    metadata: unknown
+    occurredAt: unknown
+    resource: { type: string; ref: string; title: string | null; innerId: string | null }
+    actor: {
+      type: string
+      id: string | null
+      login: string | null
+      nickname: string | null
+      avatar: string | null
+    }
+    subject: { type: string; ref: string; title: string | null; innerId: string | null }
+    target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+    parentEvent: {
+      id: string
+      eventRef: string | null
+      operationRef: string | null
+      parentEventRef: string | null
+      messageKey: string
+      action: string
+      category: string
+      highRisk: boolean
+      source: string
+      payload: unknown
+      metadata: unknown
+      occurredAt: unknown
+      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      actor: {
+        type: string
+        id: string | null
+        login: string | null
+        nickname: string | null
+        avatar: string | null
+      }
+      subject: { type: string; ref: string; title: string | null; innerId: string | null }
+      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+    } | null
+    childEvents: Array<{
+      id: string
+      eventRef: string | null
+      operationRef: string | null
+      parentEventRef: string | null
+      messageKey: string
+      action: string
+      category: string
+      highRisk: boolean
+      source: string
+      payload: unknown
+      metadata: unknown
+      occurredAt: unknown
+      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      actor: {
+        type: string
+        id: string | null
+        login: string | null
+        nickname: string | null
+        avatar: string | null
+      }
+      subject: { type: string; ref: string; title: string | null; innerId: string | null }
+      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+    }>
+  } | null
+}
+
+export type CommunityActivityQueryVariables = Exact<{
+  community: string
+  filter?: CommunityActivityFilter | null | undefined
+}>
+
+export type CommunityActivityQuery = {
+  communityActivity: {
+    totalCount: number | null
+    totalPages: number | null
+    pageNumber: number | null
+    pageSize: number | null
+    entries: Array<{
+      id: string
+      eventRef: string | null
+      operationRef: string | null
+      parentEventRef: string | null
+      messageKey: string
+      action: string
+      category: string
+      highRisk: boolean
+      source: string
+      payload: unknown
+      metadata: unknown
+      occurredAt: unknown
+      resource: { type: string; ref: string; title: string | null; innerId: string | null }
+      actor: {
+        type: string
+        id: string | null
+        login: string | null
+        nickname: string | null
+        avatar: string | null
+      }
+      subject: { type: string; ref: string; title: string | null; innerId: string | null }
+      target: { type: string; ref: string; title: string | null; innerId: string | null } | null
+    }>
+  }
+}
+
+export type CommunityActivityStatsQueryVariables = Exact<{
+  community: string
+  filter: CommunityActivityStatsFilter
+}>
+
+export type CommunityActivityStatsQuery = {
+  communityActivityStats: {
+    granularity: string
+    timezone: string
+    totalCount: number
+    buckets: Array<{ startedAt: unknown; endedAt: unknown; count: number }>
+  }
 }
 
 export type PageAuthorFieldsFragment = {
@@ -1301,7 +1634,14 @@ export type PageCommunityQuery = {
         kanban: boolean | null
         changelog: boolean | null
         doc: boolean | null
+        docLastUpdate: boolean | null
+        docReaction: boolean | null
         about: boolean | null
+        aboutTechstack: boolean | null
+        aboutLocation: boolean | null
+        aboutLinks: boolean | null
+        aboutMediaReport: boolean | null
+        visitorLocationMap: boolean | null
       } | null
     } | null
   } | null
@@ -5772,13 +6112,37 @@ export type UpdateDashboardSeoMutation = {
 export type UpdateDashboardEnableMutationVariables = Exact<{
   community: string
   post?: boolean | null | undefined
+  blog?: boolean | null | undefined
+  kanban?: boolean | null | undefined
   changelog?: boolean | null | undefined
+  doc?: boolean | null | undefined
+  docLastUpdate?: boolean | null | undefined
+  docReaction?: boolean | null | undefined
   about?: boolean | null | undefined
+  aboutTechstack?: boolean | null | undefined
+  aboutLocation?: boolean | null | undefined
+  aboutLinks?: boolean | null | undefined
+  aboutMediaReport?: boolean | null | undefined
+  visitorLocationMap?: boolean | null | undefined
 }>
 
 export type UpdateDashboardEnableMutation = {
   updateDashboardEnable: {
-    enable: { post: boolean | null; changelog: boolean | null; about: boolean | null } | null
+    enable: {
+      post: boolean | null
+      blog: boolean | null
+      kanban: boolean | null
+      changelog: boolean | null
+      doc: boolean | null
+      docLastUpdate: boolean | null
+      docReaction: boolean | null
+      about: boolean | null
+      aboutTechstack: boolean | null
+      aboutLocation: boolean | null
+      aboutLinks: boolean | null
+      aboutMediaReport: boolean | null
+      visitorLocationMap: boolean | null
+    } | null
   } | null
 }
 
@@ -9347,6 +9711,597 @@ export const KanbanPageFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<KanbanPageFieldsFragment, unknown>
+export const QueryUpvotePostDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUpvotePost' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'upvotePost' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueryUpvotePostMutation, QueryUpvotePostMutationVariables>
+export const QueryUndoUpvotePostDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUndoUpvotePost' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'undoUpvotePost' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Post' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueryUndoUpvotePostMutation, QueryUndoUpvotePostMutationVariables>
+export const QueryUpvoteChangelogDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUpvoteChangelog' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'upvoteChangelog' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Changelog' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueryUpvoteChangelogMutation, QueryUpvoteChangelogMutationVariables>
+export const QueryUndoUpvoteChangelogDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUndoUpvoteChangelog' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'undoUpvoteChangelog' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Changelog' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  QueryUndoUpvoteChangelogMutation,
+  QueryUndoUpvoteChangelogMutationVariables
+>
+export const QueryUpvoteDocDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUpvoteDoc' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'upvoteDoc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Doc' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueryUpvoteDocMutation, QueryUpvoteDocMutationVariables>
+export const QueryUndoUpvoteDocDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'QueryUndoUpvoteDoc' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'undoUpvoteDoc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
+                {
+                  kind: 'InlineFragment',
+                  typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Doc' } },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<QueryUndoUpvoteDocMutation, QueryUndoUpvoteDocMutationVariables>
+export const ViewerArticleStatesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ViewerArticleStates' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagedPostsFilter' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pagedPosts' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'community' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'slug' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'meta' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'thread' } }],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasViewed' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ViewerArticleStatesQuery, ViewerArticleStatesQueryVariables>
+export const ViewerChangelogStatesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ViewerChangelogStates' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'PagedChangelogsFilter' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'pagedChangelogs' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'community' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'slug' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'meta' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'thread' } }],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasViewed' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ViewerChangelogStatesQuery, ViewerChangelogStatesQueryVariables>
+export const PostViewerStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'PostViewerState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'post' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasCollected' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PostViewerStateQuery, PostViewerStateQueryVariables>
+export const ChangelogViewerStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'ChangelogViewerState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'changelog' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasCollected' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ChangelogViewerStateQuery, ChangelogViewerStateQueryVariables>
+export const DocViewerStateDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'DocViewerState' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'doc' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'article' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasCollected' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'viewerHasUpvoted' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DocViewerStateQuery, DocViewerStateQueryVariables>
 export const SetCommunityTagDocument = {
   kind: 'Document',
   definitions: [
@@ -9545,6 +10500,611 @@ export const UndoFollowDocument = {
     },
   ],
 } as unknown as DocumentNode<UndoFollowMutation, UndoFollowMutationVariables>
+export const CommunityActivityConfigDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'CommunityActivityConfig' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityActivityConfig' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resources' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'resourceType' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'actions' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'sources' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CommunityActivityConfigQuery, CommunityActivityConfigQueryVariables>
+export const CommunityActivityExportDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'CommunityActivityExport' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityActivityFilter' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'format' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CommunityActivityExportFormat' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityActivityExport' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'format' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'format' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'content' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'filename' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'exportedCount' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CommunityActivityExportQuery, CommunityActivityExportQueryVariables>
+export const CommunityActivityEventDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'CommunityActivityEvent' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'eventRef' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityActivityEvent' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'eventRef' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'eventRef' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'resource' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'actor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'subject' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'target' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'parentEvent' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'actor' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'subject' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'target' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'childEvents' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'actor' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'subject' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'target' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CommunityActivityEventQuery, CommunityActivityEventQueryVariables>
+export const CommunityActivityDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'CommunityActivity' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityActivityFilter' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityActivity' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'entries' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'action' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'category' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'resource' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'actor' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'subject' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'target' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'ref' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'innerId' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                    ],
+                  },
+                },
+                { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'pageNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'pageSize' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CommunityActivityQuery, CommunityActivityQueryVariables>
+export const CommunityActivityStatsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'CommunityActivityStats' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CommunityActivityStatsFilter' },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'communityActivityStats' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'filter' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'granularity' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'timezone' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'buckets' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endedAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CommunityActivityStatsQuery, CommunityActivityStatsQueryVariables>
 export const ChangelogDocument = {
   kind: 'Document',
   definitions: [
@@ -10726,7 +12286,14 @@ export const PageCommunityDocument = {
                             { kind: 'Field', name: { kind: 'Name', value: 'kanban' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'changelog' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'doc' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'docLastUpdate' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'docReaction' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'about' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'aboutTechstack' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'aboutLocation' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'aboutLinks' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'aboutMediaReport' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'visitorLocationMap' } },
                           ],
                         },
                       },
@@ -14725,6 +16292,7 @@ export const PagedCommentsDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isSolution' } },
           { kind: 'Field', name: { kind: 'Name', value: 'floor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
@@ -14776,6 +16344,7 @@ export const PagedCommentsDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isSolution' } },
           { kind: 'Field', name: { kind: 'Name', value: 'floor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
@@ -14977,6 +16546,7 @@ export const PagedCommentRepliesDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isSolution' } },
           { kind: 'Field', name: { kind: 'Name', value: 'floor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
@@ -15028,6 +16598,7 @@ export const PagedCommentRepliesDocument = {
             },
           },
           { kind: 'Field', name: { kind: 'Name', value: 'isPinned' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'isSolution' } },
           { kind: 'Field', name: { kind: 'Name', value: 'floor' } },
           { kind: 'Field', name: { kind: 'Name', value: 'upvotesCount' } },
           { kind: 'Field', name: { kind: 'Name', value: 'isArticleAuthor' } },
@@ -22769,12 +24340,62 @@ export const UpdateDashboardEnableDocument = {
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'blog' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'kanban' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'changelog' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
         },
         {
           kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'doc' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'docLastUpdate' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'docReaction' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
           variable: { kind: 'Variable', name: { kind: 'Name', value: 'about' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'aboutTechstack' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'aboutLocation' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'aboutLinks' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'aboutMediaReport' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'visitorLocationMap' } },
           type: { kind: 'NamedType', name: { kind: 'Name', value: 'Boolean' } },
         },
       ],
@@ -22797,13 +24418,63 @@ export const UpdateDashboardEnableDocument = {
               },
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'blog' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'blog' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'kanban' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'kanban' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'changelog' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'changelog' } },
               },
               {
                 kind: 'Argument',
+                name: { kind: 'Name', value: 'doc' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'doc' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'docLastUpdate' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'docLastUpdate' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'docReaction' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'docReaction' } },
+              },
+              {
+                kind: 'Argument',
                 name: { kind: 'Name', value: 'about' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'about' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'aboutTechstack' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'aboutTechstack' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'aboutLocation' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'aboutLocation' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'aboutLinks' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'aboutLinks' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'aboutMediaReport' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'aboutMediaReport' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'visitorLocationMap' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'visitorLocationMap' } },
               },
             ],
             selectionSet: {
@@ -22816,8 +24487,18 @@ export const UpdateDashboardEnableDocument = {
                     kind: 'SelectionSet',
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'post' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'blog' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'kanban' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'changelog' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'doc' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'docLastUpdate' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'docReaction' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'about' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'aboutTechstack' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'aboutLocation' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'aboutLinks' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'aboutMediaReport' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'visitorLocationMap' } },
                     ],
                   },
                 },

@@ -230,9 +230,12 @@ export type TPagedArticlesParams = {
   size?: number
   community?: string
   communityTag?: string
+  communityTags?: string[]
   cat?: string
   status?: string
   order?: string
+  when?: string
+  sort?: string
 }
 
 export type TArticleParams = {

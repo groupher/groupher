@@ -1,9 +1,10 @@
 import type { VariablesOf } from '@graphql-typed-document-node/core'
+import { useQuery } from '@tanstack/react-query'
 import { pick } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
-import useQuery from '~/hooks/useQuery'
+import { browserQuery } from '~/graphql/client'
+import { graphqlQueryOptions } from '~/query'
 import type { TEditFunc, TRSSType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -42,9 +43,8 @@ const DEFAULT_OPTIONS: TOptions = {
 export default function useRSS(): TRet {
   const dsb$ = useDashboard()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
   const { edit, isChanged } = useHelper()
-  const { data } = useQuery(S.pressConfig, { community })
+  const { data } = useQuery(graphqlQueryOptions(S.pressConfig, { community }))
   const [options, setOptions] = useState<TOptions>(DEFAULT_OPTIONS)
   const original = useRef<TOptions>(DEFAULT_OPTIONS)
 
@@ -78,7 +78,7 @@ export default function useRSS(): TRet {
 
   const rssOnSave = (): void => {
     dsb$.commit({ saving: true })
-    void mutate(S.updatePressConfig, {
+    void browserQuery(S.updatePressConfig, {
       input: {
         community,
         feedType: dsb$.rssFeedType.toUpperCase() as TUpdatePressConfigInput['feedType'],

@@ -1,40 +1,25 @@
 import type { ResultOf } from '@graphql-typed-document-node/core'
-import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
-import useQuery from '~/hooks/useQuery'
+import { graphqlQueryOptions } from '~/query'
 import type { TOverview } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
 import S from '~/unit/DashboardThread/schema/shell'
 
 type TCommunityOverview = NonNullable<ResultOf<typeof S.communityOverview>['community']>
 
 /** Exposes overview state and actions through the shared React hook boundary. */
 export default function useOverview(): TOverview {
-  const dsb$ = useDashboard()
   const { slug } = useCommunity()
-  const { overview } = dsb$
 
-  const { data } = useQuery(S.communityOverview, {
-    slug,
-    incViews: false,
-  })
+  const { data } = useQuery(graphqlQueryOptions(S.communityOverview, { slug, incViews: false }))
+  const community = data?.community as TCommunityOverview | undefined
 
-  const updateOverview = (community: TCommunityOverview): void => {
-    const { meta, views, subscribersCount } = community
-
-    dsb$.commit({
-      overview: {
-        views,
-        subscribersCount,
-        ...meta,
-      },
-    })
-  }
-
-  useEffect(() => {
-    if (data?.community) updateOverview(data.community)
-  }, [data])
-
-  return overview
+  return community
+    ? {
+        views: community.views,
+        subscribersCount: community.subscribersCount,
+        ...community.meta,
+      }
+    : { views: 0, subscribersCount: 0, postsCount: 0, changelogsCount: 0, docsCount: 0 }
 }

@@ -1,41 +1,24 @@
-import { unstable_noStore as noStore } from 'next/cache'
-
-import { getPagedPosts, getTagGroups, getTagStats } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
-import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
+import { Q, createQueryClient, dehydrate, HydrationBoundary } from '~/query/server'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostThread from '~/unit/PostThread'
 
-export default async function Page({ params, searchParams }) {
-  const [params$, searchParams$] = await Promise.all([params, searchParams])
-  const filter = getPagedArticlesParams(params$.community, searchParams$)
-
-  if (
-    (filter.page || 1) !== 1 ||
-    filter.communityTag ||
-    filter.cat ||
-    filter.status ||
-    filter.order
-  ) {
-    noStore()
-  }
-
-  const [pagedPosts, tagGroups, activeTagStats] = await Promise.all([
-    getPagedPosts(filter),
-    getTagGroups(params$.community, THREAD.POST),
-    getTagStats(params$.community, THREAD.POST, filter.communityTag),
+export default async function Page({ params }) {
+  const { community } = await params
+  const queryClient = createQueryClient()
+  const defaultFilter = { community, page: 1, size: 20 }
+  await Promise.all([
+    queryClient.prefetchQuery(Q.SSR.article.posts(defaultFilter)),
+    queryClient.prefetchQuery(Q.SSR.article.tagGroups(community, THREAD.POST)),
   ])
 
-  const initData = {
-    pagedPosts: pagedPosts || undefined,
-    tagGroups,
-    activeTagStats,
-    thread: THREAD.POST,
-  }
+  const initData = { thread: THREAD.POST }
 
   return (
-    <ArticleListStoreProvider initData={initData}>
-      <PostThread />
-    </ArticleListStoreProvider>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ArticleListStoreProvider initData={initData}>
+        <PostThread />
+      </ArticleListStoreProvider>
+    </HydrationBoundary>
   )
 }

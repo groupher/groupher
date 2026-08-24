@@ -1,6 +1,6 @@
 import { equals, filter, find, isEmpty, mergeRight, reject, startsWith } from 'ramda'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import type { TMediaReport } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import S from '~/unit/DashboardThread/schema/integrations'
@@ -24,8 +24,6 @@ export default function useMediaReports(): TRet {
   const dsb$ = useDashboard()
 
   const { mediaReports, original, queryingMediaReportIndex } = dsb$
-
-  const { query } = useGraphQLClient()
 
   const mediaReportsTouched = () => {
     const curValues = reject((item: TMediaReport) => !item.editUrl, mediaReports)
@@ -88,7 +86,7 @@ export default function useMediaReports(): TRet {
       dsb$.commit({ loading: true, queryingMediaReportIndex: item.index })
 
       const params = { url: editUrl.trim() }
-      query(S.openGraphInfo, params)
+      browserQuery(S.openGraphInfo, params)
         .then(({ openGraphInfo }) => handleOgQueryInfo(openGraphInfo))
         .catch((e) => {
           dsb$.commit({ loading: false, queryingMediaReportIndex: null })

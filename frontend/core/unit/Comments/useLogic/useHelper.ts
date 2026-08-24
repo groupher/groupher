@@ -1,7 +1,9 @@
-import { findIndex, prop, propEq, uniqBy } from 'ramda'
+import { useQueryClient } from '@tanstack/react-query'
+import { prop, uniqBy } from 'ramda'
 import { useContext } from 'react'
 
-import type { TComment, TEmotion, TID } from '~/spec'
+import { commentKeys } from '~/query'
+import type { TComment, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 
@@ -9,8 +11,6 @@ import { EDIT_MODE, MODE } from '../constant'
 import type { TEditMode } from '../spec'
 
 type TRet = {
-  updateOneComment: (comment: TComment, fields?: Partial<TComment>) => void
-  upvoteEmotion: (comment: TComment, emotion: TEmotion[]) => void
   addToReplies: (parentId: TID, replies: TComment[]) => void
   published: () => void
   resetPublish: (mode: TEditMode) => void
@@ -23,91 +23,27 @@ export default function useHelper(): TRet {
     throw new Error('useHelper must be used within a Comments store provider')
   }
   const comments = commentsStore
-
-  const updateOneComment = (comment: TComment, fields = {}): void => {
-    const { innerId, replyToComment } = comment
-    const replyToCommentId = replyToComment?.innerId
-    const { entries } = comments.pagedComments
-
-    if (comments.mode === MODE.REPLIES && replyToCommentId) {
-      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
-      if (parentIndex < 0) return
-      const parentComment = entries[parentIndex]
-      const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
-      if (replyIndex < 0) return
-      const replyComment = parentComment.replies[replyIndex]
-      // @ts-expect-error
-      if (fields.meta) fields.meta = { ...replyComment.meta, ...fields.meta }
-      console.log('## TODO: update one comment')
-      // snap.pagedComments.entries[parentIndex].replies[replyIndex] = {
-      //   ...replyComment,
-      //   ...fields,
-      // }
-    } else {
-      // timeline & replies parent comment
-      const index = findIndex(propEq(innerId, 'innerId'), entries)
-
-      if (index < 0) return
-      const comment = entries[index]
-      // @ts-expect-error
-      if (fields.meta) fields.meta = { ...comment.meta, ...fields.meta }
-
-      console.log('## TODO: update one comment')
-      // snap.pagedComments.entries[index] = { ...comment, ...fields }
-    }
-  }
-
-  const upvoteEmotion = (comment: TComment, emotions: TEmotion[]): void => {
-    const { innerId, replyToComment } = comment
-    const replyToCommentId = replyToComment?.innerId
-    const { entries } = comments.pagedComments
-    const nextComments = [...entries]
-
-    if (comments.mode === MODE.REPLIES && replyToCommentId) {
-      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
-      if (parentIndex < 0) return
-      const parentComment = entries[parentIndex]
-      const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
-      if (replyIndex < 0) return
-      const nextReplies = [...(parentComment.replies || [])]
-      nextReplies[replyIndex] = { ...nextReplies[replyIndex], emotions }
-      nextComments[parentIndex] = { ...parentComment, replies: nextReplies }
-    } else {
-      const index = findIndex(propEq(innerId, 'innerId'), entries)
-      if (index < 0) return
-      nextComments[index] = { ...nextComments[index], emotions }
-    }
-
-    commentsStore.commit({
-      pagedComments: {
-        ...comments.pagedComments,
-        entries: nextComments,
-      },
-    })
+  const queryClient = useQueryClient()
+  const patchComments = (updater: (entries: TComment[]) => TComment[]) => {
+    queryClient.setQueriesData(
+      { queryKey: commentKeys.all },
+      (data: { entries?: TComment[] } | undefined) =>
+        data?.entries ? { ...data, entries: updater(data.entries) } : data,
+    )
   }
 
   const addToReplies = (parentId: TID, replies: TComment[]): void => {
-    const { entries } = comments.pagedComments
-
-    if (comments.mode === MODE.REPLIES && parentId) {
-      const parentIndex = findIndex(propEq(parentId, 'innerId'), entries)
-
-      if (parentIndex < 0) return
-      const curReplies = entries[parentIndex].replies || []
-      const uniqReplies = uniqBy(prop('innerId'), [...curReplies, ...replies]) as TComment[]
-
-      const entriesPatch = entries.map((item, index) =>
-        index === parentIndex ? { ...item, replies: uniqReplies } : item,
-      ) as unknown as TComment[]
-      commentsStore.commit({
-        pagedComments: {
-          ...comments.pagedComments,
-          entries: entriesPatch,
-        },
-      })
-
-      // self.pagedComments.entries[parentIndex].replies = uniqReplies
-    }
+    if (comments.mode !== MODE.REPLIES || !parentId) return
+    patchComments((entries) =>
+      entries.map((item) => {
+        if (item.innerId !== parentId) return item
+        const uniqReplies = uniqBy(prop('innerId'), [
+          ...(item.replies || []),
+          ...replies,
+        ]) as TComment[]
+        return { ...item, replies: uniqReplies }
+      }),
+    )
   }
 
   const published = (): void => {
@@ -141,8 +77,6 @@ export default function useHelper(): TRet {
   }
 
   return {
-    updateOneComment,
-    upvoteEmotion,
     addToReplies,
     published,
     resetPublish,

@@ -1,5 +1,5 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
-import type { TArticleFilter, TPagedArticles, TTagGroup } from '~/spec'
+import type { TArticleFilter } from '~/spec'
 
 import setupStore from '..'
 
@@ -27,42 +27,5 @@ describe('stores/articleList', () => {
     // edge: key exists but value is undefined -> should assign undefined
     store.updateActiveFilter({ status: undefined } satisfies TArticleFilter)
     expect(store).toHaveProperty('activeStatus', undefined)
-
-    const paged: TPagedArticles = {
-      pageNumber: 1,
-      pageSize: 20,
-      totalCount: 2,
-      totalPages: 1,
-      entries: [{ id: 'a1' }, { id: 'a2' }],
-    }
-
-    const tagGroups: TTagGroup[] = [
-      {
-        id: 'g1',
-        title: 'General',
-        index: 0,
-        tags: [
-          { id: 't1', title: 'tag-1' },
-          { id: 't2', title: 'tag-2' },
-        ],
-      },
-    ]
-
-    store.commit({
-      tagGroups,
-      pagedPosts: paged,
-      backlog: { ...paged, entries: [{ id: 'a0' }] },
-      todo: paged,
-      wip: { ...paged, entries: [] },
-      done: { ...paged, entries: [{ id: 'a2' }] },
-      rejected: { ...paged, entries: [{ id: 'a3' }] },
-    })
-
-    expect(store.pagedPosts.entries).toHaveLength(2)
-    expect(store.backlog.entries).toHaveLength(1)
-    expect(store.todo.entries).toHaveLength(2)
-    expect(store.wip.entries).toHaveLength(0)
-    expect(store.done.entries).toHaveLength(1)
-    expect(store.rejected.entries).toHaveLength(1)
   })
 })

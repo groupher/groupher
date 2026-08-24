@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import useCommunity from '~/stores/community/hooks'
@@ -36,7 +36,6 @@ export default function usePublishActions({
 }: TArgs) {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
   const {
     docDraftInfo,
     publishView,
@@ -69,7 +68,7 @@ export default function usePublishActions({
               ? [currentDocId]
               : []
         const currentDocPublished = currentDocId ? publishedDocIds.includes(currentDocId) : false
-        const data = await mutate<TPublishChangesData>(S.publishDocChanges, {
+        const data = await browserQuery<TPublishChangesData>(S.publishDocChanges, {
           community,
           input,
           mode: 'WITH_COVER_SYNC',
@@ -128,7 +127,6 @@ export default function usePublishActions({
     [
       community,
       docDraftInfo,
-      mutate,
       onPublished,
       publishView.isDirty,
       publishView.publishDisabled,

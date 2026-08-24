@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { GlobalProvider, GraphQLProvider } from '~/app/providers'
+import { GlobalProvider, QueryProvider } from '~/app/providers'
 import { getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
@@ -49,11 +49,11 @@ export default async ({ children, params, searchParams }) => {
         metric={METRIC.DASHBOARD}
         localeData={JSON.stringify(localeData)}
       >
-        <GraphQLProvider>
+        <QueryProvider>
           <GlobalProvider>
             <Client demoMode={isDemoMode}>{children}</Client>
           </GlobalProvider>
-        </GraphQLProvider>
+        </QueryProvider>
       </MainProvider>
     </>
   )

@@ -1,4 +1,4 @@
-import type { ChangeEvent, ReactNode } from 'react'
+import type { ChangeEvent, ComponentType, ReactNode, SVGProps } from 'react'
 
 import type BUTTON_PREFIX from '~/const/button_prefix'
 import type { DSB_DESC_LAYOUT } from '~/const/layout'
@@ -186,7 +186,7 @@ export type TModelineType =
 export type TMenuOption = {
   title: string
   key: string
-  icon?: string
+  icon?: string | ComponentType<SVGProps<SVGSVGElement>>
   link?: string
   qrLink?: string
 }

@@ -2,7 +2,7 @@ import type { TRichEditorDiffResult, TRichEditorDiffValue } from '@groupher/rich
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
 import TYPE from '~/const/type'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import CloseLightSVG from '~/icons/CloseLight'
@@ -55,7 +55,6 @@ const RevisionDrawer: FC<TProps> = ({
   const s = useSalon()
   const { t } = useTrans()
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
   const { docDraftInfo, reloadDocDraft, saveStatus } = useDocsEditor()
   const [activeTab, setActiveTab] = useState<TRevisionDiffTab>('staged')
   const [selectedKey, setSelectedKey] = useState(CURRENT_CHANGES_KEY)
@@ -84,7 +83,7 @@ const RevisionDrawer: FC<TProps> = ({
       setRestoringId(revisionId)
 
       try {
-        await mutate(S.restoreDocDraftSnapshot, {
+        await browserQuery(S.restoreDocDraftSnapshot, {
           community,
           id: docDraftId,
           snapshotId: revisionId,
@@ -99,7 +98,7 @@ const RevisionDrawer: FC<TProps> = ({
         setRestoringId(null)
       }
     },
-    [community, docDraftId, mutate, onReload, reloadDocDraft, restoringId, t],
+    [community, docDraftId, onReload, reloadDocDraft, restoringId, t],
   )
 
   const restoreDisabled = saveStatus !== 'saved'

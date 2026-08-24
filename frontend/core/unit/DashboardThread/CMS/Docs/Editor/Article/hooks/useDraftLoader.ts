@@ -2,9 +2,8 @@ import { useEffect, useRef } from 'react'
 
 import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
-import { GRAPHQL_FETCH_OPTIONS } from '~/graphql/client'
+import { browserQuery } from '~/graphql/client'
 import useEvent from '~/hooks/useEvent'
-import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema/docs'
 
@@ -25,7 +24,6 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     setLoading,
   } = draftState
   const { slug: community } = useCommunity()
-  const { query } = useGraphQLClient()
   const { revisionReloadKey } = useDocsEditor()
   const loadIdRef = useRef(0)
   const handledReloadKeyRef = useRef(revisionReloadKey)
@@ -53,10 +51,10 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
 
     const abortController = new AbortController()
 
-    query<{ docDraft?: TDocDraftDTO }>(
+    browserQuery<{ docDraft?: TDocDraftDTO }>(
       S.docDraft,
       { community, id: activePage.docId },
-      { fetchOptions: { ...GRAPHQL_FETCH_OPTIONS(), signal: abortController.signal } },
+      (input, init) => fetch(input, { ...init, signal: abortController.signal }),
     )
       .then((data) => {
         if (loadIdRef.current !== loadId) return
@@ -80,7 +78,6 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     applyLoaded,
     community,
     loadStatus.loadedDocId,
-    query,
     resetDraft,
     revisionReloadKey,
     setLoadError,

@@ -3,7 +3,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 
-import useMount from '~/hooks/useMount'
 import { getArticleRowId } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
 import type { TArticle } from '~/spec'
@@ -16,14 +15,10 @@ import useCmsArticles from '../useCmsArticles'
 import useSalon, { cn } from './salon'
 
 export default function Changelogs() {
-  const { pagedArticles: pagedChangelogs, loading, loadArticles } = useCmsArticles('changelog')
+  const { pagedArticles: pagedChangelogs, loading } = useCmsArticles('changelog')
   const s = useSalon({ loading })
   const { t } = useTrans()
   const table = useCmsTableController()
-
-  useMount(() => {
-    if (!pagedChangelogs.entries?.length) loadArticles()
-  })
 
   const data = (pagedChangelogs.entries ?? []) as TArticle[]
 

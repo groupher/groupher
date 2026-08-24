@@ -1,5 +1,4 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import { getLocalSVG } from '~/icons'
 
 export { cn } from '~/css'
 
@@ -16,6 +15,5 @@ export default function useSalon() {
     linkIcon: cn('size-2.5 ml-1.5', fill('digest')),
     //
     icon: cn('size-3 mr-2.5 opacity-80', fill('digest')),
-    getIcon: (type: string) => getLocalSVG(type),
   }
 }

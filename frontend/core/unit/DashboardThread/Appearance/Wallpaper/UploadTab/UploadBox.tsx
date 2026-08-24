@@ -1,7 +1,7 @@
 import { type FC, memo, useMemo } from 'react'
 
-import SVG from '~/const/svg'
 import useTrans from '~/hooks/useTrans'
+import CopySVG from '~/icons/menu/Copy'
 import MoreSVG from '~/icons/menu/More'
 import UploadSVG from '~/icons/Upload'
 import MenuButton from '~/ui/Buttons/MenuButton'
@@ -15,7 +15,7 @@ const UploadBox: FC = () => {
     () => [
       {
         key: 'url',
-        icon: SVG.COPY,
+        icon: CopySVG,
         title: t('dsb.appearance.wallpaper.editor.image_url'),
       },
     ],

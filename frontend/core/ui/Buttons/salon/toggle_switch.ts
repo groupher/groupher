@@ -2,7 +2,7 @@ import SIZE from '~/const/size'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSizeTSM } from '~/spec'
 
-type TProps = { size: TSizeTSM; checked: boolean }
+type TProps = { size: TSizeTSM; checked: boolean; disabled: boolean }
 
 const metric = {
   [SIZE.TINY]: {
@@ -31,12 +31,17 @@ const metric = {
   },
 } as const
 
-export default function useSalon({ size, checked }: TProps) {
+export default function useSalon({ size, checked, disabled }: TProps) {
   const { cn, primary, br, bg, shadow } = useTwBelt()
   const m = metric[size]
 
   return {
-    wrapper: cn('row-center shrink-0', m.wrapper, checked && 'hover:brightness-110'),
+    wrapper: cn(
+      'row-center shrink-0',
+      m.wrapper,
+      checked && !disabled && 'hover:brightness-110',
+      disabled && 'opacity-50 cursor-not-allowed',
+    ),
     track: cn(
       'rounded-2xl w-full pointer relative trans-all-200',
       m.track,

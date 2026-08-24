@@ -1,6 +1,7 @@
 import { type FC, useCallback, useEffect, useRef } from 'react'
 
-import { lockPage, toggleGlobalBlur, unlockPage } from '~/dom'
+import { toggleGlobalBlur } from '~/dom'
+import usePageLock from '~/hooks/usePageLock'
 import useShortcut from '~/hooks/useShortcut'
 import useTheme from '~/hooks/useTheme'
 import useTopGlow from '~/hooks/useTopGlow'
@@ -33,6 +34,7 @@ const RealModal: FC<TProps> = ({
 
   const { glowType } = useTopGlow()
   const { theme } = useTheme()
+  const { lockPageOnce, unlockPageOnce } = usePageLock()
 
   const visibleOnPageRef = useRef(false)
 
@@ -40,8 +42,8 @@ const RealModal: FC<TProps> = ({
     visibleOnPageRef.current = false
     toggleGlobalBlur(false)
     handleCloseModal()
-    unlockPage()
-  }, [handleCloseModal])
+    unlockPageOnce()
+  }, [handleCloseModal, unlockPageOnce])
 
   useShortcut('Escape', handleClose)
 
@@ -50,23 +52,24 @@ const RealModal: FC<TProps> = ({
     if (!show) return
 
     toggleGlobalBlur(true)
-    lockPage()
-  }, [show])
+    lockPageOnce()
+  }, [show, lockPageOnce])
 
   useEffect(() => {
     if (show || !visibleOnPageRef.current) return
 
     visibleOnPageRef.current = false
     toggleGlobalBlur(false)
-  }, [show])
+    unlockPageOnce()
+  }, [show, unlockPageOnce])
 
   useEffect(() => {
     return () => {
       visibleOnPageRef.current = false
       toggleGlobalBlur(false)
-      unlockPage()
+      unlockPageOnce()
     }
-  }, [])
+  }, [unlockPageOnce])
 
   if (!show) return null
 

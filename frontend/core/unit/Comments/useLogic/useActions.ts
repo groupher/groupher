@@ -7,12 +7,14 @@ import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import persist from '~/utils/persist'
 
 import type { TMode } from '../spec'
+import useCommentQueryState from './queryState'
 import useQuery from './useQuery'
 
 export type TActions = {
   onModeChange: (mode: TMode) => void
   commentOnChange: (v: string) => void
   openEditor: () => void
+  closeEditor: () => void
   openReplyEditor: (comment: TComment) => void
   closeUpdateEditor: () => void
   setWordsCountState: (wordsCountReady: boolean) => void
@@ -34,10 +36,10 @@ export default function useActions(): TActions {
   }
 
   const queryActions = useQuery()
+  const { data } = useCommentQueryState()
 
   const onModeChange = (mode: TMode): void => {
-    commentsStore.commit({ mode, needRefreshState: false })
-    queryActions.loadComments()
+    commentsStore.commit({ mode, page: 1 })
   }
 
   const commentOnChange = (v: string): void => {
@@ -47,6 +49,8 @@ export default function useActions(): TActions {
   const openEditor = (): void => {
     commentsStore.commit({ showEditor: true })
   }
+
+  const closeEditor = (): void => commentsStore.commit({ showEditor: false })
 
   const openReplyEditor = (comment: TComment): void => {
     commentsStore.commit({
@@ -87,7 +91,7 @@ export default function useActions(): TActions {
   }
 
   const foldAllComments = (): void => {
-    const foldedCommentIds = commentsStore.pagedComments.entries.map((c) => c.innerId)
+    const foldedCommentIds = (data?.entries || []).map((comment) => comment.innerId)
     commentsStore.commit({ foldedCommentIds })
   }
 
@@ -102,6 +106,7 @@ export default function useActions(): TActions {
     onModeChange,
     commentOnChange,
     openEditor,
+    closeEditor,
     openReplyEditor,
     closeUpdateEditor,
     setWordsCountState,

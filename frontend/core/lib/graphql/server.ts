@@ -119,3 +119,9 @@ export const gqAuthFetch = async (
 
   return postGraphQL(query, variables, token)
 }
+
+/** Canonical anonymous public GraphQL transport. */
+export const publicQuery = gqFetchTyped
+
+/** Canonical request-aware authenticated GraphQL transport. */
+export const authQuery = gqAuthFetchTyped
