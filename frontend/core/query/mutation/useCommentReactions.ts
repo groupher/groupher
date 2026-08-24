@@ -9,8 +9,13 @@ import type { TComment, TEmotionRawType, TEmotionType } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { commentKeys, mutationKeys, viewerKeys } from '../key'
-import { patchCommentEverywhere, patchCommentViewerState, updateCommentEmotion } from './comment'
+import { mutationKeys, viewerKeys } from '../key'
+import {
+  isCommentQueryForArticle,
+  patchCommentEverywhere,
+  patchCommentViewerState,
+  updateCommentEmotion,
+} from './comment'
 
 type TMutationSnapshot = {
   comments: ReturnType<ReturnType<typeof useQueryClient>['getQueriesData']>
@@ -37,6 +42,15 @@ export default function useCommentReactions(comment: TComment) {
   const articleKey = `${articlePath.community}:${articlePath.thread}:${articlePath.innerId}`
   const commentPath = { article: articlePath, innerId: String(comment.innerId) }
   const commentKey = `${articleKey}:${comment.innerId}`
+  const commentScope = {
+    community: articlePath.community,
+    thread: articlePath.thread,
+    articleInnerId: articlePath.innerId,
+  }
+  const commentQueryFilter = {
+    predicate: (query: Parameters<typeof isCommentQueryForArticle>[0]) =>
+      isCommentQueryForArticle(query, commentScope),
+  }
   const viewerPrefix = [...viewerKeys.all, viewerScope, 'comment-state', articleKey] as const
   const upvoteDesiredRef = useRef(Boolean(comment.viewerHasUpvoted))
   const upvoteRunningRef = useRef(false)
@@ -45,11 +59,11 @@ export default function useCommentReactions(comment: TComment) {
 
   const snapshot = async (): Promise<TMutationSnapshot> => {
     await Promise.all([
-      queryClient.cancelQueries({ queryKey: commentKeys.all }),
+      queryClient.cancelQueries(commentQueryFilter),
       queryClient.cancelQueries({ queryKey: viewerPrefix }),
     ])
     return {
-      comments: queryClient.getQueriesData({ queryKey: commentKeys.all }),
+      comments: queryClient.getQueriesData(commentQueryFilter),
       viewer: queryClient.getQueriesData({ queryKey: viewerPrefix }),
     }
   }
@@ -81,7 +95,7 @@ export default function useCommentReactions(comment: TComment) {
     },
     onMutate: async (nextViewerState) => {
       const state = await snapshot()
-      patchCommentEverywhere(queryClient, comment.innerId, (current) => ({
+      patchCommentEverywhere(queryClient, commentScope, comment.innerId, (current) => ({
         ...current,
         upvotesCount: Math.max(0, current.upvotesCount + (nextViewerState ? 1 : -1)),
       }))
@@ -98,7 +112,7 @@ export default function useCommentReactions(comment: TComment) {
     },
     onError: (_error, _variables, state) => restore(state),
     onSuccess: (confirmed, nextViewerState) => {
-      patchCommentEverywhere(queryClient, comment.innerId, (current) => ({
+      patchCommentEverywhere(queryClient, commentScope, comment.innerId, (current) => ({
         ...current,
         meta: confirmed.meta,
         upvotesCount: confirmed.upvotesCount,
@@ -119,8 +133,7 @@ export default function useCommentReactions(comment: TComment) {
         )
       }
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' }),
+    onSettled: () => queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' }),
   })
 
   const emotion = useMutation({
@@ -153,7 +166,7 @@ export default function useCommentReactions(comment: TComment) {
     },
     onMutate: async ({ name, nextViewerState }) => {
       const state = await snapshot()
-      patchCommentEverywhere(queryClient, comment.innerId, (current) =>
+      patchCommentEverywhere(queryClient, commentScope, comment.innerId, (current) =>
         updateCommentEmotion(current, name, nextViewerState),
       )
       if (viewerScope) {
@@ -175,7 +188,7 @@ export default function useCommentReactions(comment: TComment) {
     },
     onError: (_error, _variables, state) => restore(state),
     onSuccess: (confirmed, { name, nextViewerState }) => {
-      patchCommentEverywhere(queryClient, comment.innerId, (current) => ({
+      patchCommentEverywhere(queryClient, commentScope, comment.innerId, (current) => ({
         ...current,
         emotions: publicEmotions(confirmed),
       }))
@@ -201,8 +214,7 @@ export default function useCommentReactions(comment: TComment) {
         )
       }
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' }),
+    onSettled: () => queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' }),
   })
 
   useEffect(() => {

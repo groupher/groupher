@@ -70,6 +70,8 @@ export const articleKeys = {
 
 export const commentKeys = {
   all: ['comment'] as const,
+  articlePrefix: (community: string, thread: TThread, innerId: string | number) =>
+    [...commentKeys.all, 'list', community, thread, String(innerId)] as const,
   list: (
     community: string,
     thread: TThread,
@@ -77,6 +79,15 @@ export const commentKeys = {
     page = 1,
     mode = 'REPLIES',
   ) => [...commentKeys.all, 'list', community, thread, String(innerId), { mode, page }] as const,
+  matchesArticle: (
+    query: { queryKey: readonly unknown[] },
+    community: string,
+    thread: TThread,
+    innerId: string | number,
+  ): boolean => {
+    const prefix = commentKeys.articlePrefix(community, thread, innerId)
+    return prefix.every((part, index) => query.queryKey[index] === part)
+  },
 }
 
 export const viewerKeys = {

@@ -6,11 +6,12 @@ import { scrollIntoEle } from '~/dom'
 import { browserQuery } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { stripCommentViewerState } from '~/lib/commentViewerState'
-import { articleKeys, commentKeys, mutationKeys, Q, viewerKeys } from '~/query'
+import { articleKeys, mutationKeys, Q, viewerKeys } from '~/query'
 import { patchArticleEverywhere } from '~/query/mutation/article'
 import {
   insertPendingComment,
   insertPendingReply,
+  isCommentQueryForArticle,
   patchCommentEverywhere,
   reconcileCreatedComment,
 } from '~/query/mutation/comment'
@@ -56,6 +57,15 @@ export default function useQuery(): TRet {
   const repliesRequestRef = useRef(0)
 
   const articlePath = `${article.community?.slug || ''}:${article.meta.thread}:${article.innerId}`
+  const commentScope = {
+    community: article.community.slug,
+    thread: article.meta.thread,
+    articleInnerId: article.innerId,
+  }
+  const commentQueryFilter = {
+    predicate: (query: Parameters<typeof isCommentQueryForArticle>[0]) =>
+      isCommentQueryForArticle(query, commentScope),
+  }
   const latestArticlePathRef = useRef(articlePath)
 
   useEffect(() => {
@@ -116,12 +126,12 @@ export default function useQuery(): TRet {
     },
     onMutate: async ({ pending }) => {
       await Promise.all([
-        queryClient.cancelQueries({ queryKey: commentKeys.all }),
+        queryClient.cancelQueries(commentQueryFilter),
         queryClient.cancelQueries({ queryKey: articleKeys.all }),
       ])
-      const comments = queryClient.getQueriesData({ queryKey: commentKeys.all })
+      const comments = queryClient.getQueriesData(commentQueryFilter)
       const articles = queryClient.getQueriesData({ queryKey: articleKeys.all })
-      insertPendingComment(queryClient, pending)
+      insertPendingComment(queryClient, commentScope, pending)
       patchArticleEverywhere(queryClient, buildArticlePath(), (current) => ({
         ...current,
         commentsCount: current.commentsCount + 1,
@@ -137,6 +147,7 @@ export default function useQuery(): TRet {
     onSuccess: (payload, { pending }) => {
       reconcileCreatedComment(
         queryClient,
+        commentScope,
         pending.innerId,
         stripCommentViewerState(payload.comment as unknown as TComment),
         buildArticlePath(),
@@ -146,7 +157,7 @@ export default function useQuery(): TRet {
       setTimeout(() => resetPublish(EDIT_MODE.CREATE), 500)
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' })
+      void queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' })
       void queryClient.invalidateQueries({ queryKey: viewerKeys.all, refetchType: 'none' })
     },
   })
@@ -173,12 +184,12 @@ export default function useQuery(): TRet {
     },
     onMutate: async ({ parentId, pending }) => {
       await Promise.all([
-        queryClient.cancelQueries({ queryKey: commentKeys.all }),
+        queryClient.cancelQueries(commentQueryFilter),
         queryClient.cancelQueries({ queryKey: articleKeys.all }),
       ])
-      const comments = queryClient.getQueriesData({ queryKey: commentKeys.all })
+      const comments = queryClient.getQueriesData(commentQueryFilter)
       const articles = queryClient.getQueriesData({ queryKey: articleKeys.all })
-      insertPendingReply(queryClient, parentId, pending)
+      insertPendingReply(queryClient, commentScope, parentId, pending)
       patchArticleEverywhere(queryClient, buildArticlePath(), (current) => ({
         ...current,
         commentsCount: current.commentsCount + 1,
@@ -194,6 +205,7 @@ export default function useQuery(): TRet {
     onSuccess: (payload, { pending }) => {
       reconcileCreatedComment(
         queryClient,
+        commentScope,
         pending.innerId,
         stripCommentViewerState(payload.comment as unknown as TComment),
         buildArticlePath(),
@@ -203,7 +215,7 @@ export default function useQuery(): TRet {
       setTimeout(() => resetPublish(EDIT_MODE.REPLY), 500)
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' })
+      void queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' })
       void queryClient.invalidateQueries({ queryKey: viewerKeys.all, refetchType: 'none' })
     },
   })
@@ -233,15 +245,14 @@ export default function useQuery(): TRet {
       commentsStore.commit({ publishing: false })
     },
     onSuccess: (confirmed) => {
-      patchCommentEverywhere(queryClient, confirmed.innerId, (current) => ({
+      patchCommentEverywhere(queryClient, commentScope, confirmed.innerId, (current) => ({
         ...current,
         ...stripCommentViewerState(confirmed),
       }))
       published()
       setTimeout(() => resetPublish(EDIT_MODE.UPDATE), 500)
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' }),
+    onSettled: () => queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' }),
   })
 
   const loadComments = (page = 1): void => {

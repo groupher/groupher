@@ -19,13 +19,15 @@ const root = {
   emotions: [{ type: 'HEART', count: 0, viewerHasReacted: false }],
 } as TComment
 const key = commentKeys.list('home', THREAD.POST, '42')
+const otherArticleKey = commentKeys.list('home', THREAD.POST, '99')
+const scope = { community: 'home', thread: THREAD.POST, articleInnerId: '42' }
 
 describe('comment query mutation helpers', () => {
   it('patches a nested reply across loaded comment lists', () => {
     const queryClient = new QueryClient()
     queryClient.setQueryData(key, { entries: [root], totalCount: 2 })
 
-    patchCommentEverywhere(queryClient, '2', (comment) => ({ ...comment, upvotesCount: 2 }))
+    patchCommentEverywhere(queryClient, scope, '2', (comment) => ({ ...comment, upvotesCount: 2 }))
 
     const data = queryClient.getQueryData<{ entries: TComment[] }>(key)
     expect(data?.entries[0].replies[0].upvotesCount).toBe(2)
@@ -36,14 +38,14 @@ describe('comment query mutation helpers', () => {
     queryClient.setQueryData(key, { entries: [root], totalCount: 1, pageNumber: 1 })
     const pending = { innerId: 'pending:1', replies: [] } as TComment
 
-    insertPendingComment(queryClient, pending)
+    insertPendingComment(queryClient, scope, pending)
     expect(
       queryClient.getQueryData<{ entries: TComment[]; totalCount: number }>(key),
     ).toMatchObject({
       totalCount: 2,
       entries: [{ innerId: 'pending:1' }, { innerId: '1' }],
     })
-    patchCommentEverywhere(queryClient, pending.innerId, () => null)
+    patchCommentEverywhere(queryClient, scope, pending.innerId, () => null)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toHaveLength(1)
   })
 
@@ -75,6 +77,24 @@ describe('comment query mutation helpers', () => {
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0]).toBe(root)
   })
 
+  it('does not patch a same-innerId comment from another article', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(key, { entries: [root] })
+    queryClient.setQueryData(otherArticleKey, {
+      entries: [{ ...root, upvotesCount: 10 }],
+    })
+
+    patchCommentEverywhere(queryClient, scope, '1', (comment) => ({
+      ...comment,
+      upvotesCount: 2,
+    }))
+
+    expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].upvotesCount).toBe(2)
+    expect(
+      queryClient.getQueryData<{ entries: TComment[] }>(otherArticleKey)?.entries[0].upvotesCount,
+    ).toBe(10)
+  })
+
   it('replaces a pending comment and uses the server-confirmed article count', () => {
     const queryClient = new QueryClient()
     const articleKey = articleKeys.detail('home', THREAD.POST, '42')
@@ -91,6 +111,7 @@ describe('comment query mutation helpers', () => {
 
     reconcileCreatedComment(
       queryClient,
+      scope,
       'pending:1',
       { ...root, innerId: 'confirmed-1' },
       { community: 'home', thread: THREAD.POST, innerId: '42' },

@@ -39,4 +39,40 @@ describe('mutation cache tag mapping', () => {
       }),
     ).toEqual([])
   })
+
+  it('maps community-scoped post restore mutations to post tags', () => {
+    expect(
+      mutationCacheTags(
+        'mutation restoreTrashedPost($community: String!, $id: ID!) { restoreTrashedArticle(community: $community, id: $id, thread: POST) { innerId } }',
+        { community: 'home', id: '42' },
+      ),
+    ).toEqual(['community[home]-thread[POST]-article[42]', 'community[home]-thread[POST]-articles'])
+  })
+
+  it('maps document publishing to only the document list and tree tags', () => {
+    expect(
+      mutationCacheTags(
+        'mutation publishDocChanges($community: String!, $input: DocPublishChangesInput) { publishDocChanges(community: $community, input: $input) { done } }',
+        {
+          community: 'home',
+          input: { docChangeIds: ['change:42'], treeChangeIds: ['tree:7'] },
+        },
+      ),
+    ).toEqual(['community[home]-thread[DOC]-articles', 'community[home]-doc-tree'])
+  })
+
+  it('does not treat publishDocChanges as an article mutation without its community rule', () => {
+    expect(
+      mutationCacheTags('mutation publishDocChanges { publishDocChanges { done } }', { article }),
+    ).toEqual([])
+  })
+
+  it('invalidates the public document tree for community-scoped tree mutations', () => {
+    expect(
+      mutationCacheTags(
+        'mutation UpdateDocTreeNode($community: String!, $id: ID!) { updateDocTreeNode(community: $community, id: $id) { revision } }',
+        { community: 'home', id: 'node-1' },
+      ),
+    ).toEqual(['community[home]-doc-tree'])
+  })
 })

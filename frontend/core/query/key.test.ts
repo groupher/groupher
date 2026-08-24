@@ -93,4 +93,12 @@ describe('query keys', () => {
       ['post:1', 'post:2'],
     ])
   })
+
+  it('matches every comment page for one article without crossing article ids', () => {
+    const target = { queryKey: commentKeys.list('home', THREAD.POST, '42', 2, 'ALL') }
+    const other = { queryKey: commentKeys.list('home', THREAD.POST, '99') }
+
+    expect(commentKeys.matchesArticle(target, 'home', THREAD.POST, '42')).toBe(true)
+    expect(commentKeys.matchesArticle(other, 'home', THREAD.POST, '42')).toBe(false)
+  })
 })

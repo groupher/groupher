@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { prop, uniqBy } from 'ramda'
 import { useContext } from 'react'
 
+import useViewingArticle from '~/hooks/useViewingArticle'
 import { commentKeys } from '~/query'
 import type { TComment, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
@@ -24,9 +25,23 @@ export default function useHelper(): TRet {
   }
   const comments = commentsStore
   const queryClient = useQueryClient()
+  const { article } = useViewingArticle()
+  const commentScope = {
+    community: article.community.slug,
+    thread: article.meta.thread,
+    articleInnerId: article.innerId,
+  }
   const patchComments = (updater: (entries: TComment[]) => TComment[]) => {
     queryClient.setQueriesData(
-      { queryKey: commentKeys.all },
+      {
+        predicate: (query) =>
+          commentKeys.matchesArticle(
+            query,
+            commentScope.community,
+            commentScope.thread,
+            commentScope.articleInnerId,
+          ),
+      },
       (data: { entries?: TComment[] } | undefined) =>
         data?.entries ? { ...data, entries: updater(data.entries) } : data,
     )

@@ -8,8 +8,12 @@ import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { commentKeys, mutationKeys, viewerKeys } from '../key'
-import { patchCommentEverywhere, patchCommentViewerState } from './comment'
+import { mutationKeys, viewerKeys } from '../key'
+import {
+  isCommentQueryForArticle,
+  patchCommentEverywhere,
+  patchCommentViewerState,
+} from './comment'
 
 /** Owns per-comment moderation transport and cache effects. */
 export default function useCommentModeration(comment: TComment) {
@@ -23,6 +27,15 @@ export default function useCommentModeration(comment: TComment) {
     innerId: String(article.innerId),
   }
   const articleKey = `${articleInput.community}:${articleInput.thread}:${articleInput.innerId}`
+  const commentScope = {
+    community: articleInput.community,
+    thread: articleInput.thread,
+    articleInnerId: articleInput.innerId,
+  }
+  const commentQueryFilter = {
+    predicate: (query: Parameters<typeof isCommentQueryForArticle>[0]) =>
+      isCommentQueryForArticle(query, commentScope),
+  }
   const commentInput = { article: articleInput, innerId: String(comment.innerId) }
   const commentKey = `${articleKey}:${comment.innerId}`
 
@@ -32,16 +45,15 @@ export default function useCommentModeration(comment: TComment) {
     retry: false,
     mutationFn: async () => browserQuery(commentsSchema.deleteComment, { comment: commentInput }),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: commentKeys.all })
-      const comments = queryClient.getQueriesData({ queryKey: commentKeys.all })
-      patchCommentEverywhere(queryClient, comment.innerId, () => null)
+      await queryClient.cancelQueries(commentQueryFilter)
+      const comments = queryClient.getQueriesData(commentQueryFilter)
+      patchCommentEverywhere(queryClient, commentScope, comment.innerId, () => null)
       return { comments }
     },
     onError: (_error, _variables, snapshot) => {
       for (const [key, data] of snapshot?.comments || []) queryClient.setQueryData(key, data)
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: commentKeys.all, refetchType: 'none' }),
+    onSettled: () => queryClient.invalidateQueries({ ...commentQueryFilter, refetchType: 'none' }),
   })
 
   const reportMutation = useMutation({

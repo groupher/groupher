@@ -1,10 +1,19 @@
-import type { QueryClient } from '@tanstack/react-query'
+import type { Query, QueryClient } from '@tanstack/react-query'
 
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment, TThread } from '~/spec'
 
 import { commentKeys, viewerKeys } from '../key'
 import { patchArticleEverywhere } from './article'
+
+export type TCommentScope = {
+  community: string
+  thread: TThread
+  articleInnerId: string | number
+}
+
+export const isCommentQueryForArticle = (query: Query, scope: TCommentScope): boolean =>
+  commentKeys.matchesArticle(query, scope.community, scope.thread, scope.articleInnerId)
 
 const patchEntries = (
   entries: TComment[],
@@ -30,11 +39,12 @@ const patchEntries = (
 /** Applies one comment update across timeline and nested-reply query shapes. */
 export const patchCommentEverywhere = (
   queryClient: QueryClient,
+  scope: TCommentScope,
   innerId: string | number,
   updater: (comment: TComment) => TComment | null,
 ): void => {
   queryClient.setQueriesData(
-    { queryKey: commentKeys.all },
+    { predicate: (query) => isCommentQueryForArticle(query, scope) },
     (data: { entries?: TComment[] } | undefined) =>
       data?.entries
         ? {
@@ -46,9 +56,13 @@ export const patchCommentEverywhere = (
 }
 
 /** Inserts a temporary top-level comment into loaded first-page comment queries. */
-export const insertPendingComment = (queryClient: QueryClient, comment: TComment): void => {
+export const insertPendingComment = (
+  queryClient: QueryClient,
+  scope: TCommentScope,
+  comment: TComment,
+): void => {
   queryClient.setQueriesData(
-    { queryKey: commentKeys.all },
+    { predicate: (query) => isCommentQueryForArticle(query, scope) },
     (data: { entries?: TComment[]; totalCount?: number; pageNumber?: number } | undefined) =>
       data?.entries && (data.pageNumber || 1) === 1
         ? {
@@ -63,10 +77,11 @@ export const insertPendingComment = (queryClient: QueryClient, comment: TComment
 /** Inserts a temporary reply below its parent in every loaded comment shape. */
 export const insertPendingReply = (
   queryClient: QueryClient,
+  scope: TCommentScope,
   parentId: string | number,
   reply: TComment,
 ): void => {
-  patchCommentEverywhere(queryClient, parentId, (parent) => ({
+  patchCommentEverywhere(queryClient, scope, parentId, (parent) => ({
     ...parent,
     replies: [...(parent.replies || []), reply],
   }))
@@ -75,12 +90,13 @@ export const insertPendingReply = (
 /** Replaces a pending comment and converges the article count to the mutation payload. */
 export const reconcileCreatedComment = (
   queryClient: QueryClient,
+  scope: TCommentScope,
   pendingInnerId: string | number,
   confirmed: TComment,
   article: { community: string; thread: TThread; innerId: string },
   commentsCount: number,
 ): void => {
-  patchCommentEverywhere(queryClient, pendingInnerId, () => confirmed)
+  patchCommentEverywhere(queryClient, scope, pendingInnerId, () => confirmed)
   patchArticleEverywhere(queryClient, article, (current) => ({
     ...current,
     commentsCount,
