@@ -123,7 +123,7 @@ frontend/dash/public/wallpaper/
 frontend/landing/public/wallpaper/
 frontend/core/assets/wallpaper/pattern-bak/
 
-# Frontend schema snapshots are generated from backend/main/schema.graphql when needed.
+# Frontend schema snapshots are generated from backend/api/schema.graphql when needed.
 frontend/main/graphql/schema.graphql
 frontend/dashboard/graphql/schema.graphql
 
@@ -146,25 +146,25 @@ frontend/apply/src/routeTree.gen.ts
 # =====================
 # Backend (Elixir / BEAM)
 # =====================
-backend/main/_build
-backend/main/.elixir_ls
-backend/main/db
-backend/main/deps
-backend/main/*.ez
-backend/main/erl_crash.dump
+backend/api/_build
+backend/api/.elixir_ls
+backend/api/db
+backend/api/deps
+backend/api/*.ez
+backend/api/erl_crash.dump
 
 # =====================
 # Backend secrets / temp
 # =====================
-backend/main/config/*.secret.exs
-backend/main/config/_tmp.exs
+backend/api/config/*.secret.exs
+backend/api/config/_tmp.exs
 
 # =====================
 # Misc
 # =====================
-backend/main/_tuts/
-backend/main/docs/draft.ex
-backend/main/cover/excoveralls.html
+backend/api/_tuts/
+backend/api/docs/draft.ex
+backend/api/cover/excoveralls.html
 .agignore
 
 # AI agent / skills (local only)

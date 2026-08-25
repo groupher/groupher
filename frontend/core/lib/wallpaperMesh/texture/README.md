@@ -99,7 +99,7 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
 
 7. Add the backend allowed value in:
 
-   `backend/main/lib/groupher_server/cms/model/embeds/dashboard/wallpaper.ex`
+   `backend/api/lib/groupher_server/cms/model/embeds/dashboard/wallpaper.ex`
 
 8. Run:
 

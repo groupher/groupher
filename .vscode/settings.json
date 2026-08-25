@@ -1,7 +1,7 @@
 {
   "makefile.configureOnOpen": false,
-  "elixir.projectPath": "backend/main",
-  "elixirLS.projectDir": "backend/main",
+  "elixir.projectPath": "backend/api",
+  "elixirLS.projectDir": "backend/api",
   "editor.formatOnSave": false,
   "editor.codeActionsOnSave": {
     "source.format.oxc": "always",

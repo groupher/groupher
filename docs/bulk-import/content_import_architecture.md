@@ -558,7 +558,7 @@ getDocsImportJob
 ## 10. Phoenix 目录结构
 
 ```text
-backend/main/lib/groupher_server/cms/content_import/
+backend/api/lib/groupher_server/cms/content_import/
 |-- jobs.ex
 |-- staging.ex
 |-- import_source_mapping.ex

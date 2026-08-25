@@ -8,8 +8,8 @@
 
 ## 产物
 
-- Cleanup SQL: [`backend/main/scripts/oauth_cutover_raw_cleanup.sql`](../../backend/main/scripts/oauth_cutover_raw_cleanup.sql)
-- Migration: `backend/main/priv/repo/migrations/20260811100000_harden_oauth_provider_bindings.exs`
+- Cleanup SQL: [`backend/api/scripts/oauth_cutover_raw_cleanup.sql`](../../backend/api/scripts/oauth_cutover_raw_cleanup.sql)
+- Migration: `backend/api/priv/repo/migrations/20260811100000_harden_oauth_provider_bindings.exs`
 - 已评审的发布 commit：`________________________`
 - 清理脚本版本或 checksum：`________________________`
 
@@ -45,7 +45,7 @@ provider bindings。
 
 ```sh
 psql --set ON_ERROR_STOP=1 "$DATABASE_URL" \\
-  -f backend/main/scripts/oauth_cutover_raw_cleanup.sql
+  -f backend/api/scripts/oauth_cutover_raw_cleanup.sql
 ```
 
 - [ ] 记录 `non_null_raw_before`。

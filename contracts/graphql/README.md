@@ -9,7 +9,7 @@ these checks validate shared policy and repository wiring.
 - the temporary exception manifest shape and expiry policy;
 - a reachable issue URL or issue number for every exception; and
 - the mock-server schema symlink resolving to
-  `backend/main/schema.graphql`.
+  `backend/api/schema.graphql`.
 
 `scripts/assert-static-graphql.mjs` additionally checks that every Codegen
 allowlist path exists and contains neither legacy `gql` templates nor runtime

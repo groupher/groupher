@@ -3,7 +3,7 @@ name: GraphQL schema contract
 on:
   pull_request:
     paths:
-      - 'backend/main/**'
+      - 'backend/api/**'
       - 'frontend/core/schemas/**'
       - 'frontend/core/schemas/fragments/**'
       - 'frontend/core/unit/**'
@@ -16,7 +16,7 @@ on:
       - '.github/workflows/graphql-contract.yml'
   push:
     paths:
-      - 'backend/main/**'
+      - 'backend/api/**'
       - 'frontend/core/schemas/**'
       - 'frontend/core/schemas/fragments/**'
       - 'frontend/core/unit/**'
@@ -58,14 +58,14 @@ jobs:
           elixir-version: '1.20.3'
 
       - name: Install backend dependencies
-        working-directory: backend/main
+        working-directory: backend/api
         run: mix deps.get
 
       - name: Generate the backend SDL and mock-schema link
         run: make be.gen.schema
 
       - name: Fail when the checked-in SDL is stale
-        run: git diff --exit-code -- backend/main/schema.graphql
+        run: git diff --exit-code -- backend/api/schema.graphql
 
       - name: Validate repository GraphQL invariants
         run: yarn contract:graphql

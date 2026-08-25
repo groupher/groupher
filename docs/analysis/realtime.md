@@ -166,12 +166,12 @@ TrendPage / WebOverview
 - Umami Active Users 查询 hook：`src/components/hooks/queries/useActiveUsersQuery.ts`
 - Umami Active Users route：`src/app/api/websites/[websiteId]/active/route.ts`
 - Umami distinct session 查询：`src/queries/sql/getActiveVisitors.ts`
-- Groupher provider callback：`backend/main/lib/groupher_server/analysis/web/provider.ex`
-- Groupher Umami adapter：`backend/main/lib/groupher_server/analysis/web/provider/umami.ex`
-- Groupher Web Analysis facade：`backend/main/lib/groupher_server/analysis/web.ex`
-- Groupher cache helper：`backend/main/lib/helper/cache.ex`
+- Groupher provider callback：`backend/api/lib/groupher_server/analysis/web/provider.ex`
+- Groupher Umami adapter：`backend/api/lib/groupher_server/analysis/web/provider/umami.ex`
+- Groupher Web Analysis facade：`backend/api/lib/groupher_server/analysis/web.ex`
+- Groupher cache helper：`backend/api/lib/helper/cache.ex`
 - Groupher RealtimeOnline UI：`frontend/core/unit/DashboardThread/Analysis/RealtimeOnline/index.tsx`
-- Groupher 现有 global lock + ETS 缓存先例：`backend/main/lib/groupher_server/service_auth/client.ex`
+- Groupher 现有 global lock + ETS 缓存先例：`backend/api/lib/groupher_server/service_auth/client.ex`
 - Groupher 标题右侧 slot：`frontend/core/unit/DashboardThread/Portal/index.tsx`
 - Groupher slot 定位样式：`frontend/core/unit/DashboardThread/Portal/salon/index.ts`
 - Groupher Trends 页面入口：`frontend/dashboard/src/app/[community]/trend/layout.tsx`

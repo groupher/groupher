@@ -999,24 +999,24 @@ actor，不能伪造无法恢复的历史用户。
 
 Backend：
 
-- `backend/main/lib/groupher_server/cms/articles.ex`
-- `backend/main/lib/groupher_server/cms/articles/lock.ex`
-- `backend/main/lib/groupher_server/cms/articles/list.ex`
-- `backend/main/lib/groupher_server/cms/articles/write.ex`
-- `backend/main/lib/groupher_server/cms/artiment_mentions.ex`
-- `backend/main/lib/groupher_server/cms/doc_tree.ex`
-- `backend/main/lib/groupher_server/cms/doc_tree/write.ex`
-- `backend/main/lib/groupher_server/cms/doc_tree/write/trash.ex`
-- `backend/main/lib/groupher_server/cms/doc_tree/trash.ex`
-- `backend/main/lib/groupher_server/cms/doc_tree/trash_snapshot.ex`（删除）
-- `backend/main/lib/groupher_server/cms/model/doc_tree_trash_item.ex`（删除）
-- `backend/main/lib/groupher_server_web/schema/helper/mutations.ex`
-- `backend/main/lib/groupher_server_web/schema/cms/cms_queries.ex`
-- `backend/main/lib/groupher_server_web/schema/cms/cms_types.ex`
-- `backend/main/lib/groupher_server_web/resolvers/cms_resolver.ex`
-- `backend/main/lib/helper/scheduler.ex`
-- `backend/main/lib/helper/query_builder.ex`（只删除 `mark_delete` filter，不新增能力）
-- `backend/main/config/config.exs`
+- `backend/api/lib/groupher_server/cms/articles.ex`
+- `backend/api/lib/groupher_server/cms/articles/lock.ex`
+- `backend/api/lib/groupher_server/cms/articles/list.ex`
+- `backend/api/lib/groupher_server/cms/articles/write.ex`
+- `backend/api/lib/groupher_server/cms/artiment_mentions.ex`
+- `backend/api/lib/groupher_server/cms/doc_tree.ex`
+- `backend/api/lib/groupher_server/cms/doc_tree/write.ex`
+- `backend/api/lib/groupher_server/cms/doc_tree/write/trash.ex`
+- `backend/api/lib/groupher_server/cms/doc_tree/trash.ex`
+- `backend/api/lib/groupher_server/cms/doc_tree/trash_snapshot.ex`（删除）
+- `backend/api/lib/groupher_server/cms/model/doc_tree_trash_item.ex`（删除）
+- `backend/api/lib/groupher_server_web/schema/helper/mutations.ex`
+- `backend/api/lib/groupher_server_web/schema/cms/cms_queries.ex`
+- `backend/api/lib/groupher_server_web/schema/cms/cms_types.ex`
+- `backend/api/lib/groupher_server_web/resolvers/cms_resolver.ex`
+- `backend/api/lib/helper/scheduler.ex`
+- `backend/api/lib/helper/query_builder.ex`（只删除 `mark_delete` filter，不新增能力）
+- `backend/api/config/config.exs`
 - Article product schemas, migrations, Passport actions, factories and tests
 
 New backend boundaries：

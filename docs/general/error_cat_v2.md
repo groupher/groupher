@@ -119,7 +119,7 @@ namespace 重复检查只比较完整 tuple。range 冲突只比较数值区间�
 
 目录遵循仓库现有 context 约定：
 
-    backend/main/lib/
+    backend/api/lib/
     ├── groupher_server/
     │   ├── error_cat.ex
     │   ├── error_cat/

@@ -1,6 +1,6 @@
 # Groupher Phoenix Backend
 
-`backend/main` is Groupher's domain authority and GraphQL API. It remains a
+`backend/api` is Groupher's domain authority and GraphQL API. It remains a
 modular monolith: Accounts, CMS, Messaging, Analysis, authorization, lifecycle,
 and persistence live in Phoenix contexts and share one PostgreSQL repository.
 

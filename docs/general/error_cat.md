@@ -104,30 +104,30 @@ Web adapter
 `ErrorCat` 是一个目录级机制，不是一个文件包办全部逻辑：
 
 ```text
-backend/main/lib/groupher_server/error_cat.ex
-backend/main/lib/groupher_server/error_cat/
+backend/api/lib/groupher_server/error_cat.ex
+backend/api/lib/groupher_server/error_cat/
 ├── domain.ex       # ErrorCat.Domain DSL
 ├── error.ex        # ErrorCat.Error 结构
 ├── registry.ex     # catalog registry
 └── validator.ex    # 全局校验
 
-backend/main/lib/mix/tasks/compile/error_cat.ex
+backend/api/lib/mix/tasks/compile/error_cat.ex
   # Mix.Tasks.Compile.ErrorCat
 ```
 
 领域 catalog 放在所属 context 下：
 
 ```text
-backend/main/lib/groupher_server_web/error_cat.ex
-backend/main/lib/groupher_server/accounts/profiles/error_cat.ex
-backend/main/lib/groupher_server/accounts/collect_folders/error_cat.ex
-backend/main/lib/groupher_server/cms/error_cat.ex
-backend/main/lib/groupher_server/cms/gate/error_cat.ex
-backend/main/lib/groupher_server/cms/gate/rate_limit/error_cat.ex
-backend/main/lib/groupher_server/cms/passport/error_cat.ex
-backend/main/lib/groupher_server/cms/comments/error_cat.ex
-backend/main/lib/groupher_server/cms/communities/error_cat.ex
-backend/main/lib/groupher_server/cms/articles/error_cat.ex
+backend/api/lib/groupher_server_web/error_cat.ex
+backend/api/lib/groupher_server/accounts/profiles/error_cat.ex
+backend/api/lib/groupher_server/accounts/collect_folders/error_cat.ex
+backend/api/lib/groupher_server/cms/error_cat.ex
+backend/api/lib/groupher_server/cms/gate/error_cat.ex
+backend/api/lib/groupher_server/cms/gate/rate_limit/error_cat.ex
+backend/api/lib/groupher_server/cms/passport/error_cat.ex
+backend/api/lib/groupher_server/cms/comments/error_cat.ex
+backend/api/lib/groupher_server/cms/communities/error_cat.ex
+backend/api/lib/groupher_server/cms/articles/error_cat.ex
 ```
 
 对应模块为：
@@ -535,7 +535,7 @@ namespace + reason
 
 ## 13. 现有错误清单的迁移落点
 
-以下清单盘点迁移前 `backend/main/lib/helper/const.ex` 中的 reason，并给出新 catalog
+以下清单盘点迁移前 `backend/api/lib/helper/const.ex` 中的 reason，并给出新 catalog
 的目标 namespace。表中的旧 code 只用于定位现状，迁移时不要求保留。
 本表只保留迁移索引；最终、逐条的落点以 `error_cat_v2.md` 为准。
 

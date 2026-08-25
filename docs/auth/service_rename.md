@@ -90,7 +90,7 @@ TypeScript 侧的变更前导出：
 
 直接入口：
 
-    backend/main/lib/groupher_server/cms/assets/deletion.ex
+    backend/api/lib/groupher_server/cms/assets/deletion.ex
 
     CMS.Assets.Deletion.enqueue/1
       -> safe_enqueue/1
@@ -123,7 +123,7 @@ Assets Hub 当前要求：
 
 直接入口：
 
-    backend/main/lib/groupher_server/cms/press.ex
+    backend/api/lib/groupher_server/cms/press.ex
 
     CMS.Press.invalidate/1
       -> ServiceAuth.Client.token/2
@@ -141,7 +141,7 @@ Press 的 resource 有默认值，但允许通过 PRESS_INTERNAL_RESOURCE 覆盖
 
 直接入口：
 
-    backend/main/lib/groupher_server_web/context.ex
+    backend/api/lib/groupher_server_web/context.ex
 
     HTTP request
       -> GroupherServerWeb.Context.call/2
@@ -174,11 +174,11 @@ service token + 用户身份的实际组合通常是：请求不带浏览器 coo
 
 入站实现模块当前是：
 
-    backend/main/lib/groupher_server_web/service_auth/verifier.ex
+    backend/api/lib/groupher_server_web/service_auth/verifier.ex
 
 目标命名：
 
-    backend/main/lib/groupher_server_web/service_auth/verifier.ex
+    backend/api/lib/groupher_server_web/service_auth/verifier.ex
 
 它与出站 Client 对称：
 
@@ -272,7 +272,7 @@ Auth 侧本次只重命名文件/模块边界；`issueServiceToken/2`、`readSer
 
 Phoenix 出站 Client 配置在：
 
-    backend/main/config/runtime.exs
+    backend/api/config/runtime.exs
 
     SERVICE_AUTH_TOKEN_ENDPOINT
     SERVICE_AUTH_CLIENT_ID
@@ -329,7 +329,7 @@ Client 代码运行时通过：
 
 当前测试文件：
 
-    backend/main/test/groupher_server_web/service_auth_verifier_test.exs
+    backend/api/test/groupher_server_web/service_auth_verifier_test.exs
 
 它测试的是 Phoenix 入站 ServiceAuth.Verifier，不是出站 Client；setup 使用重命名后的模块作为 config key：
 
@@ -350,18 +350,18 @@ Client 代码运行时通过：
 
 本次统一 ServiceAuth 命名已同步：
 
-    backend/main/lib/groupher_server/service_auth/client.ex
+    backend/api/lib/groupher_server/service_auth/client.ex
 
-    backend/main/lib/groupher_server_web/service_auth/verifier.ex
+    backend/api/lib/groupher_server_web/service_auth/verifier.ex
 
-    backend/main/lib/groupher_server_web/context.ex
+    backend/api/lib/groupher_server_web/context.ex
       -> alias 和 ServiceAuth.Verifier.service_token?/1、verify/1 的调用方
 
-    backend/main/lib/groupher_server/cms/assets/deletion.ex
-    backend/main/lib/groupher_server/cms/press.ex
+    backend/api/lib/groupher_server/cms/assets/deletion.ex
+    backend/api/lib/groupher_server/cms/press.ex
 
-    backend/main/config/runtime.exs
-    backend/main/test/groupher_server_web/service_auth_verifier_test.exs
+    backend/api/config/runtime.exs
+    backend/api/test/groupher_server_web/service_auth_verifier_test.exs
 
     frontend/dashboard/src/lib/serviceAuth.ts
 

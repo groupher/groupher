@@ -238,7 +238,7 @@ article_documents
 数据库字段：
 
 ```elixir
-# backend/main/lib/groupher_server/cms/model/article_document.ex
+# backend/api/lib/groupher_server/cms/model/article_document.ex
 schema "article_documents" do
   # existing document representations...
   field(:thumbnail, :map)

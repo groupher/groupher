@@ -56,7 +56,7 @@ frontend/dashboard/src/
 ### 0.3 Phoenix 目标目录
 
 ```text
-backend/main/lib/groupher_server/cms/content_import/
+backend/api/lib/groupher_server/cms/content_import/
 |-- jobs.ex
 |-- staging.ex
 |-- import_source_mapping.ex
@@ -492,7 +492,7 @@ GroupherServer.CMS.ContentImport
 测试目录必须镜像新的 `lib/groupher_server/cms/content_import` 模块结构，不保留扁平的 `doc_import/adapters_test.exs`：
 
 ```text
-backend/main/test/groupher_server/cms
+backend/api/test/groupher_server/cms
 |-- content_import_test.exs
 `-- content_import
     |-- diagnostic_test.exs
@@ -568,7 +568,7 @@ backend/main/test/groupher_server/cms
 fixture 同样按职责分层：
 
 ```text
-backend/main/test/fixtures/content_import
+backend/api/test/fixtures/content_import
 |-- platforms
 |   |-- archive
 |   `-- github

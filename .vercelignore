@@ -107,19 +107,19 @@ frontend/main/graphql/schema.graphql
 frontend/dashboard/graphql/schema.graphql
 
 # Backend local build and dependency output
-backend/main/_build
-backend/main/_build/
-backend/main/deps
-backend/main/.elixir_ls/
-backend/main/db/
-backend/main/deps/
-backend/main/*.ez
-backend/main/erl_crash.dump
-backend/main/config/*.secret.exs
-backend/main/config/_tmp.exs
-backend/main/_tuts/
-backend/main/docs/draft.ex
-backend/main/cover/excoveralls.html
+backend/api/_build
+backend/api/_build/
+backend/api/deps
+backend/api/.elixir_ls/
+backend/api/db/
+backend/api/deps/
+backend/api/*.ez
+backend/api/erl_crash.dump
+backend/api/config/*.secret.exs
+backend/api/config/_tmp.exs
+backend/api/_tuts/
+backend/api/docs/draft.ex
+backend/api/cover/excoveralls.html
 
 # Local agent/tool state
 .agents/

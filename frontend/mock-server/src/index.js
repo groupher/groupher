@@ -30,7 +30,7 @@ const schemaPath = (() => {
   if (existsSync(preferred)) return preferred
 
   // Backward compatible fallback (repo had schema in other locations before)
-  return path.resolve(__dirname, '../../../backend/main/schema.graphql')
+  return path.resolve(__dirname, '../../../backend/api/schema.graphql')
 })()
 
 const typeDefs = readFileSync(schemaPath, 'utf8')

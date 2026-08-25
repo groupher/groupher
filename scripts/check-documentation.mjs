@@ -28,7 +28,7 @@ const walk = (directory, accept, skip = () => false) =>
 const hasAsciiFlow = (text) => /-->|->|<->|\n\s*(?:\*\s*){0,1}[|+`]--?/.test(text)
 
 const checkElixirModules = () => {
-  const directory = path.join(root, 'backend/main/lib')
+  const directory = path.join(root, 'backend/api/lib')
   const files = walk(directory, (file) => file.endsWith('.ex'))
 
   for (const file of files) {
@@ -199,34 +199,34 @@ const checkExportedCallables = () => {
 
 const checkElixirSharedFunctions = () => {
   const boundaryFiles = [
-    'backend/main/lib/groupher_server/cms/comments/list.ex',
-    'backend/main/lib/groupher_server/cms/comments/writer.ex',
-    'backend/main/lib/groupher_server/cms/comments/lifecycle.ex',
-    'backend/main/lib/groupher_server/cms/comments/job_policy.ex',
-    'backend/main/lib/groupher_server/cms/comments/interaction_response.ex',
-    'backend/main/lib/groupher_server/cms/articles/interaction_response.ex',
-    'backend/main/lib/groupher_server/cms/articles/mutation_lock.ex',
-    'backend/main/lib/groupher_server/cms/gate/access.ex',
-    'backend/main/lib/groupher_server/cms/gate/access/check.ex',
-    'backend/main/lib/groupher_server/cms/model/post_solution.ex',
-    'backend/main/lib/groupher_server/cms/comments/commands/accept_solution.ex',
-    'backend/main/lib/groupher_server/cms/comments/commands/revoke_solution.ex',
-    'backend/main/lib/groupher_server/cms/comments/commands/update_comment.ex',
-    'backend/main/lib/groupher_server/cms/comments/commands/delete_comment.ex',
-    'backend/main/lib/groupher_server/cms/comments/commands/solution_transition.ex',
+    'backend/api/lib/groupher_server/cms/comments/list.ex',
+    'backend/api/lib/groupher_server/cms/comments/writer.ex',
+    'backend/api/lib/groupher_server/cms/comments/lifecycle.ex',
+    'backend/api/lib/groupher_server/cms/comments/job_policy.ex',
+    'backend/api/lib/groupher_server/cms/comments/interaction_response.ex',
+    'backend/api/lib/groupher_server/cms/articles/interaction_response.ex',
+    'backend/api/lib/groupher_server/cms/articles/mutation_lock.ex',
+    'backend/api/lib/groupher_server/cms/gate/access.ex',
+    'backend/api/lib/groupher_server/cms/gate/access/check.ex',
+    'backend/api/lib/groupher_server/cms/model/post_solution.ex',
+    'backend/api/lib/groupher_server/cms/comments/commands/accept_solution.ex',
+    'backend/api/lib/groupher_server/cms/comments/commands/revoke_solution.ex',
+    'backend/api/lib/groupher_server/cms/comments/commands/update_comment.ex',
+    'backend/api/lib/groupher_server/cms/comments/commands/delete_comment.ex',
+    'backend/api/lib/groupher_server/cms/comments/commands/solution_transition.ex',
   ].map((file) => path.join(root, file))
 
   const files = [
-    ...walk(path.join(root, 'backend/main/lib/helper'), (file) => file.endsWith('.ex')),
+    ...walk(path.join(root, 'backend/api/lib/helper'), (file) => file.endsWith('.ex')),
     ...['accounts', 'cms', 'messaging', 'analysis'].flatMap((context) => {
-      const directory = path.join(root, 'backend/main/lib/groupher_server', context)
+      const directory = path.join(root, 'backend/api/lib/groupher_server', context)
       return fs
         .readdirSync(directory, { withFileTypes: true })
         .filter((entry) => entry.isFile() && entry.name.endsWith('.ex'))
         .map((entry) => path.join(directory, entry.name))
     }),
     ...['messaging', 'analysis', 'jobs', 'activity', 'front_desk'].map((context) =>
-      path.join(root, 'backend/main/lib/groupher_server', `${context}.ex`),
+      path.join(root, 'backend/api/lib/groupher_server', `${context}.ex`),
     ),
     ...boundaryFiles,
   ].filter((file, index, all) => all.indexOf(file) === index)
@@ -322,7 +322,7 @@ const checkWorkspaceReadmes = () => {
       if (fs.existsSync(path.join(directory, 'package.json'))) directories.push(directory)
     }
   }
-  directories.push(path.join(root, 'backend/main'), path.join(root, 'backend/document-converter'))
+  directories.push(path.join(root, 'backend/api'), path.join(root, 'backend/document-converter'))
 
   for (const directory of directories) {
     if (!fs.existsSync(path.join(directory, 'README.md'))) fail(directory, 'is missing README.md')

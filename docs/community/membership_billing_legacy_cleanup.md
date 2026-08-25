@@ -56,7 +56,7 @@ Moderator 或 Passport。它们不能被用于推断未来的会员资格或支�
 
 ## 数据迁移
 
-[`20260814120000_remove_legacy_membership_and_billing_placeholders.exs`](../../backend/main/priv/repo/migrations/20260814120000_remove_legacy_membership_and_billing_placeholders.exs)
+[`20260814120000_remove_legacy_membership_and_billing_placeholders.exs`](../../backend/api/priv/repo/migrations/20260814120000_remove_legacy_membership_and_billing_placeholders.exs)
 执行以下不可逆操作：
 
 1. 删除 `account.achievements` 的三个旧会员徽章列及其依赖索引。

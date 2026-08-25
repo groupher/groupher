@@ -168,13 +168,13 @@ article_documents
 
 相关模块：
 
-- `backend/main/lib/helper/content_pipeline.ex`
-- `backend/main/lib/helper/article_payload.ex`
-- `backend/main/lib/helper/converter/content.ex`
-- `backend/main/lib/helper/converter/content/plate.ex`
-- `backend/main/lib/groupher_server/cms/articles/draft.ex`
-- `backend/main/lib/groupher_server/cms/articles/document.ex`
-- `backend/main/lib/groupher_server/cms/model/article_document.ex`
+- `backend/api/lib/helper/content_pipeline.ex`
+- `backend/api/lib/helper/article_payload.ex`
+- `backend/api/lib/helper/converter/content.ex`
+- `backend/api/lib/helper/converter/content/plate.ex`
+- `backend/api/lib/groupher_server/cms/articles/draft.ex`
+- `backend/api/lib/groupher_server/cms/articles/document.ex`
+- `backend/api/lib/groupher_server/cms/model/article_document.ex`
 
 问题不是 Elixir 无法遍历 JSON，而是这里手写了一套 Plate serializer。它必然落后于浏览器端真实的 Plate 插件、节点结构和序列化规则。
 
@@ -639,7 +639,7 @@ Comment 暂不迁移，因此 Article cutover 后采用以下边界：
 
 - `MdToEditor` 已删除。
 - `ContentImport.MarkdownNormalizer` 已删除。
-- `rg` 确认 `backend/main/lib` 和 `backend/main/test` 无 Earmark 调用。
+- `rg` 确认 `backend/api/lib` 和 `backend/api/test` 无 Earmark 调用。
 - `mix deps.unlock earmark` 后 compile/test 通过。
 
 ---

@@ -48,7 +48,7 @@ This document covers:
 
 - Replacing field-list string interpolation with standard named fragments.
 - Representing queries and mutations as `TypedDocumentNode` values.
-- Validating every registered operation against `backend/main/schema.graphql`.
+- Validating every registered operation against `backend/api/schema.graphql`.
 - Generating operation result and variable types from the schema and documents.
 - Preserving current urql, SSR, and custom GraphQL request behavior during the
   migration.
@@ -67,7 +67,7 @@ This document does not cover:
   is already invalid against the current schema.
 - Introducing a normalized entity cache.
 - Reorganizing unrelated frontend domain code.
-- Loading `backend/main/schema.graphql` in Main, Dashboard, or Dash at runtime.
+- Loading `backend/api/schema.graphql` in Main, Dashboard, or Dash at runtime.
 
 **明确边界：本次只实施 GraphQL fragments、typed documents、Codegen 和
 schema contract checks。TanStack Query/QueryClient、query key、缓存
@@ -142,7 +142,7 @@ adapters only at boundaries that still require serialized query text.
 
 The recent `User.fromGithub` and `User.githubProfile` failure demonstrates the
 problem: a frontend operation referenced fields absent from
-`backend/main/schema.graphql`, so Phoenix rejected the complete operation and
+`backend/api/schema.graphql`, so Phoenix rejected the complete operation and
 the account session query failed.
 
 The primary guardrail is not fragment syntax by itself. It is validating every
@@ -276,7 +276,7 @@ legacy `frontend/dashboard` Next application from `frontend/dash`.
 #### Mock schema authority
 
 `frontend/mock-server/schema.graphql` is currently a symbolic link to
-`backend/main/schema.graphql`; it is not an independent schema copy. The backend
+`backend/api/schema.graphql`; it is not an independent schema copy. The backend
 schema remains the single contract authority for Codegen, contract tests, and
 the mock server. CI must preserve this invariant by resolving both paths and
 asserting that they identify the same file. If the repository ever stops using a
@@ -607,7 +607,7 @@ using only `graphql` and Vitest:
 import { readFileSync } from 'node:fs'
 import { buildSchema, parse, validate } from 'graphql'
 
-const schema = buildSchema(readFileSync('backend/main/schema.graphql', 'utf8'))
+const schema = buildSchema(readFileSync('backend/api/schema.graphql', 'utf8'))
 
 const documents = Object.entries(pageDocuments).map(([name, source]) => ({
   name,
@@ -664,7 +664,7 @@ The contract suite runs before application build and browser E2E:
 Phoenix Absinthe
       │ make be.gen.schema
       ▼
-backend/main/schema.graphql
+backend/api/schema.graphql
       │
       ├── git diff: SDL freshness
       ├── validate Main operations
@@ -681,7 +681,7 @@ Query therefore changes request/cache orchestration, not the schema contract.
 The minimum Phase 0A CI sequence is:
 
 1. Run `make be.gen.schema`.
-2. Fail on a diff to `backend/main/schema.graphql`.
+2. Fail on a diff to `backend/api/schema.graphql`.
 3. Run the Pages GraphQL schema contract suite.
 
 The repository workflow at `.github/workflows/graphql-contract.yml` is the
@@ -697,7 +697,7 @@ wait for the complete contract infrastructure.
 
 ### Repository contract boundaries
 
-`backend/main/schema.graphql` is the only GraphQL schema authority. The mock
+`backend/api/schema.graphql` is the only GraphQL schema authority. The mock
 server, frontend contract tests, and Codegen consume it; none keeps a copy.
 
 `@groupher/contracts` remains the framework-free TypeScript projection for
@@ -740,7 +740,7 @@ category; it must reach zero.
 
 ### Generated files must not become the schema authority
 
-`backend/main/schema.graphql` remains the checked-in contract for frontend
+`backend/api/schema.graphql` remains the checked-in contract for frontend
 validation. Generated TypeScript types are derived artifacts. Regenerating
 types must fail when an operation is invalid; it must not silently edit or
 weaken the backend schema.
@@ -757,7 +757,7 @@ Conceptual configuration:
 import type { CodegenConfig } from '@graphql-codegen/cli'
 
 const config: CodegenConfig = {
-  schema: 'backend/main/schema.graphql',
+  schema: 'backend/api/schema.graphql',
   documents: [
     'frontend/core/schemas/pages/user.ts',
     'frontend/core/schemas/pages/user.fragments.ts',
@@ -904,7 +904,7 @@ Deliver this as a small, dedicated change before converting any fragment:
    `user` and `sessionState` cases out of
    `dashboard-mutations.schema.test.ts` so those operations have one test owner.
 3. Add `make be.gen.schema` plus
-   `git diff --exit-code -- backend/main/schema.graphql` before the Pages schema
+   `git diff --exit-code -- backend/api/schema.graphql` before the Pages schema
    test in CI.
 
 Phase 0A is complete when CI proves both that the checked-in SDL matches the
@@ -1139,7 +1139,7 @@ explicitly.
 
 ### Contract tests
 
-- Every production operation validates against `backend/main/schema.graphql`.
+- Every production operation validates against `backend/api/schema.graphql`.
 - A single parameterized suite may own many operation cases; the required
   granularity is one independently validated executable document with its own id
   and failure message, not one file or CI job per operation.
@@ -1343,7 +1343,7 @@ For the initial implementation:
   ownership decision is resolved.
 - Prohibit computed executable documents; keep any temporary exception
   manifest owner-bound, issue-bound, expiring, and empty at completion.
-- Treat `backend/main/schema.graphql` as the schema authority shared by Codegen,
+- Treat `backend/api/schema.graphql` as the schema authority shared by Codegen,
   contract tests, and the mock-server symlink.
 - Keep schema validation in tests/CI only and implement it with `graphql`, not
   urql or TanStack Query APIs.

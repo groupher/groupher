@@ -574,10 +574,10 @@ full users     -> fact table 分页
 可参考旧代码库测试目录：
 
 ```text
-backend/main/test/groupher_server/cms/comments/emotion/*_test.exs
-backend/main/test/groupher_server/cms/comments/write/*_comment_test.exs
-backend/main/test/groupher_server/cms/polymorphic_article_writes_test.exs
-backend/main/test/groupher_server/cms/polymorphic_article_constraints_test.exs
+backend/api/test/groupher_server/cms/comments/emotion/*_test.exs
+backend/api/test/groupher_server/cms/comments/write/*_comment_test.exs
+backend/api/test/groupher_server/cms/polymorphic_article_writes_test.exs
+backend/api/test/groupher_server/cms/polymorphic_article_constraints_test.exs
 ```
 
 ### 8.3 Projection 测试

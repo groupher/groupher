@@ -390,7 +390,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'elixir-config',
-      root: fromRoot('backend/main/config'),
+      root: fromRoot('backend/api/config'),
       environment: 'mock',
     },
     command: 'make',
