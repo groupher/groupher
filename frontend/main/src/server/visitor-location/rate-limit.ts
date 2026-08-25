@@ -30,6 +30,7 @@ const take = (key: string, capacity: number, now: number): boolean => {
   return true
 }
 
+/** Applies both global and per-community limits to a visitor-location request. */
 export const allowVisitorLocationRequest = (ip: string, community: string, now = Date.now()) =>
   take(`global:${ip}`, GLOBAL_CAPACITY, now) &&
   take(`community:${ip}:${community}`, COMMUNITY_CAPACITY, now)

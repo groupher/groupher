@@ -296,7 +296,11 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  @doc false
+  @doc """
+  Normalizes provider country and region rows into the public visitor payload.
+
+  Provider location rows -> bounded country payload -> Dashboard DTO.
+  """
   def visitor_countries(country_rows, region_rows) do
     countries =
       country_rows

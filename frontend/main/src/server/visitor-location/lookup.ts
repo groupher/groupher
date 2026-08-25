@@ -101,6 +101,7 @@ const stripPrivateMarkerFields = ({
   ...marker
 }: TInternalMarker) => marker
 
+/** Maps provider location rows into the bounded, locale-aware About-page DTO. */
 export const toVisitorLocationMap = (
   payload: TVisitorLocationGraphQL | null | undefined,
   locale: string,
