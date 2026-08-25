@@ -1,0 +1,39 @@
+defmodule GroupherServer.CMS.ErrorCat do
+  @moduledoc """
+  Shared CMS boundary error catalog.
+
+  CMS operation -> catalog reason -> stable protocol error.
+  """
+
+  use GroupherServer.ErrorCat.Domain, namespace: {:cms}
+
+  error(:invalid_article_path, code: 4501)
+  error(:invalid_requirement, code: 4502)
+  error(:missing_thread, code: 4503)
+  error(:missing_community, code: 4504)
+  error(:missing_passport, code: 4505)
+  error(:invalid_body, code: 4506)
+  error(:lifecycle_not_found, code: 4507)
+  error(:lifecycle_state_conflict, code: 4508)
+  error(:invalid_notify_payload, code: 4509)
+  error(:not_configured, code: 4510)
+  error(:community_not_persisted, code: 4511)
+  error(:dashboard_not_found, code: 4512)
+  error(:external_not_found, code: 4513)
+  error(:external_unavailable, code: 4514, retryable: true)
+  error(:unexpected_external_response, code: 4515)
+  error(:invalid_plate_json, code: 4516)
+  error(:invalid_event_type, code: 4517)
+  error(:invalid_mention_type, code: 4518)
+  error(:invalid_comment_link, code: 4519)
+  error(:invalid_thread, code: 4520)
+  error(:content_import_connection_create_failed, code: 4521, retryable: true)
+  error(:content_import_has_no_ready_documents, code: 4522)
+  error(:content_import_staged_body_missing, code: 4523)
+  error(:content_import_job_not_found, code: 4524)
+  error(:content_import_actor_not_found, code: 4525)
+  error(:content_import_job_not_ready, code: 4526)
+  error(:invalid_search_artiment, code: 4527)
+  error(:not_searchable, code: 4528)
+  error(:search_platform, code: 4529, retryable: true)
+end

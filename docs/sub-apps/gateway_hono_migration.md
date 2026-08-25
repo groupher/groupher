@@ -4,7 +4,7 @@
 >
 > UI：无独立 UI
 >
-> 当前状态：Hono 迁移已开始，核心 routing/proxy/app 结构已落到 `backend/gateway/src`
+> 当前状态：Hono 迁移已开始，核心 routing/proxy/app 结构已落到 `infra/gateway/src`
 
 本文是 [`docs/gateway.md`](../gateway.md) 的 Hono 落地方案。Gateway 的首期实现
 直接在 Hono/Node 范围内解决，不为 NGINX、Envoy、Worker、API Gateway 等短期不会
@@ -12,7 +12,7 @@
 
 ## 目标
 
-`backend/gateway` 当前只是一个全局入口和路由分发层，但运行在完整 Next.js
+`infra/gateway` 当前只是一个全局入口和路由分发层，但运行在完整 Next.js
 runtime 上。目标是把它一次性迁移为独立 Hono gateway，保留现有用户可见 URL 和
 分流规则，移除 Next.js 依赖、`.next` 构建产物和 `NextResponse.rewrite` 运行时。
 
@@ -22,9 +22,9 @@ adapter。切换前可以使用 preview 或临时域名做验收；正式切换�
 
 ## 当前 Gateway 职责
 
-迁移前入口位于 `backend/gateway/proxy.ts`，辅助规则位于
-`backend/gateway/utils.ts`。迁移后的入口位于 `backend/gateway/src/app.ts`，纯路由决策
-位于 `backend/gateway/src/routing.ts`，代理执行位于 `backend/gateway/src/proxy.ts`。
+迁移前入口位于 `infra/gateway/proxy.ts`，辅助规则位于
+`infra/gateway/utils.ts`。迁移后的入口位于 `infra/gateway/src/app.ts`，纯路由决策
+位于 `infra/gateway/src/routing.ts`，代理执行位于 `infra/gateway/src/proxy.ts`。
 
 | 输入                          | 当前行为                                                  | 目标 Hono 行为                                     |
 | ----------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
@@ -129,7 +129,7 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
   不依赖 `Host` 做产品路由；如果未来某个 WebSocket upstream 依赖 `Host` 而不是
   `x-forwarded-host` 判断外部域名，需要为该 upstream 明确增加策略测试。
 - `src/env.ts` 的 cwd fallback 和 `src/static.ts` 的 `PUBLIC_ROOT` fallback 一致，都是为
-  `yarn run dev:gateway` 从 monorepo root 启动、以及从 `backend/gateway` 目录直接启动
+  `yarn run dev:gateway` 从 monorepo root 启动、以及从 `infra/gateway` 目录直接启动
   两种方式服务。`src/server.ts` 通过 `import './env'` 提供唯一显式入口，`dev` 和
   `start` 都依赖这个入口加载环境变量。
 - `src/static.ts` 返回 `ArrayBuffer` 时使用 `byteOffset/byteLength` 做 slice。这个处理是
@@ -141,7 +141,7 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
 workspace 名称为 `@groupher/gateway`，移除 Next 运行时。
 
 ```text
-backend/gateway/
+infra/gateway/
   app.js
   index.js
   package.json
@@ -171,21 +171,21 @@ backend/gateway/
 - `app.js`：兼容需要根部 JS 入口的 host，导出 build 后的 `dist/app.js`。
 - `index.js`：兼容性入口，同样导出 build 后的 `dist/app.js`。
 
-## Vercel Serverless 部署记录
+## 历史 Vercel Serverless 部署记录
 
 Gateway 当前在 Vercel 使用 Hono preset 部署，项目设置为：
 
 ```text
 Framework Preset: Hono
-Root Directory: backend/gateway
+Root Directory: infra/gateway
 Install Command: cd ../.. && yarn install --immutable
 Build Command: yarn build
 Output Directory: N/A
 ```
 
-这段记录只保留 `backend/gateway` 的 Vercel 部署能力。当前 `groupher.com` 生产流量由
-`frontend/landing/public/_worker.js` 的 Cloudflare Public Edge Router 承接；Hono Gateway
-不属于生产 Status 监控目标。
+这段记录只用于解释旧构建约束，不表示继续部署 Gateway。当前 `groupher.com` 生产流量由
+独立 Cloudflare Worker `infra/edge-router` 承接；Hono Gateway 只用于本地 Dev Hub，不属于
+生产部署或 Status 监控目标。
 
 这是 Vercel serverless/function 形态，不是长期运行 `node dist/server.js` 的常驻 Node
 进程。`src/server.ts` 和 `dist/server.js` 保留给本地 Dev Hub 或普通 Node host；
@@ -272,7 +272,7 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 
 ### 3. 替换 workspace runtime
 
-更新 `backend/gateway/package.json`：
+更新 `infra/gateway/package.json`：
 
 - 移除 `next`、`react`、`react-dom`。
 - 增加 `hono`、`@hono/node-server`、`tsx`、`esbuild`、`rimraf`。
@@ -292,7 +292,7 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 
 ### 4. 调整部署入口
 
-当前 `backend/gateway/vercel.json` 使用 `@vercel/next`。迁移后应改为 Hono/Vercel
+当前 `infra/gateway/vercel.json` 使用 `@vercel/next`。迁移后应改为 Hono/Vercel
 默认入口模型，保留独立 gateway 项目，不修改 root-level 多项目部署脚本语义。
 
 Root 级 `frontend/scripts/vercel.build.sh` 仍然按
@@ -342,7 +342,7 @@ GET /manifest.json
 
 ### 6. 切换
 
-评审通过后直接替换 `backend/gateway` 实现。正式部署前使用 preview 或临时域名验证。
+评审通过后直接替换 `infra/gateway` 实现。正式部署前使用 preview 或临时域名验证。
 生产切换不保留旧 Next gateway 的兼容代码；如果失败，回滚部署版本，而不是在运行时
 双分支。
 
@@ -358,7 +358,7 @@ GET /manifest.json
 | 静态资源缓存 header 变化 | chunk 缓存或 CDN 行为变化                    | 对比 `_next/static` 响应 header                           |
 | Vercel 项目识别变化      | gateway 部署失败                             | 单独验证 gateway project，不改 root 多项目脚本            |
 | dev WebSocket host 语义  | HMR 或未来 socket upstream 路由错误          | `Host` 指向 upstream，保留原始 `x-forwarded-host` 并测试  |
-| cwd 不同导致资源缺失     | env 或 public 文件加载失败                   | env/static 统一兼容 root 和 `backend/gateway` cwd         |
+| cwd 不同导致资源缺失     | env 或 public 文件加载失败                   | env/static 统一兼容 root 和 `infra/gateway` cwd           |
 | Buffer 底层范围泄漏      | public 文件响应包含多余字节                  | `readPublicFile()` 使用 `byteOffset/byteLength` slice     |
 
 ## 不做的事

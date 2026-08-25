@@ -294,9 +294,9 @@ alias GroupherServer.CMS.Gate.ErrorCat
 同步更新所有调用方，包括：
 
 ```elixir
-backend/main/lib/groupher_server/cms/gate/rate_limit/publish.ex
-backend/main/lib/groupher_server_web/middleware/publish_throttle.ex
-backend/main/test/groupher_server_web/mutation/cms/publish_throttle_test.exs
+backend/api/lib/groupher_server/cms/gate/rate_limit/publish.ex
+backend/api/lib/groupher_server_web/middleware/publish_throttle.ex
+backend/api/test/groupher_server_web/mutation/cms/publish_throttle_test.exs
 ```
 
 合并后 namespace 会从：

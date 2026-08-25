@@ -1,4 +1,5 @@
 import { communityQueries } from '@community/query/queries'
+import { communityPublicPath } from '@community/server/public-path'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
@@ -17,9 +18,14 @@ export const Route = createFileRoute('/$community/changelog/$id')({
     if (!article) throw notFound()
     return { article }
   },
-  head: ({ loaderData, params }) => ({
+  head: ({ loaderData, params, matches }) => ({
     meta: loaderData?.article?.title ? [{ title: loaderData.article.title }] : [],
-    links: [{ rel: 'canonical', href: `/${params.community}/changelog/${params.id}` }],
+    links: [
+      {
+        rel: 'canonical',
+        href: communityPublicPath(params.community, `/changelog/${params.id}`, matches),
+      },
+    ],
   }),
   component: ChangelogDetail,
 })

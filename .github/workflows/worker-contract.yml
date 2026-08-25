@@ -1,0 +1,65 @@
+name: Worker routing contract
+
+on:
+  pull_request:
+    paths:
+      - 'packages/route-contract/**'
+      - 'packages/contracts/**'
+      - 'infra/edge-router/**'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    paths:
+      - 'packages/route-contract/**'
+      - 'packages/contracts/**'
+      - 'infra/edge-router/**'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.target }} ${{ matrix.command }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: route-contract
+            workspace: '@groupher/route-contract'
+            command: lint
+          - target: route-contract
+            workspace: '@groupher/route-contract'
+            command: type-check
+          - target: route-contract
+            workspace: '@groupher/route-contract'
+            command: test
+          - target: edge-router
+            workspace: '@groupher/edge-router'
+            command: lint
+          - target: edge-router
+            workspace: '@groupher/edge-router'
+            command: type-check
+          - target: edge-router
+            workspace: '@groupher/edge-router'
+            command: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run check
+        run: yarn workspace ${{ matrix.workspace }} ${{ matrix.command }}

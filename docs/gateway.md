@@ -2,12 +2,12 @@
 
 > 状态：架构约定
 >
-> 当前结论：Gateway 的核心是稳定的入口分流规则和安全边界；首期实现直接在 Hono
-> 内完成，不为短期不会使用的 gateway runtime 做额外抽象。
+> 当前结论：Gateway 仅保留本地开发和历史路由回归用途；生产公共入口由
+> `infra/edge-router`（Cloudflare Worker）承担。
 
 ## 定位
 
-Gateway 是 Groupher 的统一公开入口。它负责把浏览器请求稳定地分发到 Main、
+Gateway 是 Groupher 的本地统一入口。它负责把浏览器请求稳定地分发到 Main、
 Dashboard、Landing、Auth、Phoenix 和后续子应用，同时保留用户可见 URL、同源
 GraphQL 入口和登录态边界。
 
@@ -24,7 +24,7 @@ adapter。
 
 ## 当前职责
 
-当前 `backend/gateway` 承担这些职责：
+当前 `infra/gateway` 在本地承担这些职责：
 
 - `/api/auth/*` 进入独立 Auth 应用。
 - `/api/graphql` 进入 Phoenix `/graphiql`，并执行浏览器 header/cookie 清洗。
@@ -35,7 +35,7 @@ adapter。
   path segment。
 - Dashboard 和 Landing 的静态资源路径进入对应 upstream。
 - `/`、`/pricing`、`/book-demo` 等静态营销页进入 Landing。
-- 其他路径默认进入 Main。
+- 其他未迁移的本地路径仍可进入 Main，作为开发环境兼容行为；这不是生产 fallback。
 - 提供低成本健康检查和少量静态公开文件，例如 `/health`、`robots.txt`、
   `sitemap.xml`、`manifest.json`。
 
@@ -81,7 +81,8 @@ Dashboard 规则必须区分 host 命中和 path pattern 命中：
 - 普通 host 上的 `/:community/dashboard/...` 才裁掉 `dashboard` segment，例如
   `/home/dashboard/appearance` 代理到 Dashboard 的 `/home/appearance`。
 - `/xxx/settings/dashboard` 这类不是第二段 `dashboard` 的路径不能误判为 Dashboard，
-  应继续走 Main fallback。
+  应继续走本地 Main 兼容路径；生产 `edge-router` 对未匹配路径统一返回 `404`，不存在
+  Main fallback。
 
 ## 安全边界
 

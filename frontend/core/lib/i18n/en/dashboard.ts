@@ -461,6 +461,33 @@ export default {
   'dsb.activity.all_sources': 'All sources',
   'dsb.activity.all_actions': 'All actions',
   'dsb.activity.all_categories': 'All categories',
+  'dsb.activity.custom_filter': 'Custom filters',
+  'dsb.activity.preset_filter_conflict': 'These filters do not overlap with the selected question.',
+  'dsb.activity.exit_preset': 'Exit preset',
+  'dsb.activity.coverage_limited':
+    '{count} required event producers are not active yet. Empty results are not complete evidence.',
+  'dsb.activity.outcome': 'Outcome',
+  'dsb.activity.outcome_allowed': 'Allowed',
+  'dsb.activity.outcome_denied': 'Denied',
+  'dsb.activity.changed_fields': 'Changed fields',
+  'dsb.activity.preset.destructive_actions.question': 'Who performed destructive actions?',
+  'dsb.activity.preset.destructive_actions.description':
+    'Permanent deletion, blocker termination, and Community destruction.',
+  'dsb.activity.preset.community_destruction.question':
+    'What happened during Community destruction?',
+  'dsb.activity.preset.community_destruction.description':
+    'Review each step and final result of a Community destruction operation.',
+  'dsb.activity.preset.publishing_and_configuration.question':
+    'Who changed publishing or configuration?',
+  'dsb.activity.preset.publishing_and_configuration.description':
+    'Publishing and configuration changes with their changed fields.',
+  'dsb.activity.preset.denied_high_risk_attempts.question': 'Which high-risk attempts were denied?',
+  'dsb.activity.preset.denied_high_risk_attempts.description':
+    'Denied high-risk actions and their stable denial reason.',
+  'dsb.activity.preset.activity_exports.question': 'Who exported Activity?',
+  'dsb.activity.preset.activity_exports.description':
+    'Activity exports and the exact evidence scope used.',
+  'dsb.activity.preset.coverage.from_launch': 'Coverage begins when Activity V3 is deployed.',
   'dsb.activity.search_subject': 'Search subject',
   'dsb.activity.clear_day': 'Clear day',
   'dsb.activity.clear_actor': 'Clear actor',
@@ -549,6 +576,7 @@ export default {
   'dsb.activity.event.setup_retried': '{actor} retried setup for {resource} “{subject}”',
   'dsb.activity.event.activated': '{actor} activated {resource} “{subject}”',
   'dsb.activity.event.config_updated': '{actor} updated settings for {resource} “{subject}”',
+  'dsb.activity.event.activity_exported': '{actor} exported Activity for {resource} “{subject}”',
   'dsb.activity.event.draft_updated': '{actor} updated the draft of {resource} “{subject}”',
   'dsb.activity.event.moderation_review_started':
     '{actor} started a moderation review for {resource} “{subject}”',
@@ -584,6 +612,7 @@ export default {
   'dsb.activity.action.setup_retried': 'Setup retried',
   'dsb.activity.action.activated': 'Activated',
   'dsb.activity.action.config_updated': 'Settings updated',
+  'dsb.activity.action.activity_exported': 'Activity exported',
   'dsb.activity.action.draft_updated': 'Draft updated',
   'dsb.activity.action.moderation_review_started': 'Moderation review started',
   'dsb.activity.action.moderation_review_resolved': 'Moderation review resolved',

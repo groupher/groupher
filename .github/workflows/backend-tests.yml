@@ -2,11 +2,11 @@ name: Backend unit tests
 on:
   push:
     paths:
-      - 'backend/main/**' # only trigger when this dir changes
+      - 'backend/api/**' # only trigger when this dir changes
       - 'ops/postgres/**'
   pull_request:
     paths:
-      - 'backend/main/**'
+      - 'backend/api/**'
       - 'ops/postgres/**'
 
 jobs:
@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend/main
+        working-directory: backend/api
 
     steps:
       - uses: actions/checkout@v3
@@ -29,7 +29,7 @@ jobs:
       - name: Cache deps
         uses: actions/cache@v3
         with:
-          path: backend/main/deps
+          path: backend/api/deps
           key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-otp29-elixir20-mix-
@@ -37,7 +37,7 @@ jobs:
       - name: Cache build
         uses: actions/cache@v3
         with:
-          path: backend/main/_build
+          path: backend/api/_build
           key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-otp29-elixir20-build-
@@ -51,7 +51,7 @@ jobs:
     needs: setup
     defaults:
       run:
-        working-directory: backend/main
+        working-directory: backend/api
     steps:
       - uses: actions/checkout@v3
 
@@ -64,7 +64,7 @@ jobs:
       - name: Restore cached deps
         uses: actions/cache@v3
         with:
-          path: backend/main/deps
+          path: backend/api/deps
           key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-otp29-elixir20-mix-
@@ -72,7 +72,7 @@ jobs:
       - name: Restore cached build
         uses: actions/cache@v3
         with:
-          path: backend/main/_build
+          path: backend/api/_build
           key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
           restore-keys: |
             ${{ runner.OS }}-otp29-elixir20-build-

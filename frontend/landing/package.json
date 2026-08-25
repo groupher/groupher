@@ -7,7 +7,9 @@
     "ci": "cross-env NODE_ENV=ci next dev",
     "type-check": "next typegen && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "cross-env NODE_ENV=production next build",
-    "build:cloudflare": "yarn build && node scripts/prepare-cloudflare-pages.mjs",
+    "build:worker": "yarn --cwd ../.. sync:assets:landing && yarn build && node scripts/prepare-cloudflare-worker.mjs",
+    "deploy:worker": "yarn build:worker && wrangler deploy --config wrangler.jsonc",
+    "deploy:worker:dry-run": "yarn build:worker && wrangler deploy --dry-run --config wrangler.jsonc",
     "start": "next start",
     "dist": "next build && next export -o \"build\"",
     "serve": "serve out",
@@ -26,6 +28,7 @@
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
-    "serve": "^14.2.6"
+    "serve": "^14.2.6",
+    "wrangler": "^4.118.0"
   }
 }

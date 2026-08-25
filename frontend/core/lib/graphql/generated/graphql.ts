@@ -93,30 +93,29 @@ export type CommunitiesFilter = {
 
 export type CommunityActivityExportFormat = 'CSV' | 'JSON'
 
-export type CommunityActivityFilter = {
+export type CommunityActivityFilterInput = {
   actions?: Array<string> | null | undefined
   actorRef?: string | number | null | undefined
+  actorTypes?: Array<string> | null | undefined
   categories?: Array<string> | null | undefined
-  eventRef?: string | number | null | undefined
+  changedFields?: Array<string> | null | undefined
+  denialCodes?: Array<string> | null | undefined
   occurredAfter?: unknown
   occurredBefore?: unknown
+  onBehalfOfRef?: string | number | null | undefined
   operationRef?: string | number | null | undefined
-  page?: number | null | undefined
+  outcomes?: Array<string> | null | undefined
   resourceTypes?: Array<string> | null | undefined
   source?: string | null | undefined
-  subjectQuery?: string | null | undefined
+  subjectRef?: string | number | null | undefined
+  targetRef?: string | number | null | undefined
 }
 
-export type CommunityActivityStatsFilter = {
-  actions?: Array<string> | null | undefined
-  actorRef?: string | number | null | undefined
-  categories?: Array<string> | null | undefined
-  occurredAfter: unknown
-  occurredBefore: unknown
-  operationRef?: string | number | null | undefined
-  resourceTypes?: Array<string> | null | undefined
-  source?: string | null | undefined
-  subjectQuery?: string | null | undefined
+export type CommunityActivityRelativeTimeUnit = 'DAY' | 'MONTH' | 'WEEK'
+
+export type CommunityActivitySelectionInput = {
+  filter?: CommunityActivityFilterInput | null | undefined
+  presetKey?: string | null | undefined
 }
 
 export type CommunityAssetFilter = {
@@ -670,26 +669,41 @@ export type CommunityActivityConfigQueryVariables = Exact<{
 export type CommunityActivityConfigQuery = {
   communityActivityConfig: {
     sources: Array<string>
+    actorTypes: Array<string>
     resources: Array<{
       resourceType: string
       actions: Array<{ action: string; messageKey: string; category: string; highRisk: boolean }>
     }>
+    presets: Array<{
+      key: string
+      questionKey: string
+      descriptionKey: string
+      coverageNoteKey: string | null
+      defaultTimeRange: { amount: number; unit: CommunityActivityRelativeTimeUnit }
+    }>
   }
 }
 
-export type CommunityActivityExportQueryVariables = Exact<{
+export type ExportCommunityActivityMutationVariables = Exact<{
   community: string
-  filter?: CommunityActivityFilter | null | undefined
+  selection: CommunityActivitySelectionInput
   format: CommunityActivityExportFormat
 }>
 
-export type CommunityActivityExportQuery = {
-  communityActivityExport: {
+export type ExportCommunityActivityMutation = {
+  exportCommunityActivity: {
     content: string
     filename: string
     mimeType: string
     totalCount: number
     exportedCount: number
+    manifest: unknown
+    queryContext: {
+      appliedFilter: unknown
+      coverage: unknown
+      presetIntersectionEmpty: boolean
+      preset: { key: string; questionKey: string } | null
+    }
   }
 }
 
@@ -704,14 +718,20 @@ export type CommunityActivityEventQuery = {
     eventRef: string | null
     operationRef: string | null
     parentEventRef: string | null
+    operationIndex: number
+    recordSequence: number
     messageKey: string
     action: string
     category: string
     highRisk: boolean
+    outcome: string
+    denialCode: string | null
+    changedFields: Array<string>
     source: string
     payload: unknown
     metadata: unknown
     occurredAt: unknown
+    recordedAt: unknown
     resource: { type: string; ref: string; title: string | null; innerId: string | null }
     actor: {
       type: string
@@ -720,6 +740,13 @@ export type CommunityActivityEventQuery = {
       nickname: string | null
       avatar: string | null
     }
+    onBehalfOf: {
+      type: string
+      id: string | null
+      login: string | null
+      nickname: string | null
+      avatar: string | null
+    } | null
     subject: { type: string; ref: string; title: string | null; innerId: string | null }
     target: { type: string; ref: string; title: string | null; innerId: string | null } | null
     parentEvent: {
@@ -727,14 +754,20 @@ export type CommunityActivityEventQuery = {
       eventRef: string | null
       operationRef: string | null
       parentEventRef: string | null
+      operationIndex: number
+      recordSequence: number
       messageKey: string
       action: string
       category: string
       highRisk: boolean
+      outcome: string
+      denialCode: string | null
+      changedFields: Array<string>
       source: string
       payload: unknown
       metadata: unknown
       occurredAt: unknown
+      recordedAt: unknown
       resource: { type: string; ref: string; title: string | null; innerId: string | null }
       actor: {
         type: string
@@ -751,14 +784,20 @@ export type CommunityActivityEventQuery = {
       eventRef: string | null
       operationRef: string | null
       parentEventRef: string | null
+      operationIndex: number
+      recordSequence: number
       messageKey: string
       action: string
       category: string
       highRisk: boolean
+      outcome: string
+      denialCode: string | null
+      changedFields: Array<string>
       source: string
       payload: unknown
       metadata: unknown
       occurredAt: unknown
+      recordedAt: unknown
       resource: { type: string; ref: string; title: string | null; innerId: string | null }
       actor: {
         type: string
@@ -775,7 +814,8 @@ export type CommunityActivityEventQuery = {
 
 export type CommunityActivityQueryVariables = Exact<{
   community: string
-  filter?: CommunityActivityFilter | null | undefined
+  selection: CommunityActivitySelectionInput
+  page?: number | null | undefined
 }>
 
 export type CommunityActivityQuery = {
@@ -789,14 +829,20 @@ export type CommunityActivityQuery = {
       eventRef: string | null
       operationRef: string | null
       parentEventRef: string | null
+      operationIndex: number
+      recordSequence: number
       messageKey: string
       action: string
       category: string
       highRisk: boolean
+      outcome: string
+      denialCode: string | null
+      changedFields: Array<string>
       source: string
       payload: unknown
       metadata: unknown
       occurredAt: unknown
+      recordedAt: unknown
       resource: { type: string; ref: string; title: string | null; innerId: string | null }
       actor: {
         type: string
@@ -805,15 +851,28 @@ export type CommunityActivityQuery = {
         nickname: string | null
         avatar: string | null
       }
+      onBehalfOf: {
+        type: string
+        id: string | null
+        login: string | null
+        nickname: string | null
+        avatar: string | null
+      } | null
       subject: { type: string; ref: string; title: string | null; innerId: string | null }
       target: { type: string; ref: string; title: string | null; innerId: string | null } | null
     }>
+    queryContext: {
+      appliedFilter: unknown
+      coverage: unknown
+      presetIntersectionEmpty: boolean
+      preset: { key: string; questionKey: string } | null
+    }
   }
 }
 
 export type CommunityActivityStatsQueryVariables = Exact<{
   community: string
-  filter: CommunityActivityStatsFilter
+  selection: CommunityActivitySelectionInput
 }>
 
 export type CommunityActivityStatsQuery = {
@@ -822,6 +881,12 @@ export type CommunityActivityStatsQuery = {
     timezone: string
     totalCount: number
     buckets: Array<{ startedAt: unknown; endedAt: unknown; count: number }>
+    queryContext: {
+      appliedFilter: unknown
+      coverage: unknown
+      presetIntersectionEmpty: boolean
+      preset: { key: string; questionKey: string } | null
+    }
   }
 }
 
@@ -10557,6 +10622,31 @@ export const CommunityActivityConfigDocument = {
                   },
                 },
                 { kind: 'Field', name: { kind: 'Name', value: 'sources' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'actorTypes' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'presets' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'questionKey' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'descriptionKey' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'coverageNoteKey' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'defaultTimeRange' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'unit' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -10565,13 +10655,13 @@ export const CommunityActivityConfigDocument = {
     },
   ],
 } as unknown as DocumentNode<CommunityActivityConfigQuery, CommunityActivityConfigQueryVariables>
-export const CommunityActivityExportDocument = {
+export const ExportCommunityActivityDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'CommunityActivityExport' },
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'ExportCommunityActivity' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -10583,8 +10673,14 @@ export const CommunityActivityExportDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityActivityFilter' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CommunityActivitySelectionInput' },
+            },
+          },
         },
         {
           kind: 'VariableDefinition',
@@ -10603,7 +10699,7 @@ export const CommunityActivityExportDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'communityActivityExport' },
+            name: { kind: 'Name', value: 'exportCommunityActivity' },
             arguments: [
               {
                 kind: 'Argument',
@@ -10612,8 +10708,8 @@ export const CommunityActivityExportDocument = {
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'filter' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+                name: { kind: 'Name', value: 'selection' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
               },
               {
                 kind: 'Argument',
@@ -10629,6 +10725,30 @@ export const CommunityActivityExportDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'mimeType' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'totalCount' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'exportedCount' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'manifest' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queryContext' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'preset' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'questionKey' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'appliedFilter' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'coverage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'presetIntersectionEmpty' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -10636,7 +10756,10 @@ export const CommunityActivityExportDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<CommunityActivityExportQuery, CommunityActivityExportQueryVariables>
+} as unknown as DocumentNode<
+  ExportCommunityActivityMutation,
+  ExportCommunityActivityMutationVariables
+>
 export const CommunityActivityEventDocument = {
   kind: 'Document',
   definitions: [
@@ -10687,10 +10810,15 @@ export const CommunityActivityEventDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'operationIndex' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'recordSequence' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'action' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'category' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'outcome' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'denialCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'changedFields' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'resource' },
@@ -10707,6 +10835,20 @@ export const CommunityActivityEventDocument = {
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'actor' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'onBehalfOf' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
@@ -10748,6 +10890,7 @@ export const CommunityActivityEventDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'recordedAt' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'parentEvent' },
@@ -10758,10 +10901,15 @@ export const CommunityActivityEventDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationIndex' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordSequence' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'action' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'category' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'outcome' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'denialCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'changedFields' } },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'resource' },
@@ -10819,6 +10967,7 @@ export const CommunityActivityEventDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordedAt' } },
                     ],
                   },
                 },
@@ -10832,10 +10981,15 @@ export const CommunityActivityEventDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationIndex' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordSequence' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'action' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'category' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'outcome' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'denialCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'changedFields' } },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'resource' },
@@ -10893,6 +11047,7 @@ export const CommunityActivityEventDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordedAt' } },
                     ],
                   },
                 },
@@ -10922,8 +11077,20 @@ export const CommunityActivityDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'CommunityActivityFilter' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'NamedType',
+              name: { kind: 'Name', value: 'CommunityActivitySelectionInput' },
+            },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          defaultValue: { kind: 'IntValue', value: '1' },
         },
       ],
       selectionSet: {
@@ -10940,8 +11107,13 @@ export const CommunityActivityDocument = {
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'filter' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+                name: { kind: 'Name', value: 'selection' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'page' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
               },
             ],
             selectionSet: {
@@ -10957,10 +11129,15 @@ export const CommunityActivityDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'eventRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'operationRef' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'parentEventRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'operationIndex' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordSequence' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'messageKey' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'action' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'category' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'highRisk' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'outcome' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'denialCode' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'changedFields' } },
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'resource' },
@@ -10977,6 +11154,20 @@ export const CommunityActivityDocument = {
                       {
                         kind: 'Field',
                         name: { kind: 'Name', value: 'actor' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'login' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'onBehalfOf' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
@@ -11018,6 +11209,7 @@ export const CommunityActivityDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'payload' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'metadata' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'occurredAt' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'recordedAt' } },
                     ],
                   },
                 },
@@ -11025,6 +11217,29 @@ export const CommunityActivityDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'totalPages' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'pageNumber' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'pageSize' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queryContext' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'preset' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'questionKey' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'appliedFilter' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'coverage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'presetIntersectionEmpty' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -11051,12 +11266,12 @@ export const CommunityActivityStatsDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
           type: {
             kind: 'NonNullType',
             type: {
               kind: 'NamedType',
-              name: { kind: 'Name', value: 'CommunityActivityStatsFilter' },
+              name: { kind: 'Name', value: 'CommunityActivitySelectionInput' },
             },
           },
         },
@@ -11075,8 +11290,8 @@ export const CommunityActivityStatsDocument = {
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'filter' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'filter' } },
+                name: { kind: 'Name', value: 'selection' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'selection' } },
               },
             ],
             selectionSet: {
@@ -11094,6 +11309,29 @@ export const CommunityActivityStatsDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'startedAt' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'endedAt' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'count' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'queryContext' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'preset' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'questionKey' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'appliedFilter' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'coverage' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'presetIntersectionEmpty' } },
                     ],
                   },
                 },

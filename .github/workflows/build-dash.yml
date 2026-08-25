@@ -1,7 +1,15 @@
 name: Build frontend dash
 
 on:
+  pull_request:
+    paths:
+      - 'frontend/dash/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
   push:
+    branches:
+      - dev
     paths:
       - 'frontend/dash/**'
       - 'frontend/core/**'

@@ -558,7 +558,7 @@ ImportProcessLog
 v1 实现目录：
 
 ```text
-backend/main/lib/groupher_server/cms/content_import/
+backend/api/lib/groupher_server/cms/content_import/
 `-- process.ex
 
 frontend/dashboard/src/lib/content-import/core/process/

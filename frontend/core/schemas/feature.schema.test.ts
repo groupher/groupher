@@ -38,7 +38,7 @@ import TagSettingSchema from '../unit/TagSettingEditor/schema'
 import { pageDocuments } from './pages/contract-inventory'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const schemaPath = path.join(__dirname, '../../../backend/main/schema.graphql')
+const schemaPath = path.join(__dirname, '../../../backend/api/schema.graphql')
 const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 
 const maxPagesDepth = (

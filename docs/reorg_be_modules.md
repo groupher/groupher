@@ -41,11 +41,11 @@ Web 流量分析从根 `GroupherServer.Analysis` 模块迁移到 `GroupherServer
 Provider 相关代码现在位于：
 
 ```text
-backend/main/lib/groupher_server/analysis/web.ex
-backend/main/lib/groupher_server/analysis/web/community.ex
-backend/main/lib/groupher_server/analysis/web/config.ex
-backend/main/lib/groupher_server/analysis/web/provider.ex
-backend/main/lib/groupher_server/analysis/web/provider/umami.ex
+backend/api/lib/groupher_server/analysis/web.ex
+backend/api/lib/groupher_server/analysis/web/community.ex
+backend/api/lib/groupher_server/analysis/web/config.ex
+backend/api/lib/groupher_server/analysis/web/provider.ex
+backend/api/lib/groupher_server/analysis/web/provider/umami.ex
 ```
 
 GraphQL 字段从 `webAnalysis*` 重命名为 `analysisWeb*`：
@@ -83,8 +83,8 @@ GroupherServer.Analysis.list_contributions_digest(subject)
 模型迁移到：
 
 ```text
-backend/main/lib/groupher_server/analysis/contribution/model/user_contribute.ex
-backend/main/lib/groupher_server/analysis/contribution/model/community_contribute.ex
+backend/api/lib/groupher_server/analysis/contribution/model/user_contribute.ex
+backend/api/lib/groupher_server/analysis/contribution/model/community_contribute.ex
 ```
 
 GraphQL middleware 由：

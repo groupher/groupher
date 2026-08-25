@@ -771,7 +771,7 @@ promotion 的对象进入清理队列。上传 intent 只能由当前登录用�
 ## 后端模块结构
 
 ```text
-backend/main/lib/groupher_server/cms/
+backend/api/lib/groupher_server/cms/
 ├── community_applications.ex
 ├── community_applications/
 │   ├── config.ex

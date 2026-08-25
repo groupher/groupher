@@ -94,14 +94,14 @@ endpoints:
         success-threshold: 2
         send-on-resolved: true
 
-  - name: Main App
+  - name: Community
     group: Product services
-    url: https://main.groupher.com/health
-    interval: 5m
+    url: https://community.groupher.com/health
+    interval: 2m
     conditions:
       - "[STATUS] == 200"
       - "[BODY].schemaVersion == health.v1"
-      - "[BODY].service == main"
+      - "[BODY].service == community"
       - "[BODY].status == ok"
       - "[RESPONSE_TIME] < 15000"
     ui:
@@ -212,6 +212,26 @@ endpoints:
   - name: Public Website
     group: Public paths
     url: https://groupher.com/
+    interval: 2m
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 10000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Community Public Route
+    group: Public paths
+    url: https://groupher.com/home/post
     interval: 2m
     conditions:
       - "[STATUS] == 200"

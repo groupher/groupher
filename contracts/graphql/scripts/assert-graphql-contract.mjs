@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
 const manifestPath = path.join(repoRoot, 'contracts/graphql/exception-manifest.json')
 const mockSchemaPath = path.join(repoRoot, 'frontend/mock-server/schema.graphql')
-const backendSchemaPath = path.join(repoRoot, 'backend/main/schema.graphql')
+const backendSchemaPath = path.join(repoRoot, 'backend/api/schema.graphql')
 
 const fail = (message) => {
   console.error(`GraphQL contract check failed: ${message}`)
@@ -42,7 +42,7 @@ const mockStat = fs.lstatSync(mockSchemaPath)
 if (!mockStat.isSymbolicLink()) fail('frontend/mock-server/schema.graphql must be a symlink')
 
 if (fs.realpathSync(mockSchemaPath) !== fs.realpathSync(backendSchemaPath)) {
-  fail('mock schema must resolve to backend/main/schema.graphql')
+  fail('mock schema must resolve to backend/api/schema.graphql')
 }
 
 if (!process.exitCode) {

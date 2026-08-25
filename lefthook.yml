@@ -46,8 +46,8 @@ pre-commit:
       run: cd backend/auth && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check gateway
-      files: node scripts/lefthook-files.mjs backend/gateway ts tsx --absolute
-      run: cd backend/gateway && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      files: node scripts/lefthook-files.mjs infra/gateway ts tsx --absolute
+      run: cd infra/gateway && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check content-import
       files: node scripts/lefthook-files.mjs backend/content-import ts tsx --absolute

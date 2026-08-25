@@ -9,7 +9,7 @@
 Groupher 现在已经有一个自托管的 Umami 部署：
 
 - 应用：`https://analysis.groupher.com`
-- Vercel 项目：`groupher/umami`
+- 运行平台：Fly.io（旧 Vercel 项目已退役）
 - 源仓库：`groupher/umami`，fork 自`umami-software/umami`
 - 数据库：Neon 项目`umami-dev`
 - 为 Groupher 创建的 Umami website：
@@ -126,10 +126,10 @@ Dashboard
 
 Groupher 有两个与 analytics 相关的表面：
 
-| 表面                     | 目的                                                                           | 负责人                               | 数据边界                                     |
-| ------------------------ | ------------------------------------------------------------------------------ | ------------------------------------ | -------------------------------------------- |
-| 内建 Web Analysis        | 在 Dashboard`Analytics`中展示的原生社区流量和产品分析。                       | Groupher 平台。                      | Groupher 拥有的 Umami 部署。                 |
-| Third-party Integrations | 用户配置的外部分析脚本和 provider ID。                                          | 社区管理员 / 外部 provider。         | 外部 provider 账户或用户自有服务。           |
+| 表面                     | 目的                                                    | 负责人                       | 数据边界                           |
+| ------------------------ | ------------------------------------------------------- | ---------------------------- | ---------------------------------- |
+| 内建 Web Analysis        | 在 Dashboard`Analytics`中展示的原生社区流量和产品分析。 | Groupher 平台。              | Groupher 拥有的 Umami 部署。       |
+| Third-party Integrations | 用户配置的外部分析脚本和 provider ID。                  | 社区管理员 / 外部 provider。 | 外部 provider 账户或用户自有服务。 |
 
 这两个表面不能共用同一个持久化模型。 Third-party Integrations 可以有面向用户的 provider 选择和启用开关。内建 Web Analysis 不可以。
 
@@ -181,11 +181,11 @@ Umami 源站在代码中固定为`https://analysis.groupher.com`。不同的 dev
 
 示例：
 
-| 社区       | 公开路径范围     | Umami website                 |
-| ---------- | ---------------- | ----------------------------- |
-|`home`|`/home/**`|`groupher.com`全局网站 |
-|`feedback`|`/feedback/**`|`groupher.com`全局网站 |
-|`docs`|`/docs/**`|`groupher.com`全局网站 |
+| 社区       | 公开路径范围   | Umami website          |
+| ---------- | -------------- | ---------------------- |
+| `home`     | `/home/**`     | `groupher.com`全局网站 |
+| `feedback` | `/feedback/**` | `groupher.com`全局网站 |
+| `docs`     | `/docs/**`     | `groupher.com`全局网站 |
 
 查询形态：
 
@@ -252,7 +252,7 @@ Dashboard analytics view
 
 当前重点。
 
-- 确认`analysis.groupher.com`指向新的 Vercel`umami`项目。
+- 确认`analysis.groupher.com`指向 Fly 上的 Umami 实例。
 - 确认 Neon`umami-dev`包含迁移后的 Umami schema。
 - 在 Umami UI 中手动创建或确认`groupher.com`的 Umami website，用于引导启动。
 - 将 website ID`d91f259a-40b6-46d9-b8a5-d7d124a46ba4`记录为全局 analytics 配置值。
@@ -326,11 +326,11 @@ Dashboard analytics view
 
 示例：
 
-| 事件           | 目的                                                             |
-| -------------- | ---------------------------------------------------------------- |
-|`article_view`| 内容级流量汇总。                                                  |
-|`post_vote`| 产品参与趋势事件，而不是 vote 计数的事实来源。                     |
-|`docs_search`| Docs 搜索效果和空结果检测。                                        |
+| 事件           | 目的                                           |
+| -------------- | ---------------------------------------------- |
+| `article_view` | 内容级流量汇总。                               |
+| `post_vote`    | 产品参与趋势事件，而不是 vote 计数的事实来源。 |
+| `docs_search`  | Docs 搜索效果和空结果检测。                    |
 
 Phoenix/Postgres 仍然是事务型产品数据的事实来源，例如 votes、content status、permissions 和 moderation。 Umami 只用于流量、趋势、漏斗和行为分析。
 

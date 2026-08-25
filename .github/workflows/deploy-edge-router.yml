@@ -1,0 +1,88 @@
+name: Deploy Edge Router Worker
+
+on:
+  pull_request:
+    paths:
+      - 'infra/edge-router/**'
+      - 'packages/route-contract/**'
+      - 'packages/contracts/**'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'infra/edge-router/**'
+      - 'packages/route-contract/**'
+      - 'packages/contracts/**'
+      - 'package.json'
+      - 'yarn.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-edge-router-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Edge Router
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run route contract checks
+        run: |
+          yarn workspace @groupher/route-contract lint
+          yarn workspace @groupher/route-contract type-check
+          yarn workspace @groupher/route-contract test
+
+      - name: Run Edge Router checks
+        run: |
+          yarn workspace @groupher/edge-router lint
+          yarn workspace @groupher/edge-router type-check
+          yarn workspace @groupher/edge-router test
+
+      - name: Validate Worker deploy
+        run: yarn workspace @groupher/edge-router deploy:dry-run
+
+  deploy:
+    name: Deploy Edge Router Worker
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Deploy Worker
+        run: yarn workspace @groupher/edge-router deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

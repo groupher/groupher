@@ -69,6 +69,7 @@ export default function Activity({ community }: { community: string }) {
   const searchParams = useSearchParams()
   const queryString = searchParams.toString()
   const currentParams = useMemo(() => new URLSearchParams(queryString), [queryString])
+  const presetKey = currentParams.get('preset') || ''
   const window = useMemo(isoDayWindow, [])
   const [resourceType, setResourceType] = useState('')
   const [action, setAction] = useState('')
@@ -116,12 +117,16 @@ export default function Activity({ community }: { community: string }) {
     router[history](`${pathname}${next.toString() ? `?${next.toString()}` : ''}`, { scroll: false })
   }
 
-  const highRiskActions = Array.from(
-    new Set(
-      configQuery.data?.resources.flatMap((resource) =>
-        resource.actions.filter((item) => item.highRisk).map((item) => item.action),
+  const highRiskActions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          configQuery.data?.resources.flatMap((resource) =>
+            resource.actions.filter((item) => item.highRisk).map((item) => item.action),
+          ),
+        ),
       ),
-    ),
+    [configQuery.data?.resources],
   )
 
   const baseFilter = useMemo(
@@ -131,7 +136,7 @@ export default function Activity({ community }: { community: string }) {
       categories: category ? [category] : undefined,
       actorRef: actorRef || undefined,
       source: source || undefined,
-      subjectQuery: subjectQuery.trim() || undefined,
+      subjectRef: subjectQuery.trim() || undefined,
     }),
     [action, actorRef, category, highRiskActions, highRiskOnly, resourceType, source, subjectQuery],
   )
@@ -141,20 +146,27 @@ export default function Activity({ community }: { community: string }) {
     [baseFilter, window],
   )
 
-  const statsQuery = useQuery(Q.activity.stats(community, statsFilter))
+  const statsSelection = useMemo(
+    () => ({ presetKey: presetKey || undefined, filter: statsFilter }),
+    [presetKey, statsFilter],
+  )
+  const statsQuery = useQuery(Q.activity.stats(community, statsSelection))
   const buckets = statsQuery.data?.buckets ?? []
   const selectedBucket = buckets.find((bucket) => String(bucket.startedAt) === selectedDay)
   const listFilter = useMemo(
     () => ({
       ...baseFilter,
-      page,
       occurredAfter: selectedBucket ? String(selectedBucket.startedAt) : window.after,
       occurredBefore: selectedBucket ? String(selectedBucket.endedAt) : window.before,
     }),
-    [baseFilter, page, selectedBucket, window],
+    [baseFilter, selectedBucket, window],
   )
 
-  const activityQuery = useQuery(Q.activity.list(community, listFilter))
+  const listSelection = useMemo(
+    () => ({ presetKey: presetKey || undefined, filter: listFilter }),
+    [listFilter, presetKey],
+  )
+  const activityQuery = useQuery(Q.activity.list(community, listSelection, page))
   const resourceTypes = configQuery.data?.resources.map((resource) => resource.resourceType) ?? []
   const sources = configQuery.data?.sources ?? []
   const actions = Array.from(
@@ -173,6 +185,12 @@ export default function Activity({ community }: { community: string }) {
   )
   const maxCount = Math.max(1, ...buckets.map((bucket) => bucket.count))
   const eventDetail = eventQuery.data as TActivityDetail | null | undefined
+  const coverageLimitations =
+    (
+      activityQuery.data?.queryContext.coverage as
+        | { limitations?: Array<Record<string, unknown>> }
+        | undefined
+    )?.limitations ?? []
   const operationGroups = useMemo(() => {
     const dates = new Map<string, Map<string, TActivityEntry[]>>()
 
@@ -236,7 +254,12 @@ export default function Activity({ community }: { community: string }) {
         <p className='text-sm'>{activityMessage(t, entry)}</p>
         <p className='text-digest mt-1 text-xs'>
           {new Date(String(entry.occurredAt)).toLocaleString()} ·{' '}
-          {activityValueLabel(t, 'source', entry.source)}
+          {activityValueLabel(t, 'source', entry.source)} ·{' '}
+          <span className={entry.outcome === 'denied' ? 'text-red-500' : ''}>
+            {entry.outcome === 'denied'
+              ? t('dsb.activity.outcome_denied')
+              : t('dsb.activity.outcome_allowed')}
+          </span>
         </p>
       </div>
     </button>
@@ -246,8 +269,8 @@ export default function Activity({ community }: { community: string }) {
     setExporting(true)
 
     try {
-      const response = await Q.activity.export(community, listFilter, format)
-      const payload = response.communityActivityExport
+      const response = await Q.activity.export(community, listSelection, format)
+      const payload = response.exportCommunityActivity
       const blob = new Blob([payload.content], { type: payload.mimeType })
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
@@ -309,6 +332,21 @@ export default function Activity({ community }: { community: string }) {
       </section>
 
       <section className='bg-card border-divider flex flex-wrap items-center gap-2 rounded-md border px-4 py-3'>
+        <select
+          className='bg-card border-divider rounded border px-2 py-1.5 text-sm'
+          onChange={(event) => {
+            setPage(1)
+            updateUrl({ preset: event.target.value || null, page: '1' })
+          }}
+          value={presetKey}
+        >
+          <option value=''>{t('dsb.activity.custom_filter')}</option>
+          {(configQuery.data?.presets ?? []).map((preset) => (
+            <option key={preset.key} value={preset.key}>
+              {t(preset.questionKey as Parameters<typeof t>[0])}
+            </option>
+          ))}
+        </select>
         <select
           className='bg-card border-divider rounded border px-2 py-1.5 text-sm'
           onChange={(event) => changeFilter('resourceTypes', event.target.value, setResourceType)}
@@ -431,6 +469,25 @@ export default function Activity({ community }: { community: string }) {
         >
           {t('dsb.activity.new_available')}
         </button>
+      )}
+
+      {activityQuery.data?.queryContext.presetIntersectionEmpty && (
+        <div className='bg-card border-divider flex items-center justify-between rounded-md border px-4 py-3'>
+          <p className='text-digest text-sm'>{t('dsb.activity.preset_filter_conflict')}</p>
+          <button
+            className='text-accent text-sm underline'
+            onClick={() => updateUrl({ preset: null, page: '1' })}
+            type='button'
+          >
+            {t('dsb.activity.exit_preset')}
+          </button>
+        </div>
+      )}
+
+      {coverageLimitations.length > 0 && (
+        <p className='bg-card border-divider text-digest rounded-md border px-4 py-3 text-sm'>
+          {t('dsb.activity.coverage_limited', { count: coverageLimitations.length })}
+        </p>
       )}
 
       <section className='bg-card divide-divider border-divider divide-y rounded-md border'>
@@ -582,6 +639,19 @@ export default function Activity({ community }: { community: string }) {
                   {detailEntry.actor.nickname || detailEntry.actor.login || detailEntry.actor.type}
                 </button>
               </dd>
+            </div>
+            <div>
+              <dt className='text-digest'>{t('dsb.activity.outcome')}</dt>
+              <dd>
+                {detailEntry.outcome === 'denied'
+                  ? t('dsb.activity.outcome_denied')
+                  : t('dsb.activity.outcome_allowed')}
+                {detailEntry.denialCode ? ` · ${detailEntry.denialCode}` : ''}
+              </dd>
+            </div>
+            <div>
+              <dt className='text-digest'>{t('dsb.activity.changed_fields')}</dt>
+              <dd>{detailEntry.changedFields.join(', ') || '—'}</dd>
             </div>
           </dl>
           {detailEntry.parentEventRef && (

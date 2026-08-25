@@ -146,16 +146,16 @@ be.document-converter.test:
 # backend
 # mix ecto.setup
 be.install:
-	cd ./backend/main && mix deps.get 
+	cd ./backend/api && mix deps.get
 
 be.start:
-	cd ./backend/main && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
+	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
 
 # generate graphql schema (SDL) and link it for the mock server
 be.gen.schema:
-	cd ./backend/main && mix absinthe.schema.sdl schema.graphql && cd - \
+	cd ./backend/api && mix absinthe.schema.sdl schema.graphql && cd - \
 	&& rm -f ./frontend/mock-server/schema.graphql \
-	&& ln -s ../../backend/main/schema.graphql ./frontend/mock-server/schema.graphql
+	&& ln -s ../../backend/api/schema.graphql ./frontend/mock-server/schema.graphql
 
 sync.schema: be.gen.schema
 
@@ -165,46 +165,46 @@ sync.schema: be.gen.schema
 # test.watch not work now, see: https://github.com/lpil/mix-test.watch/issues/116
 # mix test.watch --only wip --stale
 be.test:
-	cd ./backend/main && mix test
+	cd ./backend/api && mix test
 
 be.watch.wip:
-	cd ./backend/main && mix test --listen-on-stdin --stale --only wip
+	cd ./backend/api && mix test --listen-on-stdin --stale --only wip
 	
 be.watch.wip2:
-	cd ./backend/main && mix test --listen-on-stdin --stale --only wip2
+	cd ./backend/api && mix test --listen-on-stdin --stale --only wip2
 
 be.mock.start: 
-	cd ./backend/main && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
+	cd ./backend/api && if [ -f .env.local ]; then set -a; . .env.local; set +a; fi; MIX_ENV=mock mix phx.server
 
 be.migrate:
-	cd ./backend/main && mix ecto.migrate && cd -
+	cd ./backend/api && mix ecto.migrate && cd -
 
 be.migrate.prod:
-	cd ./backend/main && MIX_ENV=prod mix ecto.migrate && cd -
+	cd ./backend/api && MIX_ENV=prod mix ecto.migrate && cd -
 
 be.migrate.mock:
-	cd ./backend/main && MIX_ENV=mock mix ecto.migrate && cd -
+	cd ./backend/api && MIX_ENV=mock mix ecto.migrate && cd -
 
 be.migrate.dev:
-	cd ./backend/main && MIX_ENV=dev mix ecto.migrate && cd -
+	cd ./backend/api && MIX_ENV=dev mix ecto.migrate && cd -
 
 be.migrate.test:
-	cd ./backend/main && MIX_ENV=test mix ecto.migrate && cd -
+	cd ./backend/api && MIX_ENV=test mix ecto.migrate && cd -
 
 be.rollback:
-	cd ./backend/main && mix ecto.rollback && cd -
+	cd ./backend/api && mix ecto.rollback && cd -
 
 be.rollback.mock:
-	cd ./backend/main && MIX_ENV=mock mix ecto.rollback && cd -
+	cd ./backend/api && MIX_ENV=mock mix ecto.rollback && cd -
 be.rollback.test:
-	cd ./backend/main && MIX_ENV=test mix ecto.rollback && cd -
+	cd ./backend/api && MIX_ENV=test mix ecto.rollback && cd -
 
 be.rollback.dev:
-	cd ./backend/main && MIX_ENV=dev mix ecto.rollback && cd -
+	cd ./backend/api && MIX_ENV=dev mix ecto.rollback && cd -
 
 
 be.deploy:
-	cd ./backend/main && flyctl deploy && cd -
+	cd ./backend/api && flyctl deploy && cd -
 
 be.status.deploy:
 	cd ./ops/status && flyctl deploy --config fly.toml --remote-only && cd -

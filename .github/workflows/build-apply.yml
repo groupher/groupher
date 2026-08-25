@@ -1,0 +1,43 @@
+name: Build frontend apply
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/apply/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'frontend/apply/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build apply
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build project
+        run: yarn build:prod:apply

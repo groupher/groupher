@@ -1,0 +1,79 @@
+name: Deploy Apply Worker
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/apply/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'frontend/apply/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-apply-worker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Apply Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run type-check
+        run: yarn workspace @groupher/frontend-apply type-check
+
+      - name: Run lint
+        run: yarn workspace @groupher/frontend-apply lint
+
+      - name: Validate Worker deploy
+        run: yarn workspace @groupher/frontend-apply deploy:dry-run
+
+  deploy:
+    name: Deploy Apply Worker
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Deploy Worker
+        run: yarn workspace @groupher/frontend-apply deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

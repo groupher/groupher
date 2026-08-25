@@ -99,7 +99,7 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 | [`posthouse`](./posthouse.md)                   | Node/Hono                 | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
 | [`ai`](./ai.md)                                 | Node/Hono                 | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |
 | [`risk-center`](./risk_center.md)               | Node/Hono                 | Dashboard              | 风险信号查询、聚合和低延迟判定     | 规划中                           |
-| [`umami`](./umami.md)                           | 自托管 vendor application | Dashboard              | 社区访问统计                       | 规划中                           |
+| [`umami`](./umami.md)                           | 自托管 vendor application | Dashboard              | 社区访问统计                       | Fly.io；Neon `umami-dev`         |
 
 ## 总体关系
 

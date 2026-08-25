@@ -1,10 +1,11 @@
 # Auth
 
-> 运行形态：独立 Node/Hono + `@auth/core` 应用
+> 运行形态：生产为 Cloudflare Worker；本地为独立 Node/Hono + `@auth/core` 应用
 >
 > UI：独立的系统级登录 UI
 >
-> 当前状态：独立 Hono/Auth.js 应用已建立，Main 和 Dashboard 统一经 Gateway 使用
+> 当前状态：Auth Worker 已上线；平台根域由 `edge-router` Service Binding 接入，独立域名为
+> `auth.groupher.com`；本地 Gateway 仅用于开发
 
 ## 定位
 
@@ -29,8 +30,9 @@ callback 和登录流程同样属于这个边界。
 ```
 
 现在 OAuth provider、callback、logout 和 Phoenix identity exchange 已迁至
-`backend/auth`。Main 和 Dashboard 不再挂载 Auth handler，也不再解码 Auth.js
-Session；它们只被动携带 Auth 写入的 `groupher-auth.token`。
+`backend/auth`。生产请求可通过 `edge-router` 的 Auth Service Binding 或直接访问
+`auth.groupher.com`；Main、Community、Dashboard 和其他产品不再挂载 Auth handler，也不再
+解码 Auth.js Session，只被动携带 Auth 写入的 `groupher-auth.token`。
 
 ## 提供的服务
 
@@ -90,14 +92,18 @@ sequenceDiagram
 
 ## 公共入口
 
-生产环境的 V1 Auth consumer 直接访问 canonical Auth：
+生产环境保留 canonical Auth 直连入口，同时平台根域通过 `edge-router` 接入同一个 Auth
+Worker：
 
 ```text
-https://auth.groupher.com/api/auth/*
+https://auth.groupher.com/api/auth/*  -> auth Worker
+https://groupher.com/api/auth/*       -> edge-router -> AUTH Service Binding -> auth Worker
 ```
 
-`https://groupher.com/api/auth/*` 的 Gateway rewrite 仅作为遗留直达链接的兼容入口；
-V1 的 Main、Dashboard、Dash 和 Apply consumer 不再通过产品 origin 代理 Auth 请求。
+`groupher.com/api/auth/*` 不是旧 Gateway rewrite，而是生产 edge-router 的正式同源入口。
+前端共享 Auth consumer 默认使用 `https://auth.groupher.com/api/auth`，因此跨源请求显式
+使用 `credentials: include`；需要同源浏览器 API 的场景才使用平台根域路径。Dash、Apply
+等独立产品仍可直接访问 canonical Auth。
 `https://groupher.com/login` 和 `/logout` 可以继续作为用户导航入口，但最终的 OAuth、
 Session、refresh、logout 和设备管理协议均落在 canonical Auth。OAuth provider 只配置
 一组 canonical callback，不感知各产品的实际部署地址。
@@ -114,10 +120,10 @@ https://auth.groupher.com/api/auth/callback/github
 这是当前架构的正式配置，不是 workaround。GitHub OAuth App 的 callback allowlist
 校验发生在 provider 侧，必须与发起授权时传给 GitHub 的 `redirect_uri` 完全一致。
 线上发起授权时使用 `auth.groupher.com`，因此 GitHub App 也必须登记
-`auth.groupher.com` 的 callback。Gateway 上的 `/api/auth/*` 兼容 rewrite 不能改变
-这个 canonical callback。
+`auth.groupher.com` 的 callback。平台根域的 edge-router 或本地 Gateway 上的
+`/api/auth/*` 转发都不能改变这个 canonical callback。
 
-生产 Auth 部署的 `AUTH_URL` 必须固定为 `https://auth.groupher.com`，它决定 Auth.js
+生产 Auth Worker 的 `AUTH_URL` 必须固定为 `https://auth.groupher.com`，它决定 Auth.js
 生成的 provider `redirect_uri`，也是 V1 credentialed browser API 的唯一入口。
 
 本地开发使用单独的 GitHub OAuth App，不复用线上 credential。本地 callback 应填写
@@ -155,8 +161,9 @@ Origin/custom-header CSRF contract。
 也不转换成 `Authorization` header。生产环境中，产品 Login Modal 和共享 Auth
 consumer 通过带 credentials 的跨源请求直接访问 canonical Auth；OAuth CSRF
 bootstrap、signin、callback、Session probe、Session list、refresh、logout 和
-Session revoke 都在 `auth.groupher.com` 完成。只有 GraphQL 继续走当前产品的同源
-Gateway 路径。`api.groupher.localhost` 只作为 GraphiQL、诊断和服务间调用入口。
+Session revoke 都在 `auth.groupher.com` 完成。GraphQL 继续走当前产品的同源入口：生产
+经 edge-router，开发经 Gateway。`api.groupher.localhost` 只作为 GraphiQL、诊断和服务间
+调用入口。
 
 首方子域共享的只是 `AUTH_COOKIE_DOMAIN=.groupher.com`（本地为
 `.groupher.localhost`）上的短期 Phoenix access token 和非敏感 hint；Auth.js
@@ -201,15 +208,16 @@ Phoenix 面向具体下游服务签发。
 
 Auth 使用 Hono 承载标准 Web Request/Response，并直接调用 `@auth/core`：
 
-1. 独立 `backend/auth` Hono/Auth.js 应用拥有 OAuth、Browser Session、refresh、logout
-   和设备管理 browser API。
-2. 生产 consumer 直接访问 canonical Auth；Gateway 的 `/api/auth/*` rewrite 仅保留为
-   遗留入口兼容和本地 canonical Auth 路由。
+1. `backend/auth` 的 Worker entrypoint 拥有 OAuth、Browser Session、refresh、logout
+   和设备管理 browser API；`src/server.ts` 只用于本地 Node 运行时。
+2. 生产 consumer 可直连 canonical Auth，也可通过 `edge-router` 的 `/api/auth/*` 正式同源
+   路由访问同一个 Worker；本地 Gateway 只负责本地开发入口。
 3. Auth 在 callback 完成后写入 host-only Auth.js Session，并提交父域
    `groupher-auth.token` 和非敏感 hint。
 4. Main、Dashboard、Dash 和 Apply 不消费 Auth.js Session，只读取或携带 Phoenix
    token Cookie，并通过共享 `~/auth` consumer 调用 Auth。
-5. 浏览器 GraphQL 继续访问产品同源 `/api/graphql`，由 Gateway 执行受限转发。
+5. 浏览器 GraphQL 继续访问产品同源 `/api/graphql`，生产由 edge-router、开发由 Gateway
+   执行受限转发。
 
 Hono 只负责 HTTP 路由和运行时适配；OAuth provider、state、PKCE、Session 等协议
 能力继续由 `@auth/core` 提供。
@@ -222,8 +230,8 @@ Hono 只负责 HTTP 路由和运行时适配；OAuth provider、state、PKCE、S
 | --------------- | ----------------------------------------------------------- |
 | `src/app.ts`    | 定义 health、Session probe/refresh/logout/list/revoke 路由  |
 | `src/auth.ts`   | 封装 `@auth/core`、Phoenix identity exchange 和 Cookie 提交 |
-| `src/server.ts` | Dev Hub 和独立 Node 部署使用的 HTTP server                  |
-| `index.ts`      | Vercel Hono 部署的标准默认导出                              |
+| `src/server.ts` | 本地 Node server 和开发验证使用的 HTTP server               |
+| `src/worker.ts` | Cloudflare Worker production entrypoint                     |
 
 Main、Dashboard、Dash 和 Apply 通过 `~/auth`（`frontend/core/lib/auth/`）消费共享
 Groupher Auth 客户端；`frontend/core/lib/oauth.ts` 只保留 `signIn` / `signOut` 的兼容
@@ -280,11 +288,12 @@ Auth 只有在 `@auth/core` 的 callback response 确实签发 Session Cookie �
 | `AUTH_COOKIE_SECURE`                                    | 非生产环境覆盖 Secure Cookie 推导，仅用于特殊调试     |
 | `PORT` / `HOST`                                         | 独立 Node server 的监听地址                           |
 
-每个产品前端还必须把 `NEXT_PUBLIC_AUTH_ENDPOINT` 指向 canonical Auth 的完整地址：
+每个产品前端可用 `NEXT_PUBLIC_AUTH_ENDPOINT` 覆盖 Auth 地址；默认值为 canonical Auth 的完整地址：
 本地为 `https://groupher.localhost/api/auth`，生产为
 `https://auth.groupher.com/api/auth`。Refresh、logout、Session list/revoke 都由浏览器
-直接请求该地址，产品应用不得增加同源 `/api/auth` 代理。共享前端常量在生产环境缺少
-配置时只会回退到上述生产 canonical 地址，不会回退到产品同源路径。
+直接请求该地址。平台根域的 `/api/auth/*` 由 edge-router 提供同源入口，但不是第二套
+Auth 实现；它只转发到同一个 Auth Worker。共享前端常量在生产环境缺少配置时仍回退到
+canonical Auth 地址。
 
 Cloudflare Worker 部署还声明 `AUTH_REFRESH_RATE_LIMITER` 原生 Rate Limiting binding，
 同时按客户端和 `browserSessionRef` 计数。修改 `wrangler.jsonc` 中的 namespace 时必须

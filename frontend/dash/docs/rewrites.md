@@ -222,7 +222,7 @@ overview values, and hydrated Dashboard shell.
 ## Canonical Dash Paths, Vite Assets, And HMR
 
 module
-`backend/gateway/src/routing.ts` and `frontend/dash/app.config.ts`
+`infra/gateway/src/routing.ts` and `frontend/dash/app.config.ts`
 
 background
 Local development uses one canonical gateway origin so the session cookie,

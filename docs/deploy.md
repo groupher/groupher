@@ -4,54 +4,68 @@
 
 ## 公共入口
 
-Groupher 保持 path-first 的公共 URL 契约：
+Groupher 的公共站点保持 path-first URL；独立产品使用独立子域名：
 
 ```text
 groupher.com/                         Landing
 groupher.com/pricing                  Landing
 groupher.com/book-demo                Landing
-groupher.com/:community/...           Main / Press（按路径分流）
-groupher.com/:community/dashboard/... Dashboard
-groupher.com/:community/dash/...      Dash
+groupher.com/:community/...           Community / Press
 groupher.com/api/graphql              同源浏览器 GraphQL facade
+dashboard.groupher.com                Dashboard
+dash.groupher.com                     Dash
+apply.groupher.com                    Apply
 api.groupher.com/graphiql             Phoenix GraphQL origin
 press.groupher.com                    Press 服务 origin
 ```
 
-`.md`、Feed、`llms.txt` 和 community sitemap 仍使用
-`groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Cloudflare Pages
-Worker 和 Phoenix 调用 Press 的稳定 origin，不建立第二套 canonical 内容地址。
+`/:community/dashboard/*`、`/:community/dash/*`、`/apply` 和 `/apply/*` 是已经删除的旧公共
+路径，返回 `404`。Dashboard、Dash、Apply 不再通过 `groupher.com` 的社区路径提供页面。
 
-当前公共入口由 Cloudflare Pages 项目 `groupher-landing` 托管。
+Dashboard 的页面、`/api/artiment/*`、`/api/docs/import/*`、`/api/revalidate/community` 和
+框架资产全部属于 `dashboard.groupher.com`。`groupher.com` 不代理这些路径；迁移后根域上的
+旧 Dashboard API/资产返回 `404`。
+
+`/api/utils/slugify` 是例外：平台根域上的该路径属于 Community，用于后续用户内容创建；
+Dashboard 独立域名保留自己的同名实现。
+
+`.md`、Feed、`llms.txt` 和 community sitemap 仍使用
+`groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Edge Router 和
+Phoenix 调用 Press 的稳定 origin，不建立第二套 canonical 内容地址。
+
+当前公共入口由 `edge-router` Worker 托管，静态 Landing 与应用 Worker 通过 Service Binding
+接入：
 
 ```text
-Cloudflare Pages project: groupher-landing
-  production custom domains:
-    groupher.com
-    www.groupher.com
-  internal/default domain:
-    groupher-landing.pages.dev
-  preview/debug domains:
-    <deployment>.groupher-landing.pages.dev
-    <branch>.groupher-landing.pages.dev
+groupher.com/*, www.groupher.com/*
+  -> edge-router Worker Route
+       -> landing Worker Static Assets
+       -> community Worker
+       -> auth Worker
+       -> Phoenix / Press HTTPS origins
 ```
 
-`groupher-landing.pages.dev` 是 Cloudflare Pages 自带的项目域名。它保留用于
-preview、部署冒烟测试和自定义域名调试，不是面向用户生产 URL。
+生产入口只使用 Worker Routes 和 Service Bindings，不保留旧托管平台兼容入口或回滚通道。
 
 ## Cloudflare 应用
 
 ```text
-Cloudflare Pages
-  groupher-landing
-    prod:
-      groupher.com
-      www.groupher.com
-
 Cloudflare Workers
-  groupher-dash
+  edge-router
+    prod routes:
+      groupher.com/*
+      www.groupher.com/*
+  landing
+    consumed by edge-router Service Binding
+  community
+    direct domain: community.groupher.com
+    consumed by edge-router Service Binding
+  dash
     prod route:
       dash.groupher.com/*
+  apply
+    prod custom domain:
+      apply.groupher.com/*
   auth
     prod route:
       auth.groupher.com/*
@@ -63,8 +77,15 @@ Cloudflare Workers
       inspire-me.groupher.com/*
 ```
 
-Cloudflare 项目使用产品级命名。`groupher-` 前缀虽然 Cloudflare 不强制要求，但
-在共享 Cloudflare 账号里能让 `landing` 这类通用名保持清晰。
+Cloudflare Account 的显示名称为 `Groupher`，它是这些资源的账户级边界。账户内的
+Workers 统一使用产品级短名称，不再重复添加 `groupher-` 前缀。
+
+Worker 统一使用短名称，不添加 `groupher-` 或 `-production`。旧的
+`groupher-community-production` 已删除。
+
+Community 对不存在的 slug 返回 `404`。Phoenix 的匿名与登录读取路径都保留
+`CMS.Communities.ErrorCat.not_exist`（GraphQL code `5504`）；Community 将该预期领域错误转换
+为 route-level not-found，其他 GraphQL 错误仍按服务错误处理。
 
 ## Fly.io 应用
 
@@ -108,27 +129,25 @@ production
   api.groupher.com
   press.groupher.com
 
-preview/debug
-  groupher-landing.pages.dev
-  <deployment>.groupher-landing.pages.dev
-  <branch>.groupher-landing.pages.dev
-
 local development
   Dev Hub / local Gateway / portless routes
 ```
 
-不要把 `*.pages.dev` 当作用户生产 URL。如果之后需要公开的 staging 环境，应
-显式添加一个 `staging.groupher.com` 或 `dev.groupher.com` 这样的自定义域名，
-并绑定到对应的 Pages 分支。
+如果之后需要公开的 staging 环境，应显式添加一个 `staging.groupher.com` 或
+`dev.groupher.com` 这样的自定义域名，并绑定到对应的 Worker deployment。
 
 ## DNS 记录
 
-对于 Landing Pages 项目，apex 和 `www` 都应指向该 Pages 项目：
+apex 与 `www` 保留 orange-cloud proxied DNS 记录，并由 Worker Routes 接管：
 
 ```text
-groupher.com      CNAME  groupher-landing.pages.dev
-www.groupher.com  CNAME  groupher-landing.pages.dev
+groupher.com/*      -> edge-router
+www.groupher.com/*  -> edge-router
 ```
+
+现有 DNS origin 只是 Worker Route 的 carrier；请求会在到达 origin 前进入 `edge-router`。
+不要删除这两条 proxied DNS 记录，也不要切成 DNS-only，除非同一次变更中改用 Worker Custom
+Domain 并完成 TLS 与公网 smoke。
 
 Press custom domain 应绑定到 Fly app `groupher-press`：
 
@@ -142,14 +161,16 @@ press.groupher.com  CNAME  groupher-press.fly.dev
 Cloudflare 会把 apex CNAME flatten 掉，因此在 Cloudflare DNS 中给 `groupher.com`
 使用 CNAME 是合法的。
 
+不要把这两个 hostname CNAME 到 `workers.dev`。当前使用 Worker Routes；Worker Custom
+Domains 只是未来可选的 DNS 清理方案。完整设计见
+[`docs/deploy/cf_arch.md`](deploy/cf_arch.md)。
+
 推荐这些生产自定义域名使用 orange-cloud 代理。orange cloud 表示该主机名会经
 Cloudflare 的 HTTP 代理层路由，Cloudflare 可以在此应用证书、WAF/规则、缓存、
 redirect 和边缘可观测性。gray cloud 表示 DNS only：Cloudflare 只返回 DNS 目标，
 不在该 DNS 记录上应用 zone 的 HTTP 代理能力。
 
-对于指向 `groupher-landing.pages.dev` 的 CNAME，gray-cloud DNS-only 在功能上
-依然可以解析到 Cloudflare Pages，因为目标本身就在 Cloudflare 上。但保持
-`groupher.com` 和 `www.groupher.com` 同时代理是更清晰的生产姿态。
+`groupher.com` 和 `www.groupher.com` 必须保持代理状态；DNS-only 不会执行 Worker Route。
 
 证书机构的 CAA 记录应保留：
 
@@ -161,14 +182,23 @@ groupher.com CAA 0 issue "letsencrypt.org"
 
 ## 部署命令
 
-构建并通过 Wrangler 直传 Landing Pages 产物：
+先部署下游 Worker，再部署公共 Router：
 
 ```bash
-yarn workspace @groupher/frontend-landing build:cloudflare
-./node_modules/.bin/wrangler pages deploy frontend/landing/out \
-  --project-name groupher-landing \
-  --branch main
+yarn workspace @groupher/frontend-landing deploy:worker
+yarn workspace @groupher/frontend-community deploy
+yarn workspace @groupher/backend-auth deploy:worker
+yarn workspace @groupher/edge-router deploy
 ```
+
+首次部署 `edge-router` 前必须人工确认 Landing、Community、Auth 已部署且 Service Bindings
+可解析，因为该 Worker 配置包含 `groupher.com/*` 和 `www.groupher.com/*` production
+Worker Routes；Edge Router 的 CI push 只执行验证，正式部署使用手动 workflow。
+
+Landing 的 `build:worker` 会先执行根目录的 `sync:assets:landing`，再构建 Next 静态产物；
+因此 icons 和 wallpaper 不需要额外手动同步。Landing 的 PR dry-run 和 `dev` 分支部署由
+`.github/workflows/deploy-landing-worker.yml` 执行；Edge Router 的 PR/`dev` push 只做验证，
+正式部署通过 `.github/workflows/deploy-edge-router.yml` 的手动 workflow 执行。
 
 部署完成后，对自定义域名进行冒烟测试：
 
@@ -176,8 +206,8 @@ yarn workspace @groupher/frontend-landing build:cloudflare
 curl -i https://groupher.com/health
 curl -i https://www.groupher.com/health
 curl -i https://www.groupher.com/api/auth/providers
-curl -i https://www.groupher.com/home/dashboard
-curl -i https://www.groupher.com/home/dashboard/appearance
+curl -i https://www.groupher.com/home
+curl -i https://www.groupher.com/home/post
 ```
 
 health 端点应从 Cloudflare 返回 `service: "edge-router"`。
@@ -188,14 +218,15 @@ health 端点应从 Cloudflare 返回 `service: "edge-router"`。
 yarn workspace @groupher/frontend-dash deploy
 ```
 
-部署完成后验证 direct origin，再部署 Landing Pages 将公共路径接入 Dash：
+部署完成后只验证 Dash 的独立产品域名：
 
 ```bash
 curl -i https://dash.groupher.com/health
 curl -i https://dash.groupher.com/home/dash/overview
-curl -i https://groupher.com/health/dash
-curl -i https://groupher.com/home/dash/overview
 ```
+
+`groupher.com/health/dash` 和 `groupher.com/:community/dash/*` 保持 `404`，不属于 Dash 的
+发布 smoke。
 
 ## Press 部署与切换
 
@@ -216,7 +247,7 @@ Phoenix / Fly secrets
   SERVICE_AUTH_CLIENT_ID=<phoenix client id>
   SERVICE_AUTH_CLIENT_SECRET=<phoenix client secret>
 
-Landing / Cloudflare Pages variables
+Edge Router / Cloudflare Worker variables
   PRESS_SITE=https://press.groupher.com
 ```
 
@@ -226,9 +257,10 @@ Landing / Cloudflare Pages variables
 2. 执行 `@groupher/press` Drizzle migration，建立 `analysis.press_*` 对象。
 3. 部署 Fly app `groupher-press` 并绑定 `press.groupher.com`。
 4. 直接请求 `press.groupher.com`，验证 Press 到生产 Phoenix 和 PostgreSQL。
-5. Landing Worker 在 Main fallback 前接入 Press route，生产 `PRESS_SITE` 指向
-   `https://press.groupher.com`。
-6. 部署 Landing Pages 后，从 `groupher.com` 验证真实 `.md`、Feed、`llms.txt` 和 sitemap。
+5. Public Router 将 Press 公共输出规则放在 Community 通用路由之前，生产 `PRESS_SITE`
+   指向 `https://press.groupher.com`。
+6. 部署 Landing Worker 与 Edge Router 后，从 `groupher.com` 验证真实 `.md`、Feed、
+   `llms.txt` 和 sitemap。
 7. 验收通过后删除旧 Main Doc `.md` HTTP route/renderer；Phoenix 持久化 Markdown 和
    `CMS.Press.article` projection 保留。
 
@@ -236,12 +268,13 @@ Press `/health` 当前只证明 Node 进程可响应。部署完成还必须至�
 
 ```bash
 curl -i https://press.groupher.com/health
-curl -i https://groupher.com/home/feed.xml
-curl -i https://groupher.com/home/feed.atom
-curl -i https://groupher.com/home/feed.json
+curl -i https://groupher.com/home/changelog/3.md
 curl -i https://groupher.com/home/llms.txt
 curl -i https://groupher.com/home/sitemap.xml
 ```
+
+Feed 是否返回内容取决于社区是否开启对应输出；未开启时 `404` 是正常产品配置，不用于判断
+Press 链路失败。Markdown、`llms.txt` 和 sitemap 是稳定的发布 smoke。
 
 另选一篇真实 published Doc 验证 `.md`、ETag/`304`、不增加 Article human views、metrics
 落库和 Phoenix-to-Press invalidation。完整检查表见 `docs/press/v1.md`。

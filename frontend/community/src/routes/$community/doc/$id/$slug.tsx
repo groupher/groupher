@@ -1,4 +1,5 @@
 import { communityQueries, docTreeClientQuery } from '@community/query/queries'
+import { communityPublicPath } from '@community/server/public-path'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
@@ -14,9 +15,14 @@ export const Route = createFileRoute('/$community/doc/$id/$slug')({
     if (!doc) throw notFound()
     return { doc }
   },
-  head: ({ loaderData, params }) => ({
+  head: ({ loaderData, params, matches }) => ({
     meta: loaderData?.doc?.title ? [{ title: loaderData.doc.title }] : [],
-    links: [{ rel: 'canonical', href: `/${params.community}/doc/${params.id}/${params.slug}` }],
+    links: [
+      {
+        rel: 'canonical',
+        href: communityPublicPath(params.community, `/doc/${params.id}/${params.slug}`, matches),
+      },
+    ],
   }),
   component: DocArticle,
 })

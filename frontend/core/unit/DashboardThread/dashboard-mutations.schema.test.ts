@@ -11,7 +11,7 @@ import dashboardAppearanceSchema from './schema/appearance'
 import dashboardSettingsSchema from './schema/settings'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const schemaPath = path.join(__dirname, '../../../..', 'backend/main/schema.graphql')
+const schemaPath = path.join(__dirname, '../../../..', 'backend/api/schema.graphql')
 const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 
 const documents = {

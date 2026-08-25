@@ -12,6 +12,7 @@ export type TCommentScope = {
   articleInnerId: string | number
 }
 
+/** Identifies comment queries belonging to one article scope. */
 export const isCommentQueryForArticle = (query: Query, scope: TCommentScope): boolean =>
   commentKeys.matchesArticle(query, scope.community, scope.thread, scope.articleInnerId)
 

@@ -84,7 +84,7 @@ Article Draft
 
 已发布 Article 再次编辑时，目标状态允许同时存在 Public 和 Draft。这不需要 Branch 或 Snapshot。
 
-当前 [Publish](../../backend/main/lib/groupher_server/cms/articles/publish.ex) 仅在 `:doc` 分支解析 `DocBranch` 并创建 `DocSnapshot`；Post、Blog、Changelog 只写 ArticleLifecycle 和 Public/Draft 行。
+当前 [Publish](../../backend/api/lib/groupher_server/cms/articles/publish.ex) 仅在 `:doc` 分支解析 `DocBranch` 并创建 `DocSnapshot`；Post、Blog、Changelog 只写 ArticleLifecycle 和 Public/Draft 行。
 
 ### 1.3 DraftDiff 是所有 Article 的基础能力
 
@@ -556,7 +556,7 @@ Docs Release
 
 ## 9. 当前 Doc 发布链路
 
-当前 [DocTree.Publish](../../backend/main/lib/groupher_server/cms/doc_tree/publish.ex) 是 Docs 编排入口，底层已经使用 DocBranch、DocLifecycle 和 DocSnapshot：
+当前 [DocTree.Publish](../../backend/api/lib/groupher_server/cms/doc_tree/publish.ex) 是 Docs 编排入口，底层已经使用 DocBranch、DocLifecycle 和 DocSnapshot：
 
 ```text
 Gate.access_check(:manage_docs, community)

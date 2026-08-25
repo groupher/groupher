@@ -75,11 +75,11 @@ Phoenix 当前的出站 token 客户端：
 
 代码位置：
 
-    backend/main/lib/groupher_server/service_auth/client.ex
+    backend/api/lib/groupher_server/service_auth/client.ex
 
 配置位置：
 
-    backend/main/config/runtime.exs
+    backend/api/config/runtime.exs
       SERVICE_AUTH_TOKEN_ENDPOINT
       SERVICE_AUTH_CLIENT_ID
       SERVICE_AUTH_CLIENT_SECRET

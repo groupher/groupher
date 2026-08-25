@@ -13,9 +13,9 @@ node_modules
 coverage
 playwright-report
 test-results
-backend/main/deps
-backend/main/_build
-backend/main/priv/static
+backend/api/deps
+backend/api/_build
+backend/api/priv/static
 frontend/landing/.next
 frontend/landing/out
 local/dev-hub/src-tauri/target

@@ -3,16 +3,14 @@ name: Frontend typecheck
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
@@ -54,14 +52,18 @@ jobs:
               - 'frontend/dash/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/dash/tsconfig*.json'
               - 'frontend/dash/package.json'
+            community:
+              - 'frontend/community/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/community/tsconfig*.json'
+              - 'frontend/community/package.json'
+            apply:
+              - 'frontend/apply/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/apply/tsconfig*.json'
+              - 'frontend/apply/package.json'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/landing/tsconfig*.json'
               - 'frontend/landing/package.json'
-            gateway:
-              - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-              - 'backend/gateway/tsconfig*.json'
-              - 'backend/gateway/package.json'
 
       - name: Build matrix
         id: matrix
@@ -70,8 +72,9 @@ jobs:
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           DASH_CHANGED: ${{ steps.filter.outputs.dash }}
+          COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
+          APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
-          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
         run: |
           targets=()
 
@@ -91,12 +94,16 @@ jobs:
             targets+=('{"target":"dash","workspace":"@groupher/frontend-dash"}')
           fi
 
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
-            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$COMMUNITY_CHANGED" = "true" ]; then
+            targets+=('{"target":"community","workspace":"@groupher/frontend-community"}')
           fi
 
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/gateway"}')
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$APPLY_CHANGED" = "true" ]; then
+            targets+=('{"target":"apply","workspace":"@groupher/frontend-apply"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
+            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then

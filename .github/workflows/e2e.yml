@@ -15,7 +15,6 @@ on:
       - 'packages/service/**'
       - 'package.json'
       - 'yarn.lock'
-      - '!frontend/**/vercel.json'
   push:
     paths:
       - 'frontend/main/**'
@@ -30,7 +29,6 @@ on:
       - 'packages/service/**'
       - 'package.json'
       - 'yarn.lock'
-      - '!frontend/**/vercel.json'
   workflow_dispatch:
 
 permissions:

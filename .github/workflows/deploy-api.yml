@@ -5,7 +5,7 @@ on:
       - dev
       - main
     paths:
-      - 'backend/main/**' # only trigger when this dir changes
+      - 'backend/api/**' # only trigger when this dir changes
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
       cancel-in-progress: true
     defaults:
       run:
-        working-directory: backend/main
+        working-directory: backend/api
 
     steps:
       - uses: actions/checkout@v4
@@ -30,13 +30,13 @@ jobs:
       - name: Cache deps
         uses: actions/cache@v3
         with:
-          path: backend/main/deps
+          path: backend/api/deps
           key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock') }}
 
       - name: Cache build
         uses: actions/cache@v3
         with:
-          path: backend/main/_build
+          path: backend/api/_build
           key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock') }}
 
       - name: Install dependencies
