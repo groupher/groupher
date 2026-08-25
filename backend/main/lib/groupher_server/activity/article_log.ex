@@ -30,7 +30,7 @@ defmodule GroupherServer.Activity.ArticleLog do
         |> where([log], field(log, ^handler.stream_field()) == ^stream_ref)
         |> where([log], log.action in ^actions)
         |> maybe_branch(canonical)
-        |> order_by([log], desc: log.occurred_at, desc: log.id)
+        |> order_by([log], desc: log.occurred_at, desc: log.record_sequence)
 
       paged = ORM.paginator(query, page: page, size: @page_size)
 

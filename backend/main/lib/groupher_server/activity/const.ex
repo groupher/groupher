@@ -11,6 +11,7 @@ defmodule GroupherServer.Activity.Const do
 
   @sources [:api, :admin, :worker, :scheduler, :maintenance]
   @actor_types [:user, :system]
+  @outcomes [:allowed, :denied]
   @surfaces [:article_log, :community_log]
 
   @spec source_values() :: [atom()]
@@ -18,6 +19,9 @@ defmodule GroupherServer.Activity.Const do
 
   @spec actor_type_values() :: [atom()]
   def actor_type_values, do: @actor_types
+
+  @spec outcome_values() :: [atom()]
+  def outcome_values, do: @outcomes
 
   @spec surface_values() :: [atom()]
   def surface_values, do: @surfaces

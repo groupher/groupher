@@ -32,6 +32,7 @@ const MESSAGE_KEYS: Record<string, TTransKey> = {
   'activity.destroy_cancelled': 'dsb.activity.event.destroy_cancelled',
   'activity.destroyed': 'dsb.activity.event.destroyed',
   'activity.lifecycle_reconciled': 'dsb.activity.event.lifecycle_reconciled',
+  'activity.activity_exported': 'dsb.activity.event.activity_exported',
   'activity.comment_created': 'dsb.activity.event.comment_created',
   'activity.comment_updated': 'dsb.activity.event.comment_updated',
   'activity.comment_pinned': 'dsb.activity.event.comment_pinned',
@@ -67,6 +68,7 @@ const resourceLabel = (t: TTranslate, entry: TActivityEntry) =>
 const subjectLabel = (entry: TActivityEntry) =>
   entry.subject.title || entry.subject.ref || entry.resource.title || entry.resource.ref
 
+/** Translates an activity event into the sentence shown in the activity feed. */
 export const activityMessage = (t: TTranslate, entry: TActivityEntry) =>
   t(MESSAGE_KEYS[entry.messageKey] || 'dsb.activity.event.unknown', {
     actor: actorLabel(entry),
@@ -74,15 +76,19 @@ export const activityMessage = (t: TTranslate, entry: TActivityEntry) =>
     subject: subjectLabel(entry),
   })
 
+/** Translates an activity message key into its short action label. */
 export const activityActionLabel = (t: TTranslate, messageKey: string) =>
   t(ACTION_KEYS[messageKey] || 'dsb.activity.title')
 
+/** Translates the resource type represented by an activity entry. */
 export const activityResourceLabel = (t: TTranslate, entry: TActivityEntry) =>
   resourceLabel(t, entry)
 
+/** Translates a raw activity resource type value for filters and summaries. */
 export const activityResourceTypeLabel = (t: TTranslate, value: string) =>
   t(RESOURCE_KEYS[value] || 'dsb.activity.resource.unknown')
 
+/** Translates an activity category/source value with a readable fallback. */
 export const activityValueLabel = (t: TTranslate, kind: 'category' | 'source', value: string) => {
   const key = `dsb.activity.${kind}.${value}` as TTransKey
   const translated = t(key)

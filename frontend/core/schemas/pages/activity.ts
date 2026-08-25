@@ -13,22 +13,43 @@ export const communityActivityConfig = graphql(`
         }
       }
       sources
+      actorTypes
+      presets {
+        key
+        questionKey
+        descriptionKey
+        coverageNoteKey
+        defaultTimeRange {
+          amount
+          unit
+        }
+      }
     }
   }
 `)
 
-export const communityActivityExport = graphql(`
-  query CommunityActivityExport(
+export const exportCommunityActivity = graphql(`
+  mutation ExportCommunityActivity(
     $community: String!
-    $filter: CommunityActivityFilter
+    $selection: CommunityActivitySelectionInput!
     $format: CommunityActivityExportFormat!
   ) {
-    communityActivityExport(community: $community, filter: $filter, format: $format) {
+    exportCommunityActivity(community: $community, selection: $selection, format: $format) {
       content
       filename
       mimeType
       totalCount
       exportedCount
+      manifest
+      queryContext {
+        preset {
+          key
+          questionKey
+        }
+        appliedFilter
+        coverage
+        presetIntersectionEmpty
+      }
     }
   }
 `)
@@ -40,10 +61,15 @@ export const communityActivityEvent = graphql(`
       eventRef
       operationRef
       parentEventRef
+      operationIndex
+      recordSequence
       messageKey
       action
       category
       highRisk
+      outcome
+      denialCode
+      changedFields
       resource {
         type
         ref
@@ -51,6 +77,13 @@ export const communityActivityEvent = graphql(`
         innerId
       }
       actor {
+        type
+        id
+        login
+        nickname
+        avatar
+      }
+      onBehalfOf {
         type
         id
         login
@@ -73,15 +106,21 @@ export const communityActivityEvent = graphql(`
       payload
       metadata
       occurredAt
+      recordedAt
       parentEvent {
         id
         eventRef
         operationRef
         parentEventRef
+        operationIndex
+        recordSequence
         messageKey
         action
         category
         highRisk
+        outcome
+        denialCode
+        changedFields
         resource {
           type
           ref
@@ -111,16 +150,22 @@ export const communityActivityEvent = graphql(`
         payload
         metadata
         occurredAt
+        recordedAt
       }
       childEvents {
         id
         eventRef
         operationRef
         parentEventRef
+        operationIndex
+        recordSequence
         messageKey
         action
         category
         highRisk
+        outcome
+        denialCode
+        changedFields
         resource {
           type
           ref
@@ -150,23 +195,33 @@ export const communityActivityEvent = graphql(`
         payload
         metadata
         occurredAt
+        recordedAt
       }
     }
   }
 `)
 
 export const communityActivity = graphql(`
-  query CommunityActivity($community: String!, $filter: CommunityActivityFilter) {
-    communityActivity(community: $community, filter: $filter) {
+  query CommunityActivity(
+    $community: String!
+    $selection: CommunityActivitySelectionInput!
+    $page: Int = 1
+  ) {
+    communityActivity(community: $community, selection: $selection, page: $page) {
       entries {
         id
         eventRef
         operationRef
         parentEventRef
+        operationIndex
+        recordSequence
         messageKey
         action
         category
         highRisk
+        outcome
+        denialCode
+        changedFields
         resource {
           type
           ref
@@ -174,6 +229,13 @@ export const communityActivity = graphql(`
           innerId
         }
         actor {
+          type
+          id
+          login
+          nickname
+          avatar
+        }
+        onBehalfOf {
           type
           id
           login
@@ -196,18 +258,28 @@ export const communityActivity = graphql(`
         payload
         metadata
         occurredAt
+        recordedAt
       }
       totalCount
       totalPages
       pageNumber
       pageSize
+      queryContext {
+        preset {
+          key
+          questionKey
+        }
+        appliedFilter
+        coverage
+        presetIntersectionEmpty
+      }
     }
   }
 `)
 
 export const communityActivityStats = graphql(`
-  query CommunityActivityStats($community: String!, $filter: CommunityActivityStatsFilter!) {
-    communityActivityStats(community: $community, filter: $filter) {
+  query CommunityActivityStats($community: String!, $selection: CommunityActivitySelectionInput!) {
+    communityActivityStats(community: $community, selection: $selection) {
       granularity
       timezone
       totalCount
@@ -215,6 +287,15 @@ export const communityActivityStats = graphql(`
         startedAt
         endedAt
         count
+      }
+      queryContext {
+        preset {
+          key
+          questionKey
+        }
+        appliedFilter
+        coverage
+        presetIntersectionEmpty
       }
     }
   }

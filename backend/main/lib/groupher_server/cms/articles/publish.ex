@@ -217,6 +217,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
              operation_ref: operation_ref,
              occurred_at: occurred_at,
              payload: changes,
+             changed_fields: Map.keys(changes),
              metadata: metadata
            ) do
         {:ok, _log} -> {:cont, :ok}

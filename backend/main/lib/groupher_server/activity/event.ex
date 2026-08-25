@@ -10,7 +10,13 @@ defmodule GroupherServer.Activity.Event do
   alias GroupherServer.Activity.EventRef
   alias GroupherServer.Repo
 
-  def contract(payload \\ [], metadata \\ [], surfaces \\ [:community_log], target \\ nil) do
+  def contract(
+        payload \\ [],
+        metadata \\ [],
+        surfaces \\ [:community_log],
+        target \\ nil,
+        opts \\ []
+      ) do
     surface_contract = fn surface ->
       fields =
         case surface do
@@ -21,15 +27,22 @@ defmodule GroupherServer.Activity.Event do
             [
               :resource,
               :actor,
+              :on_behalf_of,
               :subject,
               :target,
               :source,
               :payload,
               :metadata,
+              :outcome,
+              :denial_code,
+              :changed_fields,
               :occurred_at,
+              :recorded_at,
               :event_ref,
               :operation_ref,
               :parent_event_ref,
+              :operation_index,
+              :record_sequence,
               :category,
               :high_risk,
               :message_key
@@ -50,8 +63,14 @@ defmodule GroupherServer.Activity.Event do
       write: %{
         target_type: target,
         accepted_payload: payload,
-        accepted_metadata: metadata
+        accepted_metadata: metadata,
+        accepted_changed_fields: Keyword.get(opts, :changed_fields, payload)
       },
+      outcomes:
+        Keyword.get(opts, :outcomes, %{
+          allowed: %{producer_status: :active},
+          denied: %{producer_status: :contract_only, denial_codes: []}
+        }),
       surfaces: Map.new(surfaces, surface_contract),
       subject_search:
         if(:community_log in surfaces,
@@ -83,6 +102,7 @@ defmodule GroupherServer.Activity.Event do
     destroy_cancelled: %{message_key: "activity.destroy_cancelled"},
     destroyed: %{message_key: "activity.destroyed"},
     lifecycle_reconciled: %{message_key: "activity.lifecycle_reconciled"},
+    activity_exported: %{message_key: "activity.activity_exported"},
     comment_created: %{message_key: "activity.comment_created"},
     comment_updated: %{message_key: "activity.comment_updated"},
     comment_pinned: %{message_key: "activity.comment_pinned"},
@@ -131,20 +151,29 @@ defmodule GroupherServer.Activity.Event do
            accepted_payload(opts[:payload] || %{}, contract.write.accepted_payload),
          {:ok, metadata} <-
            accepted_payload(opts[:metadata] || %{}, contract.write.accepted_metadata),
+         {:ok, changed_fields} <-
+           accepted_changed_fields(
+             opts[:changed_fields] || [],
+             contract.write.accepted_changed_fields
+           ),
+         {:ok, outcome} <- validate_outcome(opts, contract),
          :ok <- validate_target(descriptor, contract.write.target_type),
          {:ok, envelope} <- envelope(handler, descriptor, action, opts) do
       attrs =
         descriptor
         |> Map.merge(envelope)
-        |> Map.merge(%{action: action, payload: payload, metadata: metadata})
+        |> Map.merge(%{
+          action: action,
+          payload: payload,
+          metadata: metadata,
+          changed_fields: changed_fields,
+          outcome: outcome.outcome,
+          denial_code: outcome.denial_code
+        })
 
       schema = handler.schema()
 
-      schema
-      |> struct()
-      |> schema.changeset(attrs)
-      |> Repo.insert()
-      |> normalize_insert()
+      insert(schema, attrs)
     else
       %GroupherServer.ErrorCat.Error{} = error -> {:error, error}
       {:error, %GroupherServer.ErrorCat.Error{}} = error -> error
@@ -157,12 +186,13 @@ defmodule GroupherServer.Activity.Event do
          {:ok, surface_contract} <- Map.fetch(contract.surfaces, surface) do
       fields = surface_contract.exposed_fields
 
-      base = %{id: log.hash_id, action: log.action}
+      base = %{id: public_uuid(log.event_ref), action: log.action}
 
       result =
         base
         |> maybe_put(:resource, resource(handler, log), :resource in fields)
         |> maybe_put(:actor, actor(log), :actor in fields)
+        |> maybe_put(:on_behalf_of, on_behalf_of(log), :on_behalf_of in fields)
         |> maybe_put(
           :subject,
           ref(log.subject_type, log.subject_ref, log.subject_snapshot),
@@ -180,7 +210,11 @@ defmodule GroupherServer.Activity.Event do
           take_payload(log.metadata, surface_contract.exposed_metadata),
           :metadata in fields
         )
+        |> maybe_put(:outcome, log.outcome, :outcome in fields)
+        |> maybe_put(:denial_code, log.denial_code, :denial_code in fields)
+        |> maybe_put(:changed_fields, log.changed_fields, :changed_fields in fields)
         |> maybe_put(:occurred_at, log.occurred_at, :occurred_at in fields)
+        |> maybe_put(:recorded_at, log.recorded_at, :recorded_at in fields)
         |> maybe_put(:event_ref, public_uuid(log.event_ref), :event_ref in fields)
         |> maybe_put(:operation_ref, public_uuid(log.operation_ref), :operation_ref in fields)
         |> maybe_put(
@@ -188,6 +222,8 @@ defmodule GroupherServer.Activity.Event do
           public_uuid(log.parent_event_ref),
           :parent_event_ref in fields
         )
+        |> maybe_put(:operation_index, log.operation_index, :operation_index in fields)
+        |> maybe_put(:record_sequence, log.record_sequence, :record_sequence in fields)
         |> maybe_put(
           :category,
           classification(contract, log.action).category,
@@ -286,7 +322,7 @@ defmodule GroupherServer.Activity.Event do
   def actor_attrs(%User{} = actor) do
     %{
       actor_type: :user,
-      actor_id: actor.id,
+      actor_ref: public_user_ref(actor),
       actor_snapshot: %{
         id: public_user_ref(actor),
         login: actor.login,
@@ -296,7 +332,9 @@ defmodule GroupherServer.Activity.Event do
     }
   end
 
-  def actor_attrs(:system), do: %{actor_type: :system, actor_id: nil, actor_snapshot: %{}}
+  def actor_attrs(:system),
+    do: %{actor_type: :system, actor_ref: "groupher", actor_snapshot: %{name: "Groupher"}}
+
   def actor_attrs(:operations), do: {:error, ErrorCat.invalid_actor()}
   def actor_attrs(nil), do: {:error, ErrorCat.invalid_actor()}
   def actor_attrs(_), do: {:error, ErrorCat.invalid_actor()}
@@ -336,6 +374,38 @@ defmodule GroupherServer.Activity.Event do
 
   defp accepted_payload(_, _), do: {:error, ErrorCat.invalid_payload()}
 
+  defp accepted_changed_fields(fields, accepted) when is_list(fields) do
+    fields = Enum.map(fields, &to_string/1)
+    accepted = Enum.map(accepted, &to_string/1)
+
+    if Enum.all?(fields, &(&1 in accepted)),
+      do: {:ok, Enum.uniq(fields)},
+      else: {:error, ErrorCat.undeclared_payload()}
+  end
+
+  defp accepted_changed_fields(_, _), do: {:error, ErrorCat.invalid_payload()}
+
+  defp validate_outcome(opts, contract) do
+    outcome = Keyword.get(opts, :outcome, :allowed)
+    denial_code = Keyword.get(opts, :denial_code)
+    outcome_contract = Map.get(contract.outcomes, outcome)
+
+    cond do
+      is_nil(outcome_contract) ->
+        {:error, ErrorCat.invalid_payload()}
+
+      outcome == :allowed and is_nil(denial_code) ->
+        {:ok, %{outcome: :allowed, denial_code: nil}}
+
+      outcome == :denied and outcome_contract.producer_status == :active and
+          denial_code in Map.get(outcome_contract, :denial_codes, []) ->
+        {:ok, %{outcome: :denied, denial_code: to_string(denial_code)}}
+
+      true ->
+        {:error, ErrorCat.invalid_payload()}
+    end
+  end
+
   defp accepted_key?(key, accepted) when is_atom(key), do: key in accepted
 
   defp accepted_key?(key, accepted) when is_binary(key),
@@ -370,14 +440,14 @@ defmodule GroupherServer.Activity.Event do
     operation_ref =
       Keyword.get(opts, :operation_ref) || explicit_event_ref || Ecto.UUID.generate()
 
-    event_sequence = Keyword.get(opts, :event_sequence, 0)
+    operation_index = Keyword.get(opts, :operation_index, 0)
     occurred_at = Keyword.get(opts, :occurred_at, DateTime.utc_now(:second))
 
     with true <- Const.valid_source?(source) || ErrorCat.invalid_source(),
          {:ok, operation_ref} <- uuid(operation_ref, :operation_ref),
          true <-
-           (is_integer(event_sequence) and event_sequence >= 0) ||
-             ErrorCat.invalid_event_sequence(),
+           (is_integer(operation_index) and operation_index >= 0) ||
+             ErrorCat.invalid_operation_index(),
          {:ok, event_ref} <-
            event_ref(
              explicit_event_ref,
@@ -385,18 +455,23 @@ defmodule GroupherServer.Activity.Event do
              handler,
              descriptor,
              action,
-             event_sequence
+             operation_index
            ),
          {:ok, parent_event_ref} <-
            optional_uuid(Keyword.get(opts, :parent_event_ref), :parent_event_ref),
          true <- match?(%DateTime{}, occurred_at) || ErrorCat.invalid_occurred_at(),
-         actor when is_map(actor) <- actor_attrs(Keyword.get(opts, :actor, :system)) do
+         true <- occurred_at_allowed?(occurred_at) || ErrorCat.invalid_occurred_at(),
+         actor when is_map(actor) <- actor_attrs(Keyword.get(opts, :actor, :system)),
+         {:ok, on_behalf_of} <- on_behalf_of_attrs(Keyword.get(opts, :on_behalf_of)) do
       {:ok,
-       Map.merge(actor, %{
+       actor
+       |> Map.merge(on_behalf_of)
+       |> Map.merge(%{
          source: source,
          event_ref: event_ref,
          operation_ref: operation_ref,
          parent_event_ref: parent_event_ref,
+         operation_index: operation_index,
          occurred_at: occurred_at
        })}
     else
@@ -455,6 +530,16 @@ defmodule GroupherServer.Activity.Event do
     end
   end
 
+  defp insert(schema, attrs) do
+    schema
+    |> struct()
+    |> schema.changeset(attrs)
+    |> Repo.insert()
+    |> normalize_insert()
+  rescue
+    Ecto.ConstraintError -> {:error, ErrorCat.append_failed()}
+  end
+
   defp public_user_ref(%{login: login}) when is_binary(login), do: login
   defp public_user_ref(%{id: id}), do: to_string(id)
 
@@ -465,6 +550,29 @@ defmodule GroupherServer.Activity.Event do
       do: %{type: :system},
       else: Map.put(snapshot, :type, :user)
   end
+
+  defp on_behalf_of(%{on_behalf_of_type: nil}), do: nil
+
+  defp on_behalf_of(log) do
+    snapshot = atomize_known(log.on_behalf_of_snapshot || %{}, [:id, :login, :nickname, :avatar])
+    Map.put(snapshot, :type, log.on_behalf_of_type)
+  end
+
+  defp on_behalf_of_attrs(nil),
+    do: {:ok, %{on_behalf_of_type: nil, on_behalf_of_ref: nil, on_behalf_of_snapshot: %{}}}
+
+  defp on_behalf_of_attrs(actor) do
+    case actor_attrs(actor) do
+      %{actor_type: type, actor_ref: ref, actor_snapshot: snapshot} ->
+        {:ok, %{on_behalf_of_type: type, on_behalf_of_ref: ref, on_behalf_of_snapshot: snapshot}}
+
+      _ ->
+        {:error, ErrorCat.invalid_actor()}
+    end
+  end
+
+  defp occurred_at_allowed?(%DateTime{} = occurred_at),
+    do: DateTime.compare(occurred_at, DateTime.add(DateTime.utc_now(), 60, :second)) != :gt
 
   defp resource(handler, log) do
     ref(

@@ -242,30 +242,27 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:page, :integer, default_value: 1)
   end
 
-  input_object :community_activity_filter do
-    field(:page, :integer, default_value: 1)
+  input_object :community_activity_filter_input do
     field(:resource_types, list_of(non_null(:string)))
     field(:actions, list_of(non_null(:string)))
     field(:categories, list_of(non_null(:string)))
+    field(:outcomes, list_of(non_null(:string)))
+    field(:denial_codes, list_of(non_null(:string)))
+    field(:actor_types, list_of(non_null(:string)))
     field(:actor_ref, :id)
+    field(:on_behalf_of_ref, :id)
+    field(:subject_ref, :id)
+    field(:target_ref, :id)
+    field(:changed_fields, list_of(non_null(:string)))
     field(:source, :string)
     field(:occurred_after, :datetime)
     field(:occurred_before, :datetime)
-    field(:subject_query, :string)
-    field(:event_ref, :id)
     field(:operation_ref, :id)
   end
 
-  input_object :community_activity_stats_filter do
-    field(:resource_types, list_of(non_null(:string)))
-    field(:actions, list_of(non_null(:string)))
-    field(:categories, list_of(non_null(:string)))
-    field(:actor_ref, :id)
-    field(:source, :string)
-    field(:occurred_after, non_null(:datetime))
-    field(:occurred_before, non_null(:datetime))
-    field(:subject_query, :string)
-    field(:operation_ref, :id)
+  input_object :community_activity_selection_input do
+    field(:preset_key, :string)
+    field(:filter, :community_activity_filter_input)
   end
 
   enum :community_activity_export_format do

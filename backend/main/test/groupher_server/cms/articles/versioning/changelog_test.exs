@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Changelog do
       |> Repo.one!()
 
     assert released.occurred_at
-    assert released.actor_id == user.id
+    assert released.actor_ref == user.login
 
     assert {:error, _} =
              CMS.Articles.read_draft(community, :changelog, public.article_hash_id)

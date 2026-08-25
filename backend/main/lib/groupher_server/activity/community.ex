@@ -18,7 +18,13 @@ defmodule GroupherServer.Activity.Community do
     destroy_scheduled: Event.contract([], [:state, :scheduled_at], [:community_log]),
     destroy_cancelled: Event.contract([], [:state], [:community_log]),
     destroyed: Event.contract([], [:state], [:community_log]),
-    lifecycle_reconciled: Event.contract([], [:state, :reason], [:community_log])
+    lifecycle_reconciled: Event.contract([], [:state, :reason], [:community_log]),
+    activity_exported:
+      Event.contract(
+        [:format, :query_context, :exported_count, :manifest],
+        [],
+        [:community_log]
+      )
   }
 
   def contracts, do: Event.classify_contracts(@contracts)

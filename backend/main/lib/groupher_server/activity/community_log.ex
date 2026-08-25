@@ -11,6 +11,7 @@ defmodule GroupherServer.Activity.CommunityLog do
   alias GroupherServer.Activity
   alias GroupherServer.Activity.Event
   alias GroupherServer.Activity.ErrorCat
+  alias GroupherServer.Activity.Filter
   alias GroupherServer.CMS.Model.Community
   alias GroupherServer.CMS.Passport.Authorization
   alias GroupherServer.Repo
@@ -33,7 +34,6 @@ defmodule GroupherServer.Activity.CommunityLog do
   @row_fields [
     :log_type,
     :local_id,
-    :hash_id,
     :event_ref,
     :operation_ref,
     :parent_event_ref,
@@ -48,11 +48,20 @@ defmodule GroupherServer.Activity.CommunityLog do
     :target_ref,
     :target_snapshot,
     :actor_type,
-    :actor_id,
+    :actor_ref,
     :actor_snapshot,
+    :on_behalf_of_type,
+    :on_behalf_of_ref,
+    :on_behalf_of_snapshot,
+    :outcome,
+    :denial_code,
+    :operation_index,
+    :record_sequence,
+    :changed_fields,
     :payload,
     :metadata,
-    :occurred_at
+    :occurred_at,
+    :recorded_at
   ]
 
   @supported_filter_keys [
@@ -62,7 +71,14 @@ defmodule GroupherServer.Activity.CommunityLog do
     :action,
     :actions,
     :categories,
+    :outcomes,
+    :denial_codes,
+    :actor_types,
     :actor_ref,
+    :on_behalf_of_ref,
+    :subject_ref,
+    :target_ref,
+    :changed_fields,
     :source,
     :occurred_after,
     :occurred_before,
@@ -73,11 +89,16 @@ defmodule GroupherServer.Activity.CommunityLog do
   ]
 
   @doc "Lists the safe CommunityLog surface with a fixed server-side page size."
-  def list(%Community{} = community, actor, filter) do
+  def list(%Community{} = community, actor, selection, page \\ 1) do
     with {:ok, true} <- Authorization.check(actor, "audit.read", %{community: community}),
-         {:ok, normalized} <- normalize_filter(filter, :list) do
-      handlers = select_handlers(normalized)
-      {total_count, entries} = page(handlers, community.id, normalized)
+         {:ok, resolved} <- Filter.resolve(selection, active_actions()),
+         {:ok, normalized} <- normalize_filter(Map.put(resolved.filter, :page, page), :list) do
+      {total_count, entries} =
+        if resolved.empty? do
+          {0, []}
+        else
+          page(select_handlers(normalized), community.id, normalized)
+        end
 
       {:ok,
        %{
@@ -85,24 +106,29 @@ defmodule GroupherServer.Activity.CommunityLog do
          total_count: total_count,
          total_pages: max(ceil(total_count / @page_size), 1),
          page_number: normalized.page,
-         page_size: @page_size
+         page_size: @page_size,
+         query_context: resolved.query_context
        }}
     end
   end
 
   @doc "Returns UTC daily counts for the same safe CommunityLog filter as list/3."
-  def stats(%Community{} = community, actor, filter) do
+  def stats(%Community{} = community, actor, selection) do
     with {:ok, true} <- Authorization.check(actor, "audit.read", %{community: community}),
-         {:ok, normalized} <- normalize_filter(filter, :stats) do
-      handlers = select_handlers(normalized)
-      {total_count, counts} = daily_counts(handlers, community.id, normalized)
+         {:ok, resolved} <- Filter.resolve(selection, active_actions()),
+         {:ok, normalized} <- normalize_filter(resolved.filter, :stats) do
+      {total_count, counts} =
+        if resolved.empty?,
+          do: {0, %{}},
+          else: daily_counts(select_handlers(normalized), community.id, normalized)
 
       {:ok,
        %{
          granularity: :day,
          timezone: @utc,
          total_count: total_count,
-         buckets: fill_buckets(normalized.occurred_after, normalized.occurred_before, counts)
+         buckets: fill_buckets(normalized.occurred_after, normalized.occurred_before, counts),
+         query_context: resolved.query_context
        }}
     end
   end
@@ -127,27 +153,53 @@ defmodule GroupherServer.Activity.CommunityLog do
           %{resource_type: handler.resource_type(), actions: actions}
         end)
 
-      {:ok, %{resources: resources, sources: Activity.Const.source_values()}}
+      {:ok,
+       %{
+         resources: resources,
+         sources: Activity.Const.source_values(),
+         actor_types: Activity.Const.actor_type_values(),
+         presets: Filter.descriptors()
+       }}
     end
   end
 
   @doc "Exports the current CommunityLog filter as bounded JSON or CSV data."
-  def export_logs(%Community{} = community, actor, filter, format) when format in [:json, :csv] do
+  def export_logs(%Community{} = community, actor, selection, format)
+      when format in [:json, :csv] do
     with {:ok, true} <- Authorization.check(actor, "audit.read", %{community: community}),
-         {:ok, normalized} <- normalize_filter(filter, :list) do
-      handlers = select_handlers(normalized)
-
+         {:ok, resolved} <- Filter.resolve(selection, active_actions()),
+         {:ok, normalized} <- normalize_filter(Map.put(resolved.filter, :page, 1), :list) do
       {total_count, entries} =
-        page(handlers, community.id, %{normalized | page: 1}, @max_export_entries)
+        if resolved.empty? do
+          {0, []}
+        else
+          page(select_handlers(normalized), community.id, normalized, @max_export_entries)
+        end
 
-      {:ok,
-       %{
-         content: encode_export(entries, format),
-         filename: "community-activity.#{format}",
-         mime_type: if(format == :json, do: "application/json", else: "text/csv"),
-         total_count: total_count,
-         exported_count: length(entries)
-       }}
+      manifest = export_manifest(community, actor, resolved.query_context, length(entries))
+      content = encode_export(entries, format, manifest)
+
+      with {:ok, _audit_event} <-
+             Activity.log(community, :activity_exported,
+               actor: actor,
+               payload: %{
+                 format: format,
+                 query_context: resolved.query_context,
+                 exported_count: length(entries),
+                 manifest: manifest
+               }
+             ) do
+        {:ok,
+         %{
+           content: content,
+           filename: "community-activity.#{format}",
+           mime_type: if(format == :json, do: "application/json", else: "text/csv"),
+           total_count: total_count,
+           exported_count: length(entries),
+           manifest: manifest,
+           query_context: resolved.query_context
+         }}
+      end
     end
   end
 
@@ -156,7 +208,7 @@ defmodule GroupherServer.Activity.CommunityLog do
 
   @doc "Reads one safe CommunityLog event by its public event reference."
   def get_event(%Community{} = community, actor, event_ref) do
-    case list(community, actor, %{event_ref: event_ref, page: 1}) do
+    case list(community, actor, %{filter: %{event_ref: event_ref}}, 1) do
       {:ok, %{entries: [entry | _]}} -> {:ok, entry}
       {:ok, _empty} -> {:ok, nil}
       error -> error
@@ -186,9 +238,35 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp related_children(_community, _actor, nil), do: {:ok, %{entries: []}}
 
   defp related_children(community, actor, event_ref),
-    do: list(community, actor, %{parent_event_ref: event_ref, page: 1})
+    do: list(community, actor, %{filter: %{parent_event_ref: event_ref}}, 1)
 
   def handlers, do: @handlers
+
+  defp active_actions do
+    Enum.flat_map(@handlers, fn handler ->
+      Enum.map(handler.surface_actions(:community_log), fn action ->
+        contract = handler.contracts()[action]
+
+        active_outcomes =
+          contract.outcomes
+          |> Enum.filter(fn {_outcome, config} -> config.producer_status == :active end)
+          |> Enum.map(&elem(&1, 0))
+
+        denial_codes =
+          contract.outcomes
+          |> Map.get(:denied, %{})
+          |> Map.get(:denial_codes, [])
+
+        Map.merge(Event.classification(action), %{
+          action: action,
+          resource_type: handler.resource_type(),
+          outcomes: active_outcomes,
+          denial_codes: denial_codes,
+          changed_fields: contract.write.accepted_changed_fields
+        })
+      end)
+    end)
+  end
 
   defp page([], _community_id, _filter, _page_size), do: {0, []}
 
@@ -203,7 +281,7 @@ defmodule GroupherServer.Activity.CommunityLog do
     page_sql = """
     SELECT *
     FROM (#{union}) AS activity_rows
-    ORDER BY occurred_at DESC, log_type ASC, local_id DESC
+    ORDER BY occurred_at DESC, record_sequence DESC
     LIMIT $#{limit_param} OFFSET $#{offset_param}
     """
 
@@ -266,7 +344,6 @@ defmodule GroupherServer.Activity.CommunityLog do
     """
     SELECT '#{handler.resource_type()}' AS log_type,
            id AS local_id,
-           hash_id::text AS hash_id,
            event_ref,
            operation_ref,
            parent_event_ref,
@@ -281,11 +358,20 @@ defmodule GroupherServer.Activity.CommunityLog do
            target_ref,
            target_snapshot,
            actor_type,
-           actor_id,
+           actor_ref,
            actor_snapshot,
+           on_behalf_of_type,
+           on_behalf_of_ref,
+           on_behalf_of_snapshot,
+           outcome,
+           denial_code,
+           operation_index,
+           record_sequence,
+           changed_fields,
            payload,
            metadata,
-           occurred_at
+           occurred_at,
+           recorded_at
     FROM #{prefix}.#{table}
     WHERE community_id = $1
       AND action IN (#{actions})#{where_sql}
@@ -309,7 +395,6 @@ defmodule GroupherServer.Activity.CommunityLog do
   defp to_log(handler, attrs) do
     log_attrs = %{
       id: attrs.local_id,
-      hash_id: attrs.hash_id,
       event_ref: attrs.event_ref,
       operation_ref: attrs.operation_ref,
       parent_event_ref: attrs.parent_event_ref,
@@ -323,11 +408,20 @@ defmodule GroupherServer.Activity.CommunityLog do
       target_ref: attrs.target_ref,
       target_snapshot: attrs.target_snapshot,
       actor_type: String.to_existing_atom(attrs.actor_type),
-      actor_id: attrs.actor_id,
+      actor_ref: attrs.actor_ref,
       actor_snapshot: attrs.actor_snapshot,
+      on_behalf_of_type: optional_existing_atom(attrs.on_behalf_of_type),
+      on_behalf_of_ref: attrs.on_behalf_of_ref,
+      on_behalf_of_snapshot: attrs.on_behalf_of_snapshot,
+      outcome: String.to_existing_atom(attrs.outcome),
+      denial_code: attrs.denial_code,
+      operation_index: attrs.operation_index,
+      record_sequence: attrs.record_sequence,
+      changed_fields: attrs.changed_fields,
       payload: attrs.payload,
       metadata: attrs.metadata,
-      occurred_at: attrs.occurred_at
+      occurred_at: attrs.occurred_at,
+      recorded_at: attrs.recorded_at
     }
 
     struct(handler.schema(), Map.put(log_attrs, handler.stream_field(), attrs.stream_ref))
@@ -358,6 +452,17 @@ defmodule GroupherServer.Activity.CommunityLog do
          {:ok, resource_types} <- normalize_resource_types(filter),
          {:ok, actions} <- normalize_actions(filter),
          {:ok, categories} <- normalize_categories(filter),
+         {:ok, outcomes} <-
+           normalize_enum_list(Map.get(filter, :outcomes), Activity.Const.outcome_values()),
+         {:ok, actor_types} <-
+           normalize_enum_list(Map.get(filter, :actor_types), Activity.Const.actor_type_values()),
+         {:ok, denial_codes} <-
+           normalize_declared_text_list(Map.get(filter, :denial_codes), declared_denial_codes()),
+         {:ok, changed_fields} <-
+           normalize_declared_text_list(
+             Map.get(filter, :changed_fields),
+             declared_changed_fields()
+           ),
          {:ok, source} <- normalize_source(Map.get(filter, :source)),
          {:ok, occurred_after} <- normalize_datetime(Map.get(filter, :occurred_after)),
          {:ok, occurred_before} <- normalize_datetime(Map.get(filter, :occurred_before)),
@@ -374,7 +479,14 @@ defmodule GroupherServer.Activity.CommunityLog do
          resource_types: resource_types,
          actions: actions,
          categories: categories,
+         outcomes: outcomes,
+         denial_codes: denial_codes,
+         actor_types: actor_types,
          actor_ref: normalize_text(Map.get(filter, :actor_ref)),
+         on_behalf_of_ref: normalize_text(Map.get(filter, :on_behalf_of_ref)),
+         subject_ref: normalize_text(Map.get(filter, :subject_ref)),
+         target_ref: normalize_text(Map.get(filter, :target_ref)),
+         changed_fields: changed_fields,
          source: source,
          occurred_after: occurred_after,
          occurred_before: occurred_before,
@@ -455,6 +567,26 @@ defmodule GroupherServer.Activity.CommunityLog do
     Enum.filter(actions, &MapSet.member?(allowed, &1))
   end
 
+  defp normalize_enum_list(nil, _known), do: {:ok, nil}
+
+  defp normalize_enum_list(value, known) do
+    values = Enum.map(list_value(value), &safe_existing_atom/1)
+
+    if Enum.all?(values, &(&1 in known)),
+      do: {:ok, values},
+      else: {:error, ErrorCat.invalid_pagination()}
+  end
+
+  defp normalize_declared_text_list(nil, _known), do: {:ok, nil}
+
+  defp normalize_declared_text_list(value, known) do
+    values = list_value(value) |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+
+    if values != [] and Enum.all?(values, &(&1 in known)),
+      do: {:ok, Enum.uniq(values)},
+      else: {:error, ErrorCat.invalid_pagination()}
+  end
+
   defp normalize_source(nil), do: {:ok, nil}
 
   defp normalize_source(source) do
@@ -502,7 +634,34 @@ defmodule GroupherServer.Activity.CommunityLog do
     {conditions, params, next} = add_array_condition(conditions, params, next, filter.actions)
 
     {conditions, params, next} =
-      add_condition(conditions, params, next, filter.actor_ref, "actor_snapshot->>'id' = $%d")
+      add_text_array_condition(conditions, params, next, filter.outcomes, "outcome")
+
+    {conditions, params, next} =
+      add_text_array_condition(conditions, params, next, filter.denial_codes, "denial_code")
+
+    {conditions, params, next} =
+      add_text_array_condition(conditions, params, next, filter.actor_types, "actor_type")
+
+    {conditions, params, next} =
+      add_condition(conditions, params, next, filter.actor_ref, "actor_ref = $%d")
+
+    {conditions, params, next} =
+      add_condition(conditions, params, next, filter.on_behalf_of_ref, "on_behalf_of_ref = $%d")
+
+    {conditions, params, next} =
+      add_condition(conditions, params, next, filter.subject_ref, "subject_ref = $%d")
+
+    {conditions, params, next} =
+      add_condition(conditions, params, next, filter.target_ref, "target_ref = $%d")
+
+    {conditions, params, next} =
+      case filter.changed_fields do
+        nil ->
+          {conditions, params, next}
+
+        fields ->
+          {[" AND changed_fields @> $#{next}::text[]" | conditions], [fields | params], next + 1}
+      end
 
     {conditions, params, next} =
       add_condition(conditions, params, next, filter.source, "source = $%d")
@@ -565,6 +724,30 @@ defmodule GroupherServer.Activity.CommunityLog do
     |> Enum.uniq()
   end
 
+  defp declared_denial_codes do
+    @handlers
+    |> Enum.flat_map(fn handler ->
+      Enum.flat_map(handler.contracts(), fn {_action, contract} ->
+        contract.outcomes
+        |> Map.get(:denied, %{})
+        |> Map.get(:denial_codes, [])
+      end)
+    end)
+    |> Enum.map(&to_string/1)
+    |> Enum.uniq()
+  end
+
+  defp declared_changed_fields do
+    @handlers
+    |> Enum.flat_map(fn handler ->
+      Enum.flat_map(handler.contracts(), fn {_action, contract} ->
+        contract.write.accepted_changed_fields
+      end)
+    end)
+    |> Enum.map(&to_string/1)
+    |> Enum.uniq()
+  end
+
   defp title_search_allowed?(actions) do
     @handlers
     |> Enum.flat_map(fn handler ->
@@ -588,6 +771,14 @@ defmodule GroupherServer.Activity.CommunityLog do
       {[" AND action = ANY($#{next}::text[])" | conditions],
        [Enum.map(actions, &to_string/1) | params], next + 1}
 
+  defp add_text_array_condition(conditions, params, next, nil, _field),
+    do: {conditions, params, next}
+
+  defp add_text_array_condition(conditions, params, next, values, field),
+    do:
+      {[" AND #{field} = ANY($#{next}::text[])" | conditions],
+       [Enum.map(values, &to_string/1) | params], next + 1}
+
   defp add_condition(conditions, params, next, nil, _template), do: {conditions, params, next}
 
   defp add_condition(conditions, params, next, value, template) do
@@ -608,11 +799,12 @@ defmodule GroupherServer.Activity.CommunityLog do
     end)
   end
 
-  defp encode_export(entries, :json), do: Jason.encode!(entries)
+  defp encode_export(entries, :json, manifest),
+    do: Jason.encode!(%{manifest: manifest, entries: entries})
 
-  defp encode_export(entries, :csv) do
+  defp encode_export(entries, :csv, _manifest) do
     header =
-      ~w(event_ref operation_ref parent_event_ref action category high_risk resource_type resource_ref actor_ref subject_ref source occurred_at)
+      ~w(event_ref operation_ref parent_event_ref operation_index record_sequence action outcome denial_code changed_fields category high_risk resource_type resource_ref actor_type actor_ref subject_ref source occurred_at recorded_at)
 
     rows =
       Enum.map(entries, fn entry ->
@@ -620,15 +812,22 @@ defmodule GroupherServer.Activity.CommunityLog do
           entry.event_ref,
           entry.operation_ref,
           entry.parent_event_ref,
+          entry.operation_index,
+          entry.record_sequence,
           entry.action,
+          entry.outcome,
+          entry.denial_code,
+          Enum.join(entry.changed_fields, "|"),
           entry.category,
           entry.high_risk,
           entry.resource.type,
           entry.resource.ref,
-          entry.actor.id || entry.actor.login || entry.actor.type,
+          entry.actor.type,
+          Map.get(entry.actor, :id) || Map.get(entry.actor, :login) || entry.actor.type,
           entry.subject.ref,
           entry.source,
-          entry.occurred_at
+          entry.occurred_at,
+          entry.recorded_at
         ]
       end)
 
@@ -660,5 +859,20 @@ defmodule GroupherServer.Activity.CommunityLog do
     String.to_existing_atom(value)
   rescue
     ArgumentError -> nil
+  end
+
+  defp optional_existing_atom(nil), do: nil
+  defp optional_existing_atom(value), do: String.to_existing_atom(value)
+
+  defp export_manifest(community, actor, query_context, count) do
+    %{
+      schema_version: 3,
+      generated_at: DateTime.utc_now(:second),
+      generated_by: Event.actor_attrs(actor).actor_ref,
+      community_ref: community.slug,
+      query_context: query_context,
+      event_count: count,
+      timezone: @utc
+    }
   end
 end

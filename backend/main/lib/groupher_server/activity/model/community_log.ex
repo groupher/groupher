@@ -17,6 +17,7 @@ defmodule GroupherServer.Activity.Model.CommunityLog do
       :destroy_scheduled,
       :destroy_cancelled,
       :destroyed,
-      :lifecycle_reconciled
+      :lifecycle_reconciled,
+      :activity_exported
     ]
 end

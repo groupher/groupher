@@ -74,16 +74,13 @@ type RootQueryType {
   articleLogs(article: ArticlePathInput!, filter: ArticleLogFilter): PagedArticleLogs!
 
   "Safe Community Activity timeline across readable resource streams"
-  communityActivity(community: String!, filter: CommunityActivityFilter): PagedCommunityActivity!
+  communityActivity(community: String!, selection: CommunityActivitySelectionInput!, page: Int): PagedCommunityActivity!
 
   "UTC daily Community Activity counts for the timeline overview"
-  communityActivityStats(community: String!, filter: CommunityActivityStatsFilter!): CommunityActivityStats!
+  communityActivityStats(community: String!, selection: CommunityActivitySelectionInput!): CommunityActivityStats!
 
   "Active Community Activity actions available to the current manager"
   communityActivityConfig(community: String!): CommunityActivityConfig!
-
-  "Exports the current Community Activity filter"
-  communityActivityExport(community: String!, filter: CommunityActivityFilter, format: CommunityActivityExportFormat!): CommunityActivityExport!
 
   "Reads one safe Community Activity event by event reference"
   communityActivityEvent(community: String!, eventRef: ID!): CommunityActivityEvent
@@ -755,6 +752,11 @@ type RootMutationType {
 
   "undo pin a comment"
   undoPinComment(comment: CommentPathInput!): Comment
+
+  "Exports Activity evidence and records the export before returning the artifact"
+  exportCommunityActivity(
+    community: String!, selection: CommunityActivitySelectionInput!, format: CommunityActivityExportFormat!
+  ): CommunityActivityExport!
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
@@ -1738,18 +1740,26 @@ type CommunityActivityEvent {
   action: String!
   category: String!
   highRisk: Boolean!
+  outcome: String!
+  denialCode: String
+  changedFields: [String!]!
+  operationIndex: Int!
+  recordSequence: Int!
   resource: ActivityResourceRef!
   actor: ArticleLogActor!
+  onBehalfOf: ArticleLogActor
   subject: ActivityResourceRef!
   target: ActivityResourceRef
   source: String!
   payload: Json!
   metadata: Json!
   occurredAt: DateTime!
+  recordedAt: DateTime!
 }
 
 type PagedCommunityActivity {
   entries: [CommunityActivityEvent!]!
+  queryContext: CommunityActivityQueryContext!
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1767,6 +1777,7 @@ type CommunityActivityStats {
   timezone: String!
   totalCount: Int!
   buckets: [CommunityActivityBucket!]!
+  queryContext: CommunityActivityQueryContext!
 }
 
 type CommunityActivityAction {
@@ -1784,6 +1795,39 @@ type CommunityActivityResourceConfig {
 type CommunityActivityConfig {
   resources: [CommunityActivityResourceConfig!]!
   sources: [String!]!
+  actorTypes: [String!]!
+  presets: [CommunityActivityPresetDescriptor!]!
+}
+
+enum CommunityActivityRelativeTimeUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+type CommunityActivityDefaultTimeRange {
+  amount: Int!
+  unit: CommunityActivityRelativeTimeUnit!
+}
+
+type CommunityActivityPresetDescriptor {
+  key: String!
+  questionKey: String!
+  descriptionKey: String!
+  coverageNoteKey: String
+  defaultTimeRange: CommunityActivityDefaultTimeRange!
+}
+
+type CommunityActivityAppliedPreset {
+  key: String!
+  questionKey: String!
+}
+
+type CommunityActivityQueryContext {
+  preset: CommunityActivityAppliedPreset
+  appliedFilter: Json!
+  coverage: Json!
+  presetIntersectionEmpty: Boolean!
 }
 
 type CommunityActivityExport {
@@ -1792,6 +1836,8 @@ type CommunityActivityExport {
   mimeType: String!
   totalCount: Int!
   exportedCount: Int!
+  manifest: Json!
+  queryContext: CommunityActivityQueryContext!
 }
 
 enum DocTreeNodeType {
@@ -3623,30 +3669,27 @@ input ArticleLogFilter {
   page: Int
 }
 
-input CommunityActivityFilter {
-  page: Int
+input CommunityActivityFilterInput {
   resourceTypes: [String!]
   actions: [String!]
   categories: [String!]
+  outcomes: [String!]
+  denialCodes: [String!]
+  actorTypes: [String!]
   actorRef: ID
+  onBehalfOfRef: ID
+  subjectRef: ID
+  targetRef: ID
+  changedFields: [String!]
   source: String
   occurredAfter: DateTime
   occurredBefore: DateTime
-  subjectQuery: String
-  eventRef: ID
   operationRef: ID
 }
 
-input CommunityActivityStatsFilter {
-  resourceTypes: [String!]
-  actions: [String!]
-  categories: [String!]
-  actorRef: ID
-  source: String
-  occurredAfter: DateTime!
-  occurredBefore: DateTime!
-  subjectQuery: String
-  operationRef: ID
+input CommunityActivitySelectionInput {
+  presetKey: String
+  filter: CommunityActivityFilterInput
 }
 
 enum CommunityActivityExportFormat {

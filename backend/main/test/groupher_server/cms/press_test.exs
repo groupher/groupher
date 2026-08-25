@@ -194,6 +194,15 @@ defmodule GroupherServer.Test.CMS.Press do
     assert config.feed_threads == ["post", "changelog"]
     assert config.revision == 1
 
+    activity =
+      Repo.get_by!(GroupherServer.Activity.Model.PressLog,
+        community_id: community.id,
+        action: :config_updated
+      )
+
+    assert Enum.sort(activity.changed_fields) ==
+             Enum.sort(["feed_enabled", "feed_type", "feed_count", "feed_threads"])
+
     assert {:ok, updated} = CMS.Press.update_config(community, %{feed_count: 15}, user)
     assert updated.revision == 2
   end

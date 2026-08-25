@@ -12,6 +12,15 @@ defmodule GroupherServer.Activity.Changelog do
     schema: ChangelogLog,
     stream_field: :changelog_ref
 
+  @trash_denial_codes [
+    :permission_denied,
+    :article_not_mutable,
+    :ancestor_community_not_writable,
+    :article_archived,
+    :article_deleted,
+    :article_destroyed
+  ]
+
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),
     title_changed: Event.contract([:title], [:revision_ref], [:article_log, :community_log]),
@@ -27,7 +36,13 @@ defmodule GroupherServer.Activity.Changelog do
       |> Event.contract_only(),
     release_withdrawn:
       Event.contract([], [], [:article_log, :community_log]) |> Event.contract_only(),
-    trashed: Event.contract([], [], [:community_log]),
+    trashed:
+      Event.contract([], [], [:community_log], nil,
+        outcomes: %{
+          allowed: %{producer_status: :active},
+          denied: %{producer_status: :active, denial_codes: @trash_denial_codes}
+        }
+      ),
     restored: Event.contract([], [], [:article_log, :community_log]),
     archived: Event.contract([], [:batch], [:article_log, :community_log]),
     permanently_deleted: Event.contract([], [], [:community_log]),

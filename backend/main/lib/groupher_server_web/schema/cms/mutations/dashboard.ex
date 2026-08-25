@@ -17,6 +17,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
   import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_args: 1, dsb_args: 2]
 
   object :cms_dsb_mutations do
+    @desc "Exports Activity evidence and records the export before returning the artifact"
+    field :export_community_activity, non_null(:community_activity_export) do
+      arg(:community, non_null(:string))
+      arg(:selection, non_null(:community_activity_selection_input))
+      arg(:format, non_null(:community_activity_export_format))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.export_community_activity/3)
+    end
+
     @desc "update base info in dashboard"
     field :update_dashboard_base_info, :dsb do
       arg(:community, non_null(:string))

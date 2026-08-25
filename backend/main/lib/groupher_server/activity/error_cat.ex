@@ -21,7 +21,8 @@ defmodule GroupherServer.Activity.ErrorCat do
   error(:invalid_parent_event_ref, code: 6112)
   error(:invalid_occurred_at, code: 6114)
   error(:invalid_pagination, code: 6115)
-  error(:invalid_event_sequence, code: 6116)
+  error(:invalid_operation_index, code: 6116)
   error(:duplicate_event, code: 6117)
   error(:append_failed, code: 6118)
+  error(:preset_unavailable, code: 6119)
 end

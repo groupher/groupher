@@ -402,8 +402,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:high_risk, non_null(:boolean))
 
+    field(:outcome, non_null(:string),
+      resolve: fn event, _, _ -> {:ok, to_string(event.outcome)} end
+    )
+
+    field(:denial_code, :string)
+    field(:changed_fields, non_null(list_of(non_null(:string))))
+    field(:operation_index, non_null(:integer))
+    field(:record_sequence, non_null(:integer))
+
     field(:resource, non_null(:activity_resource_ref))
     field(:actor, non_null(:article_log_actor))
+    field(:on_behalf_of, :article_log_actor)
     field(:subject, non_null(:activity_resource_ref))
     field(:target, :activity_resource_ref)
 
@@ -414,10 +424,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:payload, non_null(:json))
     field(:metadata, non_null(:json))
     field(:occurred_at, non_null(:datetime))
+    field(:recorded_at, non_null(:datetime))
   end
 
   object :paged_community_activity do
     field(:entries, non_null(list_of(non_null(:community_activity_event))))
+    field(:query_context, non_null(:community_activity_query_context))
     pagination_fields()
   end
 
@@ -435,6 +447,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:timezone, non_null(:string))
     field(:total_count, non_null(:integer))
     field(:buckets, non_null(list_of(non_null(:community_activity_bucket))))
+    field(:query_context, non_null(:community_activity_query_context))
   end
 
   object :community_activity_action do
@@ -463,6 +476,43 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:sources, non_null(list_of(non_null(:string))),
       resolve: fn config, _, _ -> {:ok, Enum.map(config.sources, &to_string/1)} end
     )
+
+    field(:actor_types, non_null(list_of(non_null(:string))),
+      resolve: fn config, _, _ -> {:ok, Enum.map(config.actor_types, &to_string/1)} end
+    )
+
+    field(:presets, non_null(list_of(non_null(:community_activity_preset_descriptor))))
+  end
+
+  enum :community_activity_relative_time_unit do
+    value(:day)
+    value(:week)
+    value(:month)
+  end
+
+  object :community_activity_default_time_range do
+    field(:amount, non_null(:integer))
+    field(:unit, non_null(:community_activity_relative_time_unit))
+  end
+
+  object :community_activity_preset_descriptor do
+    field(:key, non_null(:string))
+    field(:question_key, non_null(:string))
+    field(:description_key, non_null(:string))
+    field(:coverage_note_key, :string)
+    field(:default_time_range, non_null(:community_activity_default_time_range))
+  end
+
+  object :community_activity_applied_preset do
+    field(:key, non_null(:string))
+    field(:question_key, non_null(:string))
+  end
+
+  object :community_activity_query_context do
+    field(:preset, :community_activity_applied_preset)
+    field(:applied_filter, non_null(:json))
+    field(:coverage, non_null(:json))
+    field(:preset_intersection_empty, non_null(:boolean))
   end
 
   object :community_activity_export do
@@ -471,6 +521,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:mime_type, non_null(:string))
     field(:total_count, non_null(:integer))
     field(:exported_count, non_null(:integer))
+    field(:manifest, non_null(:json))
+    field(:query_context, non_null(:community_activity_query_context))
   end
 
   defp uuid_ref(nil), do: nil

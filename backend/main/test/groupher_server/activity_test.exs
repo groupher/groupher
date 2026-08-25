@@ -70,7 +70,7 @@ defmodule GroupherServer.Test.ActivityTest do
              Activity.log(post, :restored,
                actor: user,
                operation_ref: derived_operation_ref,
-               event_sequence: 1
+               operation_index: 1
              )
 
     assert first.operation_ref == second.operation_ref
@@ -108,6 +108,22 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:ok, system_event} = Activity.log(post, :restored)
     assert system_event.actor_type == :system
+    assert system_event.actor_ref == "groupher"
+    assert system_event.outcome == :allowed
+    assert system_event.denial_code == nil
+    assert system_event.operation_index == 0
+    assert is_integer(system_event.record_sequence)
+    assert %DateTime{} = system_event.recorded_at
+
+    assert {:ok, changed_event} =
+             Activity.log(post, :title_changed,
+               actor: user,
+               payload: %{title: "changed"},
+               changed_fields: [:title]
+             )
+
+    assert changed_event.actor_ref == user.login
+    assert changed_event.changed_fields == ["title"]
 
     assert {:ok, child_event} =
              Activity.log(post, :restored,
@@ -125,6 +141,28 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:error, %ErrorCat.Error{reason: :invalid_parent_event_ref}} =
              Activity.log(post, :restored, actor: user, parent_event_ref: "not-a-uuid")
+  end
+
+  test "authenticated Gate denials append a denied Activity fact" do
+    {community, post, _attrs, _owner} = mock_article(:post)
+    {:ok, stranger} = db_insert(:user)
+
+    assert {:ok, _lifecycle} =
+             CMS.Articles.Lifecycle.transition(
+               community.id,
+               :post,
+               post.article_hash_id,
+               :archived
+             )
+
+    assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
+             CMS.Articles.trash(post, stranger)
+
+    denied = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :trashed)
+    assert denied.outcome == :denied
+    assert denied.denial_code == "article_archived"
+    assert denied.actor_type == :user
+    assert denied.actor_ref == stranger.login
   end
 
   test "handler registry, Comment routing and surface contracts fail closed" do
@@ -235,7 +273,7 @@ defmodule GroupherServer.Test.ActivityTest do
       | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
     }
 
-    assert {:ok, result} = Activity.list_community_logs(community, manager, %{page: 1})
+    assert {:ok, result} = Activity.list_community_logs(community, manager, %{filter: %{}}, 1)
 
     refute Enum.any?(result.entries, &(&1.action == :moderation_review_started))
   end
@@ -264,7 +302,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
   test "ArticleLog keeps Article and Doc branch permissions, surface filtering and tie order" do
     {_community, post, _attrs, user} = mock_article(:post)
-    occurred_at = DateTime.add(DateTime.utc_now(:second), 3_600, :second)
+    occurred_at = DateTime.utc_now(:second)
     operation_ref = Ecto.UUID.generate()
 
     assert {:ok, older} =
@@ -272,7 +310,7 @@ defmodule GroupherServer.Test.ActivityTest do
                actor: user,
                occurred_at: occurred_at,
                operation_ref: operation_ref,
-               event_sequence: 0
+               operation_index: 0
              )
 
     assert {:ok, newer} =
@@ -280,7 +318,7 @@ defmodule GroupherServer.Test.ActivityTest do
                actor: user,
                occurred_at: occurred_at,
                operation_ref: operation_ref,
-               event_sequence: 1
+               operation_index: 1
              )
 
     assert {:ok, _} =
@@ -291,7 +329,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:ok, %{entries: entries}} = Activity.list_article_logs(post, nil)
     restored_ids = entries |> Enum.filter(&(&1.action == :restored)) |> Enum.map(& &1.id)
-    assert Enum.take(restored_ids, 2) == [newer.hash_id, older.hash_id]
+    assert Enum.take(restored_ids, 2) == [newer.event_ref, older.event_ref]
     refute Enum.any?(entries, &(&1.action in [:trashed, :permanently_deleted]))
 
     {doc_community, doc, _doc_attrs, doc_user} = mock_article(:doc)
@@ -423,7 +461,7 @@ defmodule GroupherServer.Test.ActivityTest do
       | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
     }
 
-    occurred_at = DateTime.add(DateTime.utc_now(:second), 3_600, :second)
+    occurred_at = DateTime.utc_now(:second)
 
     assert {:ok, _} =
              Activity.log(post, :restored,
@@ -490,7 +528,7 @@ defmodule GroupherServer.Test.ActivityTest do
              )
 
     assert {:ok, result} =
-             Activity.list_community_logs(community, manager, %{page: 1})
+             Activity.list_community_logs(community, manager, %{filter: %{}}, 1)
 
     assert result.total_count >= 2
 
@@ -507,45 +545,50 @@ defmodule GroupherServer.Test.ActivityTest do
            )
 
     assert result.entries |> Enum.take(8) |> Enum.map(& &1.resource.type) == [
-             :blog,
-             :blog,
-             :changelog,
-             :community,
-             :doc,
+             :press,
              :doc_tree,
-             :post,
-             :press
+             :blog,
+             :doc,
+             :changelog,
+             :blog,
+             :community,
+             :post
            ]
 
-    assert result.entries |> Enum.take(2) |> Enum.map(& &1.id) |> hd() == second_blog.hash_id
+    assert Enum.at(result.entries, 2).id == second_blog.event_ref
 
     community_entry = Enum.find(result.entries, &(&1.action == :activated))
-    assert community_entry.id == Repo.get_by!(CommunityLog, action: :activated).hash_id
+    assert community_entry.id == Repo.get_by!(CommunityLog, action: :activated).event_ref
     assert community_entry.metadata == %{state: "active"}
     assert community_entry.event_ref
     assert community_entry.operation_ref
 
     assert {:ok, blog_result} =
-             Activity.list_community_logs(community, manager, %{
-               page: 1,
-               resource_type: :blog
-             })
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{resource_types: [:blog]}},
+               1
+             )
 
     assert blog_result.total_count == 2
     assert Enum.all?(blog_result.entries, &(&1.resource.type == :blog))
 
     assert {:ok, press_result} =
-             Activity.list_community_logs(community, manager, %{
-               page: 1,
-               resource_type: :press,
-               action: :config_updated
-             })
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{filter: %{resource_types: [:press], actions: [:config_updated]}},
+               1
+             )
 
     assert press_result.total_count == 1
     assert [%{action: :config_updated, resource: %{type: :press}}] = press_result.entries
 
-    assert {:error, _} = Activity.list_community_logs(community, manager, %{page: 0})
-    assert {:error, _} = Activity.list_community_logs(community, manager, %{page: 1, size: 20})
+    assert {:error, _} = Activity.list_community_logs(community, manager, %{filter: %{}}, 0)
+
+    assert {:error, _} =
+             Activity.list_community_logs(community, manager, %{filter: %{size: 20}}, 1)
   end
 
   test "CommunityLog uses fixed-size database pagination across pages" do
@@ -557,7 +600,7 @@ defmodule GroupherServer.Test.ActivityTest do
       | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
     }
 
-    base_time = DateTime.add(DateTime.utc_now(:second), 7_200, :second)
+    base_time = DateTime.add(DateTime.utc_now(:second), -60, :second)
 
     for sequence <- 1..35 do
       assert {:ok, _} =
@@ -569,8 +612,10 @@ defmodule GroupherServer.Test.ActivityTest do
                )
     end
 
-    assert {:ok, first_page} = Activity.list_community_logs(community, manager, %{page: 1})
-    assert {:ok, second_page} = Activity.list_community_logs(community, manager, %{page: 2})
+    assert {:ok, first_page} = Activity.list_community_logs(community, manager, %{filter: %{}}, 1)
+
+    assert {:ok, second_page} =
+             Activity.list_community_logs(community, manager, %{filter: %{}}, 2)
 
     assert first_page.page_size == 30
     assert length(first_page.entries) == 30
@@ -613,9 +658,11 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:ok, stats} =
              Activity.get_community_log_stats(community, manager, %{
-               occurred_after: start,
-               occurred_before: before,
-               actions: ["activated"]
+               filter: %{
+                 occurred_after: start,
+                 occurred_before: before,
+                 actions: ["activated"]
+               }
              })
 
     assert stats.granularity == :day
@@ -625,8 +672,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:ok, empty} =
              Activity.list_community_logs(community, manager, %{
-               resource_types: ["community"],
-               actions: ["created"]
+               filter: %{resource_types: ["community"], actions: ["created"]}
              })
 
     assert empty.total_count == 0
@@ -657,7 +703,7 @@ defmodule GroupherServer.Test.ActivityTest do
       | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
     }
 
-    assert {:ok, result} = Activity.list_community_logs(community, manager, %{page: 1})
+    assert {:ok, result} = Activity.list_community_logs(community, manager, %{filter: %{}}, 1)
     child = Enum.find(result.entries, &(&1.action == :setup_retried))
     assert child.parent_event_ref == parent.event_ref
   end
@@ -709,14 +755,15 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:error, _} =
              Activity.list_community_logs(community, manager, %{
-               occurred_after: after_datetime,
-               occurred_before: before_datetime
+               filter: %{occurred_after: after_datetime, occurred_before: before_datetime}
              })
 
     assert {:error, _} =
              Activity.get_community_log_stats(community, manager, %{
-               occurred_after: after_datetime,
-               occurred_before: DateTime.add(after_datetime, 367, :day)
+               filter: %{
+                 occurred_after: after_datetime,
+                 occurred_before: DateTime.add(after_datetime, 367, :day)
+               }
              })
   end
 
@@ -737,15 +784,92 @@ defmodule GroupherServer.Test.ActivityTest do
              )
 
     filter = %{actions: ["activated"]}
-    assert {:ok, json} = Activity.export_community_logs(community, manager, filter, :json)
+
+    assert {:ok, json} =
+             Activity.export_community_logs(community, manager, %{filter: filter}, :json)
+
     assert json.mime_type == "application/json"
     assert json.exported_count == 1
     assert json.content =~ "activated"
+    assert json.manifest.schema_version == 3
 
-    assert {:ok, csv} = Activity.export_community_logs(community, manager, filter, :csv)
+    exported = Repo.get_by!(CommunityLog, action: :activity_exported)
+    assert exported.actor_ref == manager.login
+    assert exported.payload["exported_count"] == 1
+
+    assert {:ok, csv} =
+             Activity.export_community_logs(community, manager, %{filter: filter}, :csv)
+
     assert csv.mime_type == "text/csv"
-    assert csv.content =~ "event_ref,operation_ref,parent_event_ref"
+
+    assert csv.content =~
+             "event_ref,operation_ref,parent_event_ref,operation_index,record_sequence"
+
     assert csv.exported_count == 1
+  end
+
+  test "CommunityLog presets resolve to one applied filter and explain empty intersections" do
+    {community, _post, _attrs, _owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    assert {:ok, result} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{
+                 preset_key: "destructive_actions",
+                 filter: %{actions: ["created"]}
+               },
+               1
+             )
+
+    assert result.entries == []
+    assert result.query_context.preset.key == "destructive_actions"
+    assert result.query_context.preset_intersection_empty
+    assert %DateTime{} = result.query_context.applied_filter.occurred_after
+    assert %DateTime{} = result.query_context.applied_filter.occurred_before
+
+    assert {:error, %ErrorCat.Error{reason: :preset_unavailable}} =
+             Activity.list_community_logs(
+               community,
+               manager,
+               %{preset_key: "missing", filter: %{}},
+               1
+             )
+  end
+
+  test "CommunityLog export fails closed when its self-audit append fails" do
+    {community, _post, _attrs, _owner} = mock_article(:post)
+    {:ok, manager} = db_insert(:user)
+
+    manager = %{
+      manager
+      | cur_passport: %{"global" => %{}, community.slug => %{"root" => true}}
+    }
+
+    constraint = "community_logs_reject_export_test"
+
+    Repo.query!("""
+    ALTER TABLE activity.community_logs
+    ADD CONSTRAINT #{constraint} CHECK (action <> 'activity_exported') NOT VALID
+    """)
+
+    try do
+      assert {:error, %ErrorCat.Error{reason: :append_failed}} =
+               Activity.export_community_logs(
+                 community,
+                 manager,
+                 %{filter: %{actions: ["activated"]}},
+                 :json
+               )
+    after
+      Repo.query!("ALTER TABLE activity.community_logs DROP CONSTRAINT #{constraint}")
+    end
   end
 
   defp check_values(table, field) do

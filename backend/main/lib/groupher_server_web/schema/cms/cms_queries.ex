@@ -32,7 +32,8 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "Safe Community Activity timeline across readable resource streams"
     field :community_activity, non_null(:paged_community_activity) do
       arg(:community, non_null(:string))
-      arg(:filter, :community_activity_filter)
+      arg(:selection, non_null(:community_activity_selection_input))
+      arg(:page, :integer, default_value: 1)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
@@ -43,7 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "UTC daily Community Activity counts for the timeline overview"
     field :community_activity_stats, non_null(:community_activity_stats) do
       arg(:community, non_null(:string))
-      arg(:filter, non_null(:community_activity_stats_filter))
+      arg(:selection, non_null(:community_activity_selection_input))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "audit.read")
@@ -59,18 +60,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       middleware(M.Passport, action: "audit.read")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.community_activity_config/3)
-    end
-
-    @desc "Exports the current Community Activity filter"
-    field :community_activity_export, non_null(:community_activity_export) do
-      arg(:community, non_null(:string))
-      arg(:filter, :community_activity_filter)
-      arg(:format, non_null(:community_activity_export_format))
-
-      middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "audit.read")
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.community_activity_export/3)
     end
 
     @desc "Reads one safe Community Activity event by event reference"

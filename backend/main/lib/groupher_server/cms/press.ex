@@ -99,23 +99,26 @@ defmodule GroupherServer.CMS.Press do
       Multi.new()
       |> Multi.insert_or_update(:config, changeset)
       |> Multi.run(:activity, fn _, %{config: config} ->
+        changed_payload =
+          changeset.changes
+          |> Map.take([
+            :markdown_enabled,
+            :feed_enabled,
+            :feed_type,
+            :feed_count,
+            :feed_threads,
+            :llms_enabled,
+            :sitemap_enabled
+          ])
+
         Activity.log(config, :config_updated,
           actor: actor,
           source: :admin,
           operation_ref: operation_ref,
           stream_ref: community.slug,
           occurred_at: config.updated_at,
-          payload:
-            changeset.changes
-            |> Map.take([
-              :markdown_enabled,
-              :feed_enabled,
-              :feed_type,
-              :feed_count,
-              :feed_threads,
-              :llms_enabled,
-              :sitemap_enabled
-            ]),
+          payload: changed_payload,
+          changed_fields: Map.keys(changed_payload),
           metadata: %{revision: config.revision}
         )
       end)

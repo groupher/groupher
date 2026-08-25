@@ -39,6 +39,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   alias GroupherServer.Accounts.Publish
   alias GroupherServer.{Activity, CMS, Repo}
   alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias GroupherServer.CMS.Gate.Decision
   alias Helper.{ORM, T}
 
   require CMS.Const
@@ -151,12 +152,19 @@ defmodule GroupherServer.CMS.Articles.Trash do
             {:ok, item}
 
           nil ->
-            with {:ok, canonical} <- CMS.Gate.access_check(actor, :delete, article) do
-              MutationLock.with_article(
-                community,
-                article,
-                fn -> do_trash(community, thread, canonical.article_hash_id, actor, opts) end
-              )
+            case CMS.Gate.access_check(actor, :delete, article) do
+              {:ok, canonical} ->
+                MutationLock.with_article(
+                  community,
+                  article,
+                  fn -> do_trash(community, thread, canonical.article_hash_id, actor, opts) end
+                )
+
+              {:error, %Decision{} = decision} ->
+                record_denied_trash(article, actor, decision)
+
+              error ->
+                error
             end
         end
       else
@@ -166,6 +174,22 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
     sync_search(result, :delete)
   end
+
+  defp record_denied_trash(article, %User{} = actor, %Decision{} = decision) do
+    reason = Decision.primary_reason(decision)
+
+    with {:ok, _event} <-
+           Activity.log(article, :trashed,
+             actor: actor,
+             outcome: :denied,
+             denial_code: reason
+           ) do
+      {:error, decision}
+    end
+  end
+
+  defp record_denied_trash(_article, _actor, %Decision{} = decision),
+    do: {:error, decision}
 
   @doc """
   Creates one Article membership under an already-created action.
