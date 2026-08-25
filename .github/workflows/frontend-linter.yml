@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -14,7 +13,6 @@ on:
   push:
     paths:
       - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -54,8 +52,6 @@ jobs:
               - 'frontend/apply/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-            gateway:
-              - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
               - 'frontend/**/.oxlintrc.json'
@@ -74,7 +70,6 @@ jobs:
           COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
           APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
-          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
           SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
         run: |
           targets=()
@@ -111,10 +106,6 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
             add_target '{"target":"landing","workspace":"@groupher/frontend-landing"}'
-          fi
-
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then

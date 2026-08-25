@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
@@ -12,7 +11,6 @@ on:
   push:
     paths:
       - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
@@ -66,10 +64,6 @@ jobs:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/landing/tsconfig*.json'
               - 'frontend/landing/package.json'
-            gateway:
-              - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-              - 'infra/gateway/tsconfig*.json'
-              - 'infra/gateway/package.json'
 
       - name: Build matrix
         id: matrix
@@ -81,7 +75,6 @@ jobs:
           COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
           APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
-          GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
         run: |
           targets=()
 
@@ -111,10 +104,6 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
             targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
-          fi
-
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then
