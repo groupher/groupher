@@ -1,9 +1,9 @@
-name: Build frontend dash
+name: Build frontend apply
 
 on:
   pull_request:
     paths:
-      - 'frontend/dash/**'
+      - 'frontend/apply/**'
       - 'frontend/core/**'
       - 'package.json'
       - 'yarn.lock'
@@ -11,22 +11,23 @@ on:
     branches:
       - dev
     paths:
-      - 'frontend/dash/**'
+      - 'frontend/apply/**'
       - 'frontend/core/**'
       - 'package.json'
       - 'yarn.lock'
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    name: Build dash
+    name: Build apply
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: yarn
@@ -39,4 +40,4 @@ jobs:
         run: yarn install --immutable
 
       - name: Build project
-        run: yarn build:prod:dash
+        run: yarn build:prod:apply

@@ -3,7 +3,7 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
@@ -13,7 +13,7 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
@@ -48,6 +48,10 @@ jobs:
               - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             dash:
               - 'frontend/dash/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+            community:
+              - 'frontend/community/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+            apply:
+              - 'frontend/apply/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             gateway:
@@ -67,6 +71,8 @@ jobs:
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           DASH_CHANGED: ${{ steps.filter.outputs.dash }}
+          COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
+          APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
           GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
           SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
@@ -93,6 +99,14 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASH_CHANGED" = "true" ]; then
             add_target '{"target":"dash","workspace":"@groupher/frontend-dash"}'
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$COMMUNITY_CHANGED" = "true" ]; then
+            add_target '{"target":"community","workspace":"@groupher/frontend-community"}'
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$APPLY_CHANGED" = "true" ]; then
+            add_target '{"target":"apply","workspace":"@groupher/frontend-apply"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then

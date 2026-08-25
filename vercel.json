@@ -1,3 +1,0 @@
-{
-  "ignoreCommand": "bash -c 'if [ -f frontend/scripts/vercel.ignore.sh ]; then exec bash frontend/scripts/vercel.ignore.sh; else exec bash ../../frontend/scripts/vercel.ignore.sh; fi'"
-}

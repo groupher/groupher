@@ -156,7 +156,6 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
 export const INFRA_PLATFORMS: TInfraPlatform[] = INFRA_LINK_GROUPS[0].platforms
 
 export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeploymentTarget>> = {
-  gateway: deploymentTarget('gateway', 'vercel', 'https://vercel.com/groupher/gateway'),
   auth: deploymentTarget(
     'auth',
     'cloudflare',
@@ -167,8 +166,16 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'cloudflare',
     'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
   ),
-  main: deploymentTarget('main', 'vercel', 'https://vercel.com/groupher/main'),
-  dashboard: deploymentTarget('dashboard', 'vercel', 'https://vercel.com/groupher/dashboard'),
+  community: deploymentTarget(
+    'community',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
+  ),
+  dash: deploymentTarget(
+    'dash',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
+  ),
   apply: deploymentTarget(
     'apply',
     'cloudflare',

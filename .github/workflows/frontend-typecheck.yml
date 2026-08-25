@@ -3,7 +3,7 @@ name: Frontend typecheck
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
@@ -11,7 +11,7 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
@@ -54,6 +54,14 @@ jobs:
               - 'frontend/dash/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/dash/tsconfig*.json'
               - 'frontend/dash/package.json'
+            community:
+              - 'frontend/community/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/community/tsconfig*.json'
+              - 'frontend/community/package.json'
+            apply:
+              - 'frontend/apply/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/apply/tsconfig*.json'
+              - 'frontend/apply/package.json'
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
               - 'frontend/landing/tsconfig*.json'
@@ -70,6 +78,8 @@ jobs:
           MAIN_CHANGED: ${{ steps.filter.outputs.main }}
           DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           DASH_CHANGED: ${{ steps.filter.outputs.dash }}
+          COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
+          APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
           LANDING_CHANGED: ${{ steps.filter.outputs.landing }}
           GATEWAY_CHANGED: ${{ steps.filter.outputs.gateway }}
         run: |
@@ -89,6 +99,14 @@ jobs:
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASH_CHANGED" = "true" ]; then
             targets+=('{"target":"dash","workspace":"@groupher/frontend-dash"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$COMMUNITY_CHANGED" = "true" ]; then
+            targets+=('{"target":"community","workspace":"@groupher/frontend-community"}')
+          fi
+
+          if [ "$SHARED_CHANGED" = "true" ] || [ "$APPLY_CHANGED" = "true" ]; then
+            targets+=('{"target":"apply","workspace":"@groupher/frontend-apply"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
