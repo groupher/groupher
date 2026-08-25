@@ -1,4 +1,5 @@
 import { communityQueries } from '@community/query/queries'
+import { communityPublicPath } from '@community/server/public-path'
 import { requireCanonicalPreviewMask } from '@community/utils/preview-route'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
@@ -10,8 +11,11 @@ import Drawer from '~/ui/@Drawer'
 import ArticleViewer from '~/unit/ArticleView'
 
 export const Route = createFileRoute('/$community/changelog/_layout/previewer/$id')({
-  beforeLoad: ({ location, params }) => {
-    requireCanonicalPreviewMask(location, `/${params.community}/changelog/${params.id}`)
+  beforeLoad: ({ location, params, matches }) => {
+    requireCanonicalPreviewMask(
+      location,
+      communityPublicPath(params.community, `/changelog/${params.id}`, matches),
+    )
   },
   loader: async ({ context, params }) => {
     const article = await context.queryClient.ensureQueryData(

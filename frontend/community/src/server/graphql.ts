@@ -37,6 +37,7 @@ export async function fetchGraphQL<TData>(
   query: string | DocumentNode | TypedDocumentNode<TData, Record<string, unknown>>,
   variables: Record<string, unknown>,
   token: string | null = null,
+  options: { allowErrorCodes?: readonly number[] } = {},
 ): Promise<TGraphQLResponse<TData>> {
   const response = await fetch(process.env.GRAPHQL_ENDPOINT || 'http://127.0.0.1:4001/graphiql', {
     method: 'POST',
@@ -67,6 +68,12 @@ export async function fetchGraphQL<TData>(
   }
 
   if (payload.errors?.length) {
+    const allowedCodes = new Set(options.allowErrorCodes || [])
+    const hasOnlyAllowedErrors =
+      allowedCodes.size > 0 &&
+      payload.errors.every(({ extensions }) => allowedCodes.has(Number(extensions?.code)))
+    if (hasOnlyAllowedErrors) return payload
+
     throw new GraphQLRequestError(
       payload.errors.map((error) => error.message || 'GraphQL request failed').join('; '),
       response.status,

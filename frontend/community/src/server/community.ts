@@ -1,6 +1,6 @@
 import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 import { createServerFn } from '@tanstack/react-start'
-import { setResponseHeader } from '@tanstack/react-start/server'
+import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 
 import { THREAD } from '~/const/thread'
 import { CACHE_TAG } from '~/constant/cache'
@@ -27,6 +27,7 @@ import type {
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
+import { isCommunityPathContextTrusted } from './public-path'
 
 export type TCommunityShell = {
   account: TAccountInit
@@ -34,6 +35,29 @@ export type TCommunityShell = {
   dashboard: TParseDashboard
   wallpaper: ReturnType<typeof parseWallpaper>
 }
+
+const PLATFORM_HOSTS = new Set([
+  'groupher.com',
+  'www.groupher.com',
+  'groupher.localhost',
+  'www.groupher.localhost',
+  'localhost',
+  '127.0.0.1',
+])
+
+export const loadCommunityRequestContext = createServerFn({ method: 'GET', strict: false }).handler(
+  async () => {
+    const request = getRequest()
+    const slug = request.headers.get('x-groupher-community-slug') || ''
+    const pathname = new URL(request.url).pathname
+    const host = (request.headers.get('x-forwarded-host') || new URL(request.url).host)
+      .split(':')[0]
+      .toLowerCase()
+    return {
+      customDomain: isCommunityPathContextTrusted(pathname, slug) && !PLATFORM_HOSTS.has(host),
+    }
+  },
+)
 
 const publicCacheHeader = (tags: string[]): void => {
   if (getAuthToken()) {
@@ -47,7 +71,7 @@ const publicCacheHeader = (tags: string[]): void => {
 
 const loadCommunity = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string }) => data)
-  .handler(async ({ data }): Promise<TCommunityShell> => {
+  .handler(async ({ data }): Promise<TCommunityShell | null> => {
     const token = getAuthToken()
     publicCacheHeader([CACHE_TAG.communityCache(data.community)])
     const userHasLogin = Boolean(token)
@@ -55,13 +79,14 @@ const loadCommunity = createServerFn({ method: 'GET', strict: false })
       communityDocument,
       { slug: data.community, userHasLogin },
       token,
+      { allowErrorCodes: [5504] },
     )
     const accountPromise = token
       ? loadAccount(token)
       : Promise.resolve<TAccountInit>({ loading: false, user: null })
     const [result, account] = await Promise.all([communityPromise, accountPromise])
-    const community = result.data.community as unknown as TCommunity | null
-    if (!community) throw new Error('Community was not found.')
+    const community = result.data?.community as unknown as TCommunity | null | undefined
+    if (!community) return null
     const dashboard = parseDashboard(community)
     return {
       account,

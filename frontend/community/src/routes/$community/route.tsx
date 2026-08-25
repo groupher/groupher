@@ -1,30 +1,36 @@
 import CommunityBoundary from '@community/components/CommunityBoundary'
 import CommunityShell from '@community/components/CommunityShell'
 import { communityQueries } from '@community/query/queries'
+import { loadCommunityRequestContext } from '@community/server/community'
 import { projectCommunityHead } from '@community/server/head'
 import { loadLocale } from '@community/server/locale'
-import { Outlet, createFileRoute, notFound, useLoaderData } from '@tanstack/react-router'
+import { communityPublicPath } from '@community/server/public-path'
+import { Outlet, createFileRoute, notFound, redirect, useLoaderData } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/$community')({
-  beforeLoad: ({ params, location }) => {
-    const communityRoot = `/${params.community}`
-    if (
-      params.community === '.well-known' ||
-      location.pathname === communityRoot ||
-      location.pathname === `${communityRoot}/`
-    ) {
-      throw notFound()
-    }
+  beforeLoad: ({ params }) => {
+    if (params.community === '.well-known') throw notFound()
   },
-  loader: async ({ params, context }) => {
-    const [shell, locale] = await Promise.all([
+  loader: async ({ params, context, location }) => {
+    const [shell, locale, requestContext] = await Promise.all([
       context.queryClient.ensureQueryData(communityQueries.shell(params.community)),
       loadLocale({ data: {} }),
+      loadCommunityRequestContext(),
     ])
+    if (!shell) throw notFound()
+    if (
+      location.pathname === `/${params.community}` ||
+      location.pathname === `/${params.community}/`
+    ) {
+      throw redirect({
+        href: communityPublicPath(params.community, '/post', requestContext.customDomain),
+        replace: true,
+      })
+    }
     if (!shell.community.slug) throw notFound()
-    return { head: projectCommunityHead(shell), locale }
+    return { head: projectCommunityHead(shell), locale, requestContext }
   },
-  head: ({ loaderData }) => ({
+  head: ({ loaderData, matches }) => ({
     meta: [
       {
         title: loaderData?.head.title || 'Groupher Community',
@@ -54,17 +60,17 @@ export const Route = createFileRoute('/$community')({
           {
             rel: 'alternate',
             type: 'application/rss+xml',
-            href: `/${loaderData.head.feedSlug}/feed.xml`,
+            href: communityPublicPath(loaderData.head.feedSlug, '/feed.xml', matches),
           },
           {
             rel: 'alternate',
             type: 'application/atom+xml',
-            href: `/${loaderData.head.feedSlug}/feed.atom`,
+            href: communityPublicPath(loaderData.head.feedSlug, '/feed.atom', matches),
           },
           {
             rel: 'alternate',
             type: 'application/feed+json',
-            href: `/${loaderData.head.feedSlug}/feed.json`,
+            href: communityPublicPath(loaderData.head.feedSlug, '/feed.json', matches),
           },
         ]
       : [],

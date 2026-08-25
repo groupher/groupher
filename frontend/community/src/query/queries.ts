@@ -1,4 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
+import { notFound } from '@tanstack/react-router'
 import { print } from 'graphql'
 
 import { THREAD } from '~/const/thread'
@@ -26,7 +27,11 @@ export const communityQueries = {
   shell: (community: string) =>
     queryOptions({
       queryKey: communityKeys.shell(community),
-      queryFn: () => loadCommunity({ data: { community } }),
+      queryFn: async () => {
+        const shell = await loadCommunity({ data: { community } })
+        if (!shell) throw notFound()
+        return shell
+      },
       staleTime: 60_000,
       gcTime: 10 * 60_000,
     }),

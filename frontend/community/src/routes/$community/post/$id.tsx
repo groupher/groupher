@@ -1,4 +1,5 @@
 import { communityQueries } from '@community/query/queries'
+import { communityPublicPath } from '@community/server/public-path'
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
@@ -17,9 +18,14 @@ export const Route = createFileRoute('/$community/post/$id')({
     if (!post) throw notFound()
     return { post }
   },
-  head: ({ loaderData, params }) => ({
+  head: ({ loaderData, params, matches }) => ({
     meta: loaderData?.post?.title ? [{ title: loaderData.post.title }] : [],
-    links: [{ rel: 'canonical', href: `/${params.community}/post/${params.id}` }],
+    links: [
+      {
+        rel: 'canonical',
+        href: communityPublicPath(params.community, `/post/${params.id}`, matches),
+      },
+    ],
   }),
   component: PostDetail,
 })
