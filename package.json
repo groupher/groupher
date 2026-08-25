@@ -141,7 +141,9 @@
     "doctor:dashboard": "react-doctor frontend/dashboard",
     "doctor:dash": "react-doctor frontend/dash",
     "doctor:landing": "react-doctor frontend/landing",
-    "doctor:core": "react-doctor frontend/core"
+    "doctor:core": "react-doctor frontend/core",
+    "doctor:community": "react-doctor frontend/community",
+    "doctor:apply": "react-doctor frontend/apply"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
