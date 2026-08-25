@@ -23,6 +23,7 @@ import {
 describe('gateway/routing', () => {
   describe('isAuthRoute', () => {
     it('only matches the Auth.js route namespace', () => {
+      expect(isAuthRoute('/api/auth')).toBe(true)
       expect(isAuthRoute('/api/auth/signin/github')).toBe(true)
       expect(isAuthRoute('/api/auth/callback/github')).toBe(true)
       expect(isAuthRoute('/api/articles')).toBe(false)
@@ -50,9 +51,9 @@ describe('gateway/routing', () => {
   })
 
   describe('isApplyRoute', () => {
-    it('recognizes only the independent Apply root and host', () => {
-      expect(isApplyRoute('/apply', 'groupher.com')).toBe(true)
-      expect(isApplyRoute('/apply/review/app_1', 'groupher.com')).toBe(true)
+    it('recognizes only the independent Apply host', () => {
+      expect(isApplyRoute('/apply', 'groupher.com')).toBe(false)
+      expect(isApplyRoute('/apply/review/app_1', 'groupher.com')).toBe(false)
       expect(isApplyRoute('/anything', 'apply.groupher.localhost')).toBe(true)
       expect(isApplyRoute('/home/dash/apply', 'groupher.com')).toBe(false)
     })
@@ -206,10 +207,10 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.search).toBe('?code=abc&state=xyz')
     })
 
-    it('routes browser GraphQL to Phoenix before product routes', () => {
+    it('routes root-domain browser GraphQL to Phoenix', () => {
       const target = resolve(
         '/api/graphql',
-        'dashboard.groupher.localhost',
+        'groupher.localhost',
         '?query=%7Bme%7Blogin%7D%7D',
         undefined,
         'POST',
@@ -242,18 +243,34 @@ describe('gateway/routing', () => {
       delete process.env.CUSTOM_DOMAIN_COMMUNITIES
     })
 
+    it('injects community scope for custom-domain Community routes', () => {
+      process.env.CUSTOM_DOMAIN_COMMUNITIES = JSON.stringify({ 'talk.example.com': 'home' })
+
+      const page = resolve('/post/123', 'talk.example.com')
+      expect(page.targetKind).toBe('community')
+      expect(page.targetUrl.pathname).toBe('/home/post/123')
+      expect(page.communitySlug).toBe('home')
+
+      const slugify = resolve('/api/utils/slugify', 'talk.example.com')
+      expect(slugify.targetKind).toBe('community')
+      expect(slugify.targetUrl.pathname).toBe('/api/utils/slugify')
+
+      delete process.env.CUSTOM_DOMAIN_COMMUNITIES
+    })
+
     it('routes explicit Main and Landing subdomains before canonical path rules', () => {
       expect(resolve('/', 'main.groupher.localhost').targetKind).toBe('main')
       expect(resolve('/unknown', 'landing.groupher.localhost').targetKind).toBe('landing')
       expect(resolve('/home/overview', 'dash.groupher.localhost').targetKind).toBe('dash')
     })
 
-    it('routes Apply as an independent app with the canonical path intact', () => {
-      const target = resolve('/apply/review/app_1', 'groupher.com', '?tab=events')
+    it('routes Apply only through its independent host', () => {
+      const target = resolve('/review/app_1', 'apply.groupher.localhost', '?tab=events')
       expect(target.targetKind).toBe('apply')
       expect(target.targetUrl.origin).toBe(new URL(SITE.APPLY).origin)
-      expect(target.targetUrl.pathname).toBe('/apply/review/app_1')
+      expect(target.targetUrl.pathname).toBe('/review/app_1')
       expect(target.targetUrl.search).toBe('?tab=events')
+      expect(resolve('/apply/review/app_1', 'groupher.com').targetKind).toBe('not-found')
     })
 
     it('routes shared Vite modules by the Apply page referer', () => {
@@ -263,7 +280,7 @@ describe('gateway/routing', () => {
         '',
         undefined,
         'GET',
-        'https://groupher.localhost/apply/',
+        'https://apply.groupher.localhost/',
       )
       expect(target.targetKind).toBe('apply')
       expect(target.targetUrl.pathname).toBe('/@tanstack-start/styles.css')
@@ -554,16 +571,16 @@ describe('gateway/routing', () => {
       expect(target.targetUrl.search).toBe('?ref=ad')
     })
 
-    it('rewrites other routes to main site', () => {
+    it('routes valid root segments to Community', () => {
       const target = resolve('/unknown', 'www.groupher.com', '?k=v')
-      expect(target.targetKind).toBe('main')
+      expect(target.targetKind).toBe('community')
       expect(target.targetUrl.pathname).toBe('/unknown')
       expect(target.targetUrl.search).toBe('?k=v')
     })
 
     it('does not misclassify non-dashboard routes', () => {
       const target = resolve('/foo/bar/dashboard', 'www.groupher.com', '?k=v')
-      expect(target.targetKind).toBe('main')
+      expect(target.targetKind).toBe('community')
       expect(target.targetUrl.pathname).toBe('/foo/bar/dashboard')
       expect(target.targetUrl.search).toBe('?k=v')
     })

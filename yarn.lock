@@ -1136,6 +1136,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cloudflare/workers-types@npm:^5.20260823.1":
+  version: 5.20260823.1
+  resolution: "@cloudflare/workers-types@npm:5.20260823.1"
+  checksum: 10c0/6e2fd85e4430199801357febb2dca963062671ed93eef621290007c7a95b38c7f18eaf4808d0bde6fd5763e50273ab735ba3669c21e3848519456b4cb0902971
+  languageName: node
+  linkType: hard
+
 "@commitlint/cli@npm:^17.6.6":
   version: 17.8.1
   resolution: "@commitlint/cli@npm:17.8.1"
@@ -3273,6 +3280,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@groupher/edge-router@workspace:infra/edge-router":
+  version: 0.0.0-use.local
+  resolution: "@groupher/edge-router@workspace:infra/edge-router"
+  dependencies:
+    "@cloudflare/workers-types": "npm:^5.20260823.1"
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/route-contract": "npm:1.0.0"
+    typescript: "npm:5.9.3"
+    vitest: "npm:^4.1.5"
+    wrangler: "npm:^4.118.0"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/frontend-apply@workspace:frontend/apply":
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-apply@workspace:frontend/apply"
@@ -3397,6 +3417,7 @@ __metadata:
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     serve: "npm:^14.2.6"
+    wrangler: "npm:^4.118.0"
   languageName: unknown
   linkType: soft
 
@@ -3414,11 +3435,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@groupher/gateway@workspace:backend/gateway":
+"@groupher/gateway@workspace:infra/gateway":
   version: 0.0.0-use.local
-  resolution: "@groupher/gateway@workspace:backend/gateway"
+  resolution: "@groupher/gateway@workspace:infra/gateway"
   dependencies:
     "@groupher/contracts": "npm:1.0.0"
+    "@groupher/route-contract": "npm:1.0.0"
     "@groupher/service": "npm:1.0.0"
     "@hono/node-server": "npm:^2.0.11"
     "@types/node": "npm:^24.0.0"
@@ -3693,6 +3715,15 @@ __metadata:
     vite: "npm:^8.2.0"
     vite-tsconfig-paths: "npm:^6.1.1"
     vitest: "npm:^4.1.10"
+  languageName: unknown
+  linkType: soft
+
+"@groupher/route-contract@npm:1.0.0, @groupher/route-contract@workspace:packages/route-contract":
+  version: 0.0.0-use.local
+  resolution: "@groupher/route-contract@workspace:packages/route-contract"
+  dependencies:
+    "@types/node": "npm:^24.0.0"
+    vitest: "npm:^4.1.5"
   languageName: unknown
   linkType: soft
 

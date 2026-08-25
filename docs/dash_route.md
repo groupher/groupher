@@ -13,10 +13,10 @@
 
 应用程序由主机识别。路径只标识社区以及该应用程序内的页面。
 
-| 应用      | 运行时        | 生产 origin                      | 本地 origin                            |
-| --------- | ------------- | -------------------------------- | -------------------------------------- |
+| 应用      | 运行时         | 生产 origin                      | 本地 origin                            |
+| --------- | -------------- | -------------------------------- | -------------------------------------- |
 | Dash      | TanStack Start | `https://dash.groupher.com`      | `https://dash.groupher.localhost`      |
-| Dashboard | Next.js       | `https://dashboard.groupher.com` | `https://dashboard.groupher.localhost` |
+| Dashboard | Next.js        | `https://dashboard.groupher.com` | `https://dashboard.groupher.localhost` |
 
 规范的路由形状是：
 
@@ -336,7 +336,7 @@ Dashboard  https://dashboard.groupher.localhost/<community>/<section...>
   配置和 TLS/Portless host 解析；
 - `backend/assets-hub/src/app.ts`、`backend/assets-hub/.env.example` 以及
   Dev Hub 中的 `ASSETS_HUB_CORS_ORIGIN`，必须允许 Dash canonical origin；
-- `backend/gateway/.env.example` 必须包含 `DASH_SITE`；运行时默认值可以
+- `infra/gateway/.env.example` 必须包含 `DASH_SITE`；运行时默认值可以
   保留，但模板不能遗漏该覆盖项。
 - `ops/status/config.yaml:232-249` 的 `Dash Public Route` 检查必须删除，
   或改为直查 `https://dash.groupher.com/health`；
@@ -356,9 +356,9 @@ Dashboard  https://dashboard.groupher.localhost/<community>/<section...>
 - `frontend/e2e/playwright.config.ts`：Dashboard 和 Dash 都使用各自的
   canonical `.localhost` host + port，不能使用裸 `localhost` 作为浏览器
   canonical URL；
-- `backend/gateway/src/routing.test.ts`、`app.test.ts` 和 `upgrade.test.ts`；
-- `frontend/landing/app/cloudflare-worker.test.ts`，包括旧主域路径和
-  `/health/dash` 的 404；
+- `infra/gateway/src/routing.test.ts`、`app.test.ts` 和 `upgrade.test.ts`；
+- `infra/edge-router/src/index.test.ts` 和 `packages/route-contract/src/index.test.ts`，
+  包括旧主域路径和 `/health/dash` 的 404；
 - `ops/status/config.yaml:232-249` 的 `Dash Public Route` 检查，必须与
   `https://dash.groupher.com/health` 保持一致，避免继续请求已废弃的
   `https://groupher.com/health/dash` 并触发 Discord 告警；

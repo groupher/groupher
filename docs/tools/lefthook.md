@@ -37,7 +37,7 @@ git commit
 | backend/inspire-me     | tsc-files                |
 | local/dev-hub          | workspace type-check     |
 | backend/auth           | tsc-files                |
-| backend/gateway        | tsc-files                |
+| infra/gateway          | tsc-files                |
 | backend/content-import | tsc-files                |
 
 多个 workspace 也有自己的 lint-staged 配置，但不能因为配置文件存在就认为它实际生效。迁移前必须用 yarn lint-staged --debug 确认根目录调用到底加载了哪些配置。
@@ -56,7 +56,7 @@ type-check-core:
   run: yarn tsc-files ... {staged_files}
 ```
 
-如果同时 staged frontend/core/a.ts 和 backend/gateway/b.ts，不能假设 type-check-core 只收到 a.ts。
+如果同时 staged frontend/core/a.ts 和 infra/gateway/b.ts，不能假设 type-check-core 只收到 a.ts。
 
 要复刻 lint-staged 语义，应使用 files: 命令生成经过目录和扩展名过滤的列表，再传给 files 模板：
 
@@ -128,7 +128,7 @@ commit-msg:
 - backend/inspire-me
 - local/dev-hub
 - backend/auth
-- backend/gateway
+- infra/gateway
 - backend/content-import
 
 stage_fixed 可以减少 formatter 修复后的手动操作。配置 files: 时，Lefthook stage 的是 files 命令输出的整个匹配 staged 文件集合；它不会精确到 formatter 实际修改的文件，因此仍必须审计 staged diff。
@@ -213,7 +213,7 @@ CI 侧需要确认：
 | 场景                                  | 预期结果                                           |
 | ------------------------------------- | -------------------------------------------------- |
 | 只 staged frontend/core/a.ts          | 只触发 core 相关 job，并只传 core 文件             |
-| 只 staged backend/gateway/b.ts        | 只触发 gateway 相关 job，并只传 gateway 文件       |
+| 只 staged infra/gateway/b.ts          | 只触发 gateway 相关 job，并只传 gateway 文件       |
 | 同时 staged core/a.ts 和 gateway/b.ts | 两个 job 都触发，但每个 job 只收到自己的文件       |
 | 只 staged docs/tools/lefthook.md      | 触发全仓 JSON/Markdown job，并只传入该 staged 文件 |
 | staged 文件之外存在格式错误           | pre-commit 不因该文件失败；CI/full-check 仍可发现  |

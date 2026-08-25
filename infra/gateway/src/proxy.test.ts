@@ -32,6 +32,15 @@ describe('gateway/proxy', () => {
     expect(headers.get('x-forwarded-proto')).toBe('https')
   })
 
+  it('replaces a client-supplied community slug with trusted route context', () => {
+    const request = new Request('https://talk.example.com/post/123', {
+      headers: { 'x-groupher-community-slug': 'spoofed' },
+    })
+    const headers = buildProxyHeaders(request, makeTarget({ communitySlug: 'home' }))
+
+    expect(headers.get('x-groupher-community-slug')).toBe('home')
+  })
+
   it('cleans browser GraphQL credentials and forwards only the Groupher auth token', () => {
     const request = new Request('https://dashboard.groupher.com/api/graphql', {
       headers: {
@@ -71,6 +80,19 @@ describe('gateway/proxy', () => {
         targetKind: 'phoenix',
         requestHeaderPolicy: 'graphql-browser-clean',
       }),
+    )
+
+    expect(headers.has('authorization')).toBe(false)
+    expect(headers.has('cookie')).toBe(false)
+  })
+
+  it('removes credentials from public Press output', () => {
+    const request = new Request('https://groupher.com/home/post/a.md', {
+      headers: { authorization: 'Bearer private', cookie: 'private=yes' },
+    })
+    const headers = buildProxyHeaders(
+      request,
+      makeTarget({ targetKind: 'press', requestHeaderPolicy: 'public-output' }),
     )
 
     expect(headers.has('authorization')).toBe(false)

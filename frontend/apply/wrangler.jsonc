@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "groupher-apply",
+  "name": "apply",
   "main": "@tanstack/react-start/server-entry",
   "compatibility_date": "2026-08-06",
   "compatibility_flags": ["nodejs_compat"],
@@ -10,11 +10,16 @@
   },
   "env": {
     "production": {
+      "name": "apply",
       "vars": {
         "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
       },
       "routes": [{ "pattern": "apply.groupher.com", "custom_domain": true }]
     }
   },
-  "observability": { "enabled": true }
+  "observability": {
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  }
 }

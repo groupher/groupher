@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "ci": "cross-env NODE_ENV=ci tsx src/server.ts",
-    "test": "../../node_modules/.bin/vitest --root ../.. --config frontend/core/vitest.config.mts run backend/gateway",
+    "test": "../../node_modules/.bin/vitest --root ../.. --config frontend/core/vitest.config.mts run infra/gateway",
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js && esbuild src/app.ts --bundle --platform=node --format=esm --external:dotenv --external:hono --external:'hono/*' --outfile=dist/app.js && cp -R public dist/public",
     "start": "cross-env NODE_ENV=production node dist/server.js",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@groupher/contracts": "1.0.0",
+    "@groupher/route-contract": "1.0.0",
     "@groupher/service": "1.0.0",
     "@hono/node-server": "^2.0.11",
     "dotenv": "^17.4.2",

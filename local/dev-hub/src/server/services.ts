@@ -128,7 +128,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('backend/gateway'),
+      root: fromRoot('infra/gateway'),
       environment: 'development',
     },
     command: 'make',

@@ -70,6 +70,10 @@ export const buildProxyHeaders = (request: Request, target: TGatewayTarget): Hea
 
   headers.set('x-forwarded-host', forwardedHost)
   headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''))
+  headers.delete('x-groupher-community-slug')
+  if (target.communitySlug) {
+    headers.set('x-groupher-community-slug', target.communitySlug)
+  }
 
   if (target.requestHeaderPolicy === 'graphql-browser-clean') {
     const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
@@ -80,6 +84,11 @@ export const buildProxyHeaders = (request: Request, target: TGatewayTarget): Hea
     if (authToken) {
       headers.set('cookie', `${GROUPHER_AUTH_TOKEN_COOKIE}=${encodeURIComponent(authToken)}`)
     }
+  }
+
+  if (target.requestHeaderPolicy === 'public-output') {
+    headers.delete('authorization')
+    headers.delete('cookie')
   }
 
   return headers

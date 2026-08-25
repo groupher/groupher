@@ -18,7 +18,7 @@ const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 const PUBLIC_ROOT =
   path.basename(cwd) === 'gateway'
     ? path.join(cwd, 'public')
-    : path.join(cwd, 'backend/gateway/public')
+    : path.join(cwd, 'infra/gateway/public')
 const DIST_PUBLIC_ROOT = path.join(sourceRoot, 'public')
 
 const PUBLIC_FILE_TYPES = {

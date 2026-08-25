@@ -9,18 +9,28 @@
  *     -> proxied response
  */
 
+import {
+  isAuthRoute as isPublicAuthRoute,
+  isGraphqlRoute as isPublicGraphqlRoute,
+  isPressRoute as isPublicPressRoute,
+  resolvePublicRoute,
+  type RequestHeaderPolicy as PublicRequestHeaderPolicy,
+  type RouteTargetKind,
+} from '@groupher/route-contract'
+
 export type GatewayTargetKind =
   | 'main'
   | 'dashboard'
   | 'dash'
   | 'apply'
   | 'landing'
+  | 'community'
   | 'auth'
   | 'phoenix'
   | 'press'
   | 'not-found'
 
-export type TRequestHeaderPolicy = 'pass-through' | 'graphql-browser-clean'
+export type TRequestHeaderPolicy = PublicRequestHeaderPolicy
 export type TResponsePolicy = 'pass-through'
 export type TRedirectPolicy = 'preserve-upstream'
 
@@ -31,6 +41,7 @@ export type TGatewayTarget = {
   responsePolicy: TResponsePolicy
   redirectPolicy: TRedirectPolicy
   requiresBodyProxy: boolean
+  communitySlug?: string
 }
 
 type TResolveGatewayTargetInput = {
@@ -47,6 +58,7 @@ const APP = {
   DASHBOARD: 'dashboard',
   DASH: 'dash',
   APPLY: 'apply',
+  COMMUNITY: 'community',
   MAIN: 'main',
 } as const
 
@@ -58,6 +70,7 @@ export const SITE = {
   DASHBOARD: process.env.DASHBOARD_SITE || `https://${APP.DASHBOARD}.groupher.com`,
   DASH: process.env.DASH_SITE || `https://${APP.DASH}.groupher.com`,
   APPLY: process.env.APPLY_SITE || `https://${APP.APPLY}.groupher.com`,
+  COMMUNITY: process.env.COMMUNITY_SITE || `https://${APP.COMMUNITY}.groupher.com`,
   AUTH: process.env.AUTH_SITE || 'https://auth.groupher.com',
   API:
     process.env.API_SITE ||
@@ -66,9 +79,9 @@ export const SITE = {
 }
 
 /** Reports whether auth route at the gateway boundary. */
-export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
+export const isAuthRoute = (pathname: string): boolean => isPublicAuthRoute(pathname)
 /** Reports whether graphql route at the gateway boundary. */
-export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
+export const isGraphqlRoute = (pathname: string): boolean => isPublicGraphqlRoute(pathname)
 const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
 const isDashViteAssetRoute = (pathname: string): boolean => pathname.startsWith('/__dash_hmr')
 const isSharedViteAssetRoute = (pathname: string): boolean =>
@@ -123,6 +136,9 @@ export const isDashHost = (host: string): boolean => isAppHost(host, APP.DASH)
 /** Reports whether apply host at the gateway boundary. */
 export const isApplyHost = (host: string): boolean => isAppHost(host, APP.APPLY)
 
+/** Reports whether community host at the gateway boundary. */
+export const isCommunityHost = (host: string): boolean => isAppHost(host, APP.COMMUNITY)
+
 /** Reports whether platform root host at the gateway boundary. */
 export const isPlatformRootHost = (host: string): boolean => {
   const hostname = host.split(':')[0].toLowerCase()
@@ -136,35 +152,17 @@ export const isPlatformRootHost = (host: string): boolean => {
 }
 
 /** Reports whether press route at the gateway boundary. */
-export const isPressRoute = (pathname: string): boolean =>
-  /^\/[^/]+\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) ||
-  /^\/[^/]+\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) ||
-  /^\/[^/]+\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname) ||
-  /^\/[^/]+\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname)
+export const isPressRoute = (pathname: string): boolean => isPublicPressRoute(pathname)
 
-const customDomainCommunity = (host: string): string | null => {
+const customDomainCommunities = (): Record<string, string> => {
   try {
-    const mapping = JSON.parse(process.env.CUSTOM_DOMAIN_COMMUNITIES || '{}') as Record<
-      string,
-      string
-    >
-    const community = mapping[host.split(':')[0].toLowerCase()]
-    return community && /^[a-z0-9][a-z0-9-]*$/.test(community) ? community : null
+    const mapping: unknown = JSON.parse(process.env.CUSTOM_DOMAIN_COMMUNITIES || '{}')
+    return mapping && typeof mapping === 'object' && !Array.isArray(mapping)
+      ? (mapping as Record<string, string>)
+      : {}
   } catch {
-    return null
+    return {}
   }
-}
-
-const customDomainPressPath = (pathname: string, host: string): string | null => {
-  if (
-    !/^\/(feed\.(xml|atom|json)|llms\.txt|sitemap\.xml)$/.test(pathname) &&
-    !/^\/(post|blog|changelog|doc)\/feed\.xml$/.test(pathname) &&
-    !/^\/(post|blog|changelog)\/[^/]+\.md$/.test(pathname) &&
-    !/^\/doc\/[^/]+(?:\/[^/]+)?\.md$/.test(pathname)
-  )
-    return null
-  const community = customDomainCommunity(host)
-  return community ? `/${community}${pathname}` : null
 }
 
 const LANDING_STATIC_SIGN = `/${APP.LANDING}/_next/static`
@@ -188,19 +186,8 @@ export const isDashboardRoute = (_pathname: string, host: string): boolean =>
 /** Reports whether dash route at the gateway boundary. */
 export const isDashRoute = (_pathname: string, host: string): boolean => isDashHost(host)
 
-const isLegacyDashboardRoute = (pathname: string): boolean => {
-  const pathParts = pathname.split('/').filter(Boolean)
-  return pathParts.length >= 2 && pathParts[1] === 'dashboard'
-}
-
-const isLegacyDashRoute = (pathname: string): boolean => {
-  const pathParts = pathname.split('/').filter(Boolean)
-  return pathParts.length >= 2 && pathParts[1] === 'dash'
-}
-
 /** Reports whether apply route at the gateway boundary. */
-export const isApplyRoute = (pathname: string, host: string): boolean =>
-  isApplyHost(host) || pathname === '/apply' || pathname.startsWith('/apply/')
+export const isApplyRoute = (_pathname: string, host: string): boolean => isApplyHost(host)
 
 /** Returns dashboard url for the gateway workflow. */
 export const getDashboardUrl = (pathname: string, host: string, search = ''): URL => {
@@ -232,6 +219,7 @@ const target = (
   targetUrl: URL,
   method?: string,
   requestHeaderPolicy: TRequestHeaderPolicy = 'pass-through',
+  communitySlug?: string,
 ): TGatewayTarget => ({
   targetKind,
   targetUrl,
@@ -239,10 +227,54 @@ const target = (
   responsePolicy: 'pass-through',
   redirectPolicy: 'preserve-upstream',
   requiresBodyProxy: shouldForwardBody(method),
+  ...(communitySlug ? { communitySlug } : {}),
 })
 
 const notFoundTarget = (pathname: string, search: string, method?: string): TGatewayTarget =>
   target('not-found', new URL(pathname + search, 'http://gateway.invalid'), method)
+
+const PUBLIC_TARGET_SITE: Partial<Record<RouteTargetKind, string>> = {
+  landing: SITE.LANDING,
+  community: SITE.COMMUNITY,
+  auth: SITE.AUTH,
+  phoenix: SITE.API,
+  press: SITE.PRESS,
+}
+
+const publicTarget = (
+  pathname: string,
+  search: string,
+  method: string | undefined,
+  routingHost: string,
+): TGatewayTarget => {
+  const resolved = resolvePublicRoute({
+    hostname: routingHost,
+    pathname,
+    method,
+    customDomainCommunities: customDomainCommunities(),
+    platformHosts: [
+      'groupher.com',
+      'www.groupher.com',
+      'groupher.localhost',
+      'localhost',
+      '127.0.0.1',
+    ],
+  })
+
+  if (resolved.targetKind === 'not-found' || resolved.targetKind === 'health') {
+    return notFoundTarget(pathname, search, method)
+  }
+
+  const site = PUBLIC_TARGET_SITE[resolved.targetKind]
+  if (!site) return notFoundTarget(pathname, search, method)
+  return target(
+    resolved.targetKind,
+    new URL(resolved.pathname + search, site),
+    method,
+    resolved.requestHeaderPolicy,
+    resolved.communitySlug,
+  )
+}
 
 /** Resolves gateway target without leaking gateway routing details to callers. */
 export const resolveGatewayTarget = ({
@@ -256,36 +288,6 @@ export const resolveGatewayTarget = ({
   const routingHost = firstForwardedHost(forwardedHost) || host
   const fullPath = pathname + search
   const refererUrl = getRefererUrl(referer)
-
-  if (isAuthRoute(pathname)) {
-    return target('auth', new URL(fullPath, SITE.AUTH), method)
-  }
-
-  if (isGraphqlRoute(pathname)) {
-    return target(
-      'phoenix',
-      new URL(`/graphiql${search}`, SITE.API),
-      method,
-      'graphql-browser-clean',
-    )
-  }
-
-  const customPressPath = customDomainPressPath(pathname, routingHost)
-  if (customPressPath) return target('press', new URL(customPressPath + search, SITE.PRESS), method)
-
-  if (isPressRoute(pathname)) {
-    if (pathname === '/sitemap.xml' && isPlatformRootHost(routingHost)) {
-      return target('main', new URL(fullPath, SITE.MAIN), method)
-    }
-    return target('press', new URL(fullPath, SITE.PRESS), method)
-  }
-
-  if (
-    isPlatformRootHost(routingHost) &&
-    (isLegacyDashRoute(pathname) || isLegacyDashboardRoute(pathname))
-  ) {
-    return notFoundTarget(pathname, search, method)
-  }
 
   if (isMainHost(routingHost)) {
     return target('main', new URL(fullPath, SITE.MAIN), method)
@@ -303,8 +305,8 @@ export const resolveGatewayTarget = ({
     return target('apply', new URL(fullPath, SITE.APPLY), method)
   }
 
-  if (isApplyRoute(pathname, routingHost)) {
-    return target('apply', new URL(fullPath, SITE.APPLY), method)
+  if (isCommunityHost(routingHost)) {
+    return target('community', new URL(fullPath, SITE.COMMUNITY), method)
   }
 
   if (isApplyViteAssetRoute(pathname)) {
@@ -361,9 +363,5 @@ export const resolveGatewayTarget = ({
     return target('dashboard', new URL(fullPath, SITE.DASHBOARD), method)
   }
 
-  if (STATIC_PATHS.includes(pathname) || isLandingStaticRoute(pathname)) {
-    return target('landing', new URL(fullPath, SITE.LANDING), method)
-  }
-
-  return target('main', new URL(fullPath, SITE.MAIN), method)
+  return publicTarget(pathname, search, method, routingHost)
 }

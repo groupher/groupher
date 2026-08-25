@@ -24,8 +24,12 @@ yarn workspace @groupher/frontend-landing dev
 yarn workspace @groupher/frontend-landing type-check
 yarn workspace @groupher/frontend-landing format:check
 yarn workspace @groupher/frontend-landing build
-yarn workspace @groupher/frontend-landing build:cloudflare
+yarn workspace @groupher/frontend-landing build:worker
+yarn workspace @groupher/frontend-landing deploy:worker:dry-run
 ```
+
+The target deployment is the `landing` Worker Static Assets project configured
+by `wrangler.jsonc`; the former Pages `_worker.js` path has been removed.
 
 This package uses the repository's current Next.js runtime. Consult the bundled
 Next.js documentation before changing framework APIs or conventions.

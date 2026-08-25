@@ -6,6 +6,7 @@
   "workspaces": {
     "packages": [
       "backend/*",
+      "infra/*",
       "frontend/*",
       "local/*",
       "packages/*"
@@ -99,7 +100,7 @@
     "serve:prod:gateway": "yarn workspace @groupher/gateway start",
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",
-    "type-check": "yarn check:theme-first-paint-vars && yarn workspace @groupher/contracts type-check && yarn workspace @groupher/service type-check && yarn workspace @groupher/artiment-publisher type-check && yarn workspace @groupher/frontend-core type-check && yarn workspace @groupher/frontend-main type-check && yarn workspace @groupher/frontend-dashboard type-check && yarn workspace @groupher/frontend-dash type-check && yarn workspace @groupher/frontend-apply type-check && yarn workspace @groupher/widget type-check && yarn workspace @groupher/frontend-landing type-check && yarn workspace @groupher/inspire-me type-check && yarn workspace @groupher/gateway type-check && yarn workspace @groupher/backend-auth type-check && yarn workspace @groupher/assets-hub type-check && yarn workspace @groupher/backend-content-import type-check && yarn workspace @groupher/press type-check && yarn workspace @groupher/local-dev-hub type-check",
+    "type-check": "yarn check:theme-first-paint-vars && yarn workspace @groupher/contracts type-check && yarn workspace @groupher/route-contract type-check && yarn workspace @groupher/service type-check && yarn workspace @groupher/artiment-publisher type-check && yarn workspace @groupher/frontend-core type-check && yarn workspace @groupher/frontend-main type-check && yarn workspace @groupher/frontend-dashboard type-check && yarn workspace @groupher/frontend-dash type-check && yarn workspace @groupher/frontend-apply type-check && yarn workspace @groupher/widget type-check && yarn workspace @groupher/frontend-landing type-check && yarn workspace @groupher/inspire-me type-check && yarn workspace @groupher/gateway type-check && yarn workspace @groupher/edge-router type-check && yarn workspace @groupher/backend-auth type-check && yarn workspace @groupher/assets-hub type-check && yarn workspace @groupher/backend-content-import type-check && yarn workspace @groupher/press type-check && yarn workspace @groupher/local-dev-hub type-check",
     "docs:check": "node scripts/check-documentation.mjs",
     "contract:health": "node contracts/services/health/scripts/assert-health.mjs && vitest --config frontend/core/vitest.config.mts run frontend/community/src/server/health.test.ts",
     "contract:graphql": "node contracts/graphql/scripts/assert-graphql-contract.mjs && node contracts/graphql/scripts/assert-static-graphql.mjs && node contracts/graphql/scripts/assert-no-urql.mjs",

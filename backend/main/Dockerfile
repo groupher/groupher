@@ -7,17 +7,17 @@
 # This file is based on these images:
 #
 #   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
-#   - https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-20260316-slim - for the release image
+#   - https://hub.docker.com/_/ubuntu?tab=tags&page=1&name=noble-20260810 - for the release image
 #   - https://pkgs.org/ - resource for finding needed packages
 #   - Ex: hexpm/elixir:1.20.3-erlang-29.0.5-ubuntu-noble-20260810
 #
 ARG ELIXIR_VERSION=1.20.3
 ARG OTP_VERSION=29.0.5
 ARG BUILDER_OS_VERSION=ubuntu-noble-20260810
-ARG DEBIAN_VERSION=bullseye-20260316-slim
+ARG RUNNER_OS_VERSION=noble-20260810
 
 ARG BUILDER_IMAGE="hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-${BUILDER_OS_VERSION}"
-ARG RUNNER_IMAGE="debian:${DEBIAN_VERSION}"
+ARG RUNNER_IMAGE="ubuntu:${RUNNER_OS_VERSION}"
 
 FROM ${BUILDER_IMAGE} as builder
 
@@ -69,7 +69,7 @@ RUN mix release
 FROM ${RUNNER_IMAGE}
 
 RUN apt-get update -y && \
-  apt-get install -y libstdc++6 openssl libncurses5 locales ca-certificates \
+  apt-get install -y libstdc++6 openssl libncurses6 locales ca-certificates \
   && apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Set the locale

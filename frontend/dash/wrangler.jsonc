@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "groupher-dash",
+  "name": "dash",
   "main": "@tanstack/react-start/server-entry",
   "compatibility_date": "2026-08-06",
   "compatibility_flags": ["nodejs_compat"],
@@ -10,6 +10,7 @@
   },
   "env": {
     "production": {
+      "name": "dash",
       "vars": {
         "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
       }
@@ -22,6 +23,8 @@
     }
   ],
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": { "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
   }
 }

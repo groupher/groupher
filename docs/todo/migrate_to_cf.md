@@ -1,9 +1,13 @@
 # 将 Groupher 入口迁移到 Cloudflare
 
-> 状态：提案
+> 状态：历史提案，已被 [`docs/deploy/cf_arch.md`](../deploy/cf_arch.md) 的已上线架构取代
 >
 > 目标：将公共 `groupher.com` 入口和静态 Landing 交付迁移到
 > Cloudflare，同时保留 Groupher 的 path-first URL 合约。
+
+本文保留迁移前的 Pages/Main/Gateway 盘点，仅供追溯，不再作为部署或路由契约。当前生产
+入口是独立 `edge-router` Worker，Landing 使用 Workers Static Assets，Community 是唯一社区
+页面目标。
 
 ## 背景
 
@@ -22,7 +26,7 @@ api.groupher.com/graphiql             Phoenix GraphQL origin
 DNS 不能按 pathname 路由。无论哪个服务接收 `groupher.com`，它都必须
 充当 Landing、Main、Dashboard、Auth 和 GraphQL 的 HTTP 路由器。
 
-目前这个路由职责在 `backend/gateway` 中。当前 Gateway 是部署在 Vercel 上的
+目前这个路由职责在 `infra/gateway` 中。当前 Gateway 是部署在 Vercel 上的
 Hono/Node 反向代理。它将浏览器请求路由到这些源站：
 
 ```text
@@ -58,7 +62,7 @@ Landing 资源是否绕过 router 路径，以及产品、API 和 Auth 请求是
 
 - 先迁移主机和路由；前端框架变更留到后面评估。
 - 迁移期间，将 Cloudflare router 与现有的 Vercel/Hono Gateway 并行引入。
-  不要在第一次切换时删除 `backend/gateway`。
+  不要在第一次切换时删除 `infra/gateway`。
 - 保持 `gateway.groupher.com` 可用，作为回滚、对比目标和本地开发入口，直到
   Cloudflare 路由被证明可用。
 - 保留同源浏览器 `/api/graphql` facade。不要在托管迁移期间重新设计 GraphQL
@@ -373,7 +377,7 @@ Cloudflare router 仍然需要基本的反向代理卫生措施。
 
 ```text
 default local app development
-  -> existing Dev Hub / backend/gateway route chain
+  -> existing Dev Hub / infra/gateway route chain
 
 Cloudflare routing development
   -> wrangler Pages dev / Pages preview running Landing assets + _worker.js
@@ -385,7 +389,7 @@ cookie domain 或 Portless 变更上。
 当生产流量迁移到 Cloudflare 后，需要显式选择长期本地模型：
 
 ```text
-Option A: keep backend/gateway as local-only router
+Option A: keep infra/gateway as local-only router
   lower migration risk
   production and local routing logic can drift
 
@@ -397,7 +401,7 @@ Option B: use wrangler Pages dev as the local unified entry
 推荐的路径是在切换期间采用 Option A，然后在 Cloudflare 生产行为稳定后再评估
 Option B。
 
-`backend/gateway` 应保留在仓库中，直到生产回滚需求和本地路由需求都得到解决。
+`infra/gateway` 应保留在仓库中，直到生产回滚需求和本地路由需求都得到解决。
 
 ## 未来的框架选项
 
@@ -427,14 +431,15 @@ export，避免把托管迁移和前端重写混在一起。
 
 ### Phase 1: 为 Cloudflare Pages 准备 Landing
 
-1. 使用 `yarn workspace @groupher/frontend-landing build:cloudflare` 作为
-   Cloudflare Pages 的构建命令。
+1. 历史上曾使用 `yarn workspace @groupher/frontend-landing build:cloudflare` 作为
+   Cloudflare Pages 的构建命令；该脚本和 Pages `_worker.js` 已删除，当前生产改用
+   `yarn workspace @groupher/frontend-landing build:worker` 部署 Landing Worker。
 2. 确保 `frontend/landing` 在初始渲染时不依赖运行时 GraphQL。
 3. 第一次切换时继续让 Landing 使用 Next export。不要在托管迁移期间把它重写为
    Vinext、TanStack、Astro 或其他框架。
 4. 保持生产环境的 `assetPrefix: '/landing'`，除非 Pages 构建策略被有意重新设计。
 5. 保持 Pages 输出目录为 `frontend/landing/out`。因为当前生产 Next 构建输出的 HTML
-   引用了 `/landing/_next/static/...`，所以 `build:cloudflare` 在部署前必须先把
+   引用了 `/landing/_next/static/...`，所以当时的 `build:cloudflare` 在部署前必须先把
    `out/_next` 复制为 `out/landing/_next`。
 6. 在 Landing 输出路径中添加 Pages advanced `_worker.js` 入口。
 7. 先只实现这些响应：
@@ -452,7 +457,7 @@ export，避免把托管迁移和前端重写混在一起。
 3. 添加 `/api/auth/*` 到 Auth 的代理，并使用手动重定向。
 4. 为 `/landing/_next/static/*` 和 `/dashboard/_next/static/*` 添加静态资源归属。
 5. 保持 `gateway.groupher.com` 可用于对比。
-6. 保持 `backend/gateway` 已部署且可用。这个阶段里 Cloudflare router 是增量添加的。
+6. 保持 `infra/gateway` 已部署且可用。这个阶段里 Cloudflare router 是增量添加的。
 7. 确认每个动态请求最多只产生一次 origin fetch。这个阶段不要加入 fan-out 或
    origin probing。
 
@@ -503,7 +508,7 @@ GET  /dashboard/_next/static/...
 - Cloudflare Workers 的 CPU 和 subrequest 指标稳定低于限制
 
 通过后，将 Vercel Gateway 从生产 `groupher.com` 请求路径中移除。保留代码，直到
-回滚信心足够，再决定是否删除或归档 `backend/gateway`。
+回滚信心足够，再决定是否删除或归档 `infra/gateway`。
 
 ## 开放问题
 

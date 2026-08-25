@@ -1,0 +1,28 @@
+{
+  "name": "@groupher/edge-router",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.jsonc",
+    "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "types": "wrangler types --config wrangler.jsonc",
+    "deploy": "wrangler deploy --config wrangler.jsonc",
+    "deploy:dry-run": "wrangler deploy --dry-run --config wrangler.jsonc",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json *.mts",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.ts *.json *.mts",
+    "build": "wrangler deploy --dry-run --config wrangler.jsonc"
+  },
+  "dependencies": {
+    "@groupher/contracts": "1.0.0",
+    "@groupher/route-contract": "1.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260823.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.1.5",
+    "wrangler": "^4.118.0"
+  }
+}

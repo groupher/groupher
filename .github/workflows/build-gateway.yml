@@ -3,13 +3,13 @@ name: Build backend gateway
 on:
   push:
     paths:
-      - 'backend/gateway/**'
+      - 'infra/gateway/**'
       - 'package.json'
       - 'yarn.lock'
       - 'Makefile'
   pull_request:
     paths:
-      - 'backend/gateway/**'
+      - 'infra/gateway/**'
       - 'package.json'
       - 'yarn.lock'
       - 'Makefile'

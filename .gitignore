@@ -7,6 +7,7 @@ frontend/**/dist/
 frontend/**/out/
 local/**/dist/
 backend/**/dist/
+infra/**/dist/
 local/**/.data/
 **/target/
 **/*.app/

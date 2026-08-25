@@ -14,13 +14,17 @@ import { fileURLToPath } from 'node:url'
 
 import { config } from 'dotenv'
 
-const authRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+// Wrangler can erase `import.meta.url` while bundling this shared module for a Worker.
+// Worker bindings already provide the runtime environment, so dotenv is only needed by Node.
+if (import.meta.url) {
+  const authRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
-config({
-  path: [
-    path.join(authRoot, '.env.local'),
-    path.join(authRoot, '.env.development'),
-    path.join(authRoot, '.env'),
-  ],
-  quiet: true,
-})
+  config({
+    path: [
+      path.join(authRoot, '.env.local'),
+      path.join(authRoot, '.env.development'),
+      path.join(authRoot, '.env'),
+    ],
+    quiet: true,
+  })
+}

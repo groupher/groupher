@@ -1,0 +1,79 @@
+name: Deploy Landing Worker
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/landing/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'frontend/landing/**'
+      - 'frontend/core/**'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-landing-worker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate Landing Worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run type-check
+        run: yarn workspace @groupher/frontend-landing type-check
+
+      - name: Run lint
+        run: yarn workspace @groupher/frontend-landing lint
+
+      - name: Validate Worker deploy
+        run: yarn workspace @groupher/frontend-landing deploy:worker:dry-run
+
+  deploy:
+    name: Deploy Landing Worker
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Deploy Worker
+        run: yarn workspace @groupher/frontend-landing deploy:worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

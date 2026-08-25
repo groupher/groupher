@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -14,7 +14,7 @@ on:
   push:
     paths:
       - 'frontend/{main,dashboard,dash,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -51,7 +51,7 @@ jobs:
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             gateway:
-              - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+              - 'infra/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
               - 'frontend/**/.oxlintrc.json'

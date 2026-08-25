@@ -64,11 +64,15 @@ const productionSourceSkip = (file) =>
   /(^|\/)salon(\/|\.[cm]?[jt]sx?$)/.test(file) ||
   /(?:next-env|cloudflare-workers)\.d\.ts$/.test(file)
 
-const backendApps = ['assets-hub', 'auth', 'content-import', 'gateway', 'inspire-me', 'press']
+const backendApps = ['assets-hub', 'auth', 'content-import', 'inspire-me', 'press']
+const infraApps = ['gateway']
 
 const checkBackendScriptModules = () => {
-  for (const app of backendApps) {
-    const directory = path.join(root, 'backend', app)
+  for (const [base, app] of [
+    ...backendApps.map((app) => ['backend', app]),
+    ...infraApps.map((app) => ['infra', app]),
+  ]) {
+    const directory = path.join(root, base, app)
     const files = walk(directory, (file) => /\.[cm]?[jt]sx?$/.test(file), productionSourceSkip)
     for (const file of files) {
       const source = fs.readFileSync(file, 'utf8')
@@ -107,6 +111,7 @@ const checkExportedCallables = () => {
       (app) => path.join(root, 'frontend', app),
     ),
     ...backendApps.map((app) => path.join(root, 'backend', app)),
+    ...infraApps.map((app) => path.join(root, 'infra', app)),
     path.join(root, 'packages'),
   ]
 

@@ -1,6 +1,6 @@
 # Groupher Gateway
 
-`backend/gateway` is the stable HTTP routing edge for Groupher applications. It
+`infra/gateway` is the stable HTTP routing edge for Groupher applications. It
 runs a Hono app in local Node and serverless entrypoints, selects a target from
 host/path rules, forwards bounded headers and cookies, and proxies HTTP or
 WebSocket traffic without owning product authorization.

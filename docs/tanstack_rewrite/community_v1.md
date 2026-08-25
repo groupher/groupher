@@ -603,7 +603,7 @@ Feed 的 URL、内容、headers、缓存和可用性由 Gateway/Press 测试负�
 | Article detail read 调用 `Interactions.record_view`                              | `backend/main/lib/groupher_server/cms/articles/reader.ex`                              | 明确 detail cache hit/miss 与 view event 的现状关系                       |
 | Post/Changelog preview 背景是保持挂载的 list；Kanban 跨 thread preview 到 Post   | `frontend/main/src/app/[community]/{post,changelog,kanban}/layout.tsx` 与 `@previewer` | 用 list/board pathless parent + masked Drawer 保持同等行为                |
 | Intercepted preview 不生成 article metadata                                      | `frontend/main/src/app/[community]/{post,changelog}/@previewer/(.)[id]/page.tsx`       | Masked 状态保持 list/board head；canonical detail 才生成 article metadata |
-| Community、thread Feed 与 community sitemap/llms 由 Gateway/Press 提供           | `backend/gateway/src/routing.ts`、`backend/press/src/app.ts`                           | 不实现或测试 Press response；只保持页面已有 alternate links               |
+| Community、thread Feed 与 community sitemap/llms 由 Gateway/Press 提供           | `infra/gateway/src/routing.ts`、`backend/press/src/app.ts`                             | 不实现或测试 Press response；只保持页面已有 alternate links               |
 | 根级 `/robots.txt` 和遗留 `/sitemap.xml` 是 Main 静态文件                        | `frontend/main/public/robots.txt`、`frontend/main/public/sitemap.xml`                  | Community 不承接，保持既有路由归属                                        |
 | `/api/revalidate/community` 是 Main 的 Next tag 失效入口                         | `frontend/main/src/app/api/revalidate/community/route.ts`                              | 不复刻 Next API；Community 使用独立签名 revalidation endpoint             |
 

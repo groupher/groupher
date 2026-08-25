@@ -4,30 +4,32 @@
 
 ## 运行时边界
 
-生产环境和本地开发现在为同一公共路由契约使用不同的 gateway 运行时。
+生产环境和本地开发对齐产品 URL 边界，但使用不同的 runtime adapter。
 
 ```text
 production
   groupher.com / www.groupher.com
-    -> Cloudflare Pages project `groupher-landing`
-       -> frontend/landing/public/_worker.js
-          -> Landing assets on Cloudflare
-          -> Main on Vercel
-          -> Dashboard on Vercel
-          -> Auth on Cloudflare Workers
-          -> Phoenix on api.groupher.com
+    -> Cloudflare Worker `edge-router`
+       -> Landing Worker Static Assets (Service Binding)
+       -> Community Worker (Service Binding)
+       -> Auth Worker (Service Binding)
+       -> Phoenix / Press (HTTPS)
 
 local development
   https://groupher.localhost
-    -> backend/gateway on port 3003
+    -> infra/gateway on port 3003
        -> Landing on port 3002
        -> Main on port 3000
        -> Dashboard on port 3001
+       -> Dash on port 3005
+       -> Apply on port 3006
+       -> Community on port 3007
        -> Auth on port 3004
        -> Phoenix on port 4001
 ```
 
-`backend/gateway` 是 Dev Gateway。它保留用于本地路由和 Dev Hub 的易用性。在 Cloudflare Pages 切换之后，它不再是生产环境中 `groupher.com` 的运行时。
+`infra/gateway` 是 Dev Gateway。它保留用于本地路由和 Dev Hub 的易用性，但不是生产环境中
+`groupher.com` 的运行时。
 
 ## 为什么在本地保留 Dev Gateway
 
@@ -36,9 +38,10 @@ local development
 - 它兼容 Dev Hub 现有的启动链。
 - 它使用稳定的 Portless 名称，例如 `https://groupher.localhost`。
 - 它将本地 cookie 作用域保持在 `.groupher.localhost` 下。
-- 对于每次 Main 或 Dashboard 变更，它避免了强制要求 Wrangler、Pages assets 和 Cloudflare 本地运行时。
+- 对于每次 Community 或其他子应用变更，它避免强制要求 Wrangler 与 Cloudflare 本地运行时。
 
-生产环境的 Cloudflare 路由器和本地 Dev Gateway 应当在路由契约层面保持一致，但在正常本地开发中，它们不需要共享同一个运行时。
+生产环境的 Cloudflare Router 和本地 Dev Gateway 应共享纯生产路由契约，但不需要共享同一个
+runtime。Gateway 还可以保留 HMR、开发资产和 referer 分流等本地专用能力。
 
 ## 日常本地流程
 
@@ -54,6 +57,8 @@ make dev
 make be.gateway.start
 make fe.dev.main
 make fe.dev.dashboard
+make fe.dev.dash
+make fe.dev.apply
 make fe.dev.landing
 make be.auth.start
 ```
@@ -63,7 +68,7 @@ Dev Hub 将本地入口建模为 `Dev Gateway`，但稳定的 service id、works
 ```text
 service id:    gateway
 workspace:     @groupher/gateway
-directory:     backend/gateway
+directory:     infra/gateway
 entry command: make be.gateway.start
 ```
 
@@ -83,6 +88,9 @@ yarn portless:setup
 groupher.localhost             -> Dev Gateway, port 3003
 main.groupher.localhost        -> Dev Gateway, port 3003
 dashboard.groupher.localhost   -> Dev Gateway, port 3003
+dash.groupher.localhost        -> Dash, port 3005
+apply.groupher.localhost       -> Apply, port 3006
+community.groupher.localhost   -> Community, port 3007
 landing.groupher.localhost     -> Dev Gateway, port 3003
 auth.groupher.localhost        -> Auth, port 3004
 api.groupher.localhost         -> Phoenix, port 4001
@@ -99,51 +107,80 @@ Dev Gateway 接收浏览器请求，并按 host/path 路由：
 ```text
 /api/auth/*             -> Auth
 /api/graphql            -> Phoenix /graphiql with browser cookie cleanup
+/api/utils/slugify      -> Community
 /                       -> Landing
 /pricing                -> Landing
 /book-demo              -> Landing
-/:community/dashboard/* -> Dashboard
-other product paths     -> Main
+/:community/*           -> Community（共享生产契约）
+/:community/dashboard/* -> 404
+/:community/dash/*      -> 404
+/apply, /apply/*        -> 404
+
+dashboard.groupher.localhost/* -> Dashboard
+dash.groupher.localhost/*      -> Dash
+apply.groupher.localhost/*     -> Apply
 ```
+
+Dashboard、Dash 和 Apply 是独立产品入口，不通过 `groupher.localhost/:community/...` 路由。
+Gateway 不包含旧 Main fallback 或 `/apply` 兼容产品路由，只保留真正的 dev-only 规则。
 
 对于浏览器 GraphQL，Dev Gateway 保持与生产路由器相同的安全边界：浏览器请求使用同源 `/api/graphql`，并且只将 HttpOnly 的 `groupher-auth.token` 转发给 Phoenix。
 
-## Cloudflare 本地路由模式
-
-Cloudflare Pages `_worker.js` 不会在默认的 Dev Hub 流程中运行。它会在生产环境、Pages 预览以及 Wrangler Pages dev 中运行。
-
-只有在验证生产路由器一致性时才使用 Cloudflare 本地路由：
-
-```bash
-yarn workspace @groupher/frontend-landing build:cloudflare
-
-MAIN_SITE=http://127.0.0.1:3000 \
-DASHBOARD_SITE=http://127.0.0.1:3001 \
-AUTH_SITE=http://127.0.0.1:3004 \
-API_SITE=http://127.0.0.1:4001 \
-ENVIRONMENT=development \
-./node_modules/.bin/wrangler pages dev frontend/landing/out --port 8788
-```
+Landing 的旧入口路由实现已清理。需要验证生产形态时，使用当前 `landing` Worker Static
+Assets 和 `edge-router` 的 dry-run/development 流程；现有本地 Gateway 仍覆盖开发路由和 HMR。
 
 然后进行冒烟测试：
 
 ```bash
 curl -i http://127.0.0.1:8788/health
 curl -i http://127.0.0.1:8788/pricing
-curl -i http://127.0.0.1:8788/home/dashboard
+curl -i http://127.0.0.1:8788/home
 curl -i http://127.0.0.1:8788/api/auth/providers
 curl -i http://127.0.0.1:8788/api/graphql
 ```
 
-这个模式目前还不能替代日常的 Dev Hub 入口。完整替代还需要对 HTTPS、本地 cookie 域、Portless 别名以及 Wrangler Pages asset 行为进行显式处理。
+不要用该模式验收当前生产架构；其中 `MAIN_SITE` 与 `DASHBOARD_SITE` 都是迁移前配置。
+
+## Edge Router 本地一致性模式
+
+独立 `edge-router` 已落地。生产一致性 smoke 应使用 Wrangler 的多 Worker 本地开发和
+Service Bindings 同时启动 Router、Landing、Community、Auth 等目标；日常产品开发仍使用
+Gateway，避免强制所有下游都运行在 Wrangler 中。
+
+Community 的 Wrangler 入口由 TanStack Start build 生成，不能直接对源码配置运行：
+
+```bash
+yarn workspace @groupher/frontend-community build
+cd frontend/community
+yarn exec wrangler dev --config dist/server/wrangler.json --port 8790
+```
+
+随后分别启动 Landing Worker、Auth Worker 和 Edge Router；当四个 Worker 使用各自的
+Wrangler 配置运行时，Edge Router 的 Service Bindings 会显示为 `local [connected]`。
+本地 smoke 入口固定为 `http://127.0.0.1:8787`，至少验证 `/health`、`/pricing`、`/home`、
+`/api/auth/providers` 和 `/api/graphql`。
+
+该模式用于验证 route contract、Service Binding、header/cookie/redirect 和自定义 host
+语义；日常开发仍可使用 Dev Hub + Gateway。长期结构是：
+
+```text
+@groupher/route-contract
+  |-- edge-router: production adapter and local parity smoke
+  `-- infra/gateway: local adapter, Portless, dev assets and HMR
+```
+
+该 workspace package 只包含 hostname/path 分类和内部 pathname transform，不依赖 Node、Hono
+或 Cloudflare runtime；Gateway 与 edge-router 各自实现运行时 adapter。
+
+Gateway 的 `/@fs/*`、`/@id/*`、`/@vite/*`、`/__dash_hmr`、`/__apply_hmr`、开发专用
+`_serverFn` 和 HMR WebSocket 规则不进入生产 Router。
 
 ## 分析服务
 
-`analysis.groupher.com` 是一个部署在 Vercel 上的 Umami 实例，可以保持为 DNS only：
+`analysis.groupher.com` 是一个部署在 Fly.io 上的 Umami 实例；本地开发仍使用稳定的公开源站：
 
 ```text
-analysis.groupher.com -> Vercel
-Proxy status: DNS only
+analysis.groupher.com -> Fly.io
 ```
 
-除非 Groupher 之后需要 Cloudflare WAF、Access、Bot Management，或者该服务的 zone-level HTTP rules，否则它不需要经过 Cloudflare 代理。
+Umami 的前端脚本和 Phoenix provider 都固定使用这个域名，不应改用 Fly 的 `*.fly.dev` 诊断域名。
