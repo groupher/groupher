@@ -78,6 +78,9 @@ Groupher。批量导入由 `content-import` 编排；直接上传单篇文档也
 
 ## 部署与演进
 
+关于从当前 Vercel project 迁移到 Fly、以及它和 `content-import` 的边界，见
+[`../todo/migrate_doc_import_runtime.md`](../todo/migrate_doc_import_runtime.md)。
+
 本地首次启动前先安装 Python 3.12 virtualenv：
 
 ```sh

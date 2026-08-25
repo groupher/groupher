@@ -7,6 +7,9 @@
 > 当前状态：`backend/content-import` 已承载 server implementation；Dashboard 原 URL
 > 只保留稳定 proxy 和产品 UI。
 
+运行时从 Vercel Workflow/Blob 迁移到 Fly 或 Cloudflare 的阶段设计见
+[`../todo/migrate_doc_import_runtime.md`](../todo/migrate_doc_import_runtime.md)。
+
 ## 定位
 
 `content-import` 负责从外部来源读取内容，把来源差异收敛为 Groupher 可 Review、
