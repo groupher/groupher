@@ -49,6 +49,7 @@ defmodule GroupherServer.Activity do
           | :destroyed
           | :lifecycle_reconciled
           | :config_updated
+          | :activity_exported
 
   @spec log(struct() | map(), action(), keyword()) ::
           {:ok, struct()} | {:error, GroupherServer.ErrorCat.Error.t()}
@@ -83,16 +84,17 @@ defmodule GroupherServer.Activity do
   def list_article_logs(article, actor, filter \\ %{}),
     do: ArticleLog.list(article, actor, filter)
 
-  @spec list_community_logs(Community.t(), struct(), map()) :: {:ok, map()} | {:error, term()}
+  @spec list_community_logs(Community.t(), struct(), map(), pos_integer()) ::
+          {:ok, map()} | {:error, term()}
   @doc "Lists the Community management surface across Activity streams."
-  def list_community_logs(community, actor, filter \\ %{}),
-    do: CommunityLog.list(community, actor, filter)
+  def list_community_logs(community, actor, selection, page \\ 1),
+    do: CommunityLog.list(community, actor, selection, page)
 
   @spec get_community_log_stats(Community.t(), struct(), map()) ::
           {:ok, map()} | {:error, term()}
   @doc "Returns UTC daily CommunityLog counts for the same filter boundary as list_community_logs/3."
-  def get_community_log_stats(community, actor, filter \\ %{}),
-    do: CommunityLog.stats(community, actor, filter)
+  def get_community_log_stats(community, actor, selection),
+    do: CommunityLog.stats(community, actor, selection)
 
   @spec get_community_log_config(Community.t(), struct()) :: {:ok, map()} | {:error, term()}
   @doc "Returns active CommunityLog actions for dashboard filter controls."
@@ -101,8 +103,8 @@ defmodule GroupherServer.Activity do
   @spec export_community_logs(Community.t(), struct(), map(), atom()) ::
           {:ok, map()} | {:error, term()}
   @doc "Exports the current CommunityLog filter as a bounded JSON or CSV document."
-  def export_community_logs(community, actor, filter, format),
-    do: CommunityLog.export_logs(community, actor, filter, format)
+  def export_community_logs(community, actor, selection, format),
+    do: CommunityLog.export_logs(community, actor, selection, format)
 
   @spec get_community_log_event(Community.t(), struct(), String.t()) ::
           {:ok, map() | nil} | {:error, term()}
