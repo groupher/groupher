@@ -31,6 +31,15 @@ defmodule GroupherServer.Test.CMS.Communities.Reader do
       assert community.views == 0
     end
 
+    test "missing public community preserves the community not-exist error" do
+      assert {:error,
+              %GroupherServer.ErrorCat.Error{
+                namespace: {:cms, :community},
+                reason: :not_exist,
+                code: 5504
+              }} = CMS.Communities.fetch("missing-community")
+    end
+
     test "denied viewer reads do not inc views", ~m(community user2)a do
       Repo.get_by!(CommunityLifecycle, community_id: community.id)
       |> CommunityLifecycle.changeset(%{state: :suspended})

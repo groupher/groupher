@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.Assets.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  CMS asset ownership and processing error catalog.
+
+  Asset operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms, :asset}
 

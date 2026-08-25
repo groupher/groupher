@@ -1,5 +1,9 @@
 defmodule GroupherServer.Accounts.Fans.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Account fan and follow error catalog.
+
+  Fan operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:account, :fans}
 

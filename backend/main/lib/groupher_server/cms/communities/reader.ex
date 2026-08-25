@@ -67,15 +67,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
          {:ok, community} <- maybe_inc_views(community, opt) do
       viewer_has_states({:ok, community}, user)
     else
-      {:error,
-       %GroupherServer.ErrorCat.Error{
-         reason: :custom,
-         details: %{reason: :not_exist}
-       }} ->
-        {:error, CommunityErrorCat.not_exist("Community")}
-
-      {:error, reason} ->
-        {:error, reason}
+      {:error, reason} -> {:error, normalize_fetch_error(reason)}
     end
   end
 
@@ -87,9 +79,17 @@ defmodule GroupherServer.CMS.Communities.Reader do
          {:ok, community} <- maybe_inc_views(community, opt) do
       {:ok, community}
     else
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> {:error, normalize_fetch_error(reason)}
     end
   end
+
+  defp normalize_fetch_error(%GroupherServer.ErrorCat.Error{
+         reason: :custom,
+         details: %{reason: :not_exist}
+       }),
+       do: CommunityErrorCat.not_exist("Community")
+
+  defp normalize_fetch_error(reason), do: reason
 
   defp scoped_query(slug, actor, opt) do
     policy_mode = Keyword.get(opt, :policy_mode, :public)

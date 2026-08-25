@@ -5,6 +5,8 @@ defmodule GroupherServer.ErrorCat do
   Contexts own declarations; this module owns only the global namespace/range
   contract, reserved definitions, cross-catalog validation, and standard error
   formatting for protocol boundaries such as GraphQL.
+
+  Context catalog -> global registry and validation -> protocol error.
   """
 
   alias GroupherServer.ErrorCat.{Error, Registry, Validator}

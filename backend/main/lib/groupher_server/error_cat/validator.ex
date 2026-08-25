@@ -1,5 +1,9 @@
 defmodule GroupherServer.ErrorCat.Validator do
-  @moduledoc false
+  @moduledoc """
+  Compile-time validation for the global ErrorCat contract.
+
+  Ranges and catalogs -> invariant checks -> `:ok` or a compilation error.
+  """
 
   alias GroupherServer.ErrorCat.Registry
 

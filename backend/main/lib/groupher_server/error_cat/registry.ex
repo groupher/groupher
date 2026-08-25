@@ -1,5 +1,9 @@
 defmodule GroupherServer.ErrorCat.Registry do
-  @moduledoc false
+  @moduledoc """
+  Runtime lookup and flattening for registered ErrorCat catalogs.
+
+  Catalog list -> namespace/reason lookup -> structured error metadata.
+  """
 
   def find(catalogs, namespace, reason) do
     Enum.find_value(catalogs, fn catalog ->

@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Press.Config do
   @moduledoc """
   Press-owned static configuration derived from CMS Article configuration.
+
+  CMS Article config -> Press projection -> supported thread list.
   """
 
   alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig

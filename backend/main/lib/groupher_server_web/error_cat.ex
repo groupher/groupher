@@ -1,5 +1,9 @@
 defmodule GroupherServerWeb.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Web boundary error catalog for HTTP and GraphQL-facing failures.
+
+  Web request failure -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:web}
 

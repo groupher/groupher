@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.Passport.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  CMS passport and role-management error catalog.
+
+  Passport operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms, :passport}
 

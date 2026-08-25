@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.Articles.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  CMS Article lifecycle and interaction error catalog.
+
+  Article operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms, :article}
 

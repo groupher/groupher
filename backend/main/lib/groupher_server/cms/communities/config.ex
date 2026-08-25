@@ -1,6 +1,8 @@
 defmodule GroupherServer.CMS.Communities.Config do
   @moduledoc """
   Community policy configuration derived from CMS Article configuration.
+
+  CMS Article config -> Community policy -> thread and emotion helpers.
   """
 
   alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig

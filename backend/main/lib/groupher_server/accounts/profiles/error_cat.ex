@@ -1,5 +1,9 @@
 defmodule GroupherServer.Accounts.Profiles.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Account profile and session error catalog.
+
+  Authentication operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:account, :authentication}
 

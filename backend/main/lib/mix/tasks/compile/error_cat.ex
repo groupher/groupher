@@ -1,5 +1,9 @@
 defmodule Mix.Tasks.Compile.ErrorCat do
-  @moduledoc "Validates all ErrorCat catalogs after normal Elixir compilation."
+  @moduledoc """
+  Validates all ErrorCat catalogs after normal Elixir compilation.
+
+  Normal compilation -> ErrorCat validation -> compiler result.
+  """
 
   use Mix.Task.Compiler
 

@@ -5,6 +5,8 @@ defmodule GroupherServer.CMS.Gate.Config do
   Gate owns the distinction between ordinary Article resources and Doc
   resources; `CMS.Artiment.Config` remains the source of the configured
   Article thread values.
+
+  CMS Article config -> Gate boundary -> resource classification.
   """
 
   alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig

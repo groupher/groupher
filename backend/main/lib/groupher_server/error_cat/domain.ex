@@ -1,6 +1,10 @@
 defmodule GroupherServer.ErrorCat.Domain do
   # credo:disable-for-this-file Credo.Check.Design.AliasUsage
-  @moduledoc "DSL used by a context-owned ErrorCat catalog."
+  @moduledoc """
+  DSL used by a context-owned ErrorCat catalog.
+
+  Catalog declaration -> compile-time validation -> structured error entries.
+  """
 
   defmacro __using__(opts) do
     namespace_ast = Keyword.fetch!(opts, :namespace)

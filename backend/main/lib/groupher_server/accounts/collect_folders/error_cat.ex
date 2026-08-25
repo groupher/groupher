@@ -1,5 +1,9 @@
 defmodule GroupherServer.Accounts.CollectFolders.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Account collection-folder error catalog.
+
+  Collection operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:account, :collection}
 

@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.ErrorCat do
-  @moduledoc false
+  @moduledoc """
+  Shared CMS boundary error catalog.
+
+  CMS operation -> catalog reason -> stable protocol error.
+  """
 
   use GroupherServer.ErrorCat.Domain, namespace: {:cms}
 
