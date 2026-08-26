@@ -6,13 +6,23 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "vars": {
-    "GRAPHQL_ENDPOINT": "http://api.groupher.localhost:4001/graphiql"
+    "CONTENT_IMPORT_APP_ENDPOINT": "http://127.0.0.1:8001",
+    "GRAPHQL_ENDPOINT": "http://api.groupher.localhost:4001/graphiql",
+    "SERVICE_AUTH_CLIENT_ID": "dash-development",
+    "SERVICE_AUTH_ISSUER": "http://127.0.0.1:3004",
+    "SERVICE_AUTH_JWKS_URL": "http://127.0.0.1:3004/.well-known/jwks.json",
+    "SERVICE_AUTH_TOKEN_ENDPOINT": "http://127.0.0.1:3004/oauth2/token"
   },
   "env": {
     "production": {
       "name": "dash",
       "vars": {
-        "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
+        "CONTENT_IMPORT_APP_ENDPOINT": "https://content-import.groupher.com",
+        "GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
+        "SERVICE_AUTH_CLIENT_ID": "dash-production",
+        "SERVICE_AUTH_ISSUER": "https://auth.groupher.com",
+        "SERVICE_AUTH_JWKS_URL": "https://auth.groupher.com/.well-known/jwks.json",
+        "SERVICE_AUTH_TOKEN_ENDPOINT": "https://auth.groupher.com/oauth2/token"
       }
     }
   },

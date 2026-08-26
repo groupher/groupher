@@ -10,13 +10,13 @@
 >
 > 冲突优先级：跨来源架构与术语以本文为准；Files SDK 和临时对象生命周期以 `import_file_sdk.md` 为准；产品步骤与 UI 以 `bulk_import.md` 为准；单篇格式转换与 BodyBag 以 `article_publish_import_refactor.md` 为准。
 >
-> 更新：2026-07-22
+> 更新：2026-08-26
 
 ## 1. 结论
 
 Content Import 采用“来源适配 → 标准化 Dataset → Review → PostgreSQL staging → Thread Writer”的稳定边界：
 
-- Next.js Node 负责外部平台访问、下载、分页、临时文件、framework 分析、安全 Markdown/MDX、`ThreadDataset` 和 BodyBag 生成。
+- 独立 Content Import Node/Hono 服务负责外部平台访问、下载、分页、临时文件、framework 分析、安全 Markdown/MDX、`ThreadDataset` 和 BodyBag 生成。
 - Phoenix 不重新访问或解析外部来源，只负责权限、ImportJob、PostgreSQL staging、目标校验、最终 Thread 写入和 `ImportSourceMapping`。
 - Files SDK 只位于 Node `PreviewStore` 后面，用于跨请求、Workflow Step 和实例保存不可变 Preview/Dataset；不替代 parser 的原生临时目录。
 - 正文转换统一复用现有 Import Content：Markdown/MDX → Rich Editor AST → BodyBag。批量 Docs 和后续单篇同步不能各写一套 converter/publisher。
@@ -102,10 +102,20 @@ ImportJob 整体失败仍使用 `errorCode/errorMessage`；`TBadSmell` 表达具
 
 ## 3. Node / Phoenix 总架构
 
-整体架构图只表达两个服务端运行边界，不把 Dashboard UI 画进来：
+浏览器始终请求 Dash 同源 API；TanStack server route 校验用户会话并以受限的 Dash service
+identity 转发。Content Import 使用自己的 service identity 调用 Phoenix，不能复用 Dash 身份：
 
 ```text
-┌──────────────────────────────── Next.js Node ────────────────────────────────┐
+Browser
+  │ Phoenix browser token
+  v
+┌────────────────────────────── TanStack Dash server ──────────────────────────┐
+│  /api/docs/import/*                                                         │
+│  sub=service:dash -> aud=content-import:internal-api                         │
+│  scope=docs:import:proxy                                                     │
+└──────────────────────────────────────────────┬───────────────────────────────┘
+                                               v
+┌──────────────────────── Content Import Node/Hono ────────────────────────────┐
 │                                                                              │
 │  Docs Import Workflow                                                        │
 │          │                                                                   │
@@ -125,7 +135,9 @@ ImportJob 整体失败仍使用 `errorCode/errorMessage`；`TBadSmell` 表达具
 │                    shared Import Content -> BodyBag[] -> Phoenix Client       │
 │                                                                              │
 └──────────────────────────────────────────────┬───────────────────────────────┘
-                                               │ trusted bounded batches
+                                               │ sub=service:content-import
+                                               │ aud=phoenix:content-import-api
+                                               │ scope=content-import:write
                                                v
 ┌──────────────────────────────── Phoenix / Elixir ────────────────────────────┐
 │                                                                              │
@@ -154,7 +166,20 @@ ImportJob 整体失败仍使用 `errorCode/errorMessage`；`TBadSmell` 表达具
 - 通过现有 Import Content 生成 BodyBag。
 - 把 selected items 以有界批次发送给 Phoenix。
 
-### 3.2 Phoenix 负责
+### 3.2 Dash server proxy 负责
+
+- 保持 Browser 使用同源 `/api/docs/import/*`，不向 Browser 暴露 service credential。
+- 校验并提取 Phoenix browser token，通过 `X-Groupher-User-Authorization` 委托给 Content Import。
+- 以 `service:dash` 请求 `content-import:internal-api` 的 `docs:import:proxy` scope。
+
+Auth 的 `SERVICE_AUTH_CLIENTS_JSON` 是部署 secret registry。生产和本地配置必须注册 Dash
+client，并只允许 `content-import:internal-api` 下的 `docs:import:proxy`。
+
+PreviewStore 保留 TTL 和批量删除能力，但当前仓库没有 scheduler、Cron trigger 或已部署的
+定时清理入口。接入真实运行机制前，不注册 scheduler service identity，也不暴露虚构的 Dash
+sweep route。
+
+### 3.3 Phoenix 负责
 
 - 用户、community、`doc.import` 权限和服务间 trust。
 - 创建和查询 ImportJob，保存有界进度与错误摘要。
@@ -492,10 +517,10 @@ ImportSourceMapping
 
 ## 9. Node 目录结构
 
-首期 server-only 模块继续留在 Dashboard，后续出现第二个 Next.js host 时再提取 package：
+server-only 模块位于独立的 Content Import backend workspace：
 
 ```text
-frontend/dashboard/src/
+backend/content-import/src/
 |-- lib/
 |   `-- content-import/
 |       |-- core/
@@ -554,6 +579,16 @@ getDocsImportJob
 现在不单独创建只有一个消费者的 `client.ts`；第二个 Thread importer 出现后再抽通用 Phoenix client。
 
 不创建 Notion、Google、Linear、Changelog、Post、comments、reactions、actors 等空目录。
+
+Analyzer 的 framework contract fixtures 归 Content Import 自己所有，固定放在：
+
+```text
+backend/content-import/test/fixtures/frameworks/<framework>/<case>/
+```
+
+每个 case 是一个可独立分析的最小文档仓库，可包含框架配置、Markdown/MDX 来源和
+`expected/tree.json`。测试不得从 `frontend/fixtures` 读取，也不得依赖在线仓库、前端 build
+产物或 workspace `node_modules`。
 
 ## 10. Phoenix 目录结构
 

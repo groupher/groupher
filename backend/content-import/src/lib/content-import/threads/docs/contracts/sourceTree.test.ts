@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { ContractError, decodeSourceTree } from './index'
 
-const fixtureRoot = path.resolve(process.cwd(), '../../frontend/fixtures/content-import/frameworks')
+const fixtureRoot = path.resolve(process.cwd(), 'test/fixtures/frameworks')
 
 const goldenFiles = ['vitepress/basic', 'rspress/basic', 'nextra/basic'].map((fixture) =>
   path.join(fixtureRoot, fixture, 'expected/tree.json'),

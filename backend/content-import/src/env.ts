@@ -3,7 +3,7 @@
  *
  * Business position:
  *
- *   Dashboard / Phoenix import job
+ *   Dash proxy / Phoenix import job
  *     -> Content Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary

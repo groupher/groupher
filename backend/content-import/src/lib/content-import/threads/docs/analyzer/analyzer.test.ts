@@ -9,7 +9,7 @@ import { analyzeFumadocs } from './frameworks/fumadocs'
 import { analyzeSourceWorkspace, detectFramework } from './index'
 import { parseStaticConfig } from './staticConfig'
 
-const fixtureRoot = path.resolve(process.cwd(), '../../frontend/fixtures/content-import/frameworks')
+const fixtureRoot = path.resolve(process.cwd(), 'test/fixtures/frameworks')
 
 const loadFixture = async (fixture: string) => {
   const root = path.join(fixtureRoot, fixture)

@@ -5,12 +5,12 @@
 > UI：独立的系统级登录 UI
 >
 > 当前状态：Auth Worker 已上线；平台根域由 `edge-router` Service Binding 接入，独立域名为
-> `auth.groupher.com`；本地 Gateway 仅用于开发
+> `auth.groupher.com`；本地 Dev Gateway 仅用于开发
 
 ## 定位
 
 `auth` 统一处理 Groupher 各前端应用的 OAuth、登录、登出和 Browser Session。
-Main、Dashboard、Apply 以及后续前端应用不再分别部署一套 provider 和 callback
+Community、Dash、Apply 以及后续前端应用不再分别部署一套 provider 和 callback
 handler，只消费统一登录结果。
 
 该子应用拆分的是认证协议和会话运行边界，不是 Phoenix 的用户领域。用户、
@@ -31,7 +31,7 @@ callback 和登录流程同样属于这个边界。
 
 现在 OAuth provider、callback、logout 和 Phoenix identity exchange 已迁至
 `backend/auth`。生产请求可通过 `edge-router` 的 Auth Service Binding 或直接访问
-`auth.groupher.com`；Main、Community、Dashboard 和其他产品不再挂载 Auth handler，也不再
+`auth.groupher.com`；Community、Dash 和其他产品不再挂载 Auth handler，也不再
 解码 Auth.js Session，只被动携带 Auth 写入的 `groupher-auth.token`。
 
 ## 提供的服务
@@ -41,7 +41,7 @@ callback 和登录流程同样属于这个边界。
 - 登录、登出、Session 签发、刷新和失效。
 - 统一的 Cookie 名称、作用域和生命周期。
 - 登录及 callback 所需的少量系统 UI。
-- 向 Main、Dashboard 和 Apply 提供一致的用户登录状态。
+- 向 Community、Dash 和 Apply 提供一致的用户登录状态。
 
 ## 领域边界
 
@@ -243,12 +243,12 @@ Groupher Auth 客户端；`frontend/core/lib/oauth.ts` 只保留 `signIn` / `sig
 
 ## Cookie contract
 
-| Cookie                               | 写入方               | 消费方                                         | 用途                          |
-| ------------------------------------ | -------------------- | ---------------------------------------------- | ----------------------------- |
-| `__Host-groupher-auth.session-token` | `@auth/core`         | 仅 canonical Auth                              | 90 天 Browser Session         |
-| `__Host-groupher-auth.csrf-token` 等 | `@auth/core`         | 仅 canonical Auth                              | CSRF、state、PKCE 和 callback |
-| `groupher-auth.token`                | Auth 的 Hono wrapper | Main/Dashboard server routes、Gateway、Phoenix | Phoenix 用户认证              |
-| `groupher-auth.signed-in`            | Auth 的 Hono wrapper | 首方浏览器应用                                 | 非敏感登录提示，不是凭证      |
+| Cookie                               | 写入方               | 消费方                               | 用途                          |
+| ------------------------------------ | -------------------- | ------------------------------------ | ----------------------------- |
+| `__Host-groupher-auth.session-token` | `@auth/core`         | 仅 canonical Auth                    | 90 天 Browser Session         |
+| `__Host-groupher-auth.csrf-token` 等 | `@auth/core`         | 仅 canonical Auth                    | CSRF、state、PKCE 和 callback |
+| `groupher-auth.token`                | Auth 的 Hono wrapper | Community/Dash、Dev Gateway、Phoenix | Phoenix 用户认证              |
+| `groupher-auth.signed-in`            | Auth 的 Hono wrapper | 首方浏览器应用                       | 非敏感登录提示，不是凭证      |
 
 生产和本地 HTTPS 环境中的 Credential Cookie 使用 `HttpOnly`、`Secure` 和
 `SameSite=Lax`。90 天 Auth Browser Session 与协议 Cookie 使用 `__Host-` 且不含
@@ -257,8 +257,8 @@ Groupher Auth 客户端；`frontend/core/lib/oauth.ts` 只保留 `signIn` / `sig
 登录证明。完整生命周期以 [`docs/auth/v1.md`](../auth/v1.md) 为准。
 
 当前父域 Cookie 会被浏览器发送给 `groupher.com` 及其所有匹配子域，包括
-`main.groupher.com`、`landing.groupher.com`、`dashboard.groupher.com`、
-`dash.groupher.com` 和 `auth.groupher.com`。这不表示每个子域都是 Auth 消费者：
+`landing.groupher.com`、`dash.groupher.com` 和 `auth.groupher.com`。这不表示每个子域都是
+Auth 消费者：
 Landing 在 V1 中没有 Auth origin capability，但由于浏览器只按
 `Domain=.groupher.com` 匹配，它的部署服务器仍可能收到当前 30 分钟 Phoenix Cookie。
 因此整个 `*.groupher.com` DNS 和部署命名空间都是 credential-trusted boundary，
@@ -294,6 +294,20 @@ Auth 只有在 `@auth/core` 的 callback response 确实签发 Session Cookie �
 直接请求该地址。平台根域的 `/api/auth/*` 由 edge-router 提供同源入口，但不是第二套
 Auth 实现；它只转发到同一个 Auth Worker。共享前端常量在生产环境缺少配置时仍回退到
 canonical Auth 地址。
+
+### Content Import service clients
+
+Docs Import 使用两段互不复用的身份合同：
+
+| client         | resource                                       | audience                      | scope                  |
+| -------------- | ---------------------------------------------- | ----------------------------- | ---------------------- |
+| Dash           | `https://content-import.groupher.com/internal` | `content-import:internal-api` | `docs:import:proxy`    |
+| Content Import | `https://api.groupher.com/content-import`      | `phoenix:content-import-api`  | `content-import:write` |
+
+`SERVICE_AUTH_CLIENTS_JSON` 必须分别注册 `serviceName: dash` 和 `content-import` client，并只
+授予表内 audience/scope。实际 client id、credential hash 和 secret 属于部署配置，不提交到
+仓库。Phoenix 不再注册或接受 `phoenix:dashboard-api`。当前没有 scheduler service 或 Cron
+trigger，Auth 不为 Docs Import 注册 scheduler audience。
 
 Cloudflare Worker 部署还声明 `AUTH_REFRESH_RATE_LIMITER` 原生 Rate Limiting binding，
 同时按客户端和 `browserSessionRef` 计数。修改 `wrangler.jsonc` 中的 namespace 时必须
