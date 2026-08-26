@@ -3,8 +3,6 @@ name: e2e
 on:
   pull_request:
     paths:
-      - 'frontend/main/**'
-      - 'frontend/dashboard/**'
       - 'frontend/dash/**'
       - 'frontend/landing/**'
       - 'frontend/core/**'
@@ -17,8 +15,6 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/main/**'
-      - 'frontend/dashboard/**'
       - 'frontend/dash/**'
       - 'frontend/landing/**'
       - 'frontend/core/**'
@@ -38,8 +34,6 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      main: ${{ steps.filter.outputs.main }}
-      dashboard: ${{ steps.filter.outputs.dashboard }}
       dash: ${{ steps.filter.outputs.dash }}
       landing: ${{ steps.filter.outputs.landing }}
       auth: ${{ steps.filter.outputs.auth }}
@@ -50,10 +44,6 @@ jobs:
         id: filter
         with:
           filters: |
-            main:
-              - 'frontend/main/**'
-            dashboard:
-              - 'frontend/dashboard/**'
             dash:
               - 'frontend/dash/**'
             landing:
@@ -68,76 +58,6 @@ jobs:
               - 'backend/auth/**'
               - 'packages/contracts/**'
               - 'packages/service/**'
-
-  e2e-main:
-    name: playwright (main)
-    needs: changes
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
-    timeout-minutes: 30
-    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.main == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Run e2e
-        env:
-          CI: true
-        run: yarn test:e2e:main
-
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-main
-          path: |
-            .playwright/report
-            .playwright/test-results
-
-  e2e-dashboard:
-    name: playwright (dashboard)
-    needs: changes
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
-    timeout-minutes: 30
-    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dashboard == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install deps
-        run: yarn install --immutable
-
-      - name: Run e2e
-        env:
-          CI: true
-        run: yarn test:e2e:dashboard
-
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-dashboard
-          path: |
-            .playwright/report
-            .playwright/test-results
 
   e2e-dash:
     name: playwright (dash)

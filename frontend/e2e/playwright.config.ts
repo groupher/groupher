@@ -2,7 +2,7 @@ import path from 'node:path'
 
 import { defineConfig, devices } from '@playwright/test'
 
-const app = process.env.E2E_APP ?? 'main'
+const app = process.env.E2E_APP ?? 'dash'
 const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
 const mockGraphQLEndpoint = `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/graphiql`
 
@@ -14,16 +14,6 @@ type TWebServer = {
 }
 
 const appConfig = {
-  main: {
-    cmd: `yarn exec cross-env PORT=3100 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-main dev`,
-    url: 'http://localhost:3100',
-    testDir: path.resolve('frontend/e2e/tests/main'),
-  },
-  dashboard: {
-    cmd: `yarn exec cross-env PORT=3101 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-dashboard dev`,
-    url: 'http://dashboard.groupher.localhost:3101',
-    testDir: path.resolve('frontend/e2e/tests/dashboard'),
-  },
   dash: {
     cmd: `yarn exec cross-env PORT=3103 GRAPHQL_ENDPOINT=${mockGraphQLEndpoint} yarn workspace @groupher/frontend-dash dev`,
     url: 'http://dash.groupher.localhost:3103',
@@ -54,8 +44,7 @@ const authHostResolverRules = [
 const webServer: TWebServer[] = authStack
   ? [
       {
-        command:
-          'yarn exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 yarn mock:server',
+        command: 'yarn exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 yarn mock:server',
         url: 'http://localhost:4104/health',
         reuseExistingServer: false,
         timeout: 120_000,
@@ -86,7 +75,6 @@ const webServer: TWebServer[] = authStack
       {
         command: cmd,
         url,
-        // We run multiple Next apps on the same localhost URL in this monorepo.
         // Reusing an already-running server can accidentally run tests against the wrong app.
         reuseExistingServer: false,
         timeout: 120_000,

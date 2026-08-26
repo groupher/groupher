@@ -64,10 +64,6 @@ const result = {
     worker: summarize(path.join(communityRoot, 'dist/client', 'worker-revision-diff.js')),
       server: summarize(path.join(communityRoot, 'dist/server')),
   },
-  main: {
-    client: summarize(path.join(repoRoot, 'frontend/main/.next/static/chunks')),
-    server: summarize(path.join(repoRoot, 'frontend/main/.next/server/app')),
-  },
 }
 
 if (process.env.COMMUNITY_BASE_URL) {

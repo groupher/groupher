@@ -89,7 +89,6 @@ describe('platform root routes', () => {
     '/api/docs/import/start',
     '/api/internal/docs-import/status',
     '/api/revalidate/community',
-    '/dashboard/_next/app.js',
     '/api/unknown',
   ])('keeps removed or unknown route %s at 404', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('not-found')

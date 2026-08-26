@@ -92,8 +92,7 @@ const isDeletedProductRoute = (pathname: string): boolean => {
   )
 }
 
-const isDeletedDashboardRoute = (pathname: string): boolean =>
-  pathname.startsWith('/dashboard/_next/') ||
+const isRetiredApiRoute = (pathname: string): boolean =>
   DELETED_DASHBOARD_API_PATHS.has(pathname) ||
   DASHBOARD_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
@@ -139,7 +138,7 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
     return route('community', pathname, 'pass-through', undefined, 'community-tool')
   }
   if (isPressRoute(pathname)) return route('press', pathname, 'public-output')
-  if (isDeletedProductRoute(pathname) || isDeletedDashboardRoute(pathname)) {
+  if (isDeletedProductRoute(pathname) || isRetiredApiRoute(pathname)) {
     return route('not-found', pathname, 'pass-through', undefined, 'removed-product')
   }
   if (pathname === '/api' || pathname.startsWith('/api/')) {

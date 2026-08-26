@@ -3,7 +3,7 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -12,7 +12,7 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{dash,community,apply,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -40,10 +40,6 @@ jobs:
         id: filter
         with:
           filters: |
-            main:
-              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-            dashboard:
-              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             dash:
               - 'frontend/dash/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             community:
@@ -64,8 +60,6 @@ jobs:
       - name: Build matrix
         id: matrix
         env:
-          MAIN_CHANGED: ${{ steps.filter.outputs.main }}
-          DASHBOARD_CHANGED: ${{ steps.filter.outputs.dashboard }}
           DASH_CHANGED: ${{ steps.filter.outputs.dash }}
           COMMUNITY_CHANGED: ${{ steps.filter.outputs.community }}
           APPLY_CHANGED: ${{ steps.filter.outputs.apply }}
@@ -80,16 +74,8 @@ jobs:
             react_doctor_targets+=("$1")
           }
 
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
-            add_target '{"target":"main","workspace":"@groupher/frontend-main"}'
-          fi
-
           if [ "$SHARED_CHANGED" = "true" ]; then
             add_target '{"target":"core","workspace":"@groupher/frontend-core"}'
-          fi
-
-          if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
-            add_target '{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASH_CHANGED" = "true" ]; then

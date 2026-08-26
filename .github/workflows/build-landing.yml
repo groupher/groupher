@@ -37,13 +37,13 @@ jobs:
           corepack enable
           yarn install --immutable
 
-      - name: Restore Turbopack build cache
+      - name: Restore TanStack build cache
         uses: actions/cache@v4
         with:
-          path: frontend/landing/.next/cache
-          key: ${{ runner.os }}-next-landing-${{ hashFiles('yarn.lock', 'frontend/core/**', 'frontend/landing/**') }}
+          path: frontend/landing/.tanstack
+          key: ${{ runner.os }}-tanstack-landing-${{ hashFiles('yarn.lock', 'frontend/core/**', 'frontend/landing/**') }}
           restore-keys: |
-            ${{ runner.os }}-next-landing-
+            ${{ runner.os }}-tanstack-landing-
 
       - name: Build Project
         run: yarn run build:prod:landing
