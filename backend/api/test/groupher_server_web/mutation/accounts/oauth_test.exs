@@ -99,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
         guest_conn
         |> Plug.Conn.put_req_header("cookie", "groupher-auth.token=invalid-token")
         |> Plug.Conn.put_req_header("content-type", "application/json")
-        |> Plug.Conn.put_req_header("origin", "https://dashboard.groupher.localhost")
+        |> Plug.Conn.put_req_header("origin", "https://dash.groupher.localhost")
         |> Plug.Conn.put_req_header("x-groupher-csrf", "1")
         |> post("/graphiql", query: query, variables: %{})
         |> json_response(200)

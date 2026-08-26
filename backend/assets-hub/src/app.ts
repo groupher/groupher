@@ -43,8 +43,6 @@ const defaultCorsOrigins = [
   'https://groupher.localhost',
   'http://apply.groupher.localhost',
   'https://apply.groupher.localhost',
-  'http://dashboard.groupher.localhost',
-  'https://dashboard.groupher.localhost',
   'http://dash.groupher.localhost',
   'https://dash.groupher.localhost',
 ]

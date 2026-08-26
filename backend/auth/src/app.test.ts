@@ -53,15 +53,13 @@ describe('Auth Hono application', () => {
     const response = await createApp().request('/api/auth', {
       method: 'OPTIONS',
       headers: {
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'access-control-request-headers': 'content-type, x-auth-return-redirect',
         'access-control-request-method': 'POST',
       },
     })
 
-    expect(response.headers.get('access-control-allow-origin')).toBe(
-      'https://dashboard.groupher.com',
-    )
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://dash.groupher.com')
     expect(response.headers.get('access-control-allow-credentials')).toBe('true')
     expect(response.headers.get('access-control-allow-headers')).toContain('x-auth-return-redirect')
     expect(response.headers.get('access-control-expose-headers')).toContain('Retry-After')
@@ -83,13 +81,13 @@ describe('Auth Hono application', () => {
     const response = await createApp().request('/api/auth/session', {
       method: 'OPTIONS',
       headers: {
-        origin: 'https://dashboard.groupher.localhost',
+        origin: 'https://dash.groupher.localhost',
         'access-control-request-method': 'GET',
       },
     })
 
     expect(response.headers.get('access-control-allow-origin')).toBe(
-      'https://dashboard.groupher.localhost',
+      'https://dash.groupher.localhost',
     )
   })
 
@@ -128,7 +126,7 @@ describe('Auth Hono application', () => {
     const response = await createApp().request('/api/auth/session', {
       method: 'OPTIONS',
       headers: {
-        origin: 'https://dashboard.groupher.com:444',
+        origin: 'https://dash.groupher.com:444',
         'access-control-request-method': 'GET',
       },
     })
@@ -161,7 +159,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/token/refresh', {
       method: 'POST',
       headers: {
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
     })
@@ -185,7 +183,7 @@ describe('Auth Hono application', () => {
       method: 'POST',
       headers: {
         cookie: '__Host-groupher-auth.session-token=stale-session',
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
     })
@@ -203,7 +201,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/token/refresh', {
       method: 'POST',
       headers: {
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
     })
@@ -262,7 +260,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/accounts/oauth_ref/unlink', {
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -291,7 +289,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/accounts/oauth_ref/unlink', {
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -336,7 +334,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/accounts/oauth_ref/unlink', {
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -361,12 +359,12 @@ describe('Auth Hono application', () => {
       }),
     }).request('/api/auth/accounts/github/link', {
       body: JSON.stringify({
-        returnTo: 'https://dashboard.groupher.localhost/account/connections',
+        returnTo: 'https://dash.groupher.localhost/account/connections',
       }),
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
         'content-type': 'application/json',
-        origin: 'https://dashboard.groupher.localhost',
+        origin: 'https://dash.groupher.localhost',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -416,7 +414,7 @@ describe('Auth Hono application', () => {
     const begin = await app.request('/api/auth/accounts/github/link', {
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dashboard.groupher.localhost',
+        origin: 'https://dash.groupher.localhost',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -486,7 +484,7 @@ describe('Auth Hono application', () => {
     const begin = await app.request('/api/auth/accounts/github/link', {
       headers: {
         cookie: 'groupher-auth.token=phoenix-user-token',
-        origin: 'https://dashboard.groupher.localhost',
+        origin: 'https://dash.groupher.localhost',
         'x-groupher-csrf': '1',
       },
       method: 'POST',
@@ -560,7 +558,7 @@ describe('Auth Hono application', () => {
     }).request('/api/auth/logout', {
       method: 'POST',
       headers: {
-        origin: 'https://dashboard.groupher.com',
+        origin: 'https://dash.groupher.com',
         'x-groupher-csrf': '1',
         cookie: [
           'groupher-auth.token=phoenix-token',

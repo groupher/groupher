@@ -20,14 +20,10 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   @production_hosts MapSet.new([
                       "groupher.com",
-                      "main.groupher.com",
-                      "dashboard.groupher.com",
                       "dash.groupher.com"
                     ])
   @development_hosts MapSet.new([
                        "groupher.localhost",
-                       "main.groupher.localhost",
-                       "dashboard.groupher.localhost",
                        "dash.groupher.localhost"
                      ])
 

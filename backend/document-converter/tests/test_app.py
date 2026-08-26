@@ -177,7 +177,7 @@ def test_rejects_file_larger_than_configured_limit(pdf_bytes: bytes) -> None:
 
 
 def test_rejects_unlisted_browser_origin(pdf_bytes: bytes) -> None:
-    settings = Settings(allowed_origins=frozenset({"https://dashboard.groupher.com"}))
+    settings = Settings(allowed_origins=frozenset({"https://dash.groupher.com"}))
     client = TestClient(create_app(settings=settings))
 
     response = client.post(
@@ -191,7 +191,7 @@ def test_rejects_unlisted_browser_origin(pdf_bytes: bytes) -> None:
 
 
 def test_allows_configured_browser_origin_preflight() -> None:
-    origin = "https://dashboard.groupher.com"
+    origin = "https://dash.groupher.com"
     settings = Settings(allowed_origins=frozenset({origin}))
     client = TestClient(create_app(settings=settings))
 

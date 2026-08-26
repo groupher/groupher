@@ -29,7 +29,7 @@
     "AUTH_URL": "https://auth.groupher.com",
     "AUTH_COOKIE_DOMAIN": ".groupher.com",
     "SERVICE_AUTH_ISSUER": "https://auth.groupher.com",
-    "SERVICE_AUTH_RESOURCES_JSON": "{\"https://api.groupher.com/assets\":\"phoenix:assets-api\",\"https://api.groupher.com/auth\":\"phoenix:auth-api\",\"https://api.groupher.com/content-import\":\"phoenix:content-import-api\",\"https://api.groupher.com/dashboard\":\"phoenix:dashboard-api\",\"https://api.groupher.com/press\":\"phoenix:press-api\",\"https://assets.groupher.com/internal\":\"assets-hub:internal-api\",\"https://content-import.groupher.com/internal\":\"content-import:internal-api\",\"https://dashboard.groupher.com/scheduler\":\"dashboard:scheduler-api\",\"https://press.groupher.com/internal\":\"press:internal-api\"}",
+    "SERVICE_AUTH_RESOURCES_JSON": "{\"https://api.groupher.com/assets\":\"phoenix:assets-api\",\"https://api.groupher.com/auth\":\"phoenix:auth-api\",\"https://api.groupher.com/content-import\":\"phoenix:content-import-api\",\"https://api.groupher.com/press\":\"phoenix:press-api\",\"https://assets.groupher.com/internal\":\"assets-hub:internal-api\",\"https://content-import.groupher.com/internal\":\"content-import:internal-api\",\"https://press.groupher.com/internal\":\"press:internal-api\"}",
     "SERVICE_AUTH_TOKEN_TTL_SECONDS": "600",
     "SERVICE_AUTH_TOKEN_ENDPOINT": "https://auth.groupher.com/oauth2/token",
     "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",

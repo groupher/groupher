@@ -72,19 +72,9 @@ type TOptions = {
   testLogin?: (request: Request) => Promise<Response>
 }
 
-const FIRST_PARTY_AUTH_HOSTS = new Set([
-  'groupher.com',
-  'main.groupher.com',
-  'dashboard.groupher.com',
-  'dash.groupher.com',
-])
+const FIRST_PARTY_AUTH_HOSTS = new Set(['groupher.com', 'dash.groupher.com'])
 
-const LOCAL_AUTH_HOSTS = new Set([
-  'groupher.localhost',
-  'main.groupher.localhost',
-  'dashboard.groupher.localhost',
-  'dash.groupher.localhost',
-])
+const LOCAL_AUTH_HOSTS = new Set(['groupher.localhost', 'dash.groupher.localhost'])
 
 const isAllowedLocalAuthOrigin = (url: URL): boolean => {
   if (!['http:', 'https:'].includes(url.protocol)) return false
