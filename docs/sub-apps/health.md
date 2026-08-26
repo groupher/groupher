@@ -18,11 +18,11 @@ Dashboard 路由或转换接口都不应该承担基础存活检查职责。
 
 所有可独立启动或部署的 HTTP 服务都应该提供统一的 `GET /health`：
 
-- `gateway`
+- `dev-gateway`
 - `auth`
 - `landing`
-- `main`
-- `dashboard`
+- `community`
+- `dash`
 - `inspire-me`
 - `phoenix`
 - `document-converter`
@@ -38,7 +38,7 @@ v1 响应保持低成本、无鉴权、无副作用：
 {
   "schemaVersion": "health.v1",
   "status": "ok",
-  "service": "main",
+  "service": "community",
   "version": "dev",
   "environment": "development",
   "timestamp": "2026-07-26T00:00:00Z",
@@ -155,7 +155,7 @@ validate 或 conformance check 应在这些位置运行：
 当前实现已经开始对齐 `health.v1`：
 
 - 根目录已有机器可读 contract：`contracts/services/health/schemas/v1.schema.json`。
-- `gateway`、`landing`、`main`、`dashboard` 和 `inspire-me` 暴露 `GET /health`。
+- `dev-gateway`、`landing`、`community`、`dash` 和 `inspire-me` 暴露 `GET /health`。
 - `auth`、`phoenix` 和 `document-converter` 暴露 `GET /health` 并返回统一 JSON。
 - Dev Hub 服务清单使用各服务的 `/health` 作为基础可达性 URL。
 - E2E mock GraphQL server 仍有自己的 `GET /health`，用于 Playwright 等待 mock server。

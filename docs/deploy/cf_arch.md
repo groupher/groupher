@@ -15,7 +15,6 @@ groupher.com/pricing                  Landing
 groupher.com/book-demo                Landing
 groupher.com/:community/...           Community / Press
 
-dashboard.groupher.com/...            Dashboard
 dash.groupher.com/...                 Dash
 apply.groupher.com/...                Apply
 auth.groupher.com/...                 Auth direct origin
@@ -193,7 +192,7 @@ packages/route-contract
 - 输入为 hostname、pathname、method 和已解析的自定义域名映射。
 - 输出为 route class、target kind 和必要的内部 pathname transform。
 - 不导入 Hono、Node API、Cloudflare `env`、`Request`、具体 fetcher 或 Gateway dev 逻辑。
-- `edge-router` 和 `infra/gateway` 分别实现 Worker/Node adapter、代理和运行时测试。
+- `edge-router` 和 `infra/dev-gateway` 分别实现 Worker/Node adapter、代理和运行时测试。
 
 Wrangler 和 Gateway 的 esbuild 都直接 bundle 这个 package。生产路径分类只在 package 中测试
 一次；Service Binding、header/cookie、HTTPS fetch、开发资产和 WebSocket 行为留在各自
@@ -225,7 +224,6 @@ frontend/landing/out
 独立应用在自己的子域名提供健康检查：
 
 ```text
-dashboard.groupher.com/health
 dash.groupher.com/health
 apply.groupher.com/health
 auth.groupher.com/health
@@ -236,7 +234,7 @@ Landing 和 Community 通过少量真实公共页面 smoke check 验证。Status
 
 ## 本地开发
 
-`infra/gateway` 长期保留为本地开发基础设施。它负责 Dev Hub、Portless、开发
+`infra/dev-gateway` 长期保留为本地开发基础设施。它负责 Dev Hub、Portless、开发
 资源归属、referer 判断、Vite/TanStack 资源和 HMR WebSocket；这些都不是生产 Router 的
 职责。
 
@@ -244,7 +242,6 @@ Landing 和 Community 通过少量真实公共页面 smoke check 验证。Status
 
 ```text
 groupher.localhost                    Landing / Community 公共入口
-dashboard.groupher.localhost          Dashboard
 dash.groupher.localhost               Dash
 apply.groupher.localhost              Apply
 auth.groupher.localhost               Auth
@@ -255,13 +252,13 @@ auth.groupher.localhost               Auth
 ```text
 @groupher/route-contract
   |-- edge-router: production adapter
-  `-- infra/gateway: local adapter + dev-only routes
+  `-- infra/dev-gateway: local adapter + dev-only routes
 ```
 
 `edge-router` 也应能通过 Wrangler 的多 Worker 本地开发模式连接本地 Service Bindings，用于
-生产一致性 smoke。它不必替代日常 Gateway；两者共享纯路由契约和测试即可。
+生产一致性 smoke。它不必替代日常 Dev Gateway；两者共享纯路由契约和测试即可。
 
-以下开发路径只属于 Gateway，生产 `edge-router` 不得暴露：
+以下开发路径只属于 Dev Gateway，生产 `edge-router` 不得暴露：
 
 ```text
 /@fs/*  /@id/*  /@vite/*  /@react-refresh  /src/*
@@ -351,8 +348,8 @@ Community 已独立部署并承担自身域名流量，不再设置单独的“�
 1. 建立 `@groupher/route-contract`，完整覆盖平台根域、自定义域名、slug、根级静态资产、
    Press transform 和目标 404。
 2. 建立 `infra/edge-router` Worker、Wrangler 配置、bindings、observability 和单元测试。
-3. 让 Gateway 复用共享生产规则，并在本地 adapter 中保留 dev-only 规则。
-4. Dashboard 保持独立现状，仅保留本地运行能力；不接入 Edge Router。
+3. 让 Dev Gateway 复用共享生产规则，并在本地 adapter 中保留 dev-only 规则。
+4. Dash 保持独立产品域名，不接入 Edge Router。
 5. 配置 Landing、Community、Auth Service Bindings，并验证 host/header 契约。
 6. 将 Landing `out` 部署为 `landing` Worker Static Assets。
 7. 完成本地、active downstream preview、version override 和 direct origin 验证。
@@ -369,7 +366,7 @@ Community 已独立部署并承担自身域名流量，不再设置单独的“�
 ```bash
 yarn workspace @groupher/route-contract test
 yarn workspace @groupher/edge-router test
-yarn workspace @groupher/gateway test
+yarn workspace @groupher/dev-gateway test
 yarn workspace @groupher/frontend-landing build:worker
 yarn workspace @groupher/frontend-landing deploy:worker:dry-run
 yarn workspace @groupher/edge-router deploy:dry-run
@@ -382,13 +379,13 @@ yarn workspace @groupher/edge-router deploy:dry-run
 Routes。部署前必须人工确认 Landing、Community、Auth 三个下游 Worker 已部署且 Service
 Bindings 可解析；Edge Router workflow 的 push/PR 触发只做验证，正式部署使用手动触发。
 
-Gateway 不在这条生产迁移链中退役；后续只有在本地开发体验有明确替代时才单独讨论删除。
+Dev Gateway 不在这条生产迁移链中退役；后续只有在本地开发体验有明确替代时才单独讨论删除。
 
 ## 验收条件
 
 - Landing、Community 与 Press 公共路径按上述优先级正确分流。
 - 旧 Dashboard、Dash、Apply 公共路径以及 `/health/*` 返回 `404`。
-- Dashboard、Dash、Apply 只通过独立子域名提供产品页面。
+- Dash、Apply 只通过独立子域名提供产品页面。
 - `/api/utils/slugify` 在平台根域交给 Community；旧 Dashboard 的其他根域 API/资产返回
   `404`，Dashboard 调用方只使用其独立域名。
 - Router 配置中不存在旧 Main、Dashboard、Dash、Apply 的 hostname、binding、origin、fallback
@@ -400,7 +397,7 @@ Gateway 不在这条生产迁移链中退役；后续只有在本地开发体验
 - Preview 报告明确 downstream version；Worker Route 上的最终公网 smoke 通过。
 - Trace 能区分 Router route class 和下游 Worker 边界。
 - 生产部署不依赖旧托管平台、兼容入口或 fallback。
-- Gateway 可继续承担日常本地开发；edge-router 可用于本地生产一致性 smoke。
+- Dev Gateway 可继续承担日常本地开发；edge-router 可用于本地生产一致性 smoke。
 
 ## Cloudflare 参考
 

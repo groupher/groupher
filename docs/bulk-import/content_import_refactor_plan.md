@@ -34,7 +34,7 @@ Phoenix
 ### 0.2 Node 目标目录
 
 ```text
-frontend/dashboard/src/
+backend/content-import/src/
 |-- lib/content-import/
 |   |-- core/contracts/
 |   |-- core/preview-store/
@@ -591,7 +591,7 @@ backend/api/test/fixtures/content_import
 - 现有 fixture 和 golden 只移动，不复制两份；platform-to-thread integration test 直接复用对应 thread fixture。
 - 新增 module 时，测试文件必须落在与 module 相同的相对目录。
 - fixture 目录使用稳定 framework id（`mkdocs`、`vitepress`）；只有 Elixir module/test 文件按 `mk_docs.ex` / `mk_docs_test.exs`、`vite_press.ex` / `vite_press_test.exs` 命名。
-- 前端不新建统一的全局 test root：route/component/hook 测试留在 `frontend/dashboard/src` 或 `frontend/core` 的对应实现旁；若该模块族当前使用 `tests/` 子目录，则继续沿用该局部约定。
+- 前端不新建统一的全局 test root：route/component/hook 测试留在 `frontend/dash/src` 或 `frontend/core` 的对应实现旁；若该模块族当前使用 `tests/` 子目录，则继续沿用该局部约定。
 
 ---
 

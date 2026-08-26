@@ -1,5 +1,8 @@
 # SSR 首次绘制主题
 
+> 历史实现说明：文中的 Next `useServerInsertedHTML` 和旧 Main/Dashboard 文件路径仅用于
+> 解释迁移前实现；当前 hosts 使用 TanStack 与共享的 pre-paint script。
+
 > 状态：设计说明和实现指南。 Wallpaper/renderSpec 不在此范围内，应单独处理。
 
 ## 问题

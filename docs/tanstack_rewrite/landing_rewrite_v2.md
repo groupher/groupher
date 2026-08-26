@@ -1,5 +1,8 @@
 # Landing TanStack Rewrite V2：Bundle 与依赖边界
 
+> 历史迁移说明：下文提及保留 `frontend/main` 的段落记录当时的范围边界；Main 现已由
+> Community 替代并删除，不再构成当前约束。
+
 > 状态：Phase 1–3 的确定性依赖收敛已于 2026-08-26 落地；Tooltip、Markdown、首屏以下 islands 与 wallpaper 图片化仍按本文边界留作后续。
 >
 > 原则：优先删除 Landing 不应拥有的运行时依赖，再拆分页面加载边界；不能为了减小 HTML 而退回客户端空壳。

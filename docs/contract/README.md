@@ -92,7 +92,7 @@ GET /health
 {
   "schemaVersion": "health.v1",
   "status": "ok",
-  "service": "main",
+  "service": "community",
   "version": "dev",
   "environment": "development",
   "timestamp": "2026-07-26T00:00:00Z",

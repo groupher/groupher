@@ -1,5 +1,8 @@
 # Apply V1
 
+> 迁移说明：下文“当前实现”中的 Main 页面是独立 Apply 应用建立前的历史输入。当前入口为
+> `frontend/apply`；旧 Main/Dashboard 路径不再是实现位置或兼容目标。
+
 > 状态：目标实现合同
 >
 > 前端运行时：独立 TanStack Start 应用
@@ -142,7 +145,7 @@ V1 不完成：
 
 ## 当前实现及必须替换的问题
 
-当前入口是：
+迁移前入口是：
 
 ```text
 frontend/main/src/app/apply/community/page.tsx
@@ -375,7 +378,7 @@ App root Provider
 
 禁止的耦合：
 
-- 在 `frontend/main`、`frontend/dash` 或 `frontend/dashboard` 下增加 Apply route、proxy
+- 在 Community、Dash 等其他产品应用下增加 Apply route、proxy
   route、Provider 或 server adapter。
 - 从 Apply import `@main/*`、`@dash/*`、MainProvider、Dashboard Store、Community Store 或
   CommunityBoundary。

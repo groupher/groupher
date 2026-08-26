@@ -1,5 +1,8 @@
 # 第三方分析集成
 
+> 迁移提示：本文中的 Main/Dashboard 文件路径是功能最初落地时的历史位置。当前公开页面
+> host 为 Community、管理 host 为 Dash；后续修改必须使用现存 TanStack 路径。
+
 > 状态：v1 已实现；v2 后续工作见下文。
 >
 > 范围：社区管理员为公开社区页面配置的第三方分析脚本。
@@ -109,13 +112,13 @@ SSR community layout
 这些值不是 secret。它们是分析 provider 期望网站放在浏览器可见脚本中的常规
 公共追踪身份。
 
-| Provider | 用户提供的值 | 示例 |
-| --- | --- | --- |
-| Google Analytics | Measurement ID | `G-1234567` |
-| Google Tag Manager | Container ID | `GTM-ABC1234` |
-| Microsoft Clarity | Project ID | `abc123xyz` |
-| Plausible | Site domain | `docs.example.com` |
-| Fathom | Site ID | `ABCDE` |
+| Provider           | 用户提供的值   | 示例               |
+| ------------------ | -------------- | ------------------ |
+| Google Analytics   | Measurement ID | `G-1234567`        |
+| Google Tag Manager | Container ID   | `GTM-ABC1234`      |
+| Microsoft Clarity  | Project ID     | `abc123xyz`        |
+| Plausible          | Site domain    | `docs.example.com` |
+| Fathom             | Site ID        | `ABCDE`            |
 
 不要在这种集成模型中存储或暴露 provider 管理凭据、API token、OAuth secret 或
 服务端访问密钥。v1 只需要上述浏览器追踪身份。
@@ -192,13 +195,13 @@ third_party_analytics: [
 使用 provider 专属的 config key，而不是到处都使用一个泛化的 `id`。这样能让
 校验和未来的 UI 标签更清晰：
 
-| Provider | Config field |
-| --- | --- |
-| `ga` | `measurement_id` |
-| `gtm` | `container_id` |
-| `clarity` | `project_id` |
-| `plausible` | `domain` |
-| `fathom` | `site_id` |
+| Provider    | Config field     |
+| ----------- | ---------------- |
+| `ga`        | `measurement_id` |
+| `gtm`       | `container_id`   |
+| `clarity`   | `project_id`     |
+| `plausible` | `domain`         |
+| `fathom`    | `site_id`        |
 
 持久化形态使用 snake_case，因为它由后端存储和校验。GraphQL 和前端公开形态通过
 Absinthe 常规的字段转换边界使用 camelCase。
@@ -271,13 +274,13 @@ third-party-analytics-fathom
 
 推荐的 Next `Script` 策略：
 
-| Provider | Strategy | 原因 |
-| --- | --- | --- |
-| Google Analytics | `afterInteractive` | 标准分析引导，不阻塞首次绘制。 |
+| Provider           | Strategy           | 原因                                     |
+| ------------------ | ------------------ | ---------------------------------------- |
+| Google Analytics   | `afterInteractive` | 标准分析引导，不阻塞首次绘制。           |
 | Google Tag Manager | `afterInteractive` | v1 中避免让 community 页面关键路径变重。 |
-| Microsoft Clarity | `afterInteractive` | session 工具应在 hydration 完成后启动。 |
-| Plausible | `lazyOnload` | 轻量页面分析可以等浏览器空闲。 |
-| Fathom | `lazyOnload` | 轻量页面分析可以等浏览器空闲。 |
+| Microsoft Clarity  | `afterInteractive` | session 工具应在 hydration 完成后启动。  |
+| Plausible          | `lazyOnload`       | 轻量页面分析可以等浏览器空闲。           |
+| Fathom             | `lazyOnload`       | 轻量页面分析可以等浏览器空闲。           |
 
 ## Provider 渲染说明
 
@@ -290,10 +293,12 @@ third-party-analytics-fathom
 ```html
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1234567"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-1234567');
+  window.dataLayer = window.dataLayer || []
+  function gtag() {
+    dataLayer.push(arguments)
+  }
+  gtag('js', new Date())
+  gtag('config', 'G-1234567')
 </script>
 ```
 
@@ -305,7 +310,9 @@ third-party-analytics-fathom
 
 ```html
 <script>
-  (function(w,d,s,l,i){/* GTM bootstrap */})(window,document,'script','dataLayer','GTM-ABC1234');
+  ;(function (w, d, s, l, i) {
+    /* GTM bootstrap */
+  })(window, document, 'script', 'dataLayer', 'GTM-ABC1234')
 </script>
 ```
 
@@ -321,7 +328,9 @@ JavaScript 走正常运行时路径。如果以后需要 noscript 兜底，应�
 
 ```html
 <script>
-  (function(c,l,a,r,i,t,y){/* Clarity bootstrap */})(window, document, "clarity", "script", "abc123xyz");
+  ;(function (c, l, a, r, i, t, y) {
+    /* Clarity bootstrap */
+  })(window, document, 'clarity', 'script', 'abc123xyz')
 </script>
 ```
 
@@ -354,13 +363,13 @@ JavaScript 走正常运行时路径。如果以后需要 noscript 兜底，应�
 
 建议的校验：
 
-| Provider | 校验 |
-| --- | --- |
-| Google Analytics | `measurement_id` 匹配 `/^G-[A-Za-z0-9-]+$/` |
-| Google Tag Manager | `container_id` 匹配 `/^GTM-[A-Za-z0-9-]+$/` |
-| Microsoft Clarity | `project_id` 非空，且只包含字母、数字、下划线和连字符 |
-| Plausible | `domain` 匹配 `/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$/` |
-| Fathom | `site_id` 非空，且只包含字母、数字、下划线和连字符 |
+| Provider           | 校验                                                                                                  |
+| ------------------ | ----------------------------------------------------------------------------------------------------- |
+| Google Analytics   | `measurement_id` 匹配 `/^G-[A-Za-z0-9-]+$/`                                                           |
+| Google Tag Manager | `container_id` 匹配 `/^GTM-[A-Za-z0-9-]+$/`                                                           |
+| Microsoft Clarity  | `project_id` 非空，且只包含字母、数字、下划线和连字符                                                 |
+| Plausible          | `domain` 匹配 `/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$/` |
+| Fathom             | `site_id` 非空，且只包含字母、数字、下划线和连字符                                                    |
 
 所有用户输入的 provider 值应有一个实际的最大长度。除非某个 provider 有更严
 格的文档限制，否则 provider 身份字段和域名使用 255 字符。provider key 应更短，

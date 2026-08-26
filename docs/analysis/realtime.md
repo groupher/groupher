@@ -174,7 +174,7 @@ TrendPage / WebOverview
 - Groupher 现有 global lock + ETS 缓存先例：`backend/api/lib/groupher_server/service_auth/client.ex`
 - Groupher 标题右侧 slot：`frontend/core/unit/DashboardThread/Portal/index.tsx`
 - Groupher slot 定位样式：`frontend/core/unit/DashboardThread/Portal/salon/index.ts`
-- Groupher Trends 页面入口：`frontend/dashboard/src/app/[community]/trend/layout.tsx`
+- Groupher Trends 页面入口：`frontend/dash/src/routes/$community/trend.tsx`
 
 ## Cache helper 复用边界
 

@@ -1,5 +1,8 @@
 # 网络分析 v1
 
+> 历史方案：文中的 Main layout 挂载点属于已退役 Next 应用。当前采集接入必须落在
+> Community TanStack shell，不恢复 `frontend/main`。
+
 > 状态：规划中。
 >
 > 目标：先验证面向真实 Groupher 页面、可自托管的 Umami 采集闭环，然后引入一个由 Groupher 拥有的轻量业务边界，这个边界最初可以只是透明转发，之后再扩展为社区隔离、权限和产品分析。

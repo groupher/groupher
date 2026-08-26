@@ -133,13 +133,13 @@ type TSourceDocument = {
 
 实现位置：
 
-| 边界                      | 文件                                                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| frontmatter/body 拆分     | [`documentFile.ts`](../../frontend/dashboard/src/lib/content-import/threads/docs/analyzer/documentFile.ts)      |
-| Markdown/MDX AST 标题解析 | [`documentTitle.ts`](../../frontend/dashboard/src/lib/content-import/threads/docs/documentTitle.ts)             |
-| SourceAnalysis contract   | [`sourceAnalysis.ts`](../../frontend/dashboard/src/lib/content-import/threads/docs/contracts/sourceAnalysis.ts) |
-| 导航标题 fallback         | [`helpers.ts`](../../frontend/dashboard/src/lib/content-import/threads/docs/analyzer/helpers.ts)                |
-| 目标 AST H1 消费          | [`publisher.ts`](../../frontend/dashboard/src/lib/content-import/threads/docs/publisher.ts)                     |
+| 边界                      | 文件                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| frontmatter/body 拆分     | [`documentFile.ts`](../../backend/content-import/src/lib/content-import/threads/docs/analyzer/documentFile.ts)      |
+| Markdown/MDX AST 标题解析 | [`documentTitle.ts`](../../backend/content-import/src/lib/content-import/threads/docs/documentTitle.ts)             |
+| SourceAnalysis contract   | [`sourceAnalysis.ts`](../../backend/content-import/src/lib/content-import/threads/docs/contracts/sourceAnalysis.ts) |
+| 导航标题 fallback         | [`helpers.ts`](../../backend/content-import/src/lib/content-import/threads/docs/analyzer/helpers.ts)                |
+| 目标 AST H1 消费          | [`publisher.ts`](../../backend/content-import/src/lib/content-import/threads/docs/publisher.ts)                     |
 
 ## 8. 测试要求
 

@@ -1,5 +1,9 @@
 # About 访客分布地图
 
+> 迁移提示：本文尚未实施，文中的 `frontend/main`、Next API route 和 `.next` 检查命令是
+> 旧方案输入，不能直接执行。实施前必须改为 `frontend/community` 的 TanStack route/server
+> function 边界；不恢复 Main 或 Next 兼容层。
+
 > 状态：方案已确认，尚未实现。
 >
 > 范围：在社区 About 页面公开展示国家级访客分布，并为指定的大型国家细化 region marker；

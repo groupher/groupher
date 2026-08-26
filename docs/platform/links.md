@@ -1,14 +1,10 @@
-# Platform 链接
+# 路由链接合同
 
 ## 目的
 
-Dashboard UI 由两个应用共享：
-
-- `frontend/dashboard` 使用 Next.js App Router 和 `next/link`。
-- `frontend/dash` 使用 TanStack Router 和 `@tanstack/react-router` 的 `Link`。
-
-共享 Core 组件不得直接导入任一 Router，而应使用 `PlatformProvider` 暴露的
-Platform 链接合同。
+Landing、Community、Dash 和 Apply 都使用 TanStack Router，但共享 Core 仍不直接导入
+具体 Router。Core 保存类型化 route target、路径解析和语义化链接；每个 host 只通过窄化的
+`RouteScopeProvider` 提供当前位置和命令式导航能力。
 
 ## 链接合同
 
@@ -25,29 +21,16 @@ Core uses `frontend/core/platform/Link.tsx`:
 - `route`：内部的类型化 Dashboard 路由目标；
 - `href`：普通 URL，包括外部 URL。
 
-Core 组件不判断导航由 Next 还是 TanStack Router 处理，这由当前 Platform adapter
-负责。
+`PlatformLink` 始终渲染原生 `<a>`。普通点击由当前 route scope 交给 TanStack Router；
+外链、新标签页和带修饰键点击继续使用浏览器原生行为。
 
-## Platform 实现
+## Host 实现
 
-### Next Dashboard
+### TanStack hosts
 
-`frontend/dashboard/src/platform/Link.tsx` 使用 `dashboard` 根片段解析路由，并渲染：
-
-```tsx
-<NextLink href={resolvedHref}>...</NextLink>
-```
-
-### TanStack Dash
-
-`frontend/dash/src/platform/Link.tsx` 使用 `dash` 根片段解析路由，并渲染：
-
-```tsx
-<TanStackLink to={resolvedHref}>...</TanStackLink>
-```
-
-TanStack adapter 负责 `preload`、`replace` 和已注册路由类型等 TanStack 专属逻辑。
-这些细节不得泄漏到 Core 组件中。
+Community、Dash、Landing 和 Apply 在各自应用根部安装 `RouteScopeProvider`。scope 负责
+`push`、`replace`、`prefetch`、当前 pathname/search 和产品特有的 preview masking；Image、
+Link、Script 不再通过 Context 注入。
 
 ## 语义边界
 
@@ -72,25 +55,23 @@ TanStack adapter 负责 `preload`、`replace` 和已注册路由类型等 TanSta
 
 ## Search 参数
 
-Dashboard 路由构造器返回与平台无关的 `TRouteTarget`。请求 `preserveSearch` 时，adapter
-使用平台根片段和当前 search 状态解析它：
+Dashboard 路由构造器返回与运行时无关的 `TRouteTarget`。请求 `preserveSearch` 时，Core
+使用当前 search 状态解析它：
 
 ```text
 Core route target
-  -> Next adapter: /community/dashboard/...
-  -> Dash adapter: /community/dash/...
+  -> /community/dash/...
 ```
 
-这样可以保持两棵路由树平行，同时不让 Core 知道当前由哪个应用渲染。
+旧 `dashboard` 根片段已经删除，不提供兼容解析。
 
 ## 添加新平台
 
 添加新的 Host 或 Router 时：
 
-1. 实现 `TPlatformLinkProps` 合同。
-2. 使用该平台的根片段和 search 规则解析 `route`。
-3. 渲染 Router 原生的链接组件。
-4. 在该平台的 `PlatformProvider` 中注册实现。
-5. Core 组件继续使用 `PlatformLink`，不要增加 Router 专属导入。
+1. 在 host 根部实现 `TRouteNavigation`。
+2. 使用 `RouteScopeProvider` 提供 location 和导航动作。
+3. 产品特有的 preview/masking 留在 host scope。
+4. Core 组件继续使用 `PlatformLink`，不要增加 Router 专属导入。
 
 实现应继续为内部和外部导航渲染语义化锚点。只有改变 UI 状态的控件才应渲染为按钮。

@@ -289,29 +289,21 @@ type TDocumentConversionResult = {
 
 ### 4.2 `artiment-publisher`
 
-第一阶段物理位置：DSB 内部。
+当前物理位置：独立共享 package。
 
 ```text
-frontend/dashboard/src/
-├── app/api/artiment/publish/route.ts
-└── lib/artiment-publisher/
-    ├── index.ts
-    ├── editor.ts
-    ├── serialize.ts
-    ├── sanitize.ts
-    ├── hash.ts
-    ├── validate.ts
-    ├── graphql.ts
-    └── types.ts
+packages/artiment-publisher/
+├── index.ts
+├── serialize.ts
+├── sanitize.ts
+├── hash.ts
+├── validate.ts
+└── types.ts
 ```
 
-`route.ts` 只负责 HTTP、认证上下文、错误映射和调用核心模块。Plate 初始化、serializer、sanitize 和 GraphQL client 不应全部写进 Route Handler。
-
-Route Handler 必须运行在 Node runtime，不能使用 Edge runtime，因为 Plate server serializer、
-React server render、`node:crypto` 和 HTML sanitizer 不应建立在 Edge 兼容假设上。
-
-当前 Dashboard 使用 Next.js 16 `cacheComponents`，显式导出 `runtime = 'nodejs'` 会导致构建失败；
-App Route 保持默认 Node runtime，并通过 Node-only imports 固化这个边界，不增加 `runtime` route config。
+Content Import 的 HTTP 层只负责认证上下文、错误映射和调用核心模块。Plate 初始化、
+serializer、sanitize 和 GraphQL client 不应全部写进 transport handler。该 package 运行在
+Node runtime，不建立 Edge 兼容假设。
 
 核心实现必须避免依赖 Next.js request/response 类型，保证后续可以移动到：
 

@@ -1,6 +1,7 @@
 # Inspire Me TanStack Rewrite V1
 
-> 状态：规划中。
+> 状态：已完成。下文 Vinext、`.next` 和旧构建路径仅记录迁移输入；当前应用是纯 TanStack
+> Start，不保留兼容层。
 >
 > 本文定义 `frontend/inspire-me` 从 Vinext 改写为 TanStack Start 的实施边界。V1 是运行时迁移，不是产品重做；公开 URL、研究数据、页面行为、Worker 身份和 Cloudflare Access 契约保持不变。
 

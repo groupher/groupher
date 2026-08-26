@@ -929,14 +929,16 @@ content-import/previews/
 
 #### 19.2.1 本地开发与调试
 
-本地不需要额外启动 Redis、队列或 Workflow 数据库。Workflow SDK 的 Local World 随正常 Next.js dev server 运行：
+本地不需要额外启动 Redis、队列或 Workflow 数据库。Workflow SDK 的 Local World 随独立
+Content Import Node 服务运行：
 
 ```bash
-yarn workspace @groupher/frontend-dashboard dev
-npx workflow inspect runs --web
+cd backend/content-import
+yarn dev
+yarn exec workflow inspect runs --web
 ```
 
-- 本地 Inspector 从 `.next/workflow-data/` 读取 Run、Step、输入、输出、错误和耗时；该目录是开发产物，不提交 Git。
+- 本地 Inspector 从 `.workflow-data/` 读取 Run、Step、输入、输出、错误和耗时；该目录是开发产物，不提交 Git。
 - GitHub 和 Phoenix 使用本地 `.env`/`.env.local`；需要连接 Vercel 测试资源时再执行 `vercel link` 和 `vercel env pull`。
 - `PreviewStore` 是可替换接口：本地默认使用 `.tmp/docs-import/previews/`，`CI=true` 也强制使用 local backend，即使 CI 环境包含 `VERCEL=1`；测试不需要 `BLOB_READ_WRITE_TOKEN` 或 Vercel 网络。
 - 可通过 `DOCS_IMPORT_PREVIEW_STORE=local|blob` 显式选择 backend；本地/CI 可设置 `DOCS_IMPORT_PREVIEW_DIR` 指向测试临时目录。Vercel Preview/Production 选择 `blob` 时才要求 `BLOB_READ_WRITE_TOKEN`。
@@ -990,14 +992,14 @@ npx workflow inspect runs --web
 目标模块边界以总架构文档为准，首期只创建 GitHub + Docs 的真实目录：
 
 ```text
-frontend/dashboard/src/
-├── lib/backend-content-import/
+backend/content-import/src/
+├── lib/content-import/
 │   ├── core/contracts/
 │   ├── core/preview-store/
 │   ├── platforms/github/repo/
 │   ├── threads/docs/
 │   └── transport/phoenix/docsImport.ts
-└── workflows/backend-content-import/docs/
+└── workflows/content-import/docs/
     ├── analyzeGitHubRepo.ts
     └── applyDocsDataset.ts
 ```

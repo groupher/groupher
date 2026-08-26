@@ -561,7 +561,7 @@ v1 实现目录：
 backend/api/lib/groupher_server/cms/content_import/
 `-- process.ex
 
-frontend/dashboard/src/lib/content-import/core/process/
+backend/content-import/src/lib/content-import/core/process/
 |-- contract.ts
 `-- previewProjector.ts
 

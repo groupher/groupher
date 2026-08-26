@@ -26,13 +26,11 @@ GET /health
 
 当前覆盖目标：
 
-- `gateway`
+- `dev-gateway`
 - `edge-router`
 - `auth`
 - `landing`
-- `main`
 - `community`
-- `dashboard`
 - `dash`
 - `inspire-me`
 - `phoenix`
@@ -42,8 +40,8 @@ GET /health
 - `document-converter`
 
 `edge-router` 是当前承接 `groupher.com` 生产流量的 Cloudflare Public Edge Router。
-`gateway` 保留给可在 Vercel 或本地 Node runtime 运行的 Hono Gateway；两者不是同一个
-producer，也不能共享 service id。
+`dev-gateway` 只表示本地 Node/Hono 开发入口；它与生产 `edge-router` 不是同一个 producer，
+也不能共享 service id。
 
 纯库、构建脚本、离线 worker 和没有 HTTP server 的模块不需要提供 `/health`。如果
 后续 worker 变成常驻服务，应通过它自己的控制面或 supervisor 暴露等价健康状态。
@@ -56,7 +54,7 @@ producer，也不能共享 service id。
 {
   "schemaVersion": "health.v1",
   "status": "ok",
-  "service": "main",
+  "service": "community",
   "version": "dev",
   "environment": "development",
   "timestamp": "2026-07-26T00:00:00Z",
@@ -223,8 +221,8 @@ node contracts/services/health/scripts/assert-health.mjs
 
 ```bash
 node contracts/services/health/scripts/assert-health.mjs \
-  --url http://127.0.0.1:3000/health \
-  --service main
+  --url http://127.0.0.1:3007/health \
+  --service community
 ```
 
 服务自身不应该在每次处理 `/health` 请求时读取 schema 再校验自己。这样会让健康
@@ -236,7 +234,7 @@ node contracts/services/health/scripts/assert-health.mjs \
 当前实现已经开始对齐 `health.v1`：
 
 - 根目录已有 `contracts/services/health/schemas/v1.schema.json`。
-- `gateway`、`landing`、`main`、`dashboard` 和 `inspire-me` 暴露 `GET /health`。
+- `dev-gateway`、`landing`、`community`、`dash` 和 `inspire-me` 暴露 `GET /health`。
 - `auth`、`phoenix` 和 `document-converter` 暴露 `GET /health` 并返回统一 JSON。
 - Dev Hub 服务清单使用各服务的 `/health` 作为基础可达性 URL。
 - E2E mock GraphQL server 仍有自己的 `GET /health`，用于 Playwright 等待 mock server。

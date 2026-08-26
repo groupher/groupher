@@ -1,6 +1,6 @@
 # Next.js 退场与基础设施清理
 
-> 状态：目标方案，尚未实施
+> 状态：实施完成，工作区待人工复核；本轮改动暂不提交
 >
 > 目标：删除已经被 TanStack 应用替代的旧项目和全部真实 Next.js 依赖，收敛生产与本地
 > 路由基础设施，并清理失效的脚本、配置、测试和文档。
@@ -14,6 +14,7 @@ frontend/landing     官网与营销页面
 frontend/community   公开社区
 frontend/dash        社区管理后台
 frontend/apply       社区申请
+frontend/inspire-me  反馈研究工具
 ```
 
 入口基础设施分为生产和本地两层。以下是依赖关系，不表示目录嵌套；共享 contract 的
@@ -45,6 +46,8 @@ frontend/dashboard  -> frontend/dash
 - 删除 `/:community/dashboard/*`；
 - 删除 `/_next/static/*` 和 `/_next/hmr`；
 - 删除旧 Main/Dashboard API routes；
+- 旧 Dashboard 中仍属存活产品的 API 职责必须迁入 TanStack Dash server routes；Docs Import
+  的 `/api/docs/import/*` 和 scheduler sweep 不得随旧项目一起丢失；
 - `dashboard.groupher.com` 不重定向、不映射到 Dash，直接退场；
 - 正式管理后台只使用 `dash.groupher.com`。
 
@@ -224,7 +227,6 @@ Binding、WebSocket proxy 或环境特定 upstream URL。
 
 ```text
 backend/inspire-me  -> frontend/inspire-me
-TanStack Start      -> TanStack Start
 ```
 
 Inspire Me 已完成 TanStack Start 改写，不再保留 Vinext 或 `next/*` 兼容 API。目录迁移到
@@ -243,14 +245,23 @@ Inspire Me 已完成 TanStack Start 改写，不再保留 Vinext 或 `next/*` �
 ```bash
 rg -l \
   'frontend/main|frontend/dashboard|@groupher/gateway|next-compose-plugins|NextRequest|useServerInsertedHTML' \
+  --hidden \
   --glob '!**/node_modules/**' \
+  --glob '!**/.git/**' \
+  --glob '!.yarn/**' \
   --glob '!**/.next/**'
 
 rg -n \
   '\.next|/_next|dashboard\.groupher\.com|service.*(gateway|main|dashboard)' \
+  --hidden \
   --glob '!**/node_modules/**' \
+  --glob '!**/.git/**' \
+  --glob '!.yarn/**' \
   --glob '!**/.next/**'
 ```
+
+`--hidden` 是验收必需项，否则 Ripgrep 默认跳过 `.gitignore`、`.dockerignore` 和 `.github`，
+会漏掉最需要清理的构建与 CI 约定。`.git` 与 vendored Yarn runtime 单独排除。
 
 第二条中的 `service.*(gateway|main|dashboard)` 是有意采用的宽匹配，只用于发现 Status、
 Dev Hub 和类似服务清单中的陈旧条目。它可能命中普通说明文字或无关 service 行，结果必须
@@ -267,8 +278,62 @@ Dev Hub 和类似服务清单中的陈旧条目。它可能命中普通说明文
 - Frontend Core imports、exports 和 config；
 - 文档、部署脚本和生成产物约定。
 
+测试资产按实际所有者归档：
+
+- `frontend/e2e` 只保存 Playwright 配置、setup/teardown 和浏览器用例；运行报告、trace、截图
+  和 test results 统一写入仓库根 `.playwright/`，不得保存在 `frontend/e2e/.playwright`；
+- Content Import 的 Docusaurus、Fumadocs、MkDocs、Nextra、Rspress、Starlight 和 VitePress
+  analyzer fixtures 位于 `backend/content-import/test/fixtures/frameworks`，不再使用通用
+  `frontend/fixtures` 目录。
+
 最终验收重复运行相同命令。剩余命中必须逐条分类为有效历史文字、Vinext 兼容 API 或明确
 保留的非 Next 语义，不能只凭数量下降判断完成。
+
+## 最终扫描分类
+
+2026-08-26 使用上面的 hidden-aware 命令复扫后，没有未分类的运行代码、workspace、CI、
+Status、Dev Hub、Portless、ignore 或部署配置命中。剩余结果归为：
+
+- `infra/clean_up.md`：清理合同本身必须引用待删除名称；
+- `docs/dashboard-to-tanstack/*`、`docs/tanstack_rewrite/*`、`docs/dash_route.md`、
+  `docs/ssr_theme.md`、`docs/sub-apps/gateway_hono_migration.md`、
+  `frontend/dash/docs/rewrites.md`：已明确标记的历史迁移记录；
+- Auth、Analytics、Activity、Assets、Apply、GraphQL、Query、Lefthook 等领域文档中的旧路径：
+  已更新为当前路径，或在文件头明确标注为迁移期证据/继续实施前必须重做清点；
+- `docs/deploy/cf_arch.md` 中的 `/_next`：当前 Edge Router 的显式 `404` 负面合同，不是代理
+  路由；
+- `backend/content-import/.../candidateFilter.ts` 中的 `.next`：过滤导入的第三方 GitHub
+  workspace 生成目录，不是 Groupher build/cache 约定；
+- `service: 'dev-gateway'` 与 `service.id === 'dev-gateway'`：Dev Gateway 的正式新 service id；
+- `.next()`、`next_floor`、`next_page`、`nextIconHover`：普通语言或 API 标识，与 Next.js 无关；
+- `nextjs.png` 和 MarkerPicker 的 `nextjs`：Landing 技术展示与用户可选技术图标，不是 runtime
+  依赖；
+- `@workflow/next`：`workflow` 元包的可选 adapter 传递包；`next` peer 未安装，
+  `yarn why next` 为空。Content Import 只运行独立 Node/Hono adapter，不调用该包。
+
+历史文档保留旧名称是为了说明迁移输入，不得作为恢复兼容层的依据。
+
+## Content Import 信任链收尾
+
+删除旧 Dashboard 后，Docs Import 采用两段明确的 service identity，不能用字符串替换代替
+代理迁移：
+
+```text
+TanStack Dash -> Content Import
+  sub=service:dash
+  aud=content-import:internal-api
+  scope=docs:import:proxy
+
+Content Import -> Phoenix
+  sub=service:content-import
+  aud=phoenix:content-import-api
+  scope=content-import:write
+```
+
+Phoenix 不再接受 `phoenix:dashboard-api` 或 `dashboard:body-bag:write`。Auth 的 runtime secret
+registry 需要保留新的 Dash client；仓库只记录 client/resource 合同，不提交 credential。
+当前不存在 scheduler service、Cron trigger 或调用方，因此不迁移旧 Dashboard 的 sweep
+代理，也不注册 `dash:scheduler-api`。
 
 ## 生成产物与忽略规则
 
@@ -314,9 +379,9 @@ Next 项目退场后，删除 `.gitignore`、`.dockerignore`、CI 和 workspace 
 2. 更新部署、本地开发、子应用、路由和历史迁移文档。
 3. 重跑删除前清点命令并逐条关闭剩余项。
 
-### 后续独立项目
+### 已完成的独立前置项目
 
-将 Inspire Me 移入 `frontend` 并迁到 TanStack Start。
+Inspire Me 已移入 `frontend` 并完成 TanStack Start 改写，本轮不保留 Vinext/Next 兼容层。
 
 ## 验收标准
 
@@ -331,6 +396,9 @@ Next 项目退场后，删除 `.gitignore`、`.dockerignore`、CI 和 workspace 
 - `yarn why next` 无真实 Next.js package 依赖；
 - 存活 workspace、CI、`.gitignore` 和 `.dockerignore` 不再包含 `.next` 产物约定；
 - Core 不直接导入 Next runtime；
+- Dash `/api/docs/import/*` 能以用户委托和 `service:dash` 身份访问 Content Import；
+- Content Import 只以 `service:content-import`、`phoenix:content-import-api` 写入 BodyBag；
+- Phoenix runtime 和 BodyBag Trust 不再包含 `phoenix:dashboard-api`；
 - Landing、Community、Dash、Apply、Auth、Press 和 Phoenix 可独立启动；
 - `groupher.localhost` 的 Landing、Community、Auth、GraphQL 和 Press 路径正常；
 - Dash、Apply 独立本地域名正常；
@@ -347,4 +415,4 @@ Next 项目退场后，删除 `.gitignore`、`.dockerignore`、CI 和 workspace 
 - 不让 Dev Gateway 进入生产部署或 Status 监控；
 - 不将本地 HMR 规则加入生产 Edge Router；
 - 不把 GraphQL、Auth 或 Phoenix 领域逻辑搬进路由层；
-- 不在本轮顺带重写 Inspire Me。
+- 不恢复 Inspire Me 的 Vinext/Next 兼容层。
