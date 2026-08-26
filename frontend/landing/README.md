@@ -7,10 +7,10 @@ adapter; it does not own authenticated community product behavior.
 ## Position in the system
 
 ```text
-Visitor -> Gateway -> Landing/Next.js -> marketing pages
-                            |
-                            +-> narrow Core UI/platform reuse
-                            +-> explicit product links to Main/Auth/Apply
+Visitor -> Edge Router -> Landing/TanStack Start static output -> marketing pages
+                              |
+                              +-> narrow Core UI/platform reuse
+                              +-> explicit product links to Main/Auth/Apply
 ```
 
 Landing should remain independent of heavy Dashboard, editor, Widget runtime,
@@ -24,18 +24,22 @@ yarn workspace @groupher/frontend-landing dev
 yarn workspace @groupher/frontend-landing type-check
 yarn workspace @groupher/frontend-landing format:check
 yarn workspace @groupher/frontend-landing build
-yarn workspace @groupher/frontend-landing build:worker
 yarn workspace @groupher/frontend-landing deploy:worker:dry-run
 ```
 
-The target deployment is the `landing` Worker Static Assets project configured
-by `wrangler.jsonc`; the former Pages `_worker.js` path has been removed.
+TanStack Start prerenders `/`, `/pricing`, and `/book-demo` at build time. The
+deployable boundary is only `dist/client`; the generated server build exists to
+prerender and is not deployed. Public Vite assets use `/landing/assets/*`, which
+the Edge Router and local Gateway map to the static bundle's `/assets/*` path.
 
-This package uses the repository's current Next.js runtime. Consult the bundled
-Next.js documentation before changing framework APIs or conventions.
+The target deployment is the `landing` Worker Static Assets project configured
+by `wrangler.jsonc`. Local development also exposes `/health` for Dev Hub and
+local Status checks; production availability is covered by Edge Router health
+and Gatus page probes.
 
 ## Related documentation
 
 - [`docs/deploy.md`](../../docs/deploy.md)
 - [`docs/platform/links.md`](../../docs/platform/links.md)
 - [`docs/ssr_theme.md`](../../docs/ssr_theme.md)
+- [`docs/tanstack_rewrite/landing_rewrite.md`](../../docs/tanstack_rewrite/landing_rewrite.md)

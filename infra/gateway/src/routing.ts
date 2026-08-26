@@ -84,6 +84,8 @@ export const isAuthRoute = (pathname: string): boolean => isPublicAuthRoute(path
 export const isGraphqlRoute = (pathname: string): boolean => isPublicGraphqlRoute(pathname)
 const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
 const isDashViteAssetRoute = (pathname: string): boolean => pathname.startsWith('/__dash_hmr')
+const isLandingViteAssetRoute = (pathname: string): boolean =>
+  pathname.startsWith('/__landing_hmr')
 const isSharedViteAssetRoute = (pathname: string): boolean =>
   pathname.startsWith('/@fs/') ||
   pathname.startsWith('/@id/') ||
@@ -165,7 +167,7 @@ const customDomainCommunities = (): Record<string, string> => {
   }
 }
 
-const LANDING_STATIC_SIGN = `/${APP.LANDING}/_next/static`
+const LANDING_STATIC_SIGN = `/${APP.LANDING}/assets/`
 const DASHBOARD_STATIC_SIGN = `/${APP.DASHBOARD}/_next/static`
 const DASHBOARD_NEXT_SIGN = `/${APP.DASHBOARD}/_next/`
 
@@ -311,6 +313,10 @@ export const resolveGatewayTarget = ({
 
   if (isApplyViteAssetRoute(pathname)) {
     return target('apply', new URL(fullPath, SITE.APPLY), method)
+  }
+
+  if (isLandingViteAssetRoute(pathname)) {
+    return target('landing', new URL(fullPath, SITE.LANDING), method)
   }
 
   // App-specific HMR sockets don't carry a reliable Referer during upgrade.

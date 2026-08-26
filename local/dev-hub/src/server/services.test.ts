@@ -19,13 +19,17 @@ test('Gatus is an infra service with HTTP readiness', () => {
 })
 
 test('frontend and Phoenix stacks match their runtime boundaries', () => {
-  for (const id of ['main', 'dashboard', 'landing']) {
+  for (const id of ['main', 'dashboard']) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
     assert.deepEqual(service?.technologies, ['nextjs', 'react', 'typescript', 'tailwindcss'])
   }
 
   const dash = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dash')
   assert.deepEqual(dash?.technologies, ['tanstack-start', 'react', 'typescript', 'tailwindcss'])
+
+  const landing = SERVICE_DEFINITIONS.find((definition) => definition.id === 'landing')
+  assert.deepEqual(landing?.technologies, ['tanstack-start', 'react', 'typescript', 'tailwindcss'])
+  assert.equal(landing?.config?.kind, 'env-files')
 
   const gateway = SERVICE_DEFINITIONS.find((definition) => definition.id === 'gateway')
   assert.deepEqual(gateway?.technologies, ['hono', 'nodejs', 'typescript', 'routing'])

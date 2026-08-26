@@ -31,8 +31,7 @@ export const COMMUNITY_SLUG_RE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 const LANDING_PATHS = new Set(['/', '/pricing', '/book-demo'])
 const LANDING_STATIC_ASSET_PREFIXES = [
-  '/landing/',
-  '/landing/_next/static/',
+  '/landing/assets/',
   '/avatars/',
   '/icons/',
   '/locales/',
@@ -98,6 +97,9 @@ const isDeletedDashboardRoute = (pathname: string): boolean =>
   DELETED_DASHBOARD_API_PATHS.has(pathname) ||
   DASHBOARD_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
+const landingTargetPath = (pathname: string): string =>
+  pathname.startsWith('/landing/assets/') ? pathname.slice('/landing'.length) : pathname
+
 const route = (
   targetKind: RouteTargetKind,
   pathname: string,
@@ -123,7 +125,7 @@ const resolvePlatformRoute = (pathname: string, method: string): PublicRoute => 
   if (isLandingPath(pathname) || isLandingStaticAssetPath(pathname)) {
     return route(
       'landing',
-      pathname,
+      landingTargetPath(pathname),
       'pass-through',
       undefined,
       isLandingPath(pathname) ? 'landing-page' : 'landing-asset',

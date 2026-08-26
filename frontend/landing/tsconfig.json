@@ -1,4 +1,11 @@
 {
-  "extends": "../core/tsconfig.json",
-  "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"]
+  "extends": "../core/tsconfig.app.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "plugins": [],
+    "strictNullChecks": false,
+    "types": ["vite/client"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".output", "dist"]
 }

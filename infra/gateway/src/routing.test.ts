@@ -102,13 +102,13 @@ describe('gateway/routing', () => {
       expect(isPressRoute('/home/sitemap.xml')).toBe(true)
     })
     it('detects landing static routes', () => {
-      expect(isLandingStaticRoute('/landing/_next/static/chunks/app.js')).toBe(true)
-      expect(isLandingStaticRoute('/dashboard/_next/static/chunks/app.js')).toBe(false)
+      expect(isLandingStaticRoute('/landing/assets/app.js')).toBe(true)
+      expect(isLandingStaticRoute('/dashboard/assets/app.js')).toBe(false)
     })
 
     it('detects dashboard static routes', () => {
       expect(isDashboardStaticRoute('/dashboard/_next/static/chunks/app.js')).toBe(true)
-      expect(isDashboardStaticRoute('/landing/_next/static/chunks/app.js')).toBe(false)
+      expect(isDashboardStaticRoute('/dashboard/assets/app.js')).toBe(false)
     })
   })
 
@@ -329,7 +329,7 @@ describe('gateway/routing', () => {
       expect(resolve('/dashboard/_next/static/chunks/app.js', 'www.groupher.com').targetKind).toBe(
         'dashboard',
       )
-      expect(resolve('/landing/_next/static/chunks/app.js', 'www.groupher.com').targetKind).toBe(
+      expect(resolve('/landing/assets/app.js', 'www.groupher.com').targetKind).toBe(
         'landing',
       )
     })
@@ -552,7 +552,7 @@ describe('gateway/routing', () => {
 
     it('routes unprefixed development chunks by the landing referer', () => {
       const target = resolve(
-        '/_next/static/chunks/app.js',
+        '/@vite/client',
         'groupher.localhost',
         '',
         undefined,
@@ -561,7 +561,13 @@ describe('gateway/routing', () => {
       )
 
       expect(target.targetKind).toBe('landing')
-      expect(target.targetUrl.pathname).toBe('/_next/static/chunks/app.js')
+      expect(target.targetUrl.pathname).toBe('/@vite/client')
+    })
+
+    it('routes Landing HMR without a referer', () => {
+      const target = resolve('/__landing_hmr', 'groupher.localhost')
+      expect(target.targetKind).toBe('landing')
+      expect(target.targetUrl.pathname).toBe('/__landing_hmr')
     })
 
     it('routes landing static page paths to landing', () => {

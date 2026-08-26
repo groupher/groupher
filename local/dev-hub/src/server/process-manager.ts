@@ -227,6 +227,7 @@ export class ServiceManager {
           ? {
               DEV_HUB_URL: this.devHubOrigin,
               NEXT_PUBLIC_DEV_HUB_URL: this.devHubOrigin,
+              VITE_DEV_HUB_URL: this.devHubOrigin,
             }
           : {}),
         ...definition.env,

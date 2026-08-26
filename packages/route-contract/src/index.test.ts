@@ -27,10 +27,17 @@ describe('platform root routes', () => {
     '/llms.txt',
     '/robots.txt',
     '/favicon.ico',
-    '/landing/_next/static/app.js',
+    '/landing/assets/app.js',
     '/icons/logo.svg',
   ])('routes Landing asset %s', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('landing')
+  })
+
+  it('maps the public Landing asset namespace to the static bundle path', () => {
+    expect(resolveRoot('/landing/assets/app.js')).toMatchObject({
+      targetKind: 'landing',
+      pathname: '/assets/app.js',
+    })
   })
 
   it('keeps health isolated to the router', () => {

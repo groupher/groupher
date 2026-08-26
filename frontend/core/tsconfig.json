@@ -10,8 +10,7 @@
     "**/*.tsx",
     "**/*.d.ts",
     "**/*.ts",
-    ".next/types/**/*.ts",
-    "../landing/app/widgets/Main.tsx"
+    ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

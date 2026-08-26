@@ -47,6 +47,14 @@ describe('edge-router', () => {
     expect(env.AUTH.fetch).toHaveBeenCalledOnce()
   })
 
+  it('maps Landing public assets to the Vite static bundle', async () => {
+    const env = createEnv()
+    await dispatch(new Request('https://groupher.com/landing/assets/app.js'), env)
+
+    const request = vi.mocked(env.LANDING.fetch).mock.calls[0][0] as Request
+    expect(new URL(request.url).pathname).toBe('/assets/app.js')
+  })
+
   it('rewrites custom domains internally while preserving the public host', async () => {
     const env = createEnv()
     const response = await dispatch(

@@ -191,10 +191,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     description: 'Public marketing site',
     group: 'frontend',
     monogram: 'LD',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
+    technologies: ['tanstack-start', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
+      kind: 'env-files',
       root: fromRoot('frontend/landing'),
       environment: 'development',
     },

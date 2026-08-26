@@ -209,6 +209,9 @@ be.deploy:
 be.status.deploy:
 	cd ./ops/status && flyctl deploy --config fly.toml --remote-only && cd -
 
+be.status.config.validate:
+	./ops/status/validate-config.sh
+
 be.status:
 	flyctl status -a groupher-api
 
