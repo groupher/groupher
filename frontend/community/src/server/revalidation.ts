@@ -6,8 +6,10 @@ const configuredPurge = (): { zoneId: string; token: string } | null => {
 
 const PURGE_TIMEOUT_MS = 5_000
 
+/** Reports whether Cloudflare tag purging is configured for this runtime. */
 export const hasConfiguredPurge = (): boolean => Boolean(configuredPurge())
 
+/** Purges the supplied Community cache tags through the Cloudflare API. */
 export const purgeCommunityTags = async (tags: string[]): Promise<void> => {
   const config = configuredPurge()
   if (!config) throw new Error('Community cache purge is not configured.')

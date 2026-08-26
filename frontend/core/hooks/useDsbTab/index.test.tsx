@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
-import { PlatformProvider, type TPlatform } from '~/platform'
+import { RouteScopeProvider, type TRouteScope } from '~/platform'
 
 let mockPathname = '/acme'
 let mockSearch = ''
@@ -11,12 +11,7 @@ let mockSearch = ''
 describe('useDsbTab', () => {
   const render = () => {
     const searchParams = new URLSearchParams(mockSearch)
-    const value: TPlatform = {
-      components: {
-        Image: () => null,
-        Link: () => null,
-        Script: () => null,
-      },
+    const value: TRouteScope = {
       navi: {
         location: {
           pathname: mockPathname,
@@ -31,13 +26,13 @@ describe('useDsbTab', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
-        dsbRootSegment: 'dashboard',
+        dsbRootSegment: 'dash',
       },
     }
 
     return renderHook(() => useDsbTab(), {
       wrapper: ({ children }: { children: ReactNode }) => (
-        <PlatformProvider value={value}>{children}</PlatformProvider>
+        <RouteScopeProvider value={value}>{children}</RouteScopeProvider>
       ),
     })
   }

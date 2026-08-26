@@ -10,7 +10,7 @@ import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import AuthLoginModal from '~/ui/AuthLoginModal'
 
-import { TanStackPlatformProvider } from '../platform/tanStackPlatform'
+import { TanStackRouteScopeProvider } from '../platform/tanStackPlatform'
 import type { TRouterContext } from '../router-context'
 
 export const Route = createRootRouteWithContext<TRouterContext>()({
@@ -45,10 +45,10 @@ function RootComponent() {
     <InitialNowProvider initialNow={renderedAt}>
       <LocaleStoreProvider initData={locale}>
         <ThemeStoreProvider initData={theme}>
-          <TanStackPlatformProvider>
+          <TanStackRouteScopeProvider>
             <Outlet />
             <AuthLoginModal />
-          </TanStackPlatformProvider>
+          </TanStackRouteScopeProvider>
         </ThemeStoreProvider>
       </LocaleStoreProvider>
     </InitialNowProvider>

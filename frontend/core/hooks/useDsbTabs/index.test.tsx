@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useDsbTabs, { type TDsbTabs } from '~/hooks/useDsbTabs'
-import { PlatformProvider, type TPlatform } from '~/platform'
+import { RouteScopeProvider, type TRouteScope } from '~/platform'
 import type { TCommunity } from '~/spec'
 
 let mockPathname = '/acme'
@@ -21,12 +21,7 @@ describe('useDsbTabs', () => {
       ],
     }
 
-    const value: TPlatform = {
-      components: {
-        Image: () => null,
-        Link: () => null,
-        Script: () => null,
-      },
+    const value: TRouteScope = {
       navi: {
         location: {
           pathname: mockPathname,
@@ -41,7 +36,7 @@ describe('useDsbTabs', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
-        dsbRootSegment: 'dashboard',
+        dsbRootSegment: 'dash',
       },
     }
 
@@ -50,9 +45,9 @@ describe('useDsbTabs', () => {
     })
     const Wrapper = ({ children }: { children: ReactNode }) => {
       return (
-        <PlatformProvider value={value}>
+        <RouteScopeProvider value={value}>
           <StoreWrapper>{children}</StoreWrapper>
-        </PlatformProvider>
+        </RouteScopeProvider>
       )
     }
 

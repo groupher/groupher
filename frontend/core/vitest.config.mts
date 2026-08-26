@@ -41,9 +41,9 @@ export default defineConfig({
     include: [
       'frontend/**/*.test.{ts,tsx}',
       'backend/auth/**/*.test.{ts,tsx}',
-      'infra/gateway/**/*.test.{ts,tsx}',
+      'infra/dev-gateway/**/*.test.{ts,tsx}',
     ],
-    exclude: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**'],
 
     globals: true,
 

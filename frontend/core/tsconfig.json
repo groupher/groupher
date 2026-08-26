@@ -4,13 +4,6 @@
     "moduleResolution": "bundler"
   },
 
-  "include": [
-    "next-env.d.ts",
-    "vitest.config.mts",
-    "**/*.tsx",
-    "**/*.d.ts",
-    "**/*.ts",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["vitest.config.mts", "**/*.tsx", "**/*.d.ts", "**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -10,7 +10,7 @@ not an independently deployed website.
 Main / Dashboard / Dash / Landing
                  |
                  v
-        PlatformProvider adapter
+        RouteScopeProvider adapter
                  |
                  v
  Core hooks + stores + UI + product units

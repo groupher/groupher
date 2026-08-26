@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { browserQuery } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { usePlatform } from '~/platform'
+import { useRouteScope } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import { decodeImportProcess } from '../../ContentImport/ProcessLog/decoder'
@@ -79,7 +79,7 @@ const preserveMonotonicStage = (
 export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
   const { t } = useTrans()
-  const { navi } = usePlatform()
+  const { navi } = useRouteScope()
   const searchParams = navi.location.searchParams
   const initialJobRef = searchParams.get('job')
   const initialPreviewRef = searchParams.get('preview') || ''

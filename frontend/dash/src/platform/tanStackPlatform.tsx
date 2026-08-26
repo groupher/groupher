@@ -3,11 +3,7 @@
 import { useLocation, useNavigate, useRouter as useTanStackRouter } from '@tanstack/react-router'
 import { type ReactNode, useMemo } from 'react'
 
-import { isActiveDsbRoute, PlatformProvider, resolveDsbRoute } from '~/platform'
-
-import NativePlatformImage from './Image'
-import TanStackPlatformLink from './Link'
-import NativePlatformScript from './Script'
+import { isActiveDsbRoute, RouteScopeProvider, resolveDsbRoute } from '~/platform'
 
 type TProps = {
   children: ReactNode
@@ -29,7 +25,7 @@ const preloadResolvedPath = async (router: TTanStackRouter, href: string): Promi
   await router.preloadRoute({ to: href } as TTanStackPreloadRouteOptions)
 }
 
-export const TanStackPlatformProvider = ({ children }: TProps): ReactNode => {
+export const TanStackRouteScopeProvider = ({ children }: TProps): ReactNode => {
   const location = useLocation()
   const navigate = useNavigate()
   const router = useTanStackRouter()
@@ -84,20 +80,7 @@ export const TanStackPlatformProvider = ({ children }: TProps): ReactNode => {
     }
   }, [location.pathname, search, navigate, router])
 
-  return (
-    <PlatformProvider
-      value={{
-        navi,
-        components: {
-          Image: NativePlatformImage,
-          Link: TanStackPlatformLink,
-          Script: NativePlatformScript,
-        },
-      }}
-    >
-      {children}
-    </PlatformProvider>
-  )
+  return <RouteScopeProvider value={{ navi }}>{children}</RouteScopeProvider>
 }
 
-export default TanStackPlatformProvider
+export default TanStackRouteScopeProvider

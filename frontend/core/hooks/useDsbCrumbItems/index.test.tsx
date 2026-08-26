@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useDsbCrumbItems, { type TDsbCrumbNode } from '~/hooks/useDsbCrumbItems'
-import { PlatformProvider, type TPlatform } from '~/platform'
+import { RouteScopeProvider, type TRouteScope } from '~/platform'
 
 let mockPathname = '/acme'
 let mockSearch = ''
@@ -11,12 +11,7 @@ let mockSearch = ''
 describe('useDsbCrumbItems', () => {
   it('builds breadcrumb chain using seg/toSeg', () => {
     mockPathname = '/acme/third-part/email'
-    const value: TPlatform = {
-      components: {
-        Image: () => null,
-        Link: () => null,
-        Script: () => null,
-      },
+    const value: TRouteScope = {
       navi: {
         location: {
           pathname: mockPathname,
@@ -31,7 +26,7 @@ describe('useDsbCrumbItems', () => {
         refresh: vi.fn(),
         prefetch: vi.fn(async () => {}),
         isActive: vi.fn(() => false),
-        dsbRootSegment: 'dashboard',
+        dsbRootSegment: 'dash',
       },
     }
 
@@ -44,9 +39,9 @@ describe('useDsbCrumbItems', () => {
     }
 
     const Wrapped = ({ children }: { children: ReactNode }) => (
-      <PlatformProvider value={value}>
+      <RouteScopeProvider value={value}>
         <StoreWrapper>{children}</StoreWrapper>
-      </PlatformProvider>
+      </RouteScopeProvider>
     )
 
     const { result } = renderHook(() => useDsbCrumbItems(root), { wrapper: Wrapped })

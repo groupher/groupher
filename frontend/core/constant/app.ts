@@ -1,6 +1,5 @@
-export default {
+const APP = {
   LANDING: 'landing',
-  DASHBOARD: 'dashboard',
-  MAIN: 'main',
-  GATEWAY: 'gateway',
-}
+} as const
+
+export default APP

@@ -4,7 +4,7 @@
  * LandingPage
  */
 
-import { DASHBOARD_SITE_URL } from '~/config'
+import { DASH_SITE_URL } from '~/config'
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
@@ -104,7 +104,7 @@ export default function Landing() {
                     <div className={s.demoItemTitle}>{t('landing.hero.demo.official')}</div>
                     <LinkSVG className={s.outLink} />
                   </a>
-                  <a href={`${DASHBOARD_SITE_URL}/${ROUTE.HOME}`} className={s.demoItem}>
+                  <a href={`${DASH_SITE_URL}/${ROUTE.HOME}`} className={s.demoItem}>
                     <div className={s.demoItemTitle}>{t('landing.hero.demo.dashboard')}</div>
 
                     <LinkSVG className={s.outLink} />

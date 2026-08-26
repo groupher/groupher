@@ -33,7 +33,7 @@ describe('Auth OAuth account helpers', () => {
     vi.stubGlobal('window', {
       location: {
         assign,
-        href: 'https://dashboard.groupher.localhost/account/connections',
+        href: 'https://dash.groupher.localhost/account/connections',
       },
     })
     const fetchMock = vi.fn<typeof fetch>(async () =>
@@ -41,14 +41,11 @@ describe('Auth OAuth account helpers', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await beginLinkedOauthAccount(
-      'github',
-      'https://dashboard.groupher.localhost/account/connections',
-    )
+    await beginLinkedOauthAccount('github', 'https://dash.groupher.localhost/account/connections')
 
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/accounts/github/link', {
       body: JSON.stringify({
-        returnTo: 'https://dashboard.groupher.localhost/account/connections',
+        returnTo: 'https://dash.groupher.localhost/account/connections',
       }),
       credentials: 'include',
       headers: {

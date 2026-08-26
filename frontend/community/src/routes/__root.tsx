@@ -5,7 +5,7 @@ import '../../../core/tailwind/global.css'
 import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 
-import CommunityPlatformProvider from '../platform/communityPlatform'
+import CommunityRouteScopeProvider from '../platform/communityPlatform'
 import type { TRouterContext } from '../router-context'
 
 export const Route = createRootRouteWithContext<TRouterContext>()({
@@ -22,9 +22,9 @@ export const Route = createRootRouteWithContext<TRouterContext>()({
 
 function RootComponent() {
   return (
-    <CommunityPlatformProvider>
+    <CommunityRouteScopeProvider>
       <Outlet />
-    </CommunityPlatformProvider>
+    </CommunityRouteScopeProvider>
   )
 }
 

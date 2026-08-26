@@ -9,6 +9,7 @@ const isValidFooterLinkChild = (link: TLinkChild): boolean =>
   typeof link.title === 'string' &&
   typeof link.url === 'string'
 
+/** Validates one grouped or direct footer link before it reaches shared rendering. */
 export const isValidFooterLink = (item: TLinkItem): boolean => {
   if (!item || typeof item !== 'object') return false
   if (typeof item.id !== 'string' || item.id.length === 0) return false
@@ -23,18 +24,23 @@ export const isValidFooterLink = (item: TLinkItem): boolean => {
   return false
 }
 
+/** Validates the complete multi-column footer link collection. */
 export const isValidFooterLinks = (links: readonly TLinkItem[]): boolean =>
   links.every(isValidFooterLink)
 
+/** Validates one compact footer link. */
 export const isValidFooterOnelineLink = (link: TFooterOnelineLink): boolean =>
   Boolean(link.id) && typeof link.title === 'string' && typeof link.url === 'string'
 
+/** Validates the complete compact footer link collection. */
 export const isValidFooterOnelineLinks = (links: readonly TFooterOnelineLink[]): boolean =>
   links.every(isValidFooterOnelineLink)
 
+/** Rejects malformed grouped footer configuration at the shared UI boundary. */
 export const normalizeFooterLinks = (links: readonly TLinkItem[]): readonly TLinkItem[] =>
   isValidFooterLinks(links) ? links : []
 
+/** Rejects malformed compact footer configuration at the shared UI boundary. */
 export const normalizeFooterOnelineLinks = (
   links: readonly TFooterOnelineLink[],
 ): readonly TFooterOnelineLink[] => (isValidFooterOnelineLinks(links) ? links : [])

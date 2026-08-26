@@ -1,10 +1,21 @@
-'use client'
+import type { TImageProps } from './context'
 
-import type { TPlatformImageProps } from './context'
-import { usePlatform } from './context'
+const resolveSrc = (src: TImageProps['src']): string => (typeof src === 'string' ? src : src.src)
 
-export default function PlatformImage(props: TPlatformImageProps) {
-  const Image = usePlatform().components.Image
-
-  return <Image {...props} />
+export default function Image({
+  fill,
+  priority,
+  src,
+  style,
+  unoptimized: _unoptimized,
+  ...props
+}: TImageProps) {
+  return (
+    <img
+      {...props}
+      src={resolveSrc(src)}
+      style={fill ? { height: '100%', objectFit: 'cover', width: '100%', ...style } : style}
+      {...(priority ? { fetchPriority: 'high' as const } : {})}
+    />
+  )
 }

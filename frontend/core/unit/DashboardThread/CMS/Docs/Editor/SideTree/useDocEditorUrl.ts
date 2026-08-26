@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react'
 
-import { parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { parseDsbPathname, resolveDsbRoute, useRouteScope } from '~/platform'
 
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 
@@ -21,9 +21,9 @@ export default function useDocEditorUrl(): {
   currentDocId: string | null
   syncDocIdToUrl: (docId: string | null) => void
 } {
-  const { navi } = usePlatform()
+  const { navi } = useRouteScope()
   const routeMeta = useMemo(
-    () => parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dashboard'),
+    () => parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dash'),
     [navi.location.pathname, navi.dsbRootSegment],
   )
   const currentDocId = navi.location.searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
@@ -38,7 +38,7 @@ export default function useDocEditorUrl(): {
           community: routeMeta.community,
           path: routeMeta.segments.join('/'),
         },
-        { rootSegment: navi.dsbRootSegment ?? 'dashboard' },
+        { rootSegment: navi.dsbRootSegment ?? 'dash' },
       )
 
       const nextSearch = buildSearchObject(

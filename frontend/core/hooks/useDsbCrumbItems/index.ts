@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useRef } from 'react'
 
-import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute, useRouteScope } from '~/platform'
 import type { TBreadcrumbItem, TTransKey } from '~/spec'
 
 export type TDsbCrumbNode = {
@@ -61,8 +61,8 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
  * move under different dashboard URLs.
  */
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
-  const { navi } = usePlatform()
-  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const { navi } = useRouteScope()
+  const rootSegment = navi.dsbRootSegment ?? 'dash'
   const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
   const community = routeMeta?.community ?? ''
   const search = navi.location.searchParams

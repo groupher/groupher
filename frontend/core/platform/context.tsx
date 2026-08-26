@@ -3,10 +3,9 @@
 import { createContext, useContext } from 'react'
 import type {
   AnchorHTMLAttributes,
-  ComponentType,
   ImgHTMLAttributes,
-  Ref,
   ReactNode,
+  Ref,
   ScriptHTMLAttributes,
 } from 'react'
 
@@ -15,15 +14,17 @@ import type { TDsbRouteRootSegment } from './route'
 export type TNaviOptions = {
   replace?: boolean
   preserveSearch?: boolean
+  previewId?: string | number
+  scroll?: boolean
 }
 
-export type TPlatformSearchValue = string | number | boolean | null | undefined
+export type TRouteSearchValue = string | number | boolean | null | undefined
 
-export type TPlatformSearch = Record<string, TPlatformSearchValue>
+export type TRouteSearch = Record<string, TRouteSearchValue>
 
 export type TRouteTarget = TDsbRouteTarget | TCommunityRouteTarget
 
-export type TPlatformLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
+export type TLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   href?: string
   route?: TRouteTarget
   previewId?: string | number
@@ -33,7 +34,7 @@ export type TPlatformLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, '
   preserveSearch?: boolean
 }
 
-export type TPlatformImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> & {
+export type TImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> & {
   alt: string
   fill?: boolean
   priority?: boolean
@@ -43,7 +44,7 @@ export type TPlatformImageProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src
   unoptimized?: boolean
 }
 
-export type TPlatformScriptProps = ScriptHTMLAttributes<HTMLScriptElement> & {
+export type TScriptProps = ScriptHTMLAttributes<HTMLScriptElement> & {
   strategy?: 'afterInteractive' | 'beforeInteractive' | 'lazyOnload'
 }
 
@@ -51,7 +52,7 @@ export type TDsbRouteTarget = {
   app: 'dsb'
   community: string
   path: string
-  search?: TPlatformSearch
+  search?: TRouteSearch
   searchSchema?: readonly string[]
   preserveSearchKeys?: readonly string[]
 }
@@ -60,12 +61,12 @@ export type TCommunityRouteTarget = {
   app: 'community'
   community: string
   path: string
-  search?: TPlatformSearch
+  search?: TRouteSearch
   searchSchema?: readonly string[]
   preserveSearchKeys?: readonly string[]
 }
 
-export type TPlatformNavi = {
+export type TRouteNavigation = {
   /** Identifies the DSB product adapter; it is not emitted as a URL segment. */
   dsbRootSegment?: TDsbRouteRootSegment
   location: {
@@ -83,38 +84,25 @@ export type TPlatformNavi = {
   isActive: (target: TRouteTarget) => boolean
 }
 
-export type TPlatform = {
-  navi: TPlatformNavi
-  components: {
-    Image: ComponentType<TPlatformImageProps>
-    Link: ComponentType<TPlatformLinkProps>
-    Script: ComponentType<TPlatformScriptProps>
-  }
-}
+export type TRouteScope = { navi: TRouteNavigation }
 
-const PlatformContext = createContext<TPlatform | null>(null)
-let platformFallback: TPlatform | null = null
+const RouteScopeContext = createContext<TRouteScope | null>(null)
 
-/** Runs the set platform fallback operation at the frontend shared boundary. */
-export const setPlatformFallback = (value: TPlatform | null): void => {
-  platformFallback = value
-}
-
-export const PlatformProvider = ({
+export const RouteScopeProvider = ({
   value,
   children,
 }: {
-  value: TPlatform
+  value: TRouteScope
   children: ReactNode
-}): ReactNode => <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>
+}): ReactNode => <RouteScopeContext.Provider value={value}>{children}</RouteScopeContext.Provider>
 
-/** Exposes platform state and actions through the shared React hook boundary. */
-export const usePlatform = (): TPlatform => {
-  const platform = useContext(PlatformContext)
+/** Exposes router-neutral route state and actions through the shared React boundary. */
+export const useRouteScope = (): TRouteScope => {
+  const scope = useContext(RouteScopeContext)
 
-  if (!platform && !platformFallback) {
-    throw new Error('usePlatform must be used inside a PlatformProvider')
+  if (!scope) {
+    throw new Error('useRouteScope must be used inside a RouteScopeProvider')
   }
 
-  return platform ?? platformFallback!
+  return scope
 }

@@ -29,9 +29,9 @@ export const GRAPHQL_ENDPOINT =
     return 'http://localhost:4001/graphiql'
   })()
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
-export const DASHBOARD_SITE_URL = readPublicEnv(
-  'NEXT_PUBLIC_DASHBOARD_SITE_URL',
+export const DASH_SITE_URL = readPublicEnv(
+  'NEXT_PUBLIC_DASH_SITE_URL',
   process.env.NODE_ENV === 'development'
-    ? 'https://dashboard.groupher.localhost'
-    : 'https://dashboard.groupher.com',
+    ? 'https://dash.groupher.localhost'
+    : 'https://dash.groupher.com',
 )

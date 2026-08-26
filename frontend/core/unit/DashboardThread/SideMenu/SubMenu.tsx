@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import SidebarIcon from '~/icons/dsb/Sidebar'
-import { dsbRoutes, Link, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { dsbRoutes, Link, parseDsbPathname, resolveDsbRoute, useRouteScope } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 
 import ActiveMark from './ActiveMark'
@@ -33,9 +33,9 @@ export default function SubMenu({
   scope,
 }: TProps) {
   const { slug: community } = useCommunity()
-  const { navi } = usePlatform()
+  const { navi } = useRouteScope()
   const { subTab } = useDsbTab()
-  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const rootSegment = navi.dsbRootSegment ?? 'dash'
   const meta = parseDsbPathname(navi.location.pathname, rootSegment)
   const currentCommunity = meta?.community ?? community
   const { t } = useTrans()

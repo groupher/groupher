@@ -1,6 +1,6 @@
 'use client'
 
-import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute, useRouteScope } from '~/platform'
 import type { TTabItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -49,9 +49,9 @@ export default function useDsbTabs(cfg: TDsbTabs): {
   items: TTabItem[]
   activeTab: string
 } {
-  const { navi } = usePlatform()
+  const { navi } = useRouteScope()
   const { slug: community } = useCommunity()
-  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const rootSegment = navi.dsbRootSegment ?? 'dash'
   const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
   const routeSegments = routeMeta?.segments ?? []
   const basePath = stripSlash(cfg.segment)

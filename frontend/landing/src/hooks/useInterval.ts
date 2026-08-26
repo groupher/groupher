@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 
+/** Runs the latest callback on a cancellable browser interval. */
 export default function useInterval(callback: () => void, delay: number | null): void {
   const callbackRef = useRef(callback)
 

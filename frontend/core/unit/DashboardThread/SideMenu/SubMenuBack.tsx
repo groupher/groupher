@@ -2,7 +2,7 @@ import { type MouseEvent, useRef } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
-import { dsbRoutes, parseDsbPathname, toDsbTargetFromPath, usePlatform } from '~/platform'
+import { dsbRoutes, parseDsbPathname, toDsbTargetFromPath, useRouteScope } from '~/platform'
 
 import { MENU_VIEW } from '../constant'
 import { runBeforeDashboardBack } from './beforeBack'
@@ -25,8 +25,8 @@ export default function SubMenuBack({
   title = 'dsb.menu.doc.back',
 }: TProps) {
   const { t } = useTrans()
-  const { navi } = usePlatform()
-  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
+  const { navi } = useRouteScope()
+  const rootSegment = navi.dsbRootSegment ?? 'dash'
   const meta = parseDsbPathname(navi.location.pathname, rootSegment)
   const community = meta?.community ?? ''
   const s = useSalon()

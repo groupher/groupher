@@ -16,7 +16,7 @@ import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 import '../domain.css'
 import '../../../core/tailwind/global.css'
 import NotFound from '../NotFound'
-import TanStackPlatformProvider from '../platform/TanStackPlatformProvider'
+import TanStackRouteScopeProvider from '../platform/TanStackRouteScopeProvider'
 import Main from '../widgets/Main'
 
 export const Route = createRootRoute({
@@ -52,7 +52,7 @@ function RootComponent() {
 
   return (
     <>
-      <TanStackPlatformProvider>
+      <TanStackRouteScopeProvider>
         {import.meta.env.DEV ? (
           <DevHubReporter serviceId='landing' endpoint={import.meta.env.VITE_DEV_HUB_URL} />
         ) : null}
@@ -67,7 +67,7 @@ function RootComponent() {
             <Outlet />
           </StaticLayout>
         </StaticShellProvider>
-      </TanStackPlatformProvider>
+      </TanStackRouteScopeProvider>
       <Analytics />
       <SpeedInsights />
     </>

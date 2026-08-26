@@ -15,12 +15,7 @@ import {
 } from '~/const/route'
 import URL_PARAM from '~/const/url_param'
 
-import type {
-  TCommunityRouteTarget,
-  TPlatformSearch,
-  TRouteTarget,
-  TDsbRouteTarget,
-} from './context'
+import type { TCommunityRouteTarget, TRouteSearch, TRouteTarget, TDsbRouteTarget } from './context'
 
 export const DSB_SEARCH_KEYS = ['mode', 'other', ...Object.values(URL_PARAM)] as const
 
@@ -32,7 +27,7 @@ const DSB_ROUTE_SEARCH_KEYS: { [section: string]: readonly string[] } = {
 
 type TSearchSchema = readonly string[]
 
-export type TDsbRouteRootSegment = 'dashboard' | 'dash'
+export type TDsbRouteRootSegment = 'dash'
 
 type TRouteMeta = {
   community: string
@@ -42,7 +37,7 @@ type TRouteMeta = {
 
 const trimPath = (value: string): string => value.replace(/^\/+|\/+$/g, '')
 
-const toSearchString = (search: TPlatformSearch): string => {
+const toSearchString = (search: TRouteSearch): string => {
   const query = new URLSearchParams()
 
   for (const [key, value] of Object.entries(search)) {
@@ -78,8 +73,8 @@ const toSearchSchema = (path: string): TSearchSchema =>
 const parseSearchKeys = (
   searchParams: URLSearchParams,
   allowlist: readonly string[],
-): TPlatformSearch => {
-  const next: TPlatformSearch = {}
+): TRouteSearch => {
+  const next: TRouteSearch = {}
   const keys = dedupe(allowlist)
 
   if (keys.length === 0) {
@@ -102,7 +97,7 @@ const parseSearchKeys = (
 /** Runs the to dsb target from path operation at the frontend shared boundary. */
 export const toDsbTargetFromPath = (
   rawPath: string,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
+  rootSegment: TDsbRouteRootSegment = 'dash',
 ): TDsbRouteTarget | null => {
   if (!rawPath) return null
 
@@ -124,13 +119,12 @@ export const toDsbTargetFromPath = (
 }
 
 /** Reports whether dsb root segment at the frontend shared boundary. */
-export const isDsbRootSegment = (value: string): value is TDsbRouteRootSegment =>
-  value === 'dashboard' || value === 'dash'
+export const isDsbRootSegment = (value: string): value is TDsbRouteRootSegment => value === 'dash'
 
 /** Parses dsb pathname into the canonical frontend shared representation. */
 export const parseDsbPathname = (
   pathname: string,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
+  rootSegment: TDsbRouteRootSegment = 'dash',
 ): TRouteMeta | null => {
   const normalized = trimPath(pathname)
   const segments = normalized.split('/').filter(Boolean)
@@ -139,9 +133,7 @@ export const parseDsbPathname = (
 
   const routeSegments = segments.slice(1)
   const normalizedRouteSegments =
-    rootSegment === 'dash' && routeSegments[0] === 'overview'
-      ? routeSegments.slice(1)
-      : routeSegments
+    routeSegments[0] === 'overview' ? routeSegments.slice(1) : routeSegments
 
   return {
     community,
@@ -153,8 +145,8 @@ export const parseDsbPathname = (
 const mergeSearch = (
   target: TRouteTarget,
   options: { preserveSearch?: boolean; currentSearch?: URLSearchParams },
-): TPlatformSearch => {
-  const merged: TPlatformSearch = {}
+): TRouteSearch => {
+  const merged: TRouteSearch = {}
   const schema =
     target.app === 'dsb'
       ? dedupe([...DSB_SEARCH_KEYS, ...(target.searchSchema ?? resolveSearchSchema(target.path))])
@@ -189,7 +181,7 @@ const mergeSearch = (
 export type TRouteMetaTarget = {
   community: string
   section: string
-  search?: TPlatformSearch
+  search?: TRouteSearch
   searchSchema?: TSearchSchema
   preserveSearchKeys?: readonly string[]
 }
@@ -197,7 +189,7 @@ export type TRouteMetaTarget = {
 const createSection = (path: string) => {
   return (input: {
     community: string
-    search?: TPlatformSearch
+    search?: TRouteSearch
     searchSchema?: TSearchSchema
     preserveSearchKeys?: readonly string[]
   }): TDsbRouteTarget => ({
@@ -325,7 +317,7 @@ export const resolveDsbRoute = (
 export const isActiveDsbRoute = (
   pathname: string,
   target: TDsbRouteTarget,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
+  rootSegment: TDsbRouteRootSegment = 'dash',
 ): boolean => {
   const meta = parseDsbPathname(pathname, rootSegment)
   if (!meta) return false

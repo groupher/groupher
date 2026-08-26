@@ -3,13 +3,10 @@
 import { useLocation, useNavigate, useRouter as useTanStackRouter } from '@tanstack/react-router'
 import { type ReactNode, useMemo } from 'react'
 
-import { isActiveCommunityRoute, PlatformProvider, resolveCommunityRoute } from '~/platform'
+import { THREAD_PATH } from '~/const/thread'
+import { isActiveCommunityRoute, RouteScopeProvider, resolveCommunityRoute } from '~/platform'
 
-import CommunityImage from './Image'
-import CommunityLink from './Link'
-import CommunityScript from './Script'
-
-export default function CommunityPlatformProvider({ children }: { children: ReactNode }) {
+export default function CommunityRouteScopeProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const navigate = useNavigate()
   const router = useTanStackRouter()
@@ -27,11 +24,29 @@ export default function CommunityPlatformProvider({ children }: { children: Reac
           currentSearch: searchParams,
           preserveSearch: options?.preserveSearch,
         })
+        const previewId = options?.previewId === undefined ? null : String(options.previewId)
+        const currentSegments = location.pathname.split('/').filter(Boolean)
+        const currentCommunity = currentSegments[0]
+        const currentThread = currentSegments.length === 2 ? currentSegments[1] : null
+        const maskedTo =
+          previewId && currentThread === THREAD_PATH.POST && href.includes(`/${THREAD_PATH.POST}/`)
+            ? `/${currentCommunity}/${THREAD_PATH.POST}/previewer/${previewId}`
+            : previewId &&
+                currentThread === THREAD_PATH.CHANGELOG &&
+                href.includes(`/${THREAD_PATH.CHANGELOG}/`)
+              ? `/${currentCommunity}/${THREAD_PATH.CHANGELOG}/previewer/${previewId}`
+              : previewId &&
+                  currentThread === THREAD_PATH.KANBAN &&
+                  href.includes(`/${THREAD_PATH.POST}/`)
+                ? `/${currentCommunity}/${THREAD_PATH.KANBAN}/previewer/${THREAD_PATH.POST}/${previewId}`
+                : href
+
         void navigate({
-          to: href,
+          to: maskedTo,
+          mask: maskedTo === href ? undefined : { to: href },
           replace: options?.replace,
-          resetScroll: true,
-        })
+          resetScroll: options?.scroll !== false,
+        } as never)
       },
       push: (href, options) => void navigate({ to: href, resetScroll: options?.scroll !== false }),
       replace: (href, options) =>
@@ -47,14 +62,5 @@ export default function CommunityPlatformProvider({ children }: { children: Reac
     }
   }, [location.pathname, search, navigate, router])
 
-  return (
-    <PlatformProvider
-      value={{
-        navi,
-        components: { Image: CommunityImage, Link: CommunityLink, Script: CommunityScript },
-      }}
-    >
-      {children}
-    </PlatformProvider>
-  )
+  return <RouteScopeProvider value={{ navi }}>{children}</RouteScopeProvider>
 }

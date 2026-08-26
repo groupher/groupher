@@ -1,10 +1,10 @@
-export { PlatformProvider, setPlatformFallback, usePlatform } from './context'
+export { RouteScopeProvider, useRouteScope } from './context'
 export type {
-  TPlatform,
-  TPlatformImageProps,
-  TPlatformLinkProps,
-  TPlatformNavi,
-  TPlatformScriptProps,
+  TRouteScope,
+  TImageProps,
+  TLinkProps,
+  TRouteNavigation,
+  TScriptProps,
   TCommunityRouteTarget,
   TRouteTarget,
 } from './context'

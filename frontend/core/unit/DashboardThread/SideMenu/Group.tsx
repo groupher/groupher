@@ -7,7 +7,7 @@ import BindSVG from '~/icons/Bind'
 import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
-import { dsbRoutes, Link, parseDsbPathname, usePlatform } from '~/platform'
+import { dsbRoutes, Link, parseDsbPathname, useRouteScope } from '~/platform'
 import type { TDsbPath } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -25,8 +25,8 @@ type TProps = {
 
 const Group: FC<TProps> = ({ activeMainTab, group }) => {
   const { slug: community } = useCommunity()
-  const { navi } = usePlatform()
-  const routeMeta = parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dashboard')
+  const { navi } = useRouteScope()
+  const routeMeta = parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dash')
   const currentCommunity = routeMeta?.community ?? community
   const [foldState, setFoldState] = useState<boolean | null>(null)
   const fold = foldState ?? group.initFold

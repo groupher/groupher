@@ -11,10 +11,10 @@ describe('platform route parsing', () => {
     })
   })
 
-  it('keeps normal dashboard nested segments', () => {
-    expect(parseDsbPathname('/acme/info/logos', 'dashboard')).toEqual({
+  it('keeps normal Dash nested segments', () => {
+    expect(parseDsbPathname('/acme/info/logos', 'dash')).toEqual({
       community: 'acme',
-      rootSegment: 'dashboard',
+      rootSegment: 'dash',
       segments: ['info', 'logos'],
     })
   })
@@ -115,7 +115,7 @@ describe('platform route active', () => {
       community: 'acme',
       path: '',
     }
-    expect(isActiveDsbRoute('/acme', target, 'dashboard')).toBe(true)
+    expect(isActiveDsbRoute('/acme', target, 'dash')).toBe(true)
     expect(isActiveDsbRoute('/acme/overview', target, 'dash')).toBe(true)
   })
 })
