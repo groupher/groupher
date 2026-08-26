@@ -367,7 +367,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'next-env',
-      root: fromRoot('backend/inspire-me'),
+      root: fromRoot('frontend/inspire-me'),
       environment: 'development',
     },
     command: 'yarn',

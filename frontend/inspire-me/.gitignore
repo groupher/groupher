@@ -1,0 +1,4 @@
+/dist/
+.wrangler/
+/public/feedback-platforms.generated.json
+/public/feedback-platforms/

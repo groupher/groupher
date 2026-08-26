@@ -3462,23 +3462,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@groupher/inspire-me@workspace:backend/inspire-me":
+"@groupher/inspire-me@workspace:frontend/inspire-me":
   version: 0.0.0-use.local
-  resolution: "@groupher/inspire-me@workspace:backend/inspire-me"
+  resolution: "@groupher/inspire-me@workspace:frontend/inspire-me"
   dependencies:
     "@cloudflare/vite-plugin": "npm:^1.50.0"
     "@groupher/frontend-core": "npm:1.0.0"
-    "@tailwindcss/postcss": "npm:4.3.3"
-    "@vinext/cloudflare": "npm:^1.0.0-beta.4"
+    "@tailwindcss/vite": "npm:4.3.3"
+    "@tanstack/react-router": "npm:1.170.21"
+    "@tanstack/react-start": "npm:1.168.38"
+    "@tanstack/router-generator": "npm:1.167.24"
     "@vitejs/plugin-react": "npm:^6.0.5"
-    "@vitejs/plugin-rsc": "npm:^0.5.32"
-    cross-env: "npm:^10.1.0"
-    postcss: "npm:^8.5.25"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
-    react-server-dom-webpack: "npm:^19.2.8"
+    rimraf: "npm:^6.1.3"
     tailwindcss: "npm:4.3.3"
-    vinext: "npm:^1.0.0-beta.4"
     vite: "npm:^8.2.0"
     wrangler: "npm:^4.118.0"
   languageName: unknown

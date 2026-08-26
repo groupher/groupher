@@ -1,0 +1,37 @@
+{
+  "name": "@groupher/inspire-me",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:data": "node scripts/generate-feedback-data.mjs",
+    "dev": "yarn generate:data && vite --config app.config.ts --host 127.0.0.1",
+    "type-check": "yarn generate:data && yarn generate:routes && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "build": "yarn generate:data && yarn generate:routes && vite build --config app.config.ts",
+    "start": "wrangler dev --config dist/server/wrangler.json",
+    "generate:routes": "node ./scripts/generate-route-tree.mjs",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ./oxfmt.json ./src",
+    "format:check": "../../node_modules/.bin/oxfmt -c ./oxfmt.json --check ./src",
+    "clean": "rimraf --glob .output .tanstack dist 'vite.config.*.timestamp-*' '*.tsbuildinfo'",
+    "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) yarn build && wrangler deploy --dry-run --config dist/server/wrangler.json"
+  },
+  "dependencies": {
+    "@groupher/frontend-core": "1.0.0",
+    "@tanstack/react-router": "1.170.21",
+    "@tanstack/react-start": "1.168.38",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.50.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/router-generator": "1.167.24",
+    "@vitejs/plugin-react": "^6.0.5",
+    "rimraf": "^6.1.3",
+    "tailwindcss": "4.3.3",
+    "vite": "^8.2.0",
+    "wrangler": "^4.118.0"
+  }
+}

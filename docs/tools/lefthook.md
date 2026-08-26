@@ -34,7 +34,7 @@ git commit
 | frontend/main          | tsc-files                |
 | frontend/dashboard     | tsc-files                |
 | frontend/landing       | tsc-files                |
-| backend/inspire-me     | tsc-files                |
+| frontend/inspire-me   | tsc-files                |
 | local/dev-hub          | workspace type-check     |
 | backend/auth           | tsc-files                |
 | infra/gateway          | tsc-files                |
@@ -125,7 +125,7 @@ commit-msg:
 - frontend/main
 - frontend/dashboard
 - frontend/landing
-- backend/inspire-me
+- frontend/inspire-me
 - local/dev-hub
 - backend/auth
 - infra/gateway
