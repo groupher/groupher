@@ -1,4 +1,4 @@
-import { pick } from 'ramda'
+import { useContext } from 'react'
 
 import type {
   TAvatarLayout,
@@ -13,7 +13,7 @@ import type {
   TPostLayout,
   TTagLayout,
 } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import { ShellStyleContext } from '~/stores/shellStyle/context'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -30,22 +30,34 @@ type TRet = {
 }
 
 export default function UseLayout(): TRet {
-  const dashboard = useDashboard()
+  const value = useContext(ShellStyleContext)
+  if (!value) throw new Error('useLayout must be used within ShellStyleProvider')
 
-  return pick(
-    [
-      'avatarLayout',
-      'communityLayout',
-      'brandLayout',
-      'tagLayout',
-      'inlineTagLayout',
-      'navActiveLayout',
-      'postLayout',
-      'kanbanLayout',
-      'kanbanCardLayout',
-      'kanbanBoards',
-      'changelogLayout',
-    ],
-    dashboard,
-  )
+  const {
+    avatarLayout,
+    communityLayout,
+    brandLayout,
+    tagLayout,
+    inlineTagLayout,
+    navActiveLayout,
+    postLayout,
+    kanbanLayout,
+    kanbanCardLayout,
+    kanbanBoards,
+    changelogLayout,
+  } = value
+
+  return {
+    avatarLayout,
+    communityLayout,
+    brandLayout,
+    tagLayout,
+    inlineTagLayout,
+    navActiveLayout,
+    postLayout,
+    kanbanLayout,
+    kanbanCardLayout,
+    kanbanBoards,
+    changelogLayout,
+  }
 }

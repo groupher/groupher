@@ -3,12 +3,11 @@
 import { type FC, type ReactNode, useEffect, useRef } from 'react'
 
 import { cn } from '~/css'
-import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
-import GlowBackground from '~/shell/GlobalLayout/GlowBackground'
-import useSalon from '~/shell/GlobalLayout/salon/main'
 import HomeHeader from '~/unit/HomeHeader'
 import Footer from '~/unit/SiteFooter'
+
+import useSalon from './salon/main'
 
 const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420
@@ -23,9 +22,8 @@ type TProps = {
 }
 
 const Main: FC<TProps> = ({ children }) => {
-  const s = useSalon({ containerMetric: null })
+  const s = useSalon()
   const { locale } = useTrans()
-  const { hasTopbar } = useTopbar()
 
   const layoutRef = useRef({
     fromWidth: DEFAULT_CONTAINER_WIDTH,
@@ -106,10 +104,8 @@ const Main: FC<TProps> = ({ children }) => {
   return (
     <main key={locale} className={LANDING_WRAPPER_CLASS}>
       <HomeHeader />
-      {hasTopbar && <div className={s.topBar} />}
       <div className={s.body}>{children}</div>
       <Footer />
-      <GlowBackground />
     </main>
   )
 }

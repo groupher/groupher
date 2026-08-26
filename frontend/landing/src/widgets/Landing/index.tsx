@@ -5,7 +5,6 @@
  */
 
 import { DASHBOARD_SITE_URL } from '~/config'
-import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
@@ -19,7 +18,7 @@ import BorderButton from '~/ui/Buttons/BorderButton'
 import Button from '~/ui/Buttons/Button'
 import Facepile from '~/ui/Facepile'
 import Tooltip from '~/ui/Tooltip'
-import FaqList from '~/unit/FaqList'
+import LeftRightFaqList from '~/unit/FaqList/LeftRightList'
 
 import ArticlesIntroTabs from './ArticlesIntroTabs'
 import BatteryBento from './BatteryBento'
@@ -139,7 +138,7 @@ export default function Landing() {
         <UsersWall />
 
         <section className={s.faqWrapper}>
-          <FaqList layout={DOC_FAQ_LAYOUT.LEFT_RIGHT} sections={faqs} />
+          <LeftRightFaqList sections={faqs} />
         </section>
 
         <JoinOurCommunity />

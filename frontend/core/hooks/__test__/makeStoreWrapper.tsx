@@ -8,7 +8,9 @@ import type { TInit as TArticleListInit } from '~/stores/articleList/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import type { TInit as TDashboardInit } from '~/stores/dashboard/spec'
+import DashboardFooterLinksProvider from '~/stores/footerLinks/dashboard-provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
+import DashboardShellStyleProvider from '~/stores/shellStyle/dashboard-provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
@@ -58,9 +60,13 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
         <LocaleStoreProvider initData={{ locale, localeData }}>
           <CommunityStoreProvider initData={initCommunity}>
             <DashboardStoreProvider initData={initDashboard}>
-              <ThemePresetStoreProvider initData={initDashboard}>
-                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
-              </ThemePresetStoreProvider>
+              <DashboardShellStyleProvider>
+                <DashboardFooterLinksProvider>
+                  <ThemePresetStoreProvider initData={initDashboard}>
+                    <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+                  </ThemePresetStoreProvider>
+                </DashboardFooterLinksProvider>
+              </DashboardShellStyleProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
         </LocaleStoreProvider>

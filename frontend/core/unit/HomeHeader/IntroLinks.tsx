@@ -3,9 +3,9 @@ import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
 import { Link } from '~/platform'
-import CommunityBrand from '~/unit/CommunityBrand'
 
 import { HEAD_MENU } from './constant'
+import LandingBrand from './LandingBrand'
 import useSalon, { cn } from './salon'
 
 type TProps = {
@@ -25,7 +25,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
   return (
     <>
       <Link href='/' className={s.brand} onMouseEnter={onLinkHover}>
-        <CommunityBrand landingBrand />
+        <LandingBrand />
       </Link>
 
       <div className={s.links}>

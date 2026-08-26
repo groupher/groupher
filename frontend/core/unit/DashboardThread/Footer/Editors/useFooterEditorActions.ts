@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 
+import { isValidFooterLinks } from '~/lib/footerLinks'
 import type { TLinkItem } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '~/unit/DashboardThread/constant'
@@ -8,7 +9,6 @@ import { makeDashboardLinkId } from '../../LinkEditor/model'
 import useDashboardLinkEditorActions, {
   type TDashboardLinkEditorActions,
 } from '../../LinkEditor/useEditorActions'
-import { isValidFooterLinks } from './model'
 
 export type TFooterEditorActions = TDashboardLinkEditorActions
 

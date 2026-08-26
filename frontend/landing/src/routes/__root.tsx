@@ -4,14 +4,13 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import type { ReactNode } from 'react'
 
-import { GlobalProvider } from '~/app/providers'
 import { LOCALE } from '~/const/i18n'
-import METRIC from '~/const/metric'
 import { LANDING_INIT_DATA } from '~/const/name'
 import { loadLocaleFile } from '~/i18n'
 import landingMessages from '~/i18n/en/landing'
 import { I18N_NS } from '~/i18n/namespaces'
-import MainProvider from '~/stores/provider'
+import StaticLayout from '~/shell/StaticLayout'
+import StaticShellProvider from '~/stores/StaticShellProvider'
 import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 
 import '../domain.css'
@@ -57,17 +56,17 @@ function RootComponent() {
         {import.meta.env.DEV ? (
           <DevHubReporter serviceId='landing' endpoint={import.meta.env.VITE_DEV_HUB_URL} />
         ) : null}
-        <MainProvider
-          initData={LANDING_INIT_DATA}
-          noAccount
-          metric={METRIC.LANDING}
+        <StaticShellProvider
+          community={LANDING_INIT_DATA.community}
+          footerLinks={LANDING_INIT_DATA.footerLinks}
+          wallpaper={LANDING_INIT_DATA.wallpaper}
           locale={LOCALE.EN}
           localeData={JSON.stringify(localeData)}
         >
-          <GlobalProvider mainBlock={Main}>
+          <StaticLayout mainBlock={Main}>
             <Outlet />
-          </GlobalProvider>
-        </MainProvider>
+          </StaticLayout>
+        </StaticShellProvider>
       </TanStackPlatformProvider>
       <Analytics />
       <SpeedInsights />

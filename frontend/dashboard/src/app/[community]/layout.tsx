@@ -7,7 +7,7 @@ import METRIC from '~/const/metric'
 import { I18N_NS } from '~/i18n/namespaces'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import CommunityThemePresetStyle from '~/shell/CommunityThemePresetStyle'
-import MainProvider from '~/stores/provider'
+import CommunityShellProvider from '~/stores/CommunityShellProvider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
 
@@ -43,7 +43,7 @@ export default async ({ children, params, searchParams }) => {
         cssText={serializeCommunityThemePresetCss(dashboard.themeTokens)}
       />
 
-      <MainProvider
+      <CommunityShellProvider
         initData={{ community, dashboard, wallpaper }}
         locale={locale}
         metric={METRIC.DASHBOARD}
@@ -54,7 +54,7 @@ export default async ({ children, params, searchParams }) => {
             <Client demoMode={isDemoMode}>{children}</Client>
           </GlobalProvider>
         </QueryProvider>
-      </MainProvider>
+      </CommunityShellProvider>
     </>
   )
 }

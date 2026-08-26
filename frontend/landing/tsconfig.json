@@ -4,7 +4,7 @@
     "jsx": "react-jsx",
     "plugins": [],
     "strictNullChecks": false,
-    "types": ["vite/client"]
+    "types": ["vite/client", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".output", "dist"]

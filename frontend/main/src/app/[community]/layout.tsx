@@ -7,7 +7,7 @@ import { I18N_NS } from '~/i18n/namespaces'
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import ThirdPartyAnalyticsScripts from '~/lib/thirdPartyAnalytics/ThirdPartyAnalyticsScripts'
 import CommunityThemePresetStyle from '~/shell/CommunityThemePresetStyle'
-import MainProvider from '~/stores/provider'
+import CommunityShellProvider from '~/stores/CommunityShellProvider'
 import { getMetadata } from '~/utils/ssr'
 
 import WebAnalysisScript from '../WebAnalysisScript'
@@ -51,7 +51,7 @@ export default async ({ children, params }) => {
       <ThirdPartyAnalyticsScripts configs={dashboard.enabledThirdPartyAnalytics} />
       <WebAnalysisScript websiteId={dashboard.umamiWebsiteId} />
 
-      <MainProvider
+      <CommunityShellProvider
         initData={{ community, dashboard, wallpaper }}
         locale={locale}
         localeData={JSON.stringify(localeData)}
@@ -61,7 +61,7 @@ export default async ({ children, params }) => {
             <Client>{children}</Client>
           </GlobalProvider>
         </QueryProvider>
-      </MainProvider>
+      </CommunityShellProvider>
     </>
   )
 }

@@ -1,25 +1,14 @@
 import { arrayMove } from '@dnd-kit/sortable'
 
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
+import { isValidFooterLinks, isValidFooterOnelineLink } from '~/lib/footerLinks'
 import type { TFooterOnelineLink, TLinkChild, TLinkItem } from '~/spec'
 
-import { isValidDashboardLink, isValidDashboardLinks, toDraftLink } from '../../LinkEditor/model'
+import { toDraftLink } from '../../LinkEditor/model'
 import type { TFooterColumn, TFooterDraftLink, TFooterDragTarget } from './spec'
 
 const FOOTER_ONELINE_GROUP_ID = 'footer-oneline-links'
 const FOOTER_ONELINE_GROUP_TITLE = 'Links'
-
-export const isValidFooterLink = isValidDashboardLink
-export const isValidFooterLinks = isValidDashboardLinks
-
-// Public footer rendering is fed from dashboard state, which can briefly contain
-// partial editor drafts. Treat empty title/url strings as valid draft values so
-// a newly added oneline link stays editable instead of being filtered out.
-const isValidFooterOnelineLink = (link: TFooterOnelineLink): boolean =>
-  Boolean(link.id) && typeof link.title === 'string' && typeof link.url === 'string'
-/** Reports whether valid footer oneline links at the frontend shared boundary. */
-export const isValidFooterOnelineLinks = (links: readonly TFooterOnelineLink[]): boolean =>
-  links.every(isValidFooterOnelineLink)
 
 const toDndId = (groupId: string, link: TLinkChild): string => `footer-link:${groupId}:${link.id}`
 

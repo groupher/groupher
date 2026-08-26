@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import type { FC, ReactNode } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
@@ -8,14 +8,16 @@ import AccountStoreProvider from '~/stores/account/provider'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
+import DashboardFooterLinksProvider from '~/stores/footerLinks/dashboard-provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
+import DashboardShellStyleProvider from '~/stores/shellStyle/dashboard-provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
 type TProps = {
-  children: React.ReactNode
+  children: ReactNode
   initData: {
     community: TCommunity
     dashboard: TParseDashboard
@@ -30,13 +32,13 @@ type TProps = {
 }
 
 const AccountWrapper: FC<{
-  children: React.ReactNode
+  children: ReactNode
   initData?: TAccountInit
   noAccount: boolean
 }> = ({ children, initData, noAccount }) =>
   noAccount ? children : <AccountStoreProvider initData={initData}>{children}</AccountStoreProvider>
 
-const MainProvider: FC<TProps> = ({
+export default function CommunityShellProvider({
   children,
   initData,
   locale = LOCALE.EN,
@@ -44,7 +46,7 @@ const MainProvider: FC<TProps> = ({
   initialNow,
   noAccount = false,
   metric = METRIC.COMMUNITY,
-}) => {
+}: TProps) {
   const { account, dashboard, community, wallpaper } = initData
 
   return (
@@ -54,9 +56,15 @@ const MainProvider: FC<TProps> = ({
           <AccountWrapper initData={account} noAccount={noAccount}>
             <CommunityStoreProvider initData={community}>
               <DashboardStoreProvider initData={{ ...dashboard, metric }}>
-                <ThemePresetStoreProvider initData={dashboard}>
-                  <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
-                </ThemePresetStoreProvider>
+                <DashboardShellStyleProvider>
+                  <DashboardFooterLinksProvider>
+                    <ThemePresetStoreProvider initData={dashboard}>
+                      <WallpaperStoreProvider initData={wallpaper}>
+                        {children}
+                      </WallpaperStoreProvider>
+                    </ThemePresetStoreProvider>
+                  </DashboardFooterLinksProvider>
+                </DashboardShellStyleProvider>
               </DashboardStoreProvider>
             </CommunityStoreProvider>
           </AccountWrapper>
@@ -65,5 +73,3 @@ const MainProvider: FC<TProps> = ({
     </ThemeStoreProvider>
   )
 }
-
-export default MainProvider

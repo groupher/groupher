@@ -1,25 +1,12 @@
-import type { TFooterLayout, TFooterOnelineLink, TLinkItem } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
-import {
-  isValidFooterLink,
-  isValidFooterOnelineLinks,
-} from '~/unit/DashboardThread/Footer/Editors/model'
+import { useContext } from 'react'
 
-type TFooterLinks = {
-  layout: TFooterLayout
-  links: readonly TLinkItem[]
-  onelineLinks: readonly TFooterOnelineLink[]
-}
+import { FooterLinksContext } from '~/stores/footerLinks/context'
+import type { TFooterLinks } from '~/stores/footerLinks/spec'
 
 /** Exposes footer links state and actions through the shared React hook boundary. */
 export default function useFooterLinks(): TFooterLinks {
-  const { footerLayout, footerLinks, footerOnelineLinks } = useDashboard()
-  const links = footerLinks.every(isValidFooterLink) ? footerLinks : []
-  const onelineLinks = isValidFooterOnelineLinks(footerOnelineLinks) ? footerOnelineLinks : []
+  const value = useContext(FooterLinksContext)
+  if (!value) throw new Error('useFooterLinks must be used within FooterLinksProvider')
 
-  return {
-    layout: footerLayout,
-    links,
-    onelineLinks,
-  }
+  return value
 }

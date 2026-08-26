@@ -1,5 +1,5 @@
+import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEFAULT_WALLPAPER_PATTERN_ID, WALLPAPER_PATTERN_TONE } from '~/const/wallpaper'
-import { FIELDS } from '~/stores/dashboard/constant'
 
 export { BUILTIN_ALIAS } from './builtin-alias'
 
@@ -24,9 +24,10 @@ const LANDING_COMMUNITY = {
 
 export const LANDING_INIT_DATA = {
   community: LANDING_COMMUNITY,
-  dashboard: {
-    ...FIELDS,
-    original: FIELDS,
+  footerLinks: {
+    layout: FOOTER_LAYOUT.GROUP,
+    links: [],
+    onelineLinks: [],
   },
   wallpaper: {
     light: {

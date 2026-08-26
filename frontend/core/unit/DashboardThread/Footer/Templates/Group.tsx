@@ -3,13 +3,13 @@ import type { FC } from 'react'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
+import { isValidFooterLink } from '~/lib/footerLinks'
 import type { TActive, TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
-import { isValidFooterLink } from '../Editors/model'
 import useSalon, { cn } from '../salon/templates/group'
 
 type TProps = {

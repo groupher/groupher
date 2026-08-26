@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
+import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
-import ColorSelector from '~/ui/ColorSelector'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/layout_tab/header'
 
@@ -10,21 +10,26 @@ type TProps = {
   onPrimaryChange: (color: TColorName) => void
 }
 
+const SHOWCASE_COLORS: readonly TColorName[] = [COLOR.PURPLE, COLOR.BLUE, COLOR.GREEN, COLOR.ORANGE]
+
 const Header: FC<TProps> = ({ primaryColor, onPrimaryChange }) => {
   const s = useSalon({ color: primaryColor })
+  const cyclePrimaryColor = () => {
+    const currentIndex = SHOWCASE_COLORS.indexOf(primaryColor)
+    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % SHOWCASE_COLORS.length
+    onPrimaryChange(SHOWCASE_COLORS[nextIndex])
+  }
 
   return (
     <div className={s.wrapper}>
-      <ColorSelector
-        activeColor={primaryColor}
-        onChange={(color) => onPrimaryChange(color)}
-        placement='bottom-start'
-        offset={[0, 0]}
+      <button
+        type='button'
+        className={s.colorBox}
+        aria-label='切换示例主色'
+        onClick={cyclePrimaryColor}
       >
-        <div className={s.colorBox}>
-          <div className={s.colorBall} />
-        </div>
-      </ColorSelector>
+        <div className={s.colorBall} />
+      </button>
 
       <h3 className={s.title}>你的社区</h3>
       <div className='grow' />
