@@ -5,8 +5,8 @@ import { buildProxyHeaders, buildProxyResponse, proxyRequest } from './proxy'
 import type { TGatewayTarget } from './routing'
 
 const makeTarget = (overrides: Partial<TGatewayTarget> = {}): TGatewayTarget => ({
-  targetKind: 'main',
-  targetUrl: new URL('https://main.groupher.com/home'),
+  targetKind: 'community',
+  targetUrl: new URL('https://community.groupher.com/home'),
   requestHeaderPolicy: 'pass-through',
   responsePolicy: 'pass-through',
   redirectPolicy: 'preserve-upstream',
@@ -20,7 +20,7 @@ describe('gateway/proxy', () => {
       headers: {
         connection: 'keep-alive',
         host: 'gateway.groupher.com',
-        'x-forwarded-host': 'main.groupher.com, internal.local',
+        'x-forwarded-host': 'community.groupher.com, internal.local',
       },
     })
 
@@ -28,7 +28,7 @@ describe('gateway/proxy', () => {
 
     expect(headers.has('connection')).toBe(false)
     expect(headers.has('host')).toBe(false)
-    expect(headers.get('x-forwarded-host')).toBe('main.groupher.com')
+    expect(headers.get('x-forwarded-host')).toBe('community.groupher.com')
     expect(headers.get('x-forwarded-proto')).toBe('https')
   })
 
@@ -42,7 +42,7 @@ describe('gateway/proxy', () => {
   })
 
   it('cleans browser GraphQL credentials and forwards only the Groupher auth token', () => {
-    const request = new Request('https://dashboard.groupher.com/api/graphql', {
+    const request = new Request('https://groupher.com/api/graphql', {
       headers: {
         authorization: 'Bearer browser-token',
         cookie: [
@@ -67,7 +67,7 @@ describe('gateway/proxy', () => {
   })
 
   it('removes browser GraphQL cookies when the Groupher auth token is absent', () => {
-    const request = new Request('https://dashboard.groupher.com/api/graphql', {
+    const request = new Request('https://groupher.com/api/graphql', {
       headers: {
         authorization: 'Bearer browser-token',
         cookie: 'other=value',

@@ -1,10 +1,10 @@
 /**
- * Forwards WebSocket upgrades from Gateway to the selected upstream service.
+ * Forwards WebSocket upgrades from Dev Gateway to the selected upstream service.
  *
  * Business position:
  *
  *   Browser / service
- *     -> Gateway module
+ *     -> Dev Gateway module
  *     -> selected Groupher application
  *     -> proxied response
  */
@@ -23,9 +23,9 @@ const firstHeaderValue = (value: string | string[] | undefined): string | null =
   return value?.split(',')[0]?.trim() || null
 }
 
-/** Builds upgrade target url from typed gateway inputs. */
+/** Builds upgrade target url from typed Dev Gateway inputs. */
 export const buildUpgradeTargetUrl = (request: IncomingMessage): URL => {
-  const requestUrl = new URL(request.url || '/', 'http://gateway.local')
+  const requestUrl = new URL(request.url || '/', 'http://dev-gateway.local')
   const target = resolveGatewayTarget({
     pathname: requestUrl.pathname,
     search: requestUrl.search,
@@ -42,7 +42,7 @@ export const buildUpgradeTargetUrl = (request: IncomingMessage): URL => {
   return target.targetUrl
 }
 
-/** Builds upgrade header lines from typed gateway inputs. */
+/** Builds upgrade header lines from typed Dev Gateway inputs. */
 export const buildUpgradeHeaderLines = (headers: TUpgradeHeaders, targetUrl: URL): string[] => {
   const forwardedHost =
     firstHeaderValue(headers['x-forwarded-host']) || firstHeaderValue(headers.host)
@@ -69,7 +69,7 @@ export const buildUpgradeHeaderLines = (headers: TUpgradeHeaders, targetUrl: URL
   return lines
 }
 
-/** Runs the proxy upgrade request operation at the gateway boundary. */
+/** Runs the proxy upgrade request operation at the Dev Gateway boundary. */
 export const proxyUpgradeRequest = (
   request: IncomingMessage,
   socket: Duplex,

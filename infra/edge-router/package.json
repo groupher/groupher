@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev --config wrangler.jsonc",
+    "dev:local": "wrangler dev --config wrangler.local.jsonc",
     "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "types": "wrangler types --config wrangler.jsonc",

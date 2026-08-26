@@ -19,7 +19,9 @@
     "clean": "rimraf .output .tanstack vite.config.*.timestamp-* routeTree.gen.ts src/routeTree.gen.ts *.tsbuildinfo"
   },
   "dependencies": {
+    "@groupher/contracts": "1.0.0",
     "@groupher/frontend-core": "1.0.0",
+    "@groupher/service": "1.0.0",
     "@tanstack/query-core": "5.101.4",
     "@tanstack/react-query": "^5.101.4",
     "@tanstack/react-router": "1.170.21",

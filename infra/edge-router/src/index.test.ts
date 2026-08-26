@@ -118,8 +118,17 @@ describe('edge-router', () => {
   })
 
   it('does not know independent product hosts or removed root paths', async () => {
-    expect((await dispatch(new Request('https://dashboard.groupher.com/'))).status).toBe(404)
+    expect((await dispatch(new Request('https://dash.groupher.com/'))).status).toBe(404)
     expect((await dispatch(new Request('https://groupher.com/apply'))).status).toBe(404)
     expect((await dispatch(new Request('https://groupher.com/home/dashboard'))).status).toBe(404)
+  })
+
+  it('accepts local platform hosts only in the development configuration', async () => {
+    expect((await dispatch(new Request('https://groupher.localhost/health'))).status).toBe(404)
+
+    const env = { ...createEnv(), NODE_ENV: 'development' } as unknown as Env
+    expect((await dispatch(new Request('https://groupher.localhost/health'), env)).status).toBe(200)
+    expect((await dispatch(new Request('http://localhost/health'), env)).status).toBe(200)
+    expect((await dispatch(new Request('http://127.0.0.1/health'), env)).status).toBe(200)
   })
 })

@@ -28,7 +28,7 @@ const createDefinition = (
   metrics: METRICS,
 })
 
-test('Next env manifests follow development precedence and redact values by default', async (t) => {
+test('env manifests follow development precedence and redact values by default', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'dev-hub-env-'))
   t.after(async () => rm(root, { recursive: true, force: true }))
 
@@ -43,7 +43,7 @@ test('Next env manifests follow development precedence and redact values by defa
   const reader = new ServiceConfigReader(
     [
       createDefinition(root, {
-        kind: 'next-env',
+        kind: 'env-files',
         root,
         environment: 'development',
       }),

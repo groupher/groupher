@@ -1,7 +1,6 @@
 # =====================
 # Build outputs
 # =====================
-**/.next/
 build
 frontend/**/dist/
 frontend/**/out/
@@ -83,9 +82,9 @@ cypress/videos/*
 # =====================
 # TypeScript / build artifacts
 # =====================
-**/next-env.d.ts
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+**/.workflow-data/
 # tsc-files (lint-staged type check) leaves tsconfig.<random>.json temp configs
 # behind when the tsc subprocess is killed; the tracked ones use fixed names
 # (app/node/paths/build/...), so ignore the random-named leftovers only.
@@ -117,15 +116,9 @@ frontend/**/public/icons/phosphor/
 frontend/**/public/icons/providers/
 frontend/**/public/icons/*.sprite.svg
 frontend/core/assets/icons/generated/
-frontend/main/public/wallpaper/
-frontend/dashboard/public/wallpaper/
 frontend/dash/public/wallpaper/
 frontend/landing/public/wallpaper/
 frontend/core/assets/wallpaper/pattern-bak/
-
-# Frontend schema snapshots are generated from backend/api/schema.graphql when needed.
-frontend/main/graphql/schema.graphql
-frontend/dashboard/graphql/schema.graphql
 
 # TanStack Router generated output
 frontend/dash/src/routeTree.gen.ts

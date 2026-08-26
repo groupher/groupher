@@ -850,19 +850,9 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='main'] {
+)[data-service-id='community'] {
   --service-monogram-background: #6f4a50;
   --service-monogram-foreground: #f4e8ea;
-}
-
-:is(
-  .service-card,
-  .terminal-panel,
-  .metrics-drawer-popup,
-  .config-drawer-popup
-)[data-service-id='dashboard'] {
-  --service-monogram-background: #41614e;
-  --service-monogram-foreground: #e4efe7;
 }
 
 :is(
@@ -890,7 +880,7 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='gateway'] {
+)[data-service-id='dev-gateway'] {
   --service-monogram-background: #626747;
   --service-monogram-foreground: #eef0e1;
 }

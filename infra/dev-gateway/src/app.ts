@@ -1,10 +1,10 @@
 /**
- * Composes the Gateway HTTP application and its injected route dependencies.
+ * Composes the Dev Gateway HTTP application and its injected route dependencies.
  *
  * Business position:
  *
  *   Browser / service
- *     -> Gateway module
+ *     -> Dev Gateway module
  *     -> selected Groupher application
  *     -> proxied response
  */
@@ -41,7 +41,7 @@ const validateBrowserGraphQLRequest = (
   return null
 }
 
-/** Creates the gateway application with injectable runtime dependencies. */
+/** Creates the Dev Gateway application with injectable runtime dependencies. */
 export const createApp = ({ fetcher }: TOptions = {}) => {
   const app = new Hono()
 

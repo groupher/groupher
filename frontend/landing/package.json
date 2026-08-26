@@ -14,7 +14,7 @@
     "lint": "../../node_modules/.bin/oxlint src --threads=1",
     "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --ignore-path ./config/oxfmtignore ./src",
     "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --ignore-path ./config/oxfmtignore --check ./src",
-    "clean": "rimraf --glob .next .output .tanstack dist out routeTree.gen.ts src/routeTree.gen.ts 'vite.config.*.timestamp-*' '*.tsbuildinfo'"
+    "clean": "rimraf --glob .output .tanstack dist out routeTree.gen.ts src/routeTree.gen.ts 'vite.config.*.timestamp-*' '*.tsbuildinfo'"
   },
   "dependencies": {
     "@groupher/frontend-core": "1.0.0",

@@ -6,8 +6,8 @@ import type { TPublicService, TServiceMetricsSnapshot } from '@shared/contracts'
 import { getServiceOpenUrl } from './service-open-url'
 
 const service = (overrides: Partial<TPublicService>): TPublicService => ({
-  id: 'main',
-  name: 'Main',
+  id: 'community',
+  name: 'Community',
   description: '',
   group: 'frontend',
   monogram: 'MN',
@@ -15,9 +15,9 @@ const service = (overrides: Partial<TPublicService>): TPublicService => ({
   port: 3000,
   url: 'http://127.0.0.1:3000/health',
   appUrl: 'http://127.0.0.1:3000/home',
-  portlessName: 'main',
-  portlessUrl: 'https://main.groupher.localhost/health',
-  portlessAppUrl: 'https://main.groupher.localhost/home',
+  portlessName: 'community',
+  portlessUrl: 'https://community.groupher.localhost/health',
+  portlessAppUrl: 'https://community.groupher.localhost/home',
   endpoints: [],
   status: 'running',
   pid: 123,
@@ -56,7 +56,7 @@ describe('getServiceOpenUrl', () => {
   })
 
   it('keeps portless as the default local app URL for other services', () => {
-    assert.equal(getServiceOpenUrl(service({})), 'https://main.groupher.localhost/home')
+    assert.equal(getServiceOpenUrl(service({})), 'https://community.groupher.localhost/home')
   })
 
   it('prefers the active browser heartbeat URL when present', () => {

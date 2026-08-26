@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './app'
 import { SITE } from './routing'
 
-describe('gateway/app', () => {
-  it('serves the gateway health endpoint', async () => {
+describe('dev-gateway/app', () => {
+  it('serves the Dev Gateway health endpoint', async () => {
     const app = createApp()
     const response = await app.request('http://127.0.0.1:3003/health')
 
@@ -12,7 +12,7 @@ describe('gateway/app', () => {
     const body = await response.json()
     expect(body.schemaVersion).toBe('health.v1')
     expect(body.status).toBe('ok')
-    expect(body.service).toBe('gateway')
+    expect(body.service).toBe('dev-gateway')
     expect(typeof body.version).toBe('string')
     expect(typeof body.environment).toBe('string')
     expect(typeof body.timestamp).toBe('string')
@@ -31,21 +31,21 @@ describe('gateway/app', () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
 
-  it('proxies application routes through the resolved gateway target', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('dashboard'))
+  it('proxies surviving application routes through the resolved Dev Gateway target', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('community'))
     const app = createApp({ fetcher })
     const response = await app.request('http://127.0.0.1:3003/home', {
-      headers: { 'x-forwarded-host': 'dashboard.groupher.localhost' },
+      headers: { 'x-forwarded-host': 'groupher.localhost' },
     })
 
-    expect(await response.text()).toBe('dashboard')
+    expect(await response.text()).toBe('community')
     expect(fetcher).toHaveBeenCalledTimes(1)
     const [url, init] = fetcher.mock.calls[0]
-    expect(url).toEqual(new URL('/home', SITE.DASHBOARD))
+    expect(url).toEqual(new URL('/home', SITE.COMMUNITY))
     expect(init?.redirect).toBe('manual')
   })
 
-  it('returns 404 for removed root-domain dashboard paths', async () => {
+  it('returns 404 for removed root-domain paths', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('should not proxy'))
     const app = createApp({ fetcher })
     const response = await app.request('http://127.0.0.1:3003/home/dashboard', {

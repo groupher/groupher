@@ -9,7 +9,7 @@ type TProps = {
 }
 
 const INITIAL_ZOOM = 1
-const INITIAL_FOCUS_NODE_ID = 'gateway'
+const INITIAL_FOCUS_NODE_ID = 'dev-gateway'
 export const FLOW_INITIAL_TOP_INSET = 96
 
 export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {

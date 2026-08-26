@@ -23,5 +23,5 @@ node contracts/services/health/scripts/assert-health.mjs
 Check a running service with:
 
 ```bash
-node contracts/services/health/scripts/assert-health.mjs --url http://127.0.0.1:3000/health --service main
+node contracts/services/health/scripts/assert-health.mjs --url http://127.0.0.1:3007/health --service community
 ```

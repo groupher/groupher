@@ -1,10 +1,10 @@
 /**
- * Implements the Src Static boundary inside Gateway.
+ * Implements the Src Static boundary inside Dev Gateway.
  *
  * Business position:
  *
  *   Browser / service
- *     -> Gateway module
+ *     -> Dev Gateway module
  *     -> selected Groupher application
  *     -> proxied response
  */
@@ -16,9 +16,9 @@ import { fileURLToPath } from 'node:url'
 const cwd = process.cwd()
 const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const PUBLIC_ROOT =
-  path.basename(cwd) === 'gateway'
+  path.basename(cwd) === 'dev-gateway'
     ? path.join(cwd, 'public')
-    : path.join(cwd, 'infra/gateway/public')
+    : path.join(cwd, 'infra/dev-gateway/public')
 const DIST_PUBLIC_ROOT = path.join(sourceRoot, 'public')
 
 const PUBLIC_FILE_TYPES = {
@@ -28,11 +28,11 @@ const PUBLIC_FILE_TYPES = {
   '/favicon.ico': { fileName: 'favicon.ico', contentType: 'image/x-icon' },
 } as const
 
-/** Returns public file for the gateway workflow. */
+/** Returns public file for the Dev Gateway workflow. */
 export const getPublicFile = (pathname: string) =>
   PUBLIC_FILE_TYPES[pathname as keyof typeof PUBLIC_FILE_TYPES]
 
-/** Reads public file through the bounded gateway interface. */
+/** Reads public file through the bounded Dev Gateway interface. */
 export const readPublicFile = async (fileName: string): Promise<ArrayBuffer> => {
   const content = await readFile(path.join(PUBLIC_ROOT, fileName)).catch(() =>
     readFile(path.join(DIST_PUBLIC_ROOT, fileName)),

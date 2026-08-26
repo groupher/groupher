@@ -1,13 +1,11 @@
 export const SERVICE_HEALTH_SCHEMA_VERSION = 'health.v1'
 
 export const SERVICE_HEALTH_SERVICES = [
-  'gateway',
+  'dev-gateway',
   'edge-router',
   'auth',
   'landing',
-  'main',
   'community',
-  'dashboard',
   'dash',
   'inspire-me',
   'phoenix',

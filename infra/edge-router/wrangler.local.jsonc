@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "edge-router-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "services": [
+    { "binding": "LANDING", "service": "landing" },
+    { "binding": "COMMUNITY", "service": "community" },
+    { "binding": "AUTH", "service": "auth" }
+  ],
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  "vars": {
+    "API_SITE": "http://127.0.0.1:4001",
+    "PRESS_SITE": "http://127.0.0.1:8003",
+    "CUSTOM_DOMAIN_COMMUNITIES": "{}",
+    "NODE_ENV": "development"
+  }
+}

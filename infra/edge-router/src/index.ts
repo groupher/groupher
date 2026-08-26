@@ -1,6 +1,10 @@
 import { GROUPHER_AUTH_CSRF_HEADER, GROUPHER_AUTH_CSRF_VALUE } from '@groupher/contracts/auth'
 import { SERVICE_HEALTH_SCHEMA_VERSION } from '@groupher/contracts/health'
-import { resolvePublicRoute, type PublicRoute } from '@groupher/route-contract'
+import {
+  PRODUCTION_PLATFORM_HOSTS,
+  resolvePublicRoute,
+  type PublicRoute,
+} from '@groupher/route-contract'
 
 import { buildProxyHeaders } from './headers'
 
@@ -34,6 +38,11 @@ const readCustomDomains = (value: string): Record<string, string> => {
     return {}
   }
 }
+
+const platformHosts = (env: Env): readonly string[] =>
+  (env.NODE_ENV as string) === 'development'
+    ? [...PRODUCTION_PLATFORM_HOSTS, 'groupher.localhost', 'localhost', '127.0.0.1']
+    : PRODUCTION_PLATFORM_HOSTS
 
 const targetUrl = (base: string, pathname: string, search: string): URL => {
   const url = new URL(base)
@@ -99,6 +108,7 @@ export default {
       pathname: url.pathname,
       method: request.method,
       customDomainCommunities: readCustomDomains(env.CUSTOM_DOMAIN_COMMUNITIES),
+      platformHosts: platformHosts(env),
     })
 
     try {

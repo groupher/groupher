@@ -13,7 +13,6 @@ const RECONCILE_INTERVAL_MS = 5_000
 
 const IGNORED_WORKTREE_PARTS = new Set([
   '.git',
-  '.next',
   '.playwright',
   '.yarn',
   '_build',

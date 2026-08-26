@@ -46,7 +46,7 @@ const service = (
 describe('buildServiceViewModel', () => {
   it('marks required dependency issues before optional dependency issues', () => {
     const model = buildServiceViewModel([
-      service('gateway', 'running', {
+      service('dev-gateway', 'running', {
         optionalDependencies: ['assets'],
         requiredDependencies: ['phoenix'],
       }),
@@ -54,7 +54,7 @@ describe('buildServiceViewModel', () => {
       service('assets', 'stopped'),
     ])
 
-    assert.deepEqual(model.dependencyStateByServiceId.get('gateway'), {
+    assert.deepEqual(model.dependencyStateByServiceId.get('dev-gateway'), {
       hasOptionalDependencyIssue: false,
       hasRequiredDependencyIssue: true,
       hasStartedRequiredDependencies: false,
@@ -63,7 +63,7 @@ describe('buildServiceViewModel', () => {
 
   it('marks optional issues only after required dependencies are started', () => {
     const model = buildServiceViewModel([
-      service('gateway', 'running', {
+      service('dev-gateway', 'running', {
         optionalDependencies: ['assets'],
         requiredDependencies: ['phoenix'],
       }),
@@ -71,7 +71,7 @@ describe('buildServiceViewModel', () => {
       service('assets', 'unavailable'),
     ])
 
-    assert.deepEqual(model.dependencyStateByServiceId.get('gateway'), {
+    assert.deepEqual(model.dependencyStateByServiceId.get('dev-gateway'), {
       hasOptionalDependencyIssue: true,
       hasRequiredDependencyIssue: false,
       hasStartedRequiredDependencies: true,

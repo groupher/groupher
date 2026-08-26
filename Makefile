@@ -34,28 +34,11 @@ dev.dev:
 dev.app:
 	@bash local/dev-hub/scripts/install-app.sh
 
-# main
-fe.dev.main:
-	PORT=3000 NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:main
-
-fe.build.main:
-	yarn run build:prod:main
-
-fe.serve.main: 
-	yarn run serve:prod:main
-
-# dashboard
-fe.dev.dashboard:
-	PORT=3001 NEXT_PUBLIC_SITE_URL=https://dashboard.groupher.localhost NEXT_PUBLIC_DASHBOARD_SITE_URL=https://dashboard.groupher.localhost yarn run dev:dashboard
-
 fe.dev.dash:
 	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth yarn run dev:dash
 
 fe.dev.apply:
 	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:apply
-
-fe.build.dashboard:
-	yarn run build:prod:dashboard
 
 fe.build.dash:
 	yarn run build:prod:dash
@@ -63,42 +46,21 @@ fe.build.dash:
 fe.build.apply:
 	yarn run build:prod:apply
 
-fe.serve.dashboard: 
-	yarn run serve:prod:dashboard
-
-fe.test.dashboard:
-	yarn run test:dashboard
-
-fe.test.main:
-	yarn run test:main
-
 fe.test.landing:
 	yarn run test:landing
-
-fe.e2e.dashboard:
-	yarn run test:e2e:dashboard
-
-fe.e2e.main:
-	yarn run test:e2e:main
 
 fe.e2e.landing:
 	yarn run test:e2e:landing
 
-fe.dev.dsb: fe.dev.dashboard
-fe.build.dsb: fe.build.dashboard
-fe.serve.dsb: fe.serve.dashboard
-fe.test.dsb: fe.test.dashboard
-fe.e2e.dsb: fe.e2e.dashboard
+# dev gateway
+be.dev-gateway.start:
+	yarn run dev:dev-gateway
 
-# gateway
-be.gateway.start:
-	yarn run dev:gateway
+be.dev-gateway.build:
+	yarn run build:prod:dev-gateway
 
-be.gateway.build:
-	yarn run build:prod:gateway
-
-be.gateway.test:
-	yarn workspace @groupher/gateway test
+be.dev-gateway.test:
+	yarn workspace @groupher/dev-gateway test
 
 # auth
 be.auth.start:

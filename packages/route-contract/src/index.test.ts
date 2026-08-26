@@ -104,7 +104,7 @@ describe('platform root routes', () => {
     })
   })
 
-  it.each(['/Home', '/1home', '/_next/app.js'])('rejects invalid first segment %s', (pathname) => {
+  it.each(['/Home', '/1home', '/_vite/app.js'])('rejects invalid first segment %s', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('not-found')
   })
 })

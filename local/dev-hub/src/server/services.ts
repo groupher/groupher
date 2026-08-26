@@ -19,11 +19,6 @@ export type TServiceConfigDefinition =
       environment: 'development'
     }
   | {
-      kind: 'next-env'
-      root: string
-      environment: 'development'
-    }
-  | {
       kind: 'elixir-config'
       root: string
       environment: string
@@ -88,26 +83,21 @@ const BACKEND_METRICS: TMetricThresholds = {
   browserHeapBytes: 512 * MB,
 }
 
-const APP_CHAIN_POLICY = {
+const DASH_CHAIN_POLICY = {
   defaultMode: 'chain',
-  requiredDependencies: ['gateway', 'auth', 'phoenix'],
-  optionalDependencies: ['document-converter'],
-} satisfies TServiceStartPolicy
-
-const DASHBOARD_CHAIN_POLICY = {
-  ...APP_CHAIN_POLICY,
+  requiredDependencies: ['dev-gateway', 'auth', 'phoenix'],
   optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
 } satisfies TServiceStartPolicy
 
 const APPLY_CHAIN_POLICY = {
   defaultMode: 'chain',
-  requiredDependencies: ['gateway', 'auth', 'phoenix', 'assets-hub'],
+  requiredDependencies: ['dev-gateway', 'auth', 'phoenix', 'assets-hub'],
   optionalDependencies: [],
 } satisfies TServiceStartPolicy
 
 const LANDING_CHAIN_POLICY = {
   defaultMode: 'chain',
-  requiredDependencies: ['gateway'],
+  requiredDependencies: ['dev-gateway'],
   optionalDependencies: [],
 } satisfies TServiceStartPolicy
 
@@ -119,7 +109,7 @@ const COMMUNITY_CHAIN_POLICY = {
 
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
-    id: 'gateway',
+    id: 'dev-gateway',
     name: 'Dev Gateway',
     description: 'Local-only routing entry',
     group: 'backend',
@@ -128,17 +118,15 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('infra/gateway'),
+      root: fromRoot('infra/dev-gateway'),
       environment: 'development',
     },
     command: 'make',
-    args: ['be.gateway.start'],
+    args: ['be.dev-gateway.start'],
     env: {
       PORT: '3003',
       NEXT_PUBLIC_SITE_URL: 'https://groupher.localhost',
       LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
-      MAIN_SITE: LOCAL_SERVICE_ENDPOINTS.main,
-      DASHBOARD_SITE: LOCAL_SERVICE_ENDPOINTS.dashboard,
       DASH_SITE: LOCAL_SERVICE_ENDPOINTS.dash,
       APPLY_SITE: LOCAL_SERVICE_ENDPOINTS.apply,
       AUTH_SITE: LOCAL_SERVICE_ENDPOINTS.auth,
@@ -210,30 +198,6 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     startPolicy: LANDING_CHAIN_POLICY,
   },
   {
-    id: 'main',
-    name: 'Main',
-    description: 'Community-facing application',
-    group: 'frontend',
-    monogram: 'MN',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
-    cwd: REPO_ROOT,
-    config: {
-      kind: 'next-env',
-      root: fromRoot('frontend/main'),
-      environment: 'development',
-    },
-    command: 'make',
-    args: ['fe.dev.main'],
-    port: 3000,
-    url: 'http://127.0.0.1:3000/health',
-    appUrl: 'http://127.0.0.1:3000/home',
-    portlessName: 'main',
-    portlessUrl: 'https://main.groupher.localhost/health',
-    portlessAppUrl: 'https://main.groupher.localhost/home',
-    metrics: FRONTEND_METRICS,
-    startPolicy: APP_CHAIN_POLICY,
-  },
-  {
     id: 'community',
     name: 'Community',
     description: 'TanStack Start public community application',
@@ -260,42 +224,6 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessAppUrl: 'https://community.groupher.localhost/home/about',
     metrics: FRONTEND_METRICS,
     startPolicy: COMMUNITY_CHAIN_POLICY,
-  },
-  {
-    id: 'dashboard',
-    name: 'Dashboard',
-    description: 'Community administration workspace',
-    group: 'frontend',
-    monogram: 'DS',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
-    cwd: REPO_ROOT,
-    config: {
-      kind: 'next-env',
-      root: fromRoot('frontend/dashboard'),
-      environment: 'development',
-    },
-    command: 'make',
-    args: ['fe.dev.dsb'],
-    env: {
-      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
-      NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
-      CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
-      SERVICE_AUTH_ISSUER: LOCAL_SERVICE_ENDPOINTS.auth,
-      SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
-      SERVICE_AUTH_TOKEN_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/oauth2/token`,
-    },
-    port: 3001,
-    url: 'http://127.0.0.1:3001/health',
-    appUrl: 'http://127.0.0.1:3001/home',
-    portlessName: 'dashboard',
-    portlessUrl: 'https://dashboard.groupher.localhost/health',
-    portlessAppUrl: 'https://dashboard.groupher.localhost/home',
-    browserMetricOrigins: [
-      'http://dashboard.groupher.localhost:3001',
-      'https://dashboard.groupher.localhost',
-    ],
-    metrics: FRONTEND_METRICS,
-    startPolicy: DASHBOARD_CHAIN_POLICY,
   },
   {
     id: 'dash',
@@ -327,7 +255,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessUrl: 'https://dash.groupher.localhost/health',
     portlessAppUrl: 'https://dash.groupher.localhost/home/overview',
     metrics: FRONTEND_METRICS,
-    startPolicy: DASHBOARD_CHAIN_POLICY,
+    startPolicy: DASH_CHAIN_POLICY,
   },
   {
     id: 'apply',
@@ -363,10 +291,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     description: 'Local feedback research library',
     group: 'frontend',
     monogram: 'IN',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
+    technologies: ['tanstack-start', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
+      kind: 'env-files',
       root: fromRoot('frontend/inspire-me'),
       environment: 'development',
     },
@@ -490,7 +418,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['dev:assets-hub'],
     env: {
       ASSETS_HUB_CORS_ORIGIN:
-        'http://localhost:3003,http://dashboard.groupher.localhost,https://dashboard.groupher.localhost,http://dash.groupher.localhost,https://dash.groupher.localhost,http://apply.groupher.localhost,https://apply.groupher.localhost,https://groupher.localhost',
+        'http://localhost:3003,http://dash.groupher.localhost,https://dash.groupher.localhost,http://apply.groupher.localhost,https://apply.groupher.localhost,https://groupher.localhost',
       PORT: '8002',
       SERVICE_AUTH_ISSUER: LOCAL_SERVICE_ENDPOINTS.auth,
       SERVICE_AUTH_JWKS_URL: `${LOCAL_SERVICE_ENDPOINTS.auth}/.well-known/jwks.json`,
@@ -580,56 +508,35 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
 export const SERVICE_RELATIONS: TServiceRelation[] = [
   {
     id: 'gateway-auth',
-    source: 'gateway',
+    source: 'dev-gateway',
     target: 'auth',
     kind: 'route',
     label: '/api/auth/*',
   },
   {
     id: 'gateway-landing',
-    source: 'gateway',
+    source: 'dev-gateway',
     target: 'landing',
     kind: 'route',
     label: '/, /pricing, /book-demo',
   },
   {
-    id: 'auth-main',
-    source: 'auth',
-    target: 'main',
-    kind: 'auth',
-    label: 'signed-in session',
-  },
-  {
-    id: 'auth-dashboard',
-    source: 'auth',
-    target: 'dashboard',
-    kind: 'auth',
-    label: '/:community/dashboard/*',
-  },
-  {
     id: 'gateway-dash',
-    source: 'gateway',
+    source: 'dev-gateway',
     target: 'dash',
     kind: 'route',
     label: '/:community/dash/*',
   },
   {
-    id: 'gateway-main',
-    source: 'gateway',
-    target: 'main',
-    kind: 'route',
-    label: 'all other routes',
-  },
-  {
     id: 'gateway-apply',
-    source: 'gateway',
+    source: 'dev-gateway',
     target: 'apply',
     kind: 'route',
     label: '/apply/*',
   },
   {
     id: 'gateway-press',
-    source: 'gateway',
+    source: 'dev-gateway',
     target: 'press',
     kind: 'route',
     label: '*.md, feed.*, llms.txt, sitemap.xml',
@@ -642,39 +549,11 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: 'CMS.Press GraphQL projection',
   },
   {
-    id: 'main-phoenix',
-    source: 'main',
-    target: 'phoenix',
-    kind: 'api',
-    label: 'GraphQL',
-  },
-  {
     id: 'community-phoenix',
     source: 'community',
     target: 'phoenix',
     kind: 'api',
     label: 'GraphQL',
-  },
-  {
-    id: 'dashboard-phoenix',
-    source: 'dashboard',
-    target: 'phoenix',
-    kind: 'api',
-    label: 'GraphQL',
-  },
-  {
-    id: 'dashboard-content-import',
-    source: 'dashboard',
-    target: 'content-import',
-    kind: 'api',
-    label: '/api/docs/import/*',
-  },
-  {
-    id: 'dashboard-assets-hub',
-    source: 'dashboard',
-    target: 'assets-hub',
-    kind: 'api',
-    label: 'asset upload flow',
   },
   {
     id: 'dash-phoenix',
@@ -738,13 +617,6 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     target: 'document-converter',
     kind: 'api',
     label: 'file conversion',
-  },
-  {
-    id: 'dashboard-document-converter',
-    source: 'dashboard',
-    target: 'document-converter',
-    kind: 'api',
-    label: '/api/artiment/import -> /convert',
   },
   {
     id: 'dash-document-converter',

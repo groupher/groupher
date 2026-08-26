@@ -8,7 +8,6 @@ export type TTechnology =
   | 'graphql'
   | 'hono'
   | 'markitdown'
-  | 'nextjs'
   | 'nodejs'
   | 'oauth'
   | 'phoenix'
@@ -141,12 +140,7 @@ export type TGitDiffPayload = {
   revision: number
 }
 
-export type TServiceConfigKind =
-  | 'env-files'
-  | 'next-env'
-  | 'elixir-config'
-  | 'python-settings'
-  | 'none'
+export type TServiceConfigKind = 'env-files' | 'elixir-config' | 'python-settings' | 'none'
 
 export type TServiceConfigFileGroup = 'active' | 'other' | 'template'
 

@@ -21,6 +21,7 @@
     "@groupher/rich-editor": "0.0.35",
     "@groupher/service": "1.0.0",
     "@hono/node-server": "^2.0.11",
+    "@vercel/blob": "2.6.1",
     "dotenv": "^17.4.2",
     "files-sdk": "2.2.3",
     "hono": "^4.13.0",
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/tar-stream": "^3",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "rimraf": "^6.1.3",
