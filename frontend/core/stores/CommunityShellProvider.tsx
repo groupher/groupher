@@ -8,7 +8,7 @@ import AccountStoreProvider from '~/stores/account/provider'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
-import DashboardFooterLinksProvider from '~/stores/footerLinks/dashboard-provider'
+import DsbFooterLinksProvider from '~/stores/footerLinks/dsb-provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import DashboardShellStyleProvider from '~/stores/shellStyle/dashboard-provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
@@ -57,13 +57,13 @@ export default function CommunityShellProvider({
             <CommunityStoreProvider initData={community}>
               <DashboardStoreProvider initData={{ ...dashboard, metric }}>
                 <DashboardShellStyleProvider>
-                  <DashboardFooterLinksProvider>
+                  <DsbFooterLinksProvider>
                     <ThemePresetStoreProvider initData={dashboard}>
                       <WallpaperStoreProvider initData={wallpaper}>
                         {children}
                       </WallpaperStoreProvider>
                     </ThemePresetStoreProvider>
-                  </DashboardFooterLinksProvider>
+                  </DsbFooterLinksProvider>
                 </DashboardShellStyleProvider>
               </DashboardStoreProvider>
             </CommunityStoreProvider>

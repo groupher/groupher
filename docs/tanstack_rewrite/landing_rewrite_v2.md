@@ -154,8 +154,8 @@ public Footer
 4. Core 提供 `FooterLinksProvider` 与 `FooterLinksContext`，只承载公开 Footer 所需的 `layout`、`links`、`onelineLinks`；
 5. 保留现有 `useFooterLinks` 名称，但将实现改为读取 `FooterLinksContext`，不再调用 `useDashboard()`；
 6. `SiteFooter`、`GroupLayout` 和 `OnelineLayout` 继续通过 `useFooterLinks` 取数，不直接读取完整 Dashboard store，也不直接耦合 `LANDING_INIT_DATA`；
-7. `CommunityShellProvider` 在 `DashboardStoreProvider` 内挂载简单的 `DashboardFooterLinksProvider`，后者只读取 Dashboard store 的三个 Footer 字段并传给 `FooterLinksProvider`；
-8. Dashboard editor 继续直接使用 Dashboard store；编辑状态变化会使 `DashboardFooterLinksProvider` 更新 context，因此公开 Footer preview 保持实时更新；
+7. `CommunityShellProvider` 在 `DashboardStoreProvider` 内挂载简单的 `DsbFooterLinksProvider`，后者只读取 Dashboard store 的三个 Footer 字段并传给 `FooterLinksProvider`；
+8. Dashboard editor 继续直接使用 Dashboard store；编辑状态变化会使 `DsbFooterLinksProvider` 更新 context，因此公开 Footer preview 保持实时更新；
 9. `StaticShellProvider` 接收必填的 `footerLinks` 配置并直接挂载 `FooterLinksProvider`，完全不创建 Dashboard store；没有 Footer 的静态 host 必须显式传空配置，不能依赖隐藏默认值；
 10. 检查 `DashboardThread/Footer/Templates/Group.tsx` 等其他公共渲染入口，全部改为依赖纯 Footer domain，不能从第二条路径重新引入 editor model；
 11. 构建后确认三个 `@dnd-kit` 包不再进入 Landing 与 Community 的公共页面 client source map。
@@ -165,7 +165,7 @@ public Footer
 ```text
 CommunityShellProvider
   -> DashboardStoreProvider
-     -> DashboardFooterLinksProvider
+     -> DsbFooterLinksProvider
         -> FooterLinksProvider
            -> SiteFooter/useFooterLinks
 
@@ -272,7 +272,7 @@ HTML 中有 245 个 inline SVG，但 source map 未发现单个巨型 Landing SV
 已完成：
 
 - 公共 Footer validation/normalization 已从 Dashboard DnD editor model 拆出；`SiteFooter` 只读取 `FooterLinksProvider`；
-- `DashboardFooterLinksProvider` 作为很薄的 Dashboard 数据适配层，Community/Main/Dashboard 仍保留实时 Footer preview；
+- `DsbFooterLinksProvider` 作为很薄的 Dashboard 数据适配层，Community/Main/Dashboard 仍保留实时 Footer preview；
 - 历史 `MainProvider` 已重命名为 `CommunityShellProvider`，所有仍存活的 Main、Community、Dashboard caller 已同步迁移；
 - Landing 改用 `StaticShellProvider` 与 `StaticLayout`，不再创建 Dashboard、Account、Query 或 auth modal runtime；
 - Landing 所需公开 layout 配置由窄的 shell context 注入，不再借完整 Dashboard store 供给；
@@ -308,7 +308,7 @@ DashboardThread/Footer/Editors/model
 - Landing 绕过 provider barrel，直接使用窄入口；
 - 将公共 Footer validation 与 Dashboard DnD editor model 拆开；
 - 建立 `FooterLinksProvider`，让现有 `useFooterLinks` 改读窄 context；
-- 建立 `DashboardFooterLinksProvider`，维持 Community/Dashboard Footer 的实时 store 数据；
+- 建立 `DsbFooterLinksProvider`，维持 Community/Dashboard Footer 的实时 store 数据；
 - 让 `StaticShellProvider` 直接注入静态 Footer links，解除 Landing `SiteFooter -> useDashboard`；
 - 构建并保存新的首页资源清单与 source map 证据。
 

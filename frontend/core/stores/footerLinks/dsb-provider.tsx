@@ -6,7 +6,7 @@ import useDashboard from '~/stores/dashboard/hooks'
 
 import FooterLinksProvider from './provider'
 
-export default function DashboardFooterLinksProvider({ children }: { children: ReactNode }) {
+export default function DsbFooterLinksProvider({ children }: { children: ReactNode }) {
   const { footerLayout, footerLinks, footerOnelineLinks } = useDashboard()
 
   return (
