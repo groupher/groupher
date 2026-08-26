@@ -59,6 +59,42 @@ V2 必须保留以下合约：
 
 HTML 优化应针对重复 markup 和经实测占比显著、确实适合图片化的资产，而不是删除 prerender 内容或批量替换普通 SVG icon。
 
+### 2.3 V2 改动前后基线
+
+以下数据使用同一台机器、同一套 production build 与“首页 HTML 实际引用资源”口径。十进制 KB 仅用于快速阅读，验收与后续 diff 以精确字节数为准。
+
+| 指标                 |                    V2 前 |                    V2 后 |   绝对变化 | 百分比变化 |
+| -------------------- | -----------------------: | -----------------------: | ---------: | ---------: |
+| JS 文件数            |                       13 |                        5 |         -8 |     -61.5% |
+| JS raw               | 1,889,864 B / 1,889.9 KB | 1,135,159 B / 1,135.2 KB | -754,705 B |     -39.9% |
+| JS gzip              |     467,966 B / 468.0 KB |     360,967 B / 361.0 KB | -106,999 B |     -22.9% |
+| JS Brotli            |     430,339 B / 430.3 KB |     304,115 B / 304.1 KB | -126,224 B |     -29.3% |
+| CSS 文件数           |                        1 |                        1 |          0 |         0% |
+| CSS raw              |     188,936 B / 188.9 KB |     188,936 B / 188.9 KB |          0 |         0% |
+| CSS gzip             |       29,201 B / 29.2 KB |       29,421 B / 29.4 KB |     +220 B |      +0.8% |
+| JS + CSS gzip        |     497,167 B / 497.2 KB |     390,388 B / 390.4 KB | -106,779 B |     -21.5% |
+| HTML raw             |     361,236 B / 361.2 KB |     359,973 B / 360.0 KB |   -1,263 B |      -0.3% |
+| HTML gzip            |       69,801 B / 69.8 KB |       69,925 B / 69.9 KB |     +124 B |      +0.2% |
+| HTML + JS + CSS gzip |     566,968 B / 567.0 KB |     460,313 B / 460.3 KB | -106,655 B |     -18.8% |
+
+因此 V2 完成后的两个固定报告值是：
+
+- Landing 首页 client bundle：`390.4 KB gzip`（JS + CSS，不含 HTML）；
+- Landing 首页首次静态传输：`460.3 KB gzip`（HTML + JS + CSS，不含图片、字体及运行时请求）。
+
+改动前后的依赖边界对比：
+
+| 依赖/能力                  | V2 前                                        | V2 后                                    |
+| -------------------------- | -------------------------------------------- | ---------------------------------------- |
+| GraphQL generated/query    | 由 provider barrel 进入 Landing              | 不在 Landing client source map           |
+| Dashboard store            | Landing root 默认创建                        | 由 `StaticShellProvider` 移除            |
+| Footer editor / `@dnd-kit` | 公共 Footer 间接加载                         | Footer 使用独立 domain/context，不再加载 |
+| React Aria/Stately         | Dashboard showcase 的真实 ColorSelector 引入 | Landing 使用轻量内置色交互，不再加载     |
+| FAQ 其他布局               | 聚合入口共同加载                             | 直接使用 `LeftRightList`                 |
+| QR renderer                | `MenuButton` 顶层加载                        | 菜单打开且存在 `qrLink` 时动态加载       |
+
+HTML 与 CSS 基本不变是符合本轮范围的结果：V2 处理客户端依赖边界，不以删除 prerender 内容或视觉样式换取体积。HTML、单文件 CSS、Tooltip/Markdown 和动画 runtime 的后续基线由 V3 继续承接。
+
 ## 3. 已确认的依赖泄漏
 
 ### 3.1 Provider barrel 带入 GraphQL
@@ -256,19 +292,7 @@ qrcode.react
 DashboardThread/Footer/Editors/model
 ```
 
-同口径优化后首页实际引用资源：
-
-| 指标                 |       V2 前 |       V2 后 |     变化 |
-| -------------------- | ----------: | ----------: | -------: |
-| JS 文件数            |          13 |           5 |       -8 |
-| JS raw               | 1,889,864 B | 1,135,159 B |   -39.9% |
-| JS gzip              |   467,966 B |   360,967 B |   -22.9% |
-| JS Brotli            |   430,339 B |   304,115 B |   -29.3% |
-| CSS raw              |   188,936 B |   188,936 B |       0% |
-| CSS gzip             |    29,201 B |    29,421 B | 测量波动 |
-| JS + CSS gzip        |   497,167 B |   390,388 B |   -21.5% |
-| HTML gzip            |    69,801 B |    69,925 B | 测量波动 |
-| HTML + JS + CSS gzip |   566,968 B |   460,313 B |   -18.8% |
+首页资源的完整改动前后数据见 [2.3 V2 改动前后基线](#23-v2-改动前后基线)。该表同时保留精确字节、十进制 KB、绝对变化和百分比，作为后续 V3 及线上复测的固定比较基线。
 
 最大两个 client chunk 现在是：
 
