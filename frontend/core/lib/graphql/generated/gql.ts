@@ -114,6 +114,9 @@ type Documents = {
   '\n  query SearchUsers($name: String!) {\n    searchUsers(name: $name) {\n      entries {\n        ...CommentAuthorFields\n      }\n    }\n  }\n': typeof types.SearchUsersDocument
   '\n  query PagedPublishedComments($login: String!, $thread: Thread, $filter: PagiFilter!) {\n    pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {\n      entries {\n        ...CommentFields\n        article {\n          innerId\n          title\n          thread\n          author {\n            nickname\n            login\n          }\n        }\n      }\n      ...CommentPageFields\n    }\n  }\n': typeof types.PagedPublishedCommentsDocument
   '\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n': typeof types.CoverSimpleQueryDocument
+  '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n': typeof types.DocCoverMarkerFieldsFragmentDoc
+  '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n': typeof types.DocCoverItemFieldsFragmentDoc
+  '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n': typeof types.DocCoverDocument
   '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n': typeof types.AnalysisActiveVisitorsDocument
   '\n  query AnalysisTrendPages(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendPagesDimension!\n  ) {\n    analysisTrendPages(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n          bounceRate\n          visitDuration\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n': typeof types.AnalysisTrendPagesDocument
   '\n  query AnalysisTrendSources(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendSourcesDimension!\n  ) {\n    analysisTrendSources(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n': typeof types.AnalysisTrendSourcesDocument
@@ -203,9 +206,6 @@ type Documents = {
   '\n  mutation DashboardReindexTagsInGroup(\n    $community: String!\n    $thread: Thread\n    $groupId: ID!\n    $tags: [ReindexTagInput]\n  ) {\n    reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {\n      done\n    }\n  }\n': typeof types.DashboardReindexTagsInGroupDocument
   '\n  mutation DashboardReindexCommunityTags(\n    $community: String!\n    $thread: Thread\n    $tags: [ReindexCommunityTagInput]\n  ) {\n    reindexCommunityTags(community: $community, thread: $thread, tags: $tags) {\n      done\n    }\n  }\n': typeof types.DashboardReindexCommunityTagsDocument
   '\n  mutation DashboardReindexCommunityTagGroups(\n    $community: String!\n    $thread: Thread\n    $groups: [ReindexCommunityTagGroupInput]\n  ) {\n    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {\n      done\n    }\n  }\n': typeof types.DashboardReindexCommunityTagGroupsDocument
-  '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n': typeof types.DocCoverMarkerFieldsFragmentDoc
-  '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n': typeof types.DocCoverItemFieldsFragmentDoc
-  '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n': typeof types.DocCoverDocument
   '\n  fragment KanbanAuthorFields on User {\n    login\n    nickname\n    avatar\n    bio\n    shortbio\n  }\n': typeof types.KanbanAuthorFieldsFragmentDoc
   '\n  fragment KanbanPageFields on PagedPosts {\n    totalPages\n    totalCount\n    pageSize\n    pageNumber\n  }\n': typeof types.KanbanPageFieldsFragmentDoc
   '\n  query GroupedKanbanPosts($community: String!) {\n    groupedKanbanPosts(community: $community) {\n      backlog {\n        entries {\n          innerId\n          cat\n          status\n          title\n          community {\n            slug\n          }\n          meta {\n            thread\n          }\n          author {\n            ...KanbanAuthorFields\n          }\n        }\n        ...KanbanPageFields\n      }\n      todo {\n        entries {\n          innerId\n          cat\n          status\n          title\n          community {\n            slug\n          }\n          meta {\n            thread\n          }\n          author {\n            ...KanbanAuthorFields\n          }\n        }\n        ...KanbanPageFields\n      }\n      wip {\n        entries {\n          innerId\n          cat\n          status\n          title\n          community {\n            slug\n          }\n          meta {\n            thread\n          }\n          author {\n            ...KanbanAuthorFields\n          }\n        }\n        ...KanbanPageFields\n      }\n      done {\n        entries {\n          innerId\n          cat\n          status\n          title\n          community {\n            slug\n          }\n          meta {\n            thread\n          }\n          author {\n            ...KanbanAuthorFields\n          }\n        }\n        ...KanbanPageFields\n      }\n      rejected {\n        entries {\n          innerId\n          cat\n          status\n          title\n          community {\n            slug\n          }\n          meta {\n            thread\n          }\n          author {\n            ...KanbanAuthorFields\n          }\n        }\n        ...KanbanPageFields\n      }\n    }\n  }\n': typeof types.GroupedKanbanPostsDocument
@@ -418,6 +418,12 @@ const documents: Documents = {
     types.PagedPublishedCommentsDocument,
   '\n  query CoverSimpleQuery($article: ArticlePathInput!) {\n    post(article: $article) {\n      innerId\n    }\n  }\n':
     types.CoverSimpleQueryDocument,
+  '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n':
+    types.DocCoverMarkerFieldsFragmentDoc,
+  '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n':
+    types.DocCoverItemFieldsFragmentDoc,
+  '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n':
+    types.DocCoverDocument,
   '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n':
     types.AnalysisActiveVisitorsDocument,
   '\n  query AnalysisTrendPages(\n    $community: String!\n    $days: Int\n    $dimension: AnalysisTrendPagesDimension!\n  ) {\n    analysisTrendPages(community: $community, days: $days, dimension: $dimension) {\n      status\n      items {\n        value\n        label\n        metrics {\n          visitors\n          visits\n          views\n          bounceRate\n          visitDuration\n        }\n      }\n      error {\n        code\n        message\n        section\n        providerStatus\n      }\n    }\n  }\n':
@@ -596,12 +602,6 @@ const documents: Documents = {
     types.DashboardReindexCommunityTagsDocument,
   '\n  mutation DashboardReindexCommunityTagGroups(\n    $community: String!\n    $thread: Thread\n    $groups: [ReindexCommunityTagGroupInput]\n  ) {\n    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {\n      done\n    }\n  }\n':
     types.DashboardReindexCommunityTagGroupsDocument,
-  '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n':
-    types.DocCoverMarkerFieldsFragmentDoc,
-  '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n':
-    types.DocCoverItemFieldsFragmentDoc,
-  '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n':
-    types.DocCoverDocument,
   '\n  fragment KanbanAuthorFields on User {\n    login\n    nickname\n    avatar\n    bio\n    shortbio\n  }\n':
     types.KanbanAuthorFieldsFragmentDoc,
   '\n  fragment KanbanPageFields on PagedPosts {\n    totalPages\n    totalCount\n    pageSize\n    pageNumber\n  }\n':
@@ -1240,6 +1240,24 @@ export function graphql(
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(
+  source: '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n',
+): (typeof documents)['\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n']
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n',
+): (typeof documents)['\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n']
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
+  source: '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n',
+): (typeof documents)['\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n']
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(
   source: '\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n',
 ): (typeof documents)['\n  query AnalysisActiveVisitors($community: String!) {\n    analysisActiveVisitors(community: $community) {\n      visitors\n    }\n  }\n']
 /**
@@ -1770,24 +1788,6 @@ export function graphql(
 export function graphql(
   source: '\n  mutation DashboardReindexCommunityTagGroups(\n    $community: String!\n    $thread: Thread\n    $groups: [ReindexCommunityTagGroupInput]\n  ) {\n    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {\n      done\n    }\n  }\n',
 ): (typeof documents)['\n  mutation DashboardReindexCommunityTagGroups(\n    $community: String!\n    $thread: Thread\n    $groups: [ReindexCommunityTagGroupInput]\n  ) {\n    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {\n      done\n    }\n  }\n']
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(
-  source: '\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n',
-): (typeof documents)['\n  fragment DocCoverMarkerFields on Marker {\n    type\n    provider\n    name\n    src\n    unified\n    appearance {\n      light {\n        color\n        bg\n      }\n      dark {\n        color\n        bg\n      }\n    }\n  }\n']
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(
-  source: '\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n',
-): (typeof documents)['\n  fragment DocCoverItemFields on DocCoverCardItem {\n    id\n    nodeId\n    docId\n    index\n    type\n    title\n    href\n    badge\n    leafCount\n    marker {\n      ...DocCoverMarkerFields\n    }\n  }\n']
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(
-  source: '\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n',
-): (typeof documents)['\n  query DocCover($community: String!, $view: DocCoverView = PUBLIC) {\n    docCover(community: $community, view: $view) {\n      cards {\n        id\n        groupNodeId\n        index\n        appearance\n        title\n        items {\n          ...DocCoverItemFields\n        }\n      }\n      pinnedDocs {\n        nodeId\n        index\n        appearance\n        href\n        doc {\n          title\n          author {\n            avatar\n            nickname\n          }\n          document {\n            thumbnail\n          }\n        }\n      }\n    }\n  }\n']
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

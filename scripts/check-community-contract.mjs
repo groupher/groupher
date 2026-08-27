@@ -126,10 +126,12 @@ const simpleKanbanCard = readFileSync(
 )
 if (
   simpleKanbanCard.includes('useRouter') ||
-  !simpleKanbanCard.includes('<Link') ||
+  !simpleKanbanCard.includes('<CommunityPreviewLink') ||
   !simpleKanbanCard.includes('previewId')
 ) {
-  throw new Error('Simple Kanban cards must use PlatformLink so Community can mask previews')
+  throw new Error(
+    'Simple Kanban cards must use CommunityPreviewLink so Community can mask previews',
+  )
 }
 
 for (const dependency of [

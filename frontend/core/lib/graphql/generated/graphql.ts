@@ -3852,6 +3852,91 @@ export type CoverSimpleQueryQueryVariables = Exact<{
 
 export type CoverSimpleQueryQuery = { post: { innerId: string | null } }
 
+export type DocCoverMarkerFieldsFragment = {
+  type: MarkerType
+  provider: string | null
+  name: string | null
+  src: string | null
+  unified: string | null
+  appearance: {
+    light: { color: string | null; bg: string | null }
+    dark: { color: string | null; bg: string | null }
+  } | null
+}
+
+export type DocCoverItemFieldsFragment = {
+  id: string
+  nodeId: string
+  docId: string | null
+  index: number
+  type: DocTreeNodeType
+  title: string
+  href: string
+  badge: string | null
+  leafCount: number | null
+  marker: {
+    type: MarkerType
+    provider: string | null
+    name: string | null
+    src: string | null
+    unified: string | null
+    appearance: {
+      light: { color: string | null; bg: string | null }
+      dark: { color: string | null; bg: string | null }
+    } | null
+  } | null
+}
+
+export type DocCoverQueryVariables = Exact<{
+  community: string
+  view?: DocCoverView | null | undefined
+}>
+
+export type DocCoverQuery = {
+  docCover: {
+    cards: Array<{
+      id: string
+      groupNodeId: string
+      index: number
+      appearance: unknown
+      title: string
+      items: Array<{
+        id: string
+        nodeId: string
+        docId: string | null
+        index: number
+        type: DocTreeNodeType
+        title: string
+        href: string
+        badge: string | null
+        leafCount: number | null
+        marker: {
+          type: MarkerType
+          provider: string | null
+          name: string | null
+          src: string | null
+          unified: string | null
+          appearance: {
+            light: { color: string | null; bg: string | null }
+            dark: { color: string | null; bg: string | null }
+          } | null
+        } | null
+      }>
+    }>
+    pinnedDocs: Array<{
+      nodeId: string
+      index: number
+      appearance: unknown
+      href: string
+      doc: {
+        title: string | null
+        author: { avatar: string | null; nickname: string | null } | null
+        document: { thumbnail: unknown } | null
+      }
+    }>
+  } | null
+}
+
 export type AnalysisActiveVisitorsQueryVariables = Exact<{
   community: string
 }>
@@ -6569,91 +6654,6 @@ export type DashboardReindexCommunityTagGroupsMutation = {
   reindexCommunityTagGroups: { done: boolean | null } | null
 }
 
-export type DocCoverMarkerFieldsFragment = {
-  type: MarkerType
-  provider: string | null
-  name: string | null
-  src: string | null
-  unified: string | null
-  appearance: {
-    light: { color: string | null; bg: string | null }
-    dark: { color: string | null; bg: string | null }
-  } | null
-}
-
-export type DocCoverItemFieldsFragment = {
-  id: string
-  nodeId: string
-  docId: string | null
-  index: number
-  type: DocTreeNodeType
-  title: string
-  href: string
-  badge: string | null
-  leafCount: number | null
-  marker: {
-    type: MarkerType
-    provider: string | null
-    name: string | null
-    src: string | null
-    unified: string | null
-    appearance: {
-      light: { color: string | null; bg: string | null }
-      dark: { color: string | null; bg: string | null }
-    } | null
-  } | null
-}
-
-export type DocCoverQueryVariables = Exact<{
-  community: string
-  view?: DocCoverView | null | undefined
-}>
-
-export type DocCoverQuery = {
-  docCover: {
-    cards: Array<{
-      id: string
-      groupNodeId: string
-      index: number
-      appearance: unknown
-      title: string
-      items: Array<{
-        id: string
-        nodeId: string
-        docId: string | null
-        index: number
-        type: DocTreeNodeType
-        title: string
-        href: string
-        badge: string | null
-        leafCount: number | null
-        marker: {
-          type: MarkerType
-          provider: string | null
-          name: string | null
-          src: string | null
-          unified: string | null
-          appearance: {
-            light: { color: string | null; bg: string | null }
-            dark: { color: string | null; bg: string | null }
-          } | null
-        } | null
-      }>
-    }>
-    pinnedDocs: Array<{
-      nodeId: string
-      index: number
-      appearance: unknown
-      href: string
-      doc: {
-        title: string | null
-        author: { avatar: string | null; nickname: string | null } | null
-        document: { thumbnail: unknown } | null
-      }
-    }>
-  } | null
-}
-
 export type KanbanAuthorFieldsFragment = {
   login: string | null
   nickname: string | null
@@ -8804,6 +8804,137 @@ export const CommentPageFieldsFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<CommentPageFieldsFragment, unknown>
+export const DocCoverMarkerFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appearance' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'light' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dark' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DocCoverMarkerFieldsFragment, unknown>
+export const DocCoverItemFieldsFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'DocCoverItemFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverCardItem' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'index' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'href' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'leafCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marker' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'DocCoverMarkerFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appearance' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'light' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dark' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DocCoverItemFieldsFragment, unknown>
 export const DashboardWallpaperFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -9606,137 +9737,6 @@ export const DashboardTrashedArticlesPageInfoFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<DashboardTrashedArticlesPageInfoFragment, unknown>
-export const DocCoverMarkerFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'appearance' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'light' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'dark' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DocCoverMarkerFieldsFragment, unknown>
-export const DocCoverItemFieldsFragmentDoc = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'DocCoverItemFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverCardItem' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'index' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'href' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'leafCount' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'marker' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'DocCoverMarkerFields' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'appearance' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'light' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'dark' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DocCoverItemFieldsFragment, unknown>
 export const KanbanAuthorFieldsFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -18229,6 +18229,204 @@ export const CoverSimpleQueryDocument = {
     },
   ],
 } as unknown as DocumentNode<CoverSimpleQueryQuery, CoverSimpleQueryQueryVariables>
+export const DocCoverDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'DocCover' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'view' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverView' } },
+          defaultValue: { kind: 'EnumValue', value: 'PUBLIC' },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'docCover' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'community' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'view' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'view' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'cards' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'groupNodeId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'index' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'appearance' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'items' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'DocCoverItemFields' },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'pinnedDocs' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'index' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'appearance' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'href' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'doc' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'author' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'document' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'thumbnail' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'appearance' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'light' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'dark' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'DocCoverItemFields' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverCardItem' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'index' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'href' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'leafCount' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'marker' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'DocCoverMarkerFields' } },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<DocCoverQuery, DocCoverQueryVariables>
 export const AnalysisActiveVisitorsDocument = {
   kind: 'Document',
   definitions: [
@@ -26363,204 +26561,6 @@ export const DashboardReindexCommunityTagGroupsDocument = {
   DashboardReindexCommunityTagGroupsMutation,
   DashboardReindexCommunityTagGroupsMutationVariables
 >
-export const DocCoverDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'DocCover' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'view' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverView' } },
-          defaultValue: { kind: 'EnumValue', value: 'PUBLIC' },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'docCover' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'view' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'view' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'cards' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'groupNodeId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'index' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'appearance' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'items' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            {
-                              kind: 'FragmentSpread',
-                              name: { kind: 'Name', value: 'DocCoverItemFields' },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'pinnedDocs' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'index' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'appearance' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'href' } },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'doc' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'author' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                                  { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                                ],
-                              },
-                            },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'document' },
-                              selectionSet: {
-                                kind: 'SelectionSet',
-                                selections: [
-                                  { kind: 'Field', name: { kind: 'Name', value: 'thumbnail' } },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'DocCoverMarkerFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Marker' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'provider' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'src' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'unified' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'appearance' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'light' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'dark' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'color' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'bg' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'DocCoverItemFields' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'DocCoverCardItem' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'nodeId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'index' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'type' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'href' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'badge' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'leafCount' } },
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'marker' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'FragmentSpread', name: { kind: 'Name', value: 'DocCoverMarkerFields' } },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DocCoverQuery, DocCoverQueryVariables>
 export const GroupedKanbanPostsDocument = {
   kind: 'Document',
   definitions: [
