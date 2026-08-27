@@ -2,7 +2,41 @@ import { useEffect, useRef, useState } from 'react'
 
 import { invalidateAuthState, refreshSession, requestLogin } from '~/auth'
 
-import { authRouteRecoveryKey } from '../utils/auth-route-recovery'
+import {
+  hasAuthRouteRecoveryAttempt,
+  markAuthRouteRecoveryAttempt,
+} from '../utils/auth-route-recovery'
+
+type TRecoveryAttempt = {
+  clearStateOnLogin: boolean
+  loginRequested: boolean
+  promise: Promise<boolean>
+  reloadRequested: boolean
+}
+
+let activeRecovery: TRecoveryAttempt | null = null
+const startRecovery = (shouldRefresh: boolean): TRecoveryAttempt => {
+  if (activeRecovery) return activeRecovery
+
+  const attempt = {
+    clearStateOnLogin: shouldRefresh,
+    loginRequested: false,
+    promise: Promise.resolve(false),
+    reloadRequested: false,
+  } satisfies TRecoveryAttempt
+
+  attempt.promise = (
+    shouldRefresh
+      ? refreshSession()
+          .then(() => true)
+          .catch(() => false)
+      : Promise.resolve(false)
+  ).finally(() => {
+    if (activeRecovery === attempt) activeRecovery = null
+  })
+  activeRecovery = attempt
+  return attempt
+}
 
 export default function AuthRouteRecovery() {
   const attempted = useRef(false)
@@ -13,32 +47,25 @@ export default function AuthRouteRecovery() {
     attempted.current = true
 
     let active = true
-    const recoveryKey = authRouteRecoveryKey(window.location.href)
-    const fail = (clearState: boolean) => {
-      if (clearState) {
-        invalidateAuthState()
-      }
-      requestLogin({ returnTo: window.location.href })
-      if (active) setFailed(true)
-    }
+    const href = window.location.href
+    const shouldRefresh = !hasAuthRouteRecoveryAttempt(href)
+    if (shouldRefresh) markAuthRouteRecoveryAttempt(href)
+    const attempt = startRecovery(shouldRefresh)
 
-    if (sessionStorage.getItem(recoveryKey) === 'attempted') {
-      fail(false)
-      return
-    }
-    sessionStorage.setItem(recoveryKey, 'attempted')
-
-    void (async () => {
-      try {
-        await refreshSession()
-      } catch {
-        fail(true)
+    void attempt.promise.then((recovered) => {
+      if (recovered) {
+        if (attempt.reloadRequested) return
+        attempt.reloadRequested = true
+        window.location.reload()
         return
       }
 
-      sessionStorage.removeItem(recoveryKey)
-      window.location.reload()
-    })()
+      if (attempt.loginRequested) return
+      attempt.loginRequested = true
+      if (attempt.clearStateOnLogin) invalidateAuthState()
+      requestLogin({ returnTo: href })
+      if (active) setFailed(true)
+    })
 
     return () => {
       active = false

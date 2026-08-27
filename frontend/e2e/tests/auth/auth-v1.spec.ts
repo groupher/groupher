@@ -231,6 +231,41 @@ test.describe('Auth V1 browser protocol', () => {
     expect((await readState(request)).stats.refreshCalls).toBe(1)
   })
 
+  test('P0 stops a repeated SSR recovery after one reload attempt', async ({
+    context,
+    page,
+    request,
+  }) => {
+    await testLogin(page)
+
+    const href = `${DASH_ORIGIN}/home/overview`
+    const refreshRequests: string[] = []
+    page.on('request', (req) => {
+      if (req.url() === `${AUTH_ORIGIN}/api/auth/token/refresh`) refreshRequests.push(req.url())
+    })
+    await page.route(`${AUTH_ORIGIN}/api/auth/token/refresh`, (route) =>
+      route.fulfill({ status: 204 }),
+    )
+    await clearAccessCookie(context)
+
+    await page.goto(href)
+
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            Boolean(
+              (window as Window & { __groupherAuthLoginRequest?: unknown })
+                .__groupherAuthLoginRequest,
+            ),
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe(true)
+    expect(refreshRequests).toHaveLength(1)
+    expect((await readState(request)).stats.refreshCalls).toBe(0)
+  })
+
   test('P0 keeps the account visible after callback cookies reach the application', async ({
     context,
     page,

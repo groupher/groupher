@@ -9,7 +9,7 @@ import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 import CommunityDigest from '~/unit/CommunityDigest/DsbLayout'
 import { SideMenu } from '~/unit/DsbThread'
 
-import { authRouteRecoveryKey } from '../utils/auth-route-recovery'
+import { clearAuthRouteRecoveryAttempt } from '../utils/auth-route-recovery'
 
 type TProps = {
   children: ReactNode
@@ -18,7 +18,7 @@ type TProps = {
 
 export default function DsbShell({ children, shell }: TProps) {
   useEffect(() => {
-    sessionStorage.removeItem(authRouteRecoveryKey(window.location.href))
+    clearAuthRouteRecoveryAttempt(window.location.href)
   }, [])
 
   return (
