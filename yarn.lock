@@ -3374,7 +3374,9 @@ __metadata:
   resolution: "@groupher/frontend-dash@workspace:frontend/dash"
   dependencies:
     "@cloudflare/vite-plugin": "npm:^1.50.0"
+    "@groupher/contracts": "npm:1.0.0"
     "@groupher/frontend-core": "npm:1.0.0"
+    "@groupher/service": "npm:1.0.0"
     "@tailwindcss/vite": "npm:4.3.3"
     "@tanstack/query-core": "npm:5.101.4"
     "@tanstack/react-query": "npm:^5.101.4"
