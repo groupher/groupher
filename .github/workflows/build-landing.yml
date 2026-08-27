@@ -1,12 +1,6 @@
 name: Build frontend landing
 
 on:
-  push:
-    paths:
-      - 'frontend/landing/**' # only trigger when this dir changes
-      - 'frontend/core/**'
-      - 'package.json'
-      - 'yarn.lock'
   pull_request:
     paths:
       - 'frontend/landing/**'
@@ -23,14 +17,14 @@ jobs:
       - name: Checkout codebase
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           repository: 'groupher/groupher'
           path: './'
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.13.0'
+          node-version: '24'
 
       - name: Install Yarn Dependencies
         run: |
