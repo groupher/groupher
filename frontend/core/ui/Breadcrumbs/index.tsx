@@ -29,7 +29,7 @@ const BreadCrumb: FC<Props> = ({ items, separator = '/', ...spacing }) => {
             <li key={item?.key || item.path} className={s.li}>
               <span className={cn(s.itemGroup, isFirst && s.hoverShift)}>
                 {clickable ? (
-                  <Link href={item.path} className={cn(s.item, s.itemHover)}>
+                  <Link navigation='router' href={item.path} className={cn(s.item, s.itemHover)}>
                     {t(item.title)}
                   </Link>
                 ) : (

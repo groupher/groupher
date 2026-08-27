@@ -9,13 +9,13 @@ Dashboard application.
 ```text
 Admin -> Gateway -> Dash/TanStack Start
                        |
-                       +-> Core RouteScopeProvider
+                       +-> Core TanStack Router navigation
                        +-> Auth Session contract
                        +-> Phoenix GraphQL
                        +-> Content Import server proxy
 ```
 
-Dash owns its native file routes, SSR loaders, request-scoped provider setup,
+Dash owns its native file routes, SSR loaders, request-scoped setup,
 document shell, and Cloudflare deployment adapter. Product widgets, stores, and
 GraphQL contracts remain in Core when they are genuinely framework-neutral.
 

@@ -56,7 +56,7 @@ const NoticeBar: FC<TProps> = ({
         </div>
       )}
       {explainLink && (
-        <Link href={explainLink} prefetch={false} className={s.questionLink}>
+        <Link href={explainLink} navigation='document' className={s.questionLink}>
           <QuestionSVG className={s.questionIcon} />
         </Link>
       )}

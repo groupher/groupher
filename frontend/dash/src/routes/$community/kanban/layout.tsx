@@ -1,7 +1,7 @@
 import Layout from '@dash/components/layouts/kanban.layout'
 import { createFileRoute } from '@tanstack/react-router'
 
-import KanbanLayout from '~/unit/DashboardThread/Appearance/KanbanLayout'
+import KanbanLayout from '~/unit/DsbThread/Appearance/KanbanLayout'
 
 export const Route = createFileRoute('/$community/kanban/layout')({
   component: KanbanLayoutPage,

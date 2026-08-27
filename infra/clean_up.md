@@ -115,6 +115,23 @@ helpers 应保留，并移动到不带 Next runtime 语义的边界。
 完成后 Core 不直接依赖 Next.js 或 TanStack Router runtime；产品路由语义继续保留为纯
 route target/resolver，runtime hooks 由具体 TanStack host 提供。
 
+### Dsb 配置收敛
+
+Community、Dash 和 Landing 使用同一套 Dsb 配置模型。`stores/dsb` 是布局、颜色、别名和
+metric 的唯一前端状态源，`useMetric`、`useLayout`、`useTwBelt` 等共享 hooks 直接读取
+Dsb store，不再通过 `ShellStyleContext` 复制一份相同数据：
+
+- Community 使用后端返回的 `dashboard` 配置初始化 `DsbStoreProvider`；
+- Dash 使用相同配置初始化 `DsbStoreProvider`，并在同一 store 上编辑；
+- Landing 不请求 dashboard 配置，只使用 Dsb store 的默认字段并覆盖 `metric: landing`；
+- `ShellStyleProvider`、`DashboardShellStyleProvider`、`FooterLinksProvider` 及其独立 context
+  已删除；布局、样式和 footer links 都直接来自 Dsb store；
+- 内部 store、hook 和 Dashboard UI 单元统一使用 `Dsb` 命名；GraphQL/HTTP 中的
+  `dashboard` 字段和 `TParseDashboard` 等外部数据契约保持不变。
+
+本轮不拆分 Dsb 配置状态与 Dsb editor/demo runtime；这仍由同一个 `DsbStoreProvider`
+承载，后续如需拆分应单独设计和验证，不能作为本轮清理的隐含前置条件。
+
 ## 4. PlatformProvider 收敛
 
 所有正式前端统一到 TanStack 后，当前 `PlatformProvider` 不再需要承担 Next/TanStack
@@ -396,6 +413,9 @@ Inspire Me 已移入 `frontend` 并完成 TanStack Start 改写，本轮不保�
 - `yarn why next` 无真实 Next.js package 依赖；
 - 存活 workspace、CI、`.gitignore` 和 `.dockerignore` 不再包含 `.next` 产物约定；
 - Core 不直接导入 Next runtime；
+- Core 不再包含 `ShellStyleContext`、`stores/shellStyle` 或独立 FooterLinks context，共享样式
+  与 footer hooks 直接读取 Dsb store；
+- Community、Dash 和 Landing 均由 `DsbStoreProvider` 提供布局配置；
 - Dash `/api/docs/import/*` 能以用户委托和 `service:dash` 身份访问 Content Import；
 - Content Import 只以 `service:content-import`、`phoenix:content-import-api` 写入 BodyBag；
 - Phoenix runtime 和 BodyBag Trust 不再包含 `phoenix:dashboard-api`；

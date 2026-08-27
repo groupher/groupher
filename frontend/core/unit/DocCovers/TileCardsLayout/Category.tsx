@@ -43,7 +43,7 @@ const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
       </div>
       <div className={s.items}>
         {items.map((item) => (
-          <Link key={item.id} href={item.href} className={s.item}>
+          <Link key={item.id} href={item.href} navigation='router' className={s.item}>
             {item.title}
           </Link>
         ))}

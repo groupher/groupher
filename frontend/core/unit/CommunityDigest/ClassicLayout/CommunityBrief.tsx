@@ -9,7 +9,7 @@ import PlusSVG from '~/icons/PlusCircle'
 import GlobalSVG from '~/icons/social/Global'
 import { Link } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import Tooltip from '~/ui/Tooltip'
 import CommunityBrand from '~/unit/CommunityBrand'
 
@@ -20,7 +20,7 @@ export default function CommunityBrief() {
 
   const disableTippyJumpRef = useRef(false)
   const { slug } = useCommunity()
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
 
   const [ref, isHovering] = useHover<HTMLDivElement>()
 
@@ -38,7 +38,11 @@ export default function CommunityBrief() {
             <CommunityBrand />
           </div>
 
-          <Link className={cn(s.menuItem, 'hover:no-underline')} href={`/${slug}`}>
+          <Link
+            navigation='router'
+            className={cn(s.menuItem, 'hover:no-underline')}
+            href={`/${slug}`}
+          >
             <div className={s.menuIconBox}>
               <DiscussSVG className={s.menuIcon} />
             </div>
@@ -46,7 +50,7 @@ export default function CommunityBrief() {
             <div className={s.menuTitle}>社区主页</div>
           </Link>
 
-          <Link className={s.menuItem} href={dsb$.homepage}>
+          <Link navigation='document' className={s.menuItem} href={dsb$.homepage}>
             <div className={s.menuIconBox}>
               <GlobalSVG className={s.menuIcon} />
             </div>
@@ -54,7 +58,7 @@ export default function CommunityBrief() {
             <ArrowSVG className={s.linkArrow} />
           </Link>
 
-          <Link className={s.menuItem} href={`/${slug}`}>
+          <Link navigation='router' className={s.menuItem} href={`/${slug}`}>
             <div className={s.menuIconBox}>
               <GithubSVG className={cn(s.menuIcon, 'size-3')} />
             </div>
@@ -63,7 +67,7 @@ export default function CommunityBrief() {
           </Link>
 
           <div className={s.divider} />
-          <Link className={s.menuItem} href='/apply'>
+          <Link navigation='document' className={s.menuItem} href='/apply'>
             <div className={s.menuIconBox}>
               <PlusSVG className={s.menuIcon} />
             </div>

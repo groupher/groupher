@@ -6,11 +6,9 @@ import type { TCommunity, TLocale, TMetric } from '~/spec'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import type { TInit as TArticleListInit } from '~/stores/articleList/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
-import DashboardStoreProvider from '~/stores/dashboard/provider'
-import type { TInit as TDashboardInit } from '~/stores/dashboard/spec'
-import DsbFooterLinksProvider from '~/stores/footerLinks/dsb-provider'
+import DsbStoreProvider from '~/stores/dsb/provider'
+import type { TInit as TDsbInit } from '~/stores/dsb/spec'
 import LocaleStoreProvider from '~/stores/locale/provider'
-import DashboardShellStyleProvider from '~/stores/shellStyle/dashboard-provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
@@ -21,7 +19,7 @@ export type TWrapperOpts = {
   locale?: TLocale
   localeData?: string
   community?: Partial<Omit<TCommunity, 'slug'>> & { slug?: string }
-  dashboard?: Partial<Omit<TDashboardInit, 'metric'>>
+  dashboard?: Partial<Omit<TDsbInit, 'metric'>>
   wallpaper?: TWallpaperInit
   articleList?: boolean
   articleListInit?: TArticleListInit
@@ -49,7 +47,7 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
     threads,
   }
 
-  const initDashboard: TDashboardInit = {
+  const initDashboard: TDsbInit = {
     metric,
     ...dashboard,
   }
@@ -59,15 +57,11 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
       <ThemeStoreProvider>
         <LocaleStoreProvider initData={{ locale, localeData }}>
           <CommunityStoreProvider initData={initCommunity}>
-            <DashboardStoreProvider initData={initDashboard}>
-              <DashboardShellStyleProvider>
-                <DsbFooterLinksProvider>
-                  <ThemePresetStoreProvider initData={initDashboard}>
-                    <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
-                  </ThemePresetStoreProvider>
-                </DsbFooterLinksProvider>
-              </DashboardShellStyleProvider>
-            </DashboardStoreProvider>
+            <DsbStoreProvider initData={initDashboard}>
+              <ThemePresetStoreProvider initData={initDashboard}>
+                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+              </ThemePresetStoreProvider>
+            </DsbStoreProvider>
           </CommunityStoreProvider>
         </LocaleStoreProvider>
       </ThemeStoreProvider>

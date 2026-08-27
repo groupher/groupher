@@ -1,8 +1,8 @@
 'use client'
 
+import { useLocation } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
-import { usePathname } from '~/platform'
 import type { TThreadPath } from '~/spec'
 
 type TRouteMatch = {
@@ -26,7 +26,7 @@ export default function usePreviewItemActive(
   innerId: string | number,
   thread: TThreadPath,
 ): boolean {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
 
   return useMemo(() => {
     const routeMatch = getRouteMatch(pathname)

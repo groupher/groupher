@@ -1,7 +1,7 @@
 import Layout from '@dash/components/layouts/doc.import'
 import { createFileRoute } from '@tanstack/react-router'
 
-import DocsImport from '~/unit/DashboardThread/CMS/Docs/Import'
+import DocsImport from '~/unit/DsbThread/CMS/Docs/Import'
 
 export const Route = createFileRoute('/$community/doc/import')({
   component: DocImportPage,

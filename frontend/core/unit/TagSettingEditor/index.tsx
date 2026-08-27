@@ -146,7 +146,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
         <div className={s.title}>{t('dsb.tags.editor.layout')}</div>
         <div className={s.desc}>
           {t('dsb.tags.editor.layout.desc_prefix')}
-          <Link route={dsbRoutes.appearance({ community })} className={s.navi}>
+          <Link route={dsbRoutes.appearance({ community })} navigation='router' className={s.navi}>
             {t('dsb.tags.editor.layout.link')}
           </Link>
           {t('dsb.tags.editor.layout.desc_suffix')}

@@ -1,7 +1,9 @@
 'use client'
 
+import { useLocation } from '@tanstack/react-router'
+
 import { DSB_ROUTE } from '~/const/route'
-import { parseDsbPathname, useRouteScope } from '~/platform'
+import { parseDsbPathname } from '~/platform'
 
 export type TDsbTabState = {
   mainTab: string
@@ -10,8 +12,8 @@ export type TDsbTabState = {
 
 /** Exposes dsb tab state and actions through the shared React hook boundary. */
 export default function useDsbTab(): TDsbTabState {
-  const { navi } = useRouteScope()
-  const meta = parseDsbPathname(navi.location.pathname, navi.dsbRootSegment ?? 'dash')
+  const { pathname } = useLocation()
+  const meta = parseDsbPathname(pathname)
   const segments = meta ? meta.segments : []
 
   if (!meta) {

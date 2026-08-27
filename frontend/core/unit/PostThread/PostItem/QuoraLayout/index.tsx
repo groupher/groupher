@@ -2,9 +2,9 @@ import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import { Link } from '~/platform'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
 import useSalon from '../salon/quora_layout'
 import Footer from './Footer'
@@ -22,14 +22,13 @@ const PostItem: FC<TProps> = ({ article }) => {
   return (
     <article className={s.wrapper}>
       <Header article={article} />
-      <Link
+      <CommunityPreviewLink
         className={s.digest}
         href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
-        scroll={false}
         previewId={article.innerId}
       >
         {article.digest}
-      </Link>
+      </CommunityPreviewLink>
       <Footer article={article} />
     </article>
   )

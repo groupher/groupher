@@ -6,7 +6,6 @@ import { ANCHOR } from '~/const/dom'
 import TYPE from '~/const/type'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import usePageLock from '~/hooks/usePageLock'
-import { useRouter } from '~/platform'
 import useSalon, { cn } from '~/ui/Drawer/salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/ui/Drawer/salon/constant'
 import Portal from '~/ui/Portal'
@@ -24,8 +23,6 @@ export default function Drawer({
   resetKey,
   dismissible = true,
 }: TProps) {
-  const { back } = useRouter()
-
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
@@ -81,8 +78,8 @@ export default function Drawer({
     didCloseRef.current = true
 
     unlockPageOnce()
-    back()
-  }, [back, unlockPageOnce])
+    window.history.back()
+  }, [unlockPageOnce])
 
   const requestClose = useCallback(() => {
     if (closing) return

@@ -52,7 +52,7 @@ const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
         <div className={s.items}>
           {items.slice(0, sliceCount).map((item) => (
             <div className={s.item} key={item.id}>
-              <Link href={item.href} className={s.itemTitle}>
+              <Link href={item.href} navigation='router' className={s.itemTitle}>
                 {item.title}
               </Link>
             </div>

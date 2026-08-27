@@ -1,6 +1,6 @@
+import { useLocation } from '@tanstack/react-router'
 import type { FC } from 'react'
 
-import { usePathname } from '~/platform'
 import type { TDoc, TDocPublicTree, TDocPublicTreeGroup } from '~/spec'
 
 import { findCurrentGroup } from '../helper'
@@ -12,7 +12,7 @@ type TProps = {
 }
 
 const Group: FC<TProps> = ({ doc, tree }) => {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const s = useSalon()
 
   const nodes = tree.tabs.flatMap((tab) => tab.groups)

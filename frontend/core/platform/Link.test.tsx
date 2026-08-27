@@ -1,48 +1,69 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 
-import { RouteScopeProvider, type TRouteScope } from './context'
 import Link from './Link'
 
-const createScope = (): TRouteScope => ({
-  navi: {
-    dsbRootSegment: 'dash',
-    location: {
-      pathname: '/home/post',
-      search: '?mode=default',
-      searchParams: new URLSearchParams('?mode=default'),
-    },
-    to: vi.fn(),
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-    prefetch: vi.fn(async () => {}),
-    isActive: vi.fn(() => false),
-  },
-})
-
 describe('Link', () => {
-  it('renders a semantic href and delegates internal navigation to the route scope', () => {
-    const scope = createScope()
-    const route = { app: 'community' as const, community: 'home', path: 'post/42' }
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/home')
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+  })
 
+  it('renders a semantic href for router navigation', () => {
     render(
-      <RouteScopeProvider value={scope}>
-        <Link route={route} previewId={42}>
-          Open post
-        </Link>
-      </RouteScopeProvider>,
+      <Link href='/home/post/42' navigation='router'>
+        Open post
+      </Link>,
     )
 
     const link = screen.getByRole('link', { name: 'Open post' })
     expect(link).toHaveAttribute('href', '/home/post/42')
+  })
+
+  it('renders document navigation as a native link', () => {
+    render(
+      <Link href='https://example.com' navigation='document'>
+        External
+      </Link>,
+    )
+
+    expect(screen.getByRole('link', { name: 'External' })).toHaveAttribute(
+      'href',
+      'https://example.com',
+    )
+  })
+
+  it.each([
+    ['omitted', undefined, true],
+    ['true', true, true],
+    ['false', false, false],
+  ])('maps scroll=%s to router resetScroll', (_label, scroll, shouldReset) => {
+    render(
+      <Link href='/home/post/42' navigation='router' scroll={scroll}>
+        Open post
+      </Link>,
+    )
+
+    fireEvent.click(screen.getByRole('link', { name: 'Open post' }))
+
+    if (shouldReset) expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
+    else expect(window.scrollTo).not.toHaveBeenCalled()
+  })
+
+  it('uses a private route for router navigation while exposing the canonical mask', () => {
+    render(
+      <Link
+        href='/home/post/42'
+        navigation='router'
+        mask={{ to: '/home/post/previewer/42', visibleHref: '/home/post/42' }}
+        scroll={false}
+      >
+        Open preview
+      </Link>,
+    )
+
+    const link = screen.getByRole('link', { name: 'Open preview' })
+    expect(link).toHaveAttribute('href', '/home/post/42')
     fireEvent.click(link)
-    expect(scope.navi.to).toHaveBeenCalledWith(route, {
-      preserveSearch: undefined,
-      previewId: 42,
-      replace: undefined,
-      scroll: undefined,
-    })
+    expect(window.location.pathname).toBe('/home/post/previewer/42')
   })
 })

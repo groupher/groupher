@@ -16,7 +16,6 @@ import { prePaintInitTime, prePaintThemeDetectScript } from '~/utils/ssr/script'
 import '../domain.css'
 import '../../../core/tailwind/global.css'
 import NotFound from '../NotFound'
-import TanStackRouteScopeProvider from '../platform/TanStackRouteScopeProvider'
 import Main from '../widgets/Main'
 
 export const Route = createRootRoute({
@@ -52,22 +51,20 @@ function RootComponent() {
 
   return (
     <>
-      <TanStackRouteScopeProvider>
-        {import.meta.env.DEV ? (
-          <DevHubReporter serviceId='landing' endpoint={import.meta.env.VITE_DEV_HUB_URL} />
-        ) : null}
-        <StaticShellProvider
-          community={LANDING_INIT_DATA.community}
-          footerLinks={LANDING_INIT_DATA.footerLinks}
-          wallpaper={LANDING_INIT_DATA.wallpaper}
-          locale={LOCALE.EN}
-          localeData={JSON.stringify(localeData)}
-        >
-          <StaticLayout mainBlock={Main}>
-            <Outlet />
-          </StaticLayout>
-        </StaticShellProvider>
-      </TanStackRouteScopeProvider>
+      {import.meta.env.DEV ? (
+        <DevHubReporter serviceId='landing' endpoint={import.meta.env.VITE_DEV_HUB_URL} />
+      ) : null}
+      <StaticShellProvider
+        community={LANDING_INIT_DATA.community}
+        footerLinks={LANDING_INIT_DATA.footerLinks}
+        wallpaper={LANDING_INIT_DATA.wallpaper}
+        locale={LOCALE.EN}
+        localeData={JSON.stringify(localeData)}
+      >
+        <StaticLayout mainBlock={Main}>
+          <Outlet />
+        </StaticLayout>
+      </StaticShellProvider>
       <Analytics />
       <SpeedInsights />
     </>

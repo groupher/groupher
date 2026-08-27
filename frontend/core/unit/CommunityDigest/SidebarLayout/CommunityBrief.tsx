@@ -7,7 +7,6 @@ import useViewingThread from '~/hooks/useViewingThread'
 import LinkSVG from '~/icons/Link'
 import Img from '~/Img'
 import { Link } from '~/platform'
-import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import ArrowButton from '~/ui/Buttons/ArrowButton'
 import ImgFallback from '~/ui/ImgFallback'
@@ -17,7 +16,7 @@ import useSalon from '../salon/sidebar_layout/community_brief'
 export default function CommunityBrief() {
   const s = useSalon()
 
-  const { push } = useRouter()
+  const navigate = useNavigate()
   const { logo, slug, title, desc, dashboard } = useCommunity()
   const activeThread = useViewingThread()
   const { communityLayout, brandLayout } = useLayout()
@@ -36,7 +35,12 @@ export default function CommunityBrief() {
       <div className={s.desc}>{desc}</div>
 
       {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
-        <ArrowButton top={12} left={-2} leftLayout onClick={() => push(`/${slug}`)}>
+        <ArrowButton
+          top={12}
+          left={-2}
+          leftLayout
+          onClick={() => void navigate({ to: `/${slug}` as never })}
+        >
           返回社区
         </ArrowButton>
       )}
@@ -46,7 +50,7 @@ export default function CommunityBrief() {
           <div className={s.linkIconBox}>
             <LinkSVG className={s.linkIcon} />
           </div>
-          <Link href={baseInfo.homepage} className={s.link}>
+          <Link href={baseInfo.homepage} navigation='document' className={s.link}>
             {prettyURL(baseInfo.homepage)}
           </Link>
         </div>
@@ -54,3 +58,4 @@ export default function CommunityBrief() {
     </div>
   )
 }
+import { useNavigate } from '@tanstack/react-router'

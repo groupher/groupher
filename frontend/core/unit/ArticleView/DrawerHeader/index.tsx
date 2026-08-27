@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react'
 
 import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
-import { useRouter } from '~/platform'
 import ArticleSettingMenu from '~/unit/ArticleSettingMenu'
 
 import ArticleNavi from './ArticleNavi'
@@ -12,11 +11,10 @@ const Share = lazy(() => import('~/unit/Share'))
 
 export default function DrawerHeader() {
   const s = useSalon()
-  const { back } = useRouter()
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.backBtn} onClick={() => back()}>
+      <button type='button' className={s.backBtn} onClick={() => window.history.back()}>
         <ArrowSVG className={s.icon} />
       </button>
       <div className='ml-1' />

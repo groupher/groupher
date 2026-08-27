@@ -6,7 +6,7 @@
 浏览器请求
   -> Community TanStack route tree
   -> request-local QueryClient / SSR integration
-  -> Community boundary + RouteScopeProvider
+  -> frontend/core reader UI with TanStack Router navigation
   -> frontend/core 公共 reader UI
 ```
 

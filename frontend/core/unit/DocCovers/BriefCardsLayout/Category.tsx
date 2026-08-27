@@ -49,7 +49,7 @@ const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
               />
             </span>
 
-            <Link href={item.href} className={s.itemTitle}>
+            <Link href={item.href} navigation='router' className={s.itemTitle}>
               {item.title}
               {item.type === 'group' ? ` (${item.leafCount})` : ''}
             </Link>

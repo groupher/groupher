@@ -1,9 +1,9 @@
 import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
-import { Link } from '~/platform'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
 import ArticleReadLabel from '../../ArticleReadLabel'
 import useSalon from '../salon/cover_layout/header'
@@ -21,14 +21,13 @@ const Header: FC<TProps> = ({ article }) => {
     <div className={s.wrapper}>
       <div className={s.main}>
         <ArticleReadLabel viewed={article.viewerHasViewed} />
-        <Link
+        <CommunityPreviewLink
           className={s.title}
           href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
-          scroll={false}
           previewId={article.innerId}
         >
           {title}
-        </Link>
+        </CommunityPreviewLink>
       </div>
     </div>
   )

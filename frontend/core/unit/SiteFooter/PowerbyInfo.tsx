@@ -13,7 +13,7 @@ export default function PowerbyInfo() {
       {metric !== METRIC.LANDING && (
         <div className={s.note}>
           由
-          <Link className={s.link} href='/'>
+          <Link className={s.link} href='/' navigation='document'>
             Groupher
           </Link>
           提供服务

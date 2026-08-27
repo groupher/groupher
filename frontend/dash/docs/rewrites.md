@@ -2,6 +2,8 @@
 
 > Historical migration record. References to the retired Next.js Main/Dashboard applications and
 > their `_next` routes describe the pre-cleanup comparison target, not the current architecture.
+> The RouteScope passages below are superseded by `infra/clean_up_v2.md`; they are retained only as
+> historical evidence of the migration.
 
 ## Theme First Paint Script
 

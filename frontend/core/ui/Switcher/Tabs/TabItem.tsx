@@ -76,7 +76,13 @@ const TabItem: FC<TTabItemProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className={s.wrapper} data-tab-item='true' onClick={handleLabelClick}>
+      <Link
+        href={href}
+        navigation='router'
+        className={s.wrapper}
+        data-tab-item='true'
+        onClick={handleLabelClick}
+      >
         {Label}
       </Link>
     )

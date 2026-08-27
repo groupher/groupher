@@ -6,9 +6,9 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
-import StorageUsageRing from '~/unit/DashboardThread/AssetsHub/StorageUsageRing'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import StorageUsageRing from '~/unit/DsbThread/AssetsHub/StorageUsageRing'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
 
 const seg = DSB_ROUTE.ASSETS
 const CRUMB_CONFIG = {

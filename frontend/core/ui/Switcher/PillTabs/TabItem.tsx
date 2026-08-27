@@ -3,7 +3,6 @@
 import { cloneElement, isValidElement, type FC, type ReactElement, type SVGProps } from 'react'
 
 import { cnMerge } from '~/css'
-import { Image as NextImage } from '~/platform'
 
 import useSalon, { cn } from '../salon/pill_tabs/tab_item'
 import type { TPillTabItemProps } from './spec'
@@ -43,12 +42,11 @@ const TabItem: FC<TPillTabItemProps> = ({
     >
       <span className={s.iconSlot} aria-hidden='true'>
         {item.icon ? (
-          <NextImage
+          <img
             src={item.icon}
             alt=''
             width={14}
             height={14}
-            unoptimized
             draggable={false}
             className={s.iconImageClassName}
           />

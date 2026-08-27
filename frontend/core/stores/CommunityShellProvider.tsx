@@ -7,10 +7,8 @@ import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import CommunityStoreProvider from '~/stores/community/provider'
-import DashboardStoreProvider from '~/stores/dashboard/provider'
-import DsbFooterLinksProvider from '~/stores/footerLinks/dsb-provider'
+import DsbStoreProvider from '~/stores/dsb/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
-import DashboardShellStyleProvider from '~/stores/shellStyle/dashboard-provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
@@ -55,17 +53,11 @@ export default function CommunityShellProvider({
         <LocaleStoreProvider initData={{ locale, localeData }}>
           <AccountWrapper initData={account} noAccount={noAccount}>
             <CommunityStoreProvider initData={community}>
-              <DashboardStoreProvider initData={{ ...dashboard, metric }}>
-                <DashboardShellStyleProvider>
-                  <DsbFooterLinksProvider>
-                    <ThemePresetStoreProvider initData={dashboard}>
-                      <WallpaperStoreProvider initData={wallpaper}>
-                        {children}
-                      </WallpaperStoreProvider>
-                    </ThemePresetStoreProvider>
-                  </DsbFooterLinksProvider>
-                </DashboardShellStyleProvider>
-              </DashboardStoreProvider>
+              <DsbStoreProvider initData={{ ...dashboard, metric }}>
+                <ThemePresetStoreProvider initData={dashboard}>
+                  <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+                </ThemePresetStoreProvider>
+              </DsbStoreProvider>
             </CommunityStoreProvider>
           </AccountWrapper>
         </LocaleStoreProvider>

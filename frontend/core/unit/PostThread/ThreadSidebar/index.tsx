@@ -48,7 +48,7 @@ export default function ThreadSidebar() {
             <div className={s.desc}>{desc}</div>
             <div className={s.homeLinks}>
               <LinkSVG className={s.linkIcon} />
-              <Link href={homepage} className={s.link}>
+              <Link href={homepage} navigation='document' className={s.link}>
                 {homepage}
               </Link>
               <div className='grow' />

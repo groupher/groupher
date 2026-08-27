@@ -64,7 +64,7 @@ export default function PinnedDocCard({
           </button>
         </div>
       )}
-      <Link className={s.link} href={doc.href}>
+      <Link className={s.link} href={doc.href} navigation='router'>
         <div className={s.header}>
           <h3 className={s.title}>{doc.doc.title}</h3>
           {doc.doc.author?.nickname && <span className={s.author}>{doc.doc.author.nickname}</span>}

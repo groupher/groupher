@@ -6,9 +6,9 @@ import useTrans from '~/hooks/useTrans'
 import ViewSVG from '~/icons/article/Viewed'
 import Button from '~/ui/Buttons/Button'
 import Tabs from '~/ui/Switcher/Tabs'
-import Portal from '~/unit/DashboardThread/Portal'
-import BaseSetting from '~/unit/DashboardThread/Widgets/BaseSetting'
-import useSalon from '~/unit/DashboardThread/Widgets/salon'
+import Portal from '~/unit/DsbThread/Portal'
+import BaseSetting from '~/unit/DsbThread/Widgets/BaseSetting'
+import useSalon from '~/unit/DsbThread/Widgets/salon'
 
 export default function Layout({ children }) {
   const s = useSalon()

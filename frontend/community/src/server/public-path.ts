@@ -3,9 +3,13 @@ const PLATFORM_HOSTS = new Set([
   'www.groupher.com',
   'groupher.localhost',
   'www.groupher.localhost',
+  'community.groupher.localhost',
   'localhost',
   '127.0.0.1',
 ])
+
+export const isPlatformHost = (hostname: string): boolean =>
+  PLATFORM_HOSTS.has(hostname.toLowerCase())
 
 const normalizeSuffix = (suffix: string): string => {
   if (!suffix || suffix === '/') return ''
@@ -32,7 +36,7 @@ export const communityPublicPath = (
               ?.requestContext?.customDomain === true,
         )
   const browserCustomDomain =
-    typeof window !== 'undefined' && !PLATFORM_HOSTS.has(window.location.hostname.toLowerCase())
+    typeof window !== 'undefined' && !isPlatformHost(window.location.hostname)
 
   return customDomain || browserCustomDomain
     ? normalizedSuffix || '/'

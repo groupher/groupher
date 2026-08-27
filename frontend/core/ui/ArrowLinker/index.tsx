@@ -40,7 +40,7 @@ const ArrowLinker: FC<TProps> = ({
   const s = useSalon({ color, noColor, withLiteBg, ...spacing })
 
   return (
-    <Link href={href} target={target} className='inline-block'>
+    <Link href={href} navigation='document' target={target} className='inline-block'>
       <div className={cnMerge(s.wrapper, className)} data-testid={testid}>
         <div className={s.title}>{children}</div>
         <ArrowSVG className={s.arrowIcon} />

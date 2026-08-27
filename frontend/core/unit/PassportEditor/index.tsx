@@ -15,7 +15,7 @@ import Button from '~/ui/Buttons/Button'
 import ImgFallback from '~/ui/ImgFallback'
 import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 import Modal from '~/ui/Modal'
-import AdminUserItem from '~/unit/DashboardThread/Admin/UserItem'
+import AdminUserItem from '~/unit/DsbThread/Admin/UserItem'
 import SocialList from '~/unit/SocialList'
 
 import useSalon from './salon'

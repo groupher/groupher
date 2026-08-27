@@ -1,18 +1,16 @@
 import { filter } from 'ramda'
 import { useMemo } from 'react'
-import { useContext } from 'react'
 
 import type { TNameAlias } from '~/spec'
-import { ShellStyleContext } from '~/stores/shellStyle/context'
+import useDsb from '~/stores/dsb/hooks'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
-  const shellStyle = useContext(ShellStyleContext)
-  if (!shellStyle) throw new Error('useNameAlias must be used within ShellStyleProvider')
+  const { nameAlias } = useDsb()
 
   const alias = {}
   let aliasList = []
 
-  const curAlias = useMemo(() => shellStyle.nameAlias, [shellStyle.nameAlias])
+  const curAlias = useMemo(() => nameAlias, [nameAlias])
 
   if (!group) {
     aliasList = [...curAlias]

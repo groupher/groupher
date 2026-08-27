@@ -10,7 +10,7 @@ import {
   MasonryPreview,
   MinimalPreview,
   ThreeColumnPreview,
-} from '~/unit/DashboardThread/Appearance/PostLayout'
+} from '~/unit/DsbThread/Appearance/PostLayout'
 
 import useSalon from './salon/post_layout'
 

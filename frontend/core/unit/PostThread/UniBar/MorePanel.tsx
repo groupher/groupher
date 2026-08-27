@@ -17,7 +17,7 @@ export default function MorePanel() {
 
   return (
     <div className={s.wrapper}>
-      <Link href={`${DASH_SITE_URL}/${slug}`} className={s.linkable}>
+      <Link href={`${DASH_SITE_URL}/${slug}`} navigation='document' className={s.linkable}>
         <MenuBar>
           <div className={s.iconBox}>
             <SettingSVG className={s.dashboardIcon} />

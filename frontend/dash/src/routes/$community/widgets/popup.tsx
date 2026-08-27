@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import Popup from '~/unit/DashboardThread/Widgets/Popup'
+import Popup from '~/unit/DsbThread/Widgets/Popup'
 
 export const Route = createFileRoute('/$community/widgets/popup')({
   component: WidgetsPopupPage,

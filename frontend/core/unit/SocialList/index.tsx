@@ -36,6 +36,7 @@ const SocialList: FC<TProps> = ({
             className={s.socialBox}
             key={`${socialType}-${social.link}`}
             href={social.link}
+            navigation='document'
             target='_blank'
           >
             <SocialIcon className={s.icon} />

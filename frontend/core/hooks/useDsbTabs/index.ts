@@ -1,6 +1,8 @@
 'use client'
 
-import { dsbRoutes, parseDsbPathname, resolveDsbRoute, useRouteScope } from '~/platform'
+import { useLocation } from '@tanstack/react-router'
+
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute } from '~/platform'
 import type { TTabItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -49,10 +51,9 @@ export default function useDsbTabs(cfg: TDsbTabs): {
   items: TTabItem[]
   activeTab: string
 } {
-  const { navi } = useRouteScope()
+  const { pathname, searchStr } = useLocation()
   const { slug: community } = useCommunity()
-  const rootSegment = navi.dsbRootSegment ?? 'dash'
-  const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
+  const routeMeta = parseDsbPathname(pathname)
   const routeSegments = routeMeta?.segments ?? []
   const basePath = stripSlash(cfg.segment)
   const defaultTab = cfg.items[0]?.slug ?? ''
@@ -69,8 +70,7 @@ export default function useDsbTabs(cfg: TDsbTabs): {
     const target = dsbRoutes.section({ community, section: path, search: {} })
 
     const href = resolveDsbRoute(target, {
-      rootSegment,
-      currentSearch: navi.location.searchParams,
+      currentSearch: new URLSearchParams(searchStr),
       preserveSearch: true,
     })
 

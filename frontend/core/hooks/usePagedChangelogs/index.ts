@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
-import { useSearchParams } from '~/platform'
 import { Q } from '~/query'
 import type { TPagedChangelogs, TResState } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -20,7 +20,7 @@ type TRes = {
 export default function usePagedChangelogs(): TRes {
   const account = useAccount()
   const { slug } = useCommunity()
-  const searchParams = useSearchParams()
+  const searchParams = useURLSearchParams()
   const pagedParams = getPagedArticlesParams(slug, searchParams)
   const query = useQuery(Q.article.changelogs(pagedParams))
   const articleKeys = useMemo(

@@ -9,9 +9,9 @@ import { type FC, memo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
-import { Link } from '~/platform'
 import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import CoverImage from '~/ui/CoverImage'
 import ReadableDate from '~/ui/ReadableDate'
 import CommentsCount from '~/unit/CommentsCount'
@@ -35,15 +35,14 @@ const ClassicLayout: FC<TProps> = ({ article }) => {
     <div className={s.wrapper}>
       <div className={s.main}>
         <CoverImage />
-        <Link
+        <CommunityPreviewLink
           className={s.title}
           href={`/${slug}/${THREAD_PATH.CHANGELOG}/${article.innerId}`}
-          scroll={false}
           previewId={article.innerId}
         >
           {article.title}
           <div className={s.version}>v3.21</div>
-        </Link>
+        </CommunityPreviewLink>
         <div className={s.tags}>
           <SolidTagList tags={demoTags} />
           <div className={s.dateTime}>

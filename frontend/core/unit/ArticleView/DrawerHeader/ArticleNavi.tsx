@@ -1,6 +1,7 @@
+import { useNavigate } from '@tanstack/react-router'
+
 import useNaviArticle from '~/hooks/useNaviArticle'
 import ArrowSVG from '~/icons/ArrowSimple'
-import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import { thread2Path } from '~/utils/thread'
 
@@ -8,7 +9,7 @@ import useSalon, { cn } from './salon/article_navi'
 
 export default function ArticleNavi() {
   const s = useSalon()
-  const { push } = useRouter()
+  const navigate = useNavigate()
   const { slug } = useCommunity()
 
   const articleNavi = useNaviArticle()
@@ -20,12 +21,10 @@ export default function ArticleNavi() {
           type='button'
           className={cn(s.switchBlock, s.upBlock)}
           onClick={() =>
-            push(
-              `/${slug}/${thread2Path(articleNavi.previous.meta.thread)}/${articleNavi.previous.innerId}`,
-              {
-                scroll: false,
-              },
-            )
+            void navigate({
+              to: `/${slug}/${thread2Path(articleNavi.previous.meta.thread)}/${articleNavi.previous.innerId}`,
+              resetScroll: false,
+            } as never)
           }
         >
           <ArrowSVG className={s.upArrow} />
@@ -39,12 +38,10 @@ export default function ArticleNavi() {
           type='button'
           className={cn(s.switchBlock, s.downBlock)}
           onClick={() =>
-            push(
-              `/${slug}/${thread2Path(articleNavi.next.meta.thread)}/${articleNavi.next.innerId}`,
-              {
-                scroll: false,
-              },
-            )
+            void navigate({
+              to: `/${slug}/${thread2Path(articleNavi.next.meta.thread)}/${articleNavi.next.innerId}`,
+              resetScroll: false,
+            } as never)
           }
         >
           <ArrowSVG className={s.downArrow} />

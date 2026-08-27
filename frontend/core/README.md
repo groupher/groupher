@@ -1,35 +1,31 @@
 # Groupher Frontend Core
 
-`frontend/core` is the framework-neutral product and UI layer shared by Main,
-Dashboard, Dash, Landing, and selected standalone applications. It is a package,
-not an independently deployed website.
+`frontend/core` is the shared product and UI layer used by the TanStack Start
+applications. It is a package, not an independently deployed website.
 
 ## Position in the system
 
 ```text
-Main / Dashboard / Dash / Landing
-                 |
-                 v
-        RouteScopeProvider adapter
-                 |
-                 v
- Core hooks + stores + UI + product units
-                 |
-                 v
-      GraphQL/auth/browser contracts
+TanStack Start hosts
+        |
+        v
+Core TanStack Router runtime + product UI
+        |
+        v
+ GraphQL/auth/browser contracts
 ```
 
-Core owns reusable product behavior and presentation. Framework applications
-own routing, server rendering, cache APIs, document shells, and deployment
-entrypoints. Core must not import Next.js or TanStack Router runtime APIs; those
-capabilities enter through `platform/` contracts.
+Core owns reusable product behavior and presentation, and directly uses the
+TanStack Router runtime without importing any application's generated route tree.
+Applications own route trees, server rendering, cache APIs, document shells,
+and deployment entrypoints. Cross-application links remain full-document links.
 
 ## Main areas
 
-- `app`: framework-neutral server/client orchestration shared by hosts.
+- `app`: shared server/client orchestration.
 - `hooks`: reusable state and product hooks.
 - `lib`: protocol, formatting, browser, and integration helpers.
-- `platform`: host adapters for navigation, links, images, and runtime services.
+- `platform`: the shared TanStack Link and script boundary.
 - `stores`: shared Valtio product state.
 - `ui`, `shell`, `render`, `unit`: reusable visual and product boundaries.
 - `schemas` and `lib/graphql`: authored operations and generated GraphQL output.

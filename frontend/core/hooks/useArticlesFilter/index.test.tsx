@@ -5,23 +5,9 @@ import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useArticlesFilter from '~/hooks/useArticlesFilter'
 
-let mockSearchParams = new URLSearchParams()
-const mockPush = vi.fn()
-
-vi.mock('~/platform', async () => {
-  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
-  return {
-    ...actual,
-    usePathname: () => '/demo/post',
-    useRouter: () => ({ push: mockPush }),
-    useSearchParams: () => mockSearchParams,
-  }
-})
-
 describe('useArticlesFilter', () => {
   it('derives filter fields from search params and pushes updated query', () => {
-    mockSearchParams = new URLSearchParams(`${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}`)
-    mockPush.mockReset()
+    window.history.replaceState(null, '', `/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}`)
 
     const wrapper = makeStoreWrapper({ articleList: true })
     const { result } = renderHook(() => useArticlesFilter(), { wrapper })
@@ -30,6 +16,8 @@ describe('useArticlesFilter', () => {
 
     act(() => result.current.updateActiveFilter({ cat: ARTICLE_CAT.IDEA }))
 
-    expect(mockPush).toHaveBeenCalledWith(`/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.IDEA}`)
+    expect(window.location.pathname + window.location.search).toBe(
+      `/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.IDEA}`,
+    )
   })
 })

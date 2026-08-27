@@ -1,5 +1,5 @@
 import CommunityBoundary from '@dash/components/CommunityBoundary'
-import DashboardShell from '@dash/components/DashboardShell'
+import DsbShell from '@dash/components/DsbShell'
 import RouteError from '@dash/components/RouteError'
 import { loadCommunity } from '@dash/server/community'
 import { loadLocale } from '@dash/server/locale'
@@ -57,9 +57,9 @@ function CommunityLayout() {
       community={shell.community}
       locale={locale}
     >
-      <DashboardShell shell={shell}>
+      <DsbShell shell={shell}>
         <Outlet />
-      </DashboardShell>
+      </DsbShell>
     </CommunityBoundary>
   )
 }

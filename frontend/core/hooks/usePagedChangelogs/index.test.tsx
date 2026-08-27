@@ -9,21 +9,12 @@ import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 import { articleKeys } from '~/query'
 import AccountStoreProvider from '~/stores/account/provider'
 
-let mockSearchParams = new URLSearchParams()
-
-vi.mock('~/platform', async () => {
-  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
-  return {
-    ...actual,
-    usePathname: () => '/',
-    useSearchParams: () => mockSearchParams,
-  }
-})
-
 describe('usePagedChangelogs', () => {
   it('builds pagedParams from searchParams and reads the Query cache', async () => {
-    mockSearchParams = new URLSearchParams(
-      `${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATUS}=${ARTICLE_STATUS.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
+    window.history.replaceState(
+      null,
+      '',
+      `/acme/changelog?${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATUS}=${ARTICLE_STATUS.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
     )
 
     const StoreWrapper = makeStoreWrapper({

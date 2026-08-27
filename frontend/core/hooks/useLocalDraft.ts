@@ -1,8 +1,8 @@
 import { equals } from 'ramda'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import useDashboard from '~/stores/dashboard/hooks'
-import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+import useDsb from '~/stores/dsb/hooks'
+import type { TDsbFieldMap } from '~/stores/dsb/spec'
 
 type TFieldKey = keyof TDsbFieldMap
 
@@ -27,7 +27,7 @@ export default function useLocalDraft<K extends TFieldKey, T>(
   fieldOrSource: K | T,
   maybeOriginal?: T,
 ): TRet<TDsbFieldMap[K] | T> {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const isFieldMode = typeof fieldOrSource === 'string' && maybeOriginal === undefined
   const source = isFieldMode ? dsb$[fieldOrSource as K] : (fieldOrSource as T)
   const original = isFieldMode ? dsb$.original[fieldOrSource as K] : (maybeOriginal as T)

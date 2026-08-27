@@ -1,7 +1,7 @@
+import { useLocation } from '@tanstack/react-router'
 import { AnimatePresence, domAnimation, LazyMotion } from 'motion/react'
 import { useMemo, useState } from 'react'
 
-import { usePathname } from '~/platform'
 import type { TDocPublicTreeGroup } from '~/spec'
 
 import { isActiveHref } from '../Tree/helper'
@@ -20,7 +20,7 @@ type TProps = {
 export default function TreeToc({ groups, onOpenTree }: TProps) {
   const [hovered, setHovered] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const s = useSalon()
   const items = useMemo(() => flattenTreeTocItems(groups), [groups])
   const activeItem = items.find((item) => isActiveHref(pathname, item.href))

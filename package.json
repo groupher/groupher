@@ -18,6 +18,7 @@
     "generate:fa-icons": "yarn generate:icons",
     "gen:theme-first-paint-vars": "node scripts/generate-theme-first-paint-vars.mjs",
     "check:theme-first-paint-vars": "node scripts/generate-theme-first-paint-vars.mjs --check",
+    "check:router-runtime": "node --test scripts/check-router-runtime.test.mjs && node scripts/check-router-runtime.mjs",
     "sync:icons": "node scripts/sync-fa-icons.mjs",
     "sync:icons:dash": "node scripts/sync-fa-icons.mjs dash",
     "sync:icons:landing": "node scripts/sync-fa-icons.mjs landing",

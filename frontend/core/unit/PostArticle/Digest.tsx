@@ -2,13 +2,13 @@
  * PostLayout
  */
 
+import { useNavigate } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import ArrowSVG from '~/icons/Arrow'
 import Img from '~/Img'
 import { Link } from '~/platform'
-import { useRouter } from '~/platform'
 import type { TPost } from '~/spec'
 // import ArchivedSign from '~/ui/ArchivedSign'
 import useArticle from '~/stores/article/hooks'
@@ -22,7 +22,7 @@ import useSalon from './salon/digest'
 const Share = lazy(() => import('~/unit/Share'))
 
 export default function Digest() {
-  const { push } = useRouter()
+  const navigate = useNavigate()
   const { post } = useArticle()
 
   const isPinned = post?.isPinned ?? false
@@ -40,7 +40,11 @@ export default function Digest() {
     <div className={s.wrapper}>
       <div className={s.leftPart}>
         <div className={s.topping}>
-          <button type='button' className={s.backBtn} onClick={() => push(backUrl)}>
+          <button
+            type='button'
+            className={s.backBtn}
+            onClick={() => void navigate({ to: backUrl as never })}
+          >
             <ArrowSVG className={s.backIcon} />
             <div className={s.backText}>讨论区</div>
           </button>
@@ -57,7 +61,7 @@ export default function Digest() {
           <div className={s.subTitle}>{innerId}</div>
         </div>
         <div className={s.bottomInfo}>
-          <Link href='/' className={s.authorName}>
+          <Link href='/' navigation='document' className={s.authorName}>
             <Img
               src={author.avatar}
               className={s.avatar}

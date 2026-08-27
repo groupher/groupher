@@ -1,5 +1,5 @@
 import type { TMediaReport, TSocialItem } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TABoutInfo = {
   homepage: string | null
@@ -11,7 +11,7 @@ type TABoutInfo = {
 
 /** Exposes about info state and actions through the shared React hook boundary. */
 export default function useAboutInfo(): TABoutInfo {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
 
   const { homepage = '', city = '', techstack = '', socialLinks = [], mediaReports = [] } = dsb$
 

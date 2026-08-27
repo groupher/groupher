@@ -7,9 +7,9 @@ import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import RealtimeOnline from '~/unit/DashboardThread/Analysis/RealtimeOnline'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import RealtimeOnline from '~/unit/DsbThread/Analysis/RealtimeOnline'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
 
 const CRUMB_CONFIG = {
   title: 'dsb.crumb.analytics',

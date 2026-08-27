@@ -1,5 +1,3 @@
-import { useContext } from 'react'
-
 import type {
   TAvatarLayout,
   TBrandLayout,
@@ -13,7 +11,7 @@ import type {
   TPostLayout,
   TTagLayout,
 } from '~/spec'
-import { ShellStyleContext } from '~/stores/shellStyle/context'
+import useDsb from '~/stores/dsb/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -30,9 +28,6 @@ type TRet = {
 }
 
 export default function UseLayout(): TRet {
-  const value = useContext(ShellStyleContext)
-  if (!value) throw new Error('useLayout must be used within ShellStyleProvider')
-
   const {
     avatarLayout,
     communityLayout,
@@ -45,7 +40,7 @@ export default function UseLayout(): TRet {
     kanbanCardLayout,
     kanbanBoards,
     changelogLayout,
-  } = value
+  } = useDsb()
 
   return {
     avatarLayout,

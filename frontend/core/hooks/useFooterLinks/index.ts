@@ -1,12 +1,19 @@
-import { useContext } from 'react'
+import { useMemo } from 'react'
 
-import { FooterLinksContext } from '~/stores/footerLinks/context'
-import type { TFooterLinks } from '~/stores/footerLinks/spec'
+import { normalizeFooterLinks, normalizeFooterOnelineLinks } from '~/lib/footerLinks'
+import type { TFooterLinks } from '~/spec'
+import useDsb from '~/stores/dsb/hooks'
 
 /** Exposes footer links state and actions through the shared React hook boundary. */
 export default function useFooterLinks(): TFooterLinks {
-  const value = useContext(FooterLinksContext)
-  if (!value) throw new Error('useFooterLinks must be used within FooterLinksProvider')
+  const { footerLayout, footerLinks, footerOnelineLinks } = useDsb()
 
-  return value
+  return useMemo(
+    () => ({
+      layout: footerLayout,
+      links: normalizeFooterLinks(footerLinks),
+      onelineLinks: normalizeFooterOnelineLinks(footerOnelineLinks),
+    }),
+    [footerLayout, footerLinks, footerOnelineLinks],
+  )
 }

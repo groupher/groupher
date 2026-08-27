@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
 import URL_PARAM from '~/const/url_param'
 import useActiveTag from '~/hooks/useActiveTag'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 import useViewingThread from '~/hooks/useViewingThread'
-import { usePathname, useRouter, useSearchParams } from '~/platform'
 import { Q } from '~/query'
 import type { TGroupedTags, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -23,9 +24,9 @@ type TRet = {
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
-  const { push } = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const searchParams = useURLSearchParams()
   const { slug: community } = useCommunity()
   const thread = useViewingThread()
   const tagGroups = useQuery(Q.article.tagGroups(community, thread)).data || []
@@ -57,7 +58,7 @@ export default function useLogic(): TRet {
     const nextQuery = nextSearchParams.toString()
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname
 
-    setTimeout(() => push(nextUrl), 0)
+    setTimeout(() => void navigate({ to: nextUrl as never }), 0)
   }
 
   return {

@@ -3359,11 +3359,13 @@ __metadata:
   dependencies:
     "@groupher/contracts": "npm:1.0.0"
     "@tanstack/react-query": "npm:^5.101.4"
+    "@tanstack/react-router": "npm:1.170.21"
     cobe: "npm:^2.0.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
   peerDependencies:
     "@tanstack/react-query": ^5.101.4
+    "@tanstack/react-router": 1.170.21
     react: ^19.2.8
     react-dom: ^19.2.8
   languageName: unknown

@@ -7,7 +7,7 @@ import { closeDrawer, send } from '~/signal'
 import type { TModerator, TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import { toast } from '~/ui/Toaster'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
@@ -155,7 +155,7 @@ type TRet = {
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const community$ = useCommunity()
   const account$ = useAccount()
 

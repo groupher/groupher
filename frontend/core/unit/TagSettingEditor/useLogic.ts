@@ -7,7 +7,7 @@ import { browserQuery } from '~/graphql/client'
 import { closeDrawer, send } from '~/signal'
 import type { TChangeMode, TColorName, TEditValue, TSelectOption, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import { slugify } from '~/utils/slug'
 import { nilOrEmpty, validateSlug } from '~/validator'
 
@@ -37,7 +37,7 @@ type TRet = {
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const { tagGroups, settingTag, activeTagThread } = dsb$
 
   const community$ = useCommunity()

@@ -1,0 +1,208 @@
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+
+import { browserQuery } from '~/graphql/client'
+import { sortByKey } from '~/helper'
+import type { TModerator, TUser } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
+import useDsb from '~/stores/dsb/hooks'
+import S from '~/unit/DsbThread/schema/admins'
+import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
+
+type TPassportJson = Record<string, unknown>
+
+const safeParsePassport = (passport: string): TPassportJson => {
+  try {
+    const parsed = JSON.parse(passport)
+    return typeof parsed === 'object' && parsed !== null ? parsed : {}
+  } catch (error) {
+    console.error('## parse passport error: ', error)
+    return {}
+  }
+}
+
+const ruleMapFrom = (rules: unknown): Record<string, boolean> =>
+  typeof rules === 'object' && rules !== null ? (rules as Record<string, boolean>) : {}
+
+const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
+  Object.entries(rules).flatMap(([rule, enabled]) => (enabled ? [rule] : []))
+
+const communityPassportFrom = (
+  passport: Record<string, unknown>,
+  community: string,
+): Record<string, unknown> => {
+  if (!community) return {}
+
+  const rules = passport[community]
+  return typeof rules === 'object' && rules !== null ? (rules as Record<string, unknown>) : {}
+}
+
+const moderatorNeedsHydration = (moderator: TModerator): boolean =>
+  moderator.rules === undefined || moderator.globalRules === undefined
+
+type TRet = {
+  moderators: TModerator[]
+  activeModerator: TUser | null
+  setActiveSettingAdmin: (user: TUser) => void
+  searchUsers: (name: string) => Promise<TUser[]>
+  addAdmins: (users: TUser[]) => Promise<void>
+  isModerator: (user: TUser | null) => boolean
+}
+
+/** Exposes admins state and actions through the shared React hook boundary. */
+export default function useAdmins(): TRet {
+  const dsb$ = useDsb()
+  const community$ = useCommunity()
+  const { moderators: originalModerators, activeModerator } = dsb$
+  const hydrationSignatureRef = useRef('')
+
+  const moderatorLoginSet = useMemo(() => {
+    return new Set(
+      originalModerators.flatMap((moderator) =>
+        moderator.user?.login ? [moderator.user.login] : [],
+      ),
+    )
+  }, [originalModerators])
+
+  const moderators = useMemo(() => {
+    return sortByKey(
+      originalModerators.filter((moderator) => moderator.user?.login),
+      'passportItemCount',
+    ).reverse() as TModerator[]
+  }, [originalModerators])
+
+  const setActiveSettingAdmin = (user: TUser): void => dsb$.commit({ activeModerator: user })
+
+  const hydrateModerators = useCallback(
+    async (moderators: readonly TModerator[]): Promise<void> => {
+      const slug = community$.slug
+      if (!slug || !moderators.some(moderatorNeedsHydration)) return
+
+      const signature = `${slug}:${moderators
+        .map((moderator) => `${moderator.user?.login ?? ''}:${moderator.passportItemCount}`)
+        .join('|')}`
+      if (hydrationSignatureRef.current === signature) return
+      hydrationSignatureRef.current = signature
+
+      try {
+        const hydratedModerators = await Promise.all(
+          moderators.map(async (moderator) => {
+            const login = moderator.user?.login
+            if (!login || !moderatorNeedsHydration(moderator)) return moderator
+
+            const res = await browserQuery<
+              { user?: { passportString?: string } },
+              { login: string }
+            >(S.userPassport, { login })
+            const passportJson = safeParsePassport(res?.user?.passportString ?? '{}')
+            const globalRules = ruleMapFrom(passportJson.global)
+            const communityPassport = communityPassportFrom(passportJson, slug)
+            const communityRules = ruleMapFrom(communityPassport.cms)
+            const isRoot = communityPassport.root === true
+
+            return {
+              ...moderator,
+              isRoot,
+              passportItemCount: enabledRuleKeys(communityRules).length,
+              rules: communityRules,
+              globalRules,
+            }
+          }),
+        )
+
+        dsb$.commit({ moderators: hydratedModerators })
+        community$.commit({ moderators: hydratedModerators })
+      } catch (error) {
+        console.error('## hydrate moderators passport error: ', error)
+      }
+    },
+    [community$, dsb$],
+  )
+
+  useEffect(() => {
+    void hydrateModerators(originalModerators)
+  }, [hydrateModerators, originalModerators])
+
+  const isModerator = useCallback(
+    (user: TUser | null): boolean => {
+      if (!user?.login) return false
+      return moderatorLoginSet.has(user.login)
+    },
+    [moderatorLoginSet],
+  )
+
+  const searchUsers = useCallback(
+    async (name: string): Promise<TUser[]> => {
+      const keyword = name.trim()
+      if (!keyword) return []
+
+      const data = await browserQuery<{ searchUsers: { entries: TUser[] } }, { name: string }>(
+        S.searchUsers,
+        { name: keyword },
+      )
+
+      return data.searchUsers.entries.filter(
+        (user) => user.login && !moderatorLoginSet.has(user.login),
+      )
+    },
+    [moderatorLoginSet],
+  )
+
+  const addAdmins = useCallback(
+    async (users: TUser[]): Promise<void> => {
+      const validUsers = users.filter((user) => user.login && !moderatorLoginSet.has(user.login))
+      if (!community$.slug || !validUsers.length) return
+
+      const data = await browserQuery<
+        { addModerators: { moderators: TModerator[] } },
+        { community: string; users: string[] }
+      >(S.addModerators, {
+        community: community$.slug,
+        users: validUsers.map((user) => user.login!),
+      })
+
+      const pendingLogins = new Set(validUsers.map((user) => user.login))
+      const remoteModerators = data.addModerators.moderators ?? []
+      const nextModerators = remoteModerators.flatMap((moderator) => {
+        const login = moderator.user?.login
+        if (!login) return []
+
+        return [
+          {
+            ...moderator,
+            pending: pendingLogins.has(login),
+          },
+        ]
+      })
+
+      const fallbackModerators = [
+        ...originalModerators,
+        ...validUsers.map((user) => ({
+          isRoot: false,
+          passportItemCount: 0,
+          user,
+          pending: true,
+        })),
+      ]
+
+      const resolvedModerators = nextModerators.length ? nextModerators : fallbackModerators
+
+      dsb$.commit({ moderators: resolvedModerators })
+      community$.commit({ moderators: resolvedModerators })
+      try {
+        await revalidateCommunityCache(community$.slug)
+      } catch (error) {
+        console.error('## revalidate community cache error: ', error)
+      }
+    },
+    [community$, dsb$, moderatorLoginSet, originalModerators],
+  )
+
+  return {
+    moderators,
+    activeModerator,
+    setActiveSettingAdmin,
+    searchUsers,
+    addAdmins,
+    isModerator,
+  }
+}

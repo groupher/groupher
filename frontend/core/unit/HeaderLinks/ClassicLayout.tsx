@@ -42,6 +42,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
               <Link
                 key={item.id}
                 href={item.url}
+                navigation='document'
                 className={cn(s.menuLink, active && activeStyle.item)}
               >
                 {moreTabLinkTitle(item, t)}
@@ -86,6 +87,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
                   isHeaderLinkActive(slug, activePath, item.url) && activeStyle.item,
                 )}
                 href={item.url}
+                navigation='document'
               >
                 {item.title}
               </Link>

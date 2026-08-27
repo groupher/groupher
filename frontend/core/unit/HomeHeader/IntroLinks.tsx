@@ -24,7 +24,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
 
   return (
     <>
-      <Link href='/' className={s.brand} onMouseEnter={onLinkHover}>
+      <Link href='/' navigation='router' className={s.brand} onMouseEnter={onLinkHover}>
         <LandingBrand />
       </Link>
 
@@ -53,7 +53,12 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
           文档 <ArrowSVG className={s.arrowIcon} />
         </button>
 
-        <Link className={s.linkItem} href={`/${ROUTE.PRICE}`} onMouseEnter={() => handleHover('')}>
+        <Link
+          className={s.linkItem}
+          href={`/${ROUTE.PRICE}`}
+          navigation='router'
+          onMouseEnter={() => handleHover('')}
+        >
           价格
         </Link>
 

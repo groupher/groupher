@@ -3,34 +3,31 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFooterLinks from '~/hooks/useFooterLinks'
-import useDashboard from '~/stores/dashboard/hooks'
-import FooterLinksProvider from '~/stores/footerLinks/provider'
+import useDsb from '~/stores/dsb/hooks'
 
 describe('useFooterLinks', () => {
   it('returns footer links projection', () => {
-    const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <FooterLinksProvider
-        layout={FOOTER_LAYOUT.GROUP}
-        links={[
+    const wrapper = makeStoreWrapper({
+      dashboard: {
+        footerLayout: FOOTER_LAYOUT.GROUP,
+        footerLinks: [
           {
             id: 'links',
             type: 'GROUP',
             title: 'Links',
             links: [{ id: 'github', title: 'GitHub', url: 'https://x' }],
           },
-        ]}
-        onelineLinks={[]}
-      >
-        {children}
-      </FooterLinksProvider>
-    )
+        ],
+        footerOnelineLinks: [],
+      },
+    })
 
     const { result } = renderHook(() => useFooterLinks(), { wrapper })
     expect(result.current.links).toHaveLength(1)
     expect(result.current.links[0].title).toBe('Links')
   })
 
-  it('keeps the dashboard footer bridge live', async () => {
+  it('stays live when Dsb footer fields change', async () => {
     const wrapper = makeStoreWrapper({
       dashboard: {
         footerLayout: FOOTER_LAYOUT.GROUP,
@@ -38,7 +35,7 @@ describe('useFooterLinks', () => {
         footerOnelineLinks: [],
       },
     })
-    const { result } = renderHook(() => ({ dashboard: useDashboard(), footer: useFooterLinks() }), {
+    const { result } = renderHook(() => ({ dashboard: useDsb(), footer: useFooterLinks() }), {
       wrapper,
     })
 

@@ -1,7 +1,5 @@
 import { type FC, type ReactNode, useEffect, useReducer, useRef } from 'react'
 
-import { Image as NextImage } from '~/platform'
-
 import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon'
 
@@ -94,16 +92,7 @@ const NativeImg: FC<TProps> = ({
     <>
       {showFallback && <span className={s.fallbackOverlay}>{fallback}</span>}
 
-      {showImg && (
-        <NextImage
-          className={s.img}
-          src={resolvedSrc}
-          alt={alt}
-          fill
-          unoptimized
-          draggable={false}
-        />
-      )}
+      {showImg && <img className={s.img} src={resolvedSrc} alt={alt} draggable={false} />}
     </>
   )
 

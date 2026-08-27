@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import type { THeaderLayout, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 import { resolveHeaderLinks } from './helper'
 
@@ -19,7 +19,7 @@ type THeaderLinks = {
  * can decide when to include synthetic More-tab entries.
  */
 export default function useHeaderLinks(): THeaderLinks {
-  const { headerLayout, headerLinks } = useDashboard()
+  const { headerLayout, headerLinks } = useDsb()
   const { slug: community } = useCommunity()
 
   const getCustomLinks = useCallback(

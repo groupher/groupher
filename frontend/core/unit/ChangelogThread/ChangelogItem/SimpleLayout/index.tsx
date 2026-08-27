@@ -9,9 +9,9 @@ import { type FC, memo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
-import { Link } from '~/platform'
 import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ReadableDate from '~/ui/ReadableDate'
 import CommentsCount from '~/unit/CommentsCount'
 import EmotionSelector from '~/unit/EmotionSelector'
@@ -35,15 +35,14 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
         <ReadableDate date={article.insertedAt} withTime={false} />
       </div>
       <div className={s.main}>
-        <Link
+        <CommunityPreviewLink
           href={`/${slug}/${THREAD_PATH.CHANGELOG}/${article.innerId}`}
           className={s.title}
-          scroll={false}
           previewId={article.innerId}
         >
           {article.title}
           <div className={s.version}>v3.21</div>
-        </Link>
+        </CommunityPreviewLink>
         <div className={s.tags}>
           <TagsList items={demoTags} size='small' />
         </div>

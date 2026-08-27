@@ -39,7 +39,7 @@ export default function GroupLayout() {
               <h3 className={s.title}>{group.title}</h3>
               <div className={s.body}>
                 {group.links.map((item) => (
-                  <Link key={item.id} href={item.url} className={s.link}>
+                  <Link key={item.id} href={item.url} navigation='document' className={s.link}>
                     {item.title}
                   </Link>
                 ))}

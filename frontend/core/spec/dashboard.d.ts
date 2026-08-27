@@ -21,7 +21,7 @@ import type { DSB_TAB } from '~/const/route'
 import type { KANBAN_BOARD } from '~/const/thread'
 import type { TThirdPartyAnalyticsConfig } from '~/lib/thirdPartyAnalytics'
 import type { TConstValues } from '~/spec'
-import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
+import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dsb/spec'
 
 import type { TColorName } from './color'
 import type { TModerator } from './community'
@@ -50,6 +50,11 @@ export type TDocCoverLayout = TConstValues<typeof DOC_COVER_LAYOUT>
 export type TDocFAQLayout = TConstValues<typeof DOC_FAQ_LAYOUT>
 export type THeaderLayout = TConstValues<typeof HEADER_LAYOUT>
 export type TFooterLayout = TConstValues<typeof FOOTER_LAYOUT>
+export type TFooterLinks = {
+  layout: TFooterLayout
+  links: readonly TLinkItem[]
+  onelineLinks: readonly TFooterOnelineLink[]
+}
 export type TRSSType = TConstValues<typeof RSS_TYPE>
 export type TBroadcastLayout = TConstValues<typeof BROADCAST_LAYOUT>
 export type TBroadcastArticleLayout = TConstValues<typeof BROADCAST_ARTICLE_LAYOUT>

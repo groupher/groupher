@@ -10,9 +10,9 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockUsers } from '~/mock'
-import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
@@ -33,13 +33,12 @@ const KanbanItem: FC<TProps> = ({ article }) => {
   return (
     <div className={s.wrapper}>
       <h4 className={s.title}>
-        <Link
+        <CommunityPreviewLink
           href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
-          scroll={false}
           previewId={article.innerId}
         >
           {title}
-        </Link>
+        </CommunityPreviewLink>
       </h4>
       <div className='grow' />
       <TagsList items={communityTags} right={1} />

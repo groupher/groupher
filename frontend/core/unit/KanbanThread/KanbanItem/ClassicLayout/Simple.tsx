@@ -11,9 +11,9 @@ import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
-import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import CommentsCount from '~/unit/CommentsCount'
 import TagsList from '~/unit/TagsList'
@@ -39,14 +39,13 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.header}>
         <TagsList items={[tags[titleIdx]]} />
       </div>
-      <Link
+      <CommunityPreviewLink
         href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}
-        scroll={false}
         className={s.title}
         previewId={article.innerId}
       >
         {article.title}
-      </Link>
+      </CommunityPreviewLink>
       <div className={s.footer}>
         <div className='row-center'>
           <Upvote

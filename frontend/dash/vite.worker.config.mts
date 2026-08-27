@@ -11,7 +11,7 @@ export default defineConfig({
     lib: {
       entry: resolve(
         dashRoot,
-        '../core/unit/DashboardThread/CMS/Docs/ActionSnackbar/RevisionDrawer/diff.worker.ts',
+        '../core/unit/DsbThread/CMS/Docs/ActionSnackbar/RevisionDrawer/diff.worker.ts',
       ),
       fileName: () => 'worker-revision-diff.js',
       formats: ['es'],

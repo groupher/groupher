@@ -32,6 +32,7 @@ export default function MainMenu() {
             className={cn(s.menuItem, active && activeStyle.item)}
             key={thread.slug}
             href={`/${community}/${thread.slug}`}
+            navigation='router'
           >
             <ThreadIcon thread={path2Thread(thread.slug)} active={active} />
             <div className={cn(s.menuTitle, active && activeStyle.text)}>{thread.title}</div>

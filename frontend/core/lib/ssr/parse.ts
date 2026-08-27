@@ -4,7 +4,7 @@ import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import { removeEmptyValuesFromObject } from '~/helper'
 import type { TCommunity, TNameAlias, TParseDashboard, TParsedWallpaper } from '~/spec'
-import { FIELDS } from '~/stores/dashboard/constant'
+import { FIELDS } from '~/stores/dsb/constant'
 
 /** Parses wallpaper into the canonical frontend shared representation. */
 export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {

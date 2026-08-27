@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import type { TScriptProps } from './context'
+import type { TScriptProps } from './types'
 
 const LOADED = 'data-groupher-loaded'
 
@@ -22,7 +22,7 @@ export default function Script({
   onError,
   onLoad,
   src,
-  strategy = 'afterInteractive',
+  strategy = 'mount',
   ...attributes
 }: TScriptProps) {
   const attributeEntries = Object.entries(attributes).filter(
@@ -80,7 +80,7 @@ export default function Script({
       if (!src) script.setAttribute(LOADED, '')
     }
 
-    if (strategy === 'lazyOnload') {
+    if (strategy === 'idle') {
       const scheduleIdle = () => {
         if (typeof window.requestIdleCallback === 'function') {
           idleId = window.requestIdleCallback(insert)
