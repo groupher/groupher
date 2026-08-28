@@ -20,6 +20,7 @@
     "clean": "rimraf .output .tanstack vite.config.*.timestamp-* routeTree.gen.ts src/routeTree.gen.ts *.tsbuildinfo"
   },
   "dependencies": {
+    "@graphql-typed-document-node/core": "3.2.0",
     "@groupher/contracts": "workspace:*",
     "@groupher/frontend-core": "workspace:*",
     "@tanstack/query-core": "5.101.4",

@@ -27,7 +27,7 @@ packages/*
 - 少量脚本、忽略配置和维护文档；
 - `yarn.lock`、`.yarnrc.yml` 和仓库内置的 Yarn release。
 
-迁移后的配置使用 pnpm 原生的 `nodeLinker: isolated`，依赖通过根目录 `node_modules/.pnpm` 虚拟仓库和各 workspace 的符号链接提供。这样每个 workspace 默认只能解析自身声明的依赖；原先被根目录提升掩盖的隐式依赖会直接暴露。因此，本次迁移不能只替换 lockfile 和命令名称，还必须验证 workspace 链接、依赖声明、生命周期脚本、CI 缓存和 Docker 安装结果。
+迁移后的配置使用 pnpm 原生的 `nodeLinker: isolated`，依赖通过根目录 `node_modules/.pnpm` 虚拟仓库和各 workspace 的符号链接提供。workspace 本地依赖会按 manifest 建立链接，未声明的传递依赖不再稳定地因为提升而可见；本次验证已经暴露并修复了这类问题。因此，本次迁移不能只替换 lockfile 和命令名称，还必须验证 workspace 链接、依赖声明、生命周期脚本、CI 缓存和 Docker 安装结果。
 
 迁移前根 `package.json` 曾保留 `packageManagerConfig.hoistingLimits`，其中记录了 `@radix-ui/*`、`shadcn` 和 `@groupher/editor` 的 workspace 隔离意图。该字段来自旧 Yarn 1 `workspaces.nohoist` 配置，但当前 Yarn 4 不识别它；当时实际生效的 `nmHoistingLimits` 是 `none`。该历史字段已删除，不能被视为当前安装布局已经满足的约束。
 
@@ -37,7 +37,7 @@ Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。R
 
 - 已完成根配置、workspace manifest、内部依赖、脚本、本地入口、CI workflow、Press Dockerfile 和当前运维文档的 pnpm 改造。
 - 已生成 `pnpm-lock.yaml`，并用 pnpm 11.24.0 连续两次执行冻结安装；`check:router-runtime`、type-check、lint、format、test 和 `build:ci` 已通过，保留原有 warning 作为非阻断项。
-- 已在干净副本使用 `nodeLinker: isolated` 执行冻结安装；全 workspace type-check、lint、format、test 和 `build:ci` 均通过，未发现因根目录提升而暴露的隐式依赖。
+- 已在干净副本使用 `nodeLinker: isolated` 执行冻结安装；补齐根同步脚本的 `sharp`、`frontend/core` 的 Tooltip/Share/GraphQL/表格/日期依赖，以及各应用缺失的 GraphQL 和 Node 类型直接依赖后，type-check、lint、format、test、资源同步和 `build:ci` 均通过。
 - 8 个 Worker dry-run 入口（Apply、Community、Dash、Landing、Inspire Me、Assets Hub、Auth、Edge Router）均完成 bundle、配置读取和 `--dry-run: exiting now.` 验证。
 - 干净安装实测发现 pnpm 11 的构建脚本审批是必需项；现已只允许 `lefthook` 执行，并将 `@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 明确设为不执行。
 - Assets Hub 已补齐自身的 `wrangler` devDependency，避免依赖 root hoisting。
@@ -340,11 +340,11 @@ rg -n '\byarn\b|yarn\.lock|\.yarn/' \
 
 ### 阶段 7：isolated 布局验收
 
-本阶段已作为当前 pnpm 迁移 PR 的后续 commit 执行，不另开 PR。验收重点是确认 pnpm 原生布局没有依赖根目录提升：
+本阶段已作为当前 pnpm 迁移 PR 的后续 commit 执行，不另开 PR。验收重点是确认 pnpm 原生布局不依赖传递包的根目录提升：
 
 1. 将 `nodeLinker` 设置为 `isolated`；
 2. 在干净安装环境运行完整验收矩阵；
-3. 修复所有未声明依赖、写死根 `node_modules` 路径和不兼容工具；
+3. 修复所有未声明依赖、写死根 `node_modules` 路径和不兼容工具；本次复核已补齐 `sharp`、Tooltip/Share/GraphQL 等实际直接依赖，并修正 GraphQL 泛型和 TanStack Table 模块增强的类型边界；
 4. 验证根 package 直接声明的 `commitizen` 和 `cz-conventional-changelog` 仍可通过现有 `config.commitizen.path` 正确加载；
 5. Worker dry-run、Press Docker 和所有 CI 通过后，才将本次 isolated 切换视为完成；
 6. 如果某个工具确实要求提升，使用最小范围的 pnpm `hoistPattern` 或 `publicHoistPattern` 并记录原因，不启用全局 `shamefullyHoist`。
@@ -422,7 +422,7 @@ pnpm --filter @groupher/local-dev-hub test
 
 - [ ] Yarn 基线中通过的检查在 pnpm 下仍然通过；
 - [ ] 没有因为缺失依赖或 CLI 不可见导致的失败；
-- [ ] 在 `nodeLinker: isolated` 下每个 workspace 仅通过自身 manifest 解析直接依赖，不依赖根目录提升；
+- [ ] 在 `nodeLinker: isolated` 下 workspace 的直接运行时/构建依赖均已写入自身 manifest，不依赖传递包的根目录提升；
 - [ ] 生成资产和代码生成结果与基线一致；
 - [ ] 构建没有产生未预期的 tracked file 变更；
 - [ ] peer dependency warning 已逐项判断，新增 warning 必须修复或记录原因。

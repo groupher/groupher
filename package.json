@@ -211,6 +211,7 @@
     "postcss": "^8.5.25",
     "react-doctor": "^0.7.6",
     "react-json-view-lite": "^2.5.0",
+    "sharp": "0.35.2",
     "svgo": "^4.0.1",
     "tsc-files": "^1.1.4",
     "typescript": "7.0.2",
