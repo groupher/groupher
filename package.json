@@ -234,12 +234,5 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "yarn@4.17.1",
-  "packageManagerConfig": {
-    "hoistingLimits": {
-      "**/@radix-ui/**": "workspaces",
-      "**/shadcn/**": "workspaces",
-      "**/@groupher/editor/**": "workspaces"
-    }
-  }
+  "packageManager": "yarn@4.17.1"
 }
