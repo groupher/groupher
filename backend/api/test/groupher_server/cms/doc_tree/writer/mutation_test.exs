@@ -817,16 +817,17 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   defp capture_repo_queries(fun) do
     ref = make_ref()
     handler_id = {__MODULE__, ref}
+    owner = self()
     event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
 
     :ok =
       :telemetry.attach(
         handler_id,
         event,
-        fn _event, _measurements, metadata, {pid, query_ref} ->
-          send(pid, {query_ref, metadata.query})
+        fn _event, _measurements, metadata, {pid, query_ref, owner_pid} ->
+          if self() == owner_pid, do: send(pid, {query_ref, metadata.query})
         end,
-        {self(), ref}
+        {self(), ref, owner}
       )
 
     try do

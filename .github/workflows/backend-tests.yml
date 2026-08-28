@@ -18,7 +18,7 @@ jobs:
         working-directory: backend/api
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -27,7 +27,7 @@ jobs:
           elixir-version: '1.20.3'
 
       - name: Cache deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: backend/api/deps
           key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
@@ -35,7 +35,7 @@ jobs:
             ${{ runner.OS }}-otp29-elixir20-mix-
 
       - name: Cache build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: backend/api/_build
           key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
@@ -53,7 +53,7 @@ jobs:
       run:
         working-directory: backend/api
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -62,7 +62,7 @@ jobs:
           elixir-version: '1.20.3'
 
       - name: Restore cached deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: backend/api/deps
           key: ${{ runner.OS }}-otp29-elixir20-mix-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
@@ -70,7 +70,7 @@ jobs:
             ${{ runner.OS }}-otp29-elixir20-mix-
 
       - name: Restore cached build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: backend/api/_build
           key: ${{ runner.OS }}-otp29-elixir20-build-${{ hashFiles('**/mix.lock', '**/mix.exs') }}
