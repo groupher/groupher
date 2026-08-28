@@ -24,7 +24,7 @@ RUN corepack pnpm --filter @groupher/press run build
 # Create a portable production directory. Copying the workspace's original
 # node_modules after moving it from /app/backend/press to /app/press can break
 # relative symlinks, while deploy materializes an isolated dependency layout.
-RUN corepack pnpm --filter @groupher/press --prod deploy --legacy /app/deploy
+RUN corepack pnpm --filter @groupher/press --prod deploy /app/deploy
 
 FROM node:24-bookworm-slim AS runtime
 

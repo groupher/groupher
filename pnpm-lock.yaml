@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -397,6 +398,9 @@ importers:
       tsx:
         specifier: ^4.23.5
         version: 4.23.12
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       wrangler:
         specifier: ^4.118.0
         version: 4.126.0(@cloudflare/workers-types@5.20260827.1)
@@ -440,6 +444,9 @@ importers:
       tsx:
         specifier: ^4.23.5
         version: 4.23.12
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
 
   backend/content-import:
     dependencies:
@@ -647,6 +654,9 @@ importers:
       '@tanstack/react-start':
         specifier: 1.168.38
         version: 1.168.38(esbuild@0.28.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.6)(supports-color@10.2.2)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      graphql:
+        specifier: ^16.13.2
+        version: 16.14.2
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -678,45 +688,162 @@ importers:
       vite:
         specifier: ^8.2.0
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       wrangler:
         specifier: ^4.118.0
         version: 4.126.0(@cloudflare/workers-types@5.20260827.1)
 
   frontend/core:
     dependencies:
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(react@19.2.8)
+      '@formkit/auto-animate':
+        specifier: ^0.9.0
+        version: 0.9.0
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.14.2)
       '@groupher/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@groupher/rich-editor':
+        specifier: 0.0.35
+        version: 0.0.35(@babel/core@7.29.7(supports-color@10.2.2))(@babel/template@7.29.7)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(supports-color@10.2.2)(typescript@7.0.2)(use-sync-external-store@1.6.0(react@19.2.8))(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       '@groupher/tooltip':
         specifier: 4.2.7
         version: 4.2.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@groupher/use-mobile-detect-hook':
+        specifier: ^2.0.2
+        version: 2.0.2(react@19.2.8)
       '@internationalized/date':
         specifier: 3.12.3
         version: 3.12.3
+      '@platejs/core':
+        specifier: ^53.2.4
+        version: 53.3.9(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8))
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tanstack/react-virtual':
+        specifier: ^3.13.18
+        version: 3.14.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/table-core':
         specifier: 8.21.3
         version: 8.21.3
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      cnfast:
+        specifier: 0.0.8
+        version: 0.0.8
       cobe:
         specifier: ^2.0.1
         version: 2.0.1
       copy-to-clipboard:
         specifier: 3.3.3
         version: 3.3.3
+      emoji-picker-react:
+        specifier: ^4.19.1
+        version: 4.19.1(react@19.2.8)
+      graphql:
+        specifier: ^16.13.2
+        version: 16.14.2
+      markdown-to-jsx:
+        specifier: ^9.7.16
+        version: 9.10.2(react@19.2.8)
+      motion:
+        specifier: ^12.43.0
+        version: 12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      nanoid:
+        specifier: ^5.1.9
+        version: 5.1.16
+      overlayscrollbars:
+        specifier: ^2.9.1
+        version: 2.16.0
+      overlayscrollbars-react:
+        specifier: ^0.5.6
+        version: 0.5.6(overlayscrollbars@2.16.0)(react@19.2.8)
+      pinyin-pro:
+        specifier: ^3.28.1
+        version: 3.29.3
+      platejs:
+        specifier: ^53.2.4
+        version: 53.3.9(@types/react@19.2.18)(immer@11.1.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)(use-sync-external-store@1.6.0(react@19.2.8))
+      prop-types:
+        specifier: ^15.5.10
+        version: 15.8.1
+      qrcode.react:
+        specifier: ^4.2.0
+        version: 4.2.0(react@19.2.8)
+      ramda:
+        specifier: ^0.32.0
+        version: 0.32.0
+      react-aria-components:
+        specifier: ^1.17.0
+        version: 1.20.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-content-loader:
+        specifier: ^6.2.1
+        version: 6.2.1(react@19.2.8)
+      react-flip-numbers:
+        specifier: ^3.0.8
+        version: 3.0.9(react-dom@19.2.8(react@19.2.8))(react-simple-animate@3.5.3(react-dom@19.2.8(react@19.2.8)))(react@19.2.8)
+      react-highlight-words:
+        specifier: ^0.21.0
+        version: 0.21.0(react@19.2.8)
+      react-masonry-css:
+        specifier: ^1.0.16
+        version: 1.0.16(react@19.2.8)
+      react-resizable-panels:
+        specifier: ^4.11.2
+        version: 4.12.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-select:
+        specifier: ^5.10.2
+        version: 5.10.2(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@10.2.2)
       react-stately:
         specifier: 3.49.0
         version: 3.49.0(react@19.2.8)
+      react-swipeable:
+        specifier: ^7.0.0
+        version: 7.0.2(react@19.2.8)
+      react-textarea-autosize:
+        specifier: ^8.3.0
+        version: 8.5.9(@types/react@19.2.18)(react@19.2.8)
+      react-trend:
+        specifier: ^1.2.4
+        version: 1.2.5(react@19.2.8)
+      react-use:
+        specifier: 17.6.0
+        version: 17.6.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       resize-observer-polyfill:
         specifier: 1.5.1
         version: 1.5.1
+      sanitize-html:
+        specifier: ^2.17.3
+        version: 2.17.7
+      stringz:
+        specifier: ^2.0.0
+        version: 2.1.0
+      tinykeys:
+        specifier: ^2.1.0
+        version: 2.1.0
       tippy.js:
         specifier: 6.3.7
         version: 6.3.7
+      valtio:
+        specifier: 2.3.2
+        version: 2.3.2(@types/react@19.2.18)(react@19.2.8)
     devDependencies:
       '@tanstack/react-query':
         specifier: ^5.101.4
@@ -724,15 +851,42 @@ importers:
       '@tanstack/react-router':
         specifier: 1.170.21
         version: 1.170.21(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@testing-library/react':
+        specifier: ^16.3.2
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
+      '@types/ramda':
+        specifier: ^0.31.1
+        version: 0.31.1
+      '@types/react':
+        specifier: 19.2.18
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: 19.2.4
+        version: 19.2.4(@types/react@19.2.18)
+      '@types/sanitize-html':
+        specifier: ^2.16.1
+        version: 2.16.1
+      '@vitejs/plugin-react':
+        specifier: ^6.0.5
+        version: 6.1.0(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       react:
         specifier: ^19.2.8
         version: 19.2.8
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
+      tailwindcss:
+        specifier: 4.3.3
+        version: 4.3.3
+      vite-tsconfig-paths:
+        specifier: ^6.1.1
+        version: 6.1.1(supports-color@10.2.2)(typescript@7.0.2)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
 
   frontend/dash:
     dependencies:
@@ -763,6 +917,9 @@ importers:
       '@tanstack/react-start':
         specifier: 1.168.38
         version: 1.168.38(esbuild@0.28.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(rolldown@1.2.6)(supports-color@10.2.2)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      graphql:
+        specifier: ^16.13.2
+        version: 16.14.2
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -797,6 +954,9 @@ importers:
       vite:
         specifier: ^8.2.0
         version: 8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       wrangler:
         specifier: ^4.118.0
         version: 4.126.0(@cloudflare/workers-types@5.20260827.1)
@@ -864,12 +1024,27 @@ importers:
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(react@19.2.8)
+      motion:
+        specifier: ^12.43.0
+        version: 12.43.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      ramda:
+        specifier: ^0.32.0
+        version: 0.32.0
       react:
         specifier: ^19.2.8
         version: 19.2.8
       react-dom:
         specifier: ^19.2.8
         version: 19.2.8(react@19.2.8)
+      react-scroll-snap-anime-slider:
+        specifier: ^1.5.3
+        version: 1.5.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react-trend:
+        specifier: ^1.2.4
+        version: 1.2.5(react@19.2.8)
+      typewriter-effect:
+        specifier: ^2.19.0
+        version: 2.22.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@tailwindcss/vite':
         specifier: 4.3.3
@@ -975,6 +1150,9 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^4.1.10
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(jsdom@29.1.1)(vite@8.2.2(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
 
   infra/edge-router:
     dependencies:

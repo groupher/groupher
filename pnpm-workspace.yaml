@@ -8,6 +8,7 @@ packages:
 # Use pnpm's native symlinked virtual-store layout so each workspace resolves
 # only its declared dependencies.
 nodeLinker: isolated
+injectWorkspacePackages: true
 strictDepBuilds: true
 
 # Only Lefthook needs its install script in the current repository. Keep every

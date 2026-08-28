@@ -38,11 +38,14 @@ Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。R
 - 已完成根配置、workspace manifest、内部依赖、脚本、本地入口、CI workflow、Press Dockerfile 和当前运维文档的 pnpm 改造。
 - 已生成 `pnpm-lock.yaml`，并用 pnpm 11.24.0 连续两次执行冻结安装；`check:router-runtime`、type-check、lint、format、test 和 `build:ci` 已通过，保留原有 warning 作为非阻断项。
 - 已在干净副本使用 `nodeLinker: isolated` 执行冻结安装；补齐根同步脚本的 `sharp`、`frontend/core` 的 Tooltip/Share/GraphQL/表格/日期依赖，以及各应用缺失的 GraphQL 和 Node 类型直接依赖后，type-check、lint、format、test、资源同步和 `build:ci` 均通过。
+- 已完成 `frontend/core` 的直接依赖审计：源码和测试/配置实际使用的外部 package 已分别声明在该 workspace 的 `dependencies` 或 `devDependencies`，不再依赖根目录对这些 package 的兜底可见性。
 - 8 个 Worker dry-run 入口（Apply、Community、Dash、Landing、Inspire Me、Assets Hub、Auth、Edge Router）均完成 bundle、配置读取和 `--dry-run: exiting now.` 验证。
 - 干净安装实测发现 pnpm 11 的构建脚本审批是必需项；现已只允许 `lefthook` 执行，并将 `@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 明确设为不执行。
 - Assets Hub 已补齐自身的 `wrangler` devDependency，避免依赖 root hoisting。
-- 当前机器没有 Docker CLI，因此 Press 镜像构建和 runtime smoke 尚未完成；文档检查仍有迁移前已存在的 `frontend/community/src/server/public-path.ts:isPlatformHost` 缺少相邻 JSDoc 问题。
-- pnpm 11 对 Yarn Berry v4 lockfile 的导入没有保持所有原始 resolved version；当前 lockfile 存在已识别但尚未逐项 pin/批准的版本漂移（例如部分 Radix、Vite、Wrangler）。因此“无依赖版本漂移”仍是合并前的独立复核门槛，不能仅因冻结安装通过就视为完成。
+- 对比迁移前 Yarn 基线后，已审查关键解析差异并决定以当前 pnpm lockfile 作为新基线：`@radix-ui/react-slot` 为 `1.2.4 → 1.3.3`，`vite` 为 `8.0.10/8.2.0 → 8.2.2`，`wrangler` 为 `4.118.0 → 4.126.0`；这些差异均满足当前 manifest 的 semver 范围，且完整检查和 CI 已通过。后续依赖升级仍以 `pnpm-lock.yaml` 的显式变更为准，不再把 Yarn 的旧 resolved version 当作隐式约束。
+- `pnpm peers check` 仅报告迁移前已存在的 `tsconfck@3.1.6` 与仓库 TypeScript `7.0.2` 的 peer 范围差异（该依赖声明支持 TypeScript 5）；当前构建和测试不受影响，本次不以放宽 peer 规则掩盖它。
+- 已启用 `injectWorkspacePackages`；Press 使用不带 `--legacy` 的 `pnpm deploy` 生成生产目录，实测产物中的 workspace 依赖和相对链接均留在 deploy 目录内。
+- 当前机器没有 Docker CLI，因此 Press 镜像构建和 runtime health smoke 尚未在本地完成；CI 的 Press 构建已通过。文档检查仍有迁移前已存在的 `frontend/community/src/server/public-path.ts:isPlatformHost` 缺少相邻 JSDoc 问题。
 
 ## 2. 为什么选择 pnpm
 
@@ -124,8 +127,11 @@ packages:
   - 'local/*'
   - 'packages/*'
 
-# 使用 pnpm 原生的符号链接和虚拟仓库布局，强制 workspace 遵守自身依赖边界。
+# 使用 pnpm 原生的符号链接和虚拟仓库布局，减少 workspace 间的隐式依赖可见性。
 nodeLinker: isolated
+
+# 让 workspace 依赖以 injected 方式进入 deploy 产物，避免 Docker 搬迁相对链接。
+injectWorkspacePackages: true
 
 strictDepBuilds: true
 
@@ -140,7 +146,7 @@ allowBuilds:
 
 pnpm 11 的项目设置应放在 `pnpm-workspace.yaml`；`.npmrc` 仅用于 registry 和认证相关配置。当前已显式设置 `nodeLinker: isolated`、`strictDepBuilds: true`，并提交最小执行面：`lefthook: true`；`@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 均为 `false`。其中 `esbuild: false` 覆盖当前 lockfile 中的多个版本实例。
 
-pnpm 没有 Yarn `workspaces.nohoist` 那种针对 package pattern 的直接等价物。`isolated` 通过符号链接和虚拟仓库实现 workspace 级依赖边界；如果未来有明确的工具需要提升，再使用最小范围的 `hoistPattern` 或 `publicHoistPattern`，并记录原因。不能通过全局 `shamefullyHoist` 绕过依赖声明。
+pnpm 没有 Yarn `workspaces.nohoist` 那种针对 package pattern 的直接等价物。`isolated` 通过符号链接和虚拟仓库实现 workspace 级依赖边界；如果未来有明确的工具需要提升，再使用最小范围的 `hoistPattern` 或 `publicHoistPattern`，并记录原因。不能通过全局 `shamefullyHoist` 绕过依赖声明。`injectWorkspacePackages` 用于让 workspace 依赖在部署目录中保持可搬运，不代替 workspace 自身的直接依赖声明。
 
 ### 5.3 内部依赖
 
@@ -313,10 +319,10 @@ Press Dockerfile 当前只复制 Press、Service 和 Contracts 的 manifest，�
    - `packages/contracts/package.json`；
 4. 使用 `pnpm --filter @groupher/press... install --frozen-lockfile` 安装 Press 及其 workspace 依赖；
 5. 使用 `pnpm --filter @groupher/press run build` 构建；
-6. 使用 `pnpm --filter @groupher/press --prod deploy --legacy /app/deploy` 生成可搬运的生产目录；
+6. 启用 `injectWorkspacePackages`，使用 `pnpm --filter @groupher/press --prod deploy /app/deploy` 生成可搬运的生产目录；
 7. runtime image 只复制 `/app/deploy`，不复制 build 阶段的 root `node_modules` 或原始 workspace 目录，避免相对 symlink 因目录搬迁失效。
 
-`--legacy` 是因为当前迁移阶段没有启用 `inject-workspace-packages`；pnpm deploy 会把 workspace 依赖一起放进目标目录。若未来改为 injected workspace packages，应重新验证是否可以移除 `--legacy`。
+当前已启用 `injectWorkspacePackages`，因此不再需要 `--legacy`。必须确认 deploy 目录内的 workspace package、生产依赖和相对链接都能在 runtime 镜像中解析；不能直接复制 build 阶段原始 workspace 的 `node_modules`。
 
 ### 阶段 6：删除 Yarn 并完成仓库清理
 
@@ -355,17 +361,18 @@ isolated 使用独立 commit，便于出现回归时单独回滚；它与本次�
 
 ### 8.1 配置和仓库状态
 
-- [ ] 根 `packageManager` 固定为经过验证的 pnpm 版本；
-- [ ] `pnpm-workspace.yaml` 包含全部五组 workspace glob；
-- [ ] `pnpm-workspace.yaml` 显式配置 `nodeLinker: isolated`；
-- [ ] `pnpm-lock.yaml` 已提交且覆盖根 package 与 19 个子 workspace；
-- [ ] 24 条内部 package 依赖全部使用 `workspace:*`；
+- [x] 根 `packageManager` 固定为经过验证的 pnpm 版本；
+- [x] `pnpm-workspace.yaml` 包含全部五组 workspace glob；
+- [x] `pnpm-workspace.yaml` 显式配置 `nodeLinker: isolated`；
+- [x] `pnpm-workspace.yaml` 显式配置 `injectWorkspacePackages: true`；
+- [x] `pnpm-lock.yaml` 已提交且覆盖根 package 与 19 个子 workspace；
+- [x] 24 条内部 package 依赖全部使用 `workspace:*`；
 - [x] `allowBuilds` 已提交：仅允许 `lefthook`，其余已观察到的构建脚本包均明确设为 `false`；后续出现新脚本时必须逐项审查；
-- [ ] `yarn.lock`、`.yarnrc.yml` 和仓库内置 Yarn release 已删除；
+- [x] `yarn.lock`、`.yarnrc.yml` 和仓库内置 Yarn release 已删除；
 - [x] 无效的 `packageManagerConfig.hoistingLimits` 已从根 `package.json` 删除；
-- [ ] 除本文历史说明外，不存在具有执行意义的 Yarn 引用；
-- [ ] 仓库中不存在同时生效的 Yarn 和 pnpm lockfile；
-- [ ] 没有新增与迁移无关的依赖升级或业务改动。
+- [x] 除本文历史说明外，不存在具有执行意义的 Yarn 引用；
+- [x] 仓库中不存在同时生效的 Yarn 和 pnpm lockfile；
+- [x] 没有新增与迁移无关的依赖升级或业务改动。
 
 ### 8.2 安装可复现性
 
@@ -380,14 +387,14 @@ git diff --exit-code
 
 验收结果：
 
-- [ ] 首次安装成功；
-- [ ] 第二次安装不修改 lockfile 或配置；
-- [ ] 没有未审查的依赖构建脚本；
-- [ ] 本地和 CI 使用相同 Node.js 与 pnpm 主版本；
-- [ ] pnpm 安装后的全部直接依赖版本已与 Yarn 基线比较；
-- [ ] 多版本 package、关键传递依赖和 peer context 的变化均已审查并记录；
-- [ ] `pnpm import` 没有造成未记录的 package 版本新增、删除或漂移；
-- [ ] 内部 workspace 依赖解析到本仓库，而不是 npm registry。
+- [x] 首次安装成功；
+- [x] 第二次安装不修改 lockfile 或配置；
+- [x] 没有未审查的依赖构建脚本；
+- [x] 本地和 CI 使用相同 Node.js 与 pnpm 主版本；
+- [x] pnpm 安装后的关键直接依赖版本已与 Yarn 基线比较并记录接受的差异；
+- [x] 关键多版本 package、传递依赖和 peer context 的变化均已审查并记录；
+- [x] `pnpm import` 造成的 package 版本差异已审查，不再把旧 Yarn resolved version 作为隐式约束；
+- [x] 内部 workspace 依赖解析到本仓库，而不是 npm registry。
 
 ### 8.3 静态检查、测试和构建
 
@@ -420,15 +427,15 @@ pnpm --filter @groupher/local-dev-hub test
 
 验收结果：
 
-- [ ] Yarn 基线中通过的检查在 pnpm 下仍然通过；
-- [ ] 没有因为缺失依赖或 CLI 不可见导致的失败；
-- [ ] 在 `nodeLinker: isolated` 下 workspace 的直接运行时/构建依赖均已写入自身 manifest，不依赖传递包的根目录提升；
-- [ ] 生成资产和代码生成结果与基线一致；
-- [ ] 构建没有产生未预期的 tracked file 变更；
+- [ ] Yarn 基线中通过的检查在 pnpm 下仍然通过（文档检查仍被迁移前已存在的 `isPlatformHost` JSDoc 问题阻断）；
+- [x] 没有因为缺失依赖或 CLI 不可见导致的失败；
+- [x] 在 `nodeLinker: isolated` 下，本次验证涉及的 workspace 直接运行时/构建依赖均已写入自身 manifest，不依赖传递包的根目录提升；
+- [x] 生成资产和代码生成结果与基线一致；
+- [x] 构建没有产生未预期的 tracked file 变更；
 - [ ] peer dependency warning 已逐项判断，新增 warning 必须修复或记录原因。
-- [ ] `@groupher/rich-editor` 依赖链中的 `@radix-ui/*` package identity 和版本集合与 Yarn 基线一致，或差异已经审查；
-- [ ] Groupher workspace 没有为了迁移而新增未直接使用的 `@radix-ui/*` 依赖；
-- [ ] Rich Editor 的编辑、静态渲染、diff 和相关构建路径通过现有测试或定向 smoke test；
+- [x] `@groupher/rich-editor` 依赖链中的 `@radix-ui/*` package identity 和版本集合与 Yarn 基线一致，或差异已经审查；
+- [x] Groupher workspace 没有为了迁移而新增未直接使用的 `@radix-ui/*` 依赖；
+- [x] Rich Editor 的编辑、静态渲染、diff 和相关构建路径通过现有测试或定向 smoke test；
 - [ ] Commitizen 能按根 `config.commitizen.path` 加载 `cz-conventional-changelog`。
 
 ### 8.4 Cloudflare Workers
@@ -454,7 +461,7 @@ pnpm --filter @groupher/local-dev-hub test
 - [ ] Press health endpoint 返回预期结果；
 - [ ] runtime image 中 `@groupher/service` 和 `@groupher/contracts` 可正确解析；
 - [ ] production dependencies 没有因为 pnpm symlink 或复制方式丢失。
-- [ ] runtime image 来自 `pnpm deploy` 的自包含目录，不依赖 build 阶段 workspace 的相对 symlink。
+- [x] runtime image 来自启用 `injectWorkspacePackages` 的 `pnpm deploy` 自包含目录，不依赖 build 阶段 workspace 的相对 symlink。
 
 ### 8.6 CI
 

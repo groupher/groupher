@@ -22,8 +22,13 @@
     "@tanstack/react-start": "1.168.38",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "motion": "^12.43.0",
+    "ramda": "^0.32.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "react-scroll-snap-anime-slider": "^1.5.3",
+    "react-trend": "^1.2.4",
+    "typewriter-effect": "^2.19.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
