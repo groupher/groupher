@@ -2,7 +2,7 @@ import Layout from '@dash/components/layouts/assets'
 import { loadAssets } from '@dash/server/cms'
 import { createFileRoute } from '@tanstack/react-router'
 
-import AssetsHub from '~/unit/DashboardThread/AssetsHub'
+import AssetsHub from '~/unit/DsbThread/AssetsHub'
 
 export const Route = createFileRoute('/$community/assets')({
   staleTime: 60_000,

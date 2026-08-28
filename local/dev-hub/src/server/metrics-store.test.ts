@@ -9,14 +9,14 @@ import type { TServiceDefinition } from './services.ts'
 
 const MB = 1024 * 1024
 const definition: TServiceDefinition = {
-  id: 'main',
-  name: 'Main',
+  id: 'community',
+  name: 'Community',
   description: 'Test service',
   group: 'frontend',
-  monogram: 'MN',
+  monogram: 'CM',
   cwd: '/tmp',
-  port: 3000,
-  url: 'http://localhost:3000',
+  port: 3007,
+  url: 'http://localhost:3007',
   metrics: {
     serverCpuPercent: 90,
     serverRssBytes: 1_024 * MB,
@@ -35,22 +35,22 @@ test('keeps only the current local day and returns recorded history', async () =
     await store.initialize()
     await assert.rejects(access(path.join(rootDir, '2026-07-22')))
 
-    await store.recordServer('main', 'main-run', {
+    await store.recordServer('community', 'community-run', {
       cpuPercent: 24.3,
       rssBytes: 320 * MB,
       processCount: 3,
     })
     await store.recordBrowser({
-      serviceId: 'main',
+      serviceId: 'community',
       pageId: 'page-1',
-      url: 'http://localhost:3000/home',
+      url: 'http://localhost:3007/home',
       visibility: 'visible',
       heapBytes: 128 * MB,
       busyPercent: 4.2,
       sampleWindowMs: 2_000,
     })
 
-    const history = await store.getHistory('main', '1h')
+    const history = await store.getHistory('community', '1h')
     assert.equal(history.samples.length, 2)
     assert.deepEqual(
       new Set(history.samples.map((sample) => sample.source)),
@@ -75,7 +75,7 @@ test('pauses persistence and raises a notice at the per-service size limit', asy
   try {
     await store.initialize()
     for (let index = 0; index < 12; index += 1) {
-      await store.recordServer('main', 'main-run', {
+      await store.recordServer('community', 'community-run', {
         cpuPercent: index,
         rssBytes: (300 + index) * MB,
         processCount: 2,
@@ -85,12 +85,12 @@ test('pauses persistence and raises a notice at the per-service size limit', asy
 
     const notices = store.getNotices()
     assert.equal(notices.length, 1)
-    assert.equal(notices[0]?.serviceId, 'main')
+    assert.equal(notices[0]?.serviceId, 'community')
     assert.equal(notices[0]?.recordingPaused, true)
 
-    const file = path.join(rootDir, '2026-07-23', 'main.jsonl')
+    const file = path.join(rootDir, '2026-07-23', 'community.jsonl')
     assert.ok((await stat(file)).size <= maxFileBytes)
-    assert.equal(store.getSnapshots().main?.server?.cpuPercent, 11)
+    assert.equal(store.getSnapshots().community?.server?.cpuPercent, 11)
   } finally {
     await store.close()
     await rm(rootDir, { force: true, recursive: true })
@@ -105,9 +105,9 @@ test('selects the newest visible browser page without sorting all pages', async 
   try {
     await store.initialize()
     await store.recordBrowser({
-      serviceId: 'main',
+      serviceId: 'community',
       pageId: 'visible-old',
-      url: 'http://localhost:3000/visible-old',
+      url: 'http://localhost:3007/visible-old',
       visibility: 'visible',
       heapBytes: 10,
       busyPercent: 1,
@@ -115,30 +115,30 @@ test('selects the newest visible browser page without sorting all pages', async 
     })
     now += 1
     await store.recordBrowser({
-      serviceId: 'main',
+      serviceId: 'community',
       pageId: 'hidden-new',
-      url: 'http://localhost:3000/hidden-new',
+      url: 'http://localhost:3007/hidden-new',
       visibility: 'hidden',
       heapBytes: 20,
       busyPercent: 2,
       sampleWindowMs: 2_000,
     })
 
-    assert.equal(store.getSnapshots().main?.browser?.pageId, 'visible-old')
+    assert.equal(store.getSnapshots().community?.browser?.pageId, 'visible-old')
 
     now += 1
     await store.recordBrowser({
-      serviceId: 'main',
+      serviceId: 'community',
       pageId: 'visible-new',
-      url: 'http://localhost:3000/visible-new',
+      url: 'http://localhost:3007/visible-new',
       visibility: 'visible',
       heapBytes: 30,
       busyPercent: 3,
       sampleWindowMs: 2_000,
     })
 
-    assert.equal(store.getSnapshots().main?.browser?.pageId, 'visible-new')
-    assert.equal(store.getSnapshots().main?.browserPageCount, 3)
+    assert.equal(store.getSnapshots().community?.browser?.pageId, 'visible-new')
+    assert.equal(store.getSnapshots().community?.browserPageCount, 3)
   } finally {
     await store.close()
     await rm(rootDir, { force: true, recursive: true })

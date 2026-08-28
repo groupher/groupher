@@ -1,10 +1,8 @@
+import { useLocation } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
 
-import { usePathname, useSearchParams } from '~/platform'
-
 export default (loader: () => void) => {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const { pathname, searchStr } = useLocation()
 
   const isInitialMount = useRef(true)
   const loaderRef = useRef(loader)
@@ -17,5 +15,5 @@ export default (loader: () => void) => {
       return
     }
     loaderRef.current?.()
-  }, [pathname, searchParams])
+  }, [pathname, searchStr])
 }

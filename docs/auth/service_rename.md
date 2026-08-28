@@ -1,5 +1,7 @@
 # ServiceAuth 模块重命名与调用链
 
+> 历史实施记录：下文 Dashboard helper 路径用于保留重命名前后的证据，不是当前文件位置。
+
 ## 状态
 
 已执行。本文保留旧名到新名的映射、调用链和迁移风险，作为后续维护的边界说明。
@@ -30,14 +32,14 @@ Phoenix 出站客户端的实际职责是向 Auth 申请短期 service access to
 
 ## 变更前后命名映射
 
-| 变更前职责 | 变更后命名或概念 |
-| --- | --- |
-| Phoenix 出站 token client | `GroupherServer.ServiceAuth.Client` |
-| Phoenix 入站 service token verifier | `GroupherServerWeb.ServiceAuth.Verifier` |
-| TypeScript token client 工厂与类型 | `createServiceAuthClient`、`TServiceAuthClient` |
+| 变更前职责                           | 变更后命名或概念                                    |
+| ------------------------------------ | --------------------------------------------------- |
+| Phoenix 出站 token client            | `GroupherServer.ServiceAuth.Client`                 |
+| Phoenix 入站 service token verifier  | `GroupherServerWeb.ServiceAuth.Verifier`            |
+| TypeScript token client 工厂与类型   | `createServiceAuthClient`、`TServiceAuthClient`     |
 | TypeScript token verifier 工厂与类型 | `createServiceAuthVerifier`、`TServiceAuthVerifier` |
-| Dashboard service-auth helper | `frontend/dashboard/src/lib/serviceAuth.ts` |
-| Auth issuer 文件 | `backend/auth/src/service-auth.ts` |
+| Dashboard service-auth helper        | `frontend/dashboard/src/lib/serviceAuth.ts`         |
+| Auth issuer 文件                     | `backend/auth/src/service-auth.ts`                  |
 
 TypeScript 侧的变更前导出：
 
@@ -80,11 +82,11 @@ TypeScript 侧的变更前导出：
 
 当前仓库的实现分布：
 
-| 模块 | 方向 | 职责 |
-| --- | --- | --- |
-| GroupherServer.ServiceAuth.Client | Phoenix 出站 | 向 Auth 申请 service access JWT，并按 resource/scope 缓存 |
-| GroupherServerWeb.ServiceAuth.Verifier | Phoenix 入站 | 验证其他服务发来的 service access JWT |
-| @groupher/service/auth | 多个 TypeScript 服务 | 提供 token client/verifier 的工厂与类型 |
+| 模块                                   | 方向                 | 职责                                                      |
+| -------------------------------------- | -------------------- | --------------------------------------------------------- |
+| GroupherServer.ServiceAuth.Client      | Phoenix 出站         | 向 Auth 申请 service access JWT，并按 resource/scope 缓存 |
+| GroupherServerWeb.ServiceAuth.Verifier | Phoenix 入站         | 验证其他服务发来的 service access JWT                     |
+| @groupher/service/auth                 | 多个 TypeScript 服务 | 提供 token client/verifier 的工厂与类型                   |
 
 ## Phoenix 出站：调用 Assets Hub
 

@@ -2,7 +2,6 @@
 
 import type { FC } from 'react'
 
-import { Image as NextImage } from '~/platform'
 import type { TMarkerEmojiValue } from '~/spec'
 import { getTwemojiSrc } from '~/utils/icons'
 
@@ -16,12 +15,11 @@ const EmojiNode: FC<TProps> = ({ value, size, className }) => {
   const pixelSize = size * 4
 
   return (
-    <NextImage
+    <img
       src={getTwemojiSrc(value.unified)}
       width={pixelSize}
       height={pixelSize}
       alt=''
-      unoptimized
       draggable={false}
       className={className}
     />

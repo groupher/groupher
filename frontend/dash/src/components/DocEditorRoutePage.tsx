@@ -1,6 +1,6 @@
 import type { TDocEditorInitialData } from '@dash/server/doc-editor'
 
-import Editor from '~/unit/DashboardThread/CMS/Docs/Editor'
+import Editor from '~/unit/DsbThread/CMS/Docs/Editor'
 
 type TProps = {
   initialData: TDocEditorInitialData

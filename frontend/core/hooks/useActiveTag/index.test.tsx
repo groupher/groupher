@@ -7,20 +7,9 @@ import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useActiveTag from '~/hooks/useActiveTag'
 import { articleKeys } from '~/query'
 
-let mockSearchParams = new URLSearchParams()
-
-vi.mock('~/platform', async () => {
-  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
-  return {
-    ...actual,
-    usePathname: () => '/acme/post',
-    useSearchParams: () => mockSearchParams,
-  }
-})
-
 describe('useActiveTag', () => {
   it('returns activeTag from url slug', () => {
-    mockSearchParams = new URLSearchParams('tag=tag-1')
+    window.history.replaceState(null, '', '/acme/post?tag=tag-1')
 
     const StoreWrapper = makeStoreWrapper({
       community: { slug: 'acme' },

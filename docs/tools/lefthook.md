@@ -1,5 +1,8 @@
 # Lefthook 迁移方案
 
+> 历史实施记录：下文列出的 `frontend/main`、`frontend/dashboard` 和 `infra/gateway`
+> 是迁移当时的检查矩阵，不代表当前 workspace。当前配置以根 `lefthook.yml` 为准。
+
 ## 结论
 
 项目可以采用 Lefthook，但目标应是替换 Husky + lint-staged 的 Git hooks 编排层，不应与现有两者并存。
@@ -34,7 +37,7 @@ git commit
 | frontend/main          | tsc-files                |
 | frontend/dashboard     | tsc-files                |
 | frontend/landing       | tsc-files                |
-| backend/inspire-me     | tsc-files                |
+| frontend/inspire-me    | tsc-files                |
 | local/dev-hub          | workspace type-check     |
 | backend/auth           | tsc-files                |
 | infra/gateway          | tsc-files                |
@@ -125,7 +128,7 @@ commit-msg:
 - frontend/main
 - frontend/dashboard
 - frontend/landing
-- backend/inspire-me
+- frontend/inspire-me
 - local/dev-hub
 - backend/auth
 - infra/gateway

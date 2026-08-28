@@ -21,21 +21,13 @@ pre-commit:
       files: node scripts/lefthook-files.mjs frontend/core ts tsx --absolute
       run: cd frontend/core && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.app.json global.d.ts {files}
 
-    - name: type-check main
-      files: node scripts/lefthook-files.mjs frontend/main ts tsx --absolute
-      run: cd frontend/main && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
-
-    - name: type-check dashboard
-      files: node scripts/lefthook-files.mjs frontend/dashboard ts tsx --absolute
-      run: cd frontend/dashboard && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
-
     - name: type-check landing
       files: node scripts/lefthook-files.mjs frontend/landing ts tsx --absolute
       run: cd frontend/landing && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check inspire-me
-      files: node scripts/lefthook-files.mjs backend/inspire-me ts tsx --absolute
-      run: cd backend/inspire-me && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      files: node scripts/lefthook-files.mjs frontend/inspire-me ts tsx --absolute
+      run: cd frontend/inspire-me && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check dev-hub
       files: node scripts/lefthook-files.mjs local/dev-hub ts tsx
@@ -45,9 +37,9 @@ pre-commit:
       files: node scripts/lefthook-files.mjs backend/auth ts tsx --absolute
       run: cd backend/auth && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
-    - name: type-check gateway
-      files: node scripts/lefthook-files.mjs infra/gateway ts tsx --absolute
-      run: cd infra/gateway && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+    - name: type-check dev-gateway
+      files: node scripts/lefthook-files.mjs infra/dev-gateway ts tsx --absolute
+      run: cd infra/dev-gateway && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check content-import
       files: node scripts/lefthook-files.mjs backend/content-import ts tsx --absolute

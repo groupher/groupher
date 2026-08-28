@@ -1,4 +1,4 @@
-import { DASHBOARD_SITE_URL } from '~/config'
+import { DASH_SITE_URL } from '~/config'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { ROUTE } from '~/const/route'
 import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
@@ -6,7 +6,7 @@ import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 import { MORE_TAB } from './constant'
 
 const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
-const getDashboardPath = (community: string): string => `${DASHBOARD_SITE_URL}/${community}`
+const getDashboardPath = (community: string): string => `${DASH_SITE_URL}/${community}`
 
 type TLegacyHeaderLinkItem = {
   id?: string

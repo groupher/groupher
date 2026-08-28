@@ -1,12 +1,10 @@
-'use client'
-
 import type { TMetric } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TFmt = 'default' | 'lowercase'
 
 export default (fmt: TFmt = 'default'): TMetric => {
-  const { metric } = useDashboard()
+  const { metric } = useDsb()
 
   if (fmt === 'lowercase') {
     return metric.toLowerCase() as TMetric

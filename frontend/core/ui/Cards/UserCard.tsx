@@ -31,7 +31,7 @@ const UserCard: FC<TProps> = ({ user }) => {
           fallback={<ImgFallback user={user} className={s.avatar} size={SIZE.MEDIUM} />}
         />
         <div className={s.info}>
-          <Link href={`user/${login}`} prefetch={false} className={s.title}>
+          <Link href={`user/${login}`} navigation='router' prefetch={false} className={s.title}>
             <div className={s.nickname}>{cutRest(nickname, 12)}</div>
             <div className={s.login}>{login}</div>
           </Link>

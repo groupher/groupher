@@ -65,6 +65,7 @@ export default function DashList({ activeId, groups, onOpenTree, onSelect }: TPr
                   key={item.id}
                   className={className}
                   href={href}
+                  navigation='router'
                   aria-label={item.title || 'Untitled'}
                   aria-current={active ? 'location' : undefined}
                   onClick={() => onSelect(item)}

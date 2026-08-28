@@ -27,10 +27,17 @@ describe('platform root routes', () => {
     '/llms.txt',
     '/robots.txt',
     '/favicon.ico',
-    '/landing/_next/static/app.js',
+    '/landing/assets/app.js',
     '/icons/logo.svg',
   ])('routes Landing asset %s', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('landing')
+  })
+
+  it('maps the public Landing asset namespace to the static bundle path', () => {
+    expect(resolveRoot('/landing/assets/app.js')).toMatchObject({
+      targetKind: 'landing',
+      pathname: '/assets/app.js',
+    })
   })
 
   it('keeps health isolated to the router', () => {
@@ -82,7 +89,6 @@ describe('platform root routes', () => {
     '/api/docs/import/start',
     '/api/internal/docs-import/status',
     '/api/revalidate/community',
-    '/dashboard/_next/app.js',
     '/api/unknown',
   ])('keeps removed or unknown route %s at 404', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('not-found')
@@ -98,7 +104,7 @@ describe('platform root routes', () => {
     })
   })
 
-  it.each(['/Home', '/1home', '/_next/app.js'])('rejects invalid first segment %s', (pathname) => {
+  it.each(['/Home', '/1home', '/_vite/app.js'])('rejects invalid first segment %s', (pathname) => {
     expect(resolveRoot(pathname).targetKind).toBe('not-found')
   })
 })

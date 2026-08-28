@@ -716,12 +716,13 @@ Files SDK 提供 list/delete，不提供 Groupher Preview TTL 语义。主动 sw
 
 ## 11. Node 模块边界
 
-首期 Node server-only 模块继续留在 `frontend/dashboard`，不在本轮抽 workspace package。若 `main` 或其他 Next.js host 后续确实需要发起同一导入流程，再提取 server-only 业务模块，由具体 host 提供 auth/env/route composition。
+Node server-only 模块已经收敛到独立的 `backend/content-import` workspace，由 Dash 通过
+HTTP contract 调用；前端 host 不再拥有导入 runtime、auth/env 或 route composition。
 
 目录按 Platform、Thread 和基础设施分开，但只创建 GitHub + Docs 的真实实现：
 
 ```text
-frontend/dashboard/src/
+backend/content-import/src/
 |-- lib/content-import/
 |   |-- core/
 |   |   |-- contracts/

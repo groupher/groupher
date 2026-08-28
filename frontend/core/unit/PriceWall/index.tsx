@@ -109,7 +109,7 @@ export default function PriceWall({ layout = 'page' }: TProps) {
               <Feature key={item.key} title={item.title} color={COLOR.PURPLE} />
             ))}
           </div>
-          <Link href={`mailto:todo`} className={s.link}>
+          <Link href='mailto:todo' navigation='document' className={s.link}>
             <Button ghost>联系我们</Button>
           </Link>
         </div>

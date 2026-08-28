@@ -1,5 +1,8 @@
 # Dashboard TanStack V2 实现评审
 
+> 历史评审记录：评审中的 `frontend/dashboard`、Next assets/HMR 和双应用路由是迁移期
+> 对照对象，不是当前运行架构。
+
 > 评审日期：2026-08-08
 >
 > 范围：`frontend/dash`、`frontend/dashboard`、`frontend/core` 中共享的 Dashboard

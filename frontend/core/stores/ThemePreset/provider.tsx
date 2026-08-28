@@ -5,7 +5,7 @@ import { useSnapshot } from 'valtio'
 
 import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import type { TResolvedThemePreset } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 import setupStore from '.'
 import { StoreContext } from './context'
@@ -48,7 +48,7 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
 
 export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProps) {
   const storeRef = useRef<TStore | null>(null)
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
 
   storeRef.current ??= setupStore(initData)
 

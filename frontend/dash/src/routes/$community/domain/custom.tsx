@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import Custom from '~/unit/DashboardThread/Domain/Custom'
+import Custom from '~/unit/DsbThread/Domain/Custom'
 
 export const Route = createFileRoute('/$community/domain/custom')({
   component: DomainCustomPage,

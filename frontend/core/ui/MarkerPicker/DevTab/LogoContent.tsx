@@ -1,6 +1,5 @@
 import type { CSSProperties, FC } from 'react'
 
-import { Image as NextImage } from '~/platform'
 import { getDevLogoFilePath, getDevLogoSrc } from '~/utils/icons'
 
 import type { TDevLogo } from '../constant/dev_logo'
@@ -19,12 +18,11 @@ const LogoContent: FC<TProps> = ({ item, active, activeBg }) => {
 
   return (
     <span className={s.wrapper} style={style}>
-      <NextImage
+      <img
         src={getDevLogoSrc(getDevLogoFilePath(item))}
         width={24}
         height={24}
         alt=''
-        unoptimized
         draggable={false}
         className={s.image}
       />

@@ -4,9 +4,9 @@ import { COMMUNITY_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
-import { Link } from '~/platform'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
 import TimeAgo from '~/ui/TimeAgo'
 import Tooltip from '~/ui/Tooltip'
@@ -54,15 +54,14 @@ const Header: FC<TProps> = ({ article }) => {
         </div>
       </div>
       <div className={s.main}>
-        <Link
+        <CommunityPreviewLink
           className={s.title}
           href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
-          scroll={false}
           previewId={innerId}
         >
           <ArticleReadLabel viewed={article.viewerHasViewed} />
           {title}
-        </Link>
+        </CommunityPreviewLink>
 
         <TagsList items={communityTags} left={2} top='px' />
         <div className='grow' />

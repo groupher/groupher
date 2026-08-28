@@ -4,12 +4,12 @@
  *
  */
 
+import { useLocation } from '@tanstack/react-router'
 import type { FC, ReactNode } from 'react'
 
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
-import { usePathname } from '~/platform'
 // import DashboardAlert from './D
 // import CustomScroller from '~/ui/CustomScroller'
 import GlowBackground from '~/shell/GlobalLayout/GlowBackground'
@@ -22,7 +22,7 @@ type TProps = {
 }
 
 const Main: FC<TProps> = ({ children }) => {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const isDocArticleRoute = /^\/[^/]+\/doc\/[^/]+\/[^/]+(?:\/)?$/.test(pathname || '')
   const containerMetric: TContainerMetric | null = isDocArticleRoute ? 'community-doc' : null
   const s = useSalon({ containerMetric })

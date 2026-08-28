@@ -12,7 +12,6 @@ groupher.com/pricing                  Landing
 groupher.com/book-demo                Landing
 groupher.com/:community/...           Community / Press
 groupher.com/api/graphql              同源浏览器 GraphQL facade
-dashboard.groupher.com                Dashboard
 dash.groupher.com                     Dash
 apply.groupher.com                    Apply
 api.groupher.com/graphiql             Phoenix GraphQL origin
@@ -20,14 +19,14 @@ press.groupher.com                    Press 服务 origin
 ```
 
 `/:community/dashboard/*`、`/:community/dash/*`、`/apply` 和 `/apply/*` 是已经删除的旧公共
-路径，返回 `404`。Dashboard、Dash、Apply 不再通过 `groupher.com` 的社区路径提供页面。
+路径，返回 `404`。Dash、Apply 不通过 `groupher.com` 的社区路径提供页面。
 
-Dashboard 的页面、`/api/artiment/*`、`/api/docs/import/*`、`/api/revalidate/community` 和
-框架资产全部属于 `dashboard.groupher.com`。`groupher.com` 不代理这些路径；迁移后根域上的
-旧 Dashboard API/资产返回 `404`。
+Dash 的页面、`/api/artiment/*`、`/api/docs/import/*`、`/api/revalidate/community` 和
+框架资产全部属于 `dash.groupher.com`。`groupher.com` 不代理这些路径；根域上的旧
+Dashboard API/资产返回 `404`。
 
 `/api/utils/slugify` 是例外：平台根域上的该路径属于 Community，用于后续用户内容创建；
-Dashboard 独立域名保留自己的同名实现。
+Dash 独立域名保留自己的同名实现。
 
 `.md`、Feed、`llms.txt` 和 community sitemap 仍使用
 `groupher.com/:community/...` 这一公共 URL。`press.groupher.com` 只作为 Edge Router 和

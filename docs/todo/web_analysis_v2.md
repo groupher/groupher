@@ -1,5 +1,8 @@
 # 网络分析 v2
 
+> 迁移说明：文中的 Next Dashboard `Client.tsx` 是已退役实现。当前 Trends 入口是
+> `frontend/dash/src/routes/$community/trend.tsx`，服务端加载位于 `frontend/dash/src/server/trend.ts`。
+
 > 状态：实现进行中。
 >
 > 范围：基于 Groupher 自有 UI 和 DTO 构建的 Dashboard`Analytics / Trends`，
@@ -737,9 +740,10 @@ v2 的流量热力图遵循与 Trends 其余部分相同的过滤语义。
 相关拆分：
 
 ```text
-frontend/dashboard/src/app/[community]/dashboard/trend/
-  page.tsx                       # 只做 SSR overview
-  helper.ts                       # overview query 和显式失败 DTO
+frontend/dash/src/
+  routes/$community/trend.tsx     # route loader 与页面入口
+  server/trend.ts                 # overview query 和显式失败 DTO
+  components/TrendRoutePage.tsx   # 组合共享 WebOverview
 
 frontend/core/unit/DashboardThread/Analysis/WebOverview/
   SummaryGrid.tsx

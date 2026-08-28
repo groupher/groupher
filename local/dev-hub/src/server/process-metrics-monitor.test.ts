@@ -12,9 +12,9 @@ test('parses and aggregates every process in a managed process group', () => {
 
   assert.deepEqual(
     aggregateProcessGroup(rows, {
-      serviceId: 'main',
+      serviceId: 'community',
       pid: 101,
-      runId: 'main-run',
+      runId: 'community-run',
     }),
     {
       cpuPercent: 20,

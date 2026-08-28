@@ -1,5 +1,8 @@
 # GraphQL Fragment And Typed Document Migration
 
+> Historical implementation record: references to the legacy Next Dashboard describe the migration
+> comparison target. The current management application is `frontend/dash`.
+
 > Status: v1 contract guardrails and typed-document slices are implemented; all
 > Pages and Dashboard operation sources are now bounded static documents. The
 > remaining work is SSR consumer/type cleanup and the separate TanStack Query

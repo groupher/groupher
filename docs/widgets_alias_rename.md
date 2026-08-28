@@ -1,5 +1,7 @@
 # 共享前端别名重命名
 
+> 历史实施记录：下文的 Dashboard type-check 名称来自旧 workspace，当前对应应用为 Dash。
+
 > 状态：已实现。
 >
 > 范围：将共享的`frontend/core/widgets`命名空间重命名为`ui`，将应用外壳组件移动到`shell`，将渲染组件移动到`render`，并更新对应的 TypeScript 别名和导入。

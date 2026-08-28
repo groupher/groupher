@@ -9,8 +9,8 @@ import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/ui/Switcher/Tabs'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon from '~/unit/DashboardThread/salon'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon from '~/unit/DsbThread/salon'
 
 const seg = DSB_ROUTE.DOC
 const CRUMB_CONFIG = {
@@ -20,7 +20,7 @@ const CRUMB_CONFIG = {
   children: [{ title: 'dsb.crumb.doc.layout', seg: `${seg}/${DSB_DOC_ROUTE.LAYOUT}` }],
 } satisfies TCrumbConfig
 
-export default function DashboardDocLayoutTabs({ children }: { children: ReactNode }) {
+export default function DsbDocLayoutTabs({ children }: { children: ReactNode }) {
   const s = useSalon()
   const { items, activeTab } = useDsbTabs(DOC_LAYOUT_TABS)
   const { t } = useTrans()

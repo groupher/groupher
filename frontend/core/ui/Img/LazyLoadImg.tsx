@@ -1,7 +1,6 @@
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 
 // frontend/core/ui/Img/LazyLoadImg.tsx
-import { Image as NextImage } from '~/platform'
 import LazyLoad from '~/ui/LazyLoad'
 
 import type { TProps as TPropsBase } from '.'
@@ -104,13 +103,11 @@ const LazyLoadImg: FC<TProps> = ({
         {(visible) =>
           // keep "visible" in the gate so behavior remains correct even if started is ever reset
           (visible || started) && showImg ? (
-            <NextImage
+            <img
               ref={imgRef}
               className={cnMerge(s.imgOverlay, !loaded && 'invisible', className)}
               src={src}
               alt={alt}
-              fill
-              unoptimized
               onLoad={handleLoad}
               onError={handleError}
               draggable={false}

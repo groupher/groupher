@@ -43,6 +43,7 @@ const Tabs: FC<TProps> = ({ activeTabId, tabs, onSelect }) => {
             key={tab.id}
             className={className}
             href={href}
+            navigation='router'
             aria-current={active ? 'page' : undefined}
           >
             {tab.title}

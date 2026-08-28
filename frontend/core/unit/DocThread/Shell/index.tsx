@@ -1,8 +1,8 @@
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import { useLocation } from '@tanstack/react-router'
 import type { FC, KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { usePathname } from '~/platform'
 import type { TDocPublicTree, TDocPublicTreeGroup, TDocPublicTreeNavigationNode } from '~/spec'
 import ArticleToc from '~/ui/ArticleToc'
 
@@ -45,7 +45,7 @@ const collectGroups = (nodes: readonly TDocPublicTreeNavigationNode[]): TDocPubl
   )
 
 const Shell: FC<TProps> = ({ children, tree }) => {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const [treeOpen, setTreeOpen] = useState(true)
   const [treeWidth, setTreeWidth] = useState<number>(DOC_PUBLIC_TREE_WIDTH.default)
   const [activeTocId, setActiveTocId] = useState<string | null>(DOC_ARTICLE_TOC_ACTIVE_ID)

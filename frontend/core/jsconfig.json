@@ -43,8 +43,6 @@
       "~/i18n": ["./lib/i18n"],
       "~/providers": ["./app/providers"],
       "~/providers/*": ["./app/providers/*"],
-      "~/proxies": ["./app/proxies"],
-      "~/proxies/*": ["./app/proxies/*"],
       "~/tailwind": ["./tailwind"],
       "~/tailwind/*": ["./tailwind/*"]
     }

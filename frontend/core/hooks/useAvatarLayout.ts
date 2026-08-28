@@ -1,8 +1,6 @@
-'use client'
-
 import { AVATAR_LAYOUT } from '~/const/layout'
 import type { TAvatarLayout } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -11,9 +9,7 @@ type TRet = {
 
 /** Exposes avatar layout state and actions through the shared React hook boundary. */
 export default function useAvatarLayout(): TRet {
-  const dsb$ = useDashboard()
-
-  const { avatarLayout } = dsb$
+  const { avatarLayout } = useDsb()
 
   return {
     avatarLayout,

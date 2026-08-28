@@ -1,20 +1,25 @@
 import { describe, expect, it } from 'vitest'
 
-import { isActiveDsbRoute, parseDsbPathname, resolveDsbRoute, toDsbTargetFromPath } from './route'
+import {
+  isActiveCommunityRoute,
+  isActiveDsbRoute,
+  parseDsbPathname,
+  resolveCommunityRoute,
+  resolveDsbRoute,
+  toDsbTargetFromPath,
+} from './route'
 
 describe('platform route parsing', () => {
   it('normalizes overview as empty segments', () => {
-    expect(parseDsbPathname('/acme/overview', 'dash')).toEqual({
+    expect(parseDsbPathname('/acme/overview')).toEqual({
       community: 'acme',
-      rootSegment: 'dash',
       segments: [],
     })
   })
 
-  it('keeps normal dashboard nested segments', () => {
-    expect(parseDsbPathname('/acme/info/logos', 'dashboard')).toEqual({
+  it('keeps normal Dash nested segments', () => {
+    expect(parseDsbPathname('/acme/info/logos')).toEqual({
       community: 'acme',
-      rootSegment: 'dashboard',
       segments: ['info', 'logos'],
     })
   })
@@ -35,7 +40,6 @@ describe('platform route search', () => {
       },
     }
     const next = resolveDsbRoute(target, {
-      rootSegment: 'dash',
       currentSearch: 'page=2&tab=draft&tag=tech&unexpected=oops',
       preserveSearch: true,
     })
@@ -53,12 +57,8 @@ describe('platform route search', () => {
   it('keeps doc editor and import allowlist keys, drops unknown keys', () => {
     const editorTarget = toDsbTargetFromPath(
       '/acme/doc/editor?docId=x&preview=job-1&job=j-1&unexpected=1',
-      'dash',
     )
-    const importTarget = toDsbTargetFromPath(
-      '/acme/doc/import?preview=job-1&job=j-1&unexpected=1',
-      'dash',
-    )
+    const importTarget = toDsbTargetFromPath('/acme/doc/import?preview=job-1&job=j-1&unexpected=1')
 
     expect(editorTarget).toMatchObject({
       app: 'dsb',
@@ -94,7 +94,6 @@ describe('platform route search', () => {
         searchSchema: ['scope'],
       },
       {
-        rootSegment: 'dash',
         currentSearch: 'page=2&scope=all&unexpected=keep',
         preserveSearch: true,
       },
@@ -115,7 +114,39 @@ describe('platform route active', () => {
       community: 'acme',
       path: '',
     }
-    expect(isActiveDsbRoute('/acme', target, 'dashboard')).toBe(true)
-    expect(isActiveDsbRoute('/acme/overview', target, 'dash')).toBe(true)
+    expect(isActiveDsbRoute('/acme', target)).toBe(true)
+    expect(isActiveDsbRoute('/acme/overview', target)).toBe(true)
+  })
+})
+
+describe('community route active', () => {
+  const target = {
+    app: 'community' as const,
+    community: 'acme',
+    path: 'post/42',
+  }
+
+  it('matches the exact target and its descendants', () => {
+    expect(isActiveCommunityRoute('/acme/post/42', target)).toBe(true)
+    expect(isActiveCommunityRoute('/acme/post/42/comments', target)).toBe(true)
+  })
+
+  it('does not match another community or a partial segment', () => {
+    expect(isActiveCommunityRoute('/other/post/42', target)).toBe(false)
+    expect(isActiveCommunityRoute('/acme/post/420', target)).toBe(false)
+  })
+
+  it('resolves a community route with its declared search schema', () => {
+    expect(
+      resolveCommunityRoute(
+        {
+          ...target,
+          path: 'post',
+          search: { tag: 'typescript', unexpected: 'drop' },
+          searchSchema: ['tag'],
+        },
+        { currentSearch: 'tag=react&page=2', preserveSearch: true },
+      ),
+    ).toBe('/acme/post?tag=typescript')
   })
 })

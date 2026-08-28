@@ -1,5 +1,8 @@
 # Query Cache 作用域与 Mutation 失效修复计划
 
+> 迁移提示：本文待办形成于 Main 仍存在时；其中 Main GraphQL route 条目已失去执行目标。
+> 继续实施前必须重做 Community/Edge Router 调用链清点，不恢复旧 route。
+
 > 状态：待实施
 >
 > 来源：PR #585 review follow-up（2026-08-24）。

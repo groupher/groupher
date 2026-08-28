@@ -11,12 +11,12 @@ export default function OnelineLayout() {
 
   return (
     <div className={s.wrapper}>
-      <Link className={s.brandLink} href='/'>
+      <Link className={s.brandLink} href='/' navigation='document'>
         Groupher
       </Link>
       <div className={s.linksInfo}>
         {onelineLinks.map((item) => (
-          <Link className={s.linkItem} key={item.id} href={item.url}>
+          <Link className={s.linkItem} key={item.id} href={item.url} navigation='document'>
             {item.title}
           </Link>
         ))}

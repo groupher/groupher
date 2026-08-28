@@ -5,8 +5,8 @@ import VIEW from '~/const/view'
 import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import Tabs from '~/ui/Switcher/Tabs'
-import useSalon from '~/unit/DashboardThread/Broadcast/salon'
-import Portal from '~/unit/DashboardThread/Portal'
+import useSalon from '~/unit/DsbThread/Broadcast/salon'
+import Portal from '~/unit/DsbThread/Portal'
 
 export default function Layout({ children }) {
   const s = useSalon()

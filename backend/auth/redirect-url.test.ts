@@ -11,9 +11,9 @@ describe('resolveAuthRedirect', () => {
       resolveAuthRedirect({
         baseUrl,
         sharedDomain,
-        url: 'https://dashboard.groupher.localhost/home',
+        url: 'https://dash.groupher.localhost/home',
       }),
-    ).toBe('https://dashboard.groupher.localhost/home')
+    ).toBe('https://dash.groupher.localhost/home')
   })
 
   it('resolves a relative callback against the Auth base URL', () => {
@@ -37,7 +37,7 @@ describe('resolveAuthRedirect', () => {
       resolveAuthRedirect({
         baseUrl,
         sharedDomain,
-        url: 'http://dashboard.groupher.localhost/home',
+        url: 'http://dash.groupher.localhost/home',
       }),
     ).toBe(baseUrl)
 
@@ -45,7 +45,7 @@ describe('resolveAuthRedirect', () => {
       resolveAuthRedirect({
         baseUrl,
         sharedDomain,
-        url: 'https://dashboard.groupher.localhost:444/home',
+        url: 'https://dash.groupher.localhost:444/home',
       }),
     ).toBe(baseUrl)
   })

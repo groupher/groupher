@@ -1,9 +1,10 @@
 'use client'
 
+import { useLocation } from '@tanstack/react-router'
+
 import METRIC from '~/const/metric'
 import { THREAD, THREAD_PATH } from '~/const/thread'
 import useMetric from '~/hooks/useMetric'
-import { usePathname } from '~/platform'
 import type { TThread, TThreadPath } from '~/spec'
 import { path2Thread } from '~/utils/thread'
 
@@ -26,7 +27,7 @@ const getThreadFromPathname = (pathname: string): TThread | null => {
 
 /** Exposes viewing thread state and actions through the shared React hook boundary. */
 export default function useViewingThread(): TThread {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
 
   const metric = useMetric()
   if (metric === METRIC.LANDING) {

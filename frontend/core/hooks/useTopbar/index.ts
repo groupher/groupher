@@ -5,7 +5,7 @@ import { includes } from 'ramda'
 import METRIC from '~/const/metric'
 import useMetric from '~/hooks/useMetric'
 import type { TColorName } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TRet = {
   hasTopbar: boolean
@@ -15,7 +15,7 @@ type TRet = {
 
 /** Exposes topbar state and actions through the shared React hook boundary. */
 export default function useTopbar(): TRet {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const metric = useMetric()
 
   const hasTopbar = !includes(metric, [METRIC.LANDING]) && dsb$.topbarEnabled

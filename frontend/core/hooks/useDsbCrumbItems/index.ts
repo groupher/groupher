@@ -1,7 +1,8 @@
 'use client'
+import { useLocation } from '@tanstack/react-router'
 import { useMemo, useRef } from 'react'
 
-import { dsbRoutes, parseDsbPathname, resolveDsbRoute, usePlatform } from '~/platform'
+import { dsbRoutes, parseDsbPathname, resolveDsbRoute } from '~/platform'
 import type { TBreadcrumbItem, TTransKey } from '~/spec'
 
 export type TDsbCrumbNode = {
@@ -61,11 +62,10 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
  * move under different dashboard URLs.
  */
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
-  const { navi } = usePlatform()
-  const rootSegment = navi.dsbRootSegment ?? 'dashboard'
-  const routeMeta = parseDsbPathname(navi.location.pathname, rootSegment)
+  const { pathname, searchStr } = useLocation()
+  const routeMeta = parseDsbPathname(pathname)
   const community = routeMeta?.community ?? ''
-  const search = navi.location.searchParams
+  const search = new URLSearchParams(searchStr)
   const routeSegmentsKey = routeMeta?.segments.join('/') ?? ''
   const crumbCacheRef = useRef<TBreadcrumbItem[]>([])
   const lastCommunityRef = useRef<string | undefined>(undefined)
@@ -90,14 +90,13 @@ export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[]
         section: to,
       })
       const full = resolveDsbRoute(target, {
-        rootSegment,
         currentSearch: search,
         preserveSearch: true,
       })
       const isLast = i === chain.length - 1
       return { title: node.title, path: isLast ? '' : full }
     })
-  }, [community, root, rootSegment, routeSegmentsKey, search.toString()])
+  }, [community, root, routeSegmentsKey, searchStr])
 
   if (community !== lastCommunityRef.current) {
     crumbCacheRef.current = []

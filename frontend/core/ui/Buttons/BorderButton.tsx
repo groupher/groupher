@@ -20,8 +20,7 @@ export default function BorderButton({ children, space = 2, className }: TProps)
   return (
     <div className={s.wrapper}>
       <ArrowSVG className={s.arrow} />
-      <div className={s.background}>
-        <div className={s.realBg} style={{ background }} />
+      <div className={s.background} style={{ background }}>
         <Button space={space} className={cnMerge(s.button, className)} noBorder>
           {children}
         </Button>

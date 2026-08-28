@@ -12,7 +12,7 @@ ${script}
 })();
 `
 
-/** Runs the pre paint theme detect script operation at the frontend shared boundary. */
+/** Builds the browser script that resolves the theme before the first paint. */
 export const prePaintThemeDetectScript = () =>
   withTryCatch(`    var stored = localStorage.getItem('${LOCAL_THEME_KEY}');
     var theme = '${THEME_MODE.LIGHT}';
@@ -28,18 +28,11 @@ export const prePaintThemeDetectScript = () =>
     document.documentElement.style.colorScheme = theme;
 `)
 
-/** Runs the pre paint init time operation at the frontend shared boundary. */
+/** Seeds the shared initial timestamp before React hydration starts. */
 export const prePaintInitTime = () =>
   withTryCatch(`    window.__GROUPHER_INITIAL_NOW__ = Date.now();`)
 
-/**
- * Build a hydration-safe first-paint CSS variable snapshot.
- *
- * React may briefly reconcile `<html data-theme>` back to the server default
- * before ThemeMonitor applies the persisted mode. This script freezes computed
- * theme variables for the currently selected theme until ThemeMonitor removes
- * the temporary style.
- */
+/** Captures resolved theme variables into a stable first-paint style element. */
 export const injectThemeFirstPaintVars = (): string => {
   const names = serializeForInlineScript(THEME_FIRST_PAINT_VAR_NAMES)
   const styleId = serializeForInlineScript(THEME_FIRST_PAINT_STYLE_ID)
@@ -61,22 +54,13 @@ export const injectThemeFirstPaintVars = (): string => {
     for (var i = 0; i < names.length; i += 1) {
       var name = names[i];
       var value = computed.getPropertyValue(name).trim();
-
-      if (value) {
-        css += name + ':' + value + ' !important;';
-      }
+      if (value) css += name + ':' + value + ' !important;';
     }
 
     css += '}';
-
-    if (style) {
-      style.disabled = wasDisabled;
-    }
-
+    if (style) style.disabled = wasDisabled;
     if (css === ':root{}') {
-      if (style) {
-        style.remove();
-      }
+      if (style) style.remove();
       return;
     }
 
@@ -84,11 +68,7 @@ export const injectThemeFirstPaintVars = (): string => {
       style = document.createElement('style');
       style.id = styleId;
     }
-
-    if (!style.parentNode) {
-      document.head.appendChild(style);
-    }
-
+    if (!style.parentNode) document.head.appendChild(style);
     style.textContent = css;
 `)
 }

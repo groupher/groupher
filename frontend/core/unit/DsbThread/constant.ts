@@ -1,0 +1,387 @@
+import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
+import { DSB_ALIAS_ROUTE, DSB_COVERS, DSB_ROUTE } from '~/const/route'
+import { PRESET_FIELD } from '~/const/theme_preset'
+import type { TDsbFieldMap, TDsbStoreFieldKey } from '~/stores/dsb/spec'
+
+import type { TDsbMenu } from './spec'
+
+export { SEO_KEYS } from '~/const/seo'
+
+export const DSB_DEMO_KEY = 'DSB_DEMO'
+export const DASHBOARD_SIDE_MENU_STICKY_OFFSET = 36
+
+const DSB_DOC_SIDE_MENU = {
+  EXPANDED_BODY_TOP: 'mt-2',
+  COLLAPSED_TOGGLE_TOP: 'mt-7',
+  COLLAPSED_BODY_TOP: 'mt-15',
+} as const
+
+const DSB_DOC_TABS = {
+  ROW: 'min-h-12',
+  EXPANDED_TOP: '-mt-2',
+  COLLAPSED_TOP: '-mt-7',
+  EXPANDED_TO_BODY_GAP: 'mt-7',
+  COLLAPSED_TO_BODY_GAP: 'mt-8',
+} as const
+
+// Shared vertical anchors for the dashboard docs workspace. Keep these values
+// semantic so the submenu, tabs, and editor body move as one layout.
+export const DSB_DOC = {
+  HEADER_ROW: 'h-10',
+  SIDE_MENU: DSB_DOC_SIDE_MENU,
+  TABS: DSB_DOC_TABS,
+  EDITOR_LAYOUT: {
+    withoutTabs: {
+      expanded: {
+        tabsOffset: null,
+        bodyTopGap: DSB_DOC_SIDE_MENU.EXPANDED_BODY_TOP,
+      },
+      collapsed: {
+        tabsOffset: null,
+        bodyTopGap: DSB_DOC_SIDE_MENU.COLLAPSED_BODY_TOP,
+      },
+    },
+    withTabs: {
+      expanded: {
+        tabsOffset: DSB_DOC_TABS.EXPANDED_TOP,
+        bodyTopGap: DSB_DOC_TABS.EXPANDED_TO_BODY_GAP,
+      },
+      collapsed: {
+        tabsOffset: DSB_DOC_TABS.COLLAPSED_TOP,
+        bodyTopGap: DSB_DOC_TABS.COLLAPSED_TO_BODY_GAP,
+      },
+    },
+  },
+  COLLAPSED_MENU_OFFSET: '-translate-y-1',
+} as const
+
+export const DSB_MENU_ICON = {
+  BASIC: 'basic',
+  CMS: 'cms',
+  ANALYSIS: 'analysis',
+  BIND: 'bind',
+} as const
+
+// Keep these keys aligned with ordinary dashboard layout state.
+// Theme preset keys are included in dashboard draft state, but persisted through
+// dedicated theme mutations instead of updateDashboardLayout.
+export const LAYOUT_FIELD = {
+  POST_LAYOUT: 'postLayout',
+  KANBAN_LAYOUT: 'kanbanLayout',
+  KANBAN_CARD_LAYOUT: 'kanbanCardLayout',
+  KANBAN_BOARDS: 'kanbanBoards',
+  KANBAN_BG_COLORS: 'kanbanBgColors',
+  DOC_COVER_LAYOUT: 'docCoverLayout',
+  DOC_FAQ_LAYOUT: 'docFaqLayout',
+  BRAND_LAYOUT: 'brandLayout',
+  TAG_LAYOUT: 'tagLayout',
+  INLINE_TAG_LAYOUT: 'inlineTagLayout',
+  AVATAR_LAYOUT: 'avatarLayout',
+  COMMUNITY_LAYOUT: 'communityLayout',
+  NAV_ACTIVE_LAYOUT: 'navActiveLayout',
+  HEADER_LAYOUT: 'headerLayout',
+  FOOTER_LAYOUT: 'footerLayout',
+  TOPBAR_ENABLED: 'topbarEnabled',
+  TOPBAR_BG: 'topbarBg',
+  TOPBAR_BG_CUSTOM_COLOR: 'topbarBgCustomColor',
+  BROADCAST_LAYOUT: 'broadcastLayout',
+  BROADCAST_ARTICLE_LAYOUT: 'broadcastArticleLayout',
+  BROADCAST_BG: 'broadcastBg',
+  BROADCAST_CUSTOM_BG: 'broadcastCustomBg',
+  BROADCAST_ARTICLE_BG: 'broadcastArticleBg',
+  BROADCAST_ARTICLE_CUSTOM_BG: 'broadcastArticleCustomBg',
+  BROADCAST_ARTICLE_ENABLE: 'broadcastArticleEnable',
+  CHANGELOG_LAYOUT: 'changelogLayout',
+  OVERLAY_DARK: 'overlayDark',
+} as const
+
+export const FIELD = {
+  ...LAYOUT_FIELD,
+  ...PRESET_FIELD,
+  ENABLE: 'enable',
+  BASE_INFO: 'baseInfo',
+  CITY: 'city',
+  TECHSTACK: 'techstack',
+  MEDIA_REPORTS: 'mediaReports',
+  THIRD_PARTY_ANALYTICS: 'thirdPartyAnalytics',
+  SEO: 'seo',
+  SOCIAL_LINKS: 'socialLinks',
+  HEADER_LINKS: 'headerLinks',
+  FOOTER_LINKS: 'footerLinks',
+  FOOTER_ONELINE_LINKS: 'footerOnelineLinks',
+  TAGS: 'tagGroups',
+  TAG: 'tag',
+  TAG_INDEX: 'tagIndex',
+  DOC_FAQ: 'docFaq',
+  NAME_ALIAS: 'nameAlias',
+  RSS_FEED_TYPE: 'rssFeedType',
+  RSS_FEED_COUNT: 'rssFeedCount',
+  WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
+  WIDGETS_SIZE: 'widgetsSize',
+  WIDGETS_THREADS: 'widgetsThreads',
+  BROADCAST_ENABLE: 'broadcastEnable',
+} as const
+
+export const TAG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.TAGS]
+export const FAQ_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.DOC_FAQ]
+export const MENU: TDsbMenu = {
+  BASIC: {
+    title: 'dsb.menu.basic',
+    icon: DSB_MENU_ICON.BASIC,
+    overviewSlug: DSB_COVERS.WORKPLACE,
+    initFold: false,
+    children: [
+      {
+        icon: 'overview',
+        title: 'dsb.menu.overview',
+        slug: DSB_ROUTE.OVERVIEW,
+      },
+      {
+        icon: 'basicInfo',
+        title: 'dsb.menu.basic_info',
+        slug: DSB_ROUTE.INFO,
+      },
+      {
+        icon: 'seo',
+        title: 'dsb.menu.seo',
+        slug: DSB_ROUTE.SEO,
+      },
+      {
+        icon: 'threads',
+        title: 'dsb.menu.threads',
+        slug: DSB_ROUTE.THREADS,
+      },
+      {
+        icon: 'appearance',
+        title: 'dsb.menu.appearance',
+        slug: DSB_ROUTE.APPEARANCE,
+      },
+      {
+        icon: 'alias',
+        title: 'dsb.menu.alias',
+        slug: DSB_ROUTE.ALIAS,
+        alias: FIELD.NAME_ALIAS,
+      },
+      {
+        icon: 'admins',
+        title: 'dsb.menu.admins',
+        slug: DSB_ROUTE.ADMINS,
+      },
+      {
+        icon: 'header',
+        title: 'dsb.menu.header',
+        slug: DSB_ROUTE.CLASSIC,
+      },
+      {
+        icon: 'footer',
+        title: 'dsb.menu.footer',
+        slug: DSB_ROUTE.FOOTER,
+      },
+    ],
+  },
+
+  CMS: {
+    title: 'dsb.menu.cms',
+    icon: DSB_MENU_ICON.CMS,
+    overviewSlug: DSB_COVERS.CMS,
+    initFold: false,
+    children: [
+      {
+        icon: 'content',
+        title: 'dsb.menu.assets',
+        slug: DSB_ROUTE.ASSETS,
+      },
+      {
+        icon: 'communities',
+        title: 'dsb.menu.communities',
+        slug: DSB_ROUTE.COMMUNITIES,
+      },
+      {
+        icon: 'tags',
+        title: 'dsb.menu.tags',
+        slug: DSB_ROUTE.TAGS,
+      },
+      {
+        icon: 'posts',
+        title: 'dsb.menu.post',
+        slug: DSB_ROUTE.POST,
+      },
+      {
+        icon: 'kanban',
+        title: 'dsb.menu.kanban',
+        slug: DSB_ROUTE.KANBAN,
+      },
+      {
+        icon: 'changelog',
+        title: 'dsb.menu.changelog',
+        slug: DSB_ROUTE.CHANGELOG,
+      },
+      {
+        icon: 'docs',
+        title: 'dsb.menu.doc',
+        slug: DSB_ROUTE.DOC,
+      },
+      {
+        icon: 'broadcast',
+        title: 'dsb.menu.broadcast',
+        slug: DSB_ROUTE.BROADCAST,
+      },
+      {
+        icon: 'blackhouse',
+        title: 'dsb.menu.blackhouse',
+        slug: DSB_ROUTE.BLACKHOUSE,
+      },
+      {
+        icon: 'rss',
+        title: 'dsb.menu.rss',
+        slug: DSB_ROUTE.RSS,
+      },
+      {
+        icon: 'importExport',
+        title: 'dsb.menu.inout',
+        slug: DSB_ROUTE.INOUT,
+      },
+      {
+        icon: 'log',
+        title: 'dsb.menu.activity',
+        slug: DSB_ROUTE.ACTIVITY,
+      },
+    ],
+  },
+
+  ANALYSIS: {
+    title: 'dsb.menu.analysis',
+    icon: DSB_MENU_ICON.ANALYSIS,
+    overviewSlug: DSB_ROUTE.ANALYSIS,
+    initFold: true,
+    children: [
+      {
+        icon: 'trend',
+        title: 'dsb.menu.trend',
+        slug: DSB_ROUTE.TREND,
+      },
+    ],
+  },
+
+  INTEGRATE: {
+    title: 'dsb.menu.integrations',
+    icon: DSB_MENU_ICON.BIND,
+    overviewSlug: DSB_COVERS.INTEGRATIONS,
+    initFold: false,
+    children: [
+      {
+        icon: 'domain',
+        title: 'dsb.menu.domain',
+        slug: DSB_ROUTE.DOMAIN,
+      },
+      {
+        icon: 'thirdParty',
+        title: 'dsb.menu.third_part',
+        slug: DSB_ROUTE['THIRD-PART'],
+      },
+      {
+        icon: 'widgets',
+        title: 'dsb.menu.widgets',
+        slug: DSB_ROUTE.WIDGETS,
+      },
+    ],
+  },
+}
+
+export enum MENU_VIEW {
+  MAIN = 'main',
+  DOC = 'doc',
+  POST = 'post',
+  KANBAN = 'kanban',
+  CHANGELOG = 'changelog',
+}
+
+export const ALIAS_GROUP = {
+  THREAD: DSB_ALIAS_ROUTE.THREAD,
+  KANBAN: DSB_ALIAS_ROUTE.KANBAN,
+  OTHERS: DSB_ALIAS_ROUTE.OTHERS,
+}
+
+export const BUILD_IN_ALIAS_SUGGESTIONS = {
+  post: ['帖子', '讨论区', '论坛'],
+  kanban: ['路线图', '规划', '蓝图'],
+  changelog: ['新功能', '发布日志', '里程碑', '开发计划'],
+  upvote: ['支持', '顶', '赞', '有帮助'],
+  doc: ['文档', '帮助中心'],
+  upvote_bug: ['同样问题', '复现', '求解决'],
+  backlog: ['Backlog', '需求池', '待排期'],
+  todo: ['Todo', '已排期', '评估中', '计划中'],
+  wip: ['Wip', '完善中'],
+  done: ['Done', '已解决'],
+  rejected: ['Rejected', '已拒绝', '已关闭'],
+  // category
+  idea: ['想法', '功能建议', '功能需求', '新功能'],
+  qa: ['问答', '求助 / 疑问', '使用帮助'],
+  bug: ['问题上报', '缺陷', 'issue', 'bug'],
+  discussion: ['讨论', '其他讨论', '其他话题'],
+}
+
+export const TW_CARD_OPTIONS = [
+  {
+    label: TW_CARD.SUMMARY,
+    value: TW_CARD.SUMMARY,
+  },
+
+  {
+    label: TW_CARD.SUMMARY_LARGE_IMAGE,
+    value: TW_CARD.SUMMARY_LARGE_IMAGE,
+  },
+]
+
+export const EMPTY_LINK_ITEM = {
+  title: '',
+  link: '',
+  index: 0,
+  group: ONE_LINK_GROUP,
+  groupIndex: 0,
+}
+
+export const EMPTY_MEDIA_REPORT = {
+  index: 0,
+  title: '',
+  favicon: '',
+  siteName: '',
+  url: '',
+  editUrl: '',
+}
+
+export const BASEINFO_BASIC_KEYS: (keyof TDsbFieldMap)[] = [
+  'locale',
+  'title',
+  'desc',
+  'introduction',
+  'homepage',
+  'slug',
+]
+export const BASEINFO_LOGOS_KEYS: (keyof TDsbFieldMap)[] = ['logo', 'favicon']
+export const BASEINFO_OTHER_KEYS: (keyof TDsbFieldMap)[] = [FIELD.CITY, FIELD.TECHSTACK]
+export const COMMUNITY_BASEINFO_KEYS = [
+  'title',
+  'locale',
+  'desc',
+  'logo',
+  'favicon',
+  'slug',
+  'homepage',
+] as const
+
+export const BASEINFO_KEYS: (keyof TDsbFieldMap)[] = [
+  ...BASEINFO_BASIC_KEYS,
+  ...BASEINFO_LOGOS_KEYS,
+  ...BASEINFO_OTHER_KEYS,
+]
+
+// export const BROADCAST_KEYS = [
+//   'broadcastTab',
+//   'broadcastLayout',
+//   'broadcastBg',
+//   'broadcastEnable',
+//   'broadcastArticleLayout',
+//   'broadcastArticleBg',
+//   'broadcastArticleEnable',
+// ]

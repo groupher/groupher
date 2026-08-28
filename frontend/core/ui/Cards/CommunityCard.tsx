@@ -27,7 +27,7 @@ const CommunityCard: FC<TProps> = ({ item: { logo, title, slug, desc } }) => {
         <div className={s.info}>
           <div className={s.title}>{title}</div>
           <div className={s.subInfo}>
-            <Link href={`/${slug}`} prefetch={false} className={s.rawLink}>
+            <Link href={`/${slug}`} navigation='router' prefetch={false} className={s.rawLink}>
               {slug}
             </Link>
             <DotDivider className='mx-1.5' />

@@ -1,0 +1,33 @@
+// import useDsb from '~/stores/dsb/hooks'
+// import useHelper from '../useHelper'
+
+export type TRet = {
+  deleteCommunity: () => void
+  archiveCommunity: () => void
+  toggleVisiable: () => void
+}
+
+/** Exposes danger zone state and actions through the shared React hook boundary. */
+export default function useDangerZone(): TRet {
+  // TODO: handle image upload
+  const deleteCommunity = () => {
+    console.log('## deleteCommunity')
+    return
+  }
+
+  const archiveCommunity = () => {
+    console.log('## archiveCommunity')
+    return
+  }
+
+  const toggleVisiable = () => {
+    console.log('## toggleVisiable')
+    return
+  }
+
+  return {
+    deleteCommunity,
+    archiveCommunity,
+    toggleVisiable,
+  }
+}

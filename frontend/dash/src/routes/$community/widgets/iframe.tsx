@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import IFrame from '~/unit/DashboardThread/Widgets/IFrame'
+import IFrame from '~/unit/DsbThread/Widgets/IFrame'
 
 export const Route = createFileRoute('/$community/widgets/iframe')({
   component: WidgetsIframePage,

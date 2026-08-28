@@ -1,9 +1,9 @@
+import { useLocation } from '@tanstack/react-router'
 import type { FC, ReactNode } from 'react'
 
 import FileTextSVG from '~/icons/FileText'
 import LinkOutSVG from '~/icons/LinkOut'
 import { Link } from '~/platform'
-import { usePathname } from '~/platform'
 import MarkerRender from '~/render/MarkerRender'
 
 import { getNodeHref, getNodeMarker, isActiveHref, isExternalHref } from '../Tree/helper'
@@ -16,7 +16,7 @@ type TProps = {
 }
 
 const Item: FC<TProps> = ({ item, onSelect }) => {
-  const pathname = usePathname()
+  const { pathname } = useLocation()
   const href = getNodeHref(item)
   const external = isExternalHref(href)
   const active = isActiveHref(pathname, href)
@@ -53,7 +53,7 @@ const Item: FC<TProps> = ({ item, onSelect }) => {
   }
 
   return (
-    <Link className={s.link} href={href} onClick={() => onSelect(item)}>
+    <Link className={s.link} href={href} navigation='router' onClick={() => onSelect(item)}>
       {content}
     </Link>
   )

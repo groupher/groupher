@@ -81,12 +81,16 @@ export default function HomeHeader() {
           <ThemeSwitch />
           <div className={s.divider} />
           {!isSticky ? (
-            <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`}>
+            <Link className={s.requestDemoLink} href={`/${ROUTE.BOOK_DEMO}`} navigation='router'>
               <DemoSVG className={s.demoIcon} />
               <div>预约演示</div>
             </Link>
           ) : (
-            <Link className={cn(s.requestDemoLink, 'scale-90')} href={ROUTE.APPLY}>
+            <Link
+              className={cn(s.requestDemoLink, 'scale-90')}
+              href={ROUTE.APPLY}
+              navigation='document'
+            >
               <Button space={3} className='bold-sm'>
                 <span className='relative mr-2.5 flex size-3 scale-75 brightness-125'>
                   <span className='s-full bg-rainbow-purpleLite absolute inline-flex animate-ping rounded-full opacity-80'></span>

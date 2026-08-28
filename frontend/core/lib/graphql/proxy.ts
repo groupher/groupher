@@ -84,8 +84,8 @@ const responseHeaders = (headers: Headers): Headers => {
 /**
  * Proxies same-origin browser GraphQL requests to Phoenix.
  *
- * App route handlers in `frontend/main` and `frontend/dashboard` delegate to
- * this helper from `/api/graphql`. It strips browser credentials before
+ * TanStack server routes delegate to this helper from `/api/graphql`. It strips
+ * browser credentials before
  * forwarding, then only forwards the canonical Groupher Phoenix token as the
  * same cookie Phoenix reads. Anonymous requests remain anonymous.
  *

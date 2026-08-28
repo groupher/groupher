@@ -15,7 +15,7 @@ import DomainSVG from '~/icons/Domain'
 import KanbanSVG from '~/icons/Kanban'
 import PostSVG from '~/icons/Post'
 import ThemeSVG from '~/icons/Theme'
-import DsbCovers from '~/unit/DashboardCovers'
+import DsbCovers from '~/unit/DsbCovers'
 
 export const Route = createFileRoute('/$community/workplace')({
   component: WorkplaceCoversPage,

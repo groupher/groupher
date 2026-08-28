@@ -7,8 +7,8 @@ import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import ArrowButton from '~/ui/Buttons/ArrowButton'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
 
 type TProps = {
   children: ReactNode

@@ -44,11 +44,11 @@ const renderGoogleAnalytics: TScriptRenderer = (config) => {
       <Script
         id='third-party-analytics-ga-loader'
         src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(value)}`}
-        strategy='afterInteractive'
+        strategy='mount'
       />
       <Script
         id='third-party-analytics-ga-init'
-        strategy='afterInteractive'
+        strategy='mount'
         dangerouslySetInnerHTML={{ __html: googleAnalyticsInit(value) }}
       />
     </Fragment>
@@ -59,7 +59,7 @@ const renderGoogleTagManager: TScriptRenderer = (config) => (
   <Script
     key={config.provider}
     id='third-party-analytics-gtm'
-    strategy='afterInteractive'
+    strategy='mount'
     dangerouslySetInnerHTML={{ __html: googleTagManagerInit(getThirdPartyAnalyticsValue(config)) }}
   />
 )
@@ -68,7 +68,7 @@ const renderClarity: TScriptRenderer = (config) => (
   <Script
     key={config.provider}
     id='third-party-analytics-clarity'
-    strategy='afterInteractive'
+    strategy='mount'
     dangerouslySetInnerHTML={{ __html: clarityInit(getThirdPartyAnalyticsValue(config)) }}
   />
 )
@@ -79,7 +79,7 @@ const renderPlausible: TScriptRenderer = (config) => (
     id='third-party-analytics-plausible'
     src='https://plausible.io/js/script.js'
     data-domain={getThirdPartyAnalyticsValue(config)}
-    strategy='lazyOnload'
+    strategy='idle'
   />
 )
 
@@ -89,7 +89,7 @@ const renderFathom: TScriptRenderer = (config) => (
     id='third-party-analytics-fathom'
     src='https://cdn.usefathom.com/script.js'
     data-site={getThirdPartyAnalyticsValue(config)}
-    strategy='lazyOnload'
+    strategy='idle'
   />
 )
 

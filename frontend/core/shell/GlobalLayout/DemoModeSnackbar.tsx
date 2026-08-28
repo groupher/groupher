@@ -6,7 +6,7 @@ import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/List'
 import WarningSVG from '~/icons/Warning'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import Button from '~/ui/Buttons/Button'
 import { resetDsbDemoConfig } from '~/utils/dsb-demo'
 
@@ -14,7 +14,7 @@ import useSalon from './salon/demo_mode_snackbar'
 
 const DemoModeSnackbar: FC = () => {
   const s = useSalon()
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const { t } = useTrans()
 
   const handleReset = () => {

@@ -1,9 +1,10 @@
 /**
  * Verifies repository-owned module docs, shared callable docs, and app READMEs.
  *
- * The check deliberately excludes tests, generated artifacts, route components,
- * and local salon style factories. Those files either inherit framework
- * contracts or are not reusable public boundaries.
+ * The check deliberately excludes tests, fixtures, generated artifacts, route
+ * components, and local salon style factories. Those files either model
+ * external inputs, inherit framework contracts, or are not reusable public
+ * boundaries.
  */
 
 import fs from 'node:fs'
@@ -57,15 +58,15 @@ const checkElixirModules = () => {
 }
 
 const productionSourceSkip = (file) =>
-  /(^|\/)(node_modules|dist|\.next|\.wrangler|coverage|e2e|generated|public|__test__)(\/|$)/.test(
+  /(^|\/)(node_modules|dist|\.wrangler|coverage|e2e|fixtures|generated|public|__test__)(\/|$)/.test(
     file,
   ) ||
   /\.(test|spec)\.[cm]?[jt]sx?$/.test(file) ||
   /(^|\/)salon(\/|\.[cm]?[jt]sx?$)/.test(file) ||
-  /(?:next-env|cloudflare-workers)\.d\.ts$/.test(file)
+  /cloudflare-workers\.d\.ts$/.test(file)
 
-const backendApps = ['assets-hub', 'auth', 'content-import', 'inspire-me', 'press']
-const infraApps = ['gateway']
+const backendApps = ['assets-hub', 'auth', 'content-import', 'press']
+const infraApps = ['dev-gateway']
 
 const checkBackendScriptModules = () => {
   for (const [base, app] of [
@@ -107,9 +108,16 @@ const hasAdjacentJsdoc = (node, source) =>
 
 const checkExportedCallables = () => {
   const sourceRoots = [
-    ...['core', 'main', 'dashboard', 'dash', 'apply', 'widget', 'landing', 'mock-server'].map(
-      (app) => path.join(root, 'frontend', app),
-    ),
+    ...[
+      'core',
+      'community',
+      'dash',
+      'apply',
+      'widget',
+      'landing',
+      'inspire-me',
+      'mock-server',
+    ].map((app) => path.join(root, 'frontend', app)),
     ...backendApps.map((app) => path.join(root, 'backend', app)),
     ...infraApps.map((app) => path.join(root, 'infra', app)),
     path.join(root, 'packages'),

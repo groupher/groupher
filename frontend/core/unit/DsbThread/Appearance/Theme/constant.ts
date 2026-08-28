@@ -1,0 +1,15 @@
+import { PRESET_FIELD } from '~/const/theme_preset'
+import type { TDsbStoreFieldKey } from '~/stores/dsb/spec'
+
+export const THEME_PRESET_STORE_FIELDS = [
+  PRESET_FIELD.THEME_PRESET,
+  PRESET_FIELD.THEME_PRESET_BASE,
+  PRESET_FIELD.THEME_TOKENS,
+  PRESET_FIELD.THEME_PRESETS,
+  PRESET_FIELD.THEME_OVERWRITE,
+] as const satisfies readonly TDsbStoreFieldKey[]
+
+export const PREVIEW_CSS_VAR_CLEANUP = {
+  '--preview-page-bg': null,
+  '--preview-glow-opacity': null,
+} as const

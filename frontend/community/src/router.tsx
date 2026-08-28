@@ -9,6 +9,7 @@ import RoutePending from './components/RoutePending'
 import type { TRouterContext } from './router-context'
 import { routeTree } from './routeTree.gen'
 
+/** Creates the Community router with its request-scoped query client. */
 export function getRouter() {
   const queryClient = getQueryClient()
   const options = {

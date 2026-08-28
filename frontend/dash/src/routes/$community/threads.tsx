@@ -1,7 +1,7 @@
 import Layout from '@dash/components/layouts/threads'
 import { createFileRoute } from '@tanstack/react-router'
 
-import Threads from '~/unit/DashboardThread/Threads'
+import Threads from '~/unit/DsbThread/Threads'
 
 export const Route = createFileRoute('/$community/threads')({
   component: ThreadsPage,

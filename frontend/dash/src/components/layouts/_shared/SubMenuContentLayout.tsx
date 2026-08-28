@@ -2,8 +2,8 @@
 
 import type { ReactNode } from 'react'
 
-import useDashboardStore from '~/stores/dashboard/hooks'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import useDsb from '~/stores/dsb/hooks'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
 
 type TProps = {
   children: ReactNode
@@ -14,7 +14,7 @@ const COLLAPSED_CONTENT_INLINE_INSET = 'pl-0'
 
 export default function SubMenuContentLayout({ children }: TProps) {
   const s = useSalon()
-  const { submenuCollapsed } = useDashboardStore()
+  const { submenuCollapsed } = useDsb()
 
   return (
     <div

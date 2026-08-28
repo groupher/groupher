@@ -8,7 +8,7 @@ Groupher Dev Hub 是 Groupher monorepo 的本地开发控制台。它把分散�
 
 ## 为什么需要 Dev Hub
 
-Groupher 不是单进程项目。日常开发可能同时涉及 Main、Dashboard、Landing、Gateway、Phoenix、文档转换器以及本地研究工具。只靠多个终端手动管理会带来几个反复出现的问题：
+Groupher 不是单进程项目。日常开发可能同时涉及 Community、Dash、Landing、Dev Gateway、Phoenix、文档转换器以及本地研究工具。只靠多个终端手动管理会带来几个反复出现的问题：
 
 - 每个服务的目录、启动命令、端口和环境变量都不同。
 - 很难快速判断端口对应的是 Dev Hub 管理的进程，还是外部已经启动的进程。
@@ -75,7 +75,7 @@ make dev.app
 - **进程接管与安全边界**：启动时识别并重启可安全确认归属的旧服务；无法确认归属时保留为 `external`，避免误杀其他项目的进程。
 - **实时状态**：通过 Server-Sent Events 推送服务状态、日志、Git 快照和指标。
 - **内嵌终端**：使用 xterm.js 展示 stdout / stderr，并保留 ANSI 颜色。
-- **列表与关系图**：既能按 Frontend / Backend 浏览，也能查看 Gateway 路由和 GraphQL 依赖。
+- **列表与关系图**：既能按 Frontend / Backend 浏览，也能查看 Dev Gateway 路由和 GraphQL 依赖。
 - **运行指标**：聚合服务进程组的 CPU、RSS 和进程数，也接收前端页面的 JS heap 与 long-task busy time。
 - **Git 面板**：展示分支、staged / unstaged / untracked 汇总及 patch。
 - **配置查看**：按服务读取 Next.js env、Elixir config 和 Python settings；敏感值只用于本地展示。
@@ -94,7 +94,7 @@ flowchart LR
 
   UI <-- "REST + SSE" --> Server
   Server --> Manager["ServiceManager"]
-  Manager --> Processes["受管进程组<br/>Main / Dashboard / Phoenix / …"]
+  Manager --> Processes["受管进程组<br/>Community / Dash / Phoenix / …"]
   Server --> Git["GitMonitor"]
   Server --> Config["ServiceConfigReader"]
   Server --> Metrics["MetricsStore + ProcessMetricsMonitor"]
@@ -106,21 +106,21 @@ flowchart LR
 
 ## 当前服务图
 
-| 服务       | 默认端口 | 角色                  | 主要技术                                 |
-| ---------- | -------: | --------------------- | ---------------------------------------- |
-| Main       |   `3000` | 社区前台              | Next.js、React、TypeScript、Tailwind CSS |
-| Dashboard  |   `3001` | 社区管理后台          | Next.js、React、TypeScript、Tailwind CSS |
-| Landing    |   `3002` | 官网与营销页面        | Next.js、React、TypeScript、Tailwind CSS |
-| Gateway    |   `3003` | 本地域名与路由入口    | Next.js、React、TypeScript、Node.js      |
-| Inspire Me |   `3010` | 本地反馈研究库        | Next.js、React、TypeScript、Tailwind CSS |
-| Phoenix    |   `4001` | mock 模式 GraphQL API | Phoenix、Elixir、Absinthe、PostgreSQL    |
-| Converter  |   `8000` | 文档转 Markdown 服务  | Python、FastAPI、MarkItDown、Uvicorn     |
+| 服务        | 默认端口 | 角色                  | 主要技术                              |
+| ----------- | -------: | --------------------- | ------------------------------------- |
+| Community   |   `3007` | 社区前台              | TanStack Start、React、TypeScript     |
+| Dash        |   `3005` | 社区管理后台          | TanStack Start、React、TypeScript     |
+| Landing     |   `3002` | 官网与营销页面        | TanStack Start、React、TypeScript     |
+| Dev Gateway |   `3003` | 本地域名与路由入口    | Hono、Node.js、TypeScript             |
+| Inspire Me  |   `3010` | 本地反馈研究库        | TanStack Start、React、TypeScript     |
+| Phoenix     |   `4001` | mock 模式 GraphQL API | Phoenix、Elixir、Absinthe、PostgreSQL |
+| Converter   |   `8000` | 文档转 Markdown 服务  | Python、FastAPI、MarkItDown、Uvicorn  |
 
 服务及关系的来源是 [`src/server/services.ts`](./src/server/services.ts)。新的服务应在这里声明工作目录、命令、端口、配置来源、技术栈和指标阈值；服务之间的路由或 API 依赖也在同一文件维护。
 
 ## Start Chain
 
-Dev Hub 的启动行为由服务配置驱动，不从 Flow 里的路由/API 关系自动推断。Flow 关系描述运行时流量方向，例如 Gateway 会路由到 Main 和 Dashboard；启动依赖描述“为了调试这个服务，哪些服务必须先可用”。
+Dev Hub 的启动行为由服务配置驱动，不从 Flow 里的路由/API 关系自动推断。Flow 关系描述运行时流量方向，例如 Dev Gateway 会路由到 Landing、Community 和 Auth；启动依赖描述“为了调试这个服务，哪些服务必须先可用”。
 
 每个服务可以声明 `startPolicy`：
 

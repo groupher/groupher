@@ -17,10 +17,8 @@ production
 
 local development
   https://groupher.localhost
-    -> infra/gateway on port 3003
+    -> infra/dev-gateway on port 3003
        -> Landing on port 3002
-       -> Main on port 3000
-       -> Dashboard on port 3001
        -> Dash on port 3005
        -> Apply on port 3006
        -> Community on port 3007
@@ -28,7 +26,7 @@ local development
        -> Phoenix on port 4001
 ```
 
-`infra/gateway` 是 Dev Gateway。它保留用于本地路由和 Dev Hub 的易用性，但不是生产环境中
+`infra/dev-gateway` 是 Dev Gateway。它保留用于本地路由和 Dev Hub 的易用性，但不是生产环境中
 `groupher.com` 的运行时。
 
 ## 为什么在本地保留 Dev Gateway
@@ -41,7 +39,7 @@ local development
 - 对于每次 Community 或其他子应用变更，它避免强制要求 Wrangler 与 Cloudflare 本地运行时。
 
 生产环境的 Cloudflare Router 和本地 Dev Gateway 应共享纯生产路由契约，但不需要共享同一个
-runtime。Gateway 还可以保留 HMR、开发资产和 referer 分流等本地专用能力。
+runtime。Dev Gateway 还可以保留 HMR、开发资产和 referer 分流等本地专用能力。
 
 ## 日常本地流程
 
@@ -54,22 +52,20 @@ make dev
 或者启动单个服务：
 
 ```bash
-make be.gateway.start
-make fe.dev.main
-make fe.dev.dashboard
+make be.dev-gateway.start
 make fe.dev.dash
 make fe.dev.apply
 make fe.dev.landing
 make be.auth.start
 ```
 
-Dev Hub 将本地入口建模为 `Dev Gateway`，但稳定的 service id、workspace name、directory 和 Makefile targets 保持不变：
+Dev Hub 将本地入口统一建模为 `Dev Gateway`：
 
 ```text
-service id:    gateway
-workspace:     @groupher/gateway
-directory:     infra/gateway
-entry command: make be.gateway.start
+service id:    dev-gateway
+workspace:     @groupher/dev-gateway
+directory:     infra/dev-gateway
+entry command: make be.dev-gateway.start
 ```
 
 在有意进行 package 或目录重命名之前，保持这些项稳定。
@@ -86,8 +82,6 @@ yarn portless:setup
 
 ```text
 groupher.localhost             -> Dev Gateway, port 3003
-main.groupher.localhost        -> Dev Gateway, port 3003
-dashboard.groupher.localhost   -> Dev Gateway, port 3003
 dash.groupher.localhost        -> Dash, port 3005
 apply.groupher.localhost       -> Apply, port 3006
 community.groupher.localhost   -> Community, port 3007
@@ -116,18 +110,17 @@ Dev Gateway 接收浏览器请求，并按 host/path 路由：
 /:community/dash/*      -> 404
 /apply, /apply/*        -> 404
 
-dashboard.groupher.localhost/* -> Dashboard
 dash.groupher.localhost/*      -> Dash
 apply.groupher.localhost/*     -> Apply
 ```
 
-Dashboard、Dash 和 Apply 是独立产品入口，不通过 `groupher.localhost/:community/...` 路由。
-Gateway 不包含旧 Main fallback 或 `/apply` 兼容产品路由，只保留真正的 dev-only 规则。
+Dash 和 Apply 是独立产品入口，不通过 `groupher.localhost/:community/...` 路由。
+Dev Gateway 不包含旧产品 fallback 或 `/apply` 兼容产品路由，只保留真正的 dev-only 规则。
 
 对于浏览器 GraphQL，Dev Gateway 保持与生产路由器相同的安全边界：浏览器请求使用同源 `/api/graphql`，并且只将 HttpOnly 的 `groupher-auth.token` 转发给 Phoenix。
 
 Landing 的旧入口路由实现已清理。需要验证生产形态时，使用当前 `landing` Worker Static
-Assets 和 `edge-router` 的 dry-run/development 流程；现有本地 Gateway 仍覆盖开发路由和 HMR。
+Assets 和 `edge-router` 的 dry-run/development 流程；现有 Dev Gateway 仍覆盖开发路由和 HMR。
 
 然后进行冒烟测试：
 
@@ -139,13 +132,11 @@ curl -i http://127.0.0.1:8788/api/auth/providers
 curl -i http://127.0.0.1:8788/api/graphql
 ```
 
-不要用该模式验收当前生产架构；其中 `MAIN_SITE` 与 `DASHBOARD_SITE` 都是迁移前配置。
-
 ## Edge Router 本地一致性模式
 
 独立 `edge-router` 已落地。生产一致性 smoke 应使用 Wrangler 的多 Worker 本地开发和
 Service Bindings 同时启动 Router、Landing、Community、Auth 等目标；日常产品开发仍使用
-Gateway，避免强制所有下游都运行在 Wrangler 中。
+Dev Gateway，避免强制所有下游都运行在 Wrangler 中。
 
 Community 的 Wrangler 入口由 TanStack Start build 生成，不能直接对源码配置运行：
 
@@ -161,18 +152,18 @@ Wrangler 配置运行时，Edge Router 的 Service Bindings 会显示为 `local 
 `/api/auth/providers` 和 `/api/graphql`。
 
 该模式用于验证 route contract、Service Binding、header/cookie/redirect 和自定义 host
-语义；日常开发仍可使用 Dev Hub + Gateway。长期结构是：
+语义；日常开发仍可使用 Dev Hub + Dev Gateway。长期结构是：
 
 ```text
 @groupher/route-contract
   |-- edge-router: production adapter and local parity smoke
-  `-- infra/gateway: local adapter, Portless, dev assets and HMR
+  `-- infra/dev-gateway: local adapter, Portless, dev assets and HMR
 ```
 
 该 workspace package 只包含 hostname/path 分类和内部 pathname transform，不依赖 Node、Hono
-或 Cloudflare runtime；Gateway 与 edge-router 各自实现运行时 adapter。
+或 Cloudflare runtime；Dev Gateway 与 edge-router 各自实现运行时 adapter。
 
-Gateway 的 `/@fs/*`、`/@id/*`、`/@vite/*`、`/__dash_hmr`、`/__apply_hmr`、开发专用
+Dev Gateway 的 `/@fs/*`、`/@id/*`、`/@vite/*`、`/__dash_hmr`、`/__apply_hmr`、开发专用
 `_serverFn` 和 HMR WebSocket 规则不进入生产 Router。
 
 ## 分析服务

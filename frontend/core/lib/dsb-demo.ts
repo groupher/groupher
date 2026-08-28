@@ -1,7 +1,7 @@
 import { ROUTE } from '~/const/route'
-import { FIELDS } from '~/stores/dashboard/constant'
-import type { TDsbFieldMap } from '~/stores/dashboard/spec'
-import { DSB_DEMO_KEY } from '~/unit/DashboardThread/constant'
+import { FIELDS } from '~/stores/dsb/constant'
+import type { TDsbFieldMap } from '~/stores/dsb/spec'
+import { DSB_DEMO_KEY } from '~/unit/DsbThread/constant'
 import persist from '~/utils/persist'
 
 const DEMO_CONFIG_KEY = `${DSB_DEMO_KEY}:config`

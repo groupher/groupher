@@ -10,7 +10,6 @@
     "./postcss.config": "./postcss.config.js",
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
-    "./next.config": "./next.config.js",
     "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
     "./dev-hub-reporter/react": "./ui/DevHubReporter/index.tsx"
   },
@@ -27,11 +26,13 @@
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "1.170.21",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-router": "1.170.21",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   }

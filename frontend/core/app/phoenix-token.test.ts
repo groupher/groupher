@@ -36,7 +36,7 @@ describe('getPhoenixToken', () => {
 
   it('reads the canonical Phoenix token cookie after verifying the JWT signature', () => {
     const token = signedToken()
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `theme=dark; groupher-auth.token=${encodeURIComponent(token)}`,
       },
@@ -46,7 +46,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('rejects unsigned or forged Phoenix token cookies', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: 'theme=dark; groupher-auth.token=phoenix-token',
       },
@@ -56,7 +56,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('rejects expired Phoenix token cookies', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken({ exp: Math.floor(Date.now() / 1000) - 1 })}`,
       },
@@ -66,7 +66,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('rejects validly signed tokens from another issuer', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken({ iss: 'other' })}`,
       },
@@ -76,7 +76,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('rejects tokens outside the browser API audience', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken({ aud: 'another-service' })}`,
       },
@@ -86,7 +86,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('rejects non-browser Phoenix tokens', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken({ typ: 'service' })}`,
       },
@@ -97,7 +97,7 @@ describe('getPhoenixToken', () => {
 
   it('rejects Phoenix token cookies when the Phoenix JWT secret is not configured', () => {
     vi.unstubAllEnvs()
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: `groupher-auth.token=${signedToken()}`,
       },
@@ -107,7 +107,7 @@ describe('getPhoenixToken', () => {
   })
 
   it('does not read the Auth.js Session cookie', () => {
-    const request = new Request('https://dashboard.groupher.localhost', {
+    const request = new Request('https://dash.groupher.localhost', {
       headers: {
         cookie: '__Secure-groupher-auth.session-token=auth-session',
       },

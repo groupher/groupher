@@ -1,6 +1,6 @@
 'use client'
 
-import { ADD_TAB_BREADCRUMB_SLOT_ID } from '~/unit/DashboardThread/CMS/Docs/Editor/AddTabPortal'
+import { ADD_TAB_BREADCRUMB_SLOT_ID } from '~/unit/DsbThread/CMS/Docs/Editor/AddTabPortal'
 
 import createDocLayout from './_shared/createDocLayout'
 

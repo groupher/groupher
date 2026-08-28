@@ -39,22 +39,22 @@ const getCoreServicePositions = (
   services: Pick<TPublicService, 'id' | 'status'>[],
 ): Partial<Record<string, { x: number; y: number }>> => {
   const heightById = new Map(services.map((service) => [service.id, getNodeHeight(service)]))
-  const topRowHeight = Math.max(heightById.get('gateway') || 0, heightById.get('auth') || 0)
+  const topRowHeight = Math.max(heightById.get('dev-gateway') || 0, heightById.get('auth') || 0)
   const appRowHeight = Math.max(
     heightById.get('landing') || 0,
-    heightById.get('main') || 0,
-    heightById.get('dashboard') || 0,
+    heightById.get('community') || 0,
+    heightById.get('dash') || 0,
   )
   const appRowY = CORE_TOP_ROW_Y + topRowHeight + CORE_TOP_TO_APP_GAP
   const backendRowY = appRowY + appRowHeight + CORE_APP_TO_BACKEND_GAP
 
   return {
     users: { x: CORE_COLUMN_X.center, y: USER_NODE_TOP },
-    gateway: { x: CORE_COLUMN_X.center, y: CORE_TOP_ROW_Y },
+    'dev-gateway': { x: CORE_COLUMN_X.center, y: CORE_TOP_ROW_Y },
     auth: { x: CORE_COLUMN_X.right, y: CORE_TOP_ROW_Y },
     landing: { x: CORE_COLUMN_X.left, y: appRowY },
-    main: { x: CORE_COLUMN_X.center, y: appRowY },
-    dashboard: { x: CORE_COLUMN_X.right, y: appRowY },
+    community: { x: CORE_COLUMN_X.center, y: appRowY },
+    dash: { x: CORE_COLUMN_X.right, y: appRowY },
     press: { x: CORE_COLUMN_X.farLeft, y: backendRowY },
     'assets-hub': { x: CORE_COLUMN_X.left, y: backendRowY },
     phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
@@ -109,11 +109,11 @@ export async function layoutServiceFlow(
     positions[child.id] = { x: child.x || 0, y: child.y || 0 }
   }
 
-  const mainPosition = positions.main
-  const dashboardPosition = positions.dashboard
-  if (mainPosition && dashboardPosition && mainPosition.x > dashboardPosition.x) {
-    positions.main = { ...mainPosition, x: dashboardPosition.x }
-    positions.dashboard = { ...dashboardPosition, x: mainPosition.x }
+  const communityPosition = positions.community
+  const dashPosition = positions.dash
+  if (communityPosition && dashPosition && communityPosition.x > dashPosition.x) {
+    positions.community = { ...communityPosition, x: dashPosition.x }
+    positions.dash = { ...dashPosition, x: communityPosition.x }
   }
 
   const targetIds = new Set(graphRelations.map((relation) => relation.target))

@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrfTest do
     conn =
       request(:post, %{"query" => "mutation Update { updateProfile(profile: {}) { id } }"}, [
         {"content-type", "application/json"},
-        {"origin", "https://dashboard.groupher.localhost"},
+        {"origin", "https://dash.groupher.localhost"},
         {"x-groupher-csrf", "1"}
       ])
 

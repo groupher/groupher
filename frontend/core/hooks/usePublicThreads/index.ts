@@ -5,7 +5,7 @@ import { sortByIndex } from '~/helper'
 import { normalizeHeaderLinks, shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 /**
  * Computes the public thread list after dashboard configuration is applied.
@@ -15,7 +15,7 @@ import useDashboard from '~/stores/dashboard/hooks'
  * because it is folded into the header More tab.
  */
 export default function usePublicThreads(): TCommunityThread[] {
-  const dsb$ = useDashboard()
+  const dsb$ = useDsb()
   const { slug, threads } = useCommunity()
 
   const enabledThreads = sortByIndex(threads.filter((thread) => dsb$.enable[thread.slug]))

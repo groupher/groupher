@@ -20,7 +20,7 @@ const CatSection: FC<TProps> = ({ item }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.bar} />
-      <Link href='/' className={s.catItem}>
+      <Link href='/' navigation='router' className={s.catItem}>
         {item.title}
       </Link>
       <div className={s.catDesc}>{item.articles.length} 篇内容</div>

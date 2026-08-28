@@ -1,6 +1,6 @@
 import type { TDashTrendOverview } from '@dash/server/trend'
 
-import WebOverview from '~/unit/DashboardThread/Analysis/WebOverview'
+import WebOverview from '~/unit/DsbThread/Analysis/WebOverview'
 
 import TrendLayout from './layouts/TrendLayout'
 

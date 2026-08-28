@@ -23,14 +23,11 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
   @doc "Allows ordinary mutations and requires a bounded publisher scope for BodyBag writes."
   @impl Absinthe.Middleware
   def call(
-        %{arguments: %{body_bag: _}, context: %{service_actor: actor} = context} = resolution,
+        %{arguments: %{body_bag: _}, context: %{service_actor: actor}} = resolution,
         _opts
       ) do
     allowed =
       (actor.subject == "service:test-suite" and MapSet.member?(actor.scopes, "*")) or
-        (actor.audience == "phoenix:dashboard-api" and
-           MapSet.member?(actor.scopes, "dashboard:body-bag:write") and
-           Map.has_key?(context, :delegated_actor)) or
         (actor.audience == "phoenix:content-import-api" and
            MapSet.member?(actor.scopes, "content-import:write"))
 

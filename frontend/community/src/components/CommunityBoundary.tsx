@@ -3,7 +3,7 @@ import type { TCommunityLocale } from '@community/server/locale'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-import MainProvider from '~/stores/provider'
+import CommunityShellProvider from '~/stores/CommunityShellProvider'
 
 export default function CommunityBoundary({
   children,
@@ -19,7 +19,7 @@ export default function CommunityBoundary({
   const { data: shell } = useSuspenseQuery(communityQueries.shell(community))
 
   return (
-    <MainProvider
+    <CommunityShellProvider
       initData={{
         account: shell.account,
         community: shell.community,
@@ -31,6 +31,6 @@ export default function CommunityBoundary({
       initialNow={initialNow}
     >
       {children}
-    </MainProvider>
+    </CommunityShellProvider>
   )
 }

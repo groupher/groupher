@@ -235,7 +235,7 @@ export function FlowView({
   )
   const requestPathIds = useMemo(
     () =>
-      services.some((service) => service.id === 'gateway')
+      services.some((service) => service.id === 'dev-gateway')
         ? [USERS_GATEWAY_RELATION_ID, ...coreNodes.map((node) => node.id)]
         : coreNodes.map((node) => node.id),
     [coreNodes, services],
@@ -249,13 +249,13 @@ export function FlowView({
 
     const serviceNodes: TFlowNode[] = []
 
-    if (layout.positions.gateway) {
+    if (layout.positions['dev-gateway']) {
       serviceNodes.push({
         id: USERS_GATEWAY_RELATION_ID,
         type: 'users',
         position: {
-          x: layout.positions.gateway.x,
-          y: Math.max(0, layout.positions.gateway.y - FLOW_USERS_TO_GATEWAY_OFFSET),
+          x: layout.positions['dev-gateway'].x,
+          y: Math.max(0, layout.positions['dev-gateway'].y - FLOW_USERS_TO_GATEWAY_OFFSET),
         },
         style: { width: FLOW_NODE_WIDTH, pointerEvents: 'all' },
         draggable: false,
@@ -290,7 +290,7 @@ export function FlowView({
           hasStartedRequiredDependencies: dependencyState?.hasStartedRequiredDependencies || false,
           hasOptionalDependencyIssue: dependencyState?.hasOptionalDependencyIssue || false,
           incomingRelationIds:
-            service.id === 'gateway'
+            service.id === 'dev-gateway'
               ? [
                   USERS_GATEWAY_RELATION_ID,
                   ...(relationIdsByService.incoming.get(service.id) || []),
@@ -381,7 +381,7 @@ export function FlowView({
       ]
     })
 
-    const gateway = serviceById.get('gateway')
+    const gateway = serviceById.get('dev-gateway')
     if (!gateway) return relationEdges
 
     const live = isLiveService(gateway)
@@ -391,7 +391,7 @@ export function FlowView({
       {
         id: USERS_GATEWAY_RELATION_ID,
         source: USERS_GATEWAY_RELATION_ID,
-        target: 'gateway',
+        target: 'dev-gateway',
         sourceHandle: USERS_GATEWAY_RELATION_ID,
         targetHandle: USERS_GATEWAY_RELATION_ID,
         type: 'relation',
@@ -401,7 +401,7 @@ export function FlowView({
           laneOffset: 0,
           relationId: USERS_GATEWAY_RELATION_ID,
           sourceId: USERS_GATEWAY_RELATION_ID,
-          targetId: 'gateway',
+          targetId: 'dev-gateway',
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,

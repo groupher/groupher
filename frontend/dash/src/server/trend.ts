@@ -4,8 +4,8 @@ import { createServerFn } from '@tanstack/react-start'
 import {
   ANALYSIS_TRENDS_OVERVIEW_QUERY,
   unavailableOverview,
-} from '~/unit/DashboardThread/Analysis/WebOverview/server'
-import type { TAnalysisTrendsOverview } from '~/unit/DashboardThread/Analysis/WebOverview/spec'
+} from '~/unit/DsbThread/Analysis/WebOverview/server'
+import type { TAnalysisTrendsOverview } from '~/unit/DsbThread/Analysis/WebOverview/spec'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 

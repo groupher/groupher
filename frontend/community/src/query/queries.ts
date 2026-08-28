@@ -86,6 +86,7 @@ export const communityQueries = {
     }),
 }
 
+/** Defines the client cache contract for a community's public Docs tree. */
 export const docTreeClientQuery = (community: string) =>
   queryOptions<TDocPublicTreeQuery>({
     queryKey: ['graphql', print(docPublicTree), { community }],

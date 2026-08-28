@@ -61,7 +61,7 @@ export type TLink = {
   href: string
 }
 
-export type TPlatform = {
+export type TBrowserPlatform = {
   isChrome: boolean
   isFirefox: boolean
   isSafari: boolean

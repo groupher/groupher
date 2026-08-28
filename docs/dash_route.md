@@ -1,5 +1,8 @@
 # Dash 路由和域迁移
 
+> 历史迁移设计：文中的 Next Dashboard、旧域名和共存状态用于说明硬切换前的输入；
+> 当前只保留 `frontend/dash` 与 `dash.groupher.com`，不提供旧入口兼容。
+
 ## 状态
 
 本文档定义了新 TanStack Dash 和旧版 Next.js Dashboard 的目标 URL

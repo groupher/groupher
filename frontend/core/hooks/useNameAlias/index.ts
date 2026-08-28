@@ -2,15 +2,15 @@ import { filter } from 'ramda'
 import { useMemo } from 'react'
 
 import type { TNameAlias } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 const useNameAlias = (group = 'kanban'): Record<string, TNameAlias> => {
-  const dsb$ = useDashboard()
+  const { nameAlias } = useDsb()
 
   const alias = {}
   let aliasList = []
 
-  const curAlias = useMemo(() => dsb$.nameAlias, [dsb$.nameAlias])
+  const curAlias = useMemo(() => nameAlias, [nameAlias])
 
   if (!group) {
     aliasList = [...curAlias]

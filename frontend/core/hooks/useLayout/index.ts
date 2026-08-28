@@ -1,5 +1,3 @@
-import { pick } from 'ramda'
-
 import type {
   TAvatarLayout,
   TBrandLayout,
@@ -13,7 +11,7 @@ import type {
   TPostLayout,
   TTagLayout,
 } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout
@@ -30,22 +28,31 @@ type TRet = {
 }
 
 export default function UseLayout(): TRet {
-  const dashboard = useDashboard()
+  const {
+    avatarLayout,
+    communityLayout,
+    brandLayout,
+    tagLayout,
+    inlineTagLayout,
+    navActiveLayout,
+    postLayout,
+    kanbanLayout,
+    kanbanCardLayout,
+    kanbanBoards,
+    changelogLayout,
+  } = useDsb()
 
-  return pick(
-    [
-      'avatarLayout',
-      'communityLayout',
-      'brandLayout',
-      'tagLayout',
-      'inlineTagLayout',
-      'navActiveLayout',
-      'postLayout',
-      'kanbanLayout',
-      'kanbanCardLayout',
-      'kanbanBoards',
-      'changelogLayout',
-    ],
-    dashboard,
-  )
+  return {
+    avatarLayout,
+    communityLayout,
+    brandLayout,
+    tagLayout,
+    inlineTagLayout,
+    navActiveLayout,
+    postLayout,
+    kanbanLayout,
+    kanbanCardLayout,
+    kanbanBoards,
+    changelogLayout,
+  }
 }

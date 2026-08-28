@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
 
-import type { TDocDraftInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/Article/spec'
-import type { TDocTreeInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
-import DashboardDocsSchema from '~/unit/DashboardThread/schema/docs'
+import type { TDocDraftInitialData } from '~/unit/DsbThread/CMS/Docs/Editor/Article/spec'
+import type { TDocTreeInitialData } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/spec'
+import type { TDocTreeNodeDTO } from '~/unit/DsbThread/CMS/Docs/Editor/SideTree/spec'
+import DashboardDocsSchema from '~/unit/DsbThread/schema/docs'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
 

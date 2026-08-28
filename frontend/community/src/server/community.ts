@@ -27,7 +27,7 @@ import type {
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 
 import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
-import { isCommunityPathContextTrusted } from './public-path'
+import { isCommunityPathContextTrusted, isPlatformHost } from './public-path'
 
 export type TCommunityShell = {
   account: TAccountInit
@@ -35,15 +35,6 @@ export type TCommunityShell = {
   dashboard: TParseDashboard
   wallpaper: ReturnType<typeof parseWallpaper>
 }
-
-const PLATFORM_HOSTS = new Set([
-  'groupher.com',
-  'www.groupher.com',
-  'groupher.localhost',
-  'www.groupher.localhost',
-  'localhost',
-  '127.0.0.1',
-])
 
 export const loadCommunityRequestContext = createServerFn({ method: 'GET', strict: false }).handler(
   async () => {
@@ -54,7 +45,7 @@ export const loadCommunityRequestContext = createServerFn({ method: 'GET', stric
       .split(':')[0]
       .toLowerCase()
     return {
-      customDomain: isCommunityPathContextTrusted(pathname, slug) && !PLATFORM_HOSTS.has(host),
+      customDomain: isCommunityPathContextTrusted(pathname, slug) && !isPlatformHost(host),
     }
   },
 )

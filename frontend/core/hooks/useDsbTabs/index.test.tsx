@@ -1,17 +1,15 @@
 import { renderHook } from '@testing-library/react'
-import type { ReactNode } from 'react'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useDsbTabs, { type TDsbTabs } from '~/hooks/useDsbTabs'
-import { PlatformProvider, type TPlatform } from '~/platform'
 import type { TCommunity } from '~/spec'
 
 let mockPathname = '/acme'
-let mockSearch = ''
 
 describe('useDsbTabs', () => {
   it('builds hrefs and resolves activeTab from layout segments', () => {
     mockPathname = '/acme/third-part/integrations'
+    window.history.replaceState(null, '', mockPathname)
 
     const cfg: TDsbTabs = {
       segment: 'third-part',
@@ -21,40 +19,10 @@ describe('useDsbTabs', () => {
       ],
     }
 
-    const value: TPlatform = {
-      components: {
-        Image: () => null,
-        Link: () => null,
-        Script: () => null,
-      },
-      navi: {
-        location: {
-          pathname: mockPathname,
-          search: mockSearch,
-          searchParams: new URLSearchParams(mockSearch),
-        },
-        to: vi.fn(),
-        push: vi.fn(),
-        replace: vi.fn(),
-        back: vi.fn(),
-        forward: vi.fn(),
-        refresh: vi.fn(),
-        prefetch: vi.fn(async () => {}),
-        isActive: vi.fn(() => false),
-        dsbRootSegment: 'dashboard',
-      },
-    }
-
     const StoreWrapper = makeStoreWrapper({
       community: { slug: 'acme' } satisfies Partial<TCommunity>,
     })
-    const Wrapper = ({ children }: { children: ReactNode }) => {
-      return (
-        <PlatformProvider value={value}>
-          <StoreWrapper>{children}</StoreWrapper>
-        </PlatformProvider>
-      )
-    }
+    const Wrapper = StoreWrapper
 
     const { result } = renderHook(() => useDsbTabs(cfg), { wrapper: Wrapper })
 

@@ -7,11 +7,11 @@ import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import Tabs from '~/ui/Switcher/Tabs'
-import { FIELD } from '~/unit/DashboardThread/constant'
-import useSEO from '~/unit/DashboardThread/hooks/useSEO'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
-import SavingBar from '~/unit/DashboardThread/SavingBar'
+import { FIELD } from '~/unit/DsbThread/constant'
+import useSEO from '~/unit/DsbThread/hooks/useSEO'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
+import SavingBar from '~/unit/DsbThread/SavingBar'
 
 const seg = SEO_TABS.segment
 const CRUMB_CONFIG = {

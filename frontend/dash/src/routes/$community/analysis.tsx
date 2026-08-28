@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import TrendSVG from '~/icons/dsb/Trend'
-import DsbCovers from '~/unit/DashboardCovers'
+import DsbCovers from '~/unit/DsbCovers'
 
 export const Route = createFileRoute('/$community/analysis')({
   component: AnalysisCoversPage,

@@ -15,12 +15,7 @@ import {
 } from '~/const/route'
 import URL_PARAM from '~/const/url_param'
 
-import type {
-  TCommunityRouteTarget,
-  TPlatformSearch,
-  TRouteTarget,
-  TDsbRouteTarget,
-} from './context'
+import type { TCommunityRouteTarget, TRouteSearch, TRouteTarget, TDsbRouteTarget } from './types'
 
 export const DSB_SEARCH_KEYS = ['mode', 'other', ...Object.values(URL_PARAM)] as const
 
@@ -32,17 +27,14 @@ const DSB_ROUTE_SEARCH_KEYS: { [section: string]: readonly string[] } = {
 
 type TSearchSchema = readonly string[]
 
-export type TDsbRouteRootSegment = 'dashboard' | 'dash'
-
 type TRouteMeta = {
   community: string
-  rootSegment: TDsbRouteRootSegment
   segments: string[]
 }
 
 const trimPath = (value: string): string => value.replace(/^\/+|\/+$/g, '')
 
-const toSearchString = (search: TPlatformSearch): string => {
+const toSearchString = (search: TRouteSearch): string => {
   const query = new URLSearchParams()
 
   for (const [key, value] of Object.entries(search)) {
@@ -78,8 +70,8 @@ const toSearchSchema = (path: string): TSearchSchema =>
 const parseSearchKeys = (
   searchParams: URLSearchParams,
   allowlist: readonly string[],
-): TPlatformSearch => {
-  const next: TPlatformSearch = {}
+): TRouteSearch => {
+  const next: TRouteSearch = {}
   const keys = dedupe(allowlist)
 
   if (keys.length === 0) {
@@ -100,14 +92,11 @@ const parseSearchKeys = (
 }
 
 /** Runs the to dsb target from path operation at the frontend shared boundary. */
-export const toDsbTargetFromPath = (
-  rawPath: string,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
-): TDsbRouteTarget | null => {
+export const toDsbTargetFromPath = (rawPath: string): TDsbRouteTarget | null => {
   if (!rawPath) return null
 
   const parsed = new URL(rawPath, 'https://groupher.localhost')
-  const targetMeta = parseDsbPathname(parsed.pathname, rootSegment)
+  const targetMeta = parseDsbPathname(parsed.pathname)
 
   if (!targetMeta) return null
   const targetPath = targetMeta.segments.join('/')
@@ -123,15 +112,8 @@ export const toDsbTargetFromPath = (
   }
 }
 
-/** Reports whether dsb root segment at the frontend shared boundary. */
-export const isDsbRootSegment = (value: string): value is TDsbRouteRootSegment =>
-  value === 'dashboard' || value === 'dash'
-
 /** Parses dsb pathname into the canonical frontend shared representation. */
-export const parseDsbPathname = (
-  pathname: string,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
-): TRouteMeta | null => {
+export const parseDsbPathname = (pathname: string): TRouteMeta | null => {
   const normalized = trimPath(pathname)
   const segments = normalized.split('/').filter(Boolean)
   const community = segments[0]
@@ -139,13 +121,10 @@ export const parseDsbPathname = (
 
   const routeSegments = segments.slice(1)
   const normalizedRouteSegments =
-    rootSegment === 'dash' && routeSegments[0] === 'overview'
-      ? routeSegments.slice(1)
-      : routeSegments
+    routeSegments[0] === 'overview' ? routeSegments.slice(1) : routeSegments
 
   return {
     community,
-    rootSegment,
     segments: normalizedRouteSegments,
   }
 }
@@ -153,8 +132,8 @@ export const parseDsbPathname = (
 const mergeSearch = (
   target: TRouteTarget,
   options: { preserveSearch?: boolean; currentSearch?: URLSearchParams },
-): TPlatformSearch => {
-  const merged: TPlatformSearch = {}
+): TRouteSearch => {
+  const merged: TRouteSearch = {}
   const schema =
     target.app === 'dsb'
       ? dedupe([...DSB_SEARCH_KEYS, ...(target.searchSchema ?? resolveSearchSchema(target.path))])
@@ -189,7 +168,7 @@ const mergeSearch = (
 export type TRouteMetaTarget = {
   community: string
   section: string
-  search?: TPlatformSearch
+  search?: TRouteSearch
   searchSchema?: TSearchSchema
   preserveSearchKeys?: readonly string[]
 }
@@ -197,7 +176,7 @@ export type TRouteMetaTarget = {
 const createSection = (path: string) => {
   return (input: {
     community: string
-    search?: TPlatformSearch
+    search?: TRouteSearch
     searchSchema?: TSearchSchema
     preserveSearchKeys?: readonly string[]
   }): TDsbRouteTarget => ({
@@ -297,13 +276,12 @@ export const dsbRoutes = DSB_ROUTES
 export const resolveDsbRoute = (
   target: TDsbRouteTarget,
   options: {
-    rootSegment: TDsbRouteRootSegment
     currentSearch?: URLSearchParams | string
     preserveSearch?: boolean
   },
 ): string => {
   const path = trimPath(target.path)
-  const resolvedPath = options.rootSegment === 'dash' && path.length === 0 ? 'overview' : path
+  const resolvedPath = path.length === 0 ? 'overview' : path
   const normalizedSegment = resolvedPath.length === 0 ? '' : `/${resolvedPath}`
 
   const mergedSearch = mergeSearch(target, {
@@ -322,12 +300,8 @@ export const resolveDsbRoute = (
 }
 
 /** Reports whether active dsb route at the frontend shared boundary. */
-export const isActiveDsbRoute = (
-  pathname: string,
-  target: TDsbRouteTarget,
-  rootSegment: TDsbRouteRootSegment = 'dashboard',
-): boolean => {
-  const meta = parseDsbPathname(pathname, rootSegment)
+export const isActiveDsbRoute = (pathname: string, target: TDsbRouteTarget): boolean => {
+  const meta = parseDsbPathname(pathname)
   if (!meta) return false
   if (meta.community !== target.community) return false
 

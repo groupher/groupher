@@ -28,7 +28,7 @@ const MediaReports: FC<TProps> = ({ items }) => {
               <div className={s.siteName}>{siteName}</div>
             </div>
 
-            <Link href={url} target='_blank' className={s.title}>
+            <Link href={url} navigation='document' target='_blank' className={s.title}>
               {title}
             </Link>
             <div className={s.arrowBox}>

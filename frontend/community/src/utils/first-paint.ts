@@ -5,6 +5,7 @@ import {
   THEME_MODE_COOKIE,
 } from '~/const/theme'
 
+/** Builds the pre-hydration script that resolves and persists the Community theme. */
 export const prePaintThemeDetectScript = ({
   theme,
   themeMode,
@@ -28,6 +29,7 @@ export const prePaintThemeDetectScript = ({
 })();
 `
 
+/** Seeds browser runtime globals required by shared code before hydration. */
 export const prePaintRuntimeSeedScript = (renderedAt: number) => `
 (function() {
   try {

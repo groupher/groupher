@@ -1,6 +1,6 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS, CAT, ORDER, STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
-import { usePathname, useRouter, useSearchParams } from '~/platform'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus } from '~/spec'
 
 type TRes = {
@@ -21,9 +21,9 @@ const toValidFilterValue = <TValue extends string>(
 
 /** Exposes articles filter state and actions through the shared React hook boundary. */
 export default function useArticlesFilter(): TRes {
-  const { push } = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const searchParams = useURLSearchParams()
 
   const order = toValidFilterValue(
     searchParams.get(URL_PARAM.ORDER),
@@ -73,7 +73,7 @@ export default function useArticlesFilter(): TRes {
 
     if (nextUrl === currentUrl) return
 
-    push(nextUrl)
+    void navigate({ to: nextUrl as never })
   }
 
   return {
@@ -83,3 +83,4 @@ export default function useArticlesFilter(): TRes {
     updateActiveFilter,
   }
 }
+import { useLocation, useNavigate } from '@tanstack/react-router'

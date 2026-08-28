@@ -4,7 +4,6 @@ import {
   siElixir,
   siFastapi,
   siGraphql,
-  siNextdotjs,
   siNodedotjs,
   siOpenid,
   siPhoenixframework,
@@ -91,10 +90,6 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIcon
     viewBox: '0 0 76 98',
     color: '#ff4b1f',
     assetUrl: honoLogoUrl,
-  },
-  nextjs: {
-    ...fromSimpleIcon(siNextdotjs),
-    underlayPath: CIRCLE_UNDERLAY_PATH,
   },
   nodejs: fromSimpleIcon(siNodedotjs),
   oauth: {

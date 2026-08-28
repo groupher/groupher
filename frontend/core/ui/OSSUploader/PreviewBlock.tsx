@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import { assetSrc } from '~/helper'
-import { Image as NextImage } from '~/platform'
 
 import useSalon from './salon/preview_block'
 
@@ -14,14 +13,7 @@ const PreviewBlock: FC<TProps> = ({ url }) => {
 
   return (
     <div>
-      <NextImage
-        src={assetSrc(url)}
-        className={s.previewImg}
-        alt='preview img'
-        width={64}
-        height={64}
-        unoptimized
-      />
+      <img src={assetSrc(url)} className={s.previewImg} alt='preview img' width={64} height={64} />
     </div>
   )
 }

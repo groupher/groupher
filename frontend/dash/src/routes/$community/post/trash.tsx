@@ -2,7 +2,7 @@ import Layout from '@dash/components/layouts/post.trash'
 import { loadTrash } from '@dash/server/cms'
 import { createFileRoute } from '@tanstack/react-router'
 
-import PostTrash from '~/unit/DashboardThread/CMS/Trash'
+import PostTrash from '~/unit/DsbThread/CMS/Trash'
 
 export const Route = createFileRoute('/$community/post/trash')({
   staleTime: 60_000,

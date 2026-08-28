@@ -3,9 +3,9 @@ import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import { Link } from '~/platform'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
 import ArticleImgWindow from '../ArticleImgWindow'
 import ArticlePinLabel from '../ArticlePinLabel'
@@ -35,18 +35,17 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       </div>
 
       <div className='mt-1' />
-      <Link
+      <CommunityPreviewLink
         className={s.titleLink}
-        scroll={false}
         href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
         previewId={innerId}
       >
         {title}
-      </Link>
+      </CommunityPreviewLink>
 
-      <Link scroll={false} href={`/${slug}/${THREAD_PATH.POST}/${innerId}`} previewId={innerId}>
+      <CommunityPreviewLink href={`/${slug}/${THREAD_PATH.POST}/${innerId}`} previewId={innerId}>
         {cutRest(digest, 150)}
-      </Link>
+      </CommunityPreviewLink>
 
       <div className='mt-1' />
       <ArticleImgWindow />

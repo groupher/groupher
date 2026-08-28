@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import URL_PARAM from '~/const/url_param'
+import useURLSearchParams from '~/hooks/useURLSearchParams'
 import useViewingThread from '~/hooks/useViewingThread'
-import { useSearchParams } from '~/platform'
 import { Q } from '~/query'
 import type { TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -12,7 +12,7 @@ import useCommunity from '~/stores/community/hooks'
 export default function useActiveTag(): TTag | null {
   const { slug: community } = useCommunity()
   const thread = useViewingThread()
-  const searchParams = useSearchParams()
+  const searchParams = useURLSearchParams()
   const activeTagSlug = searchParams.get(URL_PARAM.TAG)
   const tagGroupsQuery = useQuery(Q.article.tagGroups(community, thread))
 

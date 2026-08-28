@@ -2,7 +2,6 @@ import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
-import { useRouter } from '~/platform'
 import useCommunity from '~/stores/community/hooks'
 import TabBar from '~/ui/TabBar'
 import ViewportTracker from '~/ui/ViewportTracker'
@@ -14,7 +13,7 @@ import CommunityBrief from './CommunityBrief'
 export default function HeroLayout() {
   const s = useSalon()
 
-  const { push } = useRouter()
+  const navigate = useNavigate()
   const { enterView, leaveView } = useCommunityDigestViewport()
   const publicThreads = usePublicThreads()
   const activeThread = useViewingThread()
@@ -30,7 +29,7 @@ export default function HeroLayout() {
         <div className={s.tabs}>
           <TabBar
             source={publicThreads}
-            onChange={(path) => push(`/${community.slug}/${path}`)}
+            onChange={(path) => void navigate({ to: `/${community.slug}/${path}` as never })}
             active={activeThread}
             withIcon
           />
@@ -41,3 +40,4 @@ export default function HeroLayout() {
     </div>
   )
 }
+import { useNavigate } from '@tanstack/react-router'

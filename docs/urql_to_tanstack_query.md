@@ -1,5 +1,8 @@
 # urql 迁移到 TanStack Query
 
+> 历史实施记录：下文的 Main/Dashboard 名称用于界定当时的迁移范围；两个 Next workspace
+> 现已由 Community/Dash 替代并删除。
+
 > 状态：全链路 urql runtime 替换与 Phase 8 领域收口已经完成（2026-08-20）。
 > Main/Core/Dashboard/Dash 的 urql consumer、Provider、类型依赖和根依赖均已删除；Doc detail、
 > tagGroups、comment public/viewer ownership、article/comment optimistic intent 以及目标范围内的

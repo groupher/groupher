@@ -3,7 +3,7 @@
  *
  * Business position:
  *
- *   Dashboard / Phoenix import job
+ *   Dash proxy / Phoenix import job
  *     -> Content Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
@@ -20,7 +20,6 @@ import { createHealthResponse } from '@groupher/service/health'
 import { jsonResponse } from '@groupher/service/http'
 import { Hono } from 'hono'
 
-import { getPreviewStore, sweepExpiredPreviews } from './lib/content-import/core/preview-store'
 import { resolveDelegationSubject } from './lib/groupherGraphql'
 
 type TAuthenticatedOptions = {
@@ -47,7 +46,6 @@ type THandlers = {
     community: string,
     owner: Pick<TAuthenticatedOptions, 'serviceSubject' | 'userRef'>,
   ) => Promise<Response>
-  sweepExpiredPreviews: () => Promise<number>
 }
 
 type TOptions = {
@@ -74,7 +72,6 @@ const defaultHandlers = {
   cancelPreview: missingHandler('cancelPreview'),
   createPreview: missingHandler('createPreview'),
   getPreview: missingHandler('getPreview'),
-  sweepExpiredPreviews: () => sweepExpiredPreviews(getPreviewStore()),
 }
 
 const json = jsonResponse
@@ -103,7 +100,7 @@ const resolveAuthOptions = async (
   if (!serviceToken) return json({ error: { code: 'unauthorized' }, ok: false }, 401)
   try {
     const actor = await verifier.verify(serviceToken, 'docs:import:proxy')
-    if (actor.subject !== 'service:dashboard') {
+    if (actor.subject !== 'service:dash') {
       return json({ error: { code: 'forbidden' }, ok: false }, 403)
     }
   } catch (error) {
@@ -139,7 +136,7 @@ const resolveAuthOptions = async (
   return {
     backendToken: backendToken.trim(),
     previewSecret: previewSecret.trim(),
-    serviceSubject: 'service:dashboard',
+    serviceSubject: 'service:dash',
     userRef,
   }
 }
@@ -195,20 +192,6 @@ export const createApp = ({
     if (options instanceof Response) return options
     return resolvedHandlers.applyPreview(context.req.raw, context.req.param('previewRef'), options)
   })
-
-  app.post('/api/internal/docs-import/sweep', async (context) => {
-    const token = bearerToken(context.req.header('authorization'))
-    if (!token) return json({ ok: false }, 401)
-    try {
-      const actor = await verifier.verify(token, 'docs:import:sweep')
-      if (actor.subject !== 'service:dashboard') return json({ ok: false }, 403)
-    } catch (error) {
-      return json({ ok: false }, serviceTokenErrorStatus(error))
-    }
-    const deleted = await resolvedHandlers.sweepExpiredPreviews()
-    return json({ deleted, ok: true })
-  })
-
   return app
 }
 

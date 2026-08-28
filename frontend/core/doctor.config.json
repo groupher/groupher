@@ -2,11 +2,11 @@
   "ignore": {
     "files": [
       "stores/provider.tsx",
-      "unit/DashboardThread/CMS/Posts/index.tsx",
-      "unit/DashboardThread/CMS/Communities/index.tsx",
-      "unit/DashboardThread/CMS/Changelogs/index.tsx",
-      "unit/DashboardThread/CMS/Docs/Table.tsx",
-      "unit/DashboardThread/LinkEditor/index.tsx",
+      "unit/DsbThread/CMS/Posts/index.tsx",
+      "unit/DsbThread/CMS/Communities/index.tsx",
+      "unit/DsbThread/CMS/Changelogs/index.tsx",
+      "unit/DsbThread/CMS/Docs/Table.tsx",
+      "unit/DsbThread/LinkEditor/index.tsx",
       "unit/ArticleSettingMenu/SubMenu/TitleSetting.tsx"
     ]
   }

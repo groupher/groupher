@@ -3,7 +3,6 @@ import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-r
 import { lazy, Suspense, type ReactNode } from 'react'
 
 import AppShell from '../components/AppShell'
-import ApplyPlatformProvider from '../platform/ApplyPlatformProvider'
 
 import '../../../core/tailwind/global.css'
 import '../styles/domain.css'
@@ -24,7 +23,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <ApplyPlatformProvider>
+    <>
       <AppShell>
         <Outlet />
       </AppShell>
@@ -32,7 +31,7 @@ function RootComponent() {
         <AuthLoginModal />
       </Suspense>
       <DevHubReporter serviceId='apply' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
-    </ApplyPlatformProvider>
+    </>
   )
 }
 

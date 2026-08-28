@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import Drawer from '~/unit/DashboardThread/Widgets/Drawer'
-import WidgetPreviewLoader from '~/unit/DashboardThread/Widgets/PreviewLoader'
+import Drawer from '~/unit/DsbThread/Widgets/Drawer'
+import WidgetPreviewLoader from '~/unit/DsbThread/Widgets/PreviewLoader'
 
 export const Route = createFileRoute('/$community/widgets/')({
   component: WidgetsIndexPage,

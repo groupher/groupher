@@ -24,7 +24,7 @@ export default defineConfig({
   server: {
     port: dashPort,
     strictPort: true,
-    allowedHosts: ['dash.groupher.localhost', 'main.groupher.localhost', 'groupher.localhost'],
+    allowedHosts: ['dash.groupher.localhost', 'groupher.localhost'],
     ws: {
       protocol: isDevelopment ? 'ws' : 'wss',
       host: 'dash.groupher.localhost',

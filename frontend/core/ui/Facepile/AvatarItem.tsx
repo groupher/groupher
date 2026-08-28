@@ -1,7 +1,6 @@
 import { type FC, useState } from 'react'
 
 import SIZE from '~/const/size'
-import { Image } from '~/platform'
 import type { TUser } from '~/spec'
 import UserCard from '~/ui/Cards/UserCard'
 import ImgFallback from '~/ui/ImgFallback'
@@ -44,13 +43,11 @@ const AvatarItem: FC<TProps> = ({
     <>
       <ImgFallback className={s.avatarFallback} size={size} user={user} />
       {showImage && (
-        <Image
+        <img
           className={s.avatarImage}
           src={avatarSrc}
           alt={label}
-          fill
           sizes={size === SIZE.SMALL ? '20px' : '24px'}
-          unoptimized
           loading={noLazyLoad ? 'eager' : 'lazy'}
           draggable={false}
           onError={() => setFailedSrc(avatarSrc)}

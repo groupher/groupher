@@ -20,7 +20,6 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
     "phoenix:assets-api",
     "phoenix:auth-api",
     "phoenix:content-import-api",
-    "phoenix:dashboard-api",
     "phoenix:press-api"
   ]
 

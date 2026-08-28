@@ -23,11 +23,11 @@ export type TCoreRelationSpec = {
 }
 
 export const CORE_SERVICE_IDS = [
-  'gateway',
+  'dev-gateway',
   'auth',
   'landing',
-  'main',
-  'dashboard',
+  'community',
+  'dash',
   'assets-hub',
   'press',
   'content-import',
@@ -44,7 +44,7 @@ export const CORE_RELATION_SPECS = {
     source: { side: 'right', style: { top: '50%' } },
     target: { side: 'left', style: { top: '50%' } },
   },
-  'gateway-main': {
+  'gateway-dash': {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '50%' } },
   },
@@ -54,14 +54,7 @@ export const CORE_RELATION_SPECS = {
   'gateway-landing': {
     route: 'safe-lane',
   },
-  'auth-main': {
-    route: 'safe-lane',
-  },
-  'auth-dashboard': {
-    source: { side: 'bottom', style: { left: '50%' } },
-    target: { side: 'top', style: { left: '50%' } },
-  },
-  'main-phoenix': {
+  'community-phoenix': {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '50%' } },
   },
@@ -70,16 +63,16 @@ export const CORE_RELATION_SPECS = {
     target: { side: 'left', style: { top: '28%' } },
     route: 'safe-lane',
   },
-  'dashboard-phoenix': {
+  'dash-phoenix': {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '72%' } },
     route: 'safe-lane',
   },
-  'dashboard-content-import': {
+  'dash-content-import': {
     source: { side: 'bottom', style: { left: '50%' } },
     target: { side: 'top', style: { left: '50%' } },
   },
-  'dashboard-assets-hub': {
+  'dash-assets-hub': {
     source: { side: 'bottom', style: { left: '28%' } },
     target: { side: 'top', style: { left: '50%' } },
     route: 'safe-lane',
@@ -101,7 +94,7 @@ export const CORE_RELATION_SPECS = {
     source: { side: 'right', style: { top: '50%' } },
     target: { side: 'left', style: { top: '50%' } },
   },
-  'dashboard-document-converter': {
+  'dash-document-converter': {
     source: { side: 'bottom', style: { left: '72%' } },
     target: { side: 'top', style: { left: '50%' } },
     route: 'safe-lane',
@@ -111,20 +104,18 @@ export const CORE_RELATION_SPECS = {
 export const CORE_REQUIRED_RELATION_IDS = [
   'gateway-auth',
   'gateway-landing',
-  'gateway-main',
+  'gateway-dash',
   'gateway-press',
-  'auth-main',
-  'auth-dashboard',
-  'main-phoenix',
+  'community-phoenix',
   'press-phoenix',
-  'dashboard-phoenix',
-  'dashboard-assets-hub',
+  'dash-phoenix',
+  'dash-assets-hub',
   'assets-hub-phoenix',
   'phoenix-assets-hub',
-  'dashboard-content-import',
+  'dash-content-import',
   'content-import-phoenix',
   'content-import-document-converter',
-  'dashboard-document-converter',
+  'dash-document-converter',
 ] as const
 
 export const getCoreRelationSpec = (relationId: string): TCoreRelationSpec | undefined =>

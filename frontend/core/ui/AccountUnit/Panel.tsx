@@ -96,10 +96,10 @@ const Panel: FC<TProps> = ({ show, returnTo, onClose }) => {
             })}
           </div>
           <div className={s.footer}>
-            <Link href='/' className={s.link}>
+            <Link href='/' navigation='document' className={s.link}>
               {t('login.bind.hint')}
             </Link>
-            <Link href='/' className={s.link}>
+            <Link href='/' navigation='document' className={s.link}>
               {t('need.help')}
             </Link>
           </div>

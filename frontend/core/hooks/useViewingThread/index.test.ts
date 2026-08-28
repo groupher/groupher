@@ -5,19 +5,9 @@ import { THREAD } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useViewingThread from '~/hooks/useViewingThread'
 
-let mockPathname = '/'
-
-vi.mock('~/platform', async () => {
-  const actual = await vi.importActual<typeof import('~/platform')>('~/platform')
-  return {
-    ...actual,
-    usePathname: () => mockPathname,
-  }
-})
-
 describe('useViewingThread', () => {
   it('resolves thread from pathname, but forces POST on landing', () => {
-    mockPathname = '/acme/changelog'
+    window.history.replaceState(null, '', '/acme/changelog')
 
     const a = renderHook(() => useViewingThread(), {
       wrapper: makeStoreWrapper({ metric: METRIC.COMMUNITY }),
@@ -31,7 +21,7 @@ describe('useViewingThread', () => {
   })
 
   it('resolves thread from detail pathname segments', () => {
-    mockPathname = '/acme/changelog/42'
+    window.history.replaceState(null, '', '/acme/changelog/42')
 
     const result = renderHook(() => useViewingThread(), {
       wrapper: makeStoreWrapper({ metric: METRIC.COMMUNITY }),

@@ -1,5 +1,10 @@
 # Dash Rewrite Records
 
+> Historical migration record. References to the retired Next.js Main/Dashboard applications and
+> their `_next` routes describe the pre-cleanup comparison target, not the current architecture.
+> The RouteScope passages below are superseded by `infra/clean_up_v2.md`; they are retained only as
+> historical evidence of the migration.
+
 ## Theme First Paint Script
 
 module
@@ -100,7 +105,7 @@ lifecycle.
 
 platform
 Shared Link, Image, pathname, search-param, and client router behavior comes
-directly from `PlatformProvider`. Main, Dashboard, and Landing provide Next
+directly from `RouteScopeProvider`. Main, Dashboard, and Landing provide Next
 implementations; Dash provides TanStack navigation plus a native image
 renderer. Server-only hooks and app-owned APIs remain outside the platform
 contract.
@@ -111,15 +116,15 @@ local compatibility modules.
 
 after
 Link, Image, Navigation, Dynamic, Cache, and Script no longer use Dash
-compatibility adapters. The first three resolve through `PlatformProvider`;
+compatibility adapters. The first three resolve through `RouteScopeProvider`;
 Dynamic resolves through `React.lazy`, `Suspense`, and explicit client-only
-boundaries; Dash scripts resolve through `PlatformProvider`.
+boundaries; Dash scripts resolve through `RouteScopeProvider`.
 
 comparison
 Kept: shared Dashboard components, Next Image optimization in Next apps,
 native image loading in Dash, and stable logical links.
 Dropped: fake client navigation/image/dynamic compatibility behavior.
-Changed: client runtime ownership is explicit through PlatformProvider and
+Changed: client runtime ownership is explicit through RouteScopeProvider and
 React lifecycle primitives.
 
 extraction path
@@ -222,7 +227,7 @@ overview values, and hydrated Dashboard shell.
 ## Canonical Dash Paths, Vite Assets, And HMR
 
 module
-`infra/gateway/src/routing.ts` and `frontend/dash/app.config.ts`
+`infra/dev-gateway/src/routing.ts` and `frontend/dash/app.config.ts`
 
 background
 Local development uses one canonical gateway origin so the session cookie,

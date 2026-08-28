@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 
-import { useRouter } from '~/platform'
 import { graphqlQueryOptions } from '~/query'
 import type { TDocCoverLayout, TDocFAQLayout, TDocFaq } from '~/spec'
 import { useArticleUI } from '~/stores/article/hooks'
 import useCommunity from '~/stores/community/hooks'
-import useDashboard from '~/stores/dashboard/hooks'
+import useDsb from '~/stores/dsb/hooks'
 import { DOC_COVER_VIEW } from '~/unit/DocCovers/constant'
 import S from '~/unit/DocCovers/schema'
 import type { TDocCovers } from '~/unit/DocCovers/spec'
@@ -28,10 +28,10 @@ type TRet = {
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(): TRet {
-  const dashboard = useDashboard()
+  const dashboard = useDsb()
   const article$ = useArticleUI()
   const { slug: community } = useCommunity()
-  const { push } = useRouter()
+  const navigate = useNavigate()
   const { data } = useQuery(
     graphqlQueryOptions<{ docCover?: TDocCovers }>(S.docCover, {
       community,
@@ -49,7 +49,7 @@ export default function useLogic(): TRet {
   }
 
   const back2Layout = (): void => {
-    push(`/${community}/doc`)
+    void navigate({ to: `/${community}/doc` as never })
   }
 
   return {

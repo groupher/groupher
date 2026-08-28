@@ -3,7 +3,7 @@
  *
  * Business position:
  *
- *   Dashboard / Phoenix import job
+ *   Dash proxy / Phoenix import job
  *     -> Content Import module
  *     -> canonical source tree / apply batch
  *     -> Phoenix persistence boundary
@@ -12,7 +12,7 @@
 import { serve } from '@hono/node-server'
 
 import './env'
-import app from './dashboard-app'
+import app from './service-app'
 
 const port = Number.parseInt(process.env.PORT || '8001', 10)
 const hostname =

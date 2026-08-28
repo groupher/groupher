@@ -5,9 +5,9 @@ import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TCrumbConfig } from '~/spec'
-import AdminList from '~/unit/DashboardThread/AdminList'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import AdminList from '~/unit/DsbThread/AdminList'
+import Portal from '~/unit/DsbThread/Portal'
+import useSalon, { cnMerge } from '~/unit/DsbThread/salon'
 
 const seg = DSB_ROUTE.COMMUNITIES
 const CRUMB_CONFIG = {

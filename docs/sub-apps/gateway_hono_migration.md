@@ -1,12 +1,16 @@
 # Gateway Hono 迁移评估
 
+> 历史迁移记录：本文描述已退役的 `infra/gateway` 从 Next.js 迁到 Hono 的中间阶段。
+> 当前本地入口为 `infra/dev-gateway`，生产入口为 `infra/edge-router`；本文中的旧目录、
+> package 名称和 `_next` 路由不再是有效配置。
+
 > 运行形态：独立 Node/Hono reverse proxy
 >
 > UI：无独立 UI
 >
-> 当前状态：Hono 迁移已开始，核心 routing/proxy/app 结构已落到 `infra/gateway/src`
+> 当前状态：历史阶段已结束，最终形态见 [`infra/clean_up.md`](../../infra/clean_up.md)
 
-本文是 [`docs/gateway.md`](../gateway.md) 的 Hono 落地方案。Gateway 的首期实现
+本文是旧 Gateway 的 Hono 落地方案。Gateway 的首期实现
 直接在 Hono/Node 范围内解决，不为 NGINX、Envoy、Worker、API Gateway 等短期不会
 使用的 runtime 设计额外抽象。
 

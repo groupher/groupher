@@ -117,29 +117,6 @@ endpoints:
         success-threshold: 2
         send-on-resolved: true
 
-  - name: Dashboard
-    group: Product services
-    url: https://dashboard.groupher.com/health
-    interval: 5m
-    conditions:
-      - "[STATUS] == 200"
-      - "[BODY].schemaVersion == health.v1"
-      - "[BODY].service == dashboard"
-      - "[BODY].status == ok"
-      - "[RESPONSE_TIME] < 15000"
-    ui:
-      hide-url: true
-      hide-hostname: true
-      hide-port: true
-      hide-conditions: true
-      hide-errors: true
-    alerts:
-      - type: discord
-        enabled: true
-        failure-threshold: 3
-        success-threshold: 2
-        send-on-resolved: true
-
   - name: Dash
     group: Product services
     url: https://dash.groupher.com/health
@@ -215,6 +192,28 @@ endpoints:
     interval: 2m
     conditions:
       - "[STATUS] == 200"
+      - '[BODY] == pat(*data-testid="landing-page"*)'
+      - "[RESPONSE_TIME] < 10000"
+    ui:
+      hide-url: true
+      hide-hostname: true
+      hide-port: true
+      hide-conditions: true
+      hide-errors: true
+    alerts:
+      - type: discord
+        enabled: true
+        failure-threshold: 3
+        success-threshold: 2
+        send-on-resolved: true
+
+  - name: Pricing Page
+    group: Public paths
+    url: https://groupher.com/pricing
+    interval: 2m
+    conditions:
+      - "[STATUS] == 200"
+      - '[BODY] == pat(*data-testid="pricing-page"*)'
       - "[RESPONSE_TIME] < 10000"
     ui:
       hide-url: true

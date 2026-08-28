@@ -1,7 +1,7 @@
 import Layout from '@dash/components/layouts/tags'
 import { createFileRoute } from '@tanstack/react-router'
 
-import Tags from '~/unit/DashboardThread/Tags'
+import Tags from '~/unit/DsbThread/Tags'
 
 export const Route = createFileRoute('/$community/tags')({
   component: TagsPage,

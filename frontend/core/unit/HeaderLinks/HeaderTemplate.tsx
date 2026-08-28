@@ -24,7 +24,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
       content={
         <div className={s.menuPanel}>
           {links.map((item) => (
-            <Link className={s.linkItem} key={item.id} href={item.url}>
+            <Link className={s.linkItem} key={item.id} href={item.url} navigation='document'>
               {moreTabLinkTitle(item, t)}
             </Link>
           ))}
@@ -51,7 +51,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links = DEFAULT_LINKS }) => {
       {visibleLinks.map((item) => (
         <Fragment key={item.id}>
           {item.type === DASHBOARD_LINK_TYPE.LINK ? (
-            <Link className={s.linkItem} href={item.url}>
+            <Link className={s.linkItem} href={item.url} navigation='document'>
               {item.title}
             </Link>
           ) : (

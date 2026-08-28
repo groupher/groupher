@@ -1,5 +1,8 @@
 # Umami on Fly.io
 
+> 迁移说明：下文的 `frontend/main` 脚本路径记录部署切换当时的接入点；Main 已退役，
+> 后续公开采集接入归 Community TanStack shell 所有。
+
 > 状态：已完成（2026-08-25）
 >
 > 更新：2026-08-25

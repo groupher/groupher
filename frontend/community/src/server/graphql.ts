@@ -19,6 +19,7 @@ export class GraphQLRequestError extends Error {
   }
 }
 
+/** Reads the Groupher auth token from the active TanStack server request. */
 export const getAuthToken = (): string | null => {
   const cookieHeader = getRequest().headers.get('cookie')
   if (!cookieHeader) return null
@@ -29,10 +30,12 @@ export const getAuthToken = (): string | null => {
   return null
 }
 
+/** Prevents session-scoped loader responses from entering shared caches. */
 export const setPrivateCacheHeader = (): void => {
   setResponseHeader('cache-control', 'private, no-store')
 }
 
+/** Executes a bounded server-side GraphQL request for Community loaders. */
 export async function fetchGraphQL<TData>(
   query: string | DocumentNode | TypedDocumentNode<TData, Record<string, unknown>>,
   variables: Record<string, unknown>,
