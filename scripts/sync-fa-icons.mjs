@@ -18,7 +18,7 @@ const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 
 const runGenerate = () => {
   console.log('[sync-fa-icons] Generating source icons because optimized assets are missing.')
-  const command = process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
+  const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
 
   const result = spawnSync(command, ['generate:fa-icons'], {
     cwd: repoRoot,
@@ -26,7 +26,7 @@ const runGenerate = () => {
   })
 
   if (result.status !== 0) {
-    throw new Error('Failed to generate icon assets, run `yarn generate:fa-icons` manually')
+    throw new Error('Failed to generate icon assets, run `pnpm generate:fa-icons` manually')
   }
 }
 

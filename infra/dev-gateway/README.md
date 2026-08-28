@@ -18,10 +18,10 @@ It is development infrastructure only. Production public routing belongs to
 ## Commands
 
 ```bash
-yarn workspace @groupher/dev-gateway dev
-yarn workspace @groupher/dev-gateway test
-yarn workspace @groupher/dev-gateway type-check
-yarn workspace @groupher/dev-gateway format:check
+pnpm --filter @groupher/dev-gateway run dev
+pnpm --filter @groupher/dev-gateway run test
+pnpm --filter @groupher/dev-gateway run type-check
+pnpm --filter @groupher/dev-gateway run format:check
 ```
 
 See [`infra/clean_up.md`](../clean_up.md) for the migration boundary and

@@ -289,7 +289,7 @@ frontend/core/unit/AboutThread/
 生成文件导出一个仅用于构建审计的稳定标记，例如 `VISITOR_LOCATION_DATA_VERSION`。生产构建后执行：
 
 ```bash
-yarn workspace @groupher/frontend-main build
+pnpm --filter @groupher/frontend-main run build
 
 # 浏览器 chunk 不得包含 Node-only 地理数据标记；该命令必须无输出。
 rg -l "VISITOR_LOCATION_DATA_VERSION" frontend/main/.next/static/chunks

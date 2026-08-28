@@ -573,7 +573,7 @@ mount 后加载且需要去重/onLoad 的脚本保留为明确的 `ClientScript`
 7. 新建 `CommunityPreviewLink`，迁移 11 个 Core 生产文件中的 12 处 preview JSX 使用，重写
    `Link.test.tsx` 中另 2 处测试使用，并验证 mask 方向和滚动。
 8. 对跨应用链接使用 full-document navigation。
-9. 新增 `yarn check:router-runtime` 自动检查宿主/Core 声明和 lockfile 唯一解析版本。
+9. 新增 `pnpm run check:router-runtime` 自动检查宿主/Core 声明和 lockfile 唯一解析版本。
 10. 验证 Community、Dash、Landing 和 Apply 的 route tree/type-check。
 
 ### PR 3：删除 provider 与 adapter
@@ -655,11 +655,11 @@ rg -n '\bpreviewId=' frontend/core/platform/Link.test.tsx | LC_ALL=C sort
 并分别统计 Link 与 navigation hook candidates。扫描结果仍需人工分类；固定命令保证 PR
 前后列表可比较，不代表每个候选文件都必须采用同一种迁移方式。
 
-Router runtime 版本不能只靠人工阅读 `yarn why`。PR 2 新增仓库级
-`yarn check:router-runtime`，至少自动检查：
+Router runtime 版本不能只靠人工阅读 `pnpm why`。PR 2 新增仓库级
+`pnpm run check:router-runtime`，至少自动检查：
 
 - Core peer/dev dependency 和所有宿主 dependency 都 exact pin 到 `1.170.21`；
-- `yarn.lock` 中 `@tanstack/react-router` 的唯一解析版本是 `1.170.21`；
+- `pnpm-lock.yaml` 中 `@tanstack/react-router` 的唯一解析版本是 `1.170.21`；
 - 出现多个唯一解析版本、缺失宿主声明或范围漂移时以非零状态退出。
 
 Yarn peer virtualization 会产生多个 `virtual:*#npm:1.170.21` locator，它们不是多个 package
@@ -674,7 +674,7 @@ Yarn peer virtualization 会产生多个 `virtual:*#npm:1.170.21` locator，它�
 - Core 正式声明并直接使用 TanStack Router；
 - `@tanstack/react-router`、React 和 React DOM 在每个宿主 bundle 中保持单 runtime 实例；
 - Core peer/dev dependency 与所有宿主 exact pin 同一个 Router 版本；
-- `yarn check:router-runtime` 自动确认 lockfile 只有一个 resolved Router version；
+- `pnpm run check:router-runtime` 自动确认 lockfile 只有一个 resolved Router version；
 - Core 不再 framework-neutral，但继续保持 app-route-tree 和 infrastructure neutrality；
 - Core 不导入任一应用的 generated route tree；
 - Core Link 对外只接受互斥的 `route`/`href`，不公开 TanStack `to: string`；

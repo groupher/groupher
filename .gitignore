@@ -31,23 +31,12 @@ test-results/
 yalc.lock
 bun.lockb
 npm-debug.log
-yarn-error.log
 
 # Python build and test artifacts
 **/__pycache__/
 *.egg-info/
 .pytest_cache/
 .venv/
-
-# =====================
-# Yarn Berry
-# =====================
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
 
 # =====================
 # Environment variables

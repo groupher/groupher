@@ -93,7 +93,7 @@ Next 产物约定也必须删除，当前已知包括：
 当仓库不存在真实 Next.js 项目后，`.next` ignore/cache/clean 约定应整体删除，而不是继续
 以“可能还会用到”为理由保留。
 
-重新生成锁文件后，`yarn why next` 应无真实 Next.js package 依赖。
+重新生成锁文件后，`pnpm why next` 应无真实 Next.js package 依赖。
 
 `NEXT_PUBLIC_*` 名称本身不等于 Next.js runtime 依赖。TanStack 应用仍在使用的变量应单独
 评估并逐步迁移到统一的公开环境变量命名，不阻塞本轮项目删除。
@@ -265,7 +265,6 @@ rg -l \
   --hidden \
   --glob '!**/node_modules/**' \
   --glob '!**/.git/**' \
-  --glob '!.yarn/**' \
   --glob '!**/.next/**'
 
 rg -n \
@@ -273,12 +272,11 @@ rg -n \
   --hidden \
   --glob '!**/node_modules/**' \
   --glob '!**/.git/**' \
-  --glob '!.yarn/**' \
   --glob '!**/.next/**'
 ```
 
 `--hidden` 是验收必需项，否则 Ripgrep 默认跳过 `.gitignore`、`.dockerignore` 和 `.github`，
-会漏掉最需要清理的构建与 CI 约定。`.git` 与 vendored Yarn runtime 单独排除。
+会漏掉最需要清理的构建与 CI 约定。`.git` 单独排除。
 
 第二条中的 `service.*(gateway|main|dashboard)` 是有意采用的宽匹配，只用于发现 Status、
 Dev Hub 和类似服务清单中的陈旧条目。它可能命中普通说明文字或无关 service 行，结果必须
@@ -326,7 +324,7 @@ Status、Dev Hub、Portless、ignore 或部署配置命中。剩余结果归为�
 - `nextjs.png` 和 MarkerPicker 的 `nextjs`：Landing 技术展示与用户可选技术图标，不是 runtime
   依赖；
 - `@workflow/next`：`workflow` 元包的可选 adapter 传递包；`next` peer 未安装，
-  `yarn why next` 为空。Content Import 只运行独立 Node/Hono adapter，不调用该包。
+  `pnpm why next` 为空。Content Import 只运行独立 Node/Hono adapter，不调用该包。
 
 历史文档保留旧名称是为了说明迁移输入，不得作为恢复兼容层的依据。
 
@@ -387,7 +385,7 @@ Next 项目退场后，删除 `.gitignore`、`.dockerignore`、CI 和 workspace 
 1. 清理 Core 的 Next 专用模块。
 2. 收敛 PlatformProvider，保留纯 routing 能力。
 3. 删除根 Next 依赖和 Next scripts。
-4. 重新生成锁文件并验证 `yarn why next`。
+4. 重新生成锁文件并验证 `pnpm why next`。
 5. 清理 `.next` ignore 规则和散落的生成产物。
 
 ### PR 4：基础设施一致性与文档收尾
@@ -410,7 +408,7 @@ Inspire Me 已移入 `frontend` 并完成 TanStack Start 改写，本轮不保�
 - `frontend/e2e` 不再启动或测试 Main/Dashboard；
 - Dev Gateway 的 routing/upgrade tests 不再包含 Next HMR/static 用例；
 - 根 workspace 不依赖 `next`、`@next/bundle-analyzer` 或 Next config；
-- `yarn why next` 无真实 Next.js package 依赖；
+- `pnpm why next` 无真实 Next.js package 依赖；
 - 存活 workspace、CI、`.gitignore` 和 `.dockerignore` 不再包含 `.next` 产物约定；
 - Core 不直接导入 Next runtime；
 - Core 不再包含 `ShellStyleContext`、`stores/shellStyle` 或独立 FooterLinks context，共享样式

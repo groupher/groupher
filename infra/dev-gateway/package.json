@@ -6,19 +6,19 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "ci": "cross-env NODE_ENV=ci tsx src/server.ts",
-    "test": "../../node_modules/.bin/vitest --root ../.. --config frontend/core/vitest.config.mts run infra/dev-gateway",
-    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "test": "pnpm exec vitest --root ../.. --config frontend/core/vitest.config.mts run infra/dev-gateway",
+    "type-check": "pnpm --workspace-root exec tsc --noEmit --project infra/dev-gateway/tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js && esbuild src/app.ts --bundle --platform=node --format=esm --external:dotenv --external:hono --external:'hono/*' --outfile=dist/app.js && cp -R public dist/public",
     "start": "cross-env NODE_ENV=production node dist/server.js",
-    "lint": "../../node_modules/.bin/oxlint . --threads=1",
-    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.js *.json",
-    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.js *.json",
+    "lint": "pnpm exec oxlint . --threads=1",
+    "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.js *.json",
+    "format:check": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.js *.json",
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@groupher/contracts": "1.0.0",
-    "@groupher/route-contract": "1.0.0",
-    "@groupher/service": "1.0.0",
+    "@groupher/contracts": "workspace:*",
+    "@groupher/route-contract": "workspace:*",
+    "@groupher/service": "workspace:*",
     "@hono/node-server": "^2.0.11",
     "dotenv": "^17.4.2",
     "hono": "^4.13.0"

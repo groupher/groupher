@@ -10,9 +10,8 @@ on:
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
-      - 'yarn.lock'
-      - '.yarn/**'
-      - '.yarnrc.yml'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
 
 jobs:
   deploy:

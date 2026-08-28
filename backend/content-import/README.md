@@ -43,10 +43,10 @@ consumes canonical files, tree nodes, diagnostics, and stable source IDs.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/backend-content-import dev
-yarn workspace @groupher/backend-content-import test
-yarn workspace @groupher/backend-content-import type-check
-yarn workspace @groupher/backend-content-import format:check
+pnpm --filter @groupher/backend-content-import run dev
+pnpm --filter @groupher/backend-content-import run test
+pnpm --filter @groupher/backend-content-import run type-check
+pnpm --filter @groupher/backend-content-import run format:check
 ```
 
 Some document formats are delegated to `backend/document-converter`; install

@@ -1,8 +1,8 @@
 # Community V1 baseline
 
 > Generated from the local Community production build on 2026-08-21. Re-run
-> `yarn workspace @groupher/frontend-community build` followed by
-> `yarn workspace @groupher/frontend-community baseline` when the bundle changes.
+> `pnpm --filter @groupher/frontend-community run build` followed by
+> `pnpm --filter @groupher/frontend-community run baseline` when the bundle changes.
 
 ## Local build
 

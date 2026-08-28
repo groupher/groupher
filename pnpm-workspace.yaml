@@ -1,0 +1,22 @@
+packages:
+  - 'backend/*'
+  - 'infra/*'
+  - 'frontend/*'
+  - 'local/*'
+  - 'packages/*'
+
+# Keep the first migration close to the existing node_modules layout.
+nodeLinker: hoisted
+hoistingLimits: none
+strictDepBuilds: true
+
+# Only Lefthook needs its install script in the current repository. Keep every
+# other observed build-script decision explicit so clean frozen installs are
+# reproducible and do not silently execute new dependency scripts.
+allowBuilds:
+  '@swc/core': false
+  cbor-extract: false
+  esbuild: false
+  lefthook: true
+  tsparticles-engine: false
+  workerd: false

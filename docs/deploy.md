@@ -184,10 +184,10 @@ groupher.com CAA 0 issue "letsencrypt.org"
 先部署下游 Worker，再部署公共 Router：
 
 ```bash
-yarn workspace @groupher/frontend-landing deploy:worker
-yarn workspace @groupher/frontend-community deploy
-yarn workspace @groupher/backend-auth deploy:worker
-yarn workspace @groupher/edge-router deploy
+pnpm --filter @groupher/frontend-landing run deploy:worker
+pnpm --filter @groupher/frontend-community run deploy
+pnpm --filter @groupher/backend-auth run deploy:worker
+pnpm --filter @groupher/edge-router run deploy
 ```
 
 首次部署 `edge-router` 前必须人工确认 Landing、Community、Auth 已部署且 Service Bindings
@@ -214,7 +214,7 @@ health 端点应从 Cloudflare 返回 `service: "edge-router"`。
 构建并部署 TanStack Start Dash Worker：
 
 ```bash
-yarn workspace @groupher/frontend-dash deploy
+pnpm --filter @groupher/frontend-dash run deploy
 ```
 
 部署完成后只验证 Dash 的独立产品域名：

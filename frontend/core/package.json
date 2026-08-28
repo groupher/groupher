@@ -14,14 +14,14 @@
     "./dev-hub-reporter/react": "./ui/DevHubReporter/index.tsx"
   },
   "scripts": {
-    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.app.json",
-    "lint": "../../node_modules/.bin/oxlint . --threads=1",
-    "format": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json .",
-    "format:check": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json --check .",
+    "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.app.json",
+    "lint": "pnpm exec oxlint . --threads=1",
+    "format": "pnpm exec oxfmt -c ./config/oxfmt.json .",
+    "format:check": "pnpm exec oxfmt -c ./config/oxfmt.json --check .",
     "build": "echo 'skip build'"
   },
   "dependencies": {
-    "@groupher/contracts": "1.0.0",
+    "@groupher/contracts": "workspace:*",
     "cobe": "^2.0.1"
   },
   "devDependencies": {

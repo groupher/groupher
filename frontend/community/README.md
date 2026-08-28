@@ -24,7 +24,7 @@
 本地开发：
 
 ```bash
-yarn dev:community
+pnpm run dev:community
 ```
 
 默认地址是 `http://127.0.0.1:3007`。生成 route tree、类型检查、格式检查和生产构建

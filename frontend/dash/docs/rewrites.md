@@ -82,7 +82,7 @@ framework-neutral token/reset CSS only if the two build systems later need
 materially different Tailwind configuration.
 
 validation
-`yarn workspace @groupher/frontend-dash build` compiles the shared entrypoint.
+`pnpm --filter @groupher/frontend-dash run build` compiles the shared entrypoint.
 Browser verification of `/home/dash/overview` confirms the same wallpaper and
 Lucide static assets load through the local gateway.
 

@@ -12,7 +12,7 @@ on:
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/graphql-contract.yml'
   push:
     paths:
@@ -25,7 +25,7 @@ on:
       - 'codegen.ts'
       - 'Makefile'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/graphql-contract.yml'
 
 permissions:
@@ -42,14 +42,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: yarn
-          cache-dependency-path: yarn.lock
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install JavaScript dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
@@ -68,13 +68,13 @@ jobs:
         run: git diff --exit-code -- backend/api/schema.graphql
 
       - name: Validate repository GraphQL invariants
-        run: yarn contract:graphql
+        run: pnpm run contract:graphql
 
       - name: Validate Pages operations against the backend SDL
-        run: yarn vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/pages/pages.schema.test.ts
+        run: pnpm exec vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/pages/pages.schema.test.ts
 
       - name: Validate feature-local operations against the backend SDL
-        run: yarn vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/feature.schema.test.ts
+        run: pnpm exec vitest --config frontend/core/vitest.config.mts run frontend/core/schemas/feature.schema.test.ts
 
       - name: Rebuild and verify generated GraphQL artifacts
         run: |
@@ -83,6 +83,6 @@ jobs:
             frontend/core/lib/graphql/generated/gql.ts \
             frontend/core/lib/graphql/generated/graphql.ts \
             frontend/core/lib/graphql/generated/index.ts
-          yarn graphql:codegen
-          yarn contract:graphql:generated
+          pnpm run graphql:codegen
+          pnpm run contract:graphql:generated
           git diff --exit-code -- frontend/core/lib/graphql/generated

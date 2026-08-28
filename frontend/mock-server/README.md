@@ -18,7 +18,7 @@ enough to expose frontend drift instead of inventing a second API.
 ## Local development
 
 ```sh
-yarn workspace @groupher/mock-server dev
+pnpm --filter @groupher/mock-server run dev
 ```
 
 Prefer real Phoenix when validating permissions, mutations, Session behavior,

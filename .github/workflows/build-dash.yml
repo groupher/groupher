@@ -6,7 +6,7 @@ on:
       - 'frontend/dash/**'
       - 'frontend/core/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
   push:
     branches:
       - dev
@@ -14,7 +14,7 @@ on:
       - 'frontend/dash/**'
       - 'frontend/core/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
 
 jobs:
   build:
@@ -29,14 +29,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: yarn.lock
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
-        run: yarn build:prod:dash
+        run: pnpm run build:prod:dash

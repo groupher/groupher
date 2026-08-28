@@ -34,7 +34,7 @@ export default async () => {
     // ignore
   }
 
-  const child = spawn('yarn mock:server', {
+  const child = spawn('pnpm run mock:server', {
     shell: true,
     stdio: 'inherit',
     detached: true,

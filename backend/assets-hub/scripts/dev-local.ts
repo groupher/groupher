@@ -20,8 +20,8 @@ type TProcessSpec = {
 }
 
 const processes: TProcessSpec[] = [
-  { args: ['dev:upload-api'], command: 'yarn', name: 'upload-api', port: 8002 },
-  { args: ['dev:read-worker'], command: 'yarn', name: 'read-worker', port: 8787 },
+  { args: ['run', 'dev:upload-api'], command: 'pnpm', name: 'upload-api', port: 8002 },
+  { args: ['run', 'dev:read-worker'], command: 'pnpm', name: 'read-worker', port: 8787 },
 ]
 
 const children = new Set<ChildProcess>()

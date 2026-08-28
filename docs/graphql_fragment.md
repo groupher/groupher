@@ -830,7 +830,7 @@ its own. The first pilot run must assert that generated outputs contain the
 producing schema-only artifacts. It must also type-check the authoring import and
 prove an unknown-field fixture exits non-zero.
 
-That smoke check is executable as `yarn contract:graphql:generated`; CI runs it
+That smoke check is executable as `pnpm run contract:graphql:generated`; CI runs it
 immediately after Codegen and before the generated-directory diff.
 The CI job also requires every generated file to be tracked before regeneration;
 an untracked output directory cannot satisfy the freshness gate.
@@ -878,7 +878,7 @@ discovery while output remains behind the `~/graphql/authoring` boundary.
 The generated directory is a compile-time dependency of authoring modules. This
 pilot resolves that lifecycle by committing generated artifacts. Normal build
 and type-check commands therefore work from a clean checkout; CI reruns
-`yarn graphql:codegen` and fails on a generated diff. Codegen must run before a
+`pnpm run graphql:codegen` and fails on a generated diff. Codegen must run before a
 change to a source document is accepted, but it is not a hidden runtime import
 dependency for the existing `~/graphql` transport exports.
 
@@ -960,7 +960,7 @@ consumer of core-owned documents.
 1. Give both operations stable names.
 2. Remove fields absent from the backend schema.
 3. Commit the generated artifacts under
-   `frontend/core/lib/graphql/generated/`; `yarn graphql:codegen` followed by a
+   `frontend/core/lib/graphql/generated/`; `pnpm run graphql:codegen` followed by a
    clean git diff is the reproducibility check.
 4. Add the Codegen client preset with a pilot-only documents allowlist and expose
    its helper through `~/graphql/authoring`. The pilot must configure that
@@ -1333,7 +1333,7 @@ For the initial implementation:
 - Generate privately into `frontend/core/lib/graphql/generated/`, matching the
   existing `~/graphql` alias. Keep the runtime index independent and expose only
   the authoring helper through `frontend/core/lib/graphql/authoring.ts`.
-- Commit generated artifacts and verify them with `yarn graphql:codegen` in CI;
+- Commit generated artifacts and verify them with `pnpm run graphql:codegen` in CI;
   do not make the runtime transport facade depend on a prebuild side effect.
 - Build `contracts/graphql/` incrementally in Phase 0B as repository-level
   checks acquire a real home, while keeping operation validation beside each

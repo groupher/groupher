@@ -833,7 +833,7 @@ TArticleSnapshot*               -> TDocSnapshot*
 本次同步清理的运行时契约包括：
 
 - `CMS.Const`、DocBranch、DocSnapshot、Gate Scope、Press 和 DocTree 调用点；
-- GraphQL 的 `:article_branch_type`、`:article_branch_status`、`:article_snapshot`、`:article_snapshot_stage` 和 `:article_snapshot_action`；Doc 相关类型统一改为 `:doc_branch_type`、`:doc_branch_status`、`:doc_snapshot`、`:doc_snapshot_stage` 和 `:doc_snapshot_action`，普通 Article Draft 使用共享的 `:article_stage`。修改 schema、query / mutation 和 enum 后，立即运行 `yarn graphql:codegen`，同步更新 `frontend/core/lib/graphql/generated`（包括 `graphql.ts` 等生成文件），再执行 GraphQL contract/generated checks；
+- GraphQL 的 `:article_branch_type`、`:article_branch_status`、`:article_snapshot`、`:article_snapshot_stage` 和 `:article_snapshot_action`；Doc 相关类型统一改为 `:doc_branch_type`、`:doc_branch_status`、`:doc_snapshot`、`:doc_snapshot_stage` 和 `:doc_snapshot_action`，普通 Article Draft 使用共享的 `:article_stage`。修改 schema、query / mutation 和 enum 后，立即运行 `pnpm run graphql:codegen`，同步更新 `frontend/core/lib/graphql/generated`（包括 `graphql.ts` 等生成文件），再执行 GraphQL contract/generated checks；
 - Doc 查询、mutation、resolver、测试和前端生成类型必须作为同一个收口步骤验收；
 - RevisionDrawer、DiffStatus 等只服务 Docs 的前端类型；
 - `DocPublishRelease`、DocTree Publish 和 change detection 中把 DocSnapshot 集合称为 `article_snapshots` 的局部变量和注释；

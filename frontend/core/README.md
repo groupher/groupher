@@ -34,9 +34,9 @@ and deployment entrypoints. Cross-application links remain full-document links.
 ## Validation
 
 ```sh
-yarn workspace @groupher/frontend-core type-check
-yarn workspace @groupher/frontend-core format:check
-yarn test:core
+pnpm --filter @groupher/frontend-core run type-check
+pnpm --filter @groupher/frontend-core run format:check
+pnpm run test:core
 ```
 
 Generated GraphQL and generated asset files are updated through repository

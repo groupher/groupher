@@ -20,11 +20,11 @@ repository asset scripts rather than imported from another app's build output.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/frontend-landing dev
-yarn workspace @groupher/frontend-landing type-check
-yarn workspace @groupher/frontend-landing format:check
-yarn workspace @groupher/frontend-landing build
-yarn workspace @groupher/frontend-landing deploy:worker:dry-run
+pnpm --filter @groupher/frontend-landing run dev
+pnpm --filter @groupher/frontend-landing run type-check
+pnpm --filter @groupher/frontend-landing run format:check
+pnpm --filter @groupher/frontend-landing run build
+pnpm --filter @groupher/frontend-landing run deploy:worker:dry-run
 ```
 
 TanStack Start prerenders `/`, `/pricing`, and `/book-demo` at build time. The

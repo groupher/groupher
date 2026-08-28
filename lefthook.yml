@@ -4,55 +4,55 @@ pre-commit:
   jobs:
     - name: format json and markdown
       files: node scripts/lefthook-files.mjs . json md
-      run: yarn oxfmt -c frontend/core/config/oxfmt.json {files}
+      run: pnpm exec oxfmt -c frontend/core/config/oxfmt.json {files}
       stage_fixed: true
 
     - name: format frontend
       files: node scripts/lefthook-files.mjs frontend js jsx ts tsx
-      run: yarn oxfmt -c frontend/core/config/oxfmt.json {files}
+      run: pnpm exec oxfmt -c frontend/core/config/oxfmt.json {files}
       stage_fixed: true
 
     - name: lint frontend
       files: node scripts/lefthook-files.mjs frontend js jsx ts tsx
-      run: yarn oxlint -c frontend/core/config/oxlint.json --fix --threads=1 {files}
+      run: pnpm exec oxlint -c frontend/core/config/oxlint.json --fix --threads=1 {files}
       stage_fixed: true
 
     - name: type-check core
       files: node scripts/lefthook-files.mjs frontend/core ts tsx --absolute
-      run: cd frontend/core && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.app.json global.d.ts {files}
+      run: cd frontend/core && pnpm exec tsc-files --noEmit --project tsconfig.app.json global.d.ts {files}
 
     - name: type-check landing
       files: node scripts/lefthook-files.mjs frontend/landing ts tsx --absolute
-      run: cd frontend/landing && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      run: cd frontend/landing && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check inspire-me
       files: node scripts/lefthook-files.mjs frontend/inspire-me ts tsx --absolute
-      run: cd frontend/inspire-me && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      run: cd frontend/inspire-me && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check dev-hub
       files: node scripts/lefthook-files.mjs local/dev-hub ts tsx
-      run: yarn workspace @groupher/local-dev-hub type-check
+      run: pnpm --filter @groupher/local-dev-hub run type-check
 
     - name: type-check auth
       files: node scripts/lefthook-files.mjs backend/auth ts tsx --absolute
-      run: cd backend/auth && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      run: cd backend/auth && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check dev-gateway
       files: node scripts/lefthook-files.mjs infra/dev-gateway ts tsx --absolute
-      run: cd infra/dev-gateway && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      run: cd infra/dev-gateway && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
     - name: type-check content-import
       files: node scripts/lefthook-files.mjs backend/content-import ts tsx --absolute
-      run: cd backend/content-import && ../../node_modules/.bin/tsc-files --noEmit --project tsconfig.json {files}
+      run: cd backend/content-import && pnpm exec tsc-files --noEmit --project tsconfig.json {files}
 
 commit-msg:
   jobs:
     - name: commitlint
-      run: yarn commitlint --edit {1}
+      run: pnpm exec commitlint --edit {1}
 
 full-check:
   jobs:
     - name: format check
-      run: yarn format:check
+      run: pnpm run format:check
     - name: lint
-      run: yarn lint
+      run: pnpm run lint
