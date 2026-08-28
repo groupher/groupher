@@ -153,7 +153,7 @@ jobs:
       - name: Run auth e2e
         env:
           CI: true
-        run: pnpm run test:e2e:auth -- --grep "P0"
+        run: pnpm run test:e2e:auth --grep "P0"
 
       - name: Upload Playwright report
         if: failure()
