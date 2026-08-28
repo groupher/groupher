@@ -35,9 +35,9 @@ after their contracts are implemented.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/assets-hub dev:local
-yarn workspace @groupher/assets-hub type-check
-yarn workspace @groupher/assets-hub format:check
+pnpm --filter @groupher/assets-hub run dev:local
+pnpm --filter @groupher/assets-hub run type-check
+pnpm --filter @groupher/assets-hub run format:check
 ```
 
 Use `.env.example` as the configuration inventory. Secrets belong in local or

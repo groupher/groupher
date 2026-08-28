@@ -1026,7 +1026,7 @@ function matchesExternalProcess(
 }
 
 function isRecognizedRuntimeCommand(command: string): boolean {
-  return /\b(node|vite|next|yarn|npm|pnpm|bun|make|mix|elixir|beam|python|uvicorn|cargo|go)\b/i.test(
+  return /\b(node|vite|next|npm|pnpm|bun|make|mix|elixir|beam|python|uvicorn|cargo|go)\b/i.test(
     command,
   )
 }

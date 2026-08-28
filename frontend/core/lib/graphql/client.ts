@@ -176,10 +176,7 @@ export const createAuthFetch =
   }
 
 /** Typed same-origin browser transport shared by TanStack Query and mutations. */
-export const browserQuery = async <
-  TResult,
-  TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
+export const browserQuery = async <TResult, TVariables = Record<string, unknown>>(
   document: string | DocumentNode | TypedDocumentNode<TResult, TVariables>,
   variables: TVariables = {} as TVariables,
   fetcher: typeof fetch = fetch,

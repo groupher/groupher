@@ -1,109 +1,109 @@
 # naming should be [part].[action].[env].[sub-app]
 # frontend
 fe.install:
-	yarn install
+	pnpm install --frozen-lockfile
 
 # landing
 fe.dev.landing:
-	PORT=3002 NEXT_PUBLIC_SITE_URL=http://localhost:3002 yarn run dev:landing
+	PORT=3002 NEXT_PUBLIC_SITE_URL=http://localhost:3002 pnpm run dev:landing
 
 fe.build.landing:
-	yarn run build:prod:landing
+	pnpm run build:prod:landing
 
 fe.serve.landing: 
-	yarn run serve:prod:landing
+	pnpm run serve:prod:landing
 
 # inspire-me
 fe.dev.inspire:
 	(sleep 2 && open http://localhost:3010/canny) &
-	yarn workspace @groupher/inspire-me dev --port 3010
+	pnpm --filter @groupher/inspire-me run dev --port 3010
 
 fe.inspire-me.deploy:
-	@yarn workspace @groupher/inspire-me exec wrangler whoami >/dev/null 2>&1 || yarn workspace @groupher/inspire-me exec wrangler login
-	yarn workspace @groupher/inspire-me deploy
+	@pnpm --filter @groupher/inspire-me exec wrangler whoami >/dev/null 2>&1 || pnpm --filter @groupher/inspire-me exec wrangler login
+	pnpm --filter @groupher/inspire-me run deploy
 
 inspire: fe.dev.inspire
 
 # local development hub
 dev:
-	yarn workspace @groupher/local-dev-hub hub
+	pnpm --filter @groupher/local-dev-hub run hub
 
 dev.dev:
-	yarn workspace @groupher/local-dev-hub dev
+	pnpm --filter @groupher/local-dev-hub run dev
 
 dev.app:
 	@bash local/dev-hub/scripts/install-app.sh
 
 fe.dev.dash:
-	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth yarn run dev:dash
+	PORT=3005 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://dash.groupher.localhost NEXT_PUBLIC_AUTH_ENDPOINT=https://auth.groupher.localhost/api/auth pnpm run dev:dash
 
 fe.dev.apply:
-	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:apply
+	PORT=3006 GRAPHQL_ENDPOINT=http://127.0.0.1:4001/graphiql NEXT_PUBLIC_SITE_URL=https://groupher.localhost pnpm run dev:apply
 
 fe.build.dash:
-	yarn run build:prod:dash
+	pnpm run build:prod:dash
 
 fe.build.apply:
-	yarn run build:prod:apply
+	pnpm run build:prod:apply
 
 fe.test.landing:
-	yarn run test:landing
+	pnpm run test:landing
 
 fe.e2e.landing:
-	yarn run test:e2e:landing
+	pnpm run test:e2e:landing
 
 # dev gateway
 be.dev-gateway.start:
-	yarn run dev:dev-gateway
+	pnpm run dev:dev-gateway
 
 be.dev-gateway.build:
-	yarn run build:prod:dev-gateway
+	pnpm run build:prod:dev-gateway
 
 be.dev-gateway.test:
-	yarn workspace @groupher/dev-gateway test
+	pnpm --filter @groupher/dev-gateway run test
 
 # auth
 be.auth.start:
-	PORT=3004 AUTH_URL=https://auth.groupher.localhost yarn run dev:auth
+	PORT=3004 AUTH_URL=https://auth.groupher.localhost pnpm run dev:auth
 
 be.auth.build:
-	yarn run build:prod:auth
+	pnpm run build:prod:auth
 
 be.auth.test:
-	yarn workspace @groupher/backend-auth test
+	pnpm --filter @groupher/backend-auth run test
 
 # content import
 be.content-import.start:
-	yarn run dev:content-import
+	pnpm run dev:content-import
 
 be.content-import.build:
-	yarn run build:prod:content-import
+	pnpm run build:prod:content-import
 
 be.content-import.test:
-	yarn workspace @groupher/backend-content-import test
+	pnpm --filter @groupher/backend-content-import run test
 
 be.press.start:
-	yarn workspace @groupher/press db:migrate && yarn run dev:press
+	pnpm --filter @groupher/press run db:migrate && pnpm run dev:press
 
 be.press.build:
-	yarn run build:prod:press
+	pnpm run build:prod:press
 
 be.press.test:
-	yarn workspace @groupher/press test
+	pnpm --filter @groupher/press run test
 
 # assets hub
 fe.assets-hub.deploy:
-	yarn workspace @groupher/assets-hub deploy:worker
+	pnpm --filter @groupher/assets-hub run deploy:worker
 
 # document converter
 be.document-converter.install:
-	yarn run document-converter:install
+	pnpm run document-converter:install
 
 be.document-converter.start:
-	yarn run dev:document-converter
+	pnpm run dev:document-converter
 
 be.document-converter.test:
-	yarn run test:document-converter
+	pnpm run test:document-converter
 
 # backend
 # mix ecto.setup

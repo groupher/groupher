@@ -133,7 +133,7 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
   不依赖 `Host` 做产品路由；如果未来某个 WebSocket upstream 依赖 `Host` 而不是
   `x-forwarded-host` 判断外部域名，需要为该 upstream 明确增加策略测试。
 - `src/env.ts` 的 cwd fallback 和 `src/static.ts` 的 `PUBLIC_ROOT` fallback 一致，都是为
-  `yarn run dev:gateway` 从 monorepo root 启动、以及从 `infra/gateway` 目录直接启动
+  `pnpm run dev:gateway` 从 monorepo root 启动、以及从 `infra/gateway` 目录直接启动
   两种方式服务。`src/server.ts` 通过 `import './env'` 提供唯一显式入口，`dev` 和
   `start` 都依赖这个入口加载环境变量。
 - `src/static.ts` 返回 `ArrayBuffer` 时使用 `byteOffset/byteLength` 做 slice。这个处理是
@@ -177,13 +177,13 @@ infra/gateway/
 
 ## 历史 Vercel Serverless 部署记录
 
-Gateway 当前在 Vercel 使用 Hono preset 部署，项目设置为：
+旧 Gateway 曾在 Vercel 使用 Hono preset 部署，项目设置为：
 
 ```text
 Framework Preset: Hono
 Root Directory: infra/gateway
-Install Command: cd ../.. && yarn install --immutable
-Build Command: yarn build
+Install Command: cd ../.. && pnpm install --frozen-lockfile
+Build Command: pnpm run build
 Output Directory: N/A
 ```
 
@@ -196,15 +196,16 @@ Output Directory: N/A
 Vercel Hono preset 以 `src/app.ts` 为应用入口；根部 `app.js` / `index.js` 只是 build
 后 ESM 的兼容 shim，不是需要手写业务逻辑的第二套入口。
 
-Vercel Hono builder 当前不能使用仓库根部的 TypeScript 7 preview。失败日志为：
+历史上的 Vercel Hono builder 曾不能使用仓库根部的 TypeScript 7。失败日志为：
 
 ```text
 Using TypeScript 7.0.2 (local user-provided)
 Cannot read properties of undefined (reading 'readFile')
 ```
 
-因此 `@groupher/gateway` workspace 显式依赖 `typescript@5.9.3`。这只是 Vercel Hono
-builder 的兼容性约束，不代表全仓库放弃 TypeScript 7 preview。
+因此已退役的 `@groupher/gateway` workspace 当时显式依赖 `typescript@5.9.3`。这只是
+历史 Vercel Hono builder 的兼容性记录，不是当前仓库的约束；当前 `@groupher/dev-gateway`
+和 `@groupher/edge-router` 均统一使用 `typescript@7.0.2`。
 
 Vercel Hono preset 会处理 `src/app.ts` 并在运行时执行转译后的 ESM 文件。为兼容 Node
 ESM runtime：
@@ -300,7 +301,7 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 默认入口模型，保留独立 gateway 项目，不修改 root-level 多项目部署脚本语义。
 
 Root 级 `frontend/scripts/vercel.build.sh` 仍然按
-`yarn workspace @groupher/gateway build` 触发，因此 Gateway 的 `build`
+`pnpm --filter @groupher/gateway run build` 触发，因此 Gateway 的 `build`
 脚本必须继续存在，即使 Vercel Hono 部署本身可以零配置。
 
 ### 5. 验证
@@ -308,9 +309,9 @@ Root 级 `frontend/scripts/vercel.build.sh` 仍然按
 单元测试：
 
 ```bash
-yarn workspace @groupher/gateway test
-yarn workspace @groupher/gateway type-check
-yarn workspace @groupher/gateway build
+pnpm --filter @groupher/gateway run test
+pnpm --filter @groupher/gateway run type-check
+pnpm --filter @groupher/gateway run build
 ```
 
 本地 smoke：

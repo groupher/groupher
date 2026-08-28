@@ -50,7 +50,7 @@ make dev.app
 
 - Xcode Command Line Tools：`xcode-select --install`
 - 当前 Node.js LTS
-- Yarn，或 Node 安装中可用的 Corepack
+- pnpm，或 Node 安装中可用的 Corepack
 
 然后在仓库根目录执行：
 
@@ -62,7 +62,7 @@ make dev.app
 
 1. 检查 macOS、Xcode Command Line Tools 和 Node.js。
 2. 在缺少 Rust 时下载官方 `rustup-init`，校验 SHA-256 后安装 stable toolchain。
-3. 使用 `yarn install --immutable` 安装 monorepo 依赖。
+3. 使用 `pnpm install --frozen-lockfile` 安装 monorepo 依赖。
 4. 构建 production 页面，再构建并 ad-hoc 签名 `Groupher Dev Hub.app`。
 5. 关闭已安装的旧版本，并安全替换 `/Applications` 中 bundle id 匹配的应用。
 6. 刷新 Launch Services，然后启动新版本。
@@ -241,13 +241,13 @@ Dev Hub 只监听 loopback 地址，不应改为局域网或公网服务。配�
 
 ```bash
 # Node 端测试
-yarn workspace @groupher/local-dev-hub test
+pnpm --filter @groupher/local-dev-hub run test
 
 # TypeScript
-yarn workspace @groupher/local-dev-hub type-check
+pnpm --filter @groupher/local-dev-hub run type-check
 
 # 格式检查
-yarn workspace @groupher/local-dev-hub format:check
+pnpm --filter @groupher/local-dev-hub run format:check
 
 # Rust 启动器
 cargo test --manifest-path local/dev-hub/src-tauri/Cargo.toml --locked

@@ -203,7 +203,7 @@ CI 和 Dev Hub 用来确认返回值是否符合 contract 的检查。
 
 - 开发时：改某个服务的 `/health` 后，跑本服务测试；必要时启动服务并用
   `assert-health.mjs --url ... --service ...` 检查真实响应。
-- CI：先跑 `yarn contract:health` 做 schema 和 fixtures 自测，再跑各服务单元测试；需要端到端保证时，启动
+- CI：先跑 `pnpm run contract:health` 做 schema 和 fixtures 自测，再跑各服务单元测试；需要端到端保证时，启动
   关键服务并用 `assert-health.mjs` 检查真实 URL。
 - Dev Hub 运行时：定期请求每个服务的 `/health`，做宽松 validate；不符合时展示
   protocol mismatch，而不是让 Dev Hub 崩溃。

@@ -65,7 +65,7 @@ if (args.has('--check')) {
     console.error(
       [
         'theme-first-paint generated file is stale.',
-        'Run: yarn gen:theme-first-paint-vars',
+        'Run: pnpm gen:theme-first-paint-vars',
         `Sources: ${sourceFiles.map((file) => path.relative(repoRoot, file)).join(', ')}`,
         `Target: ${path.relative(repoRoot, generatedFile)}`,
       ].join('\n'),

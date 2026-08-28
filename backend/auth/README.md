@@ -40,11 +40,11 @@ revocation. Gateway only routes requests and forwards the access cookie.
 ## Local development and validation
 
 ```sh
-yarn auth:env:bootstrap
-yarn workspace @groupher/backend-auth dev
-yarn workspace @groupher/backend-auth test
-yarn workspace @groupher/backend-auth type-check
-yarn workspace @groupher/backend-auth format:check
+pnpm run auth:env:bootstrap
+pnpm --filter @groupher/backend-auth run dev
+pnpm --filter @groupher/backend-auth run test
+pnpm --filter @groupher/backend-auth run type-check
+pnpm --filter @groupher/backend-auth run format:check
 ```
 
 The browser and Phoenix sides must be running for end-to-end Session tests.

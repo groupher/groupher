@@ -431,9 +431,9 @@ export，避免把托管迁移和前端重写混在一起。
 
 ### Phase 1: 为 Cloudflare Pages 准备 Landing
 
-1. 历史上曾使用 `yarn workspace @groupher/frontend-landing build:cloudflare` 作为
+1. 历史上曾使用 `pnpm --filter @groupher/frontend-landing run build:cloudflare` 作为
    Cloudflare Pages 的构建命令；该脚本和 Pages `_worker.js` 已删除，当前生产改用
-   `yarn workspace @groupher/frontend-landing build:worker` 部署 Landing Worker。
+   `pnpm --filter @groupher/frontend-landing run build:worker` 部署 Landing Worker。
 2. 确保 `frontend/landing` 在初始渲染时不依赖运行时 GraphQL。
 3. 第一次切换时继续让 Landing 使用 Next export。不要在托管迁移期间把它重写为
    Vinext、TanStack、Astro 或其他框架。

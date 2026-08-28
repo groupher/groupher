@@ -6,8 +6,8 @@
   "scripts": {
     "build": "tsc --noEmit && vite build && node scripts/verify-build.mjs",
     "dev": "vite --host 127.0.0.1",
-    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json src test vite.config.ts",
-    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check src test vite.config.ts",
+    "format": "pnpm exec oxfmt -c ../core/config/oxfmt.json src test vite.config.ts",
+    "format:check": "pnpm exec oxfmt -c ../core/config/oxfmt.json --check src test vite.config.ts",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "type-check": "tsc --noEmit",

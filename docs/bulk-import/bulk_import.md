@@ -934,8 +934,8 @@ Content Import Node 服务运行：
 
 ```bash
 cd backend/content-import
-yarn dev
-yarn exec workflow inspect runs --web
+pnpm run dev
+pnpm exec workflow inspect runs --web
 ```
 
 - 本地 Inspector 从 `.workflow-data/` 读取 Run、Step、输入、输出、错误和耗时；该目录是开发产物，不提交 Git。

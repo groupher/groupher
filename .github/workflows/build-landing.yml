@@ -6,7 +6,7 @@ on:
       - 'frontend/landing/**'
       - 'frontend/core/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
 
 jobs:
   build:
@@ -26,18 +26,20 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install Yarn Dependencies
-        run: |
-          corepack enable
-          yarn install --immutable
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
+      - name: Install pnpm Dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Restore TanStack build cache
         uses: actions/cache@v4
         with:
           path: frontend/landing/.tanstack
-          key: ${{ runner.os }}-tanstack-landing-${{ hashFiles('yarn.lock', 'frontend/core/**', 'frontend/landing/**') }}
+          key: ${{ runner.os }}-tanstack-landing-${{ hashFiles('pnpm-lock.yaml', 'frontend/core/**', 'frontend/landing/**') }}
           restore-keys: |
             ${{ runner.os }}-tanstack-landing-
 
       - name: Build Project
-        run: yarn run build:prod:landing
+        run: pnpm run build:prod:landing

@@ -75,7 +75,7 @@ entry command: make be.dev-gateway.start
 当本地机器需要 HTTPS 开发域名时，运行 Portless 设置：
 
 ```bash
-yarn portless:setup
+pnpm run portless:setup
 ```
 
 当前别名：
@@ -141,9 +141,9 @@ Dev Gateway，避免强制所有下游都运行在 Wrangler 中。
 Community 的 Wrangler 入口由 TanStack Start build 生成，不能直接对源码配置运行：
 
 ```bash
-yarn workspace @groupher/frontend-community build
+pnpm --filter @groupher/frontend-community run build
 cd frontend/community
-yarn exec wrangler dev --config dist/server/wrangler.json --port 8790
+pnpm exec wrangler dev --config dist/server/wrangler.json --port 8790
 ```
 
 随后分别启动 Landing Worker、Auth Worker 和 Edge Router；当四个 Worker 使用各自的

@@ -211,32 +211,43 @@ test.describe('Auth V1 browser protocol', () => {
     }
   })
 
-  test('P0 recovers an authenticated SSR route once after hydration', async ({
+  test('P0 serves SSR and recovers a missing access cookie once after hydration', async ({
     context,
     page,
     request,
   }) => {
     await testLogin(page)
     await clearAccessCookie(context)
+    await context.clearCookies({ name: HINT_COOKIE })
+    await context.addCookies([
+      {
+        domain: '.groupher.localhost',
+        name: HINT_COOKIE,
+        path: '/',
+        sameSite: 'Lax',
+        secure: false,
+        value: '1',
+      },
+    ])
     const refreshRequests: string[] = []
     page.on('request', (req) => {
       if (req.url() === `${AUTH_ORIGIN}/api/auth/token/refresh`) refreshRequests.push(req.url())
     })
-
     const response = await page.goto(`${DASH_ORIGIN}/home/overview`)
-    expect(await response?.text()).toContain('Restoring your session')
-    await expect(page.getByTestId('dashboard-overview-title')).toBeVisible({ timeout: 15_000 })
+    expect(response?.status()).toBe(200)
+
+    const result = await runProtectedOperation(page)
 
     expect(refreshRequests).toHaveLength(1)
     expect((await readState(request)).stats.refreshCalls).toBe(1)
+    expect(result.error).toBeUndefined()
+    expect(result.data?.me?.login).toBe('e2e')
   })
 
-  test('P0 stops a repeated SSR recovery after one reload attempt', async ({
-    context,
-    page,
-    request,
-  }) => {
+  test('P0 stops a repeated SSR recovery after one reload attempt', async ({ page, request }) => {
     await testLogin(page)
+    const expireResponse = await request.post(`${MOCK_ORIGIN}/__e2e/auth/expire-access`)
+    expect(expireResponse.ok()).toBe(true)
 
     const href = `${DASH_ORIGIN}/home/overview`
     const refreshRequests: string[] = []
@@ -246,8 +257,6 @@ test.describe('Auth V1 browser protocol', () => {
     await page.route(`${AUTH_ORIGIN}/api/auth/token/refresh`, (route) =>
       route.fulfill({ status: 204 }),
     )
-    await clearAccessCookie(context)
-
     await page.goto(href)
 
     await expect

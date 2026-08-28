@@ -12,7 +12,7 @@ on:
       - 'packages/contracts/**'
       - 'packages/service/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
   push:
     paths:
       - 'frontend/dash/**'
@@ -24,7 +24,7 @@ on:
       - 'packages/contracts/**'
       - 'packages/service/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions:
@@ -53,7 +53,7 @@ jobs:
               - 'frontend/mock-server/**'
               - 'frontend/e2e/**'
               - 'package.json'
-              - 'yarn.lock'
+              - 'pnpm-lock.yaml'
             auth:
               - 'backend/auth/**'
               - 'packages/contracts/**'
@@ -70,20 +70,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install deps
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Run e2e
         env:
           CI: true
-        run: yarn test:e2e:dash
+        run: pnpm run test:e2e:dash
 
       - name: Upload Playwright report
         if: failure()
@@ -105,20 +106,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install deps
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Run e2e
         env:
           CI: true
-        run: yarn test:e2e:landing
+        run: pnpm run test:e2e:landing
 
       - name: Upload Playwright report
         if: failure()
@@ -140,20 +142,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
 
-      - name: Enable Corepack
-        run: corepack enable
-
       - name: Install deps
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Run auth e2e
         env:
           CI: true
-        run: yarn test:e2e:auth --grep "P0"
+        run: pnpm run test:e2e:auth --grep "P0"
 
       - name: Upload Playwright report
         if: failure()

@@ -364,16 +364,16 @@ Community 已独立部署并承担自身域名流量，不再设置单独的“�
 当前实现验证命令：
 
 ```bash
-yarn workspace @groupher/route-contract test
-yarn workspace @groupher/edge-router test
-yarn workspace @groupher/dev-gateway test
-yarn workspace @groupher/frontend-landing build:worker
-yarn workspace @groupher/frontend-landing deploy:worker:dry-run
-yarn workspace @groupher/edge-router deploy:dry-run
+pnpm --filter @groupher/route-contract run test
+pnpm --filter @groupher/edge-router run test
+pnpm --filter @groupher/dev-gateway run test
+pnpm --filter @groupher/frontend-landing run build:worker
+pnpm --filter @groupher/frontend-landing run deploy:worker:dry-run
+pnpm --filter @groupher/edge-router run deploy:dry-run
 ```
 
 `build:worker` 内部会先运行 `sync:assets:landing`，确保 Worker 上传的 icons 和 wallpaper
-来自当前源码；不要改成只执行 `yarn build` 的部署链路。
+来自当前源码；不要改成只执行 `pnpm run build` 的部署链路。
 
 `edge-router` 的首次正式部署会立即激活 `groupher.com/*` 和 `www.groupher.com/*` Worker
 Routes。部署前必须人工确认 Landing、Community、Auth 三个下游 Worker 已部署且 Service

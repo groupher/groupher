@@ -490,8 +490,8 @@ scheduleRemoveThemeFirstPaintVars()
 使用两个脚本：
 
 ```text
-yarn gen:theme-first-paint-vars
-yarn check:theme-first-paint-vars
+pnpm run gen:theme-first-paint-vars
+pnpm run check:theme-first-paint-vars
 ```
 
 预期行为：
@@ -502,7 +502,7 @@ yarn check:theme-first-paint-vars
   `frontend/core/constant/theme-first-paint.generated.ts`。
 - `check:theme-first-paint-vars`在内存中或临时文件中重新生成，并在检查中的生成文件过旧时失败。
 - 实现位于`scripts/generate-theme-first-paint-vars.mjs`。
-- CI 应在这里完全强制之前运行`yarn check:theme-first-paint-vars`。
+- CI 应在这里完全强制之前运行`pnpm run check:theme-first-paint-vars`。
 
 如果某个子应用使用运行时 CSS-in-JS，并且只有在 JS bundle 加载后才注入主题变量，那么这些值无法被首次绘制变量保护。首次绘制可见的主题 CSS 必须以静态 CSS 或在相关快照脚本运行之前通过服务端插入的`<style>`输出。
 
@@ -534,7 +534,7 @@ inline styles.
 
 ## 剩余工作
 
-1. 把`yarn check:theme-first-paint-vars`接入 CI。
+1. 把`pnpm run check:theme-first-paint-vars`接入 CI。
 2. 在期望这个机制覆盖之前，先把首次绘制可见的 glow/filter 值迁移到 CSS 变量。
 3. 审计`dark:*`的使用：
    - 颜色应该迁移到语义化 CSS 变量；

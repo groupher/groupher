@@ -29,10 +29,10 @@ service identity, and proxy to `backend/content-import`. Production must provide
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/frontend-dash dev
-yarn workspace @groupher/frontend-dash type-check
-yarn workspace @groupher/frontend-dash format:check
-yarn workspace @groupher/frontend-dash build
+pnpm --filter @groupher/frontend-dash run dev
+pnpm --filter @groupher/frontend-dash run type-check
+pnpm --filter @groupher/frontend-dash run format:check
+pnpm --filter @groupher/frontend-dash run build
 ```
 
 Use `/home` for local UI and Playwright verification because other communities

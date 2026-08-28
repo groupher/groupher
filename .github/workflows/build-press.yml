@@ -7,7 +7,7 @@ on:
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'Makefile'
   push:
     paths:
@@ -15,7 +15,7 @@ on:
       - 'packages/service/**'
       - 'packages/contracts/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
       - 'Makefile'
 
 jobs:
@@ -26,32 +26,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: yarn
-          cache-dependency-path: yarn.lock
-
-      - name: Enable Corepack
-        run: corepack enable
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Validate Drizzle migrations
-        run: yarn workspace @groupher/press exec drizzle-kit check
+        run: pnpm --filter @groupher/press exec drizzle-kit check
 
       - name: Check formatting
-        run: yarn workspace @groupher/press format:check
+        run: pnpm --filter @groupher/press run format:check
 
       - name: Run lint
-        run: yarn workspace @groupher/press lint
+        run: pnpm --filter @groupher/press run lint
 
       - name: Run type-check
-        run: yarn workspace @groupher/press type-check
+        run: pnpm --filter @groupher/press run type-check
 
       - name: Run unit tests
-        run: yarn workspace @groupher/press test
+        run: pnpm --filter @groupher/press run test
 
       - name: Build
-        run: yarn workspace @groupher/press build
+        run: pnpm --filter @groupher/press run build

@@ -104,8 +104,8 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
 8. Run:
 
    ```sh
-   yarn workspace @groupher/frontend-core type-check
-   yarn vitest --config frontend/core/vitest.config.mts run frontend/core/hooks/useWallpaper/index.test.tsx frontend/core/stores/wallpaper/tests/index.test.ts
+   pnpm --filter @groupher/frontend-core run type-check
+   pnpm exec vitest --config frontend/core/vitest.config.mts run frontend/core/hooks/useWallpaper/index.test.tsx frontend/core/stores/wallpaper/tests/index.test.ts
    ```
 
 ## Debugging

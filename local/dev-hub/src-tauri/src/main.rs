@@ -152,7 +152,7 @@ fn spawn_hub(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     command
         .args([
             "-lc",
-            "exec yarn workspace @groupher/local-dev-hub hub:serve",
+            "exec pnpm --filter @groupher/local-dev-hub run hub:serve",
         ])
         .current_dir(&repo_root)
         .env("DEV_HUB_OPEN_BROWSER", "false")

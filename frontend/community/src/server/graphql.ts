@@ -1,5 +1,8 @@
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core'
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
+import {
+  GROUPHER_AUTH_SIGNED_IN_COOKIE,
+  GROUPHER_AUTH_TOKEN_COOKIE,
+} from '@groupher/contracts/auth'
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server'
 import { print, type DocumentNode } from 'graphql'
 
@@ -28,6 +31,13 @@ export const getAuthToken = (): string | null => {
     if (name === GROUPHER_AUTH_TOKEN_COOKIE) return value.join('=')
   }
   return null
+}
+
+/** Returns whether the active request carries the non-sensitive login hint. */
+export const hasSignedInHint = (cookieHeader = getRequest().headers.get('cookie')): boolean => {
+  return Boolean(
+    cookieHeader?.split(';').some((item) => item.trim() === `${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1`),
+  )
 }
 
 /** Prevents session-scoped loader responses from entering shared caches. */

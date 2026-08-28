@@ -238,7 +238,7 @@ rg -n "from ['\"]~/widgets|import\\(['\"]~/widgets" frontend
 rg -n "frontend/core/widgets|~/widgets" frontend docs
 rg -n "frontend/landing/app/widgets|/dashboard/widgets" frontend
 
-yarn workspace @groupher/frontend-core type-check
+pnpm --filter @groupher/frontend-core run type-check
 frontend/core focused tests
 frontend/dash type-check
 frontend/dashboard type-check

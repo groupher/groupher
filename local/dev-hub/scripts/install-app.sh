@@ -61,13 +61,13 @@ install_rust_if_needed() {
   trap - EXIT
 }
 
-run_yarn() {
-  if command -v yarn >/dev/null 2>&1; then
-    yarn "$@"
-  elif command -v corepack >/dev/null 2>&1; then
-    corepack yarn "$@"
+run_pnpm() {
+  if command -v corepack >/dev/null 2>&1; then
+    corepack pnpm "$@"
+  elif command -v pnpm >/dev/null 2>&1; then
+    pnpm "$@"
   else
-    fail 'Yarn is unavailable and this Node.js installation does not include Corepack.'
+    fail 'pnpm is unavailable and this Node.js installation does not include Corepack.'
   fi
 }
 
@@ -110,13 +110,13 @@ export PATH="$HOME/.cargo/bin:$PATH"
 
 cd "$REPO_ROOT"
 echo 'Installing JavaScript dependencies…'
-run_yarn install --immutable
+run_pnpm install --frozen-lockfile
 
 echo 'Building the production Dev Hub…'
-run_yarn workspace @groupher/local-dev-hub build
+run_pnpm --filter @groupher/local-dev-hub run build
 
 echo 'Building the signed Dev Hub application…'
-run_yarn workspace @groupher/local-dev-hub desktop:build -- \
+run_pnpm --filter @groupher/local-dev-hub run desktop:build -- \
   --config 'source.crates-io.replace-with="rsproxy-sparse"' \
   --config 'source.rsproxy-sparse.registry="sparse+https://rsproxy.cn/index/"'
 

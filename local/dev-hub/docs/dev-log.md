@@ -80,7 +80,7 @@ flowchart TB
 
 - 保证应用单实例；再次打开时只唤回已有窗口；
 - 检查 `127.0.0.1:4310` 是否已经是一个有效的 Dev Hub；
-- 如果 Hub 尚未运行，启动 `yarn workspace @groupher/local-dev-hub hub:serve`；
+- 如果 Hub 尚未运行，启动 `pnpm --filter @groupher/local-dev-hub run hub:serve`；
 - 在 Node 服务准备期间显示内置 bootstrap 页面；
 - 服务健康后把窗口导航到 `http://127.0.0.1:4310`；
 - 红色关闭按钮只隐藏窗口；
@@ -419,13 +419,13 @@ Dev Hub 默认运行 production build。只有 `make dev.dev` 才启动带 HMR �
 
 ```bash
 # TypeScript
-yarn workspace @groupher/local-dev-hub type-check
+pnpm --filter @groupher/local-dev-hub run type-check
 
 # Node server
-yarn workspace @groupher/local-dev-hub test
+pnpm --filter @groupher/local-dev-hub run test
 
 # 格式
-yarn workspace @groupher/local-dev-hub format:check
+pnpm --filter @groupher/local-dev-hub run format:check
 
 # Rust launcher
 cargo test --manifest-path local/dev-hub/src-tauri/Cargo.toml --locked

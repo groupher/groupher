@@ -27,11 +27,11 @@ persistent feedback work remain separate milestones where the design says so.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/widget dev
-yarn workspace @groupher/widget test
-yarn workspace @groupher/widget type-check
-yarn workspace @groupher/widget format:check
-yarn workspace @groupher/widget verify:build
+pnpm --filter @groupher/widget run dev
+pnpm --filter @groupher/widget run test
+pnpm --filter @groupher/widget run type-check
+pnpm --filter @groupher/widget run format:check
+pnpm --filter @groupher/widget run verify:build
 ```
 
 Runtime CSS is loaded only with the Widget route/runtime and is injected into

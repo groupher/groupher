@@ -321,9 +321,9 @@ development 默认值。
 ## 本地验证
 
 ```bash
-yarn workspace @groupher/backend-auth type-check
-yarn workspace @groupher/backend-auth test
-yarn workspace @groupher/backend-auth build
+pnpm --filter @groupher/backend-auth run type-check
+pnpm --filter @groupher/backend-auth run test
+pnpm --filter @groupher/backend-auth run build
 ```
 
 实际测试仍通过仓库统一的 Vitest 配置执行。运行中的最小检查为：

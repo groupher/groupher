@@ -210,8 +210,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       root: fromRoot('frontend/community'),
       environment: 'development',
     },
-    command: 'yarn',
-    args: ['dev:community'],
+    command: 'pnpm',
+    args: ['run', 'dev:community'],
     env: {
       GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
       NEXT_PUBLIC_AUTH_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/api/auth`,
@@ -298,8 +298,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       root: fromRoot('frontend/inspire-me'),
       environment: 'development',
     },
-    command: 'yarn',
-    args: ['workspace', '@groupher/inspire-me', 'dev', '-p', '3010'],
+    command: 'pnpm',
+    args: ['--filter', '@groupher/inspire-me', 'run', 'dev', '--', '-p', '3010'],
     port: 3010,
     url: 'http://127.0.0.1:3010/health',
     appUrl: 'http://127.0.0.1:3010/',
@@ -414,8 +414,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
       root: fromRoot('backend/assets-hub'),
       environment: 'development',
     },
-    command: 'yarn',
-    args: ['dev:assets-hub'],
+    command: 'pnpm',
+    args: ['run', 'dev:assets-hub'],
     env: {
       ASSETS_HUB_CORS_ORIGIN:
         'http://localhost:3003,http://dash.groupher.localhost,https://dash.groupher.localhost,http://apply.groupher.localhost,https://apply.groupher.localhost,https://groupher.localhost',

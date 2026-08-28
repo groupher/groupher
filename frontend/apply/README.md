@@ -21,10 +21,10 @@ review, and community creation. Assets Hub executes file storage only.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/frontend-apply dev
-yarn workspace @groupher/frontend-apply type-check
-yarn workspace @groupher/frontend-apply format:check
-yarn workspace @groupher/frontend-apply build
+pnpm --filter @groupher/frontend-apply run dev
+pnpm --filter @groupher/frontend-apply run type-check
+pnpm --filter @groupher/frontend-apply run format:check
+pnpm --filter @groupher/frontend-apply run build
 ```
 
 Route changes require regenerating the TanStack route tree through the package

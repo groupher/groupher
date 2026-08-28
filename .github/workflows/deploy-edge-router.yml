@@ -7,7 +7,7 @@ on:
       - 'packages/route-contract/**'
       - 'packages/contracts/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
   push:
     branches:
       - dev
@@ -16,7 +16,7 @@ on:
       - 'packages/route-contract/**'
       - 'packages/contracts/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions:
@@ -34,32 +34,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: yarn.lock
-
-      - name: Enable Corepack
-        run: corepack enable
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Run route contract checks
         run: |
-          yarn workspace @groupher/route-contract lint
-          yarn workspace @groupher/route-contract type-check
-          yarn workspace @groupher/route-contract test
+          pnpm --filter @groupher/route-contract run lint
+          pnpm --filter @groupher/route-contract run type-check
+          pnpm --filter @groupher/route-contract run test
 
       - name: Run Edge Router checks
         run: |
-          yarn workspace @groupher/edge-router lint
-          yarn workspace @groupher/edge-router type-check
-          yarn workspace @groupher/edge-router test
+          pnpm --filter @groupher/edge-router run lint
+          pnpm --filter @groupher/edge-router run type-check
+          pnpm --filter @groupher/edge-router run test
 
       - name: Validate Worker deploy
-        run: yarn workspace @groupher/edge-router deploy:dry-run
+        run: pnpm --filter @groupher/edge-router run deploy:dry-run
 
   deploy:
     name: Deploy Edge Router Worker
@@ -70,19 +70,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/setup@v1
+        with:
+          install: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: yarn
-          cache-dependency-path: yarn.lock
-
-      - name: Enable Corepack
-        run: corepack enable
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Deploy Worker
-        run: yarn workspace @groupher/edge-router deploy
+        run: pnpm --filter @groupher/edge-router run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

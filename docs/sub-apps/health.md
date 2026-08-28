@@ -145,7 +145,7 @@ validate 或 conformance check 应在这些位置运行：
 
 - 开发时：改某个服务的 `/health` 后，跑本服务测试；必要时用
   `contracts/services/health/scripts/assert-health.mjs` 检查本地 URL。
-- CI：跑 `yarn contract:health` 做 schema/fixtures 自测，再跑各服务测试；需要端到端
+- CI：跑 `pnpm run contract:health` 做 schema/fixtures 自测，再跑各服务测试；需要端到端
   保证时再启动服务检查真实 `/health`。
 - Dev Hub：定期请求 `/health`，宽松校验格式，不符合时显示 protocol mismatch。
 - 部署平台：只做轻量可达性判断，主要看 `200` 或 `503`。

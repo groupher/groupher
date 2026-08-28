@@ -30,12 +30,12 @@ second authoring system and must not write Phoenix tables directly.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/press dev
-yarn workspace @groupher/press test
-yarn workspace @groupher/press type-check
-yarn workspace @groupher/press format:check
-yarn workspace @groupher/press db:generate
-yarn workspace @groupher/press db:migrate
+pnpm --filter @groupher/press run dev
+pnpm --filter @groupher/press run test
+pnpm --filter @groupher/press run type-check
+pnpm --filter @groupher/press run format:check
+pnpm --filter @groupher/press run db:generate
+pnpm --filter @groupher/press run db:migrate
 ```
 
 ## Related documentation

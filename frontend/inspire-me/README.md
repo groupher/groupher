@@ -34,12 +34,12 @@ development and production Workers load it through `env.ASSETS.fetch(...)`.
 ## Local development and validation
 
 ```sh
-yarn workspace @groupher/inspire-me generate:data
-yarn workspace @groupher/inspire-me dev
-yarn workspace @groupher/inspire-me type-check
-yarn workspace @groupher/inspire-me format:check
-yarn workspace @groupher/inspire-me build
-yarn workspace @groupher/inspire-me deploy:dry-run
+pnpm --filter @groupher/inspire-me run generate:data
+pnpm --filter @groupher/inspire-me run dev
+pnpm --filter @groupher/inspire-me run type-check
+pnpm --filter @groupher/inspire-me run format:check
+pnpm --filter @groupher/inspire-me run build
+pnpm --filter @groupher/inspire-me run deploy:dry-run
 ```
 
 Generated research data should be refreshed through `generate:data`; do not

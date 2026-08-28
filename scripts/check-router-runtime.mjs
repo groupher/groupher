@@ -16,7 +16,7 @@ export const collectResolvedRouterVersions = (lockfile) =>
   new Set(
     [
       ...lockfile.matchAll(
-        /resolution:\s+"?@tanstack\/react-router@(?:virtual:[^"#]+#)?npm:([^"\s]+)"?/g,
+        /^\s{2}'?@tanstack\/react-router@(\d+\.\d+\.\d+)/gm,
       ),
     ].map(([, version]) => version),
   )
@@ -38,12 +38,12 @@ const main = async () => {
     }
   }
 
-  const lockfile = await readFile(resolve('yarn.lock'), 'utf8')
+  const lockfile = await readFile(resolve('pnpm-lock.yaml'), 'utf8')
   const resolvedVersions = collectResolvedRouterVersions(lockfile)
 
   if (resolvedVersions.size !== 1 || !resolvedVersions.has(REQUIRED_VERSION)) {
     failures.push(
-      `yarn.lock must resolve one @tanstack/react-router version (${REQUIRED_VERSION}); found ${
+      `pnpm-lock.yaml must resolve one @tanstack/react-router version (${REQUIRED_VERSION}); found ${
         [...resolvedVersions].join(', ') || 'none'
       }`,
     )

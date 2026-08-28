@@ -240,8 +240,8 @@ portless clean
 
 首期已经建立命名和映射，没有改变 Dev Hub 的进程模型：
 
-1. 使用仓库锁定的 Portless 版本，执行 `yarn portless:setup` 安装并信任本地 CA。
-2. 使用 `yarn portless:sync` 为 Gateway、Main、Dashboard、Landing、Auth、Phoenix
+1. 使用仓库锁定的 Portless 版本，执行 `pnpm run portless:setup` 安装并信任本地 CA。
+2. 使用 `pnpm run portless:sync` 为 Gateway、Main、Dashboard、Landing、Auth、Phoenix
    和 Converter 重建固定 alias。
 3. 将浏览器 GraphQL endpoint 改为同源 `/api/graphql`，由 Gateway 转发到 Phoenix。
 4. 补充 Phoenix 本地 CORS 和 Auth Session 所需的域名配置。

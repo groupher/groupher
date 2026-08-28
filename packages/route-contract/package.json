@@ -7,11 +7,11 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
-    "lint": "../../node_modules/.bin/oxlint src --threads=1",
-    "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
-    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.json *.md *.mts",
-    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.json *.md *.mts",
+    "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",
+    "lint": "pnpm exec oxlint src --threads=1",
+    "test": "pnpm exec vitest --config vitest.config.mts run",
+    "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.json *.md *.mts",
+    "format:check": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.json *.md *.mts",
     "build": "echo 'skip build'"
   },
   "devDependencies": {

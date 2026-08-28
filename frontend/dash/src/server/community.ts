@@ -9,7 +9,7 @@ import type { TCommunity, TParseDashboard, TUser } from '~/spec'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 
-import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
+import { fetchGraphQL, getAuthToken, hasSignedInHint, setPrivateCacheHeader } from './graphql'
 
 type TLoadCommunityInput = {
   community: string
@@ -46,6 +46,7 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
     const token = getAuthToken()
     const userHasLogin = Boolean(token)
     const isDemoMode = isDsbDemoMode(data.community, data.mode)
+    const signedInHint = hasSignedInHint()
 
     setPrivateCacheHeader()
 
@@ -56,7 +57,7 @@ export const loadCommunity = createServerFn({ method: 'GET', strict: false })
     )
     const accountPromise = token
       ? loadAccount(token)
-      : Promise.resolve({ loading: false, user: null })
+      : Promise.resolve<TAccountInit>({ loading: signedInHint, user: null })
     const [communityResult, account] = await Promise.all([communityPromise, accountPromise])
 
     const community = communityResult.data?.community as unknown as TCommunity | null | undefined
