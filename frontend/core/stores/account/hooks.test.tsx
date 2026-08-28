@@ -65,4 +65,22 @@ describe('stores/account/hooks', () => {
     expect(result.current.isLogin).toBe(true)
     expect(result.current.user?.login).toBe('e2e')
   })
+
+  it('probes after hydration when SSR has no user but the signed-in hint remains', async () => {
+    const refetch = vi.fn()
+    mockedUseQuery.mockReturnValue({
+      data: undefined,
+      error: undefined,
+      isFetching: false,
+      refetch,
+    } as never)
+
+    renderHook(() => useAccount(), {
+      wrapper: ({ children }) => (
+        <Provider initData={{ loading: false, user: null }}>{children}</Provider>
+      ),
+    })
+
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce())
+  })
 })

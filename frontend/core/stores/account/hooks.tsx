@@ -3,7 +3,7 @@
 import type { ResultOf } from '@graphql-typed-document-node/core'
 import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { use } from 'react'
+import { use, useEffect, useRef, useState } from 'react'
 
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
@@ -34,16 +34,28 @@ const hasSignedInHintCookie = (): boolean => {
 export default function Hooks() {
   const seed = use(SessionSeedContext)
   const queryClient = useQueryClient()
+  const [isHydrated, setIsHydrated] = useState(false)
+  const hasProbed = useRef(false)
   if (!seed) throw new Error('useAccount must be used within an Account store provider')
 
+  useEffect(() => setIsHydrated(true), [])
+
   const options = graphqlQueryOptions(sessionState, {})
-  const shouldFetchMe = seed.loading !== false && hasSignedInHintCookie()
+  const shouldFetchMe =
+    isHydrated && hasSignedInHintCookie() && (seed.loading !== false || !seed.user)
 
   const query = useQuery({
     ...options,
-    enabled: shouldFetchMe,
+    enabled: false,
     initialData: makeSessionResult(seed.user ?? null),
   })
+
+  useEffect(() => {
+    if (!shouldFetchMe || hasProbed.current) return
+
+    hasProbed.current = true
+    void query.refetch()
+  }, [query.refetch, shouldFetchMe])
 
   const clearSession = () => {
     queryClient.setQueryData(options.queryKey, makeSessionResult(null))
@@ -63,7 +75,7 @@ export default function Hooks() {
 
   return {
     user,
-    loading: shouldFetchMe && query.isFetching,
+    loading: shouldFetchMe && (query.isFetching || !query.data?.sessionState?.isValid),
     isLogin,
     accountInfo: {
       ...user,

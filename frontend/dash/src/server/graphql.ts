@@ -39,8 +39,8 @@ export const readAuthToken = (cookieHeader: string | null): string | null => {
 /** Returns auth token for the frontend shared workflow. */
 export const getAuthToken = (): string | null => readAuthToken(getRequest().headers.get('cookie'))
 
-const hasSignedInHint = (): boolean => {
-  const cookieHeader = getRequest().headers.get('cookie')
+/** Returns whether the active request carries the non-sensitive login hint. */
+export const hasSignedInHint = (cookieHeader = getRequest().headers.get('cookie')): boolean => {
   return Boolean(
     cookieHeader?.split(';').some((item) => item.trim() === `${GROUPHER_AUTH_SIGNED_IN_COOKIE}=1`),
   )

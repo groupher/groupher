@@ -26,7 +26,7 @@ import type {
 } from '~/spec'
 import type { TInit as TAccountInit } from '~/stores/account/spec'
 
-import { fetchGraphQL, getAuthToken, setPrivateCacheHeader } from './graphql'
+import { fetchGraphQL, getAuthToken, hasSignedInHint, setPrivateCacheHeader } from './graphql'
 import { isCommunityPathContextTrusted, isPlatformHost } from './public-path'
 
 export type TCommunityShell = {
@@ -51,7 +51,7 @@ export const loadCommunityRequestContext = createServerFn({ method: 'GET', stric
 )
 
 const publicCacheHeader = (tags: string[]): void => {
-  if (getAuthToken()) {
+  if (getAuthToken() || hasSignedInHint()) {
     setPrivateCacheHeader()
     return
   }
@@ -64,6 +64,7 @@ const loadCommunity = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string }) => data)
   .handler(async ({ data }): Promise<TCommunityShell | null> => {
     const token = getAuthToken()
+    const signedInHint = hasSignedInHint()
     publicCacheHeader([CACHE_TAG.communityCache(data.community)])
     const userHasLogin = Boolean(token)
     const communityPromise = fetchGraphQL<ResultOf<typeof communityDocument>>(
@@ -74,7 +75,7 @@ const loadCommunity = createServerFn({ method: 'GET', strict: false })
     )
     const accountPromise = token
       ? loadAccount(token)
-      : Promise.resolve<TAccountInit>({ loading: false, user: null })
+      : Promise.resolve<TAccountInit>({ loading: signedInHint, user: null })
     const [result, account] = await Promise.all([communityPromise, accountPromise])
     const community = result.data?.community as unknown as TCommunity | null | undefined
     if (!community) return null

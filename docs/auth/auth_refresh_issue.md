@@ -15,6 +15,11 @@
 access token 过期不等于 Browser Session 已退出。浏览器已有的
 `refreshSession()`、`withAuthRetry()` 和 `createAuthFetch()` 负责刷新并重放请求。
 
+本次实际复现的是 access token 自然过期后的另一条路径：浏览器仍保留 Browser Session
+和可读的 `groupher-auth.signed-in=1` hint，但短期 access token 已不再随请求发送。SSR
+因此不能调用 `loadAccount`，过去会把账户 seed 固定成 `{ loading: false, user: null }`；
+客户端又把这个 SSR seed 当作已确认的匿名状态，账户探测不会启动，页面就静默显示为未登录。
+
 ## 已确认的故障边界
 
 SSR loader 使用过期 access token 时可能抛出 `TOKEN_MISSING` 或 `TOKEN_EXPIRED`，使
@@ -27,6 +32,19 @@ TanStack SSR 请求以 500 结束。`RouteError` 会尝试从 GraphQL 错误中�
 和生命周期问题，避免多个 recovery 挂载点互相触发或被旧状态永久拦截。
 
 ## 本次修复
+
+### 自然过期、access cookie 缺失
+
+`frontend/dash/src/server/community.ts` 和 `frontend/community/src/server/community.ts` 在
+没有 access token 但仍有登录 hint 时，返回 `{ loading: true, user: null }`，并让 Community
+请求保持 private；这不会改变现有缓存边界。`frontend/core/stores/account/hooks.tsx` 在
+hydration 完成后识别该 seed，显式执行一次 `sessionState` probe。该 probe 不依赖全局
+`staleTime=60s`：通过 `query.refetch()` 强制进入现有 `createAuthFetch`，再沿用
+`refreshSession()` single-flight 和一次 replay。SSR 与客户端首帧也不再直接读取 cookie，
+避免 hydration mismatch。
+
+登录 hint 只表示“可能存在 Browser Session”，不代表 access token 有效；只有 probe 成功
+返回有效用户后才恢复账户态，probe/refresh 失败仍进入既有登录流程。
 
 `frontend/dash/src/components/AuthRouteRecovery.tsx` 使用模块级活动 recovery attempt：
 
@@ -75,7 +93,8 @@ refresh 失败并进入 login 时 marker 会保留，直到用户成功回到原
 - 不迁移 Community 或 Dash 的 SSR 数据到客户端。
 - 不删除现有 `RouteError` 的 refresh 分支。
 - 不把 `@auth/core` 安全升级混入 refresh 修复的因果链。
-- 不改 CDN、`Cache-Control`、TanStack `staleTime` 或叶子 loader。
+- 不改 CDN、`Cache-Control`、全局 TanStack `staleTime` 或叶子 loader；账户恢复 probe 只在
+  需要时显式绕过全局 staleTime。
 - 不把“SSR 500 + recovery 壳”描述成已经解决；若要消除该状态码，需要另一个明确的
   SSR 公共壳/typed loader 方案，并单独评估其影响范围。
 
@@ -87,7 +106,8 @@ refresh 失败并进入 login 时 marker 会保留，直到用户成功回到原
 4. 同一 URL 的 recovery marker 在正常页面成功挂载后清理，未来新的过期窗口仍可恢复。
 5. 模块级 coordinator 在 attempt 结束后清理，并发挂载仍只执行一次 refresh。
 
-已验证：auth SSR recovery E2E 通过（2 cases passed），其中一条覆盖“SSR 认证失败 →
-挂载 recovery → refresh → 页面恢复”，另一条真实拦截 refresh 为 204 但不写 cookie，
-覆盖“reload 后 SSR 再次认证失败 → 不再 refresh → 直接进入 login”。recovery guard 单测
-覆盖 marker 的单 URL 一次性语义、URL 隔离和成功清理。
+已验证：auth E2E 的两个 P0 协议场景通过：一条覆盖“access cookie 缺失时 SSR 返回 200，
+客户端受保护请求触发一次 refresh 并成功 replay”，另一条真实拦截 refresh 为 204 但不写
+cookie，覆盖“reload 后 SSR 再次认证失败 → 不再 refresh → 直接进入 login”。账户 hook
+单测覆盖“SSR 没有 user 但仍有登录 hint 时，hydration 后执行 probe”；recovery guard
+单测覆盖 marker 的单 URL 一次性语义、URL 隔离和成功清理。

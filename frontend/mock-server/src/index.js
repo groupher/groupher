@@ -173,6 +173,9 @@ const readJsonBody = (req) =>
     req.on('error', reject)
   })
 
+const hasAccessCookie = (cookieHeader) =>
+  (cookieHeader || '').split(';').some((part) => part.trim().startsWith('groupher-auth.token='))
+
 createServer((req, res) => {
   setCORS(req, res)
 
@@ -244,7 +247,10 @@ createServer((req, res) => {
       const trusted = req.headers.authorization === 'Bearer e2e-service-token'
       if (!trusted) {
         const code = recordProtectedRequest(req.headers.cookie)
-        if (code) {
+        // Community SSR is intentionally public when the access cookie is gone.
+        // Browser GraphQL calls still carry the CSRF header and remain protected.
+        const isBrowserGraphQL = req.headers['x-groupher-csrf'] === '1'
+        if (code && (isBrowserGraphQL || hasAccessCookie(req.headers.cookie))) {
           res.statusCode = 200
           res.setHeader('content-type', 'application/json; charset=utf-8')
           res.end(JSON.stringify({ errors: [{ extensions: { code }, message: code }] }))
