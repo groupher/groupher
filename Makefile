@@ -1,7 +1,7 @@
 # naming should be [part].[action].[env].[sub-app]
 # frontend
 fe.install:
-	corepack pnpm install --frozen-lockfile
+	pnpm install --frozen-lockfile
 
 # landing
 fe.dev.landing:

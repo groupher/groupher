@@ -2,7 +2,8 @@ FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
 
-RUN corepack enable
+RUN npm install --global pnpm@12.0.0
+RUN pnpm --version
 ENV HUSKY=0
 
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
@@ -13,18 +14,18 @@ COPY packages/contracts/package.json packages/contracts/package.json
 # The image intentionally copies only Press and its two workspace dependencies;
 # the repository lockfile also contains unrelated workspaces, so this focused
 # build install resolves the reduced workspace graph.
-RUN corepack pnpm install --frozen-lockfile --filter @groupher/press...
+RUN pnpm install --frozen-lockfile --filter @groupher/press...
 
 COPY backend/press backend/press
 COPY packages/service packages/service
 COPY packages/contracts packages/contracts
 
-RUN corepack pnpm --filter @groupher/press run build
+RUN pnpm --filter @groupher/press run build
 
 # Create a portable production directory. Copying the workspace's original
 # node_modules after moving it from /app/backend/press to /app/press can break
 # relative symlinks, while deploy materializes an isolated dependency layout.
-RUN corepack pnpm --filter @groupher/press --prod deploy /app/deploy
+RUN pnpm --filter @groupher/press --prod deploy /app/deploy
 
 FROM node:24-bookworm-slim AS runtime
 

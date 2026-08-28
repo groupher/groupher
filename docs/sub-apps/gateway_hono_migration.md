@@ -177,7 +177,7 @@ infra/gateway/
 
 ## 历史 Vercel Serverless 部署记录
 
-Gateway 当前在 Vercel 使用 Hono preset 部署，项目设置为：
+旧 Gateway 曾在 Vercel 使用 Hono preset 部署，项目设置为：
 
 ```text
 Framework Preset: Hono
@@ -196,15 +196,16 @@ Output Directory: N/A
 Vercel Hono preset 以 `src/app.ts` 为应用入口；根部 `app.js` / `index.js` 只是 build
 后 ESM 的兼容 shim，不是需要手写业务逻辑的第二套入口。
 
-Vercel Hono builder 当前不能使用仓库根部的 TypeScript 7 preview。失败日志为：
+历史上的 Vercel Hono builder 曾不能使用仓库根部的 TypeScript 7。失败日志为：
 
 ```text
 Using TypeScript 7.0.2 (local user-provided)
 Cannot read properties of undefined (reading 'readFile')
 ```
 
-因此 `@groupher/gateway` workspace 显式依赖 `typescript@5.9.3`。这只是 Vercel Hono
-builder 的兼容性约束，不代表全仓库放弃 TypeScript 7 preview。
+因此已退役的 `@groupher/gateway` workspace 当时显式依赖 `typescript@5.9.3`。这只是
+历史 Vercel Hono builder 的兼容性记录，不是当前仓库的约束；当前 `@groupher/dev-gateway`
+和 `@groupher/edge-router` 均统一使用 `typescript@7.0.2`。
 
 Vercel Hono preset 会处理 `src/app.ts` 并在运行时执行转译后的 ESM 文件。为兼容 Node
 ESM runtime：

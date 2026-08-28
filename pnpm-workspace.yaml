@@ -11,6 +11,10 @@ nodeLinker: isolated
 injectWorkspacePackages: true
 strictDepBuilds: true
 
+# pnpm 12 is provisioned explicitly by pnpm/setup, Docker, and local setup
+# instructions. Do not persist pnpm's own bootstrap packages in the project lockfile.
+pmOnFail: ignore
+
 # Only Lefthook needs its install script in the current repository. Keep every
 # other observed build-script decision explicit so clean frozen installs are
 # reproducible and do not silently execute new dependency scripts.

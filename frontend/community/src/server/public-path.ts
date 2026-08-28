@@ -8,6 +8,7 @@ const PLATFORM_HOSTS = new Set([
   '127.0.0.1',
 ])
 
+/** Returns whether the hostname belongs to a Groupher platform domain rather than a custom community domain. */
 export const isPlatformHost = (hostname: string): boolean =>
   PLATFORM_HOSTS.has(hostname.toLowerCase())
 
