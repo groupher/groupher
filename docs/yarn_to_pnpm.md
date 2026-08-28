@@ -1,6 +1,6 @@
 # Yarn 到 pnpm 迁移方案
 
-> 状态：第一阶段已实施，待合并前复核
+> 状态：pnpm 迁移与 isolated 布局已实施，待合并前复核
 > 制定日期：2026-08-28
 > 当前基线：Node.js 24、Yarn 4.17.1
 > 目标版本：pnpm 11.24.0
@@ -27,9 +27,9 @@ packages/*
 - 少量脚本、忽略配置和维护文档；
 - `yarn.lock`、`.yarnrc.yml` 和仓库内置的 Yarn release。
 
-当前配置使用 `nodeLinker: node-modules`。大量 workspace 脚本还直接访问根目录的 `../../node_modules/.bin/*`，部分 workspace 也依赖根目录提升后可见、但没有在自身 manifest 中声明的依赖。因此，本次迁移不能只替换 lockfile 和命令名称，还必须验证 workspace 链接、依赖声明、生命周期脚本、CI 缓存和 Docker 安装结果。
+迁移后的配置使用 pnpm 原生的 `nodeLinker: isolated`，依赖通过根目录 `node_modules/.pnpm` 虚拟仓库和各 workspace 的符号链接提供。这样每个 workspace 默认只能解析自身声明的依赖；原先被根目录提升掩盖的隐式依赖会直接暴露。因此，本次迁移不能只替换 lockfile 和命令名称，还必须验证 workspace 链接、依赖声明、生命周期脚本、CI 缓存和 Docker 安装结果。
 
-根 `package.json` 还保留了 `packageManagerConfig.hoistingLimits`，其中记录了 `@radix-ui/*`、`shadcn` 和 `@groupher/editor` 的 workspace 隔离意图。该字段来自旧 Yarn 1 `workspaces.nohoist` 配置，但当前 Yarn 4 不识别它；当前实际生效的 `nmHoistingLimits` 是 `none`。它应被视为需要调查和清理的历史配置，不能被视为当前安装布局已经满足的约束。
+迁移前根 `package.json` 曾保留 `packageManagerConfig.hoistingLimits`，其中记录了 `@radix-ui/*`、`shadcn` 和 `@groupher/editor` 的 workspace 隔离意图。该字段来自旧 Yarn 1 `workspaces.nohoist` 配置，但当前 Yarn 4 不识别它；当时实际生效的 `nmHoistingLimits` 是 `none`。该历史字段已删除，不能被视为当前安装布局已经满足的约束。
 
 Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。Radix 由外部依赖 `@groupher/rich-editor@0.0.35` 引入，编辑器直接依赖 6 个 Radix package；旧配置中的 `@groupher/editor` 也不是当前 package 名称。因此，迁移需要验证的是 Rich Editor 依赖链和编辑器功能，而不是给 Groupher workspace 建立新的 Radix 直接依赖或长期布局约束。
 
@@ -37,9 +37,10 @@ Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。R
 
 - 已完成根配置、workspace manifest、内部依赖、脚本、本地入口、CI workflow、Press Dockerfile 和当前运维文档的 pnpm 改造。
 - 已生成 `pnpm-lock.yaml`，并用 pnpm 11.24.0 连续两次执行冻结安装；`check:router-runtime`、type-check、lint、format、test 和 `build:ci` 已通过，保留原有 warning 作为非阻断项。
+- 已在干净副本使用 `nodeLinker: isolated` 执行冻结安装；全 workspace type-check、lint、format、test 和 `build:ci` 均通过，未发现因根目录提升而暴露的隐式依赖。
 - 8 个 Worker dry-run 入口（Apply、Community、Dash、Landing、Inspire Me、Assets Hub、Auth、Edge Router）均完成 bundle、配置读取和 `--dry-run: exiting now.` 验证。
 - 干净安装实测发现 pnpm 11 的构建脚本审批是必需项；现已只允许 `lefthook` 执行，并将 `@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 明确设为不执行。
-- Assets Hub 已补齐自身的 `wrangler` devDependency，避免未来切换 `isolated` 布局后依赖 root hoisting。
+- Assets Hub 已补齐自身的 `wrangler` devDependency，避免依赖 root hoisting。
 - 当前机器没有 Docker CLI，因此 Press 镜像构建和 runtime smoke 尚未完成；文档检查仍有迁移前已存在的 `frontend/community/src/server/public-path.ts:isPlatformHost` 缺少相邻 JSDoc 问题。
 - pnpm 11 对 Yarn Berry v4 lockfile 的导入没有保持所有原始 resolved version；当前 lockfile 存在已识别但尚未逐项 pin/批准的版本漂移（例如部分 Radix、Vite、Wrangler）。因此“无依赖版本漂移”仍是合并前的独立复核门槛，不能仅因冻结安装通过就视为完成。
 
@@ -75,7 +76,7 @@ Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。R
 - 不调整 workspace 目录结构和 package 命名；
 - 不借机升级全部业务依赖；
 - 不改变应用功能、部署拓扑或 Cloudflare Workers compatibility 配置；
-- 不要求第一阶段立即切换到 pnpm 的 `isolated` 依赖布局。
+- 本次在同一个迁移 PR 内完成 `isolated` 依赖布局切换，并以完整 CI 作为合并门槛。
 
 ## 4. 当前影响范围
 
@@ -113,7 +114,7 @@ Groupher 源码和 workspace manifest 当前没有直接引用 `@radix-ui/*`。R
 
 ### 5.2 pnpm-workspace.yaml
 
-第一阶段使用以下基础结构：
+当前使用以下基础结构：
 
 ```yaml
 packages:
@@ -123,11 +124,8 @@ packages:
   - 'local/*'
   - 'packages/*'
 
-# 迁移期先保持接近现有 node_modules 的布局，降低一次性改动范围。
-nodeLinker: hoisted
-
-# 与当前 Yarn 4 实际生效的 nmHoistingLimits: none 对齐。
-hoistingLimits: none
+# 使用 pnpm 原生的符号链接和虚拟仓库布局，强制 workspace 遵守自身依赖边界。
+nodeLinker: isolated
 
 strictDepBuilds: true
 
@@ -140,9 +138,9 @@ allowBuilds:
   workerd: false
 ```
 
-pnpm 11 的项目设置应放在 `pnpm-workspace.yaml`；`.npmrc` 仅用于 registry 和认证相关配置。当前已显式设置 `strictDepBuilds: true`，并提交最小执行面：`lefthook: true`；`@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 均为 `false`。其中 `esbuild: false` 覆盖当前 lockfile 中的多个版本实例。
+pnpm 11 的项目设置应放在 `pnpm-workspace.yaml`；`.npmrc` 仅用于 registry 和认证相关配置。当前已显式设置 `nodeLinker: isolated`、`strictDepBuilds: true`，并提交最小执行面：`lefthook: true`；`@swc/core`、`cbor-extract`、`esbuild`、`tsparticles-engine` 和 `workerd` 均为 `false`。其中 `esbuild: false` 覆盖当前 lockfile 中的多个版本实例。
 
-pnpm 11 支持 `hoistingLimits: none | workspaces | dependencies`，但这是全局设置，不能直接表达旧 Yarn 1 只针对若干 package pattern 的 `nohoist`。第一阶段使用 `none` 是为了匹配当前 Yarn 4 的实际行为；不能因为根 `package.json` 中存在无效的历史字段，就直接启用全局 `workspaces`。仓库曾短暂启用 Yarn 的 `nmHoistingLimits: workspaces`，随后因 CI workspace 依赖不可见而撤回，这说明全局隔离必须放在依赖清理之后评估。
+pnpm 没有 Yarn `workspaces.nohoist` 那种针对 package pattern 的直接等价物。`isolated` 通过符号链接和虚拟仓库实现 workspace 级依赖边界；如果未来有明确的工具需要提升，再使用最小范围的 `hoistPattern` 或 `publicHoistPattern`，并记录原因。不能通过全局 `shamefullyHoist` 绕过依赖声明。
 
 ### 5.3 内部依赖
 
@@ -225,7 +223,7 @@ yarn build:ci
 2. 将根 `packageManager` 改为固定的 pnpm 版本。
 3. 将 `packageManagerConfig.hoistingLimits` 作为无效 Yarn 历史配置删除；迁移记录中保留它的来源和实际验证结果。
 4. 将 24 条内部 workspace 依赖改为 `workspace:*`。
-5. 在 `pnpm-workspace.yaml` 中显式设置 `nodeLinker: hoisted` 和 `hoistingLimits: none`。
+5. 在 `pnpm-workspace.yaml` 中显式设置 `nodeLinker: isolated`，不把 Yarn 的历史提升配置翻译成 pnpm 全局配置。
 6. 在保留 `yarn.lock` 的临时迁移状态下执行：
 
    ```bash
@@ -274,7 +272,7 @@ yarn build:ci
 
 ### 阶段 3：修复依赖边界
 
-第一阶段使用 `nodeLinker: hoisted`，但仍需修复 pnpm 安装和运行时暴露出的明确缺失依赖：
+当前使用 `nodeLinker: isolated`，因此 pnpm 安装和运行时会直接暴露缺失依赖：
 
 1. 从每个失败命令定位实际 import 所属 workspace；
 2. 将运行时 import 加入该 workspace 的 `dependencies`；
@@ -340,18 +338,18 @@ rg -n '\byarn\b|yarn\.lock|\.yarn/' \
 
 所有具有执行意义的 Yarn 引用都必须清除。历史说明如果需要保留，必须明确标注为历史上下文，不能继续给出可复制执行的 Yarn 命令。
 
-### 阶段 7：isolated 布局加固
+### 阶段 7：isolated 布局验收
 
-这一阶段不阻断首个 pnpm 迁移 PR，但属于后续依赖治理目标。
+本阶段已作为当前 pnpm 迁移 PR 的后续 commit 执行，不另开 PR。验收重点是确认 pnpm 原生布局没有依赖根目录提升：
 
-1. 将 `nodeLinker` 从 `hoisted` 改为 `isolated`；
+1. 将 `nodeLinker` 设置为 `isolated`；
 2. 在干净安装环境运行完整验收矩阵；
 3. 修复所有未声明依赖、写死根 `node_modules` 路径和不兼容工具；
-4. 验证根 package 直接声明的 `commitizen` 和 `cz-conventional-changelog` 仍可通过现有 `config.commitizen.path` 正确加载；该路径不是当前的 phantom dependency，但需要 smoke test 覆盖；
-5. Worker dry-run、Press Docker 和所有 CI 通过后，再将 `isolated` 作为默认配置；
-6. 如果某个工具确实要求提升，使用最小范围的 pnpm hoisting 配置并记录原因，不启用全局 `shamefullyHoist`。
+4. 验证根 package 直接声明的 `commitizen` 和 `cz-conventional-changelog` 仍可通过现有 `config.commitizen.path` 正确加载；
+5. Worker dry-run、Press Docker 和所有 CI 通过后，才将本次 isolated 切换视为完成；
+6. 如果某个工具确实要求提升，使用最小范围的 pnpm `hoistPattern` 或 `publicHoistPattern` 并记录原因，不启用全局 `shamefullyHoist`。
 
-`isolated` 切换应作为独立 commit 或 PR，保证出现回归时可以与包管理器迁移本身分开定位和回滚。
+isolated 使用独立 commit，便于出现回归时单独回滚；它与本次迁移共用同一个 PR。
 
 ## 8. 验收标准
 
@@ -359,12 +357,12 @@ rg -n '\byarn\b|yarn\.lock|\.yarn/' \
 
 - [ ] 根 `packageManager` 固定为经过验证的 pnpm 版本；
 - [ ] `pnpm-workspace.yaml` 包含全部五组 workspace glob；
-- [ ] 第一阶段显式配置 `nodeLinker: hoisted` 和 `hoistingLimits: none`；
+- [ ] `pnpm-workspace.yaml` 显式配置 `nodeLinker: isolated`；
 - [ ] `pnpm-lock.yaml` 已提交且覆盖根 package 与 19 个子 workspace；
 - [ ] 24 条内部 package 依赖全部使用 `workspace:*`；
 - [x] `allowBuilds` 已提交：仅允许 `lefthook`，其余已观察到的构建脚本包均明确设为 `false`；后续出现新脚本时必须逐项审查；
 - [ ] `yarn.lock`、`.yarnrc.yml` 和仓库内置 Yarn release 已删除；
-- [ ] 无效的 `packageManagerConfig.hoistingLimits` 已从根 `package.json` 删除；
+- [x] 无效的 `packageManagerConfig.hoistingLimits` 已从根 `package.json` 删除；
 - [ ] 除本文历史说明外，不存在具有执行意义的 Yarn 引用；
 - [ ] 仓库中不存在同时生效的 Yarn 和 pnpm lockfile；
 - [ ] 没有新增与迁移无关的依赖升级或业务改动。
@@ -424,6 +422,7 @@ pnpm --filter @groupher/local-dev-hub test
 
 - [ ] Yarn 基线中通过的检查在 pnpm 下仍然通过；
 - [ ] 没有因为缺失依赖或 CLI 不可见导致的失败；
+- [ ] 在 `nodeLinker: isolated` 下每个 workspace 仅通过自身 manifest 解析直接依赖，不依赖根目录提升；
 - [ ] 生成资产和代码生成结果与基线一致；
 - [ ] 构建没有产生未预期的 tracked file 变更；
 - [ ] peer dependency warning 已逐项判断，新增 warning 必须修复或记录原因。
@@ -484,7 +483,7 @@ pnpm --filter @groupher/local-dev-hub test
 - 合并后：如果出现无法快速修复的 CI、Docker 或生产构建回归，整体 revert 迁移 commits，恢复 `packageManager`、`yarn.lock`、`.yarnrc.yml` 和 Yarn release；
 - 不通过同时维护 `yarn.lock` 与 `pnpm-lock.yaml` 作为长期回滚方案；
 - pnpm store cache 不是源数据，回滚或故障排查时可以安全重建；
-- `isolated` 布局加固独立实施，因此可以单独回滚到已验收的 `hoisted` pnpm 状态。
+- isolated 切换使用独立 commit，因此可以单独回滚到已验收的 hoisted pnpm 状态。
 
 ## 11. 完成定义
 
@@ -498,7 +497,7 @@ pnpm --filter @groupher/local-dev-hub test
 6. 仓库不存在可执行的 Yarn 残留；
 7. 迁移没有引入业务行为变化。
 
-`nodeLinker: isolated` 是后续依赖治理完成标准，不阻断第一阶段 pnpm 迁移完成；但在 isolated 验收之前，不能宣称已经完全消除隐式依赖。
+当前默认配置为 `nodeLinker: isolated`。只有在 isolated 安装、完整本地检查、Worker dry-run、Press Docker 和 PR CI 全部通过后，才能宣称 pnpm 迁移与依赖边界治理均已完成。
 
 ## 12. 参考资料
 
