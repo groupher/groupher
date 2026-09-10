@@ -13,6 +13,11 @@
 - [Interaction V2](./interaction_v2.md)：物化 count、批量读取和列表排序；
 - [Interaction V3](./interaction_v3.md)：Article mutation admission、Gate action 与 metadata 收口；
 - [Gate V4](../community/gate_v4.md)：typed Context、`scope/4` 与 `access_check/3`。
+- [Optimistic Operation](../tanstack_rewrite/optimistic_operation.md)：前端内存 operation identity、
+  rollback、server reconcile 与 confirmed handoff；客户端 O1/O3/O4/O5 已接线，Article/Comment reaction
+  的 operationRef/revision 已接通，Comment entity 协议按阶段实施。
+- [Optimistic Read Your Writes](../tanstack_rewrite/optimistic_read_your_writes.md)：浏览器跨刷新 receipt、
+  public projection revision 与 private viewer relation 的合并协议；当前仅有短 TTL 客户端兜底。
 
 当前实施快照：
 
@@ -453,7 +458,7 @@ Interactions.ReadState：
 - `ShadowSync.refresh_*`；
 - 为了获取 Article 作者而跨域调用 FrontDesk。
 
-具体 owner 为 `Articles.InteractionResponse` 与 `Comments.InteractionResponse`。它们只负责把
+具体 owner 为 `Articles.Response` 与 `Comments.InteractionResponse`。它们只负责把
 ReadState map 映射到现有 Article/Comment GraphQL shape；`Comments.AuthorRelationState` 单独批量计算
 Article 作者与 Comment upvote 的关系。这三个模块都不拥有 fact、bitmap 或 Interaction SQL。
 
@@ -924,7 +929,7 @@ Interaction 内部跨模块协作函数仍是 Elixir public function，因此必
 公开 response assembly 位于 Interaction 目录之外：
 
 ```text
-cms/articles/interaction_response.ex
+cms/articles/response.ex
 cms/comments/interaction_response.ex
 cms/comments/author_relation_state.ex
 ```

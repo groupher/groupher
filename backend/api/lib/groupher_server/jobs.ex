@@ -17,8 +17,8 @@ defmodule GroupherServer.Jobs do
   """
 
   alias GroupherServer.Jobs
-  alias GroupherServer.Jobs.Codec
-  alias GroupherServer.Jobs.Config
+  alias Jobs.Codec
+  alias Jobs.Config
 
   require Logger
 

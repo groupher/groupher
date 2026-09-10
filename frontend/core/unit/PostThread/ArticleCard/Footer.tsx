@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
-import useArticleUpvoteMutation from '~/query/mutation/useArticleUpvoteMutation'
+import useArticleUpvote from '~/query/mutation/useArticleUpvote'
 import type { TArticle } from '~/spec'
 import DotDivider from '~/ui/DotDivider'
 import TimeAgo from '~/ui/TimeAgo'
@@ -17,8 +17,8 @@ type TProps = {
 
 const Footer: FC<TProps> = ({ data }) => {
   const s = useSalon()
-  const { author, insertedAt, commentsCount, upvotesCount, viewerHasUpvoted, meta } = data
-  const upvoteArticle = useArticleUpvoteMutation(data)
+  const { author, insertedAt, commentsCount, meta } = data
+  const { count, isUpvoted, toggle } = useArticleUpvote(data)
 
   return (
     <div className={s.wrapper}>
@@ -29,10 +29,10 @@ const Footer: FC<TProps> = ({ data }) => {
       <div className={s.bottom}>
         <Upvote
           type={UPVOTE_LAYOUT.GENERAL}
-          count={upvotesCount}
+          count={count}
           avatarList={meta.latestUpvotedUsers}
-          viewerHasUpvoted={viewerHasUpvoted}
-          onAction={upvoteArticle}
+          viewerHasUpvoted={isUpvoted}
+          onAction={() => toggle()}
         />
 
         {commentsCount !== 0 && <CommentsCount count={commentsCount} size={SIZE.MEDIUM} />}

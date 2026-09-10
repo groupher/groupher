@@ -199,6 +199,22 @@ describe('createAuthFetch', () => {
     ).rejects.toMatchObject({ message: 'gradient: has unsupported config' })
   })
 
+  it.each([
+    [4530, 'This operation changed elsewhere. Refresh and try again.'],
+    [4531, 'This operation is still being processed. Please try again shortly.'],
+    [4532, 'This operation is missing its command key. Please submit it again.'],
+  ])('maps command error code %s to an actionable message', async (code, message) => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        Response.json({ errors: [{ extensions: { code }, message: 'internal command error' }] }),
+      )
+
+    await expect(
+      browserGraphQLRequest(parse('mutation Save { save }'), {}, { fetcher }),
+    ).rejects.toMatchObject({ message })
+  })
+
   it('preserves the final response and errors when an auth replay still fails', async () => {
     const finalResponse = Response.json({
       errors: [{ extensions: { code: 'INVALID_INPUT' }, message: 'still invalid' }],

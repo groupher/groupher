@@ -161,13 +161,13 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     assert {:ok, %{is_solution: true}} = CMS.Comments.one_comment(first.id)
 
-    {:ok, post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert post.is_solved
     assert post.solution_comment_id == first.inner_id
     assert post.solution_digest == "first"
 
     {:ok, _} = CMS.Comments.update_comment(first, mock_comment("changed"), actor)
-    {:ok, post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert post.solution_digest == "changed"
   end
 
@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert match?({:ok, _}, replace_result)
     assert Repo.get_by!(PostSolution, post_id: post.id).comment_id == second.id
 
-    {:ok, projected_post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, projected_post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert projected_post.solution_comment_id == second.inner_id
     assert projected_post.solution_digest == "second"
   end
@@ -265,7 +265,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     {{:ok, [projected_post]}, article_queries} =
       capture_queries(fn ->
-        CMS.Articles.InteractionResponse.many([Repo.get!(Post, post.id)], nil)
+        CMS.Articles.Response.list([Repo.get!(Post, post.id)], nil)
       end)
 
     assert projected_post.is_solved

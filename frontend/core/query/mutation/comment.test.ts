@@ -5,13 +5,17 @@ import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment } from '~/spec'
 
 import { articleKeys, commentKeys, viewerKeys } from '../key'
+import { articleQueryTargets } from './article'
 import {
+  deleteCommentOperation,
   insertPendingComment,
   patchCommentEverywhere,
   patchCommentViewerState,
   reconcileCreatedComment,
+  updateCommentOperation,
   updateCommentEmotion,
 } from './comment'
+import { markChange, rollbackChanges } from './optimistic/effects'
 
 const root = {
   innerId: '1',
@@ -122,5 +126,118 @@ describe('comment query mutation helpers', () => {
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].innerId).toBe(
       'confirmed-1',
     )
+  })
+
+  it('routes article aggregate patches only to article entity queries', () => {
+    const queryClient = new QueryClient()
+    const detailKey = articleKeys.detail('home', THREAD.POST, '42')
+    const tagGroupsKey = articleKeys.tagGroups('home', THREAD.POST)
+    queryClient.setQueryData(detailKey, { innerId: '42' })
+    queryClient.setQueryData(tagGroupsKey, { innerId: '42' })
+
+    expect(articleQueryTargets(queryClient).map(({ queryKey }) => queryKey)).toEqual([detailKey])
+  })
+
+  it('restores a deleted entity at its original slot when the operation fails', () => {
+    const queryClient = new QueryClient()
+    queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
+    const target = {
+      comment: root,
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      commentInnerId: '1',
+      commentPath: {
+        article: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        innerId: '1',
+      },
+    }
+    const context = { queryClient, accountRef: 'alice', commandKey: 'op-1' }
+    const plan = deleteCommentOperation.apply(context, target)
+
+    for (const change of plan.changes) markChange(queryClient, change)
+    expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toEqual([])
+
+    rollbackChanges(queryClient, plan.changes)
+    expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].innerId).toBe('1')
+  })
+
+  it('reconciles the Article comment revision returned by an update', () => {
+    const queryClient = new QueryClient()
+    const articleKey = articleKeys.detail('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleKey, {
+      innerId: '42',
+      community: { slug: 'home' },
+      meta: { thread: THREAD.POST },
+      commentsCount: 8,
+      commentsRevision: 2,
+    })
+    const target = {
+      comment: root,
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      commentInnerId: '1',
+      commentPath: {
+        article: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        innerId: '1',
+      },
+    }
+
+    updateCommentOperation.reconcile(
+      { queryClient, accountRef: 'alice', commandKey: 'op-update' },
+      target,
+      'updated body',
+      {
+        ...root,
+        bodyHtml: 'updated body',
+        article: { innerId: '42', commentsCount: 8, commentsRevision: 3 },
+      },
+    )
+
+    expect(
+      queryClient.getQueryData<{ commentsRevision: number }>(articleKey)?.commentsRevision,
+    ).toBe(3)
+  })
+
+  it('reconciles the confirmed Article count and revision returned by delete', () => {
+    const queryClient = new QueryClient()
+    const articleKey = articleKeys.detail('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleKey, {
+      innerId: '42',
+      community: { slug: 'home' },
+      meta: { thread: THREAD.POST },
+      commentsCount: 7,
+      commentsRevision: 2,
+    })
+    queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
+    const target = {
+      comment: root,
+      scope,
+      articlePath: { community: 'home', thread: THREAD.POST, innerId: '42' },
+      articleKey: 'home:POST:42',
+      commentInnerId: '1',
+      commentPath: {
+        article: { community: 'home', thread: THREAD.POST, innerId: '42' },
+        innerId: '1',
+      },
+    }
+
+    deleteCommentOperation.reconcile(
+      { queryClient, accountRef: 'alice', commandKey: 'op-delete' },
+      target,
+      undefined,
+      {
+        ...root,
+        commandReplayed: true,
+        article: { innerId: '42', commentsCount: 9, commentsRevision: 3 },
+      },
+    )
+
+    expect(queryClient.getQueryData(articleKey)).toMatchObject({
+      commentsCount: 9,
+      commentsRevision: 3,
+    })
+    expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toEqual([])
   })
 })

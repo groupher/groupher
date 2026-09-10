@@ -33,6 +33,9 @@ JSONB 字段，也不引入双写、双读或运行时兼容分支。
 
 > v1 定义互动事实、projection schema 与 bitmap 语义；projection 的统一读写边界、批量 response
 > 组装与 list 路径由 [Interaction V2](./interaction_v2.md) 的 `CMS.Interactions.State` 负责。
+> 浏览器 optimistic 状态在刷新后如何与较旧 public projection 合并，不属于本存储模型；后续
+> write receipt、public/viewer revision 分区与 private reconcile 提案见
+> [Optimistic Read Your Writes](../tanstack_rewrite/optimistic_read_your_writes.md)。
 > v2 的实现入口统一为 `CMS.Interactions.State`、`CMS.Interactions.ViewEvents`、
 > `CMS.Interactions.Config` 与 `CMS.Interactions.Schema.*`；旧 `CMS.Reactions.Store` 和
 > `CMS.Comments.ViewerState` 已移除，Trash 专属的 `hydrate_entries` 不属于互动读路径。
@@ -427,6 +430,11 @@ article read 新增可选的 `view_event_id` 参数（旧调用不受影响）�
 因此无法把网络重试识别为同一次浏览。
 <emotion>.latestUsers
 ```
+
+跨刷新协议不得把 durable view event 的“已接受”误写成 public `views` projection 已完成。浏览器
+只可恢复同一次逻辑 view 的稳定 `view_event_id` 和 pending viewer overlay；`views` 仍等待 worker
+推进。完整边界见
+[Optimistic Read Your Writes](../tanstack_rewrite/optimistic_read_your_writes.md)。
 
 bitmap、reaction info 的表名和内部 user ID 不属于公开契约。
 

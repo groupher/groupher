@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Project do
 
   defp increment_views(model, target_id, count) do
     case Repo.update_all(from(article in model, where: article.id == ^target_id),
-           inc: [views: count]
+           inc: [views: count, views_revision: 1]
          ) do
       {1, _} -> :ok
       _ -> {:error, ErrorCat.target_not_found()}

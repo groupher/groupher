@@ -37,6 +37,7 @@ const createDraftState = (): TDraftEditorState =>
       bodyJson: '[{"type":"p","children":[{"text":"Draft"}]}]',
       bodyValue: [{ type: 'p', children: [{ text: 'Draft' }] }],
       docId: 'doc-a',
+      version: 3,
       slug: 'guide',
       subtitle: '',
       title: 'Guide',
@@ -52,7 +53,7 @@ const createDraftState = (): TDraftEditorState =>
 describe('useDraftAutoSave', () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset()
-    mocks.saveDocDraft.mockResolvedValue({ docId: 'doc-a', slug: 'guide' })
+    mocks.saveDocDraft.mockResolvedValue({ docId: 'doc-a', slug: 'guide', version: 4 })
   })
 
   afterEach(() => vi.useRealTimers())
@@ -68,7 +69,7 @@ describe('useDraftAutoSave', () => {
     expect(mocks.attachSaveDocDraft).toHaveBeenCalledWith(expect.any(Function))
     expect(mocks.saveDocDraft).toHaveBeenCalledOnce()
     expect(mocks.saveDocDraft).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'doc-a', title: 'Guide' }),
+      expect.objectContaining({ expectedVersion: 3, id: 'doc-a', title: 'Guide' }),
     )
   })
 

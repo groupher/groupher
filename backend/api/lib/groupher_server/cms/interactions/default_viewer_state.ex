@@ -61,8 +61,8 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
 
   """
   @spec emotions(:article | :comment) :: [map()]
-  def emotions(kind) when kind in [:article, :comment] do
-    vocabulary = if kind == :article, do: Config.emotions(), else: Config.comment_emotions()
+  def emotions(type) when type in [:article, :comment] do
+    vocabulary = if type == :article, do: Config.emotions(), else: Config.comment_emotions()
 
     Enum.map(vocabulary, fn emotion ->
       %{

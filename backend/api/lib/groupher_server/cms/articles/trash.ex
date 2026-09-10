@@ -161,7 +161,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                 )
 
               {:error, %Decision{} = decision} ->
-                record_denied_trash(article, actor, decision)
+                {:error, decision}
 
               error ->
                 error
@@ -174,22 +174,6 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
     sync_search(result, :delete)
   end
-
-  defp record_denied_trash(article, %User{} = actor, %Decision{} = decision) do
-    reason = Decision.primary_reason(decision)
-
-    with {:ok, _event} <-
-           Activity.log(article, :trashed,
-             actor: actor,
-             outcome: :denied,
-             denial_code: reason
-           ) do
-      {:error, decision}
-    end
-  end
-
-  defp record_denied_trash(_article, _actor, %Decision{} = decision),
-    do: {:error, decision}
 
   @doc """
   Creates one Article membership under an already-created action.

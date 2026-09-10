@@ -76,6 +76,8 @@ export const DashboardDocPublishChecklistItemFields = graphql(`
 export const DashboardDocTreeMutationPayload = graphql(`
   fragment DashboardDocTreeMutationPayload on DocTreeMutationPayload {
     revision
+    commandKey
+    commandReplayed
     treeState {
       hasUnpublishedChanges
       stagedEventCount

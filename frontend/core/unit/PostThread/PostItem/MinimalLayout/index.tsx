@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import useArticleUpvoteMutation from '~/query/mutation/useArticleUpvoteMutation'
+import useArticleUpvote from '~/query/mutation/useArticleUpvote'
 import type { TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
 
@@ -19,19 +19,19 @@ type TProps = {
 const DigestView: FC<TProps> = ({ article }) => {
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
-  const { upvotesCount, meta, viewerHasUpvoted } = article
-  const upvoteArticle = useArticleUpvoteMutation(article)
+  const { meta } = article
+  const { count, isUpvoted, toggle } = useArticleUpvote(article)
 
   return (
     <article className={s.wrapper}>
       <ArticlePinLabel isPinned={article.isPinned} />
       <div className={s.upvoteWrapper}>
         <Upvote
-          count={upvotesCount}
+          count={count}
           avatarList={meta.latestUpvotedUsers}
-          viewerHasUpvoted={viewerHasUpvoted}
+          viewerHasUpvoted={isUpvoted}
           type={UPVOTE_LAYOUT.POST_MINIMAL}
-          onAction={upvoteArticle}
+          onAction={() => toggle()}
           left={-2}
           top={-1}
         />

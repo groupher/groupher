@@ -178,10 +178,17 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, blog_draft} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(blog_body)})
+      {:ok, blog_draft} =
+        CMS.Articles.update(blog, %{
+          body_bag: mock_body_bag(blog_body),
+          expected_version: blog.version
+        })
 
       {:ok, changelog_draft} =
-        CMS.Articles.update(changelog, %{body_bag: mock_body_bag(changelog_body)})
+        CMS.Articles.update(changelog, %{
+          body_bag: mock_body_bag(changelog_body),
+          expected_version: changelog.version
+        })
 
       {:ok, %{article: blog}} =
         CMS.Articles.publish_draft(community, :blog, blog_draft.article_hash_id, user)
@@ -237,7 +244,11 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
         |> Jason.encode!()
 
-      {:ok, draft} = CMS.Articles.update(post, %{body_bag: mock_body_bag(self_body)})
+      {:ok, draft} =
+        CMS.Articles.update(post, %{
+          body_bag: mock_body_bag(self_body),
+          expected_version: post.version
+        })
 
       {:ok, %{article: post}} =
         CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
@@ -362,6 +373,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       {:ok, draft} =
         CMS.Articles.update(post, %{
+          expected_version: post.version,
           body_bag:
             mock_body_bag(
               plate_body([block("block-b", [text("clean content without mentions")])])

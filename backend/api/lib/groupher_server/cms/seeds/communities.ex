@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Domain
+  alias CMS.Seeds.Domain
   alias GroupherServer.CMS.Seeds.Helper, as: SeedHelper
 
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   @community_types [:pl, :framework]

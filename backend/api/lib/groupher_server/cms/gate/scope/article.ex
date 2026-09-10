@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias CMS.Gate.ErrorCat
   alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Gate.Scope.Policy
+  alias CMS.Gate.Scope.Policy
   alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
 
 

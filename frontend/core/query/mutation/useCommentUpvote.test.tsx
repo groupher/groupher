@@ -6,7 +6,7 @@ import { THREAD } from '~/const/thread'
 import type { TComment } from '~/spec'
 
 import { commentKeys, viewerKeys } from '../key'
-import useCommentReactions from './useCommentReactions'
+import useCommentUpvote from './useCommentUpvote'
 
 const mocks = vi.hoisted(() => ({ browserGraphQLRequest: vi.fn() }))
 
@@ -33,7 +33,7 @@ const comment = {
   viewerHasUpvoted: false,
 } as unknown as TComment
 
-describe('useCommentReactions', () => {
+describe('useCommentUpvote', () => {
   it('coalesces rapid toggles into one serial lane and reaches the final intent', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
@@ -51,11 +51,11 @@ describe('useCommentReactions', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     )
-    const { result } = renderHook(() => useCommentReactions(comment), { wrapper })
+    const { result } = renderHook(() => useCommentUpvote(comment), { wrapper })
 
     act(() => {
-      result.current.handleUpvote(true)
-      result.current.handleUpvote(true)
+      result.current.toggle()
+      result.current.toggle()
     })
 
     await waitFor(() => expect(mocks.browserGraphQLRequest).toHaveBeenCalledTimes(1))
@@ -77,6 +77,7 @@ describe('useCommentReactions', () => {
         queryClient.getQueryData<Record<string, { viewerHasUpvoted: boolean }>>(viewerKey)
       expect(list?.entries[0].upvotesCount).toBe(3)
       expect(viewer?.['1'].viewerHasUpvoted).toBe(false)
+      expect(result.current).toMatchObject({ count: 3, isUpvoted: false })
     })
   })
 })

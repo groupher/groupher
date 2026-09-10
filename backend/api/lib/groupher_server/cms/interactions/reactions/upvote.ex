@@ -11,13 +11,13 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   alias GroupherServer.{Accounts, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.MutationLock
   import Ecto.Query
 
   alias GroupherServer.CMS.Artiment.Matcher
   alias GroupherServer.CMS.{Events, Gate}
   alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias GroupherServer.CMS.CommandReceipt
   alias GroupherServer.CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{Later, T}
@@ -34,8 +34,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.add(canonical_input, actor)
 
   """
-  @spec add(struct(), User.t()) :: T.domain_res(struct())
-  def add(artiment, %User{} = actor), do: mutate(artiment, actor, :add)
+  @spec add(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
+  def add(artiment, %User{} = actor, command_key \\ nil),
+    do: mutate(artiment, actor, :add, command_key)
 
   @doc """
   Removes an upvote as an idempotent set-state command.
@@ -45,25 +46,36 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       Reactions.Upvote.remove(canonical_input, actor)
 
   """
-  @spec remove(struct(), User.t()) :: T.domain_res(struct())
-  def remove(artiment, %User{} = actor), do: mutate(artiment, actor, :remove)
+  @spec remove(struct(), User.t(), String.t() | nil) :: T.domain_res(struct())
+  def remove(artiment, %User{} = actor, command_key \\ nil),
+    do: mutate(artiment, actor, :remove, command_key)
 
-  defp mutate(input, actor, operation) do
-    MutationLock.observe_transaction(fn ->
-      Repo.transaction(fn ->
-        with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
-             {:ok, info} <- Matcher.match_interaction(canonical),
-             {:ok, change} <- change_fact(canonical, info, actor, operation),
-             :ok <- sync_state(canonical, actor, operation, change),
-             :ok <- maybe_achieve(canonical, actor, operation, change) do
-          {canonical, change}
-        else
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-    end)
-    |> after_commit(operation, actor)
+  defp mutate(input, actor, operation, command_key) do
+    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key),
+         {:ok, info} <- Matcher.match_interaction(input) do
+      CommandReceipt.run_user_command(
+        actor,
+        command_key,
+        "upvote_#{operation}",
+        Atom.to_string(info.artiment),
+        input.id,
+        nil,
+        fn ->
+          with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
+               {:ok, change} <- change_fact(canonical, info, actor, operation),
+               :ok <- sync_state(canonical, actor, operation, change),
+               :ok <- maybe_achieve(canonical, actor, operation, change) do
+            {:ok, {canonical, change}, %{outcome: change}}
+          end
+        end,
+        fn receipt -> {:ok, {input, {:replayed, replay_outcome(receipt)}}} end
+      )
+      |> after_commit(operation, actor, command_key)
+    end
   end
+
+  defp replay_outcome(%{outcome: "unchanged"}), do: :unchanged
+  defp replay_outcome(_receipt), do: :changed
 
   defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
 
@@ -93,16 +105,26 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp after_commit({:ok, {canonical, :unchanged}}, _operation, _actor),
-    do: {:ok, canonical}
+  defp after_commit({:ok, {canonical, :unchanged}}, _operation, _actor, command_key),
+    do: {:ok, put_reaction_metadata(canonical, command_key, :unchanged, false)}
 
-  defp after_commit({:ok, {canonical, :changed}}, operation, actor) do
+  defp after_commit({:ok, {canonical, {:replayed, outcome}}}, _operation, _actor, command_key),
+    do: {:ok, put_reaction_metadata(canonical, command_key, outcome, true)}
+
+  defp after_commit({:ok, {canonical, :changed}}, operation, actor, command_key) do
     emit(canonical, operation, actor)
     maybe_sync_search(canonical)
-    {:ok, canonical}
+    {:ok, put_reaction_metadata(canonical, command_key, :changed, false)}
   end
 
-  defp after_commit({:error, reason}, _operation, _actor), do: {:error, reason}
+  defp after_commit({:error, reason}, _operation, _actor, _command_key), do: {:error, reason}
+
+  defp put_reaction_metadata(canonical, command_key, outcome, command_replayed) do
+    canonical
+    |> Map.put(:command_key, command_key)
+    |> Map.put(:command_replayed, command_replayed)
+    |> Map.put(:reaction_outcome, outcome)
+  end
 
   defp emit(canonical, :add, actor) do
     Later.run({Events, :emit, [:notify_upvote, %{target: canonical, from_user: actor}]})

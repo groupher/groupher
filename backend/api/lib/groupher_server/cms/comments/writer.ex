@@ -25,6 +25,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
   alias GroupherServer.CMS.{FrontDesk, Gate}
   alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
   alias GroupherServer.CMS.Artiment.Const
+  alias GroupherServer.CMS.ErrorCat, as: CmsErrorCat
+  alias GroupherServer.CMS.CommandReceipt
 
   alias GroupherServer.CMS.Comments.{
     BodyCodec,
@@ -65,19 +67,11 @@ defmodule GroupherServer.CMS.Comments.Writer do
       CMS.Comments.Writer.create(community, :post, article_id, body, user)
 
   """
-  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
-          T.domain_res(map())
-  def create(%Community{} = community, thread, article_id, body, %User{} = user) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <-
-           FrontDesk.article(community, thread, article_id,
-             preload: [[author: :user], :community]
-           ) do
-      do_create(thread, article, body, user, info)
-    end
-  end
-
   @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(map())
+  def create(thread, article, body, %User{} = user), do: create(thread, article, body, user, nil)
+
+  @spec create(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
   @doc """
   Creates a top-level Comment from an already resolved Article identity.
 
@@ -88,34 +82,98 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
       CMS.Comments.Writer.create(:post, post, body, actor)
   """
-  def create(thread, article, body, %User{} = user) do
+  def create(thread, article, body, %User{} = user, command_key) when is_struct(article) do
     with {:ok, info} <- match(thread) do
-      do_create(thread, article, body, user, info)
+      do_create(thread, article, body, user, info, command_key)
     end
   end
 
-  defp do_create(thread, article, body, %User{} = user, info) do
-    article = Repo.preload(article, [[author: :user], :community])
+  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) :: T.domain_res(map())
+  def create(%Community{} = community, thread, article_id, body, %User{} = user),
+    do: create(community, thread, article_id, body, user, nil)
 
-    Gate.Access.with_check(user, :create_comment, article, fn canonical ->
-      create_locked(thread, canonical, body, user, info)
-    end)
-    |> normalize_comments_locked()
-    |> sync_article_metrics()
-    |> enqueue_create_followups(user, article.community)
+  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
+  @doc "Creates a top-level Comment using an optional idempotency command key."
+  def create(%Community{} = community, thread, article_id, body, %User{} = user, command_key) do
+    with {:ok, info} <- match(thread),
+         {:ok, article} <-
+           FrontDesk.article(community, thread, article_id,
+             preload: [[author: :user], :community]
+           ) do
+      do_create(thread, article, body, user, info, command_key)
+    end
   end
 
-  defp create_locked(thread, article, body, %User{} = user, info) do
+  defp do_create(thread, article, body, %User{} = user, info, command_key) do
+    article = Repo.preload(article, [[author: :user], :community])
+
+    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
+      CommandReceipt.run_user_command(
+        user,
+        command_key,
+        "comment.create",
+        Atom.to_string(thread),
+        article.id,
+        body,
+        fn ->
+          with {:ok, result} <-
+                 Gate.Access.with_check(user, :create_comment, article, fn canonical ->
+                   create_new(thread, canonical, body, user, info, command_key)
+                 end) do
+            {:ok, result, %{result_key: result.comment.id}}
+          end
+        end,
+        fn receipt -> replay_created(receipt, article, command_key) end
+      )
+      |> normalize_comments_locked()
+      |> sync_article_metrics()
+      |> enqueue_create_followups(user, article.community)
+    end
+  end
+
+  defp create_new(thread, article, body, %User{} = user, info, command_key) do
     with {:ok, comment} <- create_comment_record(body, thread, info.foreign_key, article, user),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(comment.id),
          {:ok, counted_article} <- ORM.inc(article, :comments_count),
+         {:ok, counted_article} <- ORM.inc(counted_article, :comments_revision),
          {:ok, projected_comment} <- set_question_flag_ifneed(article, comment),
          {:ok, _participants} <- Participants.add_to_article(article, user),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _job} <- JobPolicy.audition(projected_comment) do
-      {:ok, %{comment: projected_comment, article: counted_article}}
+      {:ok,
+       %{
+         comment: projected_comment,
+         article: counted_article,
+         command_key: command_key,
+         command_replayed: false
+       }}
     end
   end
+
+  defp replay_created(%{result_key: result_key}, article, command_key)
+       when is_binary(result_key) do
+    with {result_id, ""} <- Integer.parse(result_key),
+         %Comment{} = comment <- Repo.get(Comment, result_id),
+         canonical_article when not is_nil(canonical_article) <-
+           Repo.get(article.__struct__, article.id) do
+      canonical_article = Repo.preload(canonical_article, [[author: :user], :community])
+
+      {:ok,
+       %{
+         comment: comment,
+         article: canonical_article,
+         command_key: command_key,
+         command_replayed: true
+       }}
+    else
+      _ ->
+        {:error, CmsErrorCat.command_key_conflict()}
+    end
+  end
+
+  defp replay_created(_receipt, _article, _command_key),
+    do: {:error, CmsErrorCat.command_key_conflict()}
 
   @doc """
   Creates a reply after reloading and authorizing its target Comment inside the
@@ -126,28 +184,70 @@ defmodule GroupherServer.CMS.Comments.Writer do
       CMS.Comments.Writer.reply(comment_id, body, actor)
   """
   @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(map())
-  def reply(comment_id, body, %User{} = user) do
+  def reply(comment_id, body, %User{} = user), do: reply(comment_id, body, user, nil)
+
+  @spec reply(T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
+  @doc "Creates a reply using an optional idempotency command key."
+  def reply(comment_id, body, %User{} = user, command_key) do
     with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id) do
-      Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical ->
-        reply_locked(canonical, body, user)
-      end)
-      |> normalize_comments_locked()
-      |> sync_article_metrics()
-      |> enqueue_reply_followups(user)
+      with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
+        CommandReceipt.run_user_command(
+          user,
+          command_key,
+          "comment.reply",
+          "comment",
+          target_comment.id,
+          body,
+          fn ->
+            with {:ok, result} <-
+                   Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical ->
+                     reply_new_from_canonical(canonical, body, user, command_key)
+                   end) do
+              {:ok, result, %{result_key: result.comment.id}}
+            end
+          end,
+          fn receipt ->
+            with {:ok, article} <-
+                   FrontDesk.article_of(target_comment, preload: [[author: :user], :community]) do
+              replay_created(receipt, article, command_key)
+            end
+          end
+        )
+        |> normalize_comments_locked()
+        |> sync_article_metrics()
+        |> enqueue_reply_followups(user)
+      end
     end
   end
 
-  defp reply_locked(canonical, body, %User{} = user) do
+  defp reply_new_from_canonical(canonical, body, %User{} = user, command_key) do
     with replying_comment <- Repo.preload(canonical, reply_to_comment: :author),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
          {:ok, article} <-
            FrontDesk.article_of(replying_comment, preload: [[author: :user], :community]),
          {:ok, info} <- match(thread),
-         parent_comment <- Replies.root_comment(replying_comment),
-         {:ok, replied_comment} <-
+         {:ok, result} <-
+           reply_new(replying_comment, body, user, thread, info, article, command_key) do
+      {:ok, result}
+    end
+  end
+
+  defp reply_new(
+         replying_comment,
+         body,
+         %User{} = user,
+         thread,
+         info,
+         article,
+         command_key
+       ) do
+    parent_comment = Replies.root_comment(replying_comment)
+
+    with {:ok, replied_comment} <-
            insert_comment(body, thread, info.foreign_key, article, user, replying_comment),
          {:ok, _lifecycle} <- Lifecycle.ensure_created(replied_comment.id),
          {:ok, counted_article} <- ORM.inc(article, :comments_count),
+         {:ok, counted_article} <- ORM.inc(counted_article, :comments_revision),
          {:ok, _reply_relation} <-
            ORM.create(CommentReply, %{
              comment_id: replied_comment.id,
@@ -160,7 +260,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, _embedded_parent} <- add_replies_ifneed(parent_comment, associated_reply),
          {:ok, _parent} <- ORM.inc(parent_comment, :replies_count),
          {:ok, _job} <- JobPolicy.audition(associated_reply) do
-      {:ok, %{comment: associated_reply, article: counted_article}}
+      {:ok,
+       %{
+         comment: associated_reply,
+         article: counted_article,
+         command_key: command_key,
+         command_replayed: false
+       }}
     end
   end
 
@@ -284,6 +390,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
+  defp sync_article_metrics({:ok, %{article: _, command_replayed: true}} = result), do: result
+
   defp sync_article_metrics({:ok, %{article: article}} = result) do
     _ = Indexer.enqueue_metrics(article)
     result
@@ -292,7 +400,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp sync_article_metrics(result), do: result
 
   defp enqueue_create_followups(
-         {:ok, %{comment: %Comment{} = comment}} = result,
+         {:ok, %{comment: %Comment{} = comment, command_replayed: false}} = result,
          %User{} = actor,
          %Community{} = community
        ) do
@@ -314,10 +422,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
     result
   end
 
+  defp enqueue_create_followups({:ok, %{command_replayed: true}} = result, _actor, _community),
+    do: result
+
   defp enqueue_create_followups(result, _actor, _community), do: result
 
   defp enqueue_reply_followups(
-         {:ok, %{comment: %Comment{} = comment}} = result,
+         {:ok, %{comment: %Comment{} = comment, command_replayed: false}} = result,
          %User{} = actor
        ) do
     :ok =
@@ -332,6 +443,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
     result
   end
+
+  defp enqueue_reply_followups({:ok, %{command_replayed: true}} = result, _actor), do: result
 
   defp enqueue_reply_followups(result, _actor), do: result
 

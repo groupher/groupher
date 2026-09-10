@@ -17,6 +17,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   object :cms_operation_mutations do
     @desc "Move one logical Article into Trash"
     field :trash_article, :trashed_article do
+      arg(:command_key, non_null(:id))
       arg(:article, non_null(:article_path_input))
 
       middleware(M.Authorize, :login)
@@ -27,6 +28,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "Restore one logical Article from Trash"
     field :restore_trashed_article, :article do
+      arg(:command_key, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))
@@ -39,6 +41,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "Permanently delete one standalone Article aggregate from Trash"
     field :permanently_delete_trashed_article, :done_state do
+      arg(:command_key, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))
@@ -51,6 +54,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "Permanently delete one complete Trash action"
     field :permanently_delete_trash_action, :done_state do
+      arg(:command_key, non_null(:id))
       arg(:id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))

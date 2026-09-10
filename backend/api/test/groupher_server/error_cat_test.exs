@@ -2,8 +2,8 @@ defmodule GroupherServer.ErrorCatTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
-  alias GroupherServer.ErrorCat.Validator
+  alias ErrorCat.Error
+  alias ErrorCat.Validator
 
   test "catalog declarations produce structured errors" do
     error = GroupherServer.CMS.Gate.ErrorCat.article_archived("read only")

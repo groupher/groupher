@@ -1,12 +1,20 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createContext, type ReactNode, useContext, useMemo } from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react'
 
+import {
+  isArticleUpvoteReceiptNewer,
+  overlayArticleUpvoteReceipt,
+  readArticleUpvoteReceipt,
+} from '~/query/mutation/articleReceipt'
+import { clearArticleViewReceipt, readArticleViewReceipt } from '~/query/viewReceipt'
 import type { TArticle, TThread } from '~/spec'
+import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
+import useArticleInteractionReconcile from './useArticleInteractionReconcile'
 import type { TViewerArticleRef } from './viewer'
 
 type TValue = {
@@ -39,19 +47,42 @@ export default function ArticleQueryProvider({
     ...Q.article.detail(community, thread, innerId),
     initialData: initialArticle || undefined,
   })
-  const viewerScope = account.user?.login || ''
   const articleRef = {
     community,
     thread,
     innerId: String(innerId),
   } satisfies TViewerArticleRef
-  const viewerQuery = useQuery(Q.viewer.articleStates(viewerScope, [articleRef]))
+  const viewerQuery = useQuery(
+    Q.viewer.articleStates(account.accountRef || getAccountRef(account.user) || '', [articleRef]),
+  )
+  useEffect(() => {
+    const key = `${community}:${thread}:${String(innerId)}`
+    if (viewerQuery.data?.[key]?.viewerHasViewed === true) clearArticleViewReceipt(key)
+  }, [community, innerId, thread, viewerQuery.data])
+  useArticleInteractionReconcile(articleQuery.data ? [articleQuery.data] : [])
   const article = useMemo(() => {
     if (!articleQuery.data) return null
     const key = `${community}:${thread}:${String(innerId)}`
     const viewerState = viewerQuery.data?.[key]
-    return viewerState ? ({ ...articleQuery.data, ...viewerState } as TArticle) : articleQuery.data
-  }, [articleQuery.data, community, innerId, thread, viewerQuery.data])
+    const accountRef = account.accountRef || getAccountRef(account.user)
+    const merged = viewerState
+      ? ({ ...articleQuery.data, ...viewerState } as TArticle)
+      : articleQuery.data
+    const viewReceipt = accountRef ? readArticleViewReceipt(key) : null
+    const viewed = viewReceipt ? { ...merged, viewerHasViewed: true } : merged
+    const receipt = readArticleUpvoteReceipt(accountRef, key)
+    return isArticleUpvoteReceiptNewer(viewed, receipt)
+      ? overlayArticleUpvoteReceipt(viewed, receipt as NonNullable<typeof receipt>)
+      : viewed
+  }, [
+    account.accountRef,
+    account.user,
+    articleQuery.data,
+    community,
+    innerId,
+    thread,
+    viewerQuery.data,
+  ])
   const value = useMemo(
     () => ({
       article,

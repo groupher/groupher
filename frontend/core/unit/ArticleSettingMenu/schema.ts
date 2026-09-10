@@ -3,12 +3,14 @@ import { graphql } from '~/graphql/authoring'
 const updatePost = graphql(`
   mutation UpdatePostFromMenu(
     $article: ArticlePathInput!
+    $commandKey: ID!
     $expectedVersion: Int!
     $title: String
     $communityTags: [ID]
   ) {
     updatePost(
       article: $article
+      commandKey: $commandKey
       expectedVersion: $expectedVersion
       title: $title
       communityTags: $communityTags

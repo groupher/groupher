@@ -36,4 +36,7 @@ defmodule GroupherServer.CMS.ErrorCat do
   error(:invalid_search_artiment, code: 4527)
   error(:not_searchable, code: 4528)
   error(:search_platform, code: 4529, retryable: true)
+  error(:command_key_conflict, code: 4530)
+  error(:command_resolution_pending, code: 4531, retryable: true)
+  error(:command_key_required, code: 4532)
 end

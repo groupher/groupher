@@ -339,7 +339,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_rich_text(~s(new content))
-      {:ok, changelog} = CMS.Articles.update(changelog, %{body_bag: mock_body_bag(body)})
+
+      {:ok, changelog} =
+        CMS.Articles.update(changelog, %{
+          body_bag: mock_body_bag(body),
+          expected_version: changelog.version
+        })
 
       {:ok, article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})

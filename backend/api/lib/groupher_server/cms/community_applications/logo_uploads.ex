@@ -15,12 +15,11 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
 
   alias Ecto.Multi
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Assets.Capability
-  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Assets.Capability
+  alias CMS.Communities.ErrorCat
   alias GroupherServer.CMS.CommunityApplications.{Config, Policy}
-  alias GroupherServer.CMS.Model.CommunityApplicationLogoUpload
-  alias GroupherServer.Repo
+  alias CMS.Model.CommunityApplicationLogoUpload
   alias Helper.Utils
 
   @allowed_mime_types ~w(image/jpeg image/png image/webp image/gif)

@@ -18,11 +18,11 @@ defmodule GroupherServer.CMS.Seeds.Helper do
   alias GroupherServer.CMS
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
+  alias CMS.Artiment.Threads
   alias GroupherServer.CMS.Model.{Category, Community}
-  alias GroupherServer.CMS.Seeds.SeedsConfig
+  alias CMS.Seeds.SeedsConfig
 
-  alias GroupherServer.CMS.Seeds.Tags
+  alias CMS.Seeds.Tags
   alias Helper.ORM
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"

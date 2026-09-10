@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     Community,
     Doc,
     DocSnapshot,
+    DocsSiteState,
     DocTreeEvent,
     DocTreeNode
   }
@@ -54,10 +55,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     tree_changes = tree_change_items(community, branch)
 
     %{
+      revision: tree_revision(community, branch),
       total_count: length(doc_changes) + length(tree_changes),
       doc_changes: doc_changes,
       tree_changes: tree_changes
     }
+  end
+
+  defp tree_revision(community, branch) do
+    case Repo.get_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
+      %DocsSiteState{tree_lock_version: revision} -> revision
+      _ -> 0
+    end
   end
 
   def doc_shell_tree_checklist_item_ids(%Community{} = community, branch) do

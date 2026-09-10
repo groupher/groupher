@@ -96,12 +96,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
        when thread in @supported_threads and is_list(target_ids) do
     target_ids = Enum.uniq(target_ids)
     info = interaction_info(thread)
-    kind = if thread == :comment, do: :comment, else: :article
+    projection_type = if thread == :comment, do: :comment, else: :article
     fixed_by_target = fixed_stats_by_target(info, target_ids, viewer, opts)
-    emotions_by_target = emotion_stats_by_target(info, target_ids, viewer, kind)
+    emotions_by_target = emotion_stats_by_target(info, target_ids, viewer, projection_type)
 
     pending_viewed_ids =
-      case {kind, viewer} do
+      case {projection_type, viewer} do
         {:article, %User{id: user_id}} -> pending_viewed_ids(thread, target_ids, user_id)
         _ -> MapSet.new()
       end
@@ -139,6 +139,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     DefaultViewerState.comment()
     |> Map.merge(%{
       upvotes_count: value(state, :upvotes_count, 0),
+      interaction_revision: value(state, :interaction_revision, 0),
       latest_upvoted_users: value(state, :latest_upvoted_users, []),
       emotions: emotions(state, :comment),
       viewer_has_upvoted: value(state, :viewer_has_upvoted, false),
@@ -151,6 +152,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     DefaultViewerState.article()
     |> Map.merge(%{
       upvotes_count: value(state, :upvotes_count, 0),
+      interaction_revision: value(state, :interaction_revision, 0),
       collects_count: value(state, :collects_count, 0),
       latest_upvoted_users: value(state, :latest_upvoted_users, []),
       latest_collected_users: value(state, :latest_collected_users, []),
@@ -175,10 +177,10 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     end
   end
 
-  defp emotions(state, kind) do
+  defp emotions(state, projection_type) do
     values = value(state, :emotions, %{})
 
-    kind
+    projection_type
     |> DefaultViewerState.emotions()
     |> Enum.map(fn default ->
       emotion = default.emotion
@@ -209,7 +211,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
           where: field(info_row, ^info.foreign_key) in ^target_ids,
           select: %{
             target_id: field(info_row, ^info.foreign_key),
-            upvotes_count: info_row.upvotes_count
+            upvotes_count: info_row.upvotes_count,
+            interaction_revision: info_row.interaction_revision
           }
         )
 
@@ -247,7 +250,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
         select: %{
           target_id: field(info_row, ^target_id_field),
           latest_upvoted_users: info_row.latest_upvoted_users,
-          upvotes_count: info_row.upvotes_count
+          upvotes_count: info_row.upvotes_count,
+          interaction_revision: info_row.interaction_revision
         }
       )
 
@@ -271,7 +275,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
          %{emotion_info_model: schema, foreign_key: target_id_field},
          target_ids,
          user,
-         emotion_kind
+         emotion_type
        ) do
     user_id = if match?(%User{}, user), do: user.id
 
@@ -288,13 +292,13 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     |> Repo.all()
     |> Enum.group_by(& &1.target_id)
     |> Map.new(fn {target_id, rows} ->
-      emotions = Enum.reduce(rows, %{}, &Map.merge(&2, emotion_embed(&1, emotion_kind)))
+      emotions = Enum.reduce(rows, %{}, &Map.merge(&2, emotion_embed(&1, emotion_type)))
       {target_id, emotions}
     end)
   end
 
-  defp emotion_embed(row, emotion_kind) do
-    case Emotion.decode(row.emotion, emotion_kind) do
+  defp emotion_embed(row, emotion_type) do
+    case Emotion.decode(row.emotion, emotion_type) do
       {:ok, emotion} ->
         %{
           :"#{emotion}_count" => row.count,
@@ -305,7 +309,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_emotion}} ->
         :telemetry.execute([:groupher, :cms, :interactions, :unknown_emotion], %{count: 1}, %{
           emotion: row.emotion,
-          kind: emotion_kind
+          type: emotion_type
         })
 
         %{}

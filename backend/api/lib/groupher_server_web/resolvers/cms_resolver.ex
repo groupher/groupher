@@ -500,6 +500,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       input
       |> Map.put(:parent_node_id, args[:parent_node_id])
       |> Map.put(:base_revision, args[:base_revision])
+      |> Map.put(:command_key, args[:command_key])
       |> with_doc_tree_actor(args),
       user
     )
@@ -513,7 +514,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.update_node(
       community,
       id,
-      patch |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+      patch
+      |> Map.put(:base_revision, args[:base_revision])
+      |> Map.put(:command_key, args[:command_key])
+      |> with_doc_tree_actor(args)
     )
   end
 
@@ -525,17 +529,17 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.update_draft(
       community,
       doc_id,
-      Map.take(args, [:title, :subtitle, :slug, :body_bag, :expected_version]),
+      Map.take(args, [:title, :subtitle, :slug, :body_bag, :expected_version, :command_key]),
       user
     )
   end
 
   def checkpoint_doc_draft_snapshot(
         _root,
-        %{community: community, id: doc_id, cur_user: user},
+        %{community: community, id: doc_id, cur_user: user} = args,
         _info
       ) do
-    CMS.Docs.checkpoint_snapshot(community, doc_id, user)
+    CMS.Docs.checkpoint_snapshot(community, doc_id, user, command_key: args[:command_key])
   end
 
   def checkpoint_doc_draft_snapshot(_root, %{community: community, id: doc_id}, _info) do
@@ -544,10 +548,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def restore_doc_draft_snapshot(
         _root,
-        %{community: community, id: doc_id, snapshot_id: snapshot_id, cur_user: user},
+        %{community: community, id: doc_id, snapshot_id: snapshot_id, cur_user: user} = args,
         _info
       ) do
-    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id, user)
+    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id, user,
+      command_key: args[:command_key]
+    )
   end
 
   def restore_doc_draft_snapshot(
@@ -570,7 +576,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     input = Map.get(args, :input) || %{}
     sync_cover? = publish_with_cover_sync?(args)
 
-    CMS.DocTree.publish_changes(community, input, user, sync_cover: sync_cover?)
+    CMS.DocTree.publish_changes(community, input, user,
+      sync_cover: sync_cover?,
+      command_key: args[:command_key]
+    )
   end
 
   defp doc_cover_view(args), do: Map.get(args, :view) || :public
@@ -583,8 +592,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp with_doc_tree_actor(attrs, _args), do: attrs
 
-  def move_doc_to_draft(_root, %{community: community, id: id, cur_user: user}, _info) do
-    with {:ok, draft} <- CMS.DocTree.move_doc_to_draft(community, id, user) do
+  def move_doc_to_draft(_root, %{community: community, id: id, cur_user: user} = args, _info) do
+    with {:ok, draft} <-
+           CMS.DocTree.move_doc_to_draft(community, id, user, command_key: args[:command_key]) do
       {:ok,
        %{
          doc_id: draft.article_hash_id,
@@ -596,17 +606,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
            has_draft: true,
            public_doc_id: draft.article_hash_id,
            has_unpublished_changes: false
-         }
+         },
+         command_key: Map.get(draft, :command_key),
+         command_replayed: Map.get(draft, :command_replayed, false)
        }}
     end
   end
 
   def move_doc_tree_subtree_to_draft(
         _root,
-        %{community: community, node_id: node_id, cur_user: user},
+        %{community: community, node_id: node_id, cur_user: user} = args,
         _info
       ) do
-    CMS.DocTree.move_subtree_to_draft(community, node_id, user)
+    CMS.DocTree.move_subtree_to_draft(community, node_id, user, command_key: args[:command_key])
   end
 
   def add_doc_cover_card(
@@ -677,7 +689,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.delete_node(
       community,
       id,
-      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+      %{base_revision: args[:base_revision], command_key: args[:command_key]}
+      |> with_doc_tree_actor(args)
     )
   end
 
@@ -687,6 +700,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       id,
       %{
         base_revision: args[:base_revision],
+        command_key: args[:command_key],
         target_parent_node_id: args[:target_parent_node_id],
         target_index: args[:target_index]
       }
@@ -698,7 +712,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.duplicate_node(
       community,
       id,
-      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+      %{base_revision: args[:base_revision], command_key: args[:command_key]}
+      |> with_doc_tree_actor(args)
     )
   end
 
@@ -708,6 +723,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       id,
       %{
         base_revision: args[:base_revision],
+        command_key: args[:command_key],
         target_parent_node_id: args[:target_parent_node_id],
         target_index: args.target_index
       }
@@ -717,14 +733,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 
-  def request_destroy_community(_root, %{community: %Community{} = community}, %{
+  def request_destroy_community(_root, %{community: %Community{} = community} = args, %{
         context: %{cur_user: user}
       }) do
-    with {:ok, _canonical} <- CMS.Gate.access_check(user, :request_destroy, community),
-         {:ok, _blocker} <-
-           CMS.Communities.request_destroy(community.slug, operation_ref: Ecto.UUID.generate()) do
-      CMS.Communities.fetch(community.slug, :operations, inc_views: false)
-    end
+    CMS.Communities.request_destroy(community, user, command_key: args[:command_key])
   end
 
   def check_community_name(_root, %{slug: slug}, _info),
@@ -893,7 +905,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.Articles.create(community, thread, Map.put(args, :cur_user, user), user)
+    CMS.Articles.create(community, thread, Map.put(args, :cur_user, user), user,
+      command_key: args[:command_key]
+    )
   end
 
   defp create_article_draft(
@@ -901,7 +915,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          ~m(community thread)a = args,
          %{context: %{cur_user: user}}
        ) do
-    CMS.Articles.create_draft(community, thread, Map.put(args, :cur_user, user), user)
+    CMS.Articles.create_draft(community, thread, Map.put(args, :cur_user, user), user,
+      command_key: args[:command_key]
+    )
   end
 
   defp update_article_draft(
@@ -916,17 +932,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       args
       |> Map.drop([:community, :thread, :id, :passport_is_owner])
       |> Map.put(:cur_user, user),
-      user
+      user,
+      command_key: args[:command_key]
     )
   end
 
   defp publish_article_draft(
          _root,
-         %{community: community, thread: thread, id: article_hash_id},
+         %{community: community, thread: thread, id: article_hash_id} = args,
          %{context: %{cur_user: user}}
        ) do
     with {:ok, %{article: public_article}} <-
-           CMS.Articles.publish_draft(community, thread, article_hash_id, user) do
+           CMS.Articles.publish_draft(community, thread, article_hash_id, user,
+             command_key: args[:command_key],
+             expected_version: args[:expected_version],
+             expected_lifecycle_version: args[:expected_lifecycle_version],
+             require_expected_version: true
+           ) do
       {:ok, public_article}
     end
   end
@@ -935,38 +957,63 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.update(article, Map.put(args, :cur_user, user), user)
   end
 
-  def update_article(_root, %{article: article} = args, _info) do
-    CMS.Articles.update(article, args)
-  end
-
   # #######################
   # article actions
   # #######################
-  def trash_article(_root, %{article: article}, %{context: %{cur_user: user}}) do
-    with {:ok, item} <- CMS.Articles.trash(article, user) do
-      CMS.Articles.get_trashed(item.hash_id)
+  def trash_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
+    with {:ok, item} <- CMS.Articles.trash(article, user, command_key: args[:command_key]) do
+      with {:ok, hydrated} <- CMS.Articles.get_trashed(item.hash_id) do
+        {:ok,
+         %{
+           hydrated
+           | command_key: Map.get(item, :command_key),
+             command_replayed: Map.get(item, :command_replayed, false)
+         }}
+      end
     end
   end
 
   def restore_trashed_article(
         _root,
-        %{id: id, community: %Community{} = community, thread: thread},
+        %{id: id, community: %Community{} = community, thread: thread} = args,
         %{context: %{cur_user: user}}
       ) do
-    with {:ok, item} <- CMS.Articles.get_trashed(id),
-         :ok <- verify_trash_scope(item, community, thread) do
-      CMS.Articles.restore_trashed(item, user)
+    command_key = args[:command_key]
+    opts = [command_key: command_key, community_id: community.id, thread: thread]
+
+    case CMS.Articles.get_trashed(id) do
+      {:ok, item} ->
+        with :ok <- verify_trash_scope(item, community, thread) do
+          CMS.Articles.restore_trashed(item, user, opts)
+        end
+
+      {:error, _reason} when is_binary(command_key) ->
+        CMS.Articles.restore_trashed(id, user, opts)
+
+      error ->
+        error
     end
   end
 
   def permanently_delete_trashed_article(
         _root,
-        %{id: id, community: %Community{} = community, thread: thread},
+        %{id: id, community: %Community{} = community, thread: thread} = args,
         %{context: %{cur_user: user}}
       ) do
-    with {:ok, item} <- CMS.Articles.get_trashed(id),
-         :ok <- verify_trash_scope(item, community, thread) do
-      CMS.Articles.permanently_delete_trashed(item, user)
+    command_key = args[:command_key]
+    opts = [command_key: command_key, community_id: community.id, thread: thread]
+
+    case CMS.Articles.get_trashed(id) do
+      {:ok, item} ->
+        with :ok <- verify_trash_scope(item, community, thread) do
+          CMS.Articles.permanently_delete_trashed(item, user, opts)
+        end
+
+      {:error, _reason} when is_binary(command_key) ->
+        CMS.Articles.permanently_delete_trashed(id, user, opts)
+
+      error ->
+        error
     end
   end
 
@@ -1124,12 +1171,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)
   def undo_sink_article(_root, ~m(article)a, _info), do: CMS.Articles.undo_sink(article)
 
-  def upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.upvote(article, user) |> hydrate_interaction(user)
+  def upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.upvote(article, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
-  def undo_upvote_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.undo_upvote(article, user) |> hydrate_interaction(user)
+  def undo_upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.undo_upvote(article, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
   def upvoted_users(_root, ~m(article filter)a, _info) do
@@ -1140,12 +1189,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Interactions.collected_users(article, filter)
   end
 
-  def emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.emotion(article, emotion, user) |> hydrate_interaction(user)
+  def emotion_to_article(_root, %{article: article, emotion: emotion} = args, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Interactions.emotion(article, emotion, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
-  def undo_emotion_to_article(_root, ~m(article emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Interactions.undo_emotion(article, emotion, user) |> hydrate_interaction(user)
+  def undo_emotion_to_article(_root, %{article: article, emotion: emotion} = args, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Interactions.undo_emotion(article, emotion, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
   # #######################
@@ -1356,6 +1411,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def article_interaction_states(_root, %{refs: refs}, info) do
+    with :ok <- validate_viewer_batch(refs) do
+      case Map.get(info.context, :cur_user) do
+        %User{} = user -> resolve_article_interaction_states(refs, user)
+        _ -> {:ok, []}
+      end
+    end
+  end
+
   def comment_viewer_states(
         _root,
         %{article: article_path, comment_inner_ids: comment_inner_ids},
@@ -1366,6 +1430,43 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %User{} = user -> resolve_comment_viewer_states(article_path, comment_inner_ids, user)
         _ -> {:ok, []}
       end
+    end
+  end
+
+  def comment_reconcile_states(
+        _root,
+        %{article: article_path, comment_inner_ids: comment_inner_ids},
+        info
+      ) do
+    with :ok <- validate_viewer_batch(comment_inner_ids),
+         {:ok, {thread, article}} <- resolve_article_path(article_path),
+         viewer <- Map.get(info.context, :cur_user),
+         {:ok, comments} <-
+           CMS.Comments.reconcile_comments(thread, article, comment_inner_ids, viewer) do
+      comments_by_inner_id = Map.new(comments, &{to_string(&1.inner_id), &1})
+
+      entries =
+        Enum.map(comment_inner_ids, fn inner_id ->
+          comment =
+            comments_by_inner_id
+            |> Map.get(to_string(inner_id))
+            |> case do
+              nil -> nil
+              value -> Map.put(value, :article, article)
+            end
+
+          %{comment_inner_id: inner_id, comment: comment}
+        end)
+
+      {:ok,
+       %{
+         article: %{
+           inner_id: article.inner_id,
+           comments_count: article.comments_count || 0,
+           comments_revision: article.comments_revision || 0
+         },
+         entries: entries
+       }}
     end
   end
 
@@ -1392,6 +1493,29 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  defp resolve_article_interaction_states(refs, user) do
+    with {:ok, resolved} <- resolve_article_viewer_batch(refs),
+         {:ok, hydrated} <- hydrate_article_viewer_batch(resolved, user) do
+      {:ok,
+       Enum.zip(resolved, hydrated)
+       |> Enum.map(fn {%{path: path}, article} ->
+         %{
+           community: path.community,
+           thread: path.thread,
+           inner_id: article.inner_id,
+           article_interaction_revision: article.article_interaction_revision || 0,
+           upvotes_count: article.upvotes_count || 0,
+           collects_count: article.collects_count || 0,
+           emotions: EmotionFormatter.format(article, :article),
+           latest_upvoted_users: get_in(article, [:meta, :latest_upvoted_users]) || [],
+           viewer_has_upvoted: article.viewer_has_upvoted || false,
+           viewer_has_collected: article.viewer_has_collected || false,
+           viewer_emotion: article.viewer_emotion
+         }
+       end)}
+    end
+  end
+
   defp resolve_article_viewer_batch(paths) do
     paths
     |> Enum.reduce_while({:ok, []}, fn path, {:ok, acc} ->
@@ -1407,7 +1531,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp hydrate_article_viewer_batch(resolved, %User{} = user) do
-    CMS.Articles.InteractionResponse.many(Enum.map(resolved, &elem(&1, 1)), user)
+    CMS.Articles.Response.list(Enum.map(resolved, &elem(&1, 1)), user)
   end
 
   defp resolve_comment_viewer_batch(article_path, comment_inner_ids) do
@@ -1482,30 +1606,42 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.paged_comments_participants(thread, article.id, filter)
   end
 
-  def create_comment(_root, %{article: article, article_path: %{thread: thread}, body: body}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.Comments.create_comment_payload(thread, article, body, user)
+  def create_comment(
+        _root,
+        %{article: article, article_path: %{thread: thread}, body: body} = args,
+        %{
+          context: %{cur_user: user}
+        }
+      ) do
+    CMS.Comments.create_comment_payload(
+      thread,
+      article,
+      body,
+      user,
+      Map.get(args, :command_key)
+    )
   end
 
-  def update_comment(_root, ~m(body comment)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.update_comment(comment, body, user)
+  def update_comment(_root, ~m(body comment)a = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.update_comment(comment, body, user, Map.get(args, :command_key))
   end
 
-  def delete_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.delete_comment(comment, user)
+  def delete_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.delete_comment(comment, user, Map.get(args, :command_key))
   end
 
-  def reply_comment(_root, %{comment: comment, body: body}, %{context: %{cur_user: user}}) do
-    CMS.Comments.reply_comment_payload(comment.id, body, user)
+  def reply_comment(_root, %{comment: comment, body: body} = args, %{context: %{cur_user: user}}) do
+    CMS.Comments.reply_comment_payload(comment.id, body, user, Map.get(args, :command_key))
   end
 
-  def upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Interactions.upvote(comment, user) |> hydrate_interaction(user)
+  def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.upvote(comment, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
-  def undo_upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Interactions.undo_upvote(comment, user) |> hydrate_interaction(user)
+  def undo_upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
+    CMS.Interactions.undo_upvote(comment, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
   def report_comment(_root, ~m(comment reason attr)a, %{context: %{cur_user: user}}) do
@@ -1516,16 +1652,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Interactions.undo_report(comment, user) |> hydrate_report_interaction(user)
   end
 
-  def emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
+  def emotion_to_comment(_root, %{comment: comment, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.Interactions.emotion(comment, emotion, user) |> hydrate_interaction(user)
+    CMS.Interactions.emotion(comment, emotion, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
-  def undo_emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
+  def undo_emotion_to_comment(_root, %{comment: comment, emotion: emotion} = args, %{
         context: %{cur_user: user}
       }) do
-    CMS.Interactions.undo_emotion(comment, emotion, user) |> hydrate_interaction(user)
+    CMS.Interactions.undo_emotion(comment, emotion, user, Map.get(args, :command_key))
+    |> hydrate_interaction(user)
   end
 
   @doc """
@@ -1683,7 +1821,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.Comments.InteractionResponse.one(comment, user)
 
   defp hydrate_interaction({:ok, article}, user),
-    do: CMS.Articles.InteractionResponse.one(article, user)
+    do: CMS.Articles.Response.one(article, user)
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 
@@ -1691,7 +1829,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.Comments.InteractionResponse.one(comment, user, surface: :report)
 
   defp hydrate_report_interaction({:ok, article}, user),
-    do: CMS.Articles.InteractionResponse.one(article, user, surface: :report)
+    do: CMS.Articles.Response.one(article, user, surface: :report)
 
   defp hydrate_report_interaction({:error, _reason} = error, _user), do: error
 

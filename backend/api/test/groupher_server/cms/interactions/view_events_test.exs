@@ -114,6 +114,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
     assert :ok = ViewEvents.project(event_id)
 
     assert Repo.get!(post.__struct__, post.id).views == 1
+    assert Repo.get!(post.__struct__, post.id).views_revision == 1
 
     assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
   end

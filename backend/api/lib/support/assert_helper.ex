@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.AssertHelper do
   import Helper.Utils, only: [map_key_stringify: 1]
 
   alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
+  alias ErrorCat.Error
   alias GroupherServer.Support.Factory.Articles
 
   @endpoint GroupherServerWeb.Endpoint
@@ -120,6 +120,7 @@ defmodule GroupherServer.Test.AssertHelper do
   """
   def gq_mutation(conn, query, variables, flag \\ false) do
     {conn, variables} = prepare_artiment_request(conn, query, variables)
+    variables = ensure_command_key(query, variables)
 
     conn
     |> post("/graphiql", query: query, variables: variables)
@@ -128,6 +129,20 @@ defmodule GroupherServer.Test.AssertHelper do
     |> Map.get("data")
     |> Map.get(get_operation_name(query))
   end
+
+  # Receipt-backed mutation documents in the test suite may predate the
+  # commandKey contract. Supply an identity only at this test transport
+  # boundary; production GraphQL never invents command keys.
+  defp ensure_command_key(query, variables) when is_binary(query) and is_map(variables) do
+    if String.contains?(query, "$commandKey") and
+         not (Map.has_key?(variables, :commandKey) or Map.has_key?(variables, "commandKey")) do
+      Map.put(variables, :commandKey, Ecto.UUID.generate())
+    else
+      variables
+    end
+  end
+
+  defp ensure_command_key(_query, variables), do: variables
 
   def get_operation_name(query) when is_binary(query) do
     # 移除注释和换行，简化处理
@@ -214,6 +229,7 @@ defmodule GroupherServer.Test.AssertHelper do
 
   defp gq_resp(conn, query, variables) do
     {conn, variables} = prepare_artiment_request(conn, query, variables)
+    variables = ensure_command_key(query, variables)
 
     conn
     |> post("/graphiql", query: query, variables: variables)

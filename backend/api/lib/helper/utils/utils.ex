@@ -15,11 +15,10 @@ defmodule Helper.Utils do
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{ErrorCat, Repo}
 
   import Helper.Validator.Guards, only: [g_none_empty_str: 1]
 
-  alias GroupherServer.Repo
   alias Helper.{Cache, Utils}
 
   # Map utils

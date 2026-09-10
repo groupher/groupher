@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
         -> Repo / domain event
   """
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Artiment.Config
+  alias CMS.Artiment.Config
 
-  alias GroupherServer.CMS.Model.Embeds
+  alias CMS.Model.Embeds
 
   @threads Config.threads()
 

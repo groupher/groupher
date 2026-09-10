@@ -11,7 +11,7 @@ defmodule GroupherServer.FrontDesk.Revalidate do
   """
 
   alias GroupherServer.FrontDesk
-  alias GroupherServer.FrontDesk.Cache
+  alias FrontDesk.Cache
 
   @spec user(String.t()) :: {:ok, any()} | {:error, any()}
   def user(login) when is_binary(login) do

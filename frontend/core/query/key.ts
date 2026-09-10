@@ -79,6 +79,17 @@ export const commentKeys = {
     page = 1,
     mode = 'REPLIES',
   ) => [...commentKeys.all, 'list', community, thread, String(innerId), { mode, page }] as const,
+  reconcile: (
+    community: string,
+    thread: TThread,
+    innerId: string | number,
+    commentRefs: readonly string[],
+  ) =>
+    [
+      ...commentKeys.articlePrefix(community, thread, innerId),
+      'reconcile',
+      [...commentRefs].sort(),
+    ] as const,
   matchesArticle: (
     query: { queryKey: readonly unknown[] },
     community: string,
@@ -93,19 +104,21 @@ export const commentKeys = {
 export const viewerKeys = {
   all: ['viewer'] as const,
   session: () => [...viewerKeys.all, 'session'] as const,
-  articleStatePrefix: (viewerScope: string) =>
-    [...viewerKeys.all, viewerScope, 'article-state'] as const,
-  articleStates: (viewerScope: string, articleKeys: readonly string[]) =>
-    [...viewerKeys.articleStatePrefix(viewerScope), [...articleKeys].sort()] as const,
-  commentStatePrefix: (viewerScope: string, articleKey: string) =>
-    [...viewerKeys.all, viewerScope, 'comment-state', articleKey] as const,
-  commentStates: (viewerScope: string, articleKey: string, commentInnerIds: readonly string[]) =>
+  articleStatePrefix: (accountRef: string) =>
+    [...viewerKeys.all, accountRef, 'article-state'] as const,
+  articleStates: (accountRef: string, articleKeys: readonly string[]) =>
+    [...viewerKeys.articleStatePrefix(accountRef), [...articleKeys].sort()] as const,
+  articleInteractionStates: (accountRef: string, articleKeys: readonly string[]) =>
+    [...viewerKeys.all, accountRef, 'article-interaction-state', [...articleKeys].sort()] as const,
+  commentStatePrefix: (accountRef: string, articleKey: string) =>
+    [...viewerKeys.all, accountRef, 'comment-state', articleKey] as const,
+  commentStates: (accountRef: string, articleKey: string, commentInnerIds: readonly string[]) =>
     [
-      ...viewerKeys.commentStatePrefix(viewerScope, articleKey),
+      ...viewerKeys.commentStatePrefix(accountRef, articleKey),
       [...commentInnerIds].sort(),
     ] as const,
-  commentSummary: (viewerScope: string, articleKey: string) =>
-    [...viewerKeys.all, viewerScope || 'anonymous', 'comment-summary', articleKey] as const,
+  commentSummary: (accountRef: string, articleKey: string) =>
+    [...viewerKeys.all, accountRef || 'anonymous', 'comment-summary', articleKey] as const,
 }
 
 export const mutationKeys = {

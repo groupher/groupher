@@ -8,13 +8,12 @@ defmodule GroupherServer.Activity.CommunityLog do
   the dashboard timeline and its overview never count different event sets.
   """
 
-  alias GroupherServer.Activity
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.ErrorCat
-  alias GroupherServer.Activity.Filter
+  alias GroupherServer.{Activity, Repo}
+  alias Activity.Event
+  alias Activity.ErrorCat
+  alias Activity.Filter
   alias GroupherServer.CMS.Model.Community
   alias GroupherServer.CMS.Passport.Authorization
-  alias GroupherServer.Repo
 
   @handlers [
     Activity.Post,

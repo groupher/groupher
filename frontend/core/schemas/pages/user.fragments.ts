@@ -2,6 +2,7 @@ import { graphql } from '~/graphql/authoring'
 
 export const UserAuthorFields = graphql(`
   fragment UserAuthorFields on User {
+    accountRef
     login
     nickname
     avatar

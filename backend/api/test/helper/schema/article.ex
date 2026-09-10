@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:trash_article) do
     """
-    mutation($article: ArticlePathInput!) {
-      trashArticle(article: $article) {
+    mutation($article: ArticlePathInput!, $commandKey: ID!) {
+      trashArticle(article: $article, commandKey: $commandKey) {
         id
         thread
         articleRef
@@ -21,10 +21,14 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:restore_trashed_article) do
     """
-    mutation($id: ID!, $community: String!, $thread: Thread!) {
-      restoreTrashedArticle(id: $id, community: $community, thread: $thread) {
+    mutation($id: ID!, $community: String!, $thread: Thread!, $commandKey: ID!) {
+      restoreTrashedArticle(id: $id, community: $community, thread: $thread, commandKey: $commandKey) {
         innerId
         title
+        ... on Post {
+          commandKey
+          commandReplayed
+        }
       }
     }
     """
@@ -32,9 +36,11 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:permanently_delete_trashed_article) do
     """
-    mutation($id: ID!, $community: String!, $thread: Thread!) {
-      permanentlyDeleteTrashedArticle(id: $id, community: $community, thread: $thread) {
+    mutation($id: ID!, $community: String!, $thread: Thread!, $commandKey: ID!) {
+      permanentlyDeleteTrashedArticle(id: $id, community: $community, thread: $thread, commandKey: $commandKey) {
         done
+        commandKey
+        commandReplayed
       }
     }
     """
@@ -147,8 +153,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_upvote_article, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      undoUpvote#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandKey: ID!) {
+      undoUpvote#{t(thread)}(article: $article, commandKey: $commandKey) {
         innerId
         meta {
           latestUpvotedUsers {
@@ -247,8 +253,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:emotion_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!) {
-      emotionTo#{t(thread)}(article: $article, emotion: $emotion) {
+    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandKey: ID!) {
+      emotionTo#{t(thread)}(article: $article, emotion: $emotion, commandKey: $commandKey) {
         innerId
         emotions {
           type
@@ -266,8 +272,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:undo_emotion_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!) {
-      undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion) {
+    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandKey: ID!) {
+      undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion, commandKey: $commandKey) {
         innerId
         emotions {
           type
@@ -285,8 +291,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:create_article_draft, thread) do
     """
-    mutation($community: String!, $title: String!, $bodyBag: ArtimentBodyBagInput!) {
-      create#{t(thread)}Draft(community: $community, title: $title, bodyBag: $bodyBag) {
+    mutation($community: String!, $title: String!, $bodyBag: ArtimentBodyBagInput!, $commandKey: ID!) {
+      create#{t(thread)}Draft(community: $community, title: $title, bodyBag: $bodyBag, commandKey: $commandKey) {
         id
         thread
         stage
@@ -303,6 +309,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
       $title: String!
       $bodyBag: ArtimentBodyBagInput!
       $community: String!
+      $commandKey: ID!
       $communityTags: [ID]
       $linkAddr: String
     ) {
@@ -310,6 +317,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         title: $title
         bodyBag: $bodyBag
         community: $community
+        commandKey: $commandKey
         communityTags: $communityTags
         linkAddr: $linkAddr
       ) {
@@ -329,8 +337,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article_draft, thread) do
     """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput) {
-      update#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandKey: ID!) {
+      update#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandKey: $commandKey) {
         id
         thread
         stage
@@ -343,8 +351,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:publish_article_draft, thread) do
     """
-    mutation($community: String!, $id: ID!) {
-      publish#{t(thread)}Draft(community: $community, id: $id) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $expectedLifecycleVersion: Int!, $commandKey: ID!) {
+      publish#{t(thread)}Draft(community: $community, id: $id, expectedVersion: $expectedVersion, expectedLifecycleVersion: $expectedLifecycleVersion, commandKey: $commandKey) {
         innerId
         title
       }
@@ -354,8 +362,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID]){
-      update#{t(thread)}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID], $commandKey: ID!){
+      update#{t(thread)}(article: $article, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags, commandKey: $commandKey) {
         innerId
         version
         title
@@ -380,8 +388,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:upvote_article, thread) do
     """
-    mutation($article: ArticlePathInput!) {
-      upvote#{t(thread)}(article: $article) {
+    mutation($article: ArticlePathInput!, $commandKey: ID!) {
+      upvote#{t(thread)}(article: $article, commandKey: $commandKey) {
         innerId
         meta {
           latestUpvotedUsers {
@@ -394,10 +402,27 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
+  def m(:upvote_article_with_command_key, thread) do
+    """
+    mutation($article: ArticlePathInput!, $commandKey: ID!) {
+      upvote#{t(thread)}(article: $article, commandKey: $commandKey) {
+        innerId
+        upvotesCount
+        ... on #{t(thread)} {
+          commandKey
+          commandReplayed
+          reactionOutcome
+          articleInteractionRevision
+        }
+      }
+    }
+    """
+  end
+
   def m(:create_document, operation) do
     """
-    mutation($title: String!, $bodyBag: ArtimentBodyBagInput!, $community: String!) {
-      #{operation}(title: $title, bodyBag: $bodyBag, community: $community) {
+    mutation($title: String!, $bodyBag: ArtimentBodyBagInput!, $community: String!, $commandKey: ID!) {
+      #{operation}(title: $title, bodyBag: $bodyBag, community: $community, commandKey: $commandKey) {
         innerId
         title
         document {
@@ -413,8 +438,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_document, operation) do
     """
-    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput) {
-      #{operation}(article: $article, title: $title, bodyBag: $bodyBag) {
+    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandKey: ID!) {
+      #{operation}(article: $article, title: $title, bodyBag: $bodyBag, commandKey: $commandKey) {
         innerId
         title
         document {
@@ -430,8 +455,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_draft_document, operation) do
     """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput) {
-      #{operation}(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $bodyBag: ArtimentBodyBagInput, $commandKey: ID!) {
+      #{operation}(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, bodyBag: $bodyBag, commandKey: $commandKey) {
         id
         version
         title
@@ -454,6 +479,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
       $title: String!
       $bodyBag: ArtimentBodyBagInput!
       $community: String!
+      $commandKey: ID!
       $coverUrl: String
       $coverUrlDark: String
       $coverEditInfo: CoverEditInfoInput
@@ -462,6 +488,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         title: $title
         bodyBag: $bodyBag
         community: $community
+        commandKey: $commandKey
         coverUrl: $coverUrl
         coverUrlDark: $coverUrlDark
         coverEditInfo: $coverEditInfo
@@ -500,6 +527,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation(
       $article: ArticlePathInput!
+      $commandKey: ID!
       $expectedVersion: Int!
       $coverUrl: String
       $coverUrlDark: String
@@ -507,6 +535,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     ) {
       update#{thread_name}(
         article: $article
+        commandKey: $commandKey
         expectedVersion: $expectedVersion
         coverUrl: $coverUrl
         coverUrlDark: $coverUrlDark

@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   alias GroupherServer.Support.FakeData
 
   alias GroupherServer.CMS.Model.{Comment, Community}
-  alias GroupherServer.CMS.Seeds.Config
+  alias CMS.Seeds.Config
 
   alias Helper.{ORM, T}
 

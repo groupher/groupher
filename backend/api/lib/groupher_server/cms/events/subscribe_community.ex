@@ -17,9 +17,9 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Events.Event
-  alias GroupherServer.CMS.FrontDesk
+  alias CMS.Communities
+  alias CMS.Events.Event
+  alias CMS.FrontDesk
   alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
 
   @behaviour CMS.Events.Handler

@@ -6,6 +6,7 @@
 
 - [Gate V2：统一读取范围与操作准入](../community/gate_v2.md)
 - [Gate V4：资源级强类型 Context](../community/gate_v4.md)
+- [CMS Facade 与实现目录收口](../fix/cms-facade-directory.md)
 - [AuditLog 与 ActivityLog](../todo/audit_log.md)
 - [Post Solution](./post_solution.md)
 

@@ -8,6 +8,7 @@ import type { TDocDraftInfo } from '../store/spec'
 export type TDocDraftDTO = {
   id: string
   docId?: string | null
+  version?: number | null
   title?: string | null
   subtitle?: string | null
   slug?: string | null
@@ -29,6 +30,7 @@ export type TDocDraftInitialData = TDocDraftDTO
 
 export type TEditorDraft = {
   docId: string
+  version: number
   title: string
   subtitle: string
   slug: string
@@ -38,6 +40,7 @@ export type TEditorDraft = {
 
 export type TSavedDraft = {
   docId: string
+  version: number
   title: string
   subtitle: string
   bodyValue: TRichEditorValue
@@ -86,6 +89,7 @@ export type TDocDraftSession = {
   bodyJson: string
   info: TDocDraftInfo
   source: TDocDraftSource
+  version: number
   slug: string
   subtitle: string
   title: string

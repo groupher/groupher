@@ -7,6 +7,16 @@
 >
 > 本文只定义 `frontend/community` 的缓存边界和 revalidation。Dash 通过自己的 TanStack Start
 > route/API 调用 Community revalidation，不使用 Next.js cache API。
+>
+> 当前协议仍允许刷新后 public aggregate 短暂旧值。当前 viewer 跨刷新的 read-your-writes 见
+> [Optimistic Read Your Writes](./optimistic_read_your_writes.md)；当前客户端已对 Article upvote 与
+> Comment reaction/feed 提供覆盖 public CDN fresh + stale window 的有界 TTL receipt 兜底；Article/Comment reaction 的 commandKey/revision
+> 字段已接通；Comment create/reply/update/delete 也已绑定 commandKey，public revision selector、
+> write receipt slot 和 private reconcile 已接通。SSR 首帧仍可能短暂显示旧 public HTML，hydrate 后收敛；
+> Cloudflare 生产 purge 与跨 PoP 验证仍属于发布门。
+> mutation 刷新前的 identity、inverse rollback、queueKey 与 confirmed handoff 见
+> [Optimistic Operation](./optimistic_operation.md)，其中 O1/O3/O4/O5 的客户端接线、后端幂等和 revision
+> 阶段已落地。
 
 ## 结论
 
@@ -81,13 +91,17 @@ theme 也遵循公共响应边界：SSR 输出稳定的默认 theme；现有 pre
 
 ```text
 Q.viewer.session()
-Q.viewer.communityState(viewerScope, community)
-Q.viewer.articleStates(viewerScope, articleRefs)
-Q.viewer.commentStates(viewerScope, articleRef, commentRefs)
+Q.viewer.communityState(accountRef, community)
+Q.viewer.articleStates(accountRef, articleRefs)
+Q.viewer.commentStates(accountRef, articleRef, commentRefs)
 ```
 
-`viewerScope` 是非 secret 的稳定账号 scope，并进入所有用户实体 query key。session query 负责得到
-当前账号和 viewerScope；它自身不以 viewerScope 为参数。当前
+`accountRef` 是 non-secret、opaque、immutable public account ref，并进入所有用户实体 query key。
+session query 负责得到当前账号和 accountRef；它自身不以 accountRef 为参数。当前 authenticated
+session、viewer Query、toggle 和 receipt key 已统一使用稳定 accountRef，不暴露数据库 `user_id`，
+也不复用 device/session 级 BrowserSession ref。
+
+当前
 `frontend/core/stores/account/hooks.tsx` 已通过 `graphqlQueryOptions + useQuery` 请求 session，目标是
 把该 generic query 收进 `Q.viewer.session()`，再移除 Community shell 中的 account seed。
 
@@ -141,6 +155,11 @@ viewer query 当前只应拥有 viewer fields，不能假定它总会返回 cano
 用它覆盖 public query。若某个 mutation payload 已明确返回确认后的 aggregate，当前 tab 可以 patch；
 刷新后公共 count 允许短暂旧值。只有产品明确要求刷新后也同步校准公开计数时，才为对应 read model
 增加 public aggregate/sync token，而不是悄悄扩大 viewer query 所有权。
+
+跨刷新 read-your-writes 的具体提案采用 projection-domain revision、短期 confirmed write receipt
+和 receipt-triggered private reconcile，见
+[Optimistic Read Your Writes](./optimistic_read_your_writes.md)。其中 public revision 与
+viewer-private relation 保持分离；这不是持久化整个 TanStack Query cache。
 
 ### 后续触发条件
 
@@ -327,10 +346,11 @@ Views 不是普通缓存字段，读取本身会产生写 side effect：
 | community      | `loadCommunity` 调用 community GraphQL read            | 命中 CDN 时不回源，因此不是每个 HTTP request 都增加 |
 | article detail | `loadPost/loadChangelog/loadDoc` 触发对应 GraphQL read | 命中 CDN 时不执行新的 read/view event               |
 
-`frontend/core/query/cacheInvalidation.ts` 中 mutation regex 包含 `View`，只说明失效匹配
-允许这类 operation name，不证明当前已有独立客户端 View mutation。Community 实施前
-必须决定并测试目标语义是“每次页面访问”“每次源读取”还是客户端提交幂等 view event；
-不能让 CDN/Router `staleTime` 偶然决定计数。
+当前 Article detail query 已通过稳定的 `viewEventId` 记录客户端 durable view event；它不是
+独立 GraphQL mutation。服务端按 event identity 幂等接受，再由 worker 推进 `views`/viewer
+projection。`frontend/core/query/cacheInvalidation.ts` 中 mutation regex 包含 `View`，只说明
+失效匹配允许这类 operation name，不能把它当作已有 View mutation。页面访问、源读取和
+客户端 event 的计数语义仍必须分别测试，不能让 CDN/Router `staleTime` 偶然决定计数。
 
 ## Dashboard → Community 主动失效
 
@@ -435,7 +455,7 @@ mutation 在真实 Phoenix、Community 和 Dash URL 上的端到端观察。以�
 
 - `loadCommunity` 只请求 no-user-spec community/Dsb/wallpaper；带 cookie 不改变公共内容与 TTL；
 - `loadThemeSeed` 使用固定公共 seed，用户 theme 由 hydration 前 pre-paint 逻辑应用；
-- session、community/article/comment viewer state 统一进入 `Q.viewer`，并按 viewer scope 隔离；
+- session、community/article/comment viewer state 统一进入 `Q.viewer`，并按 accountRef 隔离；
 - article/comment viewer operation 使用 canonical refs，排序去重，超过 100 条自动分片并合并；
 - `Q.dsb.config` 是确认配置 owner，`DsbEditStore` 只持有可编辑 working copy，旧 Dsb runtime 和
   confirmed duplicate 已删除；

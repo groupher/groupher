@@ -10,6 +10,12 @@
 > 主执行顺序见 [`workflow_query_store_reorg.md`](./workflow_query_store_reorg.md)；Dsb working copy
 > 合同见 [`dashboard_store_reorg.md`](./dashboard_store_reorg.md)；公共缓存与 purge 见
 > [`tanstack_rewrite/query_sync_cache.md`](./tanstack_rewrite/query_sync_cache.md)。
+> 当前 viewer 跨刷新 read-your-writes 的窄 receipt/revision 提案见
+> [`tanstack_rewrite/optimistic_read_your_writes.md`](./tanstack_rewrite/optimistic_read_your_writes.md)；
+> Article/Comment 的窄 receipt/revision 链路已在当前客户端落地，但不改变本文“一份 confirmed server
+> state 只有一个客户端 owner”的约束；View durable projection 与生产 purge 仍按各自文档边界推进。
+> 其前置的内存 operation identity、inverse patch 与 confirmed transition 见
+> [`tanstack_rewrite/optimistic_operation.md`](./tanstack_rewrite/optimistic_operation.md)。
 
 验收环境说明：本轮 source 在并行 `frontend/core/render/BgRenderer/vgpu-poc` 文件出现前已通过全仓
 文档检查，最终 source、类型、测试、合同和 production build 也已复验。当前 dirty worktree 的全仓
@@ -95,7 +101,7 @@ CDN cache effect 随后由 server proxy 执行。purge 失败不得把已经成�
 | dashboard    | `Q.dsb.config(slug)`                               | `DsbEditStore.current/original/touched` 是编辑 working copy                | SSR seed、领域 save response、refetch                          | Community 展示、Dash editors、SavingBar          |
 | wallpaper    | `Q.wallpaper.config(slug)`                         | wallpaper store 是 draft/preview projection                                | SSR seed、wallpaper mutation response、refetch                 | Community renderer、Dash wallpaper editor        |
 | theme preset | `Q.dsb.config(slug).themePreset`                   | `ThemePresetStore` 只负责 CSS projection/preview                           | theme mutation response、Dsb refetch                           | pre-paint、Theme editor、CSS variable projection |
-| viewer       | `Q.viewer.*(viewerScope, refs)`                    | render-time selector；unknown 保持 `undefined`                             | hydration 后 viewer batch response                             | article/comment/account UI                       |
+| viewer       | `Q.viewer.*(accountRef, refs)`                     | render-time selector；unknown 保持 `undefined`                             | hydration 后 viewer batch response                             | article/comment/account UI                       |
 | baseInfo     | `Q.community.config` + `Q.dsb.config` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
 
 `loadCommunity` 可以只发起一次 GraphQL bootstrap；`projectCommunityConfig`、dashboard 和 wallpaper
@@ -205,7 +211,20 @@ Query 的 optimistic/confirmed 更新，不直接编排 Dash → Community → C
 - public/viewer 分离与 viewer batch；
 - `CACHE_TAG` vocabulary；
 - Dsb submitted/confirmed/current reconcile；
-- 为连续点击保留的 latest-intent optimistic 逻辑。
+- 为连续点击保留的 toggle optimistic 合并逻辑。
+
+内存期 optimistic mutation 的后续收口允许复用 `useOptimisticAction/useOptimisticToggle`，统一
+identity、phase、queueKey、effect plan 与 confirmed handoff；领域 patch/reconcile 继续由
+Article/Comment operation definition 以 typed callbacks 提供。它不得扩展为全局 callback registry
+或任意 mutation DSL。设计见
+[`optimistic_operation.md`](./tanstack_rewrite/optimistic_operation.md)。
+这是对早期“先竖切、后抽取”的有意调整；O3 Comment reaction 与 O4 create/delete 必须分别原样复用
+既定 Toggle/Action 公开合同，否则先重新评审通用层边界。
+
+若实施跨刷新 read-your-writes，允许保存有 TTL、按 accountRef 隔离的 confirmed write receipt。
+它只是在 public projection revision 追上前参与 render overlay 和按需 reconcile，不是第二份长期
+confirmed cache，也不得演化为 Valtio mirror 或通用 transaction engine。具体合同见
+[`optimistic_read_your_writes.md`](./tanstack_rewrite/optimistic_read_your_writes.md)。
 
 以下方向禁止引入：
 

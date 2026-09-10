@@ -95,13 +95,15 @@ export const composeEditorDraft = ({
   slug,
   subtitle,
   title,
-}: Omit<TEditorDraft, 'bodyJson'>): TEditorDraft => ({
+  version = 0,
+}: Omit<TEditorDraft, 'bodyJson' | 'version'> & { version?: number }): TEditorDraft => ({
   bodyJson: serializeEditorValue(bodyValue),
   bodyValue,
   docId,
   slug,
   subtitle,
   title,
+  version,
 })
 
 /** Runs the compose empty editor draft operation at the frontend shared boundary. */
@@ -122,6 +124,7 @@ export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
   revisionSignature: draftSignature(draft),
   subtitle: draft.subtitle,
   title: draft.title,
+  version: draft.version,
 })
 
 /** Runs the compose empty saved draft operation at the frontend shared boundary. */
@@ -181,6 +184,7 @@ export const composeEditorDraftFromSession = (session: TDocDraftSession): TEdito
     slug: session.slug,
     subtitle: session.subtitle,
     title: session.title,
+    version: session.version,
   })
 
 /** Runs the compose doc draft info operation at the frontend shared boundary. */
@@ -268,6 +272,7 @@ export const composeLoadedDraftSession = (
       ...countEditorText(body),
     },
     source: resolveDraftSource(draft),
+    version: draft?.version ?? 0,
     slug: draft?.slug || '',
     subtitle,
     title,

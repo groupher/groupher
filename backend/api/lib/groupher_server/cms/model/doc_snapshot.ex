@@ -61,6 +61,8 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
     field(:revision_number, :integer)
     field(:schema_version, :integer, default: 1)
     field(:message, :string)
+    field(:command_key, Ecto.UUID, virtual: true)
+    field(:command_replayed, :boolean, virtual: true, default: false)
 
     timestamps(type: :utc_datetime)
   end

@@ -25,6 +25,56 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
              )
   end
 
+  test "comment reconciliation returns one Article aggregate and preserves missing refs" do
+    {community, post, _attrs, user} = mock_article(:post)
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+    assert {:ok,
+            %{
+              article: %{
+                inner_id: article_inner_id,
+                comments_count: comments_count,
+                comments_revision: comments_revision
+              },
+              entries: [
+                %{comment_inner_id: comment_inner_id, comment: reconciled},
+                %{comment_inner_id: "999999", comment: nil}
+              ]
+            }} =
+             ResolverCMS.comment_reconcile_states(
+               nil,
+               %{
+                 article: %{community: community.slug, thread: :post, inner_id: post.inner_id},
+                 comment_inner_ids: [to_string(comment.inner_id), "999999"]
+               },
+               %{context: %{cur_user: user}}
+             )
+
+    assert article_inner_id == post.inner_id
+    assert comments_count == 1
+    assert comments_revision >= 1
+    assert to_string(comment_inner_id) == to_string(comment.inner_id)
+    assert reconciled.inner_id == comment.inner_id
+    assert reconciled.viewer_has_upvoted == false
+    assert reconciled.article.inner_id == post.inner_id
+  end
+
+  test "comment reconciliation rejects batches larger than the shared limit" do
+    refs = Enum.map(1..101, &to_string/1)
+
+    assert {:error, "viewer batch cannot contain more than 100 refs"} =
+             ResolverCMS.comment_reconcile_states(
+               nil,
+               %{
+                 article: %{community: "home", thread: "POST", inner_id: "1"},
+                 comment_inner_ids: refs
+               },
+               %{context: %{cur_user: nil}}
+             )
+  end
+
   test "returns Article read state with complete emotion vocabulary" do
     {_community, post, _attrs, user} = mock_article(:post)
     post = Repo.preload(post, author: :user)

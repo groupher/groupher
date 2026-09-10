@@ -2,10 +2,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Communities.TagStats
+  alias GroupherServer.CMS
+  alias CMS.Communities.TagStats
   alias GroupherServer.CMS.Model.{CommunityTag, CommunityTagStat}
 
-  alias GroupherServer.CMS
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)

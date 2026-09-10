@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Events.SyncMentions do
   """
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Events.Event
+  alias CMS.Events.Event
 
   @behaviour GroupherServer.CMS.Events.Handler
 

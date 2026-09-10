@@ -43,6 +43,7 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
         field(:upvoted_user_ids, Model.Interaction.RoaringBitmap)
         field(:reported_user_ids, Model.Interaction.RoaringBitmap)
         field(:upvotes_count, :integer, default: 0)
+        field(:interaction_revision, :integer, default: 0)
         field(:latest_upvoted_users, {:array, :map}, default: [])
         unquote(collection_fields)
 

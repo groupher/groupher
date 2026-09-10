@@ -16,6 +16,14 @@
 > 与 [`dashboard_store_reorg.md`](./dashboard_store_reorg.md)。真实 Cloudflare purge/跨 PoP 证据仍需
 > 部署凭据。
 >
+> 本文的 optimistic contract 只保证当前内存 QueryClient。跨刷新保留当前 viewer 已确认写入的
+> 后续提案见
+> [`tanstack_rewrite/optimistic_read_your_writes.md`](./tanstack_rewrite/optimistic_read_your_writes.md)，
+> 其前置 operation identity、inverse patch、queueKey 和 confirmed transition 见
+> [`tanstack_rewrite/optimistic_operation.md`](./tanstack_rewrite/optimistic_operation.md)；客户端 O1/O3/O4/O5
+> 接线已落地，Article/Comment reaction 与 Comment entity 的 commandKey/revision、receipt、private
+> reconcile 和严格跨刷新 guard 已接通；SSR 首帧旧 public HTML 的短暂 flash 仍按 RYW 文档的边界接受。
+>
 > 范围：`frontend/main`、`frontend/dashboard`、`frontend/dash` 以及它们使用的
 > `frontend/core` server-state 链路。迁移按垂直业务切片进行，允许短期双 runtime，
 > 但不再把 Dashboard/Dash 的 urql 兼容视为长期边界。
@@ -35,9 +43,9 @@
   和精确 invalidate；comment reaction 同时更新 public aggregate 与 viewer-owned flags，快速
   toggle 通过同实体 operation lane 与最终意图缓冲收敛。article upvote 同样按实体合并最后意图，
   命令式 Mutation settle 后立即退出 mutation cache。
-- 当前 schema 没有 article view mutation，因此没有伪造客户端 view 写入；
-  `viewerHasViewed` 由独立 viewer query 读取，未来增加幂等后端 operation 后再接 optimistic
-  view helper。
+- Article view 不走独立 mutation：detail query 通过稳定的 `viewEventId` 记录 durable event，
+  服务端以 event identity 幂等接受并由 worker 推进公开 `views` projection；客户端不伪造
+  `views + 1`，`viewerHasViewed` 继续由独立 viewer/read-state 查询读取。
 - Post/Changelog 的 `tagGroups` 已由 `Q.article.tagGroups` + SSR prefetch/hydration 持有，
   `useActiveTag` 不再读取 ArticleList store；dead update adapter、`activeTagStats` fallback 与
   `resState` 写入已删除。
@@ -219,8 +227,8 @@ Q.article.detail(path)
 Q.article.tagGroups(community, thread)
 Q.comment.list(articlePath, filter)
 Q.viewer.session()
-Q.viewer.articleStates(viewerScope, articleRefs)
-Q.viewer.commentStates(viewerScope, articleRef, commentRefs)
+Q.viewer.articleStates(accountRef, articleRefs)
+Q.viewer.commentStates(accountRef, articleRef, commentRefs)
 
 Q.SSR.article.posts(filter)
 Q.SSR.article.changelogs(filter)
@@ -268,8 +276,10 @@ frontend/core/query/
   client.ts              QueryClient 和 browser query factories
   server.ts              server-only Q.SSR
   mutation/
-    article.ts
-    comment.ts
+    article.ts          stable re-export facade
+    article/            cache/schema/upvote
+    comment.ts          stable re-export facade
+    comment/            cache/lifecycle/reaction/moderation
     dashboard/           Dashboard/Dash 领域 mutation；不暴露 QueryClient 给组件
 
 frontend/core/graphql/
@@ -310,7 +320,7 @@ const postsKey = ['article', 'posts', normalizedFilter]
 const changelogsKey = ['article', 'changelogs', normalizedFilter]
 const articleKey = ['article', 'detail', community, thread, innerId]
 const commentsKey = ['comment', 'list', community, thread, innerId, normalizedFilter]
-const viewerStateKey = ['viewer', viewerScope, 'article-state', normalizedArticleRefs]
+const viewerStateKey = ['viewer', accountRef, 'article-state', normalizedArticleRefs]
 ```
 
 规则：
@@ -320,7 +330,7 @@ const viewerStateKey = ['viewer', viewerScope, 'article-state', normalizedArticl
 - 空字符串、`null` 和 `undefined` 不得为同一筛选语义制造多个 key；
 - filter 对象字段顺序由 factory 固定，业务组件不得手写对象 key；
 - mutation 可以使用 `['article', 'posts']` 前缀更新所有已加载列表；
-- 所有用户实体 query 必须包含稳定的 `viewerScope`；登录用户变化时清除所有 viewer queries；
+- 所有用户实体 query 必须包含稳定的 `accountRef`；登录用户变化时清除所有 viewer queries；
 - token、Cookie 和其他 secret 不得进入 query key。
 
 ## GraphQL transport
@@ -489,7 +499,7 @@ Browser hydrate
   -> 命中 dehydrated data
   -> staleTime 内不重复请求
   -> Q.viewer.session()
-  -> Q.viewer.articleStates(viewerScope, visibleArticleRefs)
+  -> Q.viewer.articleStates(accountRef, visibleArticleRefs)
   -> 将当前用户状态合并进 view
 ```
 
@@ -566,13 +576,16 @@ type TArticleRef = {
   innerId: string
 }
 
-Q.viewer.articleStates(viewerScope, articleRefs)
-Q.viewer.commentStates(viewerScope, articleRef, commentRefs)
+Q.viewer.articleStates(accountRef, articleRefs)
+Q.viewer.commentStates(accountRef, articleRef, commentRefs)
 ```
 
 后端提供按 refs 批量查询 viewer state 的 operation。Query factory 对 refs 排序、去重，并让同一组
 refs 同时决定 query key 和 request variables。最终 key 不包含 list filter、page、mode 或 offset；
-`viewerScope` 是所有用户实体 query key 的必需部分，且只能是非 secret 的稳定账号 scope。
+`accountRef` 是所有用户实体 query key 的必需部分，且只能是 non-secret、opaque、immutable public
+account ref。生产实现不再以可变 login 作为 key；仅测试 fixture 在缺少该字段时保留 login fallback。
+`accountRef` 的 session contract 与原子迁移由
+[Optimistic Read Your Writes](./tanstack_rewrite/optimistic_read_your_writes.md) Phase R0 冻结。
 
 ### Viewer batch GraphQL 合同
 
@@ -610,7 +623,7 @@ query CommentViewerStates($article: ArticleRefInput!, $commentInnerIds: [ID!]!) 
 - Query factory 对完整 refs 排序、去重并生成一个 query key；queryFn 再按 100 条自动分片、并行请求
   并按 canonical identity 合并，业务组件不感知分片；
 - 任一分片失败时整个 Query 失败，不返回可能被误认为完整结果的部分 record；
-- 服务端从 auth session 确定 viewer，`viewerScope` 只进入客户端 query key，不作为 GraphQL variable；
+- 服务端从 auth session 确定 viewer，`accountRef` 只进入客户端 query key，不作为 GraphQL variable；
 - 未登录时在发起分片请求前直接返回空 record；服务端收到无有效 session 的请求也返回空数组，
   不返回身份业务错误；客户端将缺失 viewer state 保持为 unknown。
 - 输入在客户端排序、去重；服务端输出顺序不承担语义；
@@ -621,7 +634,7 @@ query CommentViewerStates($article: ArticleRefInput!, $commentInnerIds: [ID!]!) 
   `viewerHasCollected`、`viewerHasCommented` 和 article emotions 均不在本轮范围；
 - `articleStates`、`changelogStates`、`articleState`、`commentStates` 全部由 batch operation 替换，
   并删除对应旧 queryFn、query key 和 GraphQL documents；不保留共存或 fallback；
-- `ArticleQueryProvider` 使用 `Q.viewer.articleStates(viewerScope, [articleRef])`，再按 canonical
+- `ArticleQueryProvider` 使用 `Q.viewer.articleStates(accountRef, [articleRef])`，再按 canonical
   articleKey 从 record 读取单实体 viewer state；
 - `commentSummary` 及其 `isViewerJoined`、total/participants summary 保留，不属于 batch
   viewer-state 合同。
@@ -682,6 +695,13 @@ transport 迁移成功后精确 invalidate/refetch `viewerKeys.commentStates`，
 
 当前方案使用 TanStack Query mutation 和显式 cache update。不要同时更新 Query
 cache 与 Valtio server-state 副本。
+
+本节描述当前 tab 内的 optimistic/confirmed 生命周期。页面刷新后若 public SSR/CDN 快照尚未
+收敛，当前实现允许 public aggregate 短暂回旧；不能把这里的 snapshot/rollback 误认为跨刷新
+持久事务。当前 mutation 向精确 inverse 与 confirmed handoff 演进的合同见
+[Optimistic Operation](./tanstack_rewrite/optimistic_operation.md)；需要 read-your-writes 时再使用
+[Optimistic Read Your Writes](./tanstack_rewrite/optimistic_read_your_writes.md) 定义的 confirmed
+receipt + projection revision，而不是持久化完整 Query cache。
 
 按产品语义把 mutation 分成三类：
 
@@ -1097,18 +1117,13 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
   overlay `viewerHasReacted`，公共 `count`/`latestUsers` 永远来自 comment list，禁止数组整体覆盖；
   `Q.viewer.commentStates` 直接消费未裁剪的 authenticated browser response，不能复用已裁剪的
   `Q.comment.list` cache；
-- 将 article upvote 与 comment upvote/emotion 统一接入带稳定 `mutationKey` 的 TanStack
-  mutation cache，新增 canonical `mutationKeys` factory。key 形状固定为
-  `['mutation', entityType, entityKey, operation]`，其中 operation 是稳定能力名，例如 `upvote`、
-  `emotion:HEART`；upvote/undo-upvote 不拆成两个 operation，目标状态放在 variables；
-  `mutationKey` 按 `entity + operation` 区分 pending 状态。article 当前只有 upvote，因此使用
-  operation lane；comment upvote 与 emotion 会 snapshot、patch 和 rollback 同一组 public/viewer
-  cache，所以同一 comment 的所有 reaction 共用 entity-level `scope.id` 串行 lane，避免一个
-  operation 的 rollback 覆盖另一个 operation。`mutationKey` 负责观察/过滤，`scope.id` 独立负责
-  串行，两者不是同一机制；保留领域 helper 作为唯一 cache writer，移除 module-global pending
-  Set。`useMutationState` 可按 `['mutation', entityType, entityKey]` 观察实体全部 pending，或按完整
-  key 观察单个 operation；scope 只保证不并发，不会自动合并十次 toggle，最后期望状态仍由业务
-  intent buffer 合并；
+- article upvote 与 comment upvote/emotion 统一接入
+  [optimistic operation 通用层](./tanstack_rewrite/optimistic_operation.md)：`useOptimisticToggle` 负责
+  读取 canonical Query、合并最后期望状态，executor 负责 commandKey、受影响 Query 取消、
+  `queueKey` lane 串行、精确 effect plan、guarded rollback 和 server reconcile。当前实现不创建
+  TanStack MutationCache 的 `mutationKey`/`scope.id` 记录，也不把 pending 状态放进 module-global Set；
+  运行期 identity 以 `commandKey + operation name + queueKey` 记录，未来若迁移到 `useMutation`，
+  只能把这些不可变字段映射到 meta/观察 key，不得改变 queueKey 与 toggle intent buffer 语义；
 - article upvote 必须补齐与 comment reaction 等价的按实体 intent buffer；UI 事件不得把基于
   stale prop 计算出的目标值直接排队。连续操作以最后期望状态为准，同一实体同时最多一个请求，
   settle 后仅在服务端确认状态与最新 intent 不同时补偿一次；命令式 `Mutation` settle 后显式从
@@ -1216,8 +1231,8 @@ wrapper、过渡 `~/hooks/useQuery` 或依赖；ArticleList/Comments Valtio stor
   `article.commentsCount`；成功后 pending entity 和 optimistic count 都被 payload 精确替换；
 - 所有 `createXxx` mutation 的 TanStack 配置均为 `retry: false`，network error 不自动重发；
 - 快速连续点击会合并到最后期望状态，不会出现负数、重复 upvote 或最终状态反转；
-- stable `mutationKey` 可被 `useMutationState` 按实体/operation 观察；同一 operation 的正向与撤销
-  共用 key 和 scope lane，pending Set 删除后行为不回退；
+- commandKey/name/queueKey 可用于日志和诊断；同一 operation 的正向与撤销共享 queueKey lane，
+  toggle intent buffer 在请求期间合并最后期望状态，settle 后不会因点击次数堆积执行记录；
 - list/detail/preview 同时打开时保持一致；
 - REPLIES 模式的嵌套 reply 与 TIMELINE 模式的扁平 entry 都能被同一 mutation 更新；
 - 排名或筛选归属由服务端决定时，optimistic 字段立即更新且 refetch 后顺序正确。

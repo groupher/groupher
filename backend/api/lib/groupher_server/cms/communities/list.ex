@@ -14,10 +14,10 @@ defmodule GroupherServer.CMS.Communities.List do
 
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.QueryBuilder
+  alias CMS.QueryBuilder
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   @doc """

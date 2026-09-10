@@ -39,6 +39,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Result,
     Selection
   }
+  alias GroupherServer.CMS.DocTree.Reader
 
   alias GroupherServer.CMS.DocPublishRelease
   alias GroupherServer.CMS.Docs.Branch
@@ -112,10 +113,21 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp publish_changes_locked(community, branch, args, user, sync_cover?) do
-    case CMS.Gate.access_check(user, :manage_docs, community) do
-      {:ok, _canonical} -> prepare_publish_flow(community, branch, args, user, sync_cover?)
+    with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
+         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+         :ok <- verify_checklist_revision(state, args) do
+      prepare_publish_flow(community, branch, args, user, sync_cover?)
+    else
       {:error, reason} -> Repo.rollback(reason)
       reason -> Repo.rollback(reason)
+    end
+  end
+
+  defp verify_checklist_revision(state, args) do
+    case Map.get(args, :expected_checklist_revision) do
+      nil -> :ok
+      revision when revision == state.tree_lock_version -> :ok
+      _ -> {:error, GroupherServer.ErrorCat.custom("Docs publish checklist conflict")}
     end
   end
 

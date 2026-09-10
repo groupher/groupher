@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Gate.RateLimit.Publish do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Policy.Model.PublishThrottle
+  alias CMS.Policy.Model.PublishThrottle
 
   setup do
     {:ok, user} = db_insert(:user)

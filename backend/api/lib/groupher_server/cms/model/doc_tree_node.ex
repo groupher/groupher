@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Marker
+  alias CMS.Marker
   alias GroupherServer.CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
 

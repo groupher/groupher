@@ -12,6 +12,7 @@ export type TPublishChecklistItem = {
 }
 
 export type TPublishChecklist = {
+  revision?: number | null
   totalCount: number
   docChanges: TPublishChecklistItem[]
   treeChanges: TPublishChecklistItem[]
@@ -33,6 +34,8 @@ export type TDocPublishRelease = {
 
 export type TPublishChangesData = {
   publishDocChanges?: {
+    commandKey?: string | null
+    commandReplayed?: boolean | null
     checklist?: TPublishChecklist | null
     release?: TDocPublishRelease | null
   } | null

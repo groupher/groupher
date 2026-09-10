@@ -44,6 +44,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
   end
 
   enum :community_application_status do
@@ -100,6 +102,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :article_lifecycle do
     field(:state, non_null(:article_lifecycle_state))
+    field(:version, non_null(:integer))
     field(:changed_at, :datetime)
     field(:archived_at, :datetime)
     field(:deleted_at, :datetime)
@@ -323,6 +326,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
     field(:mentioned_by_count, non_null(:integer))
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
@@ -773,6 +778,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :doc_publish_checklist do
+    field(:revision, non_null(:integer))
     field(:total_count, non_null(:integer))
     field(:doc_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
     field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
@@ -804,11 +810,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comment_mutation_article do
     field(:inner_id, non_null(:integer))
     field(:comments_count, non_null(:integer))
+    field(:comments_revision, non_null(:integer))
   end
 
   object :comment_mutation_payload do
     field(:comment, non_null(:comment))
     field(:article, non_null(:comment_mutation_article))
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
+  end
+
+  object :comment_reconcile_entry do
+    field(:comment_inner_id, non_null(:id))
+    field(:comment, :comment)
+  end
+
+  object :comment_reconcile_payload do
+    field(:article, non_null(:comment_mutation_article))
+    field(:entries, non_null(list_of(non_null(:comment_reconcile_entry))))
   end
 
   object :doc_publish_changes_payload do
@@ -816,9 +835,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:release, :doc_publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
   end
 
   input_object :doc_publish_changes_input do
+    field(:expected_checklist_revision, :integer)
     field(:doc_change_ids, list_of(:id))
     field(:tree_change_ids, list_of(:id))
     field(:restore_tree_change_ids, list_of(:id))
@@ -866,6 +888,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
     field(:stage, :doc_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
@@ -888,6 +912,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
     field(:document, :article_document, resolve: dataloader(CMS, :document))
     timestamp_fields()
   end
@@ -898,12 +924,16 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
     field(:affected_nodes, list_of(:doc_tree_node))
     field(:conflict, :boolean)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
   end
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
     field(:stage, :doc_snapshot_stage)
     field(:publish_state, :doc_tree_node_publish_state)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
   end
 
   input_object :doc_tree_node_input do
@@ -946,6 +976,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:inner_id, :id)
     # field(:body_html, :string)
     field(:title, :string)
+    field(:comments_count, :integer)
+    field(:comments_revision, :integer)
     field(:author, :common_user)
   end
 
@@ -1173,6 +1205,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:schema_version, :integer)
     field(:data, :json)
     field(:message, :string)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
   end
@@ -1642,6 +1676,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
 
     field(:pending, :integer)
+    field(:command_key, :id)
+    field(:command_replayed, :boolean)
 
     timestamp_fields()
   end
@@ -1712,6 +1748,21 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:inner_id, non_null(:id))
     field(:viewer_has_viewed, :boolean)
     field(:viewer_has_upvoted, :boolean)
+  end
+
+  @desc "Private, no-store Article interaction projection used to reconcile confirmed writes"
+  object :article_interaction_state do
+    field(:community, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:inner_id, non_null(:id))
+    field(:article_interaction_revision, non_null(:integer))
+    field(:upvotes_count, non_null(:integer))
+    field(:collects_count, non_null(:integer))
+    field(:emotions, non_null(list_of(non_null(:emotion_stat))))
+    field(:latest_upvoted_users, non_null(list_of(non_null(:common_user))))
+    field(:viewer_has_upvoted, non_null(:boolean))
+    field(:viewer_has_collected, non_null(:boolean))
+    field(:viewer_emotion, :emotion_type)
   end
 
   object :viewer_comment_emotion_state do

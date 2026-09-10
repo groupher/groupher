@@ -63,7 +63,7 @@ Phase 0 冻结的 Community 公共入口如下；所有公开 SSR loader 都不�
 
 保留的 viewer 领域只返回当前用户拥有的字段：article 为 viewed/upvoted，comment 为 upvoted、
 reported 和 emotion reaction；未知值保持 `undefined`。所有 refs 先排序去重，超过 100 条自动分片，
-且 `viewerScope` 进入实体 query key。评论 viewer 请求的 ID 必须由
+且 immutable `accountRef` 进入实体 query key。评论 viewer 请求的 ID 必须由
 `gatherCommentViewerIds` 递归遍历 entries、全部 replies 和 replyToComment 后产生；该 helper
 只是收集查询 ID，不涉及 article collect/收藏功能。无有效 session 时服务端返回空数组。
 Phase 0 的 Dsb 基线同时覆盖 `Q.dsb.config`、`DsbEditStore`、SavingBar、Dsb 领域请求函数、
@@ -147,11 +147,11 @@ Apollo/urql/Graffle 或新的 client framework。
 - [x] 在后端增加按 canonical refs 批量查询 article/comment viewer state 的 GraphQL operation；
       operation、返回 shape、100 条 batch 上限和匿名语义严格遵守
       [`urql_to_tanstack_query.md#viewer-batch-graphql-合同`](./urql_to_tanstack_query.md#viewer-batch-graphql-合同)。
-- [x] 建立 `Q.viewer.communityState(viewerScope, community)`、
-      `Q.viewer.articleStates(viewerScope, articleRefs)` 和
-      `Q.viewer.commentStates(viewerScope, articleRef, commentRefs)`。
+- [x] 建立 `Q.viewer.communityState(accountRef, community)`、
+      `Q.viewer.articleStates(accountRef, articleRefs)` 和
+      `Q.viewer.commentStates(accountRef, articleRef, commentRefs)`。
 - [x] 对 refs 排序、去重，并让同一组 refs 同时决定 query key 和 GraphQL variables；所有用户实体
-      query key 必须包含非 secret 的稳定 `viewerScope`。
+      query key 必须包含非 secret、opaque、immutable 的 `accountRef`。
 - [x] queryFn 将超过 100 条的完整 refs 自动分片并行请求后合并；任一分片失败则整个 Query 失败，
       组件不处理分片或部分结果。
 - [x] hydration 后加载当前页面可见实体的 viewer state；未知字段保持

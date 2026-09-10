@@ -72,7 +72,9 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
       context.user_conn
       |> gq_mutation(S.Article.m(:publish_article_draft, :blog), %{
         community: context.community.slug,
-        id: draft["id"]
+        id: draft["id"],
+        expectedVersion: updated["version"],
+        expectedLifecycleVersion: 1
       })
 
     assert published["innerId"]
@@ -113,7 +115,12 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogDraft do
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :blog),
-             %{community: context.community.slug, id: draft["id"]},
+             %{
+               community: context.community.slug,
+               id: draft["id"],
+               expectedVersion: draft["version"],
+               expectedLifecycleVersion: 1
+             },
              ErrorCat.code(ErrorCat.passport())
            )
 

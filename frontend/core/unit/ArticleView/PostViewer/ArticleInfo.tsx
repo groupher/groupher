@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import useArticleUpvoteMutation from '~/query/mutation/useArticleUpvoteMutation'
+import useArticleUpvote from '~/query/mutation/useArticleUpvote'
 import type { TArticle } from '~/spec'
 import Upvote from '~/unit/Upvote'
 
@@ -14,19 +14,19 @@ type TProps = {
 
 const ArticleInfo: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { upvotesCount, viewerHasUpvoted, meta } = article
-  const upvoteArticle = useArticleUpvoteMutation(article)
+  const { meta } = article
+  const { count, isUpvoted, toggle } = useArticleUpvote(article)
 
   return (
     <div className={s.wrapper}>
       <div className={s.baseWrapper}>
         <Upvote
           type={UPVOTE_LAYOUT.DEFAULT}
-          count={upvotesCount}
+          count={count}
           avatarList={meta.latestUpvotedUsers}
           noLazyLoad
-          viewerHasUpvoted={viewerHasUpvoted}
-          onAction={upvoteArticle}
+          viewerHasUpvoted={isUpvoted}
+          onAction={() => toggle()}
         />
         <div className='grow' />
         <ArticleBaseStats article={article} container='drawer' />

@@ -54,6 +54,7 @@ const Publish: FC<TProps> = ({ variant = 'article', checklist }) => {
     selectedInput,
     selectedPublishDisabled,
     onPublished: closeDrawer,
+    checklistRevision: publishChecklist?.revision,
   })
   const openOptions = useCallback(() => {
     reloadPublishChecklist()

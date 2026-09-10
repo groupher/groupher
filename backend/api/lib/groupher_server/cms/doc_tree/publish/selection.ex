@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   """
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.Publish.Result
+  alias CMS.DocTree.Publish.Result
 
 
   @publish_input_key_doc_changes CMS.DocTree.Const.doc_publish_input_key(:doc_change_ids)

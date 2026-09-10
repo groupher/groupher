@@ -5,7 +5,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { ArticleRefInput } from '~/lib/graphql/generated/graphql'
 import { sessionState } from '~/schemas/pages/user'
-import type { TCommentsState, TThread } from '~/spec'
+import type { TArticle, TCommentsState, TThread } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
 import { viewerKeys } from './key'
@@ -14,6 +14,8 @@ export type TArticleViewerState = {
   articleKey: string
   viewerHasViewed?: boolean
   viewerHasUpvoted?: boolean
+  viewerHasCollected?: boolean
+  viewerEmotion?: string | null
 }
 
 export type TViewerArticleRef = ArticleRefInput
@@ -26,6 +28,36 @@ const articleViewerStates = graphql(`
       innerId
       viewerHasViewed
       viewerHasUpvoted
+    }
+  }
+`)
+
+const articleInteractionStates = graphql(`
+  query ArticleInteractionStates($refs: [ArticleRefInput!]!) {
+    articleInteractionStates(refs: $refs) {
+      community
+      thread
+      innerId
+      articleInteractionRevision
+      upvotesCount
+      collectsCount
+      latestUpvotedUsers {
+        login
+        nickname
+        avatar
+      }
+      emotions {
+        type
+        count
+        latestUsers {
+          login
+          nickname
+          avatar
+        }
+      }
+      viewerHasUpvoted
+      viewerHasCollected
+      viewerEmotion
     }
   }
 `)
@@ -107,6 +139,56 @@ const fetchArticleViewerStates = async (
   )
 }
 
+export type TArticleInteractionState = {
+  articleKey: string
+  community: string
+  thread: string
+  innerId: string
+  articleInteractionRevision: number
+  upvotesCount: number
+  collectsCount: number
+  emotions: NonNullable<TArticle['emotions']>
+  latestUpvotedUsers: NonNullable<TArticle['meta']>['latestUpvotedUsers']
+  viewerHasUpvoted: boolean
+  viewerHasCollected: boolean
+  viewerEmotion?: string | null
+}
+
+const fetchArticleInteractionStates = async (
+  articles: readonly TViewerArticleRef[],
+  signal?: AbortSignal,
+): Promise<Record<string, TArticleInteractionState>> => {
+  const normalized = normalizeArticleRefs(articles)
+  const responses = await Promise.all(
+    chunk(normalized, viewerBatchSize).map((batch) =>
+      browserGraphQLRequest(articleInteractionStates, { refs: batch }, { signal }),
+    ),
+  )
+  return Object.fromEntries(
+    responses.flatMap((data) =>
+      data.articleInteractionStates.map((article) => {
+        const key = articleKey(article as TViewerArticleRef)
+        return [
+          key,
+          {
+            ...article,
+            articleKey: key,
+            innerId: String(article.innerId),
+            articleInteractionRevision: article.articleInteractionRevision,
+            upvotesCount: article.upvotesCount,
+            collectsCount: article.collectsCount,
+            latestUpvotedUsers: article.latestUpvotedUsers,
+            emotions: article.emotions as unknown as NonNullable<TArticle['emotions']>,
+            viewerHasUpvoted: article.viewerHasUpvoted,
+            viewerHasCollected: article.viewerHasCollected,
+            viewerEmotion: article.viewerEmotion,
+          },
+        ] as const
+      }),
+    ),
+  )
+}
+
 const fetchCommentViewerStates = async (
   article: ArticleRefInput,
   commentInnerIds: readonly string[],
@@ -142,18 +224,32 @@ const fetchCommentViewerStates = async (
   return states
 }
 
-const articleStates = (viewerScope: string, articles: readonly TViewerArticleRef[]) => {
+const articleStates = (accountRef: string, articles: readonly TViewerArticleRef[]) => {
   const normalized = normalizeArticleRefs(articles)
   return queryOptions({
-    queryKey: viewerKeys.articleStates(viewerScope, normalized.map(articleKey)),
-    queryFn: ({ signal }) => (viewerScope ? fetchArticleViewerStates(normalized, signal) : {}),
-    enabled: !!viewerScope && normalized.length > 0,
+    queryKey: viewerKeys.articleStates(accountRef, normalized.map(articleKey)),
+    queryFn: ({ signal }) => (accountRef ? fetchArticleViewerStates(normalized, signal) : {}),
+    enabled: !!accountRef && normalized.length > 0,
     staleTime: 30_000,
   })
 }
 
+const articleInteractionStateOptions = (
+  accountRef: string,
+  articles: readonly TViewerArticleRef[],
+) => {
+  const normalized = normalizeArticleRefs(articles)
+  return queryOptions({
+    queryKey: viewerKeys.articleInteractionStates(accountRef, normalized.map(articleKey)),
+    queryFn: ({ signal }) => fetchArticleInteractionStates(normalized, signal),
+    enabled: !!accountRef && normalized.length > 0,
+    staleTime: 0,
+    gcTime: 30_000,
+  })
+}
+
 const commentStates = (
-  viewerScope: string,
+  accountRef: string,
   article: TViewerArticleRef,
   commentInnerIds: readonly string[],
 ) => {
@@ -165,10 +261,10 @@ const commentStates = (
   const articleKeyValue = articleKey(normalizedArticle)
   const normalizedIds = [...new Set(commentInnerIds.map(String))].sort()
   return queryOptions({
-    queryKey: viewerKeys.commentStates(viewerScope, articleKeyValue, normalizedIds),
+    queryKey: viewerKeys.commentStates(accountRef, articleKeyValue, normalizedIds),
     queryFn: ({ signal }) =>
-      viewerScope ? fetchCommentViewerStates(normalizedArticle, normalizedIds, signal) : {},
-    enabled: !!viewerScope && normalizedIds.length > 0,
+      accountRef ? fetchCommentViewerStates(normalizedArticle, normalizedIds, signal) : {},
+    enabled: !!accountRef && normalizedIds.length > 0,
     staleTime: 30_000,
   })
 }
@@ -181,13 +277,13 @@ const session = () =>
   })
 
 const commentSummary = (
-  viewerScope: string,
+  accountRef: string,
   community: string,
   thread: TThread,
   innerId: string | number,
 ) =>
   queryOptions({
-    queryKey: viewerKeys.commentSummary(viewerScope, `${community}:${thread}:${String(innerId)}`),
+    queryKey: viewerKeys.commentSummary(accountRef, `${community}:${thread}:${String(innerId)}`),
     queryFn: async ({ signal }) => {
       const data = await browserGraphQLRequest(
         commentsSchema.commentsState,
@@ -203,6 +299,7 @@ const commentSummary = (
 export const viewerQueries = {
   session,
   articleStates,
+  articleInteractionStates: articleInteractionStateOptions,
   commentStates,
   commentSummary,
 }

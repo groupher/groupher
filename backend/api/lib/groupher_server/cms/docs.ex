@@ -9,9 +9,10 @@ defmodule GroupherServer.CMS.Docs do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Articles.Diff
-  alias GroupherServer.CMS.Articles.Publish
-  alias GroupherServer.CMS.Docs.Snapshot
+  alias CMS.CommandReceipt
+  alias CMS.Articles.Diff
+  alias CMS.Articles.Publish
+  alias CMS.Docs.Snapshot
   alias GroupherServer.CMS.Model.{Community, DocSnapshot}
   alias Helper.T
 
@@ -38,7 +39,30 @@ defmodule GroupherServer.CMS.Docs do
   @spec checkpoint_snapshot(Community.t(), T.id(), User.t() | nil, keyword() | map()) ::
           T.domain_res(DocSnapshot.t())
   def checkpoint_snapshot(%Community{} = community, doc_id, user \\ nil, opts \\ []) do
-    Snapshot.checkpoint(community, :doc, doc_id, user, opts)
+    if match?(%User{}, user) do
+      with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
+        opts = drop_command_key(opts)
+
+        CommandReceipt.run_user_command(
+          user,
+          command_key,
+          "doc.checkpoint_snapshot",
+          "doc",
+          "#{community.id}:#{doc_id}",
+          opts,
+          fn ->
+            with {:ok, result} <- Snapshot.checkpoint(community, :doc, doc_id, user, opts) do
+              {:ok, result, %{result_key: result.id}}
+            end
+          end,
+          fn receipt ->
+            Snapshot.get(community, :doc, doc_id, receipt.result_key, opts)
+          end
+        )
+      end
+    else
+      Snapshot.checkpoint(community, :doc, doc_id, user, opts)
+    end
   end
 
   @doc "Restores a Doc revision into the selected branch draft."
@@ -50,7 +74,29 @@ defmodule GroupherServer.CMS.Docs do
           keyword() | map()
         ) :: T.domain_res(T.article())
   def restore_snapshot(community, doc_id, snapshot_id, user \\ nil, opts \\ []) do
-    Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts)
+    if match?(%User{}, user) do
+      with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
+        opts = drop_command_key(opts)
+
+        CommandReceipt.run_user_command(
+          user,
+          command_key,
+          "doc.restore_snapshot",
+          "doc",
+          "#{community.id}:#{doc_id}:#{snapshot_id}",
+          opts,
+          fn ->
+            with {:ok, result} <-
+                   Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts) do
+              {:ok, result, %{result_key: result.article_hash_id}}
+            end
+          end,
+          fn _receipt -> CMS.Articles.read_editor(community, :doc, doc_id, opts) end
+        )
+      end
+    else
+      Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts)
+    end
   end
 
   @doc "Publishes one Doc draft and returns its immutable Doc revision."
@@ -68,4 +114,8 @@ defmodule GroupherServer.CMS.Docs do
 
   @doc "Compares a current Doc Article row to an immutable Doc revision."
   def diff_current(article, snapshot), do: Diff.compare_current(article, snapshot)
+
+  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
+  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
+  defp drop_command_key(opts), do: opts
 end

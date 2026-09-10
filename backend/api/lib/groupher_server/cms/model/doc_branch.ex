@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Model.DocBranch do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

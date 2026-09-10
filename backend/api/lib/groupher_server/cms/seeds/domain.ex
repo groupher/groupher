@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     ]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Threads
+  alias CMS.Seeds.Threads
 
   alias GroupherServer.CMS.Model.{Category, Community}
   alias GroupherServer.CMS.Seeds.Communities, as: CommunitySeeds

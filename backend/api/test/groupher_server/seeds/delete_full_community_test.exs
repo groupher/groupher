@@ -5,8 +5,7 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
   alias Helper.ORM
 
   alias GroupherServer.CMS.Model.{

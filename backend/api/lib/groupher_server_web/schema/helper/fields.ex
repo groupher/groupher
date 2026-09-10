@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   alias GroupherServer.CMS
 
   alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.CMS.Dashboard.KanbanBoards
+  alias CMS.Dashboard.KanbanBoards
 
   @page_size GroupherServerWeb.Config.page_size()
 
@@ -33,6 +33,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:document, :article_document, resolve: dataloader(CMS, :document))
       field(:digest, :string)
       field(:views, :integer)
+      field(:views_revision, :integer)
       field(:is_pinned, :boolean)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
@@ -49,6 +50,11 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:meta, :article_meta)
       field(:upvotes_count, :integer)
       field(:collects_count, :integer)
+      field(:comments_revision, :integer)
+      field(:article_interaction_revision, :integer)
+      field(:command_key, :id)
+      field(:command_replayed, :boolean)
+      field(:reaction_outcome, :string)
 
       field(:emotions, list_of(:emotion_stat),
         resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
@@ -56,6 +62,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
       field(:viewer_has_collected, :boolean)
       field(:viewer_has_upvoted, :boolean)
+      field(:viewer_emotion, :emotion_type)
       field(:viewer_has_viewed, :boolean)
       field(:viewer_has_reported, :boolean)
 
@@ -183,6 +190,10 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:is_pinned, :boolean)
       field(:floor, :integer)
       field(:upvotes_count, :integer)
+      field(:comment_interaction_revision, :integer)
+      field(:command_key, :id)
+      field(:command_replayed, :boolean)
+      field(:reaction_outcome, :string)
       field(:is_article_author, :boolean)
 
       field(:emotions, list_of(:emotion_stat),

@@ -341,7 +341,9 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       body = mock_rich_text(~s(new content))
-      {:ok, post} = CMS.Articles.update(post, %{body_bag: mock_body_bag(body)})
+
+      {:ok, post} =
+        CMS.Articles.update(post, %{body_bag: mock_body_bag(body), expected_version: post.version})
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
 

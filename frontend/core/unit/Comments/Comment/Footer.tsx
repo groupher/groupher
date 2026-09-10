@@ -4,7 +4,8 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
 import UserBadge from '~/icons/UserBadge'
-import useCommentReactions from '~/query/mutation/useCommentReactions'
+import useCommentEmotion from '~/query/mutation/useCommentEmotion'
+import useCommentUpvote from '~/query/mutation/useCommentUpvote'
 import { authWarn } from '~/signal'
 import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
@@ -25,11 +26,12 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
   const s = useSalon()
 
   const { isLogin } = useAccount()
-  const { handleUpvote, handleEmotion } = useCommentReactions(data)
+  const { count, isUpvoted, toggle: toggleUpvote } = useCommentUpvote(data)
+  const { emotions, toggle: toggleEmotion } = useCommentEmotion(data)
   const { t } = useTrans()
 
   // const { isLegal } = data.meta
-  const { meta, upvotesCount, viewerHasUpvoted } = data
+  const { meta } = data
   const { isArticleAuthorUpvoted, isLegal } = meta
 
   const isSolution = data.isSolution
@@ -60,19 +62,19 @@ const Footer: FC<TProps> = ({ data, apiMode }) => {
         <Upvote
           left={1.5}
           type={UPVOTE_LAYOUT.COMMENT}
-          count={upvotesCount}
-          viewerHasUpvoted={viewerHasUpvoted}
-          onAction={handleUpvote}
+          count={count}
+          viewerHasUpvoted={isUpvoted}
+          onAction={toggleUpvote}
         />
 
         <div className='mr-2.5' />
 
         <EmotionSelector
           isLegal={isLegal}
-          emotions={data.emotions}
-          onAction={(name, hasReacted) => {
+          emotions={emotions}
+          onAction={(name) => {
             if (!isLogin) return authWarn()
-            handleEmotion(name, hasReacted)
+            toggleEmotion(name)
           }}
         />
 

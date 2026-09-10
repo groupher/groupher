@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
   """
 
   alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
+  alias ErrorCat.Error
 
   @type violation :: %{
           reason: atom(),

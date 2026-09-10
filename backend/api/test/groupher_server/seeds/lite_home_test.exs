@@ -4,8 +4,8 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   @moduletag timeout: 300_000
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Seeds.LiteHome
+  alias CMS.Articles.Trash
+  alias CMS.Seeds.LiteHome
 
   describe "[lite home seeds]" do
     test "resets home with minimal main and dashboard data" do

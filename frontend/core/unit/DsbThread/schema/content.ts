@@ -12,6 +12,8 @@ export const trashedPosts = graphql(`
         deletedAt
         scheduledPermanentDeletionAt
         mentionedByCount
+        commandKey
+        commandReplayed
         deletedBy {
           ...DashboardAuthorFields
         }
@@ -44,18 +46,29 @@ export const trashedPosts = graphql(`
 `)
 
 export const restoreTrashedPost = graphql(`
-  mutation restoreTrashedPost($community: String!, $id: ID!) {
-    restoreTrashedArticle(community: $community, id: $id, thread: POST) {
+  mutation restoreTrashedPost($community: String!, $id: ID!, $commandKey: ID!) {
+    restoreTrashedArticle(community: $community, id: $id, thread: POST, commandKey: $commandKey) {
       innerId
       title
+      ... on Post {
+        commandKey
+        commandReplayed
+      }
     }
   }
 `)
 
 export const permanentlyDeleteTrashedPost = graphql(`
-  mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!) {
-    permanentlyDeleteTrashedArticle(community: $community, id: $id, thread: POST) {
+  mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!, $commandKey: ID!) {
+    permanentlyDeleteTrashedArticle(
+      community: $community
+      id: $id
+      thread: POST
+      commandKey: $commandKey
+    ) {
       done
+      commandKey
+      commandReplayed
     }
   }
 `)

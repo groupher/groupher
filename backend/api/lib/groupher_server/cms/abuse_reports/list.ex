@@ -1,5 +1,6 @@
 defmodule GroupherServer.CMS.AbuseReports.List do
-  alias GroupherServer.CMS.QueryBuilder
+  alias GroupherServer.CMS
+  alias CMS.QueryBuilder
   @moduledoc """
   List operations for abuse reports.
 
@@ -14,7 +15,6 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
-  alias GroupherServer.CMS
 
   alias GroupherServer.CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, T}

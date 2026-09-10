@@ -28,7 +28,9 @@ defmodule GroupherServer.Test.CMS.PostMeta do
 
       assert not post.meta.is_edited
 
-      {:ok, _} = CMS.Articles.update(post, %{"title" => "new title"})
+      {:ok, _} =
+        CMS.Articles.update(post, %{"title" => "new title", expected_version: post.version})
+
       {:ok, post} = ORM.find_by(Post, id: post.id)
 
       assert post.meta.is_edited

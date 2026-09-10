@@ -2,7 +2,7 @@ defmodule GroupherServer.Test.Jobs.Comments do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.Jobs
-  alias GroupherServer.Jobs.Codec
+  alias Jobs.Codec
   alias GroupherServer.CMS.Model.{Comment, Community, Post}
   alias GroupherServer.Accounts.Model.User
 

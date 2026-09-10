@@ -20,13 +20,14 @@ defmodule GroupherServer.CMS.Articles do
 
   alias Helper.T
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Model.Community
+  alias Accounts.Model.User
+  alias CMS.Artiment.Const
+  alias CMS.Model.Community
 
   alias __MODULE__.{
+    Commands,
     Draft,
     List,
     Moderation,
@@ -90,26 +91,26 @@ defmodule GroupherServer.CMS.Articles do
   # Write
 
   @doc "Creates and immediately publishes an Article through the shared lifecycle."
-  @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
-  def create(%Community{} = community, thread, attrs, %User{} = user) do
-    Publish.create(community, thread, attrs, user)
-  end
+  @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def create(community, thread, attrs, %User{} = user, opts \\ []),
+    do: Commands.Create.create(community, thread, attrs, user, opts)
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
-  @doc "Runs `update` through the public `Articles` boundary."
+  @doc "Updates through the actor-less domain path by deriving the actor from the Article author; this is not a transport entrypoint."
   def update(article, attrs), do: Publish.update(article, attrs)
 
   @doc "Starts or updates the persistent Article Draft; explicit Publish is separate."
   @spec update(T.article(), map(), User.t()) :: T.domain_res(T.article())
-  def update(article, attrs, %User{} = user), do: Publish.update(article, attrs, user)
+  def update(article, attrs, %User{} = user), do: Commands.Update.update(article, attrs, user)
 
   # Shared Article Draft lifecycle
 
   @doc "Creates a branch-local draft for any Article thread."
-  @spec create_draft(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
-  def create_draft(%Community{} = community, thread, attrs, %User{} = user) do
-    Draft.create(community, thread, attrs, user)
-  end
+  @spec create_draft(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def create_draft(community, thread, attrs, %User{} = user, opts \\ []),
+    do: Commands.Draft.create(community, thread, attrs, user, opts)
 
   @doc "Reads a Draft through one typed :read_draft Scope query."
   @spec read_draft(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
@@ -135,11 +136,10 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @doc "Creates the editable Draft from main/public when needed, then applies an update."
-  @spec update_draft(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t()) ::
+  @spec update_draft(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
-  def update_draft(community, thread, article_hash_id, attrs, %User{} = user) do
-    Draft.update_or_create_from_public(community, thread, article_hash_id, attrs, user)
-  end
+  def update_draft(community, thread, article_hash_id, attrs, %User{} = user, opts \\ []),
+    do: Commands.Draft.update(community, thread, article_hash_id, attrs, user, opts)
 
   @doc "Compares the current Draft with Public without creating history."
   def draft_diff(community, thread, article_hash_id, opts \\ []) do
@@ -171,21 +171,21 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Publishes one ordinary Article Draft and returns its public Article."
   @spec publish_draft(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
           T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish_draft(community, thread, article_hash_id, %User{} = user, opts \\ []) do
-    Publish.publish(community, thread, article_hash_id, user, opts)
-  end
+  def publish_draft(community, thread, article_hash_id, %User{} = user, opts \\ []),
+    do: Commands.Publish.publish(community, thread, article_hash_id, user, opts)
 
   # Lifecycle
 
   @doc "Moves one logical Article into Trash without deleting its aggregate."
   @spec trash(T.article(), User.t() | nil, keyword()) ::
           T.domain_res(CMS.Model.TrashedArticle.t())
-  def trash(article, actor, opts \\ []), do: Trash.trash(article, actor, opts)
+  def trash(article, actor, opts \\ []), do: Commands.Trash.trash(article, actor, opts)
 
   @doc "Restores one logical Article from Trash."
   @spec restore_trashed(Ecto.UUID.t() | CMS.Model.TrashedArticle.t(), User.t() | nil, keyword()) ::
           T.domain_res(T.article())
-  def restore_trashed(item_or_ref, actor, opts \\ []), do: Trash.restore(item_or_ref, actor, opts)
+  def restore_trashed(item_or_ref, actor, opts \\ []),
+    do: Commands.Trash.restore(item_or_ref, actor, opts)
 
   @doc "Permanently removes one standalone trashed Article aggregate."
   @spec permanently_delete_trashed(
@@ -194,18 +194,17 @@ defmodule GroupherServer.CMS.Articles do
           keyword()
         ) :: T.domain_res(map())
   def permanently_delete_trashed(item_or_ref, actor, opts \\ []) do
-    permanently_delete(item_or_ref, actor, opts)
+    Commands.Trash.permanently_delete(item_or_ref, actor, opts)
   end
 
   @doc "Permanently removes one standalone trashed Article aggregate."
   @spec permanently_delete(
-          Ecto.UUID.t() | CMS.Model.TrashedArticle.t(),
+          Ecto.UUID.t() | CMS.Model.TrashedArticle.t() | CMS.Model.TrashedDocArticle.t(),
           User.t() | nil,
           keyword()
         ) :: T.domain_res(map())
-  def permanently_delete(item_or_ref, actor, opts \\ []) do
-    Trash.permanently_delete(item_or_ref, actor, opts)
-  end
+  def permanently_delete(item_or_ref, actor, opts \\ []),
+    do: Commands.Trash.permanently_delete(item_or_ref, actor, opts)
 
   @doc "Lists current Article Trash memberships for a Community."
   @spec list_trashed(Community.t(), map()) :: T.domain_res(map())

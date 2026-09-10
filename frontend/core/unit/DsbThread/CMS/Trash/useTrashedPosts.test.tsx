@@ -81,10 +81,14 @@ describe('useTrashedPosts', () => {
       expect(await result.current.restore('trash-1')).toBe(true)
     })
 
-    expect(mocks.mutate).toHaveBeenCalledWith(S.restoreTrashedPost, {
-      community: 'home',
-      id: 'trash-1',
-    })
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      S.restoreTrashedPost,
+      expect.objectContaining({
+        community: 'home',
+        id: 'trash-1',
+        commandKey: expect.any(String),
+      }),
+    )
     expect(mocks.query).toHaveBeenCalledTimes(2)
     expect(mocks.toast).toHaveBeenCalledWith('dsb.cms.trash.restored')
   })
@@ -99,10 +103,14 @@ describe('useTrashedPosts', () => {
       expect(await result.current.permanentlyDelete('trash-1')).toBe(true)
     })
 
-    expect(mocks.mutate).toHaveBeenCalledWith(S.permanentlyDeleteTrashedPost, {
-      community: 'home',
-      id: 'trash-1',
-    })
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      S.permanentlyDeleteTrashedPost,
+      expect.objectContaining({
+        community: 'home',
+        id: 'trash-1',
+        commandKey: expect.any(String),
+      }),
+    )
     expect(mocks.query).toHaveBeenCalledTimes(2)
     expect(mocks.toast).toHaveBeenCalledWith('dsb.cms.trash.permanently_deleted')
   })

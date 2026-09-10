@@ -5,8 +5,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.Snapshot
-  alias GroupherServer.CMS.Model.DocTreeNode
+  alias CMS.DocTree.Snapshot
+  alias CMS.Model.DocTreeNode
 
   require CMS.Const
 

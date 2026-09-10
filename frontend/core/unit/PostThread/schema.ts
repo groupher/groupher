@@ -22,6 +22,8 @@ const getArticleFreshSchema = () => {
         views
         upvotesCount
         commentsCount
+        commentsRevision
+        articleInteractionRevision
         viewerHasViewed @include(if: $userHasLogin)
         viewerHasUpvoted @include(if: $userHasLogin)
       }

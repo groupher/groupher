@@ -18,7 +18,7 @@ defmodule Helper.Scheduler do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Events
+  alias CMS.Events
 
   @threads GroupherServer.CMS.Artiment.Config.threads()
 

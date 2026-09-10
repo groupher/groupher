@@ -6,7 +6,7 @@ defmodule GroupherServer.Activity.Artiment do
   """
 
   alias GroupherServer.Activity
-  alias GroupherServer.Activity.ErrorCat
+  alias Activity.ErrorCat
   alias GroupherServer.CMS.Artiment.Matcher
 
   @handlers %{

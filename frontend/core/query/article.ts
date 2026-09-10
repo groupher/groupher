@@ -18,6 +18,9 @@ import type {
 } from '~/spec'
 
 import { articleKeys, normalizeArticleFilter } from './key'
+import { preserveArticleProjection } from './revisionGuard'
+import { getArticleViewEventId } from './viewEvent'
+import { writeArticleViewReceipt } from './viewReceipt'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -46,6 +49,7 @@ const toPostsFilter = (filter: TPagedArticlesParams): VariablesOf<typeof pagedPo
 const posts = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.posts(filter),
+    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedPosts, {
         filter: toPostsFilter(filter),
@@ -58,6 +62,7 @@ const posts = (filter: TPagedArticlesParams) =>
 const changelogs = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.changelogs(filter),
+    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedChangelogs, {
         filter: toPostsFilter(filter) as VariablesOf<typeof pagedChangelogs>['filter'],
@@ -80,17 +85,35 @@ const kanban = (community: string) =>
 const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
     queryKey: articleKeys.detail(community, thread, innerId),
+    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
+      const articleRef = `${community}:${thread}:${innerId}`
+      const viewEventId = getArticleViewEventId(articleRef)
       if (thread === THREAD.CHANGELOG) {
-        const data = await browserGraphQLRequest(changelog, { article, userHasLogin: false })
+        const data = await browserGraphQLRequest(changelog, {
+          article,
+          userHasLogin: false,
+          viewEventId,
+        })
+        if (viewEventId && data.changelog) writeArticleViewReceipt(articleRef, viewEventId)
         return data.changelog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
-        const data = await browserGraphQLRequest(doc, { article, userHasLogin: false })
+        const data = await browserGraphQLRequest(doc, {
+          article,
+          userHasLogin: false,
+          viewEventId,
+        })
+        if (viewEventId && data.doc) writeArticleViewReceipt(articleRef, viewEventId)
         return data.doc as unknown as TPost
       }
-      const data = await browserGraphQLRequest(post, { article, userHasLogin: false })
+      const data = await browserGraphQLRequest(post, {
+        article,
+        userHasLogin: false,
+        viewEventId,
+      })
+      if (viewEventId && data.post) writeArticleViewReceipt(articleRef, viewEventId)
       return data.post as unknown as TPost
     },
   })

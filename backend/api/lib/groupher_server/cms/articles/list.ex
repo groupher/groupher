@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias GroupherServer.{CMS, Repo}
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.InteractionResponse
+  alias GroupherServer.CMS.Articles.Response
   alias GroupherServer.CMS.Articles.Trash
   alias GroupherServer.CMS.Artiment.Const
   alias GroupherServer.CMS.Communities.Enable
@@ -228,7 +228,7 @@ defmodule GroupherServer.CMS.Articles.List do
   defp scope_context(thread), do: ArticleScope.public(thread)
 
   defp read_articles(%{entries: entries} = paged_articles, actor) do
-    case InteractionResponse.many(entries, actor) do
+    case Response.list(entries, actor) do
       {:ok, entries} -> Map.put(paged_articles, :entries, entries)
       {:error, _reason} = error -> error
     end

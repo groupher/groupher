@@ -29,8 +29,7 @@ defmodule Helper.Transaction do
 
   import Ecto.Query, warn: false
   alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
-  alias GroupherServer.ErrorCat
-  alias GroupherServer.Repo
+  alias GroupherServer.{ErrorCat, Repo}
 
   @article_schemas [Post, Blog, Changelog, Doc]
 

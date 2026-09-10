@@ -42,13 +42,12 @@ defmodule GroupherServerWeb.Middleware.Passport do
   @behaviour Absinthe.Middleware
 
   import Helper.Utils
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{ErrorCat, FrontDesk}
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
   alias GroupherServer.CMS.Model.Comment
   alias GroupherServer.CMS.Passport.Registry
-  alias GroupherServer.FrontDesk
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution

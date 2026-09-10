@@ -156,12 +156,13 @@ type TCommentScope = {
 修改范围：
 
 - `frontend/core/query/mutation/comment.ts`
-- `frontend/core/query/mutation/useCommentReactions.ts`
+- `frontend/core/query/mutation/useCommentUpvote.ts`
+- `frontend/core/query/mutation/useCommentEmotion.ts`
 - `frontend/core/query/mutation/useCommentModeration.ts`
 - `frontend/core/unit/Comments/useLogic/useHelper.ts`
 - `frontend/core/unit/Comments/useLogic/useQuery.ts`
 - `frontend/core/query/mutation/comment.test.ts`（现有）
-- `frontend/core/query/mutation/useCommentReactions.test.tsx`（现有）
+- `frontend/core/query/mutation/useCommentUpvote.test.tsx`（现有）
 - `frontend/core/query/mutation/useCommentModeration.test.tsx`（新建）
 
 实施步骤：
@@ -233,7 +234,7 @@ type TCommentScope = {
 
 ```text
 frontend/core/query/mutation/comment.test.ts
-frontend/core/query/mutation/useCommentReactions.test.tsx
+frontend/core/query/mutation/useCommentUpvote.test.tsx
 frontend/core/query/mutation/useCommentModeration.test.tsx（新建）
 frontend/core/query/cacheInvalidation.test.ts
 frontend/main/src/app/api/graphql/route.test.ts（新建）

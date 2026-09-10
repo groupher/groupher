@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias CMS.Gate.ErrorCat
 
   @throttle_interval GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
   @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit

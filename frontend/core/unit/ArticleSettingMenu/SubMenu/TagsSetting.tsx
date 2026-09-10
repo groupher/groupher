@@ -6,6 +6,7 @@ import { type FC, useEffect, useState } from 'react'
 import { THREAD } from '~/const/thread'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { Q } from '~/query'
+import { createCommandKey } from '~/query/mutation/optimistic/execute'
 import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import { updateViewingArticle } from '~/signal'
 import type { TColorName, TID, TTag } from '~/spec'
@@ -60,6 +61,7 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
         thread: article.meta.thread,
       },
       expectedVersion: article.version,
+      commandKey: createCommandKey(),
       communityTags: checked,
     }
 

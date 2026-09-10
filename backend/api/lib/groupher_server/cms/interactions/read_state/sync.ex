@@ -202,7 +202,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
              operation,
              count_field,
              latest_field,
-             latest_users
+             latest_users,
+             reaction in [:upvote, :collect]
            ) do
       {:ok, reaction_info}
     end
@@ -221,9 +222,27 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
              operation,
              :users_count,
              :latest_users,
-             latest_users
-           ) do
+             latest_users,
+             false
+           ),
+         :ok <- bump_interaction_revision(info, target_id) do
       {:ok, emotion_info}
+    end
+  end
+
+  defp bump_interaction_revision(
+         %{reaction_info_model: schema, foreign_key: target_id_field},
+         target_id
+       ) do
+    insert_info(schema, target_id_field, target_id)
+
+    case from(info in schema, where: field(info, ^target_id_field) == ^target_id)
+         |> Repo.update_all(
+           inc: [interaction_revision: 1],
+           set: [updated_at: DateTime.utc_now(:second)]
+         ) do
+      {1, _} -> :ok
+      {0, _} -> {:error, ErrorCat.projection_not_updated()}
     end
   end
 
@@ -300,7 +319,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
          operation,
          count_field,
          latest_field,
-         latest_users
+         latest_users,
+         increment_revision?
        ) do
     bitmap =
       case operation do
@@ -318,9 +338,19 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
         field -> Keyword.put(updates, :inc, [{field, if(operation == :add, do: 1, else: -1)}])
       end
 
+    updates = if increment_revision?, do: maybe_increment_revision(updates, schema), else: updates
+
     case from(info in schema, where: info.id == ^info_id) |> Repo.update_all(updates) do
       {1, _} -> :ok
       {0, _} -> {:error, ErrorCat.projection_not_updated()}
+    end
+  end
+
+  defp maybe_increment_revision(updates, schema) do
+    if :interaction_revision in schema.__schema__(:fields) do
+      Keyword.update(updates, :inc, [], fn existing -> [{:interaction_revision, 1} | existing] end)
+    else
+      updates
     end
   end
 

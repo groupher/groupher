@@ -9,9 +9,15 @@ import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
 import { Q } from '~/query'
 import { viewerKeys } from '~/query/key'
+import { clearArticleUpvoteReceipts } from '~/query/mutation/articleReceipt'
+import { clearCommentReactionReceipts } from '~/query/mutation/commentReactionReceipt'
+import { clearCommentFeedReceipts } from '~/query/mutation/commentReceipt'
+import { clearArticleViewEventIds } from '~/query/viewEvent'
+import { clearArticleViewReceipts } from '~/query/viewReceipt'
 import type { TUser } from '~/spec'
 
 import { sessionState } from '../../schemas/pages/user'
+import { getAccountRef } from './accountRef'
 import { SessionSeedContext } from './context'
 
 type TSessionResult = ResultOf<typeof sessionState>
@@ -59,6 +65,12 @@ export default function Hooks() {
   }, [query.refetch, shouldFetchMe])
 
   const clearSession = () => {
+    const previousAccountRef = getAccountRef(query.data?.sessionState.user as TUser | null)
+    clearArticleUpvoteReceipts(previousAccountRef)
+    clearCommentFeedReceipts(previousAccountRef)
+    clearCommentReactionReceipts(previousAccountRef)
+    clearArticleViewEventIds()
+    clearArticleViewReceipts()
     void queryClient.removeQueries({ queryKey: viewerKeys.all })
     queryClient.setQueryData(options.queryKey, makeSessionResult(null))
   }
@@ -74,9 +86,26 @@ export default function Hooks() {
         }
       : null
   const isLogin = Boolean(user)
+  const accountRef = getAccountRef(user as TUser | null)
+  const previousAccountRef = useRef<string | null>(accountRef)
+
+  useEffect(() => {
+    const previous = previousAccountRef.current
+    if (previous !== accountRef) {
+      if (previous) {
+        clearArticleUpvoteReceipts(previous)
+        clearCommentFeedReceipts(previous)
+        clearCommentReactionReceipts(previous)
+      }
+      clearArticleViewEventIds()
+      clearArticleViewReceipts()
+    }
+    previousAccountRef.current = accountRef
+  }, [accountRef])
 
   return {
     user,
+    accountRef,
     loading: shouldFetchMe && (query.isFetching || !query.data?.sessionState?.isValid),
     isLogin,
     accountInfo: {

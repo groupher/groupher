@@ -17,7 +17,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   import Helper.Utils, only: [handle_absinthe_error: 3]
   alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
   alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
+  alias ErrorCat.Error
 
   alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishThrottle
 

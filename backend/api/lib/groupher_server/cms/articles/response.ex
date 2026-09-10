@@ -1,20 +1,21 @@
-defmodule GroupherServer.CMS.Articles.InteractionResponse do
+defmodule GroupherServer.CMS.Articles.Response do
   @moduledoc """
   Assembles Article API response fields from Interaction read state.
 
   Interaction owns fact and viewer-state reads; Articles owns how that state is
   represented on the existing Article GraphQL response.
 
-      Articles Reader -> InteractionResponse -> Article API response
+      Articles Reader -> Response -> Article API response
   """
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Comments.BodyCodec
-  alias GroupherServer.CMS.Model.{Comment, Post, PostSolution}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Comments.BodyCodec
+  alias CMS.Model.{Comment, Post, PostSolution}
+
   alias GroupherServer.Repo
 
   @doc """
@@ -22,7 +23,7 @@ defmodule GroupherServer.CMS.Articles.InteractionResponse do
 
   ## Examples
 
-      InteractionResponse.one(article, viewer)
+      Response.one(article, viewer)
 
   """
   @spec one(struct(), User.t() | nil, keyword()) :: {:ok, struct()} | {:error, term()}
@@ -47,11 +48,11 @@ defmodule GroupherServer.CMS.Articles.InteractionResponse do
 
   ## Examples
 
-      InteractionResponse.many(articles, viewer)
+      Response.list(articles, viewer)
 
   """
-  @spec many([struct()], User.t() | nil, keyword()) :: {:ok, [struct()]} | {:error, term()}
-  def many(articles, viewer, opts \\ []) when is_list(articles) do
+  @spec list([struct()], User.t() | nil, keyword()) :: {:ok, [struct()]} | {:error, term()}
+  def list(articles, viewer, opts \\ []) when is_list(articles) do
     with states when is_map(states) <- CMS.Interactions.viewer_states(articles, viewer, opts) do
       solution_by_post = solution_by_post(articles)
 
@@ -96,7 +97,7 @@ defmodule GroupherServer.CMS.Articles.InteractionResponse do
     end)
   end
 
-  defp merge_solution(%Post{id: post_id} = post, solution_by_post) do
+  defp merge_solution(%{__struct__: Post, id: post_id} = post, solution_by_post) do
     case Map.get(solution_by_post, post_id) do
       nil ->
         %{post | is_solved: false, solution_comment_id: nil, solution_digest: nil}
@@ -111,9 +112,11 @@ defmodule GroupherServer.CMS.Articles.InteractionResponse do
   defp merge(article, state) do
     article
     |> Map.put(:upvotes_count, state.upvotes_count)
+    |> Map.put(:article_interaction_revision, state.interaction_revision)
     |> Map.put(:collects_count, state.collects_count)
     |> Map.put(:viewer_has_upvoted, state.viewer_has_upvoted)
     |> Map.put(:viewer_has_collected, state.viewer_has_collected)
+    |> Map.put(:viewer_emotion, viewer_emotion(state.emotions))
     |> Map.put(:viewer_has_reported, state.viewer_has_reported)
     |> Map.put(:viewer_has_viewed, state.viewer_has_viewed)
     |> Map.put(:emotions, emotion_map(state.emotions))
@@ -144,5 +147,12 @@ defmodule GroupherServer.CMS.Articles.InteractionResponse do
       |> Map.put(:"latest_#{emotion}_users", state.latest_users)
       |> Map.put(:"viewer_has_#{emotion}ed", state.viewer_has_reacted)
     end)
+  end
+
+  defp viewer_emotion(emotions) do
+    case Enum.find(emotions, &Map.get(&1, :viewer_has_reacted, false)) do
+      %{emotion: emotion} -> emotion
+      _ -> nil
+    end
   end
 end

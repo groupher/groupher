@@ -17,6 +17,12 @@ type TGraphQLError = {
   extensions?: Record<string, unknown>
 }
 
+const COMMAND_ERROR_MESSAGES: Readonly<Record<string, string>> = {
+  '4530': 'This operation changed elsewhere. Refresh and try again.',
+  '4531': 'This operation is still being processed. Please try again shortly.',
+  '4532': 'This operation is missing its command key. Please submit it again.',
+}
+
 type TGraphQLPayload<TResult> = {
   data?: TResult
   errors?: unknown
@@ -39,6 +45,15 @@ const formatGraphQLErrorMessage = (message: unknown): string => {
   if (message && typeof message === 'object') return JSON.stringify(message)
   return message == null ? '' : String(message)
 }
+
+const commandErrorMessage = (extensions?: Record<string, unknown>): string | undefined => {
+  const code = extensions?.reasonCode ?? extensions?.code
+  if (typeof code !== 'string' && typeof code !== 'number') return undefined
+  return COMMAND_ERROR_MESSAGES[String(code)]
+}
+
+const formatRequestErrorMessage = (error: TGraphQLError): string =>
+  commandErrorMessage(error.extensions) || formatGraphQLErrorMessage(error.message)
 
 const graphQLErrors = (payload: unknown): TGraphQLError[] => {
   if (!payload || typeof payload !== 'object') return []
@@ -64,10 +79,7 @@ export class GraphQLRequestError extends Error {
 
   constructor(response: Response, errors: TGraphQLError[]) {
     super(
-      errors
-        .map((error) => formatGraphQLErrorMessage(error.message))
-        .filter(Boolean)
-        .join('\n') || 'GraphQL request failed.',
+      errors.map(formatRequestErrorMessage).filter(Boolean).join('\n') || 'GraphQL request failed.',
     )
     this.name = 'GraphQLRequestError'
     this.errors = errors

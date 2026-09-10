@@ -7,10 +7,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Artiment.Const
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Artiment.Const
   alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.Repo
   alias Helper.ORM
 
   alias GroupherServer.CMS.Model.{Changelog, Comment, Community, Doc, Post}

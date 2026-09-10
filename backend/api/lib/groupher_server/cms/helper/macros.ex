@@ -1,5 +1,6 @@
 defmodule GroupherServer.CMS.Helper.Macros do
   require GroupherServer.CMS.Const
+
   @moduledoc """
   Defines shared artiment schema fields and CMS changeset validation macros.
 
@@ -125,6 +126,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     quote do
       field(:comments_participants_count, :integer, default: 0)
       field(:comments_count, :integer, default: 0)
+      field(:comments_revision, :integer, default: 0)
       has_many(:comments, {"comments", Comment})
       # 评论参与者，只保留最近 5 个
       embeds_many(:comments_participants, Embeds.User, on_replace: :delete)
@@ -309,6 +311,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:digest, :string)
 
       field(:views, :integer, default: 0)
+      field(:views_revision, :integer, default: 0)
       field(:is_pinned, :boolean, default: false, virtual: true)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
@@ -339,6 +342,9 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:active_at, :utc_datetime)
 
       field(:pending, :integer, default: 0)
+      # Mutation-only metadata; it distinguishes a durable replay from a new execution.
+      field(:command_key, Ecto.UUID, virtual: true)
+      field(:command_replayed, :boolean, default: false, virtual: true)
 
       timestamps(type: :utc_datetime)
     end

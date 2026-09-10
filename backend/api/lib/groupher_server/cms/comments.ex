@@ -67,6 +67,12 @@ defmodule GroupherServer.CMS.Comments do
   """
   def one_comment(id, %User{} = user), do: Reader.one_comment(id, user)
 
+  @spec reconcile_comments(atom(), struct(), [integer() | String.t()], User.t() | nil) ::
+          T.domain_res([Comment.t()])
+  @doc "Returns one bounded Article-scoped Comment reconciliation batch."
+  def reconcile_comments(thread, article, inner_ids, viewer),
+    do: Reader.reconcile_comments(thread, article, inner_ids, viewer)
+
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
   @doc """
   Returns aggregate comment state for an Article without a viewer.
@@ -210,7 +216,8 @@ defmodule GroupherServer.CMS.Comments do
   def paged_comments_participants(thread, article_id, filters),
     do: List.paged_comments_participants(thread, article_id, filters)
 
-  @spec create_comment(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec create_comment(T.thread(), T.article(), String.t(), User.t()) ::
+          T.domain_res(Comment.t())
   @doc """
   Creates a Comment from an already resolved Article and returns the Comment.
 
@@ -218,13 +225,47 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.create_comment(:post, post, body, actor)
   """
-  def create_comment(thread, article, body, %User{} = user) do
-    with {:ok, %{comment: comment}} <- create_comment_payload(thread, article, body, user) do
+  def create_comment(thread, article, body, %User{} = user),
+    do: create_comment(thread, article, body, user, nil)
+
+  @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(Comment.t())
+  def create_comment(thread, article, body, %User{} = user, command_key) do
+    with {:ok, %{comment: comment}} <-
+           create_comment_payload(thread, article, body, user, command_key) do
       {:ok, comment}
     end
   end
 
-  @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t()) ::
+  @doc """
+  Resolves an Article from public identity, creates a Comment and returns it.
+
+  ## Examples
+
+      CMS.Comments.create_comment(community, :post, post_ref, body, actor)
+  """
+  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
+          T.domain_res(Comment.t())
+  def create_comment(%Community{} = community, thread, article_id, body, %User{} = user),
+    do: create_comment(community, thread, article_id, body, user, nil)
+
+  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(Comment.t())
+  def create_comment(
+        %Community{} = community,
+        thread,
+        article_id,
+        body,
+        %User{} = user,
+        command_key
+      ) do
+    with {:ok, %{comment: comment}} <-
+           Writer.create(community, thread, article_id, body, user, command_key) do
+      {:ok, comment}
+    end
+  end
+
+  @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(map())
   @doc """
   Creates a Comment and returns the canonical Comment/Article payload.
@@ -233,24 +274,8 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.create_comment_payload(:post, post, body, actor)
   """
-  def create_comment_payload(thread, article, body, %User{} = user),
-    do: Writer.create(thread, article, body, user)
-
-  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
-          T.domain_res(Comment.t())
-  @doc """
-  Resolves an Article from public identity, creates a Comment and returns it.
-
-  ## Examples
-
-      CMS.Comments.create_comment(community, :post, post_ref, body, actor)
-  """
-  def create_comment(%Community{} = community, thread, article_id, body, %User{} = user) do
-    with {:ok, %{comment: comment}} <-
-           Writer.create(community, thread, article_id, body, user) do
-      {:ok, comment}
-    end
-  end
+  def create_comment_payload(thread, article, body, %User{} = user, command_key \\ nil),
+    do: Writer.create(thread, article, body, user, command_key)
 
   @spec update_comment(Comment.t(), String.t()) :: T.domain_res(Comment.t())
   @doc """
@@ -262,7 +287,8 @@ defmodule GroupherServer.CMS.Comments do
   """
   def update_comment(%Comment{}, _body), do: {:error, AuthErrorCat.account_login()}
 
-  @spec update_comment(Comment.t(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(Comment.t())
   @doc """
   Updates one authorized Comment in its canonical aggregate transaction.
 
@@ -271,7 +297,12 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.update_comment(comment, body, actor)
   """
   def update_comment(%Comment{} = comment, body, %User{} = user),
-    do: UpdateComment.execute(comment, body, user)
+    do: update_comment(comment, body, user, nil)
+
+  @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(Comment.t())
+  def update_comment(%Comment{} = comment, body, %User{} = user, command_key),
+    do: UpdateComment.execute(comment, body, user, command_key)
 
   @spec delete_comment(Comment.t()) :: T.domain_res(Comment.t())
   @doc """
@@ -283,7 +314,7 @@ defmodule GroupherServer.CMS.Comments do
   """
   def delete_comment(%Comment{}), do: {:error, AuthErrorCat.account_login()}
 
-  @spec delete_comment(Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
   @doc """
   Soft-deletes one authorized Comment and reconciles its parent aggregate.
 
@@ -292,7 +323,11 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.delete_comment(comment, actor)
   """
   def delete_comment(%Comment{} = comment, %User{} = user),
-    do: DeleteComment.execute(comment, user)
+    do: delete_comment(comment, user, nil)
+
+  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
+  def delete_comment(%Comment{} = comment, %User{} = user, command_key),
+    do: DeleteComment.execute(comment, user, command_key)
 
   @doc """
   Accepts or replaces the current solution of a QA Post.
@@ -324,13 +359,19 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.reply_comment(parent_id, body, actor)
   """
-  def reply_comment(comment_id, body, %User{} = user) do
-    with {:ok, %{comment: comment}} <- reply_comment_payload(comment_id, body, user) do
+  def reply_comment(comment_id, body, %User{} = user),
+    do: reply_comment(comment_id, body, user, nil)
+
+  @spec reply_comment(T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
+  def reply_comment(comment_id, body, %User{} = user, command_key) do
+    with {:ok, %{comment: comment}} <-
+           reply_comment_payload(comment_id, body, user, command_key) do
       {:ok, comment}
     end
   end
 
-  @spec reply_comment_payload(T.id(), String.t(), User.t()) :: T.domain_res(map())
+  @spec reply_comment_payload(T.id(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
   @doc """
   Creates a reply and returns the canonical Comment/Article payload.
 
@@ -338,8 +379,8 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.reply_comment_payload(parent_id, body, actor)
   """
-  def reply_comment_payload(comment_id, body, %User{} = user),
-    do: Writer.reply(comment_id, body, user)
+  def reply_comment_payload(comment_id, body, %User{} = user, command_key \\ nil),
+    do: Writer.reply(comment_id, body, user, command_key)
 
   @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   @doc """

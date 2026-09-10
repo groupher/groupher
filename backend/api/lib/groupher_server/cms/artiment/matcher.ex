@@ -22,10 +22,10 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   alias GroupherServer.CMS
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Interactions.ErrorCat
+  alias CMS.Interactions.ErrorCat
 
   alias GroupherServer.Accounts.Model.Embeds.UserMeta
-  alias GroupherServer.CMS.Model.Embeds.CommentMeta
+  alias CMS.Model.Embeds.CommentMeta
 
   alias GroupherServer.CMS.Model.{
     Blog,

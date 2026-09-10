@@ -124,8 +124,9 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.emotion(comment, :heart, actor)
 
   """
-  @spec emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor), to: Reactions
+  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate emotion(artiment, emotion, actor, command_key \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment emotion idempotently and returns the canonical Artiment.
@@ -135,8 +136,9 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.undo_emotion(comment, :heart, actor)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor), to: Reactions
+  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate undo_emotion(artiment, emotion, actor, command_key \\ nil), to: Reactions
 
   @doc """
   Adds an Artiment upvote idempotently and returns the canonical Artiment.
@@ -146,8 +148,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.upvote(article, actor)
 
   """
-  @spec upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor), to: Reactions
+  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_key \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment upvote idempotently and returns the canonical Artiment.
@@ -157,8 +159,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.undo_upvote(article, actor)
 
   """
-  @spec undo_upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor), to: Reactions
+  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_key \\ nil), to: Reactions
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.

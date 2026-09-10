@@ -43,6 +43,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   }
 
   alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias GroupherServer.CMS.Model.ArticleLifecycle, as: ArticleLifecycleModel
   alias GroupherServer.CMS.Docs.{Branch, Snapshot}
   alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
 
@@ -56,6 +57,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias Helper.Validator.Slug
 
   import Helper.Utils, only: [plural: 1]
+  import Ecto.Query
 
   require CMS.Const
 
@@ -146,6 +148,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
          :ok <- validate_publish_branch(thread, branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
+         :ok <- ensure_expected_version(draft, branch_ref),
          {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
          :ok <- validate_version(draft),
          restored_publish? <- thread == :doc and Snapshot.restored_draft?(draft),
@@ -153,7 +156,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          {:ok, public_article, first_publish?} <-
            apply_draft(community, thread, branch, draft),
          {:ok, lifecycle} <-
-           transition_lifecycle(community, thread, draft, branch, :published),
+           transition_lifecycle(community, thread, draft, branch, :published, branch_ref),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
@@ -420,17 +423,80 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
   defp validate_version(_article), do: :ok
 
+  defp ensure_expected_version(%{version: version}, opts) when is_map(opts) do
+    required? = Map.get(opts, :require_expected_version, false)
+
+    case Map.fetch(opts, :expected_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      :error -> :ok
+      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+    end
+  end
+
+  defp ensure_expected_version(%{version: version}, opts) when is_list(opts) do
+    required? = Keyword.get(opts, :require_expected_version, false)
+
+    case Keyword.fetch(opts, :expected_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      :error -> :ok
+      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+    end
+  end
+
+  defp ensure_expected_version(_draft, _opts), do: :ok
+
+  defp ensure_expected_lifecycle_version(%{version: version}, opts) when is_map(opts) do
+    required? = Map.get(opts, :require_expected_version, false)
+
+    case Map.fetch(opts, :expected_lifecycle_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      :error -> :ok
+      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+    end
+  end
+
+  defp ensure_expected_lifecycle_version(%{version: version}, opts) when is_list(opts) do
+    required? = Keyword.get(opts, :require_expected_version, false)
+
+    case Keyword.fetch(opts, :expected_lifecycle_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      :error -> :ok
+      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+    end
+  end
+
+  defp ensure_expected_lifecycle_version(_lifecycle, _opts), do: :ok
+
   defp resolve_branch(%Community{} = community, :doc, branch_ref),
     do: Branch.resolve(community, branch_ref)
 
   defp resolve_branch(_community, _thread, _branch_ref), do: {:ok, nil}
 
-  defp transition_lifecycle(community, :doc, draft, branch, state) do
+  defp transition_lifecycle(community, :doc, draft, branch, state, _opts) do
     DocLifecycle.transition(community.id, branch.id, draft.article_hash_id, state)
   end
 
-  defp transition_lifecycle(community, thread, draft, _branch, state) do
-    ArticleLifecycle.transition(community.id, thread, draft.article_hash_id, state)
+  defp transition_lifecycle(community, thread, draft, _branch, state, opts) do
+    lifecycle_query =
+      ArticleLifecycleModel
+      |> where(
+        [lifecycle],
+        lifecycle.community_id == ^community.id and lifecycle.thread == ^thread and
+          lifecycle.article_hash_id == ^draft.article_hash_id
+      )
+      |> lock("FOR UPDATE")
+
+    with %ArticleLifecycleModel{} = lifecycle <- Repo.one(lifecycle_query),
+         :ok <- ensure_expected_lifecycle_version(lifecycle, opts) do
+      ArticleLifecycle.transition(lifecycle, state)
+    else
+      nil -> {:error, GroupherServer.CMS.ErrorCat.lifecycle_not_found()}
+      error -> error
+    end
   end
 
   defp maybe_snapshot(:doc, article, user),

@@ -58,8 +58,8 @@ defmodule GroupherServer.Test.Helper.Schema.DocTree do
 
   def m(:delete_doc_tree_node) do
     """
-    mutation($community: String!, $id: ID!, $baseRevision: Int!) {
-      deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+    mutation($community: String!, $id: ID!, $baseRevision: Int!, $commandKey: ID!) {
+      deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision, commandKey: $commandKey) {
         revision
         conflict
       }
@@ -69,8 +69,8 @@ defmodule GroupherServer.Test.Helper.Schema.DocTree do
 
   def m(:restore_doc_tree_trash_item) do
     """
-    mutation($community: String!, $id: ID!, $baseRevision: Int!) {
-      restoreDocTreeTrashItem(community: $community, id: $id, baseRevision: $baseRevision) {
+    mutation($community: String!, $id: ID!, $baseRevision: Int!, $commandKey: ID!) {
+      restoreDocTreeTrashItem(community: $community, id: $id, baseRevision: $baseRevision, commandKey: $commandKey) {
         revision
         conflict
         node {

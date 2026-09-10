@@ -54,11 +54,15 @@ type TBaseArticle = {
   digest?: string
   body?: string
   views?: number
+  viewsRevision?: number
   copyRight?: string
   isQuestion?: boolean
   isPinned?: boolean
   author?: TAccount
   upvotesCount?: number
+  collectsCount?: number
+  articleInteractionRevision?: number
+  emotions?: TEmotion[]
   community?: TCommunity
   communities?: readonly TCommunity[]
   commentsParticipants?: readonly TUser[]
@@ -67,8 +71,10 @@ type TBaseArticle = {
   updatedAt?: string
   viewerHasViewed?: boolean
   viewerHasCollected?: boolean
+  viewerEmotion?: string | null
   viewerHasUpvoted?: boolean
   commentsCount?: number
+  commentsRevision?: number
   communityTags?: readonly TTag[]
   meta?: TArticleMeta
   document?: TDocument
@@ -150,6 +156,9 @@ export type TComment = {
   replies?: TComment[]
   replyToComment?: TComment
   upvotesCount?: number
+  commentInteractionRevision?: number
+  commandKey?: string
+  reactionOutcome?: string
   viewerHasUpvoted?: boolean
   viewerHasReported?: boolean
   isArticleAuthor?: boolean
@@ -165,6 +174,8 @@ export type TComment = {
     innerId?: string
     title?: string
     thread?: TThread
+    commentsCount?: number
+    commentsRevision?: number
     author?: {
       login
       nickname
