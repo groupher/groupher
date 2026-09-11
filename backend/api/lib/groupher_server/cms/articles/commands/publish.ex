@@ -18,6 +18,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   alias Helper.T
 
   @doc "Publishes an Article Draft under a stable command key."
+  @spec publish(Community.t(), T.thread(), T.article(), User.t(), keyword() | map()) ::
+          T.domain_res(%{article: T.article(), snapshot: nil})
+  def publish(community, thread, article, %User{} = user, opts) when is_struct(article) do
+    publish(community, thread, article.article_hash_id, user, opts)
+  end
+
   @spec publish(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
           T.domain_res(%{article: T.article(), snapshot: nil})
   def publish(community, thread, article_hash_id, %User{} = user, opts) do

@@ -16,9 +16,14 @@ defmodule GroupherServer.CMS.Docs do
   alias GroupherServer.CMS.Model.{Community, DocSnapshot}
   alias Helper.T
 
-  @doc "Reads the current Doc editor head in the selected branch."
+  @doc "Reads the current Doc content head shown by the editor; this is not the rich-text editor implementation."
+  def read_editor_head(%Community{} = community, doc_id, opts \\ []) do
+    CMS.Articles.read_editor_head(community, :doc, doc_id, opts)
+  end
+
+  @doc "Compatibility alias for `read_editor_head/3`."
   def read_editor(%Community{} = community, doc_id, opts \\ []) do
-    CMS.Articles.read_editor(community, :doc, doc_id, opts)
+    read_editor_head(community, doc_id, opts)
   end
 
   @doc "Lists immutable revisions for one Doc in the selected branch."
@@ -91,7 +96,7 @@ defmodule GroupherServer.CMS.Docs do
               {:ok, result, %{result_key: result.article_hash_id}}
             end
           end,
-          fn _receipt -> CMS.Articles.read_editor(community, :doc, doc_id, opts) end
+          fn _receipt -> CMS.Articles.read_editor_head(community, :doc, doc_id, opts) end
         )
       end
     else

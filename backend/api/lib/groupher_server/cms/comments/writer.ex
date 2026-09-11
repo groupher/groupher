@@ -88,23 +88,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) :: T.domain_res(map())
-  def create(%Community{} = community, thread, article_id, body, %User{} = user),
-    do: create(community, thread, article_id, body, user, nil)
-
-  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t() | nil) ::
-          T.domain_res(map())
-  @doc "Creates a top-level Comment using an optional idempotency command key."
-  def create(%Community{} = community, thread, article_id, body, %User{} = user, command_key) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <-
-           FrontDesk.article(community, thread, article_id,
-             preload: [[author: :user], :community]
-           ) do
-      do_create(thread, article, body, user, info, command_key)
-    end
-  end
-
   defp do_create(thread, article, body, %User{} = user, info, command_key) do
     article = Repo.preload(article, [[author: :user], :community])
 
@@ -181,50 +164,54 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   ## Examples
 
-      CMS.Comments.Writer.reply(comment_id, body, actor)
+      CMS.Comments.Writer.reply(parent_comment, body, actor)
   """
-  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(map())
-  def reply(comment_id, body, %User{} = user), do: reply(comment_id, body, user, nil)
+  @spec reply(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(map())
+  def reply(comment_or_id, body, %User{} = user), do: reply(comment_or_id, body, user, nil)
 
-  @spec reply(T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
+  @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   @doc "Creates a reply using an optional idempotency command key."
-  def reply(comment_id, body, %User{} = user, command_key) do
-    with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id) do
-      with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
-        CommandReceipt.run_user_command(
-          user,
-          command_key,
-          "comment.reply",
-          "comment",
-          target_comment.id,
-          body,
-          fn ->
-            with {:ok, result} <-
-                   Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical ->
-                     reply_new_from_canonical(canonical, body, user, command_key)
-                   end) do
-              {:ok, result, %{result_key: result.comment.id}}
-            end
-          end,
-          fn receipt ->
-            with {:ok, article} <-
-                   FrontDesk.article_of(target_comment, preload: [[author: :user], :community]) do
-              replay_created(receipt, article, command_key)
-            end
+  def reply(%Comment{} = target_comment, body, %User{} = user, command_key) do
+    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
+      CommandReceipt.run_user_command(
+        user,
+        command_key,
+        "comment.reply",
+        "comment",
+        target_comment.id,
+        body,
+        fn ->
+          with {:ok, result} <-
+                 Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical,
+                                                                                 article ->
+                   reply_new_from_canonical(canonical, article, body, user, command_key)
+                 end) do
+            {:ok, result, %{result_key: result.comment.id}}
           end
-        )
-        |> normalize_comments_locked()
-        |> sync_article_metrics()
-        |> enqueue_reply_followups(user)
-      end
+        end,
+        fn receipt ->
+          with {:ok, article} <-
+                 FrontDesk.article_of(target_comment, preload: [[author: :user], :community]) do
+            replay_created(receipt, article, command_key)
+          end
+        end
+      )
+      |> normalize_comments_locked()
+      |> sync_article_metrics()
+      |> enqueue_reply_followups(user)
     end
   end
 
-  defp reply_new_from_canonical(canonical, body, %User{} = user, command_key) do
+  def reply(comment_id, body, %User{} = user, command_key) do
+    with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id) do
+      reply(target_comment, body, user, command_key)
+    end
+  end
+
+  defp reply_new_from_canonical(canonical, article, body, %User{} = user, command_key) do
     with replying_comment <- Repo.preload(canonical, reply_to_comment: :author),
          {:ok, thread} <- FrontDesk.thread_of(replying_comment),
-         {:ok, article} <-
-           FrontDesk.article_of(replying_comment, preload: [[author: :user], :community]),
+         article <- Repo.preload(article, [[author: :user], :community]),
          {:ok, info} <- match(thread),
          {:ok, result} <-
            reply_new(replying_comment, body, user, thread, info, article, command_key) do

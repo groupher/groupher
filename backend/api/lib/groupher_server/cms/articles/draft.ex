@@ -120,14 +120,14 @@ defmodule GroupherServer.CMS.Articles.Draft do
   Ordinary Articles prefer their Draft and fall back to Public. Docs resolve
   the editor's explicit branch and never fall back across branches.
   """
-  @spec read_editor(
+  @spec read_editor_head(
           Community.t(),
           T.thread(),
           Ecto.UUID.t(),
           DocBranch.t() | map() | keyword() | nil
         ) ::
           T.domain_res(T.article())
-  def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
+  def read_editor_head(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref) do
       case read(community, thread, article_hash_id, branch_ref) do
         {:ok, draft} ->
@@ -144,6 +144,17 @@ defmodule GroupherServer.CMS.Articles.Draft do
           error
       end
     end
+  end
+
+  @doc "Compatibility alias for `read_editor_head/4`."
+  @spec read_editor(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          DocBranch.t() | map() | keyword() | nil
+        ) :: T.domain_res(T.article())
+  def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
+    read_editor_head(community, thread, article_hash_id, branch_ref)
   end
 
   @doc "Creates a new Article draft and its derived ArticleDocument."
@@ -213,9 +224,9 @@ defmodule GroupherServer.CMS.Articles.Draft do
     run_locked(community, thread, article_hash_id, attrs, fn ->
       draft_result = read(community, thread, article_hash_id, attrs)
 
-      with {:ok, editor_article} <- read_editor(community, thread, article_hash_id, attrs),
-           {:ok, _canonical_article} <- Gate.access_check(user, :edit, editor_article),
-           :ok <- validate_version(editor_article, attrs, require_version?: true),
+      with {:ok, editor_article} <- read_editor_head(community, thread, article_hash_id, attrs),
+           {:ok, canonical_article} <- Gate.access_check(user, :edit, editor_article),
+           :ok <- validate_version(canonical_article, attrs, require_version?: true),
            {:ok, _draft} <-
              ensure_from_public_unlocked(community, thread, article_hash_id, attrs, user) do
         update_opts =

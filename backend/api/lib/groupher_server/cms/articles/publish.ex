@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
         public_article.article_hash_id,
         nil,
         fn ->
-          with {:ok, _canonical_article} <- Gate.access_check(user, :edit, public_article),
+          with {:ok, canonical_article} <- Gate.access_check(user, :edit, public_article),
                {:ok, draft} <-
                  Draft.ensure_from_public_unlocked(
                    community,
@@ -108,7 +108,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
                    attrs,
                    require_version?: true
                  ),
-               {:ok, _public_article} <- States.update_edit_status(public_article),
+               {:ok, _public_article} <- States.update_edit_status(canonical_article),
                {:ok, updated_draft} <- States.update_edit_status(updated_draft) do
             {:ok, updated_draft}
           else
@@ -149,14 +149,21 @@ defmodule GroupherServer.CMS.Articles.Publish do
          :ok <- validate_publish_branch(thread, branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
          :ok <- ensure_expected_version(draft, branch_ref),
-         {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
-         :ok <- validate_version(draft),
-         restored_publish? <- thread == :doc and Snapshot.restored_draft?(draft),
-         previous <- previous_public(community, thread, branch, draft),
+         {:ok, canonical_draft} <- Gate.access_check(user, :publish, draft),
+         :ok <- validate_version(canonical_draft),
+         restored_publish? <- thread == :doc and Snapshot.restored_draft?(canonical_draft),
+         previous <- previous_public(community, thread, branch, canonical_draft),
          {:ok, public_article, first_publish?} <-
-           apply_draft(community, thread, branch, draft),
+           apply_draft(community, thread, branch, canonical_draft),
          {:ok, lifecycle} <-
-           transition_lifecycle(community, thread, draft, branch, :published, branch_ref),
+           transition_lifecycle(
+             community,
+             thread,
+             canonical_draft,
+             branch,
+             :published,
+             branch_ref
+           ),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
@@ -396,7 +403,12 @@ defmodule GroupherServer.CMS.Articles.Publish do
     Later.run({Events, :emit, [:audition, %{artiment: public_article}]})
 
     if first_publish? do
-      Later.run({Write, :notify_admin_new_article, [public_article]})
+      # Keep the durable job payload to stable identity; the notification
+      # worker reloads the current Article authority when it executes.
+      Later.run(
+        {Write, :notify_admin_new_article,
+         [%{target: public_article.__struct__, id: public_article.id}]}
+      )
     end
 
     :ok

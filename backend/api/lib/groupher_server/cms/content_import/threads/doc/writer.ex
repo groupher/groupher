@@ -263,7 +263,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   end
 
   defp do_write_item(community, target_ref, attrs, actor, branch, :public) do
-    with {:ok, editor} <- Draft.read_editor(community, :doc, target_ref, branch) do
+    with {:ok, editor} <- Draft.read_editor_head(community, :doc, target_ref, branch) do
       Draft.update_or_create_from_public(
         community,
         :doc,

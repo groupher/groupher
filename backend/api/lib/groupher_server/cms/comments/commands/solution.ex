@@ -1,34 +1,54 @@
-defmodule GroupherServer.CMS.Comments.Commands.SolutionTransition do
+defmodule GroupherServer.CMS.Comments.Commands.Solution do
   @moduledoc """
-  Implements relation transitions shared by solution and delete Commands.
+  Runs the complete solution command family for one QA Post.
 
-  The caller already owns the Post aggregate transaction and advisory lock.
-  This module never opens another boundary or invokes Gate again.
+      resolved Comment
+        -> Gate authorization + Post aggregate transaction/lock
+        -> accept | replace | revoke
+        -> PostSolution relation + Activity
 
-      authorized aggregate callback
-        -> lock/read current PostSolution row
-        -> accept | replace | revoke | unchanged
-        -> write Activity in the same transaction
-        -> return to owning Command
+  The module intentionally groups the closely related accept/revoke actions.
+  `revoke_if_current/5` is the narrow reconciliation entry used by the
+  Comment delete command; it is not a separate public command family.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Activity, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Gate
   alias GroupherServer.CMS.Comments.ErrorCat
   alias GroupherServer.CMS.Model.{Comment, Post, PostSolution}
 
   @doc """
-  Locks and returns the current solution relation for a Post.
-
-  The caller must already own the Post aggregate transaction.
+  Accepts or replaces the current solution of a QA Post.
 
   ## Examples
 
-      SolutionTransition.current(post)
-      #=> %PostSolution{} | nil
+      Commands.Solution.accept(comment, actor)
   """
+  @spec accept(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
+  def accept(%Comment{} = comment, %User{} = actor) do
+    Gate.Access.with_check(actor, :accept_solution, comment, fn canonical, post ->
+      accept_in_transaction(post, canonical, actor)
+    end)
+  end
+
+  @doc """
+  Revokes a Comment only when it is the current solution of its QA Post.
+
+  ## Examples
+
+      Commands.Solution.revoke(comment, actor)
+  """
+  @spec revoke(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
+  def revoke(%Comment{} = comment, %User{} = actor) do
+    Gate.Access.with_check(actor, :revoke_solution, comment, fn canonical, post ->
+      revoke_in_transaction(post, canonical, actor)
+    end)
+  end
+
+  @doc "Locks and returns the current solution relation for a Post."
   @spec current(Post.t()) :: PostSolution.t() | nil
   def current(%Post{id: post_id}) do
     PostSolution
@@ -37,16 +57,36 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionTransition do
     |> Repo.one()
   end
 
-  @doc """
-  Accepts or replaces a Post solution inside the owning transaction.
+  @doc "Revokes a relation only when it points to the supplied Comment."
+  @spec revoke_if_current(Post.t(), Comment.t(), User.t(), Ecto.UUID.t(), DateTime.t()) ::
+          {:ok, :unchanged | :revoked} | {:error, term()}
+  def revoke_if_current(
+        %Post{} = post,
+        %Comment{} = comment,
+        %User{} = actor,
+        operation_ref,
+        occurred_at
+      ) do
+    case current(post) do
+      %PostSolution{comment_id: comment_id} = solution when comment_id == comment.id ->
+        with {:ok, _} <- Repo.delete(solution),
+             {:ok, _} <-
+               Activity.log(post, :solution_revoked,
+                 actor: actor,
+                 target: comment,
+                 operation_ref: operation_ref,
+                 occurred_at: occurred_at,
+                 payload: %{}
+               ) do
+          {:ok, :revoked}
+        end
 
-  ## Examples
+      _ ->
+        {:ok, :unchanged}
+    end
+  end
 
-      SolutionTransition.accept(post, comment, actor)
-      #=> {:ok, %Comment{is_solution: true}} | {:error, reason}
-  """
-  @spec accept(Post.t(), Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
-  def accept(%Post{} = post, %Comment{} = comment, %User{} = actor) do
+  defp accept_in_transaction(%Post{} = post, %Comment{} = comment, %User{} = actor) do
     current = current(post)
 
     if match?(%PostSolution{comment_id: id} when id == comment.id, current) do
@@ -63,19 +103,7 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionTransition do
     end
   end
 
-  @doc """
-  Revokes the requested Comment when it is the Post's current solution.
-
-  A Post without a current relation succeeds without side effects; requesting
-  another Comment returns `solution_target_mismatch`.
-
-  ## Examples
-
-      SolutionTransition.revoke(post, comment, actor)
-      #=> {:ok, %Comment{is_solution: false}} | {:error, reason}
-  """
-  @spec revoke(Post.t(), Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
-  def revoke(%Post{} = post, %Comment{} = comment, %User{} = actor) do
+  defp revoke_in_transaction(%Post{} = post, %Comment{} = comment, %User{} = actor) do
     case current(post) do
       nil ->
         {:ok, %{comment | is_solution: false}}
@@ -102,39 +130,6 @@ defmodule GroupherServer.CMS.Comments.Commands.SolutionTransition do
                ) do
           {:ok, %{comment | is_solution: false}}
         end
-    end
-  end
-
-  @doc """
-  Revokes a relation only when it currently points to the supplied Comment.
-
-  Delete commands pass their own operation reference and timestamp so the
-  reconciliation Activity shares the command identity.
-
-  ## Examples
-
-      SolutionTransition.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
-      #=> {:ok, :revoked} | {:ok, :unchanged} | {:error, reason}
-  """
-  @spec revoke_if_current(Post.t(), Comment.t(), User.t(), Ecto.UUID.t(), DateTime.t()) ::
-          {:ok, :unchanged | :revoked} | {:error, term()}
-  def revoke_if_current(post, comment, actor, operation_ref, occurred_at) do
-    case current(post) do
-      %PostSolution{comment_id: comment_id} = solution when comment_id == comment.id ->
-        with {:ok, _} <- Repo.delete(solution),
-             {:ok, _} <-
-               Activity.log(post, :solution_revoked,
-                 actor: actor,
-                 target: comment,
-                 operation_ref: operation_ref,
-                 occurred_at: occurred_at,
-                 payload: %{}
-               ) do
-          {:ok, :revoked}
-        end
-
-      _ ->
-        {:ok, :unchanged}
     end
   end
 

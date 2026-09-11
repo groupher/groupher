@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
                    thread when is_atom(thread) <- option(clean_opts, :thread),
                    article_hash_id when is_binary(article_hash_id) <- receipt.result_key,
                    {:ok, community} <- fetch_community(community_id) do
-                Draft.read_editor(community, thread, article_hash_id, clean_opts)
+                Draft.read_editor_head(community, thread, article_hash_id, clean_opts)
               else
                 _ -> {:error, ErrorCat.not_exist("Article")}
               end
@@ -203,7 +203,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp replay_restored_article(receipt, community_id, thread, opts) do
     with {:ok, community} <- fetch_community(community_id),
          article_hash_id when is_binary(article_hash_id) <- receipt.result_key do
-      Draft.read_editor(community, thread, article_hash_id, opts)
+      Draft.read_editor_head(community, thread, article_hash_id, opts)
     else
       _ -> {:error, ErrorCat.not_exist("Article")}
     end

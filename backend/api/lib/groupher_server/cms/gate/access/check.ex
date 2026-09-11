@@ -158,6 +158,27 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
+  @doc false
+  @spec with_authorized(
+          term(),
+          atom(),
+          tuple(),
+          (struct(), struct() -> term())
+        ) ::
+          {:ok, term()} | {:error, term()}
+  def with_authorized(actor, action, {community, thread, article, %Comment{} = comment}, callback)
+      when is_function(callback, 2) do
+    with {:ok, context} <- Load.comment(community, thread, article, comment),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(Policy.comment(actor, action, context.comment, context), context) do
+      callback.(decision.context.comment, decision.context.article)
+      |> normalize_callback_result()
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
   def with_authorized(actor, action, {community, article}, callback)
       when is_function(callback, 1) do
     with {:ok, thread} <- article_thread(article),

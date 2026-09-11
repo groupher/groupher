@@ -150,6 +150,10 @@ defmodule GroupherServer.CMS.DocTree do
   @doc """
   Updates the draft content associated with a docs page.
   """
+  @spec update_draft(Community.t(), Doc.t(), map(), User.t()) :: T.domain_res(map())
+  def update_draft(%Community{} = community, %Doc{} = doc, args, %User{} = user),
+    do: Commands.Node.update_draft(community, doc, args, user)
+
   @spec update_draft(Community.t(), T.id(), map(), User.t()) :: T.domain_res(map())
   def update_draft(%Community{} = community, id, args, %User{} = user),
     do: Commands.Node.update_draft(community, id, args, user)

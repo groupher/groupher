@@ -1,5 +1,6 @@
 defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   require GroupherServer.CMS.DocTree.Const
+
   @moduledoc """
   Publishes one docs article draft and its public tree shell.
 
@@ -103,8 +104,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
       MutationLock.with_article(community, :doc, branch.id, public_doc.article_hash_id, fn ->
         case CMS.Gate.access_check(user, :edit, public_doc) do
-          {:ok, _canonical_doc} ->
-            read_or_create_draft(community, branch, public_doc, document, user)
+          {:ok, canonical_doc} ->
+            read_or_create_draft(community, branch, canonical_doc, document, user)
 
           {:error, %Decision{} = decision} ->
             {:error, Decision.primary_error(decision)}

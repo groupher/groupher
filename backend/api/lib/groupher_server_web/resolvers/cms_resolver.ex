@@ -442,7 +442,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: %Community{} = community, id: doc_id},
         %{context: %{cur_user: user}}
       ) do
-    CMS.Docs.read_editor(community, doc_id,
+    CMS.Docs.read_editor_head(community, doc_id,
       actor: user,
       policy_mode: :moderator_management
     )
@@ -454,7 +454,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{context: %{cur_user: user}}
       ) do
     with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
-      CMS.Docs.read_editor(community, doc_id,
+      CMS.Docs.read_editor_head(community, doc_id,
         actor: user,
         policy_mode: :moderator_management
       )
@@ -523,12 +523,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def update_doc_draft(
         _root,
-        %{community: community, id: doc_id, cur_user: user} = args,
+        %{community: community, article: doc, cur_user: user} = args,
         _info
       ) do
     CMS.DocTree.update_draft(
       community,
-      doc_id,
+      doc,
       Map.take(args, [:title, :subtitle, :slug, :body_bag, :expected_version, :command_key]),
       user
     )
@@ -922,15 +922,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp update_article_draft(
          _root,
-         %{community: community, thread: thread, id: article_hash_id} = args,
+         %{community: community, thread: thread, article: article} = args,
          %{context: %{cur_user: user}}
        ) do
     CMS.Articles.update_draft(
       community,
       thread,
-      article_hash_id,
+      article,
       args
-      |> Map.drop([:community, :thread, :id, :passport_is_owner])
+      |> Map.drop([:community, :thread, :id, :article, :passport_is_owner])
       |> Map.put(:cur_user, user),
       user,
       command_key: args[:command_key]
@@ -939,11 +939,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp publish_article_draft(
          _root,
-         %{community: community, thread: thread, id: article_hash_id} = args,
+         %{community: community, thread: thread, article: article} = args,
          %{context: %{cur_user: user}}
        ) do
     with {:ok, %{article: public_article}} <-
-           CMS.Articles.publish_draft(community, thread, article_hash_id, user,
+           CMS.Articles.publish_draft(community, thread, article, user,
              command_key: args[:command_key],
              expected_version: args[:expected_version],
              expected_lifecycle_version: args[:expected_lifecycle_version],
@@ -1631,7 +1631,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def reply_comment(_root, %{comment: comment, body: body} = args, %{context: %{cur_user: user}}) do
-    CMS.Comments.reply_comment_payload(comment.id, body, user, Map.get(args, :command_key))
+    CMS.Comments.reply_comment_payload(comment, body, user, Map.get(args, :command_key))
   end
 
   def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
@@ -1674,7 +1674,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       accept_solution(root, %{comment: comment}, resolution)
   """
   def accept_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.accept_solution(comment.id, user)
+    CMS.Comments.accept_solution(comment, user)
   end
 
   @doc """
@@ -1685,14 +1685,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       revoke_solution(root, %{comment: comment}, resolution)
   """
   def revoke_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.revoke_solution(comment.id, user)
+    CMS.Comments.revoke_solution(comment, user)
   end
 
   def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
-    do: CMS.Comments.pin_comment(comment.id, user)
+    do: CMS.Comments.pin_comment(comment, user)
 
   def undo_pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
-    do: CMS.Comments.undo_pin_comment(comment.id, user)
+    do: CMS.Comments.undo_pin_comment(comment, user)
 
   def emotions(%{thread: _} = root, _args, _info) do
     {:ok, EmotionFormatter.format(root, :comment)}

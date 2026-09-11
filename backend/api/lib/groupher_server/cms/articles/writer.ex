@@ -23,8 +23,16 @@ defmodule GroupherServer.CMS.Articles.Writer do
 
   @doc "Notifies community administrators after the first official Article publish."
   @spec notify_admin_new_article(map()) :: T.domain_res(term())
-  def notify_admin_new_article(%{id: id} = result) do
-    target = result.__struct__
+  def notify_admin_new_article(%{target: target, id: id}) when is_atom(target) do
+    do_notify_admin_new_article(target, id)
+  end
+
+  @doc false
+  def notify_admin_new_article(%{__struct__: target, id: id}) do
+    do_notify_admin_new_article(target, id)
+  end
+
+  defp do_notify_admin_new_article(target, id) do
     preload = [:community, author: :user]
 
     with {:ok, article} <- FrontDesk.get(target, id, preload: preload) do
@@ -34,12 +42,7 @@ defmodule GroupherServer.CMS.Articles.Writer do
         digest: Map.get(article, :digest, article.title),
         author_name: article.author.user.nickname,
         community_slug: article.community.slug,
-        type:
-          result.__struct__
-          |> to_string()
-          |> String.split(".")
-          |> List.last()
-          |> String.downcase()
+        type: target |> to_string() |> String.split(".") |> List.last() |> String.downcase()
       }
 
       Messaging.notify(:notify_admin_new_article, info)

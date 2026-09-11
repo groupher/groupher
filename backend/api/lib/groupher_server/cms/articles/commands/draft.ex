@@ -46,6 +46,12 @@ defmodule GroupherServer.CMS.Articles.Commands.Draft do
   end
 
   @doc "Updates or creates a persistent Article Draft under a stable command key."
+  @spec update(Community.t(), T.thread(), T.article(), map(), User.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def update(community, thread, article, attrs, %User{} = user, opts) when is_struct(article) do
+    update(community, thread, article.article_hash_id, attrs, user, opts)
+  end
+
   @spec update(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def update(community, thread, article_hash_id, attrs, %User{} = user, opts) do
@@ -72,7 +78,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Draft do
             {:ok, result, %{result_key: result.article_hash_id}}
           end
         end,
-        fn _receipt -> ArticleDraft.read_editor(community, thread, article_hash_id, attrs) end
+        fn _receipt ->
+          ArticleDraft.read_editor_head(community, thread, article_hash_id, attrs)
+        end
       )
     end
   end

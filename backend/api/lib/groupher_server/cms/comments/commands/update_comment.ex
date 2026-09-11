@@ -45,8 +45,8 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
         comment.id,
         body,
         fn ->
-          Gate.Access.with_check(actor, :edit, comment, fn canonical ->
-            update_new(canonical, body, command_key)
+          Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+            update_new(canonical, article, body, command_key)
           end)
         end,
         fn _receipt ->
@@ -63,11 +63,10 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
     end
   end
 
-  defp update_new(canonical, body, command_key) do
+  defp update_new(canonical, article, body, command_key) do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
-         {:ok, article} <- FrontDesk.article_of(canonical),
          {:ok, updated_article} <- ORM.inc(article, :comments_revision),
          {:ok, synced} <- FrontDesk.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced) do

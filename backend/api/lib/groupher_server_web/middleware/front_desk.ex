@@ -6,7 +6,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   Resolves public GraphQL references into domain models before a resolver runs.
 
   It loads community, account, article, or comment records and enriches resolver
-  arguments with ownership flags so resolvers do not duplicate lookup logic.
+  arguments with ownership flags so resolvers do not duplicate lookup logic. The
+  `:article_editor` variant stores the selected Draft/Public editor head under
+  `arguments.article` before the resolver runs.
 
   Business position:
 
@@ -127,11 +129,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article} <- CMS.Articles.read_editor(community, thread, article_hash_id) do
+         {:ok, article} <- CMS.Articles.read_editor_head(community, thread, article_hash_id) do
       article = Repo.preload(article, author: :user)
 
       updated_arguments =
-        maybe_put_article_passport_is_owner(arguments, article, resolution)
+        arguments
+        |> Map.put(:article, article)
+        |> maybe_put_article_passport_is_owner(article, resolution)
 
       %{resolution | arguments: updated_arguments}
     else

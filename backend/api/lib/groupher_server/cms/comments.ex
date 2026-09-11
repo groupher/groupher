@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments do
   """
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Model.{Comment, Community}
   alias Helper.T
 
@@ -25,7 +26,7 @@ defmodule GroupherServer.CMS.Comments do
     Writer
   }
 
-  alias __MODULE__.Commands.{AcceptSolution, DeleteComment, RevokeSolution, UpdateComment}
+  alias __MODULE__.Commands.{DeleteComment, Solution, UpdateComment}
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   @doc """
@@ -259,8 +260,12 @@ defmodule GroupherServer.CMS.Comments do
         %User{} = user,
         command_key
       ) do
-    with {:ok, %{comment: comment}} <-
-           Writer.create(community, thread, article_id, body, user, command_key) do
+    with {:ok, article} <-
+           FrontDesk.article(community, thread, article_id,
+             preload: [[author: :user], :community]
+           ),
+         {:ok, %{comment: comment}} <-
+           Writer.create(thread, article, body, user, command_key) do
       {:ok, comment}
     end
   end
@@ -334,43 +339,54 @@ defmodule GroupherServer.CMS.Comments do
 
   ## Examples
 
-      CMS.Comments.accept_solution(comment_id, post_author)
+      CMS.Comments.accept_solution(comment, post_author)
   """
-  @spec accept_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def accept_solution(comment_id, %User{} = user),
-    do: AcceptSolution.execute(comment_id, user)
+  @spec accept_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
+  def accept_solution(%Comment{} = comment, %User{} = user), do: Solution.accept(comment, user)
+
+  def accept_solution(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+      Solution.accept(comment, user)
+    end
+  end
 
   @doc """
   Revokes a Comment when it is the current solution of its QA Post.
 
   ## Examples
 
-      CMS.Comments.revoke_solution(comment_id, post_author)
+      CMS.Comments.revoke_solution(comment, post_author)
   """
-  @spec revoke_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def revoke_solution(comment_id, %User{} = user),
-    do: RevokeSolution.execute(comment_id, user)
+  @spec revoke_solution(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
+  def revoke_solution(%Comment{} = comment, %User{} = user), do: Solution.revoke(comment, user)
 
-  @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  def revoke_solution(comment_id, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+      Solution.revoke(comment, user)
+    end
+  end
+
+  @spec reply_comment(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   @doc """
   Creates a reply and returns the resulting Comment.
 
   ## Examples
 
-      CMS.Comments.reply_comment(parent_id, body, actor)
+      CMS.Comments.reply_comment(parent_comment, body, actor)
   """
-  def reply_comment(comment_id, body, %User{} = user),
-    do: reply_comment(comment_id, body, user, nil)
+  def reply_comment(comment_or_id, body, %User{} = user),
+    do: reply_comment(comment_or_id, body, user, nil)
 
-  @spec reply_comment(T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
-  def reply_comment(comment_id, body, %User{} = user, command_key) do
+  @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(Comment.t())
+  def reply_comment(comment_or_id, body, %User{} = user, command_key) do
     with {:ok, %{comment: comment}} <-
-           reply_comment_payload(comment_id, body, user, command_key) do
+           reply_comment_payload(comment_or_id, body, user, command_key) do
       {:ok, comment}
     end
   end
 
-  @spec reply_comment_payload(T.id(), String.t(), User.t(), String.t() | nil) ::
+  @spec reply_comment_payload(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(map())
   @doc """
   Creates a reply and returns the canonical Comment/Article payload.
@@ -379,8 +395,16 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.reply_comment_payload(parent_id, body, actor)
   """
-  def reply_comment_payload(comment_id, body, %User{} = user, command_key \\ nil),
-    do: Writer.reply(comment_id, body, user, command_key)
+  def reply_comment_payload(comment_or_id, body, user, command_key \\ nil)
+
+  def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_key),
+    do: Writer.reply(comment, body, user, command_key)
+
+  def reply_comment_payload(comment_id, body, %User{} = user, command_key) do
+    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+      Writer.reply(comment, body, user, command_key)
+    end
+  end
 
   @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   @doc """
@@ -392,14 +416,15 @@ defmodule GroupherServer.CMS.Comments do
   """
   def pin_comment(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
-  @spec pin_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc """
   Pins one Comment independently of its solution state.
 
   ## Examples
 
-      CMS.Comments.pin_comment(comment_id, actor)
+      CMS.Comments.pin_comment(comment, actor)
   """
+  def pin_comment(%Comment{} = comment, %User{} = user), do: States.pin(comment, user)
   def pin_comment(comment_id, %User{} = user), do: States.pin(comment_id, user)
 
   @spec undo_pin_comment(T.id()) :: T.domain_res(Comment.t())
@@ -412,34 +437,37 @@ defmodule GroupherServer.CMS.Comments do
   """
   def undo_pin_comment(_comment_id), do: {:error, AuthErrorCat.account_login()}
 
-  @spec undo_pin_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec undo_pin_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc """
   Removes one Comment's independent pin relation.
 
   ## Examples
 
-      CMS.Comments.undo_pin_comment(comment_id, actor)
+      CMS.Comments.undo_pin_comment(comment, actor)
   """
+  def undo_pin_comment(%Comment{} = comment, %User{} = user), do: States.undo_pin(comment, user)
   def undo_pin_comment(comment_id, %User{} = user), do: States.undo_pin(comment_id, user)
 
-  @spec fold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec fold_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc """
   Folds one Comment for an authorized actor.
 
   ## Examples
 
-      CMS.Comments.fold_comment(comment_id, actor)
+      CMS.Comments.fold_comment(comment, actor)
   """
+  def fold_comment(%Comment{} = comment, %User{} = user), do: States.fold(comment, user)
   def fold_comment(comment_id, %User{} = user), do: States.fold(comment_id, user)
 
-  @spec unfold_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec unfold_comment(Comment.t() | T.id(), User.t()) :: T.domain_res(Comment.t())
   @doc """
   Restores one folded Comment for an authorized actor.
 
   ## Examples
 
-      CMS.Comments.unfold_comment(comment_id, actor)
+      CMS.Comments.unfold_comment(comment, actor)
   """
+  def unfold_comment(%Comment{} = comment, %User{} = user), do: States.unfold(comment, user)
   def unfold_comment(comment_id, %User{} = user), do: States.unfold(comment_id, user)
 
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())

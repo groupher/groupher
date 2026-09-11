@@ -34,7 +34,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
   - `community_slug` comes from request arguments, then selects one community whitelist bucket.
   - `grant_by_thread` requirements are expanded at runtime into concrete grants via `thread` argument.
   - Article mutations parse `arguments.article` into `arguments.article_path` here, but the
-    article is still loaded later by the `FrontDesk` article middleware.
+    article is still loaded later by the `FrontDesk` article middleware. If an earlier
+    `article_editor` middleware already supplied a struct, Passport preserves it.
   - `global.god == true` bypasses normal checks.
   - `<community_slug>.root == true` bypasses checks only inside that community.
   """
@@ -103,6 +104,16 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp maybe_put_article_path(%{arguments: arguments} = resolution, opts)
        when is_map(arguments) do
+    if match?(%{article: %{__struct__: _}}, arguments) do
+      {:ok, resolution}
+    else
+      do_put_article_path(resolution, arguments, opts)
+    end
+  end
+
+  defp maybe_put_article_path(resolution, _opts), do: {:ok, resolution}
+
+  defp do_put_article_path(resolution, arguments, opts) do
     if Map.has_key?(arguments, :article) or Map.has_key?(arguments, :article_path) do
       # Passport runs before article loading, so it can only prepare the public
       # locator for permission checks. It must not load the article here.
@@ -117,8 +128,6 @@ defmodule GroupherServerWeb.Middleware.Passport do
       {:ok, resolution}
     end
   end
-
-  defp maybe_put_article_path(resolution, _), do: {:ok, resolution}
 
   defp missing_action(resolution) do
     resolution

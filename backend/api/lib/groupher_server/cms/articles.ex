@@ -128,17 +128,40 @@ defmodule GroupherServer.CMS.Articles do
     Draft.read_public(community, thread, article_hash_id, opts)
   end
 
-  @doc "Reads the editor head, with main-draft to main-public fallback."
+  @doc "Reads the Article head shown by the editor; this is a content-head lookup, not a rich-text editor implementation."
+  @spec read_editor_head(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def read_editor_head(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    Draft.read_editor_head(community, thread, article_hash_id, opts)
+  end
+
+  @doc "Compatibility alias for `read_editor_head/4`; use the explicit head name in new code."
   @spec read_editor(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def read_editor(%Community{} = community, thread, article_hash_id, opts \\ []) do
-    Draft.read_editor(community, thread, article_hash_id, opts)
+    read_editor_head(community, thread, article_hash_id, opts)
   end
 
   @doc "Creates the editable Draft from main/public when needed, then applies an update."
+  @spec update_draft(
+          Community.t(),
+          T.thread(),
+          T.article(),
+          map(),
+          User.t(),
+          keyword() | map()
+        ) ::
+          T.domain_res(T.article())
+  def update_draft(community, thread, target, attrs, user, opts \\ [])
+
+  def update_draft(%Community{} = community, thread, article, attrs, %User{} = user, opts)
+      when is_struct(article) do
+    Commands.Draft.update(community, thread, article, attrs, user, opts)
+  end
+
   @spec update_draft(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
-  def update_draft(community, thread, article_hash_id, attrs, %User{} = user, opts \\ []),
+  def update_draft(community, thread, article_hash_id, attrs, %User{} = user, opts),
     do: Commands.Draft.update(community, thread, article_hash_id, attrs, user, opts)
 
   @doc "Compares the current Draft with Public without creating history."
@@ -169,9 +192,24 @@ defmodule GroupherServer.CMS.Articles do
   defp put_option(_opts, key, value), do: [{key, value}]
 
   @doc "Publishes one ordinary Article Draft and returns its public Article."
+  @spec publish_draft(
+          Community.t(),
+          T.thread(),
+          T.article(),
+          User.t(),
+          keyword() | map()
+        ) ::
+          T.domain_res(%{article: T.article(), snapshot: nil})
+  def publish_draft(community, thread, target, user, opts \\ [])
+
+  def publish_draft(%Community{} = community, thread, article, %User{} = user, opts)
+      when is_struct(article) do
+    Commands.Publish.publish(community, thread, article, user, opts)
+  end
+
   @spec publish_draft(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
           T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish_draft(community, thread, article_hash_id, %User{} = user, opts \\ []),
+  def publish_draft(community, thread, article_hash_id, %User{} = user, opts),
     do: Commands.Publish.publish(community, thread, article_hash_id, user, opts)
 
   # Lifecycle

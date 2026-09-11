@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias GroupherServer.CMS.{FrontDesk, Gate}
   alias GroupherServer.CMS.Comments.{Lifecycle, ErrorCat}
   alias GroupherServer.CMS.CommandReceipt
-  alias GroupherServer.CMS.Comments.Commands.SolutionTransition
+  alias GroupherServer.CMS.Comments.Commands.Solution
   alias GroupherServer.CMS.Model.{Comment, PinnedComment, Post}
   alias GroupherServer.CMS.SearchArtiments.Indexer
   alias Helper.{ORM, T}
@@ -47,8 +47,8 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
              comment.id,
              nil,
              fn ->
-               Gate.Access.with_check(actor, :delete, comment, fn canonical ->
-                 delete_new(canonical, actor, command_key)
+               Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+                 delete_new(canonical, article, actor, command_key)
                end)
              end,
              fn _receipt ->
@@ -76,11 +76,10 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
     end
   end
 
-  defp delete_new(%Comment{} = comment, actor, command_key) do
+  defp delete_new(%Comment{} = comment, article, actor, command_key) do
     occurred_at = DateTime.utc_now(:second)
 
-    with {:ok, article} <- FrontDesk.article_of(comment),
-         :ok <- ensure_not_archived(comment),
+    with :ok <- ensure_not_archived(comment),
          {:ok, result} <- delete_new(comment, actor, article, command_key, occurred_at) do
       {:ok, result}
     end
@@ -122,7 +121,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp revoke_if_current(%Post{} = post, comment, actor, operation_ref, occurred_at),
-    do: SolutionTransition.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
+    do: Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
 
   defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at),
     do: {:ok, :unchanged}

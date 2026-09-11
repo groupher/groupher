@@ -55,6 +55,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, {:article_editor, thread: :doc})
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)
     end

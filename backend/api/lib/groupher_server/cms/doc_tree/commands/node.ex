@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   alias GroupherServer.CMS
   alias CMS.DocTree.{CommandReplay, Reader, Writer}
   alias CMS.CommandReceipt
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, Doc}
   alias Helper.T
 
   @doc "Creates one typed tree node through the existing command protocol."
@@ -69,6 +69,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   end
 
   @doc "Updates the Draft content associated with a Docs page."
+  @spec update_draft(Community.t(), Doc.t(), map(), User.t()) :: T.domain_res(map())
+  def update_draft(%Community{} = community, %Doc{} = doc, args, %User{} = user) do
+    # The resolved Doc owns the branch coordinate; an external branch option
+    # must not redirect this resource mutation to another branch.
+    args = Map.put(args, :branch_id, doc.branch_id)
+    update_draft(community, doc.article_hash_id, args, user)
+  end
+
   @spec update_draft(Community.t(), T.id(), map(), User.t()) :: T.domain_res(map())
   def update_draft(%Community{} = community, id, args, %User{} = user) do
     run_doc_command(

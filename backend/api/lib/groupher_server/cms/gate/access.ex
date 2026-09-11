@@ -57,7 +57,9 @@ defmodule GroupherServer.CMS.Gate.Access do
   The callback receives the canonical resource loaded after the advisory lock
   is acquired. It must return `{:ok, result}` or `{:error, reason}`; any other
   shape becomes `unexpected_callback_result`, while raise/throw/exit propagate
-  after rollback.
+  after rollback. An internal arity-2 callback may additionally receive the
+  canonical parent aggregate; this keeps parent reuse inside the Gate/Command
+  boundary without exposing the Access Context.
 
   ## Examples
 
@@ -65,9 +67,16 @@ defmodule GroupherServer.CMS.Gate.Access do
         ORM.update(canonical, attrs)
       end)
   """
-  @spec with_check(term(), atom(), struct(), (struct() -> {:ok, term()} | {:error, term()})) ::
+  @spec with_check(
+          term(),
+          atom(),
+          struct(),
+          (struct(), struct() -> {:ok, term()} | {:error, term()})
+          | (struct() -> {:ok, term()} | {:error, term()})
+        ) ::
           {:ok, term()} | {:error, term()}
-  def with_check(actor, action, %Comment{} = comment, callback) when is_function(callback, 1) do
+  def with_check(actor, action, %Comment{} = comment, callback)
+      when is_function(callback, 1) or is_function(callback, 2) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
          {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
          %Community{} = community <- article.community do

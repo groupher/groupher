@@ -444,7 +444,8 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     case Repo.get(User, Map.get(args, :actor_id)) do
       %User{} = actor ->
         MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
-          with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
+          with {:ok, source} <-
+                 CMS.Articles.read_editor_head(community, :doc, node.doc_id, branch),
                source <- Repo.preload(source, :document),
                %{json: json} = document when is_binary(json) <- source.document,
                {:ok, body_bag} <- BodyBag.from_document(document),
