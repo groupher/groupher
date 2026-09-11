@@ -8,9 +8,9 @@
  * The workflow carries references only. Markdown remains in PreviewStore and
  * BodyBags remain in PostgreSQL staging rather than workflow state.
  *
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/article-publish-import-refactor.md
- * @see docs/bulk-import/import-error-handling.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/article-publish-import-refactor.md
+ * @see docs/content-import/import-error-handling.md
  */
 import { getPreviewStore } from '../../../lib/content-import/core/preview-store'
 import { runPreviewDocBulkImport } from '../../../lib/content-import/threads/docs/publisher'

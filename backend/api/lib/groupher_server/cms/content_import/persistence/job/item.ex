@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Item do
   @moduledoc """
   One selected source document and its bounded staging status.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for terminal item outcomes.
+  See `docs/content-import/article-publish-import-refactor.md` for terminal item outcomes.
 
   Business position:
 

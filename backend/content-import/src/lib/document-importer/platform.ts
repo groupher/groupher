@@ -3,7 +3,7 @@
  *
  *   public URL -> DNS/redirect safety -> bounded fetch -> Markdown deserializer
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 import { Buffer } from 'node:buffer'
 import type { LookupAddress } from 'node:dns'

@@ -4,7 +4,7 @@
  *   local / CI -----> filesystem adapter --+
  *   Vercel --------> private Blob adapter --+--> FilesPreviewStore
  *
- * @see docs/bulk-import/import-file-sdk.md
+ * @see docs/content-import/import-file-sdk.md
  */
 import path from 'node:path'
 

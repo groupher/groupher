@@ -17,8 +17,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   introduced only by target planning. Confirmed intent is revalidated, never
   silently replanned, before Job creation and again inside atomic apply.
 
-  See `docs/bulk-import/content-import-architecture.md` and
-  `docs/bulk-import/bulk-import.md`.
+  See `docs/content-import/content-import-architecture.md` and
+  `docs/content-import/bulk-import.md`.
   """
 
   import Ecto.Query, warn: false

@@ -2,7 +2,7 @@
  *
  *   framework metadata -> node constructors -> canonical SourceTree -> analysis artifact
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import path from 'node:path'
 

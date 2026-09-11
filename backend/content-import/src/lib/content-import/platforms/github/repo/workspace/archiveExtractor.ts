@@ -4,8 +4,8 @@
  *   tar entries -> path validation -> candidate filter -> bounded disk writes
  *                                                    -> SourceWorkspace manifest
  *
- * @see docs/bulk-import/bulk-import.md
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/bulk-import.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import fs from 'node:fs'
 import fsPromises from 'node:fs/promises'

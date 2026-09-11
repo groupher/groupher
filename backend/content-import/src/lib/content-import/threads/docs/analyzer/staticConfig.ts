@@ -3,7 +3,7 @@
  *
  *   repository config source -> Babel AST -> bounded evaluator -> adapter configuration
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 import { parse } from '@babel/parser'
 

@@ -6,8 +6,8 @@
  * Redirect, timeout, compressed-size, and retry handling stay at this platform
  * boundary so SourceWorkspace never depends on GitHub HTTP details.
  *
- * @see docs/bulk-import/bulk-import.md
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/bulk-import.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import { DocsImportError } from '../../../../core/errors'
 

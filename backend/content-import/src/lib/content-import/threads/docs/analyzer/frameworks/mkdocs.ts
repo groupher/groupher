@@ -47,7 +47,7 @@ const navItems = (
 
 /** Maps MkDocs YAML nav and docs_dir configuration into canonical SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeMkDocs = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const configPath = workspace.files

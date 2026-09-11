@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
            v
       typed BodyBag -> Draft / Snapshot / ContentImport Writer
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for the shared publisher boundary.
+  See `docs/content-import/article-publish-import-refactor.md` for the shared publisher boundary.
   """
 
   use Ecto.Schema

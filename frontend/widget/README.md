@@ -39,5 +39,5 @@ the ShadowRoot. The stable loader must remain classic-script compatible.
 
 ## Related documentation
 
-- [`docs/embed-widget/v1.md`](../../docs/embed-widget/v1.md)
-- [`docs/sub-apps/health.md`](../../docs/sub-apps/health.md)
+- [`docs/widget/v1.md`](../../docs/widget/v1.md)
+- [`docs/infra/contracts/health.md`](../../docs/infra/contracts/health.md)

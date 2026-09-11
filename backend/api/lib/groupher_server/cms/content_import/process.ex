@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.ContentImport.Process do
 
   This is a projection only; it never persists a second process state machine.
 
-  See `docs/bulk-import/import-process-log.md`.
+  See `docs/content-import/import-process-log.md`.
 
   Business position:
 

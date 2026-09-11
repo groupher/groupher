@@ -54,6 +54,6 @@ Use `.env.example` as the public configuration inventory.
 
 - [`docs/auth/v1.md`](../../docs/auth/v1.md)
 - [`docs/auth/v2.md`](../../docs/auth/v2.md)
-- [`docs/auth/link_unlink_oauth.md`](../../docs/auth/link_unlink_oauth.md)
-- [`docs/auth/service_token.md`](../../docs/auth/service_token.md)
-- [`docs/sub-apps/auth.md`](../../docs/sub-apps/auth.md)
+- [`docs/auth/link-unlink-oauth.md`](../../docs/auth/link-unlink-oauth.md)
+- [`docs/auth/service-token.md`](../../docs/auth/service-token.md)
+- [`docs/auth/README.md`](../../docs/auth/README.md)

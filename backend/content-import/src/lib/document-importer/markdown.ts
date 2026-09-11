@@ -6,8 +6,8 @@
  * Title promotion and consumed-H1 semantics are implemented by the shared codec;
  * callers provide source options instead of deleting arbitrary first headings.
  *
- * @see docs/bulk-import/markdown-title-normalization.md
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/markdown-title-normalization.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 import { ArtimentPublisherError, assertValidArtimentValue } from '@groupher/artiment-publisher'
 import {

@@ -19,7 +19,7 @@ const CONFIG = /^rspress\.config\.(?:[cm]?[jt]s)$/
 
 /** Maps Rspress config and auto-navigation metadata into canonical SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeRspress = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const configPath = workspace.files.map((file) => file.path).find((file) => CONFIG.test(file))!

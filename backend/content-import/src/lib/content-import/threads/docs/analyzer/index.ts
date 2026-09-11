@@ -10,9 +10,9 @@
  * Framework adapters own source navigation syntax only. Shared document and
  * contract normalization must stay outside adapters.
  *
- * @see docs/bulk-import/bulk-import.md
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/markdown-title-normalization.md
+ * @see docs/content-import/bulk-import.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/markdown-title-normalization.md
  */
 import { createHash } from 'node:crypto'
 

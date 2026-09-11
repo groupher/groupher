@@ -33,5 +33,5 @@ script; generated route output is not hand-maintained.
 ## Related documentation
 
 - [`docs/apply/v1.md`](../../docs/apply/v1.md)
-- [`docs/sub-apps/apply.md`](../../docs/sub-apps/apply.md)
+- [`docs/apply/README.md`](../../docs/apply/README.md)
 - [`docs/auth/v1.md`](../../docs/auth/v1.md)

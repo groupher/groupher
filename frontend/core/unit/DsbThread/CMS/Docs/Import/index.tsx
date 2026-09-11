@@ -21,7 +21,7 @@ import useLogic from './useLogic'
 /**
  * Renders the Docs bulk-import phase selected by the recoverable client controller.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export default function DocumentImport() {
   const s = useSalon()

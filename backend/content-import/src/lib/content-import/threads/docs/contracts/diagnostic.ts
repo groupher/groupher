@@ -3,7 +3,7 @@
  *
  *   analysis JSON -> diagnostic decoder -> bounded BadSmell[] -> Review UI/apply
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import type { TBadSmell } from '../../../core/contracts'
 import { array, ContractError, oneOf, optionalString, record, string } from './decoder'

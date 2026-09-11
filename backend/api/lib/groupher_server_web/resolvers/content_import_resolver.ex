@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   Resolvers adapt names and auth context only. Source parsing belongs to Node;
   target validation and transactional persistence belong to Phoenix.
 
-  See `docs/bulk-import/content-import-architecture.md`.
+  See `docs/content-import/content-import-architecture.md`.
   """
 
   alias GroupherServer.Accounts.Model.User

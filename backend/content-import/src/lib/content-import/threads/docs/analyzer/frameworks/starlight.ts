@@ -24,7 +24,7 @@ const bySlug = (
 
 /** Maps Starlight sidebar configuration and generated directories into SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeStarlight = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const configPath = workspace.files

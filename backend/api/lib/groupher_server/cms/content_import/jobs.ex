@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   `preview_ref` is the idempotency boundary: a retry may return the existing Job
   only when the complete confirmed intent still matches.
 
-  See `docs/bulk-import/content-import-architecture.md` and
-  `docs/bulk-import/article-publish-import-refactor.md`.
+  See `docs/content-import/content-import-architecture.md` and
+  `docs/content-import/article-publish-import-refactor.md`.
   """
 
   import Ecto.Query, warn: false

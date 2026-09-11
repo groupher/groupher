@@ -45,7 +45,7 @@ deployment environment bindings and must not be committed.
 
 ## Related documentation
 
-- [`docs/sub-apps/assets_hub.md`](../../docs/sub-apps/assets_hub.md)
+- [`docs/assets-hub/README.md`](../../docs/assets-hub/README.md)
 - [`docs/assets-hub/v1.md`](../../docs/assets-hub/v1.md)
 - [`docs/assets-hub/v4.md`](../../docs/assets-hub/v4.md)
-- [`docs/sub-apps/health.md`](../../docs/sub-apps/health.md)
+- [`docs/infra/contracts/health.md`](../../docs/infra/contracts/health.md)

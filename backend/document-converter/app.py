@@ -2,7 +2,7 @@
 
 Upload -> origin check -> bounded conversion -> Markdown response
 
-See docs/bulk-import/article-publish-import-refactor.md for the service boundary.
+See docs/content-import/article-publish-import-refactor.md for the service boundary.
 """
 
 from __future__ import annotations

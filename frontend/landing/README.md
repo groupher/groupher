@@ -39,7 +39,7 @@ and Gatus page probes.
 
 ## Related documentation
 
-- [`docs/deploy.md`](../../docs/deploy.md)
-- [`docs/platform/links.md`](../../docs/platform/links.md)
-- [`docs/ssr_theme.md`](../../docs/ssr_theme.md)
-- [`docs/tanstack_rewrite/landing_rewrite.md`](../../docs/tanstack_rewrite/landing_rewrite.md)
+- [`docs/deploy/README.md`](../../docs/deploy/README.md)
+- [`docs/architecture/platform/links.md`](../../docs/architecture/platform/links.md)
+- [`docs/architecture/ssr-theme.md`](../../docs/architecture/ssr-theme.md)
+- [`docs/migrations/tanstack/landing-rewrite.md`](../../docs/migrations/tanstack/landing-rewrite.md)

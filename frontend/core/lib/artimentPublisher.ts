@@ -27,7 +27,7 @@ type TPublisherResponse<TDraft> = {
  * Sends Plate value to the authenticated Node publisher and returns the draft
  * persisted by the downstream Elixir GraphQL mutation.
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 export const saveDocDraft = async <TDraft>({
   value,

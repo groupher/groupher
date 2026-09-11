@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
   Credentials are deliberately represented only by `credential_locator`;
   tokens and private keys are rejected from the public configuration map.
 
-  See `docs/bulk-import/content-import-architecture.md` for the persistence boundary.
+  See `docs/content-import/content-import-architecture.md` for the persistence boundary.
 
   Business position:
 

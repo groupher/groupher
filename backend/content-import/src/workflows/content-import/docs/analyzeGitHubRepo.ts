@@ -16,9 +16,9 @@
  * reads persisted artifacts so target-validation retries never download the
  * repository again.
  *
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/import-file-sdk.md
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/import-file-sdk.md
+ * @see docs/content-import/bulk-import.md
  */
 import { FatalError } from 'workflow'
 

@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   A ready BodyBag cannot be replaced by a skip/failure, and the same external
   ref cannot be restaged with different bytes after completion.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` and
-  `docs/bulk-import/import-error-handling.md`.
+  See `docs/content-import/article-publish-import-refactor.md` and
+  `docs/content-import/import-error-handling.md`.
   """
 
   import Ecto.Query, warn: false

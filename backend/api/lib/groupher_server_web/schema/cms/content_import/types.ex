@@ -2,7 +2,7 @@ defmodule GroupherServerWeb.Schema.CMS.ContentImport.Types do
   @moduledoc """
   Public GraphQL contract for recoverable ContentImport Jobs and Doc previews.
 
-  See `docs/bulk-import/content-import-architecture.md` for the contracts crossing runtimes.
+  See `docs/content-import/content-import-architecture.md` for the contracts crossing runtimes.
 
   Business position:
 

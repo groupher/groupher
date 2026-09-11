@@ -9,8 +9,8 @@
  * This module owns GraphQL request shape and byte limits only; it does not
  * parse source files or decide target-tree semantics.
  *
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 import type { TArtimentBodyBag } from '@groupher/artiment-publisher'
 

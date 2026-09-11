@@ -15,7 +15,7 @@ import { DocsImportError } from '../../core/errors'
  *
  *   selected page refs -> filtered documents + pruned SourceTree + sibling links
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 import type { TSourceAnalysis, TSourceNode } from './contracts'
 

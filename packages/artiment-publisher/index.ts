@@ -13,7 +13,7 @@
  *                    v
  *              canonical BodyBag
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 import {
   RICH_EDITOR_SCHEMA_VERSION,

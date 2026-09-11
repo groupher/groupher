@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
   Elixir only for consumers such as Comment mention extraction that need to
   inspect the persisted AST shape.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for why Elixir does not serialize Plate.
+  See `docs/content-import/article-publish-import-refactor.md` for why Elixir does not serialize Plate.
 
   Business position:
 

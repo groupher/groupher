@@ -86,7 +86,7 @@ const items = (
 
 /** Maps Docusaurus sidebars and doc frontmatter into canonical SourceTree semantics.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeDocusaurus = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const configPaths = workspace.files

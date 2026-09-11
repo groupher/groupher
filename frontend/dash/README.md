@@ -41,7 +41,7 @@ not be edited by hand.
 
 ## Related documentation
 
-- [`docs/dashboard-to-tanstack/v2.md`](../../docs/dashboard-to-tanstack/v2.md)
-- [`docs/dash_route.md`](../../docs/dash_route.md)
-- [`docs/platform/links.md`](../../docs/platform/links.md)
+- [`docs/migrations/tanstack/dash/v2.md`](../../docs/migrations/tanstack/dash/v2.md)
+- [`docs/dash/routes.md`](../../docs/dash/routes.md)
+- [`docs/architecture/platform/links.md`](../../docs/architecture/platform/links.md)
 - [`docs/auth/v1.md`](../../docs/auth/v1.md)

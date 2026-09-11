@@ -13,7 +13,7 @@ export type TDocsImportStage = 'admission' | 'analyzing' | 'downloading' | 'extr
 
 /** Stable source-analysis error carried across HTTP and Workflow boundaries.
  *
- * @see docs/bulk-import/import-error-handling.md
+ * @see docs/content-import/import-error-handling.md
  */
 export class DocsImportError extends Error {
   /** Creates one stable workflow-safe error with retry and stage metadata. */

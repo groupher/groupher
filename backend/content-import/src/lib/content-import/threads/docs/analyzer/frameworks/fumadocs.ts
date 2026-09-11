@@ -86,7 +86,7 @@ const loadDirectorySections = async (
 
 /** Maps Fumadocs meta files, separators, directories, and links into SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const sourceConfig = workspace.files
