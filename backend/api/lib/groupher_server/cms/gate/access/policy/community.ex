@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   Example contract:
 
-      Access.Policy.community(actor, :update, community, %Context.Access.Community{})
+      Access.Policy.Community.check_access(actor, :update, community, %Context.Access.Community{})
       #=> :ok | {:error, reason}
   """
 

@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   Example contract:
 
-      Access.Policy.comment(actor, :edit, comment, %Context.Access.Comment{})
+      Access.Policy.Comment.check_access(actor, :edit, comment, %Context.Access.Comment{})
       #=> :ok | {:error, reason}
   """
 

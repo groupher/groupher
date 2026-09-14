@@ -14,8 +14,8 @@ defmodule GroupherServer.CMS.Gate.Access do
              -> canonical load + policy -> command callback
              -> commit / rollback
 
-  Resource policies are exposed through `Gate.Access.Policy` and return only
-  `:ok` or `{:error, reason}`.
+  Resource policies remain separated by resource type beneath `Access.Check`
+  and return only `:ok` or `{:error, reason}`.
   """
 
   alias GroupherServer.CMS.Gate.Access.Check

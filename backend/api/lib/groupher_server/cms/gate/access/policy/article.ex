@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   Example contract:
 
-      Access.Policy.article(actor, :publish, article, %Context.Access.Article{})
+      Access.Policy.Article.check_access(actor, :publish, article, %Context.Access.Article{})
       #=> :ok | {:error, reason}
   """
 

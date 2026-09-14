@@ -10,8 +10,8 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
       Gate.Access
         -> Access.Check resource function
-        -> resource check: aggregate lock + Access.Load + Access.Policy
-        -> with_authorized: Access.Load + Access.Policy inside an existing lock
+        -> resource check: aggregate lock + Access.Load + resource Policy
+        -> with_authorized: Access.Load + resource Policy inside an existing lock
         -> Gate.Decision
   """
 
@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.community(community),
          %Decision{allowed: true} <-
            Decision.from_result(
-             Policy.community(actor, action, context.community, context),
+             Policy.Community.check_access(actor, action, context.community, context),
              context
            ) do
       {:ok, context.community}
@@ -69,7 +69,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
            Articles.MutationLock.with_article(community, article, fn ->
              with {:ok, context} <- Load.comment(community, thread, article, comment),
                   %Decision{allowed: true} <-
-                    Decision.from_result(Policy.comment(actor, action, comment, context), context) do
+                    Decision.from_result(
+                      Policy.Comment.check_access(actor, action, comment, context),
+                      context
+                    ) do
                {:ok, Map.put(context.comment, :community, context.community)}
              else
                %Decision{} = decision ->
@@ -105,7 +108,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              with {:ok, context} <- Load.article(community, thread, resource),
                   %Decision{allowed: true} <-
                     Decision.from_result(
-                      Policy.article(actor, action, resource, context),
+                      Policy.Article.check_access(actor, action, resource, context),
                       context
                     ) do
                {:ok, canonical_resource(context_resource(context), context.community)}
@@ -147,7 +150,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, context} <- Load.comment(community, thread, article, comment),
          %Decision{allowed: true} = decision <-
-           Decision.from_result(Policy.comment(actor, action, context.comment, context), context) do
+           Decision.from_result(
+             Policy.Comment.check_access(actor, action, context.comment, context),
+             context
+           ) do
       decision.context.comment
       |> Map.put(:community, decision.context.community)
       |> callback.()
@@ -158,7 +164,6 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
-  @doc false
   @spec with_authorized(
           term(),
           atom(),
@@ -170,7 +175,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 2) do
     with {:ok, context} <- Load.comment(community, thread, article, comment),
          %Decision{allowed: true} = decision <-
-           Decision.from_result(Policy.comment(actor, action, context.comment, context), context) do
+           Decision.from_result(
+             Policy.Comment.check_access(actor, action, context.comment, context),
+             context
+           ) do
       callback.(decision.context.comment, decision.context.article)
       |> normalize_callback_result()
     else
@@ -184,7 +192,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article(community, thread, article),
          %Decision{allowed: true} = decision <-
-           Decision.from_result(Policy.article(actor, action, article, context), context) do
+           Decision.from_result(
+             Policy.Article.check_access(actor, action, article, context),
+             context
+           ) do
       decision.context
       |> context_resource()
       |> canonical_resource(decision.context.community)

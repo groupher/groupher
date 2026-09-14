@@ -35,7 +35,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
 
   @article_threads Config.ordinary_article_threads()
 
-  @doc false
+  @doc """
+  Loads the canonical Community lifecycle and builds its typed Access Context.
+
+  The lifecycle row is acquired with the lock mode owned by `Load.Queries`.
+  A missing lifecycle returns `lifecycle_not_found` instead of producing a
+  partial context.
+  """
   def community(%Community{} = community) do
     case Queries.community_lifecycle(community.id) do
       %CommunityLifecycle{} = lifecycle ->
@@ -50,7 +56,14 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     end
   end
 
-  @doc false
+  @doc """
+  Reloads an Article or Doc and its authoritative lifecycle facts into a typed
+  Access Context.
+
+  The supplied Community, thread and resource identities must agree. Docs also
+  require a branch, while unsupported threads and identity mismatches fail
+  closed with a declared Gate error.
+  """
   def article(
         %Community{} = community,
         :doc,
@@ -114,7 +127,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   def article(_community, _thread, _resource),
     do: {:error, ErrorCat.gate_resource_mismatch()}
 
-  @doc false
+  @doc """
+  Reloads a Comment together with its canonical parent and lifecycle facts.
+
+  The returned context contains the Comment, parent Article or Doc, Community,
+  and all lifecycle rows required by Comment policy evaluation. Any identity
+  mismatch fails closed rather than authorizing from caller-supplied structs.
+  """
   def comment(%Community{} = community, thread, article, %CommentModel{} = comment) do
     with canonical when not is_nil(canonical) <- Queries.resource(CommentModel, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),

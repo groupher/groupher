@@ -215,7 +215,9 @@ const checkElixirSharedFunctions = () => {
     'backend/api/lib/groupher_server/cms/articles/response.ex',
     'backend/api/lib/groupher_server/cms/articles/mutation_lock.ex',
     'backend/api/lib/groupher_server/cms/gate/access.ex',
-    'backend/api/lib/groupher_server/cms/gate/access/check.ex',
+    ...walk(path.join(root, 'backend/api/lib/groupher_server/cms/gate/access'), (file) =>
+      file.endsWith('.ex'),
+    ).map((file) => relative(file)),
     'backend/api/lib/groupher_server/cms/model/post_solution.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/accept_solution.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/revoke_solution.ex',
