@@ -7,7 +7,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import { graphqlQueryOptions } from '~/query'
-import { createCommandKey } from '~/query/mutation/optimistic/execute'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -892,7 +892,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       browserGraphQLRequest<TMoveDocToDraftData>(S.moveDocToDraft, {
         community,
         id: childId,
-        commandKey: createCommandKey(),
+        commandId: createCommandId(),
       })
         .then((data) => {
           const payload = data?.moveDocToDraft

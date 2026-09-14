@@ -34,8 +34,6 @@ export type TDocPublishRelease = {
 
 export type TPublishChangesData = {
   publishDocChanges?: {
-    commandKey?: string | null
-    commandReplayed?: boolean | null
     checklist?: TPublishChecklist | null
     release?: TDocPublishRelease | null
   } | null

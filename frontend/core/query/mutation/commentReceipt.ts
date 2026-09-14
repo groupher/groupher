@@ -12,7 +12,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 2
+const RECEIPT_VERSION = 3
 const storagePrefix = 'groupher:comment-feed-receipt:'
 
 type TCommentFeedProjection = {
@@ -21,7 +21,7 @@ type TCommentFeedProjection = {
 }
 
 export type TCommentFeedEffect = {
-  commandKey: string
+  commandId: string
   type: 'create' | 'update' | 'delete'
   commentRef: string
   comment?: TComment
@@ -33,7 +33,7 @@ export type TCommentFeedEffect = {
 }
 
 type TCommentFeedSlot = {
-  schemaVersion: 2
+  schemaVersion: 3
   accountRef: string
   articleKey: string
   effects: Record<string, TCommentFeedEffect>
@@ -80,7 +80,7 @@ export const writeCommentFeedReceipt = (confirmation: TCommentFeedConfirmation):
 
   const confirmedAt = Math.max(Date.now(), existing?.confirmedAt || 0)
   const effect: TCommentFeedEffect = {
-    commandKey: confirmation.commandKey,
+    commandId: confirmation.commandId,
     type: confirmation.type,
     commentRef,
     ...(confirmation.type === 'delete'

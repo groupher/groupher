@@ -3,23 +3,21 @@ import type { QueryClient } from '@tanstack/react-query'
 import { clearChanges, markChange, rollbackChanges } from './effects'
 import type { TOptimisticPlan, TOptimisticOperation } from './types'
 
-/** Creates the client command identity used for pending entities and receipts. */
-export const createCommandKey = (): string => {
+/** Creates the client command identity used for pending entities and retries. */
+export const createCommandId = (): string => {
   const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
   if (typeof cryptoApi?.randomUUID === 'function') {
     return cryptoApi.randomUUID()
   }
 
-  // GraphQL forwards commandKey to an Ecto.UUID field. Keep the fallback in
-  // UUID shape too, so restricted WebViews without crypto.randomUUID do not
-  // turn an otherwise valid operation into a server-side validation error.
+  // GraphQL forwards commandId to an Ecto.UUID field, so every generated id
+  // must retain UUID shape even when randomUUID is unavailable.
   const bytes = new Uint8Array(16)
   if (typeof cryptoApi?.getRandomValues === 'function') {
     cryptoApi.getRandomValues(bytes)
   } else {
-    // This is only a last-resort compatibility path for runtimes without Web
-    // Crypto. A command key is an idempotency identity, not an authorization
-    // token, but it still needs a UUID-shaped value accepted by Ecto.
+    // Last-resort UUID generation for runtimes without Web Crypto. This id is
+    // an idempotency identity, not an authorization token.
     for (let index = 0; index < bytes.length; index += 1)
       bytes[index] = Math.floor(Math.random() * 256)
   }
@@ -57,7 +55,7 @@ export type TExecuteOptimisticOperationArgs<TTarget, TInput, TResult> = {
   operation: TOptimisticOperation<TTarget, TInput, TResult>
   target: TTarget
   input: TInput
-  commandKey?: string
+  commandId?: string
 }
 
 /** Runs one typed operation through cancel, optimistic apply, transport, reconcile, and rollback. */
@@ -67,14 +65,14 @@ export const executeOptimisticOperation = async <TTarget, TInput, TResult>({
   operation,
   target,
   input,
-  commandKey,
+  commandId,
 }: TExecuteOptimisticOperationArgs<TTarget, TInput, TResult>): Promise<TResult> => {
   const queueKey =
     operation.queueKey?.(target) || `${operation.name}:${operation.entityKey(target)}`
   const lane = `${accountRef || 'anonymous'}:${queueKey}`
 
   return enqueue(queryClient, lane, async () => {
-    const context = { queryClient, accountRef, commandKey: commandKey || createCommandKey() }
+    const context = { queryClient, accountRef, commandId: commandId || createCommandId() }
     const cancelTargets = operation.queriesToCancel(context, target, input)
     await Promise.all(cancelTargets.map((target) => queryClient.cancelQueries(target)))
 

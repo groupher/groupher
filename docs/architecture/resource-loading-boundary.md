@@ -10,7 +10,7 @@
 - [CMS Facade 与实现目录收口](./cms-facade-directory.md)：facade、Command、Reader/Writer 的目录与所有权；
 - [Gate V2](../feature/gate/v2.md)、[Gate V4](../feature/gate/v4.md)：mutation admission、typed Access Context 与 canonical resource；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Gate、Lifecycle、Writer 和事务职责；
-- [Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandKey`、CommandReceipt、version/revision 与 replay 合同。
+- [Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、CommandReceipt、version/revision 与 replay 合同。
 
 ## 1. 问题
 

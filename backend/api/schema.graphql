@@ -396,7 +396,7 @@ type RootMutationType {
   updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
 
   "delete a global community"
-  requestDestroyCommunity(community: String!, commandKey: ID!): Community
+  requestDestroyCommunity(community: String!, commandId: ID!): Community
 
   "register an uploaded asset into the community asset library"
   registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
@@ -454,16 +454,16 @@ type RootMutationType {
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
 
   "Move one logical Article into Trash"
-  trashArticle(commandKey: ID!, article: ArticlePathInput!): TrashedArticle
+  trashArticle(commandId: ID!, article: ArticlePathInput!): TrashedArticle
 
   "Restore one logical Article from Trash"
-  restoreTrashedArticle(commandKey: ID!, id: ID!, community: String!, thread: Thread!): Article
+  restoreTrashedArticle(commandId: ID!, id: ID!, community: String!, thread: Thread!): Article
 
   "Permanently delete one standalone Article aggregate from Trash"
-  permanentlyDeleteTrashedArticle(commandKey: ID!, id: ID!, community: String!, thread: Thread!): DoneState
+  permanentlyDeleteTrashedArticle(commandId: ID!, id: ID!, community: String!, thread: Thread!): DoneState
 
   "Permanently delete one complete Trash action"
-  permanentlyDeleteTrashAction(commandKey: ID!, id: ID!, community: String!, thread: Thread!): DoneState
+  permanentlyDeleteTrashAction(commandId: ID!, id: ID!, community: String!, thread: Thread!): DoneState
 
   "set category to a community"
   setCategory(community: String!, categoryId: ID!): Community
@@ -509,26 +509,26 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
 
   "save a new post as a draft"
   createPostDraft(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/post"
   updatePost(
-    commandKey: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
 
   "save changes to a post draft without publishing"
   updatePostDraft(
-    commandKey: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing post draft"
-  publishPostDraft(commandKey: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Post
+  publishPostDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Post
 
   "set cat for a post"
   setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!): Post
@@ -537,10 +537,10 @@ type RootMutationType {
   setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!): Post
 
   "upvote to post"
-  upvotePost(article: ArticlePathInput!, commandKey: ID!): Article
+  upvotePost(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo upvote to post"
-  undoUpvotePost(article: ArticlePathInput!, commandKey: ID!): Article
+  undoUpvotePost(article: ArticlePathInput!, commandId: ID!): Article
 
   "pin to post"
   pinPost(article: ArticlePathInput!): Post
@@ -549,10 +549,10 @@ type RootMutationType {
   undoPinPost(article: ArticlePathInput!): Post
 
   "emotion to post"
-  emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Post
+  emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Post
 
   "undo emotion to post"
-  undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Post
+  undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Post
 
   "report a post"
   reportPost(article: ArticlePathInput!, reason: String!, attr: String): Post
@@ -574,32 +574,32 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
 
   "save a new blog as a draft"
   createBlogDraft(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/blog"
   updateBlog(
-    commandKey: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
 
   "save changes to a blog draft without publishing"
   updateBlogDraft(
-    commandKey: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing blog draft"
-  publishBlogDraft(commandKey: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Blog
+  publishBlogDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Blog
 
   "upvote to blog"
-  upvoteBlog(article: ArticlePathInput!, commandKey: ID!): Article
+  upvoteBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo upvote to blog"
-  undoUpvoteBlog(article: ArticlePathInput!, commandKey: ID!): Article
+  undoUpvoteBlog(article: ArticlePathInput!, commandId: ID!): Article
 
   "pin to blog"
   pinBlog(article: ArticlePathInput!): Blog
@@ -608,10 +608,10 @@ type RootMutationType {
   undoPinBlog(article: ArticlePathInput!): Blog
 
   "emotion to blog"
-  emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Blog
+  emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Blog
 
   "undo emotion to blog"
-  undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Blog
+  undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Blog
 
   "report a blog"
   reportBlog(article: ArticlePathInput!, reason: String!, attr: String): Blog
@@ -633,34 +633,34 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
 
   "save a new changelog as a draft"
   createChangelogDraft(
-    commandKey: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, title: String!, bodyBag: ArtimentBodyBagInput!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "update a cms\/changelog"
   updateChangelog(
-    commandKey: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, article: ArticlePathInput!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
 
   "save changes to a changelog draft without publishing"
   updateChangelogDraft(
-    commandKey: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, bodyBag: ArtimentBodyBagInput, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): ArticleDraft
 
   "publish an existing changelog draft"
   publishChangelogDraft(
-    commandKey: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!
+    commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!
   ): Changelog
 
   "upvote to changelog"
-  upvoteChangelog(article: ArticlePathInput!, commandKey: ID!): Article
+  upvoteChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo upvote to changelog"
-  undoUpvoteChangelog(article: ArticlePathInput!, commandKey: ID!): Article
+  undoUpvoteChangelog(article: ArticlePathInput!, commandId: ID!): Article
 
   "pin to changelog"
   pinChangelog(article: ArticlePathInput!): Changelog
@@ -669,10 +669,10 @@ type RootMutationType {
   undoPinChangelog(article: ArticlePathInput!): Changelog
 
   "emotion to changelog"
-  emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Changelog
+  emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Changelog
 
   "undo emotion to changelog"
-  undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Changelog
+  undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Changelog
 
   "report a changelog"
   reportChangelog(article: ArticlePathInput!, reason: String!, attr: String): Changelog
@@ -693,10 +693,10 @@ type RootMutationType {
   undoLockChangelogComment(article: ArticlePathInput!): Article
 
   "upvote to doc"
-  upvoteDoc(article: ArticlePathInput!, commandKey: ID!): Article
+  upvoteDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "undo upvote to doc"
-  undoUpvoteDoc(article: ArticlePathInput!, commandKey: ID!): Article
+  undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): Article
 
   "pin to doc"
   pinDoc(article: ArticlePathInput!): Doc
@@ -705,10 +705,10 @@ type RootMutationType {
   undoPinDoc(article: ArticlePathInput!): Doc
 
   "emotion to doc"
-  emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Doc
+  emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Doc
 
   "undo emotion to doc"
-  undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandKey: ID!): Doc
+  undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Doc
 
   "report a doc"
   reportDoc(article: ArticlePathInput!, reason: String!, attr: String): Doc
@@ -729,22 +729,22 @@ type RootMutationType {
   undoLockDocComment(article: ArticlePathInput!): Article
 
   "write a comment"
-  createComment(article: ArticlePathInput!, body: String!, commandKey: ID!): CommentMutationPayload
+  createComment(article: ArticlePathInput!, body: String!, commandId: ID!): CommentMutationPayload
 
   "update a comment"
-  updateComment(comment: CommentPathInput!, body: String!, commandKey: ID!): Comment
+  updateComment(comment: CommentPathInput!, body: String!, commandId: ID!): Comment
 
   "delete a comment"
-  deleteComment(comment: CommentPathInput!, commandKey: ID!): Comment
+  deleteComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "reply to a comment"
-  replyComment(comment: CommentPathInput!, body: String!, commandKey: ID!): CommentMutationPayload
+  replyComment(comment: CommentPathInput!, body: String!, commandId: ID!): CommentMutationPayload
 
   "upvote to a comment"
-  upvoteComment(comment: CommentPathInput!, commandKey: ID!): Comment
+  upvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "undo upvote to a comment"
-  undoUpvoteComment(comment: CommentPathInput!, commandKey: ID!): Comment
+  undoUpvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
 
   "report a comment"
   reportComment(comment: CommentPathInput!, reason: String!, attr: String): Comment
@@ -753,10 +753,10 @@ type RootMutationType {
   undoReportComment(comment: CommentPathInput!): Comment
 
   "emotion to a comment"
-  emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandKey: ID!): Comment
+  emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
 
   "undo emotion to a comment"
-  undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandKey: ID!): Comment
+  undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!, commandId: ID!): Comment
 
   "accept a comment as a QA post's current solution"
   acceptSolution(comment: CommentPathInput!): Comment
@@ -853,7 +853,7 @@ type RootMutationType {
 
   "create one recursive docs navigation node"
   createDocTreeNode(
-    commandKey: ID!
+    commandId: ID!
 
     community: String!
 
@@ -866,34 +866,34 @@ type RootMutationType {
   ): DocTreeMutationPayload
 
   "update a docs tree node"
-  updateDocTreeNode(commandKey: ID!, community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+  updateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
 
   "update a docs draft document"
   updateDocDraft(
-    commandKey: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
+    commandId: ID!, community: String!, id: ID!, expectedVersion: Int!, title: String, subtitle: String, slug: String, bodyBag: ArtimentBodyBagInput
   ): DocDraft
 
   "save current docs draft as an article revision checkpoint"
-  checkpointDocDraftSnapshot(commandKey: ID!, community: String!, id: ID!): DocSnapshot
+  checkpointDocDraftSnapshot(commandId: ID!, community: String!, id: ID!): DocSnapshot
 
   "publish selected docs content and tree changes as one release"
-  publishDocChanges(commandKey: ID!, community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
+  publishDocChanges(commandId: ID!, community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
 
   "move one published docs page back to draft visibility"
-  moveDocToDraft(commandKey: ID!, community: String!, id: ID!): MoveDocToDraftPayload
+  moveDocToDraft(commandId: ID!, community: String!, id: ID!): MoveDocToDraftPayload
 
   "create missing article drafts for every published Page in one navigation subtree"
-  moveDocTreeSubtreeToDraft(commandKey: ID!, community: String!, nodeId: ID!): DoneState
+  moveDocTreeSubtreeToDraft(commandId: ID!, community: String!, nodeId: ID!): DoneState
 
   "restore a docs draft from an article revision"
-  restoreDocDraftSnapshot(commandKey: ID!, community: String!, id: ID!, snapshotId: ID!): DocDraft
+  restoreDocDraftSnapshot(commandId: ID!, community: String!, id: ID!, snapshotId: ID!): DocDraft
 
   "delete a docs tree node"
-  deleteDocTreeNode(commandKey: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+  deleteDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "restore a docs tree item from product trash"
   restoreDocTreeTrashItem(
-    commandKey: ID!
+    commandId: ID!
 
     community: String!
 
@@ -908,11 +908,11 @@ type RootMutationType {
   ): DocTreeMutationPayload
 
   "duplicate a docs tree node"
-  duplicateDocTreeNode(commandKey: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+  duplicateDocTreeNode(commandId: ID!, community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
   moveDocTreeNode(
-    commandKey: ID!
+    commandId: ID!
 
     community: String!
 
@@ -1480,9 +1480,7 @@ type DoneState {
   "Whether the requested operation completed successfully."
   done: Boolean
 
-  commandKey: ID
-
-  commandReplayed: Boolean
+  commandId: ID
 }
 
 enum CommunityApplicationStatus {
@@ -1720,8 +1718,7 @@ type TrashedArticle {
   deletedBy: User
   deletedAt: DateTime!
   mentionedByCount: Int!
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   scheduledPermanentDeletionAt: DateTime!
   mentionedBy(filter: PagiFilter): PagedMentions
   mentions(filter: PagiFilter): PagedMentions
@@ -2146,8 +2143,7 @@ type CommentMutationArticle {
 type CommentMutationPayload {
   comment: Comment!
   article: CommentMutationArticle!
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
 }
 
 type CommentReconcileEntry {
@@ -2165,8 +2161,7 @@ type DocPublishChangesPayload {
   release: DocPublishRelease
   checklist: DocPublishChecklist!
   scope: DocPublishScope!
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
 }
 
 input DocPublishChangesInput {
@@ -2218,8 +2213,7 @@ type DocDraft {
   title: String
   subtitle: String
   slug: String
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   stage: DocSnapshotStage
   digest: String
   author: User
@@ -2237,8 +2231,7 @@ type ArticleDraft {
   digest: String
   slug: String
   subtitle: String
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   document: ArticleDocument
   insertedAt: DateTime
   updatedAt: DateTime
@@ -2250,16 +2243,14 @@ type DocTreeMutationPayload {
   node: DocTreeNode
   affectedNodes: [DocTreeNode]
   conflict: Boolean
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
 }
 
 type MoveDocToDraftPayload {
   docId: ID
   stage: DocSnapshotStage
   publishState: DocTreeNodePublishState
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
 }
 
 input DocTreeNodeInput {
@@ -2518,8 +2509,7 @@ type DocSnapshot {
   schemaVersion: Int
   data: Json
   message: String
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   author: User
   insertedAt: DateTime
   updatedAt: DateTime
@@ -2546,8 +2536,7 @@ type Post implements Article {
   collectsCount: Int
   commentsRevision: Int
   articleInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   emotions: [EmotionStat]
   viewerHasCollected: Boolean
@@ -2593,8 +2582,7 @@ type Changelog implements Article {
   collectsCount: Int
   commentsRevision: Int
   articleInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   emotions: [EmotionStat]
   viewerHasCollected: Boolean
@@ -2635,8 +2623,7 @@ type Doc implements Article {
   collectsCount: Int
   commentsRevision: Int
   articleInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   emotions: [EmotionStat]
   viewerHasCollected: Boolean
@@ -2678,8 +2665,7 @@ type Blog implements Article {
   collectsCount: Int
   commentsRevision: Int
   articleInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   emotions: [EmotionStat]
   viewerHasCollected: Boolean
@@ -3176,9 +3162,7 @@ type Community {
 
   pending: Int
 
-  commandKey: ID
-
-  commandReplayed: Boolean
+  commandId: ID
 
   insertedAt: DateTime
 
@@ -3292,8 +3276,7 @@ type CommentReply {
   floor: Int
   upvotesCount: Int
   commentInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
@@ -3318,8 +3301,7 @@ type Comment {
   floor: Int
   upvotesCount: Int
   commentInteractionRevision: Int
-  commandKey: ID
-  commandReplayed: Boolean
+  commandId: ID
   reactionOutcome: String
   isArticleAuthor: Boolean
   emotions: [EmotionStat]

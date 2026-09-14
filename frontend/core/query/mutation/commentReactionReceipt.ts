@@ -12,7 +12,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 2
+const RECEIPT_VERSION = 3
 const storagePrefix = 'groupher:comment-reaction-receipt:'
 
 type TCommentReactionProjection = {
@@ -27,8 +27,8 @@ type TCommentViewerState = {
 }
 
 export type TCommentReactionReceipt = {
-  schemaVersion: 2
-  commandKey: string
+  schemaVersion: 3
+  commandId: string
   accountRef: string
   articleKey: string
   commentRef: string
@@ -39,7 +39,7 @@ export type TCommentReactionReceipt = {
 }
 
 type TCommentReactionConfirmation = {
-  commandKey: string
+  commandId: string
   accountRef: string
   articleKey: string
   commentRef: string
@@ -79,7 +79,7 @@ export const writeCommentReactionReceipt = (confirmation: TCommentReactionConfir
   const confirmedAt = Math.max(Date.now(), existing?.confirmedAt || 0)
   const receipt: TCommentReactionReceipt = {
     schemaVersion: RECEIPT_VERSION,
-    commandKey: confirmation.commandKey,
+    commandId: confirmation.commandId,
     accountRef,
     articleKey,
     commentRef,

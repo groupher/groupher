@@ -115,8 +115,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:viewer_has_upvoted, :boolean, default: false, virtual: true)
     field(:viewer_has_reported, :boolean, default: false, virtual: true)
     # Command metadata is attached to mutation responses only.
-    field(:command_key, Ecto.UUID, virtual: true)
-    field(:command_replayed, :boolean, default: false, virtual: true)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     belongs_to(:reply_to_comment, Comment, foreign_key: :reply_to_comment_id)
     field(:root_comment_id, :integer, default: nil)

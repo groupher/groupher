@@ -14,9 +14,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Matcher
   alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.{Events, Gate}
+  alias GroupherServer.CMS.{Events, Gate, Command}
   alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
-  alias GroupherServer.CMS.CommandReceipt
   alias GroupherServer.CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias GroupherServer.Repo
   alias Helper.{Later, T}
@@ -30,8 +29,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor, command_key \\ nil),
-    do: mutate(artiment, emotion, actor, :add, command_key)
+  def add(artiment, emotion, %User{} = actor, command_id \\ nil),
+    do: mutate(artiment, emotion, actor, :add, command_id)
 
   @doc """
   Removes an emotion as an idempotent set-state command.
@@ -42,38 +41,51 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor, command_key \\ nil),
-    do: mutate(artiment, emotion, actor, :remove, command_key)
+  def remove(artiment, emotion, %User{} = actor, command_id \\ nil),
+    do: mutate(artiment, emotion, actor, :remove, command_id)
 
-  defp mutate(input, emotion, actor, operation, command_key) when is_atom(emotion) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key),
+  defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
+    with {:ok, command_id} <- Command.resolve_command_id(command_id),
          {:ok, info} <- Matcher.match_interaction(input) do
-      CommandReceipt.run_user_command(
-        actor,
-        command_key,
-        "emotion_#{operation}:#{emotion}",
-        Atom.to_string(info.artiment),
-        input.id,
-        nil,
-        fn ->
-          with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
-               {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
-               {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-               :ok <- sync_state(canonical, emotion, actor, operation, change) do
-            {:ok, {canonical, change}, %{outcome: change}}
-          end
-        end,
-        fn receipt -> {:ok, {input, {:replayed, replay_outcome(receipt)}}} end
+      Command.update_user(actor, command_id,
+        command: emotion_command(operation),
+        resource: input,
+        input: %{operation: operation, emotion: emotion},
+        recovery: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end,
+        after_commit: fn
+          {canonical, :changed} ->
+            if match?(%Comment{}, canonical) do
+              Later.run(
+                {Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]}
+              )
+            end
+
+            :ok
+
+          _ ->
+            :ok
+        end
       )
-      |> after_commit(operation, actor, command_key)
+      |> Command.run(fn %{resource: input} ->
+        with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
+             {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
+             {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
+             :ok <- sync_state(canonical, emotion, actor, operation, change) do
+          {:ok, {canonical, change}, %{outcome: change}}
+        end
+      end)
+      |> present_reaction(command_id)
     end
   end
 
-  defp mutate(_input, emotion, _actor, _operation, _command_key),
+  defp mutate(_input, emotion, _actor, _operation, _command_id),
     do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
 
-  defp replay_outcome(%{outcome: "unchanged"}), do: :unchanged
-  defp replay_outcome(_receipt), do: :changed
+  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
+  defp recovery_outcome(_receipt), do: :changed
+
+  defp emotion_command(:add), do: :emotion_add
+  defp emotion_command(:remove), do: :emotion_remove
 
   defp allow_emotion(%Comment{} = comment, _info, emotion) do
     Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
@@ -97,34 +109,14 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp after_commit({:ok, {canonical, :changed}}, :add, actor, command_key) do
-    if match?(%Comment{}, canonical) do
-      Later.run({Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]})
-    end
+  defp present_reaction({:ok, {canonical, outcome}}, command_id),
+    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
 
-    {:ok, put_reaction_metadata(canonical, command_key, :changed, false)}
-  end
+  defp present_reaction(error, _command_id), do: error
 
-  defp after_commit({:ok, {canonical, change}}, _operation, _actor, command_key),
-    do:
-      {:ok,
-       put_reaction_metadata(
-         canonical,
-         command_key,
-         case change do
-           {:replayed, outcome} -> outcome
-           :changed -> :changed
-           _ -> :unchanged
-         end,
-         match?({:replayed, _}, change)
-       )}
-
-  defp after_commit({:error, reason}, _operation, _actor, _command_key), do: {:error, reason}
-
-  defp put_reaction_metadata(canonical, command_key, outcome, command_replayed) do
+  defp put_reaction_metadata(canonical, command_id, outcome) do
     canonical
-    |> Map.put(:command_key, command_key)
-    |> Map.put(:command_replayed, command_replayed)
+    |> Map.put(:command_id, command_id)
     |> Map.put(:reaction_outcome, outcome)
   end
 

@@ -12,13 +12,13 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   foreign-key cascade semantics are not simulated here.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{FrontDesk, Gate}
-  alias GroupherServer.CMS.Comments.{Lifecycle, ErrorCat}
-  alias GroupherServer.CMS.CommandReceipt
-  alias GroupherServer.CMS.Comments.Commands.Solution
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment, Post}
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.{Command, FrontDesk, Gate}
+  alias CMS.Comments.{Lifecycle, ErrorCat, Commands.Solution}
+  alias CMS.Model.{Comment, PinnedComment, Post}
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{ORM, T}
 
   @delete_hint Comment.delete_hint()
@@ -36,56 +36,54 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
     do: execute(comment, actor, nil)
 
   @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
-  @doc "Deletes a Comment while binding retries to the supplied command key."
-  def execute(%Comment{} = comment, %User{} = actor, command_key) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
-      case CommandReceipt.run_user_command(
-             actor,
-             command_key,
-             "comment.delete",
-             "comment",
-             comment.id,
-             nil,
-             fn ->
+  @doc "Deletes a Comment while binding retries to the supplied command id."
+  def execute(%Comment{} = comment, %User{} = actor, command_id) do
+    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
+      command =
+        Command.update_user(actor, command_id,
+          command: :comment_delete,
+          resource: comment,
+          input: %{},
+          recovery: fn _receipt ->
+            with {:ok, article} <- FrontDesk.article_of(comment) do
+              {:ok,
+               {
+                 comment
+                 |> Map.put(:article, article_summary(article, comment.thread))
+                 |> Map.put(:command_id, command_id),
+                 article
+               }}
+            end
+          end,
+          after_commit: fn {_deleted, article} ->
+            _ = Indexer.enqueue_metrics(article)
+            :ok
+          end
+        )
+
+      with {:ok, {deleted, _article}} <-
+             Command.run(command, fn %{resource: comment} ->
                Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
-                 delete_new(canonical, article, actor, command_key)
+                 delete_new(canonical, article, actor, command_id)
                end)
-             end,
-             fn _receipt ->
-               with {:ok, article} <- FrontDesk.article_of(comment) do
-                 {:ok,
-                  {
-                    comment
-                    |> Map.put(:article, article_summary(article, comment.thread))
-                    |> Map.put(:command_key, command_key)
-                    |> Map.put(:command_replayed, true),
-                    article
-                  }}
-               end
-             end
-           ) do
-        {:ok, {deleted, article}} ->
-          if Map.get(deleted, :command_replayed) != true,
-            do: Indexer.enqueue_metrics(article)
-
-          {:ok, deleted}
-
-        other ->
-          other
+             end) do
+        {:ok, deleted}
+      else
+        error -> error
       end
     end
   end
 
-  defp delete_new(%Comment{} = comment, article, actor, command_key) do
+  defp delete_new(%Comment{} = comment, article, actor, command_id) do
     occurred_at = DateTime.utc_now(:second)
 
     with :ok <- ensure_not_archived(comment),
-         {:ok, result} <- delete_new(comment, actor, article, command_key, occurred_at) do
+         {:ok, result} <- delete_new(comment, actor, article, command_id, occurred_at) do
       {:ok, result}
     end
   end
 
-  defp delete_new(comment, actor, article, command_key, occurred_at) do
+  defp delete_new(comment, actor, article, command_id, occurred_at) do
     operation_ref = Ecto.UUID.generate()
 
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
@@ -98,8 +96,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
        {
          deleted
          |> Map.put(:article, article_summary(counted_article, comment.thread))
-         |> Map.put(:command_key, command_key)
-         |> Map.put(:command_replayed, false),
+         |> Map.put(:command_id, command_id),
          counted_article
        }}
     end

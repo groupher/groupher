@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Communities do
         -> Repo / external boundary
   """
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.CommandReceipt
+  alias GroupherServer.CMS.Command
   alias GroupherServer.CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.T
 
@@ -124,29 +124,26 @@ defmodule GroupherServer.CMS.Communities do
   @spec request_destroy(Community.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   @doc "Runs an authenticated destroy request behind the command receipt boundary."
   def request_destroy(%Community{} = community, %User{} = actor, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-      command_opts = Keyword.delete(opts, :command_key)
+    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+      command_opts = Keyword.delete(opts, :command_id)
 
-      CommandReceipt.run_user_command(
-        actor,
-        command_key,
-        "community.request_destroy",
-        "community",
-        Integer.to_string(community.id),
-        %{},
-        fn ->
-          with {:ok, _canonical} <-
-                 GroupherServer.CMS.Gate.access_check(actor, :request_destroy, community),
-               {:ok, _blocker} <-
-                 Lifecycle.request_destroy(
-                   community.slug,
-                   Keyword.put(command_opts, :operation_ref, command_key)
-                 ) do
-            fetch(community.slug, :operations, inc_views: false)
-          end
-        end,
-        fn _receipt -> fetch(community.slug, :operations, inc_views: false) end
+      Command.update_user(actor, command_id,
+        command: :community_request_destroy,
+        resource: community,
+        input: command_opts,
+        recovery: fn _receipt -> fetch(community.slug, :operations, inc_views: false) end
       )
+      |> Command.run(fn %{input: command_opts} ->
+        with {:ok, _canonical} <-
+               GroupherServer.CMS.Gate.access_check(actor, :request_destroy, community),
+             {:ok, _blocker} <-
+               Lifecycle.request_destroy(
+                 community.slug,
+                 Keyword.put(command_opts, :operation_ref, command_id)
+               ) do
+          fetch(community.slug, :operations, inc_views: false)
+        end
+      end)
     end
   end
 

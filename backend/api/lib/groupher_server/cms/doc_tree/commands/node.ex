@@ -9,38 +9,48 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
 
       CMS.DocTree facade
         -> Commands.Node
-        -> CommandReceipt / CommandReplay
+        -> CMS.Command / CommandReplay
         -> DocTree.Writer
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias CMS.DocTree.{CommandReplay, Reader, Writer}
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.Model.{Community, Doc}
   alias Helper.T
 
   @doc "Creates one typed tree node through the existing command protocol."
   @spec create_node(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
   def create_node(%Community{} = community, %{type: type} = args, user) do
-    run_tree_command(
-      community,
-      Map.get(args, :parent_node_id, "root"),
-      args,
-      user,
-      "doc.tree.create_#{type}",
-      fn clean_args ->
-        case type do
-          :tab -> Writer.create_tab(community, clean_args)
-          :group -> Writer.create_group(community, clean_args)
-          :page -> Writer.create_page(community, clean_args, user)
-          :link -> Writer.create_link(community, clean_args)
-          :pin -> Writer.create_pin(community, clean_args)
-          _ -> {:error, GroupherServer.ErrorCat.custom("unsupported docs tree node type")}
+    with {:ok, command} <- node_create_command(type) do
+      run_tree_command(
+        community,
+        Map.get(args, :parent_node_id, "root"),
+        args,
+        user,
+        command,
+        fn clean_args ->
+          case type do
+            :tab -> Writer.create_tab(community, clean_args)
+            :group -> Writer.create_group(community, clean_args)
+            :page -> Writer.create_page(community, clean_args, user)
+            :link -> Writer.create_link(community, clean_args)
+            :pin -> Writer.create_pin(community, clean_args)
+          end
         end
-      end
-    )
+      )
+    end
   end
+
+  defp node_create_command(:tab), do: {:ok, :doc_tree_create_tab}
+  defp node_create_command(:group), do: {:ok, :doc_tree_create_group}
+  defp node_create_command(:page), do: {:ok, :doc_tree_create_page}
+  defp node_create_command(:link), do: {:ok, :doc_tree_create_link}
+  defp node_create_command(:pin), do: {:ok, :doc_tree_create_pin}
+
+  defp node_create_command(_type),
+    do: {:error, GroupherServer.ErrorCat.custom("unsupported docs tree node type")}
 
   @doc "Creates a page node and its Draft through the existing command protocol."
   @spec create_page(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
@@ -50,7 +60,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       Map.get(args, :parent_node_id, "root"),
       args,
       user,
-      "doc.tree.create_page",
+      :doc_tree_create_page,
       fn clean_args -> Writer.create_page(community, clean_args, user) end
     )
   end
@@ -63,7 +73,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       id,
       args,
       option(args, :actor),
-      "doc.tree.update_node",
+      :doc_tree_update_node,
       fn clean_args -> Writer.update_node(community, id, clean_args) end
     )
   end
@@ -83,9 +93,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       community,
       id,
       user,
-      "doc.update_draft",
+      :doc_update_draft,
       args,
-      fn -> Writer.update_draft(community, id, drop_command_key(args), user) end,
+      fn -> Writer.update_draft(community, id, drop_command_id(args), user) end,
       fn _receipt -> Reader.read_draft(community, id, args) end
     )
   end
@@ -98,7 +108,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       id,
       args,
       option(args, :actor),
-      "doc.tree.delete_node",
+      :doc_tree_delete_node,
       fn clean_args -> Writer.delete_node(community, id, clean_args) end
     )
   end
@@ -111,7 +121,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       id,
       args,
       option(args, :actor),
-      "doc.tree.duplicate_node",
+      :doc_tree_duplicate_node,
       fn clean_args -> Writer.duplicate_node(community, id, clean_args) end
     )
   end
@@ -124,50 +134,46 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       id,
       args,
       option(args, :actor),
-      "doc.tree.move_node",
+      :doc_tree_move_node,
       fn clean_args -> Writer.move_node(community, id, clean_args) end
     )
   end
 
-  defp run_doc_command(community, id, user, command_name, opts, execute, replay) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-      opts = drop_command_key(opts)
+  defp run_doc_command(community, id, user, command, opts, execute, replay) do
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      opts = drop_command_id(opts)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        command_name,
-        "doc",
-        "#{community.id}:#{id}",
-        opts,
-        execute,
-        replay
+      Command.create_user(user, command_id,
+        command: command,
+        resource: :doc,
+        owner: community,
+        input: %{id: id, opts: opts},
+        recovery: replay
       )
+      |> Command.run(fn %{input: %{opts: _opts}} -> execute.() end)
     end
   end
 
-  defp run_tree_command(community, target_id, args, user, command_name, execute) do
-    clean_args = drop_command_key(args)
+  defp run_tree_command(community, target_id, args, user, command, execute) do
+    clean_args = drop_command_id(args)
 
     case user do
       %User{} = actor ->
-        with {:ok, command_key} <- CommandReceipt.resolve_command_key(args) do
+        with {:ok, command_id} <- Command.resolve_command_id(option(args, :command_id)) do
           target_key = "#{community.id}:#{target_id}"
 
-          CommandReceipt.run_user_command(
-            actor,
-            command_key,
-            command_name,
-            "doc_tree",
-            target_key,
-            clean_args,
-            fn ->
-              with {:ok, result} <- execute.(clean_args) do
-                {:ok, result, CommandReplay.tree_metadata(result, target_key)}
-              end
-            end,
-            &CommandReplay.replay_tree/1
+          Command.create_user(actor, command_id,
+            command: command,
+            resource: :doc_tree,
+            owner: community,
+            input: %{target_id: target_id, args: clean_args},
+            recovery: &CommandReplay.replay_tree/1
           )
+          |> Command.run(fn %{input: %{args: clean_args}} ->
+            with {:ok, result} <- execute.(clean_args) do
+              {:ok, result, CommandReplay.tree_metadata(result, target_key)}
+            end
+          end)
         end
 
       _ ->
@@ -179,7 +185,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
   defp option(_opts, _key), do: nil
 
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 end

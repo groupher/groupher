@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
      }}
   end
 
-  def replay_tree(_receipt), do: {:error, ErrorCat.command_key_conflict()}
+  def replay_tree(_receipt), do: {:error, ErrorCat.command_id_conflict()}
 
   @doc "Decodes one compatible subtree receipt without repeating its writes."
   @spec replay_subtree(map()) :: {:ok, map()} | {:error, term()}
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
      }}
   end
 
-  def replay_subtree(_receipt), do: {:error, ErrorCat.command_key_conflict()}
+  def replay_subtree(_receipt), do: {:error, ErrorCat.command_id_conflict()}
 
   defp json_safe(nil), do: nil
   defp json_safe(value) when is_atom(value), do: Atom.to_string(value)

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
 
   """
   @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor, command_key \\ nil), to: Upvote, as: :add
+  defdelegate upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :add
 
   @doc """
   Removes an Artiment upvote idempotently.
@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
 
   """
   @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor, command_key \\ nil), to: Upvote, as: :remove
+  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :remove
 
   @doc """
   Applies an emotion idempotently.
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
   """
   @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor, command_key \\ nil), to: Emotion, as: :add
+  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Emotion, as: :add
 
   @doc """
   Removes an emotion idempotently.
@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
   """
   @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor, command_key \\ nil),
+  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil),
     to: Emotion,
     as: :remove
 

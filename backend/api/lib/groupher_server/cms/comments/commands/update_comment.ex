@@ -12,12 +12,13 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   from `PostSolution`; the Comment row remains the body authority.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Jobs
-  alias GroupherServer.CMS.{FrontDesk, Gate}
-  alias GroupherServer.CMS.Comments.{BodyCodec, JobPolicy}
-  alias GroupherServer.CMS.CommandReceipt
-  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.{Accounts, CMS, Jobs}
+
+  alias Accounts.Model.User
+  alias CMS.{Command, FrontDesk, Gate, Comments}
+  alias Comments.{BodyCodec, JobPolicy}
+  alias CMS.Model.Comment
+
   alias Helper.{ORM, T}
 
   @doc """
@@ -33,37 +34,38 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   def execute(%Comment{} = comment, body, %User{} = actor),
     do: execute(comment, body, actor, nil)
 
+  @doc "Updates a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), String.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
-  @doc "Updates a Comment while binding retries to the supplied command key."
-  def execute(%Comment{} = comment, body, %User{} = actor, command_key) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(command_key) do
-      CommandReceipt.run_user_command(
-        actor,
-        command_key,
-        "comment.update",
-        "comment",
-        comment.id,
-        body,
-        fn ->
-          Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
-            update_new(canonical, article, body, command_key)
-          end)
-        end,
-        fn _receipt ->
-          with {:ok, article} <- FrontDesk.article_of(comment) do
-            {:ok,
-             comment
-             |> Map.put(:article, article_summary(article, comment.thread))
-             |> Map.put(:command_key, command_key)
-             |> Map.put(:command_replayed, true)}
-          end
-        end
+  def execute(%Comment{} = comment, body, %User{} = actor, command_id) do
+    command =
+      Command.update_user(actor, command_id,
+        command: :comment_update,
+        resource: comment,
+        input: body
       )
-      |> enqueue_mentions()
-    end
+
+    Command.run(
+      %{
+        command
+        | after_commit: fn %Comment{} = updated ->
+            enqueue_mentions_for(updated)
+            :ok
+          end
+      },
+      fn %{
+           actor: actor,
+           resource: comment,
+           input: body,
+           command_id: command_id
+         } ->
+        Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+          update_new(canonical, article, body, command_id)
+        end)
+      end
+    )
   end
 
-  defp update_new(canonical, article, body, command_key) do
+  defp update_new(canonical, article, body, command_id) do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
@@ -78,36 +80,14 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          comments_count: updated_article.comments_count,
          comments_revision: updated_article.comments_revision
        })
-       |> Map.put(:command_key, command_key)
-       |> Map.put(:command_replayed, false)}
+       |> Map.put(:command_id, command_id)}
     end
   end
 
-  defp enqueue_mentions({:ok, %Comment{} = comment} = result) do
-    if Map.get(comment, :command_replayed, false) do
-      result
-    else
-      enqueue_mentions_for(comment, result)
-    end
-  end
-
-  defp enqueue_mentions(result), do: result
-
-  defp enqueue_mentions_for(%Comment{} = comment, result) do
+  defp enqueue_mentions_for(%Comment{} = comment) do
     :ok =
       Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
         Jobs.sync_mentions(comment)
       end)
-
-    result
-  end
-
-  defp article_summary(article, thread) do
-    %{
-      thread: thread,
-      inner_id: article.inner_id,
-      comments_count: article.comments_count,
-      comments_revision: article.comments_revision
-    }
   end
 end

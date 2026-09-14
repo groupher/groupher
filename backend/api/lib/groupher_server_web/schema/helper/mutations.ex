@@ -62,7 +62,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("upvote to #{thread}")
       field unquote(:"upvote_#{thread}"), :article do
         arg(:article, non_null(:article_path_input))
-        arg(:command_key, non_null(:id))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -73,7 +73,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("undo upvote to #{thread}")
       field unquote(:"undo_upvote_#{thread}"), :article do
         arg(:article, non_null(:article_path_input))
-        arg(:command_key, non_null(:id))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -141,7 +141,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"emotion_to_#{thread}"), unquote(thread) do
         arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
-        arg(:command_key, non_null(:id))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -153,7 +153,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       field unquote(:"undo_emotion_to_#{thread}"), unquote(thread) do
         arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
-        arg(:command_key, non_null(:id))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})

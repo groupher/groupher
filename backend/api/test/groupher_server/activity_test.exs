@@ -146,7 +146,7 @@ defmodule GroupherServer.Test.ActivityTest do
   test "authenticated Gate denials append a denied Activity fact" do
     {community, post, _attrs, _owner} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
     assert {:ok, _lifecycle} =
              CMS.Articles.Lifecycle.transition(
@@ -157,10 +157,10 @@ defmodule GroupherServer.Test.ActivityTest do
              )
 
     assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
-             CMS.Articles.trash(post, stranger, command_key: command_key)
+             CMS.Articles.trash(post, stranger, command_id: command_id)
 
     assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
-             CMS.Articles.trash(post, stranger, command_key: command_key)
+             CMS.Articles.trash(post, stranger, command_id: command_id)
 
     denied = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :trashed)
     assert denied.outcome == :denied

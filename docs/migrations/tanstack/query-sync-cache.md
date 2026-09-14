@@ -10,8 +10,8 @@
 >
 > 当前协议仍允许刷新后 public aggregate 短暂旧值。当前 viewer 跨刷新的 read-your-writes 见
 > [Optimistic Read Your Writes](./optimistic-read-your-writes.md)；当前客户端已对 Article upvote 与
-> Comment reaction/feed 提供覆盖 public CDN fresh + stale window 的有界 TTL receipt 兜底；Article/Comment reaction 的 commandKey/revision
-> 字段已接通；Comment create/reply/update/delete 也已绑定 commandKey，public revision selector、
+> Comment reaction/feed 提供覆盖 public CDN fresh + stale window 的有界 TTL receipt 兜底；Article/Comment reaction 的 commandId/revision
+> 字段已接通；Comment create/reply/update/delete 也已绑定 commandId，public revision selector、
 > write receipt slot 和 private reconcile 已接通。SSR 首帧仍可能短暂显示旧 public HTML，hydrate 后收敛；
 > Cloudflare 生产 purge 与跨 PoP 验证仍属于发布门。
 > mutation 刷新前的 identity、inverse rollback、queueKey 与 confirmed handoff 见

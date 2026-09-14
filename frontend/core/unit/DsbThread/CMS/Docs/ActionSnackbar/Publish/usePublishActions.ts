@@ -5,7 +5,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
-import { createCommandKey } from '~/query/mutation/optimistic/execute'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -81,10 +81,10 @@ export default function usePublishActions({
               ? [currentDocId]
               : []
         const currentDocPublished = currentDocId ? publishedDocIds.includes(currentDocId) : false
-        const commandKey = createCommandKey()
+        const commandId = createCommandId()
         const data = await browserGraphQLRequest<TPublishChangesData>(S.publishDocChanges, {
           community,
-          commandKey,
+          commandId,
           input,
           mode: 'WITH_COVER_SYNC',
         })

@@ -21,7 +21,7 @@
 > [`tanstack_rewrite/optimistic_read_your_writes.md`](../migrations/tanstack/optimistic-read-your-writes.md)，
 > 其前置 operation identity、inverse patch、queueKey 和 confirmed transition 见
 > [`tanstack_rewrite/optimistic_operation.md`](../migrations/tanstack/optimistic-operation.md)；客户端 O1/O3/O4/O5
-> 接线已落地，Article/Comment reaction 与 Comment entity 的 commandKey/revision、receipt、private
+> 接线已落地，Article/Comment reaction 与 Comment entity 的 commandId/revision、receipt、private
 > reconcile 和严格跨刷新 guard 已接通；SSR 首帧旧 public HTML 的短暂 flash 仍按 RYW 文档的边界接受。
 >
 > 范围：`frontend/main`、`frontend/dashboard`、`frontend/dash` 以及它们使用的
@@ -1119,10 +1119,10 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
   `Q.comment.list` cache；
 - article upvote 与 comment upvote/emotion 统一接入
   [optimistic operation 通用层](../migrations/tanstack/optimistic-operation.md)：`useOptimisticToggle` 负责
-  读取 canonical Query、合并最后期望状态，executor 负责 commandKey、受影响 Query 取消、
+  读取 canonical Query、合并最后期望状态，executor 负责 commandId、受影响 Query 取消、
   `queueKey` lane 串行、精确 effect plan、guarded rollback 和 server reconcile。当前实现不创建
   TanStack MutationCache 的 `mutationKey`/`scope.id` 记录，也不把 pending 状态放进 module-global Set；
-  运行期 identity 以 `commandKey + operation name + queueKey` 记录，未来若迁移到 `useMutation`，
+  运行期 identity 以 `commandId + operation name + queueKey` 记录，未来若迁移到 `useMutation`，
   只能把这些不可变字段映射到 meta/观察 key，不得改变 queueKey 与 toggle intent buffer 语义；
 - article upvote 必须补齐与 comment reaction 等价的按实体 intent buffer；UI 事件不得把基于
   stale prop 计算出的目标值直接排队。连续操作以最后期望状态为准，同一实体同时最多一个请求，
@@ -1231,7 +1231,7 @@ wrapper、过渡 `~/hooks/useQuery` 或依赖；ArticleList/Comments Valtio stor
   `article.commentsCount`；成功后 pending entity 和 optimistic count 都被 payload 精确替换；
 - 所有 `createXxx` mutation 的 TanStack 配置均为 `retry: false`，network error 不自动重发；
 - 快速连续点击会合并到最后期望状态，不会出现负数、重复 upvote 或最终状态反转；
-- commandKey/name/queueKey 可用于日志和诊断；同一 operation 的正向与撤销共享 queueKey lane，
+- commandId/name/queueKey 可用于日志和诊断；同一 operation 的正向与撤销共享 queueKey lane，
   toggle intent buffer 在请求期间合并最后期望状态，settle 后不会因点击次数堆积执行记录；
 - list/detail/preview 同时打开时保持一致；
 - REPLIES 模式的嵌套 reply 与 TIMELINE 模式的扁平 entry 都能被同一 mutation 更新；

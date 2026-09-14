@@ -152,7 +152,7 @@ describe('comment query mutation helpers', () => {
         innerId: '1',
       },
     }
-    const context = { queryClient, accountRef: 'alice', commandKey: 'op-1' }
+    const context = { queryClient, accountRef: 'alice', commandId: 'op-1' }
     const plan = deleteCommentOperation.apply(context, target)
 
     for (const change of plan.changes) markChange(queryClient, change)
@@ -185,7 +185,7 @@ describe('comment query mutation helpers', () => {
     }
 
     updateCommentOperation.reconcile(
-      { queryClient, accountRef: 'alice', commandKey: 'op-update' },
+      { queryClient, accountRef: 'alice', commandId: 'op-update' },
       target,
       'updated body',
       {
@@ -224,12 +224,11 @@ describe('comment query mutation helpers', () => {
     }
 
     deleteCommentOperation.reconcile(
-      { queryClient, accountRef: 'alice', commandKey: 'op-delete' },
+      { queryClient, accountRef: 'alice', commandId: 'op-delete' },
       target,
       undefined,
       {
         ...root,
-        commandReplayed: true,
         article: { innerId: '42', commentsCount: 9, commentsRevision: 3 },
       },
     )

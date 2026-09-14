@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.CommandReceipt do
   @moduledoc """
-  Public CMS boundary for command identity, execution, replay and retention.
+  Internal receipt boundary for command identity, execution, recovery and retention.
 
       CMS domain command / retention job
         -> CommandReceipt facade
@@ -16,22 +16,18 @@ defmodule GroupherServer.CMS.CommandReceipt do
   alias GroupherServer.CMS.Model.CommandReceipt, as: CommandReceiptModel
 
   @doc """
-  Resolves an internal command key from a direct key or option containers.
+  Resolves an internal command id from a direct id.
 
   `nil` is intentionally allowed only for internal one-shot facades; transport
-  callers must supply the key before reaching this boundary. Existing binary
-  keys must be UUID-shaped so retries cannot silently become a different
+  callers must supply the id before reaching this boundary. Existing binary
+  ids must be UUID-shaped so retries cannot silently become a different
   command identity. Invalid values fail closed.
   """
-  @spec resolve_command_key(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate resolve_command_key(value), to: Key, as: :resolve
+  @spec resolve_command_id(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
+  defdelegate resolve_command_id(value), to: Key, as: :resolve
 
-  @doc "Resolves a primary option container, falling back to a secondary one."
-  @spec resolve_command_key(term(), term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate resolve_command_key(primary, fallback), to: Key, as: :resolve
-
-  @doc "Runs one user command behind the shared receipt boundary."
-  @spec run_user_command(
+  @doc "Runs the internal receipt protocol for a CMS command without exposing recovery state."
+  @spec run_internal(
           User.t(),
           Ecto.UUID.t() | nil,
           String.t(),
@@ -41,19 +37,44 @@ defmodule GroupherServer.CMS.CommandReceipt do
           (-> term()),
           (CommandReceiptModel.t() -> term())
         ) :: {:ok, term()} | {:error, term()}
-  defdelegate run_user_command(
+  defdelegate run_internal(
                 user,
-                command_key,
-                command_name,
+                command_id,
+                command,
                 target_type,
                 target_key,
                 data,
                 execute,
-                replay
+                recovery
               ),
               to: Runner
 
-  @doc "Deletes a bounded batch of receipts past the replay window."
+  @doc "Runs the internal receipt protocol with a post-commit effect callback."
+  @spec run_internal(
+          User.t(),
+          Ecto.UUID.t() | nil,
+          String.t(),
+          String.t(),
+          String.t() | pos_integer(),
+          term(),
+          (-> term()),
+          (CommandReceiptModel.t() -> term()),
+          (term() -> term())
+        ) :: {:ok, term()} | {:error, term()}
+  defdelegate run_internal(
+                user,
+                command_id,
+                command,
+                target_type,
+                target_key,
+                data,
+                execute,
+                recovery,
+                after_commit
+              ),
+              to: Runner
+
+  @doc "Deletes a bounded batch of receipts past the recovery window."
   @spec prune_expired(pos_integer()) :: non_neg_integer()
   def prune_expired(limit \\ 1_000), do: Store.prune_expired(limit)
 end

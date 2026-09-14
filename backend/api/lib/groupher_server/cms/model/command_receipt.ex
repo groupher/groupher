@@ -23,8 +23,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
   schema "command_receipts" do
     field(:initiator_type, :string)
     field(:initiator_key, :string)
-    field(:command_key, Ecto.UUID)
-    field(:command_name, :string)
+    field(:command_id, Ecto.UUID)
+    field(:command, :string)
     field(:target_type, :string)
     field(:target_key, :string)
     field(:payload_fingerprint, :string)
@@ -39,8 +39,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
   @required_fields ~w(
     initiator_type
     initiator_key
-    command_key
-    command_name
+    command_id
+    command
     target_type
     target_key
     payload_fingerprint
@@ -53,8 +53,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     |> cast(attrs, [
       :initiator_type,
       :initiator_key,
-      :command_key,
-      :command_name,
+      :command_id,
+      :command,
       :target_type,
       :target_key,
       :payload_fingerprint,
@@ -66,8 +66,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     |> validate_required(@required_fields)
     |> validate_inclusion(:outcome, ["changed", "unchanged"], allow_nil: true)
     |> unique_constraint(
-      [:initiator_type, :initiator_key, :command_key],
-      name: :command_receipts_initiator_command_key_index
+      [:initiator_type, :initiator_key, :command_id],
+      name: :command_receipts_initiator_command_id_index
     )
   end
 end

@@ -84,54 +84,50 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert current_post.upvotes_count == 1
     end
 
-    test "command key replay returns the same confirmed state",
+    test "command id replay returns the same confirmed state",
          ~m(user_conn community post)a do
-      command_key = Ecto.UUID.generate()
+      command_id = Ecto.UUID.generate()
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        commandKey: command_key
+        commandId: command_id
       }
 
       first =
         user_conn
-        |> gq_mutation(S.Article.m(:upvote_article_with_command_key, :post), variables)
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
       replay =
         user_conn
-        |> gq_mutation(S.Article.m(:upvote_article_with_command_key, :post), variables)
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
-      assert first["commandKey"] == command_key
-      refute first["commandReplayed"]
-      assert replay["commandKey"] == command_key
-      assert replay["commandReplayed"]
+      assert first["commandId"] == command_id
+      assert replay["commandId"] == command_id
       assert replay["reactionOutcome"] == "changed"
       assert replay["upvotesCount"] == first["upvotesCount"]
       assert replay["articleInteractionRevision"] == first["articleInteractionRevision"]
     end
 
-    test "command key replay preserves an unchanged outcome",
+    test "command id replay preserves an unchanged outcome",
          ~m(user_conn community post user)a do
       {:ok, _} = CMS.Interactions.upvote(post, user)
-      command_key = Ecto.UUID.generate()
+      command_id = Ecto.UUID.generate()
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        commandKey: command_key
+        commandId: command_id
       }
 
       first =
         user_conn
-        |> gq_mutation(S.Article.m(:upvote_article_with_command_key, :post), variables)
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
       replay =
         user_conn
-        |> gq_mutation(S.Article.m(:upvote_article_with_command_key, :post), variables)
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
 
       assert first["reactionOutcome"] == "unchanged"
-      refute first["commandReplayed"]
       assert replay["reactionOutcome"] == "unchanged"
-      assert replay["commandReplayed"]
       assert replay["upvotesCount"] == first["upvotesCount"]
     end
 

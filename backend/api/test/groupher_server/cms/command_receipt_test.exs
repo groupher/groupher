@@ -5,20 +5,20 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   alias GroupherServer.CMS.CommandReceipt
   alias GroupherServer.CMS.CommandReceipt.Store
+  alias GroupherServer.CMS.Command
   alias GroupherServer.CMS.DocTree.CommandReplay
   alias GroupherServer.CMS.Model.CommandReceipt, as: CommandReceiptModel
 
   test "replays the same user command and rejects a different fingerprint" do
     {_community, post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
     assert {:ok, {:ok, :new, receipt}} =
              Repo.transaction(fn ->
                {:ok, :new, receipt} =
                  Store.claim(
-                   :user,
                    Integer.to_string(user.id),
-                   command_key,
+                   command_id,
                    "article.update",
                    "post",
                    post.id,
@@ -28,12 +28,11 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                {:ok, :new, receipt}
              end)
 
-    assert {:ok, {:ok, :replay, replayed}} =
+    assert {:ok, {:ok, :recovery, recovered}} =
              Repo.transaction(fn ->
                Store.claim(
-                 :user,
                  Integer.to_string(user.id),
-                 command_key,
+                 command_id,
                  "article.update",
                  "post",
                  post.id,
@@ -41,14 +40,13 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                )
              end)
 
-    assert replayed.id == receipt.id
+    assert recovered.id == receipt.id
 
-    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :command_key_conflict}}} =
+    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_conflict}}} =
              Repo.transaction(fn ->
                Store.claim(
-                 :user,
                  Integer.to_string(user.id),
-                 command_key,
+                 command_id,
                  "article.update",
                  "post",
                  post.id,
@@ -59,15 +57,14 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   test "failed transaction rolls back the receipt claim" do
     {_community, post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
     assert {:error, :denied} =
              Repo.transaction(fn ->
                {:ok, :new, _receipt} =
                  Store.claim(
-                   :user,
                    Integer.to_string(user.id),
-                   command_key,
+                   command_id,
                    "article.delete",
                    "post",
                    post.id
@@ -81,7 +78,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                where:
                  receipt.initiator_type == "user" and
                    receipt.initiator_key == ^to_string(user.id) and
-                   receipt.command_key == ^command_key
+                   receipt.command_id == ^command_id
              )
            )
   end
@@ -92,7 +89,6 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert {:ok, {:error, %Ecto.Changeset{} = changeset}} =
              Repo.transaction(fn ->
                Store.claim(
-                 :user,
                  Integer.to_string(user.id),
                  "not-a-uuid",
                  "article.update",
@@ -101,17 +97,17 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                )
              end)
 
-    assert Keyword.has_key?(changeset.errors, :command_key)
+    assert Keyword.has_key?(changeset.errors, :command_id)
   end
 
   test "runs and replays a user command with a composite string target" do
     {_community, _post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
-    assert {:ok, %{command_key: ^command_key, command_replayed: false}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "article.update_draft",
                "article",
                "community:post:article-key",
@@ -120,10 +116,10 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                fn _receipt -> {:ok, %{id: "article-key"}} end
              )
 
-    assert {:ok, %{command_key: ^command_key, command_replayed: true}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "article.update_draft",
                "article",
                "community:post:article-key",
@@ -133,11 +129,82 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              )
   end
 
-  test "a nil command key cannot bypass the receipt boundary" do
+  test "CMS.Command keeps declaration data out of the callback arguments" do
+    {_community, _post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command =
+      Command.create_user(user, command_id,
+        command: :article_update_draft,
+        resource: :article,
+        owner: "community",
+        input: %{title: "first"},
+        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
+      )
+
+    assert {:ok, %{id: "article-key"}} =
+             Command.run(command, fn %{actor: ^user, input: %{title: "first"}} ->
+               {:ok, %{id: "article-key"}}
+             end)
+
+    assert Repo.get_by(CommandReceiptModel, command_id: command_id).command ==
+             "article.update_draft"
+
+    assert {:ok, %{id: "article-key"}} =
+             Command.run(command, fn _context -> {:error, :must_not_execute_on_replay} end)
+  end
+
+  test "create_user derives a stable owner target without a synthetic collection" do
+    {community, _post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command =
+      Command.create_user(user, command_id,
+        command: :article_create,
+        resource: :article,
+        owner: community,
+        input: %{title: "first"},
+        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
+      )
+
+    assert {:ok, %{id: "article-key"}} =
+             Command.run(command, fn %{owner: ^community, input: %{title: "first"}} ->
+               {:ok, %{id: "article-key"}}
+             end)
+
+    assert Repo.get_by(CommandReceiptModel, command_id: command_id).target_type == "article"
+
+    assert Repo.get_by(CommandReceiptModel, command_id: command_id).target_key ==
+             to_string(community.id)
+  end
+
+  test "CMS.Command encodes command atoms at the Receipt boundary" do
+    {community, _post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command =
+      Command.create_user(user, command_id,
+        command: :doc_tree_create_tab,
+        resource: :doc_tree,
+        owner: community,
+        input: %{title: "Docs"},
+        recovery: fn _receipt -> {:ok, %{id: "tree-1"}} end
+      )
+
+    assert {:ok, %{id: "tree-1"}} =
+             Command.run(command, fn %{input: %{title: "Docs"}} ->
+               {:ok, %{id: "tree-1"}}
+             end)
+
+    assert Repo.get_by(CommandReceiptModel, command_id: command_id).command ==
+             "doc.tree.create_tab"
+  end
+
+  test "a nil command id cannot bypass the receipt boundary" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_key_required}} =
-             CommandReceipt.run_user_command(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_required}} =
+             CommandReceipt.run_internal(
                user,
                nil,
                "article.update",
@@ -149,14 +216,31 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              )
   end
 
-  test "invalid command keys fail closed before entering the receipt transaction" do
+  test "the nine-argument receipt entry treats nil command id as missing" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
-    for command_key <- [42, false, [], %{}, "", "not-a-uuid"] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_key_required}} =
-               CommandReceipt.run_user_command(
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_required}} =
+             CommandReceipt.run_internal(
+               user,
+               nil,
+               "article.update",
+               "post",
+               "1",
+               %{},
+               fn -> {:ok, %{id: "post-1"}} end,
+               fn _receipt -> {:ok, %{id: "post-1"}} end,
+               fn _result -> :ok end
+             )
+  end
+
+  test "invalid command ids fail closed before entering the receipt transaction" do
+    {_community, _post, _attrs, user} = mock_article(:post)
+
+    for command_id <- [42, false, [], %{}, "", "not-a-uuid"] do
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+               CommandReceipt.run_internal(
                  user,
-                 command_key,
+                 command_id,
                  "article.update",
                  "post",
                  "1",
@@ -166,17 +250,17 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                )
     end
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_key_required}} =
-             CommandReceipt.resolve_command_key(%{command_key: ""})
+    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+             CommandReceipt.resolve_command_id(%{command_id: ""})
   end
 
-  test "invalid callbacks remain programming errors instead of command key errors" do
+  test "invalid callbacks remain programming errors instead of command id errors" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert_raise ArgumentError,
-                 "command receipt callbacks must be execute/0 and replay/1 functions",
+                 "command receipt callbacks must be execute/0, recovery/1 and after_commit/1 functions",
                  fn ->
-                   CommandReceipt.run_user_command(
+                   CommandReceipt.run_internal(
                      user,
                      Ecto.UUID.generate(),
                      "article.update",
@@ -189,44 +273,28 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  end
   end
 
-  test "internal command key resolution preserves retries and creates one-shot keys" do
-    command_key = Ecto.UUID.generate()
+  test "internal command id resolution accepts only a direct id" do
+    command_id = Ecto.UUID.generate()
 
-    assert {:ok, ^command_key} = CommandReceipt.resolve_command_key(command_key)
+    assert {:ok, ^command_id} = CommandReceipt.resolve_command_id(command_id)
 
-    assert {:ok, ^command_key} =
-             CommandReceipt.resolve_command_key(%{"command_key" => command_key})
-
-    assert {:ok, ^command_key} =
-             CommandReceipt.resolve_command_key([command_key: nil], %{command_key: command_key})
-
-    assert {:ok, ^command_key} =
-             CommandReceipt.resolve_command_key(%{}, %{command_key: command_key})
-
-    assert {:ok, generated} = CommandReceipt.resolve_command_key(nil)
+    assert {:ok, generated} = CommandReceipt.resolve_command_id(nil)
     assert {:ok, ^generated} = Ecto.UUID.cast(generated)
 
-    assert {:ok, generated_from_map} = CommandReceipt.resolve_command_key(%{})
-    assert {:ok, ^generated_from_map} = Ecto.UUID.cast(generated_from_map)
-  end
-
-  test "an invalid primary command key fails closed without consulting fallback" do
-    fallback = %{command_key: Ecto.UUID.generate()}
-
-    for primary <- [%{command_key: ""}, [command_key: ""], [:not_a_keyword_list]] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_key_required}} =
-               CommandReceipt.resolve_command_key(primary, fallback)
+    for invalid <- [42, false, [], %{}, "not-a-uuid"] do
+      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+               CommandReceipt.resolve_command_id(invalid)
     end
   end
 
   test "unchanged outcomes are replayable completed commands" do
     {_community, _post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
-    assert {:ok, %{command_replayed: false}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "upvote_remove",
                "post",
                "1",
@@ -238,13 +306,13 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert Repo.get_by(CommandReceiptModel,
              initiator_type: "user",
              initiator_key: to_string(user.id),
-             command_key: command_key
+             command_id: command_id
            ).outcome == "unchanged"
 
-    assert {:ok, %{command_replayed: true}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "upvote_remove",
                "post",
                "1",
@@ -256,7 +324,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   test "persists a versioned replay payload for tree-shaped results" do
     {_community, _post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
     result = %{
       revision: 4,
@@ -266,10 +334,10 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
       conflict: false
     }
 
-    assert {:ok, %{command_replayed: false}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "doc.tree.update_node",
                "doc_tree",
                "community:1:page-1",
@@ -282,10 +350,10 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                end
              )
 
-    assert {:ok, %{command_replayed: true}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "doc.tree.update_node",
                "doc_tree",
                "community:1:page-1",
@@ -300,12 +368,12 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   test "failed command execution rolls back its receipt claim" do
     {_community, post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
 
     assert {:error, :denied} =
-             CommandReceipt.run_user_command(
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "article.delete",
                "post",
                post.id,
@@ -319,20 +387,20 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                where:
                  receipt.initiator_type == "user" and
                    receipt.initiator_key == ^to_string(user.id) and
-                   receipt.command_key == ^command_key
+                   receipt.command_id == ^command_id
              )
            )
   end
 
   test "expired receipt is reclaimed for a new execution" do
     {_community, _post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
     input = %{body: "same command after expiry"}
 
-    assert {:ok, %{command_replayed: false}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "article.update",
                "post",
                "1",
@@ -345,14 +413,14 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
       where:
         receipt.initiator_type == "user" and
           receipt.initiator_key == ^to_string(user.id) and
-          receipt.command_key == ^command_key
+          receipt.command_id == ^command_id
     )
     |> Repo.update_all(set: [expires_at: DateTime.add(DateTime.utc_now(), -1, :second)])
 
-    assert {:ok, %{command_replayed: false}} =
-             CommandReceipt.run_user_command(
+    assert {:ok, _result} =
+             CommandReceipt.run_internal(
                user,
-               command_key,
+               command_id,
                "article.update",
                "post",
                "1",
@@ -364,15 +432,15 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   test "concurrent requests with one identity execute the domain once" do
     {_community, _post, _attrs, user} = mock_article(:post)
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
     {:ok, executions} = Agent.start_link(fn -> 0 end)
 
     task_fun = fn ->
       receive do
         :start ->
-          CommandReceipt.run_user_command(
+          CommandReceipt.run_internal(
             user,
-            command_key,
+            command_id,
             "article.update",
             "post",
             "concurrent-post",
@@ -396,29 +464,21 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     Enum.each(tasks, &send(&1.pid, :start))
     results = Enum.map(tasks, &Task.await(&1, 5_000))
 
-    assert Enum.count(results, fn
-             {:ok, %{command_replayed: false}} -> true
-             _ -> false
-           end) == 1
-
-    assert Enum.count(results, fn
-             {:ok, %{command_replayed: true}} -> true
-             _ -> false
-           end) == 1
+    assert Enum.count(results, &match?({:ok, _}, &1)) == 2
 
     assert Agent.get(executions, & &1) == 1
   end
 
   test "a competing claim times out with command_resolution_pending" do
     user = %User{id: 9_999_999}
-    command_key = Ecto.UUID.generate()
+    command_id = Ecto.UUID.generate()
     parent = self()
 
     run = fn execute, replay ->
       Ecto.Adapters.SQL.Sandbox.unboxed_run(Repo, fn ->
-        CommandReceipt.run_user_command(
+        CommandReceipt.run_internal(
           user,
-          command_key,
+          command_id,
           "article.update",
           "post",
           "timeout-post",
@@ -451,7 +511,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_resolution_pending}} =
              Task.await(second, 6_000)
 
-    assert {:ok, %{command_replayed: false}} = Task.await(first, 6_000)
+    assert {:ok, _result} = Task.await(first, 6_000)
 
     Ecto.Adapters.SQL.Sandbox.unboxed_run(Repo, fn ->
       Repo.delete_all(
@@ -459,7 +519,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           where:
             receipt.initiator_type == "user" and
               receipt.initiator_key == ^to_string(user.id) and
-              receipt.command_key == ^command_key
+              receipt.command_id == ^command_id
         )
       )
     end)
@@ -474,8 +534,8 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
         CommandReceiptModel.changeset(%CommandReceiptModel{}, %{
           initiator_type: "user",
           initiator_key: "1",
-          command_key: expired_key,
-          command_name: "article.update",
+          command_id: expired_key,
+          command: "article.update",
           target_type: "post",
           target_key: "1",
           payload_fingerprint: "expired",
@@ -489,8 +549,8 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
         CommandReceiptModel.changeset(%CommandReceiptModel{}, %{
           initiator_type: "user",
           initiator_key: "1",
-          command_key: active_key,
-          command_name: "article.update",
+          command_id: active_key,
+          command: "article.update",
           target_type: "post",
           target_key: "1",
           payload_fingerprint: "active",

@@ -45,28 +45,26 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["article"]["commentsCount"] == 2
     end
 
-    test "create retries with one command key return the same comment",
+    test "create retries with one command id return the same comment",
          ~m(community post user_conn)a do
       variables = %{
         article: article_path(community, post, :post),
         body: mock_comment("idempotent create"),
-        commandKey: Ecto.UUID.generate()
+        commandId: Ecto.UUID.generate()
       }
 
-      first = user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_key), variables)
+      first = user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_id), variables)
 
       replay =
-        user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_key), variables)
+        user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_id), variables)
 
-      assert replay["commandKey"] == variables.commandKey
-      refute first["commandReplayed"]
-      assert replay["commandReplayed"]
+      assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
       assert replay["article"]["commentsCount"] == first["article"]["commentsCount"]
       assert replay["article"]["commentsCount"] == 1
     end
 
-    test "reply retries with one command key return the same comment",
+    test "reply retries with one command id return the same comment",
          ~m(community post user user_conn)a do
       {:ok, parent} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -74,15 +72,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{
         comment: comment_path(community, post, :post, parent),
         body: mock_comment("idempotent reply"),
-        commandKey: Ecto.UUID.generate()
+        commandId: Ecto.UUID.generate()
       }
 
-      first = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_key), variables)
-      replay = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_key), variables)
+      first = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
+      replay = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
 
-      assert replay["commandKey"] == variables.commandKey
-      refute first["commandReplayed"]
-      assert replay["commandReplayed"]
+      assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
       assert replay["article"]["commentsCount"] == first["article"]["commentsCount"]
       assert replay["article"]["commentsCount"] == 2
@@ -118,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["bodyHtml"] |> String.contains?(~s(updated comment))
     end
 
-    test "update retries with one command key do not apply the body twice",
+    test "update retries with one command id do not apply the body twice",
          ~m(community post user owner_conn)a do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
@@ -126,18 +122,16 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{
         comment: comment_path(community, post, :post, comment),
         body: mock_comment("idempotent update"),
-        commandKey: Ecto.UUID.generate()
+        commandId: Ecto.UUID.generate()
       }
 
       first =
-        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_key), variables)
+        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
 
       replay =
-        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_key), variables)
+        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
 
-      assert replay["commandKey"] == variables.commandKey
-      refute first["commandReplayed"]
-      assert replay["commandReplayed"]
+      assert replay["commandId"] == variables.commandId
       assert replay["bodyHtml"] == first["bodyHtml"]
       assert replay["bodyHtml"] |> String.contains?(~s(idempotent update))
       assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
@@ -169,26 +163,24 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert deleted["innerId"] == to_string(comment.inner_id)
     end
 
-    test "delete retries with one command key return the same tombstone and count",
+    test "delete retries with one command id return the same tombstone and count",
          ~m(community post user owner_conn)a do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       variables = %{
         comment: comment_path(community, post, :post, comment),
-        commandKey: Ecto.UUID.generate()
+        commandId: Ecto.UUID.generate()
       }
 
       first =
-        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_key), variables)
+        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_id), variables)
 
       replay =
-        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_key), variables)
+        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_id), variables)
 
-      assert first["commandKey"] == variables.commandKey
-      assert replay["commandKey"] == variables.commandKey
-      refute first["commandReplayed"]
-      assert replay["commandReplayed"]
+      assert first["commandId"] == variables.commandId
+      assert replay["commandId"] == variables.commandId
       assert replay["innerId"] == first["innerId"]
       assert first["article"]["commentsCount"] == 0
       assert replay["article"]["commentsCount"] == 0

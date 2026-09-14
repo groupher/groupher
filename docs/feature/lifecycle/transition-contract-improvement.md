@@ -4,19 +4,23 @@
 
 1. Community、普通 Article、Doc branch 当前有哪些 action，它们的理想 transition contract 是什么；
 2. 每个 action 是否覆盖 version conflict、权限失败和重复请求测试；
-3. 客户端操作如何映射到 `commandKey`、`queueKey` 和 `reconcile`。
+3. 客户端操作如何映射到 `commandId`、`queueKey` 和 `reconcile`。
 
 本文以当前代码为准。已有设计文档只作为目标合同，不能代替实现和测试证据。
 
-本文采用直接切换，不承担历史协议兼容：不回填旧 receipt，不保留旧字段别名，不做双读、双写或
-`operationRef` fallback。实现时应在同一交付中把 GraphQL、前端、后端和测试切换到
-`commandKey`/`commandReplayed` 与 `cms.command_receipts`，并删除旧 receipt 表、旧字段和旧兼容逻辑。
-少数内部 facade 为了让非 transport 的一次性调用仍能完成，会在缺少 key 时生成一次性 key；这不是旧协议兼容，
-也不提供 retry/replay 语义，公开 GraphQL 路径不允许省略 key。这里不迁移的是幂等 receipt；Lifecycle、TrashAction、
-DocPublishRelease、Audit 等领域事实仍按各自合同保留。
+当前实现已从旧 `operationRef` 和 `interaction_operation_receipts` 直接切换到
+`commandId` 与 `cms.command_receipts`，没有回填旧 receipt、保留旧字段别名或双读双写。
+Receipt 恢复属于服务端内部实现，不进入产品合同；迁移顺序以 CMS Command Receipt 重构文档为准。Lifecycle、TrashAction、
+DocPublishRelease、Audit 等领域事实始终按各自合同保留，不随幂等 Receipt 迁移。
 
 本文延续 [Command：复杂领域操作的组织边界](../artiment/command.md) 和
 [Optimistic Operation](../../migrations/tanstack/optimistic-operation.md)，不引入全局 Command Bus、通用状态机或客户端第二份 confirmed store。
+
+同步 CMS 用户命令的长期 API 与 Receipt 所有权边界见
+[CMS Command](../../architecture/cms-command.md)；从历史 `CMS.CommandReceipt.run_user_command/8`
+迁移到该目标的阶段与验收见
+[CMS Command Receipt 重构](../../migrations/cms-command-receipt-refactor.md)。本文只冻结业务一致性、
+action matrix 与产品可观察结果，不冻结当前函数参数、callback 或模块内部实现。
 
 ## 相关文档与权威边界
 
@@ -35,21 +39,23 @@ Optimistic Operation：command identity / queue / rollback / reconcile
 Activity V3：command 与 Audit / Activity event 的关联
 ```
 
-| 文档                                                                                                 | 当前负责的内容                                                                                               | 与本文的关系                                                                                                                                                  |
-| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Command：复杂领域操作的组织边界](../artiment/command.md)                                            | Command、Writer、事务、锁、Gate、Lifecycle、Audit 和 post-commit effect 的职责边界                           | 通用 `cms.command_receipts` 最终应归属这个后端合同；本文只冻结目标并应用到具体 action，不建立 Command Bus                                                     |
-| [CMS Facade 与实现目录收口](../../architecture/cms-facade-directory.md)                                          | 顶层 facade、Reader/Writer 命名、`commands/` 目录与内部实现下沉顺序                                          | 本文冻结 command/receipt 行为；目录收口文档保证 Articles、DocTree 与 CommandReceipt 在不改变公开 API 的前提下落实该边界                                       |
-| [Optimistic Operation](../../migrations/tanstack/optimistic-operation.md)                                  | 前端从 optimistic apply 到 execute、rollback、reconcile 的内存期生命周期；该旧章节仍使用 `operationRef` 术语 | 本文把目标命名收敛为 `commandKey`，并将它与 `queueKey`、version/revision 对接                                                                                 |
-| [Optimistic Read Your Writes](../../migrations/tanstack/optimistic-read-your-writes.md)                    | 浏览器跨刷新 confirmed receipt、revision guard 和旧 public cache overlay                                     | 其中约 420 秒的浏览器 receipt 解决缓存收敛；本文定义的服务端 receipt 保留 24 小时，解决 ambiguous commit 和 transport retry，两者不能混用                     |
-| [Query Sync Cache](../../migrations/tanstack/query-sync-cache.md)                                          | public、viewer、Dashboard Query 的缓存边界与主动失效                                                         | 本文的 reconcile 只能在该缓存所有权边界内 patch/invalidate，不建立第二份 confirmed store                                                                      |
-| [Community Lifecycle](./contract.md)                                                                | Community state、Blocker、allowed transition 和锁内 version guard；Lifecycle 不判断 actor                    | Community action matrix 的状态和 precondition 以它为当前领域合同；`commandKey` 和 receipt 由外层 Command transaction 负责                                     |
-| [Gate V3：Article Core 与 Doc Release 边界](../gate/v3.md)                                            | Article Draft/Public/Lifecycle、Doc branch、DocLifecycle、Versioning 和 `DocPublishRelease` 的边界           | Article、Doc action matrix 的领域状态和 release 以它为依据；通用 receipt 可以指向 release，但不能取代 release                                                 |
-| [Gate V4：资源级强类型 Context](../gate/v4.md) 与 [Gate V5：Scope Query 命名与分发边界](../gate/v5.md) | Gate 的 typed Access/Scope Context，以及当前 Scope query 命名和分发                                          | Gate 继续负责 actor/action admission；`commandKey` 不能进入 Gate Policy/Scope Context，receipt 也不能改变 read scope                                          |
-| [Artiment Interaction V4](../interaction/v4.md)                                             | Interaction facade、Gate transaction、reaction fact、ReadState 和切换前的幂等实现                            | 历史上的 `interaction_operation_receipts` 已在本次切换中删除并由通用 `cms.command_receipts` 取代；reaction fact、projection 和 revision 仍由 Interaction 拥有 |
-| [Activity V3](../activity/v3.md)                                                                     | Audit/Activity 事实、查询和规模治理                                                                          | `commandKey` 用于关联一次 command；Activity 自己的 event identity 仍是另一层身份，长期审计不能依赖 24 小时 receipt                                            |
+| 文档                                                                                                   | 当前负责的内容                                                                                               | 与本文的关系                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Command：复杂领域操作的组织边界](../artiment/command.md)                                              | Command、Writer、事务、锁、Gate、Lifecycle、Audit 和 post-commit effect 的职责边界                           | 通用 `cms.command_receipts` 最终应归属这个后端合同；本文只冻结目标并应用到具体 action，不建立 Command Bus                                                     |
+| [CMS Command](../../architecture/cms-command.md)                                                       | 同步用户 Command 的长期 API、FrontDesk 结果投影、Receipt/Store 所有权和正反例                                | 本文冻结业务与并发合同；CMS Command 冻结长期代码边界，产品端不感知首次执行或 Receipt 恢复                                                                     |
+| [CMS Command Receipt 重构](../../migrations/cms-command-receipt-refactor.md)                           | 从 `run_user_command/8`、replay callback 和内部状态泄漏迁移到目标架构的阶段与验收                            | 只记录实施顺序和临时状态，不覆盖本文业务合同或 CMS Command 长期边界                                                                                           |
+| [CMS Facade 与实现目录收口](../../architecture/cms-facade-directory.md)                                | 顶层 facade、Reader/Writer 命名、`commands/` 目录与内部实现下沉顺序                                          | 本文冻结 command/receipt 行为；目录收口文档保证 Articles、DocTree 与 CommandReceipt 在不改变公开 API 的前提下落实该边界                                       |
+| [Optimistic Operation](../../migrations/tanstack/optimistic-operation.md)                              | 前端从 optimistic apply 到 execute、rollback、reconcile 的内存期生命周期；该旧章节仍使用 `operationRef` 术语 | 本文把目标命名收敛为 `commandId`，并将它与 `queueKey`、version/revision 对接                                                                                  |
+| [Optimistic Read Your Writes](../../migrations/tanstack/optimistic-read-your-writes.md)                | 浏览器跨刷新 confirmed receipt、revision guard 和旧 public cache overlay                                     | 其中约 420 秒的浏览器 receipt 解决缓存收敛；本文定义的服务端 receipt 保留 24 小时，解决 ambiguous commit 和 transport retry，两者不能混用                     |
+| [Query Sync Cache](../../migrations/tanstack/query-sync-cache.md)                                      | public、viewer、Dashboard Query 的缓存边界与主动失效                                                         | 本文的 reconcile 只能在该缓存所有权边界内 patch/invalidate，不建立第二份 confirmed store                                                                      |
+| [Community Lifecycle](./contract.md)                                                                   | Community state、Blocker、allowed transition 和锁内 version guard；Lifecycle 不判断 actor                    | Community action matrix 的状态和 precondition 以它为当前领域合同；`commandId` 和 receipt 由外层 Command transaction 负责                                      |
+| [Gate V3：Article Core 与 Doc Release 边界](../gate/v3.md)                                             | Article Draft/Public/Lifecycle、Doc branch、DocLifecycle、Versioning 和 `DocPublishRelease` 的边界           | Article、Doc action matrix 的领域状态和 release 以它为依据；通用 receipt 可以指向 release，但不能取代 release                                                 |
+| [Gate V4：资源级强类型 Context](../gate/v4.md) 与 [Gate V5：Scope Query 命名与分发边界](../gate/v5.md) | Gate 的 typed Access/Scope Context，以及当前 Scope query 命名和分发                                          | Gate 继续负责 actor/action admission；`commandId` 不能进入 Gate Policy/Scope Context，receipt 也不能改变 read scope                                           |
+| [Artiment Interaction V4](../interaction/v4.md)                                                        | Interaction facade、Gate transaction、reaction fact、ReadState 和切换前的幂等实现                            | 历史上的 `interaction_operation_receipts` 已在本次切换中删除并由通用 `cms.command_receipts` 取代；reaction fact、projection 和 revision 仍由 Interaction 拥有 |
+| [Activity V3](../activity/v3.md)                                                                       | Audit/Activity 事实、查询和规模治理                                                                          | `commandId` 用于关联一次 command；Activity 自己的 event identity 仍是另一层身份，长期审计不能依赖 24 小时 receipt                                             |
 
 现阶段其他文档仍在描述当前代码，因此其中的 `operationRef`、`operationReplayed` 和
-`interaction_operation_receipts` 不能直接当成已经完成的 `commandKey`、`commandReplayed` 和
+`interaction_operation_receipts` 不能直接当成已经完成的 `commandId` 和
 `cms.command_receipts`。本文描述目标差异；只有实现、GraphQL、测试及对应权威文档一起迁移后，旧术语才算真正被取代。
 
 历史实施记录（例如 [urql 迁移到 TanStack Query](../../architecture/urql-to-tanstack-query.md)）只用于解释旧路径，不作为新 CommandReceipt 合同的权威来源，也不要求为了本方案重写全部历史章节。
@@ -62,20 +68,24 @@ Activity V3：command 与 Audit / Activity event 的关联
 
 先冻结本文使用的命名：
 
-- `commandKey`：一次用户意图的唯一键。网络超时后的重试必须复用同一个值；
-- `commandReplayed`：服务端没有再次执行写入，而是返回同一个 command 的已确认结果；
+- `commandId`：一次用户意图的唯一键。网络超时后的重试必须复用同一个值；
+- Receipt 恢复：服务端没有再次执行写入，而是返回同一个 command 的已确认结果；这是服务端内部执行策略，
+  产品端只观察相同的成功结果，不接收或分支处理 Receipt 恢复状态；
 - `queueKey`：客户端哪些 command 必须串行的分组键，不是请求身份；
 - `expectedVersion` 或领域专用 revision：用户基于哪个已确认状态发起 command；
 - 资源不使用笼统的 `resourceRef`。Community、Article、Doc 分别使用 `communitySlug`、`articleKey`、`branchKey`/`docId` 等领域键。
 
-选择 `commandKey` 而不是 `operationKey`，是因为后端的写边界已经称为 Command，而前端又已有
-`queueKey`；`operationKey` 容易与队列分组键混淆。选择 `commandReplayed` 也使请求与响应属于同一套词汇。
+本文现有实施章节仍使用数据库和已落地 GraphQL 中的 `commandId` 名称；目标 API 统一采用
+`commandId`，迁移与兼容要求见 CMS Command Receipt 重构。选择 command identity 而不是
+`operationKey`，是因为后端的写边界已经称为 Command，而前端又已有
+`queueKey`；`operationKey` 容易与队列分组键混淆。首次执行或 Receipt 恢复属于服务端内部状态，
+不再为它建立产品响应术语。
 当前代码中的 `operationRef`、`operationReplayed` 和若干 `...Ref` 是现状证据，不是本文建议的新协议名；迁移时应端到端一次性改名，不提供旧字段 alias、fallback、双读或双写。
 
 ```text
 Command {
-  commandKey
-  commandName
+  commandId
+  command
   target: communitySlug | articleKey | (branchKey, docId)
   expectedVersion | expectedDraftVersion | expectedChecklistRevision
   input
@@ -84,13 +94,13 @@ Command {
 request authentication resolves initiator; command input never supplies trusted identity
   -> BEGIN
   -> configure claim wait budget
-  -> INSERT receipt claim by (initiatorType, initiatorKey, commandKey)
+  -> INSERT receipt claim by (initiatorType, initiatorKey, commandId)
        ON CONFLICT DO NOTHING
        inserted: this request owns the new command
        conflict: wait for the competing transaction, then read its committed receipt
          expired receipt -> lock/delete it, then reclaim（见本节末尾）
          same fingerprint -> replay stored envelope
-         different fingerprint -> command_key_conflict
+         different fingerprint -> command_id_conflict
   -> new command: Gate.access_check(initiator, gateAction, canonical target)
   -> lock canonical target/lifecycle
   -> verify expected version/revision
@@ -98,7 +108,7 @@ request authentication resolves initiator; command input never supplies trusted 
   -> mutate target + lifecycle + Audit/outbox
   -> finalize receipt with outcome/result identity or a versioned result payload
   -> COMMIT
-  -> return { commandKey, commandReplayed = false, outcome, result }
+  -> return canonical business result
 ```
 
 这里的 claim 和 finalize 是 receipt 的两个阶段，但处于**同一个数据库事务**，不是先提交一个
@@ -111,22 +121,21 @@ request authentication resolves initiator; command input never supplies trusted 
 
 实现时必须给 claim wait 设置短于 HTTP/request deadline 的 `lock_timeout`，并给整个 command transaction 设置
 `statement_timeout`。当前实现使用 4 秒 `lock_timeout` 与 30 秒 transaction/statement budget。等待超时不能原样暴露为数据库错误，应回滚当前尝试并返回可重试的
-`command_resolution_pending`；客户端退避后继续用**同一个** `commandKey` 重试。这样第一笔事务随后提交时，
+`command_resolution_pending`；客户端退避后继续用**同一个** `commandId` 重试。这样第一笔事务随后提交时，
 重试会 replay；第一笔回滚时，重试可以重新取得 claim。长耗时 batch 应拆分为 job/chunk，不能长期占用同步请求连接。
 `lock_not_available/query_canceled` 保持这一可重试映射；`DBConnection.ConnectionError` 即使最终映射为
 pending 也必须记录原始异常，不能静默吞掉。尤其 Gate denial 路径绝不能被误报成 pending。
 
-`commandName` 是稳定的 handler/receipt 身份，例如 `community.request_destroy`；`gateAction` 是 handler
+`command` 是稳定的 handler/receipt 身份，例如 `community.request_destroy`；`gateAction` 是 handler
 内部派生的授权动作，例如 `:request_destroy`，绝不能由客户端指定。切换前实现中的 receipt 字段 `operation`
-在新 schema 和代码中直接改名/映射为 `command_name`；不搬迁旧 receipt 数据，也不保留兼容字段。
+在新 schema 和代码中直接统一为 `command`；不搬迁旧 receipt 数据，也不保留兼容字段。
 
 replay 分支仍然必须完成请求认证，并校验 initiator identity 与 fingerprint，但它：
 
 - 不重新执行 write Gate、version/revision 检查、transition 或领域写入；
 - 不再次写 reaction fact、projection、counter、Audit 或 outbox；
 - 不再次触发通知、搜索索引、成就或任何 post-commit effect；
-- 一定返回 receipt 中的非敏感 envelope：`commandKey`、`commandReplayed`、`outcome` 和
-  `resultKey`；领域 replay handler 可以用当前 Reader/Scope
+- 一定从 receipt 的非敏感 envelope 取得 outcome 和 result identity；领域结果恢复可以用当前 Reader/Scope
   重读一个 canonical result，或者从 `result_payload` 恢复无法重新查询的最小结果。无论采用哪种方式，
   都不能重新执行写入或 post-commit effect。
 
@@ -137,14 +146,14 @@ command 仍然是已提交成功，服务端返回 receipt envelope，但省略�
 这里三个机制不能互相替代：
 
 - `expectedVersion` 判断用户看到的状态是否已经过期；
-- `commandKey` 识别网络重试是否仍是同一次逻辑操作；
+- `commandId` 识别网络重试是否仍是同一次逻辑操作；
 - 数据库锁只负责把并发执行串行化，不证明后执行者的意图仍然有效。
 
 当前最主要的问题正是这三者没有在所有 lifecycle command 上同时成立。
 
 #### Receipt 为什么不能成功后立刻删除
 
-服务端只知道 transaction 已提交，无法知道浏览器是否收到响应。最需要 receipt 的场景恰好是“写入成功、响应在网络中丢失”：如果成功后立刻删除，客户端以同一个 `commandKey` 重试时，服务端会把它当成新 command，再执行一次副作用。
+服务端只知道 transaction 已提交，无法知道浏览器是否收到响应。最需要 receipt 的场景恰好是“写入成功、响应在网络中丢失”：如果成功后立刻删除，客户端以同一个 `commandId` 重试时，服务端会把它当成新 command，再执行一次副作用。
 
 但 receipt 也不应无限保留。切换前的 `cms.interaction_operation_receipts` 只有
 `inserted_at/updated_at`，没有 `expires_at` 和清理任务，因而会持续增长；该表已删除，当前统一 receipt
@@ -154,7 +163,7 @@ command 仍然是已提交成功，服务端返回 receipt envelope，但省略�
 
 本文将以下内容视为确定的目标合同，而不是待选方案：
 
-- 请求身份统一为 `commandKey`，响应统一返回 `commandReplayed`；
+- 请求身份在目标 API 中统一为 `commandId`；首次执行或 Receipt 恢复不改变产品响应形状；
 - 需要处理 ambiguous commit/retry 的同步 CMS command 统一写入 `cms.command_receipts`；
 - receipt 使用本节“Receipt 为什么不能成功后立刻删除”中定义的统一 idempotency window；
 - Community blocker、`TrashAction`、`DocPublishRelease`、Lifecycle 和 reaction fact 不再分别承担通用幂等协议；
@@ -169,7 +178,7 @@ new command commits
 
 - 所有接入通用协议的同步 command 使用同一个窗口，不按 action 分出多套保留期；
 - 表必须有 `expires_at` 和清理索引，由后台任务按时间分批删除；大规模后再考虑按时间分区；
-- 协议必须公开 idempotency window。过期后相同 `commandKey` 不再保证 replay，此时仍由领域唯一约束、Lifecycle precondition 和数据库约束防止非法重复；
+- 协议必须公开 idempotency window。过期后相同 `commandId` 不再保证 replay，此时仍由领域唯一约束、Lifecycle precondition 和数据库约束防止非法重复；
 - receipt 不是 Audit。它只保存重放所需的最小结果或结果主键，不能因为审计要长期保留而永久堆积。
 
 当前前端 `CONFIRMED_WRITE_RECEIPT_TTL_MS` 是 420 秒，只用于覆盖 public cache 的 fresh、stale-while-revalidate 和 reconcile margin；它不是服务端 command 的 idempotency window，二者不能共用一个 TTL 语义。
@@ -180,7 +189,7 @@ duplicate request 测试除了同 key replay，还应固定 retention 边界：�
 
 ```text
 cms.command_receipts
-  -> 这个 initiator 的 commandKey 是否已经执行
+  -> 这个 initiator 的 commandId 是否已经执行
   -> 24 小时内如何 replay
   -> result_key 指向领域结果，或保存最小 replay payload
 
@@ -197,10 +206,10 @@ Audit / Activity
 
 ```text
 cms.command_receipts
-  initiator_type        user | job | system
-  initiator_key         user id | stable job id | stable system identity
-  command_key UUID
-  command_name
+  initiator_type        user
+  initiator_key         authenticated user id
+  command_id UUID
+  command
   target_type
   target_key
   payload_fingerprint
@@ -211,14 +220,14 @@ cms.command_receipts
   inserted_at
   updated_at
 
-UNIQUE(initiator_type, initiator_key, command_key)
+UNIQUE(initiator_type, initiator_key, command_id)
 INDEX(expires_at)
 INDEX(target_type, target_key)
 ```
 
-`payload_fingerprint` 必须绑定 command name、领域目标、业务 input 和 expected version/revision。相同 initiator、相同 `commandKey`、相同 fingerprint 才能 replay；复用同一个 key 提交不同 command、目标、input 或并发前提必须返回 `command_key_conflict`。`target_type/target_key` 用于直接定位和治理目标 receipt；fingerprint 不是可查询的目标字段，result 也不等于 target。
+`payload_fingerprint` 必须绑定 command、领域目标、业务 input 和 expected version/revision。相同 actor、相同 `commandId`、相同 fingerprint 才能恢复已确认结果；复用同一个 commandId 提交不同 command、目标、input 或并发前提必须返回 `command_id_conflict`。`target_type/target_key` 是 Receipt 内部的通用目标/作用域索引，不限定为 Article 或 Comment；创建、恢复和 batch command 可以使用 owner 或领域 scope。fingerprint 不是可查询的目标字段，result 也不等于 target。
 
-`result_payload` 只允许保存无法从领域事实恢复的最小、版本化 replay envelope，不保存完整 Community、Article 或 Doc，也不把敏感资源快照放进通用 JSON。已有领域结果时保存 `result_key`：例如 Docs publish receipt 指向 `DocPublishRelease`，具体结果类型由 `command_name` 和 `target_type` 解释；但 `DocPublishRelease` 本身不承担通用幂等协议。
+`result_payload` 只允许保存无法从领域事实恢复的最小、版本化 replay envelope，不保存完整 Community、Article 或 Doc，也不把敏感资源快照放进通用 JSON。已有领域结果时保存 `result_key`：例如 Docs publish receipt 指向 `DocPublishRelease`，具体结果类型由 `command` 和 `target_type` 解释；但 `DocPublishRelease` 本身不承担通用幂等协议。
 
 runner 只拥有 transaction、claim、finalize 与 replay 调度，不嗅探 `%Comment{}`、`%Article{}`、tree map
 或其他领域结果形状。简单 command 可以默认以 `target_key` 作为 `result_key`；复合结果必须在 execute
@@ -228,7 +237,7 @@ runner 只拥有 transaction、claim、finalize 与 replay 调度，不嗅探 `%
 通用 receipt 不持久化无人消费的 `confirmed_versions`。需要参与客户端 RYW merge 的
 Article/Comment revision 属于对应 mutation response 与前端 session receipt 合同，不进入 command receipt。
 `outcome` 只允许 `changed | unchanged`；
-`commandReplayed` 是读取已有 receipt 时计算出来的响应标记，不是持久化 outcome。
+首次执行或 Receipt 恢复是 Runner 内部计算状态，不是持久化 outcome，也不进入领域实体或产品响应。
 例如 `archive_before` 在固定 threshold 下没有任何候选时，可以提交 `outcome: unchanged`：这表示 command
 已成功验证并得出“无需改变”的确定结果，后续同 key 可以 replay；Gate denial、version conflict 或业务错误则不是
 `unchanged`，必须按失败路径回滚 receipt。
@@ -237,38 +246,40 @@ Article/Comment revision 属于对应 mutation response 与前端 session receip
 
 通用 identity 不能依赖 nullable `actor_id`，也不能伪造 system user：
 
-| 来源                 | initiator identity                            | `commandKey` 的产生与重试                                |
+| 来源                 | initiator identity                            | `commandId` 的产生与重试                                 |
 | -------------------- | --------------------------------------------- | -------------------------------------------------------- |
 | 浏览器用户           | `user + authenticated user id`                | 浏览器在一次用户意图开始时生成；transport retry 复用     |
 | 人工 operations 工具 | `user + operator user id`                     | operations client 生成；重试复用                         |
 | 后台 job             | `job + stable job id`                         | enqueue 时生成并写入 job args；每次 job retry 复用同一值 |
 | 系统入口             | `system + stable capability/command identity` | command entry 生成并持久化到可重试载体后再执行           |
 
-Community Lifecycle 等内部函数保持 actor-independent；外层 Command 负责 initiator、Gate 或 maintenance policy。
-`initiator_type/initiator_key/command_key` 的组合才是 claim 唯一键。
+当前 CMS.Command 只接受 authenticated user；Community Lifecycle 等内部函数保持 actor-independent，
+外层 user command 负责 initiator、Gate 或 maintenance policy。未来 job/system 若有真实需求，另设独立入口，
+不扩展当前 user API。
+`initiator_type/initiator_key/command_id` 的组合才是 claim 唯一键。
 
 #### 失败 command 是否保留 receipt
 
 只保留已经提交的 `changed` 或 `unchanged` 结果。Gate denial、validation error、version conflict 和领域写入失败
 都回滚 claim，不持久化 receipt；权限后来变化时，同一 key 的重试会重新执行 Gate，而不会 replay 旧 denial。
 `pending` 只是事务尚未提交时数据库中的瞬时行，不是可读 outcome；`replayed` 也是响应语义，不是 outcome。
-若调用方改变 input 或 expected version，应生成新的 `commandKey`；同 key 不同 fingerprint 一律冲突。
+若调用方改变 input 或 expected version，应生成新的 `commandId`；同 key 不同 fingerprint 一律冲突。
 
 receipt 必须和领域写入位于同一数据库 transaction：Gate、version 或领域写入失败时，claim 一起 rollback；成功时，领域事实、Audit/outbox 和 completed receipt 一起 commit。并发的相同 key 由唯一约束串行化，后一个请求读取前一个已提交的结果。
 
 有一项明确例外：若产品合同要求记录 authenticated Gate denial，denied Activity 不是成功 command 的
 receipt 附件，必须在 receipt transaction 回滚之后由领域 facade 写入。Article trash 使用同一
-`commandKey` 作为 Activity `operation_ref`；Activity 的确定性 `event_ref` 唯一约束保证同 key 重试只留下
+`commandId` 作为 Activity `operation_ref`；Activity 的确定性 `event_ref` 唯一约束保证同 key 重试只留下
 一条 denied fact。24 小时 receipt 过期不影响该 Activity 幂等性。底层 `Trash.trash` 不自行写 denial，
 避免它在 caller transaction 中被一并回滚。
 如果冲突行已经超过 `expires_at`，请求应在锁定该 receipt 后删除过期行并重新 claim；不能因为 sweeper 尚未运行而把 24 小时窗口无限延长。
 
-`run_user_command/8` 不接受 nil `commandKey`，因此公开 receipt-backed GraphQL mutation 统一声明
-`commandKey: ID!`，不会再从 transport 层省略 identity。少数只供内部直接调用的 facade 仍可在没有 transport
+`CMS.Command` 的 user command 入口不接受 nil `commandId`，因此公开 receipt-backed GraphQL mutation 统一声明
+`commandId: ID!`，不会再从 transport 层省略 identity。少数只供内部直接调用的 facade 仍可在没有 transport
 上下文时生成一次性 key；这类调用不是 retry/replay 合同，不能把返回的 key 当成客户端重试依据。job/system
 入口尚未接入共享 runner，接入时必须先持久化稳定 initiator/key，再复用同一事务管线，而不是新增第二套 runner。
-GraphQL response type 上的 nullable `commandKey` 只是兼容“该 mutation 没有 receipt 元数据”的响应字段；它不改变
-receipt-backed mutation input 的 `commandKey: ID!` 要求，也不代表客户端可以省略请求 key。
+GraphQL response type 上的 nullable `commandId` 只是兼容“该 mutation 没有 receipt 元数据”的响应字段；它不改变
+receipt-backed mutation input 的 `commandId: ID!` 要求，也不代表客户端可以省略请求 key。
 
 ### 1.2 Community
 
@@ -310,11 +321,11 @@ version、command identity 和 reconcile 不是对现有 UI 的小修补，而�
 requestDestroyCommunity(
   communitySlug,
   expectedVersion: 12,
-  commandKey: clientGeneratedUUID
+  commandId: clientGeneratedUUID
 )
 
 transaction:
-  authenticate actor + claim commandKey
+  authenticate actor + claim commandId
   -> Gate :request_destroy（与 lock/transition 位于同一 transaction）
   -> lock Lifecycle
   -> version 不是 12：返回 lifecycle_conflict，不建立 blocker
@@ -327,15 +338,15 @@ transaction:
 
 `restore`、`schedule_destroy`、`cancel_destroy` 和 `destroy` 更明显：重复请求直接变成 state conflict 或 `blocker_not_found`。用户会看到失败，但实际上第一次请求可能已经成功。
 
-合理形态是由调用方生成并重用 `commandKey`，服务端保存 command receipt：
+合理形态是由调用方生成并重用 `commandId`，服务端保存 command receipt：
 
 ```text
-(initiatorType, initiatorKey, commandKey)
-  + fingerprint(commandName, domain target, input, expected version/revision)
+(initiatorType, initiatorKey, commandId)
+  + fingerprint(command, domain target, input, expected version/revision)
   -> confirmed result
 ```
 
-相同 identity 重试返回原结果并标记 `commandReplayed: true`；相同 `commandKey` 被用于不同 command、目标、input 或 expected version/revision 时应返回 `command_key_conflict`。
+相同 identity 重试返回与首次执行相同的 canonical business result；相同 `commandId` 被用于不同 command、目标、input 或 expected version/revision 时应返回 command identity conflict。
 所有符合接入条件的同步 command 都使用 `cms.command_receipts`。Community blocker、`TrashAction` 和
 `DocPublishRelease` 继续保存领域事实；通用 receipt 只保存 replay envelope 或指向这些事实的结果主键。
 
@@ -393,7 +404,7 @@ publishDraft(
   articleKey,
   expectedDraftVersion: 4,
   expectedLifecycleVersion: 2,
-  commandKey
+  commandId
 )
 ```
 
@@ -405,21 +416,21 @@ Draft 已变成 5 时返回 `draft_conflict`；Lifecycle 被归档/删除时返�
 
 合理形态是先用 authenticated actor 和 command identity 查 receipt：
 
-- 同一 actor、action、领域目标、input、`commandKey`：允许 replay 已授权的原结果；
-- 新 `commandKey`：必须重新 Gate；
+- 同一 actor、action、领域目标、input、`commandId`：允许 replay 已授权的原结果；
+- 新 `commandId`：必须重新 Gate；
 - 不允许仅因为资源已经处于目标状态就跳过 actor admission。
 
 #### Article 理想 transition contract
 
-| Action               | 必需 precondition                             | Concurrency contract                                                     | Client result                                               |
-| -------------------- | --------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| `create_draft`       | Gate `:create`                                | `commandKey` 保证重试不创建两个逻辑 Article                              | canonical `articleKey` + Draft version + Lifecycle version  |
-| `update_draft`       | Gate `:edit`；Lifecycle 可写                  | expected Draft version + `commandKey`                                    | confirmed Draft version；replay 标记                        |
-| `publish_draft`      | Gate `:publish`；Draft 存在；Lifecycle 可发布 | expected Draft version + expected Lifecycle version + `commandKey`       | Public article + Lifecycle version + changed fields         |
-| `archive_before`     | maintenance policy；候选仍为 `published`      | 固定 threshold + batch `commandKey`；每个候选锁内 compare-and-transition | batch result + archived count                               |
-| `trash`              | Gate `:delete`；允许删除                      | expected Lifecycle version + `commandKey`                                | Trash action key + Lifecycle version                        |
-| `restore`            | Gate `:restore`；Trash membership 存在        | expected Lifecycle version + `commandKey`                                | restored state/version + canonical article                  |
-| `permanently_delete` | retention/operations policy；仍为 `deleted`   | expected Lifecycle version + `commandKey`                                | 通用 terminal receipt；资源不存在时只允许同 identity replay |
+| Action               | 必需 precondition                             | Concurrency contract                                                    | Client result                                               |
+| -------------------- | --------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `create_draft`       | Gate `:create`                                | `commandId` 保证重试不创建两个逻辑 Article                              | canonical `articleKey` + Draft version + Lifecycle version  |
+| `update_draft`       | Gate `:edit`；Lifecycle 可写                  | expected Draft version + `commandId`                                    | confirmed Draft version；replay 标记                        |
+| `publish_draft`      | Gate `:publish`；Draft 存在；Lifecycle 可发布 | expected Draft version + expected Lifecycle version + `commandId`       | Public article + Lifecycle version + changed fields         |
+| `archive_before`     | maintenance policy；候选仍为 `published`      | 固定 threshold + batch `commandId`；每个候选锁内 compare-and-transition | batch result + archived count                               |
+| `trash`              | Gate `:delete`；允许删除                      | expected Lifecycle version + `commandId`                                | Trash action key + Lifecycle version                        |
+| `restore`            | Gate `:restore`；Trash membership 存在        | expected Lifecycle version + `commandId`                                | restored state/version + canonical article                  |
+| `permanently_delete` | retention/operations policy；仍为 `deleted`   | expected Lifecycle version + `commandId`                                | 通用 terminal receipt；资源不存在时只允许同 identity replay |
 
 `ArticleLifecycle.transition/2` 当前允许多种 self-transition，并且每次都会增加 version。理想情况下，重复 command 应由 command receipt 处理；普通 self-transition 要么返回明确的 unchanged result，要么拒绝，不能靠“再写一次相同状态”模拟幂等。
 
@@ -430,23 +441,23 @@ Draft 已变成 5 时返回 `draft_conflict`；Lifecycle 被归档/删除时返�
 ```text
 enqueue archive job
   -> freeze threshold
-  -> generate commandKey once
-  -> persist {jobId, commandKey, thread, threshold}
+  -> generate commandId once
+  -> persist {jobId, commandId, thread, threshold}
 
 execute/retry
-  commandName: article.archive_before
+  command: article.archive_before
   initiator: {type: job, key: stable jobId}
   target: {type: article_archive_scope, key: "<thread>:before:<threshold>"}
-  fingerprint: commandName + thread + threshold + source
+  fingerprint: command + thread + threshold + source
 ```
 
-重试必须复用同一个 job id、`commandKey` 和 threshold，不能用“当前时间减 N 天”重新计算 threshold，
+重试必须复用同一个 job id、`commandId` 和 threshold，不能用“当前时间减 N 天”重新计算 threshold，
 否则同一 command 会悄悄扩大候选集。receipt 保存最小结果，例如
 `{outcome: changed, resultPayload: {archivedCount: 37, threshold: ...}}`。
 
 当前可控规模下，候选集在一个领域事务中全部成功或全部回滚，不定义“一个 receipt 对应部分成功”。如果未来必须
 分 chunk，应新增持久化 `ArchiveBatch`/`ArchiveBatchItem` 领域事实：父 workflow 固定候选范围，每个 chunk
-使用稳定派生的 child `commandKey`，通用 receipt 只指向 batch/chunk result，不把 N 个 article id 塞进
+使用稳定派生的 child `commandId`，通用 receipt 只指向 batch/chunk result，不把 N 个 article id 塞进
 `result_payload`。这也解释了为什么 `target_type/target_key` 表示 batch scope，而不是单篇 Article。
 
 ### 1.4 Doc branch
@@ -510,7 +521,7 @@ publishDocChanges(
   branchKey,
   expectedChecklistRevision,
   selectedItemIds,
-  commandKey
+  commandId
 )
 ```
 
@@ -524,18 +535,18 @@ publishDocChanges(
 - 同一用户因网络重试重复发送同一 command，应 replay 第一次的 release；
 - 现在两种情况都表现为后执行者拿到 noop，语义无法区分。
 
-合理形态是 `commandKey` 区分 replay，`expectedChecklistRevision` 区分竞争。
+合理形态是 `commandId` 区分 replay，`expectedChecklistRevision` 区分竞争。
 
 #### Doc branch 理想 transition contract
 
-| Action                                 | Concurrency/identity                                                 | Queue scope           | Confirmed result                                        |
-| -------------------------------------- | -------------------------------------------------------------------- | --------------------- | ------------------------------------------------------- |
-| `update_doc_draft`                     | expected Draft version + `commandKey`                                | one branch/doc        | Draft version + publish state                           |
-| tree create/update/move/delete/restore | expected tree revision + `commandKey`                                | entire branch tree    | canonical node/tree + new revision                      |
-| `move_doc_to_draft`                    | expected DocLifecycle + expected Draft/Public version + `commandKey` | one branch/doc        | Draft + lifecycle version                               |
-| `move_subtree_to_draft`                | expected tree/checklist revision + `commandKey`                      | entire branch tree    | affected doc keys + new revision                        |
-| `publish_doc_changes`                  | expected checklist revision + exact selection + `commandKey`         | entire branch release | 通用 receipt 指向同一 release + next checklist revision |
-| `restore_selected_changes`             | expected checklist revision + exact selection + `commandKey`         | entire branch release | restored items + next checklist revision                |
+| Action                                 | Concurrency/identity                                                | Queue scope           | Confirmed result                                        |
+| -------------------------------------- | ------------------------------------------------------------------- | --------------------- | ------------------------------------------------------- |
+| `update_doc_draft`                     | expected Draft version + `commandId`                                | one branch/doc        | Draft version + publish state                           |
+| tree create/update/move/delete/restore | expected tree revision + `commandId`                                | entire branch tree    | canonical node/tree + new revision                      |
+| `move_doc_to_draft`                    | expected DocLifecycle + expected Draft/Public version + `commandId` | one branch/doc        | Draft + lifecycle version                               |
+| `move_subtree_to_draft`                | expected tree/checklist revision + `commandId`                      | entire branch tree    | affected doc keys + new revision                        |
+| `publish_doc_changes`                  | expected checklist revision + exact selection + `commandId`         | entire branch release | 通用 receipt 指向同一 release + next checklist revision |
+| `restore_selected_changes`             | expected checklist revision + exact selection + `commandId`         | entire branch release | restored items + next checklist revision                |
 
 `DocLifecycle.transition/2` 与 ArticleLifecycle 一样只有 row lock 和 allowed transition，没有 expected version/command receipt；理想实现应让 release orchestration 传入并验证 branch-scoped lifecycle version，而不是把锁当成完整并发合同。
 
@@ -567,7 +578,7 @@ publishDocChanges(
 authorized + current version -> success
 unauthorized + current version -> permission_denied, no facts and no receipt written
 authorized + stale version -> conflict, no facts and no receipt written
-same commandKey replay -> same confirmed result, exactly one Audit fact and zero repeated effects
+same commandId replay -> same confirmed result, exactly one Audit fact and zero repeated effects
 ```
 
 再为 destroy 类 action 增加 blocker/retention 测试。`restore` 的 stale case 必须明确传入旧的
@@ -578,7 +589,7 @@ same commandKey replay -> same confirmed result, exactly one Audit fact and zero
 | Action               | Version conflict | Permission failure | Duplicate request | 当前缺口                                                                                                  |
 | -------------------- | ---------------: | -----------------: | ----------------: | --------------------------------------------------------------------------------------------------------- |
 | `create_draft`       |              N/A |                 ✅ |                ❌ | 没有 create command identity                                                                              |
-| `update_draft`       |               ✅ |                 ✅ |                ❌ | Draft version guard 已有；同 `commandKey` replay 未定义                                                   |
+| `update_draft`       |               ✅ |                 ✅ |                ❌ | Draft version guard 已有；同 `commandId` replay 未定义                                                    |
 | `publish_draft`      |               ❌ |                 ✅ |                ❌ | schema 没有 expected versions/客户端 command identity；响应丢失后无法 replay                              |
 | `archive_before`     |               ❌ |                N/A |                 ◐ | 有归档和归档后禁止编辑/删除测试；缺固定 batch identity、并发 retry 和原子 rollback 测试                   |
 | `trash`              |               ❌ |                  ◐ |                 ◐ | resource-state 去重存在；缺 stale version 和同 identity replay；existing membership fast path 不重新 Gate |
@@ -594,7 +605,7 @@ Article 测试不能只证明最终列表里看不到文章。必须断言冲突
 - community counters 和 search enqueue 不重复执行。
 
 所有 action 还必须共用 receipt 合同测试：并发相同 identity 只提交一次领域写入，后一个响应
-`commandReplayed: true`；同 key 不同 fingerprint 返回 `command_key_conflict`；Gate denial、validation 和
+相同 key 重试返回相同业务结果且不重复写入；同 key 不同 fingerprint 返回 command identity conflict；Gate denial、validation 和
 version conflict 不留下 receipt；replay 不再次执行 counter、Audit/outbox、notification、search 或其他 effect；
 清理器只删除超过 24 小时窗口的 completed receipt。
 
@@ -612,8 +623,8 @@ version conflict 不留下 receipt；replay 不再次执行 counter、Audit/outb
 
 Docs 发布至少需要区分三组并发测试：
 
-1. 同一 `commandKey` 重试：两次返回同一个 release；
-2. 不同 `commandKey`、相同 expected revision：一个成功，另一个 conflict；
+1. 同一 `commandId` 重试：两次返回同一个 release；
+2. 不同 `commandId`、相同 expected revision：一个成功，另一个 conflict；
 3. 发布面板打开后 checklist 变化：旧 revision 不允许 Publish All 吸收新 item。
 
 ## 3. 客户端 optimistic 映射
@@ -623,7 +634,7 @@ Lifecycle command 不应该默认 optimistic 修改权威状态。客户端仍�
 ### 3.1 统一规则
 
 ```text
-commandKey = 一次用户意图的 UUID；网络重试继续使用同一个值
+commandId = 一次用户意图的 UUID；网络重试继续使用同一个值
 entityKey  = 客户端观察和 reconcile 的 canonical entity，不进入后端通用协议
 queueKey   = 服务端共享同一个 version/lock 的最小冲突域
 optimistic = 客户端能够确定撤销的最小 UI patch
@@ -642,13 +653,13 @@ reconcile  = 用 server confirmed result 覆盖本地推测，并刷新受影响
 
 ### 3.3 Article 映射
 
-| Action                             | entityKey                                                      | queueKey                                                 | Optimistic                                                         | Reconcile                                                                                   |
-| ---------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| `create_draft`                     | `pending:${commandKey}`，成功后替换为 canonical Article entity | `article-create:{community}:{thread}:{composerInstance}` | 插入 pending item 或显示 creating；不能假造 canonical `articleKey` | 用响应的 canonical `articleKey` 替换 pending identity，并写入 Draft/Lifecycle versions      |
-| `update_draft`                     | `article:{community}:{thread}:{articleKey}`                    | `...:draft`                                              | 编辑器 working copy 保留；显示 saving，不覆盖 confirmed Draft      | 用响应更新 Draft version；conflict 时保留本地 working copy并加载 server baseline 做 diff    |
-| `publish_draft`                    | 同上                                                           | `...:lifecycle`                                          | 只显示 publishing；不能提前删除 Draft 或替换 Public                | 使用 confirmed Public、Draft absence、Lifecycle version；刷新详情、列表、作者页和 checklist |
-| `trash/restore/permanently_delete` | 同上                                                           | `...:lifecycle`                                          | 列表可临时 disable/fade；不永久移除 confirmed entity               | 用 Trash action/confirmed lifecycle 收敛，刷新列表、Trash、counter 和搜索相关 projection    |
-| `archive_before`                   | N/A：后台 maintenance batch                                    | N/A：由 server job 串行/分 chunk                         | N/A：没有客户端 optimistic 状态                                    | job 根据 batch result/Audit 验证 archived count；管理页下次查询读取权威状态                 |
+| Action                             | entityKey                                                     | queueKey                                                 | Optimistic                                                         | Reconcile                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `create_draft`                     | `pending:${commandId}`，成功后替换为 canonical Article entity | `article-create:{community}:{thread}:{composerInstance}` | 插入 pending item 或显示 creating；不能假造 canonical `articleKey` | 用响应的 canonical `articleKey` 替换 pending identity，并写入 Draft/Lifecycle versions      |
+| `update_draft`                     | `article:{community}:{thread}:{articleKey}`                   | `...:draft`                                              | 编辑器 working copy 保留；显示 saving，不覆盖 confirmed Draft      | 用响应更新 Draft version；conflict 时保留本地 working copy并加载 server baseline 做 diff    |
+| `publish_draft`                    | 同上                                                          | `...:lifecycle`                                          | 只显示 publishing；不能提前删除 Draft 或替换 Public                | 使用 confirmed Public、Draft absence、Lifecycle version；刷新详情、列表、作者页和 checklist |
+| `trash/restore/permanently_delete` | 同上                                                          | `...:lifecycle`                                          | 列表可临时 disable/fade；不永久移除 confirmed entity               | 用 Trash action/confirmed lifecycle 收敛，刷新列表、Trash、counter 和搜索相关 projection    |
+| `archive_before`                   | N/A：后台 maintenance batch                                   | N/A：由 server job 串行/分 chunk                         | N/A：没有客户端 optimistic 状态                                    | job 根据 batch result/Audit 验证 archived count；管理页下次查询读取权威状态                 |
 
 这里的 `composerInstance` 是一次 composer 页面实例的稳定 id：同一页面内的 transport retry 保持不变；
 重新打开一个 composer 页面时生成新 id，避免两个并行的新建表单进入同一 create queue lane。
@@ -670,7 +681,7 @@ Draft lane 与 Lifecycle lane 是否可以并行取决于服务端合同。publi
 
 ```text
 {
-  commandKey,
+  commandId,
   queueKey: doc-tree:{community}:{branch},
   baseRevision,
   affectedNodeIds,
@@ -680,46 +691,46 @@ Draft lane 与 Lifecycle lane 是否可以并行取决于服务端合同。publi
 
 执行成功后以 server payload 的 tree revision 和 canonical node reconcile；version conflict 时停止 lane、保留尚未执行的用户意图、reload authority，再明确决定哪些操作可以重新基于新 revision 执行。不能静默把旧 mutation 自动套到新树上。
 
-客户端的 Toggle `read` 阶段只需要 `queryClient` 和 `accountRef`，不应伪造空的 `commandKey`；executor
+客户端的 Toggle `read` 阶段只需要 `queryClient` 和 `accountRef`，不应伪造空的 `commandId`；executor
 在进入 `queriesToCancel`、`apply` 和 `execute` 之前生成真实 key。这样“读取当前状态”和“开始一次可重放
 command”在类型上就是两个明确阶段。
 
 ## 4. 本次直接切换的实际落点
 
-前面三节的“当前缺口”表是切换前的基线；本次实现已经把通用 receipt 和 `commandKey` 接到下面这些真实写入口。这里列文件和入口，是为了让后续 review 能从代码直接核对合同，而不是把设计表误读成仍未开始实现。
+前面三节的“当前缺口”表是切换前的基线；本次实现已经把通用 receipt 和 `commandId` 接到下面这些真实写入口。这里列文件和入口，是为了让后续 review 能从代码直接核对合同，而不是把设计表误读成仍未开始实现。
 
 ### 4.1 后端共享边界
 
 ```text
 GraphQL resolver / CMS facade
-  -> CMS.CommandReceipt.run_user_command/8
-       -> CommandReceipt.Key: validate commandKey
-       -> CommandReceipt.Runner: transaction + execute/replay orchestration
-            -> CommandReceipt.Store: claim/finalize/prune persistence
+  -> CMS.Command.update_user/create_user + CMS.Command.run/2
+       -> internal Receipt.Key: validate commandId
+       -> internal Receipt.Runner: transaction + execute/recovery orchestration
+            -> internal Receipt.Store: claim/finalize/prune persistence
             -> domain Gate + lifecycle/version transaction
             -> record result/outcome
             -> commit
-            -> replay: read result, skip write/effects
+            -> recovery: read result, skip write/effects
 ```
 
-- `backend/api/lib/groupher_server/cms/command_receipt.ex` 是唯一的同步 CMS receipt 公开边界，只暴露 key 解析、command 执行和过期清理；`cms/command_receipt/key.ex`、`runner.ex`、`store.ex` 分别承载 key、事务编排和持久化实现。
+- `backend/api/lib/groupher_server/cms/command.ex` 是同步 CMS 用户命令的唯一公开边界；Receipt、Key、Runner、Store 都是其内部实现，不进入 GraphQL 或领域 facade 合同。
 - 目标键允许整数或领域组合字符串；`Store` 的 fingerprint 绑定 command、target、input 和 expected version/revision。
 - `backend/api/lib/groupher_server/cms/model/command_receipt.ex` 与 `20260909120000_create_command_receipts.exs` 提供 `cms.command_receipts`、目标索引、唯一身份约束和 24 小时 `expires_at`。
 - `backend/api/lib/groupher_server/jobs/command_receipt_retention.ex` 按批次清理过期行。旧 `interaction_operation_receipts` 不迁移、不双写；`operation_ref` 仍只属于领域 Audit/Activity/transition fact。
 
 ### 4.2 Community
 
-当前公开写入口是 `request_destroy_community`：resolver 先通过 Community Gate，再在同一 receipt transaction 内调用 Lifecycle blocker；重试复用同一 `commandKey` 时只读取 Community，不重新创建 blocker、Audit 或通知。Lifecycle 内部仍生成独立的 `operation_ref`，它不是客户端幂等键。
+当前公开写入口是 `request_destroy_community`：resolver 先通过 Community Gate，再在同一 receipt transaction 内调用 Lifecycle blocker；重试复用同一 `commandId` 时只读取 Community，不重新创建 blocker、Audit 或通知。Lifecycle 内部仍生成独立的 `operation_ref`，它不是客户端幂等键。
 
 代码落点：
 
 - `backend/api/lib/groupher_server_web/resolvers/cms_resolver.ex`：`request_destroy_community/3`；
-- `backend/api/lib/groupher_server_web/schema/cms/mutations/community.ex`：`commandKey` 入参；
-- `backend/api/lib/groupher_server/cms/model/community.ex`、`cms_types.ex`：`commandKey`/`commandReplayed` 出参。
+- `backend/api/lib/groupher_server_web/schema/cms/mutations/community.ex`：`commandId` 入参；
+- `backend/api/lib/groupher_server/cms/model/community.ex`、`cms_types.ex`：`commandId` 出参；服务端不暴露 replay 状态。
 
 `restore`、`schedule_destroy`、`cancel_destroy`、`destroy` 仍是 operations/job 侧 Lifecycle command，当前尚未接入
-`CommandReceipt.run_user_command/8`。它们不能伪造 actor Gate；未来接入时 initiator 应是稳定 job/system identity，
-`commandKey` 由 job 记录并在 retry 时复用，并复用现有 runner 的 claim/finalize 管线。
+用户 Command API。它们不能伪造 actor Gate；未来接入时应设计独立的 job/system 入口，initiator 由 job 记录并在 retry
+时复用内部 Receipt 的 claim/finalize 管线。
 
 ### 4.3 Article
 
@@ -744,11 +755,11 @@ permanently_delete  -> article.permanently_delete
 `publish.ex` 在 Gate/锁内校验 expected Draft 与 Lifecycle version；Trash restore/permanent delete 使用稳定的
 `{community}:{thread}:{trashHashId}` target（`target_type = article_trash`）。这里有一个不能省略的真实场景：restore
 成功后会删除 Trash membership，若响应丢失，第二次请求已经查不到该 item；resolver 会用同一个
-`commandKey` 直接进入 receipt replay，并通过 receipt 中保存的 Article result key 读取恢复后的文章。
+`commandId` 直接进入 receipt replay，并通过 receipt 中保存的 Article result key 读取恢复后的文章。
 Permanent delete 同理返回 terminal `done`，不要求已删除的数据库行重新存在。Article schema、Trash schema
-和 `done_state` 都能返回 `commandKey` 与 `commandReplayed`，所以 transport 响应丢失后的重试不会丢失 replay 语义。
+和 `done_state` 都能返回 `commandId`；transport 响应丢失后的重试只保证返回相同业务结果，不暴露 replay 语义。
 
-GraphQL 入口在 `mutations/post.ex`、`blog.ex`、`changelog.ex`、`operation.ex`；前端发布器和 Trash hook 在 `frontend/core/lib/artimentPublisher.ts`、`DsbThread/CMS/Trash/useTrashedPosts.ts` 复用同一个 key。
+GraphQL 入口在 `mutations/post.ex`、`blog.ex`、`changelog.ex`、`operation.ex`；前端发布器和 Trash hook 在 `frontend/core/lib/artimentPublisher.ts`、`DsbThread/CMS/Trash/useTrashedPosts.ts` 复用同一个 `commandId`。
 
 ### 4.4 Doc branch
 
@@ -766,16 +777,17 @@ tree create/update/delete/duplicate/move/restore
 
 其中：
 
-- tree mutation 的 `baseRevision` 与 `commandKey` 一起进入 fingerprint；首次成功会把版本化的
-  `node/affected_nodes/tree_state` replay envelope 写入 receipt，重试不再次写 event；必要时仍可由 Reader/Scope
+- tree mutation 的 `baseRevision` 与 `commandId` 一起进入 fingerprint；首次成功会把版本化的
+  `node/affected_nodes/tree_state` result envelope 写入内部 receipt，重试不再次写 event；必要时仍可由 Reader/Scope
   重读当前资源；
 - `publish_doc_changes` 的后端 receipt 已覆盖 command identity，并在 receipt transaction 内校验公开 checklist
   revision；selection 仍按用户明确提交的 opaque ids 固定，nil selection 只表示当前 checklist 的默认选择；
 - `update_doc_draft` 后端 schema 与 `useDraftAutoSave`、`artimentPublisher.ts` 已经接通 `expectedVersion`；下游
   handler 必须继续原样转发，不能读取最新版本后静默覆盖；
-- `DocSnapshot`、`DocDraft`、tree mutation payload、publish payload 和 `done_state` 都暴露 replay metadata。
+- `DocSnapshot`、`DocDraft`、tree mutation payload、publish payload 和 `done_state` 只暴露业务结果及必要的 `commandId`；
+  不暴露 executed/replayed 等 Receipt 状态。
 
-后端入口是 `backend/api/lib/groupher_server/cms/doc_tree.ex`、`docs.ex`、`doc_tree/publish.ex` 以及 `resolvers/cms_resolver.ex`；前端的 commandKey、checklist revision、SideTree queue/reconcile 对接在 `DsbThread/schema/docs.ts`、`CMS/Docs/ActionSnackbar/Publish/usePublishActions.ts`、`CMS/Docs/Editor/SideTree/usePersistence.ts`。
+后端入口是 `backend/api/lib/groupher_server/cms/doc_tree.ex`、`docs.ex`、`doc_tree/publish.ex` 以及 `resolvers/cms_resolver.ex`；前端的 commandId、checklist revision、SideTree queue/reconcile 对接在 `DsbThread/schema/docs.ts`、`CMS/Docs/ActionSnackbar/Publish/usePublishActions.ts`、`CMS/Docs/Editor/SideTree/usePersistence.ts`。
 
 ### 4.5 验收证据
 
@@ -808,7 +820,7 @@ git diff --check
 ```
 
 上述第一条后端聚焦命令当前为 63 tests；Trash replay 单独为 4 tests；最后一条前端聚焦命令当前为
-17 tests。schema 三个测试必须在删除重复 `command_key`、重新生成 `schema.graphql` 与 frontend GraphQL
+17 tests。schema 三个测试必须在删除重复 `command_id`、重新生成 `schema.graphql` 与 frontend GraphQL
 types 后重新执行，不能沿用旧通过数字。
 
 这不意味着每个领域都复制一套 receipt 测试。共享 receipt 测试固定身份冲突、字符串 target、rollback、replay 和 retention；各领域测试只负责自己的 Gate、version、Lifecycle、Trash、Release 和 post-commit effect 不变量。

@@ -6,49 +6,47 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
       CMS.Articles facade
         -> Commands.Create
-        -> CommandReceipt
+        -> CMS.Command
         -> Articles.Publish / Articles.Draft
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias CMS.Articles.{Draft, Publish}
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.Model.Community
   alias Helper.T
 
-  @doc "Creates and publishes one Article under a stable command key."
+  @doc "Creates and publishes one Article under a stable command id."
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def create(community, thread, attrs, %User{} = user, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts, attrs) do
-      attrs = drop_command_key(attrs)
-      target_key = command_target(community, thread, Map.get(attrs, :article_hash_id, "new"))
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      attrs = drop_command_id(attrs)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        "article.create",
-        "article",
-        target_key,
-        attrs,
-        fn ->
-          with {:ok, result} <- Publish.create(community, thread, attrs, user) do
-            {:ok, result, %{result_key: result.article_hash_id}}
-          end
-        end,
-        fn receipt ->
+      Command.create_user(user, command_id,
+        command: :article_create,
+        resource: :article,
+        owner: community,
+        input: %{thread: thread, attrs: attrs},
+        recovery: fn receipt ->
           article_hash_id = receipt.result_key || Map.get(attrs, :article_hash_id)
           Draft.read_public(community, thread, article_hash_id, attrs)
         end
       )
+      |> Command.run(fn %{input: %{thread: thread, attrs: attrs}} ->
+        with {:ok, result} <- Publish.create(community, thread, attrs, user) do
+          {:ok, result, %{result_key: result.article_hash_id}}
+        end
+      end)
     end
   end
 
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 
-  defp command_target(%Community{id: id}, thread, key), do: "#{id}:#{thread}:#{key}"
-  defp command_target(community, thread, key), do: "#{community}:#{thread}:#{key}"
+  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
+  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
+  defp option(_opts, _key), do: nil
 end

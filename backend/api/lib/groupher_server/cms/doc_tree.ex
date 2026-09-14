@@ -110,14 +110,14 @@ defmodule GroupherServer.CMS.DocTree do
   """
   @spec create_tab(Community.t(), map()) :: T.domain_res(map())
   def create_tab(%Community{} = community, args),
-    do: Writer.create_tab(community, drop_command_key(args))
+    do: Writer.create_tab(community, drop_command_id(args))
 
   @doc """
   Creates a draft group node.
   """
   @spec create_group(Community.t(), map()) :: T.domain_res(map())
   def create_group(%Community{} = community, args),
-    do: Writer.create_group(community, drop_command_key(args))
+    do: Writer.create_group(community, drop_command_id(args))
 
   @doc """
   Creates a draft page node and its draft doc when `doc_id` is absent.
@@ -131,14 +131,14 @@ defmodule GroupherServer.CMS.DocTree do
   """
   @spec create_link(Community.t(), map()) :: T.domain_res(map())
   def create_link(%Community{} = community, args),
-    do: Writer.create_link(community, drop_command_key(args))
+    do: Writer.create_link(community, drop_command_id(args))
 
   @doc """
   Creates a draft pin node.
   """
   @spec create_pin(Community.t(), map()) :: T.domain_res(map())
   def create_pin(%Community{} = community, args),
-    do: Writer.create_pin(community, drop_command_key(args))
+    do: Writer.create_pin(community, drop_command_id(args))
 
   @doc """
   Updates mutable metadata for a draft tree node.
@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.DocTree do
   def restore_trash_item(%Community{} = community, id, args),
     do: Commands.Trash.restore(community, id, args)
 
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 end

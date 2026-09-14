@@ -10,7 +10,7 @@ type TSaveDocDraftInput = {
   slug: string
   expectedVersion: number
   /** Stable identity for this save attempt; retries must reuse it. */
-  commandKey: string
+  commandId: string
 }
 
 type TPublisherError = {
@@ -37,7 +37,7 @@ export const saveDocDraft = async <TDraft>({
   subtitle,
   slug,
   expectedVersion,
-  commandKey,
+  commandId,
 }: TSaveDocDraftInput): Promise<TDraft> => {
   const response = await fetch(API_ROUTE.ARTIMENT_PUBLISH, {
     method: 'POST',
@@ -46,7 +46,7 @@ export const saveDocDraft = async <TDraft>({
     body: JSON.stringify({
       action: 'updateDocDraft',
       value,
-      variables: { community, id, slug, subtitle, title, expectedVersion, commandKey },
+      variables: { community, id, slug, subtitle, title, expectedVersion, commandId },
     }),
   })
 

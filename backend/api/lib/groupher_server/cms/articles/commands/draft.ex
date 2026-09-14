@@ -6,46 +6,43 @@ defmodule GroupherServer.CMS.Articles.Commands.Draft do
 
       CMS.Articles facade
         -> Commands.Draft
-        -> CommandReceipt
+        -> CMS.Command
         -> Articles.Draft
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
   alias CMS.Articles.Draft, as: ArticleDraft
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.Model.Community
   alias Helper.T
 
-  @doc "Creates a persistent Article Draft under a stable command key."
+  @doc "Creates a persistent Article Draft under a stable command id."
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def create(community, thread, attrs, %User{} = user, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts, attrs) do
-      attrs = drop_command_key(attrs)
-      target_key = command_target(community, thread, Map.get(attrs, :article_hash_id, "new"))
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      attrs = drop_command_id(attrs)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        "article.create_draft",
-        "article",
-        target_key,
-        attrs,
-        fn ->
-          with {:ok, result} <- ArticleDraft.create(community, thread, attrs, user) do
-            {:ok, result, %{result_key: result.article_hash_id}}
-          end
-        end,
-        fn receipt ->
+      Command.create_user(user, command_id,
+        command: :article_create_draft,
+        resource: :article,
+        owner: community,
+        input: %{thread: thread, attrs: attrs},
+        recovery: fn receipt ->
           article_hash_id = receipt.result_key || Map.get(attrs, :article_hash_id)
           ArticleDraft.read(community, thread, article_hash_id, attrs)
         end
       )
+      |> Command.run(fn %{input: %{attrs: attrs}} ->
+        with {:ok, result} <- ArticleDraft.create(community, thread, attrs, user) do
+          {:ok, result, %{result_key: result.article_hash_id}}
+        end
+      end)
     end
   end
 
-  @doc "Updates or creates a persistent Article Draft under a stable command key."
+  @doc "Updates or creates a persistent Article Draft under a stable command id."
   @spec update(Community.t(), T.thread(), T.article(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def update(community, thread, article, attrs, %User{} = user, opts) when is_struct(article) do
@@ -55,40 +52,38 @@ defmodule GroupherServer.CMS.Articles.Commands.Draft do
   @spec update(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t(), keyword() | map()) ::
           T.domain_res(T.article())
   def update(community, thread, article_hash_id, attrs, %User{} = user, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts, attrs) do
-      attrs = drop_command_key(attrs)
-      target_key = command_target(community, thread, article_hash_id)
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      attrs = drop_command_id(attrs)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        "article.update_draft",
-        "article",
-        target_key,
-        attrs,
-        fn ->
-          with {:ok, result} <-
-                 ArticleDraft.update_or_create_from_public(
-                   community,
-                   thread,
-                   article_hash_id,
-                   attrs,
-                   user
-                 ) do
-            {:ok, result, %{result_key: result.article_hash_id}}
-          end
-        end,
-        fn _receipt ->
+      Command.create_user(user, command_id,
+        command: :article_update_draft,
+        resource: :article,
+        owner: community,
+        input: %{thread: thread, article_hash_id: article_hash_id, attrs: attrs},
+        recovery: fn _receipt ->
           ArticleDraft.read_editor_head(community, thread, article_hash_id, attrs)
         end
       )
+      |> Command.run(fn %{input: %{attrs: attrs}} ->
+        with {:ok, result} <-
+               ArticleDraft.update_or_create_from_public(
+                 community,
+                 thread,
+                 article_hash_id,
+                 attrs,
+                 user
+               ) do
+          {:ok, result, %{result_key: result.article_hash_id}}
+        end
+      end)
     end
   end
 
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 
-  defp command_target(%Community{id: id}, thread, key), do: "#{id}:#{thread}:#{key}"
-  defp command_target(community, thread, key), do: "#{community}:#{thread}:#{key}"
+  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
+  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
+  defp option(_opts, _key), do: nil
 end

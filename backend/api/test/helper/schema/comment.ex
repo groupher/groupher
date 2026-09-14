@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:create_comment_2) do
     """
-    mutation($article: ArticlePathInput!, $body: String!, $commandKey: ID!) {
-          createComment(article: $article, body: $body, commandKey: $commandKey) {
+    mutation($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
+          createComment(article: $article, body: $body, commandId: $commandId) {
             comment {
               innerId
               bodyHtml
@@ -20,8 +20,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:create_comment) do
     """
-    mutation($article: ArticlePathInput!, $body: String!, $commandKey: ID!) {
-      createComment(article: $article, body: $body, commandKey: $commandKey) {
+    mutation($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
+      createComment(article: $article, body: $body, commandId: $commandId) {
         comment {
           innerId
           bodyHtml
@@ -35,12 +35,11 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
   end
 
-  def m(:create_comment_with_command_key) do
+  def m(:create_comment_with_command_id) do
     """
-    mutation($article: ArticlePathInput!, $body: String!, $commandKey: ID!) {
-      createComment(article: $article, body: $body, commandKey: $commandKey) {
-        commandKey
-        commandReplayed
+    mutation($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
+      createComment(article: $article, body: $body, commandId: $commandId) {
+        commandId
         comment {
           innerId
           bodyHtml
@@ -57,8 +56,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:update_comment) do
     """
-    mutation($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-      updateComment(comment: $comment, body: $body, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+      updateComment(comment: $comment, body: $body, commandId: $commandId) {
         innerId
         bodyHtml
       }
@@ -66,12 +65,11 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
   end
 
-  def m(:update_comment_with_command_key) do
+  def m(:update_comment_with_command_id) do
     """
-    mutation($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-      updateComment(comment: $comment, body: $body, commandKey: $commandKey) {
-        commandKey
-        commandReplayed
+    mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+      updateComment(comment: $comment, body: $body, commandId: $commandId) {
+        commandId
         bodyHtml
         article {
           innerId
@@ -86,21 +84,20 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:delete_comment) do
     """
-    mutation($comment: CommentPathInput!, $commandKey: ID!) {
-      deleteComment(comment: $comment, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      deleteComment(comment: $comment, commandId: $commandId) {
         innerId
       }
     }
     """
   end
 
-  def m(:delete_comment_with_command_key) do
+  def m(:delete_comment_with_command_id) do
     """
-    mutation($comment: CommentPathInput!, $commandKey: ID!) {
-      deleteComment(comment: $comment, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      deleteComment(comment: $comment, commandId: $commandId) {
         innerId
-        commandKey
-        commandReplayed
+        commandId
         article {
           innerId
           thread
@@ -114,8 +111,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:reply_comment) do
     """
-    mutation($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-      replyComment(comment: $comment, body: $body, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+      replyComment(comment: $comment, body: $body, commandId: $commandId) {
         comment {
           innerId
           bodyHtml
@@ -129,12 +126,11 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
   end
 
-  def m(:reply_comment_with_command_key) do
+  def m(:reply_comment_with_command_id) do
     """
-    mutation($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-      replyComment(comment: $comment, body: $body, commandKey: $commandKey) {
-        commandKey
-        commandReplayed
+    mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+      replyComment(comment: $comment, body: $body, commandId: $commandId) {
+        commandId
         comment {
           innerId
           bodyHtml
@@ -151,8 +147,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:upvote_comment) do
     """
-    mutation($comment: CommentPathInput!, $commandKey: ID!) {
-      upvoteComment(comment: $comment, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      upvoteComment(comment: $comment, commandId: $commandId) {
         innerId
         upvotesCount
         viewerHasUpvoted
@@ -163,8 +159,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:undo_upvote_comment) do
     """
-    mutation($comment: CommentPathInput!, $commandKey: ID!) {
-      undoUpvoteComment(comment: $comment, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $commandId: ID!) {
+      undoUpvoteComment(comment: $comment, commandId: $commandId) {
         innerId
         upvotesCount
         viewerHasUpvoted
@@ -225,8 +221,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:emotion_to_comment) do
     """
-    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!, $commandKey: ID!) {
-      emotionToComment(comment: $comment, emotion: $emotion, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!, $commandId: ID!) {
+      emotionToComment(comment: $comment, emotion: $emotion, commandId: $commandId) {
         innerId
         emotions {
           type
@@ -244,8 +240,8 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
 
   def m(:undo_emotion_to_comment) do
     """
-    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!, $commandKey: ID!) {
-      undoEmotionToComment(comment: $comment, emotion: $emotion, commandKey: $commandKey) {
+    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!, $commandId: ID!) {
+      undoEmotionToComment(comment: $comment, emotion: $emotion, commandId: $commandId) {
         innerId
         emotions {
           type

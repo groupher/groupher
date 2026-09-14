@@ -10,7 +10,7 @@ const input = {
   subtitle: 'Intro',
   slug: 'introduction',
   expectedVersion: 3,
-  commandKey: '00000000-0000-4000-8000-000000000001',
+  commandId: '00000000-0000-4000-8000-000000000001',
 }
 
 describe('saveDocDraft', () => {
@@ -42,7 +42,7 @@ describe('saveDocDraft', () => {
         subtitle: 'Intro',
         title: 'Introduction',
         expectedVersion: 3,
-        commandKey: expect.any(String),
+        commandId: expect.any(String),
       }),
     })
   })

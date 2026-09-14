@@ -1,7 +1,7 @@
 # Optimistic Read Your Writes：跨刷新写入收敛
 
 > 状态：Article upvote、Comment reaction 与 Comment feed 已有有界 TTL receipt、revision guard 和 private
-> reconcile；Article/Comment reaction、Comment entity lifecycle 的服务端 commandKey/revision/幂等字段
+> reconcile；Article/Comment reaction、Comment entity lifecycle 的服务端 commandId/revision/幂等字段
 > 已接通。本文承接
 > [Optimistic Operation](./optimistic-operation.md) 的 `reconciled` transition，补充
 > [Query Sync Cache](./query-sync-cache.md) 当前允许“刷新后公共 count 短暂旧值”的一致性协议；
@@ -188,7 +188,7 @@ type ArticleViewerRelations = {
 }
 
 type ArticleReactionMutationPayload = {
-  commandKey: string
+  commandId: string
   outcome: 'changed' | 'unchanged'
   publicState: ArticleReactionProjection
   viewerState: ArticleViewerRelations
@@ -197,7 +197,7 @@ type ArticleReactionMutationPayload = {
 
 语义：
 
-- `commandKey` 标识一次逻辑 mutation，为服务端幂等、诊断和 receipt 关联提供稳定 identity；
+- `commandId` 标识一次逻辑 mutation，为服务端幂等、诊断和 receipt 关联提供稳定 identity；
 - `articleInteractionRevision` 只描述 Article public reaction projection；
 - `viewerState` 是该 Article 当前 viewer 的完整 reaction relation snapshot；
 - response 中两部分来自同一次已提交事务，但不共享 owner。
@@ -206,7 +206,7 @@ receipt 必须完全由这次 typed response 构造，不能再从可能较旧�
 闭包拼接缺失字段。`unchanged` 也返回完整 snapshot 供当前 tab reconcile，但按 §5.2 不写/续 public
 receipt。
 
-`commandKey` 的生成、retry 复用、identity mismatch 和内存期 phase 由
+`commandId` 的生成、retry 复用、identity mismatch 和内存期 phase 由
 [Optimistic Operation](./optimistic-operation.md) 定义。本文只消费已经 reconciled 的 typed
 result，不把未确认 optimistic operation 写入持久 receipt。
 
@@ -219,7 +219,7 @@ result，不把未确认 optimistic operation 写入持久 receipt。
 ```ts
 type ArticleUpvoteReceipt = {
   schemaVersion: 2
-  commandKey: string
+  commandId: string
   accountRef: string
   entityKey: string
   publicProjection: ArticleReactionProjection
@@ -230,7 +230,7 @@ type ArticleUpvoteReceipt = {
 
 type CommentReactionReceipt = {
   schemaVersion: 2
-  commandKey: string
+  commandId: string
   accountRef: string
   articleKey: string
   commentRef: string
@@ -241,7 +241,7 @@ type CommentReactionReceipt = {
 }
 
 type CommentFeedEffect = {
-  commandKey: string
+  commandId: string
   type: 'create' | 'update' | 'delete'
   commentRef: string
   comment?: TConfirmedComment
@@ -289,11 +289,11 @@ overlay 被无意义续期。若已有 changed receipt，继续保留到 public 
 toggle 合并吸收的点击没有 execute response；`confirmed === pendingState` 的 no-op 也不发请求，因此都不
 写 receipt。
 
-同一 `commandKey` 的 transport retry 是另一种情况：服务端幂等层返回首次 execute 已存下的原始
-changed/unchanged outcome 与 revision。当前 UI 每次 execute attempt 都生成新的 `commandKey`，mutation
+同一 `commandId` 的 transport retry 是另一种情况：服务端幂等层返回首次 execute 已存下的原始
+changed/unchanged outcome 与 revision。当前 UI 每次 execute attempt 都生成新的 `commandId`，mutation
 也没有 transport retry，因此正常客户端路径不会主动重放同一 ref；客户端对
-`commandReplayed=true` 的判断是防御边界，只 reconcile authority Query，不把 replay 当成新
-confirmation 刷新 `confirmedAt/TTL`。使用新 `commandKey` 重复请求一个已经成立的 set-state，才属于
+Receipt 恢复状态的判断曾是防御边界；当前只 reconcile authority Query，不把恢复当成新
+confirmation 刷新 `confirmedAt/TTL`。使用新 `commandId` 重复请求一个已经成立的 set-state，才属于
 projection 未变化的 `unchanged` 成功。
 
 ### 5.3 Public response
@@ -437,7 +437,7 @@ confirmed receipt 保存正式 comment ref、必要的 render fields、`comments
 - private reconcile 或 public `commentsRevision >= receipt.commentsRevision` 后删除 slot，实体再按服务端
   排序、筛选和分页归属回到 canonical 位置。
 
-create/reply 已完成 `commandKey` 服务端幂等；receipt 仍只是有界 TTL 的 confirmed overlay，不是离线
+create/reply 已完成 `commandId` 服务端幂等；receipt 仍只是有界 TTL 的 confirmed overlay，不是离线
 重放队列。
 
 ### 6.4 Comment update/delete
@@ -464,7 +464,7 @@ commentFeedSlot.effects[effect.commentRef] = {
 若旧 CDN/SSR 再次返回已删除 comment，且 public revision 较旧，当前 viewer 继续隐藏它。这样避免
 “删除成功后刷新又复活”。delete mutation response 必须返回同事务确认的 Article
 `commentsCount/commentsRevision`，不能只返回 comment id。每条 effect 自己保存
-`commandKey/commentRef/confirmedAt/expiresAt` 与 typed `publicProjection`；effect 到期或 public feed
+`commandId/commentRef/confirmedAt/expiresAt` 与 typed `publicProjection`；effect 到期或 public feed
 收敛后只删除该 map entry，map 为空才删除 slot。
 
 ### 6.5 View
@@ -621,7 +621,7 @@ R0-R3 已完成；以下保留原执行顺序和验收边界。R4 仍坚持按�
 ### Phase R2b：Comment entity/feed
 
 - 先完成 [Optimistic Operation](./optimistic-operation.md) Phase O4，取得 create/reply 幂等
-  `commandKey`、`pending:*` identity 与 entity lifecycle；
+  `commandId`、`pending:*` identity 与 entity lifecycle；
 - create/reply/update/delete 返回正式 entity、`commentsCount` 与 `commentsRevision`；
 - 实现确定性 `confirmed-write` slot、typed entity effects 和 delete tombstone；
 - 保持服务端决定的排序、筛选和分页归属通过 refetch 收敛。
@@ -655,8 +655,8 @@ R0-R3 已完成；以下保留原执行顺序和验收边界。R4 仍坚持按�
 | create comment 后刷新                    | 正式 comment 不消失，不出现 `pending:*` entity；收敛前保持在确定性 slot，不因旧 refetch 跳位                 |
 | delete comment 后刷新                    | 旧 CDN comment 不复活，Article count 使用 confirmed/reconciled 值                                            |
 | 同一 Article 连续修改多个 Comment        | 保留一个 comment-feed slot，按 commentRef 合并 typed effects；delete 是 tombstone effect，不创建独立 receipt |
-| mutation response 丢失                   | 非幂等 create 不自动重发；有 commandKey 后服务端可返回原结果                                                 |
-| 后端/transport 以同一 commandKey 重放    | 服务端返回原始结果；客户端只做 authority reconcile，不新增或续期 receipt                                     |
+| mutation response 丢失                   | 非幂等 create 不自动重发；有 commandId 后服务端可返回原结果                                                  |
+| 后端/transport 以同一 commandId 重放     | 服务端返回原始结果；客户端只做 authority reconcile，不新增或续期 receipt                                     |
 | logout/account switch                    | 前一 viewer receipt 和 viewer Query 不泄漏到新账号                                                           |
 | view retry/reload                        | 相同逻辑 view 复用 event ID，只计一次                                                                        |
 | view worker lag                          | viewer 可显示 pending viewed，公开 views 不虚假递增                                                          |

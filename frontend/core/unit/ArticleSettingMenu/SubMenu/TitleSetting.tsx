@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { createCommandKey } from '~/query/mutation/optimistic/execute'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import { updateViewingArticle } from '~/signal'
 import Input from '~/ui/Input'
 import { toast } from '~/ui/Toaster'
@@ -31,7 +31,7 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
         thread: article.meta.thread,
       },
       expectedVersion: article.version,
-      commandKey: createCommandKey(),
+      commandId: createCommandId(),
       title,
     }
 

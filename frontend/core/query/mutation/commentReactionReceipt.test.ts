@@ -12,7 +12,7 @@ describe('comment reaction receipts', () => {
 
   it('keeps the newest revision for one comment slot', () => {
     writeCommentReactionReceipt({
-      commandKey: 'op-1',
+      commandId: 'op-1',
       accountRef: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
@@ -22,7 +22,7 @@ describe('comment reaction receipts', () => {
       commentInteractionRevision: 9,
     })
     writeCommentReactionReceipt({
-      commandKey: 'op-old',
+      commandId: 'op-old',
       accountRef: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
@@ -33,8 +33,8 @@ describe('comment reaction receipts', () => {
     })
 
     expect(readCommentReactionReceipt('acct-a', 'home:POST:42', 'comment-1')).toMatchObject({
-      commandKey: 'op-1',
-      schemaVersion: 2,
+      commandId: 'op-1',
+      schemaVersion: 3,
       publicProjection: { commentInteractionRevision: 9 },
     })
   })
@@ -47,8 +47,8 @@ describe('comment reaction receipts', () => {
       emotions: [{ type: 'HEART', count: 0 }],
     }
     const receipt = {
-      schemaVersion: 2 as const,
-      commandKey: 'op-1',
+      schemaVersion: 3 as const,
+      commandId: 'op-1',
       accountRef: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
@@ -72,7 +72,7 @@ describe('comment reaction receipts', () => {
 
   it('does not let an unversioned late response replace a versioned receipt', () => {
     writeCommentReactionReceipt({
-      commandKey: 'op-new',
+      commandId: 'op-new',
       accountRef: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
@@ -82,7 +82,7 @@ describe('comment reaction receipts', () => {
       commentInteractionRevision: 9,
     })
     writeCommentReactionReceipt({
-      commandKey: 'op-legacy',
+      commandId: 'op-legacy',
       accountRef: 'acct-a',
       articleKey: 'home:POST:42',
       commentRef: 'comment-1',
@@ -91,7 +91,7 @@ describe('comment reaction receipts', () => {
       viewerHasUpvoted: false,
     })
 
-    expect(readCommentReactionReceipt('acct-a', 'home:POST:42', 'comment-1')?.commandKey).toBe(
+    expect(readCommentReactionReceipt('acct-a', 'home:POST:42', 'comment-1')?.commandId).toBe(
       'op-new',
     )
   })
@@ -99,7 +99,7 @@ describe('comment reaction receipts', () => {
   it('bounds reaction receipts for one Article', () => {
     for (let index = 0; index <= CONFIRMED_COMMENT_RECEIPT_MAX_REFS; index += 1) {
       writeCommentReactionReceipt({
-        commandKey: `op-${index}`,
+        commandId: `op-${index}`,
         accountRef: 'acct-a',
         articleKey: 'home:POST:42',
         commentRef: `comment-${index}`,

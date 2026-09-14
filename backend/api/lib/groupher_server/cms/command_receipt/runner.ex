@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
   Runs one CMS command inside the shared claim, execute, finalize transaction.
 
       user command
-        -> claim or replay
+        -> claim or recover
         -> domain callback
         -> finalize
         -> commit or rollback
@@ -27,8 +27,8 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
   @database_lock_timeout_ms 4_000
   @database_transaction_timeout_ms 30_000
 
-  @doc "Runs one user command behind the shared receipt boundary."
-  @spec run_user_command(
+  @doc false
+  @spec run_internal(
           User.t(),
           Ecto.UUID.t() | nil,
           String.t(),
@@ -38,88 +38,126 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
           (-> term()),
           (CommandReceipt.t() -> term())
         ) :: {:ok, term()} | {:error, term()}
-  def run_user_command(
+  def run_internal(
         %User{},
         nil,
-        _command_name,
+        _command,
         _target_type,
         _target_key,
         _data,
         _execute,
-        _replay
+        _recovery
       ),
-      do: {:error, ErrorCat.command_key_required()}
+      do: {:error, ErrorCat.command_id_required()}
 
-  def run_user_command(
-        %User{id: user_id},
-        command_key,
-        command_name,
+  def run_internal(
+        user,
+        command_id,
+        command,
         target_type,
         target_key,
         data,
         execute,
-        replay
+        recovery
+      ),
+      do:
+        run_internal(
+          user,
+          command_id,
+          command,
+          target_type,
+          target_key,
+          data,
+          execute,
+          recovery,
+          fn _result -> :ok end
+        )
+
+  def run_internal(
+        %User{},
+        nil,
+        _command,
+        _target_type,
+        _target_key,
+        _data,
+        _execute,
+        _recovery,
+        _after_commit
+      ),
+      do: {:error, ErrorCat.command_id_required()}
+
+  def run_internal(
+        %User{id: user_id},
+        command_id,
+        command,
+        target_type,
+        target_key,
+        data,
+        execute,
+        recovery,
+        after_commit
       )
-      when is_binary(command_key) do
-    with {:ok, command_key} <- Key.resolve(command_key) do
-      validate_callbacks!(execute, replay)
+      when is_binary(command_id) do
+    with {:ok, command_id} <- Key.resolve(command_id) do
+      validate_callbacks!(execute, recovery, after_commit)
 
       run_command(
-        :user,
         Integer.to_string(user_id),
-        command_key,
-        command_name,
+        command_id,
+        command,
         target_type,
         target_key,
         data,
         execute,
-        replay
+        recovery,
+        after_commit
       )
     end
   end
 
-  def run_user_command(
+  def run_internal(
         %User{},
-        _command_key,
-        _command_name,
+        _command_id,
+        _command,
         _target_type,
         _target_key,
         _data,
         _execute,
-        _replay
+        _recovery,
+        _after_commit
       ),
-      do: {:error, ErrorCat.command_key_required()}
+      do: {:error, ErrorCat.command_id_invalid()}
 
   defp run_command(
-         initiator_type,
          initiator_key,
-         command_key,
-         command_name,
+         command_id,
+         command,
          target_type,
          target_key,
          data,
          execute,
-         replay
+         recovery,
+         after_commit
        )
-       when initiator_type in [:user, :job, :system] and is_binary(initiator_key) and
-              is_binary(command_key) and is_function(execute, 0) and is_function(replay, 1) do
+       when is_binary(initiator_key) and is_binary(command_id) and
+              is_function(execute, 0) and is_function(recovery, 1) and
+              is_function(after_commit, 1) do
     case run_receipt_transaction(fn ->
            configure_claim_timeout!()
 
            case Store.claim(
-                  initiator_type,
                   initiator_key,
-                  command_key,
-                  command_name,
+                  command_id,
+                  command,
                   target_type,
                   target_key,
                   data
                 ) do
-             {:ok, :replay, receipt} ->
+             {:ok, :recovery, receipt} ->
                configure_transaction_timeouts!()
 
-               case replay.(receipt) do
-                 {:ok, result} -> {:replayed, result}
+               case recovery.(receipt) do
+                 {:ok, result} -> {:recovered, result}
                  {:error, reason} -> Repo.rollback(reason)
                end
 
@@ -131,46 +169,28 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
                Repo.rollback(reason)
            end
          end) do
-      {:ok, {:executed, result}} -> {:ok, attach_command_meta(result, command_key, false)}
-      {:ok, {:replayed, result}} -> {:ok, attach_command_meta(result, command_key, true)}
-      {:error, reason} -> {:error, reason}
+      {:ok, {:executed, result}} ->
+        _ = after_commit.(result)
+        {:ok, result}
+
+      {:ok, {:recovered, result}} ->
+        {:ok, result}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  defp attach_command_meta({canonical, change}, command_key, replayed?),
-    do: {attach_command_meta(canonical, command_key, replayed?), change}
-
-  # Internal domain commands may return structs that are not transport payloads.
-  # Preserve them unchanged unless they explicitly declare command metadata fields.
-  defp attach_command_meta(result, command_key, replayed?) when is_struct(result) do
-    if Map.has_key?(result, :command_key) do
-      Map.merge(result, %{command_key: command_key, command_replayed: replayed?})
-    else
-      result
-    end
-  end
-
-  defp attach_command_meta(%{article: article} = result, command_key, replayed?) do
-    result
-    |> Map.put(:article, attach_command_meta(article, command_key, replayed?))
-    |> Map.merge(%{command_key: command_key, command_replayed: replayed?})
-  end
-
-  defp attach_command_meta(result, command_key, replayed?) when is_map(result),
-    do: Map.merge(result, %{command_key: command_key, command_replayed: replayed?})
-
-  defp attach_command_meta(result, _command_key, _replayed?), do: result
-
-  defp validate_callbacks!(execute, replay) do
-    unless is_function(execute, 0) and is_function(replay, 1) do
+  defp validate_callbacks!(execute, recovery, after_commit) do
+    unless is_function(execute, 0) and is_function(recovery, 1) and is_function(after_commit, 1) do
       raise ArgumentError,
-            "command receipt callbacks must be execute/0 and replay/1 functions"
+            "command receipt callbacks must be execute/0, recovery/1 and after_commit/1 functions"
     end
   end
 
   # The runner never inspects domain result shapes. Simple commands may use the
-  # target key as their replay key; composite results must provide explicit,
-  # versioned metadata whose encoder and decoder live at the domain replay owner.
+  # target key as their recovery key; composite results must provide explicit,
+  # versioned metadata whose encoder and decoder live at the domain owner.
   defp execute_and_finalize(receipt, target_key, execute) do
     case execute.() do
       {:ok, result} ->

@@ -44,8 +44,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   enum :community_application_status do
@@ -326,8 +325,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
     field(:mentioned_by_count, non_null(:integer))
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
@@ -816,8 +814,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comment_mutation_payload do
     field(:comment, non_null(:comment))
     field(:article, non_null(:comment_mutation_article))
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   object :comment_reconcile_entry do
@@ -835,8 +832,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:release, :doc_publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   input_object :doc_publish_changes_input do
@@ -888,8 +884,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:stage, :doc_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
@@ -912,8 +907,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:document, :article_document, resolve: dataloader(CMS, :document))
     timestamp_fields()
   end
@@ -924,16 +918,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
     field(:affected_nodes, list_of(:doc_tree_node))
     field(:conflict, :boolean)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
     field(:stage, :doc_snapshot_stage)
     field(:publish_state, :doc_tree_node_publish_state)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   input_object :doc_tree_node_input do
@@ -1205,8 +1197,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:schema_version, :integer)
     field(:data, :json)
     field(:message, :string)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
   end
@@ -1676,8 +1667,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
 
     field(:pending, :integer)
-    field(:command_key, :id)
-    field(:command_replayed, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
 
     timestamp_fields()
   end

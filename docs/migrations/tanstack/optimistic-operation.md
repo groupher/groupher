@@ -1,7 +1,7 @@
 # Optimistic Operation：内存期乐观操作合同
 
 > 状态：客户端 O1（Article upvote）与 O3/O4/O5 的通用接线已落地；Article/Comment
-> upvote、Comment emotion、Comment create/reply/update/delete 已接通 commandKey，reaction
+> upvote、Comment emotion、Comment create/reply/update/delete 已接通 commandId，reaction
 > revision、Comment feed revision、Article/Comment receipt 与 private reconcile 也已落地。完整
 > RYW 的 SSR 首帧仍按 §3.1 接受旧 public HTML，hydrate 后由 selector 收敛。
 > 本文定义用户操作开始到 Phoenix 确认/拒绝之间的内存期
@@ -99,32 +99,32 @@ type TOperationAttempt = {
   operationName: string
   entityKey: string
   queueKey: string
-  commandKey: string
+  commandId: string
 }
 ```
 
 完整的泛型 operation 合同见 §6；这里仅说明一次 execute attempt 需要观察的稳定字段。
 
-`commandKey` 由通用 executor 在实际 execute attempt 开始时生成，不要求领域 Hook 或组件传入。
+`commandId` 由通用 executor 在实际 execute attempt 开始时生成，不要求领域 Hook 或组件传入。
 当前实现使用 QueryClient 作用域内的 `queueKey` lane 串行，不创建 TanStack MutationCache 记录；因此
 `mutationKey`/`scope.id` 不是本阶段公开合同。
 
-### 4.1 `commandKey`
+### 4.1 `commandId`
 
 - 绑定一次实际 execute attempt，而不是一次原始点击；identity 至少包含
   `(entityKey, operation name, pendingState/payload identity)`；
-- 被 toggle 合并吸收的点击不生成 `commandKey`；
+- 被 toggle 合并吸收的点击不生成 `commandId`；
 - 同一次 execute attempt 的安全 retry 和跨刷新 reconcile 必须复用；
 - server confirmed state 与最新 `pendingState` 不同而发起的补偿 execute 是新的 attempt，必须生成新的
-  `commandKey`；
+  `commandId`；
 - `confirmed === pendingState` 的 no-op 不发请求，也不生成 receipt；
 - 不等同于 TanStack `mutationKey`；
 - 不等同于 entity key；
-- 服务端启用幂等时，应按 actor、operation name 与 `commandKey` 约束；
-- 相同 `commandKey` 绑定不同 target、actor 或 payload identity 必须拒绝，而不是静默复用。
+- 服务端启用幂等时，应按 actor、operation name 与 `commandId` 约束；
+- 相同 `commandId` 绑定不同 target、actor 或 payload identity 必须拒绝，而不是静默复用。
 
 首期可使用 UUID。create comment 的 optimistic identity 可以派生为
-`pending:${commandKey}`，但 server-confirmed 后必须替换为正式 comment ref。
+`pending:${commandId}`，但 server-confirmed 后必须替换为正式 comment ref。
 
 ### 4.2 `entityKey`
 
@@ -140,10 +140,10 @@ React component instance 作为 entity identity。
 
 ### 4.3 观察 identity（可选）
 
-`commandKey` 是服务端幂等、日志和 receipt 的稳定 identity。当前 executor 不把每次操作注册进
-TanStack MutationCache，也不要求 `mutationKey` 或 `scope.id`；运行期观察直接使用 commandKey、
+`commandId` 是服务端幂等、日志和 receipt 的稳定 identity。当前 executor 不把每次操作注册进
+TanStack MutationCache，也不要求 `mutationKey` 或 `scope.id`；运行期观察直接使用 commandId、
 operation name 和 queueKey 日志字段。若未来改用 `useMutation`，可以把同一组不可变字段映射到
-`mutation.meta`/`mutationKey`，但不得改变本协议的 commandKey 与 queueKey 语义。
+`mutation.meta`/`mutationKey`，但不得改变本协议的 commandId 与 queueKey 语义。
 
 ### 4.4 `queueKey`
 
@@ -195,8 +195,8 @@ purge 失败，也不能把业务结果重新标为失败。
 ### 5.2 状态承载
 
 首期不建立全局 operation registry。`executeOptimisticOperation` 在一次调用内持有 immutable
-`commandKey`、目标、effect plan 和当前 phase；`effects.ts` 以 QueryClient + field/entity +
-commandKey 保存 ownership marker。失败时 executor 统一执行 guarded rollback/refetch，成功时执行
+`commandId`、目标、effect plan 和当前 phase；`effects.ts` 以 QueryClient + field/entity +
+commandId 保存 ownership marker。失败时 executor 统一执行 guarded rollback/refetch，成功时执行
 reconcile 并清理 marker。Action adapter 只把 `isSubmitting/error` 投影给 UI；Toggle 直接暴露
 `visibleState/toggle`，不额外制造 loading 状态。
 
@@ -238,7 +238,7 @@ server rejection / transport error
 ```
 
 transport error 不总能证明服务端没有提交。例如服务端 commit 后响应丢失，客户端仍可能进入
-`onError`。在没有 `commandKey` 幂等查询前，当前 `retry: false` 保持不变；对 create 等非幂等操作
+`onError`。在没有 `commandId` 幂等查询前，当前 `retry: false` 保持不变；对 create 等非幂等操作
 不能自动补发。
 
 ## 6. Operation contract
@@ -252,10 +252,10 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query'
 type TOperationContext = {
   queryClient: QueryClient
   accountRef: string | null
-  commandKey: string
+  commandId: string
 }
 
-type TReadOperationContext = Omit<TOperationContext, 'commandKey'>
+type TReadOperationContext = Omit<TOperationContext, 'commandId'>
 
 type TQueryTarget = {
   queryKey: readonly unknown[]
@@ -270,7 +270,7 @@ type TOptimisticChange =
       field: string
       before: unknown
       optimistic: unknown
-      commandKey: string
+      commandId: string
       rollback: 'restore-if-owned' | 'refetch'
       restore: () => void
     }
@@ -278,7 +278,7 @@ type TOptimisticChange =
       type: 'pending-entity'
       queryKey: QueryKey
       entityKey: `pending:${string}`
-      commandKey: string
+      commandId: string
       rollback: 'remove-if-owned'
       restore: () => void
     }
@@ -323,7 +323,7 @@ type TOptimisticToggleOperation<TTarget, TResult> = TOptimisticOperation<
 
 `TOptimisticChange` 是 mutation context 中记录的 optimistic change，不是全局 registry。field change
 同时保存精确 inverse、operation marker 和 rollback policy；public count 因 ABA 使用 `refetch`，
-viewer set-state 使用 `restore-if-owned`。pending entity 只能由创建它的同一 `commandKey` 删除。
+viewer set-state 使用 `restore-if-owned`。pending entity 只能由创建它的同一 `commandId` 删除。
 
 Action 没有 `read` 合同：create/update/delete/report 的 input 来自 `submit/remove` 调用，executor 不会
 猜测当前状态。只有 Toggle 扩展 `read`，用于通用层内部读取 canonical state；进行中的最后意图保存在
@@ -337,7 +337,7 @@ Action 没有 `read` 合同：create/update/delete/report 的 input 来自 `subm
 ```text
 useOptimisticAction / useOptimisticToggle
   -> 取得 QueryClient 与 accountRef
-  -> 生成 commandKey
+  -> 生成 commandId
   -> 按 accountRef + queueKey 进入 QueryClient 内部 lane
   -> resolve operation.queriesToCancel
   -> await cancel only affected in-flight queries
@@ -440,7 +440,7 @@ export default function useArticleUpvote(article: TArticle | null) {
 }
 ```
 
-QueryClient、`accountRef`、current state、commandKey、queue、phase、rollback 和 receipt 均由通用层
+QueryClient、`accountRef`、current state、commandId、queue、phase、rollback 和 receipt 均由通用层
 内部处理。
 
 ### 6.3 理想的组件调用
@@ -579,7 +579,7 @@ ownership marker 存在本次 mutation context 对应的 Query patch 中；recon
 
 count 类字段存在 ABA：本次 `+1` 后，其他写入可能让 count 恰好回到同一个数值。因此 public count
 失败时原则上不做 guarded restore，而是移除本 operation 的 ownership 并触发 authority refetch；
-set-state/viewer boolean 才能在 marker 匹配时恢复。`pending:${commandKey}` 临时 entity 只能由同一
+set-state/viewer boolean 才能在 marker 匹配时恢复。`pending:${commandId}` 临时 entity 只能由同一
 operation 删除；update/delete 的 entity restore 同样要求 marker 匹配，否则走 authority refetch。
 
 ### 7.3 Public 与 viewer 必须共同撤销
@@ -601,7 +601,7 @@ refetch。O2b 的目标合同如下：
 
 ```ts
 type TArticleReactionResult = {
-  commandKey: string
+  commandId: string
   outcome: 'changed' | 'unchanged'
   publicState: {
     upvotesCount: number
@@ -617,8 +617,8 @@ type TArticleReactionResult = {
 }
 ```
 
-Article/Comment mutation payload 同时返回 `commandKey` 与 `commandReplayed`。首次 execute 的
-`commandReplayed` 为 `false`；同一 commandKey 的 transport retry 返回原始 changed/unchanged
+Article/Comment mutation payload 返回 `commandId`。首次 execute 与同一 commandId 的 transport retry
+都返回原始 changed/unchanged
 结果并标记为 `true`。当前客户端 mutation 固定 `retry: false`，每次正常 execute attempt 也生成新 ref，
 所以 replay 主要由服务端幂等/transport 边界触发；客户端判断属于防御处理，看到 replay 时只重新
 reconcile 当前 Query，不新增或续期 confirmed receipt。
@@ -656,25 +656,25 @@ confirmed true == pendingState true
 
 - React render 中的旧 `viewerHasXxx` 不能作为连续点击的唯一真值；
 - active toggle 按 QueryClient + accountRef + entity + operation 隔离；
-- commandKey/name 用于观察，`queueKey` 用于串行，toggle buffer 用于合并最终 `pendingState`；
+- commandId/name 用于观察，`queueKey` 用于串行，toggle buffer 用于合并最终 `pendingState`；
 - `pendingState` 变化不创建新的 create/delete/report 操作；
 - server confirmed state 与 `pendingState` 不同才发送一次补偿 set-state；
-- 每次实际 execute 才生成 `commandKey`；补偿 execute 使用新 key，no-op 不生成 key/receipt；
+- 每次实际 execute 才生成 `commandId`；补偿 execute 使用新 key，no-op 不生成 key/receipt；
 - execute 失败后，`pendingState` 重置为最后一次已知 server-confirmed state，执行 guarded
   rollback/refetch；不自动重放失败期间累积的 target，下一次真实点击再创建新的 attempt；
 - unmount 不得让已进入 mutation scheduler 的 authority result 无人 reconcile。
 
 ## 10. 不同 operation 的策略
 
-| Operation              | Optimistic apply                             | Inverse                                    | Confirmed reconcile                   | 自动 retry                    |
-| ---------------------- | -------------------------------------------- | ------------------------------------------ | ------------------------------------- | ----------------------------- |
-| Article upvote/undo    | public count + viewer flag                   | marker-owned viewer restore；count refetch | server count/state                    | 仅完成 commandKey 幂等后      |
-| Comment upvote/emotion | comment aggregate + viewer flags             | marker-owned viewer restore；count refetch | server comment projection/state       | 同上                          |
-| Create comment/reply   | 插入 `pending:${commandKey}` + commentsCount | 只删除自己的 pending；count refetch        | 正式 entity + server count            | commandKey 幂等后             |
-| Update comment         | 可确定字段立即 patch                         | marker-owned 原字段，否则 refetch          | server-normalized comment             | commandKey 幂等后             |
-| Delete comment         | 移除 entity + commentsCount                  | marker-owned entity restore；count refetch | tombstone/result + server count       | commandKey 幂等后             |
-| Report                 | 首期可只显示 pending                         | 领域决定                                   | viewer reported state                 | 禁止盲重试                    |
-| View                   | viewer pending overlay；不盲目 `views + 1`   | 移除 pending overlay                       | durable event acceptance/worker state | 使用稳定 viewEventId 安全重试 |
+| Operation              | Optimistic apply                            | Inverse                                    | Confirmed reconcile                   | 自动 retry                    |
+| ---------------------- | ------------------------------------------- | ------------------------------------------ | ------------------------------------- | ----------------------------- |
+| Article upvote/undo    | public count + viewer flag                  | marker-owned viewer restore；count refetch | server count/state                    | 仅完成 commandId 幂等后       |
+| Comment upvote/emotion | comment aggregate + viewer flags            | marker-owned viewer restore；count refetch | server comment projection/state       | 同上                          |
+| Create comment/reply   | 插入 `pending:${commandId}` + commentsCount | 只删除自己的 pending；count refetch        | 正式 entity + server count            | commandId 幂等后              |
+| Update comment         | 可确定字段立即 patch                        | marker-owned 原字段，否则 refetch          | server-normalized comment             | commandId 幂等后              |
+| Delete comment         | 移除 entity + commentsCount                 | marker-owned entity restore；count refetch | tombstone/result + server count       | commandId 幂等后              |
+| Report                 | 首期可只显示 pending                        | 领域决定                                   | viewer reported state                 | 禁止盲重试                    |
+| View                   | viewer pending overlay；不盲目 `views + 1`  | 移除 pending overlay                       | durable event acceptance/worker state | 使用稳定 viewEventId 安全重试 |
 
 ## 11. 与 Read Your Writes 的交接
 
@@ -682,7 +682,7 @@ confirmed true == pendingState true
 
 ```ts
 type TConfirmedOperation<TPublic, TViewer> = {
-  commandKey: string
+  commandId: string
   accountRef: string
   entityKey: string
   operationName: string
@@ -715,7 +715,7 @@ revision 的 receipt，本文不重复定义其存储与消费规则。
 每个 operation 至少记录：
 
 ```text
-commandKey
+commandId
 operationName
 entityKey（公开 ref，可按日志策略脱敏）
 queueKey
@@ -728,7 +728,7 @@ toggle compensation count
 receipt persisted / failed（RYW 启用后）
 ```
 
-不记录 comment body、token 或完整 viewer data。服务端日志使用同一 `commandKey`，使浏览器失败、
+不记录 comment body、token 或完整 viewer data。服务端日志使用同一 `commandId`，使浏览器失败、
 Phoenix transaction 和后续 reconcile 可以关联。
 
 ## 13. 分阶段实施
@@ -739,7 +739,7 @@ Phoenix transaction 和后续 reconcile 可以关联。
 
 - 盘点 Article upvote、Comment reaction、create/reply/update/delete/report 的实际 patch shape；
 - 为每个 operation 列出 `TOptimisticOperation`、Query owner、server response 和 effect plan；
-- 冻结 `commandKey` 生成/复用/identity mismatch 语义；
+- 冻结 `commandId` 生成/复用/identity mismatch 语义；
 - 为整片 snapshot 的交叉覆盖建立回归测试。
 
 ### Phase O1：Article upvote 竖切
@@ -757,7 +757,7 @@ Phoenix transaction 和后续 reconcile 可以关联。
 
 ### Phase O2a：接通后端幂等
 
-- mutation 接收并返回 `commandKey`；
+- mutation 接收并返回 `commandId`；
 - 服务端相同 identity 重试返回同一逻辑结果；
 - identity mismatch 返回稳定领域错误；
 - Article reaction response 先完成 public/viewer 分区，但不抢跑 revision 字段；
@@ -782,12 +782,12 @@ Phoenix transaction 和后续 reconcile 可以关联。
 
 - create/delete 必须原样接入 O1 的 `useOptimisticAction` 公开合同；若需要改通用层 API，先触发抽象
   重评审；
-- create/reply 使用 `pending:${commandKey}`；
+- create/reply 使用 `pending:${commandId}`；
 - update/delete 增加可逆 entity/list patch；
 - delete 与 reaction/update 进入一致的 Comment 冲突边界；
 - response 返回 server-confirmed entity 和 Article `commentsCount/commentsRevision`；delete success 直接回写
   confirmed count，authority refetch 只作为失败或无法安全回滚时的兜底；
-- create/reply/update/delete 已具备 commandKey identity fence，自动重试仍由上层明确控制，默认保持 `retry: false`。
+- create/reply/update/delete 已具备 commandId identity fence，自动重试仍由上层明确控制，默认保持 `retry: false`。
 
 ### Phase O5：View operation identity
 
@@ -824,7 +824,7 @@ R4 只在以上竖切产生证据后评估
 | 同一 Article 快速 toggle                | 最终收敛到最后期望状态，中间意图不逐个发送                                                                        |
 | 不同 Article 并发                       | 一个失败 rollback 不恢复另一个成功结果                                                                            |
 | Comment upvote/emotion 交错             | public/viewer cache 不被跨 operation rollback 覆盖                                                                |
-| create response 丢失                    | 不自动盲重发；接通 commandKey 后服务端可查询/复用结果                                                             |
+| create response 丢失                    | 不自动盲重发；接通 commandId 后服务端可查询/复用结果                                                              |
 | create 成功                             | `pending:*` 被正式 comment 替换，count 使用 server result                                                         |
 | delete 失败                             | marker 仍归本 operation 时恢复 entity；count 由 authority refetch 收敛，不覆盖期间无关更新                        |
 | mutation success + cache effect failure | 业务仍为 confirmed，不 rollback，不延长 pending                                                                   |

@@ -1,5 +1,6 @@
 defmodule GroupherServer.CMS.Model.DocSnapshot do
   require GroupherServer.CMS.Docs.Const
+
   @moduledoc """
   Immutable revision checkpoint for Doc content.
 
@@ -61,8 +62,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
     field(:revision_number, :integer)
     field(:schema_version, :integer, default: 1)
     field(:message, :string)
-    field(:command_key, Ecto.UUID, virtual: true)
-    field(:command_replayed, :boolean, virtual: true, default: false)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     timestamps(type: :utc_datetime)
   end

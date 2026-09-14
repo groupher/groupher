@@ -157,7 +157,6 @@ export type TComment = {
   replyToComment?: TComment
   upvotesCount?: number
   commentInteractionRevision?: number
-  commandKey?: string
   reactionOutcome?: string
   viewerHasUpvoted?: boolean
   viewerHasReported?: boolean

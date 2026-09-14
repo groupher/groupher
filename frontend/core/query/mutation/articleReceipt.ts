@@ -9,7 +9,7 @@ import {
   writeSessionReceipt,
 } from '../sessionReceiptStorage'
 
-const RECEIPT_VERSION = 2
+const RECEIPT_VERSION = 3
 const storagePrefix = 'groupher:article-upvote-receipt:'
 
 type TArticleReactionProjection = {
@@ -27,8 +27,8 @@ type TArticleViewerState = {
 }
 
 export type TArticleUpvoteReceipt = {
-  schemaVersion: 2
-  commandKey: string
+  schemaVersion: 3
+  commandId: string
   accountRef: string
   entityKey: string
   publicProjection: TArticleReactionProjection
@@ -38,7 +38,7 @@ export type TArticleUpvoteReceipt = {
 }
 
 type TArticleUpvoteConfirmation = {
-  commandKey: string
+  commandId: string
   accountRef: string
   entityKey: string
   upvotesCount: number
@@ -90,7 +90,7 @@ export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmati
   const confirmedAt = Math.max(Date.now(), existing?.confirmedAt || 0)
   const receipt: TArticleUpvoteReceipt = {
     schemaVersion: RECEIPT_VERSION,
-    commandKey: confirmation.commandKey,
+    commandId: confirmation.commandId,
     accountRef,
     entityKey,
     publicProjection: {

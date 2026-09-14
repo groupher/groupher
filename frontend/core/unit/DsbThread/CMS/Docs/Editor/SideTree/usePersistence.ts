@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { createCommandKey } from '~/query/mutation/optimistic/execute'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 
@@ -42,7 +42,7 @@ export default function useSideTreePersistence({
       try {
         const data = await browserGraphQLRequest<TDocTreeMutationData>(schema, {
           community,
-          commandKey: createCommandKey(),
+          commandId: createCommandId(),
           baseRevision: revisionRef.current,
           ...variables,
         })

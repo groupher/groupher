@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
       CMS.Articles facade
         -> Commands.Trash
-        -> CommandReceipt
+        -> CMS.Command
         -> Articles.Trash / Articles.Draft
         -> Activity for denied facts
   """
@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   alias GroupherServer.{Activity, CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.{Draft, Trash, ErrorCat}
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.Model.{Community, TrashedArticle, TrashedDocArticle}
   alias Helper.T
 
@@ -26,27 +26,21 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   def trash(article, actor, opts)
 
   def trash(article, %User{} = actor, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-      opts = drop_command_key(opts)
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      opts = drop_command_id(opts)
 
-      target_key =
-        command_target(article, option(article, :thread, "article"), article.article_hash_id)
-
-      CommandReceipt.run_user_command(
-        actor,
-        command_key,
-        "article.trash",
-        "article",
-        target_key,
-        opts,
-        fn ->
-          with {:ok, result} <- Trash.trash(article, actor, opts) do
-            {:ok, result, %{result_key: result.hash_id}}
-          end
-        end,
-        fn receipt -> Trash.get(receipt.result_key) end
+      Command.update_user(actor, command_id,
+        command: :article_trash,
+        resource: article,
+        input: opts,
+        recovery: fn receipt -> Trash.get(receipt.result_key) end
       )
-      |> persist_denied_trash(article, actor, command_key)
+      |> Command.run(fn %{resource: article, input: opts} ->
+        with {:ok, result} <- Trash.trash(article, actor, opts) do
+          {:ok, result, %{result_key: result.hash_id}}
+        end
+      end)
+      |> persist_denied_trash(article, actor, command_id)
     end
   end
 
@@ -64,37 +58,33 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   def restore(%TrashedDocArticle{} = item, actor, opts), do: Trash.restore(item, actor, opts)
 
   def restore(item_or_ref, %User{} = actor, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-      clean_opts = drop_command_key(opts)
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      clean_opts = drop_command_id(opts)
 
       case resolve_trash_item(item_or_ref) do
         {:ok, item} ->
-          target_key = command_target(item.community_id, item.thread, item.hash_id)
-
-          CommandReceipt.run_user_command(
-            actor,
-            command_key,
-            "article.restore",
-            "article_trash",
-            target_key,
-            clean_opts,
-            fn ->
-              with {:ok, result} <- Trash.restore(item, actor, clean_opts) do
-                {:ok, result, %{result_key: result.article_hash_id}}
-              end
-            end,
-            fn receipt ->
+          Command.create_user(actor, command_id,
+            command: :article_restore,
+            resource: :article_trash,
+            owner: item.community_id,
+            input: %{item_ref: item.hash_id, opts: clean_opts},
+            recovery: fn receipt ->
               replay_restored_article(receipt, item.community_id, item.thread, clean_opts)
             end
           )
+          |> Command.run(fn %{input: %{opts: opts}} ->
+            with {:ok, result} <- Trash.restore(item, actor, opts) do
+              {:ok, result, %{result_key: result.article_hash_id}}
+            end
+          end)
 
         {:error, _reason} ->
           replay_or_resolve_missing_trash(
             item_or_ref,
             actor,
-            command_key,
+            command_id,
             clean_opts,
-            "article.restore",
+            :article_restore,
             fn receipt ->
               with community_id when is_integer(community_id) <- option(clean_opts, :community_id),
                    thread when is_atom(thread) <- option(clean_opts, :thread),
@@ -126,31 +116,29 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
   def permanently_delete(item_or_ref, actor, opts) do
     if match?(%User{}, actor) do
-      with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-        clean_opts = drop_command_key(opts)
+      with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+        clean_opts = drop_command_id(opts)
 
         case resolve_trash_item(item_or_ref) do
           {:ok, item} ->
-            target_key = command_target(item.community_id, item.thread, item.hash_id)
-
-            CommandReceipt.run_user_command(
-              actor,
-              command_key,
-              "article.permanently_delete",
-              "article_trash",
-              target_key,
-              clean_opts,
-              fn -> Trash.permanently_delete(item, actor, clean_opts) end,
-              fn _receipt -> {:ok, %{done: true}} end
+            Command.create_user(actor, command_id,
+              command: :article_permanently_delete,
+              resource: :article_trash,
+              owner: item.community_id,
+              input: %{item_ref: item.hash_id, opts: clean_opts},
+              recovery: fn _receipt -> {:ok, %{done: true}} end
             )
+            |> Command.run(fn %{input: %{opts: opts}} ->
+              Trash.permanently_delete(item, actor, opts)
+            end)
 
           {:error, _reason} ->
             replay_or_resolve_missing_trash(
               item_or_ref,
               actor,
-              command_key,
+              command_id,
               clean_opts,
-              "article.permanently_delete",
+              :article_permanently_delete,
               fn _receipt -> {:ok, %{done: true}} end
             )
         end
@@ -163,41 +151,34 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp replay_or_resolve_missing_trash(
          item_or_ref,
          actor,
-         command_key,
+         command_id,
          opts,
-         command_name,
+         command,
          replay
        ) do
-    target_key =
-      command_target(
-        option(opts, :community_id, "unknown"),
-        option(opts, :thread, "article"),
-        item_or_ref
-      )
-
-    CommandReceipt.run_user_command(
-      actor,
-      command_key,
-      command_name,
-      "article_trash",
-      target_key,
-      opts,
-      fn ->
-        with {:ok, item} <- resolve_trash_item(item_or_ref),
-             :ok <- verify_trash_scope(item, opts),
-             {:ok, result} <-
-               if(command_name == "article.restore",
-                 do: Trash.restore(item, actor, opts),
-                 else: Trash.permanently_delete(item, actor, opts)
-               ) do
-          result_key =
-            if command_name == "article.restore", do: result.article_hash_id, else: target_key
-
-          {:ok, result, %{result_key: result_key}}
-        end
-      end,
-      replay
+    Command.create_user(actor, command_id,
+      command: command,
+      resource: :article_trash,
+      owner: option(opts, :community_id, "unknown"),
+      input: %{item_ref: item_or_ref, opts: opts},
+      recovery: replay
     )
+    |> Command.run(fn %{input: %{item_ref: item_or_ref, opts: opts}} ->
+      with {:ok, item} <- resolve_trash_item(item_or_ref),
+           :ok <- verify_trash_scope(item, opts),
+           {:ok, result} <-
+             if(command == :article_restore,
+               do: Trash.restore(item, actor, opts),
+               else: Trash.permanently_delete(item, actor, opts)
+             ) do
+        target_key = command_target(item.community_id, item.thread, item.hash_id)
+
+        result_key =
+          if command == :article_restore, do: result.article_hash_id, else: target_key
+
+        {:ok, result, %{result_key: result_key}}
+      end
+    end)
   end
 
   defp replay_restored_article(receipt, community_id, thread, opts) do
@@ -213,7 +194,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
          {:error, %CMS.Gate.Decision{} = decision},
          article,
          %User{} = actor,
-         command_key
+         command_id
        ) do
     reason = CMS.Gate.Decision.primary_reason(decision)
 
@@ -221,7 +202,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
            actor: actor,
            outcome: :denied,
            denial_code: reason,
-           operation_ref: command_key
+           operation_ref: command_id
          ) do
       {:ok, _event} -> {:error, decision}
       {:error, %GroupherServer.ErrorCat.Error{reason: :duplicate_event}} -> {:error, decision}
@@ -229,7 +210,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
     end
   end
 
-  defp persist_denied_trash(result, _article, _actor, _command_key), do: result
+  defp persist_denied_trash(result, _article, _actor, _command_id), do: result
 
   defp resolve_trash_item(%TrashedArticle{} = item), do: {:ok, item}
   defp resolve_trash_item(ref), do: Trash.get(ref)
@@ -248,9 +229,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
   defp option(_opts, _key, default), do: default
 
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 
   defp command_target(%{community_id: id}, thread, key), do: command_target(id, thread, key)
   defp command_target(community, thread, key), do: "#{community}:#{thread}:#{key}"

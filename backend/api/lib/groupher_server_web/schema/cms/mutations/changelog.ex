@@ -16,7 +16,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
   object :cms_changelog_mutations do
     @desc "create a changelog"
     field :create_changelog, :changelog do
-      arg(:command_key, non_null(:id))
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -36,7 +36,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
     @desc "save a new changelog as a draft"
     field :create_changelog_draft, :article_draft do
-      arg(:command_key, non_null(:id))
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -54,7 +54,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
     @desc "update a cms/changelog"
     field :update_changelog, :changelog do
-      arg(:command_key, non_null(:id))
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:expected_version, non_null(:integer))
       arg(:title, :string)
@@ -76,7 +76,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
     @desc "save changes to a changelog draft without publishing"
     field :update_changelog_draft, :article_draft do
-      arg(:command_key, non_null(:id))
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:expected_version, non_null(:integer))
@@ -99,7 +99,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
     @desc "publish an existing changelog draft"
     field :publish_changelog_draft, :changelog do
-      arg(:command_key, non_null(:id))
+      arg(:command_id, non_null(:id))
       arg(:expected_version, non_null(:integer))
       arg(:expected_lifecycle_version, non_null(:integer))
       arg(:community, non_null(:string))

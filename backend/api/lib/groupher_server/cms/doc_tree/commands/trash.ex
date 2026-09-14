@@ -9,13 +9,13 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
 
       CMS.DocTree facade
         -> Commands.Trash
-        -> CommandReceipt / CommandReplay
+        -> CMS.Command / CommandReplay
         -> DocTree.Trash
   """
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.DocTree.{CommandReplay, Trash}
   alias CMS.Model.Community
   alias Helper.T
@@ -23,27 +23,25 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
   @doc "Restores one product Trash item through the existing command protocol."
   @spec restore(Community.t(), T.id(), map()) :: T.domain_res(map())
   def restore(%Community{} = community, id, args) do
-    clean_args = drop_command_key(args)
+    clean_args = drop_command_id(args)
 
     case option(args, :actor) do
       %User{} = actor ->
-        with {:ok, command_key} <- CommandReceipt.resolve_command_key(args) do
+        with {:ok, command_id} <- Command.resolve_command_id(option(args, :command_id)) do
           target_key = "#{community.id}:#{id}"
 
-          CommandReceipt.run_user_command(
-            actor,
-            command_key,
-            "doc.tree.restore_trash_item",
-            "doc_tree",
-            target_key,
-            clean_args,
-            fn ->
-              with {:ok, result} <- Trash.restore(community, id, clean_args) do
-                {:ok, result, CommandReplay.tree_metadata(result, target_key)}
-              end
-            end,
-            &CommandReplay.replay_tree/1
+          Command.create_user(actor, command_id,
+            command: :doc_tree_restore_trash_item,
+            resource: :doc_tree,
+            owner: community,
+            input: %{id: id, args: clean_args},
+            recovery: &CommandReplay.replay_tree/1
           )
+          |> Command.run(fn %{input: %{args: clean_args}} ->
+            with {:ok, result} <- Trash.restore(community, id, clean_args) do
+              {:ok, result, CommandReplay.tree_metadata(result, target_key)}
+            end
+          end)
         end
 
       _ ->
@@ -55,7 +53,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
   defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
   defp option(_opts, _key), do: nil
 
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 end

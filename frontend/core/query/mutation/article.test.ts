@@ -173,7 +173,7 @@ describe('article query mutation helpers', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'alice',
       entityKey: 'home:POST:42',
-      commandKey: 'old-confirmation',
+      commandId: 'old-confirmation',
       upvotesCount: 10,
       viewerHasUpvoted: false,
       articleInteractionRevision: 42,
@@ -189,8 +189,8 @@ describe('article query mutation helpers', () => {
 
   it('does not restore an older optimistic value after a newer operation owns the field', () => {
     const queryClient = setupClient()
-    const firstContext = { queryClient, accountRef: 'alice', commandKey: 'op-first' }
-    const secondContext = { queryClient, accountRef: 'alice', commandKey: 'op-second' }
+    const firstContext = { queryClient, accountRef: 'alice', commandId: 'op-first' }
+    const secondContext = { queryClient, accountRef: 'alice', commandId: 'op-second' }
     const first = articleUpvoteOperation.apply(firstContext, article, true)
     for (const change of first.changes) markChange(queryClient, change)
     const second = articleUpvoteOperation.apply(secondContext, article, false)
@@ -208,7 +208,7 @@ describe('article query mutation helpers', () => {
 
   it('leaves public aggregate rollback to the authority refetch path', () => {
     const queryClient = setupClient()
-    const context = { queryClient, accountRef: 'alice', commandKey: 'op-count' }
+    const context = { queryClient, accountRef: 'alice', commandId: 'op-count' }
     const plan = articleUpvoteOperation.apply(context, article, true)
     for (const change of plan.changes) markChange(queryClient, change)
 

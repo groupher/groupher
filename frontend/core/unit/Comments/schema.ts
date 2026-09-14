@@ -53,8 +53,8 @@ const pagedCommentReplies = graphql(`
 `)
 
 const createComment = graphql(`
-  mutation CreateComment($article: ArticlePathInput!, $body: String!, $commandKey: ID!) {
-    createComment(article: $article, body: $body, commandKey: $commandKey) {
+  mutation CreateComment($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
+    createComment(article: $article, body: $body, commandId: $commandId) {
       comment {
         ...CommentFields
       }
@@ -63,15 +63,13 @@ const createComment = graphql(`
         commentsCount
         commentsRevision
       }
-      commandKey
-      commandReplayed
     }
   }
 `)
 
 const updateComment = graphql(`
-  mutation UpdateComment($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-    updateComment(comment: $comment, body: $body, commandKey: $commandKey) {
+  mutation UpdateComment($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+    updateComment(comment: $comment, body: $body, commandId: $commandId) {
       innerId
       bodyHtml
       replyToComment {
@@ -83,8 +81,6 @@ const updateComment = graphql(`
         commentsCount
         commentsRevision
       }
-      commandKey
-      commandReplayed
     }
   }
 `)
@@ -143,8 +139,8 @@ const reconcileComments = graphql(`
 `)
 
 const replyComment = graphql(`
-  mutation ReplyComment($comment: CommentPathInput!, $body: String!, $commandKey: ID!) {
-    replyComment(comment: $comment, body: $body, commandKey: $commandKey) {
+  mutation ReplyComment($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
+    replyComment(comment: $comment, body: $body, commandId: $commandId) {
       comment {
         ...CommentFields
         replyToComment {
@@ -156,18 +152,14 @@ const replyComment = graphql(`
         commentsCount
         commentsRevision
       }
-      commandKey
-      commandReplayed
     }
   }
 `)
 
 const deleteComment = graphql(`
-  mutation DeleteComment($comment: CommentPathInput!, $commandKey: ID!) {
-    deleteComment(comment: $comment, commandKey: $commandKey) {
+  mutation DeleteComment($comment: CommentPathInput!, $commandId: ID!) {
+    deleteComment(comment: $comment, commandId: $commandId) {
       innerId
-      commandKey
-      commandReplayed
       article {
         thread
         innerId
@@ -179,16 +171,14 @@ const deleteComment = graphql(`
 `)
 
 const upvoteComment = graphql(`
-  mutation UpvoteComment($comment: CommentPathInput!, $commandKey: ID!) {
-    upvoteComment(comment: $comment, commandKey: $commandKey) {
+  mutation UpvoteComment($comment: CommentPathInput!, $commandId: ID!) {
+    upvoteComment(comment: $comment, commandId: $commandId) {
       innerId
       meta {
         isArticleAuthorUpvoted
       }
       upvotesCount
       commentInteractionRevision
-      commandKey
-      commandReplayed
       reactionOutcome
       emotions {
         ...CommentEmotionFields
@@ -202,16 +192,14 @@ const upvoteComment = graphql(`
 `)
 
 const undoUpvoteComment = graphql(`
-  mutation UndoUpvoteComment($comment: CommentPathInput!, $commandKey: ID!) {
-    undoUpvoteComment(comment: $comment, commandKey: $commandKey) {
+  mutation UndoUpvoteComment($comment: CommentPathInput!, $commandId: ID!) {
+    undoUpvoteComment(comment: $comment, commandId: $commandId) {
       innerId
       meta {
         isArticleAuthorUpvoted
       }
       upvotesCount
       commentInteractionRevision
-      commandKey
-      commandReplayed
       reactionOutcome
       emotions {
         ...CommentEmotionFields
@@ -252,15 +240,13 @@ const emotionToComment = graphql(`
   mutation EmotionToComment(
     $comment: CommentPathInput!
     $emotion: CommentEmotion!
-    $commandKey: ID!
+    $commandId: ID!
   ) {
-    emotionToComment(comment: $comment, emotion: $emotion, commandKey: $commandKey) {
+    emotionToComment(comment: $comment, emotion: $emotion, commandId: $commandId) {
       innerId
       upvotesCount
       viewerHasUpvoted
       commentInteractionRevision
-      commandKey
-      commandReplayed
       reactionOutcome
       replyToComment {
         innerId
@@ -276,15 +262,13 @@ const undoEmotionToComment = graphql(`
   mutation UndoEmotionToComment(
     $comment: CommentPathInput!
     $emotion: CommentEmotion!
-    $commandKey: ID!
+    $commandId: ID!
   ) {
-    undoEmotionToComment(comment: $comment, emotion: $emotion, commandKey: $commandKey) {
+    undoEmotionToComment(comment: $comment, emotion: $emotion, commandId: $commandId) {
       innerId
       upvotesCount
       viewerHasUpvoted
       commentInteractionRevision
-      commandKey
-      commandReplayed
       reactionOutcome
       replyToComment {
         innerId

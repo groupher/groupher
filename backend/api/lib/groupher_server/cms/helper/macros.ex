@@ -342,9 +342,8 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:active_at, :utc_datetime)
 
       field(:pending, :integer, default: 0)
-      # Mutation-only metadata; it distinguishes a durable replay from a new execution.
-      field(:command_key, Ecto.UUID, virtual: true)
-      field(:command_replayed, :boolean, default: false, virtual: true)
+      # Mutation-only metadata; it carries the request command identity.
+      field(:command_id, Ecto.UUID, virtual: true)
 
       timestamps(type: :utc_datetime)
     end

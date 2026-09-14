@@ -100,9 +100,10 @@ defmodule GroupherServer.CMS.Articles do
   @doc "Updates through the actor-less domain path by deriving the actor from the Article author; this is not a transport entrypoint."
   def update(article, attrs), do: Publish.update(article, attrs)
 
-  @doc "Starts or updates the persistent Article Draft; explicit Publish is separate."
-  @spec update(T.article(), map(), User.t()) :: T.domain_res(T.article())
-  def update(article, attrs, %User{} = user), do: Commands.Update.update(article, attrs, user)
+  @doc "Updates an Article through the authenticated idempotent command boundary."
+  @spec update(T.article(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(T.article())
+  def update(article, attrs, %User{} = user, command_id),
+    do: Commands.Update.update(article, attrs, user, command_id)
 
   # Shared Article Draft lifecycle
 

@@ -84,8 +84,7 @@ defmodule GroupherServer.CMS.Model.Community do
 
     field(:pending, :integer, default: 0)
 
-    field(:command_key, Ecto.UUID, virtual: true)
-    field(:command_replayed, :boolean, default: false, virtual: true)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     field(:viewer_has_subscribed, :boolean, default: false, virtual: true)
     field(:viewer_is_moderator, :boolean, default: false, virtual: true)

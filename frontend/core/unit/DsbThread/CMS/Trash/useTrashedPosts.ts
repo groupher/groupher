@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
-import { createCommandKey } from '~/query/mutation/optimistic/execute'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/content'
@@ -85,7 +85,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
         const data = await browserGraphQLRequest<TRestoreTrashedPostData>(S.restoreTrashedPost, {
           community,
           id,
-          commandKey: createCommandKey(),
+          commandId: createCommandId(),
         })
 
         if (!data.restoreTrashedArticle) return false
@@ -110,7 +110,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
       try {
         const data = await browserGraphQLRequest<TPermanentlyDeleteTrashedPostData>(
           S.permanentlyDeleteTrashedPost,
-          { community, id, commandKey: createCommandKey() },
+          { community, id, commandId: createCommandId() },
         )
 
         if (!data.permanentlyDeleteTrashedArticle?.done) return false

@@ -52,8 +52,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:collects_count, :integer)
       field(:comments_revision, :integer)
       field(:article_interaction_revision, :integer)
-      field(:command_key, :id)
-      field(:command_replayed, :boolean)
+      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
       field(:reaction_outcome, :string)
 
       field(:emotions, list_of(:emotion_stat),
@@ -191,8 +190,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:floor, :integer)
       field(:upvotes_count, :integer)
       field(:comment_interaction_revision, :integer)
-      field(:command_key, :id)
-      field(:command_replayed, :boolean)
+      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
       field(:reaction_outcome, :string)
       field(:is_article_author, :boolean)
 

@@ -43,8 +43,7 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
     field(:deleted_at, :utc_datetime)
     field(:article, :map, virtual: true)
     field(:mentioned_by_count, :integer, virtual: true, default: 0)
-    field(:command_key, Ecto.UUID, virtual: true)
-    field(:command_replayed, :boolean, virtual: true, default: false)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     timestamps(type: :utc_datetime)
   end

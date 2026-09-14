@@ -231,9 +231,9 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
-  def create_comment(thread, article, body, %User{} = user, command_key) do
+  def create_comment(thread, article, body, %User{} = user, command_id) do
     with {:ok, %{comment: comment}} <-
-           create_comment_payload(thread, article, body, user, command_key) do
+           create_comment_payload(thread, article, body, user, command_id) do
       {:ok, comment}
     end
   end
@@ -258,14 +258,14 @@ defmodule GroupherServer.CMS.Comments do
         article_id,
         body,
         %User{} = user,
-        command_key
+        command_id
       ) do
     with {:ok, article} <-
            FrontDesk.article(community, thread, article_id,
              preload: [[author: :user], :community]
            ),
          {:ok, %{comment: comment}} <-
-           Writer.create(thread, article, body, user, command_key) do
+           Writer.create(thread, article, body, user, command_id) do
       {:ok, comment}
     end
   end
@@ -279,8 +279,8 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.create_comment_payload(:post, post, body, actor)
   """
-  def create_comment_payload(thread, article, body, %User{} = user, command_key \\ nil),
-    do: Writer.create(thread, article, body, user, command_key)
+  def create_comment_payload(thread, article, body, %User{} = user, command_id \\ nil),
+    do: Writer.create(thread, article, body, user, command_id)
 
   @spec update_comment(Comment.t(), String.t()) :: T.domain_res(Comment.t())
   @doc """
@@ -306,8 +306,8 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
-  def update_comment(%Comment{} = comment, body, %User{} = user, command_key),
-    do: UpdateComment.execute(comment, body, user, command_key)
+  def update_comment(%Comment{} = comment, body, %User{} = user, command_id),
+    do: UpdateComment.execute(comment, body, user, command_id)
 
   @spec delete_comment(Comment.t()) :: T.domain_res(Comment.t())
   @doc """
@@ -331,8 +331,8 @@ defmodule GroupherServer.CMS.Comments do
     do: delete_comment(comment, user, nil)
 
   @spec delete_comment(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
-  def delete_comment(%Comment{} = comment, %User{} = user, command_key),
-    do: DeleteComment.execute(comment, user, command_key)
+  def delete_comment(%Comment{} = comment, %User{} = user, command_id),
+    do: DeleteComment.execute(comment, user, command_id)
 
   @doc """
   Accepts or replaces the current solution of a QA Post.
@@ -379,9 +379,9 @@ defmodule GroupherServer.CMS.Comments do
 
   @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
-  def reply_comment(comment_or_id, body, %User{} = user, command_key) do
+  def reply_comment(comment_or_id, body, %User{} = user, command_id) do
     with {:ok, %{comment: comment}} <-
-           reply_comment_payload(comment_or_id, body, user, command_key) do
+           reply_comment_payload(comment_or_id, body, user, command_id) do
       {:ok, comment}
     end
   end
@@ -395,14 +395,14 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.reply_comment_payload(parent_id, body, actor)
   """
-  def reply_comment_payload(comment_or_id, body, user, command_key \\ nil)
+  def reply_comment_payload(comment_or_id, body, user, command_id \\ nil)
 
-  def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_key),
-    do: Writer.reply(comment, body, user, command_key)
+  def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_id),
+    do: Writer.reply(comment, body, user, command_id)
 
-  def reply_comment_payload(comment_id, body, %User{} = user, command_key) do
+  def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
-      Writer.reply(comment, body, user, command_key)
+      Writer.reply(comment, body, user, command_id)
     end
   end
 

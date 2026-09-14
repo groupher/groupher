@@ -96,7 +96,7 @@ export const patchArticleChanges = (
       field: String(field),
       before,
       optimistic: readField(next, path, field),
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback:
         field === 'upvotesCount' || field === 'commentsCount' || field === 'views'
           ? 'refetch'

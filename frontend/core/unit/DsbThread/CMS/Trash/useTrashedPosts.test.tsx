@@ -86,7 +86,7 @@ describe('useTrashedPosts', () => {
       expect.objectContaining({
         community: 'home',
         id: 'trash-1',
-        commandKey: expect.any(String),
+        commandId: expect.any(String),
       }),
     )
     expect(mocks.query).toHaveBeenCalledTimes(2)
@@ -108,7 +108,7 @@ describe('useTrashedPosts', () => {
       expect.objectContaining({
         community: 'home',
         id: 'trash-1',
-        commandKey: expect.any(String),
+        commandId: expect.any(String),
       }),
     )
     expect(mocks.query).toHaveBeenCalledTimes(2)

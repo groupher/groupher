@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.CommandReceipt.Store do
   @moduledoc """
-  Persists command claims, finalized replay envelopes and retention cleanup.
+  Persists command claims, finalized recovery envelopes and retention cleanup.
 
       Runner
         -> Store claim / finalize
@@ -16,12 +16,10 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
 
   @receipt_ttl_seconds 24 * 60 * 60
 
-  @type initiator_type :: :user | :job | :system
-  @type claim_result :: :new | :replay
+  @type claim_result :: :new | :recovery
 
   @doc "Claims a command identity in the caller's transaction."
   @spec claim(
-          initiator_type(),
           String.t(),
           Ecto.UUID.t(),
           String.t(),
@@ -30,25 +28,24 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
           term()
         ) :: {:ok, claim_result(), CommandReceipt.t()} | {:error, term()}
   def claim(
-        initiator_type,
         initiator_key,
-        command_key,
-        command_name,
+        command_id,
+        command,
         target_type,
         target_key,
         fingerprint_data \\ nil
       )
-      when initiator_type in [:user, :job, :system] and is_binary(initiator_key) and
-             is_binary(command_key) and is_binary(command_name) and is_binary(target_type) and
+      when is_binary(initiator_key) and is_binary(command_id) and is_binary(command) and
+             is_binary(target_type) and
              (is_binary(target_key) or is_integer(target_key)) do
     target_key = to_string(target_key)
-    fingerprint = fingerprint(command_name, target_type, target_key, fingerprint_data)
+    fingerprint = fingerprint(command, target_type, target_key, fingerprint_data)
 
     attrs = %{
-      initiator_type: Atom.to_string(initiator_type),
+      initiator_type: "user",
       initiator_key: initiator_key,
-      command_key: command_key,
-      command_name: command_name,
+      command_id: command_id,
+      command: command,
       target_type: target_type,
       target_key: target_key,
       payload_fingerprint: fingerprint,
@@ -58,7 +55,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
     insert_claim(attrs, fingerprint)
   end
 
-  @doc "Finalizes a claimed receipt with its replay metadata."
+  @doc "Finalizes a claimed receipt with its recovery metadata."
   @spec finalize(CommandReceipt.t(), map()) ::
           {:ok, CommandReceipt.t()} | {:error, Ecto.Changeset.t()}
   def finalize(%CommandReceipt{} = receipt, attrs) when is_map(attrs) do
@@ -73,7 +70,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
     |> Repo.update()
   end
 
-  @doc "Deletes a bounded batch of receipts past the replay window."
+  @doc "Deletes a bounded batch of receipts past the recovery window."
   @spec prune_expired(pos_integer()) :: non_neg_integer()
   def prune_expired(limit \\ 1_000) when is_integer(limit) and limit > 0 do
     now = DateTime.utc_now()
@@ -102,7 +99,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
     case Repo.insert(
            changeset,
            on_conflict: :nothing,
-           conflict_target: [:initiator_type, :initiator_key, :command_key]
+           conflict_target: [:initiator_type, :initiator_key, :command_id]
          ) do
       {:ok, %CommandReceipt{id: id} = receipt} when not is_nil(id) ->
         {:ok, :new, receipt}
@@ -119,7 +116,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
     key = %{
       initiator_type: attrs.initiator_type,
       initiator_key: attrs.initiator_key,
-      command_key: attrs.command_key
+      command_id: attrs.command_id
     }
 
     case Repo.one(
@@ -127,7 +124,7 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
              where:
                receipt.initiator_type == ^key.initiator_type and
                  receipt.initiator_key == ^key.initiator_key and
-                 receipt.command_key == ^key.command_key,
+                 receipt.command_id == ^key.command_id,
              lock: "FOR UPDATE"
            )
          ) do
@@ -137,20 +134,20 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
           insert_claim(attrs, fingerprint)
         else
           case receipt.payload_fingerprint do
-            ^fingerprint -> {:ok, :replay, receipt}
-            _ -> {:error, ErrorCat.command_key_conflict()}
+            ^fingerprint -> {:ok, :recovery, receipt}
+            _ -> {:error, ErrorCat.command_id_conflict()}
           end
         end
 
       nil ->
-        {:error, ErrorCat.command_key_conflict()}
+        {:error, ErrorCat.command_id_conflict()}
     end
   end
 
-  defp fingerprint(command_name, target_type, target_key, data) do
+  defp fingerprint(command, target_type, target_key, data) do
     :crypto.hash(
       :sha256,
-      :erlang.term_to_binary({command_name, target_type, target_key, canonical_input(data)})
+      :erlang.term_to_binary({command, target_type, target_key, canonical_input(data)})
     )
     |> Base.encode16(case: :lower)
   end

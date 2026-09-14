@@ -15,7 +15,7 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-1',
+      commandId: 'op-1',
       upvotesCount: 11,
       viewerHasUpvoted: true,
       articleInteractionRevision: 42,
@@ -23,15 +23,15 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-2',
+      commandId: 'op-2',
       upvotesCount: 10,
       viewerHasUpvoted: false,
       articleInteractionRevision: 43,
     })
 
     expect(readArticleUpvoteReceipt('acct-a', 'home:POST:42')).toMatchObject({
-      commandKey: 'op-2',
-      schemaVersion: 2,
+      commandId: 'op-2',
+      schemaVersion: 3,
       publicProjection: { upvotesCount: 10, articleInteractionRevision: 43 },
       viewerState: { viewerHasUpvoted: false },
     })
@@ -42,7 +42,7 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-1',
+      commandId: 'op-1',
       upvotesCount: 11,
       viewerHasUpvoted: true,
     })
@@ -56,7 +56,7 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-ttl',
+      commandId: 'op-ttl',
       upvotesCount: 11,
       viewerHasUpvoted: true,
     })
@@ -71,7 +71,7 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-new',
+      commandId: 'op-new',
       upvotesCount: 11,
       viewerHasUpvoted: true,
       articleInteractionRevision: 42,
@@ -79,19 +79,19 @@ describe('article upvote receipts', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-legacy',
+      commandId: 'op-legacy',
       upvotesCount: 10,
       viewerHasUpvoted: false,
     })
 
-    expect(readArticleUpvoteReceipt('acct-a', 'home:POST:42')?.commandKey).toBe('op-new')
+    expect(readArticleUpvoteReceipt('acct-a', 'home:POST:42')?.commandId).toBe('op-new')
   })
 
   it('preserves an explicit null viewer emotion from a confirmed projection', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
-      commandKey: 'op-clear',
+      commandId: 'op-clear',
       upvotesCount: 10,
       viewerHasUpvoted: false,
       viewerEmotion: null,

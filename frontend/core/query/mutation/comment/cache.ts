@@ -137,7 +137,7 @@ export const makePendingComment = (
   body: string,
 ): TComment =>
   ({
-    innerId: `pending:${context.commandKey}`,
+    innerId: `pending:${context.commandId}`,
     bodyHtml: body,
     author: target.author || undefined,
     insertedAt: new Date().toISOString(),
@@ -176,7 +176,7 @@ export const insertPendingCommentChanges = (
       type: 'pending-entity',
       queryKey,
       entityKey: String(target.pending.innerId) as `pending:${string}`,
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback: 'remove-if-owned',
       restore: () =>
         queryClient.setQueryData(queryKey, (current) =>
@@ -209,7 +209,7 @@ export const insertPendingReplyChanges = (
       type: 'pending-entity',
       queryKey,
       entityKey: String(target.pending.innerId) as `pending:${string}`,
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback: 'remove-if-owned',
       restore: () =>
         queryClient.setQueryData(queryKey, (current: unknown) => {
@@ -274,7 +274,7 @@ export const patchCommentChanges = (
       field: String(field),
       before,
       optimistic: readCommentField(next, target.commentInnerId, field),
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback: field === 'upvotesCount' || field === 'emotions' ? 'refetch' : 'restore-if-owned',
       restore: () => {
         queryClient.setQueryData(queryKey, (current: unknown) => {
@@ -348,7 +348,7 @@ export const patchCommentViewerChanges = (
       field: field === 'emotionFlags' ? `${field}:${emotionName}` : field,
       before,
       optimistic: enabled,
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback: 'restore-if-owned',
       restore: () => {
         queryClient.setQueryData<TCommentViewerStates>(queryKey, (currentStates) => {
@@ -510,7 +510,7 @@ export const updateCommentEmotion = (
   } as TComment
 }
 
-export type TCommentMutationResult = TComment & { commandReplayed?: boolean | null }
+export type TCommentMutationResult = TComment
 
 /** Removes viewer flags before storing the public emotion projection. */
 export const publicEmotions = (comment: TComment): TComment['emotions'] =>

@@ -41,8 +41,6 @@ type TArticleReactionResult = {
   upvotesCount: number
   collectsCount?: number | null
   articleInteractionRevision?: number | null
-  commandKey?: string | null
-  commandReplayed?: boolean | null
   reactionOutcome?: string | null
   emotions?: Array<Pick<TEmotion, 'type' | 'count' | 'latestUsers'> | null> | null
   viewerHasCollected?: boolean | null
@@ -79,7 +77,7 @@ const patchViewerChanges = (
       field: 'viewerHasUpvoted',
       before,
       optimistic: nextViewerState,
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       rollback: 'restore-if-owned',
       restore: () => {
         queryClient.setQueryData<Record<string, TArticleViewerState>>(queryKey, (current) =>
@@ -99,9 +97,9 @@ const patchViewerChanges = (
 const requestArticleReaction = async (
   path: TArticlePath,
   nextViewerState: boolean,
-  commandKey: string,
+  commandId: string,
 ): Promise<TArticleReactionResult> => {
-  const variables = { article: path, commandKey }
+  const variables = { article: path, commandId }
   const request = (document: unknown) =>
     browserGraphQLRequest<Record<string, TArticleReactionResult | null>, typeof variables>(
       document as never,
@@ -215,7 +213,7 @@ export const articleUpvoteOperation = {
     }
   },
   execute: (context: TOperationContext, article: TArticle, nextViewerState: boolean) =>
-    requestArticleReaction(articlePath(article), nextViewerState, context.commandKey),
+    requestArticleReaction(articlePath(article), nextViewerState, context.commandId),
   reconcile: (
     context: TOperationContext,
     article: TArticle,
@@ -224,6 +222,8 @@ export const articleUpvoteOperation = {
   ) => {
     const path = articlePath(article)
     const key = articleKeyFor(path)
+    const viewerHasUpvoted =
+      typeof result.viewerHasUpvoted === 'boolean' ? result.viewerHasUpvoted : nextViewerState
     patchArticleEverywhere(context.queryClient, path, (current) => ({
       ...current,
       upvotesCount: result.upvotesCount,
@@ -242,8 +242,6 @@ export const articleUpvoteOperation = {
         : {}),
     }))
     if (context.accountRef) {
-      const viewerHasUpvoted =
-        typeof result.viewerHasUpvoted === 'boolean' ? result.viewerHasUpvoted : nextViewerState
       patchViewerState(context.queryClient, context.accountRef, key, {
         viewerHasUpvoted,
         ...(typeof result.viewerHasCollected === 'boolean'
@@ -251,32 +249,31 @@ export const articleUpvoteOperation = {
           : {}),
         ...(result.viewerEmotion !== undefined ? { viewerEmotion: result.viewerEmotion } : {}),
       })
-      if (
-        typeof result.upvotesCount === 'number' &&
-        result.reactionOutcome !== 'unchanged' &&
-        result.commandReplayed !== true
-      ) {
-        writeArticleUpvoteReceipt({
-          accountRef: context.accountRef,
-          entityKey: key,
-          commandKey: context.commandKey,
-          upvotesCount: result.upvotesCount,
-          viewerHasUpvoted,
-          collectsCount:
-            typeof result.collectsCount === 'number' ? result.collectsCount : undefined,
-          articleInteractionRevision:
-            typeof result.articleInteractionRevision === 'number'
-              ? result.articleInteractionRevision
-              : undefined,
-          emotions: Array.isArray(result.emotions) ? result.emotions : undefined,
-          latestUpvotedUsers: Array.isArray(result.meta?.latestUpvotedUsers)
-            ? result.meta.latestUpvotedUsers
+    }
+    if (
+      context.accountRef &&
+      typeof result.upvotesCount === 'number' &&
+      result.reactionOutcome !== 'unchanged'
+    ) {
+      writeArticleUpvoteReceipt({
+        accountRef: context.accountRef,
+        entityKey: key,
+        commandId: context.commandId,
+        upvotesCount: result.upvotesCount,
+        viewerHasUpvoted,
+        collectsCount: typeof result.collectsCount === 'number' ? result.collectsCount : undefined,
+        articleInteractionRevision:
+          typeof result.articleInteractionRevision === 'number'
+            ? result.articleInteractionRevision
             : undefined,
-          viewerHasCollected:
-            typeof result.viewerHasCollected === 'boolean' ? result.viewerHasCollected : undefined,
-          viewerEmotion: result.viewerEmotion,
-        })
-      }
+        emotions: Array.isArray(result.emotions) ? result.emotions : undefined,
+        latestUpvotedUsers: Array.isArray(result.meta?.latestUpvotedUsers)
+          ? result.meta.latestUpvotedUsers
+          : undefined,
+        viewerHasCollected:
+          typeof result.viewerHasCollected === 'boolean' ? result.viewerHasCollected : undefined,
+        viewerEmotion: result.viewerEmotion,
+      })
     }
   },
 } satisfies TOptimisticToggleOperation<TArticle, TArticleReactionResult>

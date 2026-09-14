@@ -60,13 +60,13 @@ export const commentUpvoteOperation = {
       ? (
           await browserGraphQLRequest(commentsSchema.upvoteComment, {
             comment: target.commentPath,
-            commandKey: _context.commandKey,
+            commandId: _context.commandId,
           })
         ).upvoteComment
       : (
           await browserGraphQLRequest(commentsSchema.undoUpvoteComment, {
             comment: target.commentPath,
-            commandKey: _context.commandKey,
+            commandId: _context.commandId,
           })
         ).undoUpvoteComment
     if (!result) throw new Error('Comment upvote response is empty')
@@ -100,25 +100,23 @@ export const commentUpvoteOperation = {
               : nextViewerState,
         }),
       )
-      if (result.reactionOutcome !== 'unchanged' && result.commandReplayed !== true) {
-        writeCommentReactionReceipt({
-          commandKey: context.commandKey,
-          accountRef: context.accountRef,
-          articleKey: target.articleKey,
-          commentRef: target.commentInnerId,
-          upvotesCount: result.upvotesCount || 0,
-          emotions: publicEmotions(result) || [],
-          viewerHasUpvoted:
-            typeof result.viewerHasUpvoted === 'boolean'
-              ? result.viewerHasUpvoted
-              : nextViewerState,
-          viewerEmotion: (result.emotions || []).find((emotion) => emotion.viewerHasReacted)?.type,
-          commentInteractionRevision:
-            typeof result.commentInteractionRevision === 'number'
-              ? result.commentInteractionRevision
-              : undefined,
-        })
-      }
+    }
+    if (context.accountRef && result.reactionOutcome !== 'unchanged') {
+      writeCommentReactionReceipt({
+        commandId: context.commandId,
+        accountRef: context.accountRef,
+        articleKey: target.articleKey,
+        commentRef: target.commentInnerId,
+        upvotesCount: result.upvotesCount || 0,
+        emotions: publicEmotions(result) || [],
+        viewerHasUpvoted:
+          typeof result.viewerHasUpvoted === 'boolean' ? result.viewerHasUpvoted : nextViewerState,
+        viewerEmotion: (result.emotions || []).find((emotion) => emotion.viewerHasReacted)?.type,
+        commentInteractionRevision:
+          typeof result.commentInteractionRevision === 'number'
+            ? result.commentInteractionRevision
+            : undefined,
+      })
     }
   },
 }
@@ -169,14 +167,14 @@ export const commentEmotionOperation = {
           await browserGraphQLRequest(commentsSchema.emotionToComment, {
             comment: target.commentPath,
             emotion,
-            commandKey: _context.commandKey,
+            commandId: _context.commandId,
           })
         ).emotionToComment
       : (
           await browserGraphQLRequest(commentsSchema.undoEmotionToComment, {
             comment: target.commentPath,
             emotion,
-            commandKey: _context.commandKey,
+            commandId: _context.commandId,
           })
         ).undoEmotionToComment
     if (!result) throw new Error('Comment emotion response is empty')
@@ -215,22 +213,22 @@ export const commentEmotionOperation = {
           },
         }),
       )
-      if (result.reactionOutcome !== 'unchanged' && result.commandReplayed !== true) {
-        writeCommentReactionReceipt({
-          commandKey: context.commandKey,
-          accountRef: context.accountRef,
-          articleKey: target.articleKey,
-          commentRef: target.commentInnerId,
-          upvotesCount: result.upvotesCount || target.comment.upvotesCount || 0,
-          emotions: publicEmotions(result) || [],
-          viewerHasUpvoted: Boolean(result.viewerHasUpvoted ?? target.comment.viewerHasUpvoted),
-          viewerEmotion: (result.emotions || []).find((emotion) => emotion.viewerHasReacted)?.type,
-          commentInteractionRevision:
-            typeof result.commentInteractionRevision === 'number'
-              ? result.commentInteractionRevision
-              : undefined,
-        })
-      }
+    }
+    if (context.accountRef && result.reactionOutcome !== 'unchanged') {
+      writeCommentReactionReceipt({
+        commandId: context.commandId,
+        accountRef: context.accountRef,
+        articleKey: target.articleKey,
+        commentRef: target.commentInnerId,
+        upvotesCount: result.upvotesCount || target.comment.upvotesCount || 0,
+        emotions: publicEmotions(result) || [],
+        viewerHasUpvoted: Boolean(result.viewerHasUpvoted ?? target.comment.viewerHasUpvoted),
+        viewerEmotion: (result.emotions || []).find((emotion) => emotion.viewerHasReacted)?.type,
+        commentInteractionRevision:
+          typeof result.commentInteractionRevision === 'number'
+            ? result.commentInteractionRevision
+            : undefined,
+      })
     }
   },
 }

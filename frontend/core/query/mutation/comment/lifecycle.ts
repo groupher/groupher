@@ -24,7 +24,6 @@ import {
 type TCreatedCommentResult = {
   comment: TComment
   article: { commentsCount: number; commentsRevision?: number }
-  commandReplayed?: boolean | null
 }
 
 const lifecycleQueryTargets = (
@@ -66,16 +65,16 @@ const reconcileCreated = (
   reconcileCreatedComment(
     context.queryClient,
     target.scope,
-    `pending:${context.commandKey}`,
+    `pending:${context.commandId}`,
     stripCommentViewerState(result.comment),
     target.articlePath,
     result.article.commentsCount,
     result.article.commentsRevision,
   )
-  if (!context.accountRef || result.commandReplayed === true) return
+  if (!context.accountRef) return
   writeCommentFeedReceipt({
     type: 'create',
-    commandKey: context.commandKey,
+    commandId: context.commandId,
     accountRef: context.accountRef,
     articleKey: target.articleKey,
     comment: stripCommentViewerState(result.comment),
@@ -103,7 +102,7 @@ export const createCommentOperation = {
     const result = await browserGraphQLRequest(commentsSchema.createComment, {
       article: target.articlePath,
       body,
-      commandKey: _context.commandKey,
+      commandId: _context.commandId,
     })
     if (!result.createComment) throw new Error('Create comment response is empty')
     return result.createComment as unknown as TCreatedCommentResult
@@ -127,7 +126,7 @@ export const replyCommentOperation = {
     const result = await browserGraphQLRequest(commentsSchema.replyComment, {
       comment: { article: target.articlePath, innerId: target.parentId },
       body,
-      commandKey: _context.commandKey,
+      commandId: _context.commandId,
     })
     if (!result.replyComment) throw new Error('Reply comment response is empty')
     return result.replyComment as unknown as TCreatedCommentResult
@@ -136,7 +135,6 @@ export const replyCommentOperation = {
 }
 
 type TUpdatedCommentResult = TComment & {
-  commandReplayed?: boolean | null
   article?: {
     innerId?: string | number
     thread?: TThread
@@ -172,7 +170,7 @@ export const updateCommentOperation = {
     const result = await browserGraphQLRequest(commentsSchema.updateComment, {
       comment: target.commentPath,
       body,
-      commandKey: _context.commandKey,
+      commandId: _context.commandId,
     })
     if (!result.updateComment) throw new Error('Update comment response is empty')
     return result.updateComment as unknown as TUpdatedCommentResult
@@ -198,10 +196,10 @@ export const updateCommentOperation = {
           : {}),
       }))
     }
-    if (!context.accountRef || result.commandReplayed === true) return
+    if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'update',
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       accountRef: context.accountRef,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
@@ -244,7 +242,7 @@ export const deleteCommentOperation = {
   ): Promise<TCommentMutationResult> => {
     const result = await browserGraphQLRequest(commentsSchema.deleteComment, {
       comment: target.commentPath,
-      commandKey: _context.commandKey,
+      commandId: _context.commandId,
     })
     if (!result.deleteComment) throw new Error('Delete comment response is empty')
     return result.deleteComment as unknown as TCommentMutationResult
@@ -267,10 +265,10 @@ export const deleteCommentOperation = {
           : {}),
       }))
     }
-    if (!context.accountRef || result.commandReplayed === true) return
+    if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'delete',
-      commandKey: context.commandKey,
+      commandId: context.commandId,
       accountRef: context.accountRef,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,

@@ -40,7 +40,7 @@ export const enqueueOptimisticToggle = <TTarget, TResult>({
   const current = active?.pendingState ?? operation.read(context, target)
   const nextState = next ?? !current
   // A set-state intent that already matches the known server state does not
-  // create an execute attempt, commandKey, or receipt.
+  // create an execute attempt or commandId.
   if (!active && nextState === current) return Promise.resolve(undefined)
   if (active) {
     active.pendingState = nextState

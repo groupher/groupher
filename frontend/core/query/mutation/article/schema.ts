@@ -1,8 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const upvotePost = graphql(`
-  mutation QueryUpvotePost($article: ArticlePathInput!, $commandKey: ID!) {
-    upvotePost(article: $article, commandKey: $commandKey) {
+  mutation QueryUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
+    upvotePost(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Post {
@@ -18,8 +18,6 @@ export const upvotePost = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type
@@ -36,8 +34,8 @@ export const upvotePost = graphql(`
 `)
 
 export const undoUpvotePost = graphql(`
-  mutation QueryUndoUpvotePost($article: ArticlePathInput!, $commandKey: ID!) {
-    undoUpvotePost(article: $article, commandKey: $commandKey) {
+  mutation QueryUndoUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
+    undoUpvotePost(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Post {
@@ -53,8 +51,6 @@ export const undoUpvotePost = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type
@@ -71,8 +67,8 @@ export const undoUpvotePost = graphql(`
 `)
 
 export const upvoteChangelog = graphql(`
-  mutation QueryUpvoteChangelog($article: ArticlePathInput!, $commandKey: ID!) {
-    upvoteChangelog(article: $article, commandKey: $commandKey) {
+  mutation QueryUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
+    upvoteChangelog(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Changelog {
@@ -88,8 +84,6 @@ export const upvoteChangelog = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type
@@ -106,8 +100,8 @@ export const upvoteChangelog = graphql(`
 `)
 
 export const undoUpvoteChangelog = graphql(`
-  mutation QueryUndoUpvoteChangelog($article: ArticlePathInput!, $commandKey: ID!) {
-    undoUpvoteChangelog(article: $article, commandKey: $commandKey) {
+  mutation QueryUndoUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
+    undoUpvoteChangelog(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Changelog {
@@ -123,8 +117,6 @@ export const undoUpvoteChangelog = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type
@@ -141,8 +133,8 @@ export const undoUpvoteChangelog = graphql(`
 `)
 
 export const upvoteDoc = graphql(`
-  mutation QueryUpvoteDoc($article: ArticlePathInput!, $commandKey: ID!) {
-    upvoteDoc(article: $article, commandKey: $commandKey) {
+  mutation QueryUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
+    upvoteDoc(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Doc {
@@ -158,8 +150,6 @@ export const upvoteDoc = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type
@@ -176,8 +166,8 @@ export const upvoteDoc = graphql(`
 `)
 
 export const undoUpvoteDoc = graphql(`
-  mutation QueryUndoUpvoteDoc($article: ArticlePathInput!, $commandKey: ID!) {
-    undoUpvoteDoc(article: $article, commandKey: $commandKey) {
+  mutation QueryUndoUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
+    undoUpvoteDoc(article: $article, commandId: $commandId) {
       innerId
       upvotesCount
       ... on Doc {
@@ -193,8 +183,6 @@ export const undoUpvoteDoc = graphql(`
         viewerEmotion
         collectsCount
         articleInteractionRevision
-        commandKey
-        commandReplayed
         reactionOutcome
         emotions {
           type

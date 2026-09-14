@@ -13,7 +13,7 @@ export type TOptimisticChange =
       field: string
       before: unknown
       optimistic: unknown
-      commandKey: string
+      commandId: string
       rollback: 'restore-if-owned' | 'refetch'
       restore: () => void
     }
@@ -21,7 +21,7 @@ export type TOptimisticChange =
       type: 'pending-entity'
       queryKey: QueryKey
       entityKey: `pending:${string}`
-      commandKey: string
+      commandId: string
       rollback: 'remove-if-owned'
       restore: () => void
     }
@@ -44,7 +44,7 @@ export type TReadOperationContext = {
 
 /** Context available after the executor has assigned the command identity. */
 export type TOperationContext = TReadOperationContext & {
-  commandKey: string
+  commandId: string
 }
 
 export type TOptimisticOperation<TTarget, TInput, TResult> = {

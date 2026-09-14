@@ -27,14 +27,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     rule_conn =
       simu_conn(:user, cms: %{community.slug => %{"post.restore" => true}})
-    command_key = Ecto.UUID.generate()
+
+    command_id = Ecto.UUID.generate()
 
     restored =
       gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
-        commandKey: command_key
+        commandId: command_id
       })
 
     assert restored["innerId"] == to_string(post.inner_id)
@@ -45,10 +46,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
-        commandKey: command_key
+        commandId: command_id
       })
 
-    assert replayed["commandReplayed"]
+    assert replayed["innerId"] == restored["innerId"]
   end
 
   test "Trash requires login and either ownership or the thread grant",
@@ -120,14 +121,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     permanent_conn =
       simu_conn(:user, owner, cms: %{community.slug => %{"post.permanent_delete" => true}})
-    command_key = Ecto.UUID.generate()
+
+    command_id = Ecto.UUID.generate()
 
     result =
       gq_mutation(permanent_conn, S.Article.m(:permanently_delete_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
-        commandKey: command_key
+        commandId: command_id
       })
 
     assert result["done"]
@@ -139,10 +141,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
         id: trashed["id"],
         community: community.slug,
         thread: "POST",
-        commandKey: command_key
+        commandId: command_id
       })
 
     assert replayed["done"]
-    assert replayed["commandReplayed"]
   end
 end

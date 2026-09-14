@@ -126,7 +126,7 @@ defmodule GroupherServer.CMS.Interactions do
   """
   @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor, command_key \\ nil), to: Reactions
+  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment emotion idempotently and returns the canonical Artiment.
@@ -138,7 +138,7 @@ defmodule GroupherServer.CMS.Interactions do
   """
   @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
           {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor, command_key \\ nil), to: Reactions
+  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Adds an Artiment upvote idempotently and returns the canonical Artiment.
@@ -149,7 +149,7 @@ defmodule GroupherServer.CMS.Interactions do
 
   """
   @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor, command_key \\ nil), to: Reactions
+  defdelegate upvote(artiment, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment upvote idempotently and returns the canonical Artiment.
@@ -160,7 +160,7 @@ defmodule GroupherServer.CMS.Interactions do
 
   """
   @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor, command_key \\ nil), to: Reactions
+  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.

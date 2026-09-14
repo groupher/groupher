@@ -5,7 +5,7 @@ const createPost = graphql(`
     $title: String!
     $bodyBag: ArtimentBodyBagInput!
     $community: String!
-    $commandKey: ID!
+    $commandId: ID!
     $communityTags: [ID]
     $linkAddr: String
     $copyRight: String
@@ -14,7 +14,7 @@ const createPost = graphql(`
       title: $title
       bodyBag: $bodyBag
       community: $community
-      commandKey: $commandKey
+      commandId: $commandId
       communityTags: $communityTags
       linkAddr: $linkAddr
       copyRight: $copyRight
@@ -31,7 +31,7 @@ const createPost = graphql(`
 const updatePost = graphql(`
   mutation UpdatePostFromEditor(
     $article: ArticlePathInput!
-    $commandKey: ID!
+    $commandId: ID!
     $expectedVersion: Int!
     $title: String
     $bodyBag: ArtimentBodyBagInput
@@ -41,7 +41,7 @@ const updatePost = graphql(`
   ) {
     updatePost(
       article: $article
-      commandKey: $commandKey
+      commandId: $commandId
       expectedVersion: $expectedVersion
       title: $title
       bodyBag: $bodyBag

@@ -9,39 +9,31 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
 
       CMS.DocTree facade
         -> Commands.Publish
-        -> CommandReceipt / CommandReplay
+        -> CMS.Command / CommandReplay
         -> DocTree.Publish / Reader
   """
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.CommandReceipt
+  alias CMS.Command
   alias CMS.DocPublishRelease
   alias CMS.DocTree.{CommandReplay, Publish, Reader}
   alias CMS.Model.{Community, Doc}
   alias Helper.T
 
-  @doc "Publishes selected Docs changes under a stable command key."
+  @doc "Publishes selected Docs changes under a stable command id."
   @spec publish_changes(Community.t(), map(), User.t(), keyword()) :: T.domain_res(map())
   def publish_changes(%Community{} = community, args, %User{} = user, opts) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts, args) do
-      args = drop_command_key(args)
-      opts = drop_command_key(opts)
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      args = drop_command_id(args)
+      opts = drop_command_id(opts)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        "doc.publish_changes",
-        "doc_branch",
-        "#{community.id}:#{Map.get(args, :branch_id, "main")}",
-        args,
-        fn ->
-          with {:ok, result} <- Publish.publish_changes(community, args, user, opts) do
-            result_key = if result.release, do: result.release.id
-            {:ok, result, %{result_key: result_key}}
-          end
-        end,
-        fn receipt ->
+      Command.create_user(user, command_id,
+        command: :doc_publish_changes,
+        resource: :doc_branch,
+        owner: community,
+        input: args,
+        recovery: fn receipt ->
           case Publish.checklist(community, opts) do
             {:error, reason} ->
               {:error, reason}
@@ -59,6 +51,12 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
           end
         end
       )
+      |> Command.run(fn %{input: args} ->
+        with {:ok, result} <- Publish.publish_changes(community, args, user, opts) do
+          result_key = if result.release, do: result.release.id
+          {:ok, result, %{result_key: result_key}}
+        end
+      end)
     end
   end
 
@@ -70,7 +68,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       community,
       id,
       user,
-      "doc.move_to_draft",
+      :doc_move_to_draft,
       opts,
       fn -> Publish.move_doc_to_draft(community, id, user, opts) end,
       fn _receipt -> Reader.read_draft(community, id, opts) end
@@ -85,7 +83,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       community,
       id,
       user,
-      "doc.move_subtree_to_draft",
+      :doc_move_subtree_to_draft,
       opts,
       fn ->
         with {:ok, result} <- Publish.move_subtree_to_draft(community, id, user, opts) do
@@ -96,24 +94,26 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
     )
   end
 
-  defp run_doc_command(community, id, user, command_name, opts, execute, replay) do
-    with {:ok, command_key} <- CommandReceipt.resolve_command_key(opts) do
-      opts = drop_command_key(opts)
+  defp run_doc_command(community, id, user, command, opts, execute, replay) do
+    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+      opts = drop_command_id(opts)
 
-      CommandReceipt.run_user_command(
-        user,
-        command_key,
-        command_name,
-        "doc",
-        "#{community.id}:#{id}",
-        opts,
-        execute,
-        replay
+      Command.create_user(user, command_id,
+        command: command,
+        resource: :doc,
+        owner: community,
+        input: %{id: id, opts: opts},
+        recovery: replay
       )
+      |> Command.run(fn %{input: %{opts: _opts}} -> execute.() end)
     end
   end
 
-  defp drop_command_key(opts) when is_map(opts), do: Map.delete(opts, :command_key)
-  defp drop_command_key(opts) when is_list(opts), do: Keyword.delete(opts, :command_key)
-  defp drop_command_key(opts), do: opts
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
+
+  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
+  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
+  defp option(_opts, _key), do: nil
 end

@@ -25,13 +25,13 @@ const markerField = (change: TOptimisticChange): string =>
 export const markChange = (queryClient: QueryClient, change: TOptimisticChange): void => {
   markerMap(queryClient).set(
     markerKey(change.queryKey, change.entityKey, markerField(change)),
-    change.commandKey,
+    change.commandId,
   )
 }
 
 const ownsChange = (queryClient: QueryClient, change: TOptimisticChange): boolean =>
   markerMap(queryClient).get(markerKey(change.queryKey, change.entityKey, markerField(change))) ===
-  change.commandKey
+  change.commandId
 
 const clearChange = (queryClient: QueryClient, change: TOptimisticChange): void => {
   const key = markerKey(change.queryKey, change.entityKey, markerField(change))

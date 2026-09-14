@@ -9,7 +9,7 @@
 
 - [Backend Rules](./backend-rules.md)：后端模块所有权和 facade 约束；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Writer、Gate、Lifecycle 与事务职责；
-- [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandKey`、`CommandReceipt` 和具体 action 的执行合同；
+- [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、`CommandReceipt` 和具体 action 的执行合同；
 - [Optimistic Operation](../migrations/tanstack/optimistic-operation.md)：前端 operation 到后端 command 的衔接。
 
 ## 1. 问题
@@ -106,7 +106,7 @@ CMS.<Domain>.Commands.<Action>
 
 Command 模块负责：
 
-- `commandKey` 和 `CommandReceipt` 编排；
+- `commandId` 和 `CommandReceipt` 编排；
 - 调用具体 Writer、Lifecycle、Gate 或领域服务；
 - replay 和权威结果重读；
 - 一个完整 action 的事务边界。
@@ -251,12 +251,12 @@ Commands.Trash
 ```
 
 现有 `DocTree.Writer`、`DocTree.Publish` 和 `DocTree.Trash` 继续拥有底层行为；Commands 负责
-`commandKey`、`CommandReceipt`、replay 编排和执行入口。版本化 codec 继续由
+`commandId`、`CommandReceipt`、replay 编排和执行入口。版本化 codec 继续由
 `DocTree.CommandReplay` 独立拥有，Commands 只调用它，不复制或内联其协议实现。
 
 范围必须保持精确：
 
-- `create_node/4` 和 `create_page/4` 已通过 `run_tree_command` 使用 `commandKey`，必须与其
+- `create_node/4` 和 `create_page/4` 已通过 `run_tree_command` 使用 `commandId`，必须与其
   receipt/replay 编排一并下沉到 `Commands.Node`；
 - `create_tab/create_group/create_link/create_pin` 这四个命名单一入口当前不经过 receipt；F3 中继续由
   facade 直接转发 `DocTree.Writer.create_*`。不得仅因为建立 `Commands.Node` 就为它们新增
