@@ -2,11 +2,12 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
 
   @total_count 35
   @page_size GroupherServerWeb.Config.page_size()
 
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {:ok, user} = db_insert(:user)

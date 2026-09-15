@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Articles.Versioning.Doc do
   @moduledoc false
 
-  alias GroupherServer.CMS.Articles.Publish
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
+  alias CMS.Articles.Publish
 
   test "keeps Doc snapshots and branch-local publication in the Docs boundary" do
     {community, public, _attrs, user} = mock_article(:doc)

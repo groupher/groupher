@@ -4,10 +4,11 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
   import Ecto.Query, warn: false
   import ExUnit.CaptureLog
 
-  alias GroupherServer.CMS.Model.{Comment, Post}
-  alias GroupherServer.CMS.Comments.JobPolicy
-  alias GroupherServer.CMS.Gate.Access
-  alias GroupherServer.Jobs.Comments, as: CommentsJob
+  alias GroupherServer.{CMS, Jobs}
+  alias CMS.Model.{Comment, Post}
+  alias CMS.Comments.JobPolicy
+  alias CMS.Gate.Access
+  alias Jobs.Comments, as: CommentsJob
   alias Helper.ORM
 
   setup do

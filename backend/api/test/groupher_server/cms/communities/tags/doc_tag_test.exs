@@ -6,7 +6,6 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
   alias GroupherServer.CMS
   alias CMS.Model.CommunityTag
 
-
   setup do
     {community, doc, doc_attrs, user} = mock_article(:doc)
 

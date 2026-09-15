@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.ModelTest do
   use GroupherServer.DataCase, async: true
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+  alias CMS.Model.{
     CommentEmotionInfo,
     CommentReactionInfo,
     PostEmotionInfo,

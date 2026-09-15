@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
   use GroupherServer.DataCase, async: true
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+  alias CMS.Model.{
     Doc,
     DocTreeNode,
     PublishRequest,

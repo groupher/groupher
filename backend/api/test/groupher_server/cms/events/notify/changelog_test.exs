@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.{Messaging, Repo}
+  alias GroupherServer.{CMS, Messaging, Repo}
+  alias CMS.Events
 
   setup do
     {community, changelog, _, user} = mock_article(:changelog)

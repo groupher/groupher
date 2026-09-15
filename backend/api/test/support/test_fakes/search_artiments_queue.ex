@@ -1,8 +1,10 @@
 defmodule Helper.TestFakes.SearchArtimentsQueue do
-  alias GroupherServer.CMS.SearchArtiments.Indexer
   @moduledoc false
 
-  @behaviour GroupherServer.CMS.SearchArtiments.QueueAdapter
+  alias GroupherServer.CMS
+  alias CMS.SearchArtiments.Indexer
+
+  @behaviour CMS.SearchArtiments.QueueAdapter
 
   @table :search_artiments_test_queue
 

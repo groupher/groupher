@@ -1,11 +1,11 @@
 defmodule GroupherServer.Test.ActivityTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.Activity
+  alias GroupherServer.{Activity, CMS}
   alias Activity.Artiment
-  alias GroupherServer.Activity.Const, as: ActivityConst
+  alias Activity.Const, as: ActivityConst
 
-  alias GroupherServer.Activity.Model.{
+  alias Activity.Model.{
     BlogLog,
     ChangelogLog,
     CommunityLog,
@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.ActivityTest do
     PressLog
   }
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{Comment, PressConfig}
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{Comment, PressConfig}
 
   test "routes abstract Articles, rejects invalid contracts and deduplicates event refs" do
     {_community, post, _attrs, user} = mock_article(:post)

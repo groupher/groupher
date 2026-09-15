@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
-  alias GroupherServer.CMS.Seeds.{Articles, Communities}
+  alias GroupherServer.CMS
+  alias CMS.Seeds.{Articles, Communities}
 
   describe "[articles seeds]" do
     test "mock seeds articles with comments and reactions" do

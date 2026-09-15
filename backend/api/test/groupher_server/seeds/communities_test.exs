@@ -4,7 +4,8 @@ defmodule GroupherServer.Test.Seeds.CommunitiesTest do
   @moduletag timeout: 300_000
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
-  alias GroupherServer.CMS.Seeds.Communities
+  alias GroupherServer.CMS
+  alias CMS.Seeds.Communities
 
   describe "[communities seeds]" do
     test "mock creates community with full default threads" do

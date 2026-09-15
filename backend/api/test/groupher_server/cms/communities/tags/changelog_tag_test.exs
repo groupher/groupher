@@ -6,7 +6,6 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
   alias GroupherServer.CMS
   alias CMS.Model.CommunityTag
 
-
   setup do
     {community, changelog, changelog_attrs, user} = mock_article(:changelog)
 

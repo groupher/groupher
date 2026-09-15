@@ -3,14 +3,14 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Activity.Model.PostLog
-  alias GroupherServer.CMS.Comments.Lifecycle
-  alias GroupherServer.CMS.Model.{Comment, CommentLifecycle, PinnedComment, Post, PostSolution}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias Activity.Model.PostLog
+  alias CMS.Comments.Lifecycle
+  alias CMS.Model.{Comment, CommentLifecycle, PinnedComment, Post, PostSolution}
   alias Helper.ORM
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
+  @article_cat CMS.Artiment.Const.cat_map()
+  @article_status CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])

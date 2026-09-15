@@ -3,9 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Activity.Model.PostLog
-  alias GroupherServer.CMS.Articles.DraftDiff
-  alias GroupherServer.CMS.Model.Post
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Model.PostLog
+  alias CMS.Articles.DraftDiff
+  alias CMS.Model.Post
 
   test "DraftDiff includes every Post version field" do
     public = %Post{

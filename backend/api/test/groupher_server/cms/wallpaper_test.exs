@@ -1,9 +1,10 @@
 defmodule GroupherServer.CMS.WallpaperTest do
   use GroupherServer.TestMate, async: true
 
-  alias GroupherServer.CMS.Dashboard.Fields
-  alias GroupherServer.CMS.Wallpaper
-  alias GroupherServer.CMS.Wallpaper.{RequestDigest, Settings}
+  alias GroupherServer.CMS
+  alias CMS.Dashboard.Fields
+  alias CMS.Wallpaper
+  alias CMS.Wallpaper.{RequestDigest, Settings}
 
   @settings_fixture_path Path.expand(
                            "../../../../../packages/contracts/fixtures/wallpaper-settings-v1.json",

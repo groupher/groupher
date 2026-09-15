@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Comments.AuthorRelationStateTest do
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Comments.AuthorRelationState
+  alias GroupherServer.CMS
+  alias CMS.Comments.AuthorRelationState
 
   test "infers the parent Article author relation in one query" do
     {community, post, _attrs, article_author} = mock_article(:post, preload: [author: :user])

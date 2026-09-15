@@ -3,9 +3,10 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.ArtimentMentions
+  alias GroupherServer.CMS
+  alias CMS.ArtimentMentions
 
-  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
+  @site_host CMS.ArtimentMentions.Config.site_host()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)

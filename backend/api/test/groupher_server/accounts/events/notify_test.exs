@@ -3,9 +3,8 @@ defmodule GroupherServer.Test.Accounts.Events.Notify do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Events
-  alias GroupherServer.Accounts.Fans
-  alias GroupherServer.Messaging
+  alias GroupherServer.{Accounts, Messaging}
+  alias Accounts.{Events, Fans}
 
   setup do
     {:ok, user} = db_insert(:user)

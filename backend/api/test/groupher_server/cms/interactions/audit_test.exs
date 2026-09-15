@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.AuditTest do
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Interactions.Audit
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Interactions.Audit
 
   test "repairs a drifted article upvote bitmap from the fact table" do
     {_community, post, _attrs, user} = mock_article(:post)

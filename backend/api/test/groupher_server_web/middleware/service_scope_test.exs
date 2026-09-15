@@ -1,7 +1,8 @@
 defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.Middleware.ServiceScope
 
   @opts [audience: "phoenix:auth-api", scope: "auth:session:refresh"]

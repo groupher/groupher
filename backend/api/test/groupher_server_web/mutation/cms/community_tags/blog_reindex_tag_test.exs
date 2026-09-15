@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogReindexTag do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunityTag
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityTag
 
   setup do
     {:ok, blog} = db_insert(:blog)

@@ -3,9 +3,10 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.CMS.Model.ArticleDocument
-  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
+  alias GroupherServer.CMS
+  alias CMS.Interactions.ViewEvents
+  alias CMS.Model.ArticleDocument
+  @article_digest_length CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, blog_attrs, user} = mock_article(:blog)

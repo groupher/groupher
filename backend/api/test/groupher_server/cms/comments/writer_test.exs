@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Comments.Writer do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Model.{Comment, Post}
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Const
+  alias CMS.Model.{Comment, Post}
   alias Helper.ORM
 
   @article_cat Const.cat_map()

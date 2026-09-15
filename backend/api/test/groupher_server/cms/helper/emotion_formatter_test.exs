@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Helper.EmotionFormatterTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Helper.EmotionFormatter
+  alias GroupherServer.CMS
+  alias CMS.Helper.EmotionFormatter
 
   describe "format/2" do
     test "formats atom-key emotion maps" do

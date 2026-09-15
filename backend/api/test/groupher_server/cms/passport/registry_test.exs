@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Passport.Registry do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.CMS
+  alias CMS.Passport.Registry
 
   test "can get all passport rules" do
     rules = Registry.all_passport_rules()

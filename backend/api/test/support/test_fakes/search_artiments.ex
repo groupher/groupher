@@ -1,9 +1,10 @@
 defmodule Helper.TestFakes.SearchArtiments do
   @moduledoc false
 
-  @behaviour GroupherServer.CMS.SearchArtiments.PlatformAdapter
+  alias GroupherServer.CMS
+  alias CMS.SearchArtiments.{Artiment, Query, Result}
 
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Query, Result}
+  @behaviour CMS.SearchArtiments.PlatformAdapter
 
   @table :search_artiments_test_platform
 

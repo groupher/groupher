@@ -3,11 +3,13 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.CMS.Model.ArticleDocument
-  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
+  alias GroupherServer.CMS
+  alias CMS.Articles.Trash
+  alias CMS.FrontDesk
+  alias CMS.Interactions.ViewEvents
+  alias CMS.Model.ArticleDocument
+
+  @article_digest_length CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, doc_attrs, user} = mock_article(:doc)

@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.PostTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.Messaging
+  alias GroupherServer.{CMS, Messaging}
+  alias CMS.Events
 
   setup do
     {community, post, _, user} = mock_article(:post)

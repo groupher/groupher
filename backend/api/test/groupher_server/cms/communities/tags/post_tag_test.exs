@@ -4,8 +4,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   alias GroupherServer.CMS
   alias CMS.Communities.TagStats
-  alias GroupherServer.CMS.Model.{CommunityTag, CommunityTagStat}
-
+  alias CMS.Model.{CommunityTag, CommunityTagStat}
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)

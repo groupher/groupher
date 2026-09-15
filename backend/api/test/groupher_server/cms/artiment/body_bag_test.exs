@@ -1,8 +1,9 @@
 defmodule GroupherServer.CMS.Artiment.BodyBagTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Model.ArticleDocument
+  alias GroupherServer.CMS
+  alias CMS.Artiment.BodyBag
+  alias CMS.Model.ArticleDocument
 
   @json Jason.encode!([
           %{"type" => "p", "children" => [%{"text" => "Published body content"}]}

@@ -4,7 +4,8 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
   import Plug.Conn
   import Plug.Test
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.Context
   alias GroupherServerWeb.ServiceAuth.Verifier
 

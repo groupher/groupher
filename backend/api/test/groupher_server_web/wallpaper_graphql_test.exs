@@ -3,11 +3,10 @@ defmodule GroupherServer.Test.WallpaperGraphQL do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Assets.Capability
-  alias GroupherServer.CMS.Assets.GeneratedBatch.PublishCapability
-  alias GroupherServer.CMS.Wallpaper
-  alias GroupherServer.CMS.Wallpaper.RequestDigest
-  alias GroupherServer.CMS.Wallpaper.Settings
+  alias GroupherServer.CMS
+  alias CMS.Assets.{Capability, GeneratedBatch.PublishCapability}
+  alias CMS.Wallpaper
+  alias CMS.Wallpaper.{RequestDigest, Settings}
 
   defmodule FakeBatchClient do
     def claim_for_publish(_batch_ref, _idempotency_key) do

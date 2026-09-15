@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.CMS.Comments.PostPending do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
 
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
   setup do
     {community, post, _, user} = mock_article(:post)

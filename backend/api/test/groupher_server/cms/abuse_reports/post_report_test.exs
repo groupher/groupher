@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.AbuseReports.PostReport do
   @moduledoc false
 
-  alias GroupherServer.CMS.Articles.Response
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
+  alias CMS.Articles.Response
 
   setup do
     {_, post, _, user} = mock_article(:post)

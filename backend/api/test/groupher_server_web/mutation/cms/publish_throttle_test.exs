@@ -6,9 +6,9 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
   alias GroupherServer.CMS
   alias CMS.Gate.ErrorCat
 
-  @throttle_interval GroupherServer.CMS.Policy.Config.publish_throttle().interval_minutes
-  @hour_limit GroupherServer.CMS.Policy.Config.publish_throttle().hour_limit
-  @day_total GroupherServer.CMS.Policy.Config.publish_throttle().day_limit
+  @throttle_interval CMS.Policy.Config.publish_throttle().interval_minutes
+  @hour_limit CMS.Policy.Config.publish_throttle().hour_limit
+  @day_total CMS.Policy.Config.publish_throttle().day_limit
 
   setup do
     guest_conn = simu_conn(:guest)

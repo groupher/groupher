@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Models.PostTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Model.Post
+  alias GroupherServer.CMS
+  alias CMS.Model.Post
 
   @valid_attrs %{
     branch_id: 1,

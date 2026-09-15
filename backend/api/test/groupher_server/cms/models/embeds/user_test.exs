@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Models.Embeds.UserTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Model.Embeds.User
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds.User
 
   describe "normalize/1" do
     test "normalizes atom-key maps" do

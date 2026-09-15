@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Seeds.CommentsTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
-  alias GroupherServer.CMS.Seeds.{Comments, Communities}
+  alias GroupherServer.CMS
+  alias CMS.Seeds.{Comments, Communities}
 
   describe "[comments seeds]" do
     test "mock seeds comments with upvotes and emotions" do

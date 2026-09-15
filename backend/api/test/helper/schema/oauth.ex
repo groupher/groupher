@@ -13,5 +13,4 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
         }
     """
   end
-
 end

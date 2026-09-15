@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Seeds.DeleteFullCommunityTest do
   alias GroupherServer.{CMS, Repo}
   alias Helper.ORM
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleUpvote,
     ArticleUserEmotion,
     Changelog,

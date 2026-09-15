@@ -1,14 +1,14 @@
 defmodule GroupherServer.Test.CMS.DocTree.Events do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
+  require GroupherServer.CMS.DocTree.Const
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.Events, as: DocTreeEvents
-  alias GroupherServer.CMS.Model.{DocTreeEvent, DocTreeNode}
+  alias CMS.DocTree.Events, as: DocTreeEvents
+  alias CMS.Model.{DocTreeEvent, DocTreeNode}
 
-  require CMS.Const
+  require GroupherServer.CMS.Const
 
   @node_key CMS.DocTree.Const.doc_tree_json_key(:node)
   @id_key CMS.DocTree.Const.doc_tree_json_key(:id)

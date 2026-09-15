@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.MutationLock do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Articles.MutationLock
+  alias GroupherServer.CMS
+  alias CMS.Articles.MutationLock
 
   test "Doc lock keys are scoped by branch" do
     {community, _existing_post, _attrs, _user} = mock_article(:post)
