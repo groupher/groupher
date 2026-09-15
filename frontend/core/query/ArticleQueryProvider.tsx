@@ -64,12 +64,12 @@ export default function ArticleQueryProvider({
     if (!articleQuery.data) return null
     const key = `${community}:${thread}:${String(innerId)}`
     const viewerState = viewerQuery.data?.[key]
-    const accountRef = account.accountRef || getAccountRef(account.user)
     const merged = viewerState
       ? ({ ...articleQuery.data, ...viewerState } as TArticle)
       : articleQuery.data
-    const viewReceipt = accountRef ? readArticleViewReceipt(key) : null
+    const viewReceipt = readArticleViewReceipt(key)
     const viewed = viewReceipt ? { ...merged, viewerHasViewed: true } : merged
+    const accountRef = account.accountRef || getAccountRef(account.user)
     const receipt = readArticleUpvoteReceipt(accountRef, key)
     return isArticleUpvoteReceiptNewer(viewed, receipt)
       ? overlayArticleUpvoteReceipt(viewed, receipt as NonNullable<typeof receipt>)

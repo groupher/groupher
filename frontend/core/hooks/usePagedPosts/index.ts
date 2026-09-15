@@ -60,8 +60,7 @@ export default function usePagedPosts(): TRes {
         const key = `${article.community.slug}:${article.meta.thread}:${article.innerId}`
         const viewerState = viewerQuery.data?.[key]
         const merged = viewerState ? { ...article, ...viewerState, articleKey: undefined } : article
-        const viewed =
-          accountRef && readArticleViewReceipt(key) ? { ...merged, viewerHasViewed: true } : merged
+        const viewed = readArticleViewReceipt(key) ? { ...merged, viewerHasViewed: true } : merged
         return overlayArticleUpvoteReceiptIfNewer(accountRef, viewed, key) || viewed
       }),
     } as TPagedPosts
