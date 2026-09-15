@@ -11,11 +11,13 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.FrontDesk.Lookup
-  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
+  alias CMS.FrontDesk.Lookup
+  alias CMS.Model.Comment
 
   @doc "Preloads the author relation expected by Article or Comment callers."
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done()
@@ -63,12 +65,12 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
          {:ok, article} <- Lookup.get(info.model, article_id, preload: preload) do
       {:ok, article}
     else
-      nil -> {:error, GroupherServer.ErrorCat.custom("invalid article")}
+      nil -> {:error, ErrorCat.custom("invalid article")}
       {:error, _} = error -> error
     end
   end
 
-  def article_of(_, _opts), do: {:error, GroupherServer.ErrorCat.custom("only support comment")}
+  def article_of(_, _opts), do: {:error, ErrorCat.custom("only support comment")}
 
   @doc "Returns the canonical thread of a Comment or Article projection."
   @spec thread_of(Comment.t() | map()) :: {:ok, atom()} | {:error, map()}
@@ -78,8 +80,8 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread),
     do: Threads.to_atom(thread)
 
-  def thread_of(_), do: {:error, GroupherServer.ErrorCat.custom("invalid article")}
+  def thread_of(_), do: {:error, ErrorCat.custom("invalid article")}
 
-  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
+  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   defp done(result), do: {:ok, result}
 end

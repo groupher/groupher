@@ -138,7 +138,7 @@ defmodule Helper.Cache do
     try do
       case loader.() do
         {:ok, _value} = result -> result
-        {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, error}
+        {:error, %ErrorCat.Error{} = error} -> {:error, error}
         {:error, reason} -> {:error, ErrorCat.custom(%{reason: :loader_failed, details: reason})}
         value -> {:error, ErrorCat.custom(%{reason: :invalid_loader_result, details: value})}
       end

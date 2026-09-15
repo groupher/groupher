@@ -20,17 +20,19 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.ErrorCat
+  require GroupherServer.CMS.ErrorCat
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias GroupherServer.{CMS, FrontDesk, Repo}
-  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.{Comment, Community}
+  import Helper.Utils, only: [handle_absinthe_error: 3]
+  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
+
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.ErrorCat, as: CmsErrorCat
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.{Comment, Community}
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
@@ -89,7 +91,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:ok, arguments} ->
         do_fetch_article(%{resolution | arguments: arguments}, opts)
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} ->
+      {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
         resolution
         |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
     end

@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   setup do
     {community, changelog, _, user} = mock_article(:changelog)
 
@@ -106,7 +109,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -254,21 +257,21 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                S.Article.m(:update_article, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
   end

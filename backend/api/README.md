@@ -73,7 +73,7 @@ regular migration datetime columns use `:timestamptz`.
 ## Related documentation
 
 - [`docs/architecture/backend-module-reorganization.md`](../../docs/architecture/backend-module-reorganization.md)
-- [`docs/architecture/backend-rules.md`](../../docs/architecture/backend-rules.md)
+- [`docs/rules/be.md`](../../docs/rules/be.md)
 - [`docs/feature/gate/legacy-overview.md`](../../docs/feature/gate/legacy-overview.md)
 - [`docs/feature/lifecycle/contract.md`](../../docs/feature/lifecycle/contract.md)
 - [`docs/auth/v1.md`](../../docs/auth/v1.md)

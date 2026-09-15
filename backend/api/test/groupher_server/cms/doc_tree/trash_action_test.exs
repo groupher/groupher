@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{Activity, CMS}
+  alias CMS.Model.{
     Community,
     Doc,
     DocsSiteState,
@@ -13,8 +14,8 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     TrashedDocTreeNode
   }
 
-  alias GroupherServer.Activity.Model.DocTreeLog
-  alias GroupherServer.CMS.ArtimentMentions.Config
+  alias Activity.Model.DocTreeLog
+  alias CMS.ArtimentMentions.Config
 
   test "deleting and restoring a published Page moves both Tree stages as one action" do
     {:ok, user} = db_insert(:user)
@@ -65,7 +66,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert {:error, _} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "Trash action must be restored as one group"
             }} =
@@ -389,7 +390,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       })
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details:
                 "The original Docs Tree parent no longer exists; select a new parent before restoring."

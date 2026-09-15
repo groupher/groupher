@@ -4,10 +4,11 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   use GroupherServer.TestMate, async: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias GroupherServer.CMS.ArtimentMentions
-  alias GroupherServer.CMS.Model.ArtimentMention
+  alias GroupherServer.CMS
+  alias CMS.ArtimentMentions
+  alias CMS.Model.ArtimentMention
 
-  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
+  @site_host CMS.ArtimentMentions.Config.site_host()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post, preload: [author: :user])
@@ -566,7 +567,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
       insert_incoming_mentions(community, post, 2, old_updated_at)
 
-      rollback_error = GroupherServer.ErrorCat.custom("forced rollback")
+      rollback_error = ErrorCat.custom("forced rollback")
 
       assert {:error, ^rollback_error} =
                Repo.transaction(fn ->

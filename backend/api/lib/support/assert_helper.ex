@@ -15,9 +15,9 @@ defmodule GroupherServer.Test.AssertHelper do
   import Phoenix.ConnTest
   import Helper.Utils, only: [map_key_stringify: 1]
 
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{ErrorCat, Support}
   alias ErrorCat.Error
-  alias GroupherServer.Support.Factory.Articles
+  alias Support.Factory.Articles
 
   @endpoint GroupherServerWeb.Endpoint
 

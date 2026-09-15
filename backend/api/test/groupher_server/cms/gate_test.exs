@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Gate do
   @moduledoc false
-  alias GroupherServer.CMS.Gate.Context.Scope.Article
   use GroupherServer.TestMate, async: false
+  alias GroupherServer.CMS
+  alias CMS.Gate.Context.Scope.Article
 
   test "root facade exposes only scope and access_check" do
     Code.ensure_loaded!(CMS.Gate)
@@ -16,7 +17,7 @@ defmodule GroupherServer.Test.CMS.Gate do
   end
 
   test "draft reads are exposed through Scope rather than Access" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
              CMS.Gate.scope(
                CMS.Model.Post,
                nil,

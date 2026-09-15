@@ -23,10 +23,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
+  alias CMS.Model.Comment
 
   @threads Config.threads()
   @valid_article_prefix Config.valid_article_prefixes()

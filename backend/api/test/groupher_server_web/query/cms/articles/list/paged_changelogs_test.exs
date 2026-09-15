@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
   use GroupherServer.TestMate
 
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+
   @page_size GroupherServerWeb.Config.page_size()
 
   @today_count 3
@@ -200,7 +203,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+               ErrorCat.code(ArticleErrorCat.thread_not_visible())
              )
     end
 
@@ -211,7 +214,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -223,14 +226,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables_0,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :changelog),
                variables_neg_1,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 

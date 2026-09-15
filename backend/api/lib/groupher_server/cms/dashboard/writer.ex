@@ -25,16 +25,17 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   """
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Dashboard.{BaseInfo, SectionPayload}
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias GroupherServer.ErrorCat, as: GenericErrorCat
+
+  alias CMS.Communities.ErrorCat
+  alias CMS.ErrorCat, as: CmsErrorCat
+  alias CMS.Dashboard.{BaseInfo, SectionPayload}
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
 
-  @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   @doc "Updates the dashboard section named by the GraphQL `dsb_section` payload."
+  @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def update(%Community{} = community, %{dsb_section: key} = args) do
     update(community, key, SectionPayload.section_args(key, args))
   end
@@ -42,9 +43,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   def update(%Community{}, _args),
     do: {:error, ErrorCat.invalid_dsb_section()}
 
+  @doc "Updates one explicit dashboard section, including base-info synchronization."
   @spec update(Community.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Updates one explicit dashboard section, including base-info synchronization."
   def update(%Community{} = community, :base_info, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
          {:ok, section_payload} <-
@@ -69,18 +70,18 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update_section(community, key, args)
   end
 
+  @doc "Ensures a dashboard exists and replaces one non-base-info section."
   @spec update_section(Community.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Ensures a dashboard exists and replaces one non-base-info section."
   def update_section(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community) do
       replace_section(community_dashboard, key, args)
     end
   end
 
+  @doc "Normalizes and persists one section on an existing dashboard."
   @spec replace_section(CommunityDashboard.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Normalizes and persists one section on an existing dashboard."
   def replace_section(%CommunityDashboard{} = community_dashboard, :content_shadow, enabled)
       when is_boolean(enabled) do
     community_dashboard
@@ -89,7 +90,7 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   end
 
   def replace_section(%CommunityDashboard{}, :content_shadow, _args),
-    do: {:error, GenericErrorCat.custom("invalid dashboard content shadow")}
+    do: {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
 
   def replace_section(%CommunityDashboard{} = community_dashboard, key, args) do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do
@@ -97,8 +98,8 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     end
   end
 
-  @spec ensure_exist(Community.t()) :: T.domain_res(CommunityDashboard.t())
   @doc "Returns the community dashboard, creating it once under a global lock when absent."
+  @spec ensure_exist(Community.t()) :: T.domain_res(CommunityDashboard.t())
   def ensure_exist(%Community{} = community) do
     Transaction.lock_global("community_dashboard:init:#{community.id}", fn ->
       case ORM.find_by(CommunityDashboard, community_id: community.id) do

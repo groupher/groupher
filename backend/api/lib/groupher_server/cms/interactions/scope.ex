@@ -10,14 +10,16 @@ defmodule GroupherServer.CMS.Interactions.Scope do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
-  alias GroupherServer.CMS.Interactions.{Config, ErrorCat}
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Matcher
+  alias CMS.Articles.Const, as: ArticlesConst
+  alias CMS.Interactions.{Config, ErrorCat}
 
   @article_types Config.article_threads()
   @passthrough_orders [nil | ArticlesConst.native_order_values()]
 
-  @type result :: {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @type result :: {:ok, Ecto.Query.t()} | {:error, ErrorCat.error()}
 
   @doc """
   Validates the order and returns a composed Article query without executing it.

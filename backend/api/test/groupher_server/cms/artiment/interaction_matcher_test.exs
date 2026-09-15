@@ -1,11 +1,12 @@
 defmodule GroupherServer.Test.CMS.Artiment.InteractionMatcherTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{Accounts, CMS, ErrorCat}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias ErrorCat.Error
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Comment,
     CommentEmotionInfo,
     CommentReactionInfo,

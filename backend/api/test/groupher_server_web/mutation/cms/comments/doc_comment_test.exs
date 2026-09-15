@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
   end
@@ -59,14 +62,14 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
@@ -86,14 +89,14 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
@@ -114,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
@@ -136,7 +139,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:undo_upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
@@ -255,7 +258,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Article.m(:lock_comment, :doc),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -283,7 +286,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Article.m(:unlock_comment, :doc),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end
@@ -310,7 +313,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -338,7 +341,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
              |> mutation_error?(
                S.Comment.m(:undo_pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

@@ -3,7 +3,11 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunityTag
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityTag
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -88,21 +92,21 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -169,21 +173,21 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
   end

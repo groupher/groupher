@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Setup do
-  require GroupherServer.CMS.Gate.Const
-  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Idempotent initialization and recovery for a newly created Community.
 
@@ -12,28 +10,28 @@ defmodule GroupherServer.CMS.Communities.Setup do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Gate.Const
+  require GroupherServer.CMS.Communities.Const
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{Analysis, CMS, Repo}
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.Jobs.Setup, as: SetupJob
-  alias GroupherServer.CMS.Communities.{Lifecycle, Moderator}
-  alias GroupherServer.CMS.CommunityApplications.Transitions
-  alias GroupherServer.CMS.Gate.Const
-  alias GroupherServer.CMS.Passport
+  alias Accounts.Model.User
+  alias CMS.Communities.{ErrorCat, Lifecycle, Moderator}
+  alias CMS.Communities.Jobs.Setup, as: SetupJob
+  alias CMS.CommunityApplications.Transitions
+  alias CMS.Gate.Const
+  alias CMS.Passport
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     CommunityApplication,
     CommunityModerator
   }
 
-
-  require Const
-
-  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
+  @community_normal CMS.Communities.Const.pending_state(:normal)
 
   @doc """
   Runs idempotent initialization for a newly created Community.
@@ -260,7 +258,7 @@ defmodule GroupherServer.CMS.Communities.Setup do
   defp ensure_analysis(community) do
     case Analysis.Web.provision_community(community) do
       {:ok, _} -> :ok
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_configured}} -> :ok
+      {:error, ErrorCat.error_pattern(reason: :not_configured)} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end

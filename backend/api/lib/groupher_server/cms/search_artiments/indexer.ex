@@ -10,20 +10,23 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
         -> search platform
   """
 
+  require GroupherServer.CMS.Const
+  require GroupherServer.CMS.ErrorCat
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.SearchArtiments
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Config, Projection}
 
-  require CMS.Const
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.{ErrorCat, SearchArtiments}
+  alias CMS.SearchArtiments.{Artiment, Config, Projection}
+
   @article_threads Config.article_threads()
 
   @batch_size 500
-  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @legal CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Enqueues a background upsert job for one article.
@@ -75,7 +78,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
         {:ok, artiment} ->
           SearchArtiments.upsert([artiment])
 
-        {:error, %GroupherServer.ErrorCat.Error{reason: :not_searchable}} ->
+        {:error, ErrorCat.error_pattern(reason: :not_searchable)} ->
           delete_article(thread, article.article_hash_id)
 
         error ->
@@ -181,6 +184,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
-  defp scope_context(:doc), do: DocScope.public_main()
-  defp scope_context(thread), do: ArticleScope.public(thread)
+  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(thread), do: ArticleContext.public(thread)
 end

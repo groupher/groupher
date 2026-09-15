@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Store do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Stores the product-level mention graph for CMS artiments.
 
@@ -61,9 +60,11 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.{
+  alias CMS.{ErrorCat, QueryBuilder}
+
+  alias CMS.{
     Artiment.Matcher,
     Artiment.PlateJSON,
     ArtimentMentions.Config,
@@ -71,7 +72,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     FrontDesk
   }
 
-  alias GroupherServer.CMS.Model.{ArtimentMention, Comment}
+  alias CMS.Model.{ArtimentMention, Comment}
   alias Helper.{ORM, T}
 
   @threads Config.threads()
@@ -290,10 +291,10 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   def mentioned_by(mentioned_type, mentioned_id, %{page: page, size: size} = filter) do
     case normalize_type(mentioned_type) do
       :url ->
-        {:error, GroupherServer.ErrorCat.custom("mentioned_by only supports internal targets")}
+        {:error, ErrorCat.custom("mentioned_by only supports internal targets")}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("invalid mentioned type")}
+        {:error, ErrorCat.custom("invalid mentioned type")}
 
       normalized_type ->
         ArtimentMention
@@ -442,7 +443,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     case Repo.preload(article, :document, force: true) |> get_in([:document, :json]) do
       nil -> {:ok, []}
       json when is_binary(json) -> PlateJSON.decode(json)
-      _ -> {:error, GroupherServer.ErrorCat.custom("invalid json body")}
+      _ -> {:error, ErrorCat.custom("invalid json body")}
     end
   end
 

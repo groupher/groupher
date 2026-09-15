@@ -1,5 +1,4 @@
 defmodule GroupherServer.Messaging.Notify do
-  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Placeholder dispatch boundary for future async notification delivery.
 
@@ -15,8 +14,12 @@ defmodule GroupherServer.Messaging.Notify do
         -> inbox / notification store
   """
 
-  @spec dispatch(atom(), map()) :: {:ok, :pass} | {:error, term()}
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
+
   @doc "Accepts a notification event at the stable dispatch boundary."
+  @spec dispatch(atom(), map()) :: {:ok, :pass} | {:error, term()}
   def dispatch(event, payload) when is_atom(event) and is_map(payload) do
     _ = {event, payload}
     {:ok, :pass}

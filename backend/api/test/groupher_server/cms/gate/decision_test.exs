@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Gate.Decision
   alias GroupherServerWeb.Middleware.GQLResultFmt
 
   test "structured decisions preserve reasons and choose the stable primary" do

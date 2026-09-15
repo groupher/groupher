@@ -10,16 +10,15 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         -> Repo / Oban
   """
 
-  alias GroupherServer.ErrorCat, as: GlobalErrorCat
-  alias GroupherServer.Repo
-  alias GroupherServerWeb.ErrorCat
+  require GroupherServer.CMS.Communities.ErrorCat
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{Communities, FrontDesk}
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunityModerator}
-  alias GroupherServer.CMS.Passport
-  alias GroupherServer.CMS.Passport.Registry
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServerWeb.ErrorCat
+  alias Accounts.Model.User
+  alias CMS.{Communities, FrontDesk, Passport}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Model.{Community, CommunityModerator}
+  alias CMS.Passport.Registry
   alias Helper.{Multi, ORM, PermissionConfig, T, Transaction}
 
   @doc """
@@ -38,7 +37,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           |> result()
         end)
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error, CommunityErrorCat.community_root_only("only community root can add moderator")}
     end
   end
@@ -83,7 +82,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           end
         end)
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error, CommunityErrorCat.community_root_only("only community root can add moderator")}
     end
   end
@@ -124,27 +123,27 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
       Communities.Reader.fetch(community.slug, inc_views: false)
     else
-      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error,
          CommunityErrorCat.community_root_only("only community root can update moderator")}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :passport_community_not_match}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :passport_community_not_match)} ->
         {:error,
          CommunityErrorCat.passport_community_not_match(
            "can only update passport in #{community.slug}"
          )}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :one_community_only}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :one_community_only)} ->
         {:error, CommunityErrorCat.one_community_only("can only passport once community a time")}
 
       {:error, {reason, message}} when is_atom(reason) and is_binary(message) ->
-        {:error, GlobalErrorCat.custom(message)}
+        {:error, CommunityErrorCat.custom(message)}
 
       {:error, reason} ->
-        {:error, GroupherServer.ErrorCat.custom("update passport error: #{inspect(reason)}")}
+        {:error, CommunityErrorCat.custom("update passport error: #{inspect(reason)}")}
 
       reason ->
-        {:error, GroupherServer.ErrorCat.custom("update passport error: #{inspect(reason)}")}
+        {:error, CommunityErrorCat.custom("update passport error: #{inspect(reason)}")}
     end
   end
 
@@ -189,7 +188,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           result(error)
       end
     else
-      {:error, %GroupherServer.ErrorCat.Error{reason: :community_root_only}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error,
          CommunityErrorCat.community_root_only("only community root can remove moderator")}
 
@@ -392,13 +391,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     do: {:error, ErrorCat.changeset(result)}
 
   defp result({:error, :stamp_passport, _result, _steps}),
-    do: {:error, GlobalErrorCat.custom("stamp passport error")}
+    do: {:error, CommunityErrorCat.custom("stamp passport error")}
 
   defp result({:error, {:stamp_passport, _user_id}, %Ecto.Changeset{} = result, _steps}),
     do: {:error, ErrorCat.changeset(result)}
 
   defp result({:error, {:stamp_passport, _user_id}, _result, _steps}),
-    do: {:error, GlobalErrorCat.custom("stamp passport error")}
+    do: {:error, CommunityErrorCat.custom("stamp passport error")}
 
   defp result({:error, _, result, _steps}) do
     {:error, result}

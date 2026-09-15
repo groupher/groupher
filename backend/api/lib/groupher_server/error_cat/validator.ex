@@ -5,7 +5,8 @@ defmodule GroupherServer.ErrorCat.Validator do
   Ranges and catalogs -> invariant checks -> `:ok` or a compilation error.
   """
 
-  alias GroupherServer.ErrorCat.Registry
+  alias GroupherServer.ErrorCat
+  alias ErrorCat.Registry
 
   @message_key ~r/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/
   @definition_fields [:namespace, :reason, :code, :retryable, :actions, :message_key]

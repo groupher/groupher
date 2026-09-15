@@ -16,6 +16,7 @@ defmodule Helper.OgInfo do
   """
   import Helper.Utils, only: [done: 1]
 
+  alias GroupherServer.ErrorCat
   alias Helper.UrlSafety
 
   @default_site_favicon_adapter Helper.SiteFavicon
@@ -32,11 +33,11 @@ defmodule Helper.OgInfo do
          favicon <- adapter.parse_favicon(resp.body, location) do
       og |> Map.merge(%{favicon: favicon}) |> fmt_field(host) |> done
     else
-      {:error, %GroupherServer.ErrorCat.Error{reason: reason}}
+      {:error, %ErrorCat.Error{reason: reason}}
       when reason in [:invalid_url, :invalid_scheme, :missing_host, :blocked_host, :blocked_ip] ->
         {:error, "unsafe url blocked"}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :unsafe_url}} ->
+      {:error, %ErrorCat.Error{reason: :unsafe_url}} ->
         {:error, "unsafe url blocked"}
 
       {:error, %Req.TransportError{reason: :nxdomain}} ->
@@ -46,8 +47,7 @@ defmodule Helper.OgInfo do
         {:error, "get url page timeout"}
 
       # {:error, false} ->
-      #   {:error,
-      #    [message: "only community root can add moderator", code: ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.community_root_only())]}
+      #   {:error, [message: "only community root can add moderator", code: ...]}
       false ->
         {:error, "invalid open graph info"}
 

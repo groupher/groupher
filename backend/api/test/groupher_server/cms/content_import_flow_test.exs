@@ -4,18 +4,17 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   import Ecto.Query, warn: false
   import GroupherServer.Support.Factory
 
-  alias GroupherServer.CMS.Articles.Draft
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
-  alias GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
-  alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree
-  alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Model.{DocLifecycle, DocTreeNode}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Articles.Draft
+  alias CMS.Artiment.BodyBag
+  alias CMS.ContentImport.{Jobs, Staging}
+  alias CMS.ContentImport.Persistence.{ImportSourceMapping, Job}
+  alias CMS.ContentImport.Persistence.Job.Body, as: StagedBody
+  alias CMS.ContentImport.Threads.Doc.{Validator, Writer}
+  alias CMS.Docs.Branch
+  alias CMS.DocTree
+  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.Model.{DocLifecycle, DocTreeNode}
 
   @job_query """
   query ContentImportJob($community: String!, $jobRef: ID!) {
@@ -328,7 +327,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              })
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               namespace: {:cms, :article},
               reason: :not_exist,
               details: _model
@@ -400,14 +399,14 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert replayed.status == :cancelled
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :content_import_job_not_ready,
               details: :cancelled
             }} =
              Writer.apply(community, job.job_ref)
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "ImportJob is not stageable from cancelled"
             }} =
@@ -517,7 +516,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     record = Repo.get_by!(Job, hash_id: job.job_ref)
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "previewRef is already bound to another intent"
             }} =
@@ -621,7 +620,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert failed.error_code == "no_importable_content"
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :content_import_job_not_ready,
               details: :failed
             }} =
@@ -641,7 +640,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, _state} = Revision.bump_tree_draft(community, state)
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "The Docs target changed after Review"
             }} =
@@ -669,7 +668,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     items =
       Enum.map(1..5, &%{external_ref: "docs/#{&1}.md", skipped: %{code: "content_too_large"}})
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
              Staging.stage(community, Ecto.UUID.generate(), items)
 
     assert message =~ "between 1 and 4"

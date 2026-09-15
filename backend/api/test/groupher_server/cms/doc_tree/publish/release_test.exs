@@ -1,14 +1,15 @@
 defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
-  require CMS.Const
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
 
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS
+  alias CMS.Communities.Lifecycle
+  alias CMS.Docs.Branch
+  alias CMS.DocTree.Events
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   describe "[doc publish release]" do
     setup do
@@ -64,7 +65,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+      assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
                CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
     end
 
@@ -243,7 +244,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
 
       public_scope =
-        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocScope.public_branch(branch.id))
+        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocContext.public_branch(branch.id))
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       refute Repo.exists?(public_scope)
@@ -253,7 +254,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           CMS.Model.Doc,
           :operations,
           :read,
-          DocScope.public_branch(branch.id, policy_mode: :operations)
+          DocContext.public_branch(branch.id, policy_mode: :operations)
         )
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
@@ -275,7 +276,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       release_count_before = release_count(community)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "No publish changes selected."
               }} =
@@ -435,7 +436,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert rename_change
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "Only deleted tree publish items can be restored."
               }} =
@@ -523,7 +524,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         {:ok, event}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("Tree create event not found.")}
+        {:error, ErrorCat.custom("Tree create event not found.")}
     end
   end
 end

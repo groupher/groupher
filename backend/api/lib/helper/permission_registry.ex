@@ -47,7 +47,8 @@ defmodule Helper.PermissionRegistry do
         -> normalized value / infrastructure
   """
 
-  alias GroupherServer.CMS.Passport.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Passport.ErrorCat
   alias Helper.PermissionConfig
 
   @root_passport_item_count 10_000
@@ -57,7 +58,7 @@ defmodule Helper.PermissionRegistry do
   @doc """
   Returns permission requirement metadata for an action.
   """
-  @spec requirement(String.t()) :: {:ok, map()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec requirement(String.t()) :: {:ok, map()} | {:error, ErrorCat.error()}
   def requirement(action) when is_binary(action) do
     case Map.get(@action_requirements, action) do
       nil -> {:error, ErrorCat.unknown_action()}
@@ -69,7 +70,7 @@ defmodule Helper.PermissionRegistry do
 
   @doc "Checks a registered action against one normalized user passport."
   @spec allowed?(map() | nil, String.t() | nil, String.t()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.error()}
   def allowed?(passport, community, action) when is_binary(action) do
     with {:ok, requirement} <- requirement(action) do
       allowed_requirement?(normalize_rules(passport), community, requirement)

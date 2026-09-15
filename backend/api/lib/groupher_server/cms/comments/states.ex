@@ -11,19 +11,17 @@ defmodule GroupherServer.CMS.Comments.States do
         -> Repo / domain event
   """
 
-  import Ecto.Query, warn: false
+  require GroupherServer.CMS.Comments.ErrorCat
 
+  import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.{Comments.ErrorCat, FrontDesk, Gate}
+  alias CMS.Model.{Comment, PinnedComment}
   alias Helper.{Multi, ORM, T}
-
-  alias GroupherServer.CMS.Comments.ErrorCat
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -35,7 +33,7 @@ defmodule GroupherServer.CMS.Comments.States do
   ## Examples
 
       CMS.Comments.States.pin(comment_id)
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :account_login}}
+      #=> {:error, ErrorCat.error_pattern(reason: :account_login)}
 
   """
   @spec pin(T.id()) :: T.domain_res(Comment.t())
@@ -230,7 +228,7 @@ defmodule GroupherServer.CMS.Comments.States do
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
 
-  defp result({:error, %GroupherServer.ErrorCat.Error{reason: :already_pinned, details: result}}),
+  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}),
     do: {:ok, result}
 
   defp result({:error, :update_comment_flag, _result, _steps}),

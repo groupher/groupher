@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Publish workflows for docs and docs tree snapshots.
 
@@ -26,12 +25,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   lets history and rollback talk about the full public docs site at one moment.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.CMS.DocTree.Publish.{
+  alias Accounts.Model.User
+
+  alias CMS.DocTree.Publish.{
     Checklist,
     DocPublisher,
     PublicProjection,
@@ -39,13 +41,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Result,
     Selection
   }
-  alias GroupherServer.CMS.DocTree.Reader
 
-  alias GroupherServer.CMS.DocPublishRelease
-  alias GroupherServer.CMS.Docs.Branch
+  alias CMS.{
+    ErrorCat,
+    DocPublishRelease,
+    Docs.Branch,
+    DocTree.Reader
+  }
 
-
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Doc,
     DocTreeEvent,
@@ -127,7 +131,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     case Map.get(args, :expected_checklist_revision) do
       nil -> :ok
       revision when revision == state.tree_lock_version -> :ok
-      _ -> {:error, GroupherServer.ErrorCat.custom("Docs publish checklist conflict")}
+      _ -> {:error, ErrorCat.custom("Docs publish checklist conflict")}
     end
   end
 
@@ -269,7 +273,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       {:ok, %{done: true, affected_count: length(drafts)}}
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("Draft subtree root must be a Tab or Group.")}
+        {:error, ErrorCat.custom("Draft subtree root must be a Tab or Group.")}
 
       error ->
         error
@@ -387,7 +391,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
         {:ok, %{snapshot: snapshot, checklist_item: item}}
       else
         nil ->
-          {:error, GroupherServer.ErrorCat.custom("Selected docs publish item no longer exists.")}
+          {:error, ErrorCat.custom("Selected docs publish item no longer exists.")}
 
         error ->
           error
@@ -433,7 +437,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, tree_checklist_item_ids)
 
     if length(events) != length(tree_checklist_item_ids) do
-      {:error, GroupherServer.ErrorCat.custom("Selected tree publish item no longer exists.")}
+      {:error, ErrorCat.custom("Selected tree publish item no longer exists.")}
     else
       doc_snapshots =
         DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
@@ -481,7 +485,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       :ok
     else
       {:error,
-       GroupherServer.ErrorCat.custom(
+       ErrorCat.custom(
          "Selected docs publish item is also selected for tree deletion."
        )}
     end
@@ -513,7 +517,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, restore_tree_checklist_item_ids)
 
     if length(events) != length(restore_tree_checklist_item_ids) do
-      {:error, GroupherServer.ErrorCat.custom("Selected tree restore item no longer exists.")}
+      {:error, ErrorCat.custom("Selected tree restore item no longer exists.")}
     else
       Restore.restore_tree_events(community, branch, events, user)
     end

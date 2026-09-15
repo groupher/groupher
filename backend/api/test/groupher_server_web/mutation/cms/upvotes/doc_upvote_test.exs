@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
   @moduledoc false
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {community, doc, _, user} = mock_article(:doc, preload: [author: :user])

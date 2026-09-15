@@ -20,27 +20,23 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   `docs/content-import/content-import-architecture.md`.
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.Draft
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.ContentImport.{ImportSourceMapping, Jobs}
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
-  alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
-  alias GroupherServer.CMS.Docs.{Branch, Lifecycle}
-  alias GroupherServer.CMS.DocTree
-  alias GroupherServer.CMS.DocTree.Import, as: DocTreeImport
-  alias GroupherServer.CMS.DocTree.Reader, as: DocTreeReader
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.Model.{Community, TrashAction, TrashedDocArticle}
-  alias Helper.Transaction
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias CMS.Articles.{Draft, Trash}
+  alias CMS.Artiment.Matcher
+  alias CMS.ContentImport.{ImportSourceMapping, Jobs, Persistence.Job, Persistence.Job.Item, Threads.Doc.Validator}
+  alias CMS.ContentImport.Persistence.Job.Body, as: StagedBody
+  alias CMS.Docs.{Branch, Lifecycle}
+  alias CMS.{DocTree, ErrorCat}
+  alias CMS.DocTree.Import, as: DocTreeImport
+  alias CMS.DocTree.Reader, as: DocTreeReader
+  alias CMS.Model.{Community, TrashAction, TrashedDocArticle}
+  alias Helper.Transaction
 
   @doc "Atomically applies all ready items for one community Job."
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
@@ -160,7 +156,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
       else
         {:ok, %{conflict: true}} ->
           {:halt,
-           {:error, GroupherServer.ErrorCat.custom("The Docs Trash changed during import")}}
+           {:error, ErrorCat.custom("The Docs Trash changed during import")}}
 
         {:error, reason} ->
           {:halt, {:error, reason}}

@@ -12,13 +12,14 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
   owning CMS context.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.CommandReceipt.{Key, Store}
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.Model.CommandReceipt
-  alias GroupherServer.Repo
-
   require Logger
+
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.CommandReceipt.{Key, Store}
+  alias CMS.Model.CommandReceipt
 
   # Claim conflict resolution must not wait forever on a transaction that is
   # still holding the unique-key row or an article mutation lock. The lock

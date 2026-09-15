@@ -16,15 +16,17 @@ defmodule GroupherServer.CMS.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{TrashAction, TrashedArticle}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.Model.{TrashAction, TrashedArticle}
   alias Helper.T
 
   @default_batch_size 50
 
-  @spec get_action(Ecto.UUID.t()) :: T.domain_res(TrashAction.t())
   @doc "Returns action through the `Trash` boundary."
+  @spec get_action(Ecto.UUID.t()) :: T.domain_res(TrashAction.t())
   def get_action(ref) do
     case Repo.get_by(TrashAction, hash_id: ref) do
       %TrashAction{} = action -> {:ok, action}
@@ -32,8 +34,8 @@ defmodule GroupherServer.CMS.Trash do
     end
   end
 
-  @spec action_thread(TrashAction.t()) :: {:ok, atom()} | {:error, term()}
   @doc "Runs `action_thread` through the public `Trash` boundary."
+  @spec action_thread(TrashAction.t()) :: {:ok, atom()} | {:error, term()}
   def action_thread(%TrashAction{root_type: root_type} = action) do
     cond do
       String.starts_with?(root_type, "doc_tree_") ->
@@ -46,13 +48,13 @@ defmodule GroupherServer.CMS.Trash do
         end
 
       true ->
-        {:error, GroupherServer.ErrorCat.custom("Unsupported Trash action type: #{root_type}")}
+        {:error, ErrorCat.custom("Unsupported Trash action type: #{root_type}")}
     end
   end
 
+  @doc "Runs `permanently_delete_action` through the public `Trash` boundary."
   @spec permanently_delete_action(TrashAction.t() | Ecto.UUID.t(), User.t() | nil, keyword()) ::
           T.domain_res(map())
-  @doc "Runs `permanently_delete_action` through the public `Trash` boundary."
   def permanently_delete_action(action_or_ref, actor \\ nil, opts \\ [])
 
   def permanently_delete_action(%TrashAction{} = action, actor, opts) do
@@ -65,7 +67,7 @@ defmodule GroupherServer.CMS.Trash do
 
       true ->
         {:error,
-         GroupherServer.ErrorCat.custom("Unsupported Trash action type: #{action.root_type}")}
+         ErrorCat.custom("Unsupported Trash action type: #{action.root_type}")}
     end
   end
 

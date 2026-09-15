@@ -14,12 +14,14 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Articles.Response
   alias CMS.Docs.Branch
   alias CMS.FrontDesk.Community, as: CommunityReader
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Community
   alias Helper.ORM
@@ -62,7 +64,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   defp public_scope_context(%Community{} = community, :doc, opts) do
     with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
       {:ok,
-       DocScope.public_branch(branch.id,
+       DocContext.public_branch(branch.id,
          include_illegal: Keyword.get(opts, :include_illegal, false)
        )}
     end
@@ -71,8 +73,8 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   defp public_scope_context(_community, thread, opts),
     do:
       {:ok,
-       ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
+       ArticleContext.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
 
-  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
+  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   defp done(result), do: {:ok, result}
 end

@@ -2,9 +2,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.Passport
-  alias GroupherServer.CMS.Model.CommunityModerator
+  alias GroupherServer.CMS
+  alias CMS.Communities.{ErrorCat, Passport}
+  alias CMS.Model.CommunityModerator
   alias Helper.PermissionRegistry
 
   setup do

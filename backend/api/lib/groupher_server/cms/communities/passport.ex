@@ -10,16 +10,17 @@ defmodule GroupherServer.CMS.Communities.Passport do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import Helper.Utils, only: [done: 1, deep_merge: 2]
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Model.Passport, as: UserPassport
-
+  alias Accounts.Model.User
+  alias CMS.Communities.ErrorCat
+  alias CMS.Model.Passport
   alias Helper.{NestedFilter, ORM, PermissionRegistry, T}
 
   @doc """
@@ -33,7 +34,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   """
   @spec paged_passports(term(), term()) :: T.domain_res(term())
   def paged_passports(community, key) do
-    UserPassport
+    Passport
     |> where(
       [p],
       fragment("(?->?->'cms'->>?)::boolean = ?", p.rules, ^community, ^key, true)
@@ -53,7 +54,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   @spec get_passport(User.t()) :: T.domain_res(term())
   def get_passport(%User{} = user) do
     with {:ok, _} <- ORM.find(User, user.id) do
-      case ORM.find_by(UserPassport, user_id: user.id) do
+      case ORM.find_by(Passport, user_id: user.id) do
         {:ok, passport} ->
           {:ok, PermissionRegistry.normalize_rules(passport.rules)}
 
@@ -70,7 +71,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   def stamp_passport(rules, %User{id: user_id}) do
     case validate_shape(rules) do
       {:ok, rules} ->
-        case ORM.find_by(UserPassport, user_id: user_id) do
+        case ORM.find_by(Passport, user_id: user_id) do
           {:ok, passport} ->
             merged_rules =
               passport.rules
@@ -82,10 +83,10 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
           {:error, _} ->
             rules = rules |> reject_invalid_rules()
-            UserPassport |> ORM.create(~m(user_id rules)a)
+            Passport |> ORM.create(~m(user_id rules)a)
         end
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_passport_shape}} ->
+      {:error, ErrorCat.error_pattern(reason: :invalid_passport_shape)} ->
         {:error, ErrorCat.invalid_passport_shape("passport rules must contain global")}
     end
   end
@@ -93,7 +94,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   @spec erase_passport(term(), User.t()) :: T.domain_res(term())
   def erase_passport(rules_path, %User{id: user_id}) when is_list(rules_path) do
     with {:ok, rules_path} <- validate_erase_path(rules_path) do
-      case ORM.find_by(UserPassport, user_id: user_id) do
+      case ORM.find_by(Passport, user_id: user_id) do
         {:ok, passport} ->
           case pop_in(passport.rules, rules_path) do
             {nil, _} ->
@@ -112,7 +113,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
 
   @spec delete_passport(User.t()) :: T.domain_res(term())
   def delete_passport(%User{id: user_id}) do
-    ORM.findby_delete!(UserPassport, ~m(user_id)a)
+    ORM.findby_delete!(Passport, ~m(user_id)a)
   end
 
   defp validate_shape(rules) do

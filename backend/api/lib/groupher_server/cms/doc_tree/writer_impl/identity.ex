@@ -19,13 +19,15 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
   the Doc records.
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
-  alias Helper.Validator.Slug
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
+  alias Helper.Validator.Slug
 
   # Explicit slugs are user input and win over title-derived slugs; title is
   # still trimmed when both are present.
@@ -124,7 +126,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
            ) do
         {:halt,
          {:error,
-          GroupherServer.ErrorCat.custom(
+          ErrorCat.custom(
             "A trashed tree item with this title is pending restore."
           )}}
       else

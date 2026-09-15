@@ -25,8 +25,6 @@ defmodule GroupherServer.TestMate do
       import Ecto.Query, warn: false
       import GroupherServer.ErrorCat
 
-      alias GroupherServer.ErrorCat
-
       import Helper.Utils,
         only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
 
@@ -34,7 +32,8 @@ defmodule GroupherServer.TestMate do
 
       import ShortMaps
 
-      alias GroupherServer.CMS.Model.{
+      alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+      alias CMS.Model.{
         Author,
         Blog,
         Changelog,
@@ -45,11 +44,11 @@ defmodule GroupherServer.TestMate do
         Post
       }
 
-      alias GroupherServer.{Accounts, CMS, Repo}
-      alias GroupherServer.Test.Helper.Schema, as: S
+      alias GroupherServer.Test
+      alias Test.Helper.Schema, as: S
       alias Helper.{Constant, Datetime, ORM}
 
-      alias GroupherServer.Accounts.Model.User
+      alias Accounts.Model.User
 
       @now Datetime.now(:second)
 

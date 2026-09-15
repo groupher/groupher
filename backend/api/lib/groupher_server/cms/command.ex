@@ -26,10 +26,11 @@ defmodule GroupherServer.CMS.Command do
   `"doc.tree.create_tab"`.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.{CommandReceipt, ErrorCat}
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.{CommandReceipt, ErrorCat, FrontDesk}
+  alias CMS.Model.Comment
 
   @doc "Resolves a transport command id before entering the user command boundary."
   defdelegate resolve_command_id(value), to: CommandReceipt

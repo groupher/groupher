@@ -21,7 +21,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   require GroupherServer.CMS.Gate.Const
 
+  require GroupherServer.CMS.Gate.ErrorCat
+
   alias GroupherServer.{Accounts, CMS}
+
   alias Accounts.Model.User
   alias CMS.Communities.Lifecycle
   alias CMS.Gate.{Const, ErrorCat}
@@ -41,7 +44,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission using the default loaded lifecycle context."
   @spec check_access(User.t() | nil, atom(), Community.t()) ::
-          :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+          :ok | {:error, ErrorCat.error()}
   def check_access(user, action, community),
     do:
       check_access(user, action, community, %CommunityContext{
@@ -51,7 +54,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   @doc "Checks Community admission against an explicitly typed Access Context."
   @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
-          :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+          :ok | {:error, ErrorCat.error()}
   def check_access(_user, action, %Community{} = community, %CommunityContext{} = context)
       when action in @read_actions do
     read_allowed?(community, context)
@@ -82,10 +85,10 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       {:ok, false} ->
         {:error, ErrorCat.permission_denied()}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_not_loaded}} ->
+      {:error, ErrorCat.error_pattern(reason: :lifecycle_not_loaded)} ->
         relation_allowed(community.pending == 0)
 
-      {:error, %GroupherServer.ErrorCat.Error{} = error} ->
+      {:error, ErrorCat.error_pattern() = error} ->
         {:error, error}
     end
   end
@@ -95,7 +98,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
 
   defp lifecycle_allowed(%Community{} = community, :command, context) do
     case Lifecycle.can_manage(community, context) do
-      {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_not_loaded}} ->
+      {:error, ErrorCat.error_pattern(reason: :lifecycle_not_loaded)} ->
         {:ok, community.pending == 0}
 
       result ->

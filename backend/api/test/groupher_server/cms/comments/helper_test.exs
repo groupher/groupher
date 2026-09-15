@@ -3,10 +3,10 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Comments.{Numbering, Replies}
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Comments.{InteractionResponse, Numbering, Replies}
+  alias CMS.Communities.Enable
+  alias ErrorCat.Error
   alias Helper.ORM
 
   setup do
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_floor(post, :post_id)
-      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 
@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.CMS.Comments.SupportModules do
       post = put_in(post.meta.__struct__, nil)
 
       {:error, reason} = Numbering.next_inner_id(post, :post_id)
-      assert error_code(reason) == ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 

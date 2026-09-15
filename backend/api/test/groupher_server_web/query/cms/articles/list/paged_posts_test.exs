@@ -3,8 +3,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
   use GroupherServer.TestMate
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServer.CMS
+
+  @article_cat CMS.Artiment.Const.cat_map()
+  @article_status CMS.Artiment.Const.status_map()
 
   @page_size GroupherServerWeb.Config.page_size()
 
@@ -246,7 +250,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+               ErrorCat.code(ArticleErrorCat.thread_not_visible())
              )
     end
 
@@ -257,7 +261,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -269,14 +273,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables_0,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables_neg_1,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 

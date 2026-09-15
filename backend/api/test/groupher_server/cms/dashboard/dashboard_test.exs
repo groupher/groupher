@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunityDashboard
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityDashboard
 
   @default_dashboard CommunityDashboard.default()
 
@@ -54,7 +55,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
          ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_dsb_section}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_dsb_section}} =
                CMS.Dashboard.update(community, %{})
     end
 
@@ -598,15 +599,15 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+              %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+              %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+              %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
     end
 

@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
         -> Activity for denied facts
   """
 
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
+  require GroupherServer.CMS.Articles.ErrorCat
+
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias Accounts.Model.User
   alias CMS.Articles.{Draft, Trash, ErrorCat}
   alias CMS.Command
   alias CMS.Model.{Community, TrashedArticle, TrashedDocArticle}
@@ -205,7 +207,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
            operation_ref: command_id
          ) do
       {:ok, _event} -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{reason: :duplicate_event}} -> {:error, decision}
+      {:error, ErrorCat.error_pattern(reason: :duplicate_event)} -> {:error, decision}
       {:error, _reason} = error -> error
     end
   end

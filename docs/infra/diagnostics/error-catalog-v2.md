@@ -6,9 +6,13 @@
 ErrorCat catalog、Gate/领域返回链路、GraphQL 边界和相关测试的切换；后续新增错误必须遵守本文，
 不得重新引入 raw error atom 或 raw error tuple。
 
+架构层的所有权、依赖和 alias 边界见 [`ErrorCat 架构`](../../architecture/error-cat.md)；本文负责
+具体 catalog 声明、运行时 API、range/reserved 校验和迁移清单。
+
 本次重构不考虑历史 API、历史模块名或历史数据兼容。完成后，业务代码、测试、文档和错误返回路径统一使用 ErrorCat。
 
-本文是唯一实现依据；error_cat.md 中与本文冲突的 range、API、payload、code 策略和默认值均已废弃。
+本文是具体实现依据；架构文档只补充模块所有权和依赖方向，不重复维护 range、API、payload、code
+策略和默认值。
 
 ## 1. 目标和最终形态
 
@@ -56,6 +60,23 @@ Ecto 持久化校验失败是例外：`Ecto.Changeset` 可以作为数据库层�
 context 内流转。它不是错误码声明，也不能直接作为 GraphQL/HTTP 错误 payload；到协议边界时
 由 changeset formatter 负责转换。除 changeset 和 Gate `Decision` 这两种结构化控制对象外，
 业务失败不得返回其他 raw atom 或 raw tuple。
+
+### 1.2 领域 catalog 的依赖边界
+
+业务模块只依赖所属领域的 `ErrorCat` alias，不直接依赖全局错误 struct：
+
+    alias GroupherServer.CMS.Communities.ErrorCat
+    {:error, ErrorCat.not_found()}
+
+`GroupherServer.ErrorCat.Domain` 在 catalog 内部 alias 全局 `ErrorCat.Error`，并向每个领域 catalog
+注入 `error?/1`、`reason/1`、`normalize_result/1`、`error_pattern/0`、`error_pattern/1` 和
+`error()`。因此全局 struct 的匹配和归一化集中在 ErrorCat 基础设施中，业务代码不会因为别名冲突而
+暴露基础设施模块。
+
+业务代码禁止 alias 或匹配 `GroupherServer.ErrorCat.Error`，也禁止直接调用
+`GroupherServer.ErrorCat.custom/1`。领域 catalog 暴露的 `custom/1`、`gate_unknown/1` 只是对
+reserved 定义的边界 wrapper；稳定业务语义仍必须新增正式 reason。完整架构流见
+[`ErrorCat 架构`](../../architecture/error-cat.md)。
 
 ## 2. 和旧机制的差异
 
@@ -359,6 +380,16 @@ Mix.Tasks.Compile.ErrorCat 负责全局校验：
     ErrorCat.valid?(%ErrorCat.Error{})
     ErrorCat.declared?({:cms, :article}, :archived)
 
+每个领域 catalog 还通过 `GroupherServer.ErrorCat.Domain` 获得一组边界 API：
+
+    ErrorCat.error?(term)
+    ErrorCat.reason(error)
+    ErrorCat.normalize_result(error_or_result)
+    ErrorCat.error_pattern(reason: :archived)
+
+这些函数和宏只负责识别、归一化或匹配结构化错误，不声明新的 reason。`error()` 是 catalog
+对外暴露的统一类型；`custom/1`、`gate_unknown/1` 仅用于对应的 reserved 边界 wrapper。
+
 语义：
 
 - definition(namespace, reason)：返回完整定义；未知定义统一抛出清晰的 ArgumentError，不能返回 nil，也不能出现 BadMapError；
@@ -462,7 +493,7 @@ details 只用于附加上下文，不参与 definition 的身份比较。是否
 
 ### 13.1 一次性迁移
 
-不保留旧 API 过渡层：
+不保留旧 API 过渡层；业务代码不得绕过领域 catalog 使用全局 fallback：
 
 1. 删除 Helper.ErrorCode、Helper.Const 中的 error code 声明和调用；
 2. 为每个真实 producer 建立或补齐 catalog；
@@ -470,7 +501,8 @@ details 只用于附加上下文，不参与 definition 的身份比较。是否
    `ErrorCat.Error`；保留的 atom 只能是非错误内部状态；
 4. 更新 resolver、context、formatter、API payload 和测试；
 5. 删除旧模块、旧 helper 和旧测试；
-6. 全仓库搜索确认不再存在旧调用方式。
+6. 全仓库搜索确认不再存在旧调用方式；全局 `ErrorCat.Error` 的 alias、模式匹配和直接
+   `GroupherServer.ErrorCat.custom/1` 调用只能留在 ErrorCat 基础设施内部。
 
 历史数据不需要兼容。数据库中如果保存了旧 code，按本次迁移规则直接重建或清理，不设计运行时兼容映射。
 

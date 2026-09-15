@@ -7,17 +7,17 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       ReadState -> Query -> DefaultViewerState + projection rows
   """
 
+  require GroupherServer.CMS.Model.Interaction.RoaringBitmap
+  require GroupherServer.CMS.Interactions.ErrorCat
+
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Interactions.{Config, DefaultViewerState, ErrorCat}
-  alias GroupherServer.CMS.Interactions.Reactions.Emotion
-  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
-  alias GroupherServer.CMS.Model.ViewEvent
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require RoaringBitmap
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions}
+  alias CMS.Model.{Interaction.RoaringBitmap, ViewEvent}
 
   @article_threads Config.article_threads()
   @supported_threads [:comment | @article_threads]
@@ -298,7 +298,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   end
 
   defp emotion_embed(row, emotion_type) do
-    case Emotion.decode(row.emotion, emotion_type) do
+    case Reactions.Emotion.decode(row.emotion, emotion_type) do
       {:ok, emotion} ->
         %{
           :"#{emotion}_count" => row.count,
@@ -306,7 +306,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
           :"viewer_has_#{emotion}ed" => Map.get(row, :viewer_has_reacted, false)
         }
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_emotion}} ->
+      {:error, ErrorCat.error_pattern(reason: :unknown_emotion)} ->
         :telemetry.execute([:groupher, :cms, :interactions, :unknown_emotion], %{count: 1}, %{
           emotion: row.emotion,
           type: emotion_type

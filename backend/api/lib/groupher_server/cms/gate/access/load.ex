@@ -14,15 +14,18 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
         -> typed Access Context
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Gate.Access.Load.Queries
-  alias GroupherServer.CMS.Gate.Context.Access.{Article, Comment, Doc}
-  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.Comment, as: CommentModel
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Artiment.Matcher
+  alias CMS.Gate.Access.Load.Queries
+  alias CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias CMS.Gate.Context.Access.Comment, as: CommentContext
+  alias CMS.Gate.Context.Access.Community, as: CommunityContext
+  alias CMS.Gate.Context.Access.Doc, as: DocContext
+  alias CMS.Gate.{ErrorCat, Config}
+  alias CMS.Model.Comment
+
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     Community,
@@ -30,8 +33,6 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     DocBranch,
     DocLifecycle
   }
-
-  alias GroupherServer.CMS.Gate.Config
 
   @article_threads Config.ordinary_article_threads()
 
@@ -79,7 +80,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
          %DocLifecycle{} = doc_lifecycle <-
            Queries.doc_lifecycle(community.id, branch_id, hash_id) do
       {:ok,
-       %Doc{
+       %DocContext{
          doc: canonical,
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
@@ -111,7 +112,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
          %ArticleLifecycle{} = article_lifecycle <-
            Queries.article_lifecycle(community.id, thread, hash_id) do
       {:ok,
-       %Article{
+       %ArticleContext{
          article: canonical,
          community: %{community | lifecycle: community_lifecycle},
          community_lifecycle: community_lifecycle,
@@ -134,13 +135,13 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   and all lifecycle rows required by Comment policy evaluation. Any identity
   mismatch fails closed rather than authorizing from caller-supplied structs.
   """
-  def comment(%Community{} = community, thread, article, %CommentModel{} = comment) do
-    with canonical when not is_nil(canonical) <- Queries.resource(CommentModel, comment.id),
+  def comment(%Community{} = community, thread, article, %Comment{} = comment) do
+    with canonical when not is_nil(canonical) <- Queries.resource(Comment, comment.id),
          true <- same_comment_identity?(canonical, comment, article, community, thread),
          {:ok, parent_context} <- article(community, thread, article),
          %CommentLifecycle{} = comment_lifecycle <- Queries.comment_lifecycle(canonical.id) do
       {:ok,
-       %Comment{
+       %CommentContext{
          comment: canonical,
          comment_lifecycle: comment_lifecycle,
          article: parent_resource(parent_context),
@@ -157,11 +158,11 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
     end
   end
 
-  defp parent_resource(%Article{article: article}), do: article
-  defp parent_resource(%Doc{doc: doc}), do: doc
+  defp parent_resource(%ArticleContext{article: article}), do: article
+  defp parent_resource(%DocContext{doc: doc}), do: doc
 
-  defp parent_lifecycle(%Article{article_lifecycle: lifecycle}), do: lifecycle
-  defp parent_lifecycle(%Doc{doc_lifecycle: lifecycle}), do: lifecycle
+  defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
+  defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle
 
   defp preload_author(resource), do: Repo.preload(resource, author: :user)
 

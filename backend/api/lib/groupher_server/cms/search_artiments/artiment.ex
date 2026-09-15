@@ -14,7 +14,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Artiment do
         -> search platform
   """
 
-  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
 
   @type artiment_type :: :article | :comment
   @type thread :: :post | :blog | :changelog | :doc

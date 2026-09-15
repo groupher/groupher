@@ -12,9 +12,10 @@ defmodule GroupherServer.CMS.Comments.JobPolicy do
   run only after the mutation has committed.
   """
 
-  alias GroupherServer.CMS.Comments.ErrorCat
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.Jobs
+  alias GroupherServer.{CMS, Jobs}
+
+  alias CMS.Comments.ErrorCat
+  alias CMS.Model.Comment
 
   @doc """
   Enqueues the required audition job for one Comment.

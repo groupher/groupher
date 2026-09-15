@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Scope.Community do
-  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Compiles Community read/list visibility rules into an Ecto query.
 
@@ -22,23 +21,26 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Community), nil, :read, context)
   """
 
+  require GroupherServer.CMS.Communities.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Model.{CommunityLifecycle, CommunityModerator}
+  alias GroupherServer.CMS
+
+  alias CMS.Communities
+  alias CMS.Gate.{ErrorCat, Scope.Policy}
+  alias CMS.Model.{CommunityLifecycle, CommunityModerator}
 
   @behaviour Policy
 
-  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
+  @community_normal CMS.Communities.Const.pending_state(:normal)
   @actions [:read, :list]
   @lifecycle_binding :gate_lifecycle
   @policy_modes Communities.Lifecycle.read_modes()
 
   @doc "Compiles Community Lifecycle and actor predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Community.t()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with {:ok, policy_mode} <- policy_mode(context),

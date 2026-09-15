@@ -5,12 +5,14 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Record do
       Article Reader -> Record -> ViewEvent + projection job
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Jobs, Repo}
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Interactions.ErrorCat
-  alias GroupherServer.CMS.Interactions.ViewEvents.Project
-  alias GroupherServer.CMS.Model.ViewEvent
+  require GroupherServer.CMS.Interactions.ErrorCat
+
+  alias GroupherServer.{Accounts, CMS, Jobs, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Interactions.{ErrorCat, ViewEvents.Project}
+  alias CMS.Model.ViewEvent
 
   @doc """
   Records one durable Article view without taking the aggregate lock.
@@ -34,7 +36,7 @@ defmodule GroupherServer.CMS.Interactions.ViewEvents.Record do
         end)
         |> case do
           {:ok, recorded_event_id} -> {:ok, recorded_event_id}
-          {:error, %GroupherServer.ErrorCat.Error{}} = error -> error
+          {:error, ErrorCat.error_pattern()} = error -> error
           {:error, _reason} -> {:error, ErrorCat.view_event_insert_failed()}
         end
 

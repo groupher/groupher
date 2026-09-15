@@ -9,17 +9,20 @@ defmodule GroupherServer.CMS.Communities.Writer do
         -> Writer
         -> Repo / Oban
   """
+
+  require Logger
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Analysis, CMS}
-  alias GroupherServer.CMS.Communities.{Lifecycle, Moderator, Reader}
-  alias GroupherServer.CMS.Dashboard.BaseInfo
-
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
+  alias GroupherServer.{Accounts, Analysis, CMS}
+  alias CMS.Communities.{Lifecycle, Moderator, Reader}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Dashboard.BaseInfo
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
-  require Logger
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -106,7 +109,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
       {:ok, _website_id} ->
         :ok
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_configured}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :not_configured)} ->
         :ok
 
       {:error, reason} ->

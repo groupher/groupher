@@ -10,9 +10,10 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.Model.CommandReceipt
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias CMS.Model.CommandReceipt
 
   @receipt_ttl_seconds 24 * 60 * 60
 

@@ -1,9 +1,9 @@
 defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.CMS.Model.ViewEvent
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Interactions.ViewEvents
+  alias CMS.Model.ViewEvent
 
   test "view event ids are unique and target types are constrained" do
     event_id = Ecto.UUID.generate()
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ViewEventsTest do
   test "an invalid event id returns a declared ErrorCat error" do
     {_community, post, _attrs, user} = mock_article(:post)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_event_id}} =
+    assert {:error, %ErrorCat.Error{reason: :invalid_event_id}} =
              ViewEvents.record(post, user, "not-a-uuid")
   end
 end

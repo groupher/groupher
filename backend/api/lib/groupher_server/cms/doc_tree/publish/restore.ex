@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish.Restore do
-  require GroupherServer.CMS.DocTree.Const
-
   @moduledoc """
   Restores staged tree-delete items back into the draft tree.
 
@@ -22,15 +20,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   handles create, update, and move events through `PublicProjection`.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.Activity.EventRef
-  alias GroupherServer.CMS.DocTree.Publish.Result
-  alias GroupherServer.CMS.DocTree.Revision
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias CMS.ErrorCat
 
-  alias GroupherServer.CMS.Model.{
+  alias Accounts.Model.User
+  alias Activity.EventRef
+  alias CMS.DocTree.{Publish.Result, Revision}
+
+  alias CMS.Model.{
     Community,
     DocsSiteState,
     DocTreeEvent,
@@ -38,8 +40,6 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   }
 
   alias Helper.ORM
-
-  require CMS.Const
 
   @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.DocTree.Const.doc_tree_json_key(:doc_id)
@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       else
         {:halt,
          {:error,
-          GroupherServer.ErrorCat.custom("Only deleted tree publish items can be restored.")}}
+          ErrorCat.custom("Only deleted tree publish items can be restored.")}}
       end
     end)
   end
@@ -124,7 +124,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   end
 
   defp restore_nodes_from_delete_event(_event),
-    do: {:error, GroupherServer.ErrorCat.custom("Deleted tree item can not be restored.")}
+    do: {:error, ErrorCat.custom("Deleted tree item can not be restored.")}
 
   defp restore_draft_nodes(%Community{} = community, branch, nodes) do
     Result.map_while_ok(nodes, &restore_draft_node(community, branch, &1))
@@ -137,7 +137,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       {:ok, restored_node}
     else
       %DocTreeNode{} ->
-        {:error, GroupherServer.ErrorCat.custom("Deleted tree item has already been restored.")}
+        {:error, ErrorCat.custom("Deleted tree item has already been restored.")}
 
       error ->
         error
@@ -226,7 +226,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
         {:ok, atom}
 
       :error ->
-        {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree node type: #{type}")}
+        {:error, ErrorCat.custom("Unsupported docs tree node type: #{type}")}
     end
   end
 end

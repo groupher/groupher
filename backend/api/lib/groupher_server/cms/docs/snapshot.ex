@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Docs.Snapshot do
-  require GroupherServer.CMS.Docs.Const
-
   @moduledoc """
   Stores the append-only revision timeline for Docs.
 
@@ -18,15 +16,19 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
   remain auditable.
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
+  alias CMS.Artiment.BodyBag
+  alias CMS.Docs.Branch
+  alias CMS.Gate.Decision
+  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
   alias Helper.{ORM, T}
 
   @default_limit 30
@@ -312,7 +314,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
 
   defp create_restored_draft(_community, _thread, _snapshot, nil, _opts) do
     {:error,
-     GroupherServer.ErrorCat.custom("DocSnapshot restore requires a user to create a Draft")}
+     ErrorCat.custom("DocSnapshot restore requires a user to create a Draft")}
   end
 
   defp create_restored_draft(community, thread, snapshot, %User{} = user, opts) do

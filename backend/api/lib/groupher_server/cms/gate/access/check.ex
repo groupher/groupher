@@ -15,19 +15,20 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
         -> Gate.Decision
   """
 
-  alias GroupherServer.CMS.{Articles, FrontDesk}
-  alias GroupherServer.CMS.Gate.Access.{Load, Policy}
-  alias GroupherServer.CMS.Gate.Config
-  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Post}
-  alias GroupherServer.CMS.Model.Doc, as: DocModel
-  alias GroupherServer.Repo
+  require GroupherServer.CMS.Gate.ErrorCat
+
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.{Articles, FrontDesk}
+  alias CMS.Gate.Access.{Load, Policy}
+  alias CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias CMS.Gate.Context.Access.Doc, as: DocContext
+  alias CMS.Gate.{Decision, Config, ErrorCat}
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Post, Doc}
+
   @article_threads Config.article_threads()
 
-  @article_models [Post, Blog, Changelog, DocModel]
+  @article_models [Post, Blog, Changelog, Doc]
 
   @doc """
   Checks access to one Community and returns its canonical loaded value.
@@ -47,7 +48,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       {:ok, context.community}
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -78,7 +79,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
                %Decision{} = decision ->
                  {:error, decision}
 
-               {:error, %GroupherServer.ErrorCat.Error{} = error} ->
+               {:error, ErrorCat.error_pattern() = error} ->
                  {:error, Decision.deny(error)}
              end
            end) do
@@ -86,7 +87,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     else
       nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
       {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -116,7 +117,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
                %Decision{} = decision ->
                  {:error, decision}
 
-               {:error, %GroupherServer.ErrorCat.Error{} = error} ->
+               {:error, ErrorCat.error_pattern() = error} ->
                  {:error, Decision.deny(error)}
              end
            end) do
@@ -124,7 +125,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     else
       nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
       {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -160,7 +161,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -183,7 +184,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -203,7 +204,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 

@@ -23,17 +23,18 @@ defmodule GroupherServer.CMS.DocTree.Writer.DraftDoc do
   revision counters. This module owns the article-content side of docs writes.
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, ErrorCat, Repo}
-  alias GroupherServer.CMS.Articles.Draft
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Model.{Community, Doc}
-  alias Helper.Validator.Slug
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias CMS.Articles.Draft
+  alias CMS.Artiment.BodyBag
+  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.Model.{Community, Doc}
+  alias Helper.Validator.Slug
 
   @doc """
   Updates one docs draft's article content.

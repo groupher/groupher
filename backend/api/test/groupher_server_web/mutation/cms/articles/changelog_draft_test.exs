@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.CMS.Passport.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Passport.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)

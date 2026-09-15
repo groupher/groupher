@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Creation do
-  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Atomic Community identity creation from one approved Application.
 
@@ -11,23 +10,22 @@ defmodule GroupherServer.CMS.Communities.Creation do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Communities.Const
+
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.Jobs.Setup
-  alias GroupherServer.CMS.Communities.{Lifecycle, NamePolicy, SlugClaims, Writer}
-  alias GroupherServer.CMS.CommunityApplications.Transitions
+  alias Accounts.Model.User
+  alias CMS.Communities.{ErrorCat, Jobs, Lifecycle, NamePolicy, SlugClaims, Writer}
+  alias CMS.CommunityApplications.Transitions
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     CommunityApplication,
     CommunityApplicationLogoUpload
   }
 
-
-  @community_applying GroupherServer.CMS.Communities.Const.pending_state(:applying)
+  @community_applying CMS.Communities.Const.pending_state(:applying)
 
   @doc """
   Creates a Community from one approved Application inside a single transaction.
@@ -180,7 +178,7 @@ defmodule GroupherServer.CMS.Communities.Creation do
       application_ref: application.public_ref,
       operation_ref: operation_ref
     }
-    |> Setup.new()
+    |> Jobs.Setup.new()
     |> Repo.insert()
   end
 end

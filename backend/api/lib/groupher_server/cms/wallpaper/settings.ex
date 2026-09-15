@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.Wallpaper.Settings do
   settings and renderConfig.
   """
 
-  alias GroupherServer.CMS.Wallpaper.ErrorCat
+  alias GroupherServer.CMS
+
+  alias CMS.Wallpaper.ErrorCat
 
   @version 1
   @render_config_keys ~w(pattern gradient texture effect)

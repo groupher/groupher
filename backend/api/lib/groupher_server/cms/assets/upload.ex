@@ -16,14 +16,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{
-    Repo
-  }
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Assets.{Capability, Writer}
-  alias GroupherServer.CMS.Model.{Community, CommunityAsset}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
+  alias CMS.Assets.{Capability, Writer}
+  alias CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
 
   @allowed_mime_types ~w(image/jpeg image/png image/webp image/gif)
@@ -173,7 +172,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
         case input |> get(:community_id) |> normalize_id() do
           nil ->
             Repo.rollback(
-              GroupherServer.ErrorCat.custom("community asset storage quota exceeded")
+              ErrorCat.custom("community asset storage quota exceeded")
             )
 
           community_id ->
@@ -204,23 +203,23 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
     cond do
       filename == nil ->
-        {:error, GroupherServer.ErrorCat.custom("filename is required")}
+        {:error, ErrorCat.custom("filename is required")}
 
       mime_type not in @allowed_mime_types ->
-        {:error, GroupherServer.ErrorCat.custom("unsupported asset MIME type")}
+        {:error, ErrorCat.custom("unsupported asset MIME type")}
 
       not is_integer(size_bytes) or size_bytes <= 0 ->
-        {:error, GroupherServer.ErrorCat.custom("size_bytes must be positive")}
+        {:error, ErrorCat.custom("size_bytes must be positive")}
 
       size_bytes > @max_size_bytes ->
-        {:error, GroupherServer.ErrorCat.custom("asset is larger than v1 upload limit")}
+        {:error, ErrorCat.custom("asset is larger than v1 upload limit")}
 
       checksum_sha256 != nil and not base64_sha256?(checksum_sha256) ->
         {:error,
-         GroupherServer.ErrorCat.custom("checksum_sha256 must be a base64 SHA-256 digest")}
+         ErrorCat.custom("checksum_sha256 must be a base64 SHA-256 digest")}
 
       not valid_thread?(thread) ->
-        {:error, GroupherServer.ErrorCat.custom("asset thread is invalid")}
+        {:error, ErrorCat.custom("asset thread is invalid")}
 
       true ->
         {:ok,
@@ -245,13 +244,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
     cond do
       mime_type != "image/webp" ->
-        {:error, GroupherServer.ErrorCat.custom("generated image MIME type must be image/webp")}
+        {:error, ErrorCat.custom("generated image MIME type must be image/webp")}
 
       not is_integer(width) or width <= 0 or not is_integer(height) or height <= 0 ->
-        {:error, GroupherServer.ErrorCat.custom("generated image dimensions are invalid")}
+        {:error, ErrorCat.custom("generated image dimensions are invalid")}
 
       batch_ref == nil or candidate_owner_ref == nil or variant_key == nil ->
-        {:error, GroupherServer.ErrorCat.custom("generated image batch metadata is required")}
+        {:error, ErrorCat.custom("generated image batch metadata is required")}
 
       true ->
         {:ok,
@@ -268,13 +267,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
   defp validate_completion(attrs) do
     cond do
       not is_binary(attrs.public_ref) or not String.starts_with?(attrs.public_ref, "asset_") ->
-        {:error, GroupherServer.ErrorCat.custom("asset_public_ref is invalid")}
+        {:error, ErrorCat.custom("asset_public_ref is invalid")}
 
       not is_binary(attrs.content_hash) or not String.starts_with?(attrs.content_hash, "sha256:") ->
-        {:error, GroupherServer.ErrorCat.custom("content_hash must use sha256:<hex>")}
+        {:error, ErrorCat.custom("content_hash must use sha256:<hex>")}
 
       not is_integer(attrs.size_bytes) or attrs.size_bytes <= 0 ->
-        {:error, GroupherServer.ErrorCat.custom("size_bytes must be positive")}
+        {:error, ErrorCat.custom("size_bytes must be positive")}
 
       true ->
         :ok
@@ -285,7 +284,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
        when is_integer(incoming_size_bytes) do
     case normalize_id(community_id) do
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("community asset storage quota exceeded")}
+        {:error, ErrorCat.custom("community asset storage quota exceeded")}
 
       community_id ->
         used_bytes =
@@ -297,13 +296,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
         if storage_bytes_to_integer(used_bytes) + incoming_size_bytes <= @storage_limit_bytes do
           :ok
         else
-          {:error, GroupherServer.ErrorCat.custom("community asset storage quota exceeded")}
+          {:error, ErrorCat.custom("community asset storage quota exceeded")}
         end
     end
   end
 
   defp ensure_capacity(_, _),
-    do: {:error, GroupherServer.ErrorCat.custom("community asset storage quota exceeded")}
+    do: {:error, ErrorCat.custom("community asset storage quota exceeded")}
 
   defp normalize_id(value) when is_integer(value), do: value
 

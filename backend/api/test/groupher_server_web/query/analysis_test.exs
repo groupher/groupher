@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Query.Analysis do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   @overview_query S.Analysis.q(:overview)
   @active_visitors_query S.Analysis.q(:active_visitors)

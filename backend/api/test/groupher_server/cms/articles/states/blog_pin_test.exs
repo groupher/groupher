@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.BlogPin do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Model.PinnedArticle
+  alias GroupherServer.CMS
+  alias CMS.Articles.ErrorCat
+  alias CMS.Model.PinnedArticle
 
   @max_pinned_article_count_per_thread Community.max_pinned_article_count_per_thread()
 

@@ -35,13 +35,15 @@ defmodule GroupherServer.CMS.DocTree.Import do
   resolution handled later by the orchestrator.
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Model.{Community, DocBranch, DocTreeNode}
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.Model.{Community, DocBranch, DocTreeNode}
 
   @insert_batch_size 500
   @managed_fields ~w(parent_node_id doc_id type title index href updated_at)a
@@ -80,7 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
       {:ok, %{nodes: nodes, state: state}}
     else
       namespace when namespace in [nil, ""] ->
-        {:error, GroupherServer.ErrorCat.custom("imported Doc tree namespace is required")}
+        {:error, ErrorCat.custom("imported Doc tree namespace is required")}
 
       error ->
         error
@@ -121,7 +123,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   end
 
   defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target),
-    do: {:error, GroupherServer.ErrorCat.custom("imported Doc tree tabs are invalid")}
+    do: {:error, ErrorCat.custom("imported Doc tree tabs are invalid")}
 
   defp flatten_children(
          community,
@@ -196,7 +198,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
         _ ->
           {:halt,
-           {:error, GroupherServer.ErrorCat.custom("imported Doc tree child type is invalid")}}
+           {:error, ErrorCat.custom("imported Doc tree child type is invalid")}}
       end
     end)
   end
@@ -210,7 +212,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
          _items_by_target,
          _attrs
        ),
-       do: {:error, GroupherServer.ErrorCat.custom("imported Doc tree pages are invalid")}
+       do: {:error, ErrorCat.custom("imported Doc tree pages are invalid")}
 
   defp flatten_pins(community, branch, namespace, tab_id, pins, attrs) when is_list(pins) do
     pins
@@ -233,7 +235,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   end
 
   defp flatten_pins(_community, _branch, _namespace, _tab_id, _pins, _attrs),
-    do: {:error, GroupherServer.ErrorCat.custom("imported Doc tree pins are invalid")}
+    do: {:error, ErrorCat.custom("imported Doc tree pins are invalid")}
 
   defp base_attrs(%Community{} = community, branch, source, type, source_node_id, index) do
     %{

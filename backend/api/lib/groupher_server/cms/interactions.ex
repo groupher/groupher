@@ -12,9 +12,10 @@ defmodule GroupherServer.CMS.Interactions do
   behind their respective domain owners.
   """
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.CMS.Interactions.{Reactions, ReadState, Scope, ViewEvents}
+  alias Accounts.Model.User
+  alias CMS.Interactions.{ErrorCat, Reactions, ReadState, Scope, ViewEvents}
 
   @doc """
   Reports an Artiment using the immutable reporter identity.
@@ -68,7 +69,7 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.counts([article, comment])
 
   """
-  @spec counts([struct()]) :: map() | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec counts([struct()]) :: map() | {:error, ErrorCat.error()}
   defdelegate counts(artiments), to: ReadState
 
   @doc """
@@ -182,6 +183,6 @@ defmodule GroupherServer.CMS.Interactions do
 
   """
   @spec scope(Ecto.Queryable.t(), keyword()) ::
-          {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, Ecto.Query.t()} | {:error, ErrorCat.error()}
   defdelegate scope(queryable, opts), to: Scope
 end

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Draft do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Owns the mutable draft head for ordinary Articles and Doc content.
 
@@ -18,28 +17,26 @@ defmodule GroupherServer.CMS.Articles.Draft do
   editor input -> Draft head -> publish boundary -> public Article head
   """
 
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset, only: [put_change: 3, put_embed: 3]
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Document, MutationLock, VersionedRelations, Writer}
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Assets
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
-  alias Helper.{ORM, T}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias CMS.Articles.{Document, ErrorCat, MutationLock, VersionedRelations, Writer, Trash}
+  alias CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias CMS.Artiment.{BodyBag, Matcher}
+  alias CMS.{Assets, Gate}
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Decision
+  alias CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
+  alias Helper.{ORM, T}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_emotions Embeds.ArticleEmotion.default_persisted_emotions()
@@ -345,24 +342,24 @@ defmodule GroupherServer.CMS.Articles.Draft do
   end
 
   defp scope_context(:doc, :draft, policy_mode, %DocBranch{id: branch_id}, _opts),
-    do: DocScope.draft(branch_id, policy_mode)
+    do: DocContext.draft(branch_id, policy_mode)
 
   defp scope_context(:doc, :public, policy_mode, %DocBranch{id: branch_id}, opts),
     do:
-      DocScope.public_branch(branch_id,
+      DocContext.public_branch(branch_id,
         policy_mode: policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
 
   defp scope_context(thread, :draft, policy_mode, _branch, opts),
     do:
-      ArticleScope.draft(thread, policy_mode,
+      ArticleContext.draft(thread, policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
 
   defp scope_context(thread, :public, policy_mode, _branch, opts),
     do:
-      ArticleScope.public(thread,
+      ArticleContext.public(thread,
         policy_mode: policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
@@ -486,7 +483,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   defp parse_body(%{body_bag: body_bag}, thread), do: BodyBag.cast(body_bag, thread: thread)
 
   defp parse_body(_attrs, _thread),
-    do: {:error, GroupherServer.ErrorCat.custom("Article draft BodyBag is required")}
+    do: {:error, ErrorCat.custom("Article draft BodyBag is required")}
 
   defp maybe_parse_body(%{body_bag: body_bag}, thread),
     do: BodyBag.cast(body_bag, thread: thread)

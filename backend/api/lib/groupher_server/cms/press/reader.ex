@@ -10,19 +10,21 @@ defmodule GroupherServer.CMS.Press.Reader do
         -> Press.Projection
   """
 
+  require GroupherServer.CMS.Const
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
   alias CMS.Artiment.Matcher
   alias CMS.Docs.Branch
-  alias CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Model.{Community, Doc, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
   alias CMS.Press.{Config, Projection}
-
-  require CMS.Const
-  require CMS.Docs.Const
 
   @threads Config.article_threads()
   @public_stage CMS.Const.stage(:public)
@@ -63,7 +65,7 @@ defmodule GroupherServer.CMS.Press.Reader do
     end
   end
 
-  def article(_), do: {:error, GroupherServer.ErrorCat.custom("invalid Press Article path")}
+  def article(_), do: {:error, ErrorCat.custom("invalid Press Article path")}
 
   @doc "Reads and projects a Community RSS feed."
   def community_rss_feed(community, opts) do
@@ -94,7 +96,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   end
 
   def thread_rss_feed(_, _, _),
-    do: {:error, GroupherServer.ErrorCat.custom("invalid Press Feed thread")}
+    do: {:error, ErrorCat.custom("invalid Press Feed thread")}
 
   @doc "Reads and projects the current Press site manifest."
   def site_manifest(community) do
@@ -117,7 +119,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp current_article(community, :doc, inner_id) do
     with {:ok, branch} <- public_branch(community, :doc) do
       Doc
-      |> CMS.Gate.scope(nil, :read, DocScope.public_branch(branch.id))
+      |> CMS.Gate.scope(nil, :read, DocContext.public_branch(branch.id))
       |> join(:inner, [article, ...], branch in DocBranch,
         as: :press_branch,
         on: branch.id == article.branch_id
@@ -138,7 +140,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp current_article(community, thread, inner_id) do
     with {:ok, info} <- Matcher.match(thread) do
       info.model
-      |> CMS.Gate.scope(nil, :read, ArticleScope.public(thread))
+      |> CMS.Gate.scope(nil, :read, ArticleContext.public(thread))
       |> where([article], article.community_id == ^community.id)
       |> where([article], article.inner_id == ^inner_id)
       |> preload([article], [:document, :community_tags, author: :user])
@@ -191,7 +193,7 @@ defmodule GroupherServer.CMS.Press.Reader do
     case public_branch(community, :doc) do
       {:ok, branch} ->
         Doc
-        |> CMS.Gate.scope(nil, :list, DocScope.public_branch(branch.id))
+        |> CMS.Gate.scope(nil, :list, DocContext.public_branch(branch.id))
         |> join(:inner, [article, ...], branch in DocBranch,
           as: :press_branch,
           on: branch.id == article.branch_id
@@ -222,7 +224,7 @@ defmodule GroupherServer.CMS.Press.Reader do
     case Matcher.match(thread) do
       {:ok, info} ->
         info.model
-        |> CMS.Gate.scope(nil, :list, ArticleScope.public(thread))
+        |> CMS.Gate.scope(nil, :list, ArticleContext.public(thread))
         |> where([article], article.community_id == ^community.id)
         |> order_by([article], desc: article.active_at, desc: article.inserted_at)
         |> limit(^limit)
@@ -257,7 +259,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 
   defp public_community(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
+    CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
     |> where([community], community.slug == ^slug or community.aka == ^slug)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
@@ -268,7 +270,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   end
 
   defp public_community_by_id(id) when is_integer(id) do
-    CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
+    CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
     |> where([community], community.id == ^id)
     |> preload([:dashboard, :lifecycle])
     |> Repo.one()
@@ -310,13 +312,13 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp ensure_feed_thread(config, thread) do
     if to_string(thread) in config.feed_threads,
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("Press Feed thread is disabled")}
+      else: {:error, ErrorCat.custom("Press Feed thread is disabled")}
   end
 
   defp ensure_thread_enabled(community, thread) do
     if thread_enabled?(community, thread),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("Community thread is disabled")}
+      else: {:error, ErrorCat.custom("Community thread is disabled")}
   end
 
   defp thread_enabled?(community, thread) do
@@ -327,7 +329,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp ensure_enabled(config, field) do
     if Map.get(config, field),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("Press output is disabled")}
+      else: {:error, ErrorCat.custom("Press output is disabled")}
   end
 
   defp bounded_limit(value, configured) when is_integer(value), do: min(max(value, 1), configured)

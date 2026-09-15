@@ -13,15 +13,19 @@ defmodule GroupherServer.CMS.Events.Audition do
         -> AuditBot
         -> persisted moderation state
   """
+
+  require GroupherServer.CMS.ErrorCat
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
 
-  alias GroupherServer.CMS.Events.Event
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.Events.Event
+  alias CMS.Model.Comment
   alias Helper.AuditBot
 
-  @behaviour GroupherServer.CMS.Events.Handler
+  @behaviour CMS.Events.Handler
 
   @type audition_result :: {:ok, map()} | {:error, map()}
   @type handle_result :: {:ok, term()} | {:error, term()}
@@ -124,13 +128,13 @@ defmodule GroupherServer.CMS.Events.Audition do
     case fun.() do
       # Background jobs may run after community/content cleanup.
       {:error,
-       %GroupherServer.ErrorCat.Error{
+       ErrorCat.error_pattern(
          reason: :custom,
          details: %{reason: :not_exist}
-       }} ->
+       )} ->
         {:ok, :pass}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
+      {:error, ErrorCat.error_pattern(reason: :not_exist)} ->
         {:ok, :pass}
 
       result ->

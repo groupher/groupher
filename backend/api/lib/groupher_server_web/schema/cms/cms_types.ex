@@ -22,13 +22,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Dashboard.ThemePreset
-  alias GroupherServer.CMS.Dashboard.ThirdPartyAnalytics
-  alias GroupherServer.CMS.Marker
-  alias GroupherServer.CMS.Model.{Community, CoverBackground}
-  alias GroupherServer.CMS.Passport.Registry
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
+  alias CMS.Marker
+  alias CMS.Model.{Community, CoverBackground}
+  alias CMS.Passport.Registry
   alias GroupherServerWeb.Schema
   alias Helper.ORM
 

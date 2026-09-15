@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.BlogArchive do
   @moduledoc false
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
 
-  @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
+  @archive_threshold CMS.Artiment.Config.archive_threshold()
   @blog_archive_threshold Datetime.shift(
                             @now,
                             @archive_threshold[:blog] || @archive_threshold[:default]
@@ -43,7 +44,7 @@ defmodule GroupherServer.Test.CMS.BlogArchive do
 
       archived_blog = archived_blogs |> List.first()
       {:error, reason} = CMS.Articles.update(archived_blog, %{"title" => "new title"})
-      assert %GroupherServer.ErrorCat.Error{reason: :article_archived} = reason
+      assert %ErrorCat.Error{reason: :article_archived} = reason
     end
 
     test "can not delete archived blog" do

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Scope.Article do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Builds complete public Article visibility into one query.
 
@@ -10,30 +9,31 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
         -> public Article boundary
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
+  alias GroupherServer.{Accounts, CMS}
 
+  alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.ErrorCat
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy}
+  alias CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
 
   @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
   @draft_lifecycle_states [:draft_only, :published, :archived]
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :read_draft, :list]
   @management_policy_modes [:owner_management, :moderator_management, :operations]
 
   @doc "Compiles Article or Doc visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), ArticleContext.t() | DocContext.t()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context)
       when (is_struct(context, ArticleContext) or is_struct(context, DocContext)) and
@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   @doc false
   @spec moderation_diagnostic_scope(Ecto.Queryable.t(), atom()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   def moderation_diagnostic_scope(queryable, thread) do
     query = Ecto.Queryable.to_query(queryable)
     branch_id = if thread == :doc, do: :main, else: nil

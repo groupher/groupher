@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{Activity, CMS}
+  alias CMS.Model.{
     ArticleLifecycle,
     ArtimentMention,
     Comment,
@@ -12,9 +13,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     TrashedArticle
   }
 
-  alias GroupherServer.Activity.Model.PostLog
+  alias Activity.Model.PostLog
 
-  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
+  @site_host CMS.ArtimentMentions.Config.site_host()
 
   test "Trash hides, lists and restores one logical Article without deleting content" do
     {community, post, _attrs, user} = mock_article(:post)
@@ -239,7 +240,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "standalone Doc Trash is rejected so Tree placement cannot become dangling" do
     {_community, doc, _attrs, user} = mock_article(:doc)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
              CMS.Articles.trash(doc, user)
 
     assert message =~ "Docs Tree lifecycle"

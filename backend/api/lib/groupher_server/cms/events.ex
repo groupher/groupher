@@ -24,13 +24,23 @@ defmodule GroupherServer.CMS.Events do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
+  alias CMS.Events.Event
 
   @type event_result :: {:ok, term()} | {:error, term()}
+  @notification_events [
+    :notify_comment,
+    :notify_reply,
+    :notify_upvote,
+    :notify_collect,
+    :notify_undo_upvote,
+    :notify_undo_collect
+  ]
 
-  @spec emit(atom(), map(), map()) :: event_result()
   @doc "Runs `emit` through the public `Events` boundary."
+  @spec emit(atom(), map(), map()) :: event_result()
   def emit(type, payload, meta \\ %{}) when is_atom(type) and is_map(payload) and is_map(meta) do
     event = %Event{type: type, payload: payload, meta: meta}
 
@@ -45,14 +55,7 @@ defmodule GroupherServer.CMS.Events do
   defp route(:subscribe_community), do: {:ok, __MODULE__.SubscribeCommunity}
 
   defp route(type)
-       when type in [
-              :notify_comment,
-              :notify_reply,
-              :notify_upvote,
-              :notify_collect,
-              :notify_undo_upvote,
-              :notify_undo_collect
-            ] do
+       when type in @notification_events do
     {:ok, __MODULE__.Notify}
   end
 

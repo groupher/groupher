@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Tags do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Owns community-tag creation, update, grouping, and article assignment workflows.
 
@@ -10,19 +9,18 @@ defmodule GroupherServer.CMS.Communities.Tags do
         -> Tags
         -> Repo / Oban
   """
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
   import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.{Community, CommunityTag, CommunityTagGroup}
+  alias Accounts.Model.User
+  alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
+  alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, T}
 
   @doc """

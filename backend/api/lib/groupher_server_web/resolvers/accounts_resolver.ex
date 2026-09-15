@@ -9,14 +9,15 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
         -> Accounts
         -> web or domain boundary
   """
+  require GroupherServer.Accounts.Profiles.ErrorCat
+
   import ShortMaps
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.{Accounts, Auth, CMS}
+  alias Accounts.Profiles.ErrorCat
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Passport.Registry
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias Accounts.Model.User
+  alias CMS.Passport.Registry
+  alias Auth.Contract, as: AuthContract
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
   def me(_root, _args, _info), do: {:ok, nil}
@@ -131,7 +132,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   defp browser_session_result(result), do: result
 
-  defp error_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp error_reason(ErrorCat.error_pattern(reason: reason)), do: reason
   defp error_reason(reason) when is_atom(reason), do: reason
   defp error_reason(_reason), do: :unknown
 

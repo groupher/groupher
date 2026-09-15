@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Publish do
-  require GroupherServer.CMS.Docs.Const
-
   @moduledoc """
   Owns the only transition from a main Draft to the permanent public runtime row.
 
@@ -29,11 +27,18 @@ defmodule GroupherServer.CMS.Articles.Publish do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.BodyBag
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Const
 
-  alias GroupherServer.CMS.Articles.{
+  import Helper.Utils, only: [plural: 1]
+  import Ecto.Query
+
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias CMS.{Articles, ErrorCat}
+  alias Accounts.Model.User
+  alias CMS.Artiment.BodyBag
+
+  alias CMS.Articles.{
     Document,
     Draft,
     MutationLock,
@@ -42,24 +47,17 @@ defmodule GroupherServer.CMS.Articles.Publish do
     Write
   }
 
-  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias GroupherServer.CMS.Model.ArticleLifecycle, as: ArticleLifecycleModel
-  alias GroupherServer.CMS.Docs.{Branch, Snapshot}
-  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
-
+  alias CMS.Articles.Lifecycle, as: ArticleLifecycleService
+  alias CMS.Docs.{Branch, Snapshot}
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
   alias Ecto.Multi
-  alias GroupherServer.CMS.{Assets, Communities, Events, Gate}
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishRateLimit
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias CMS.{Assets, Communities, Events, Gate}
+  alias CMS.Gate.Decision
+  alias CMS.Gate.RateLimit.Publish, as: PublishRateLimit
+  alias CMS.Model.{ArticleDocument, ArticleLifecycle, Author, Community, DocSnapshot}
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
-
-  import Helper.Utils, only: [plural: 1]
-  import Ecto.Query
-
-  require CMS.Const
 
   @doc "Creates a main Draft and publishes it atomically for direct-publish products."
   @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
@@ -280,7 +278,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   defp validate_publish_branch(_thread, branch) do
     if is_nil(branch),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("ordinary Articles have no branch")}
+      else: {:error, ErrorCat.custom("ordinary Articles have no branch")}
   end
 
   defp apply_draft(%Community{} = community, thread, branch, draft) do
@@ -430,7 +428,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   defp validate_version(%{slug: slug}) when is_binary(slug) do
     if Slug.valid?(slug),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("Article slug is invalid")}
+      else: {:error, ErrorCat.custom("Article slug is invalid")}
   end
 
   defp validate_version(_article), do: :ok
@@ -440,9 +438,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
     case Map.fetch(opts, :expected_version) do
       {:ok, ^version} -> :ok
-      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      :error when required? -> {:error, Articles.ErrorCat.draft_conflict()}
       :error -> :ok
-      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      _ -> {:error, Articles.ErrorCat.draft_conflict()}
     end
   end
 
@@ -451,9 +449,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
     case Keyword.fetch(opts, :expected_version) do
       {:ok, ^version} -> :ok
-      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      :error when required? -> {:error, Articles.ErrorCat.draft_conflict()}
       :error -> :ok
-      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.draft_conflict()}
+      _ -> {:error, Articles.ErrorCat.draft_conflict()}
     end
   end
 
@@ -464,9 +462,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
     case Map.fetch(opts, :expected_lifecycle_version) do
       {:ok, ^version} -> :ok
-      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      :error when required? -> {:error, Articles.ErrorCat.lifecycle_conflict()}
       :error -> :ok
-      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      _ -> {:error, Articles.ErrorCat.lifecycle_conflict()}
     end
   end
 
@@ -475,9 +473,9 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
     case Keyword.fetch(opts, :expected_lifecycle_version) do
       {:ok, ^version} -> :ok
-      :error when required? -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      :error when required? -> {:error, Articles.ErrorCat.lifecycle_conflict()}
       :error -> :ok
-      _ -> {:error, GroupherServer.CMS.Articles.ErrorCat.lifecycle_conflict()}
+      _ -> {:error, Articles.ErrorCat.lifecycle_conflict()}
     end
   end
 
@@ -494,7 +492,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
   defp transition_lifecycle(community, thread, draft, _branch, state, opts) do
     lifecycle_query =
-      ArticleLifecycleModel
+      ArticleLifecycle
       |> where(
         [lifecycle],
         lifecycle.community_id == ^community.id and lifecycle.thread == ^thread and
@@ -502,11 +500,11 @@ defmodule GroupherServer.CMS.Articles.Publish do
       )
       |> lock("FOR UPDATE")
 
-    with %ArticleLifecycleModel{} = lifecycle <- Repo.one(lifecycle_query),
+    with %ArticleLifecycle{} = lifecycle <- Repo.one(lifecycle_query),
          :ok <- ensure_expected_lifecycle_version(lifecycle, opts) do
-      ArticleLifecycle.transition(lifecycle, state)
+      ArticleLifecycleService.transition(lifecycle, state)
     else
-      nil -> {:error, GroupherServer.CMS.ErrorCat.lifecycle_not_found()}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
       error -> error
     end
   end

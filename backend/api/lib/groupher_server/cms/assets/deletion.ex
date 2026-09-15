@@ -16,14 +16,16 @@ defmodule GroupherServer.CMS.Assets.Deletion do
 
   use Tesla
 
+  require Logger
+  require GroupherServer.CMS.Assets.ErrorCat
+
   import Ecto.Query, only: [from: 2]
 
-  require Logger
+  alias GroupherServer.{CMS, Repo, ServiceAuth}
 
-  alias GroupherServer.{CMS, Repo}
   alias CMS.Assets.{ErrorCat, Writer}
   alias CMS.Model.{Community, CommunityAsset}
-  alias GroupherServer.ServiceAuth.Client
+  alias ServiceAuth.Client
 
   @timeout 10_000
 
@@ -81,7 +83,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
       :ok ->
         :ok
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :skipped}} ->
+      {:error, ErrorCat.error_pattern(reason: :skipped)} ->
         :ok
 
       {:error, reason} ->

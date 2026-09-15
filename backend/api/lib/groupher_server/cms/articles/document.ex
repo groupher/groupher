@@ -10,11 +10,13 @@ defmodule GroupherServer.CMS.Articles.Document do
         -> Document
         -> Repo / domain event
   """
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.{ArticleDocument, Doc}
+  alias GroupherServer.CMS
+
+  alias CMS.{ErrorCat, Artiment.BodyBag, FrontDesk}
+  alias CMS.Model.{ArticleDocument, Doc}
   alias Helper.{ORM, T}
 
   @type document_result :: {:ok, map()} | {:error, map()}
@@ -76,10 +78,10 @@ defmodule GroupherServer.CMS.Articles.Document do
   def update_doc(%Doc{}, _attrs), do: body_bag_required_error()
 
   defp document_already_exists_error,
-    do: {:error, GroupherServer.ErrorCat.custom("document already exists")}
+    do: {:error, ErrorCat.custom("document already exists")}
 
   defp body_bag_required_error,
-    do: {:error, GroupherServer.ErrorCat.custom("Article BodyBag is required")}
+    do: {:error, ErrorCat.custom("Article BodyBag is required")}
 
   defp article_document_exists?(%Doc{} = article) do
     {:ok, count} =

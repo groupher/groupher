@@ -7,7 +7,9 @@ defmodule GroupherServer.CMS.CommandReceipt.Key do
         -> validated UUID, command_id_required or command_id_invalid
   """
 
-  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
 
   @doc """
   Resolves a direct command id.

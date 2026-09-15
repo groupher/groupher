@@ -7,8 +7,8 @@ defmodule GroupherServer.Activity.Filter do
   Presets only compose existing filter atoms. They do not own a second query path.
   """
 
-  alias GroupherServer.Activity.ErrorCat
-  alias GroupherServer.Activity.Const
+  alias GroupherServer.Activity
+  alias Activity.{Const, ErrorCat}
 
   @list_dimensions [
     :resource_types,

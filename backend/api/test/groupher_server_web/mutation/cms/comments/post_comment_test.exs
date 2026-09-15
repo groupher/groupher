@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
   end
@@ -98,14 +102,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
@@ -148,14 +152,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
@@ -200,7 +204,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
@@ -222,7 +226,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
@@ -248,7 +252,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:report_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
@@ -277,7 +281,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_report_comment),
                undo_variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_report_comment), undo_variables)
@@ -402,7 +406,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:emotion_to_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.emotion_not_allowed())
+               ErrorCat.code(ArticleErrorCat.emotion_not_allowed())
              )
     end
   end
@@ -433,7 +437,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Article.m(:lock_comment, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -466,7 +470,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Article.m(:unlock_comment, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end
@@ -493,7 +497,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -521,7 +525,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

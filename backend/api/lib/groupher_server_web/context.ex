@@ -14,6 +14,8 @@ defmodule GroupherServerWeb.Context do
         -> Absinthe resolver
   """
 
+  require GroupherServerWeb.ErrorCat
+
   @allow_test_service_auth Application.compile_env(
                              :groupher_server,
                              :allow_test_service_auth,
@@ -24,13 +26,14 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, Auth, CMS}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.BrowserSessions
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias Accounts.Model.User
+  alias Accounts.Profiles.BrowserSessions
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.ServiceAuth.Verifier
+  alias GroupherServerWeb.ErrorCat
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
 
@@ -85,7 +88,7 @@ defmodule GroupherServerWeb.Context do
 
   defp maybe_bind_delegated_actor(context), do: context
 
-  defp service_auth_failure_code(%GroupherServer.ErrorCat.Error{reason: :jwks_unavailable}),
+  defp service_auth_failure_code(ErrorCat.error_pattern(reason: :jwks_unavailable)),
     do: AuthContract.service_jwks_unavailable()
 
   defp service_auth_failure_code(_reason), do: AuthContract.service_token_invalid()

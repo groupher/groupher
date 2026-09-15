@@ -14,7 +14,8 @@ defmodule Helper.Guardian do
   """
   use Guardian, otp_app: :groupher_server
 
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   @token_expiration 24 * 30
   @legacy_issuer "groupher_server"

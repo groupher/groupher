@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
-  require GroupherServer.CMS.Docs.Const
-  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   Compiles the public ancestor-Community boundary for CMS child resources.
 
@@ -17,13 +15,18 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
         -> public Community boundary
   """
 
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Communities.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Docs.Const
-  alias GroupherServer.CMS.Gate.ErrorCat
+  alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Communities
+  alias CMS.Docs.Const
+  alias CMS.Gate.ErrorCat
+
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     Community,
@@ -33,11 +36,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     DocLifecycle
   }
 
-
-  require Const
-
-  @community_normal GroupherServer.CMS.Communities.Const.pending_state(:normal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @community_normal CMS.Communities.Const.pending_state(:normal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
   @document_public_article_states [:published, :archived]
   @document_draft_article_states [:draft_only, :published, :archived]
   @reserved_aliases [
@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   ]
 
   @doc false
-  @spec article(Ecto.Query.t()) :: Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec article(Ecto.Query.t()) :: Ecto.Query.t() | {:error, ErrorCat.error()}
   def article(%Ecto.Query{} = query, policy_mode \\ :public) do
     with :ok <-
            reject_conflicting_scope_joins(query, [ArticleLifecycle, Community, CommunityLifecycle]) do
@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   end
 
   @doc false
-  @spec direct(Ecto.Query.t()) :: Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec direct(Ecto.Query.t()) :: Ecto.Query.t() | {:error, ErrorCat.error()}
   def direct(%Ecto.Query{} = query) do
     with :ok <-
            reject_conflicting_scope_joins(query, [
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   @doc false
   @spec comment(Ecto.Query.t(), atom(), module()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   def comment(%Ecto.Query{} = query, thread, article_schema) do
     with :ok <-
            reject_conflicting_scope_joins(query, [
@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   @doc false
   @spec document(Ecto.Query.t(), atom(), module(), atom(), atom(), integer() | :main | nil) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   def document(
         %Ecto.Query{} = query,
         thread,
@@ -288,7 +288,7 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
 
   @doc "Rejects joins and aliases owned by the Gate Scope query."
   @spec reject_conflicting_scope_joins(Ecto.Query.t(), [module()]) ::
-          :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+          :ok | {:error, ErrorCat.error()}
   def reject_conflicting_scope_joins(%Ecto.Query{aliases: aliases, joins: joins}, owned_schemas) do
     alias_conflict? = Enum.any?(@reserved_aliases, &Map.has_key?(aliases, &1))
 

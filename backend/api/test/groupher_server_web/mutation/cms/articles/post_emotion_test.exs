@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Model.ArticleUserEmotion
+  alias GroupherServer.CMS
+  alias CMS.Articles.ErrorCat
+  alias CMS.Model.ArticleUserEmotion
 
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))

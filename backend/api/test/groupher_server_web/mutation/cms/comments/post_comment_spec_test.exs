@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+
   setup do
     {community, post, _, user} = mock_article(:post)
 
@@ -49,14 +52,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Gate.ErrorCat.permission_denied())
+               ErrorCat.code(GateErrorCat.permission_denied())
              )
 
       assert guest_conn
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -93,14 +96,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Gate.ErrorCat.permission_denied())
+               ErrorCat.code(GateErrorCat.permission_denied())
              )
 
       assert guest_conn
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

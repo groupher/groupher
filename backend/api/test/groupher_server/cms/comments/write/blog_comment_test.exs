@@ -3,11 +3,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Comments.Lifecycle
-  alias GroupherServer.CMS.Model.PinnedComment
+  alias GroupherServer.CMS
+  alias CMS.Comments.{InteractionResponse, Lifecycle}
+  alias CMS.Model.PinnedComment
 
-  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
+  @active_period CMS.Artiment.Config.active_period_days()
 
   @delete_hint Comment.delete_hint()
   @report_threshold_for_fold Comment.report_threshold_for_fold()
@@ -463,7 +463,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogComment do
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :comment_pin_limit,
                 details: @pinned_comment_limit
               }} =

@@ -1,7 +1,4 @@
 defmodule Helper.PermissionConfig do
-  alias GroupherServer.CMS.Artiment.Config
-  alias GroupherServer.CMS.Passport.ErrorCat
-
   @moduledoc """
   Centralized permission configuration for CMS authorization.
 
@@ -11,6 +8,10 @@ defmodule Helper.PermissionConfig do
         -> PermissionConfig
         -> normalized value / infrastructure
   """
+
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Config
+  alias CMS.Passport.ErrorCat
 
   @contexts ["cms"]
   @article_ops [

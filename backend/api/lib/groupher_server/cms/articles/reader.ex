@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Reader do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Reader helpers for articles.
 
@@ -12,33 +11,29 @@ defmodule GroupherServer.CMS.Articles.Reader do
         -> Repo / domain event
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-
-  alias GroupherServer.CMS.{
-    Interactions
-  }
-
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Articles.Response
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Scope
-  alias GroupherServer.CMS.Model.{Community, DocBranch, PinnedArticle}
+  alias Accounts.Model.User
+  alias CMS.Interactions
+  alias CMS.Articles.{ErrorCat, Response}
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Scope
+  alias CMS.Model.{Community, DocBranch, PinnedArticle}
   alias Helper.{Datetime, Multi, ORM, T}
 
-
-  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
+  @active_period CMS.Artiment.Config.active_period_days()
+  @threads CMS.Artiment.Config.threads()
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Reads one article by community, thread, and inner id for an anonymous viewer.
@@ -150,7 +145,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
            type: CMS.Docs.Const.doc_branch_type(:main)
          ) do
       %DocBranch{id: branch_id} ->
-        {:ok, DocScope.public_branch(branch_id)}
+        {:ok, DocContext.public_branch(branch_id)}
 
       nil ->
         {:error, CMS.Articles.ErrorCat.not_exist("Doc main branch")}
@@ -158,7 +153,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   defp public_scope_context(_community_id, thread),
-    do: {:ok, ArticleScope.public(thread)}
+    do: {:ok, ArticleContext.public(thread)}
 
   defp diagnose_moderation(model, community_id, thread, inner_id) do
     model

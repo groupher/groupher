@@ -13,29 +13,31 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Artiment.Config
-  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias GroupherServer.CMS.FrontDesk.{Article, Community, Relation}
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.Comment, as: CommentModel
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias CMS.Artiment.Config
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias CMS.FrontDesk.{Article, Community, Relation}
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
   @threads Config.threads()
 
   @doc "Reads one Comment from a structured path or database id."
-  @spec read(map()) :: T.domain_res(CommentModel.t())
+  @spec read(map()) :: T.domain_res(Comment.t())
   def read(comment_path) when is_map(comment_path), do: read(comment_path, [])
 
-  @spec read(integer()) :: T.domain_res(CommentModel.t())
+  @spec read(integer()) :: T.domain_res(Comment.t())
   def read(comment_id) when is_integer(comment_id) do
-    with {:ok, comment} <- ORM.find(CommentModel, comment_id, preload: :author) do
+    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       ORM.fill_meta(comment)
     end
   end
 
   @doc "Reads one Comment path with explicit preload options."
-  @spec read(map(), keyword()) :: T.domain_res(CommentModel.t())
+  @spec read(map(), keyword()) :: T.domain_res(Comment.t())
   def read(comment_path, opts) when is_map(comment_path) and is_list(opts) do
     with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
       read(article_path, inner_id, opts)
@@ -43,7 +45,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   end
 
   @doc "Reads one Comment under a structured Article path."
-  @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(CommentModel.t())
+  @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
   def read(article_path, inner_id, opts) do
     preload = Keyword.get(opts, :preload, :author)
 
@@ -54,7 +56,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
          {:ok, article} <- Article.read(community, thread, article_inner_id, []),
          {:ok, info} <- match(thread),
          query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
-         {:ok, comment} <- ORM.find_by(CommentModel, query, preload: preload) do
+         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
       ORM.fill_meta(comment)
     end
   end
@@ -62,7 +64,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   @doc "Returns the parent Article and author information for one Comment."
   @spec full(integer()) :: T.domain_res(T.article_info())
   def full(comment_id) do
-    query = from(comment in CommentModel, where: comment.id == ^comment_id, preload: ^@threads)
+    query = from(comment in Comment, where: comment.id == ^comment_id, preload: ^@threads)
 
     with {:ok, comment} <- Repo.one(query) |> comment_done(),
          {:ok, thread} <- Relation.thread_of(comment) do
@@ -101,7 +103,7 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     end
   end
 
-  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
+  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   defp done(result), do: {:ok, result}
 
   defp comment_done(nil), do: {:error, CommentErrorCat.not_exist("comment not found")}

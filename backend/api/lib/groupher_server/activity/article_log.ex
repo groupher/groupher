@@ -5,15 +5,17 @@ defmodule GroupherServer.Activity.ArticleLog do
       Article read scope -> contract-visible action subset -> safe projection
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Activity.Artiment
-  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticlesErrorCat
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.Repo
+  alias GroupherServer.{Activity, CMS, Repo}
+
+  alias CMS.Artiment.Matcher
+  alias Activity.Artiment
+  alias Activity.ErrorCat, as: ActivityErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticlesErrorCat
+  alias CMS.Gate
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias Helper.ORM
 
   @page_size 20
@@ -58,19 +60,19 @@ defmodule GroupherServer.Activity.ArticleLog do
   end
 
   defp scope_context(%{stage: :draft, branch_id: branch_id}, :doc) when not is_nil(branch_id),
-    do: {:ok, :read_draft, DocScope.draft(branch_id, :owner_management)}
+    do: {:ok, :read_draft, DocContext.draft(branch_id, :owner_management)}
 
   defp scope_context(%{stage: :public, branch_id: branch_id}, :doc) when not is_nil(branch_id),
-    do: {:ok, :read, DocScope.public_branch(branch_id)}
+    do: {:ok, :read, DocContext.public_branch(branch_id)}
 
   defp scope_context(%{stage: :draft}, thread),
-    do: {:ok, :read_draft, ArticleScope.draft(thread, :owner_management)}
+    do: {:ok, :read_draft, ArticleContext.draft(thread, :owner_management)}
 
   defp scope_context(%{stage: :public}, thread),
-    do: {:ok, :read, ArticleScope.public(thread)}
+    do: {:ok, :read, ArticleContext.public(thread)}
 
   defp scope_context(_article, _thread),
-    do: {:error, GroupherServer.ErrorCat.custom("invalid Activity Article scope")}
+    do: {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
 
   defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id),
     do: where(query, [log], log.branch_ref == ^to_string(branch_id))

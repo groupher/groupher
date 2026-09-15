@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.CollectFolders.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.CollectFolders.ErrorCat
 
   @total_count 20
 

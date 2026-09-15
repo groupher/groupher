@@ -11,14 +11,17 @@ defmodule GroupherServer.CMS.Comments.Reader do
         -> Repo / domain event
   """
 
-  import Ecto.Query, warn: false
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
+  require GroupherServer.CMS.Comments.ErrorCat
 
-  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
+  import Ecto.Query, warn: false
+
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
   alias CMS.Comments.InteractionResponse
   alias CMS.FrontDesk
-  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
@@ -114,19 +117,19 @@ defmodule GroupherServer.CMS.Comments.Reader do
 
   defp normalize_error(
          {:error,
-          %GroupherServer.ErrorCat.Error{
+          CommentErrorCat.error_pattern(
             reason: :custom,
             details: %{reason: :not_exist, message: message}
-          }}
+          )}
        ),
        do: {:error, CommentErrorCat.not_exist(to_string(message))}
 
   defp normalize_error(
          {:error,
-          %GroupherServer.ErrorCat.Error{
+          CommentErrorCat.error_pattern(
             reason: :custom,
             details: %{reason: :not_exist}
-          }}
+          )}
        ),
        do: {:error, CommentErrorCat.not_exist("comment not found")}
 
@@ -164,8 +167,8 @@ defmodule GroupherServer.CMS.Comments.Reader do
     InteractionResponse.one(comment, user)
   end
 
-  defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)
-  defp comment_scope(thread), do: CommentScope.for_thread(thread)
+  defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
+  defp comment_scope(thread), do: CommentContext.for_thread(thread)
 
   defp parse_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
 

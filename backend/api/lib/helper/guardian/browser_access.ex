@@ -15,8 +15,9 @@ defmodule Helper.Guardian.BrowserAccess do
 
   use Guardian, otp_app: :groupher_server
 
-  alias GroupherServer.Accounts.Profiles.ErrorCat
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.{Accounts, Auth}
+  alias Accounts.Profiles.ErrorCat
+  alias Auth.Contract, as: AuthContract
 
   @access_ttl_seconds 30 * 60
 

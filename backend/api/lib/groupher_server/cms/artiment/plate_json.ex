@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Artiment.PlateJSON do
-  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Decodes the canonical Plate JSON envelope without deriving content formats.
 
@@ -17,6 +16,10 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
         -> PlateJSON
         -> Repo / domain event
   """
+
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
 
   @doc "Decodes a persisted Plate JSON root list without deriving content formats."
   @spec decode(String.t()) :: {:ok, list()} | {:error, term()}

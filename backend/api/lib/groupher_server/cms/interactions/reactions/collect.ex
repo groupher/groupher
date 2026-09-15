@@ -9,16 +9,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         -> post-commit notification
   """
 
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.Accounts.Model.User
   import Ecto.Query
 
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.{Events, Gate}
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Interactions.{ErrorCat, ReadState}
-  alias GroupherServer.CMS.Model.{ArticleCollect, Author}
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Articles.MutationLock
+  alias CMS.Artiment.Matcher
+  alias CMS.{Events, FrontDesk, Gate}
+  alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Model.{ArticleCollect, Author}
   alias Helper.{Later, T}
 
   @doc """

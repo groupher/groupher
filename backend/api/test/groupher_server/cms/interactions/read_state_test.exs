@@ -3,11 +3,12 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   import Ecto.Query
 
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+  alias ErrorCat.Error
 
-  alias GroupherServer.Accounts.Model.Achievement
+  alias Accounts.Model.Achievement
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleCollect,
     ArticleLifecycle,
     ArticleUpvote,
@@ -17,8 +18,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     PostReactionInfo
   }
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.Repo
+  alias CMS.Interactions.ViewEvents
 
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)

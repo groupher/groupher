@@ -3,7 +3,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{Post, TrashedArticle}
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.{Post, TrashedArticle}
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -61,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             ErrorCat.code(ProfileErrorCat.account_login())
            )
 
     unrelated = simu_conn(:user, cms: %{community.slug => %{"post.edit" => true}})
@@ -70,7 +74,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.passport())
            )
 
     moderator = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
@@ -89,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              S.Article.m(:trash_article),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.passport())
            )
 
     assert {:ok, _} = CMS.Articles.read(community_b, :post, post_b.inner_id)

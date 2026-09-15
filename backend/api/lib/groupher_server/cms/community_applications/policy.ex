@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.CommunityApplications.Policy do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Model.CommunityApplication
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Communities.ErrorCat
+  alias CMS.Model.CommunityApplication
 
   @doc """
   Returns whether the user may create a community application.

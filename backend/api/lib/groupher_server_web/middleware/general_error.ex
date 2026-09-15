@@ -16,6 +16,8 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
 
   @behaviour Absinthe.Middleware
 
+  alias GroupherServer.ErrorCat
+
   # legacy string errors
   def call(%{errors: [error]} = resolution, _) when is_binary(error) do
     %{resolution | value: [], errors: [%{message: error}]}
@@ -33,9 +35,7 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
   # Legacy tuple errors are not part of the ErrorCat contract. Keep the
   # transport safe without guessing a domain code from their contents.
   def call(%{errors: [error]} = resolution, _) when is_tuple(error) do
-    case GroupherServer.ErrorCat.gq_format(
-           GroupherServer.ErrorCat.custom("Unexpected legacy domain error.")
-         ) do
+    case ErrorCat.gq_format(ErrorCat.custom("Unexpected legacy domain error.")) do
       {:error, [message: message, code: code]} ->
         %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
 
@@ -45,8 +45,8 @@ defmodule GroupherServerWeb.Middleware.GeneralError do
   end
 
   # typed ErrorCat domain errors
-  def call(%{errors: [%GroupherServer.ErrorCat.Error{} = error]} = resolution, _) do
-    case GroupherServer.ErrorCat.gq_format(error) do
+  def call(%{errors: [%ErrorCat.Error{} = error]} = resolution, _) do
+    case ErrorCat.gq_format(error) do
       {:error, [message: message, code: code]} ->
         %{resolution | value: [], errors: [%{message: message, extensions: %{code: code}}]}
 

@@ -3,11 +3,11 @@ defmodule GroupherServer.Analysis.WebTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Analysis.Web
-  alias GroupherServer.Analysis.Web.Config
-  alias GroupherServer.Analysis.Web.Provider.Umami
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{Analysis, CMS, ErrorCat}
+  alias Analysis.Web
+  alias Analysis.Web.{Config, Provider.Umami}
+  alias CMS.Model.Community
+  alias ErrorCat.Error
 
   describe "config" do
     test "returns static base config without reading runtime env" do

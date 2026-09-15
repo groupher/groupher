@@ -12,16 +12,17 @@ defmodule GroupherServer.CMS.DocCover.Reader do
   Nested descendants are never flattened into the parent Card.
   """
 
+  require GroupherServer.CMS.Const
+  require GroupherServer.CMS.DocCover.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, Doc, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
-  alias Helper.T
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require CMS.Const
-  require GroupherServer.CMS.DocCover.Const
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat
+  alias CMS.Model.{Community, Doc, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
+  alias Helper.T
 
   @type view :: :public | :dashboard
 

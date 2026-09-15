@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Model.DocsSiteState
+  alias GroupherServer.CMS
+  alias CMS.Communities.Lifecycle
+  alias CMS.Model.DocsSiteState
 
   describe "[doc tree tabs]" do
     test "creates an empty independent tab and allows deleting the last tab" do
@@ -63,7 +64,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
         )
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :community},
                 reason: :not_exist,
                 details: "Community"

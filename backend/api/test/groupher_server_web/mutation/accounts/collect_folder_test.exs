@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Model.CollectFolder
-  alias GroupherServer.Accounts.Profiles.ErrorCat
-  alias GroupherServer.CMS.Model.ArticleCollect
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.CollectFolder
+  alias Accounts.Profiles.ErrorCat
+  alias CMS.Model.ArticleCollect
 
   setup do
     {community, post, _, user} = mock_article(:post)

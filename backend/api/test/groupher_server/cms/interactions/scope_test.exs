@@ -3,11 +3,12 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.Interactions
-  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
-  alias GroupherServer.CMS.Interactions.Const
-  alias GroupherServer.CMS.Model.{Comment, Doc, Post, PostReactionInfo}
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Interactions
+  alias CMS.Articles.Const, as: ArticlesConst
+  alias CMS.Interactions.Const
+  alias CMS.Model.{Comment, Doc, Post, PostReactionInfo}
+  alias ErrorCat.Error
 
   test "keeps the complete order vocabulary in one owner" do
     assert Const.interaction_order_values() == [:upvotes, :collects]

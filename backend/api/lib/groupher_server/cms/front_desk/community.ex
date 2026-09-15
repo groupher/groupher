@@ -12,15 +12,16 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.Model.Community, as: CommunityModel
-  alias CMS.Model.CommunityTag
+  alias CMS.ErrorCat
+
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Model.{Community, CommunityTag}
   alias Helper.{ORM, T}
 
   @doc "Reads one public Community by slug or alias."
-  @spec read(String.t()) :: {:ok, CommunityModel.t()} | {:error, map()}
+  @spec read(String.t()) :: {:ok, Community.t()} | {:error, map()}
   def read(slug) when is_binary(slug) do
-    CMS.Gate.scope(CommunityModel, nil, :read, CommunityScope.public())
+    CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
     |> where([community], community.slug == ^slug or community.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)
@@ -60,6 +61,6 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
     |> done()
   end
 
-  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
+  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
   defp done(result), do: {:ok, result}
 end

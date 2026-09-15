@@ -3,11 +3,10 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.CommandReceipt
-  alias GroupherServer.CMS.CommandReceipt.Store
-  alias GroupherServer.CMS.Command
-  alias GroupherServer.CMS.DocTree.CommandReplay
-  alias GroupherServer.CMS.Model.CommandReceipt, as: CommandReceiptModel
+  alias GroupherServer.CMS
+  alias CMS.{Command, CommandReceipt}
+  alias CMS.CommandReceipt.Store
+  alias CMS.DocTree.CommandReplay
 
   test "replays the same user command and rejects a different fingerprint" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -42,7 +41,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     assert recovered.id == receipt.id
 
-    assert {:ok, {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_conflict}}} =
+    assert {:ok, {:error, %ErrorCat.Error{reason: :command_id_conflict}}} =
              Repo.transaction(fn ->
                Store.claim(
                  Integer.to_string(user.id),
@@ -74,7 +73,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              end)
 
     refute Repo.exists?(
-             from(receipt in CommandReceiptModel,
+             from(receipt in CMS.Model.CommandReceipt,
                where:
                  receipt.initiator_type == "user" and
                    receipt.initiator_key == ^to_string(user.id) and
@@ -147,7 +146,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                {:ok, %{id: "article-key"}}
              end)
 
-    assert Repo.get_by(CommandReceiptModel, command_id: command_id).command ==
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
              "article.update_draft"
 
     assert {:ok, %{id: "article-key"}} =
@@ -172,9 +171,9 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                {:ok, %{id: "article-key"}}
              end)
 
-    assert Repo.get_by(CommandReceiptModel, command_id: command_id).target_type == "article"
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_type == "article"
 
-    assert Repo.get_by(CommandReceiptModel, command_id: command_id).target_key ==
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_key ==
              to_string(community.id)
   end
 
@@ -196,14 +195,14 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                {:ok, %{id: "tree-1"}}
              end)
 
-    assert Repo.get_by(CommandReceiptModel, command_id: command_id).command ==
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
              "doc.tree.create_tab"
   end
 
   test "a nil command id cannot bypass the receipt boundary" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_required}} =
+    assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
              CommandReceipt.run_internal(
                user,
                nil,
@@ -219,7 +218,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
   test "the nine-argument receipt entry treats nil command id as missing" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_required}} =
+    assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
              CommandReceipt.run_internal(
                user,
                nil,
@@ -237,7 +236,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     for command_id <- [42, false, [], %{}, "", "not-a-uuid"] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+      assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
                CommandReceipt.run_internal(
                  user,
                  command_id,
@@ -250,7 +249,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                )
     end
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+    assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
              CommandReceipt.resolve_command_id(%{command_id: ""})
   end
 
@@ -282,7 +281,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert {:ok, ^generated} = Ecto.UUID.cast(generated)
 
     for invalid <- [42, false, [], %{}, "not-a-uuid"] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_id_invalid}} =
+      assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
                CommandReceipt.resolve_command_id(invalid)
     end
   end
@@ -303,7 +302,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                fn _receipt -> {:ok, %{id: "post-1"}} end
              )
 
-    assert Repo.get_by(CommandReceiptModel,
+    assert Repo.get_by(CMS.Model.CommandReceipt,
              initiator_type: "user",
              initiator_key: to_string(user.id),
              command_id: command_id
@@ -383,7 +382,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              )
 
     refute Repo.exists?(
-             from(receipt in CommandReceiptModel,
+             from(receipt in CMS.Model.CommandReceipt,
                where:
                  receipt.initiator_type == "user" and
                    receipt.initiator_key == ^to_string(user.id) and
@@ -409,7 +408,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                fn _receipt -> {:ok, %{id: "post-1"}} end
              )
 
-    from(receipt in CommandReceiptModel,
+    from(receipt in CMS.Model.CommandReceipt,
       where:
         receipt.initiator_type == "user" and
           receipt.initiator_key == ^to_string(user.id) and
@@ -508,14 +507,14 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
         run.(fn -> {:error, :must_not_execute} end, fn _receipt -> {:ok, %{id: "post-1"}} end)
       end)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :command_resolution_pending}} =
+    assert {:error, %ErrorCat.Error{reason: :command_resolution_pending}} =
              Task.await(second, 6_000)
 
     assert {:ok, _result} = Task.await(first, 6_000)
 
     Ecto.Adapters.SQL.Sandbox.unboxed_run(Repo, fn ->
       Repo.delete_all(
-        from(receipt in CommandReceiptModel,
+        from(receipt in CMS.Model.CommandReceipt,
           where:
             receipt.initiator_type == "user" and
               receipt.initiator_key == ^to_string(user.id) and
@@ -531,7 +530,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     expired =
       Repo.insert!(
-        CommandReceiptModel.changeset(%CommandReceiptModel{}, %{
+        CMS.Model.CommandReceipt.changeset(%CMS.Model.CommandReceipt{}, %{
           initiator_type: "user",
           initiator_key: "1",
           command_id: expired_key,
@@ -546,7 +545,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
 
     active =
       Repo.insert!(
-        CommandReceiptModel.changeset(%CommandReceiptModel{}, %{
+        CMS.Model.CommandReceipt.changeset(%CMS.Model.CommandReceipt{}, %{
           initiator_type: "user",
           initiator_key: "1",
           command_id: active_key,
@@ -560,7 +559,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
       )
 
     assert CommandReceipt.prune_expired() == 1
-    assert Repo.get(CommandReceiptModel, expired.id) == nil
-    assert Repo.get(CommandReceiptModel, active.id)
+    assert Repo.get(CMS.Model.CommandReceipt, expired.id) == nil
+    assert Repo.get(CMS.Model.CommandReceipt, active.id)
   end
 end

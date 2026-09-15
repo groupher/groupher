@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+  alias CMS.Model.Community
   alias GroupherServerWeb.Resolvers.CMS, as: ResolverCMS
 
   test "viewer batch resolvers return empty lists without an authenticated session" do
@@ -152,10 +153,10 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   test "unsupported resources fail closed instead of becoming an empty Article state" do
     community = %Community{id: 1}
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unsupported_artiment}} =
+    assert {:error, %ErrorCat.Error{reason: :unsupported_artiment}} =
              CMS.Interactions.viewer_state(community, nil)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unsupported_artiment}} =
+    assert {:error, %ErrorCat.Error{reason: :unsupported_artiment}} =
              CMS.Interactions.viewer_states([community], nil)
   end
 

@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.DraftVersion do
 
     assert updated.version == 2
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :draft_conflict}} =
+    assert {:error, %ErrorCat.Error{reason: :draft_conflict}} =
              CMS.Articles.update_draft(
                community,
                :post,
@@ -54,7 +54,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.DraftVersion do
         user
       )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :draft_version_required}} =
+    assert {:error, %ErrorCat.Error{reason: :draft_version_required}} =
              CMS.Articles.update_draft(
                community,
                :post,

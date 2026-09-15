@@ -14,12 +14,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
         -> best-effort mention / notification / subscription jobs
   """
 
+  require GroupherServer.CMS.Comments.ErrorCat
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Jobs, Repo}
-
   alias Accounts.Model.User
   alias CMS.{Comments.ErrorCat, Artiment.Const, SearchArtiments.Indexer, Command, FrontDesk, Gate}
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -65,8 +66,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(map())
   def create(thread, article, body, %User{} = user), do: create(thread, article, body, user, nil)
 
-  @spec create(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
-          T.domain_res(map())
   @doc """
   Creates a top-level Comment from an already resolved Article identity.
 
@@ -77,6 +76,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
       CMS.Comments.Writer.create(:post, post, body, actor)
   """
+  @spec create(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
+          T.domain_res(map())
   def create(thread, article, body, %User{} = user, command_id) when is_struct(article) do
     with {:ok, info} <- match(thread) do
       do_create(thread, article, body, user, info, command_id)
@@ -165,8 +166,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @spec reply(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(map())
   def reply(comment_or_id, body, %User{} = user), do: reply(comment_or_id, body, user, nil)
 
-  @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   @doc "Creates a reply using an optional idempotency command id."
+  @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   def reply(%Comment{} = target_comment, body, %User{} = user, command_id) do
     with {:ok, command_id} <- Command.resolve_command_id(command_id) do
       Command.create_user(user, command_id,
@@ -255,7 +256,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  @spec batch_update_question_flag(Post.t(), boolean()) :: T.domain_res(term())
   @doc """
   Refreshes the question-category projection for every Comment under one Post.
 
@@ -263,6 +263,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
       CMS.Comments.Writer.batch_update_question_flag(post, true)
   """
+  @spec batch_update_question_flag(Post.t(), boolean()) :: T.domain_res(term())
   def batch_update_question_flag(%Post{} = post, is_question) do
     from(c in Comment, where: c.post_id == ^post.id)
     |> Repo.update_all(set: [is_for_question: is_question])
@@ -430,7 +431,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
     do: {:error, GateErrorCat.article_comments_locked(details)}
 
   defp normalize_comments_locked(
-         {:error, %GroupherServer.ErrorCat.Error{reason: :article_comments_locked}}
+         {:error, ErrorCat.error_pattern(reason: :article_comments_locked)}
        ),
        do: article_comments_locked("this article is forbid comment")
 

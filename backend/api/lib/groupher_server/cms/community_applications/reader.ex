@@ -13,18 +13,18 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias Accounts.Model.User
+  alias CMS.Communities.ErrorCat
+
+  alias CMS.Model.{
     Community,
     CommunityApplication,
     CommunityApplicationEvent,
     CommunityApplicationLogoUpload,
     CommunityAsset
   }
-
-  alias GroupherServer.Repo
 
   @doc """
   Returns the user's most recent blocking application, if any.
@@ -81,7 +81,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
     {:ok, %{entries: Enum.take(entries, first), has_next_page: length(entries) > first}}
   end
 
-  @spec owned(String.t(), User.t()) :: {:ok, CommunityApplication.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec owned(String.t(), User.t()) ::
+          {:ok, CommunityApplication.t()} | {:error, ErrorCat.error()}
   def owned(public_ref, %User{id: user_id}) when is_binary(public_ref) do
     case Repo.one(
            from(application in CommunityApplication,
@@ -94,7 +95,8 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
     end
   end
 
-  @spec review_detail(String.t()) :: {:ok, CommunityApplication.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec review_detail(String.t()) ::
+          {:ok, CommunityApplication.t()} | {:error, ErrorCat.error()}
   def review_detail(public_ref) when is_binary(public_ref) do
     case Repo.one(
            from(application in CommunityApplication,

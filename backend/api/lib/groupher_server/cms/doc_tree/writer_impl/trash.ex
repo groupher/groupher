@@ -14,17 +14,19 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
         -> Repo / published projection
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Docs.Trash
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias CMS.Articles.MutationLock
+  alias CMS.Docs.Trash
+  alias CMS.DocTree.Events
+  alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.SearchArtiments.Indexer
 
   @doc "Moves the draft root and its corresponding draft/public subtrees into one Trash action."
   def trash_subtree(
@@ -180,7 +182,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
           {count, _items} ->
             {:error,
-             GroupherServer.ErrorCat.custom(
+             ErrorCat.custom(
                "Docs Tree Trash stored #{count} of #{length(rows)} expected snapshots"
              )}
         end
@@ -220,7 +222,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Trash do
 
         if count == length(ids),
           do: :ok,
-          else: {:error, GroupherServer.ErrorCat.custom("Docs Tree changed during Trash")}
+          else: {:error, ErrorCat.custom("Docs Tree changed during Trash")}
     end
   end
 

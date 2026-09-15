@@ -8,17 +8,18 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
       Reactions / ViewEvents.Project -> Sync -> reaction and emotion info rows
   """
 
+  require GroupherServer.CMS.Model.Interaction.RoaringBitmap
+
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Interactions.{Config, ErrorCat}
-  alias GroupherServer.CMS.Model.{Comment, Embeds}
-  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require RoaringBitmap
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.FrontDesk
+  alias CMS.Interactions.{Config, ErrorCat}
+  alias CMS.Model.{Comment, Embeds}
+  alias CMS.Model.Interaction.RoaringBitmap
 
   @article_threads Config.article_threads()
 

@@ -16,8 +16,9 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
 
   @behaviour Absinthe.Middleware
 
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Gate.Decision
+  alias ErrorCat.Error
   alias GroupherServerWeb.Gettext, as: Translator
 
   def call(%{errors: [%Ecto.Changeset{}]} = resolution, _), do: resolution
@@ -29,7 +30,7 @@ defmodule GroupherServerWeb.Middleware.GQLResultFmt do
   def call(%{errors: [error]} = resolution, _) do
     if formattable_domain_error?(error) do
       {:error, [message: message, code: code]} =
-        GroupherServer.ErrorCat.gq_format({:error, error})
+        ErrorCat.gq_format({:error, error})
 
       Absinthe.Resolution.put_result(
         resolution,

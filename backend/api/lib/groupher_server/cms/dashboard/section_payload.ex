@@ -21,9 +21,10 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
 
   import Helper.Utils, only: [strip_struct: 1, deep_merge: 2]
 
-  alias GroupherServer.CMS.Dashboard.LinkValidator
-  alias GroupherServer.CMS.Model.{CommunityDashboard, Embeds}
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{CMS, ErrorCat}
+
+  alias CMS.Dashboard.LinkValidator
+  alias CMS.Model.{CommunityDashboard, Embeds}
 
   # List-like dsb sections are replaced as a whole on each update.
   @replace_section_fields [

@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Helper.Transaction do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+  alias CMS.Model.Community
   alias Helper.Transaction
 
   describe "lock_global/2" do
@@ -22,7 +23,7 @@ defmodule GroupherServer.Test.Helper.Transaction do
     end
 
     test "returns business error from callback" do
-      locked_error = GroupherServer.ErrorCat.custom("locked failed")
+      locked_error = ErrorCat.custom("locked failed")
 
       assert {:error, ^locked_error} =
                Transaction.lock_global("test:transaction:lock_global:error", fn ->
@@ -58,7 +59,7 @@ defmodule GroupherServer.Test.Helper.Transaction do
 
     test "returns resource_not_found for missing row" do
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: %{reason: :resource_not_found, resource: Community}
               }} =

@@ -1,5 +1,4 @@
 defmodule GroupherServer.ServiceAuth.Client do
-  alias GroupherServerWeb.ErrorCat
   @moduledoc """
   Fetches and caches short-lived Auth service tokens for Phoenix.
 
@@ -9,6 +8,8 @@ defmodule GroupherServer.ServiceAuth.Client do
         -> Client
         -> domain / infrastructure boundary
   """
+
+  alias GroupherServerWeb.ErrorCat
 
   @cache_table :groupher_service_token_cache
   @refresh_skew_seconds 30

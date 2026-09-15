@@ -17,12 +17,12 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.CollectFolders.ErrorCat
-  alias GroupherServer.Accounts.Model.{CollectFolder, User}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.CollectFolders.ErrorCat
+  alias Accounts.Model.{CollectFolder, User}
   alias Helper.{ORM, T}
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter) do

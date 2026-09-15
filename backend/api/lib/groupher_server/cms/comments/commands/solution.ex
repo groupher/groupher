@@ -14,11 +14,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Solution do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Comments.ErrorCat
-  alias GroupherServer.CMS.Model.{Comment, Post, PostSolution}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Gate
+  alias CMS.Comments.ErrorCat
+  alias CMS.Model.{Comment, Post, PostSolution}
 
   @doc """
   Accepts or replaces the current solution of a QA Post.

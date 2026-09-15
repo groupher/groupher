@@ -19,6 +19,7 @@ defmodule Helper.UrlSafety do
 
   import Bitwise
 
+  alias GroupherServer.ErrorCat, as: GlobalErrorCat
   alias GroupherServerWeb.ErrorCat
 
   @blocked_hosts MapSet.new([
@@ -44,13 +45,13 @@ defmodule Helper.UrlSafety do
       {:ok, "https://example.com/page"}
 
       iex> UrlSafety.validate_http_url("http://127.0.0.1/admin")
-      {:error, %GroupherServer.ErrorCat.Error{reason: :blocked_ip}}
+      {:error, %GlobalErrorCat.Error{reason: :blocked_ip}}
 
       iex> UrlSafety.validate_http_url("http://localhost:8080")
-      {:error, %GroupherServer.ErrorCat.Error{reason: :blocked_host}}
+      {:error, %GlobalErrorCat.Error{reason: :blocked_host}}
   """
   @spec validate_http_url(String.t(), keyword()) ::
-          {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, String.t()} | {:error, GlobalErrorCat.Error.t()}
   def validate_http_url(url, opts \\ [])
 
   def validate_http_url(url, opts) when is_binary(url) do

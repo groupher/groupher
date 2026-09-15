@@ -11,13 +11,14 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.{Events, Gate, Command}
-  alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
-  alias GroupherServer.CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Communities.Enable
+  alias CMS.{Events, Gate, Command}
+  alias CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias Helper.{Later, T}
 
   @doc """
@@ -130,7 +131,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec decode(String.t(), :article | :comment) ::
-          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, atom()} | {:error, ErrorCat.error()}
   def decode(value, type) when is_binary(value) and type in [:article, :comment] do
     vocabulary = if type == :article, do: Config.emotions(), else: Config.comment_emotions()
 

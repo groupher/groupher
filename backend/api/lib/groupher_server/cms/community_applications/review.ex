@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.CommunityApplications.Review do
-  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Reviewer decisions and recovery transitions for community applications.
 
@@ -12,20 +11,18 @@ defmodule GroupherServer.CMS.CommunityApplications.Review do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Gate.Const
+
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
-  alias GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity
-  alias GroupherServer.CMS.CommunityApplications.Transitions
-  alias GroupherServer.CMS.Gate.Const
-  alias GroupherServer.CMS.Model.CommunityApplication
-  alias GroupherServer.CMS.Passport
-  alias GroupherServer.Repo
-
-  require Const
+  alias Accounts.Model.User
+  alias CMS.Communities.{ErrorCat, NamePolicy, SlugClaims}
+  alias CMS.CommunityApplications.{Jobs.CreateCommunity, Transitions}
+  alias CMS.Gate.Const
+  alias CMS.Model.CommunityApplication
+  alias CMS.Passport
 
   @doc """
   Starts the review of an Application: moves it to `:reviewing` and clears

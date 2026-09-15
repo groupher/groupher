@@ -9,18 +9,20 @@ defmodule GroupherServer.CMS.Communities.Count do
         -> Count
         -> Repo / Oban
   """
+
   import Ecto.Query, only: [from: 2, where: 3]
   import Helper.Utils, only: [plural: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Model.{Community, CommunityTag}
+  alias Accounts.Model.User
+  alias CMS.Articles.Trash
+  alias CMS.Communities.ErrorCat
+  alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Constant, ORM, T, Transaction}
 
-  @threads GroupherServer.CMS.Communities.Config.threads()
+  @threads CMS.Communities.Config.threads()
 
   @doc """
   update community_tags_count / thread / article_count / subscribers_count of a community
@@ -79,7 +81,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   def update(communities, thread) when is_list(communities) do
     case Enum.all?(Enum.uniq(communities), &({:ok, _} = update(&1, thread))) do
       true -> {:ok, :pass}
-      false -> {:error, GroupherServer.ErrorCat.custom("update_community_count_field")}
+      false -> {:error, ErrorCat.custom("update_community_count_field")}
     end
   end
 
@@ -132,7 +134,7 @@ defmodule GroupherServer.CMS.Communities.Count do
     end
   end
 
-  def count(_community, _type), do: {:error, GroupherServer.ErrorCat.custom("invalid count type")}
+  def count(_community, _type), do: {:error, ErrorCat.custom("invalid count type")}
 
   defp recount_articles_count(meta) do
     @threads |> Enum.reduce(0, &(&2 + Map.get(meta, :"#{plural(&1)}_count")))

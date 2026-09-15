@@ -1,6 +1,4 @@
 defmodule GroupherServerWeb.ServiceAuth.Verifier do
-  alias GroupherServerWeb.ErrorCat
-
   @moduledoc """
   Verifies Auth-issued service access JWTs locally from a bounded JWKS cache.
 
@@ -11,6 +9,10 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
         -> Verifier
         -> web or domain boundary
   """
+
+  require GroupherServerWeb.ErrorCat
+
+  alias GroupherServerWeb.ErrorCat
 
   @cache_table :groupher_service_auth_jwks
   @cache_ttl_ms :timer.minutes(5)
@@ -45,7 +47,7 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
          token_id: claims["jti"]
        }}
     else
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, error}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, error}
       _ -> {:error, ErrorCat.invalid_service_token()}
     end
   end

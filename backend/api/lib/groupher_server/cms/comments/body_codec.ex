@@ -16,10 +16,12 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
         -> Repo / domain event
   """
 
-  alias GroupherServer.CMS.Artiment.PlateJSON
-  alias GroupherServer.CMS.Comments.ErrorCat
+  alias GroupherServer.CMS
 
-  @digest_length GroupherServer.CMS.Artiment.Config.digest_length()
+  alias CMS.Artiment.PlateJSON
+  alias CMS.Comments.ErrorCat
+
+  @digest_length CMS.Artiment.Config.digest_length()
 
   @type payload :: %{json: String.t(), html: String.t(), digest: String.t()}
 
@@ -28,14 +30,14 @@ defmodule GroupherServer.CMS.Comments.BodyCodec do
 
   Returns the raw `json`, the sanitized-by-construction `html`, and a plain-text
   `digest` truncated to the configured digest length. Non-string input returns
-  `{:error, %GroupherServer.ErrorCat.Error{reason: :invalid_body}}`.
+  `{:error, ErrorCat.error_pattern(reason: :invalid_body)}`.
 
   ## Examples
 
       {:ok, payload} = CMS.Comments.BodyCodec.parse(body)
 
       CMS.Comments.BodyCodec.parse(nil)
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_body}}
+      #=> {:error, ErrorCat.error_pattern(reason: :invalid_body)}
 
   """
   @spec parse(String.t()) :: {:ok, payload()} | {:error, term()}

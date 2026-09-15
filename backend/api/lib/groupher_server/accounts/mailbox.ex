@@ -21,9 +21,11 @@ defmodule GroupherServer.Accounts.Mailbox do
   import Helper.ErrorHandler, only: [not_found_formatter: 2]
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.Model.{Embeds, User}
-  alias GroupherServer.{ErrorCat, Messaging, Repo}
-  alias GroupherServer.FrontDesk.Cache, as: FrontDeskCache
+  alias GroupherServer.{Accounts, ErrorCat, FrontDesk, Messaging, Repo}
+
+  alias Accounts.Model.{Embeds, User}
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias FrontDesk.Cache, as: FrontDeskCache
   alias Helper.Constant.DBPrefix
 
   @default_status Embeds.UserMailbox.default_status()
@@ -182,10 +184,7 @@ defmodule GroupherServer.Accounts.Mailbox do
         {:ok, users}
 
       missing_user_id ->
-        {:error,
-         GroupherServer.Accounts.Profiles.ErrorCat.not_exist(
-           not_found_formatter(User, missing_user_id)
-         )}
+        {:error, ProfileErrorCat.not_exist(not_found_formatter(User, missing_user_id))}
     end
   end
 

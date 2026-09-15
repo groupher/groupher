@@ -14,12 +14,12 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   aligned before user pages are revalidated.
   """
 
-  alias GroupherServer.Accounts.Achievements
-  alias GroupherServer.Accounts.{Events, FrontDesk}
-  alias GroupherServer.Accounts.Fans.ErrorCat
-  alias GroupherServer.Accounts.Model.{User, UserFollower, UserFollowing}
+  alias GroupherServer.{Accounts, Repo}
+
+  alias Accounts.{Achievements, Events, FrontDesk}
+  alias Accounts.Fans.ErrorCat
+  alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
-  alias GroupherServer.Repo
   alias Helper.{Later, Multi, ORM, T}
 
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()

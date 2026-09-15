@@ -9,12 +9,12 @@ defmodule GroupherServer.CMS.Wallpaper.Upload do
         -> Assets generated upload intents
   """
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.Utils
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Assets.Capability
-  alias GroupherServer.CMS.Model.{Community, CommunityWallpaper}
-  alias GroupherServer.CMS.Wallpaper.{ErrorCat, Reader, RequestDigest, Settings}
+  alias Accounts.Model.User
+  alias CMS.Assets.Capability
+  alias CMS.Model.{Community, CommunityWallpaper}
+  alias CMS.Wallpaper.{ErrorCat, Reader, RequestDigest, Settings}
 
   @request_digest_version RequestDigest.active_version()
   @batch_ttl_seconds 15 * 60

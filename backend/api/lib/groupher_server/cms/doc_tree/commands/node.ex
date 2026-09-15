@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
         -> DocTree.Writer
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.{Command, ErrorCat}
   alias CMS.DocTree.{CommandReplay, Reader, Writer}
-  alias CMS.Command
   alias CMS.Model.{Community, Doc}
   alias Helper.T
 
@@ -30,18 +31,23 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
         args,
         user,
         command,
-        fn clean_args ->
-          case type do
-            :tab -> Writer.create_tab(community, clean_args)
-            :group -> Writer.create_group(community, clean_args)
-            :page -> Writer.create_page(community, clean_args, user)
-            :link -> Writer.create_link(community, clean_args)
-            :pin -> Writer.create_pin(community, clean_args)
-          end
-        end
+        fn clean_args -> create_node_by_type(type, community, clean_args, user) end
       )
     end
   end
+
+  # Keep node-type dispatch close to the command boundary; each clause makes
+  # the writer ownership explicit without hiding it in a generic lookup map.
+  defp create_node_by_type(:tab, community, args, _user), do: Writer.create_tab(community, args)
+
+  defp create_node_by_type(:group, community, args, _user),
+    do: Writer.create_group(community, args)
+
+  defp create_node_by_type(:page, community, args, user),
+    do: Writer.create_page(community, args, user)
+
+  defp create_node_by_type(:link, community, args, _user), do: Writer.create_link(community, args)
+  defp create_node_by_type(:pin, community, args, _user), do: Writer.create_pin(community, args)
 
   defp node_create_command(:tab), do: {:ok, :doc_tree_create_tab}
   defp node_create_command(:group), do: {:ok, :doc_tree_create_group}
@@ -50,7 +56,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   defp node_create_command(:pin), do: {:ok, :doc_tree_create_pin}
 
   defp node_create_command(_type),
-    do: {:error, GroupherServer.ErrorCat.custom("unsupported docs tree node type")}
+    do: {:error, ErrorCat.custom("unsupported docs tree node type")}
 
   @doc "Creates a page node and its Draft through the existing command protocol."
   @spec create_page(Community.t(), map(), User.t() | nil) :: T.domain_res(map())

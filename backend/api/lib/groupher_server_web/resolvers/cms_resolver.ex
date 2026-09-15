@@ -21,22 +21,25 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   path contracts separate here.
   """
 
+  require GroupherServer.CMS.Assets.ErrorCat
+  require GroupherServer.CMS.ErrorCat
+  require GroupherServer.CMS.Const
+
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, CMS, FrontDesk}
-  alias GroupherServer.Analysis.Web, as: AnalysisWeb
+  alias GroupherServer.{Accounts, Activity, Analysis, CMS, ErrorCat, FrontDesk}
+  alias Analysis.Web, as: AnalysisWeb
 
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
+  alias CMS.Helper.{ArticlePath, EmotionFormatter}
+  alias CMS.Assets.ErrorCat, as: AssetErrorCat
+  alias CMS.ErrorCat, as: CmsErrorCat
+  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
+  alias Helper.{OgInfo, ORM}
 
   @doc "Resolves the public command id from the internal receipt metadata on a domain result."
   def command_id(value, _args, _info), do: {:ok, Map.get(value, :command_id)}
-
-  alias GroupherServer.CMS.Helper.{ArticlePath, EmotionFormatter}
-  alias GroupherServer.CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
-  alias Helper.{OgInfo, ORM}
-
-  require CMS.Const
 
   @viewer_batch_size 100
 
@@ -298,7 +301,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def community_asset_origin_info(_root, %{public_ref: public_ref}, _info) do
     case CMS.Assets.origin_info(public_ref) do
       {:ok, asset} -> {:ok, asset}
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} -> {:ok, nil}
+      {:error, AssetErrorCat.error_pattern(reason: :not_exist)} -> {:ok, nil}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -1887,14 +1890,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
      [
        message: reason_code,
        extensions: %{
-         code: GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom()),
+         code: ErrorCat.code(ErrorCat.custom()),
          reasonCode: reason_code
        }
      ]}
   end
 
   defp normalize_reason({reason, _metadata}) when is_atom(reason), do: reason
-  defp normalize_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp normalize_reason(CmsErrorCat.error_pattern(reason: reason)), do: reason
   defp normalize_reason(reason) when is_atom(reason), do: reason
   defp normalize_reason(_), do: :apply_not_allowed
 

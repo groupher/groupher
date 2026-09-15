@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Interactions.ReportTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Interactions.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Interactions.ErrorCat
 
   test "report identity uses immutable user id rather than login" do
     {_community, post, _attrs, user} = mock_article(:post)

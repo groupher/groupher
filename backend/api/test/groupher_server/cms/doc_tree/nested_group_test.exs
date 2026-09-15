@@ -3,9 +3,10 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{Doc, DocsSiteState}
+  alias GroupherServer.CMS
+  alias CMS.Model.{Doc, DocsSiteState}
 
-  require CMS.Const
+  require GroupherServer.CMS.Const
 
   describe "recursive docs navigation" do
     setup do
@@ -67,7 +68,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
       assert page_node.id == page.node.id
       assert page_node.type == :page
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
                CMS.DocTree.move_node(community, guide.node.id, %{
                  target_parent_node_id: advanced.node.id,
                  target_index: 0,
@@ -76,7 +77,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
 
       assert message =~ "descendant"
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: parent_message}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: parent_message}} =
                CMS.DocTree.create_node(
                  community,
                  %{
@@ -145,7 +146,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
           {created.node.id, created.revision, Map.put(nodes, depth, created.node.id)}
         end)
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: create_message}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: create_message}} =
                CMS.DocTree.create_node(community, %{
                  type: :group,
                  parent_node_id: deepest_node_id,
@@ -171,7 +172,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
                  base_revision: movable.revision
                })
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: move_message}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: move_message}} =
                CMS.DocTree.move_node(community, movable.node.id, %{
                  target_parent_node_id: Map.fetch!(nodes_by_depth, max_depth - 1),
                  target_index: 0,

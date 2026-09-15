@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocCover.Writer do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Write operations for the save-immediate docs cover.
 
@@ -25,18 +24,21 @@ defmodule GroupherServer.CMS.DocCover.Writer do
         -> Repo / external boundary
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.DocCover.Sync, as: CoverSync
-  alias GroupherServer.CMS.DocTree.ChangeDetection
-  alias GroupherServer.CMS.DocTree.Publish, as: DocTreePublish
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.DocCover.Sync, as: CoverSync
+  alias CMS.DocTree.ChangeDetection
+  alias CMS.DocTree.Publish, as: DocTreePublish
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Doc,
     DocCoverCard,
@@ -340,7 +342,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       :ok
     else
       {:error,
-       GroupherServer.ErrorCat.custom(
+       ErrorCat.custom(
          "Publish the latest doc changes before pinning it to cover."
        )}
     end
@@ -351,11 +353,11 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
     cond do
       length(requested) != length(Enum.uniq(requested)) ->
-        {:error, GroupherServer.ErrorCat.custom("Pinned doc order contains duplicate nodes.")}
+        {:error, ErrorCat.custom("Pinned doc order contains duplicate nodes.")}
 
       MapSet.new(requested) != MapSet.new(current_ids) ->
         {:error,
-         GroupherServer.ErrorCat.custom(
+         ErrorCat.custom(
            "Pinned doc order must contain the complete current collection."
          )}
 
@@ -372,7 +374,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       {:ok, %{"light" => light, "dark" => dark}}
     else
       {:error,
-       GroupherServer.ErrorCat.custom("Pinned doc appearance must contain Light and Dark maps.")}
+       ErrorCat.custom("Pinned doc appearance must contain Light and Dark maps.")}
     end
   end
 
@@ -382,7 +384,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       {:ok, published}
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("A Cover Card must reference a published Group.")}
+        {:error, ErrorCat.custom("A Cover Card must reference a published Group.")}
 
       error ->
         error
@@ -403,12 +405,12 @@ defmodule GroupherServer.CMS.DocCover.Writer do
         {:ok, published}
 
       {:error, _} ->
-        {:error, GroupherServer.ErrorCat.custom("Publish it before adding it to cover.")}
+        {:error, ErrorCat.custom("Publish it before adding it to cover.")}
     end
   end
 
   defp expect_type(%DocTreeNode{type: type}, type, _message), do: :ok
-  defp expect_type(_node, _type, message), do: {:error, GroupherServer.ErrorCat.custom(message)}
+  defp expect_type(_node, _type, message), do: {:error, ErrorCat.custom(message)}
 
   defp published_leaves_for_group(%Community{} = community, draft_group_node_id) do
     draft_nodes =
@@ -531,7 +533,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
     if Enum.any?(result.rows, fn [_id, _index, relation] -> relation == "ancestor" end) do
       {:error,
-       GroupherServer.ErrorCat.custom(
+       ErrorCat.custom(
          "This Group is already represented by an ancestor Cover Card."
        )}
     else
@@ -558,14 +560,14 @@ defmodule GroupherServer.CMS.DocCover.Writer do
             do: {:ok, replacement_index},
             else:
               {:error,
-               GroupherServer.ErrorCat.custom("Doc Cover Cards changed during replacement.")}
+               ErrorCat.custom("Doc Cover Cards changed during replacement.")}
       end
     end
   end
 
   defp ensure_has_leaves([]),
     do:
-      {:error, GroupherServer.ErrorCat.custom("Publish a doc before adding this group to cover.")}
+      {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
 
   defp ensure_has_leaves(_leaves), do: :ok
 
@@ -658,7 +660,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
     if length(normalized_ids) == length(Enum.uniq(normalized_ids)),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom(message)}
+      else: {:error, ErrorCat.custom(message)}
   end
 
   # Reindex helpers update one tenant-scoped collection in a single SQL statement.
@@ -727,7 +729,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   defp expect_reindexed_rows({:ok, %{num_rows: expected}}, expected, _message), do: :ok
 
   defp expect_reindexed_rows({:ok, _result}, _expected, message),
-    do: {:error, GroupherServer.ErrorCat.custom(message)}
+    do: {:error, ErrorCat.custom(message)}
 
   defp expect_reindexed_rows({:error, reason}, _expected, _message), do: {:error, reason}
 

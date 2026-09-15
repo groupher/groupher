@@ -12,7 +12,9 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
         -> replay decode into the DocTree result shape
   """
 
-  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
 
   @schema_version 1
   @enum_fields [:type, :stage, :status, :restore_state]

@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   setup do
     {:ok, user} = db_insert(:user)
     community_attrs = mock_attrs(:community)
@@ -118,21 +121,21 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @save_custom_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -480,21 +483,21 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
              |> mutation_error?(
                @select_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @select_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @select_theme_preset_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
   end
