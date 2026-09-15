@@ -12,22 +12,24 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.ArticleDocumentAssetRef
+
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
+  alias CMS.Model.ArticleDocumentAssetRef
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 
   @timestamps_opts [type: :utc_datetime]
 
-  @max_body_length GroupherServer.CMS.Artiment.Config.max_length()
-  @min_body_length GroupherServer.CMS.Artiment.Config.min_length()
+  @max_body_length CMS.Artiment.Config.max_length()
+  @min_body_length CMS.Artiment.Config.min_length()
 
   @required_fields ~w(thread title article_id json)a
   @optional_fields ~w(markdown markdown_toc thumbnail html plain_text digest body_hash schema_version)a

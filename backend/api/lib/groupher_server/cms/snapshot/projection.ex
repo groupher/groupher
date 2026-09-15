@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.Snapshot.Projection do
   cache hits and requests a background refresh for misses.
   """
 
-  alias GroupherServer.CMS.Snapshot.{Cache, Reader, Refresh}
+  alias GroupherServer.CMS
+
+  alias CMS.Snapshot.{Cache, Reader, Refresh}
 
   @default_opts [mode: :stale_first]
 

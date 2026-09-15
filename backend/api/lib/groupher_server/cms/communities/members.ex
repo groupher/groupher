@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Members do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Members helpers for communities.
 
@@ -10,11 +9,16 @@ defmodule GroupherServer.CMS.Communities.Members do
         -> Members
         -> Repo / Oban
   """
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
   import ShortMaps
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
+
+  alias GroupherServer.{Accounts, CMS}
+
+  alias CMS.QueryBuilder
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityModerator, CommunitySubscriber}
   alias Helper.{ORM, T}
 
   @doc """

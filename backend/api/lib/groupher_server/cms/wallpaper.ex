@@ -13,9 +13,11 @@ defmodule GroupherServer.CMS.Wallpaper do
         -> Reader / Upload / Publisher / Retention
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.CMS.Wallpaper.{Publisher, Reader, Retention, Upload}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.Community
+  alias CMS.Wallpaper.{Publisher, Reader, Retention, Upload}
 
   @doc "Returns the cross-language Wallpaper profile matrix."
   def profile_specs, do: Upload.profile_specs()

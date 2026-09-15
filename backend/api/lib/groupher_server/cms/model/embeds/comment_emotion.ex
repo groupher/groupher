@@ -13,7 +13,8 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  alias GroupherServer.CMS
+  @supported_emotions CMS.Artiment.Config.comment_emotions()
 
   @doc "Generates the count and viewer projection fields for each comment emotion."
   defmacro emotion_fields do
@@ -28,8 +29,6 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros do
 end
 
 defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
-  @type t :: %__MODULE__{}
-
   @moduledoc """
   Embedded emotion counters and recent-user snapshots for a comment.
 
@@ -40,12 +39,17 @@ defmodule GroupherServer.CMS.Model.Embeds.CommentEmotion do
         -> Comment row
         -> Viewer-aware GraphQL projection
   """
+
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.CommentEmotion.Macros
-  @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+
+  alias GroupherServer.CMS
+
+  @type t :: %__MODULE__{}
+  @supported_emotions CMS.Artiment.Config.comment_emotions()
   @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count")
 
   @doc "default emotion status for article comment"

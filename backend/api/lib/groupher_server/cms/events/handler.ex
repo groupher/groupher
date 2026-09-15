@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.Events.Handler do
         -> bounded side effect
   """
 
-  alias GroupherServer.CMS.Events.Event
+  alias GroupherServer.CMS
+
+  alias CMS.Events.Event
 
   @callback handle(Event.t()) :: {:ok, term()} | {:error, term()}
 end

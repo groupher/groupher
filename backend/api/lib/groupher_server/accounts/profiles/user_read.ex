@@ -15,9 +15,9 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
         -> Repo
   """
 
-  alias GroupherServer.{Analysis, FrontDesk, Repo}
+  alias GroupherServer.{Accounts, Analysis, FrontDesk, Repo}
 
-  alias GroupherServer.Accounts.Model.{Embeds, Social, User}
+  alias Accounts.Model.{Embeds, Social, User}
   alias Helper.ORM
 
   @default_user_meta Embeds.UserMeta.default_meta()

@@ -26,16 +26,14 @@ defmodule GroupherServer.Messaging.Notifications do
   """
 
   import Ecto.Query, warn: false
-
   import Helper.Utils, only: [done: 1]
-
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Embeds
-  alias GroupherServer.Messaging.Model.Notification
+  alias Accounts.Model.User
+  alias CMS.Model.Embeds
+  alias Messaging.Model.Notification
   alias Helper.{Datetime, Multi, ORM}
 
   @notify_actions GroupherServer.Messaging.Config.notify_actions()

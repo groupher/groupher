@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Helper.Macros do
-  require GroupherServer.CMS.Const
-
   @moduledoc """
   Defines shared artiment schema fields and CMS changeset validation macros.
 
@@ -11,11 +9,14 @@ defmodule GroupherServer.CMS.Helper.Macros do
         -> Macros
         -> Repo / external boundary
   """
+
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleCollect,
     ArticleLifecycle,
     ArticleUpvote,
@@ -30,7 +31,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Embeds
   }
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc """
   generate base schema type with shared fields for artiments

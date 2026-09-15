@@ -7,7 +7,9 @@ defmodule GroupherServer.Jobs.CommandReceiptRetention do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.CommandReceipt
+  alias GroupherServer.CMS
+
+  alias CMS.CommandReceipt
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do

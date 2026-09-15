@@ -11,9 +11,10 @@ defmodule GroupherServer.CMS.Press.Invalidation do
 
   require Logger
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.ServiceAuth.Client
+  alias GroupherServer.{CMS, Repo, ServiceAuth}
+
+  alias CMS.Model.Community
+  alias ServiceAuth.Client
 
   @doc "Notifies Press that one Community projection changed."
   @spec invalidate(Community.t() | String.t() | integer()) :: :ok

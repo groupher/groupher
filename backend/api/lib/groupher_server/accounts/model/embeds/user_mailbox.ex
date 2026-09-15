@@ -9,6 +9,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMailbox do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 

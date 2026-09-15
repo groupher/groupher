@@ -20,7 +20,9 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
 
       import Ecto.Changeset
 
-      alias GroupherServer.CMS.Model
+      alias GroupherServer.CMS
+
+      alias CMS.Model
       alias Helper.Constant.DBPrefix
 
       @schema_prefix DBPrefix.cms()

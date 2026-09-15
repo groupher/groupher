@@ -14,15 +14,15 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
+  alias CMS.Dashboard.Fields, as: Dashboard
   alias CMS.Dashboard.KanbanBoards
 
   @page_size GroupherServerWeb.Config.page_size()
 
-  @emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @emotions CMS.Artiment.Config.emotions()
+  @comment_emotions CMS.Artiment.Config.comment_emotions()
   @all_emotions (@emotions ++ @comment_emotions) |> Enum.uniq()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do

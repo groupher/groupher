@@ -10,19 +10,21 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
         -> search platform
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
-  alias GroupherServer.CMS.SearchArtiments.Config
 
-  require CMS.Const
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
+  alias CMS.SearchArtiments.Config
+
   @article_threads Config.article_threads()
 
-  @legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
+  @legal CMS.Artiment.Const.moderation_state(:legal)
 
   @doc """
   Measures the source volume used for search platform cost estimates.
@@ -117,8 +119,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   defp decimal_to_number(%Decimal{} = value), do: Decimal.to_float(value)
   defp decimal_to_number(value), do: value
 
-  defp scope_context(:doc), do: DocScope.public_main()
-  defp scope_context(thread), do: ArticleScope.public(thread)
+  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(thread), do: ArticleContext.public(thread)
 
   defp default_zero(nil), do: 0
   defp default_zero(value), do: value

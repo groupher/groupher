@@ -9,7 +9,9 @@ defmodule GroupherServer.Jobs.ViewEventRetention do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS
+
+  alias CMS.Interactions.ViewEvents
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do

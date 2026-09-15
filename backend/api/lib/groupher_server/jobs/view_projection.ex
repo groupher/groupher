@@ -7,14 +7,14 @@ defmodule GroupherServer.Jobs.ViewProjection do
       Oban -> ViewProjection -> CMS.Interactions.ViewEvents -> article views + bitmap
   """
 
-  alias GroupherServer.Jobs.Config
-
   use Oban.Worker,
-    queue: Config.queue(:view_projection),
-    max_attempts: Config.max_attempts(:view_projection),
-    unique: Config.unique(:view_projection)
+    queue: GroupherServer.Jobs.Config.queue(:view_projection),
+    max_attempts: GroupherServer.Jobs.Config.max_attempts(:view_projection),
+    unique: GroupherServer.Jobs.Config.unique(:view_projection)
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS
+
+  alias CMS.Interactions.ViewEvents
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"event_id" => event_id}}) do

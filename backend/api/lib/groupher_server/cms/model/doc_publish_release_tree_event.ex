@@ -29,14 +29,14 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseTreeEvent do
       }
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{DocPublishRelease, DocTreeEvent}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.{DocPublishRelease, DocTreeEvent}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

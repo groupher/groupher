@@ -5,7 +5,9 @@ defmodule GroupherServer.CMS.Communities.Config do
   CMS Article config -> Community policy -> thread and emotion helpers.
   """
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @doc "Returns Article and Comment thread keys supported by Community policy."
   @spec threads() :: [atom()]

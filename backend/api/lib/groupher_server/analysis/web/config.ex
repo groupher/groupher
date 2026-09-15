@@ -14,7 +14,8 @@ defmodule GroupherServer.Analysis.Web.Config do
         -> Repo / analytics provider
   """
 
-  alias GroupherServer.Analysis.Web.Provider.Umami
+  alias GroupherServer.Analysis
+  alias Analysis.Web.Provider.Umami
 
   @type t :: %__MODULE__{
           provider: module(),

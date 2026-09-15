@@ -10,9 +10,11 @@ defmodule GroupherServer.CMS.Assets.ApplicationUploads do
         -> Repo / Assets Hub
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Assets.Writer
-  alias GroupherServer.CMS.Model.{Community, CommunityApplicationLogoUpload}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Assets.Writer
+  alias CMS.Model.{Community, CommunityApplicationLogoUpload}
   alias Helper.Utils
 
   @doc """

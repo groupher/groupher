@@ -16,13 +16,13 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   import Ecto.Query, only: [from: 2]
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.Utils
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Assets.GeneratedBatch
-  alias GroupherServer.CMS.Assets.GeneratedBatch.PublishCapability
+  alias Accounts.Model.User
+  alias CMS.Assets.GeneratedBatch
+  alias CMS.Assets.GeneratedBatch.PublishCapability
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     CommunityWallpaper,
     WallpaperPublishReceipt,
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
     WallpaperSnapshotImage
   }
 
-  alias GroupherServer.CMS.Wallpaper.{
+  alias CMS.Wallpaper.{
     ErrorCat,
     Reader,
     RequestDigest,
@@ -204,7 +204,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         request_digest: ^digest,
         request_digest_version: @request_digest_version
       } = receipt ->
-        replayed_receipt_response(community.id, receipt.response_payload)
+        recovered_receipt_response(community.id, receipt.response_payload)
 
       %WallpaperPublishReceipt{} ->
         Repo.rollback(ErrorCat.wallpaper_publish_idempotency_conflict())
@@ -430,7 +430,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
         request_digest: ^digest,
         request_digest_version: @request_digest_version
       } = receipt ->
-        {:ok, replayed_receipt_response(community_id, receipt.response_payload)}
+        {:ok, recovered_receipt_response(community_id, receipt.response_payload)}
 
       %WallpaperPublishReceipt{} ->
         {:error, ErrorCat.wallpaper_publish_idempotency_conflict()}
@@ -443,7 +443,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   defp result_from_payload(%{"version" => version}), do: %{version: version}
   defp result_from_payload(%{version: version}), do: %{version: version}
 
-  defp replayed_receipt_response(community_id, payload) do
+  defp recovered_receipt_response(community_id, payload) do
     current = Repo.get_by(CommunityWallpaper, community_id: community_id)
     Map.put(result_from_payload(payload), :version, Reader.state_version(current))
   end

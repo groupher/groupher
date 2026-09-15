@@ -18,9 +18,11 @@ defmodule GroupherServer.CMS.Model.TrashAction do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.CMS.Model.{
+  alias Accounts.Model.User
+
+  alias CMS.Model.{
     Community,
     TrashedArticle,
     TrashedDocArticle,

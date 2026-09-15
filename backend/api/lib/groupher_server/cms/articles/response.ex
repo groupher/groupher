@@ -10,13 +10,12 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
+
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Comments.BodyCodec
   alias CMS.Model.{Comment, Post, PostSolution}
-
-  alias GroupherServer.Repo
 
   @doc """
   Assembles one Article with Interaction fields for the optional viewer.

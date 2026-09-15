@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.SearchArtiments.PlatformAdapter do
         -> search platform
   """
 
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Query, Result}
+  alias GroupherServer.CMS
+
+  alias CMS.SearchArtiments.{Artiment, Query, Result}
 
   @callback upsert([Artiment.t()], keyword()) :: :ok | {:error, term()}
   @callback delete([String.t()]) :: :ok | {:error, term()}

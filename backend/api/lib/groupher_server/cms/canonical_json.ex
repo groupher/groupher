@@ -4,8 +4,13 @@ defmodule GroupherServer.CMS.CanonicalJSON do
 
   This is deliberately narrower than general JSON encoding: callers use it
   only where signatures or digests require byte-for-byte canonical output.
+
+      signature or digest payload
+        -> recursively sort object keys
+        -> canonical JSON bytes
   """
 
+  @doc "Encodes one JSON-compatible protocol value with recursively stable object-key ordering."
   @spec encode(term()) :: String.t()
   def encode(value) when is_map(value) do
     pairs =

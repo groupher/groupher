@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Comments.Replies do
         -> Repo / domain event
   """
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
   @doc """

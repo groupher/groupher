@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Moderation do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Article moderation helpers.
 
@@ -14,21 +13,20 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias CMS.{FrontDesk, QueryBuilder}
+  alias CMS.Articles.Trash
+  alias CMS.Communities.TagStats
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{Multi, ORM, T}
 
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Returns a paged list of audit-failed articles for one thread.

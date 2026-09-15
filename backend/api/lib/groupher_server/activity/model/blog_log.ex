@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.BlogLog do
 
       Blog Activity contract -> activity.blog_logs -> safe surfaces
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "blog_logs",
     stream_field: :blog_ref,

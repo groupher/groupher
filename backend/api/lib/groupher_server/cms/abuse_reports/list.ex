@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.AbuseReports.List do
-  alias GroupherServer.CMS
-  alias CMS.QueryBuilder
   @moduledoc """
   List operations for abuse reports.
 
@@ -11,17 +9,19 @@ defmodule GroupherServer.CMS.AbuseReports.List do
         -> List
         -> Repo / external boundary
   """
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
-
-
-  alias GroupherServer.CMS.Model.{AbuseReport, Comment}
-  alias Helper.{ORM, T}
-
   import Helper.Utils, only: [done: 1]
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  alias GroupherServer.CMS
+
+  alias CMS.QueryBuilder
+  alias CMS.Model.{AbuseReport, Comment}
+  alias Helper.{ORM, T}
+
+  @threads CMS.Artiment.Config.threads()
 
   @export_author_keys [:id, :login, :nickname, :avatar]
   @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :views]

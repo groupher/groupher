@@ -4,13 +4,14 @@ defmodule GroupherServer.Activity.Blog do
 
       Blog command -> Blog Activity contract -> BlogLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.BlogLog
 
   use GroupherServer.Activity.ArtimentEvent,
     thread: :blog,
-    schema: BlogLog,
+    schema: GroupherServer.Activity.Model.BlogLog,
     stream_field: :blog_ref
+
+  alias GroupherServer.Activity
+  alias Activity.Event
 
   @trash_denial_codes [
     :permission_denied,

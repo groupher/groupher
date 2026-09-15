@@ -9,20 +9,22 @@ defmodule GroupherServer.CMS.FrontDesk do
         -> Article / Comment / Community / Lookup / Relation / ReactionUsers
   """
 
-  alias GroupherServer.CMS.Comments.Replies
+  alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.FrontDesk.{
+  alias CMS.Comments.Replies
+
+  alias CMS.FrontDesk.{
     Article,
-    Comment,
     Community,
     Lookup,
     ReactionUsers,
     Relation
   }
 
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.Comment, as: CommentModel
-  alias GroupherServer.CMS.Model.CommunityTag
+  alias CMS.FrontDesk.Comment, as: CommentReader
+
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.{Comment, CommunityTag}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Helper.T
 
@@ -36,16 +38,16 @@ defmodule GroupherServer.CMS.FrontDesk do
   def revalidate_user(login), do: RootFrontDesk.revalidate().user(login)
 
   @doc "Reads one Comment from a path or database id."
-  def comment(comment_path_or_id), do: Comment.read(comment_path_or_id)
+  def comment(comment_path_or_id), do: CommentReader.read(comment_path_or_id)
 
   @doc "Reads one Comment from a path with preload options, or under an Article path."
   def comment(path, opts_or_inner_id)
 
-  def comment(path, opts) when is_map(path) and is_list(opts), do: Comment.read(path, opts)
-  def comment(article_path, inner_id), do: Comment.read(article_path, inner_id, [])
+  def comment(path, opts) when is_map(path) and is_list(opts), do: CommentReader.read(path, opts)
+  def comment(article_path, inner_id), do: CommentReader.read(article_path, inner_id, [])
 
   @doc "Reads one Comment under an Article path with preload options."
-  def comment(article_path, inner_id, opts), do: Comment.read(article_path, inner_id, opts)
+  def comment(article_path, inner_id, opts), do: CommentReader.read(article_path, inner_id, opts)
 
   @doc "Reads one Community Tag by database id."
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
@@ -58,7 +60,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   def community_tags(tag_ids), do: Community.tags(tag_ids)
 
   @doc "Returns the parent Article and author information for one Comment."
-  def full_comment(comment_id), do: Comment.full(comment_id)
+  def full_comment(comment_id), do: CommentReader.full(comment_id)
 
   @doc "Finds one schema row by primary id."
   def get(queryable, id), do: Lookup.get(queryable, id)
@@ -86,7 +88,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   def thread_of(resource), do: Relation.thread_of(resource)
 
   @doc "Synchronizes one updated reply into the root Comment's embedded reply projection."
-  @spec sync_embed_replies(CommentModel.t()) :: {:ok, CommentModel.t()}
+  @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
   def sync_embed_replies(comment), do: Replies.sync_embed_replies(comment)
 
   @doc "Loads one page of users attached to an Article reaction projection."

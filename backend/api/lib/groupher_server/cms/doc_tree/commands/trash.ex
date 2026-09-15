@@ -13,8 +13,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
         -> DocTree.Trash
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
   alias CMS.Command
   alias CMS.DocTree.{CommandReplay, Trash}
   alias CMS.Model.Community

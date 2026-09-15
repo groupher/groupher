@@ -13,9 +13,11 @@ defmodule GroupherServer.CMS.Press do
         -> Reader / ConfigWriter / Invalidation
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, PressConfig}
-  alias GroupherServer.CMS.Press.{ConfigWriter, Invalidation, Reader}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, PressConfig}
+  alias CMS.Press.{ConfigWriter, Invalidation, Reader}
 
   @doc "Reads persisted or legacy Press configuration."
   @spec config(Community.t() | String.t()) :: {:ok, PressConfig.t() | map()} | {:error, term()}

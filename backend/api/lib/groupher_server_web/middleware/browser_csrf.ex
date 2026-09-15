@@ -18,7 +18,8 @@ defmodule GroupherServerWeb.Middleware.BrowserCsrf do
 
   @behaviour Plug
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
 
   @production_hosts MapSet.new([
                       "groupher.com",

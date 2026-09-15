@@ -4,9 +4,11 @@ defmodule GroupherServer.Activity.DocTree do
 
       DocTree command -> DocTree Activity contract -> DocTreeLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.DocTreeLog
-  alias GroupherServer.CMS.Model.DocTreeNode
+
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Event
+  alias Activity.Model.DocTreeLog
+  alias CMS.Model.DocTreeNode
 
   @contracts %{
     trashed: Event.contract([], [:node_count, :doc_count], [:community_log]),

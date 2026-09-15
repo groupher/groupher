@@ -13,10 +13,10 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
         -> DocTree.Publish / Reader
   """
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias CMS.Command
-  alias CMS.DocPublishRelease
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.{Command, DocPublishRelease}
   alias CMS.DocTree.{CommandReplay, Publish, Reader}
   alias CMS.Model.{Community, Doc}
   alias Helper.T

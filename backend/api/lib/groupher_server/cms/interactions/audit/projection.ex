@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.Interactions.Audit.Projection do
       InteractionAudit job -> Interactions.Audit -> fact table + bitmap repair
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Artiment.Matcher
+
+  alias CMS.Model.{
     ArticleCollect,
     ArticleUpvote,
     ArticleUserEmotion,

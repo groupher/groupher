@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Config do
         -> search platform
   """
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @doc "Returns Article threads indexed and queried by SearchArtiments."
   @spec article_threads() :: [atom()]

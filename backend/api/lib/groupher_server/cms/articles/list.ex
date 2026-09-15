@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Articles.List do
-  alias GroupherServer.CMS.QueryBuilder
-
   @moduledoc """
   Article listing helpers.
 
@@ -24,20 +22,19 @@ defmodule GroupherServer.CMS.Articles.List do
       module_to_atom: 1
     ]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.Response
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Dashboard.KanbanBoards
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Scope
-  alias GroupherServer.CMS.Interactions
+  alias CMS.{Interactions, QueryBuilder}
+  alias Accounts.Model.User
+  alias CMS.Articles.{Response, Trash}
+  alias CMS.Artiment.Const
+  alias CMS.Communities.Enable
+  alias CMS.Dashboard.KanbanBoards
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Scope
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Embeds,
     PinnedArticle,
@@ -224,8 +221,8 @@ defmodule GroupherServer.CMS.Articles.List do
   defp maybe_mark_viewer_states(paged_articles, _thread, nil),
     do: read_articles(paged_articles, nil)
 
-  defp scope_context(:doc), do: DocScope.public_main()
-  defp scope_context(thread), do: ArticleScope.public(thread)
+  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(thread), do: ArticleContext.public(thread)
 
   defp read_articles(%{entries: entries} = paged_articles, actor) do
     case Response.list(entries, actor) do

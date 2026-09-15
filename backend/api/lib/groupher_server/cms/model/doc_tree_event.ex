@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.DocTreeEvent do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Domain event for docs tree draft changes.
 
@@ -28,18 +27,19 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   remove `payload` or move event-specific before/after values into columns
   unless they become real query dimensions.
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.{Community, DocBranch, DocTreeSnapshot}
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, DocBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
-
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

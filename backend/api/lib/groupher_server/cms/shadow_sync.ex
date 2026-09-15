@@ -10,14 +10,16 @@ defmodule GroupherServer.CMS.ShadowSync do
       CMS read projection -> ShadowSync -> cached/account user summaries
   """
 
-  alias GroupherServer.CMS.{Model.Embeds, Snapshot}
+  alias GroupherServer.CMS
 
-  @spec users_in([map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
+  alias CMS.{Model.Embeds, Snapshot}
+
   @doc "Refreshes requested nested user snapshots while preserving their paths and membership."
+  @spec users_in([map()] | nil, [atom() | [atom()]], keyword()) :: [map()] | nil
   def users_in(items, fields, opts \\ []), do: Snapshot.users_in(items, fields, opts)
 
-  @spec refresh_article(map(), keyword()) :: map()
   @doc "Refreshes all fixed-reaction and emotion latest-user snapshots on one article."
+  @spec refresh_article(map(), keyword()) :: map()
   def refresh_article(article, opts \\ []) do
     article
     |> List.wrap()
@@ -25,8 +27,8 @@ defmodule GroupherServer.CMS.ShadowSync do
     |> List.first()
   end
 
-  @spec refresh_articles([map()] | nil, keyword()) :: [map()] | nil
   @doc "Refreshes all fixed-reaction and emotion latest-user snapshots in an article list."
+  @spec refresh_articles([map()] | nil, keyword()) :: [map()] | nil
   def refresh_articles(articles, opts \\ [])
   def refresh_articles(nil, _opts), do: nil
 
@@ -36,8 +38,8 @@ defmodule GroupherServer.CMS.ShadowSync do
     |> emotion_users_in(opts)
   end
 
-  @spec refresh_comments([map()] | nil, keyword()) :: [map()] | nil
   @doc "Refreshes fixed-reaction and emotion latest-user snapshots in comments and replies."
+  @spec refresh_comments([map()] | nil, keyword()) :: [map()] | nil
   def refresh_comments(comments, opts \\ [])
   def refresh_comments(nil, _opts), do: nil
 
@@ -47,8 +49,8 @@ defmodule GroupherServer.CMS.ShadowSync do
     |> emotion_users_in(opts)
   end
 
-  @spec emotion_users_in([map()] | nil, keyword()) :: [map()] | nil
   @doc "Refreshes only dynamic emotion latest-user snapshots, including embedded replies."
+  @spec emotion_users_in([map()] | nil, keyword()) :: [map()] | nil
   def emotion_users_in(items, opts \\ [])
   def emotion_users_in(nil, _opts), do: nil
   def emotion_users_in([], _opts), do: []

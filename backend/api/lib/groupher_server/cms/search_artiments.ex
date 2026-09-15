@@ -12,8 +12,8 @@ defmodule GroupherServer.CMS.SearchArtiments do
 
   alias __MODULE__.{Artiment, Config, Query, Result}
 
-  @spec search(map() | Query.t()) :: {:ok, Result.t()} | {:error, term()}
   @doc "Runs `search` through the public `SearchArtiments` boundary."
+  @spec search(map() | Query.t()) :: {:ok, Result.t()} | {:error, term()}
   def search(%Query{} = query), do: platform().search(query)
 
   def search(attrs) when is_map(attrs) do
@@ -22,24 +22,24 @@ defmodule GroupherServer.CMS.SearchArtiments do
     end
   end
 
-  @spec upsert([Artiment.t()], keyword()) :: :ok | {:error, term()}
   @doc "Runs `upsert` through the public `SearchArtiments` boundary."
+  @spec upsert([Artiment.t()], keyword()) :: :ok | {:error, term()}
   def upsert(artiments, opts \\ []) when is_list(artiments),
     do: platform().upsert(artiments, opts)
 
-  @spec delete([String.t()]) :: :ok | {:error, term()}
   @doc "Runs `delete` through the public `SearchArtiments` boundary."
+  @spec delete([String.t()]) :: :ok | {:error, term()}
   def delete(refs) when is_list(refs), do: platform().delete(refs)
 
-  @spec update_metrics([{String.t(), map()}]) :: :ok | {:error, term()}
   @doc "Updates metrics through the `SearchArtiments` write boundary."
+  @spec update_metrics([{String.t(), map()}]) :: :ok | {:error, term()}
   def update_metrics(updates) when is_list(updates), do: platform().update_metrics(updates)
 
-  @spec platform() :: module()
   @doc "Runs `platform` through the public `SearchArtiments` boundary."
+  @spec platform() :: module()
   def platform, do: Config.platform()
 
-  @spec queue() :: module()
   @doc "Runs `queue` through the public `SearchArtiments` boundary."
+  @spec queue() :: module()
   def queue, do: Config.queue()
 end

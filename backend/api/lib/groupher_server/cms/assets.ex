@@ -23,11 +23,12 @@ defmodule GroupherServer.CMS.Assets do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityAsset}
-  alias Helper.T
-
   alias __MODULE__.{ApplicationUploads, Deletion, Reader, Upload, Writer}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityAsset}
+  alias Helper.T
 
   @doc """
   Lists active assets owned by a community.

@@ -13,8 +13,10 @@ defmodule GroupherServer.CMS.FrontDesk.ReactionUsers do
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
-  alias GroupherServer.CMS.FrontDesk.Relation
-  alias GroupherServer.CMS.QueryBuilder
+  alias GroupherServer.CMS
+
+  alias CMS.FrontDesk.Relation
+  alias CMS.QueryBuilder
   alias Helper.ORM
 
   @doc "Loads one page of users for the supplied reaction query."

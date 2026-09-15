@@ -16,11 +16,10 @@ defmodule GroupherServer.Jobs do
         -> log safely on enqueue failure, preserve caller result
   """
 
-  alias GroupherServer.Jobs
-  alias Jobs.Codec
-  alias Jobs.Config
-
   require Logger
+
+  alias GroupherServer.Jobs
+  alias Jobs.{Codec, Config}
 
   @type later_job :: {module(), atom(), list()}
   @type safe_resource_ref :: integer() | String.t() | atom() | nil

@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Comments.List do
-  alias GroupherServer.CMS.QueryBuilder
-
   @moduledoc """
   List/paged operations for comments.
 
@@ -14,21 +12,19 @@ defmodule GroupherServer.CMS.Comments.List do
   """
 
   import Ecto.Query, warn: false
-
   import Helper.Utils, only: [done: 1]
   import ShortMaps
-
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Jobs, Repo}
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.{Accounts, CMS, Jobs, Repo}
 
-  alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Comments.Replies
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
+  alias CMS.QueryBuilder
+  alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Comments.{InteractionResponse, Replies}
+  alias CMS.Model.{Comment, PinnedComment}
   alias Helper.{ORM, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
@@ -67,7 +63,6 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   @doc """
   Returns one Article's Comment state with viewer participation.
 
@@ -75,6 +70,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.comments_state(:post, post_id, viewer)
   """
+  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   def comments_state(thread, article_id, %User{} = user) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, state} <- comments_state(thread, article_id) do
@@ -95,7 +91,6 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  @spec paged_comments(T.thread(), T.id(), map(), atom()) :: T.domain_res(T.paged_data())
   @doc """
   Returns a page of Comments without viewer state.
 
@@ -103,11 +98,10 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_comments(:post, post_id, filters, :replies)
   """
+  @spec paged_comments(T.thread(), T.id(), map(), atom()) :: T.domain_res(T.paged_data())
   def paged_comments(thread, article_id, filters, mode),
     do: paged_comments(thread, article_id, filters, mode, nil)
 
-  @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
-          T.domain_res(T.paged_data())
   @doc """
   Returns a page of Comments hydrated for an optional viewer.
 
@@ -118,6 +112,8 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_comments(:post, post_id, filters, :replies, viewer)
   """
+  @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
 
   def paged_comments(thread, article_id, filters, :timeline, user) do
     where_query = dynamic([c], not c.is_folded and not c.is_pinned)
@@ -138,8 +134,6 @@ defmodule GroupherServer.CMS.Comments.List do
     {:error, "unknown mode: #{mode}"}
   end
 
-  @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
-          T.domain_res(T.paged_data())
   @doc """
   Returns a user's published Comments across all public Article threads.
 
@@ -147,12 +141,14 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_published_comments(target_user, filters, viewer)
   """
+  @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
   def paged_published_comments(%User{id: user_id}, filter, actor) do
     %{page: page, size: size} = filter
 
     Comment
     |> preload(^@published_article_preloads)
-    |> CMS.Gate.scope(actor, :list, CommentScope.all_public())
+    |> CMS.Gate.scope(actor, :list, CommentContext.all_public())
     |> join(:inner, [comment, ...], author in assoc(comment, :author),
       as: :published_comment_author
     )
@@ -163,8 +159,6 @@ defmodule GroupherServer.CMS.Comments.List do
     |> done()
   end
 
-  @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
-          T.domain_res(T.paged_data())
   @doc """
   Returns a user's published Comments in one Article thread.
 
@@ -172,6 +166,8 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_published_comments(target_user, :post, filters, viewer)
   """
+  @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
+          T.domain_res(T.paged_data())
   def paged_published_comments(%User{id: user_id}, thread, filter, actor) do
     %{page: page, size: size} = filter
 
@@ -191,7 +187,6 @@ defmodule GroupherServer.CMS.Comments.List do
     |> done()
   end
 
-  @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
   @doc """
   Returns folded Comments without viewer state.
 
@@ -199,13 +194,12 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_folded_comments(:post, post_id, filters)
   """
+  @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, nil)
   end
 
-  @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
-          T.domain_res(T.paged_data())
   @doc """
   Returns folded Comments hydrated for a viewer.
 
@@ -213,12 +207,13 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_folded_comments(:post, post_id, filters, viewer)
   """
+  @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
+          T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters, %User{} = user) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, user)
   end
 
-  @spec paged_comment_replies(T.id(), map()) :: T.domain_res(T.paged_data())
   @doc """
   Returns replies under one root Comment without viewer state.
 
@@ -226,10 +221,10 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_comment_replies(comment_id, filters)
   """
+  @spec paged_comment_replies(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_comment_replies(comment_id, filters),
     do: paged_comment_replies(comment_id, filters, nil)
 
-  @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
   @doc """
   Returns replies under one root Comment hydrated for an optional viewer.
 
@@ -237,12 +232,11 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_comment_replies(comment_id, filters, viewer)
   """
+  @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
   def paged_comment_replies(comment_id, filters, user) do
     do_paged_comment_replies(comment_id, filters, user)
   end
 
-  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
-          T.domain_res(T.paged_users())
   @doc """
   Returns distinct Comment participants and schedules a best-effort projection
   repair when the persisted count differs.
@@ -251,6 +245,8 @@ defmodule GroupherServer.CMS.Comments.List do
 
       Comments.List.paged_comments_participants(:post, post_id, filters)
   """
+  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
+          T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, info} <- match(thread),
@@ -429,11 +425,11 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  defp comment_scope(:doc), do: CommentScope.for_thread(:doc, branch_policy: :main)
-  defp comment_scope(thread), do: CommentScope.for_thread(thread)
+  defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
+  defp comment_scope(thread), do: CommentContext.for_thread(thread)
 
-  defp article_scope(:doc), do: DocScope.public_main()
-  defp article_scope(thread), do: ArticleScope.public(thread)
+  defp article_scope(:doc), do: DocContext.public_main()
+  defp article_scope(thread), do: ArticleContext.public(thread)
 
   defp list_pinned_comments(%{foreign_key: foreign_key}, thread, article_id) do
     from(c in Comment,

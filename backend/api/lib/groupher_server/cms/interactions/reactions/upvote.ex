@@ -9,16 +9,16 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         -> post-commit events and search metrics
   """
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias Accounts.Model.User
   import Ecto.Query
 
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.{Events, Gate, FrontDesk, Interactions, Command}
   alias Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias CMS.SearchArtiments.Indexer
-
   alias Helper.{Later, T}
 
   @article_threads Config.article_threads()

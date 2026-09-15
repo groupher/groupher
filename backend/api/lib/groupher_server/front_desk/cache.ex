@@ -10,8 +10,9 @@ defmodule GroupherServer.FrontDesk.Cache do
         -> cache / Repo
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.FrontDesk
+  alias GroupherServer.{Accounts, FrontDesk}
+
+  alias Accounts.Model.User
   alias Helper.Cache
 
   @pool :frontdesk_user

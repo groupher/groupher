@@ -17,12 +17,14 @@ defmodule GroupherServer.CMS.Model.CommentUserEmotion do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Constraints, only: [comment_emotion_unique_key_constraint: 1]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @supported_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @supported_emotions CMS.Artiment.Config.comment_emotions()
 
   @required_fields ~w(comment_id user_id received_user_id emotion)a
 

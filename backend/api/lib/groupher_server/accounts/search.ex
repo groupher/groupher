@@ -14,7 +14,7 @@ defmodule GroupherServer.Accounts.Search do
   alias __MODULE__.User
   alias Helper.T
 
-  @spec user(String.t()) :: T.domain_res(T.paged_users())
   @doc "Runs `user` through the public `Search` boundary."
+  @spec user(String.t()) :: T.domain_res(T.paged_users())
   def user(name) when is_binary(name), do: User.search(name)
 end

@@ -5,7 +5,9 @@ defmodule GroupherServer.CMS.Press.Config do
   CMS Article config -> Press projection -> supported thread list.
   """
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @doc "Returns Article threads that Press can project."
   @spec article_threads() :: [atom()]

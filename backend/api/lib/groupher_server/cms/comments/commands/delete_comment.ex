@@ -35,8 +35,8 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   def execute(%Comment{} = comment, %User{} = actor),
     do: execute(comment, actor, nil)
 
-  @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
   @doc "Deletes a Comment while binding retries to the supplied command id."
+  @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
   def execute(%Comment{} = comment, %User{} = actor, command_id) do
     with {:ok, command_id} <- Command.resolve_command_id(command_id) do
       command =

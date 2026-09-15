@@ -7,9 +7,12 @@ defmodule GroupherServer.CMS.Model.WallpaperSnapshot do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{Community, WallpaperSnapshotImage}
+  alias GroupherServer.CMS
+
+  alias CMS.Model.{Community, WallpaperSnapshotImage}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

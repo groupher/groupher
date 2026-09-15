@@ -11,9 +11,10 @@ defmodule GroupherServer.CMS.CommandReceipt do
   writes. This facade exposes only the shared receipt protocol used around them.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.CommandReceipt.{Key, Runner, Store}
-  alias GroupherServer.CMS.Model.CommandReceipt, as: CommandReceiptModel
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.CommandReceipt.{Key, Runner, Store}
 
   @doc """
   Resolves an internal command id from a direct id.
@@ -35,7 +36,7 @@ defmodule GroupherServer.CMS.CommandReceipt do
           String.t() | pos_integer(),
           term(),
           (-> term()),
-          (CommandReceiptModel.t() -> term())
+          (CMS.Model.CommandReceipt.t() -> term())
         ) :: {:ok, term()} | {:error, term()}
   defdelegate run_internal(
                 user,
@@ -58,7 +59,7 @@ defmodule GroupherServer.CMS.CommandReceipt do
           String.t() | pos_integer(),
           term(),
           (-> term()),
-          (CommandReceiptModel.t() -> term()),
+          (CMS.Model.CommandReceipt.t() -> term()),
           (term() -> term())
         ) :: {:ok, term()} | {:error, term()}
   defdelegate run_internal(

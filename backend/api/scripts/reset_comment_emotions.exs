@@ -3,7 +3,7 @@ import Ecto.Query, warn: false
 import GroupherServer.Support.Factory, only: [db_insert_multi: 2]
 
 alias GroupherServer.{CMS, Repo}
-alias GroupherServer.CMS.Model.{Comment, CommentUserEmotion}
+alias CMS.Model.{Comment, CommentUserEmotion}
 alias Helper.ORM
 
 supported_comment_emotions =

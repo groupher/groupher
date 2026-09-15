@@ -12,12 +12,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinDoc do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
-  alias GroupherServer.CMS.Model.{Community, Doc}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, Doc}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

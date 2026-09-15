@@ -14,15 +14,15 @@ defmodule GroupherServer.CMS.Model.ArticleDocumentAssetRef do
   and "which resources are currently orphaned?".
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{ArticleDocument, Community, CommunityAsset}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{ArticleDocument, Community, CommunityAsset}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

@@ -12,7 +12,9 @@ defmodule GroupherServer.CMS.Snapshot do
   refresh orchestration separately.
   """
 
-  alias GroupherServer.CMS.Snapshot.{Projection, Refresh}
+  alias GroupherServer.CMS
+
+  alias CMS.Snapshot.{Projection, Refresh}
 
   @type snapshot_kind :: :user | :article | :comment
 

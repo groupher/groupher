@@ -13,9 +13,10 @@ defmodule GroupherServerWeb.Schema.Helper.Imports do
         -> GraphQL response
   """
 
-  alias GroupherServerWeb.Schema.CMS
+  alias GroupherServer.CMS
+  alias GroupherServerWeb.Schema.CMS, as: SchemaCMS
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
   @doc """
   Imports mutation fields for every configured artiment thread.
 
@@ -43,7 +44,7 @@ defmodule GroupherServerWeb.Schema.Helper.Imports do
     @threads
     |> Enum.map(
       &quote do
-        import_types(unquote(Module.concat(CMS.Mutations, Recase.to_pascal(to_string(&1)))))
+        import_types(unquote(Module.concat(SchemaCMS.Mutations, Recase.to_pascal(to_string(&1)))))
       end
     )
   end

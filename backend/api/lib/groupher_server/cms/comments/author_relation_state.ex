@@ -8,14 +8,15 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
       Comments Reader -> AuthorRelationState -> author-upvoted comment ids
   """
 
+  require GroupherServer.CMS.Model.Interaction.RoaringBitmap
+
   import Ecto.Query
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Model.{Author, Comment, CommentReactionInfo}
-  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  require RoaringBitmap
+  alias CMS.Artiment.Matcher
+  alias CMS.Model.{Author, Comment, CommentReactionInfo}
+  alias CMS.Model.Interaction.RoaringBitmap
 
   @doc """
   Returns Comment ids upvoted by each Comment's parent Article author.

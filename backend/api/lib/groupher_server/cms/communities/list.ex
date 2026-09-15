@@ -12,11 +12,11 @@ defmodule GroupherServer.CMS.Communities.List do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias CMS.QueryBuilder
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.QueryBuilder
+  alias Accounts.Model.User
   alias CMS.Model.Community
   alias Helper.{ORM, T}
 
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Communities.List do
     %{page: page, size: size} = filter
 
     Community
-    |> CMS.Gate.scope(nil, :list, CommunityScope.public())
+    |> CMS.Gate.scope(nil, :list, CommunityContext.public())
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(page: page, size: size)
     |> done()

@@ -26,23 +26,23 @@ defmodule GroupherServer.Accounts.Config do
             achieve_collect_weight: Keyword.get(@general_config, :user_achieve_collect_weight),
             achieve_follow_weight: Keyword.get(@general_config, :user_achieve_follow_weight)
 
-  @spec base() :: t()
   @doc "Runs `base` through the public `Config` boundary."
+  @spec base() :: t()
   def base, do: %__MODULE__{}
 
-  @spec default_subscribed_communities() :: pos_integer()
   @doc "Runs `default_subscribed_communities` through the public `Config` boundary."
+  @spec default_subscribed_communities() :: pos_integer()
   def default_subscribed_communities, do: base().default_subscribed_communities
 
-  @spec achieve_upvote_weight() :: non_neg_integer()
   @doc "Runs `achieve_upvote_weight` through the public `Config` boundary."
+  @spec achieve_upvote_weight() :: non_neg_integer()
   def achieve_upvote_weight, do: base().achieve_upvote_weight
 
-  @spec achieve_collect_weight() :: non_neg_integer()
   @doc "Runs `achieve_collect_weight` through the public `Config` boundary."
+  @spec achieve_collect_weight() :: non_neg_integer()
   def achieve_collect_weight, do: base().achieve_collect_weight
 
-  @spec achieve_follow_weight() :: non_neg_integer()
   @doc "Runs `achieve_follow_weight` through the public `Config` boundary."
+  @spec achieve_follow_weight() :: non_neg_integer()
   def achieve_follow_weight, do: base().achieve_follow_weight
 end

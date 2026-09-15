@@ -17,7 +17,9 @@ defmodule GroupherServer.Accounts.Search.User do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.User
   alias Helper.ORM
 
   @search_items_count 15

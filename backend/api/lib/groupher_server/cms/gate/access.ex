@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Gate.Access do
   """
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.Gate.Access.Check
   alias CMS.Gate.{Decision, ErrorCat}
   alias CMS.{Articles, FrontDesk}

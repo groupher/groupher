@@ -12,10 +12,11 @@ defmodule GroupherServer.CMS.Wallpaper.Reader do
 
   import Ecto.Query, only: [from: 2]
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Dashboard.Fields, as: DashboardFields
-  alias GroupherServer.CMS.Model.{CommunityWallpaper, WallpaperSnapshot, WallpaperSnapshotImage}
-  alias GroupherServer.CMS.Wallpaper.{Settings, Upload}
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Dashboard.Fields, as: DashboardFields
+  alias CMS.Model.{CommunityWallpaper, WallpaperSnapshot, WallpaperSnapshotImage}
+  alias CMS.Wallpaper.{Settings, Upload}
 
   @doc "Reports whether an Assets Hub Batch has already produced a Snapshot."
   def batch_published?(batch_ref) when is_binary(batch_ref) do

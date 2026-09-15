@@ -13,12 +13,10 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   """
 
   alias GroupherServer.{Accounts, CMS, Jobs}
-
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate, Comments}
   alias Comments.{BodyCodec, JobPolicy}
   alias CMS.Model.Comment
-
   alias Helper.{ORM, T}
 
   @doc """

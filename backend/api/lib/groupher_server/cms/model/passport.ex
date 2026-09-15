@@ -12,12 +12,14 @@ defmodule GroupherServer.CMS.Model.Passport do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias __MODULE__
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @required_fields ~w(rules user_id)a

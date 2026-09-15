@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Model.CommunitySlugClaim do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityApplication}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityApplication}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.DocTreeLog do
 
       DocTree Activity contract -> activity.doc_tree_logs -> management surface
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "doc_tree_logs",
     stream_field: :doc_tree_ref,

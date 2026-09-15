@@ -12,12 +12,13 @@ defmodule GroupherServer.CMS.Snapshot.Reader do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Model.{Comment, CommentLifecycle}
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Model.{Comment, CommentLifecycle}
 
   @doc "Loads summaries for one snapshot kind and returns them keyed by id."
   @spec load_summaries(:user | :article | :comment, atom() | nil, [term()]) :: map()
@@ -124,6 +125,6 @@ defmodule GroupherServer.CMS.Snapshot.Reader do
   defp digest(body),
     do: if(String.length(body) <= 120, do: body, else: String.slice(body, 0, 120))
 
-  defp scope_context(:doc), do: DocScope.public_main()
-  defp scope_context(thread), do: ArticleScope.public(thread)
+  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(thread), do: ArticleContext.public(thread)
 end

@@ -10,15 +10,15 @@ defmodule GroupherServer.Analysis.Contribution do
         -> Contribution
         -> Repo / analytics provider
   """
+
   import Ecto.Query, warn: false
   import Helper.Utils
   import ShortMaps
 
-  alias GroupherServer.{CMS, FrontDesk, Repo}
-
   alias __MODULE__.Model.{CommunityContribute, UserContribute}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
+  alias Accounts.Model.User
+  alias CMS.Model.Community
   alias Helper.{Cache, Datetime, Later, Multi, ORM, QueryBuilder}
 
   @community_contribute_days __MODULE__.Config.community_contribute_days()

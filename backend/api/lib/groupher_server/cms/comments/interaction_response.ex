@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Comments.InteractionResponse do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+
   alias CMS.Comments.AuthorRelationState
   alias CMS.Model.PostSolution
 

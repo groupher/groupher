@@ -25,12 +25,13 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
       articles_foreign_key_constraint: 1
     ]
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @supported_emotions CMS.Artiment.Config.emotions()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(user_id received_user_id emotion)a
   @optional_fields Enum.map(@threads, &:"#{&1}_id")

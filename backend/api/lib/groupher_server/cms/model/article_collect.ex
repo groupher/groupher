@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
 
@@ -26,14 +25,15 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
       articles_thread_matches_ref_constraint: 2
     ]
 
-  alias GroupherServer.CMS.Artiment.Threads
-
-  alias GroupherServer.Accounts.Model.{CollectFolder, User}
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias CMS.Artiment.Threads
+  alias Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(user_id)a
   @optional_fields ~w(thread)a

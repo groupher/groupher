@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Model.CommunityApplicationLogoUpload do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{CommunityApplication, CommunityAsset}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{CommunityApplication, CommunityAsset}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

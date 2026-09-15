@@ -14,7 +14,9 @@ defmodule GroupherServer.CMS.Policy do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.Gate.RateLimit.Publish
+  alias GroupherServer.CMS
+
+  alias CMS.Gate.RateLimit.Publish
 
   @doc "Records a successful publish through the public Policy boundary."
   defdelegate record(user), to: Publish

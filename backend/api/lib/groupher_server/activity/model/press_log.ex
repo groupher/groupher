@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.PressLog do
 
       Press Activity contract -> activity.press_logs -> management surface
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "press_logs",
     stream_field: :press_ref,

@@ -13,12 +13,14 @@ defmodule GroupherServer.Analysis.Contribution.Model.CommunityContribute do
         -> CommunityContribute
         -> Repo / analytics provider
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Community
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.statistics()

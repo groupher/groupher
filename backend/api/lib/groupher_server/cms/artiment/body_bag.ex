@@ -23,8 +23,10 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Config
-  alias GroupherServer.CMS.Model.ArticleDocument
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config
+  alias CMS.Model.ArticleDocument
 
   @primary_key false
 

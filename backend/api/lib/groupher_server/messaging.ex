@@ -12,7 +12,8 @@ defmodule GroupherServer.Messaging do
         -> domain / infrastructure boundary
   """
 
-  alias GroupherServer.Messaging.{Inbox, Mentions, Notifications, Notify}
+  alias GroupherServer.Messaging
+  alias Messaging.{Inbox, Mentions, Notifications, Notify}
 
   @doc "Stores mention messages derived from an artiment and its parsed mentions."
   def send_mention(artiment, mentions, from_user),

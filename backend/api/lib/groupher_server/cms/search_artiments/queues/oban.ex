@@ -10,11 +10,10 @@ defmodule GroupherServer.CMS.SearchArtiments.Queues.Oban do
         -> search platform
   """
 
-  @behaviour GroupherServer.CMS.SearchArtiments.QueueAdapter
-
   require Logger
+  alias GroupherServer.{CMS, Jobs}
 
-  alias GroupherServer.Jobs
+  @behaviour CMS.SearchArtiments.QueueAdapter
 
   @impl true
   @doc """

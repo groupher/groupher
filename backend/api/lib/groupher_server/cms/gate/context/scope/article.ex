@@ -13,7 +13,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
       iex> %__MODULE__{thread: :post, stage: :draft} = draft(:post)
   """
 
-  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS
+
+  alias CMS.Gate.Config
 
   @threads Config.ordinary_article_threads()
   @modes [:public, :owner_management, :moderator_management, :operations]

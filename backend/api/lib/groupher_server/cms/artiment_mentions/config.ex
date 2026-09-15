@@ -12,7 +12,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Config do
 
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @type t :: %__MODULE__{
           site_host: String.t(),

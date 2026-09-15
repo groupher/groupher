@@ -13,15 +13,15 @@ defmodule GroupherServer.CMS.Model.CoverBackground do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
   import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_cast_fields: 1, dsb_fields: 1]
 
-  alias GroupherServer.CMS.Model.BgConfigValidator
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.BgConfigValidator
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

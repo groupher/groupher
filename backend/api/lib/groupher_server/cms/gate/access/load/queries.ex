@@ -18,15 +18,15 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     CommunityLifecycle,
     DocBranch,
     DocLifecycle
   }
-
-  alias GroupherServer.Repo
 
   @doc """
   Reloads one resource row by primary key under `FOR UPDATE`.

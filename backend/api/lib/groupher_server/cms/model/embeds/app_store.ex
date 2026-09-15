@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.Embeds.AppStore do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 

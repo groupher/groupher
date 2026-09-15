@@ -23,9 +23,11 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
         -> CommunityDashboard / Repo
   """
 
-  alias GroupherServer.CMS.Dashboard.{ThemePreset, Writer}
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout, as: DashboardLayout
+  alias GroupherServer.CMS
+
+  alias CMS.Dashboard.{ThemePreset, Writer}
+  alias CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Model.Embeds.Dashboard.Layout
   alias Helper.T
 
   @doc """
@@ -78,7 +80,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
 
   defp current_layout(community_dashboard) do
     community_dashboard.layout ||
-      struct(DashboardLayout, DashboardLayout.default())
+      struct(Layout, Layout.default())
   end
 
   defp validate_custom_save(%{theme_preset: :custom, theme_preset_base: :custom}),

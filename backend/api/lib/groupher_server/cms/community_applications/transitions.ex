@@ -11,8 +11,9 @@ defmodule GroupherServer.CMS.CommunityApplications.Transitions do
         -> Repo / Oban
   """
 
+  alias GroupherServer.CMS
   alias Ecto.Multi
-  alias GroupherServer.CMS.Model.{CommunityApplication, CommunityApplicationEvent}
+  alias CMS.Model.{CommunityApplication, CommunityApplicationEvent}
 
   @allowed %{
     submitted: ~w(reviewing cancelled expired)a,

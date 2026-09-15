@@ -11,10 +11,11 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   """
   import Helper.Utils, only: [plural: 1, past_verb: 1]
 
+  alias GroupherServer.CMS
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   # user published articles
   defmacro published_article_queries do

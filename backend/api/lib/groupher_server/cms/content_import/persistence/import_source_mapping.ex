@@ -17,7 +17,9 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Connection
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Connection
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

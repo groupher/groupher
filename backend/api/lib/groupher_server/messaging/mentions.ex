@@ -25,12 +25,12 @@ defmodule GroupherServer.Messaging.Mentions do
   import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
   import ShortMaps
 
-  alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.Messaging.Model.Mention
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
+  alias CMS.Model.Comment
+  alias Messaging.Model.Mention
   alias Helper.{Multi, ORM}
 
   @doc "Runs `send` through the public `Mentions` boundary."

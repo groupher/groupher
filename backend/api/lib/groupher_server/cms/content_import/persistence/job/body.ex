@@ -17,8 +17,10 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Body do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Job
+  alias CMS.ContentImport.Persistence.Job.Item
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

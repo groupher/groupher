@@ -10,9 +10,11 @@ defmodule GroupherServer.CMS.Helper.Constraints do
         -> Constraints
         -> Repo / external boundary
   """
-  import Ecto.Changeset
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  import Ecto.Changeset
+  alias GroupherServer.CMS
+
+  @threads CMS.Artiment.Config.threads()
   @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @doc """

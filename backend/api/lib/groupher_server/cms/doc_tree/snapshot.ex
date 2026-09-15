@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Snapshot do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Canonical JSON snapshots for docs Tree publish history.
 
@@ -22,13 +21,15 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
         -> Repo / published projection
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
-  require CMS.Const
+  alias CMS.Docs.Branch
+  alias CMS.Model.{Community, DocTreeNode}
 
   @tree_version 3
   @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)

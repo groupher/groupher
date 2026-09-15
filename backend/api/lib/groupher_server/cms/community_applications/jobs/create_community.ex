@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Jobs.CreateCommunity do
   as creation-failed once all retries are exhausted.
   """
   @impl Oban.Worker
+
   def perform(%Oban.Job{
         args: %{"application_ref" => application_ref, "operation_ref" => operation_ref},
         attempt: attempt,

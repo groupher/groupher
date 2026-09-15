@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
 
@@ -20,12 +19,14 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   import GroupherServer.CMS.Helper.Macros
   import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.Community
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(community_id thread)a
   # @optional_fields ~w(post_id job_id repo_id)a

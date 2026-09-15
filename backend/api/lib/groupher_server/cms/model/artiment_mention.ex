@@ -14,12 +14,13 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Threads
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

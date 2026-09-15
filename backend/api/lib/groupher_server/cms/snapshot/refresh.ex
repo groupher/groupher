@@ -11,7 +11,9 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
   relation set.
   """
 
-  alias GroupherServer.CMS.Snapshot.{Cache, Reader}
+  alias GroupherServer.CMS
+
+  alias CMS.Snapshot.{Cache, Reader}
 
   @type snapshot_kind :: :user | :article | :comment
 

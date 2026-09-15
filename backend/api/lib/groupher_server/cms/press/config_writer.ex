@@ -12,12 +12,12 @@ defmodule GroupherServer.CMS.Press.ConfigWriter do
         -> Press.Invalidation
   """
 
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.{Activity, Repo}
-  alias GroupherServer.Activity.EventRef
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, PressConfig}
-  alias GroupherServer.CMS.Press.{Invalidation, Reader}
+  alias Activity.EventRef
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, PressConfig}
+  alias CMS.Press.{Invalidation, Reader}
   alias Helper.Later
 
   @doc "Updates persisted Press config and records the changed fields."

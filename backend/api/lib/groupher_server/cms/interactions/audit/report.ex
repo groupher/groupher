@@ -5,8 +5,9 @@ defmodule GroupherServer.CMS.Interactions.Audit.Report do
       operator -> Audit.Report -> report issue inventory
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Artiment.Matcher
 
   @report_threads ~w(post blog changelog doc comment)
 

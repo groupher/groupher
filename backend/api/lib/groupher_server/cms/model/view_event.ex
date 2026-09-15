@@ -11,8 +11,10 @@ defmodule GroupherServer.CMS.Model.ViewEvent do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

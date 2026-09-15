@@ -4,13 +4,14 @@ defmodule GroupherServer.Activity.Changelog do
 
       Changelog command -> Changelog Activity contract -> ChangelogLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.ChangelogLog
 
   use GroupherServer.Activity.ArtimentEvent,
     thread: :changelog,
-    schema: ChangelogLog,
+    schema: GroupherServer.Activity.Model.ChangelogLog,
     stream_field: :changelog_ref
+
+  alias GroupherServer.Activity
+  alias Activity.Event
 
   @trash_denial_codes [
     :permission_denied,

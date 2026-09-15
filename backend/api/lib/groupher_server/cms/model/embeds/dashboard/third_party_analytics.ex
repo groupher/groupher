@@ -13,12 +13,15 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThirdPartyAnalytics do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Dashboard.ThirdPartyAnalytics, as: ProviderRegistry
+  alias GroupherServer.CMS
+
+  alias CMS.Dashboard.ThirdPartyAnalytics, as: ProviderRegistry
 
   @primary_key false
   embedded_schema do

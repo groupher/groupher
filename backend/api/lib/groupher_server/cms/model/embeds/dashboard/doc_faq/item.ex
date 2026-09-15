@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Item do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
 
   import Ecto.Changeset

@@ -9,7 +9,9 @@ defmodule GroupherServer.Jobs.InteractionAudit do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.Interactions.Audit
+  alias GroupherServer.CMS
+
+  alias CMS.Interactions.Audit
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do

@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 
@@ -19,8 +20,10 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
   import GroupherServerWeb.Schema.Helper.Fields,
     only: [dsb_cast_fields: 1, dsb_fields: 1]
 
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.CMS.Dashboard.{KanbanBoards, ThemePreset}
+  alias GroupherServer.CMS
+
+  alias CMS.Dashboard.Fields, as: Dashboard
+  alias CMS.Dashboard.{KanbanBoards, ThemePreset}
 
   @optional_fields dsb_cast_fields(:layout)
 

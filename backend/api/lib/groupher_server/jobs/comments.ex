@@ -16,8 +16,10 @@ defmodule GroupherServer.Jobs.Comments do
     queue: GroupherServer.Jobs.Config.queue(:later),
     max_attempts: GroupherServer.Jobs.Config.max_attempts(:later)
 
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.Jobs.Codec
+  alias GroupherServer.{CMS, Jobs}
+
+  alias CMS.Events
+  alias Jobs.Codec
   alias Helper.ORM
 
   @event_kinds ~w(sync_mentions audition notify_comment notify_reply subscribe_community)

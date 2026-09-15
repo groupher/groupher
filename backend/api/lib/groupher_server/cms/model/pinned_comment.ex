@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
@@ -23,12 +22,14 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   import GroupherServer.CMS.Helper.Constraints,
     only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
 
-  alias GroupherServer.CMS.Model.Comment
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(comment_id)a
   # @optional_fields ~w(post_id job_id repo_id)a

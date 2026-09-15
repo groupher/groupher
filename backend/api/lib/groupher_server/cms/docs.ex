@@ -7,13 +7,13 @@ defmodule GroupherServer.CMS.Docs do
   Docs branch/editor -> snapshot and tree boundaries -> public Docs release
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
   alias CMS.Command
-  alias CMS.Articles.Diff
-  alias CMS.Articles.Publish
+  alias CMS.Articles.{Diff, Publish}
   alias CMS.Docs.Snapshot
-  alias GroupherServer.CMS.Model.{Community, DocSnapshot}
+  alias CMS.Model.{Community, DocSnapshot}
   alias Helper.T
 
   @doc "Reads the current Doc content head shown by the editor; this is not the rich-text editor implementation."

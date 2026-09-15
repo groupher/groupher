@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.CommunityLifecycleBlocker do
-  require GroupherServer.CMS.Communities.Const
   @moduledoc """
   An active or ended restriction contributing to a Community Lifecycle state.
 
@@ -13,14 +12,16 @@ defmodule GroupherServer.CMS.Model.CommunityLifecycleBlocker do
 
   use Ecto.Schema
 
+  require GroupherServer.CMS.Communities.Const
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Communities.Const
-  alias GroupherServer.CMS.Model
-  alias GroupherServer.CMS.Model.CommunityLifecycle
-  alias Helper.Constant.DBPrefix
+  alias GroupherServer.CMS
 
-  require Const
+  alias CMS.Communities.Const
+  alias CMS.Model
+  alias CMS.Model.CommunityLifecycle
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

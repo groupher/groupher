@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Result do
         -> search platform
   """
 
-  alias GroupherServer.CMS.SearchArtiments.Artiment
+  alias GroupherServer.CMS
+
+  alias CMS.SearchArtiments.Artiment
 
   @type highlight :: %{
           required(:field) => :title | :plain_text,

@@ -8,7 +8,9 @@ defmodule GroupherServer.CMS.Passport.Assignment do
       Community administration -> CMS.Passport.Assignment -> Passport rows
   """
 
-  alias GroupherServer.CMS.Communities.Passport
+  alias GroupherServer.CMS
+
+  alias CMS.Communities.Passport
 
   @doc "Delegates paged passport listing for one community scope to `Communities.Passport`."
   defdelegate paged_passports(community, key), to: Passport

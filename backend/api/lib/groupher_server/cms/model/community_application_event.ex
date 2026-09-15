@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Model.CommunityApplicationEvent do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.CommunityApplication
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.CommunityApplication
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

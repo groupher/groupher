@@ -9,7 +9,9 @@ defmodule GroupherServer.CMS.Interactions.Config do
         -> application runtime configuration
   """
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @doc "Returns Article threads recognized by Interaction projections."
   @spec article_threads() :: [atom()]

@@ -10,7 +10,9 @@ defmodule GroupherServer.CMS.QueryBuilder do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Artiment.{Const, Threads}
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.{Const, Threads}
   alias Helper.QueryBuilder, as: GenericQueryBuilder
 
   @article_cat Const.cat_values()

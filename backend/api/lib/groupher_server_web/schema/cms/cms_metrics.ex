@@ -14,9 +14,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   import GroupherServerWeb.Schema.Helper.Fields
   import Helper.Utils, only: [module_to_atom: 1]
 
-  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
-  alias GroupherServer.CMS.Artiment.Const, as: ArtimentConst
-  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS
+  alias CMS.Articles.Const, as: ArticlesConst
+  alias CMS.Artiment.Const, as: ArtimentConst
+  alias CMS.Artiment.Threads
 
   require ArticlesConst
   require ArtimentConst

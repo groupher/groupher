@@ -13,8 +13,8 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
         -> resolver or domain context
         -> GraphQL response
   """
-  import GroupherServerWeb.Schema.Helper.Queries
   use Helper.GqlSchemaSuite
+  import GroupherServerWeb.Schema.Helper.Queries
 
   object :account_queries do
     @desc "List Browser Sessions for canonical Auth through trusted transport only."

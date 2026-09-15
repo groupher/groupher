@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Model.Blog do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
@@ -20,10 +19,10 @@ defmodule GroupherServer.CMS.Model.Blog do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-
-  alias GroupherServer.CMS.Model.Embeds
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
-
 
   @timestamps_opts [type: :utc_datetime]
 

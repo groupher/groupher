@@ -29,17 +29,19 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
         -> PostgreSQL
   """
 
-  @type t :: %__MODULE__{}
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
-  @threads GroupherServer.CMS.Artiment.Config.threads()
-  @emotions_whitelist GroupherServer.CMS.Artiment.Config.emotions_whitelist()
-  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
-  @default_thread_emotions GroupherServer.CMS.Artiment.Config.default_thread_emotions()
+  alias GroupherServer.CMS
+
+  @type t :: %__MODULE__{}
+
+  @threads CMS.Artiment.Config.threads()
+  @emotions_whitelist CMS.Artiment.Config.emotions_whitelist()
+  @article_emotions CMS.Artiment.Config.emotions()
+  @comment_emotions CMS.Artiment.Config.comment_emotions()
+  @default_thread_emotions CMS.Artiment.Config.default_thread_emotions()
 
   @comment_thread_fields Enum.map(@threads, &:"#{&1}_comment")
   @thread_fields @threads ++ @comment_thread_fields

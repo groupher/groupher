@@ -4,9 +4,11 @@ defmodule GroupherServer.Activity.Press do
 
       Press command -> Press Activity contract -> PressLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.PressLog
-  alias GroupherServer.CMS.Model.PressConfig
+
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Event
+  alias Activity.Model.PressLog
+  alias CMS.Model.PressConfig
 
   @contracts %{
     config_updated:

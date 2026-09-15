@@ -12,20 +12,20 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.{
-    Marker
-  }
+  alias __MODULE__
+  alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.CMS.Model.{Author, Community, CommunityTagGroup}
+  alias CMS.Marker
+
+  alias CMS.Artiment.Threads
+  alias CMS.Dashboard.Fields, as: Dashboard
+  alias CMS.Model.{Author, Community, CommunityTagGroup}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

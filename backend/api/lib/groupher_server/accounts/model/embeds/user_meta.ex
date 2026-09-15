@@ -14,8 +14,9 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
   """
 
   import Helper.Utils, only: [plural: 1]
+  alias GroupherServer.CMS
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   defmacro published_article_count_fields do
     @threads
@@ -38,6 +39,7 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
         -> User row
         -> Profile and permission read models
   """
+
   use Ecto.Schema
   use Accessible
 
@@ -45,7 +47,9 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserMeta do
   import GroupherServer.Accounts.Model.Embeds.UserMeta.Macro
   import Helper.Utils, only: [plural: 1]
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  alias GroupherServer.CMS
+
+  @threads CMS.Artiment.Config.threads()
 
   @general_options %{
     is_maker: false,

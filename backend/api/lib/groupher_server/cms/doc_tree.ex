@@ -26,9 +26,11 @@ defmodule GroupherServer.CMS.DocTree do
   own display lane. Every node uses the same staged Tree workflow.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.DocTree.{Commands, Publish, Reader, Trash, Writer}
-  alias GroupherServer.CMS.Model.{Community, Doc}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.DocTree.{Commands, Publish, Reader, Trash, Writer}
+  alias CMS.Model.{Community, Doc}
   alias Helper.T
 
   @doc """

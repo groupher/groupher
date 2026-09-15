@@ -9,7 +9,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
 
   alias __MODULE__.{Query, Sync}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
 
   @doc """
   Returns Interaction state for one Artiment and optional viewer.

@@ -10,8 +10,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Draft do
         -> Articles.Draft
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
   alias CMS.Articles.Draft, as: ArticleDraft
   alias CMS.Command
   alias CMS.Model.Community

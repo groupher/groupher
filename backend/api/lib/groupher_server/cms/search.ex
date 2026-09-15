@@ -10,13 +10,14 @@ defmodule GroupherServer.CMS.Search do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.Accounts.Model.User
+  alias __MODULE__.Community
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.User
   alias Helper.T
 
-  alias __MODULE__.Community
-
-  @spec community(String.t()) :: T.domain_res(T.paged_data())
   @doc "Runs `community` through the public `Search` boundary."
+  @spec community(String.t()) :: T.domain_res(T.paged_data())
   def community(title), do: Community.search(title)
 
   @spec community(String.t(), User.t()) :: T.domain_res(T.paged_data())

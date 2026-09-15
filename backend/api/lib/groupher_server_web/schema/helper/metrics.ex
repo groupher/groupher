@@ -9,9 +9,9 @@ defmodule GroupherServerWeb.Schema.Helper.Metrics do
         -> resolver or domain context
         -> GraphQL response
   """
+  use Absinthe.Schema.Notation
   import GroupherServerWeb.Schema.Helper.Fields
 
-  use Absinthe.Schema.Notation
 
   scalar :big_int, name: "BigInt" do
     description("""

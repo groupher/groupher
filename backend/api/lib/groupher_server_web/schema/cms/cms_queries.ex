@@ -13,11 +13,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
         -> resolver or domain context
         -> GraphQL response
   """
+  use Helper.GqlSchemaSuite
   import GroupherServerWeb.Schema.Helper.Queries
 
-  use Helper.GqlSchemaSuite
 
-  alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
+  alias GroupherServer.CMS
+  alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
     @desc "Safe product ArticleLog for one readable Article"

@@ -18,14 +18,6 @@ defmodule GroupherServer.CMS.Articles do
   under `CMS.Docs`; this facade only owns the ordinary Article core.
   """
 
-  alias Helper.T
-
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Artiment.Const
-  alias CMS.Model.Community
-
   alias __MODULE__.{
     Commands,
     Draft,
@@ -37,9 +29,15 @@ defmodule GroupherServer.CMS.Articles do
     Trash
   }
 
+  alias GroupherServer.{Accounts, CMS}
+  alias Helper.T
+  alias Accounts.Model.User
+  alias CMS.Artiment.Const
+  alias CMS.Model.Community
+
   # Read
-  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   @doc "Runs `read` through the public `Articles` boundary."
+  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id),
     do: Reader.read(community, thread, inner_id)
 
@@ -56,23 +54,23 @@ defmodule GroupherServer.CMS.Articles do
 
   # List
 
-  @spec page(T.thread(), map()) :: T.domain_res(T.paged_data())
   @doc "Runs `page` through the public `Articles` boundary."
+  @spec page(T.thread(), map()) :: T.domain_res(T.paged_data())
   def page(thread, filter), do: List.page(thread, filter)
 
   @spec page(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
 
-  @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   @doc "Runs `grouped_kanban` through the public `Articles` boundary."
+  @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
 
-  @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
   @doc "Returns paged kanban from the `Articles` read boundary."
+  @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
   def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
 
-  @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   @doc "Returns paged published from the `Articles` read boundary."
+  @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
   def paged_published(thread, filter, %User{} = user) do
     List.paged_published(thread, filter, user, nil)
   end
@@ -83,8 +81,8 @@ defmodule GroupherServer.CMS.Articles do
     List.paged_published(thread, filter, target_user, actor)
   end
 
-  @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
   @doc "Runs `count_published` through the public `Articles` boundary."
+  @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
   def count_published(thread, %User{} = user),
     do: List.count_published(thread, user)
 
@@ -96,8 +94,8 @@ defmodule GroupherServer.CMS.Articles do
   def create(community, thread, attrs, %User{} = user, opts \\ []),
     do: Commands.Create.create(community, thread, attrs, user, opts)
 
-  @spec update(T.article(), map()) :: T.domain_res(T.article())
   @doc "Updates through the actor-less domain path by deriving the actor from the Article author; this is not a transport entrypoint."
+  @spec update(T.article(), map()) :: T.domain_res(T.article())
   def update(article, attrs), do: Publish.update(article, attrs)
 
   @doc "Updates an Article through the authenticated idempotent command boundary."
@@ -253,73 +251,73 @@ defmodule GroupherServer.CMS.Articles do
   @spec get_trashed(Ecto.UUID.t()) :: T.domain_res(CMS.Model.TrashedArticle.t())
   def get_trashed(ref), do: Trash.get(ref)
 
-  @spec archive(T.thread()) :: T.domain_res(term())
   @doc "Runs `archive` through the public `Articles` boundary."
+  @spec archive(T.thread()) :: T.domain_res(term())
   def archive(thread), do: States.archive(thread)
 
-  @spec sink(T.article()) :: T.domain_res(T.article())
   @doc "Runs `sink` through the public `Articles` boundary."
+  @spec sink(T.article()) :: T.domain_res(T.article())
   def sink(article), do: States.sink(article)
 
-  @spec undo_sink(T.article()) :: T.domain_res(T.article())
   @doc "Runs `undo_sink` through the public `Articles` boundary."
+  @spec undo_sink(T.article()) :: T.domain_res(T.article())
   def undo_sink(article), do: States.undo_sink(article)
 
   # Meta
 
-  @spec set_cat(T.article(), Const.cat_enum() | nil) :: T.domain_res(T.article())
   @doc "Runs `set_cat` through the public `Articles` boundary."
+  @spec set_cat(T.article(), Const.cat_enum() | nil) :: T.domain_res(T.article())
   def set_cat(article, cat), do: States.set_cat(article, cat)
 
-  @spec set_status(T.article(), Const.status_enum() | nil) :: T.domain_res(T.article())
   @doc "Runs `set_status` through the public `Articles` boundary."
+  @spec set_status(T.article(), Const.status_enum() | nil) :: T.domain_res(T.article())
   def set_status(article, status), do: States.set_status(article, status)
 
-  @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
   @doc "Updates active timestamp through the `Articles` write boundary."
+  @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
   def update_active_timestamp(thread, article) do
     States.update_active_timestamp(thread, article)
   end
 
   # Moderation
 
-  @spec set_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
   @doc "Runs `set_illegal` through the public `Articles` boundary."
+  @spec set_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
   def set_illegal(thread, id, attrs),
     do: Moderation.set_illegal(thread, id, attrs)
 
   @spec set_illegal(T.article(), map()) :: T.domain_res(T.article())
   def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
 
-  @spec unset_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
   @doc "Runs `unset_illegal` through the public `Articles` boundary."
+  @spec unset_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
   def unset_illegal(thread, id, attrs),
     do: Moderation.unset_illegal(thread, id, attrs)
 
   @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
   def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
 
-  @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
   @doc "Runs `set_audit_failed` through the public `Articles` boundary."
+  @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
   def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
-  @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
   @doc "Returns paged audit failed from the `Articles` read boundary."
+  @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
   def paged_audit_failed(thread, filter),
     do: Moderation.paged_audit_failed(thread, filter)
 
   # Placement
 
-  @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `pin` through the public `Articles` boundary."
+  @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def pin(%Community{} = community, article), do: States.pin(community, article)
 
-  @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `undo_pin` through the public `Articles` boundary."
+  @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def undo_pin(%Community{} = community, article), do: States.undo_pin(community, article)
 
-  @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `mirror` through the public `Articles` boundary."
+  @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
   def mirror(%Community{} = community, article), do: States.mirror(community, article)
 
   @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
@@ -327,12 +325,12 @@ defmodule GroupherServer.CMS.Articles do
     States.mirror(community, article, article_ids)
   end
 
-  @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `unmirror` through the public `Articles` boundary."
+  @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
   def unmirror(%Community{} = community, article), do: States.unmirror(community, article)
 
-  @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `move` through the public `Articles` boundary."
+  @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
   def move(%Community{} = community, article), do: States.move(community, article)
 
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
@@ -340,8 +338,8 @@ defmodule GroupherServer.CMS.Articles do
     States.move(community, article, article_ids)
   end
 
-  @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `move_to_blackhole` through the public `Articles` boundary."
+  @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   def move_to_blackhole(%Community{} = community, article),
     do: States.move_to_blackhole(community, article)
 
@@ -350,8 +348,8 @@ defmodule GroupherServer.CMS.Articles do
     States.move_to_blackhole(community, article, article_ids)
   end
 
-  @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   @doc "Runs `mirror_to_home` through the public `Articles` boundary."
+  @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   def mirror_to_home(%Community{} = community, article),
     do: States.mirror_to_home(community, article)
 
@@ -360,11 +358,11 @@ defmodule GroupherServer.CMS.Articles do
     States.mirror_to_home(community, article, article_ids)
   end
 
-  @spec lock_comments(T.article()) :: T.domain_res(T.article())
   @doc "Runs `lock_comments` through the public `Articles` boundary."
+  @spec lock_comments(T.article()) :: T.domain_res(T.article())
   def lock_comments(article), do: States.lock_comments(article)
 
-  @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
   @doc "Runs `undo_lock_comments` through the public `Articles` boundary."
+  @spec undo_lock_comments(T.article()) :: T.domain_res(T.article())
   def undo_lock_comments(article), do: States.undo_lock_comments(article)
 end
