@@ -7,7 +7,7 @@
 
 相关文档：
 
-- [Backend Rules](./backend-rules.md)：后端模块所有权和 facade 约束；
+- [Backend Rules](../rules/be.md)：后端模块所有权和 facade 约束；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Writer、Gate、Lifecycle 与事务职责；
 - [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、`CommandReceipt` 和具体 action 的执行合同；
 - [Optimistic Operation](../migrations/tanstack/optimistic-operation.md)：前端 operation 到后端 command 的衔接。

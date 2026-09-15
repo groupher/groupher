@@ -25,6 +25,7 @@
 - 消费方只是读取上游公开数据契约时可以直接引用 owner Const；只有组合出本模块自己的策略、子集或完整协议时，才建立本地 Const facade。
 - Migration 保存创建当时冻结的 DDL 常量，不运行时调用业务 Const；通过测试保证 Ecto Enum、领域校验与数据库 CHECK 没有漂移。
 - 数据库 schema prefix 等纯基础设施常量可以保留在共享 Helper，但其中不得混入审核状态、生命周期状态等业务语义。
+- action、type、state 等分支的 Const 归属、模块 attribute 分组和 pattern matching 取舍，遵循 [Backend Const 与 Pattern Matching](./backend-const-and-pattern-matching.md)。
 
 ## 资源加载
 
@@ -39,7 +40,8 @@
 - Domain / Context / 内部公共 API 的失败结果统一为 `{:error, %GroupherServer.ErrorCat.Error{}}`，不返回 `{:error, :atom_reason}`、裸 `%ErrorCat.Error{}` 或自定义 keyword 错误。
 - `Repo.rollback/1`、Gate decision 等专用边界可以接收裸 ErrorCat 错误值；边界离开该调用后仍要恢复为标准 result tuple。
 - GraphQL 只在 resolver / middleware 协议边界调用 `ErrorCat.gq_format/1`；领域层不返回 GraphQL keyword 格式。
-- 错误 reason 优先在所属 context 的 ErrorCat catalog 声明，并分配唯一 code；`GroupherServer.ErrorCat.custom/1` 只用于尚未建立领域 catalog 的过渡边界，不得作为新领域的默认做法。
+- 错误 reason 优先在所属 context 的 ErrorCat catalog 声明，并分配唯一 code；业务代码只 alias 所属领域的 `ErrorCat`，不得直接 alias、匹配 `GroupherServer.ErrorCat.Error` 或调用全局 `custom/1`。
+- 全局错误 struct 由 `GroupherServer.ErrorCat.Domain` 封装；需要模式匹配时使用领域 catalog 提供的 `ErrorCat.error_pattern(...)`。领域 `ErrorCat.custom/1` 只是在边界内转发 reserved custom 的过渡 wrapper，不得作为新领域的默认错误。
 - 进行 ErrorCat 改造时，同步收紧 `Helper.T.domain_res/1` 等类型契约和相关测试，不保留 atom error 的隐性兼容面。
 
 ## 建议补充方向

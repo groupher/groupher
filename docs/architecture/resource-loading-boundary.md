@@ -6,7 +6,7 @@
 
 相关文档：
 
-- [Backend Rules](./backend-rules.md)：后端长期协作规则；
+- [Backend Rules](../rules/be.md)：后端长期协作规则；
 - [CMS Facade 与实现目录收口](./cms-facade-directory.md)：facade、Command、Reader/Writer 的目录与所有权；
 - [Gate V2](../feature/gate/v2.md)、[Gate V4](../feature/gate/v4.md)：mutation admission、typed Access Context 与 canonical resource；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Gate、Lifecycle、Writer 和事务职责；
