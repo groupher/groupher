@@ -18,12 +18,13 @@ defmodule GroupherServer.CMS.Gate.Access do
   and return only `:ok` or `{:error, reason}`.
   """
 
-  alias GroupherServer.CMS.Gate.Access.Check
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.{Articles, FrontDesk}
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Access.Check
+  alias CMS.Gate.{Decision, ErrorCat}
+  alias CMS.{Articles, FrontDesk}
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
+
+  @article_models [Post, Blog, Changelog, Doc]
 
   @doc """
   Authorizes one resource and returns its canonical loaded representation.
@@ -45,7 +46,7 @@ defmodule GroupherServer.CMS.Gate.Access do
     do: Check.comment(actor, action, resource)
 
   def access_check(actor, action, %model{} = resource)
-      when model in [Post, Blog, Changelog, Doc],
+      when model in @article_models,
       do: Check.article(actor, action, resource)
 
   def access_check(_actor, _action, _resource),
@@ -92,7 +93,7 @@ defmodule GroupherServer.CMS.Gate.Access do
   end
 
   def with_check(actor, action, %model{} = article, callback)
-      when model in [Post, Blog, Changelog, Doc] and is_function(callback, 1) do
+      when model in @article_models and is_function(callback, 1) do
     with %Community{} = community <- Repo.get(Community, article.community_id) do
       Articles.MutationLock.transact_article(community, article, fn ->
         Check.with_authorized(actor, action, {community, article}, callback)

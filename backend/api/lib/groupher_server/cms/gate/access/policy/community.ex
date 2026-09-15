@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
-  require GroupherServer.CMS.Gate.Const
   @moduledoc """
   Community access composition across Lifecycle, relations and Passport.
 
@@ -20,16 +19,25 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Gate.Const
-  alias GroupherServer.CMS.Gate.Context.Access.Community, as: CommunityContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.CMS.Passport.Registry
-  require Const
+  require GroupherServer.CMS.Gate.Const
 
-  @actions Const.gate_action_values()
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Communities.Lifecycle
+  alias CMS.Gate.{Const, ErrorCat}
+  alias CMS.Gate.Context.Access.Community, as: CommunityContext
+  alias CMS.Model.Community
+  alias CMS.Passport.Registry
+
+  @read_actions [:read, :list]
+  @command_actions [
+    :update,
+    :request_destroy,
+    :restore,
+    :schedule_destroy,
+    :cancel_destroy,
+    :destroy
+  ]
 
   @doc "Checks Community admission using the default loaded lifecycle context."
   @spec check_access(User.t() | nil, atom(), Community.t()) ::
@@ -44,34 +52,23 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Community do
   @doc "Checks Community admission against an explicitly typed Access Context."
   @spec check_access(User.t() | nil, atom(), Community.t(), CommunityContext.t()) ::
           :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+  def check_access(_user, action, %Community{} = community, %CommunityContext{} = context)
+      when action in @read_actions do
+    read_allowed?(community, context)
+  end
+
   def check_access(user, action, %Community{} = community, %CommunityContext{} = context)
-      when action in @actions do
-    case action do
-      action when action in [:read, :list] ->
-        read_allowed?(community, context)
+      when action in @command_actions do
+    with {:ok, true} <- lifecycle_allowed(community, :command, context) do
+      relation_allowed(command_relation_allowed?(user, community, action))
+    end
+  end
 
-      action
-      when action in [
-             :update,
-             :request_destroy,
-             :restore,
-             :schedule_destroy,
-             :cancel_destroy,
-             :destroy
-           ] ->
-        with {:ok, true} <- lifecycle_allowed(community, :command, context) do
-          relation_allowed(command_relation_allowed?(user, community, action))
-        end
-
-      :manage_docs ->
-        case Lifecycle.can_write(community, context) do
-          {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
-          {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
-          {:error, reason} -> {:error, reason}
-        end
-
-      :read_draft ->
-        {:error, ErrorCat.unknown_action()}
+  def check_access(user, :manage_docs, %Community{} = community, %CommunityContext{} = context) do
+    case Lifecycle.can_write(community, context) do
+      {:ok, true} -> relation_allowed(management_relation_allowed?(user, community))
+      {:ok, false} -> {:error, ErrorCat.ancestor_community_not_writable()}
+      {:error, reason} -> {:error, reason}
     end
   end
 
