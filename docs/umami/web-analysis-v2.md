@@ -8,6 +8,12 @@
 > 范围：基于 Groupher 自有 UI 和 DTO 构建的 Dashboard`Analytics / Trends`，
 > 并继续使用自托管的 Umami 作为采集与聚合查询引擎。
 
+边界说明：`Analysis.Web` 是 Groupher 对 Umami 的 provider adapter、权限和产品 DTO 边界，不是
+Groupher 自建的 Web Analytics 数据库。原始 pageview、visitor、session 及其聚合保存在 Umami。
+Groupher 自有的 Article 有效阅读和互动趋势属于独立的
+[ViewTracker V1](../feature/view-tracker/v1.md) 与
+[Article Insights V1](../feature/analysis/article-insights-v1.md)，不能把两套统计口径混成一个数字。
+
 ## 实现状态
 
 - 第 1 阶段已就位：新初始化的社区会立即尝试创建其 Umami website，并将生成的 UUID 持久化到

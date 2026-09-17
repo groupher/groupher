@@ -19,8 +19,10 @@
 - [ ] [Assets Hub V3](./assets-hub/v3.md) — 设计已确认，实施中。
 - [ ] [Content Import](./content-import) — 本地切换已完成，仍有生产验收门槛。
 - [ ] [Web Analysis V2](./umami/web-analysis-v2.md) — 本地能力已有，等待部署与后续阶段。
+- [ ] [Article ViewTracker / Insights V1](./feature/view-tracker/v1.md) — 核心实现完成，发布前必须完成真实浏览器 tracking 与 Insights GraphQL 授权 e2e。
+- [ ] [Article ViewTracker V2](./feature/view-tracker/v2.md) — 独立当前 views Summary、统一实体缓存、阅读资格、dead-letter 与级联清理已实现；待真实浏览器 tracking 与 Insights GraphQL 授权 e2e 验收。
 - [ ] [Interaction V4](./feature/interaction/v4.md) — 主体实现完成，仍需生产存量清理。
-- [ ] [Interaction V5](./feature/interaction/v5.md) — 设计已确认，等待实施。
+- [ ] [Interaction V5](./feature/interaction/v5.md) — ViewTracker 迁出与 Audit 退役已落地，ReportFact/Moderation 仍在实施。
 - [ ] [Gate V5](./feature/gate/v5.md) — 下一阶段 Gate 设计。
 - [ ] [Dashboard TanStack V3](./migrations/tanstack/dash/v3.md) — 当前实施版本。
 

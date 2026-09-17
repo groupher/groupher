@@ -11,5 +11,6 @@
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。
+- [`domains.md`](./domains.md)：主要业务领域的命名、职责和详细设计入口。
 - [`seo.md`](./seo.md)：搜索索引与规范 URL。
 - [`ssr-theme.md`](./ssr-theme.md)：SSR 首次绘制主题边界。

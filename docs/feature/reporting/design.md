@@ -2,6 +2,10 @@
 
 本文定义 CMS 举报事实、审核聚合、Gate、Lifecycle、Interaction 和 Audit 的边界。目标是让“用户举报了什么”“审核团队正在处理什么”“资源最终发生了什么”成为三个可分别追溯的事实，避免用举报数量直接代替审核结论或资源状态。
 
+目标模块命名是 `CMS.Report` 与 `CMS.Moderation`；当前代码对应 `CMS.AbuseReports`，且尚无独立
+Moderation Context。本文的目标章节使用目标名称，当前实现章节保留现有名称。模块总览见
+[主要领域与模块命名](../../architecture/domains.md)。
+
 相关文档：
 
 - [Gate V2：统一读取范围与操作准入](../gate/v2.md)
@@ -262,7 +266,8 @@ count >= N
 
 ```text
 GraphQL reportComment
-  -> CMS.AbuseReports.report_comment command
+  -> CMS.Report.submit(comment, actor, attrs)       # 目标入口
+     当前对应 CMS.AbuseReports.report_comment；切换前不表示目标模块已经实现
   -> transaction
      -> Gate.access_check(actor, :report, comment)
      -> insert ReportFact
