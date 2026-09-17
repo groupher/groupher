@@ -31,7 +31,7 @@ function DocArticle() {
   const { community, id } = Route.useParams()
   return (
     <ArticleQueryProvider community={community} innerId={id} thread={THREAD.DOC}>
-      <DocThread article />
+      <DocThread article community={community} innerId={Number(id)} />
     </ArticleQueryProvider>
   )
 }

@@ -166,6 +166,14 @@
     @apply tabular-nums;
   }
 
+  .view-count-slot-list {
+    min-inline-size: 4ch;
+  }
+
+  .view-count-slot-detail {
+    min-inline-size: 5ch;
+  }
+
   .bold-none {
     @apply font-normal;
   }

@@ -1,8 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const changelog = graphql(`
-  query Changelog($article: ArticlePathInput!, $userHasLogin: Boolean!, $viewEventId: ID) {
-    changelog(article: $article, viewEventId: $viewEventId) {
+  query Changelog($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+    changelog(article: $article) {
       ...PageChangelogFields
       ...PageChangelogDetailFields
     }

@@ -6,6 +6,7 @@
 
 import type { FC } from 'react'
 
+import { cn } from '~/css'
 import { scrollToComments } from '~/dom'
 import ViewSVG from '~/icons/article/Viewed'
 import CommentSVG from '~/icons/Comment'
@@ -30,7 +31,12 @@ const ArticleBaseStats: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <ViewSVG className={s.viewsIcon} />
-      <div className={s.count}>{article.views}</div>
+      <div
+        className={cn(s.count, article.views === undefined && 'view-count-slot-detail')}
+        aria-label='views'
+      >
+        {article.views === undefined ? null : article.views}
+      </div>
       <div className={s.divider} />
       <button type='button' className={s.commentBox} onClick={() => scrollToComments(container)}>
         <CommentSVG className={s.commentIcon} />

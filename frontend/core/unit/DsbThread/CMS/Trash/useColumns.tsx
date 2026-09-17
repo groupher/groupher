@@ -55,7 +55,7 @@ export default function useColumns({
       },
       {
         id: 'views',
-        accessorFn: (item) => item.article?.views ?? 0,
+        accessorFn: (item) => item.article?.viewSummary?.views ?? 0,
         header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.views')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue())}</div>

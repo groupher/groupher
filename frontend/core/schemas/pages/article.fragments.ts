@@ -71,8 +71,6 @@ export const PagePostFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    viewsRevision
     commentsCount
     commentsRevision
     upvotesCount
@@ -133,8 +131,6 @@ export const PageChangelogFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    viewsRevision
     commentsCount
     commentsRevision
     upvotesCount
@@ -212,8 +208,6 @@ export const PageDocFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    viewsRevision
     commentsCount
     commentsRevision
     upvotesCount

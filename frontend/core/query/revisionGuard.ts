@@ -4,7 +4,6 @@ type TRevisioned = {
   articleInteractionRevision?: number | null
   commentInteractionRevision?: number | null
   commentsRevision?: number | null
-  viewsRevision?: number | null
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -56,7 +55,6 @@ const mergeArticle = (previous: TArticle & TRevisioned, next: TArticle & TRevisi
     'emotions',
   ])
   merged = copyIfOlder(previous, merged, 'commentsRevision', ['commentsCount'])
-  merged = copyIfOlder(previous, merged, 'viewsRevision', ['views'])
 
   if (
     typeof previous.articleInteractionRevision === 'number' &&

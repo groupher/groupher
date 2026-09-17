@@ -18,7 +18,10 @@ export const trashedPosts = graphql(`
         article {
           innerId
           title
-          views
+          viewSummary {
+            views
+            revision
+          }
           upvotesCount
           meta {
             thread

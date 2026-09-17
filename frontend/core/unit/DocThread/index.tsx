@@ -8,11 +8,13 @@ import Home from './Home'
 type TProps = {
   article?: boolean
   initialTree?: TDocPublicTree | null
+  community?: string
+  innerId?: number
 }
 
-export default function DocThread({ article = false, initialTree }: TProps) {
+export default function DocThread({ article = false, initialTree, community, innerId }: TProps) {
   if (article) {
-    return <ArticleEntry initialTree={initialTree} />
+    return <ArticleEntry initialTree={initialTree} community={community} innerId={innerId} />
   }
 
   return <Home />

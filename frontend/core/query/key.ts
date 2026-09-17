@@ -62,6 +62,15 @@ export const articleKeys = {
   kanban: (community: string) => [...articleKeys.all, 'kanban', community] as const,
   detail: (community: string, thread: TThread, innerId: string | number) =>
     [...articleKeys.all, 'detail', community, thread, String(innerId)] as const,
+  viewSummaryPrefix: (community: string, thread: TThread) =>
+    [...articleKeys.all, 'view-summary', community, thread] as const,
+  viewSummary: (community: string, thread: TThread, innerId: string | number) =>
+    [...articleKeys.viewSummaryPrefix(community, thread), String(innerId)] as const,
+  viewSummaries: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
+    [
+      ...articleKeys.viewSummaryPrefix(community, thread),
+      [...innerIds].map(String).sort(),
+    ] as const,
   tagStats: (community: string, thread: TThread, slug: string | null | undefined) =>
     [...articleKeys.all, 'tag-stats', community, thread, normalizeText(slug)] as const,
   tagGroups: (community: string, thread: TThread) =>

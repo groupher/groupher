@@ -55,6 +55,10 @@ type TBaseArticle = {
   body?: string
   views?: number
   viewsRevision?: number
+  viewSummary?: {
+    views: number
+    revision: number
+  }
   copyRight?: string
   isQuestion?: boolean
   isPinned?: boolean

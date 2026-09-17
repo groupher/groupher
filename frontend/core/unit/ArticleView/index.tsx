@@ -5,6 +5,7 @@
 import { startTransition, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { ANCHOR } from '~/const/dom'
+import useTrackArticleView from '~/hooks/useTrackArticleView'
 import type { TArticleLoad } from '~/spec'
 import Comments from '~/unit/Comments'
 
@@ -32,13 +33,21 @@ const syncDrawerToHeader = (wrapper: HTMLDivElement) => {
   container.scrollTop = Math.max(0, nextScrollTop)
 }
 
-export default function ArticleViewer({ isFullView = true }: TProps & TViewProps) {
+export default function ArticleViewer({
+  community,
+  innerId,
+  thread,
+  isFullView = true,
+}: TProps & TViewProps) {
   const s = useSalon()
   const { article } = useLogic()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const [commentsVisibleForKey, setCommentsVisibleForKey] = useState<string | null>(null)
   const articleKey = article ? `${article.id ?? ''}:${article.innerId ?? ''}` : ''
   const commentsVisible = isFullView && commentsVisibleForKey === articleKey
+
+  const trackingReady = Boolean(article && Number(article.innerId) === innerId)
+  useTrackArticleView(wrapperRef, { community, innerId, thread }, trackingReady)
 
   useLayoutEffect(() => {
     if (!article) return

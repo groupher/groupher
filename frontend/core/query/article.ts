@@ -19,8 +19,7 @@ import type {
 
 import { articleKeys, normalizeArticleFilter } from './key'
 import { preserveArticleProjection } from './revisionGuard'
-import { getArticleViewEventId } from './viewEvent'
-import { writeArticleViewReceipt } from './viewReceipt'
+import { articleViewSummaries, articleViewSummary } from './viewTracker'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -88,32 +87,24 @@ const detail = (community: string, thread: TThread, innerId: string | number) =>
     structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
-      const articleRef = `${community}:${thread}:${innerId}`
-      const viewEventId = getArticleViewEventId(articleRef)
       if (thread === THREAD.CHANGELOG) {
         const data = await browserGraphQLRequest(changelog, {
           article,
           userHasLogin: false,
-          viewEventId,
         })
-        if (viewEventId && data.changelog) writeArticleViewReceipt(articleRef, viewEventId)
         return data.changelog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
         const data = await browserGraphQLRequest(doc, {
           article,
           userHasLogin: false,
-          viewEventId,
         })
-        if (viewEventId && data.doc) writeArticleViewReceipt(articleRef, viewEventId)
         return data.doc as unknown as TPost
       }
       const data = await browserGraphQLRequest(post, {
         article,
         userHasLogin: false,
-        viewEventId,
       })
-      if (viewEventId && data.post) writeArticleViewReceipt(articleRef, viewEventId)
       return data.post as unknown as TPost
     },
   })
@@ -140,4 +131,13 @@ const tagGroups = (community: string, thread: TThread) =>
     staleTime: 60_000,
   })
 
-export const articleQueries = { posts, changelogs, kanban, detail, tagGroups, tagStats }
+export const articleQueries = {
+  posts,
+  changelogs,
+  kanban,
+  detail,
+  tagGroups,
+  tagStats,
+  viewSummaries: articleViewSummaries,
+  viewSummary: articleViewSummary,
+}

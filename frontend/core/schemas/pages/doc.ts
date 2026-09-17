@@ -1,8 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const doc = graphql(`
-  query PageDoc($article: ArticlePathInput!, $userHasLogin: Boolean!, $viewEventId: ID) {
-    doc(article: $article, viewEventId: $viewEventId) {
+  query PageDoc($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+    doc(article: $article) {
       ...PageDocFields
       subtitle
       ...PageDocDetailFields

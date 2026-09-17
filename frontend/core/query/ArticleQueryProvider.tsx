@@ -3,13 +3,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react'
 
+import { ARTICLE_THREAD } from '~/const/thread'
 import {
   isArticleUpvoteReceiptNewer,
   overlayArticleUpvoteReceipt,
   readArticleUpvoteReceipt,
 } from '~/query/mutation/articleReceipt'
 import { clearArticleViewReceipt, readArticleViewReceipt } from '~/query/viewReceipt'
-import type { TArticle, TThread } from '~/spec'
+import type { TArticle, TArticleThread, TThread } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
@@ -47,6 +48,11 @@ export default function ArticleQueryProvider({
     ...Q.article.detail(community, thread, innerId),
     initialData: initialArticle || undefined,
   })
+  const isArticleThread = Object.values(ARTICLE_THREAD).includes(thread as TArticleThread)
+  const viewSummaryQuery = useQuery({
+    ...Q.article.viewSummary(community, thread as TArticleThread, innerId),
+    enabled: isArticleThread,
+  })
   const articleRef = {
     community,
     thread,
@@ -64,9 +70,11 @@ export default function ArticleQueryProvider({
     if (!articleQuery.data) return null
     const key = `${community}:${thread}:${String(innerId)}`
     const viewerState = viewerQuery.data?.[key]
-    const merged = viewerState
-      ? ({ ...articleQuery.data, ...viewerState } as TArticle)
+    const summary = viewSummaryQuery.data
+    const withSummary = summary
+      ? { ...articleQuery.data, views: summary.views, viewsRevision: summary.revision }
       : articleQuery.data
+    const merged = viewerState ? ({ ...withSummary, ...viewerState } as TArticle) : withSummary
     const viewReceipt = readArticleViewReceipt(key)
     const viewed = viewReceipt ? { ...merged, viewerHasViewed: true } : merged
     const accountRef = account.accountRef || getAccountRef(account.user)
@@ -81,6 +89,7 @@ export default function ArticleQueryProvider({
     community,
     innerId,
     thread,
+    viewSummaryQuery.data,
     viewerQuery.data,
   ])
   const value = useMemo(

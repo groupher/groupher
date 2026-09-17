@@ -51,6 +51,7 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/CMS/Docs/Import/schema.ts',
     'frontend/core/unit/DsbThread/CMS/Docs/Import/fragments.ts',
     'frontend/core/query/viewer.ts',
+    'frontend/core/query/viewTracker.ts',
     'frontend/core/query/mutation/article.ts',
   ],
   pluckConfig: {

@@ -23,11 +23,15 @@ export const createQueryClient = (): QueryClient =>
     },
   })
 
-let browserClient: QueryClient | undefined
+type QueryClientGlobal = typeof globalThis & {
+  __GROUPHER_QUERY_CLIENT__?: QueryClient
+}
 
 /** Returns a request-local server client or the stable browser QueryClient singleton. */
 export const getQueryClient = (): QueryClient => {
   if (isServer) return createQueryClient()
-  browserClient ??= createQueryClient()
-  return browserClient
+
+  const globalScope = globalThis as QueryClientGlobal
+  globalScope.__GROUPHER_QUERY_CLIENT__ ??= createQueryClient()
+  return globalScope.__GROUPHER_QUERY_CLIENT__
 }

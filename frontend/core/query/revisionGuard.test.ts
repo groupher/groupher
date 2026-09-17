@@ -7,7 +7,7 @@ import {
 } from './revisionGuard'
 
 describe('revision guards', () => {
-  it('keeps newer Article interaction, comment, and view domains independently', () => {
+  it('keeps newer Article interaction and comment domains independently', () => {
     const previous = {
       innerId: '42',
       community: { slug: 'home' },
@@ -17,8 +17,6 @@ describe('revision guards', () => {
       articleInteractionRevision: 5,
       commentsCount: 8,
       commentsRevision: 7,
-      views: 20,
-      viewsRevision: 3,
     } as unknown as TArticle
     const next = {
       ...previous,
@@ -27,8 +25,6 @@ describe('revision guards', () => {
       articleInteractionRevision: 4,
       commentsCount: 9,
       commentsRevision: 8,
-      views: 12,
-      viewsRevision: 2,
     } as unknown as TArticle
 
     expect(preserveArticleProjection(previous, next)).toMatchObject({
@@ -37,8 +33,6 @@ describe('revision guards', () => {
       articleInteractionRevision: 5,
       commentsCount: 9,
       commentsRevision: 8,
-      views: 20,
-      viewsRevision: 3,
     })
   })
 

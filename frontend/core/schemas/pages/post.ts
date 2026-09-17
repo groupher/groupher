@@ -1,8 +1,8 @@
 import { graphql } from '~/graphql/authoring'
 
 export const post = graphql(`
-  query Post($article: ArticlePathInput!, $userHasLogin: Boolean!, $viewEventId: ID) {
-    post(article: $article, viewEventId: $viewEventId) {
+  query Post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+    post(article: $article) {
       ...PagePostFields
       ...PagePostDetailFields
     }
