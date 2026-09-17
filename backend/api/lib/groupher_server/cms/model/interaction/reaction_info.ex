@@ -41,7 +41,6 @@ defmodule GroupherServer.CMS.Model.Interaction.ReactionInfo do
       schema unquote(table) do
         belongs_to(unquote(target), unquote(target_schema), foreign_key: unquote(target_id))
 
-        field(:viewed_user_ids, Model.Interaction.RoaringBitmap)
         field(:upvoted_user_ids, Model.Interaction.RoaringBitmap)
         field(:reported_user_ids, Model.Interaction.RoaringBitmap)
         field(:upvotes_count, :integer, default: 0)

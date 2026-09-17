@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   alias Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.Analysis.MetricEvent
   alias Helper.{Later, T}
 
   @article_threads Config.article_threads()
@@ -71,6 +72,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         with {:ok, canonical} <- Gate.access_check(actor, :upvote, input),
              {:ok, change} <- change_fact(canonical, info, actor, operation),
              :ok <- sync_state(canonical, actor, operation, change),
+             :ok <- record_metric(canonical, operation, change, command_id),
              :ok <- maybe_achieve(canonical, actor, operation, change) do
           {:ok, {canonical, change}, %{outcome: change}}
         end
@@ -95,6 +97,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
     case result do
       {:ok, _projection} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+
+  defp record_metric(article, operation, :changed, operation_id) do
+    metric = if operation == :add, do: :upvote_added, else: :upvote_removed
+
+    case MetricEvent.append_article_action(article, operation_id, metric) do
+      :ok -> :ok
       {:error, _reason} = error -> error
     end
   end

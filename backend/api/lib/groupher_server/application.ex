@@ -30,7 +30,9 @@ defmodule GroupherServer.Application do
     children =
       [
         {Phoenix.PubSub, name: GroupherServer.PubSub},
-        GroupherServer.Repo
+        GroupherServer.Repo,
+        GroupherServer.CMS.ViewTracker.RateLimit,
+        GroupherServer.ServiceAuth.Cache
       ] ++
         maybe_dns_cluster_worker() ++
         maybe_endpoint_worker() ++

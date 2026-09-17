@@ -30,8 +30,8 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     # article 所包含的共同字段
     field(:inner_id, :id)
     field(:title, :string)
-    field(:views, :integer)
     field(:upvotes_count, :integer)
+    field(:view_summary, :article_view_summary)
     field(:meta, :article_meta)
     field(:pending, :integer)
     field(:cover_url, :string)

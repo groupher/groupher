@@ -46,12 +46,6 @@ defmodule GroupherServer.CMS.Articles do
     Reader.read(community, thread, inner_id, user)
   end
 
-  @spec read(Community.t(), T.thread(), T.id(), User.t(), Ecto.UUID.t() | nil) ::
-          T.domain_res(T.article())
-  def read(%Community{} = community, thread, inner_id, %User{} = user, view_event_id) do
-    Reader.read(community, thread, inner_id, user, view_event_id)
-  end
-
   # List
 
   @doc "Runs `page` through the public `Articles` boundary."

@@ -276,9 +276,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
   add(:author_id, references(:cms_authors, on_delete: :delete_all), null: false)
   create(index(:cms_[article]s, [:author_id]))
 
-  # for :views
-  add(:views, :integer, default: 0)
-
   # for :meta
   add(:meta, :map)
 
@@ -311,8 +308,10 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:title, :string)
       field(:digest, :string)
 
-      field(:views, :integer, default: 0)
-      field(:views_revision, :integer, default: 0)
+      # Current views live in CMS.ViewTracker.ViewSummary. Article structs do
+      # not carry a compatibility copy; management/export DTOs use this
+      # explicitly nested projection instead.
+      field(:view_summary, :map, virtual: true)
       field(:is_pinned, :boolean, default: false, virtual: true)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)

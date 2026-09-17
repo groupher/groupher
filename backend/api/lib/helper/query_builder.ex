@@ -77,12 +77,6 @@ defmodule Helper.QueryBuilder do
       {:sort, :asc_index}, queryable ->
         queryable |> order_by(asc: :index)
 
-      {:sort, :most_views}, queryable ->
-        queryable |> order_by(desc: :views, desc: :inserted_at)
-
-      {:sort, :least_views}, queryable ->
-        queryable |> order_by(asc: :views, desc: :inserted_at)
-
       {:sort, :most_stars}, queryable ->
         queryable |> sort_by_count(:stars, :desc)
 

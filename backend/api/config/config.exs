@@ -10,6 +10,31 @@ config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 config :groupher_server, :allow_test_service_auth, false
 
+config :groupher_server,
+       :view_tracker_pepper,
+       System.get_env("VIEW_TRACKER_PEPPER", "development-view-tracker-pepper")
+
+config :groupher_server,
+       :view_tracker_cookie_secret,
+       System.get_env("VIEW_TRACKER_COOKIE_SECRET", "development-view-tracker-cookie-secret")
+
+config :groupher_server,
+       :view_tracker_cookie_previous_secret,
+       System.get_env("VIEW_TRACKER_COOKIE_PREVIOUS_SECRET")
+
+config :groupher_server, GroupherServer.CMS.ViewTracker.Config,
+  dedupe_window_seconds: 600,
+  view_event_retention_days: 30,
+  dedupe_state_retention_days: 30,
+  view_projection_batch_size: 100
+
+config :groupher_server, GroupherServer.Analysis.Config,
+  metric_event_retention_days: 90,
+  hourly_metric_retention_months: 13,
+  aggregation_batch_size: 100,
+  aggregation_max_batches: 10,
+  aggregation_snooze_seconds: 5
+
 config :groupher_server, :web_analysis,
   website_id: nil,
   api_token: nil,
@@ -169,10 +194,7 @@ config :groupher_server, :search_artiments,
     max_plain_text_bytes: 7_000
   ]
 
-config :groupher_server, GroupherServer.CMS.Interactions.Config,
-  view_batch_size: 100,
-  view_event_retention_days: 30,
-  latest_users_limit: 5
+config :groupher_server, GroupherServer.CMS.Interactions.Config, latest_users_limit: 5
 
 config :groupher_server, :cache,
   pool: %{
@@ -236,7 +258,8 @@ config :groupher_server, Oban,
        {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims},
        {"*/15 * * * *", GroupherServer.Jobs.WallpaperLifecycle},
        {"@daily", GroupherServer.Jobs.ViewEventRetention},
-       {"@daily", GroupherServer.Jobs.InteractionAudit},
+       {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
+       {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
        {"@daily", GroupherServer.Jobs.CommandReceiptRetention}
      ]}
   ],

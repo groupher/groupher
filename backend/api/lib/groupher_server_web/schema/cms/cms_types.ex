@@ -46,6 +46,19 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
+  object :article_view_track_receipt do
+    field(:event_id, non_null(:id))
+    field(:accepted, non_null(:boolean))
+  end
+
+  object :article_view_summary do
+    field(:community, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:inner_id, non_null(:id))
+    field(:views, non_null(:integer))
+    field(:revision, non_null(:integer))
+  end
+
   enum :community_application_status do
     value(:submitted)
     value(:reviewing)

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Interactions do
 
       GraphQL / service Reader
         -> CMS.Interactions
-        -> Reaction / ReadState / Scope / ViewEvents
+        -> Reaction / ReadState / Scope
         -> authoritative facts and derived read state
 
   The facade owns the stable Interaction reaction and read contracts. SQL,
@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Interactions.{ErrorCat, Reactions, ReadState, Scope, ViewEvents}
+  alias CMS.Interactions.{ErrorCat, Reactions, ReadState, Scope}
 
   @doc """
   Reports an Artiment using the immutable reporter identity.
@@ -71,18 +71,6 @@ defmodule GroupherServer.CMS.Interactions do
   """
   @spec counts([struct()]) :: map() | {:error, ErrorCat.error()}
   defdelegate counts(artiments), to: ReadState
-
-  @doc """
-  Records a durable Article view without taking the aggregate mutation lock.
-
-  ## Examples
-
-      CMS.Interactions.record_view(article, viewer, event_id)
-
-  """
-  @spec record_view(struct(), User.t() | nil, Ecto.UUID.t() | nil) ::
-          {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate record_view(article, viewer, event_id), to: ViewEvents, as: :record
 
   @doc """
   Collects an Article idempotently and returns the canonical Article.

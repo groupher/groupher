@@ -132,15 +132,4 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
   @spec remove_report(struct(), User.t()) :: {:ok, map()} | {:error, term()}
   defdelegate remove_report(artiment, actor), to: Sync
-
-  @doc """
-  Merges asynchronously projected Article viewer ids.
-
-  ## Examples
-
-      ReadState.merge_viewed_users(:post, article.id, [viewer.id])
-
-  """
-  @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
-  defdelegate merge_viewed_users(thread, target_id, user_ids), to: Sync
 end

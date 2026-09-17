@@ -571,6 +571,10 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           article {
             innerId
             title
+            viewSummary {
+              views
+              revision
+            }
           }
           mentionedBy(filter: {page: 1, size: 20}) {
             totalCount
@@ -791,7 +795,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         entries {
           innerId
           title
-          views
           upvotesCount
           commentsCount
           viewerHasCollected

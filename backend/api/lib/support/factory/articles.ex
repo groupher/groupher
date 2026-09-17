@@ -365,7 +365,6 @@ defmodule GroupherServer.Support.Factory.Articles do
       meta: meta,
       title: title,
       body: rich_text(text),
-      views: 0,
       emotions: default_emotions,
       active_at: active_at,
       pending: 0

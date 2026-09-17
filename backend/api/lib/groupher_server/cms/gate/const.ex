@@ -15,7 +15,8 @@ defmodule GroupherServer.CMS.Gate.Const do
       community_application_retry_creation: "community.application.retry_creation",
       community_application_retry_setup: "community.application.retry_setup",
       community_update: "community.update",
-      community_request_destroy: "community.request_destroy"
+      community_request_destroy: "community.request_destroy",
+      article_insights_read: "article.insights.read"
     ]
   end
 
@@ -24,6 +25,7 @@ defmodule GroupherServer.CMS.Gate.Const do
       read: :read,
       read_draft: :read_draft,
       list: :list,
+      read_insights: :read_insights,
       update: :update,
       publish: :publish,
       create_comment: :create_comment,

@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.ViewTracker.Model.ViewSummary
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   @page_size GroupherServerWeb.Config.page_size()
@@ -105,34 +106,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user2
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user3
-        )
+      track_view(blog, user)
+      track_view(blog, user2)
+      track_view(blog, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       first_blog = results["entries"] |> List.first()
-      last_blog = results["entries"] |> List.last()
-      assert first_blog["views"] > last_blog["views"]
+      assert first_blog["innerId"] == to_string(blog.inner_id)
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do
@@ -274,15 +254,28 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
-      most_views_blog = Blog |> order_by(desc: :views) |> limit(1) |> Repo.one()
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn blog_last_year)a do
+      Repo.insert!(%ViewSummary{
+        thread: :blog,
+        article_id: blog_last_year.id,
+        views: 10,
+        revision: 1
+      })
+
+      most_views_blog =
+        ViewSummary
+        |> where([summary], summary.thread == :blog)
+        |> order_by(desc: :views)
+        |> limit(1)
+        |> Repo.one()
+
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       find_blog = results |> Map.get("entries") |> hd
 
-      # assert find_blog["id"] == most_views_blog |> Map.get(:id) |> to_string
-      assert find_blog["views"] == most_views_blog |> Map.get(:views)
+      assert most_views_blog.article_id == blog_last_year.id
+      assert find_blog["innerId"] == to_string(blog_last_year.inner_id)
     end
   end
 
@@ -305,13 +298,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert not the_blog["viewerHasCollected"]
       assert not the_blog["viewerHasReported"]
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user
-        )
+      track_view(blog, user)
 
       {:ok, _} = CMS.Interactions.upvote(blog, user)
       {:ok, _} = CMS.Interactions.collect(blog, user)
@@ -433,5 +420,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       assert first_blog["innerId"] !== to_string(blog_last_week.inner_id)
     end
+  end
+
+  defp track_view(article, user) do
+    event_id = Ecto.UUID.generate()
+
+    assert {:ok, ^event_id} =
+             CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
+
+    assert :ok = CMS.ViewTracker.project(event_id)
   end
 end

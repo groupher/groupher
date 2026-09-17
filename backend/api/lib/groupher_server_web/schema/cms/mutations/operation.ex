@@ -15,6 +15,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   use Helper.GqlSchemaSuite
 
   object :cms_operation_mutations do
+    @desc "Records one visible public Article read through ViewTracker"
+    field :track_article_view, non_null(:article_view_track_receipt) do
+      arg(:article, non_null(:article_path_input))
+      arg(:event_id, non_null(:id))
+
+      resolve(&R.CMS.track_article_view/3)
+    end
+
     @desc "Move one logical Article into Trash"
     field :trash_article, :trashed_article do
       arg(:command_id, non_null(:id))

@@ -113,7 +113,8 @@ defmodule Helper.PermissionConfig do
         "moderator.update",
         "asset.upload",
         "doc.import",
-        "community.update"
+        "community.update",
+        "article.insights.read"
       ]
   end
 
@@ -206,6 +207,11 @@ defmodule Helper.PermissionConfig do
       "moderator.update" => %{scope: :context, context: :cms, grant: "moderator.update"},
       "asset.upload" => %{scope: :context, context: :cms, grant: "asset.upload"},
       "analysis.web.read" => %{scope: :context, context: :cms, grant: "community.update"},
+      "article.insights.read" => %{
+        scope: :context,
+        context: :cms,
+        grant: "article.insights.read"
+      },
       "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "community_tag.create" => %{

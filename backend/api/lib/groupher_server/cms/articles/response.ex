@@ -27,18 +27,16 @@ defmodule GroupherServer.CMS.Articles.Response do
   """
   @spec one(struct(), User.t() | nil, keyword()) :: {:ok, struct()} | {:error, term()}
   def one(article, viewer, opts \\ []) do
-    case CMS.Interactions.viewer_state(article, viewer, opts) do
-      state when is_map(state) ->
-        solution_by_post = solution_by_post([article])
+    with state when is_map(state) <- CMS.Interactions.viewer_state(article, viewer, opts),
+         view_state when is_map(view_state) <- CMS.ViewTracker.viewer_state(article, viewer, opts) do
+      solution_by_post = solution_by_post([article])
 
-        {:ok,
-         article
-         |> merge(state)
-         |> merge_solution(solution_by_post)
-         |> CMS.ShadowSync.refresh_article()}
-
-      {:error, _reason} = error ->
-        error
+      {:ok,
+       article
+       |> merge(state)
+       |> merge_view_state(view_state)
+       |> merge_solution(solution_by_post)
+       |> CMS.ShadowSync.refresh_article()}
     end
   end
 
@@ -52,7 +50,9 @@ defmodule GroupherServer.CMS.Articles.Response do
   """
   @spec list([struct()], User.t() | nil, keyword()) :: {:ok, [struct()]} | {:error, term()}
   def list(articles, viewer, opts \\ []) when is_list(articles) do
-    with states when is_map(states) <- CMS.Interactions.viewer_states(articles, viewer, opts) do
+    with states when is_map(states) <- CMS.Interactions.viewer_states(articles, viewer, opts),
+         view_states when is_map(view_states) <-
+           CMS.ViewTracker.viewer_states(articles, viewer, opts) do
       solution_by_post = solution_by_post(articles)
 
       articles =
@@ -61,6 +61,9 @@ defmodule GroupherServer.CMS.Articles.Response do
 
           article
           |> merge(Map.fetch!(states, {type, article.id}))
+          |> merge_view_state(
+            Map.get(view_states, {type, article.id}, %{viewer_has_viewed: false})
+          )
           |> merge_solution(solution_by_post)
         end)
 
@@ -117,10 +120,12 @@ defmodule GroupherServer.CMS.Articles.Response do
     |> Map.put(:viewer_has_collected, state.viewer_has_collected)
     |> Map.put(:viewer_emotion, viewer_emotion(state.emotions))
     |> Map.put(:viewer_has_reported, state.viewer_has_reported)
-    |> Map.put(:viewer_has_viewed, state.viewer_has_viewed)
     |> Map.put(:emotions, emotion_map(state.emotions))
     |> Map.put(:meta, article_meta(article, state))
   end
+
+  defp merge_view_state(article, %{viewer_has_viewed: viewer_has_viewed}),
+    do: Map.put(article, :viewer_has_viewed, viewer_has_viewed)
 
   defp article_meta(article, state) do
     meta =

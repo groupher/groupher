@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias CMS.{Events, Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
+  alias GroupherServer.Analysis.MetricEvent
   alias Helper.{Later, T}
 
   @doc """
@@ -71,7 +72,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
         with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
              {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
              {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-             :ok <- sync_state(canonical, emotion, actor, operation, change) do
+             :ok <- sync_state(canonical, emotion, actor, operation, change),
+             :ok <- record_metric(canonical, operation, change, command_id) do
           {:ok, {canonical, change}, %{outcome: change}}
         end
       end)
@@ -106,6 +108,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
     case result do
       {:ok, _projection} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
+
+  defp record_metric(article, operation, :changed, operation_id) do
+    metric = if operation == :add, do: :emotion_added, else: :emotion_removed
+
+    case MetricEvent.append_article_action(article, operation_id, metric) do
+      :ok -> :ok
       {:error, _reason} = error -> error
     end
   end

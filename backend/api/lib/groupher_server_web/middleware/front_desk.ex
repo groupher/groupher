@@ -58,6 +58,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   def call(resolution, :article), do: fetch_article(resolution, [])
 
+  def call(resolution, :article_insights), do: fetch_article_insights(resolution)
+
   def call(resolution, {:article_editor, opts}) do
     fetch_article_editor(resolution, List.wrap(opts))
   end
@@ -96,6 +98,31 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
     end
   end
+
+  defp fetch_article_insights(%{arguments: arguments, context: context} = resolution) do
+    with {:ok, arguments} <- ArticlePath.parse_arguments(arguments),
+         article_path <- arguments.article_path,
+         actor <- Map.get(context, :cur_user),
+         grants <- article_insight_grants(actor),
+         {:ok, article} <-
+           CMS.FrontDesk.article_insights(article_path, actor,
+             passport_granted_community_slugs: grants
+           ) do
+      %{resolution | arguments: Map.put(arguments, :article, article)}
+    else
+      {:error, err_msg} ->
+        resolution
+        |> handle_absinthe_error(
+          ArticleErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ArticleErrorCat.not_exist())
+        )
+    end
+  end
+
+  defp article_insight_grants(nil), do: []
+
+  defp article_insight_grants(actor),
+    do: GroupherServer.Analysis.ArticleInsights.passport_granted_community_slugs(actor)
 
   defp do_fetch_article(
          %{

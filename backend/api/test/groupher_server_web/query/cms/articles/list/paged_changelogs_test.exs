@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.ViewTracker.Model.ViewSummary
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   @page_size GroupherServerWeb.Config.page_size()
@@ -110,34 +111,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user2
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user3
-        )
+      track_view(changelog, user)
+      track_view(changelog, user2)
+      track_view(changelog, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
-      last_changelog = results["entries"] |> List.last()
-      assert first_changelog["views"] > last_changelog["views"]
+      assert first_changelog["innerId"] == to_string(changelog.inner_id)
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do
@@ -279,15 +259,28 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
-      most_views_changelog = Changelog |> order_by(desc: :views) |> limit(1) |> Repo.one()
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn changelog_last_year)a do
+      Repo.insert!(%ViewSummary{
+        thread: :changelog,
+        article_id: changelog_last_year.id,
+        views: 10,
+        revision: 1
+      })
+
+      most_views_changelog =
+        ViewSummary
+        |> where([summary], summary.thread == :changelog)
+        |> order_by(desc: :views)
+        |> limit(1)
+        |> Repo.one()
+
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       find_changelog = results |> Map.get("entries") |> hd
 
-      # assert find_changelog["id"] == most_views_changelog |> Map.get(:id) |> to_string
-      assert find_changelog["views"] == most_views_changelog |> Map.get(:views)
+      assert most_views_changelog.article_id == changelog_last_year.id
+      assert find_changelog["innerId"] == to_string(changelog_last_year.inner_id)
     end
   end
 
@@ -311,13 +304,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert not the_changelog["viewerHasCollected"]
       assert not the_changelog["viewerHasReported"]
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user
-        )
+      track_view(changelog, user)
 
       {:ok, _} = CMS.Interactions.upvote(changelog, user)
       {:ok, _} = CMS.Interactions.collect(changelog, user)
@@ -441,5 +428,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       assert first_changelog["innerId"] !== to_string(changelog_last_week.inner_id)
     end
+  end
+
+  defp track_view(article, user) do
+    event_id = Ecto.UUID.generate()
+
+    assert {:ok, ^event_id} =
+             CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
+
+    assert :ok = CMS.ViewTracker.project(event_id)
   end
 end

@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias CMS.Comments.{Lifecycle, ErrorCat, Commands.Solution}
   alias CMS.Model.{Comment, PinnedComment, Post}
   alias CMS.SearchArtiments.Indexer
+  alias GroupherServer.Analysis.MetricEvent
   alias Helper.{ORM, T}
 
   @delete_hint Comment.delete_hint()
@@ -91,7 +92,8 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          {:ok, counted_article} <- ORM.inc(counted_article, :comments_revision),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
-         {:ok, deleted} <- ORM.update(comment, %{body_html: @delete_hint}) do
+         {:ok, deleted} <- ORM.update(comment, %{body_html: @delete_hint}),
+         :ok <- record_article_metric(counted_article, command_id, :comment_deleted) do
       {:ok,
        {
          deleted
@@ -122,4 +124,11 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
 
   defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at),
     do: {:ok, :unchanged}
+
+  defp record_article_metric(article, operation_id, metric) do
+    case MetricEvent.append_article_action(article, operation_id, metric) do
+      :ok -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
 end

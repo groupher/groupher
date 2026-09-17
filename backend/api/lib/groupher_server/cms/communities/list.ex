@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Communities.List do
         -> Repo / Oban
   """
 
+  import Ecto.Query, only: [order_by: 3]
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS}
@@ -51,8 +52,17 @@ defmodule GroupherServer.CMS.Communities.List do
 
     Community
     |> CMS.Gate.scope(nil, :list, CommunityContext.public())
-    |> QueryBuilder.filter_pack(filter)
+    |> QueryBuilder.filter_pack(Map.drop(filter, [:sort]))
+    |> order_by_views(Map.get(filter, :sort))
     |> ORM.paginator(page: page, size: size)
     |> done()
   end
+
+  defp order_by_views(queryable, :most_views),
+    do: order_by(queryable, [community], desc: community.views, desc: community.inserted_at)
+
+  defp order_by_views(queryable, :least_views),
+    do: order_by(queryable, [community], asc: community.views, desc: community.inserted_at)
+
+  defp order_by_views(queryable, _sort), do: queryable
 end

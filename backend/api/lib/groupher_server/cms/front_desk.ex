@@ -99,6 +99,17 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, opts \\ []), do: Article.read(article_path, opts)
 
+  @doc "Loads one public canonical Article for an explicit ViewTracker request."
+  def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
+
+  @doc "Reads public current-view summaries for one Community/thread batch."
+  def article_view_summaries(community, thread, inner_ids),
+    do: Article.read_view_summaries(community, thread, inner_ids)
+
+  @doc "Reads one Article through the actor-aware Article Insights scope."
+  def article_insights(article_path, actor, opts \\ []),
+    do: Article.read_insights(article_path, actor, opts)
+
   @doc "Reads one public Article from canonical Community/thread/id coordinates."
   def article(community, thread, inner_id, opts \\ []),
     do: Article.read(community, thread, inner_id, opts)

@@ -73,6 +73,14 @@ type RootQueryType {
   "Safe product ArticleLog for one readable Article"
   articleLogs(article: ArticlePathInput!, filter: ArticleLogFilter): PagedArticleLogs!
 
+  "Hourly business metrics for one readable Article"
+  articleInsights(
+    article: ArticlePathInput!, from: DateTime, to: DateTime, metrics: [ArticleInsightsMetric!], actorTypes: [ArticleInsightsActorType!], isAuthenticated: Boolean
+  ): ArticleInsightsTrend!
+
+  "Current public Article view summaries for one Community\/thread batch"
+  articleViewSummaries(community: String!, thread: Thread!, innerIds: [ID!]!): [ArticleViewSummary!]!
+
   "Safe Community Activity timeline across readable resource streams"
   communityActivity(community: String!, selection: CommunityActivitySelectionInput!, page: Int): PagedCommunityActivity!
 
@@ -269,25 +277,25 @@ type RootQueryType {
   collectedUsers(article: ArticlePathInput!, filter: PagiFilter!): PagedUsers
 
   "get post by id"
-  post(article: ArticlePathInput!, viewEventId: ID): Post!
+  post(article: ArticlePathInput!): Post!
 
   "get paged posts"
   pagedPosts(thread: PostThread, filter: PagedPostsFilter!): PagedPosts
 
   "get blog by id"
-  blog(article: ArticlePathInput!, viewEventId: ID): Blog!
+  blog(article: ArticlePathInput!): Blog!
 
   "get paged blogs"
   pagedBlogs(thread: BlogThread, filter: PagedBlogsFilter!): PagedBlogs
 
   "get changelog by id"
-  changelog(article: ArticlePathInput!, viewEventId: ID): Changelog!
+  changelog(article: ArticlePathInput!): Changelog!
 
   "get paged changelogs"
   pagedChangelogs(thread: ChangelogThread, filter: PagedChangelogsFilter!): PagedChangelogs
 
   "get doc by id"
-  doc(article: ArticlePathInput!, viewEventId: ID): Doc!
+  doc(article: ArticlePathInput!): Doc!
 
   "get paged docs"
   pagedDocs(thread: DocThread, filter: PagedDocsFilter!): PagedDocs
@@ -452,6 +460,9 @@ type RootMutationType {
 
   "delete a tag by thread"
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
+
+  "Records one visible public Article read through ViewTracker"
+  trackArticleView(article: ArticlePathInput!, eventId: ID!): ArticleViewTrackReceipt!
 
   "Move one logical Article into Trash"
   trashArticle(commandId: ID!, article: ArticlePathInput!): TrashedArticle
@@ -1121,6 +1132,39 @@ type ContentImportBodyStageResult {
   skipped: Json!
 }
 
+enum ArticleInsightsMetric {
+  ARTICLE_VIEW
+  UPVOTE_ADDED
+  UPVOTE_REMOVED
+  COLLECT_ADDED
+  COLLECT_REMOVED
+  EMOTION_ADDED
+  EMOTION_REMOVED
+  COMMENT_CREATED
+  COMMENT_DELETED
+}
+
+enum ArticleInsightsActorType {
+  HUMAN
+  AGENT
+  CRAWLER
+  UNKNOWN
+}
+
+type ArticleInsightsBucket {
+  bucketStartedAt: DateTime!
+  metrics: Json!
+}
+
+type ArticleInsightsTrend {
+  interval: String!
+  from: DateTime!
+  to: DateTime!
+  items: [ArticleInsightsBucket!]!
+  policyVersions: [Int!]!
+  hasMixedPolicy: Boolean!
+}
+
 enum AnalysisTrendPagesDimension {
   PATH
   ENTRY
@@ -1481,6 +1525,19 @@ type DoneState {
   done: Boolean
 
   commandId: ID
+}
+
+type ArticleViewTrackReceipt {
+  eventId: ID!
+  accepted: Boolean!
+}
+
+type ArticleViewSummary {
+  community: String!
+  thread: Thread!
+  innerId: ID!
+  views: Int!
+  revision: Int!
 }
 
 enum CommunityApplicationStatus {
@@ -2521,8 +2578,7 @@ type Post implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  views: Int
-  viewsRevision: Int
+  viewSummary: ArticleViewSummary
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2567,8 +2623,7 @@ type Changelog implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  views: Int
-  viewsRevision: Int
+  viewSummary: ArticleViewSummary
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2608,8 +2663,7 @@ type Doc implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  views: Int
-  viewsRevision: Int
+  viewSummary: ArticleViewSummary
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2650,8 +2704,7 @@ type Blog implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  views: Int
-  viewsRevision: Int
+  viewSummary: ArticleViewSummary
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -3586,8 +3639,8 @@ type OpenGraph {
 interface Article {
   innerId: ID
   title: String
-  views: Int
   upvotesCount: Int
+  viewSummary: ArticleViewSummary
   meta: ArticleMeta
   pending: Int
   coverUrl: String

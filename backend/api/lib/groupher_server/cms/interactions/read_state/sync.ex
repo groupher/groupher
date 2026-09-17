@@ -3,9 +3,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   Synchronizes derived Interaction state after an authoritative fact changes.
 
   Reaction callers invoke these functions inside their existing transaction.
-  View projection invokes `merge_viewed_users/3` from its durable event flow.
-
-      Reactions / ViewEvents.Project -> Sync -> reaction and emotion info rows
+  Reactions -> Sync -> reaction and emotion info rows
   """
 
   require GroupherServer.CMS.Model.Interaction.RoaringBitmap
@@ -20,8 +18,6 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   alias CMS.Interactions.{Config, ErrorCat}
   alias CMS.Model.{Comment, Embeds}
   alias CMS.Model.Interaction.RoaringBitmap
-
-  @article_threads Config.article_threads()
 
   @doc """
   Applies an already-created upvote fact.
@@ -130,33 +126,6 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     do: sync_comment_fixed(comment, :report, actor, :remove)
 
   def remove_report(article, actor), do: sync_article_fixed(article, :report, actor, :remove)
-
-  @doc """
-  Merges asynchronously projected viewer ids for one Article.
-
-  ## Examples
-
-      ReadState.Sync.merge_viewed_users(:post, article.id, [viewer.id])
-
-  """
-  @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
-  def merge_viewed_users(thread, target_id, user_ids)
-      when thread in @article_threads and is_list(user_ids) do
-    info = interaction_info(thread)
-    reaction_info = lock_reaction_info(info, target_id)
-
-    from(info in info.reaction_info_model, where: info.id == ^reaction_info.id)
-    |> update(
-      [info],
-      set: [
-        viewed_user_ids: RoaringBitmap.merge(info.viewed_user_ids, ^user_ids),
-        updated_at: ^DateTime.utc_now(:second)
-      ]
-    )
-    |> Repo.update_all([])
-
-    :ok
-  end
 
   defp sync_article_fixed(article, reaction, %User{} = user, operation)
        when reaction in [:collect, :report, :upvote] and operation in [:add, :remove] do

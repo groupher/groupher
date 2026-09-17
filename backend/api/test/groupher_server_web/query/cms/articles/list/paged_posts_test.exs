@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.ViewTracker.Model.ViewSummary
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias GroupherServer.CMS
 
@@ -111,34 +112,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user2
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user3
-        )
+      track_view(post, user)
+      track_view(post, user2)
+      track_view(post, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
-      last_post = results["entries"] |> List.last()
-      assert first_post["views"] > last_post["views"]
+      assert first_post["innerId"] == to_string(post.inner_id)
     end
 
     test "should get valid cat & status", ~m(guest_conn post_last_week)a do
@@ -326,15 +306,44 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
-      most_views_post = Post |> order_by(desc: :views) |> limit(1) |> Repo.one()
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn post_last_year)a do
+      Repo.insert!(%ViewSummary{
+        thread: :post,
+        article_id: post_last_year.id,
+        views: 10,
+        revision: 1
+      })
+
+      most_views_post =
+        ViewSummary
+        |> where([summary], summary.thread == :post)
+        |> order_by(desc: :views)
+        |> limit(1)
+        |> Repo.one()
+
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       find_post = results |> Map.get("entries") |> hd
 
-      # assert find_post["id"] == most_views_post |> Map.get(:id) |> to_string
-      assert find_post["views"] == most_views_post |> Map.get(:views)
+      assert most_views_post.article_id == post_last_year.id
+      assert find_post["innerId"] == to_string(post_last_year.inner_id)
+    end
+
+    test "filter sort LEAST_VIEWS should use Summary zero-row semantics",
+         ~m(guest_conn community post_last_year)a do
+      Repo.insert!(%ViewSummary{
+        thread: :post,
+        article_id: post_last_year.id,
+        views: 10,
+        revision: 1
+      })
+
+      variables = %{filter: %{community: community.slug, sort: "LEAST_VIEWS"}}
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
+      find_post = results |> Map.get("entries") |> hd
+
+      refute find_post["innerId"] == to_string(post_last_year.inner_id)
     end
   end
 
@@ -356,13 +365,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert not the_post["viewerHasCollected"]
       assert not the_post["viewerHasReported"]
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user
-        )
+      track_view(post, user)
 
       {:ok, _} = CMS.Interactions.upvote(post, user)
       {:ok, _} = CMS.Interactions.collect(post, user)
@@ -484,5 +487,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       assert first_post["innerId"] !== to_string(post_last_week.inner_id)
     end
+  end
+
+  defp track_view(article, user) do
+    event_id = Ecto.UUID.generate()
+
+    assert {:ok, ^event_id} =
+             CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
+
+    assert :ok = CMS.ViewTracker.project(event_id)
   end
 end

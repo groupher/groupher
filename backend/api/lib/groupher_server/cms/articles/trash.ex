@@ -819,7 +819,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
            {:ok, _} <- CMS.Assets.cleanup_refs(thread, article.id),
            _ <- Document.remove(thread, article.id),
            {:ok, _} <- CMS.Covers.delete_cover_edit_info(article.cover_edit_info_id),
-           {:ok, _} <- Repo.delete(article) do
+           {:ok, _} <- Repo.delete(article),
+           :ok <- CMS.ViewTracker.delete_article_projection(thread, article.id) do
         {:cont, :ok}
       else
         error -> {:halt, error}
@@ -924,9 +925,33 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Enum.map(& &1.id)
       |> mentioned_by_counts(thread)
 
+    view_summaries =
+      case CMS.ViewTracker.summaries(thread, Map.values(articles_by_hash_id)) do
+        summaries when is_map(summaries) -> summaries
+        _ -> %{}
+      end
+
     Map.new(items, fn item ->
       article = Map.get(articles_by_hash_id, item.article_hash_id)
       mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
+
+      article =
+        case article do
+          nil ->
+            nil
+
+          article ->
+            summary = Map.get(view_summaries, {thread, article.id}, %{views: 0, revision: 0})
+
+            Map.put(article, :view_summary, %{
+              community: community.slug,
+              thread: thread,
+              inner_id: article.inner_id,
+              views: summary.views,
+              revision: summary.revision
+            })
+        end
+
       {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
     end)
   end

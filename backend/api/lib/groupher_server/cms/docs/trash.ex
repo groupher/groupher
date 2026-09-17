@@ -237,7 +237,8 @@ defmodule GroupherServer.CMS.Docs.Trash do
                  where: document.thread == :doc and document.article_id == ^doc.id
                )
              ),
-           {:ok, _} <- Repo.delete(doc) do
+           {:ok, _} <- Repo.delete(doc),
+           :ok <- CMS.ViewTracker.delete_article_projection(:doc, doc.id) do
         {:cont, :ok}
       else
         error -> {:halt, error}

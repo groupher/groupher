@@ -12,6 +12,39 @@ defmodule GroupherServerWeb.Schema.Analysis.Types do
 
   use Absinthe.Schema.Notation
 
+  enum :article_insights_metric do
+    value(:article_view)
+    value(:upvote_added)
+    value(:upvote_removed)
+    value(:collect_added)
+    value(:collect_removed)
+    value(:emotion_added)
+    value(:emotion_removed)
+    value(:comment_created)
+    value(:comment_deleted)
+  end
+
+  enum :article_insights_actor_type do
+    value(:human)
+    value(:agent)
+    value(:crawler)
+    value(:unknown)
+  end
+
+  object :article_insights_bucket do
+    field(:bucket_started_at, non_null(:datetime))
+    field(:metrics, non_null(:json))
+  end
+
+  object :article_insights_trend do
+    field(:interval, non_null(:string))
+    field(:from, non_null(:datetime))
+    field(:to, non_null(:datetime))
+    field(:items, non_null(list_of(non_null(:article_insights_bucket))))
+    field(:policy_versions, non_null(list_of(non_null(:integer))))
+    field(:has_mixed_policy, non_null(:boolean))
+  end
+
   enum :analysis_trend_pages_dimension do
     value(:path)
     value(:entry)

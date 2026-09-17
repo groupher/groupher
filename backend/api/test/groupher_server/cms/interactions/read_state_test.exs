@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     PostReactionInfo
   }
 
-  alias CMS.Interactions.ViewEvents
+  alias CMS.ViewTracker
 
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -247,12 +247,14 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     {_community, post, _attrs, user} = mock_article(:post)
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} = ViewEvents.record(post, user, event_id)
-    viewer = CMS.Interactions.viewer_state(post, user)
+    assert {:ok, ^event_id} =
+             ViewTracker.track(post, user, event_id, read_purpose: :public_read)
+
+    viewer = CMS.ViewTracker.viewer_state(post, user)
     assert viewer.viewer_has_viewed
 
     {:ok, other_user} = db_insert(:user)
-    other_view = CMS.Interactions.viewer_state(post, other_user)
+    other_view = CMS.ViewTracker.viewer_state(post, other_user)
     refute other_view.viewer_has_viewed
   end
 

@@ -144,6 +144,49 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert sql =~ "user_id"
   end
 
+  test "Article Insights scope combines author, owner, and scoped moderator access" do
+    {:ok, actor} = db_insert(:user)
+
+    query =
+      CMS.Gate.scope(
+        Post,
+        actor,
+        :read_insights,
+        ArticleContext.insights(:post, passport_granted_community_slugs: ["community-a"])
+      )
+
+    assert %Ecto.Query{} = query
+    {sql, params} = to_sql(query)
+
+    assert sql =~ ~s(FROM "cms"."authors")
+    assert sql =~ ~s("cms"."communities_moderators")
+    assert sql =~ "slug"
+    assert ["community-a"] in params
+
+    assert [
+             "setting_up",
+             "setup_failed",
+             "active",
+             "read_only",
+             "suspended",
+             "archived",
+             "pending_destroy"
+           ] in params
+
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read_insights, ArticleContext.insights(:post))
+  end
+
+  test "Doc Article Insights scope is pinned to the main branch" do
+    {:ok, actor} = db_insert(:user)
+    query = CMS.Gate.scope(Doc, actor, :read_insights, DocContext.insights())
+
+    assert %Ecto.Query{} = query
+    {sql, params} = to_sql(query)
+    assert sql =~ ~s(JOIN "cms"."doc_branches")
+    assert "main" in params
+  end
+
   defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   defp article_schemas,

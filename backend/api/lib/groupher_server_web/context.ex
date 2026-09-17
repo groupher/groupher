@@ -36,12 +36,14 @@ defmodule GroupherServerWeb.Context do
   alias GroupherServerWeb.ErrorCat
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
+  alias CMS.ViewTracker.AnonymousSession
 
   def init(opts), do: opts
 
   def call(conn, _) do
     conn = fetch_cookies(conn)
-    context = build_context(conn)
+    {conn, anonymous_id} = AnonymousSession.ensure(conn)
+    context = build_context(conn) |> Map.put(:anonymous_id, anonymous_id)
     Absinthe.Plug.put_options(conn, context: context)
   end
 

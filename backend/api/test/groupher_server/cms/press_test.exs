@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Press do
     assert projection.canonical_path == "/#{community.slug}/post/#{post.inner_id}"
 
     persisted = Repo.get!(Post, post.id)
-    assert persisted.views == post.views
+    refute Map.has_key?(persisted, :views)
   end
 
   test "origin projections hide communities that are not publicly active", ~m(community post)a do

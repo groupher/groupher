@@ -20,7 +20,6 @@ defmodule GroupherServer.CMS.Articles.Reader do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Interactions
   alias CMS.Articles.{ErrorCat, Response}
   alias CMS.Communities.Enable
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
@@ -38,8 +37,9 @@ defmodule GroupherServer.CMS.Articles.Reader do
   @doc """
   Reads one article by community, thread, and inner id for an anonymous viewer.
 
-  Records the view, loads the article document, marks the pinned flag, and
-  returns the article with viewer interaction states.
+  Loads the article document, marks the pinned flag, and returns the article
+  with viewer interaction states. Effective views are recorded through the
+  independent ViewTracker transport boundary after content becomes visible.
 
   ## Examples
 
@@ -48,42 +48,29 @@ defmodule GroupherServer.CMS.Articles.Reader do
   """
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id) when thread in @threads do
-    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
-         {:ok, article} <- if_article_legal(community, thread, inner_id) do
-      with {:ok, article} <- do_read_article(article, community, thread, nil, nil) do
-        Response.one(article, nil)
-      end
-    end
+    read(community, thread, inner_id, nil)
   end
 
   @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{} = user)
-      when thread in @threads,
-      do: read(community, thread, inner_id, user, nil)
-
-  @spec read(Community.t(), T.thread(), T.id(), User.t(), Ecto.UUID.t() | nil) ::
-          T.domain_res(T.article())
-  def read(%Community{} = community, thread, inner_id, %User{} = user, event_id)
       when thread in @threads do
     with {:ok, _thread} <- Enable.thread?(community.slug, thread),
-         {:ok, article} <- if_article_legal(community, thread, inner_id, user) do
-      Multi.new()
-      |> Multi.run(:normal_read, fn _, _ ->
-        do_read_article(article, community, thread, user, event_id)
-      end)
-      |> Multi.run(:set_viewer_has_states, fn _, %{normal_read: article} ->
-        Response.one(article, user)
-      end)
-      |> Repo.transaction()
-      |> result()
+         {:ok, article} <- if_article_legal(community, thread, inner_id, user),
+         {:ok, article} <- do_read_article(article, community, thread) do
+      Response.one(article, user)
     end
   end
 
-  defp do_read_article(article, %Community{} = community, thread, user, event_id) do
+  def read(%Community{} = community, thread, inner_id, nil) when thread in @threads do
+    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
+         {:ok, article} <- if_article_legal(community, thread, inner_id),
+         {:ok, article} <- do_read_article(article, community, thread) do
+      Response.one(article, nil)
+    end
+  end
+
+  defp do_read_article(article, %Community{} = community, thread) do
     Multi.new()
-    |> Multi.run(:record_view, fn _, _ ->
-      Interactions.record_view(article, user, event_id)
-    end)
     |> Multi.run(:load_html, fn _, _ ->
       article |> Repo.preload(:document) |> done()
     end)
@@ -192,8 +179,6 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   # Make transaction return shape explicit and stable.
-  defp result({:ok, %{set_viewer_has_states: {:ok, article}}}), do: {:ok, article}
-  defp result({:ok, %{set_viewer_has_states: article}}), do: {:ok, article}
   defp result({:ok, %{update_article_meta: article}}), do: {:ok, article}
   defp result({:error, _step, reason, _changes}), do: {:error, reason}
 

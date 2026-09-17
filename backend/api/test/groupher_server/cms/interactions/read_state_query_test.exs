@@ -26,6 +26,25 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
              )
   end
 
+  test "authenticated Article batch resolvers preserve ref order" do
+    {community, first, _attrs, user} = mock_article(:post)
+    {_community, second, _attrs, _user} = mock_article(:post, community, user)
+    info = %{context: %{cur_user: user}}
+
+    refs =
+      Enum.map([second, first], fn article ->
+        %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
+      end)
+
+    assert {:ok, viewer_states} = ResolverCMS.article_viewer_states(nil, %{refs: refs}, info)
+    assert Enum.map(viewer_states, & &1.inner_id) == [second.inner_id, first.inner_id]
+
+    assert {:ok, interaction_states} =
+             ResolverCMS.article_interaction_states(nil, %{refs: refs}, info)
+
+    assert Enum.map(interaction_states, & &1.inner_id) == [second.inner_id, first.inner_id]
+  end
+
   test "comment reconciliation returns one Article aggregate and preserves missing refs" do
     {community, post, _attrs, user} = mock_article(:post)
 

@@ -8,6 +8,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   alias GroupherServer.CMS
   alias CMS.Model.{Post, TrashedArticle}
+  alias CMS.ViewTracker.Model.ViewSummary
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -101,6 +102,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   test "permanent deletion removes content but leaves the item queryable until that action",
        ~m(community post owner owner_conn)a do
+    Repo.insert!(%ViewSummary{thread: :post, article_id: post.id, views: 12, revision: 3})
+
     trashed =
       gq_mutation(owner_conn, S.Article.m(:trash_article), %{
         article: article_path(community, post, :post)
@@ -122,6 +125,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert listed["totalCount"] == 1
     assert hd(listed["entries"])["mentionedByCount"] == 0
     assert hd(listed["entries"])["article"]["innerId"] == to_string(post.inner_id)
+
+    assert hd(listed["entries"])["article"]["viewSummary"] == %{
+             "views" => 12,
+             "revision" => 3
+           }
 
     permanent_conn =
       simu_conn(:user, owner, cms: %{community.slug => %{"post.permanent_delete" => true}})

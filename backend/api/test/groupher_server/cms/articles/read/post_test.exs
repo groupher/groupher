@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   alias GroupherServer.CMS
   alias CMS.FrontDesk
-  alias CMS.Interactions.ViewEvents
+  alias CMS.ViewTracker
   alias CMS.Model.ArticleDocument
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
@@ -99,63 +99,41 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       event_id = Ecto.UUID.generate()
 
       {:ok, post2} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user,
-          event_id
-        )
+        CMS.Articles.read(article_community(post), :post, post.inner_id, user)
 
       assert post.id == post2.id
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(post2, user).viewer_has_viewed
+      refute CMS.ViewTracker.viewer_state(post2, user).viewer_has_viewed
+
+      assert {:ok, ^event_id} =
+               ViewTracker.track(post2, user, event_id, read_purpose: :public_read)
+
+      assert :ok = ViewTracker.project(event_id)
+      assert CMS.ViewTracker.viewer_state(post2, user).viewer_has_viewed
     end
 
-    test "read post should update views and meta viewed_user_list",
+    test "track projection updates views and meta viewed_user_list",
          ~m(post_attrs community user user2)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       # same user duplicate case
       event_id = Ecto.UUID.generate()
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user,
-          event_id
-        )
+      {:ok, ^event_id} = ViewTracker.track(post, user, event_id, read_purpose: :public_read)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user,
-          event_id
-        )
+      {:ok, ^event_id} = ViewTracker.track(post, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
+      assert :ok = ViewTracker.project(event_id)
+      assert CMS.ViewTracker.viewer_state(post, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user2,
-          event_id
-        )
+      {:ok, ^event_id} = ViewTracker.track(post, user2, event_id, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Post, post.id)
-      assert :ok = ViewEvents.project(event_id)
-      assert created.views == 1
-      assert CMS.Interactions.viewer_state(post, user).viewer_has_viewed
-      assert CMS.Interactions.viewer_state(post, user2).viewer_has_viewed
+      assert :ok = ViewTracker.project(event_id)
+      assert %{views: 2} = ViewTracker.summaries(:post, [created])[{:post, created.id}]
+      assert CMS.ViewTracker.viewer_state(post, user).viewer_has_viewed
+      assert CMS.ViewTracker.viewer_state(post, user2).viewer_has_viewed
     end
 
     ## comment article_upvote:L60 if run this test

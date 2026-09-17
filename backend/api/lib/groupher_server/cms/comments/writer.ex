@@ -43,6 +43,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
     Post
   }
 
+  alias GroupherServer.Analysis.MetricEvent
   alias Helper.{ORM, T}
 
   @max_parent_replies_count Comment.max_parent_replies_count()
@@ -122,7 +123,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, projected_comment} <- set_question_flag_ifneed(article, comment),
          {:ok, _participants} <- Participants.add_to_article(article, user),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
-         {:ok, _job} <- JobPolicy.audition(projected_comment) do
+         {:ok, _job} <- JobPolicy.audition(projected_comment),
+         :ok <- record_article_metric(counted_article, command_id, :comment_created) do
       {:ok,
        %{
          comment: projected_comment,
@@ -246,7 +248,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, associated_reply} <- associate_reply(reply_with_meta, replying_comment),
          {:ok, _embedded_parent} <- add_replies_ifneed(parent_comment, associated_reply),
          {:ok, _parent} <- ORM.inc(parent_comment, :replies_count),
-         {:ok, _job} <- JobPolicy.audition(associated_reply) do
+         {:ok, _job} <- JobPolicy.audition(associated_reply),
+         :ok <- record_article_metric(counted_article, command_id, :comment_created) do
       {:ok,
        %{
          comment: associated_reply,
@@ -382,6 +385,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   defp sync_article_metrics(result), do: result
+
+  defp record_article_metric(article, operation_id, metric) do
+    case MetricEvent.append_article_action(article, operation_id, metric) do
+      :ok -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
 
   defp enqueue_create_followups(
          {:ok, %{comment: %Comment{} = comment}} = result,

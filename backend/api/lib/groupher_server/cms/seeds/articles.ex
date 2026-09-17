@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
           |> maybe_put_post_title(index, count, thread)
 
         {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
-        {:ok, article} = seed_views(article)
+        article = seed_views(article)
 
         attach_tags(article, tag_ids)
         {:ok, article} = seed_upvotes(article, article_upvotes_range)
@@ -221,6 +221,5 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     Map.put(attrs, :title, title)
   end
 
-  defp seed_views(article),
-    do: ORM.update(article, %{views: Enum.random(100..1000)}, strict: false)
+  defp seed_views(article), do: article
 end

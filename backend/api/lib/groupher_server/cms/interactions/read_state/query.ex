@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions}
-  alias CMS.Model.{Interaction.RoaringBitmap, ViewEvent}
+  alias CMS.Model.Interaction.RoaringBitmap
 
   @article_threads Config.article_threads()
   @supported_threads [:comment | @article_threads]
@@ -100,23 +100,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     fixed_by_target = fixed_stats_by_target(info, target_ids, viewer, opts)
     emotions_by_target = emotion_stats_by_target(info, target_ids, viewer, projection_type)
 
-    pending_viewed_ids =
-      case {projection_type, viewer} do
-        {:article, %User{id: user_id}} -> pending_viewed_ids(thread, target_ids, user_id)
-        _ -> MapSet.new()
-      end
-
     Map.new(target_ids, fn target_id ->
       state =
         info
         |> empty_state()
         |> Map.merge(Map.get(fixed_by_target, target_id, %{}))
         |> Map.put(:emotions, Map.get(emotions_by_target, target_id, %{}))
-
-      state =
-        if MapSet.member?(pending_viewed_ids, target_id),
-          do: Map.put(state, :viewer_has_viewed, true),
-          else: state
 
       {target_id, state}
     end)
@@ -159,8 +148,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       emotions: emotions(state, :article),
       viewer_has_upvoted: value(state, :viewer_has_upvoted, false),
       viewer_has_collected: value(state, :viewer_has_collected, false),
-      viewer_has_reported: value(state, :viewer_has_reported, false),
-      viewer_has_viewed: value(state, :viewer_has_viewed, false)
+      viewer_has_reported: value(state, :viewer_has_reported, false)
     })
     |> maybe_add_report(state, opts)
   end
@@ -227,17 +215,6 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       |> Repo.all()
       |> Map.new(fn row -> {row.target_id, row} end)
     end
-  end
-
-  defp pending_viewed_ids(thread, target_ids, user_id) do
-    from(event in ViewEvent,
-      where:
-        event.target_type == ^thread and event.target_id in ^Enum.uniq(target_ids) and
-          event.user_id == ^user_id and is_nil(event.processed_at),
-      select: event.target_id
-    )
-    |> Repo.all()
-    |> MapSet.new()
   end
 
   defp fixed_stats_by_target(info, target_ids, user, opts) do
@@ -329,16 +306,14 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
   defp select_fixed_viewer_state(query, nil) do
     select_merge(query, %{
       viewer_has_reported: false,
-      viewer_has_upvoted: false,
-      viewer_has_viewed: false
+      viewer_has_upvoted: false
     })
   end
 
   defp select_fixed_viewer_state(query, user_id) do
     select_merge(query, [info], %{
       viewer_has_reported: RoaringBitmap.contains(info.reported_user_ids, ^user_id),
-      viewer_has_upvoted: RoaringBitmap.contains(info.upvoted_user_ids, ^user_id),
-      viewer_has_viewed: RoaringBitmap.contains(info.viewed_user_ids, ^user_id)
+      viewer_has_upvoted: RoaringBitmap.contains(info.upvoted_user_ids, ^user_id)
     })
   end
 

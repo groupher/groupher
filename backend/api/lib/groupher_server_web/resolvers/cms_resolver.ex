@@ -41,12 +41,58 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   @doc "Resolves the public command id from the internal receipt metadata on a domain result."
   def command_id(value, _args, _info), do: {:ok, Map.get(value, :command_id)}
 
+  @doc "Records an explicit, visible public Article read."
+  def track_article_view(_root, %{article: article_path, event_id: event_id}, info) do
+    viewer = Map.get(info.context, :cur_user)
+    anonymous_id = Map.get(info.context, :anonymous_id)
+    rate_key = if viewer, do: {:user, viewer.id}, else: {:anonymous, anonymous_id}
+
+    with true <- CMS.ViewTracker.RateLimit.allow?(rate_key),
+         {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path),
+         {:ok, accepted_event_id} <-
+           CMS.ViewTracker.track(article, viewer, event_id,
+             read_purpose: :public_read,
+             anonymous_id: anonymous_id
+           ) do
+      {:ok, %{accepted: true, event_id: accepted_event_id}}
+    else
+      false -> {:error, "view tracking rate limit exceeded"}
+    end
+  end
+
   @viewer_batch_size 100
 
   def article_logs(_root, %{article: article} = args, info) do
     actor = Map.get(info.context, :cur_user)
     filter = Map.get(args, :filter, %{})
     Activity.list_article_logs(article, actor, filter)
+  end
+
+  def article_insights(_root, %{article: article} = args, info) do
+    viewer = Map.get(info.context, :cur_user)
+
+    opts =
+      [
+        from: Map.get(args, :from),
+        to: Map.get(args, :to),
+        metrics: Map.get(args, :metrics),
+        actor_types: Map.get(args, :actor_types),
+        is_authenticated: Map.get(args, :is_authenticated),
+        passport_granted_community_slugs:
+          Analysis.ArticleInsights.passport_granted_community_slugs(viewer)
+      ]
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+
+    Analysis.ArticleInsights.trend(article, viewer, opts)
+  end
+
+  @doc "Reads one public ViewTracker Summary batch after Article scope admission."
+  def article_view_summaries(
+        _root,
+        %{community: community, thread: thread, inner_ids: inner_ids},
+        _info
+      ) do
+    CMS.FrontDesk.article_view_summaries(community, thread, inner_ids)
   end
 
   def community_activity(_root, %{community: %Community{} = community} = args, info) do
@@ -781,9 +827,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   def read_article(root, args, info), do: read_article(root, args, info, [])
 
-  def read_article(_root, %{article: article_path} = args, info, opts) do
+  def read_article(_root, %{article: article_path}, info, opts) do
     with {:ok, article_path} <- ArticlePath.parse(article_path, opts) do
-      do_read_article(article_path, info, Map.get(args, :view_event_id))
+      do_read_article(article_path, info)
     end
   end
 
@@ -800,27 +846,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
   end
 
-  defp do_read_article(article_path, info, view_event_id \\ nil)
-
   defp do_read_article(
          %{community: community, thread: thread, inner_id: inner_id},
-         %{
-           context: %{cur_user: user}
-         },
-         view_event_id
+         %{context: context}
        ) do
     with {:ok, community} <- FrontDesk.community(community) do
-      CMS.Articles.read(community, thread, inner_id, user, view_event_id)
-    end
-  end
+      case Map.get(context, :cur_user) do
+        %User{} = user ->
+          CMS.Articles.read(community, thread, inner_id, user)
 
-  defp do_read_article(
-         %{community: community, thread: thread, inner_id: inner_id},
-         _info,
-         _view_event_id
-       ) do
-    with {:ok, community} <- FrontDesk.community(community) do
-      CMS.Articles.read(community, thread, inner_id)
+        _ ->
+          CMS.Articles.read(community, thread, inner_id)
+      end
     end
   end
 
@@ -1539,7 +1576,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp hydrate_article_viewer_batch(resolved, %User{} = user) do
-    CMS.Articles.Response.list(Enum.map(resolved, &elem(&1, 1)), user)
+    CMS.Articles.Response.list(Enum.map(resolved, & &1.article), user)
   end
 
   defp resolve_comment_viewer_batch(article_path, comment_inner_ids) do

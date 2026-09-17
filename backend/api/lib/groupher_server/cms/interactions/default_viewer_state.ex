@@ -30,8 +30,7 @@ defmodule GroupherServer.CMS.Interactions.DefaultViewerState do
       emotions: emotions(:article),
       viewer_has_upvoted: false,
       viewer_has_collected: false,
-      viewer_has_reported: false,
-      viewer_has_viewed: false
+      viewer_has_reported: false
     }
   end
 

@@ -172,12 +172,13 @@ defmodule GroupherServer.Jobs do
   end
 
   @doc "Enqueues a durable Artiment view projection by its idempotency key."
-  @spec view_projection(Ecto.UUID.t()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def view_projection(event_id) do
+  @spec view_projection(Ecto.UUID.t(), pos_integer()) ::
+          {:ok, Oban.Job.t() | :pass} | {:error, term()}
+  def view_projection(event_id, generation) do
     if Config.skip_enqueue?() do
       {:ok, :pass}
     else
-      %{event_id: event_id}
+      %{event_id: event_id, projection_generation: generation}
       |> Jobs.ViewProjection.new()
       |> Oban.insert()
     end

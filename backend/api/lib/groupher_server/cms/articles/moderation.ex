@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.{FrontDesk, QueryBuilder}
+  alias CMS.ViewTracker.Query, as: ViewTrackerQuery
   alias CMS.Articles.Trash
   alias CMS.Communities.TagStats
   alias CMS.SearchArtiments.Indexer
@@ -45,6 +46,10 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       info.model
       |> Trash.not_trashed_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+      |> ViewTrackerQuery.order_by_views(
+        thread,
+        Map.get(filter, :order) || Map.get(filter, :sort)
+      )
       |> ORM.paginator(~m(page size)a)
       |> done()
     end

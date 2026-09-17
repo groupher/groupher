@@ -15,7 +15,6 @@ defmodule GroupherServer.ServiceAuth.Client do
   @refresh_skew_seconds 30
 
   def token(resource, scopes) do
-    ensure_cache_table()
     key = {resource, Enum.sort(scopes)}
     now = System.system_time(:second)
 
@@ -68,20 +67,6 @@ defmodule GroupherServer.ServiceAuth.Client do
       {:ok, token}
     else
       _ -> {:error, ErrorCat.service_token_unavailable()}
-    end
-  end
-
-  defp ensure_cache_table do
-    case :ets.whereis(@cache_table) do
-      :undefined ->
-        try do
-          :ets.new(@cache_table, [:named_table, :public, read_concurrency: true])
-        rescue
-          ArgumentError -> @cache_table
-        end
-
-      table ->
-        table
     end
   end
 end

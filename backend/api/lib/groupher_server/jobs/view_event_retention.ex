@@ -4,19 +4,18 @@ defmodule GroupherServer.Jobs.ViewEventRetention do
 
   Business position:
 
-      Oban cron -> ViewEventRetention -> view_events retention + telemetry
+      Oban cron -> ViewEventRetention -> ViewTracker retention + telemetry
   """
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS
-
-  alias CMS.Interactions.ViewEvents
+  alias GroupherServer.CMS.ViewTracker
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
-    _ = ViewEvents.delete_expired()
-    :telemetry.execute([:groupher, :cms, :interactions, :view_metrics], ViewEvents.metrics(), %{})
+    _ = ViewTracker.reconcile_dead_letters()
+    _ = ViewTracker.delete_expired()
+    :telemetry.execute([:groupher, :cms, :view_tracker, :metrics], ViewTracker.metrics(), %{})
     :ok
   end
 end

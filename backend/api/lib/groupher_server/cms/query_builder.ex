@@ -60,11 +60,17 @@ defmodule GroupherServer.CMS.QueryBuilder do
       {:length, :least_words}, query ->
         order_by(query, asc: :length)
 
+      {:article_tag, tag_name}, query when tag_name in [nil, ""] ->
+        query
+
       {:article_tag, tag_name}, query ->
         from(q in query,
           join: tag in assoc(q, :community_tags),
           where: tag.slug == ^tag_name
         )
+
+      {:community_tag, tag_name}, query when tag_name in [nil, ""] ->
+        query
 
       {:community_tag, tag_name}, query ->
         from(q in query,
@@ -163,7 +169,7 @@ defmodule GroupherServer.CMS.QueryBuilder do
   defp trans_articles_order(queryable, :comments), do: order_by(queryable, desc: :comments_count)
 
   defp trans_articles_order(queryable, :views),
-    do: order_by(queryable, desc: :views, desc: :inserted_at)
+    do: queryable
 
   defp trans_articles_order(queryable, :publish), do: order_by(queryable, desc: :inserted_at)
   defp trans_articles_order(queryable, _order), do: queryable

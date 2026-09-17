@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Interactions.ViewEvents
+  alias CMS.ViewTracker
   alias CMS.Model.ArticleDocument
   @article_digest_length CMS.Artiment.Config.digest_length()
 
@@ -102,63 +102,44 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       event_id = Ecto.UUID.generate()
 
       {:ok, changelog2} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+        CMS.Articles.read(article_community(changelog), :changelog, changelog.inner_id, user)
 
       assert changelog.id == changelog2.id
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(changelog2, user).viewer_has_viewed
+      refute CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
+
+      assert {:ok, ^event_id} =
+               ViewTracker.track(changelog2, user, event_id, read_purpose: :public_read)
+
+      assert :ok = ViewTracker.project(event_id)
+      assert CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
     end
 
-    test "read changelog should update views and meta viewed_user_list",
+    test "track projection updates views and meta viewed_user_list",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       # same user duplicate case
       event_id = Ecto.UUID.generate()
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+      {:ok, ^event_id} =
+        ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+      {:ok, ^event_id} =
+        ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
+      assert :ok = ViewTracker.project(event_id)
+      assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user2,
-          event_id
-        )
+      {:ok, ^event_id} =
+        ViewTracker.track(changelog, user2, event_id, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
-      assert :ok = ViewEvents.project(event_id)
-      assert created.views == 1
-      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
-      assert CMS.Interactions.viewer_state(changelog, user2).viewer_has_viewed
+      assert :ok = ViewTracker.project(event_id)
+      assert %{views: 2} = ViewTracker.summaries(:changelog, [created])[{:changelog, created.id}]
+      assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
+      assert CMS.ViewTracker.viewer_state(changelog, user2).viewer_has_viewed
     end
 
     test "read changelog should contains viewer_has_xxx state",

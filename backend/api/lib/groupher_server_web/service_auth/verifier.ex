@@ -90,7 +90,6 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
   end
 
   defp cached_remote_jwks(url, force_refresh) when is_binary(url) and url != "" do
-    ensure_cache_table()
     now = System.monotonic_time(:millisecond)
 
     case :ets.lookup(@cache_table, :keys) do
@@ -109,20 +108,6 @@ defmodule GroupherServerWeb.ServiceAuth.Verifier do
 
       _ ->
         {:error, ErrorCat.jwks_unavailable()}
-    end
-  end
-
-  defp ensure_cache_table do
-    case :ets.whereis(@cache_table) do
-      :undefined ->
-        try do
-          :ets.new(@cache_table, [:named_table, :public, read_concurrency: true])
-        rescue
-          ArgumentError -> @cache_table
-        end
-
-      table ->
-        table
     end
   end
 

@@ -33,7 +33,8 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
     CommunityLifecycle,
     CommunityModerator,
     DocBranch,
-    DocLifecycle
+    DocLifecycle,
+    Author
   }
 
   @community_normal CMS.Communities.Const.pending_state(:normal)
@@ -237,6 +238,37 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   def community_actor(_query, _mode, _actor),
     do: {:error, ErrorCat.scope_policy_actor_mismatch()}
 
+  @doc false
+  @spec insights_actor(Ecto.Query.t(), term(), [String.t()]) ::
+          Ecto.Query.t() | {:error, ErrorCat.error()}
+  def insights_actor(query, actor, granted_community_slugs)
+      when is_list(granted_community_slugs) and
+             (actor == :operations or actor == %{type: :operations}),
+      do: query
+
+  def insights_actor(query, %{id: actor_id}, granted_community_slugs)
+      when is_integer(actor_id) and is_list(granted_community_slugs) do
+    author_ids = from(author in Author, where: author.user_id == ^actor_id, select: author.id)
+
+    from([article, gate_community: community] in query,
+      where:
+        article.author_id in subquery(author_ids) or
+          community.user_id == ^actor_id or
+          (community.slug in ^granted_community_slugs and
+             exists(
+               from(moderator in CommunityModerator,
+                 where:
+                   moderator.community_id == parent_as(:gate_community).id and
+                     moderator.user_id == ^actor_id,
+                 select: 1
+               )
+             ))
+    )
+  end
+
+  def insights_actor(_query, _actor, _granted_community_slugs),
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+
   defp apply_community_lifecycle(query, :public) do
     from([gate_community: community, gate_community_lifecycle: lifecycle] in query,
       where:
@@ -246,9 +278,17 @@ defmodule GroupherServer.CMS.Gate.Scope.CommunityChain do
   end
 
   defp apply_community_lifecycle(query, policy_mode)
-       when policy_mode in [:owner_management, :moderator_management, :operations] do
+       when policy_mode in [
+              :owner_management,
+              :moderator_management,
+              :operations,
+              :insights_management
+            ] do
+    lifecycle_mode =
+      if policy_mode == :insights_management, do: :owner_management, else: policy_mode
+
     from([gate_community_lifecycle: lifecycle] in query,
-      where: lifecycle.state in ^Communities.Lifecycle.readable_states(policy_mode)
+      where: lifecycle.state in ^Communities.Lifecycle.readable_states(lifecycle_mode)
     )
   end
 
