@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { THREAD } from '~/const/thread'
+import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { Q } from '~/query'
 import type { TPagedArticles } from '~/spec'
 import useCommunity from '~/stores/community/hooks'

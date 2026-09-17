@@ -37,7 +37,8 @@ export default function useTrackArticleView(
     }
 
     const maybeTrack = () => {
-      if (!visible || !intersecting || timer !== null || startedKeyRef.current === articleKey) return
+      if (!visible || !intersecting || timer !== null || startedKeyRef.current === articleKey)
+        return
       timer = setTimeout(track, MIN_VISIBLE_MS)
     }
 

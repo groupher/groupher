@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 
-import TYPE from '~/const/type'
 import { THREAD } from '~/const/thread'
+import TYPE from '~/const/type'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
