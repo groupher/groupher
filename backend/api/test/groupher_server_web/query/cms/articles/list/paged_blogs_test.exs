@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       first_blog = results["entries"] |> List.first()
 
-      assert first_blog["upvotesCount"] === 3
+      assert first_blog["innerId"] === to_string(blog_last_week.inner_id)
     end
 
     test "comments_count order should work",
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
       first_blog = results["entries"] |> List.first()
-      assert first_blog["commentsCount"] === 3
+      assert first_blog["innerId"] === to_string(blog_last_week.inner_id)
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do

@@ -32,10 +32,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:title, :string)
       field(:document, :article_document, resolve: dataloader(CMS, :document))
       field(:digest, :string)
-      # Current views are a separate ViewTracker entity. Public content
-      # fragments must query `articleViewSummaries`; management DTOs may expose
-      # the explicitly injected nested `viewSummary`.
-      field(:view_summary, :article_view_summary)
+      field(:article_stats, :article_stats)
       field(:is_pinned, :boolean)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
@@ -50,9 +47,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:communities, list_of(:community), resolve: dataloader(CMS, :communities))
 
       field(:meta, :article_meta)
-      field(:upvotes_count, :integer)
       field(:collects_count, :integer)
-      field(:comments_revision, :integer)
       field(:article_interaction_revision, :integer)
       field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
       field(:reaction_outcome, :string)
@@ -278,7 +273,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     quote do
       field(:comments_participants, list_of(:user))
       field(:comments_participants_count, :integer)
-      field(:comments_count, :integer)
     end
   end
 

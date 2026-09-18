@@ -51,12 +51,15 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:accepted, non_null(:boolean))
   end
 
-  object :article_view_summary do
+  object :article_stats do
     field(:community, non_null(:string))
     field(:thread, non_null(:thread))
     field(:inner_id, non_null(:id))
     field(:views, non_null(:integer))
-    field(:revision, non_null(:integer))
+    field(:views_revision, non_null(:integer))
+    field(:upvotes_count, non_null(:integer))
+    field(:comments_count, non_null(:integer))
+    field(:snapshot_at, non_null(:datetime))
   end
 
   enum :community_application_status do

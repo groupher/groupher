@@ -78,8 +78,8 @@ type RootQueryType {
     article: ArticlePathInput!, from: DateTime, to: DateTime, metrics: [ArticleInsightsMetric!], actorTypes: [ArticleInsightsActorType!], isAuthenticated: Boolean
   ): ArticleInsightsTrend!
 
-  "Current public Article view summaries for one Community\/thread batch"
-  articleViewSummaries(community: String!, thread: Thread!, innerIds: [ID!]!): [ArticleViewSummary!]!
+  "Current public Article headline stats for one Community\/thread batch"
+  articleStats(community: String!, thread: Thread!, innerIds: [ID!]!): [ArticleStats!]!
 
   "Safe Community Activity timeline across readable resource streams"
   communityActivity(community: String!, selection: CommunityActivitySelectionInput!, page: Int): PagedCommunityActivity!
@@ -1532,12 +1532,15 @@ type ArticleViewTrackReceipt {
   accepted: Boolean!
 }
 
-type ArticleViewSummary {
+type ArticleStats {
   community: String!
   thread: Thread!
   innerId: ID!
   views: Int!
-  revision: Int!
+  viewsRevision: Int!
+  upvotesCount: Int!
+  commentsCount: Int!
+  snapshotAt: DateTime!
 }
 
 enum CommunityApplicationStatus {
@@ -2578,7 +2581,7 @@ type Post implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  viewSummary: ArticleViewSummary
+  articleStats: ArticleStats
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2588,9 +2591,7 @@ type Post implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  upvotesCount: Int
   collectsCount: Int
-  commentsRevision: Int
   articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
@@ -2606,7 +2607,6 @@ type Post implements Article {
   pending: Int
   commentsParticipants: [User]
   commentsParticipantsCount: Int
-  commentsCount: Int
   cat: ArticleCatEnum
   status: ArticleStatusEnum
   isSolved: Boolean!
@@ -2623,7 +2623,7 @@ type Changelog implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  viewSummary: ArticleViewSummary
+  articleStats: ArticleStats
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2633,9 +2633,7 @@ type Changelog implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  upvotesCount: Int
   collectsCount: Int
-  commentsRevision: Int
   articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
@@ -2651,7 +2649,6 @@ type Changelog implements Article {
   pending: Int
   commentsParticipants: [User]
   commentsParticipantsCount: Int
-  commentsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2663,7 +2660,7 @@ type Doc implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  viewSummary: ArticleViewSummary
+  articleStats: ArticleStats
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2673,9 +2670,7 @@ type Doc implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  upvotesCount: Int
   collectsCount: Int
-  commentsRevision: Int
   articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
@@ -2692,7 +2687,6 @@ type Doc implements Article {
   subtitle: String
   commentsParticipants: [User]
   commentsParticipantsCount: Int
-  commentsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2704,7 +2698,7 @@ type Blog implements Article {
   title: String
   document: ArticleDocument
   digest: String
-  viewSummary: ArticleViewSummary
+  articleStats: ArticleStats
   isPinned: Boolean
   coverUrl: String
   coverUrlDark: String
@@ -2714,9 +2708,7 @@ type Blog implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  upvotesCount: Int
   collectsCount: Int
-  commentsRevision: Int
   articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
@@ -2732,7 +2724,6 @@ type Blog implements Article {
   pending: Int
   commentsParticipants: [User]
   commentsParticipantsCount: Int
-  commentsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3639,8 +3630,7 @@ type OpenGraph {
 interface Article {
   innerId: ID
   title: String
-  upvotesCount: Int
-  viewSummary: ArticleViewSummary
+  articleStats: ArticleStats
   meta: ArticleMeta
   pending: Int
   coverUrl: String

@@ -126,9 +126,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert hd(listed["entries"])["mentionedByCount"] == 0
     assert hd(listed["entries"])["article"]["innerId"] == to_string(post.inner_id)
 
-    assert hd(listed["entries"])["article"]["viewSummary"] == %{
+    assert hd(listed["entries"])["article"]["articleStats"]
+           |> Map.take(["views", "viewsRevision", "upvotesCount", "commentsCount"]) == %{
              "views" => 12,
-             "revision" => 3
+             "viewsRevision" => 3,
+             "upvotesCount" => 0,
+             "commentsCount" => 0
            }
 
     permanent_conn =

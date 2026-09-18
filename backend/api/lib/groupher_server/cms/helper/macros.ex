@@ -308,10 +308,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:title, :string)
       field(:digest, :string)
 
-      # Current views live in CMS.ViewTracker.ViewSummary. Article structs do
-      # not carry a compatibility copy; management/export DTOs use this
-      # explicitly nested projection instead.
-      field(:view_summary, :map, virtual: true)
+      field(:article_stats, :map, virtual: true)
       field(:is_pinned, :boolean, default: false, virtual: true)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)

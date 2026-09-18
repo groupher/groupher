@@ -90,13 +90,23 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
-  @doc "Reads one public scoped Summary batch without loading Articles one by one."
-  @spec read_view_summaries(String.t(), atom(), [String.t() | integer()]) ::
+  @doc "Reads one public ArticleStats batch without loading Articles one by one."
+  @spec read_article_stats(String.t(), atom(), [String.t() | integer()]) ::
           {:ok, [map()]} | {:error, map()}
-  def read_view_summaries(community_ref, thread, inner_ids)
+  def read_article_stats(community_ref, thread, inner_ids)
       when is_binary(community_ref) and is_atom(thread) and is_list(inner_ids) do
     with {:ok, inner_ids} <- normalize_inner_ids(inner_ids),
-         {:ok, %Community{id: community_id} = community} <- CommunityReader.read(community_ref),
+         {:ok, stats} <- read_article_stats_batch(community_ref, thread, inner_ids) do
+      {:ok, stats}
+    else
+      {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
+    end
+  end
+
+  defp read_article_stats_batch(_community_ref, _thread, []), do: {:ok, []}
+
+  defp read_article_stats_batch(community_ref, thread, inner_ids) do
+    with {:ok, %Community{id: community_id} = community} <- CommunityReader.read(community_ref),
          {:ok, info} <- match(thread),
          {:ok, scope_context} <- public_scope_context(community, thread, []),
          %Ecto.Query{} = query <- CMS.Gate.scope(info.model, nil, :read, scope_context) do
@@ -105,22 +115,52 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
       rows =
         query
         |> join(:left, [article, ...], summary in ViewSummary,
-          as: :view_summary,
+          as: :stats,
           on: summary.thread == ^thread_value and summary.article_id == article.id
         )
         |> where([article, ...], article.community_id == ^community_id)
         |> where([article, ...], article.inner_id in ^inner_ids)
         |> select([article, ...], %{
-          inner_id: article.inner_id,
-          views: coalesce(as(:view_summary).views, 0),
-          revision: coalesce(as(:view_summary).revision, 0)
+          article: article,
+          views: coalesce(as(:stats).views, 0),
+          views_revision: coalesce(as(:stats).revision, 0)
         })
         |> Repo.all()
-        |> Enum.map(&Map.merge(&1, %{community: community_ref, thread: thread}))
 
-      {:ok, rows}
+      articles = Enum.map(rows, & &1.article)
+
+      with counts when is_map(counts) <- CMS.Interactions.counts(articles) do
+        snapshot_at = DateTime.utc_now()
+
+        stats_by_inner_id =
+          Map.new(rows, fn %{article: article, views: views, views_revision: views_revision} ->
+            interaction = Map.get(counts, {thread, article.id}, %{})
+
+            {to_string(article.inner_id),
+             %{
+               community: community_ref,
+               thread: thread,
+               inner_id: article.inner_id,
+               views: views,
+               views_revision: views_revision,
+               upvotes_count: Map.get(interaction, :upvotes_count, 0),
+               comments_count: Map.get(article, :comments_count, 0) || 0,
+               snapshot_at: snapshot_at
+             }}
+          end)
+
+        {:ok,
+         Enum.flat_map(inner_ids, fn inner_id ->
+           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
+             {:ok, stat} -> [stat]
+             :error -> []
+           end
+         end)}
+      else
+        {:error, _} = error -> error
+      end
     else
-      {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
+      {:error, _} = error -> error
     end
   end
 
@@ -134,10 +174,52 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
       end)
 
     case normalized do
-      {:ok, ids} -> {:ok, ids |> Enum.uniq() |> Enum.reverse() |> Enum.take(100)}
-      :error -> {:error, ArticleErrorCat.article_not_found("invalid article ids")}
+      {:ok, ids} ->
+        ids = ids |> Enum.uniq() |> Enum.reverse()
+
+        if length(ids) <= 100,
+          do: {:ok, ids},
+          else: {:error, ArticleErrorCat.article_not_found("too many article ids")}
+
+      :error ->
+        {:error, ArticleErrorCat.article_not_found("invalid article ids")}
     end
   end
+
+  @doc "Builds ArticleStats for canonical Articles already loaded by a management scope."
+  @spec stats_for_articles(atom(), [struct()], String.t() | nil) ::
+          %{optional({atom(), integer()}) => map()} | {:error, term()}
+  def stats_for_articles(thread, articles, community_ref \\ nil)
+      when is_atom(thread) and is_list(articles) do
+    with summaries when is_map(summaries) <- CMS.ViewTracker.summaries(thread, articles),
+         counts when is_map(counts) <- CMS.Interactions.counts(articles) do
+      snapshot_at = DateTime.utc_now()
+
+      Map.new(articles, fn article ->
+        summary = Map.get(summaries, {thread, article.id}, %{views: 0, revision: 0})
+        interaction = Map.get(counts, {thread, article.id}, %{})
+        community = community_ref || article_community_slug(article) || ""
+
+        {{thread, article.id},
+         %{
+           community: community,
+           thread: thread,
+           inner_id: article.inner_id,
+           views: summary.views,
+           views_revision: summary.revision,
+           upvotes_count: Map.get(interaction, :upvotes_count, 0),
+           comments_count: Map.get(article, :comments_count, 0) || 0,
+           snapshot_at: snapshot_at
+         }}
+      end)
+    else
+      {:error, _} = error -> error
+    end
+  end
+
+  defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
+  defp article_community_slug(%{community: %{slug: slug}}), do: slug
+  defp article_community_slug(_article), do: nil
 
   @doc "Reads one public Article from canonical Community/thread/id coordinates."
   @spec read(Community.t(), atom(), integer() | String.t(), keyword()) ::

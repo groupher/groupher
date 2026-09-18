@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert %ViewEvent{event_id: ^event_id, counted: true} = Repo.get!(ViewEvent, event_id)
   end
 
-  test "GraphQL reads public Article view summaries in one batch" do
+  test "GraphQL reads public ArticleStats in one batch" do
     {community, post, _attrs, user} = mock_article(:post)
     event_id = Ecto.UUID.generate()
 
@@ -43,14 +43,14 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
              ViewTracker.track(post, user, event_id, read_purpose: :public_read)
 
     query = """
-    query Summaries($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
-      articleViewSummaries(community: $community, thread: $thread, innerIds: $innerIds) {
-        community thread innerId views revision
+    query ArticleStats($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
+      articleStats(community: $community, thread: $thread, innerIds: $innerIds) {
+        community thread innerId views viewsRevision upvotesCount commentsCount snapshotAt
       }
     }
     """
 
-    assert {:ok, %{data: %{"articleViewSummaries" => [summary]}}} =
+    assert {:ok, %{data: %{"articleStats" => [summary]}}} =
              Absinthe.run(query, Schema,
                variables: %{
                  "community" => community.slug,
@@ -59,13 +59,23 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
                }
              )
 
-    assert summary == %{
-             "community" => community.slug,
-             "thread" => "POST",
-             "innerId" => Integer.to_string(post.inner_id),
-             "views" => 1,
-             "revision" => 1
-           }
+    assert summary["community"] == community.slug
+    assert summary["thread"] == "POST"
+    assert summary["innerId"] == Integer.to_string(post.inner_id)
+    assert summary["views"] == 1
+    assert summary["viewsRevision"] == 1
+    assert summary["upvotesCount"] == 0
+    assert summary["commentsCount"] == 0
+    assert {:ok, _, 0} = DateTime.from_iso8601(summary["snapshotAt"])
+  end
+
+  test "management ArticleStats tolerates an unloaded community association" do
+    {_community, post, _attrs, _user} = mock_article(:post)
+    article = Map.put(post, :community, %Ecto.Association.NotLoaded{})
+    post_id = post.id
+
+    assert %{{:post, ^post_id} => %{community: ""}} =
+             CMS.FrontDesk.article_stats_for_articles(:post, [article])
   end
 
   test "view event ids are unique and threads are constrained" do

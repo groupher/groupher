@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
 
       assert created["innerId"] == to_string(post.inner_id)
-      assert created["upvotesCount"] == 2
+      assert created["articleStats"]["upvotesCount"] == 2
     end
 
     test "login user can upvote a post", ~m(user_conn user2_conn community post user)a do
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
 
       assert created["innerId"] == to_string(post.inner_id)
-      assert created["upvotesCount"] == 2
+      assert created["articleStats"]["upvotesCount"] == 2
     end
 
     test "unauth user upvote a post fails", ~m(guest_conn community post)a do
@@ -76,10 +76,10 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
-      assert created["upvotesCount"] == 1
+      assert created["articleStats"]["upvotesCount"] == 1
 
       unchanged = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
-      assert unchanged["upvotesCount"] == 1
+      assert unchanged["articleStats"]["upvotesCount"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
       assert current_post.upvotes_count == 1
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert first["commandId"] == command_id
       assert replay["commandId"] == command_id
       assert replay["reactionOutcome"] == "changed"
-      assert replay["upvotesCount"] == first["upvotesCount"]
+      assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]
       assert replay["articleInteractionRevision"] == first["articleInteractionRevision"]
     end
 
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       assert first["reactionOutcome"] == "unchanged"
       assert replay["reactionOutcome"] == "unchanged"
-      assert replay["upvotesCount"] == first["upvotesCount"]
+      assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]
     end
 
     test "undo upvote is idempotent (can undo even if not upvoted)",

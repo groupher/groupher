@@ -43,13 +43,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.article_insights/3)
     end
 
-    @desc "Current public Article view summaries for one Community/thread batch"
-    field :article_view_summaries, non_null(list_of(non_null(:article_view_summary))) do
+    @desc "Current public Article headline stats for one Community/thread batch"
+    field :article_stats, non_null(list_of(non_null(:article_stats))) do
       arg(:community, non_null(:string))
       arg(:thread, non_null(:thread))
       arg(:inner_ids, non_null(list_of(non_null(:id))))
 
-      resolve(&R.CMS.article_view_summaries/3)
+      resolve(&R.CMS.article_stats/3)
     end
 
     @desc "Safe Community Activity timeline across readable resource streams"

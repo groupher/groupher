@@ -925,9 +925,13 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Enum.map(& &1.id)
       |> mentioned_by_counts(thread)
 
-    view_summaries =
-      case CMS.ViewTracker.summaries(thread, Map.values(articles_by_hash_id)) do
-        summaries when is_map(summaries) -> summaries
+    article_stats =
+      case CMS.FrontDesk.article_stats_for_articles(
+             thread,
+             Map.values(articles_by_hash_id),
+             community.slug
+           ) do
+        stats when is_map(stats) -> stats
         _ -> %{}
       end
 
@@ -941,15 +945,20 @@ defmodule GroupherServer.CMS.Articles.Trash do
             nil
 
           article ->
-            summary = Map.get(view_summaries, {thread, article.id}, %{views: 0, revision: 0})
-
-            Map.put(article, :view_summary, %{
-              community: community.slug,
-              thread: thread,
-              inner_id: article.inner_id,
-              views: summary.views,
-              revision: summary.revision
-            })
+            Map.put(
+              article,
+              :article_stats,
+              Map.get(article_stats, {thread, article.id}, %{
+                community: community.slug,
+                thread: thread,
+                inner_id: article.inner_id,
+                views: 0,
+                views_revision: 0,
+                upvotes_count: 0,
+                comments_count: article.comments_count || 0,
+                snapshot_at: DateTime.utc_now()
+              })
+            )
         end
 
       {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}

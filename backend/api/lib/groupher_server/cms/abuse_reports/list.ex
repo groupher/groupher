@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   @threads CMS.Artiment.Config.threads()
 
   @export_author_keys [:id, :login, :nickname, :avatar]
-  @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :view_summary]
+  @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :article_stats]
   @export_report_keys [
     :id,
     :deal_with,
@@ -151,14 +151,14 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   defp reports_formatter(%{entries: entries} = paged_reports, thread)
        when thread in @threads do
-    summaries = article_view_summaries(entries, thread)
+    stats = article_stats(entries, thread)
 
     paged_reports
     |> Map.put(
       :entries,
       Enum.map(entries, fn report ->
         basic_report = report |> Map.take(@export_report_keys)
-        basic_report |> Map.put(:article, extract_article_info(thread, report, summaries))
+        basic_report |> Map.put(:article, extract_article_info(thread, report, stats))
       end)
     )
   end
@@ -167,11 +167,11 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     report |> Map.get(:account) |> Map.take(@export_author_keys)
   end
 
-  defp extract_article_info(thread, %AbuseReport{} = report, summaries) do
+  defp extract_article_info(thread, %AbuseReport{} = report, stats) do
     article = report |> Map.get(thread)
 
     article
-    |> article_with_projection_count(thread, summaries)
+    |> article_with_projection_count(thread, stats)
     |> Map.take(@export_article_keys)
     |> Map.merge(%{thread: thread})
   end
@@ -216,40 +216,35 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp article_with_projection_count(article, thread),
     do: article_with_projection_count(article, thread, nil)
 
-  defp article_with_projection_count(%{id: id} = article, thread, summaries) do
+  defp article_with_projection_count(%{id: id} = article, thread, stats) do
     counts = CMS.Interactions.counts([article]) |> Map.get({thread, id}, %{})
 
-    summary =
-      case summaries do
+    article_stats =
+      case stats do
         nil ->
-          CMS.ViewTracker.summaries(thread, [article])
-          |> Map.get({thread, id}, %{views: 0, revision: 0})
+          CMS.FrontDesk.article_stats_for_articles(thread, [article])
+          |> Map.get({thread, id}, %{})
 
-        summaries ->
-          Map.get(summaries, {thread, id}, %{views: 0, revision: 0})
+        stats ->
+          Map.get(stats, {thread, id}, %{})
       end
 
     article
     |> Map.put(:upvotes_count, Map.get(counts, :upvotes_count, 0))
-    |> Map.put(:view_summary, %{
-      thread: thread,
-      inner_id: article.inner_id,
-      views: summary.views,
-      revision: summary.revision
-    })
+    |> Map.put(:article_stats, article_stats)
   end
 
   defp article_with_projection_count(article, _thread, _summaries), do: article
 
-  defp article_view_summaries(entries, thread) do
+  defp article_stats(entries, thread) do
     articles =
       entries
       |> Enum.map(&Map.get(&1, thread))
       |> Enum.reject(&is_nil/1)
 
-    CMS.ViewTracker.summaries(thread, articles)
+    CMS.FrontDesk.article_stats_for_articles(thread, articles)
     |> case do
-      summaries when is_map(summaries) -> summaries
+      stats when is_map(stats) -> stats
       _ -> %{}
     end
   end

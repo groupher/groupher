@@ -86,13 +86,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     Analysis.ArticleInsights.trend(article, viewer, opts)
   end
 
-  @doc "Reads one public ViewTracker Summary batch after Article scope admission."
-  def article_view_summaries(
+  @doc "Reads one public ArticleStats batch after Article scope admission."
+  def article_stats(
         _root,
         %{community: community, thread: thread, inner_ids: inner_ids},
         _info
       ) do
-    CMS.FrontDesk.article_view_summaries(community, thread, inner_ids)
+    CMS.FrontDesk.article_stats(community, thread, inner_ids)
   end
 
   def community_activity(_root, %{community: %Community{} = community} = args, info) do
@@ -1865,8 +1865,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp hydrate_interaction({:ok, %Comment{} = comment}, user),
     do: CMS.Comments.InteractionResponse.one(comment, user)
 
-  defp hydrate_interaction({:ok, article}, user),
-    do: CMS.Articles.Response.one(article, user)
+  defp hydrate_interaction({:ok, article}, user) do
+    with {:ok, hydrated} <- CMS.Articles.Response.one(article, user),
+         {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(hydrated),
+         stats when is_map(stats) <-
+           CMS.FrontDesk.article_stats_for_articles(
+             thread,
+             [hydrated]
+           ) do
+      {:ok, Map.put(hydrated, :article_stats, Map.get(stats, {thread, hydrated.id}, %{}))}
+    else
+      {:error, _} = error -> error
+    end
+  end
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 

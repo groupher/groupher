@@ -394,7 +394,13 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
             login
           }
         }
-        upvotesCount
+        articleStats {
+          views
+          viewsRevision
+          upvotesCount
+          commentsCount
+          snapshotAt
+        }
       }
     }
     """
@@ -405,7 +411,13 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation($article: ArticlePathInput!, $commandId: ID!) {
       upvote#{t(thread)}(article: $article, commandId: $commandId) {
         innerId
-        upvotesCount
+        articleStats {
+          views
+          viewsRevision
+          upvotesCount
+          commentsCount
+          snapshotAt
+        }
         ... on #{t(thread)} {
           commandId
           reactionOutcome
@@ -571,9 +583,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           article {
             innerId
             title
-            viewSummary {
+            articleStats {
               views
-              revision
+              viewsRevision
+              upvotesCount
+              commentsCount
+              snapshotAt
             }
           }
           mentionedBy(filter: {page: 1, size: 20}) {
@@ -795,8 +810,13 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         entries {
           innerId
           title
-          upvotesCount
-          commentsCount
+          articleStats {
+            views
+            viewsRevision
+            upvotesCount
+            commentsCount
+            snapshotAt
+          }
           viewerHasCollected
           viewerHasUpvoted
           viewerHasViewed

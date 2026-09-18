@@ -102,9 +102,13 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "Loads one public canonical Article for an explicit ViewTracker request."
   def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
 
-  @doc "Reads public current-view summaries for one Community/thread batch."
-  def article_view_summaries(community, thread, inner_ids),
-    do: Article.read_view_summaries(community, thread, inner_ids)
+  @doc "Reads public ArticleStats for one Community/thread batch."
+  def article_stats(community, thread, inner_ids),
+    do: Article.read_article_stats(community, thread, inner_ids)
+
+  @doc "Builds ArticleStats for already-authorized canonical Articles."
+  def article_stats_for_articles(thread, articles, community_ref \\ nil),
+    do: Article.stats_for_articles(thread, articles, community_ref)
 
   @doc "Reads one Article through the actor-aware Article Insights scope."
   def article_insights(article_path, actor, opts \\ []),
