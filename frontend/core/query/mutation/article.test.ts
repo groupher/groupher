@@ -5,7 +5,11 @@ import type { TArticle, TPagedPosts } from '~/spec'
 
 import { articleKeys, viewerKeys } from '../key'
 import { articleUpvoteOperation, patchArticleStatsEverywhere } from './article'
-import { clearArticleUpvoteReceipts, readArticleUpvoteReceipt, writeArticleUpvoteReceipt } from './articleReceipt'
+import {
+  clearArticleUpvoteReceipts,
+  readArticleUpvoteReceipt,
+  writeArticleUpvoteReceipt,
+} from './articleReceipt'
 import { markChange, rollbackChanges } from './optimistic/effects'
 import { executeOptimisticOperation } from './optimistic/execute'
 import { enqueueOptimisticToggle } from './optimistic/toggle'
@@ -165,7 +169,9 @@ describe('article query mutation helpers', () => {
 
     // Public aggregate rollback is delegated to the active authority query;
     // this isolated cache has no queryFn, so it remains optimistic here.
-    expect(queryClient.getQueryData<TPagedPosts>(postsKey)?.entries[0].articleStats?.upvotesCount).toBe(3)
+    expect(
+      queryClient.getQueryData<TPagedPosts>(postsKey)?.entries[0].articleStats?.upvotesCount,
+    ).toBe(3)
     expect(queryClient.getQueryData<typeof article.articleStats>(statsKey)?.upvotesCount).toBe(3)
     expect(
       queryClient.getQueryData<Record<string, { viewerHasUpvoted: boolean }>>(viewerKey)?.[
@@ -204,7 +210,9 @@ describe('article query mutation helpers', () => {
     await executeArticleUpvote(queryClient, article, true)
 
     expect(queryClient.getQueryData<typeof article.articleStats>(statsKey)?.upvotesCount).toBe(20)
-    expect(readArticleUpvoteReceipt('alice', 'home:POST:42')?.publicProjection.upvotesCount).toBe(21)
+    expect(readArticleUpvoteReceipt('alice', 'home:POST:42')?.publicProjection.upvotesCount).toBe(
+      21,
+    )
   })
 
   it('does not restore an older optimistic value after a newer operation owns the field', () => {
@@ -258,7 +266,9 @@ describe('article query mutation helpers', () => {
     await expect(executeArticleUpvote(queryClient, docArticle, true)).resolves.toBeDefined()
 
     expect(browserGraphQLRequest).toHaveBeenCalledOnce()
-    expect(queryClient.getQueryData<typeof article.articleStats>(statsKey)?.upvotesCount).toBeUndefined()
+    expect(
+      queryClient.getQueryData<typeof article.articleStats>(statsKey)?.upvotesCount,
+    ).toBeUndefined()
   })
 
   it('coalesces rapid toggles to the last intent and removes command mutations', async () => {
@@ -268,7 +278,11 @@ describe('article query mutation helpers', () => {
         upvotePost: { innerId: '42', articleStats: { upvotesCount: 4 }, viewerHasUpvoted: true },
       })
       .mockResolvedValueOnce({
-        undoUpvotePost: { innerId: '42', articleStats: { upvotesCount: 3 }, viewerHasUpvoted: false },
+        undoUpvotePost: {
+          innerId: '42',
+          articleStats: { upvotesCount: 3 },
+          viewerHasUpvoted: false,
+        },
       })
 
     const first = queueArticleUpvoteToggle(queryClient, article)
