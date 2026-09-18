@@ -9,6 +9,7 @@
 - [`bundle-size/`](./bundle-size)：产物体积基线与优化记录。
 - [`performance/`](./performance)：复杂度与性能审计。
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
+- [`article-stats-and-public-cache.md`](./article-stats-and-public-cache.md)：ArticleStats 公共计数、SSR hydration、HTML/CDN 缓存和 tracking 判断。
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。
 - [`domains.md`](./domains.md)：主要业务领域的命名、职责和详细设计入口。

@@ -204,11 +204,19 @@ reconcile 并清理 marker。Action adapter 只把 `isSubmitting/error` 投影�
 全局 registry；若未来迁移到 `useMutation`，只允许把 immutable identity 复制到 `meta`，不能把 phase
 更新变成跨领域共享状态。
 
-除了 mutation 入口，public Query 的后台 refetch 也必须经过同一条 revision guard。Article 的 detail/list
-与 Comment feed Query 使用 TanStack `structuralSharing` 按实体比较
-`articleInteractionRevision`、`commentInteractionRevision`、`commentsRevision` 和
-`viewsRevision`：较低 revision 的 response 只更新非该 domain 字段，不能回写较旧 projection。这样
-receipt 被消费后，后台旧 CDN response 仍不会覆盖已确认的 Query；guard 不应散落在各个按钮组件中。
+除了 mutation 入口，public Query 的后台 refetch 也必须经过同一条实体收敛规则。Article 的 detail/list
+不再用 `articleInteractionRevision`、`commentsRevision` 或旧 Article 字段保护公开 headline counts；这些字段
+没有公共 ArticleStats 的 ownership。公共计数统一使用完整的 `ArticleStats` snapshot：
+
+- `snapshotAt` 是三个公开 count（`views`、`upvotesCount`、`commentsCount`）的整体新旧顺序；较旧快照整份丢弃，不能只保留其中两个字段。
+- `viewsRevision` 是 views projection 的次级单调保护；当 `snapshotAt` 不旧且 `viewsRevision` 不下降时，替换整个
+  ArticleStats entity。`snapshotAt` 更新但 `viewsRevision` 反而更低属于混合/非法响应，整份丢弃并记录 telemetry。
+- 不为 `upvotesCount` 或 `commentsCount` 另造 revision；它们随较新的 `snapshotAt` 整体收敛，不能各自字段级合并。
+
+`commentsRevision` 只保留给 Comment 自己的 feed/surface（如果该 surface 仍使用它），不参与公共 ArticleStats。
+`articleInteractionRevision` 只允许存在于仍有明确消费者的非公开/management surface；若没有这样的消费者，随 Article
+公共字段清理一并退役。这样即使请求乱序，乐观 marker 也不会被较旧的公共 ArticleStats response 覆盖；guard 不应散落
+在各个按钮组件中。
 
 ### 5.3 正常流程
 
@@ -604,10 +612,15 @@ type TArticleReactionResult = {
   commandId: string
   outcome: 'changed' | 'unchanged'
   publicState: {
-    upvotesCount: number
+    articleStats: {
+      snapshotAt: string
+      views: number
+      viewsRevision: number
+      upvotesCount: number
+      commentsCount: number
+    }
     collectsCount: number
     emotions: Array<{ type: string; count: number; latestUsers: TAccountSummary[] }>
-    articleInteractionRevision?: number
   }
   viewerState: {
     viewerHasUpvoted: boolean
@@ -785,8 +798,10 @@ Phoenix transaction 和后续 reconcile 可以关联。
 - create/reply 使用 `pending:${commandId}`；
 - update/delete 增加可逆 entity/list patch；
 - delete 与 reaction/update 进入一致的 Comment 冲突边界；
-- response 返回 server-confirmed entity 和 Article `commentsCount/commentsRevision`；delete success 直接回写
-  confirmed count，authority refetch 只作为失败或无法安全回滚时的兜底；
+- response 返回 server-confirmed Comment entity；Comment surface 如仍需要 aggregate，可返回该 surface 自己的
+  `commentsRevision`，但不得把 `commentsCount/commentsRevision` 写回公共 Article。公共 ArticleStats 的
+  `commentsCount` 只能通过完整 `ArticleStats.snapshotAt` 收敛；delete success 的 count authority refetch 只作为
+  失败或无法安全回滚时的兜底；
 - create/reply/update/delete 已具备 commandId identity fence，自动重试仍由上层明确控制，默认保持 `retry: false`。
 
 ### Phase O5：View operation identity

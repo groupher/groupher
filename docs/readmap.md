@@ -21,6 +21,7 @@
 - [ ] [Web Analysis V2](./umami/web-analysis-v2.md) — 本地能力已有，等待部署与后续阶段。
 - [ ] [Article ViewTracker / Insights V1](./feature/view-tracker/v1.md) — 核心实现完成，发布前必须完成真实浏览器 tracking 与 Insights GraphQL 授权 e2e。
 - [ ] [Article ViewTracker V2](./feature/view-tracker/v2.md) — 独立当前 views Summary、统一实体缓存、阅读资格、dead-letter 与级联清理已实现；待真实浏览器 tracking 与 Insights GraphQL 授权 e2e 验收。
+- [ ] [ArticleStats 与公共页面缓存](./architecture/article-stats-and-public-cache.md) — 统一公开 views/upvotes/comments 快照、SSR hydration、HTML/CDN TTL、客户端 freshness 和 tracking/内容边界；待实施。
 - [ ] [Interaction V4](./feature/interaction/v4.md) — 主体实现完成，仍需生产存量清理。
 - [ ] [Interaction V5](./feature/interaction/v5.md) — ViewTracker 迁出与 Audit 退役已落地，ReportFact/Moderation 仍在实施。
 - [ ] [Gate V5](./feature/gate/v5.md) — 下一阶段 Gate 设计。

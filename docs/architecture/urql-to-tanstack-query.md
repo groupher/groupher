@@ -43,9 +43,9 @@
   和精确 invalidate；comment reaction 同时更新 public aggregate 与 viewer-owned flags，快速
   toggle 通过同实体 operation lane 与最终意图缓冲收敛。article upvote 同样按实体合并最后意图，
   命令式 Mutation settle 后立即退出 mutation cache。
-- Article view 不走独立 mutation：detail query 通过稳定的 `viewEventId` 记录 durable event，
-  服务端以 event identity 幂等接受并由 worker 推进公开 `views` projection；客户端不伪造
-  `views + 1`，`viewerHasViewed` 继续由独立 viewer/read-state 查询读取。
+- Article view 通过独立的 `trackArticleView` mutation 记录 durable event，服务端以 event identity 幂等接受
+  并由 worker 推进 `ArticleViewSummary`；客户端不伪造 `views + 1`，`viewerHasViewed` 继续由独立
+  viewer/read-state 查询读取。公开 `views` 由 ArticleStats 读取，不回写 Article content。
 - Post/Changelog 的 `tagGroups` 已由 `Q.article.tagGroups` + SSR prefetch/hydration 持有，
   `useActiveTag` 不再读取 ArticleList store；dead update adapter、`activeTagStats` fallback 与
   `resState` 写入已删除。
@@ -535,9 +535,17 @@ GET /home/post?tag=react&order=latest
 type PublicArticle = {
   id: string
   title: string
+}
+
+type ArticleStats = {
+  community: string
+  thread: string
+  innerId: string
   upvotesCount: number
   commentsCount: number
   views: number
+  viewsRevision: number
+  snapshotAt: string
 }
 
 type ArticleViewerState = {
@@ -551,7 +559,7 @@ UI 组合它们，但不把 viewer state 写回公共 SSR query：
 
 ```text
 public article query ───────┐
-                            ├─> selector/hook 返回 render view -> UI
+ArticleStats query ─────────┼─> selector/hook 返回 render view -> UI
 viewer article state query ┘
 ```
 
@@ -564,8 +572,8 @@ viewerByArticleKey[articleKey]
   -> 不匹配或缺失时，viewer 字段保持 undefined
 ```
 
-禁止按可见列表 offset 合并；分页、排序、过滤或后台 refetch 后 offset 都可能变化。公共字段
-（标题、作者、公开计数等）始终来自 public query，viewer query 不能顺带覆盖它们。
+禁止按可见列表 offset 合并；分页、排序、过滤或后台 refetch 后 offset 都可能变化。公共内容字段来自
+public article query，公开计数来自 ArticleStats，viewer query 不能顺带覆盖它们。
 
 viewer state 的 fetch 也必须以实体身份为输入，不能只是把分页结果转换成 keyed record：
 

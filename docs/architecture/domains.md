@@ -7,6 +7,10 @@
 本文回答“某项能力最终归谁所有”，同时标出当前代码中的对应模块。具体模型、事务和迁移步骤以链接的
 Feature 文档为准。
 
+`ArticleStats` 不是新的业务领域：它是跨 `ViewTracker`、`Interactions` 和 Article/Comment 读取投影的公共
+统计 DTO 与 Query cache 边界。它的命名、SSR hydration、缓存 TTL 和 tracking 判断见
+[ArticleStats 与公共页面缓存](./article-stats-and-public-cache.md)。
+
 ```text
 CMS
 ├─ Interactions       普通用户反应：upvote / collect / emotion

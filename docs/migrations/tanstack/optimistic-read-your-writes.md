@@ -16,6 +16,12 @@
 > - [Interaction V1](../../feature/interaction/v1.md)：reaction 同步 projection、view durable event 与幂等语义；
 > - [Interaction V4](../../feature/interaction/v4.md)：Interaction facade、事务和 ReadState owner。
 
+> 公共 Article 的 `views`、`upvotesCount`、`commentsCount` 不再由本文的 Article entity 或
+> `articleInteractionRevision` 作为读取 owner；统一以
+> [ArticleStats 与公共页面缓存](../../architecture/article-stats-and-public-cache.md) 的完整
+> `snapshotAt`/`viewsRevision` 快照收敛。本文剩余的 receipt/reconcile 机制只描述 viewer relation、Comment surface
+> 和非公开 reaction projection；`articleInteractionRevision` 若仍保留，只能服务明确的 management/non-public surface。
+
 ## 1. 问题
 
 本文不重新定义 mutation 内存期的 apply/rollback。operation 只有达到
@@ -126,7 +132,7 @@ viewerHasReported
 viewerHasViewed
 ```
 
-这些字段与具体 viewer 相关，不属于 public `articleInteractionRevision`。mutation 可以在同一事务结果中
+这些字段与具体 viewer 相关，不属于 public `ArticleStats.snapshotAt`。mutation 可以在同一事务结果中
 同时返回 public aggregate 和 viewer relation，但两者的读取、缓存与版本语义仍然分离。
 
 默认情况下 viewer relation 不需要单独 revision。若未来必须处理同一 viewer 多设备乱序写入，再按
@@ -146,15 +152,18 @@ server-state cache。它只在公开 projection 尚未追上时参与 render ove
 - logout/account switch 时清除；
 - 使用 schema version、与 public CDN 最长传播窗口对齐的 TTL 和容量上限做有界清理。
 
-当前 public cache 合同是 `s-maxage=60, stale-while-revalidate=300`。confirmed receipt TTL 不是任意的
-30 秒经验值，而是共享常量计算出的 `60 + 300 + 60 safety margin = 420` 秒，并满足：
+当前 public HTML cache 合同由
+[ArticleStats.CachePolicy](../../architecture/article-stats-and-public-cache.md) 统一提供：默认
+`s-maxage=600, stale-while-revalidate=300`。confirmed receipt TTL 不是任意的 30 秒经验值，而是共享常量计算出的
+`600 + 300 + 60 safety margin = 960` 秒，并满足：
 
 ```text
 confirmed receipt TTL >= public fresh window + public stale window + reconcile margin
 ```
 
-Community cache header 与 receipt TTL 共同引用 `frontend/core/constant/cache.ts`，修改 public cache
-窗口时必须同步改变这一合同。private reconcile 或 public revision 追上后仍会提前清理 receipt；420 秒是
+Community cache header 与 receipt TTL 共同消费 `ArticleStats.CachePolicy` 的输出；前端常量若存在只能作为
+传输层镜像，不能成为第二个 owner。修改 public cache 窗口时必须同步改变这一合同。private reconcile 或 public
+snapshot/revision 追上后仍会提前清理 receipt；960 秒是
 故障/传播迟滞时的最大遮蔽窗口，不是固定展示时长。Comment feed/reaction 每个 Article 各最多保留 100
 个 active refs，超出时保留最新 confirmation，避免 sessionStorage 和 reconcile 输入无界增长。
 
@@ -174,8 +183,13 @@ response 都必须从同一已提交事务返回完整 public projection 与完�
 
 ```ts
 type ArticleReactionProjection = {
-  articleInteractionRevision: number
-  upvotesCount: number
+  articleStats: {
+    snapshotAt: string
+    views: number
+    viewsRevision: number
+    upvotesCount: number
+    commentsCount: number
+  }
   collectsCount: number
   emotions: Array<{ type: string; count: number; latestUsers: TAccountSummary[] }>
   latestUpvotedUsers: TAccountSummary[]
@@ -198,7 +212,8 @@ type ArticleReactionMutationPayload = {
 语义：
 
 - `commandId` 标识一次逻辑 mutation，为服务端幂等、诊断和 receipt 关联提供稳定 identity；
-- `articleInteractionRevision` 只描述 Article public reaction projection；
+- `articleStats` 是公共 headline count 的完整快照；`snapshotAt`/`viewsRevision` 按 ArticleStats 合同收敛，不能拆成
+  Article 字段或 reaction revision；
 - `viewerState` 是该 Article 当前 viewer 的完整 reaction relation snapshot；
 - response 中两部分来自同一次已提交事务，但不共享 owner。
 
@@ -302,8 +317,13 @@ projection 未变化的 `unchanged` 成功。
 
 ```ts
 type ArticlePublicInteraction = {
-  articleInteractionRevision: number
-  upvotesCount: number
+  articleStats: {
+    snapshotAt: string
+    views: number
+    viewsRevision: number
+    upvotesCount: number
+    commentsCount: number
+  }
   collectsCount: number
   emotions: Array<{ type: string; count: number; latestUsers: TAccountSummary[] }>
   latestUpvotedUsers: TAccountSummary[]
@@ -323,8 +343,13 @@ query ReconcileArticleInteractions($refs: [ArticleRefInput!]!) {
     community
     thread
     innerId
-    articleInteractionRevision
-    upvotesCount
+    articleStats {
+      snapshotAt
+      views
+      viewsRevision
+      upvotesCount
+      commentsCount
+    }
     collectsCount
     emotions {
       type
@@ -491,7 +516,8 @@ view receipt 只记录 `viewEventId + articleRef + accepted`：
 首期不创建 workspace/global `syncId`，按真正的 projection owner 划分：
 
 ```text
-Article public reactions   -> articleInteractionRevision
+Article public headline    -> ArticleStats.snapshotAt + viewsRevision
+Article management reaction projection -> articleInteractionRevision (if retained)
 Article comment feed       -> commentsRevision
 Comment public reactions   -> commentInteractionRevision
   View worker projection     -> event processed / views_revision
@@ -510,26 +536,27 @@ revision 的最小要求：
 
 R0 必须冻结并迁移以下物理水位，后续 O2b/R1 只能按此实施：
 
-GraphQL/API 字段统一使用带 owner 前缀的 `articleInteractionRevision` 与
-`commentInteractionRevision`；不保留无前缀的 `interactionRevision`。数据库列仍可在各自明确 owner
-的 projection 表内命名为 `interaction_revision`，因为表名已经限定 domain。`commentsRevision` 专指
-Article comment feed，三者不得跨域比较。
+公共 GraphQL/API 不再把 `articleInteractionRevision` 放进 Article 或 ArticleStats；公共 headline 使用
+`ArticleStats.snapshotAt`/`viewsRevision`。如果 Article reaction projection 仍需要
+`articleInteractionRevision`，它只能出现在明确的 management/non-public API；Comment surface 的
+`commentInteractionRevision` 可继续保留，不得与 ArticleStats 或 `commentsRevision` 跨域比较。
 
-| Projection domain        | 物理落点                                                                | 推进操作                                                                                                  | 不推进                            |
-| ------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| Article public reactions | 对应 `<thread>_reaction_infos.interaction_revision :bigint, default: 0` | changed upvote/undo、collect/undo、emotion/undo；与 fact/bitmap/count/latest snapshot 同事务 `+1`         | unchanged 幂等成功                |
-| Comment public reactions | `comment_reaction_infos.interaction_revision :bigint, default: 0`       | changed Comment upvote/emotion/undo；与 reaction projection 同事务 `+1`                                   | unchanged；普通 Comment feed 变更 |
-| Article comment feed     | Article 主表 `comments_revision :bigint, default: 0`                    | create/reply/update/delete，以及会改变 public feed 的 moderation；与 entity、`comments_count` 同事务 `+1` | Comment reaction                  |
-| View projection          | Article 对应 read projection 的 `views_revision :bigint, default: 0`    | worker 成功提交 `views`/viewed projection 的同一事务                                                      | event accepted/enqueued           |
+| Projection domain                      | 物理落点                                                                | 推进操作                                                                                                                 | 不推进                                       |
+| -------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| Article management reaction projection | 对应 `<thread>_reaction_infos.interaction_revision :bigint, default: 0` | 仅 management/non-public surface 明确需要时，changed upvote/undo、collect/undo、emotion/undo 与其 projection 同事务 `+1` | unchanged 幂等成功；公共 ArticleStats 不读取 |
+| Comment public reactions               | `comment_reaction_infos.interaction_revision :bigint, default: 0`       | changed Comment upvote/emotion/undo；与 reaction projection 同事务 `+1`                                                  | unchanged；普通 Comment feed 变更            |
+| Article comment feed                   | Article 主表 `comments_revision :bigint, default: 0`                    | create/reply/update/delete，以及会改变 public feed 的 moderation；与 entity、`comments_count` 同事务 `+1`                | Comment reaction                             |
+| View projection                        | Article 对应 read projection 的 `views_revision :bigint, default: 0`    | worker 成功提交 `views`/viewed projection 的同一事务                                                                     | event accepted/enqueued                      |
 
-Article emotion 的事实仍可位于独立 emotion info 表，但 `<thread>_reaction_infos` 作为 Article reaction
-domain 的公共 waterline，所有 changed reaction 都推进同一个 `articleInteractionRevision`。Comment reaction
+Article emotion 的事实仍可位于独立 emotion info 表；若保留 `<thread>_reaction_infos` 的
+`articleInteractionRevision`，它只作为 management/non-public reaction projection 的 waterline。公共 headline
+不读取该 revision，而由 ArticleStats 快照负责。Comment reaction
 不推进 `commentsRevision`；public comment entry 单独返回 `commentInteractionRevision`，从而解除 feed
 revision 与 reaction revision 的张力。
 
 `viewerHasUpvoted: false -> true` 是特定账号的 viewer relation，不属于
-`articleInteractionRevision`。一次 upvote 若同时改变公开 count，revision 因 public projection changed 而推进；
-不能用该 revision 给 viewer flag 排序。`commentsRevision` 放在 Article 主表，是因为 Comment
+`articleInteractionRevision`。一次 upvote 若同时改变 ArticleStats 的公开 count，使用 ArticleStats 的完整
+`snapshotAt` 收敛；不能用 management reaction revision 给 viewer flag 排序。`commentsRevision` 放在 Article 主表，是因为 Comment
 lifecycle 本来就原子更新 `comments_count`；它不允许 reaction/emotion 再去触碰 Article 主记录。
 
 所有 revision 都只在 projection 实际 changed 时推进，并和对应 projection update 原子提交；不能在
@@ -565,7 +592,7 @@ active confirmed receipts
 - malformed、过期或 schema version 不匹配的 receipt 直接丢弃；每次写 receipt 时顺带 sweep 过期项，
   每次读取/启动/account switch 时再次丢弃，避免只写不读或只读不写形成残留；
 - receipt 不持久化 token、权限数据或无必要的完整用户资料；
-- comment body 若为跨刷新 overlay 所必需，只保存在 sessionStorage，并受 420 秒 TTL 与每 Article
+- comment body 若为跨刷新 overlay 所必需，只保存在 sessionStorage，并受 960 秒 TTL 与每 Article
   100 refs 容量限制。
 
 ## 9. 失败与降级
@@ -643,26 +670,26 @@ R0-R3 已完成；以下保留原执行顺序和验收边界。R4 仍坚持按�
 
 ## 11. 验收矩阵
 
-| 场景                                     | 必须结果                                                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 任一 Article reaction mutation/reconcile | 同一 response 返回完整 public reaction projection 与完整 viewer relation，receipt 不从旧 Query 拼接          |
-| upvote 成功后立即刷新                    | hydration 后 viewer flag 与 count 不低于该客户端已确认 revision；首期允许 SSR 首帧短暂旧值并测量 flash       |
-| undo 成功后立即刷新                      | hydration 后不重新显示为已点赞，旧公开 count 不覆盖 confirmed result                                         |
-| upvote R42 后 undo R43 再刷新            | 同 domain 只应用 R43 receipt，R42 不得重新覆盖                                                               |
-| unchanged 幂等成功                       | 不推进 revision、不创建/替换 receipt、不续期旧 receipt                                                       |
-| stale SSR 后 background refetch 仍旧     | receipt overlay 不被较低 revision 覆盖                                                                       |
-| 其他用户随后操作                         | private reconcile 返回更高 revision/aggregate，不长期固定在 receipt count                                    |
-| create comment 后刷新                    | 正式 comment 不消失，不出现 `pending:*` entity；收敛前保持在确定性 slot，不因旧 refetch 跳位                 |
-| delete comment 后刷新                    | 旧 CDN comment 不复活，Article count 使用 confirmed/reconciled 值                                            |
-| 同一 Article 连续修改多个 Comment        | 保留一个 comment-feed slot，按 commentRef 合并 typed effects；delete 是 tombstone effect，不创建独立 receipt |
-| mutation response 丢失                   | 非幂等 create 不自动重发；有 commandId 后服务端可返回原结果                                                  |
-| 后端/transport 以同一 commandId 重放     | 服务端返回原始结果；客户端只做 authority reconcile，不新增或续期 receipt                                     |
-| logout/account switch                    | 前一 viewer receipt 和 viewer Query 不泄漏到新账号                                                           |
-| view retry/reload                        | 相同逻辑 view 复用 event ID，只计一次                                                                        |
-| view worker lag                          | viewer 可显示 pending viewed，公开 views 不虚假递增                                                          |
-| public revision 回退                     | 较旧响应被 guard，产生可观测告警                                                                             |
-| Article/Comment reaction 同时加载        | 分别只比较 `articleInteractionRevision`/`commentInteractionRevision`，不得跨 owner 比较                      |
-| receipt TTL 到期                         | 420 秒上限内仍未收敛则清理并观测，不形成永久第二 owner                                                       |
+| 场景                                     | 必须结果                                                                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 任一 Article reaction mutation/reconcile | 同一 response 返回完整 public reaction projection 与完整 viewer relation，receipt 不从旧 Query 拼接                                      |
+| upvote 成功后立即刷新                    | hydration 后 viewer flag 与 count 不低于该客户端已确认 revision；首期允许 SSR 首帧短暂旧值并测量 flash                                   |
+| undo 成功后立即刷新                      | hydration 后不重新显示为已点赞，旧公开 count 不覆盖 confirmed result                                                                     |
+| upvote R42 后 undo R43 再刷新            | 同 domain 只应用 R43 receipt，R42 不得重新覆盖                                                                                           |
+| unchanged 幂等成功                       | 不推进 revision、不创建/替换 receipt、不续期旧 receipt                                                                                   |
+| stale SSR 后 background refetch 仍旧     | receipt overlay 不被较低 revision 覆盖                                                                                                   |
+| 其他用户随后操作                         | private reconcile 返回更高 revision/aggregate，不长期固定在 receipt count                                                                |
+| create comment 后刷新                    | 正式 comment 不消失，不出现 `pending:*` entity；收敛前保持在确定性 slot，不因旧 refetch 跳位                                             |
+| delete comment 后刷新                    | 旧 CDN comment 不复活，Article count 使用 confirmed/reconciled 值                                                                        |
+| 同一 Article 连续修改多个 Comment        | 保留一个 comment-feed slot，按 commentRef 合并 typed effects；delete 是 tombstone effect，不创建独立 receipt                             |
+| mutation response 丢失                   | 非幂等 create 不自动重发；有 commandId 后服务端可返回原结果                                                                              |
+| 后端/transport 以同一 commandId 重放     | 服务端返回原始结果；客户端只做 authority reconcile，不新增或续期 receipt                                                                 |
+| logout/account switch                    | 前一 viewer receipt 和 viewer Query 不泄漏到新账号                                                                                       |
+| view retry/reload                        | 相同逻辑 view 复用 event ID，只计一次                                                                                                    |
+| view worker lag                          | viewer 可显示 pending viewed，公开 views 不虚假递增                                                                                      |
+| public revision 回退                     | 较旧响应被 guard，产生可观测告警                                                                                                         |
+| Article/Comment reaction 同时加载        | Article headline 只比较 `ArticleStats.snapshotAt/viewsRevision`；Comment reaction 只比较 `commentInteractionRevision`，不得跨 owner 比较 |
+| receipt TTL 到期                         | 960 秒上限内仍未收敛则清理并观测，不形成永久第二 owner                                                                                   |
 
 ## 12. 决策摘要
 

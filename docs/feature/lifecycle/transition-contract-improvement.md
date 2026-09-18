@@ -46,7 +46,7 @@ Activity V3：command 与 Audit / Activity event 的关联
 | [CMS Command Receipt 重构](../../migrations/cms-command-receipt-refactor.md)                           | 从 `run_user_command/8`、replay callback 和内部状态泄漏迁移到目标架构的阶段与验收                            | 只记录实施顺序和临时状态，不覆盖本文业务合同或 CMS Command 长期边界                                                                                           |
 | [CMS Facade 与实现目录收口](../../architecture/cms-facade-directory.md)                                | 顶层 facade、Reader/Writer 命名、`commands/` 目录与内部实现下沉顺序                                          | 本文冻结 command/receipt 行为；目录收口文档保证 Articles、DocTree 与 CommandReceipt 在不改变公开 API 的前提下落实该边界                                       |
 | [Optimistic Operation](../../migrations/tanstack/optimistic-operation.md)                              | 前端从 optimistic apply 到 execute、rollback、reconcile 的内存期生命周期；该旧章节仍使用 `operationRef` 术语 | 本文把目标命名收敛为 `commandId`，并将它与 `queueKey`、version/revision 对接                                                                                  |
-| [Optimistic Read Your Writes](../../migrations/tanstack/optimistic-read-your-writes.md)                | 浏览器跨刷新 confirmed receipt、revision guard 和旧 public cache overlay                                     | 其中约 420 秒的浏览器 receipt 解决缓存收敛；本文定义的服务端 receipt 保留 24 小时，解决 ambiguous commit 和 transport retry，两者不能混用                     |
+| [Optimistic Read Your Writes](../../migrations/tanstack/optimistic-read-your-writes.md)                | 浏览器跨刷新 confirmed receipt、revision guard 和旧 public cache overlay                                     | 其中约 960 秒的浏览器 receipt 解决缓存收敛；本文定义的服务端 receipt 保留 24 小时，解决 ambiguous commit 和 transport retry，两者不能混用                     |
 | [Query Sync Cache](../../migrations/tanstack/query-sync-cache.md)                                      | public、viewer、Dashboard Query 的缓存边界与主动失效                                                         | 本文的 reconcile 只能在该缓存所有权边界内 patch/invalidate，不建立第二份 confirmed store                                                                      |
 | [Community Lifecycle](./contract.md)                                                                   | Community state、Blocker、allowed transition 和锁内 version guard；Lifecycle 不判断 actor                    | Community action matrix 的状态和 precondition 以它为当前领域合同；`commandId` 和 receipt 由外层 Command transaction 负责                                      |
 | [Gate V3：Article Core 与 Doc Release 边界](../gate/v3.md)                                             | Article Draft/Public/Lifecycle、Doc branch、DocLifecycle、Versioning 和 `DocPublishRelease` 的边界           | Article、Doc action matrix 的领域状态和 release 以它为依据；通用 receipt 可以指向 release，但不能取代 release                                                 |
@@ -181,7 +181,7 @@ new command commits
 - 协议必须公开 idempotency window。过期后相同 `commandId` 不再保证 replay，此时仍由领域唯一约束、Lifecycle precondition 和数据库约束防止非法重复；
 - receipt 不是 Audit。它只保存重放所需的最小结果或结果主键，不能因为审计要长期保留而永久堆积。
 
-当前前端 `CONFIRMED_WRITE_RECEIPT_TTL_MS` 是 420 秒，只用于覆盖 public cache 的 fresh、stale-while-revalidate 和 reconcile margin；它不是服务端 command 的 idempotency window，二者不能共用一个 TTL 语义。
+当前前端 `CONFIRMED_WRITE_RECEIPT_TTL_MS` 是 960 秒，只用于覆盖 ArticleStats.CachePolicy 的 public HTML fresh、stale-while-revalidate 和 reconcile margin；它不是服务端 command 的 idempotency window，二者不能共用一个 TTL 语义。
 
 duplicate request 测试除了同 key replay，还应固定 retention 边界：窗口内同 key 只产生一次业务事实；同 key 不同 fingerprint 永远冲突；清理任务只删除已过期 receipt；窗口过期后的请求仍必须通过 Gate、version 和领域不变量，不能因为 receipt 已删除而绕过业务约束。
 
