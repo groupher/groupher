@@ -6,6 +6,7 @@ import { getRequest } from '@tanstack/react-start/server'
 import { THREAD } from '~/const/thread'
 import { CACHE_TAG } from '~/constant/cache'
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
+import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
 import { changelog, pagedChangelogs } from '~/schemas/pages/changelog'
 import { pagedComments } from '~/schemas/pages/comment'
 import { community as communityDocument } from '~/schemas/pages/community'
@@ -100,6 +101,23 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
     return (result.data?.post ?? null) as unknown as TPost | null
   })
 
+const loadArticleStats = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; thread: TThread; innerIds: string[] }) => data)
+  .handler(async ({ data }) => {
+    setPublicCacheHeaders([
+      CACHE_TAG.articlesCache(data.community, data.thread),
+      ...data.innerIds.map((innerId) =>
+        CACHE_TAG.articleCache(data.community, data.thread, innerId),
+      ),
+    ])
+    const result = await fetchGraphQL<ResultOf<typeof articleStatsDocument>>(articleStatsDocument, {
+      community: data.community,
+      thread: data.thread,
+      innerIds: data.innerIds,
+    })
+    return result.data?.articleStats ?? []
+  })
+
 const loadChangelogs = createServerFn({ method: 'GET', strict: false })
   .validator((data: { community: string }) => data)
   .handler(async ({ data }) => {
@@ -171,6 +189,7 @@ const loadComments = createServerFn({ method: 'GET', strict: false })
 export {
   loadChangelog,
   loadChangelogs,
+  loadArticleStats,
   loadComments,
   loadCommunity,
   loadDoc,

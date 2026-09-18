@@ -1,7 +1,8 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react'
+import { useRef } from 'react'
 
 import { ARTICLE_THREAD } from '~/const/thread'
 import {
@@ -14,7 +15,9 @@ import type { TArticle, TArticleThread, TThread } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
+import { isArticleStatsSnapshotStale } from './articleStats'
 import { Q } from './client'
+import { articleKeys } from './key'
 import useArticleInteractionReconcile from './useArticleInteractionReconcile'
 import type { TViewerArticleRef } from './viewer'
 
@@ -44,15 +47,30 @@ export default function ArticleQueryProvider({
   initialArticle?: TArticle | null
 }) {
   const account = useAccount()
+  const queryClient = useQueryClient()
+  const refreshedStats = useRef(false)
   const articleQuery = useQuery({
     ...Q.article.detail(community, thread, innerId),
     initialData: initialArticle || undefined,
   })
   const isArticleThread = Object.values(ARTICLE_THREAD).includes(thread as TArticleThread)
-  const viewSummaryQuery = useQuery({
-    ...Q.article.viewSummary(community, thread as TArticleThread, innerId),
+  const articleStatsQuery = useQuery({
+    ...Q.article.articleStats(community, thread as TArticleThread, innerId),
     enabled: isArticleThread,
   })
+  useEffect(() => {
+    if (
+      !articleStatsQuery.data ||
+      refreshedStats.current ||
+      !isArticleStatsSnapshotStale(articleStatsQuery.data.snapshotAt)
+    )
+      return
+    refreshedStats.current = true
+    void queryClient.invalidateQueries({
+      queryKey: articleKeys.articleStats(community, thread as TArticleThread, innerId),
+      exact: true,
+    })
+  }, [articleStatsQuery.data, community, innerId, queryClient, thread])
   const articleRef = {
     community,
     thread,
@@ -70,11 +88,10 @@ export default function ArticleQueryProvider({
     if (!articleQuery.data) return null
     const key = `${community}:${thread}:${String(innerId)}`
     const viewerState = viewerQuery.data?.[key]
-    const summary = viewSummaryQuery.data
-    const withSummary = summary
-      ? { ...articleQuery.data, views: summary.views, viewsRevision: summary.revision }
+    const withStats = articleStatsQuery.data
+      ? { ...articleQuery.data, articleStats: articleStatsQuery.data }
       : articleQuery.data
-    const merged = viewerState ? ({ ...withSummary, ...viewerState } as TArticle) : withSummary
+    const merged = viewerState ? ({ ...withStats, ...viewerState } as TArticle) : withStats
     const viewReceipt = readArticleViewReceipt(key)
     const viewed = viewReceipt ? { ...merged, viewerHasViewed: true } : merged
     const accountRef = account.accountRef || getAccountRef(account.user)
@@ -89,7 +106,7 @@ export default function ArticleQueryProvider({
     community,
     innerId,
     thread,
-    viewSummaryQuery.data,
+    articleStatsQuery.data,
     viewerQuery.data,
   ])
   const value = useMemo(

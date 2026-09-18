@@ -48,7 +48,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.desc}>{article.digest}</div>
       <div className={s.footer}>
         <Upvote
-          count={article.upvotesCount}
+          count={article.articleStats?.upvotesCount}
           avatarList={mockUsers(3)}
           type={UPVOTE_LAYOUT.GENERAL}
         />

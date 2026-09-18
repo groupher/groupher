@@ -46,6 +46,17 @@ export type TViewingInfo = {
   id: TID
 }
 
+export type TArticleStats = {
+  community: string
+  thread: TThread
+  innerId: TID
+  views: number
+  viewsRevision: number
+  upvotesCount: number
+  commentsCount: number
+  snapshotAt: string
+}
+
 type TBaseArticle = {
   id?: TID
   innerId?: TID
@@ -53,17 +64,12 @@ type TBaseArticle = {
   title?: string
   digest?: string
   body?: string
-  views?: number
-  viewsRevision?: number
-  viewSummary?: {
-    views: number
-    revision: number
-  }
+  articleStats?: TArticleStats
   copyRight?: string
   isQuestion?: boolean
   isPinned?: boolean
   author?: TAccount
-  upvotesCount?: number
+  upvotesCount?: never
   collectsCount?: number
   articleInteractionRevision?: number
   emotions?: TEmotion[]
@@ -77,8 +83,7 @@ type TBaseArticle = {
   viewerHasCollected?: boolean
   viewerEmotion?: string | null
   viewerHasUpvoted?: boolean
-  commentsCount?: number
-  commentsRevision?: number
+  commentsCount?: never
   communityTags?: readonly TTag[]
   meta?: TArticleMeta
   document?: TDocument

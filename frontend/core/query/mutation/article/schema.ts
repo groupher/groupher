@@ -4,7 +4,9 @@ export const upvotePost = graphql(`
   mutation QueryUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
     upvotePost(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Post {
         meta {
           latestUpvotedUsers {
@@ -37,7 +39,9 @@ export const undoUpvotePost = graphql(`
   mutation QueryUndoUpvotePost($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvotePost(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Post {
         meta {
           latestUpvotedUsers {
@@ -70,7 +74,9 @@ export const upvoteChangelog = graphql(`
   mutation QueryUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
     upvoteChangelog(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Changelog {
         meta {
           latestUpvotedUsers {
@@ -103,7 +109,9 @@ export const undoUpvoteChangelog = graphql(`
   mutation QueryUndoUpvoteChangelog($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvoteChangelog(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Changelog {
         meta {
           latestUpvotedUsers {
@@ -136,7 +144,9 @@ export const upvoteDoc = graphql(`
   mutation QueryUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
     upvoteDoc(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Doc {
         meta {
           latestUpvotedUsers {
@@ -169,7 +179,9 @@ export const undoUpvoteDoc = graphql(`
   mutation QueryUndoUpvoteDoc($article: ArticlePathInput!, $commandId: ID!) {
     undoUpvoteDoc(article: $article, commandId: $commandId) {
       innerId
-      upvotesCount
+      articleStats {
+        upvotesCount
+      }
       ... on Doc {
         meta {
           latestUpvotedUsers {

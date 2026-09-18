@@ -1,10 +1,6 @@
 import type { TArticle, TComment } from '~/spec'
 
-import {
-  mergeArticleCommentsProjection,
-  preserveArticleProjection,
-  preserveCommentProjection,
-} from './revisionGuard'
+import { preserveArticleProjection, preserveCommentProjection } from './revisionGuard'
 
 describe('revision guards', () => {
   it('keeps newer Article interaction and comment domains independently', () => {
@@ -13,26 +9,17 @@ describe('revision guards', () => {
       community: { slug: 'home' },
       meta: { thread: 'POST', latestUpvotedUsers: [{ login: 'alice' }] },
       title: 'old title',
-      upvotesCount: 10,
       articleInteractionRevision: 5,
-      commentsCount: 8,
-      commentsRevision: 7,
     } as unknown as TArticle
     const next = {
       ...previous,
       title: 'new title',
-      upvotesCount: 2,
       articleInteractionRevision: 4,
-      commentsCount: 9,
-      commentsRevision: 8,
     } as unknown as TArticle
 
     expect(preserveArticleProjection(previous, next)).toMatchObject({
       title: 'new title',
-      upvotesCount: 10,
       articleInteractionRevision: 5,
-      commentsCount: 9,
-      commentsRevision: 8,
     })
   })
 
@@ -86,22 +73,5 @@ describe('revision guards', () => {
         },
       ],
     })
-  })
-
-  it('does not let Comment reconcile overwrite a newer Article comments projection', () => {
-    const current = {
-      innerId: '42',
-      community: { slug: 'home' },
-      meta: { thread: 'POST' },
-      commentsCount: 12,
-      commentsRevision: 9,
-    } as unknown as TArticle
-
-    expect(
-      mergeArticleCommentsProjection(current, { commentsCount: 10, commentsRevision: 8 }),
-    ).toBe(current)
-    expect(
-      mergeArticleCommentsProjection(current, { commentsCount: 13, commentsRevision: 10 }),
-    ).toMatchObject({ commentsCount: 13, commentsRevision: 10 })
   })
 })

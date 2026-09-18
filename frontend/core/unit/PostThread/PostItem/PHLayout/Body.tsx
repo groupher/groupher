@@ -27,9 +27,11 @@ const Body: FC<TProps> = ({ article }) => {
             left={-2}
           />
         )}
-        <ViewsCount count={article.views} />
+        <ViewsCount count={article.articleStats?.views} />
         <div className='mr-5' />
-        {article.commentsCount !== 0 && <CommentsCount count={article.commentsCount} />}
+        {(article.articleStats?.commentsCount ?? 0) !== 0 && (
+          <CommentsCount count={article.articleStats?.commentsCount} />
+        )}
       </div>
     </div>
   )

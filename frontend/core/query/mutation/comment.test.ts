@@ -99,15 +99,10 @@ describe('comment query mutation helpers', () => {
     ).toBe(10)
   })
 
-  it('replaces a pending comment and uses the server-confirmed article count', () => {
+  it('replaces a pending comment and invalidates the ArticleStats entity', () => {
     const queryClient = new QueryClient()
-    const articleKey = articleKeys.detail('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleKey, {
-      innerId: '42',
-      community: { slug: 'home' },
-      meta: { thread: THREAD.POST },
-      commentsCount: 8,
-    })
+    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
     queryClient.setQueryData(key, {
       entries: [{ ...root, innerId: 'pending:1' }],
       totalCount: 1,
@@ -119,10 +114,9 @@ describe('comment query mutation helpers', () => {
       'pending:1',
       { ...root, innerId: 'confirmed-1' },
       { community: 'home', thread: THREAD.POST, innerId: '42' },
-      6,
     )
 
-    expect(queryClient.getQueryData<{ commentsCount: number }>(articleKey)?.commentsCount).toBe(6)
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].innerId).toBe(
       'confirmed-1',
     )
@@ -164,14 +158,8 @@ describe('comment query mutation helpers', () => {
 
   it('reconciles the Article comment revision returned by an update', () => {
     const queryClient = new QueryClient()
-    const articleKey = articleKeys.detail('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleKey, {
-      innerId: '42',
-      community: { slug: 'home' },
-      meta: { thread: THREAD.POST },
-      commentsCount: 8,
-      commentsRevision: 2,
-    })
+    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
     const target = {
       comment: root,
       scope,
@@ -195,21 +183,13 @@ describe('comment query mutation helpers', () => {
       },
     )
 
-    expect(
-      queryClient.getQueryData<{ commentsRevision: number }>(articleKey)?.commentsRevision,
-    ).toBe(3)
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
   })
 
-  it('reconciles the confirmed Article count and revision returned by delete', () => {
+  it('invalidates ArticleStats after delete', () => {
     const queryClient = new QueryClient()
-    const articleKey = articleKeys.detail('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleKey, {
-      innerId: '42',
-      community: { slug: 'home' },
-      meta: { thread: THREAD.POST },
-      commentsCount: 7,
-      commentsRevision: 2,
-    })
+    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, { commentsCount: 7 })
     queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
     const target = {
       comment: root,
@@ -233,10 +213,7 @@ describe('comment query mutation helpers', () => {
       },
     )
 
-    expect(queryClient.getQueryData(articleKey)).toMatchObject({
-      commentsCount: 9,
-      commentsRevision: 3,
-    })
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toEqual([])
   })
 })

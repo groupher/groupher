@@ -18,18 +18,19 @@ export const trashedPosts = graphql(`
         article {
           innerId
           title
-          viewSummary {
+          articleStats {
             views
-            revision
+            viewsRevision
+            upvotesCount
+            commentsCount
+            snapshotAt
           }
-          upvotesCount
           meta {
             thread
           }
           ... on Post {
             cat
             status
-            commentsCount
             insertedAt
             activeAt
             author {

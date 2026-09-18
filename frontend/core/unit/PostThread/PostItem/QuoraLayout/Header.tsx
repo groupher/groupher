@@ -29,7 +29,7 @@ const Header: FC<TProps> = ({ article }) => {
 
   const s = useSalon({ isPinned })
 
-  const { author, title, commentsCount, innerId, communityTags, insertedAt } = article
+  const { author, title, innerId, communityTags, insertedAt, articleStats } = article
 
   return (
     <section className={s.wrapper}>
@@ -65,9 +65,9 @@ const Header: FC<TProps> = ({ article }) => {
 
         <TagsList items={communityTags} left={2} top='px' />
         <div className='grow' />
-        {commentsCount !== 0 && (
+        {(articleStats?.commentsCount ?? 0) !== 0 && (
           <CommentsCount
-            count={commentsCount}
+            count={articleStats?.commentsCount}
             size={SIZE.MEDIUM}
             right={communityLayout === COMMUNITY_LAYOUT.SIDEBAR ? 4 : 0}
           />

@@ -144,7 +144,9 @@ export const overlayArticleUpvoteReceipt = (
   const viewer = receipt.viewerState
   return {
     ...article,
-    upvotesCount: projection.upvotesCount,
+    articleStats: article.articleStats
+      ? { ...article.articleStats, upvotesCount: projection.upvotesCount }
+      : article.articleStats,
     collectsCount: projection.collectsCount,
     emotions: projection.emotions,
     ...(Array.isArray(projection.latestUpvotedUsers)

@@ -22,7 +22,7 @@ vi.mock('./salon', () => ({
 
 describe('ArticleBaseStats', () => {
   it('reserves the detail slot while the Summary is loading', () => {
-    const article = { commentsCount: 40, views: undefined } as unknown as TArticle
+    const article = {} as unknown as TArticle
 
     render(<ArticleBaseStats article={article} />)
 

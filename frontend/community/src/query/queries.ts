@@ -3,12 +3,14 @@ import { print } from 'graphql'
 
 import { THREAD } from '~/const/thread'
 import { articleKeys, commentKeys, graphqlKeys } from '~/query'
+import { ARTICLE_STATS_SNAPSHOT_MAX_AGE_MS } from '~/query/articleStats'
 import { docPublicTree } from '~/schemas/pages/doc'
 import type { TDocPublicTreeQuery, TThread } from '~/spec'
 
 import {
   loadChangelog,
   loadChangelogs,
+  loadArticleStats,
   loadComments,
   loadDoc,
   loadDocTree,
@@ -24,6 +26,7 @@ export const communityQueries = {
       queryFn: () => loadPosts({ data: { community } }),
       staleTime: 30_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   post: (community: string, innerId: string) =>
     queryOptions({
@@ -31,6 +34,7 @@ export const communityQueries = {
       queryFn: () => loadPost({ data: { community, innerId } }),
       staleTime: 60_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   changelogs: (community: string) =>
     queryOptions({
@@ -38,6 +42,7 @@ export const communityQueries = {
       queryFn: () => loadChangelogs({ data: { community } }),
       staleTime: 30_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   changelog: (community: string, innerId: string) =>
     queryOptions({
@@ -45,6 +50,7 @@ export const communityQueries = {
       queryFn: () => loadChangelog({ data: { community, innerId } }),
       staleTime: 60_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   comments: (community: string, thread: TThread, innerId: string) =>
     queryOptions({
@@ -52,6 +58,7 @@ export const communityQueries = {
       queryFn: () => loadComments({ data: { community, thread, innerId } }),
       staleTime: 30_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   kanban: (community: string) =>
     queryOptions({
@@ -59,6 +66,7 @@ export const communityQueries = {
       queryFn: () => loadKanban({ data: { community } }),
       staleTime: 30_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
   doc: (community: string, innerId: string) =>
     queryOptions({
@@ -66,6 +74,16 @@ export const communityQueries = {
       queryFn: () => loadDoc({ data: { community, innerId } }),
       staleTime: 60_000,
       gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
+    }),
+  articleStats: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
+    queryOptions({
+      queryKey: articleKeys.articleStatsBatch(community, thread, innerIds),
+      queryFn: () =>
+        loadArticleStats({ data: { community, thread, innerIds: innerIds.map(String) } }),
+      staleTime: ARTICLE_STATS_SNAPSHOT_MAX_AGE_MS,
+      gcTime: 10 * 60_000,
+      meta: { hydration: 'public' },
     }),
 }
 
@@ -74,4 +92,5 @@ export const docTreeClientQuery = (community: string) =>
   queryOptions<TDocPublicTreeQuery>({
     queryKey: graphqlKeys.document(print(docPublicTree), { community }),
     queryFn: async () => ({ docPublicTree: await loadDocTree({ data: { community } }) }),
+    meta: { hydration: 'public' },
   })

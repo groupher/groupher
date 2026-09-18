@@ -28,7 +28,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
-  const { title, communityTags, cat, upvotesCount } = article
+  const { title, communityTags, cat, articleStats } = article
 
   return (
     <div className={s.wrapper}>
@@ -44,7 +44,11 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <TagsList items={communityTags} right={1} />
       <ArticleCatStatus cat={cat} right={10} top={-1} />
       <div className={s.upvotes}>
-        <Upvote count={upvotesCount} avatarList={mockUsers(3)} type={UPVOTE_LAYOUT.GENERAL} />
+        <Upvote
+          count={articleStats?.upvotesCount}
+          avatarList={mockUsers(3)}
+          type={UPVOTE_LAYOUT.GENERAL}
+        />
       </div>
     </div>
   )

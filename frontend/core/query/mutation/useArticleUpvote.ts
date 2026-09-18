@@ -47,7 +47,8 @@ export default function useArticleUpvote(article: TArticle | null) {
     visibleReceipt,
   ])
   return {
-    count: visibleReceipt?.publicProjection.upvotesCount ?? canonical?.upvotesCount ?? 0,
+    count:
+      visibleReceipt?.publicProjection.upvotesCount ?? canonical?.articleStats?.upvotesCount ?? 0,
     isUpvoted: visibleReceipt?.viewerState.viewerHasUpvoted ?? visibleState ?? false,
     toggle,
   }

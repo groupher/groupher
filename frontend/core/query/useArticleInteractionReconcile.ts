@@ -9,7 +9,7 @@ import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
 import { viewerKeys } from './key'
-import { patchArticleEverywhere } from './mutation/article'
+import { articleKeys } from './key'
 import {
   isArticleUpvoteReceiptNewer,
   readArticleUpvoteReceipt,
@@ -55,35 +55,6 @@ const mergePrivateState = (
   )
 }
 
-const mergePublicState = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  ref: TArticleRef,
-  state: TArticleInteractionState,
-  receiptRevision?: number,
-): void => {
-  const publicRevision = state.articleInteractionRevision
-  patchArticleEverywhere(queryClient, ref, (current) => {
-    const currentRevision = current.articleInteractionRevision
-    if (typeof currentRevision === 'number' && currentRevision > publicRevision) return current
-    if (typeof receiptRevision === 'number' && publicRevision < receiptRevision) return current
-    return {
-      ...current,
-      upvotesCount: state.upvotesCount,
-      collectsCount: state.collectsCount,
-      emotions: state.emotions,
-      articleInteractionRevision: publicRevision,
-      ...(state.latestUpvotedUsers
-        ? {
-            meta: {
-              ...(current.meta || {}),
-              latestUpvotedUsers: state.latestUpvotedUsers,
-            },
-          }
-        : {}),
-    }
-  })
-}
-
 /** Reconciles only Articles with active confirmed receipts through a private no-store query. */
 export default function useArticleInteractionReconcile(articles: readonly TArticle[] | undefined) {
   const queryClient = useQueryClient()
@@ -117,12 +88,9 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
       if (!receipt) continue
       const receiptRevision = receipt.publicProjection.articleInteractionRevision
       mergePrivateState(queryClient, accountRef, state)
-      mergePublicState(
-        queryClient,
-        ref,
-        state,
-        typeof receiptRevision === 'number' ? receiptRevision : undefined,
-      )
+      void queryClient.invalidateQueries({
+        queryKey: articleKeys.articleStats(ref.community, ref.thread, ref.innerId),
+      })
       if (
         typeof receiptRevision !== 'number' ||
         state.articleInteractionRevision >= receiptRevision

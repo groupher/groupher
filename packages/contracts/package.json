@@ -7,6 +7,7 @@
     "./auth": "./src/auth.ts",
     "./auth-cookie": "./src/auth-cookie.ts",
     "./auth-generated": "./src/auth.generated.ts",
+    "./article-stats": "./src/article-stats.ts",
     "./endpoint": "./src/endpoint.ts",
     "./headers": "./src/headers.ts",
     "./health": "./src/health.ts",

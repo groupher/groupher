@@ -54,7 +54,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
         <div className={s.footer}>
           <EmotionSelector emotions={demoEmotion} isLegal />
           <div className='grow' />
-          <CommentsCount count={article.commentsCount} size='medium' right={15} />
+          <CommentsCount count={article.articleStats?.commentsCount} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />
         </div>
       </div>

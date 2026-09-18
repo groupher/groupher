@@ -1,5 +1,8 @@
 export {
   articleQueryTargets,
+  articleStatsQueryTargets,
+  patchArticleStatsChanges,
+  patchArticleStatsEverywhere,
   patchArticleChanges,
   patchArticleEverywhere,
   selectArticleFromCache,

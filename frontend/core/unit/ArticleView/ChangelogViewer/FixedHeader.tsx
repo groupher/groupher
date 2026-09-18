@@ -16,13 +16,13 @@ type TProps = {
 
 const FixedHeader: FC<TProps> = ({ article, visible, footerVisible: _footerVisible }) => {
   const s = useSalon({ visible })
-  const { upvotesCount, viewerHasUpvoted, cat, status } = article
+  const { viewerHasUpvoted, cat, status } = article
 
   return (
     <div className={s.wrapper}>
       <div className={s.left}>
         <Upvote
-          count={upvotesCount}
+          count={article.articleStats?.upvotesCount}
           viewerHasUpvoted={viewerHasUpvoted}
           type={UPVOTE_LAYOUT.FIXED_HEADER}
           right={6}

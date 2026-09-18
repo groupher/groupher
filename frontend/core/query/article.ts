@@ -17,9 +17,9 @@ import type {
   TThread,
 } from '~/spec'
 
+import { articleStats, articleStatsBatch } from './articleStats'
 import { articleKeys, normalizeArticleFilter } from './key'
 import { preserveArticleProjection } from './revisionGuard'
-import { articleViewSummaries, articleViewSummary } from './viewTracker'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -48,6 +48,7 @@ const toPostsFilter = (filter: TPagedArticlesParams): VariablesOf<typeof pagedPo
 const posts = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.posts(filter),
+    meta: { hydration: 'public' },
     structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedPosts, {
@@ -61,6 +62,7 @@ const posts = (filter: TPagedArticlesParams) =>
 const changelogs = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.changelogs(filter),
+    meta: { hydration: 'public' },
     structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedChangelogs, {
@@ -74,6 +76,7 @@ const changelogs = (filter: TPagedArticlesParams) =>
 const kanban = (community: string) =>
   queryOptions({
     queryKey: articleKeys.kanban(community),
+    meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(groupedKanbanPosts, { community })
       return data.groupedKanbanPosts as unknown as TGroupedKanbanPosts
@@ -84,6 +87,7 @@ const kanban = (community: string) =>
 const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
     queryKey: articleKeys.detail(community, thread, innerId),
+    meta: { hydration: 'public' },
     structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
@@ -138,6 +142,6 @@ export const articleQueries = {
   detail,
   tagGroups,
   tagStats,
-  viewSummaries: articleViewSummaries,
-  viewSummary: articleViewSummary,
+  articleStats: articleStats,
+  articleStatsBatch: articleStatsBatch,
 }

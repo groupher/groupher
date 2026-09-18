@@ -71,9 +71,6 @@ export const PagePostFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    commentsCount
-    commentsRevision
-    upvotesCount
     articleInteractionRevision
     commentsParticipantsCount
     author {
@@ -110,7 +107,6 @@ export const PagePostDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    commentsRevision
     articleInteractionRevision
     lifecycle {
       state
@@ -131,9 +127,6 @@ export const PageChangelogFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    commentsCount
-    commentsRevision
-    upvotesCount
     articleInteractionRevision
     commentsParticipantsCount
     author {
@@ -170,7 +163,6 @@ export const PageChangelogDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    commentsRevision
     articleInteractionRevision
     lifecycle {
       state
@@ -208,9 +200,6 @@ export const PageDocFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    commentsCount
-    commentsRevision
-    upvotesCount
     articleInteractionRevision
     commentsParticipantsCount
     author {
@@ -247,7 +236,6 @@ export const PageDocDetailFields = graphql(`
       ...PageAuthorFields
     }
     collectsCount
-    commentsRevision
     articleInteractionRevision
     lifecycle {
       state

@@ -3,7 +3,6 @@ import type { TArticle, TComment } from '~/spec'
 type TRevisioned = {
   articleInteractionRevision?: number | null
   commentInteractionRevision?: number | null
-  commentsRevision?: number | null
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -54,8 +53,6 @@ const mergeArticle = (previous: TArticle & TRevisioned, next: TArticle & TRevisi
     'collectsCount',
     'emotions',
   ])
-  merged = copyIfOlder(previous, merged, 'commentsRevision', ['commentsCount'])
-
   if (
     typeof previous.articleInteractionRevision === 'number' &&
     (typeof next.articleInteractionRevision !== 'number' ||
@@ -73,24 +70,6 @@ const mergeArticle = (previous: TArticle & TRevisioned, next: TArticle & TRevisi
     }
   }
   return merged
-}
-
-/** Applies an authoritative Comment aggregate without allowing its revision to move backwards. */
-export const mergeArticleCommentsProjection = (
-  current: TArticle,
-  confirmed: { commentsCount: number; commentsRevision: number },
-): TArticle => {
-  if (
-    typeof current.commentsRevision === 'number' &&
-    current.commentsRevision > confirmed.commentsRevision
-  ) {
-    return current
-  }
-  return {
-    ...current,
-    commentsCount: confirmed.commentsCount,
-    commentsRevision: confirmed.commentsRevision,
-  }
 }
 
 const sameComment = (left: TComment, right: TComment): boolean =>

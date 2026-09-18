@@ -14,12 +14,12 @@ type TProps = {
 const Footer: FC<TProps> = ({ article }) => {
   const s = useSalon()
 
-  const { upvotesCount, meta, viewerHasUpvoted, insertedAt } = article
+  const { meta, viewerHasUpvoted, insertedAt, articleStats } = article
 
   return (
     <div className={s.wrapper}>
       <Upvote
-        count={upvotesCount}
+        count={articleStats?.upvotesCount}
         avatarList={meta.latestUpvotedUsers}
         viewerHasUpvoted={viewerHasUpvoted}
         type={UPVOTE_LAYOUT.GENERAL}

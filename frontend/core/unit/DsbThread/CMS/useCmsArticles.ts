@@ -20,8 +20,8 @@ export default function useCmsArticles(kind: TArticleKind) {
   })
   const query = kind === 'post' ? postsQuery : changelogsQuery
   const thread = kind === 'post' ? THREAD.POST : THREAD.CHANGELOG
-  const summaryQuery = useQuery(
-    Q.article.viewSummaries(
+  const statsQuery = useQuery(
+    Q.article.articleStatsBatch(
       community,
       thread,
       (query.data?.entries || []).map((article) => article.innerId),
@@ -29,23 +29,21 @@ export default function useCmsArticles(kind: TArticleKind) {
   )
   const pagedArticles = useMemo(() => {
     const page = query.data || EMPTY_PAGED_ARTICLES
-    const summaries = new Map<string, (typeof summaryQuery.data)[number]>()
+    const stats = new Map<string, NonNullable<typeof statsQuery.data>[number]>()
 
-    for (const summary of summaryQuery.data || []) summaries.set(String(summary.innerId), summary)
+    for (const stat of statsQuery.data || []) stats.set(String(stat.innerId), stat)
 
     return {
       ...page,
       entries: page.entries.map((article) => {
-        const summary = summaries.get(String(article.innerId))
-        return summary
-          ? { ...article, views: summary.views, viewsRevision: summary.revision }
-          : article
+        const stat = stats.get(String(article.innerId))
+        return stat ? { ...article, articleStats: stat } : article
       }),
     }
-  }, [query.data, summaryQuery.data])
+  }, [query.data, statsQuery.data])
 
   return {
-    loading: (!query.data || summaryQuery.isFetching) && query.isFetching,
+    loading: (!query.data || statsQuery.isFetching) && query.isFetching,
     pagedArticles: pagedArticles as TPagedArticles,
   }
 }

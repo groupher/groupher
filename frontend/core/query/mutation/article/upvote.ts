@@ -4,7 +4,7 @@ import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { TArticle, TEmotion, TUser } from '~/spec'
 
-import { viewerKeys } from '../../key'
+import { articleKeys, viewerKeys } from '../../key'
 import type { TArticleViewerState } from '../../viewer'
 import {
   isArticleUpvoteReceiptNewer,
@@ -19,14 +19,7 @@ import type {
   TReadOperationContext,
   TQueryTarget,
 } from '../optimistic/types'
-import {
-  articleKeyFor,
-  articlePath,
-  articleQueryTargets,
-  patchArticleChanges,
-  patchArticleEverywhere,
-  type TArticlePath,
-} from './cache'
+import { articleKeyFor, articlePath, articleStatsQueryTargets, type TArticlePath } from './cache'
 import {
   undoUpvoteChangelog,
   undoUpvoteDoc,
@@ -38,7 +31,7 @@ import {
 
 type TArticleReactionResult = {
   innerId: string | number
-  upvotesCount: number
+  articleStats?: { upvotesCount: number } | null
   collectsCount?: number | null
   articleInteractionRevision?: number | null
   reactionOutcome?: string | null
@@ -161,7 +154,7 @@ export const articleUpvoteOperation = {
     return Boolean(article.viewerHasUpvoted)
   },
   queriesToCancel: (context: TOperationContext): readonly TQueryTarget[] => [
-    ...articleQueryTargets(context.queryClient),
+    ...articleStatsQueryTargets(context.queryClient),
     ...(context.accountRef
       ? context.queryClient
           .getQueryCache()
@@ -176,24 +169,7 @@ export const articleUpvoteOperation = {
   ): TOptimisticPlan => {
     const path = articlePath(article)
     const articleKey = articleKeyFor(path)
-    const changes = patchArticleChanges(
-      context.queryClient,
-      path,
-      'upvotesCount',
-      (current) => ({
-        ...current,
-        upvotesCount: Math.max(
-          0,
-          (() => {
-            const receipt = readArticleUpvoteReceipt(context.accountRef, articleKey)
-            return isArticleUpvoteReceiptNewer(current, receipt)
-              ? (receipt?.publicProjection.upvotesCount ?? current.upvotesCount)
-              : current.upvotesCount
-          })() + (nextViewerState ? 1 : -1),
-        ),
-      }),
-      context,
-    )
+    const changes: TOptimisticChange[] = []
     if (context.accountRef) {
       changes.push(
         ...patchViewerChanges(
@@ -207,9 +183,7 @@ export const articleUpvoteOperation = {
     }
     return {
       changes,
-      refetchOnFailure: changes
-        .filter((change) => change.rollback === 'refetch')
-        .map(({ queryKey }) => ({ queryKey, exact: true })),
+      refetchOnFailure: [],
     }
   },
   execute: (context: TOperationContext, article: TArticle, nextViewerState: boolean) =>
@@ -224,23 +198,9 @@ export const articleUpvoteOperation = {
     const key = articleKeyFor(path)
     const viewerHasUpvoted =
       typeof result.viewerHasUpvoted === 'boolean' ? result.viewerHasUpvoted : nextViewerState
-    patchArticleEverywhere(context.queryClient, path, (current) => ({
-      ...current,
-      upvotesCount: result.upvotesCount,
-      ...(typeof result.collectsCount === 'number' ? { collectsCount: result.collectsCount } : {}),
-      ...(typeof result.articleInteractionRevision === 'number'
-        ? { articleInteractionRevision: result.articleInteractionRevision }
-        : {}),
-      ...(Array.isArray(result.emotions) ? { emotions: result.emotions } : {}),
-      ...(Array.isArray(result.meta?.latestUpvotedUsers)
-        ? {
-            meta: {
-              ...(current.meta || {}),
-              latestUpvotedUsers: result.meta.latestUpvotedUsers,
-            },
-          }
-        : {}),
-    }))
+    void context.queryClient.invalidateQueries({
+      queryKey: articleKeys.articleStats(path.community, path.thread, path.innerId),
+    })
     if (context.accountRef) {
       patchViewerState(context.queryClient, context.accountRef, key, {
         viewerHasUpvoted,
@@ -252,14 +212,14 @@ export const articleUpvoteOperation = {
     }
     if (
       context.accountRef &&
-      typeof result.upvotesCount === 'number' &&
+      typeof result.articleStats?.upvotesCount === 'number' &&
       result.reactionOutcome !== 'unchanged'
     ) {
       writeArticleUpvoteReceipt({
         accountRef: context.accountRef,
         entityKey: key,
         commandId: context.commandId,
-        upvotesCount: result.upvotesCount,
+        upvotesCount: result.articleStats.upvotesCount,
         viewerHasUpvoted,
         collectsCount: typeof result.collectsCount === 'number' ? result.collectsCount : undefined,
         articleInteractionRevision:

@@ -75,7 +75,8 @@ export const useCommentsHeadState = () => {
   const comments = useSnapshot(commentsStore)
   const { article } = useViewingArticle()
   const { data, query, summaryQuery } = useCommentQueryState()
-  const totalCount = summaryQuery.data?.totalCount ?? data?.totalCount ?? article.commentsCount
+  const totalCount =
+    summaryQuery.data?.totalCount ?? data?.totalCount ?? article.articleStats?.commentsCount ?? 0
 
   const basicState: TCommentsState = {
     isViewerJoined: summaryQuery.data?.isViewerJoined ?? false,

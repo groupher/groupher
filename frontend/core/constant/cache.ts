@@ -1,18 +1,19 @@
+import {
+  ARTICLE_STATS_CACHE_POLICY,
+  CONFIRMED_WRITE_RECEIPT_TTL_MS,
+} from '@groupher/contracts/article-stats'
+
 import type { TThread } from '~/spec'
 
 const CACHE_TAG_PATTERN = /^community\[[A-Za-z0-9][A-Za-z0-9-]*\](?:-[A-Za-z0-9\x5b\x5d-]+)?$/
 
-export const PUBLIC_CACHE_FRESH_SECONDS = 60
-export const PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS = 300
-const RECEIPT_RECONCILE_MARGIN_SECONDS = 60
+export const PUBLIC_CACHE_FRESH_SECONDS = ARTICLE_STATS_CACHE_POLICY.publicHtmlSMaxageSeconds
+export const PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS =
+  ARTICLE_STATS_CACHE_POLICY.publicHtmlSwrSeconds
 export const CONFIRMED_COMMENT_RECEIPT_MAX_REFS = 100
 
 /** Keeps confirmed writes visible beyond the maximum public CDN stale window. */
-export const CONFIRMED_WRITE_RECEIPT_TTL_MS =
-  (PUBLIC_CACHE_FRESH_SECONDS +
-    PUBLIC_CACHE_STALE_WHILE_REVALIDATE_SECONDS +
-    RECEIPT_RECONCILE_MARGIN_SECONDS) *
-  1_000
+export { CONFIRMED_WRITE_RECEIPT_TTL_MS }
 
 const communityCache = (community: string): string => {
   return `community[${community}]`

@@ -44,7 +44,7 @@ export default function useColumns({
       },
       {
         id: 'upvotesCount',
-        accessorFn: (item) => item.article?.upvotesCount ?? 0,
+        accessorFn: (item) => item.article?.articleStats?.upvotesCount ?? 0,
         header: () => (
           <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.upvotes')}</div>
         ),
@@ -55,7 +55,7 @@ export default function useColumns({
       },
       {
         id: 'views',
-        accessorFn: (item) => item.article?.viewSummary?.views ?? 0,
+        accessorFn: (item) => item.article?.articleStats?.views ?? 0,
         header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.views')}</div>,
         cell: ({ getValue }) => (
           <div className={cn(s.cell, 'text-center')}>{Number(getValue())}</div>
@@ -64,7 +64,7 @@ export default function useColumns({
       },
       {
         id: 'commentsCount',
-        accessorFn: (item) => item.article?.commentsCount ?? 0,
+        accessorFn: (item) => item.article?.articleStats?.commentsCount ?? 0,
         header: () => (
           <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.comments')}</div>
         ),

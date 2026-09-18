@@ -27,20 +27,21 @@ const ArticleBaseStats: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const stats = article.articleStats
 
   return (
     <div className={s.wrapper}>
       <ViewSVG className={s.viewsIcon} />
       <div
-        className={cn(s.count, article.views === undefined && 'view-count-slot-detail')}
+        className={cn(s.count, stats === undefined && 'view-count-slot-detail')}
         aria-label='views'
       >
-        {article.views === undefined ? null : article.views}
+        {stats === undefined ? null : stats.views}
       </div>
       <div className={s.divider} />
       <button type='button' className={s.commentBox} onClick={() => scrollToComments(container)}>
         <CommentSVG className={s.commentIcon} />
-        <div className={s.commentCount}>{article.commentsCount}</div>
+        <div className={s.commentCount}>{stats?.commentsCount ?? 0}</div>
       </button>
     </div>
   )

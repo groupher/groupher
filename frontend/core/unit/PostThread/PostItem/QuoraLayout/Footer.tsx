@@ -29,7 +29,7 @@ const Footer: FC<TProps> = ({ article }) => {
         type={UPVOTE_LAYOUT.GENERAL}
       />
       {article.cat && <ArticleCatStatus left={2} cat={article.cat} status={article.status} />}
-      <ViewsCount count={article.views} left={3} />
+      <ViewsCount count={article.articleStats?.views} left={3} />
     </div>
   )
 }

@@ -49,13 +49,13 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.footer}>
         <div className='row-center'>
           <Upvote
-            count={article.upvotesCount}
+            count={article.articleStats?.upvotesCount}
             avatarList={mockUsers(3)}
             type={UPVOTE_LAYOUT.SIMPLE}
           />
           <div className='mr-4' />
-          {article.commentsCount !== 0 && (
-            <CommentsCount count={article.commentsCount} size='medium' />
+          {(article.articleStats?.commentsCount ?? 0) !== 0 && (
+            <CommentsCount count={article.articleStats?.commentsCount} size='medium' />
           )}
         </div>
         <ArticleCatStatus cat={article.cat} status={article.status} />

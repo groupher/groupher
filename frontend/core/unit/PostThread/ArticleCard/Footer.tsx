@@ -17,7 +17,7 @@ type TProps = {
 
 const Footer: FC<TProps> = ({ data }) => {
   const s = useSalon()
-  const { author, insertedAt, commentsCount, meta } = data
+  const { author, insertedAt, meta, articleStats } = data
   const { count, isUpvoted, toggle } = useArticleUpvote(data)
 
   return (
@@ -35,7 +35,9 @@ const Footer: FC<TProps> = ({ data }) => {
           onAction={() => toggle()}
         />
 
-        {commentsCount !== 0 && <CommentsCount count={commentsCount} size={SIZE.MEDIUM} />}
+        {(articleStats?.commentsCount ?? 0) !== 0 && (
+          <CommentsCount count={articleStats?.commentsCount} size={SIZE.MEDIUM} />
+        )}
       </div>
     </div>
   )

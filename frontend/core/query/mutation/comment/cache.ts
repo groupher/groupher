@@ -3,8 +3,8 @@ import type { Query, QueryClient } from '@tanstack/react-query'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment, TEmotionType, TThread, TUser } from '~/spec'
 
-import { commentKeys, viewerKeys } from '../../key'
-import { patchArticleEverywhere, type TArticlePath } from '../article/cache'
+import { articleKeys, commentKeys, viewerKeys } from '../../key'
+import type { TArticlePath } from '../article/cache'
 import type {
   TOptimisticChange,
   TOptimisticPlan,
@@ -437,22 +437,18 @@ export const insertPendingReply = (
   }))
 }
 
-/** Replaces a pending comment and converges the article count to the mutation payload. */
+/** Replaces a pending comment and invalidates the canonical ArticleStats entity. */
 export const reconcileCreatedComment = (
   queryClient: QueryClient,
   scope: TCommentScope,
   pendingInnerId: string | number,
   confirmed: TComment,
   article: { community: string; thread: TThread; innerId: string },
-  commentsCount: number,
-  commentsRevision?: number,
 ): void => {
   patchCommentEverywhere(queryClient, scope, pendingInnerId, () => confirmed)
-  patchArticleEverywhere(queryClient, article, (current) => ({
-    ...current,
-    commentsCount,
-    ...(typeof commentsRevision === 'number' ? { commentsRevision } : {}),
-  }))
+  void queryClient.invalidateQueries({
+    queryKey: articleKeys.articleStats(article.community, article.thread, article.innerId),
+  })
 }
 
 /** Updates viewer-owned comment flags without replacing public aggregates. */

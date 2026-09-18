@@ -3,6 +3,7 @@ import { communityPublicPath } from '@community/server/public-path'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
+import { cacheArticleStatsEntities } from '~/query/articleStats'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostThread from '~/unit/PostThread'
 
@@ -14,6 +15,14 @@ export const Route = createFileRoute('/$community/post/_layout')({
     const posts = await context.queryClient.ensureQueryData(
       communityQueries.posts(params.community),
     )
+    const stats = await context.queryClient.ensureQueryData(
+      communityQueries.articleStats(
+        params.community,
+        THREAD.POST,
+        (posts.entries || []).map((article) => article.innerId),
+      ),
+    )
+    cacheArticleStatsEntities(context.queryClient, stats)
     return { posts }
   },
   component: PostListLayout,

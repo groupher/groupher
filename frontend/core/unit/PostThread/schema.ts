@@ -19,9 +19,6 @@ const getArticleFreshSchema = () => {
     query PostThreadFresh($article: ArticlePathInput!, $userHasLogin: Boolean!) {
       post(article: $article) {
         innerId
-        upvotesCount
-        commentsCount
-        commentsRevision
         articleInteractionRevision
         viewerHasViewed @include(if: $userHasLogin)
         viewerHasUpvoted @include(if: $userHasLogin)

@@ -66,11 +66,6 @@ export default function useCommentQueryState() {
     const receipts = readCommentFeedReceipts(
       account.accountRef || getAccountRef(account.user),
       articleKey,
-    ).filter(
-      (receipt) =>
-        typeof receipt.publicProjection.commentsRevision !== 'number' ||
-        typeof article.commentsRevision !== 'number' ||
-        article.commentsRevision < receipt.publicProjection.commentsRevision,
     )
     const withReceipts = receipts.reduce((current, receipt) => {
       if (receipt.type === 'delete') {
@@ -167,7 +162,7 @@ export default function useCommentQueryState() {
     account.user,
     article.community.slug,
     article.innerId,
-    article.commentsRevision,
+    article.articleStats?.snapshotAt,
     article.meta.thread,
     query.data,
     viewerQuery.data,

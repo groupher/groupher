@@ -12,14 +12,13 @@ import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
 import { viewerKeys } from './key'
-import { patchArticleEverywhere } from './mutation/article'
+import { articleKeys } from './key'
 import { patchCommentEverywhere, type TCommentScope } from './mutation/comment'
 import {
   clearCommentReactionReceipt,
   readCommentReactionReceipts,
 } from './mutation/commentReactionReceipt'
 import { clearCommentFeedReceipt, readCommentFeedReceipts } from './mutation/commentReceipt'
-import { mergeArticleCommentsProjection } from './revisionGuard'
 
 const publicComment = (comment: TComment): TComment => stripCommentViewerState(comment)
 
@@ -118,15 +117,9 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
   useEffect(() => {
     if (!accountRef || !scope || !query.data) return
     const confirmedArticle = query.data.article
-    patchArticleEverywhere(
-      queryClient,
-      {
-        community: scope.community,
-        thread: scope.thread,
-        innerId: String(scope.articleInnerId),
-      },
-      (current) => mergeArticleCommentsProjection(current, confirmedArticle),
-    )
+    void queryClient.invalidateQueries({
+      queryKey: articleKeys.articleStats(scope.community, scope.thread, scope.articleInnerId),
+    })
 
     for (const [commentRef, rawComment] of Object.entries(query.data.comments)) {
       const reactionReceipt = receipts.reactionByRef.get(commentRef)

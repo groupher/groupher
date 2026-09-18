@@ -4,6 +4,7 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
 import ArticleQueryProvider from '~/query/ArticleQueryProvider'
+import { cacheArticleStatsEntities } from '~/query/articleStats'
 import CommentsStoreProvider from '~/stores/comments/provider'
 import ArticleViewer from '~/unit/ArticleView'
 
@@ -16,6 +17,10 @@ export const Route = createFileRoute('/$community/post/$id')({
       ),
     ])
     if (!post) throw notFound()
+    const stats = await context.queryClient.ensureQueryData(
+      communityQueries.articleStats(params.community, THREAD.POST, [params.id]),
+    )
+    cacheArticleStatsEntities(context.queryClient, stats)
     return { post }
   },
   head: ({ loaderData, params, matches }) => ({

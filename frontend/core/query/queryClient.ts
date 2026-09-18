@@ -18,7 +18,9 @@ export const createQueryClient = (): QueryClient =>
       },
       mutations: { retry: false },
       dehydrate: {
-        shouldDehydrateQuery: (query) => query.state.status === 'success',
+        shouldDehydrateQuery: (query) =>
+          query.state.status === 'success' && query.meta?.hydration === 'public',
+        shouldDehydrateMutation: () => false,
       },
     },
   })

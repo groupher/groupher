@@ -9,12 +9,13 @@ export default function Members() {
   const { t } = useTrans()
 
   const { article } = useViewingArticle()
-  const { meta, upvotesCount, commentsParticipantsCount, commentsParticipants } = article
+  const { meta, commentsParticipantsCount, commentsParticipants } = article
 
   return (
     <div className={s.wrapper}>
       <div className={s.title}>
-        {t('article.footer.members.upvotes')} <span className='pretty-num'>({upvotesCount})</span>
+        {t('article.footer.members.upvotes')}{' '}
+        <span className='pretty-num'>({article.articleStats?.upvotesCount ?? 0})</span>
       </div>
       <UserList users={meta.latestUpvotedUsers} />
       <div className='mb-5' />
