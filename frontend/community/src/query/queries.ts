@@ -24,7 +24,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.posts({ community, page: 1, size: 20 }),
       queryFn: () => loadPosts({ data: { community } }),
-      staleTime: 30_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -32,7 +31,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.detail(community, THREAD.POST, innerId),
       queryFn: () => loadPost({ data: { community, innerId } }),
-      staleTime: 60_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -40,7 +38,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.changelogs({ community, page: 1, size: 20 }),
       queryFn: () => loadChangelogs({ data: { community } }),
-      staleTime: 30_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -48,7 +45,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.detail(community, THREAD.CHANGELOG, innerId),
       queryFn: () => loadChangelog({ data: { community, innerId } }),
-      staleTime: 60_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -56,7 +52,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: commentKeys.list(community, thread, innerId, 1, 'REPLIES'),
       queryFn: () => loadComments({ data: { community, thread, innerId } }),
-      staleTime: 30_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -64,7 +59,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.kanban(community),
       queryFn: () => loadKanban({ data: { community } }),
-      staleTime: 30_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
@@ -72,7 +66,6 @@ export const communityQueries = {
     queryOptions({
       queryKey: articleKeys.detail(community, THREAD.DOC, innerId),
       queryFn: () => loadDoc({ data: { community, innerId } }),
-      staleTime: 60_000,
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
