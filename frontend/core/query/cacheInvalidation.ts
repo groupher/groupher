@@ -1,3 +1,29 @@
+/**
+ * Maps successful typed GraphQL mutations to public-CDN cache effects.
+ *
+ * This is the current transport bridge shared by Community and Dash. Callers
+ * parse the GraphQL response first and execute only an `immediate` effect after
+ * a successful mutation. The browser never supplies raw purge tags; tags are
+ * derived from known operation names and validated locator variables.
+ *
+ * Examples:
+ *
+ *   CreatePost({ community: "home" })
+ *     -> immediate: community[home]-thread[POST]-articles
+ *
+ *   UpdatePostFromEditor({ article: { community: "home", thread: "POST", innerId: 42 } })
+ *     -> immediate: article[42] detail + POST article list
+ *
+ *   QueryUpvotePost({ article: ... })
+ *     -> none: the current browser invalidates ArticleStats; public HTML waits
+ *        for its normal TTL instead of being purged for every count change
+ *
+ * Unknown or malformed operations return `null`; they never broaden to a
+ * community-wide purge. The target architecture moves this ownership into a
+ * typed transactional outbox and deletes this operation-name bridge rather
+ * than keeping it as a compatibility fallback. See
+ * `docs/architecture/public-cache-invalidation.md`.
+ */
 import { Kind, parse } from 'graphql'
 
 import { CACHE_TAG } from '~/const/cache'
@@ -201,7 +227,14 @@ const readMutationName = (source: string): string => {
   }
 }
 
-/** Resolves the server-owned public-cache side effect for a typed GraphQL mutation. */
+/**
+ * Resolves the current server-owned public-cache effect for one GraphQL mutation.
+ *
+ * `immediate` means the host schedules tag purge after a successful response;
+ * `none` records that the operation was intentionally classified as a
+ * high-frequency/private effect; `null` means no mapping exists and fails
+ * closed without purging.
+ */
 export const mutationCacheEffect = (
   source: string,
   variables: Record<string, unknown> = {},
