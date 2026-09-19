@@ -27,20 +27,22 @@ UI 文案通常应保持原样；跨文件、跨 package、跨前后端共享的
 
 > 实施状态（2026-08-30）：P0、P1、P2 已按本文边界完成。
 
-| 领域                     | 状态     | 当前唯一来源                                |
-| ------------------------ | -------- | ------------------------------------------- |
-| Auth channel / event     | ✓ 已收口 | `frontend/core/lib/auth/constant.ts`        |
-| Auth 错误码 / JWT claims | ✓ 已收口 | `packages/contracts/auth.contract.json`     |
-| Auth recovery action     | ✓ 已收口 | `frontend/core/lib/auth/constant.ts`        |
-| Auth / 公共 API path     | ✓ 已收口 | `packages/route-contract/src/index.ts`      |
-| Query key                | ✓ 已收口 | 各 query domain 的 key factory              |
-| Widget error event       | ✓ 已收口 | `packages/contracts/src/widget.ts`          |
-| Community slug header    | ✓ 已收口 | `packages/contracts/src/headers.ts`         |
-| 平台 host                | ✓ 已收口 | `packages/route-contract/src/index.ts`      |
-| GraphQL 本地 fallback    | ✓ 已收口 | `packages/contracts/src/endpoint.ts`        |
-| Docs Import path family  | ✓ 已收口 | `packages/route-contract/src/index.ts`      |
-| 测试协议字符串           | ✓ 已审计 | 消费测试引用 contract；稳定值断言保留字面值 |
-| Constant / spec 文件职责 | ✓ 已整理 | 公开类型位于各目录 `spec.d.ts`              |
+| 领域                                 | 状态     | 当前唯一来源                                              |
+| ------------------------------------ | -------- | --------------------------------------------------------- |
+| Auth channel / event                 | ✓ 已收口 | `frontend/core/lib/auth/constant.ts`                      |
+| Auth 错误码 / JWT claims             | ✓ 已收口 | `packages/contracts/auth.contract.json`                   |
+| Auth recovery action                 | ✓ 已收口 | `frontend/core/lib/auth/constant.ts`                      |
+| Auth / 公共 API path                 | ✓ 已收口 | `packages/route-contract/src/index.ts`                    |
+| Query key                            | ✓ 已收口 | 各 query domain 的 key factory；matcher 由 key owner 导出 |
+| Query invalidation target / executor | 目标合同 | `frontend/core/query/invalidation`                        |
+| Widget error event                   | ✓ 已收口 | `packages/contracts/src/widget.ts`                        |
+| Community slug header                | ✓ 已收口 | `packages/contracts/src/headers.ts`                       |
+| 平台 host                            | ✓ 已收口 | `packages/route-contract/src/index.ts`                    |
+| GraphQL 本地 fallback                | ✓ 已收口 | `packages/contracts/src/endpoint.ts`                      |
+| Docs Import path family              | ✓ 已收口 | `packages/route-contract/src/index.ts`                    |
+| Public cache tag grammar             | 目标合同 | `packages/contracts/public-cache.contract.json`           |
+| 测试协议字符串                       | ✓ 已审计 | 消费测试引用 contract；稳定值断言保留字面值               |
+| Constant / spec 文件职责             | ✓ 已整理 | 公开类型位于各目录 `spec.d.ts`                            |
 
 ## 落地记录
 
@@ -188,6 +190,33 @@ packages/contracts/auth.contract.json
 `packages/contracts/scripts/generate-auth-contract.mjs` 负责生成两侧产物；
 `generate:auth:check` 和 Contracts 测试会检查生成结果是否过期。parity test 继续验证 TS 与 Elixir
 结果一致。
+
+## 跨语言 Public Cache tag contract｜目标
+
+公共 HTML 由 Community 输出 response tag，Cloudflare purge tag 由 Phoenix 生成；两端必须使用相同 wire grammar。
+本次改造直接复用上面的 Auth 双端生成方式，不建立第二套 contract framework：
+
+```text
+packages/contracts/public-cache.contract.json
+  ├─ 生成 packages/contracts/src/public-cache.generated.ts
+  │    └─ 由 packages/contracts/src/public-cache.ts 统一导出
+  └─ 生成 backend/api/lib/groupher_server/public_cache/tags.generated.ex
+       └─ 由 GroupherServer.PublicCache.Tags 使用
+```
+
+`packages/contracts/scripts/generate-public-cache-contract.mjs` 同时生成 TypeScript 与 Elixir，并提供
+`generate:public-cache:check` stale gate。两端测试共同读取
+`packages/contracts/fixtures/public-cache-tags-v1.json` golden vectors，验证相同输入生成完全相同的 tag。
+
+边界必须保持清楚：
+
+- contract 只拥有 tag version、scope 名称、template、输入约束和 canonical constructors；
+- `article_published` 等 invalidation type 属于 Phoenix `PublicCache.Const`，不暴露给 TypeScript；
+- 领域代码不能裸写 tag template，也不能直接传任意 tag 给 purge adapter；
+- JSON、生成文件、stale check 与 golden vectors 在同一个改造中落地，不保留旧 tag helper alias。
+
+完整 outbox、worker 与 Cloudflare 协议见
+[`public-cache-invalidation.md`](./public-cache-invalidation.md)。
 
 ## 保留字面值的边界
 

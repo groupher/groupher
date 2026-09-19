@@ -21,7 +21,11 @@
 - [ ] [Web Analysis V2](./umami/web-analysis-v2.md) — 本地能力已有，等待部署与后续阶段。
 - [ ] [Article ViewTracker / Insights V1](./feature/view-tracker/v1.md) — 核心实现完成，发布前必须完成真实浏览器 tracking 与 Insights GraphQL 授权 e2e。
 - [ ] [Article ViewTracker V2](./feature/view-tracker/v2.md) — 独立当前 views Summary、统一实体缓存、阅读资格、dead-letter 与级联清理已实现；待真实浏览器 tracking 与 Insights GraphQL 授权 e2e 验收。
-- [ ] [ArticleStats 与公共页面缓存](./architecture/article-stats-and-public-cache.md) — 统一公开 views/upvotes/comments 快照、SSR hydration、HTML/CDN TTL、客户端 freshness 和 tracking/内容边界；待实施。
+- [ ] [ArticleStats 与公共页面缓存](./architecture/article-stats-and-public-cache.md) — V1 主链路已落地；当前剩余 owner revision/receipt、空 community sentinel、EventProcessor 命名收敛、生产 telemetry 与 purge health 补强。
+- [ ] [ArticleStats 目标架构](./architecture/article-stats-target.md) — 本次改造直接落地 canonical Article identity、可排序 ArticleStats 读取投影、owner revision vector、emotion 扩展和 drift repair；不保留兼容层。
+- [ ] [TanStack Query 通用失效](./architecture/query-invalidation.md) — typed domain target、通用 executor、active/inactive policy、静态门禁和 CDN 边界；待实施。
+- [ ] [RequestActor 公共分类](./architecture/request-actor.md) — 抽出无业务策略的 human/agent/crawler/unknown 请求主体分类，直接删除旧 Actor/ViewTracker 分类入口；待实施。
+- [ ] [公共缓存可靠失效](./architecture/public-cache-invalidation.md) — `PublicCache.Invalidation` Const、transactional outbox、Oban 直连 Cloudflare、跨语言 tag contract 和可观测性；待实施。
 - [ ] [Interaction V4](./feature/interaction/v4.md) — 主体实现完成，仍需生产存量清理。
 - [ ] [Interaction V5](./feature/interaction/v5.md) — ViewTracker 迁出与 Audit 退役已落地，ReportFact/Moderation 仍在实施。
 - [ ] [Gate V5](./feature/gate/v5.md) — 下一阶段 Gate 设计。

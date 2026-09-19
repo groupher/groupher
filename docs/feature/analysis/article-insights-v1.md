@@ -122,9 +122,10 @@ ArticleHourlyMetric
 UNIQUE(article_type, article_id, bucket_started_at, metric, actor_type, is_authenticated, policy_version)
 ```
 
-不使用可空维度参与唯一键，也不依赖 PostgreSQL 的 NULL uniqueness 语义。真实 actor type 由中立的
-`GroupherServer.Actor.Const.actor_type` 定义，ViewTracker、Interaction、Comment 和 Analysis producer 共同引用；
-ViewTracker.Classifier 是分类语义 owner，不拥有跨领域存储词表。`all` 不是访问者类型，只由
+不使用可空维度参与唯一键，也不依赖 PostgreSQL 的 NULL uniqueness 语义。真实 actor type 由平台级
+[`GroupherServer.RequestActor.Const`](../../architecture/request-actor.md) 定义；请求入口通过
+`RequestActor.classify/1` 生成唯一 `RequestActor.Classification`，ViewTracker、Interaction、Comment 和 Analysis
+producer 只消费该结果，不重复分类。`all` 不是访问者类型，只由
 `Analysis.Const.actor_dimension` 在真实词表之外额外定义，并且只用于不按访问者分类的非 View 指标。
 `policy_version = 0` 是无版本指标的显式哨兵值。
 

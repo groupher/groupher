@@ -1,8 +1,12 @@
 # ArticleStats 与公共页面缓存
 
-> 状态：目标架构，待实施。
+> 状态：V1 主链路已落地；`interactionRevision`、`commentsRevision`、生产 telemetry 和 purge health
+> 是当前合同的 P0/P1 补强项，完成条件见第 8 节。完整数据模型与排序演进属于本次结构性改造。
 >
 > 本文定义 Article 公共统计、SSR hydration、HTML/CDN 缓存和阅读判断边界。
+> 本次改造的最终数据模型、排序投影和重建协议见
+> [`article-stats-target.md`](./article-stats-target.md)。
+> 可靠 CDN 失效协议见 [`public-cache-invalidation.md`](./public-cache-invalidation.md)。
 > 它在读取与缓存合同上独立于 [ViewTracker V2](../feature/view-tracker/v2.md) 的事件、去重和投影协议；
 > 本文列出的 ViewTracker 后端命名只表示边界映射，事件处理、投影和 retention 的 canonical 重构仍以 V2 为准。
 > ViewTracker 只拥有有效阅读事实与当前 views，本文定义这些事实如何和其他公开计数一起被读取。
@@ -16,17 +20,21 @@ Article content
   └─ 标题、正文、作者、标签、生命周期
 
 ArticleStats（公开 headline stats）
-  ├─ views              <- CMS.ViewTracker.ArticleViewSummary
+  ├─ views              <- CMS.ViewTracker.Model.ViewSummary
   ├─ upvotesCount       <- CMS.Interactions 同步事实/读取投影
+  ├─ collectsCount      <- CMS.Interactions 同步事实/读取投影
+  ├─ reactionCounts     <- CMS.Interactions typed emotion 读取投影
   ├─ commentsCount      <- Article/Comment 现有同步读取投影
+  ├─ commentsParticipantsCount <- Comments 现有同步读取投影
   └─ snapshotAt         <- 本次 ArticleStats 响应的服务端生成时间
 
 ViewerState
   └─ viewerHasViewed / viewerHasUpvoted / viewerEmotion ...
 ```
 
-`ArticleStats` 是公共读取 DTO 和前端 Query cache 边界，不是新的业务领域，也不是新的数据库事实表。
-V1 的范围是文章页面的 headline stats：`views`、`upvotesCount`、`commentsCount`。三者虽然写入来源不同，
+`ArticleStats` 是公共读取 DTO 和前端 Query cache 边界，不是新的业务事实 owner。目标范围是文章页面所有公开、
+可变、Article 级聚合计数：`views`、`upvotesCount`、`collectsCount`、`reactionCounts`、`commentsCount` 和
+`commentsParticipantsCount`。它们虽然写入来源不同，
 但在公共读取层使用同一个快照、同一个 `snapshotAt` 和同一套缓存策略。
 
 Article 内容、ArticleStats 和 ViewerState 不能再互相覆盖：
@@ -38,7 +46,21 @@ ViewerState      ───────┘
 
 禁止：把 ArticleStats 再写回 Article.views/viewsRevision
 禁止：把 ViewerState 写回公共 ArticleStats
+禁止：通过 spread、fallback 或 alias 把 ArticleStats/ViewerState 摊平回 Article content
 ```
+
+前端组合使用明确的 view model：
+
+```ts
+type TArticleViewModel = {
+  content: TArticleContent
+  stats: TArticleStats
+  viewerState: TArticleViewerState
+}
+```
+
+这不是兼容 wrapper。旧的 root count、root viewer flag 和 `{ ...article, articleStats, ...viewerState }` merge 必须
+在同一验收边界删除。
 
 ## 2. 命名和所有权
 
@@ -46,11 +68,13 @@ ViewerState      ───────┘
 
 | 名称                               | 含义                                                                 | 所有者                  | 是否进入公共 HTML            |
 | ---------------------------------- | -------------------------------------------------------------------- | ----------------------- | ---------------------------- |
-| `ArticleStats`                     | views、upvotes、comments 三个 headline stats 的组合快照              | 公共读取合同 / Query 层 | 是                           |
-| `ArticleViewSummary`               | 当前 views 的持久化汇总                                              | `CMS.ViewTracker`       | 通过 `ArticleStats` 间接进入 |
+| `ArticleStats`                     | Article 的公开可变聚合计数组合快照                                   | 公共读取合同 / Query 层 | 是                           |
+| `ViewSummary`                      | 当前 views 的持久化汇总                                              | `CMS.ViewTracker`       | 通过 `ArticleStats` 间接进入 |
 | `ViewerState`                      | 当前用户的 `viewerHas*` / emotion 等私有状态；不包含公开 views count | Viewer Query            | 否                           |
 | `snapshotAt`                       | ArticleStats 在服务端组装完成的时间                                  | ArticleStats transport  | 是                           |
 | `viewsRevision`                    | ViewSummary 成功投影后的版本                                         | `CMS.ViewTracker`       | 是                           |
+| `interactionRevision`              | Interactions 公共计数的确认版本                                      | `CMS.Interactions`      | 是                           |
+| `commentsRevision`                 | Comments 公共计数的确认版本                                          | Article / Comments      | 是                           |
 | `thread` + `article_id`            | ViewTracker 内部唯一 identity                                        | `CMS.ViewTracker`       | 否                           |
 | `community` + `thread` + `innerId` | GraphQL 和前端公开 locator                                           | Article Reader / Query  | 是                           |
 
@@ -65,7 +89,7 @@ article_view_summary       -> 删除旧 GraphQL type，使用 ArticleStats type
 view-summary/{...}         -> article-stats/{community}/{thread}/{innerId}
 ```
 
-这里的 `CMS.ViewTracker.ArticleViewSummary` 是后端持久化 views 汇总模型，不能与已删除的
+这里的 `CMS.ViewTracker.Model.ViewSummary` 是后端持久化 views 汇总模型，不能与已删除的
 `article_view_summary` GraphQL type 或旧的 `view-summary/*` 前端 cache key 混用。
 
 `views` 是公开的 Article 总浏览数，不属于 `ViewerState`。`ViewerState.viewerHasViewed` 表示“当前 viewer
@@ -79,36 +103,40 @@ viewerHasViewed       -> 按 viewer 隔离 -> ViewerState  -> 私有缓存
 前端命名：
 
 ```text
-useArticleStats(ref)          单篇公共统计
-useArticleListStats(refs)     列表批量公共统计
-useArticleViews(ref)          只有在确实只需要 views 时使用的窄读取
-useArticleListViews(refs)     只有在确实只需要 views 时使用的批量窄读取
-useTrackArticleView(ref)      单篇可见阅读 tracking；不是批量统计查询
+Q.article.stats(ref)                    单篇公共统计 Query option
+Q.article.statsBatch(refs)              列表批量公共统计 Query option
+articleKeys.stats(ref)                  单篇 entity key
+articleKeys.statsBatch(refs)            列表 transport key
+articleKeys.statsPrefix(scope)          失效匹配边界
+usePagedPosts/usePagedChangelogs        列表消费方
+trackArticleView(ref)                   单篇可见阅读 tracking；不是批量统计查询
 ```
 
-产品列表、Drawer 和详情页默认使用 `useArticleStats`，不各自拼装一套计数读取。
-`useArticleViews` / `useArticleListViews` 不能再把结果写回 Article entity。
+产品列表通过 `usePagedPosts` / `usePagedChangelogs` 消费 `statsBatch`，Drawer 和详情通过同一 `stats` entity key
+读取；各页面不能拼装自己的计数 query，也不能把结果写回 Article entity。GraphQL type/operation 和文件名继续使用
+领域全名 `ArticleStats` / `articleStats.ts`；TypeScript namespace 内不保留旧函数 alias。
 
 后端命名：
 
 ```text
-CMS.ViewTracker.ArticleViewSummary       持久化当前 views
+CMS.ViewTracker.Model.ViewSummary         持久化当前 views
 CMS.ViewTracker.Query.summaries/2        已授权 canonical Article 的内部批量读取
 CMS.FrontDesk.article_for_view_tracking  tracking 专用的 public Article admission
 CMS.ViewTracker.EventProcessor            ViewEvent 领域处理和投影协调
-GroupherServer.Jobs.ViewEventProcessor   Oban worker 外壳
+GroupherServer.Jobs.ViewProjection        Oban worker 外壳
 ```
 
-不再使用 `Project.project` 作为投影入口；`project` 既不表达事件处理边界，也容易和普通
-Project 业务模块混淆。`read_public_article_for_tracking` 只表示 tracking admission，普通
-Article content reader 不承担计数副作用。
+`EventProcessor` 是 canonical 领域名称，`Jobs.ViewProjection` 只负责 Oban 执行、重试和 dead-letter 协调。
+当前源码中的 `CMS.ViewTracker.Project`、`Project.project/2` 和 `ViewTracker.project/2` 是尚未清理的实现漂移，必须
+直接重命名并同步调用方；不为旧名称保留 delegate、alias 或兼容入口。
+`article_for_view_tracking` 只表示 tracking admission，普通 Article content reader 不承担计数副作用。
 
 字段和分类遵循统一术语：使用 `actor_type`、`type`、`is_authenticated`、
 `viewer_tracking_key`、`read_purpose`；不新增 `_kind`、`target_type/target_id` 或 `count_intent`。
 
 ### 2.2 缓存策略的唯一所有者
 
-三项缓存常量由一个后端/契约 owner 统一定义并向各层输出，不允许 SSR、CDN 配置和前端 hook 各自复制：
+缓存常量由一个共享契约 owner 统一定义并向各层输出，不允许 SSR、CDN 配置和前端 hook 各自复制：
 
 ```text
 ArticleStats.CachePolicy
@@ -121,6 +149,10 @@ ArticleStats.CachePolicy
 
 该 owner 负责源站 `Cache-Control`/`Date` 相关输出、`snapshotAt` 新鲜度合同和前端 hydration metadata；客户端只消费
 合同，不重新声明另一组默认值。`policy_version` 是语义版本，规则或算法改变时必须提升，不能当作普通运行时旋钮。
+
+`ArticleStats.CachePolicy` 不拥有 hydration 后的 Article content 重取频率。公共 Article content 继承共享
+QueryClient 唯一默认值 `staleTime = 60s`；ArticleStats 显式覆盖为 `snapshot_max_age_seconds = 600s`。这两个值
+分别解决正文更新和高频计数新鲜度，不要求相等，也不能在列表、Drawer、详情页再次复制。
 
 ## 3. ArticleStats 合同
 
@@ -137,14 +169,26 @@ query ArticleStats($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
     views
     viewsRevision
     upvotesCount
+    collectsCount
+    interactionRevision
+    reactionCounts {
+      type
+      count
+    }
     commentsCount
+    commentsParticipantsCount
+    commentsRevision
     snapshotAt
   }
 }
 ```
 
+`viewsRevision` 已落地；`interactionRevision` 和 `commentsRevision` 是本轮提升到 current 的 P0 合同字段，当前实现
+尚未提供。后端 DTO、GraphQL schema/operation、前端类型和 receipt guard 必须作为同一验收边界切换，不能通过
+optional field、默认零或旧字段 fallback 过渡。
+
 `ArticleStats` 查询复用 public Article Gate/Lifecycle；不存在、不可公开读取的 Article 不返回。
-存在但还没有 `ArticleViewSummary` 的 Article 返回 `views=0, viewsRevision=0`。
+存在但还没有 `ViewSummary` 的 Article 返回 `views=0, viewsRevision=0`。
 
 批量输入约束：
 
@@ -154,6 +198,11 @@ query ArticleStats($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
 innerIds 去重后最多 100 个
 空列表直接返回 []
 ```
+
+公开 locator 不允许 sentinel：`community` trim 后必须是非空 slug，`thread` 必须是支持的公开 Article thread，
+`innerId` 必须是合法公开 id。GraphQL boundary 在进入 loader 前拒绝 `community: ""`；ArticleStats DTO 和 Query key
+也不得生成空 community。只持有内部 `thread + article_id` 的 ViewTracker 路径必须先通过 canonical Article reader
+解析公开 locator，不能用空字符串表示“社区未知”。
 
 一次 `articleStats` batch request 返回每个 Article 的完整 headline stats；不能为了 views、upvotes 和 comments
 分别发三次请求，也不能在服务端按 Article 逐篇查询。
@@ -184,15 +233,15 @@ entry，但它们的值来自同一个后端 Summary；每个 locator 只负责�
 Article list [18, 19, 20]
   -> one articleStats GraphQL request
   -> one normalized entity write per returned Article
-  -> each entity contains views + upvotesCount + commentsCount
+  -> each entity contains the complete ArticleStats snapshot
 ```
 
 Dirty marker 也按同一原则工作：多个 dirty Article 合并成一次 batch request；单篇 dirty 不得退化为“每个 count
 一个请求”。
 
 公开 `ArticleStats` 与私有 `ViewerState` 使用不同 Query key。UI 可以在 selector 中组合，不能把私有字段写进
-公共 Query，也不能把 ViewerState dehydration 到共享 HTML。`views`、`upvotesCount` 和 `commentsCount` 三个
-公开 count 不因写入来源不同而拆成不同的公共缓存策略。
+公共 Query，也不能把 ViewerState dehydration 到共享 HTML。所有公共 count 和 owner revision 必须作为完整
+ArticleStats entity 一起写入，不能按字段拆成不同更新时间或缓存策略。
 
 ## 4. SSR、hydration 与 CDN
 
@@ -276,14 +325,34 @@ tracking 边界，见第 6 节。
 
 ### 4.2 默认缓存参数
 
-默认值由 `ArticleStats.CachePolicy` 定义，所有 public Article surface 共用，不由列表、Drawer、详情页各自调整：
+页面 freshness 由两个单一 owner 组成：HTML 与 ArticleStats 参数来自 `ArticleStats.CachePolicy`，Article content
+浏览器 staleTime 来自共享 QueryClient 默认策略。所有 public Article surface 共用，不由列表、Drawer、详情页各自调整：
 
 ```text
 public_article_html_s_maxage_seconds       = 600   # 10 分钟
 public_article_html_swr_seconds            = 300   # 额外 5 分钟 stale-while-revalidate
 article_stats_snapshot_max_age_seconds     = 600   # 10 分钟
 clock_skew_tolerance_seconds               = 120   # 客户端/服务端时钟偏差保护
+
+public_article_content_browser_stale_seconds = 60  # 继承共享 QueryClient 默认值
 ```
+
+这里采用明确的双层 freshness，而不是强行把正文和高频计数对齐：
+
+```text
+公共首屏 HTML/RSC
+  ├─ Article content hydration ─┐
+  └─ ArticleStats hydration ────┴─ 共同受 CDN 600s fresh + 300s SWR 约束
+
+浏览器 hydration 后
+  ├─ Article content age >= 60s  -> 后台 refetch content query
+  └─ ArticleStats age >= 600s    -> refetch ArticleStats query
+```
+
+因此 CDN hit 可以先展示同一份源站快照，但较旧正文会在 hydration 后比 ArticleStats 更早后台更新。内容编辑、发布和
+生命周期变化仍必须 purge HTML tag，使正常路径不等待 600 秒；purge 是正确性加速机制，不改变浏览器 60 秒的兜底。
+处于 600–900 秒 SWR 窗口的 HTML 可以被先返回，但 content 和 ArticleStats 都必须按各自 age 规则立即判断，且每个
+query 最多触发一次初始 refresh。
 
 含义：
 
@@ -331,8 +400,10 @@ TanStack Query 的 `dataUpdatedAt` 可以作为 Query runtime 的辅助元数据
 `revision` 和 `snapshotAt` 职责不同：
 
 ```text
-snapshotAt     判断快照新鲜度
-viewsRevision  防止旧的 ViewSummary 覆盖新的 ViewSummary
+snapshotAt           判断整份快照新鲜度
+viewsRevision        防止旧的 ViewSummary 覆盖新 views
+interactionRevision  防止旧的 interaction projection 覆盖新 upvotes/collects/reactions
+commentsRevision     防止旧的 comments projection 覆盖新 comments/participants
 ```
 
 ### 4.3 哪些操作失效什么缓存
@@ -348,7 +419,7 @@ viewsRevision  防止旧的 ViewSummary 覆盖新的 ViewSummary
   -> 后续 HTML 在 TTL 到期或显式 revalidate 后收敛
 ```
 
-三种 count 的写入一致性不同：views 经过异步投影，upvotes/comments 通常由同步业务事务更新；这不改变它们在
+这些 count 的写入一致性不同：views 经过异步投影，interactions/comments 通常由同步业务事务更新；这不改变它们在
 ArticleStats 公共读取层使用同一 `snapshotAt` 和同一缓存策略。论坛页面接受公共 HTML 中的计数最多陈旧约 10 分钟；
 这不是数据库事实不一致，而是公共页面快照策略。
 需要立即看到变化的当前用户依赖 mutation receipt 后的 Query invalidate/refetch，不依赖本地 `+1`，也不要求清理整页 CDN。
@@ -404,7 +475,8 @@ internal_probe
 
 ### 5.2 身份和分类
 
-登录用户和匿名 Session 都进入同一套 `viewer_tracking_key` + 滑动窗口去重，只在分类维度上区分：
+请求主体先由平台级 [`GroupherServer.RequestActor`](./request-actor.md) 在 request boundary 分类一次，ViewTracker
+只消费可信 request context 中的 `RequestActor.Classification`，不再自行解析 User-Agent、Cookie 或 agent header：
 
 ```text
 actor_type
@@ -421,9 +493,15 @@ is_authenticated
 匿名 Session 使用服务端签发的 `__Host-groupher-viewer` Cookie；登录用户使用同一个 tracking 协议但 key 来源为
 登录主体。Cookie 不可用时可以是 `unknown`，不能把 IP 或浏览器指纹变成长期 identity。
 
+`RequestActor` 只输出分类判断；`viewer_tracking_key`、`read_purpose`、滑动去重和 counted policy 仍由 ViewTracker
+拥有。未来 Analysis、RateLimit 或 ContentPresentation 可以复用同一个分类结果，但不能把业务策略塞回
+RequestActor，也不能根据可伪造的 User-Agent 在同一 CDN key 下返回不同 body。
+
 ## 6. 失败、revision 与读取收敛
 
 ArticleStats 是最终一致的公开快照：
+
+### 6.1 View tracking 收敛
 
 ```text
 trackArticleView accepted
@@ -442,6 +520,8 @@ tracking accepted 后：
   -> 以服务端 views/viewsRevision 为准
 ```
 
+### 6.2 快照顺序与 mutation receipt
+
 写入 cache 前执行：
 
 ```text
@@ -450,21 +530,50 @@ incoming.snapshotAt < current.snapshotAt
 
 incoming.snapshotAt >= current.snapshotAt
   且 incoming.viewsRevision >= current.viewsRevision
+  且 incoming.interactionRevision >= current.interactionRevision
+  且 incoming.commentsRevision >= current.commentsRevision
   -> 用 incoming 整份替换 ArticleStats entity
 
 incoming.snapshotAt > current.snapshotAt
-  但 incoming.viewsRevision < current.viewsRevision
+  但任一 owner revision 倒退
   -> 视为混合/非法响应，丢弃整份并记录 telemetry
-
-upvotesCount/commentsCount
-  -> 没有独立 revision；只随较新的 snapshotAt 整体收敛
 ```
 
-ArticleStats 不做 `views`、`upvotesCount`、`commentsCount` 的逐字段拼接。`snapshotAt` 是公共快照的唯一整体顺序，
-`viewsRevision` 只是 views 投影的额外单调保护；任何不满足上述关系的响应都 fail closed。
+ArticleStats 不对任何公共 count 做逐字段拼接。`snapshotAt` 是公共快照的唯一整体顺序，三个 owner revision 分别
+防止各自计数倒退；任何不满足上述关系的响应都 fail closed。
+
+upvote、emotion 和 comment mutation 返回服务端确认的 count 与对应 revision。前端 receipt 是已确认结果，不是
+optimistic `+1`，也不能写入或拼接 ArticleStats entity：
+
+```text
+mutation confirmed
+  -> receipt = confirmed count + owner revision
+  -> invalidate/refetch ArticleStats
+  -> selector 可以在 UI 上覆盖显示 receipt 的 confirmed count
+
+ArticleStats owner revision < receipt revision
+  -> 保留 receipt；ViewerState 或 comment list 追上不能证明公共快照已收敛
+
+ArticleStats owner revision >= receipt revision
+  -> 接受完整 ArticleStats snapshot；清除对应 receipt
+```
+
+receipt TTL 必须覆盖 `public_html_s_maxage + public_html_swr` 的最坏窗口。TTL 到期仍未观察到对应 revision 时，前端
+清理 receipt 前必须记录 convergence timeout telemetry 并再次 invalidate ArticleStats，不能静默恢复到更旧数字。
+当前共享合同取 `600 + 300 + 60 = 960s`，最后 60 秒是网络、调度和时钟误差余量。
+
+### 6.3 生产可观测性
 
 网络失败不应阻断文章阅读，但必须记录不包含 Cookie、event id 或 tracking key 的 failure telemetry，至少区分
 timeout、network 和 GraphQL error category。
+
+`clock_skew`、`invalid_snapshot`、`mixed_snapshot`、`receipt_convergence_timeout` 必须进入生产 telemetry sink；
+`console.warn` 只允许作为开发环境 fallback，不能作为生产验收完成的依据。事件至少包含安全的 Article locator、
+policy version、revision 差值和 snapshot age，不包含 Cookie、viewer key、event id 或正文。
+
+HTML purge 必须暴露健康状态和结构化指标：成功/失败次数、重试次数、耗时和最近一次失败原因。mutation 需要立即
+purge 但运行时缺少 Cloudflare 配置时，必须记录 `purge_not_configured` 并让 health/readiness 可见，不能因为
+`hasConfiguredPurge() == false` 静默跳过。purge 失败仍不回滚已经成功的领域 mutation。
 
 ## 7. 不允许的实现形态
 
@@ -472,7 +581,7 @@ timeout、network 和 GraphQL error category。
 Article.views + ArticleStats 双写
 ArticleStats miss -> fallback Article.views
 Summary 查询结果回写 Article.views/viewsRevision
-Article content 和 ArticleStats 各自维护一份公开 views/upvotes/comments 快照
+Article content 和 ArticleStats 各自维护一份公开 count 快照
 把公开 views count 误放进 ViewerState
 SSR 普通 content reader 隐式 tracking
 用客户端收到响应的时间伪造 snapshotAt
@@ -483,32 +592,44 @@ SSR 普通 content reader 隐式 tracking
 ```
 
 本设计不迁移历史 `Article.views`，不从旧字段、ViewEvent 或 Analysis hourly metric 回填新的 Summary。
-实施完成后 Article content schema、GraphQL fragments、DTO 和前端类型中不再存在旧
-`views/viewsRevision/upvotesCount/commentsCount` 字段。
+目标改造完成后 Article content schema、GraphQL fragments、DTO 和前端类型中不再存在旧
+`views/viewsRevision/upvotesCount/commentsCount/commentsParticipantsCount/collectsCount/emotions` 公共字段。
 
-## 8. 实施与验收
+## 8. 实施状态与验收
 
-实施顺序：
+已落地的 V1 基线：
 
-1. 固定 `ArticleStats` GraphQL DTO、`snapshotAt` 和 public locator/query key；
-2. 在 SSR request-scoped QueryClient 中预取 ArticleStats，并和 HTML 使用同一数据渲染；
-3. 接入 `dehydrate/HydrationBoundary`，设置统一 10 分钟 freshness；
-4. 移除 Article content 中的 `views/viewsRevision`、`upvotesCount`、`commentsCount` 及对应公开 revision/overlay/fallback；
-5. 让列表、Drawer、详情统一读取 ArticleStats entity；
-6. 将 tracking、ViewerState 和 ArticleStats 的失效边界分别接好；
-7. 用 `articleStats` 完整替换 `articleViewSummaries`；删除 `article_view_summary` GraphQL type、旧 generated
-   operation、旧 hooks/tests 和 `view-summary/*` cache key；不保留 alias、fallback 或双读；
-8. 最后删除旧 QueryBuilder `ORDER BY Article.views` 和残留类型/fragment。持久化的
-   `CMS.ViewTracker.ArticleViewSummary` 仍作为 views owner，但只能通过 ArticleStats 进入公共读取。
+- `ArticleStats` GraphQL 查询的 V1 字段、`snapshotAt`、public locator 和归一化 Query key；
+- SSR request-scoped QueryClient、public hydration allowlist、600 秒 HTML/ArticleStats freshness；
+- 初始 `views/upvotes/comments` 已从 Article content 分离，列表、Drawer、详情共享 ArticleStats entity；
+- tracking admission、ViewSummary/`viewsRevision` 投影以及客户端 mixed-response fail-closed；
+- 旧 `articleViewSummaries`、`article_view_summary`、`view-summary/*` 和 Article count fallback 已删除；
+- 内容变化 purge HTML、单次 view/upvote/comment 不 purge 整页的缓存边界。
+
+当前合同剩余工作，并与本次 target 架构作为同一改造验收：
+
+1. P0：将存储层已有的 `article_interaction_revision/comments_revision` 纳入后端 ArticleStats DTO，并把
+   `interactionRevision/commentsRevision` 加入 GraphQL operation、前端类型、mixed-response guard 和 mutation receipt；
+2. P0：把 `collectsCount/reactionCounts/commentsParticipantsCount` 移入 ArticleStats，前端切换为
+   `TArticleViewModel { content, stats, viewerState }`，并删除 root 字段、spread merge、旧 Query 函数与所有 fallback；
+3. P0：禁止 `community: ""` sentinel，修正 ViewTracker loader 和固化空字符串的测试；
+4. P1：将 `CMS.ViewTracker.Project` / `project/2` 直接重命名为 `EventProcessor` 对应入口并同步所有调用方，
+   不保留旧 delegate/alias；
+5. P1：把 ArticleStats 浏览器诊断接入生产 telemetry sink，`console.warn` 只保留开发 fallback；
+6. P1：按 [`public-cache-invalidation.md`](./public-cache-invalidation.md) 建立 `PublicCache.Invalidation`
+   transactional outbox、Oban `PurgeWorker` 和 Phoenix Cloudflare adapter，切换后删除 Community/Dash proxy purge owner；
+7. P1：补齐双层 freshness、revision receipt、可靠 purge 和生产可观测性的测试。
 
 验收至少包括：
 
 - `articleStats` 对 1、20、100 个 Article 都只产生一次 GraphQL batch request；返回每篇完整的
-  `views/upvotesCount/commentsCount`；
+  `views/upvotesCount/collectsCount/reactionCounts/commentsCount/commentsParticipantsCount` 和三个 owner revision；
 - 后端 ArticleStats 读取使用一个 scoped SQL，或有明确上限的固定数量 owner reads；查询次数不随 Article 数量
-  或 count 类型数量增长，禁止 N+1 和 views/upvotes/comments 三路拆分查询；
+  或 count 类型数量增长，禁止 N+1 和按 count 类型拆分查询；
 - 对 1、20、100 条输入执行 `EXPLAIN (ANALYZE, BUFFERS)` 和 select-count 测试，验证 Article locator、
-  ArticleViewSummary 及 count owner 读取使用预期索引；
+  ViewSummary 及 count owner 读取使用预期索引；
+- `community: ""`、全空格 community、未知 thread 和非法 inner id 在 GraphQL boundary fail closed，DTO 和 Query key
+  从不产生空 community sentinel；
 - CDN cache hit 返回的 HTML 与 hydration ArticleStats 数字一致；
 - SSR 使用独立 request-scoped QueryClient，浏览器 hydration 恢复同一 public ArticleStats query；
 - `dehydrate` 只输出 public allowlist，登录 SSR 中的 ViewerState、account 和 subscription 数据不出现在 HTML/RSC
@@ -517,19 +638,25 @@ SSR 普通 content reader 隐式 tracking
 - SSR 回源生成新的 `snapshotAt`，CDN cache hit 不伪造新的时间；
 - snapshot 未过期时 hydration 后不发起 ArticleStats 初始请求；
 - snapshot 过期、缺失或被 invalidate 时只请求 ArticleStats，不重新请求正文；
+- hydration content age 达到 60 秒时可以独立后台重取正文，ArticleStats 未达到 600 秒时继续复用；SWR HTML
+  同时按两套 age 规则各自最多触发一次初始 refresh；
 - 客户端时钟领先、落后或缺少可靠 `Date`/`Age` 时，按 `clock_skew_tolerance_seconds` 保守判断，不产生 refetch loop；
   一次 hydration 最多触发一次初始 ArticleStats refresh；
 - 内容编辑/发布 purge HTML；单次 view/upvote/comment 不触发整页 purge；
-- 详情页、列表和 Drawer 使用同一个 ArticleStats entity，不能出现两份公开 views/upvotes/comments 计数；
-- ArticleStats 的 `snapshotAt` 较旧响应整份丢弃；较新的 `snapshotAt` 若带较低 `viewsRevision` 也整份丢弃，
-  不允许把三个 count 分别从不同响应拼接；
-- ArticleStats 中三种公开 count 使用同一 snapshot/cache policy；ViewerState 只包含 viewer-owned flags，不包含公开 count；
+- 详情页、列表和 Drawer 使用同一个 ArticleStats entity，不能出现两份公开 count；
+- ArticleStats 的 `snapshotAt` 较旧响应整份丢弃；不早于 current 的 `snapshotAt` 若任一 owner revision 倒退也整份丢弃，
+  不允许把不同 count 从不同响应拼接；
+- ArticleStats 中所有公开 count 使用同一 snapshot/cache policy；ViewerState 只包含 viewer-owned flags，不包含公开 count；
 - ViewerState 不进入公共 HTML，登录/匿名状态不会污染 ArticleStats cache；
 - prefetch、SSR、后台标签页、列表曝光不 tracking；详情和 Drawer 真正可见后只 tracking 一次；
 - SSR hydration 使用真实 ArticleStats，不显示 placeholder；SPA 客户端导航在 ArticleStats pending 时使用固定加载槽位：
   列表/card 至少 `4ch`，Drawer/detail 至少 `5ch`，加载完成前后 bounding rect 不发生可感知位移；
 - API/Agent/Crawler 只有显式 public-read adapter 才进入 Groupher 业务 views；
-- accepted receipt 不做本地加一，投影完成后通过 refetch/revision 收敛；
+- confirmed mutation receipt 不做本地加一、不写入 ArticleStats cache；只有对应公共 owner revision 追上才清除，
+  ViewerState 或 comment list 追上不能提前清除；
+- `clock_skew`、`invalid_snapshot`、`mixed_snapshot` 和 receipt timeout 可在生产 telemetry 中查询，不能只出现在
+  浏览器 console；
+- purge 未配置、重试和最终失败都有结构化 metric/health 信号；领域 mutation 成功后 purge 失败不会回滚 mutation；
 - 旧 `articleViewSummaries`、`article_view_summary` 和 `view-summary/*` 不再被读取，只有 `articleStats`、
   `ArticleStats` 和 `article-stats/*` 存在；
 - 公共页面计数允许在约定 TTL 内陈旧，但 ArticleStats 直接查询仍返回合法 public scope 数据。
@@ -539,4 +666,7 @@ SSR 普通 content reader 隐式 tracking
 - [ViewTracker V2](../feature/view-tracker/v2.md)：事件、去重、Summary 投影、dead-letter 和删除协议；
 - [Article Insights V1](../feature/analysis/article-insights-v1.md)：MetricEvent 与小时趋势；
 - [Query/Store 边界](./query-store-boundary.md)：公共 Query、Viewer Query 和 hydration 的通用边界；
+- [TanStack Query 通用失效](./query-invalidation.md)：typed target、ArticleStats batch matcher 与通用 executor；
 - [TanStack Query 迁移](./urql-to-tanstack-query.md)：SSR QueryClient 与 HydrationBoundary 基础设施。
+- [RequestActor](./request-actor.md)：公共 human/agent/crawler/unknown 请求主体分类能力；
+- [公共缓存可靠失效](./public-cache-invalidation.md)：Phoenix transactional outbox、Oban worker 和 Cloudflare cache-tag purge。

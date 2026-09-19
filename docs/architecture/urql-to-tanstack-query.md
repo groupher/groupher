@@ -27,6 +27,11 @@
 > 范围：`frontend/main`、`frontend/dashboard`、`frontend/dash` 以及它们使用的
 > `frontend/core` server-state 链路。迁移按垂直业务切片进行，允许短期双 runtime，
 > 但不再把 Dashboard/Dash 的 urql 兼容视为长期边界。
+>
+> 目标架构覆盖说明：本文记录的 Community/Dash proxy `revalidateTag` 是已落地的历史桥接，不再是长期合同。
+> 本次改造按 [`public-cache-invalidation.md`](./public-cache-invalidation.md) 直接切换为 Phoenix
+> `PublicCache.Invalidation` outbox + Oban worker + Cloudflare；同时按本文“Query invalidation 通用能力”一节收口
+> 浏览器 Query cache。切换时删除旧 proxy/facade，不保留兼容入口。
 
 ## 实施结果
 
@@ -44,7 +49,7 @@
   toggle 通过同实体 operation lane 与最终意图缓冲收敛。article upvote 同样按实体合并最后意图，
   命令式 Mutation settle 后立即退出 mutation cache。
 - Article view 通过独立的 `trackArticleView` mutation 记录 durable event，服务端以 event identity 幂等接受
-  并由 worker 推进 `ArticleViewSummary`；客户端不伪造 `views + 1`，`viewerHasViewed` 继续由独立
+  并由 worker 推进 `ViewSummary`；客户端不伪造 `views + 1`，`viewerHasViewed` 继续由独立
   viewer/read-state 查询读取。公开 `views` 由 ArticleStats 读取，不回写 Article content。
 - Post/Changelog 的 `tagGroups` 已由 `Q.article.tagGroups` + SSR prefetch/hydration 持有，
   `useActiveTag` 不再读取 ArticleList store；dead update adapter、`activeTagStats` fallback 与
@@ -395,7 +400,11 @@ browser mutation
   -> Phoenix 写入 DB
   -> mutation response 合并 server-confirmed 数据
   -> invalidateQueries / refetch 使当前 tab 收敛
-  -> same-origin facade revalidateTag，使后续 SSR/CDN 请求收敛
+
+Phoenix domain transaction（仅需要刷新公共 HTML 的变化）
+  -> write PublicCache.Invalidation outbox
+  -> Oban worker 直接 purge Cloudflare tag
+  -> 后续 SSR/CDN 请求收敛
 ```
 
 其他 tab 不会自动得到同一份内存 cache；继续依赖 focus refetch、现有 Session channel，
@@ -417,7 +426,8 @@ Groupher 仍需维护：
 - 临时 comment/reply 的插入、真实实体替换、失败删除和关联 count 恢复；
 - 快速 toggle 的串行、最终意图合并和过期响应保护；
 - 服务端控制的列表归属、排序和跨页位置何时通过 invalidate/refetch 收敛；
-- 浏览器 query invalidation 与 Next cache tag revalidation 的映射；
+- 浏览器 query invalidation 的 typed target mapping；
+- Phoenix 领域变化与公共 CDN cache scope 的映射；
 - logout、账号切换、跨 tab 收敛策略。
 
 这些责任必须集中在 Query 领域边界，不能散落到业务组件：
@@ -541,10 +551,15 @@ type ArticleStats = {
   community: string
   thread: string
   innerId: string
-  upvotesCount: number
-  commentsCount: number
   views: number
   viewsRevision: number
+  upvotesCount: number
+  collectsCount: number
+  reactionCounts: Array<{ type: string; count: number }>
+  interactionRevision: number
+  commentsCount: number
+  commentsParticipantsCount: number
+  commentsRevision: number
   snapshotAt: string
 }
 
@@ -713,13 +728,14 @@ receipt + projection revision，而不是持久化完整 Query cache。
 
 按产品语义把 mutation 分成三类：
 
-| 类型               | 示例                                      | 客户端处理                                                               |
-| ------------------ | ----------------------------------------- | ------------------------------------------------------------------------ |
-| 实体值变化         | upvote、emotion、编辑标题/正文            | 立即 patch 所有已加载副本和对应 viewer state，成功后合并服务端确认值     |
-| 列表归属或顺序变化 | publish、delete、status/tag/category 变化 | 本地完成能够确定的插入/移除/字段更新，再失效由服务端决定的筛选与排序结果 |
-| 临时实体           | create comment、reply                     | 插入 pending entity 并更新 count；成功替换，失败删除并回滚 count         |
+| 类型               | 示例                                      | 客户端处理                                                                                |
+| ------------------ | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| viewer relation    | upvote、collect、emotion                  | 可以 optimistic 更新 viewer flag；公开 count 只使用服务端确认 receipt，不写 ArticleStats  |
+| 内容值变化         | 编辑标题/正文                             | patch canonical content query，成功后按服务端 confirmed result 收敛                       |
+| 列表归属或顺序变化 | publish、delete、status/tag/category 变化 | 本地完成能够确定的插入/移除/字段更新，再失效由服务端决定的筛选与排序结果                  |
+| 临时实体           | create comment、reply                     | 可插入 pending entity；公开 comment count 等服务端确认 receipt，失败时移除 pending entity |
 
-必须即时一致的是按钮状态、viewer flag、公开 count 和当前可见内容。按热度排序后的精确位置、
+必须即时一致的是按钮状态、viewer flag、服务端已经确认的公开 count 和当前可见内容。按热度排序后的精确位置、
 跨分页移动以及服务端筛选归属允许在 mutation 后通过 refetch 收敛；Query-only 不在客户端复制
 完整的服务端 query builder。
 
@@ -728,91 +744,85 @@ receipt + projection revision，而不是持久化完整 Query cache。
 ```text
 用户点击 Upvote
   -> 检查登录状态
-  -> cancel 相关 detail/list/viewer queries
-  -> snapshot 受影响 cache
-  -> optimistic patch
-       public upvotesCount +/- 1
-       viewerHasUpvoted = nextValue
+  -> cancel 当前 viewer state query
+  -> optimistic patch viewerHasUpvoted = nextValue
   -> browser mutation -> /api/graphql -> Phoenix
-       success -> 合并 server-confirmed count/state
-       failure -> rollback snapshot + 展示错误
-  -> targeted invalidate/refetch
-  -> 服务端 mutation facade 刷新对应 Next cache tag
+       success -> 保存 confirmed count + interactionRevision receipt
+       failure -> rollback viewer state + 展示错误
+  -> QueryInvalidation.article.stats(articleRef)
+  -> ArticleStats revision 追上 receipt 后清除 overlay
+  -> 不创建公共 HTML invalidation
 ```
 
-同一 article 可能出现在多个 Query cache 中。Query 本身不是 normalized entity
-cache，因此 mutation helper 必须显式更新：
+同一 article 可能出现在 detail、列表和 Drawer 中，但这些 surface 通过 `TArticleViewModel` 组合相同 identity 的
+`content + stats + viewerState`。公开 count 不再 fan-out 写入 Article content：
 
-- 当前 article detail；
-- 所有已加载的 posts/changelogs list 中匹配 article key 的 entry；
-- article preview query；
-- 当前 viewer article state。
+- viewer relation mutation 只 optimistic patch 对应 viewer key；
+- server-confirmed count/revision 写入短期 receipt overlay；
+- `QueryInvalidation.article.stats(ref)` 同时覆盖单篇 stats key 和包含该 entity 的已加载 `statsBatch`；
+- content mutation 只 patch/invalidate Article content 与受影响的 list membership。
 
-这类 fan-out 更新应集中在领域 helper，例如：
+组件不能遍历 `articleKeys.all`、按 data shape 猜测 Article，或把 count merge 回 content。Query key fan-out 由
+`frontend/core/query/invalidation/article.ts` 的领域 resolver 统一描述。
 
-```ts
-patchArticleEverywhere(queryClient, articleKey, updater)
-```
-
-组件不能各自复制一份 list/detail 遍历逻辑。
-
-`setQueriesData` 会同步修改所有已加载且匹配 `articleKeys.all` 的 cache，因此 detail、list 和
-preview 可以在同一次本地更新中看到新的 count。它不会自动重新计算服务端排序：例如按
-upvote 排序的列表先即时显示新 count，随后精确 invalidate/refetch；只有产品明确要求本地
-拖拽或确定性排序时，才在客户端额外调整顺序。
+按 upvote 排序的列表通过预计算 ArticleStats 排序列与精确 invalidate/refetch 收敛；客户端不自行重排跨页结果。
 
 ### View
 
-View mutation 应满足幂等或由后端去重。客户端首次确认当前用户尚未 viewed 时可以立即
-设置 `viewerHasViewed: true`；是否立即增加公开 views count 取决于后端去重语义。
-服务端结果最终覆盖 optimistic value。
+View mutation 使用 event id 幂等，并由后端滑动窗口决定是否 counted。accepted 只写 view receipt、标记
+ArticleStats stale 并在投影延迟后 refetch；客户端不设置 `views + 1`。`viewerHasViewed` 只由 viewer state 的
+服务端确认结果更新。
 
 ### Comment publish/update/delete
 
-- publish 可以先插入带临时 key 的 pending comment，并立即增加 comment count；
+- publish 可以先插入带临时 key 的 pending comment，但不做本地 `commentsCount + 1`；
 - `createComment`/`replyComment` 固定 `retry: false`，不在本轮增加请求去重参数；
-- 后端 mutation 返回明确 payload：真实 comment，以及同一事务更新后的 article
-  `innerId/commentsCount`；
-- 服务端成功后用真实 comment 替换临时 entry，并用 payload 中的 `commentsCount` 覆盖
-  optimistic count，不能长期停留在本地 `+1`；
-- 失败时移除临时 entry并恢复 count；
+- 后端 mutation 返回明确 payload：真实 comment，以及同一事务确认的 comments count/revision receipt；
+- 服务端成功后用真实 comment 替换临时 entry，以 receipt overlay 显示 confirmed count，并 invalidate ArticleStats；
+- 失败时移除临时 entry，不产生 receipt；
 - update 先 patch 对应 comment，失败回滚；
 - delete 在确认交互后 optimistic remove，失败恢复原位置；
 - reply list 和 root comment list 必须通过同一 comment mutation helper 更新；
 - 编辑器 body、reply target、弹窗开关等仍属于 Valtio UI state。
 
 GraphQL 返回契约采用明确 payload，并由后端 comment writer 从同一事务结果中返回 comment 与
-更新后的 article：
+Comments owner 的确认 receipt；它不是一份 ArticleStats snapshot：
 
 ```graphql
+type ArticleCommentsReceipt {
+  article: ArticleRef!
+  commentsCount: Int!
+  commentsParticipantsCount: Int!
+  commentsRevision: Int!
+}
+
 type CreateCommentPayload {
   comment: Comment!
-  article: Article!
+  receipt: ArticleCommentsReceipt!
 }
 
 type ReplyCommentPayload {
   comment: Comment!
-  article: Article!
+  receipt: ArticleCommentsReceipt!
 }
 
 createComment(article: ArticlePathInput!, body: String!): CreateCommentPayload!
 replyComment(comment: CommentPathInput!, body: String!): ReplyCommentPayload!
 ```
 
-前端至少选择 `comment.innerId/bodyHtml/author/insertedAt` 和
-`article.innerId/commentsCount`。这是前后端协调发布的 schema 变更：同步更新 resolver、typed
+前端至少选择 `comment.innerId/bodyHtml/author/insertedAt` 和完整 `receipt`。这是前后端协调发布的 schema 变更：同步更新 resolver、typed
 document、codegen、mock schema、mutation helper 和测试，不保留同时返回旧 `Comment` shape 的双
 协议兼容层。
 
 ### Emotion reaction
 
-Emotion mutation 只更新目标 article/comment 对应 emotion entry：
+Emotion mutation 只 optimistic 更新目标 article/comment 的 viewer relation；公共 reaction count 使用服务端确认
+receipt，并等待对应 owner revision 追上：
 
-- count 按 next viewer state 增减；
 - `viewerHasReacted` 立即切换；
-- 禁止 count 小于零；
 - 快速连续点击需要按 mutation key 串行化、合并意图或禁用尚未确认的重复动作；
-- server response 是最终确认值。
+- server response 的完整 public reaction projection + revision 是最终确认值；
+- receipt overlay 不写入 ArticleStats entity，也不能从旧 Query 拼接缺失字段。
 
 推荐维护每个实体的“最后期望状态”：请求进行中时 UI 继续反映最后一次点击，中间 toggle
 不逐个发送；当前请求结束后，仅当服务端确认状态仍与最后期望不同，才发送一次补偿请求。
@@ -823,32 +833,97 @@ Phoenix mutation 保证。
 不进入 intent buffer、不自动补偿重发；report 的重复提交与 optimistic 语义也不在本轮套用该
 规则。
 
-## 公共缓存失效
+## Query invalidation 通用能力
 
-Query cache 失效和 Next 公共缓存失效是两件事：
+本节是迁移文档中的目标摘要；长期 canonical API、目录、policy、直接切换和测试合同以
+[`query-invalidation.md`](./query-invalidation.md) 为准。
 
-```text
-queryClient.invalidateQueries(...)
-  -> 当前浏览器重新获取 server state
-
-revalidateTag(...)
-  -> 后续 SSR/CDN 请求重新生成公共数据
-```
-
-涉及公开计数或公开列表字段的 mutation 成功后，两者都可能需要执行。浏览器只负责
-调用有权限的 mutation endpoint；同源服务端 facade 在 Phoenix mutation 成功后调用
-对应 `revalidateTag`。不能允许浏览器提交任意 cache tag。
-
-失效粒度至少区分：
+TanStack Query 的失效是前端通用基础设施，但“哪些 key 受某个领域变化影响”仍由领域 resolver 拥有。目标目录：
 
 ```text
-article detail: community + thread + innerId
-article list:   community + thread
-comments:       community + thread + innerId
-community:      community
+frontend/core/query/invalidation/
+├─ index.ts       唯一公共导出
+├─ executor.ts    通用执行、去重、refetch policy 与 telemetry
+├─ types.ts       target / plan 类型
+├─ article.ts     Article、ArticleStats 与 article list targets
+├─ comment.ts     Comment list、reply 与 viewer targets
+├─ community.ts   Community/Dsb/导航 targets
+└─ viewer.ts      当前 viewer 私有 targets
 ```
 
-不要因为一次 article upvote 清空整个 QueryClient 或刷新整个 Community。
+调用方只表达领域目标，不手写 query key、predicate 或 `invalidateQueries`：
+
+```ts
+await invalidate(queryClient, QueryInvalidation.article.stats(articleRef))
+
+await invalidate(queryClient, QueryInvalidation.article.lists({ community, thread }))
+```
+
+`executor.ts` 只负责：
+
+- 合并重复 target，并把 target 编译成 exact key、prefix 或受控 matcher；
+- active query 默认立即 refetch，inactive query 默认只标记 stale；
+- 等待策略、失败 telemetry 和测试用执行结果；
+- 一次 mutation 产生多个 target 时统一调度，避免重复 refetch。
+
+默认行为由同目录的 typed policy 固定：`active -> refetch`、`inactive -> stale`、`await -> active refetch settled`。
+确需不同策略的 target 必须在领域 resolver 中显式声明受限 enum，调用方不能临时传任意 TanStack filters/options，避免
+通用 API 退化为 `invalidateQueries` 的无类型透传。
+
+它不能知道 Article、Comment、Community 或 Viewer 的 key 结构。`article.ts` 等领域 resolver 必须调用对应
+key owner 导出的 factory/matcher；禁止解析 query key 的数组下标，也禁止按 cache data shape 猜测类型。
+
+```text
+mutation confirmed
+  -> domain reconcile / receipt
+  -> QueryInvalidation.<domain>.<target>(ref)
+  -> generic executor dedupe + compile
+  -> queryClient.invalidateQueries(...)
+  -> active refetch / inactive stale
+```
+
+边界：
+
+- optimistic patch、rollback、server-confirmed reconcile、revision guard 和 receipt 仍属于 mutation domain；
+- invalidation 层不修改实体、不计算 count、不推进 `snapshotAt`；
+- ArticleStats 的单篇 key 与所有包含该实体的 `statsBatch` key 都由 `article.stats(ref)` resolver 覆盖；
+- `article.lists(scope)` 只覆盖匹配的 community/thread/filter family，不清空 `articleKeys.all`；
+- 新领域先建立 canonical key factory 和 resolver，再允许业务调用通用 executor。
+
+本次改造直接迁移所有散落的 `queryClient.invalidateQueries`、手写 batch predicate 与旧 helper，完成后删除旧入口；
+不保留 alias、兼容 facade 或双执行路径。静态门禁禁止领域代码重新直接调用 `invalidateQueries`，仅
+`invalidation/executor.ts` 和基础测试允许使用底层 API。
+
+专属测试至少覆盖：
+
+- exact、prefix 与受控 matcher 只命中声明的 key family；
+- 重复/重叠 target 在一次执行中去重，active query 不重复 refetch；
+- active 立即 refetch、inactive 只 stale，await 语义与失败 telemetry 可预测；
+- `article.stats(ref)` 同时命中单篇 key 和包含 ref 的多个 normalized `statsBatch`，不命中其他 Article；
+- accountRef 不匹配时 viewer target 不跨账号失效；非法/空 ref fail closed；
+- mutation domain 不再直接调用底层 `invalidateQueries`，executor 不触发 CDN purge 或修改 Query data。
+
+### 与公共 CDN invalidation 的边界
+
+浏览器 Query cache 与公共 CDN 是两个独立执行系统：
+
+```text
+TanStack Query invalidation
+  owner: frontend/core/query/invalidation
+  target: 当前浏览器 QueryClient
+  trigger: mutation confirmed、receipt/view projection 收敛
+
+Public CDN invalidation
+  owner: Phoenix PublicCache
+  target: Cloudflare 中的公共 HTML/hydration object
+  trigger: content/publish/visibility/config 领域变化
+  path: transaction outbox -> Oban PurgeWorker -> Cloudflare cache-tag purge
+```
+
+两边可以从同一个用户动作开始，但不能共享 executor，也不能由浏览器把 tag 传给 Phoenix。upvote/view/comment count
+通常只失效当前浏览器的 ArticleStats Query，并依赖 HTML TTL；文章发布或内容修改由 Phoenix 事务创建
+`PublicCache.Invalidation`。完整协议见
+[`public-cache-invalidation.md`](./public-cache-invalidation.md)。
 
 ## Valtio 迁移边界
 
@@ -1163,9 +1238,9 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
   和后端 `community_tags` 映射三者同时落地，不能只暴露 schema 字段；
 - 明确 Kanban 本轮不增加 upvote count/viewer state/interaction，避免用 Phase 3 的完成标准暗示
   已支持该能力；
-- 将 Phoenix `createComment`/`replyComment` 返回值改成窄 payload，同时返回真实 comment 和同一
-  事务更新后的 article `innerId/commentsCount`；前端成功后替换 pending entity 并合并
-  server-confirmed count，不再把“额外 refetch 后大致收敛”作为最终接口；
+- 将 Phoenix `createComment`/`replyComment` 返回值改成窄 payload，同时返回真实 comment 和同一事务确认的
+  `ArticleCommentsReceipt`；前端成功后替换 pending entity，以 confirmed count/revision overlay，并通过
+  `QueryInvalidation.article.stats(ref)` 收敛 ArticleStats；
 - report 为移除 urql 迁移到 TanStack mutation transport，固定 `retry: false`，成功后精确
   invalidate comment viewer state；其 optimistic、快速重复提交和后端幂等语义后续单独处理；
 - ArticleSettingMenu mutation 必须失效对应 article query；
@@ -1235,8 +1310,8 @@ wrapper、过渡 `~/hooks/useQuery` 或依赖；ArticleList/Comments Valtio stor
 - comment merge 中公共 count/latestUsers 以 list query 为准，viewer flags 以 viewer query 为准；
 - emotion merge 按 type overlay `viewerHasReacted`，旧 viewer emotions 不得覆盖 optimistic count；
 - changelog SSR 对非默认 filter 不执行 prefetch，客户端 key/queryFn 字段集一致；
-- `createComment`/`replyComment` GraphQL payload 同时返回真实 comment 与服务端确认的
-  `article.commentsCount`；成功后 pending entity 和 optimistic count 都被 payload 精确替换；
+- `createComment`/`replyComment` GraphQL payload 同时返回真实 comment 与完整 `ArticleCommentsReceipt`；成功后
+  pending entity 被真实 comment 替换，confirmed count/revision 进入 receipt overlay，不写回 Article content；
 - 所有 `createXxx` mutation 的 TanStack 配置均为 `retry: false`，network error 不自动重发；
 - 快速连续点击会合并到最后期望状态，不会出现负数、重复 upvote 或最终状态反转；
 - commandId/name/queueKey 可用于日志和诊断；同一 operation 的正向与撤销共享 queueKey lane，

@@ -16,6 +16,10 @@
 > state 只有一个客户端 owner”的约束；View durable projection 与生产 purge 仍按各自文档边界推进。
 > 其前置的内存 operation identity、inverse patch 与 confirmed transition 见
 > [`tanstack_rewrite/optimistic_operation.md`](../migrations/tanstack/optimistic-operation.md)。
+>
+> 长期架构覆盖说明：本文 §3.4、BND-04/BND-05 与 Phase B4 记录的是当时已落地的 proxy `CacheEffect`
+> 桥接。它已被 [`public-cache-invalidation.md`](./public-cache-invalidation.md) 的 Phoenix transactional
+> outbox + Oban + Cloudflare 目标架构替代；本次直接切换并删除 proxy mapping，不保留兼容 fallback。
 
 验收环境说明：本轮 source 在并行 `frontend/core/render/BgRenderer/vgpu-poc` 文件出现前已通过全仓
 文档检查，最终 source、类型、测试、合同和 production build 也已复验。当前 dirty worktree 的全仓
@@ -169,6 +173,8 @@ reset、media report、reindex 等领域规则留在对应 save module，不进�
 
 ### 3.4 CDN 失效
 
+以下内容是历史实现记录，不是新的长期扩展点：
+
 目标 cache effect 合同：
 
 ```ts
@@ -184,6 +190,9 @@ type TCacheEffect = {
 
 Community 与 Dash 的 GraphQL server proxy 应共用 operation-to-effect contract。浏览器只负责当前
 Query 的 optimistic/confirmed 更新，不直接编排 Dash → Community → Cloudflare 调用链。
+
+目标架构中，领域 command 在 Phoenix transaction 内写入 typed `PublicCache.Invalidation`；Oban worker
+直接调用 Cloudflare。上述 `TCacheEffect`、operation-name mapping 和 proxy `waitUntil` 在切换时整体删除。
 
 ## 4. 复核问题登记
 
@@ -283,6 +292,9 @@ Query 重建。
 完成标准：compatibility caller 为零；一个 editor 领域变化不会触发其他领域的 store 订阅。
 
 ### Phase B4：缩小保存层并分离 CacheEffect
+
+> 历史完成项；长期替代方案见 [`public-cache-invalidation.md`](./public-cache-invalidation.md)，不继续扩展
+> proxy CacheEffect。
 
 - [x] 每个 Dsb save module 返回 typed confirmed patch，不使用字符串路径读取通用 response；
 - [x] 公共 `useDsbSaveRunner` 不再包含 tag、DocFAQ、media、CommunityStore 等领域分支；
