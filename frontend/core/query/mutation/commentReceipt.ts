@@ -16,7 +16,6 @@ const RECEIPT_VERSION = 3
 const storagePrefix = 'groupher:comment-feed-receipt:'
 
 type TCommentFeedProjection = {
-  commentsCount?: number
   commentsRevision?: number
 }
 

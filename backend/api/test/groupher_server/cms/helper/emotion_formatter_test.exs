@@ -36,4 +36,18 @@ defmodule GroupherServer.Test.CMS.Helper.EmotionFormatterTest do
                )
     end
   end
+
+  describe "counts/2" do
+    test "returns only public totals" do
+      assert [%{type: :beer, count: 2}] =
+               EmotionFormatter.counts(
+                 %{
+                   beer_count: 2,
+                   latest_beer_users: [%{login: "alice"}],
+                   viewer_has_beered: true
+                 },
+                 :article
+               )
+    end
+  end
 end

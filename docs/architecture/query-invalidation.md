@@ -1,6 +1,7 @@
 # TanStack Query 通用失效能力
 
-> 状态：本次改造的目标架构，待实施。
+> 状态：typed target、通用 executor 和 `scripts/check-query-invalidation-boundary.mjs` 静态门禁已落地；剩余业务 owner
+> revision 收敛见 ArticleStats 文档。
 >
 > 本文定义 `frontend/core/query/invalidation` 的唯一公共合同。它统一执行浏览器 Query cache invalidation，
 > 但不拥有领域 key、optimistic mutation、receipt、SSR cache 或 Cloudflare purge。
@@ -94,8 +95,8 @@ shape 判断实体类型。
 - canonical prefix；
 - key owner 导出的受控 matcher。
 
-matcher 用于 `statsBatch` 等无法只靠 prefix 表达的成员关系。它必须先验证 key family/version，再读取 normalized refs；禁止
-硬编码数组下标，禁止读取 query data 判断是否命中。
+matcher 用于 `statsBatch` 等无法只靠 prefix 表达的成员关系。它必须先验证 key family/version，再读取 normalized refs；
+matcher 由 `frontend/core/query/key.ts` 的 key owner 导出，resolver 不得硬编码数组下标，也不得读取 query data 判断是否命中。
 
 ## 4. 默认执行策略
 
@@ -245,7 +246,8 @@ fallback。
 - 空 community、非法 thread/innerId、未知 target/version fail closed；
 - mutation rollback 不执行 success invalidation；confirmed/no-op/replayed response 的策略有明确测试；
 - executor failure 进入 production telemetry，不吞掉原 mutation 的业务成功结果；
-- 静态门禁阻止领域代码直接调用 `invalidateQueries` 或重建 key；
+- `scripts/check-query-invalidation-boundary.mjs` 阻止领域代码直接调用 `invalidateQueries`；key owner 测试阻止 resolver
+  重建 key 或绕过 canonical matcher；
 - executor 不修改 Query data，不推进 snapshot/revision，不触发 CDN purge。
 
 ## 10. 明确禁止

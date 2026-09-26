@@ -24,7 +24,6 @@ const requiredPaths = [
   '/health',
   '/api/graphql',
   '/api/utils/slugify',
-  '/internal/cache/revalidate',
 ]
 
 const missing = requiredPaths.filter((route) => !routeTree.includes(`fullPath: '${route}'`))
@@ -97,7 +96,11 @@ const boundary = readFileSync(
   path.join(communityRoot, 'src/components/CommunityBoundary.tsx'),
   'utf8',
 )
-for (const query of ['Q.community.config(community)', 'Q.dsb.config(community)', 'Q.wallpaper.config(community)']) {
+for (const query of [
+  'Q.community.config(community)',
+  'Q.dsb.config(community)',
+  'Q.wallpaper.config(community)',
+]) {
   if (!boundary.includes(`useSuspenseQuery(${query})`)) {
     throw new Error(`CommunityBoundary must read ${query} from its canonical Query key`)
   }
@@ -105,10 +108,10 @@ for (const query of ['Q.community.config(community)', 'Q.dsb.config(community)',
 
 const graphqlProxy = readFileSync(path.join(communityRoot, 'src/routes/api/graphql.ts'), 'utf8')
 if (
-  !graphqlProxy.includes('waitUntil(observeCommunityTagPurge(effect.tags))') ||
-  graphqlProxy.includes('await purgeCommunityTags')
+  !graphqlProxy.includes('POST: ({ request }) => proxyGraphQLRequest(request)') ||
+  /waitUntil|purgeCommunityTags|mutationCacheEffect|revalidation/.test(graphqlProxy)
 ) {
-  throw new Error('Community GraphQL purge must run as a Worker waitUntil task')
+  throw new Error('Community GraphQL must only proxy to Phoenix; cache purge is Phoenix-owned')
 }
 
 const communityServer = readFileSync(path.join(communityRoot, 'src/server/community.ts'), 'utf8')
@@ -118,9 +121,7 @@ if (authTokenReads !== 0) {
 }
 
 const stripTypeScriptComments = (source) =>
-  source
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|\s)\/\/.*$/gm, '$1')
+  source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/.*$/gm, '$1')
 
 const collectSourceFiles = (directory) => {
   const files = []
@@ -133,7 +134,8 @@ const collectSourceFiles = (directory) => {
 }
 
 const coreSourceFiles = collectSourceFiles(path.join(repoRoot, 'frontend/core')).filter(
-  (absolute) => !absolute.includes(`${path.sep}lib${path.sep}graphql${path.sep}generated${path.sep}`),
+  (absolute) =>
+    !absolute.includes(`${path.sep}lib${path.sep}graphql${path.sep}generated${path.sep}`),
 )
 const forbiddenCompatibility = [
   'mutationCacheTags',
@@ -173,8 +175,7 @@ const viewerSelectionFiles = publicQuerySources.filter((absolute) => {
     .split('\n')
     .some(
       (line) =>
-        /\bviewerHas[A-Za-z0-9_]*\b/.test(line) &&
-        !line.includes('@include(if: $userHasLogin)'),
+        /\bviewerHas[A-Za-z0-9_]*\b/.test(line) && !line.includes('@include(if: $userHasLogin)'),
     )
   const enablesViewerSelection = /\buserHasLogin\s*:\s*true\b/.test(source)
   return hasUnconditionalViewerField || enablesViewerSelection
@@ -216,12 +217,7 @@ for (const dependency of [
     throw new Error(`Missing Community dependency ${dependency}`)
 }
 
-for (const file of [
-  'README.md',
-  'src/routes/api/graphql.ts',
-  'src/routes/internal/cache/revalidate.ts',
-  'src/query/queries.ts',
-]) {
+for (const file of ['README.md', 'src/routes/api/graphql.ts', 'src/query/queries.ts']) {
   if (!existsSync(path.join(communityRoot, file))) throw new Error(`Missing Community file ${file}`)
 }
 

@@ -20,7 +20,6 @@ describe('article detail content query', () => {
     expect(browserGraphQLRequest).toHaveBeenCalledTimes(2)
     expect(browserGraphQLRequest.mock.calls[0][1]).toEqual({
       article: { community: 'home', innerId: '42', thread: THREAD.POST },
-      userHasLogin: false,
     })
   })
 

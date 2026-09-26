@@ -24,13 +24,14 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   section helpers.
   """
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, PublicCache, Repo}
 
   alias CMS.Communities.ErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
   alias CMS.Dashboard.{BaseInfo, SectionPayload}
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T, Transaction}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @default_dashboard CommunityDashboard.default()
 
@@ -84,9 +85,17 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
           T.domain_res(CommunityDashboard.t())
   def replace_section(%CommunityDashboard{} = community_dashboard, :content_shadow, enabled)
       when is_boolean(enabled) do
-    community_dashboard
-    |> Ecto.Changeset.change(%{content_shadow: enabled})
-    |> Repo.update()
+    Repo.transaction(fn ->
+      with {:ok, updated} <-
+             community_dashboard
+             |> Ecto.Changeset.change(%{content_shadow: enabled})
+             |> Repo.update(),
+           :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def replace_section(%CommunityDashboard{}, :content_shadow, _args),
@@ -94,7 +103,28 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
 
   def replace_section(%CommunityDashboard{} = community_dashboard, key, args) do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do
-      ORM.replace_dsb_section(community_dashboard, key, section_payload)
+      Repo.transaction(fn ->
+        with {:ok, updated} <- ORM.replace_dsb_section(community_dashboard, key, section_payload),
+             :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
+  end
+
+  defp invalidate_public_presentation(community_id) do
+    community = Repo.get!(Community, community_id)
+
+    case PublicCache.invalidate_now(
+           PublicCacheConst.community_presentation_changed(),
+           %{community: community.slug, community_id: community.id},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 

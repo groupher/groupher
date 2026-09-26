@@ -1,11 +1,10 @@
+import { VIEW_COUNTING_CONTRACT } from '@groupher/contracts/view-counting'
 import { useEffect, useRef, type RefObject } from 'react'
 
 import { trackArticleView } from '~/query/viewTracker'
 import type { TArticleLoad } from '~/spec'
 
-const MIN_VISIBLE_MS = 1_000
-
-/** Tracks once after a rendered Article is visible in the foreground for one second. */
+/** Tracks once after a rendered Article satisfies the shared human visibility threshold. */
 export default function useTrackArticleView(
   wrapperRef: RefObject<HTMLElement | null>,
   article: TArticleLoad,
@@ -39,7 +38,7 @@ export default function useTrackArticleView(
     const maybeTrack = () => {
       if (!visible || !intersecting || timer !== null || startedKeyRef.current === articleKey)
         return
-      timer = setTimeout(track, MIN_VISIBLE_MS)
+      timer = setTimeout(track, VIEW_COUNTING_CONTRACT.humanMinVisibleMs)
     }
 
     const handleVisibilityChange = () => {

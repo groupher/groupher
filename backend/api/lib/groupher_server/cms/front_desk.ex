@@ -102,6 +102,9 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "Loads one public canonical Article for an explicit ViewTracker request."
   def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
 
+  @doc "Locks and revalidates one physical Article inside the ViewTracker transaction."
+  def lock_article_for_view_tracking(article), do: Article.lock_for_view_tracking(article)
+
   @doc "Reads public ArticleStats for one Community/thread batch."
   def article_stats(community, thread, inner_ids),
     do: Article.read_article_stats(community, thread, inner_ids)

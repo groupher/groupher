@@ -46,9 +46,23 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
-  object :article_view_track_receipt do
+  enum :article_view_decision_reason do
+    value(:counted)
+    value(:duplicate_in_window)
+    value(:excluded_by_policy)
+  end
+
+  object :article_view_track_result do
     field(:event_id, non_null(:id))
-    field(:accepted, non_null(:boolean))
+    field(:counted, non_null(:boolean))
+    field(:decision_reason, non_null(:article_view_decision_reason))
+    field(:article_stats, non_null(:article_stats))
+    field(:viewer_state, non_null(:viewer_article_state))
+  end
+
+  object :article_reaction_count do
+    field(:type, non_null(:emotion_type))
+    field(:count, non_null(:integer))
   end
 
   object :article_stats do
@@ -59,6 +73,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:views_revision, non_null(:integer))
     field(:upvotes_count, non_null(:integer))
     field(:comments_count, non_null(:integer))
+    field(:collects_count, non_null(:integer))
+    field(:comments_participants_count, non_null(:integer))
+    field(:interaction_revision, non_null(:integer))
+    field(:comments_revision, non_null(:integer))
+    field(:reaction_counts, non_null(list_of(non_null(:article_reaction_count))))
     field(:snapshot_at, non_null(:datetime))
   end
 
@@ -822,7 +841,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :comment_mutation_article do
     field(:inner_id, non_null(:integer))
-    field(:comments_count, non_null(:integer))
     field(:comments_revision, non_null(:integer))
   end
 
@@ -983,8 +1001,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:inner_id, :id)
     # field(:body_html, :string)
     field(:title, :string)
-    field(:comments_count, :integer)
     field(:comments_revision, :integer)
+    field(:article_stats, :article_stats)
     field(:author, :common_user)
   end
 
@@ -1760,11 +1778,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:community, non_null(:string))
     field(:thread, non_null(:thread))
     field(:inner_id, non_null(:id))
-    field(:article_interaction_revision, non_null(:integer))
-    field(:upvotes_count, non_null(:integer))
-    field(:collects_count, non_null(:integer))
-    field(:emotions, non_null(list_of(non_null(:emotion_stat))))
-    field(:latest_upvoted_users, non_null(list_of(non_null(:common_user))))
+    field(:interaction_revision, non_null(:integer))
     field(:viewer_has_upvoted, non_null(:boolean))
     field(:viewer_has_collected, non_null(:boolean))
     field(:viewer_emotion, :emotion_type)

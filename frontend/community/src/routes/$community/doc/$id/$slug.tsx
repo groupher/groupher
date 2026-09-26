@@ -15,7 +15,7 @@ export const Route = createFileRoute('/$community/doc/$id/$slug')({
     ])
     if (!doc) throw notFound()
     const stats = await context.queryClient.ensureQueryData(
-      communityQueries.articleStats(params.community, THREAD.DOC, [params.id]),
+      communityQueries.stats(params.community, THREAD.DOC, [params.id]),
     )
     cacheArticleStatsEntities(context.queryClient, stats)
     return { doc }

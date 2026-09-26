@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
       assert result["article"]["innerId"] == post.inner_id
-      assert result["article"]["commentsCount"] == 1
+      assert result["article"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community post user user_conn)a do
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(reply comment))
-      assert result["article"]["commentsCount"] == 2
+      assert result["article"]["commentsRevision"] == 2
     end
 
     test "create retries with one command id return the same comment",
@@ -64,8 +64,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
-      assert replay["article"]["commentsCount"] == first["article"]["commentsCount"]
-      assert replay["article"]["commentsCount"] == 1
+      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
+      assert replay["article"]["commentsRevision"] == 1
     end
 
     test "reply retries with one command id return the same comment",
@@ -84,8 +84,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
-      assert replay["article"]["commentsCount"] == first["article"]["commentsCount"]
-      assert replay["article"]["commentsCount"] == 2
+      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
+      assert replay["article"]["commentsRevision"] == 2
     end
 
     test "only owner can update a exist comment",
@@ -186,8 +186,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       assert first["commandId"] == variables.commandId
       assert replay["commandId"] == variables.commandId
       assert replay["innerId"] == first["innerId"]
-      assert first["article"]["commentsCount"] == 0
-      assert replay["article"]["commentsCount"] == 0
+      assert first["article"]["commentsRevision"] == 2
+      assert replay["article"]["commentsRevision"] == 2
       assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
     end
   end

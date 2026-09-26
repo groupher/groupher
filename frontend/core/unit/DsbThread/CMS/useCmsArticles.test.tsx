@@ -31,7 +31,7 @@ vi.mock('~/query', () => ({
     article: {
       posts: (filter: unknown) => ({ queryKey: ['article', 'posts', filter] }),
       changelogs: (filter: unknown) => ({ queryKey: ['article', 'changelogs', filter] }),
-      articleStatsBatch: (community: string, thread: string, ids: string[]) => ({
+      statsBatch: (community: string, thread: string, ids: string[]) => ({
         queryKey: ['article', 'article-stats', community, thread, ids],
       }),
     },
@@ -45,12 +45,12 @@ vi.mock('~/stores/community/hooks', () => ({
 import useCmsArticles from './useCmsArticles'
 
 describe('useCmsArticles', () => {
-  it('merges the public ArticleStats batch into the Dashboard article page', () => {
+  it('keeps public ArticleStats separate from the Dashboard article content', () => {
     const { result } = renderHook(() => useCmsArticles('post'))
 
     expect(result.current.pagedArticles.entries[0]).toMatchObject({
-      innerId: '20',
-      articleStats: { views: 159, viewsRevision: 7 },
+      content: { innerId: '20' },
+      stats: { views: 159, viewsRevision: 7 },
     })
   })
 })

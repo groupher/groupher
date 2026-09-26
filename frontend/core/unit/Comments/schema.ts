@@ -60,7 +60,6 @@ const createComment = graphql(`
       }
       article {
         innerId
-        commentsCount
         commentsRevision
       }
     }
@@ -78,7 +77,6 @@ const updateComment = graphql(`
       article {
         innerId
         thread
-        commentsCount
         commentsRevision
       }
     }
@@ -107,7 +105,6 @@ const oneComment = graphql(`
       ...CommentFields
       article {
         innerId
-        commentsCount
         commentsRevision
       }
     }
@@ -119,7 +116,6 @@ const reconcileComments = graphql(`
     commentReconcileStates(article: $article, commentInnerIds: $commentInnerIds) {
       article {
         innerId
-        commentsCount
         commentsRevision
       }
       entries {
@@ -129,7 +125,6 @@ const reconcileComments = graphql(`
           ...CommentFields
           article {
             innerId
-            commentsCount
             commentsRevision
           }
         }
@@ -149,7 +144,6 @@ const replyComment = graphql(`
       }
       article {
         innerId
-        commentsCount
         commentsRevision
       }
     }
@@ -163,7 +157,6 @@ const deleteComment = graphql(`
       article {
         thread
         innerId
-        commentsCount
         commentsRevision
       }
     }

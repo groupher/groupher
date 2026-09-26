@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
+  alias CMS.Helper.EmotionFormatter
   alias CMS.Interactions.{Config, DefaultViewerState, ErrorCat, Reactions}
   alias CMS.Model.Interaction.RoaringBitmap
 
@@ -83,10 +84,25 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       typed_artiments
       |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
       |> Enum.reduce(%{}, fn {type, entries}, acc ->
+        ids = Enum.map(entries, & &1.id)
+        projection_type = if type == :comment, do: :comment, else: :article
+
+        emotion_values =
+          emotion_stats_by_target(interaction_info(type), ids, nil, projection_type)
+
         type
-        |> fixed_counts(Enum.map(entries, & &1.id))
+        |> fixed_counts(ids)
         |> Enum.reduce(acc, fn {id, values}, counts_by_artiment ->
-          Map.put(counts_by_artiment, {type, id}, values)
+          reaction_counts =
+            emotion_values
+            |> Map.get(id, %{})
+            |> EmotionFormatter.counts(projection_type)
+
+          Map.put(
+            counts_by_artiment,
+            {type, id},
+            Map.put(values, :reaction_counts, reaction_counts)
+          )
         end)
       end)
     end

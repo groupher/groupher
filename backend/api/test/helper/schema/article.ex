@@ -254,13 +254,11 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
       emotionTo#{t(thread)}(article: $article, emotion: $emotion, commandId: $commandId) {
         innerId
-        emotions {
+        viewerEmotion
+        articleStats {
+          reactionCounts {
           type
           count
-          viewerHasReacted
-          latestUsers {
-            login
-            nickname
           }
         }
       }
@@ -272,14 +270,11 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
       undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion, commandId: $commandId) {
-        innerId
-        emotions {
-          type
-          count
-          viewerHasReacted
-          latestUsers {
-            login
-            nickname
+        viewerEmotion
+        articleStats {
+          reactionCounts {
+            type
+            count
           }
         }
       }
@@ -415,13 +410,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           views
           viewsRevision
           upvotesCount
-          commentsCount
+          interactionRevision
           snapshotAt
         }
         ... on #{t(thread)} {
           commandId
           reactionOutcome
-          articleInteractionRevision
         }
       }
     }
@@ -796,7 +790,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           login
           nickname
         }
-        commentsParticipantsCount
         #{extra}
       }
     }
@@ -814,7 +807,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
             views
             viewsRevision
             upvotesCount
-            commentsCount
             snapshotAt
           }
           viewerHasCollected

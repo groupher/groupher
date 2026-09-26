@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import useArticleUpvote from '~/query/mutation/useArticleUpvote'
-import type { TArticle } from '~/spec'
+import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
 import DotDivider from '~/ui/DotDivider'
 import TimeAgo from '~/ui/TimeAgo'
 import CommentsCount from '~/unit/CommentsCount'
@@ -12,13 +12,15 @@ import Upvote from '~/unit/Upvote'
 import useSalon from './salon/footer'
 
 type TProps = {
-  data: TArticle
+  article: TArticle
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
 }
 
-const Footer: FC<TProps> = ({ data }) => {
+const Footer: FC<TProps> = ({ article, stats, viewerState }) => {
   const s = useSalon()
-  const { author, insertedAt, meta, articleStats } = data
-  const { count, isUpvoted, toggle } = useArticleUpvote(data)
+  const { author, insertedAt, meta } = article
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -35,8 +37,8 @@ const Footer: FC<TProps> = ({ data }) => {
           onAction={() => toggle()}
         />
 
-        {(articleStats?.commentsCount ?? 0) !== 0 && (
-          <CommentsCount count={articleStats?.commentsCount} size={SIZE.MEDIUM} />
+        {(stats?.commentsCount ?? 0) !== 0 && (
+          <CommentsCount count={stats?.commentsCount} size={SIZE.MEDIUM} />
         )}
       </div>
     </div>

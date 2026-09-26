@@ -1,28 +1,8 @@
-import type { TArticle, TComment } from '~/spec'
+import type { TComment } from '~/spec'
 
-import { preserveArticleProjection, preserveCommentProjection } from './revisionGuard'
+import { preserveCommentProjection } from './revisionGuard'
 
 describe('revision guards', () => {
-  it('keeps newer Article interaction and comment domains independently', () => {
-    const previous = {
-      innerId: '42',
-      community: { slug: 'home' },
-      meta: { thread: 'POST', latestUpvotedUsers: [{ login: 'alice' }] },
-      title: 'old title',
-      articleInteractionRevision: 5,
-    } as unknown as TArticle
-    const next = {
-      ...previous,
-      title: 'new title',
-      articleInteractionRevision: 4,
-    } as unknown as TArticle
-
-    expect(preserveArticleProjection(previous, next)).toMatchObject({
-      title: 'new title',
-      articleInteractionRevision: 5,
-    })
-  })
-
   it('guards nested Comment reaction projections in paged data', () => {
     const previous = {
       entries: [

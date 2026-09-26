@@ -3,24 +3,26 @@ import { useEffect, useMemo, useRef } from 'react'
 
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { Q } from '~/query'
 import { isArticleStatsSnapshotStale } from '~/query/articleStats'
-import { overlayArticleUpvoteReceiptIfNewer } from '~/query/mutation/articleReceipt'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { overlayArticleUpvoteReceiptOnViewerState } from '~/query/mutation/articleReceipt'
 import useArticleInteractionReconcile from '~/query/useArticleInteractionReconcile'
 import { clearArticleViewReceipt, readArticleViewReceipt } from '~/query/viewReceipt'
-import type { TPagedChangelogs, TResState } from '~/spec'
+import type { TChangelog, TPagedArticleViewModels, TArticleViewerState, TResState } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 
 type TRes = {
   resState: TResState
-  pagedChangelogs: TPagedChangelogs
+  pagedChangelogs: TPagedArticleViewModels<TChangelog>
   pagedParams: ReturnType<typeof getPagedArticlesParams>
 }
+
+const EMPTY_CHANGELOG_VIEW_MODELS: TPagedArticleViewModels<TChangelog> = { entries: [] }
 
 /** Reads changelog server state directly from the canonical Query cache. */
 export default function usePagedChangelogs(): TRes {
@@ -32,7 +34,7 @@ export default function usePagedChangelogs(): TRes {
   const pagedParams = getPagedArticlesParams(slug, searchParams)
   const query = useQuery(Q.article.changelogs(pagedParams))
   const statsQuery = useQuery(
-    Q.article.articleStatsBatch(
+    Q.article.statsBatch(
       slug,
       THREAD.CHANGELOG,
       (query.data?.entries || []).map((article) => article.innerId),
@@ -45,9 +47,7 @@ export default function usePagedChangelogs(): TRes {
     )
       return
     refreshedStats.current = true
-    void queryClient.invalidateQueries({
-      queryKey: Q.article.articleStatsBatch(slug, THREAD.CHANGELOG, []).queryKey.slice(0, 4),
-    })
+    void invalidate(queryClient, QueryInvalidation.article.statsBatch(slug, THREAD.CHANGELOG))
   }, [queryClient, slug, statsQuery.data])
   const articleRefs = useMemo(
     () =>
@@ -68,7 +68,7 @@ export default function usePagedChangelogs(): TRes {
   }, [viewerQuery.data])
   useArticleInteractionReconcile(query.data?.entries)
   const pagedChangelogs = useMemo(() => {
-    if (!query.data) return EMPTY_PAGED_ARTICLES
+    if (!query.data) return EMPTY_CHANGELOG_VIEW_MODELS
     const accountRef = account.accountRef || getAccountRef(account.user)
     const stats = new Map<string, NonNullable<typeof statsQuery.data>[number]>()
     for (const stat of statsQuery.data || []) stats.set(String(stat.innerId), stat)
@@ -77,20 +77,25 @@ export default function usePagedChangelogs(): TRes {
       ...query.data,
       entries: query.data.entries.map((article) => {
         const key = `${article.community.slug}:${article.meta.thread}:${article.innerId}`
-        const viewerState = viewerQuery.data?.[key]
+        const baseViewerState: TArticleViewerState = {
+          articleKey: key,
+          ...viewerQuery.data?.[key],
+        }
         const stat = stats.get(String(article.innerId))
-        const withStats = stat ? { ...article, articleStats: stat } : article
-        const merged = viewerState
-          ? { ...withStats, ...viewerState, articleKey: undefined }
-          : withStats
-        const viewed = readArticleViewReceipt(key) ? { ...merged, viewerHasViewed: true } : merged
-        return overlayArticleUpvoteReceiptIfNewer(accountRef, viewed, key) || viewed
+        const viewed = readArticleViewReceipt(key)
+          ? { ...baseViewerState, viewerHasViewed: true }
+          : baseViewerState
+        return {
+          content: article,
+          stats: stat || null,
+          viewerState: overlayArticleUpvoteReceiptOnViewerState(accountRef, stat, viewed, key),
+        }
       }),
-    }
+    } as unknown as TPagedArticleViewModels<TChangelog>
   }, [account.accountRef, account.user, query.data, statsQuery.data, viewerQuery.data])
   return {
     resState: (query.isPending ? TYPE.RES_STATE.LOADING : TYPE.RES_STATE.DONE) as TResState,
-    pagedChangelogs: pagedChangelogs as TPagedChangelogs,
+    pagedChangelogs,
     pagedParams,
   }
 }

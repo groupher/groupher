@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, PublicCache, Repo}
   alias CMS.{Articles, ErrorCat}
   alias CMS.Articles.{Document, Lifecycle, MutationLock}
   alias CMS.Communities.TagStats
@@ -28,6 +28,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   alias CMS.Docs.Trash, as: DocTrash
   alias CMS.SearchArtiments.Indexer
   alias CMS.Gate.Decision
+  alias PublicCache.Const, as: PublicCacheConst
 
   alias CMS.Model.{
     ArticleLifecycle,
@@ -461,7 +462,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     |> preload([:trash_action, :deleted_by])
     |> Repo.one()
     |> case do
-      %TrashedArticle{} = item -> {:ok, hydrate(item)}
+      %TrashedArticle{} = item -> hydrate(item)
       nil -> {:error, Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
@@ -479,7 +480,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> preload([:trash_action, :deleted_by])
 
     paged = ORM.paginator(query, page: page, size: size)
-    {:ok, %{paged | entries: hydrate_entries(paged.entries, community)}}
+
+    with {:ok, entries} <- hydrate_entries(paged.entries, community) do
+      {:ok, %{paged | entries: entries}}
+    end
   end
 
   @spec create_action(Community.t(), User.t() | nil, map()) :: T.domain_res(TrashAction.t())
@@ -564,7 +568,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                {:ok, _lifecycle} <-
                  Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
                {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-               :ok <- update_visibility_stats(article, thread, :trash),
+               :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
                {:ok, _activity} <-
                  Activity.log(article, :trashed,
                    actor: activity_actor(actor),
@@ -604,7 +608,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
          {:ok, _lifecycle} <-
            Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-         :ok <- update_visibility_stats(article, thread, :trash),
+         :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
          {:ok, _activity} <-
            maybe_record_activity(
              article,
@@ -663,7 +667,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              item.restore_state
            ),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :active),
-         :ok <- update_visibility_stats(article, item.thread, :restore),
+         :ok <- update_visibility_stats(article, item.thread, :restore, Ecto.UUID.generate()),
          {:ok, _activity} <-
            maybe_record_activity(
              article,
@@ -820,7 +824,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
            _ <- Document.remove(thread, article.id),
            {:ok, _} <- CMS.Covers.delete_cover_edit_info(article.cover_edit_info_id),
            {:ok, _} <- Repo.delete(article),
-           :ok <- CMS.ViewTracker.delete_article_projection(thread, article.id) do
+           :ok <- CMS.ViewTracker.delete_article_state(thread, article.id) do
         {:cont, :ok}
       else
         error -> {:halt, error}
@@ -883,8 +887,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   defp hydrate(%TrashedArticle{} = item) do
     community = Repo.get!(Community, item.community_id)
-    [hydrated] = hydrate_entries([item], community)
-    hydrated
+
+    with {:ok, [hydrated]} <- hydrate_entries([item], community) do
+      {:ok, hydrated}
+    end
   end
 
   defp hydrate_entries(items, %Community{} = community) do
@@ -892,10 +898,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
       items
       |> Enum.group_by(& &1.thread)
       |> Enum.reduce(%{}, fn {thread, thread_items}, acc ->
-        Map.merge(acc, hydrate_thread_entries(thread_items, community, thread))
+        {:ok, hydrated} = hydrate_thread_entries(thread_items, community, thread)
+        Map.merge(acc, hydrated)
       end)
 
-    Enum.map(items, &Map.fetch!(hydrated_by_id, &1.id))
+    {:ok, Enum.map(items, &Map.fetch!(hydrated_by_id, &1.id))}
   end
 
   defp hydrate_thread_entries(items, %Community{} = community, thread) do
@@ -925,44 +932,33 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Enum.map(& &1.id)
       |> mentioned_by_counts(thread)
 
-    article_stats =
+    stats =
       case CMS.FrontDesk.article_stats_for_articles(
              thread,
              Map.values(articles_by_hash_id),
              community.slug
            ) do
         stats when is_map(stats) -> stats
-        _ -> %{}
+        {:error, _} -> nil
       end
 
-    Map.new(items, fn item ->
-      article = Map.get(articles_by_hash_id, item.article_hash_id)
-      mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
+    {:ok,
+     Map.new(items, fn item ->
+       article = Map.get(articles_by_hash_id, item.article_hash_id)
+       mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
 
-      article =
-        case article do
-          nil ->
-            nil
+       article =
+         case article do
+           nil ->
+             nil
 
-          article ->
-            Map.put(
-              article,
-              :article_stats,
-              Map.get(article_stats, {thread, article.id}, %{
-                community: community.slug,
-                thread: thread,
-                inner_id: article.inner_id,
-                views: 0,
-                views_revision: 0,
-                upvotes_count: 0,
-                comments_count: article.comments_count || 0,
-                snapshot_at: DateTime.utc_now()
-              })
-            )
-        end
+           article ->
+             projection = if is_map(stats), do: Map.get(stats, {thread, article.id}), else: nil
+             Map.put(article, :article_stats, projection)
+         end
 
-      {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
-    end)
+       {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
+     end)}
   end
 
   defp mentioned_by_counts([], _thread), do: %{}
@@ -992,16 +988,37 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
   defp ensure_standalone_trash_supported(_thread), do: :ok
 
-  defp update_visibility_stats(article, thread, operation) do
-    if visible_public_article?(article) do
-      delta = if operation == :trash, do: :dec, else: :inc
+  defp update_visibility_stats(article, thread, operation, causation_id) do
+    result =
+      if visible_public_article?(article) do
+        delta = if operation == :trash, do: :dec, else: :inc
 
-      with :ok <- update_tag_stats(article, delta),
-           {:ok, _} <- CMS.Communities.update_count_field(article.communities, thread) do
+        with :ok <- update_tag_stats(article, delta),
+             {:ok, _} <- CMS.Communities.update_count_field(article.communities, thread) do
+          :ok
+        end
+      else
         :ok
       end
-    else
-      :ok
+
+    with :ok <- result do
+      article = Repo.preload(article, :community)
+
+      case PublicCache.invalidate_now(
+             PublicCacheConst.article_visibility_changed(),
+             %{
+               community: article.community.slug,
+               community_id: article.community_id,
+               thread: thread,
+               inner_id: article.inner_id,
+               id: article.id
+             },
+             causation_id: causation_id,
+             aggregate_type: "article"
+           ) do
+        {:ok, _invalidation} -> :ok
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 

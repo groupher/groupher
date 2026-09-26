@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   alias CMS.Artiment.Matcher
   alias CMS.Articles.Const, as: ArticlesConst
   alias CMS.Interactions.{Config, ErrorCat}
+  alias CMS.Model.ArticleStats
 
   @article_types Config.article_threads()
   @passthrough_orders [nil | ArticlesConst.native_order_values()]
@@ -79,15 +80,17 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     do: {:ok, order_by_count(query, info, :collects_count)}
 
   defp order_by_count(query, info, count_field) do
+    thread = info.artiment
+
     query
     |> exclude(:order_by)
     |> then(fn query ->
       from(article in query,
-        left_join: reaction_info in ^info.reaction_info_model,
-        on: field(reaction_info, ^info.foreign_key) == article.id,
+        left_join: stats in ArticleStats,
+        on: stats.thread == ^Atom.to_string(thread) and stats.article_id == article.id,
         order_by: [
-          desc_nulls_last: field(reaction_info, ^count_field),
-          desc_nulls_last: article.id
+          desc: coalesce(field(stats, ^count_field), 0),
+          asc: article.id
         ]
       )
     end)

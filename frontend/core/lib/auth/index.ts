@@ -9,7 +9,6 @@ import type { TOauthProvider } from '~/spec'
 
 import { logout } from '../signal'
 import { AUTH_CHANNEL, AUTH_EVENT, AUTH_RECOVERY } from './constant'
-import { requestLogin } from './login-request'
 import type {
   TAuthEvent,
   TAuthFailure,
@@ -57,6 +56,7 @@ const LOGIN_REQUIRED_CODES: ReadonlySet<string> = new Set([
   AUTH_ERROR.ACCOUNT_BLOCKED,
 ])
 let refreshPromise: Promise<void> | null = null
+let discardPromise: Promise<void> | null = null
 
 const appendHiddenField = (form: HTMLFormElement, name: string, value: string) => {
   const input = document.createElement('input')
@@ -262,10 +262,27 @@ export const resolveAuthFailure = (failure: TAuthFailure): TAuthRecovery => {
   return AUTH_RECOVERY.NONE
 }
 
-const recoverTerminalFailure = async (error: unknown): Promise<void> => {
-  if (resolveAuthFailure(authFailureFromError(error)) !== AUTH_RECOVERY.LOGIN) return
+const discardBrowserSession = async (): Promise<void> => {
+  if (discardPromise) return discardPromise
+
+  discardPromise = fetch(`${AUTH_ENDPOINT}/logout`, {
+    credentials: 'include',
+    headers: stateChangeHeaders(),
+    method: 'POST',
+  }).then(() => undefined)
+
+  try {
+    await discardPromise
+  } finally {
+    discardPromise = null
+  }
+}
+
+const recoverTerminalFailure = async (error: unknown): Promise<boolean> => {
+  if (resolveAuthFailure(authFailureFromError(error)) !== AUTH_RECOVERY.LOGIN) return false
+  await discardBrowserSession()
   invalidateAuthState()
-  requestLogin()
+  return true
 }
 
 /** Retries the original authenticated operation once after a successful refresh. */
@@ -280,7 +297,6 @@ export const withAuthRetry = async <T>(
     if (action !== AUTH_RECOVERY.REFRESH) {
       if (action === AUTH_RECOVERY.LOGIN) {
         invalidateAuthState()
-        requestLogin()
       }
       throw error
     }
@@ -288,7 +304,9 @@ export const withAuthRetry = async <T>(
     try {
       await refreshSession()
     } catch (refreshError) {
-      await recoverTerminalFailure(refreshError)
+      // Public products are optional-auth. Once Auth has discarded a terminal
+      // Session, replay as anonymous; protected UI owns the sign-in prompt.
+      if (await recoverTerminalFailure(refreshError)) return operation()
       throw refreshError
     }
     return operation()

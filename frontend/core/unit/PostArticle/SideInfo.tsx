@@ -11,8 +11,8 @@ import useSalon from './salon/side_info'
 
 export default function SideInfo() {
   const s = useSalon()
-  const { article } = useArticle()
-  const { count, isUpvoted, toggle } = useArticleUpvote(article)
+  const { article, stats, viewerState } = useArticle()
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   if (!article) {
     return <h1>Error article</h1>

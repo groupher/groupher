@@ -1,6 +1,6 @@
 import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, render, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { vi } from 'vitest'
 
@@ -35,6 +35,7 @@ describe('stores/account/hooks', () => {
       data: undefined,
       error: undefined,
       isFetching: true,
+      isPending: true,
       refetch: vi.fn(),
     } as never)
   })
@@ -50,6 +51,7 @@ describe('stores/account/hooks', () => {
       data: { sessionState: { isValid: true, user: sessionUser } },
       error: undefined,
       isFetching: false,
+      isPending: false,
       refetch: vi.fn(),
     } as never)
 
@@ -66,21 +68,59 @@ describe('stores/account/hooks', () => {
     expect(result.current.user?.login).toBe('e2e')
   })
 
-  it('probes after hydration when SSR has no user but the signed-in hint remains', async () => {
-    const refetch = vi.fn()
+  it('enables one provider-owned probe for many account consumers', async () => {
     mockedUseQuery.mockReturnValue({
       data: undefined,
       error: undefined,
       isFetching: false,
-      refetch,
+      isPending: false,
     } as never)
 
-    renderHook(() => useAccount(), {
-      wrapper: ({ children }) => (
-        <Provider initData={{ loading: false, user: null }}>{children}</Provider>
-      ),
-    })
+    const Consumer = () => {
+      useAccount()
+      return null
+    }
 
-    await waitFor(() => expect(refetch).toHaveBeenCalledOnce())
+    render(
+      <Provider initData={{ loading: false, user: null }}>
+        {Array.from({ length: 20 }, (_, index) => (
+          <Consumer key={index} />
+        ))}
+      </Provider>,
+    )
+
+    await waitFor(() =>
+      expect(mockedUseQuery).toHaveBeenLastCalledWith(expect.objectContaining({ enabled: true })),
+    )
+    expect(mockedUseQuery.mock.calls.length).toBeLessThanOrEqual(2)
+  })
+
+  it('stops loading when the session probe fails', async () => {
+    mockedUseQuery.mockReturnValue({
+      data: { sessionState: { isValid: false, user: null } },
+      error: new Error('session probe failed'),
+      isFetching: false,
+      isPending: false,
+      refetch: vi.fn(),
+    } as never)
+
+    const { result } = renderHook(() => useAccount(), { wrapper })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.isLogin).toBe(false)
+  })
+
+  it('stops loading when the session probe resolves as anonymous', async () => {
+    mockedUseQuery.mockReturnValue({
+      data: { sessionState: { isValid: false, user: null } },
+      error: undefined,
+      isFetching: false,
+      isPending: false,
+    } as never)
+
+    const { result } = renderHook(() => useAccount(), { wrapper })
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.isLogin).toBe(false)
   })
 })

@@ -462,7 +462,7 @@ type RootMutationType {
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
 
   "Records one visible public Article read through ViewTracker"
-  trackArticleView(article: ArticlePathInput!, eventId: ID!): ArticleViewTrackReceipt!
+  trackArticleView(article: ArticlePathInput!, eventId: ID!): ArticleViewTrackResult!
 
   "Move one logical Article into Trash"
   trashArticle(commandId: ID!, article: ArticlePathInput!): TrashedArticle
@@ -1527,9 +1527,23 @@ type DoneState {
   commandId: ID
 }
 
-type ArticleViewTrackReceipt {
+enum ArticleViewDecisionReason {
+  COUNTED
+  DUPLICATE_IN_WINDOW
+  EXCLUDED_BY_POLICY
+}
+
+type ArticleViewTrackResult {
   eventId: ID!
-  accepted: Boolean!
+  counted: Boolean!
+  decisionReason: ArticleViewDecisionReason!
+  articleStats: ArticleStats!
+  viewerState: ViewerArticleState!
+}
+
+type ArticleReactionCount {
+  type: EmotionType!
+  count: Int!
 }
 
 type ArticleStats {
@@ -1540,6 +1554,11 @@ type ArticleStats {
   viewsRevision: Int!
   upvotesCount: Int!
   commentsCount: Int!
+  collectsCount: Int!
+  commentsParticipantsCount: Int!
+  interactionRevision: Int!
+  commentsRevision: Int!
+  reactionCounts: [ArticleReactionCount!]!
   snapshotAt: DateTime!
 }
 
@@ -2196,7 +2215,6 @@ type DocTreeTrashItem {
 
 type CommentMutationArticle {
   innerId: Int!
-  commentsCount: Int!
   commentsRevision: Int!
 }
 
@@ -2349,8 +2367,8 @@ type CommonArticle {
   thread: Thread
   innerId: ID
   title: String
-  commentsCount: Int
   commentsRevision: Int
+  articleStats: ArticleStats
   author: CommonUser
 }
 
@@ -2591,11 +2609,8 @@ type Post implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  collectsCount: Int
-  articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
-  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerEmotion: EmotionType
@@ -2606,7 +2621,6 @@ type Post implements Article {
   linkAddr: String
   pending: Int
   commentsParticipants: [User]
-  commentsParticipantsCount: Int
   cat: ArticleCatEnum
   status: ArticleStatusEnum
   isSolved: Boolean!
@@ -2633,11 +2647,8 @@ type Changelog implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  collectsCount: Int
-  articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
-  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerEmotion: EmotionType
@@ -2648,7 +2659,6 @@ type Changelog implements Article {
   linkAddr: String
   pending: Int
   commentsParticipants: [User]
-  commentsParticipantsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2670,11 +2680,8 @@ type Doc implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  collectsCount: Int
-  articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
-  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerEmotion: EmotionType
@@ -2686,7 +2693,6 @@ type Doc implements Article {
   pending: Int
   subtitle: String
   commentsParticipants: [User]
-  commentsParticipantsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -2708,11 +2714,8 @@ type Blog implements Article {
   community: Community
   communities: [Community]
   meta: ArticleMeta
-  collectsCount: Int
-  articleInteractionRevision: Int
   commandId: ID
   reactionOutcome: String
-  emotions: [EmotionStat]
   viewerHasCollected: Boolean
   viewerHasUpvoted: Boolean
   viewerEmotion: EmotionType
@@ -2723,7 +2726,6 @@ type Blog implements Article {
   linkAddr: String
   pending: Int
   commentsParticipants: [User]
-  commentsParticipantsCount: Int
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -3280,11 +3282,7 @@ type ArticleInteractionState {
   community: String!
   thread: Thread!
   innerId: ID!
-  articleInteractionRevision: Int!
-  upvotesCount: Int!
-  collectsCount: Int!
-  emotions: [EmotionStat!]!
-  latestUpvotedUsers: [CommonUser!]!
+  interactionRevision: Int!
   viewerHasUpvoted: Boolean!
   viewerHasCollected: Boolean!
   viewerEmotion: EmotionType

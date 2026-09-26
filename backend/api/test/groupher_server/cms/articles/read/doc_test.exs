@@ -104,10 +104,9 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert doc.id == doc2.id
       refute CMS.ViewTracker.viewer_state(doc2, user).viewer_has_viewed
 
-      assert {:ok, ^event_id} =
+      assert {:ok, %{event_id: ^event_id}} =
                ViewTracker.track(doc2, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewTracker.project(event_id)
       assert CMS.ViewTracker.viewer_state(doc2, user).viewer_has_viewed
     end
 
@@ -118,20 +117,21 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       # same user duplicate case
       event_id = Ecto.UUID.generate()
 
-      {:ok, ^event_id} = ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
+      {:ok, %{event_id: ^event_id}} =
+        ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
 
-      {:ok, ^event_id} = ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
+      {:ok, %{event_id: ^event_id}} =
+        ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewTracker.project(event_id)
       assert CMS.ViewTracker.viewer_state(doc, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
-      {:ok, ^event_id} = ViewTracker.track(doc, user2, event_id, read_purpose: :public_read)
+      {:ok, %{event_id: ^event_id}} =
+        ViewTracker.track(doc, user2, event_id, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Doc, doc.id)
-      assert :ok = ViewTracker.project(event_id)
-      assert %{views: 2} = ViewTracker.summaries(:doc, [created])[{:doc, created.id}]
+      assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:doc, created.id)
       assert CMS.ViewTracker.viewer_state(doc, user).viewer_has_viewed
       assert CMS.ViewTracker.viewer_state(doc, user2).viewer_has_viewed
     end

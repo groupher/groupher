@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "tagTemplates": {
+    "community": "community[{community}]",
+    "articleList": "community[{community}]-thread[{thread}]-articles",
+    "articleDetail": "community[{community}]-thread[{thread}]-article[{innerId}]",
+    "comments": "community[{community}]-thread[{thread}]-article[{innerId}]-comments",
+    "tags": "community[{community}]-thread[{thread}]-tags",
+    "docTree": "community[{community}]-doc-tree"
+  }
+}

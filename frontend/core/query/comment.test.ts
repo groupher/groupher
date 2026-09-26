@@ -11,7 +11,7 @@ describe('commentQueries.reconcile', () => {
   it('reconciles a bounded set of Comment refs in one request', async () => {
     browserGraphQLRequest.mockResolvedValue({
       commentReconcileStates: {
-        article: { innerId: 7, commentsCount: 2, commentsRevision: 4 },
+        article: { innerId: 7, commentsRevision: 4 },
         entries: [
           { commentInnerId: '1', comment: { innerId: '1', body: 'confirmed' } },
           { commentInnerId: '2', comment: null },
@@ -28,7 +28,7 @@ describe('commentQueries.reconcile', () => {
       commentInnerIds: ['1', '2'],
     })
     expect(result).toEqual({
-      article: { innerId: 7, commentsCount: 2, commentsRevision: 4 },
+      article: { innerId: 7, commentsRevision: 4 },
       comments: { '1': { innerId: '1', body: 'confirmed' }, '2': null },
     })
   })

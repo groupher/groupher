@@ -5,7 +5,8 @@ import { useState } from 'react'
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
-import { Q, articleKeys } from '~/query'
+import { Q } from '~/query'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -35,7 +36,7 @@ export default function useUtils(): TRet {
   const [loading, setLoading] = useState(false)
 
   const invalidateTags = (thread: TThread): void => {
-    void queryClient.invalidateQueries({ queryKey: articleKeys.tagGroups(community$.slug, thread) })
+    void invalidate(queryClient, QueryInvalidation.article.tagGroups(community$.slug, thread))
   }
   const confirmTagGroups = (tagGroups: readonly TTagGroup[]): void => {
     const confirmed = { tagGroups }

@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias CMS.ViewTracker.Model.ViewSummary
+  alias CMS.Model.ArticleStats
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias GroupherServer.CMS
 
@@ -307,15 +307,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
     end
 
     test "filter sort MOST_VIEWS should work", ~m(guest_conn post_last_year)a do
-      Repo.insert!(%ViewSummary{
-        thread: :post,
-        article_id: post_last_year.id,
-        views: 10,
-        revision: 1
-      })
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :post and summary.article_id == ^post_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
 
       most_views_post =
-        ViewSummary
+        ArticleStats
         |> where([summary], summary.thread == :post)
         |> order_by(desc: :views)
         |> limit(1)
@@ -332,12 +332,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
     test "filter sort LEAST_VIEWS should use Summary zero-row semantics",
          ~m(guest_conn community post_last_year)a do
-      Repo.insert!(%ViewSummary{
-        thread: :post,
-        article_id: post_last_year.id,
-        views: 10,
-        revision: 1
-      })
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :post and summary.article_id == ^post_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
 
       variables = %{filter: %{community: community.slug, sort: "LEAST_VIEWS"}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -492,9 +492,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
   defp track_view(article, user) do
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} =
+    assert {:ok, %{event_id: ^event_id}} =
              CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
-
-    assert :ok = CMS.ViewTracker.project(event_id)
   end
 end

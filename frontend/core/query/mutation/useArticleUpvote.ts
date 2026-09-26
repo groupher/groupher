@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 
-import type { TArticle } from '~/spec'
+import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
@@ -16,7 +16,11 @@ import {
 import useOptimisticToggle from './optimistic/useOptimisticToggle'
 
 /** Returns the canonical Article reaction view model and a single toggle action. */
-export default function useArticleUpvote(article: TArticle | null) {
+export default function useArticleUpvote(
+  article: TArticle | null,
+  stats?: TArticleStats | null,
+  viewerState?: TArticleViewerState,
+) {
   const queryClient = useQueryClient()
   const account = useAccount()
   const canonical = selectArticleFromCache(queryClient, article)
@@ -27,29 +31,27 @@ export default function useArticleUpvote(article: TArticle | null) {
     ? `${article.community.slug}:${article.meta.thread}:${String(article.innerId)}`
     : ''
   const receipt = readArticleUpvoteReceipt(accountRef, entityKey)
-  const receiptIsNewer = isArticleUpvoteReceiptNewer(canonical, receipt)
+  const canonicalStats = stats
+  const receiptIsNewer = isArticleUpvoteReceiptNewer(canonicalStats, receipt)
   const visibleReceipt = receiptIsNewer ? receipt : null
-  const receiptRevision = receipt?.publicProjection.articleInteractionRevision
+  const receiptRevision = receipt?.interactionRevision
   useEffect(() => {
     if (
       visibleReceipt &&
       typeof receiptRevision === 'number' &&
-      typeof canonical?.articleInteractionRevision === 'number' &&
-      canonical.articleInteractionRevision >= receiptRevision
+      typeof canonicalStats?.interactionRevision === 'number' &&
+      canonicalStats.interactionRevision >= receiptRevision
     ) {
       clearArticleUpvoteReceipt(accountRef, entityKey)
     }
-  }, [
-    accountRef,
-    canonical?.articleInteractionRevision,
-    entityKey,
-    receiptRevision,
-    visibleReceipt,
-  ])
+  }, [accountRef, canonicalStats?.interactionRevision, entityKey, receiptRevision, visibleReceipt])
   return {
-    count:
-      visibleReceipt?.publicProjection.upvotesCount ?? canonical?.articleStats?.upvotesCount ?? 0,
-    isUpvoted: visibleReceipt?.viewerState.viewerHasUpvoted ?? visibleState ?? false,
+    count: canonicalStats?.upvotesCount ?? 0,
+    isUpvoted:
+      visibleReceipt?.viewerState.viewerHasUpvoted ??
+      viewerState?.viewerHasUpvoted ??
+      visibleState ??
+      false,
     toggle,
   }
 }

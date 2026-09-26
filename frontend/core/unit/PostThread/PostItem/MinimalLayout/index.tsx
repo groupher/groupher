@@ -4,7 +4,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import useArticleUpvote from '~/query/mutation/useArticleUpvote'
-import type { TPost } from '~/spec'
+import type { TArticleListViewModel, TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
 
 import ArticlePinLabel from '../../ArticlePinLabel'
@@ -13,14 +13,15 @@ import Footer from './Footer'
 import Header from './Header'
 
 type TProps = {
-  article: TPost
+  viewModel: TArticleListViewModel<TPost>
 }
 
-const DigestView: FC<TProps> = ({ article }) => {
+const DigestView: FC<TProps> = ({ viewModel }) => {
+  const { content: article, stats, viewerState } = viewModel
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
   const { meta } = article
-  const { count, isUpvoted, toggle } = useArticleUpvote(article)
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <article className={s.wrapper}>
@@ -37,7 +38,7 @@ const DigestView: FC<TProps> = ({ article }) => {
         />
       </div>
       <div className={s.main}>
-        <Header article={article} />
+        <Header article={article} stats={stats} viewerState={viewerState} />
         <div className={s.digest}>{article.digest}</div>
         <Footer article={article} />
       </div>

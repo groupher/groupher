@@ -107,10 +107,9 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.id == changelog2.id
       refute CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
 
-      assert {:ok, ^event_id} =
+      assert {:ok, %{event_id: ^event_id}} =
                ViewTracker.track(changelog2, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewTracker.project(event_id)
       assert CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
     end
 
@@ -121,23 +120,21 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       # same user duplicate case
       event_id = Ecto.UUID.generate()
 
-      {:ok, ^event_id} =
+      {:ok, %{event_id: ^event_id}} =
         ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
 
-      {:ok, ^event_id} =
+      {:ok, %{event_id: ^event_id}} =
         ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
 
-      assert :ok = ViewTracker.project(event_id)
       assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
 
       event_id = Ecto.UUID.generate()
 
-      {:ok, ^event_id} =
+      {:ok, %{event_id: ^event_id}} =
         ViewTracker.track(changelog, user2, event_id, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
-      assert :ok = ViewTracker.project(event_id)
-      assert %{views: 2} = ViewTracker.summaries(:changelog, [created])[{:changelog, created.id}]
+      assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:changelog, created.id)
       assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
       assert CMS.ViewTracker.viewer_state(changelog, user2).viewer_has_viewed
     end

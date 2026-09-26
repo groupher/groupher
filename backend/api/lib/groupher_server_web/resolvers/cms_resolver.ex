@@ -43,21 +43,38 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   @doc "Records an explicit, visible public Article read."
   def track_article_view(_root, %{article: article_path, event_id: event_id}, info) do
-    viewer = Map.get(info.context, :cur_user)
-    anonymous_id = Map.get(info.context, :anonymous_id)
-    rate_key = if viewer, do: {:user, viewer.id}, else: {:anonymous, anonymous_id}
+    {viewer, actor_opts} = view_actor(info.context)
 
-    with true <- CMS.ViewTracker.RateLimit.allow?(rate_key),
-         {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path),
-         {:ok, accepted_event_id} <-
-           CMS.ViewTracker.track(article, viewer, event_id,
-             read_purpose: :public_read,
-             anonymous_id: anonymous_id
-           ) do
-      {:ok, %{accepted: true, event_id: accepted_event_id}}
-    else
-      false -> {:error, "view tracking rate limit exceeded"}
+    with {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path) do
+      CMS.ViewTracker.track(
+        article,
+        viewer,
+        event_id,
+        Keyword.put(actor_opts, :read_purpose, :public_read)
+      )
     end
+  end
+
+  defp view_actor(%{delegated_actor: %{service_actor: service, user_actor: viewer}}) do
+    {viewer, [delegation_id: service_actor_id(service)]}
+  end
+
+  defp view_actor(%{service_actor: service}) do
+    {nil, [agent_credential_id: service_actor_id(service)]}
+  end
+
+  defp view_actor(%{service_auth_failure: _code}), do: {nil, []}
+
+  defp view_actor(context) do
+    viewer = Map.get(context, :cur_user)
+
+    if viewer,
+      do: {viewer, []},
+      else: {nil, [anonymous_id: Map.get(context, :anonymous_id)]}
+  end
+
+  defp service_actor_id(service) do
+    Map.get(service, :token_id) || Map.get(service, :subject)
   end
 
   @viewer_batch_size 100
@@ -1540,22 +1557,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp resolve_article_interaction_states(refs, user) do
     with {:ok, resolved} <- resolve_article_viewer_batch(refs),
-         {:ok, hydrated} <- hydrate_article_viewer_batch(resolved, user) do
+         states when is_map(states) <-
+           CMS.Interactions.viewer_states(Enum.map(resolved, & &1.article), user) do
       {:ok,
-       Enum.zip(resolved, hydrated)
-       |> Enum.map(fn {%{path: path}, article} ->
+       Enum.map(resolved, fn %{path: path, article: article} ->
+         {:ok, %{artiment: type}} = CMS.Artiment.Matcher.match_interaction(article)
+         state = Map.fetch!(states, {type, article.id})
+
          %{
            community: path.community,
            thread: path.thread,
            inner_id: article.inner_id,
-           article_interaction_revision: article.article_interaction_revision || 0,
-           upvotes_count: article.upvotes_count || 0,
-           collects_count: article.collects_count || 0,
-           emotions: EmotionFormatter.format(article, :article),
-           latest_upvoted_users: get_in(article, [:meta, :latest_upvoted_users]) || [],
-           viewer_has_upvoted: article.viewer_has_upvoted || false,
-           viewer_has_collected: article.viewer_has_collected || false,
-           viewer_emotion: article.viewer_emotion
+           interaction_revision: state.interaction_revision || 0,
+           viewer_has_upvoted: state.viewer_has_upvoted || false,
+           viewer_has_collected: state.viewer_has_collected || false,
+           viewer_emotion: viewer_emotion(state.emotions)
          }
        end)}
     end
@@ -1574,6 +1590,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       error -> error
     end
   end
+
+  defp viewer_emotion(emotions) when is_map(emotions) do
+    emotions
+    |> Map.values()
+    |> Enum.find_value(fn emotion ->
+      if Map.get(emotion, :viewer_has_reacted, false), do: Map.get(emotion, :type)
+    end)
+  end
+
+  defp viewer_emotion(_emotions), do: nil
 
   defp hydrate_article_viewer_batch(resolved, %User{} = user) do
     CMS.Articles.Response.list(Enum.map(resolved, & &1.article), user)
@@ -1873,7 +1899,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
              thread,
              [hydrated]
            ) do
-      {:ok, Map.put(hydrated, :article_stats, Map.get(stats, {thread, hydrated.id}, %{}))}
+      {:ok, Map.put(hydrated, :article_stats, Map.fetch!(stats, {thread, hydrated.id}))}
     else
       {:error, _} = error -> error
     end

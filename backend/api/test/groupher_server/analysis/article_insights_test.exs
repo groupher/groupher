@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
     from = DateTime.from_unix!(div(DateTime.to_unix(now), 3600) * 3600)
     to = DateTime.add(from, 3600, :second)
 
-    assert {:ok, ^event_id} =
+    assert {:ok, %{event_id: ^event_id}} =
              CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
 
     assert {:ok, 1} = Aggregator.run()

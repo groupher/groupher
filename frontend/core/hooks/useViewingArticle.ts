@@ -1,10 +1,12 @@
 import { SITE_URL } from '~/config'
-import type { TArticle } from '~/spec'
+import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
 import useArticle from '~/stores/article/hooks'
 import { thread2Path } from '~/utils/thread'
 
 type TRet = {
   article: TArticle
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
   articleLink: string
 }
 
@@ -20,10 +22,12 @@ const parseArticleLink = (article: TArticle): string => {
 /** Exposes viewing article state and actions through the shared React hook boundary. */
 export default function useViewingArticle(): TRet {
   const article$ = useArticle()
-  const { article } = article$
+  const { article, stats, viewerState } = article$
 
   return {
     article,
+    stats,
+    viewerState,
     articleLink: parseArticleLink(article),
   }
 }

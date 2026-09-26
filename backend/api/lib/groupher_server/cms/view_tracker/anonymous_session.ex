@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.ViewTracker.AnonymousSession do
   expiration, so closing the browser can create a new anonymous identity.
 
       HTTP request -> verify or issue Session Cookie -> trusted request context
-                   -> ViewTracker.Classifier -> viewer_tracking_key
+                   -> RequestActor.classify -> viewer_tracking_key
   """
 
   import Plug.Conn

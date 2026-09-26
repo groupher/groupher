@@ -4,24 +4,16 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
-import type { TArticleThread, TThread } from '~/spec'
+import type { TArticleStats, TArticleThread, TThread } from '~/spec'
 
+import { markStale } from './invalidation'
 import { articleKeys } from './key'
 import { getQueryClient } from './queryClient'
 
 export type TArticleStatsResponse = ResultOf<typeof articleStatsDocument>['articleStats'][number]
-export type TArticleStats = {
-  community: string
-  thread: TThread
-  innerId: string
-  views: number
-  viewsRevision: number
-  upvotesCount: number
-  commentsCount: number
-  snapshotAt: string
-}
 
-const normalizeArticleStats = (stats: TArticleStatsResponse): TArticleStats => ({
+/** Converts one GraphQL ArticleStats DTO into the canonical frontend entity shape. */
+export const normalizeArticleStats = (stats: TArticleStatsResponse): TArticleStats => ({
   community: String(stats.community),
   thread: stats.thread as TThread,
   innerId: String(stats.innerId),
@@ -29,6 +21,14 @@ const normalizeArticleStats = (stats: TArticleStatsResponse): TArticleStats => (
   viewsRevision: Number(stats.viewsRevision),
   upvotesCount: Number(stats.upvotesCount),
   commentsCount: Number(stats.commentsCount),
+  collectsCount: Number(stats.collectsCount),
+  commentsParticipantsCount: Number(stats.commentsParticipantsCount),
+  interactionRevision: Number(stats.interactionRevision),
+  commentsRevision: Number(stats.commentsRevision),
+  reactionCounts: (stats.reactionCounts || []).map((reaction) => ({
+    type: reaction.type,
+    count: Number(reaction.count),
+  })),
   snapshotAt: String(stats.snapshotAt),
 })
 
@@ -36,6 +36,7 @@ export const ARTICLE_STATS_SNAPSHOT_MAX_AGE_MS =
   ARTICLE_STATS_CACHE_POLICY.snapshotMaxAgeSeconds * 1_000
 
 type TArticleStatsTelemetryEvent = 'clock_skew' | 'invalid_snapshot' | 'mixed_snapshot'
+const OWNER_REVISIONS = ['viewsRevision', 'interactionRevision', 'commentsRevision'] as const
 
 const reportArticleStatsTelemetry = (
   event: TArticleStatsTelemetryEvent,
@@ -56,35 +57,61 @@ export const isArticleStatsSnapshotStale = (snapshotAt: string, now = Date.now()
 }
 
 const isOlderStats = (current: TArticleStats | undefined, incoming: TArticleStats): boolean => {
-  if (!current) return false
-  const currentAt = Date.parse(current.snapshotAt)
   const incomingAt = Date.parse(incoming.snapshotAt)
-  if (!Number.isFinite(incomingAt)) {
+  const incomingTimestampValid = Number.isFinite(incomingAt)
+
+  if (!current) {
+    if (!incomingTimestampValid) {
+      reportArticleStatsTelemetry('invalid_snapshot', { snapshotAt: incoming.snapshotAt })
+    }
+    return false
+  }
+  const regressedRevision = OWNER_REVISIONS.find(
+    (revision) => incoming[revision] < current[revision],
+  )
+  if (regressedRevision) {
+    reportArticleStatsTelemetry('mixed_snapshot', {
+      currentSnapshotAt: current.snapshotAt,
+      incomingSnapshotAt: incoming.snapshotAt,
+      revision: regressedRevision,
+      currentRevision: current[regressedRevision],
+      incomingRevision: incoming[regressedRevision],
+    })
+    return true
+  }
+
+  const advancedRevision = OWNER_REVISIONS.some(
+    (revision) => incoming[revision] > current[revision],
+  )
+  if (advancedRevision) {
+    if (!incomingTimestampValid) {
+      reportArticleStatsTelemetry('invalid_snapshot', { snapshotAt: incoming.snapshotAt })
+    }
+    return false
+  }
+
+  const currentAt = Date.parse(current.snapshotAt)
+  if (!incomingTimestampValid) {
     reportArticleStatsTelemetry('invalid_snapshot', { snapshotAt: incoming.snapshotAt })
     return true
   }
   if (!Number.isFinite(currentAt)) return false
-  if (incomingAt > currentAt && incoming.viewsRevision < current.viewsRevision) {
-    reportArticleStatsTelemetry('mixed_snapshot', {
-      currentSnapshotAt: current.snapshotAt,
-      incomingSnapshotAt: incoming.snapshotAt,
-      currentViewsRevision: current.viewsRevision,
-      incomingViewsRevision: incoming.viewsRevision,
-    })
-    return true
-  }
-  return (
-    incomingAt < currentAt ||
-    (incomingAt === currentAt && incoming.viewsRevision < current.viewsRevision)
-  )
+  return incomingAt < currentAt
 }
 
 /** Seeds one normalized ArticleStats entity without allowing an older snapshot to overwrite it. */
 export const cacheArticleStats = (queryClient: QueryClient, stats: TArticleStats): void => {
-  const key = articleKeys.articleStats(stats.community, stats.thread, stats.innerId)
-  queryClient.setQueryData<TArticleStats>(key, (current) =>
-    isOlderStats(current, stats) ? current : stats,
-  )
+  const key = articleKeys.stats(stats.community, stats.thread, stats.innerId)
+  let accepted = false
+  queryClient.setQueryData<TArticleStats>(key, (current) => {
+    if (isOlderStats(current, stats)) return current
+    accepted = true
+    return stats
+  })
+
+  if (accepted && !Number.isFinite(Date.parse(stats.snapshotAt))) {
+    void markStale(queryClient, key)
+  }
 }
 
 /** Seeds all normalized ArticleStats entities returned by a public batch query. */
@@ -111,7 +138,7 @@ const fetchArticleStats = async (
     { signal },
   )) as unknown as ResultOf<typeof articleStatsDocument>
   const stats = (data.articleStats || []).map(normalizeArticleStats)
-  cacheArticleStatsEntities(getQueryClient(), stats)
+  stats.forEach((item) => cacheArticleStats(getQueryClient(), item))
   return stats
 }
 
@@ -123,7 +150,7 @@ export const articleStatsBatch = (
 ) => {
   const normalizedIds = normalizeIds(innerIds)
   return {
-    queryKey: articleKeys.articleStatsBatch(community, thread, normalizedIds),
+    queryKey: articleKeys.statsBatch(community, thread, normalizedIds),
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       fetchArticleStats(community, thread, normalizedIds, signal),
     enabled: Boolean(community && thread && normalizedIds.length),
@@ -140,7 +167,7 @@ export const articleStats = (
 ) => {
   const normalizedId = String(innerId)
   return {
-    queryKey: articleKeys.articleStats(community, thread, normalizedId),
+    queryKey: articleKeys.stats(community, thread, normalizedId),
     queryFn: async ({ signal }: { signal?: AbortSignal }) => {
       const stats = await fetchArticleStats(community, thread, [normalizedId], signal)
       const articleStats = stats[0]

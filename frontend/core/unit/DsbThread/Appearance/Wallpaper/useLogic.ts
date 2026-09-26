@@ -15,7 +15,8 @@ import {
   isMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
 import type { TGradientRecipe, TGradientRenderer } from '~/lib/wallpaperMesh'
-import { dsbKeys, wallpaperEditorKeys, wallpaperKeys, wallpaperQueries } from '~/query'
+import { dsbKeys, wallpaperKeys, wallpaperQueries } from '~/query'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TParseDashboard, TParsedWallpaper, TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { hasContentShadowPatch } from '~/stores/contentShadow/helper'
@@ -260,18 +261,16 @@ export function useLogicValue(): TWallpaperLogic {
         updatePublishedWallpaperVersion(current, result.version),
       )
       pendingSaveRef.current = null
-      void queryClient.invalidateQueries({ queryKey: wallpaperKeys.config(community), exact: true })
-      void queryClient.invalidateQueries({
-        queryKey: wallpaperEditorKeys.config(community),
-        exact: true,
-      })
+      void invalidate(queryClient, [
+        QueryInvalidation.community.wallpaper(community),
+        QueryInvalidation.community.wallpaperEditor(community),
+      ])
       markSaveLaneComplete('wallpaper')
     },
     onError: (err) => {
       console.error('## wallpaper publish error: ', err)
       if (graphqlErrorCode(err) === '5702' || graphqlErrorCode(err) === '5708') {
-        void queryClient
-          .invalidateQueries({ queryKey: wallpaperKeys.config(community$.slug), exact: true })
+        void invalidate(queryClient, QueryInvalidation.community.wallpaper(community$.slug))
           .then(() => queryClient.fetchQuery(wallpaperQueries.config(community$.slug)))
           .catch(() => undefined)
       }
@@ -292,11 +291,10 @@ export function useLogicValue(): TWallpaperLogic {
             }
           : current,
       )
-      void queryClient.invalidateQueries({ queryKey: dsbKeys.config(community), exact: true })
-      void queryClient.invalidateQueries({
-        queryKey: wallpaperEditorKeys.config(community),
-        exact: true,
-      })
+      void invalidate(queryClient, [
+        QueryInvalidation.community.dashboard(community),
+        QueryInvalidation.community.wallpaperEditor(community),
+      ])
       markSaveLaneComplete('shadow')
     },
     onError: (err) => {

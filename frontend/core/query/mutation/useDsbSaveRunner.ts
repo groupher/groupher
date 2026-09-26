@@ -5,6 +5,7 @@ import { clone } from 'ramda'
 
 import useTrans from '~/hooks/useTrans'
 import { dsbKeys, dsbMutationKeys } from '~/query'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TDsbFieldMap, TParseDashboard } from '~/spec'
 import type { TDsbEditStore } from '~/stores/dsbEdit/spec'
 import { toast } from '~/ui/Toaster'
@@ -53,7 +54,7 @@ export default function useDsbSaveRunner({ community, dashboardStore }: TArgs) {
         : previous,
     )
     if (!responseComplete) {
-      void queryClient.invalidateQueries({ queryKey: dsbKeys.config(community), exact: true })
+      void invalidate(queryClient, QueryInvalidation.community.dashboard(community))
     }
 
     dashboardStore.reconcile({

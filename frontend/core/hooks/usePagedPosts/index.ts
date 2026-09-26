@@ -3,24 +3,26 @@ import { useEffect, useMemo, useRef } from 'react'
 
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { Q } from '~/query'
 import { isArticleStatsSnapshotStale } from '~/query/articleStats'
-import { overlayArticleUpvoteReceiptIfNewer } from '~/query/mutation/articleReceipt'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
+import { overlayArticleUpvoteReceiptOnViewerState } from '~/query/mutation/articleReceipt'
 import useArticleInteractionReconcile from '~/query/useArticleInteractionReconcile'
 import { clearArticleViewReceipt, readArticleViewReceipt } from '~/query/viewReceipt'
-import type { TPagedPosts, TResState } from '~/spec'
+import type { TPagedArticleViewModels, TResState, TArticleViewerState } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 
 type TRes = {
   resState: TResState
-  pagedPosts: TPagedPosts
+  pagedPosts: TPagedArticleViewModels
   pagedParams: ReturnType<typeof getPagedArticlesParams>
 }
+
+const EMPTY_POST_VIEW_MODELS: TPagedArticleViewModels = { entries: [] }
 
 /**
  * Reads and updates the current community post-list state.
@@ -37,7 +39,7 @@ export default function usePagedPosts(): TRes {
   const pagedParams = getPagedArticlesParams(slug, searchParams)
   const query = useQuery(Q.article.posts(pagedParams))
   const statsQuery = useQuery(
-    Q.article.articleStatsBatch(
+    Q.article.statsBatch(
       slug,
       THREAD.POST,
       (query.data?.entries || []).map((article) => article.innerId),
@@ -45,7 +47,7 @@ export default function usePagedPosts(): TRes {
   )
   const statsEntities = useQueries({
     queries: (query.data?.entries || []).map((article) => ({
-      ...Q.article.articleStats(slug, THREAD.POST, article.innerId),
+      ...Q.article.stats(slug, THREAD.POST, article.innerId),
       enabled: false,
     })),
   })
@@ -56,9 +58,7 @@ export default function usePagedPosts(): TRes {
     )
       return
     refreshedStats.current = true
-    void queryClient.invalidateQueries({
-      queryKey: Q.article.articleStatsBatch(slug, THREAD.POST, []).queryKey.slice(0, 4),
-    })
+    void invalidate(queryClient, QueryInvalidation.article.statsBatch(slug, THREAD.POST))
   }, [queryClient, slug, statsQuery.data])
   const articleRefs = useMemo(
     () =>
@@ -79,7 +79,7 @@ export default function usePagedPosts(): TRes {
   }, [viewerQuery.data])
   useArticleInteractionReconcile(query.data?.entries)
   const pagedPosts = useMemo(() => {
-    if (!query.data) return EMPTY_PAGED_ARTICLES
+    if (!query.data) return EMPTY_POST_VIEW_MODELS
     const accountRef = account.accountRef || getAccountRef(account.user)
 
     const stats = new Map<string, NonNullable<typeof statsQuery.data>[number]>()
@@ -92,16 +92,21 @@ export default function usePagedPosts(): TRes {
       ...query.data,
       entries: query.data.entries.map((article) => {
         const key = `${article.community.slug}:${article.meta.thread}:${article.innerId}`
-        const viewerState = viewerQuery.data?.[key]
+        const baseViewerState: TArticleViewerState = {
+          articleKey: key,
+          ...viewerQuery.data?.[key],
+        }
         const stat = stats.get(String(article.innerId))
-        const withStats = stat ? { ...article, articleStats: stat } : article
-        const merged = viewerState
-          ? { ...withStats, ...viewerState, articleKey: undefined }
-          : withStats
-        const viewed = readArticleViewReceipt(key) ? { ...merged, viewerHasViewed: true } : merged
-        return overlayArticleUpvoteReceiptIfNewer(accountRef, viewed, key) || viewed
+        const viewed = readArticleViewReceipt(key)
+          ? { ...baseViewerState, viewerHasViewed: true }
+          : baseViewerState
+        return {
+          content: article,
+          stats: stat || null,
+          viewerState: overlayArticleUpvoteReceiptOnViewerState(accountRef, stat, viewed, key),
+        }
       }),
-    } as TPagedPosts
+    } as unknown as TPagedArticleViewModels
   }, [
     account.accountRef,
     account.user,

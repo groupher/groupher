@@ -101,7 +101,7 @@ describe('comment query mutation helpers', () => {
 
   it('replaces a pending comment and invalidates the ArticleStats entity', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
     queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
     queryClient.setQueryData(key, {
       entries: [{ ...root, innerId: 'pending:1' }],
@@ -158,7 +158,7 @@ describe('comment query mutation helpers', () => {
 
   it('reconciles the Article comment revision returned by an update', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
     queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
     const target = {
       comment: root,
@@ -179,7 +179,7 @@ describe('comment query mutation helpers', () => {
       {
         ...root,
         bodyHtml: 'updated body',
-        article: { innerId: '42', commentsCount: 8, commentsRevision: 3 },
+        article: { innerId: '42', commentsRevision: 3 },
       },
     )
 
@@ -188,7 +188,7 @@ describe('comment query mutation helpers', () => {
 
   it('invalidates ArticleStats after delete', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.articleStats('home', THREAD.POST, '42')
+    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
     queryClient.setQueryData(articleStatsKey, { commentsCount: 7 })
     queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
     const target = {
@@ -209,7 +209,7 @@ describe('comment query mutation helpers', () => {
       undefined,
       {
         ...root,
-        article: { innerId: '42', commentsCount: 9, commentsRevision: 3 },
+        article: { innerId: '42', commentsRevision: 3 },
       },
     )
 

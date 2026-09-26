@@ -10,7 +10,6 @@ import { preserveCommentProjection } from './revisionGuard'
 
 export type TCommentReconcileResult = {
   article: {
-    commentsCount: number
     commentsRevision: number
     innerId: number
   }

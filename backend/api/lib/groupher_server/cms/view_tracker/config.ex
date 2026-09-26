@@ -1,53 +1,51 @@
 defmodule GroupherServer.CMS.ViewTracker.Config do
   @moduledoc """
-  Runtime limits for ViewTracker projection and retention.
+  Runtime limits for synchronous Article view counting and retention.
 
-      ViewTracker worker -> Config -> application runtime configuration
+      ViewTracker transaction / Retention -> Config -> runtime values
   """
 
-  @doc "Returns the sliding dedupe window in seconds."
-  @spec dedupe_window_seconds() :: pos_integer()
-  def dedupe_window_seconds do
-    value = runtime() |> Keyword.get(:dedupe_window_seconds, 600)
-    validate_positive!(:dedupe_window_seconds, value)
+  @doc "Returns the sliding dedupe window for one counted actor type."
+  @spec dedupe_window_seconds(:human | :agent) :: pos_integer()
+  def dedupe_window_seconds(:human) do
+    value = runtime() |> Keyword.get(:human_dedupe_window_seconds, 600)
+    validate_positive!(:human_dedupe_window_seconds, value)
     value
   end
 
-  @doc "Returns how many days terminal ViewEvents remain before cleanup."
-  @spec view_event_retention_days() :: pos_integer()
-  def view_event_retention_days do
-    value = runtime() |> Keyword.get(:view_event_retention_days, 30)
-    validate_positive!(:view_event_retention_days, value)
+  def dedupe_window_seconds(:agent) do
+    value = runtime() |> Keyword.get(:agent_dedupe_window_seconds, 600)
+    validate_positive!(:agent_dedupe_window_seconds, value)
     value
   end
 
-  @doc "Returns how many days dedupe states remain after their last counted view."
-  @spec dedupe_state_retention_days() :: pos_integer()
-  def dedupe_state_retention_days do
-    value = runtime() |> Keyword.get(:dedupe_state_retention_days, view_event_retention_days())
-    validate_positive!(:dedupe_state_retention_days, value)
+  @doc "Returns how long finalized transport receipts remain eligible for cleanup."
+  @spec view_count_receipt_ttl_seconds() :: pos_integer()
+  def view_count_receipt_ttl_seconds do
+    value = runtime() |> Keyword.get(:view_count_receipt_ttl_seconds, 960)
+    validate_positive!(:view_count_receipt_ttl_seconds, value)
+    value
+  end
 
-    if value * 86_400 <= dedupe_window_seconds() do
+  @doc "Returns how long inactive viewer watermarks are retained."
+  @spec watermark_retention_seconds() :: pos_integer()
+  def watermark_retention_seconds do
+    value = runtime() |> Keyword.get(:watermark_retention_seconds, 30 * 86_400)
+    validate_positive!(:watermark_retention_seconds, value)
+
+    if value <= max(dedupe_window_seconds(:human), dedupe_window_seconds(:agent)) do
       raise ArgumentError,
-            "dedupe_state_retention_days must cover more than dedupe_window_seconds"
+            "watermark_retention_seconds must exceed every actor dedupe window"
     end
 
     value
   end
 
-  @doc "Returns the maximum number of counted events projected in one batch."
-  @spec batch_size() :: pos_integer()
-  def batch_size do
-    value = runtime() |> Keyword.get(:view_projection_batch_size, 100)
-    validate_positive!(:view_projection_batch_size, value)
-    value
-  end
-
-  @doc "Returns the maximum wall-clock window before a lost projection is dead-lettered."
-  @spec projection_retry_window_seconds() :: pos_integer()
-  def projection_retry_window_seconds do
-    value = runtime() |> Keyword.get(:view_projection_retry_window_seconds, 86_400)
-    validate_positive!(:view_projection_retry_window_seconds, value)
+  @doc "Returns the maximum rows removed by one Retention batch."
+  @spec retention_batch_size() :: pos_integer()
+  def retention_batch_size do
+    value = runtime() |> Keyword.get(:retention_batch_size, 500)
+    validate_positive!(:retention_batch_size, value)
     value
   end
 

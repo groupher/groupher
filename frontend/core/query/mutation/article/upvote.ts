@@ -2,8 +2,9 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import { THREAD } from '~/const/thread'
 import { browserGraphQLRequest } from '~/graphql/client'
-import type { TArticle, TEmotion, TUser } from '~/spec'
+import type { TArticle, TArticleStats } from '~/spec'
 
+import { invalidate, QueryInvalidation } from '../../invalidation'
 import { articleKeys, viewerKeys } from '../../key'
 import type { TArticleViewerState } from '../../viewer'
 import {
@@ -31,17 +32,11 @@ import {
 
 type TArticleReactionResult = {
   innerId: string | number
-  articleStats?: { upvotesCount: number } | null
-  collectsCount?: number | null
-  articleInteractionRevision?: number | null
+  articleStats?: { interactionRevision?: number | null } | null
   reactionOutcome?: string | null
-  emotions?: Array<Pick<TEmotion, 'type' | 'count' | 'latestUsers'> | null> | null
   viewerHasCollected?: boolean | null
   viewerEmotion?: string | null
   viewerHasUpvoted?: boolean | null
-  meta?: {
-    latestUpvotedUsers?: Array<Pick<TUser, 'login' | 'nickname' | 'avatar'>> | null
-  } | null
 }
 
 const patchViewerChanges = (
@@ -139,7 +134,10 @@ export const articleUpvoteOperation = {
   read: (context: TReadOperationContext, article: TArticle): boolean => {
     const articleKey = articleKeyFor(articlePath(article))
     const receipt = readArticleUpvoteReceipt(context.accountRef, articleKey)
-    if (receipt && isArticleUpvoteReceiptNewer(article, receipt))
+    const stats = context.queryClient.getQueryData<TArticleStats>(
+      articleKeys.stats(article.community.slug, article.meta.thread, article.innerId),
+    )
+    if (receipt && isArticleUpvoteReceiptNewer(stats, receipt))
       return receipt.viewerState.viewerHasUpvoted
     if (context.accountRef) {
       const viewer = context.queryClient
@@ -151,7 +149,7 @@ export const articleUpvoteOperation = {
         .find((states) => typeof states?.[articleKey]?.viewerHasUpvoted === 'boolean')
       if (viewer) return Boolean(viewer[articleKey]?.viewerHasUpvoted)
     }
-    return Boolean(article.viewerHasUpvoted)
+    return false
   },
   queriesToCancel: (context: TOperationContext): readonly TQueryTarget[] => [
     ...articleStatsQueryTargets(context.queryClient),
@@ -198,9 +196,7 @@ export const articleUpvoteOperation = {
     const key = articleKeyFor(path)
     const viewerHasUpvoted =
       typeof result.viewerHasUpvoted === 'boolean' ? result.viewerHasUpvoted : nextViewerState
-    void context.queryClient.invalidateQueries({
-      queryKey: articleKeys.articleStats(path.community, path.thread, path.innerId),
-    })
+    void invalidate(context.queryClient, QueryInvalidation.article.stats(path))
     if (context.accountRef) {
       patchViewerState(context.queryClient, context.accountRef, key, {
         viewerHasUpvoted,
@@ -210,26 +206,16 @@ export const articleUpvoteOperation = {
         ...(result.viewerEmotion !== undefined ? { viewerEmotion: result.viewerEmotion } : {}),
       })
     }
-    if (
-      context.accountRef &&
-      typeof result.articleStats?.upvotesCount === 'number' &&
-      result.reactionOutcome !== 'unchanged'
-    ) {
+    if (context.accountRef && result.reactionOutcome !== 'unchanged') {
       writeArticleUpvoteReceipt({
         accountRef: context.accountRef,
         entityKey: key,
         commandId: context.commandId,
-        upvotesCount: result.articleStats.upvotesCount,
         viewerHasUpvoted,
-        collectsCount: typeof result.collectsCount === 'number' ? result.collectsCount : undefined,
-        articleInteractionRevision:
-          typeof result.articleInteractionRevision === 'number'
-            ? result.articleInteractionRevision
+        interactionRevision:
+          typeof result.articleStats?.interactionRevision === 'number'
+            ? result.articleStats.interactionRevision
             : undefined,
-        emotions: Array.isArray(result.emotions) ? result.emotions : undefined,
-        latestUpvotedUsers: Array.isArray(result.meta?.latestUpvotedUsers)
-          ? result.meta.latestUpvotedUsers
-          : undefined,
         viewerHasCollected:
           typeof result.viewerHasCollected === 'boolean' ? result.viewerHasCollected : undefined,
         viewerEmotion: result.viewerEmotion,

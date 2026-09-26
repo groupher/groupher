@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   use GroupherServer.TestMate
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias CMS.ViewTracker.Model.ViewSummary
+  alias CMS.Model.ArticleStats
   alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   @page_size GroupherServerWeb.Config.page_size()
@@ -258,15 +258,15 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     end
 
     test "filter sort MOST_VIEWS should work", ~m(guest_conn doc_last_year)a do
-      Repo.insert!(%ViewSummary{
-        thread: :doc,
-        article_id: doc_last_year.id,
-        views: 10,
-        revision: 1
-      })
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :doc and summary.article_id == ^doc_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
 
       most_views_doc =
-        ViewSummary
+        ArticleStats
         |> where([summary], summary.thread == :doc)
         |> order_by(desc: :views)
         |> limit(1)
@@ -436,9 +436,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   defp track_view(article, user) do
     event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} =
+    assert {:ok, %{event_id: ^event_id}} =
              CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
-
-    assert :ok = CMS.ViewTracker.project(event_id)
   end
 end

@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
 
   alias Accounts.Model.User
 
@@ -57,6 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   }
 
   alias Helper.{T, Transaction}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
   @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
@@ -309,7 +310,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          next_checklist <- checklist(community, branch_id: branch.id),
          {:ok, _state} <-
            DocPublishRelease.mark_site_draft_clean(community, branch, next_checklist) do
-      {:ok, publish_payload(true, nil, next_checklist)}
+      with :ok <- invalidate_doc_tree(community) do
+        {:ok, publish_payload(true, nil, next_checklist)}
+      end
     end
   end
 
@@ -355,7 +358,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              user,
              next_checklist
            ) do
-      {:ok, publish_payload(true, release, next_checklist)}
+      with :ok <- invalidate_doc_tree(community) do
+        {:ok, publish_payload(true, release, next_checklist)}
+      end
     end
   end
 
@@ -366,6 +371,18 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       checklist: checklist,
       scope: %{total_count: checklist.total_count}
     }
+  end
+
+  defp invalidate_doc_tree(community) do
+    case PublicCache.invalidate_now(
+           PublicCacheConst.doc_tree_changed(),
+           %{community: community.slug, community_id: community.id},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp publish_doc_checklist_items(
@@ -484,10 +501,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          MapSet.disjoint?(selected_doc_ids, deleted_doc_ids) do
       :ok
     else
-      {:error,
-       ErrorCat.custom(
-         "Selected docs publish item is also selected for tree deletion."
-       )}
+      {:error, ErrorCat.custom("Selected docs publish item is also selected for tree deletion.")}
     end
   end
 

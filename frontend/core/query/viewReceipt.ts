@@ -8,14 +8,13 @@ import {
   writeSessionReceipt,
 } from './sessionReceiptStorage'
 
-const RECEIPT_VERSION = 2
+const RECEIPT_VERSION = 3
 const storagePrefix = 'groupher:view-receipt:'
 
 export type TArticleViewReceipt = {
-  schemaVersion: 2
+  schemaVersion: 3
   articleRef: string
-  viewEventId: string
-  accepted: true
+  eventId: string
   confirmedAt: number
   expiresAt: number
 }
@@ -23,23 +22,22 @@ export type TArticleViewReceipt = {
 const storageKey = (articleRef: string): string => `${storagePrefix}${articleRef}`
 
 const validReceipt = (receipt: TArticleViewReceipt): boolean =>
-  Boolean(receipt.articleRef && receipt.viewEventId && receipt.accepted === true)
+  Boolean(receipt.articleRef && receipt.eventId)
 
-/** Persists acceptance of one stable Article view event across a same-tab refresh. */
-export const writeArticleViewReceipt = (articleRef: string, viewEventId: string): void => {
+/** Persists a committed anonymous view decision across a same-tab refresh. */
+export const writeArticleViewReceipt = (articleRef: string, eventId: string): void => {
   const confirmedAt = Date.now()
   listSessionReceipts(storagePrefix, RECEIPT_VERSION, validReceipt)
   writeSessionReceipt(storageKey(articleRef), {
     schemaVersion: RECEIPT_VERSION,
     articleRef,
-    viewEventId,
-    accepted: true,
+    eventId,
     confirmedAt,
     expiresAt: confirmedAt + CONFIRMED_WRITE_RECEIPT_TTL_MS,
   })
 }
 
-/** Reads a live acceptance receipt for one Article view event. */
+/** Reads a live committed receipt for one anonymous Article view. */
 export const readArticleViewReceipt = (articleRef: string): TArticleViewReceipt | null =>
   readSessionReceipt(
     storageKey(articleRef),
@@ -47,7 +45,7 @@ export const readArticleViewReceipt = (articleRef: string): TArticleViewReceipt 
     (receipt: TArticleViewReceipt) => validReceipt(receipt) && receipt.articleRef === articleRef,
   )
 
-/** Removes one accepted view receipt after viewer authority confirms it. */
+/** Removes one view receipt after viewer authority confirms it. */
 export const clearArticleViewReceipt = (articleRef: string): void => {
   removeSessionReceipt(storageKey(articleRef))
 }

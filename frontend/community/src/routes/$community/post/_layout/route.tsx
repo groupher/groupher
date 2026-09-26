@@ -16,7 +16,7 @@ export const Route = createFileRoute('/$community/post/_layout')({
       communityQueries.posts(params.community),
     )
     const stats = await context.queryClient.ensureQueryData(
-      communityQueries.articleStats(
+      communityQueries.stats(
         params.community,
         THREAD.POST,
         (posts.entries || []).map((article) => article.innerId),

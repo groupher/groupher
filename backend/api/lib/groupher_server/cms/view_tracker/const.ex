@@ -1,20 +1,10 @@
 defmodule GroupherServer.CMS.ViewTracker.Const do
   @moduledoc """
-  Closed vocabulary for ViewTracker decisions and classifications.
+  Closed vocabulary for ViewTracker decisions and receipts.
 
-      ViewTracker policy -> Const vocabulary -> ViewEvent
+      ViewTracker policy -> Const vocabulary -> synchronous receipt
   """
 
-  @actor_confidences [:verified, :probable, :unknown]
-  @classified_by [
-    :account_session,
-    :agent_credential,
-    :delegation_credential,
-    :verified_crawler,
-    :self_reported,
-    :signed_anonymous_id,
-    :fallback
-  ]
   @decision_reasons [:counted, :duplicate_in_window, :excluded_by_policy]
   @read_purposes [
     :public_read,
@@ -23,20 +13,17 @@ defmodule GroupherServer.CMS.ViewTracker.Const do
     :operations_inspection,
     :internal_probe
   ]
-  @projection_states [:pending, :applied, :article_deleted, :dead_letter, :dropped]
+  @receipt_states [:pending, :finalized]
 
-  @doc "Returns the closed actor-confidence vocabulary."
-  def actor_confidences, do: @actor_confidences
-
-  @doc "Returns the closed classifier-source vocabulary."
-  def classified_by, do: @classified_by
-
-  @doc "Returns the closed ViewEvent decision vocabulary."
+  @doc "Returns every decision reason exposed by ViewTracker."
   def decision_reasons, do: @decision_reasons
+
+  @doc "Returns decision reasons persisted in finalized receipts."
+  def persisted_decision_reasons, do: [:counted, :duplicate_in_window]
 
   @doc "Returns the server-derived read-purpose vocabulary."
   def read_purposes, do: @read_purposes
 
-  @doc "Returns the closed current-total projection vocabulary."
-  def projection_states, do: @projection_states
+  @doc "Returns the closed receipt state vocabulary."
+  def receipt_states, do: @receipt_states
 end

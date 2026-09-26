@@ -130,7 +130,11 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   defp sync_article_fixed(article, reaction, %User{} = user, operation)
        when reaction in [:collect, :report, :upvote] and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_fixed(interaction_info(thread), article.id, reaction, user, operation)
+      with {:ok, projection} <-
+             sync_fixed(interaction_info(thread), article.id, reaction, user, operation),
+           :ok <- maybe_sync_article_stats(article, reaction) do
+        {:ok, projection}
+      end
     end
   end
 
@@ -142,9 +146,18 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   defp sync_article_emotion(article, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_emotion(interaction_info(thread), article.id, emotion, user, operation)
+      with {:ok, projection} <-
+             sync_emotion(interaction_info(thread), article.id, emotion, user, operation),
+           :ok <- CMS.ArticleStats.apply_interaction_counts(article) do
+        {:ok, projection}
+      end
     end
   end
+
+  defp maybe_sync_article_stats(_article, :report), do: :ok
+
+  defp maybe_sync_article_stats(article, _reaction),
+    do: CMS.ArticleStats.apply_interaction_counts(article)
 
   defp sync_comment_emotion(comment, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do

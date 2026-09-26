@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Jobs, Repo}
+  alias GroupherServer.{Accounts, CMS, Jobs, PublicCache, Repo}
   alias Accounts.Model.User
   alias CMS.{Comments.ErrorCat, Artiment.Const, SearchArtiments.Indexer, Command, FrontDesk, Gate}
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -44,6 +44,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   }
 
   alias GroupherServer.Analysis.MetricEvent
+  alias PublicCache.Const, as: PublicCacheConst
   alias Helper.{ORM, T}
 
   @max_parent_replies_count Comment.max_parent_replies_count()
@@ -121,10 +122,12 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, counted_article} <- ORM.inc(article, :comments_count),
          {:ok, counted_article} <- ORM.inc(counted_article, :comments_revision),
          {:ok, projected_comment} <- set_question_flag_ifneed(article, comment),
-         {:ok, _participants} <- Participants.add_to_article(article, user),
+         {:ok, participant_article} <- Participants.add_to_article(article, user),
          {:ok, _active_article} <- update_active_timestamp(thread, article, comment),
          {:ok, _job} <- JobPolicy.audition(projected_comment),
-         :ok <- record_article_metric(counted_article, command_id, :comment_created) do
+         :ok <- CMS.ArticleStats.apply_comment_counts(participant_article),
+         :ok <- record_article_metric(counted_article, command_id, :comment_created),
+         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id) do
       {:ok,
        %{
          comment: projected_comment,
@@ -242,14 +245,16 @@ defmodule GroupherServer.CMS.Comments.Writer do
              comment_id: replied_comment.id,
              reply_to_comment_id: replying_comment.id
            }),
-         {:ok, _participants} <- Participants.add_to_article(article, user),
+         {:ok, participant_article} <- Participants.add_to_article(article, user),
          {:ok, reply_with_meta} <-
            update_reply_to_others_state(parent_comment, replying_comment, replied_comment),
          {:ok, associated_reply} <- associate_reply(reply_with_meta, replying_comment),
          {:ok, _embedded_parent} <- add_replies_ifneed(parent_comment, associated_reply),
          {:ok, _parent} <- ORM.inc(parent_comment, :replies_count),
          {:ok, _job} <- JobPolicy.audition(associated_reply),
-         :ok <- record_article_metric(counted_article, command_id, :comment_created) do
+         :ok <- CMS.ArticleStats.apply_comment_counts(participant_article),
+         :ok <- record_article_metric(counted_article, command_id, :comment_created),
+         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id) do
       {:ok,
        %{
          comment: associated_reply,
@@ -391,6 +396,21 @@ defmodule GroupherServer.CMS.Comments.Writer do
       :ok -> :ok
       {:error, _reason} = error -> error
     end
+  end
+
+  defp invalidate_public_comments(article, thread, command_id) do
+    PublicCache.invalidate_now(
+      PublicCacheConst.comments_content_changed(),
+      %{
+        community: article.community.slug,
+        community_id: article.community_id,
+        thread: thread,
+        inner_id: article.inner_id,
+        id: article.id
+      },
+      causation_id: command_id,
+      aggregate_type: "article"
+    )
   end
 
   defp enqueue_create_followups(

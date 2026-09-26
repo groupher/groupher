@@ -3,13 +3,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 
-import type { TArticle } from '~/spec'
+import type { TArticle, TArticleStats } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
-import { viewerKeys } from './key'
-import { articleKeys } from './key'
+import { invalidate, QueryInvalidation } from './invalidation'
+import { articleKeys, viewerKeys } from './key'
 import {
   isArticleUpvoteReceiptNewer,
   readArticleUpvoteReceipt,
@@ -68,12 +68,29 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
       const ref = toRef(article)
       const key = toKey(ref)
       const receipt = readArticleUpvoteReceipt(accountRef, key)
-      if (isArticleUpvoteReceiptNewer(article, receipt)) unique.set(key, ref)
+      const stats = queryClient.getQueryData<TArticleStats>(
+        articleKeys.stats(ref.community, ref.thread, ref.innerId),
+      )
+      if (isArticleUpvoteReceiptNewer(stats, receipt)) unique.set(key, ref)
     }
     return [...unique.values()]
-  }, [accountRef, articles])
+  }, [accountRef, articles, queryClient])
 
   const query = useQuery(Q.viewer.articleInteractionStates(accountRef || '', refs))
+
+  useEffect(() => {
+    if (!accountRef) return
+    for (const article of articles || []) {
+      const ref = toRef(article)
+      const key = toKey(ref)
+      const receipt = readArticleUpvoteReceipt(accountRef, key)
+      if (!receipt) continue
+      const stats = queryClient.getQueryData<TArticleStats>(
+        articleKeys.stats(ref.community, ref.thread, ref.innerId),
+      )
+      if (!isArticleUpvoteReceiptNewer(stats, receipt)) clearArticleUpvoteReceipt(accountRef, key)
+    }
+  }, [accountRef, articles, queryClient])
 
   useEffect(() => {
     if (!accountRef || !query.data) return
@@ -86,15 +103,10 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
       const key = toKey(ref)
       const receipt = readArticleUpvoteReceipt(accountRef, key)
       if (!receipt) continue
-      const receiptRevision = receipt.publicProjection.articleInteractionRevision
+      const receiptRevision = receipt.interactionRevision
       mergePrivateState(queryClient, accountRef, state)
-      void queryClient.invalidateQueries({
-        queryKey: articleKeys.articleStats(ref.community, ref.thread, ref.innerId),
-      })
-      if (
-        typeof receiptRevision !== 'number' ||
-        state.articleInteractionRevision >= receiptRevision
-      ) {
+      void invalidate(queryClient, QueryInvalidation.article.stats(ref))
+      if (typeof receiptRevision !== 'number' || state.interactionRevision >= receiptRevision) {
         clearArticleUpvoteReceipt(accountRef, key)
       }
     }

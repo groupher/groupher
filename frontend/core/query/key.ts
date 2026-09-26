@@ -1,3 +1,4 @@
+import { THREAD } from '~/const/thread'
 import type { TPagedArticlesParams, TThread } from '~/spec'
 
 export type TNormalizedArticleFilter = {
@@ -62,19 +63,68 @@ export const articleKeys = {
   kanban: (community: string) => [...articleKeys.all, 'kanban', community] as const,
   detail: (community: string, thread: TThread, innerId: string | number) =>
     [...articleKeys.all, 'detail', community, thread, String(innerId)] as const,
-  articleStatsPrefix: (community: string, thread: TThread) =>
+  statsPrefix: (community: string, thread: TThread) =>
     [...articleKeys.all, 'article-stats', community, thread] as const,
-  articleStats: (community: string, thread: TThread, innerId: string | number) =>
-    [...articleKeys.articleStatsPrefix(community, thread), String(innerId)] as const,
-  articleStatsBatch: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
-    [
-      ...articleKeys.articleStatsPrefix(community, thread),
-      [...innerIds].map(String).sort(),
-    ] as const,
+  stats: (community: string, thread: TThread, innerId: string | number) =>
+    [...articleKeys.statsPrefix(community, thread), String(innerId)] as const,
+  statsBatch: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
+    [...articleKeys.statsPrefix(community, thread), [...innerIds].map(String).sort()] as const,
   tagStats: (community: string, thread: TThread, slug: string | null | undefined) =>
     [...articleKeys.all, 'tag-stats', community, thread, normalizeText(slug)] as const,
   tagGroups: (community: string, thread: TThread) =>
     [...articleKeys.all, 'tag-groups', community, thread] as const,
+  isArticleEntity: (queryKey: readonly unknown[]): boolean =>
+    queryKey[0] === articleKeys.all[0] &&
+    typeof queryKey[1] === 'string' &&
+    ['changelogs', 'detail', 'posts'].includes(queryKey[1]),
+  isStats: (queryKey: readonly unknown[]): boolean =>
+    queryKey[0] === articleKeys.all[0] &&
+    queryKey[1] === 'article-stats' &&
+    typeof queryKey[2] === 'string' &&
+    typeof queryKey[3] === 'string' &&
+    typeof queryKey[4] === 'string',
+  isStatsBatch: (queryKey: readonly unknown[]): boolean =>
+    queryKey[0] === articleKeys.all[0] &&
+    queryKey[1] === 'article-stats' &&
+    typeof queryKey[2] === 'string' &&
+    typeof queryKey[3] === 'string' &&
+    Array.isArray(queryKey[4]),
+  matchesStatsBatch: (
+    queryKey: readonly unknown[],
+    community: string,
+    thread: TThread,
+    innerId: string | number,
+  ): boolean =>
+    articleKeys.isStatsBatch(queryKey) &&
+    queryKey[2] === community &&
+    queryKey[3] === thread &&
+    (queryKey[4] as unknown[]).map(String).includes(String(innerId)),
+  matchesStatsBatchScope: (
+    queryKey: readonly unknown[],
+    community: string,
+    thread: TThread,
+  ): boolean =>
+    articleKeys.isStatsBatch(queryKey) && queryKey[2] === community && queryKey[3] === thread,
+  matchesArticleList: (
+    queryKey: readonly unknown[],
+    community: string,
+    thread?: TThread,
+  ): boolean => {
+    const family = queryKey[1]
+    const filter = queryKey[2]
+    if (
+      queryKey[0] !== articleKeys.all[0] ||
+      !['posts', 'changelogs'].includes(String(family)) ||
+      !filter ||
+      typeof filter !== 'object'
+    ) {
+      return false
+    }
+
+    if ((filter as TNormalizedArticleFilter).community !== community) return false
+    if (!thread) return true
+    return thread === THREAD.CHANGELOG ? family === 'changelogs' : family === 'posts'
+  },
 }
 
 export const commentKeys = {
@@ -117,6 +167,15 @@ export const viewerKeys = {
     [...viewerKeys.all, accountRef, 'article-state'] as const,
   articleStates: (accountRef: string, articleKeys: readonly string[]) =>
     [...viewerKeys.articleStatePrefix(accountRef), [...articleKeys].sort()] as const,
+  matchesArticleState: (query: { queryKey: readonly unknown[] }, articleKey: string): boolean => {
+    const [domain, _accountRef, target, articleKeys] = query.queryKey
+    return (
+      domain === viewerKeys.all[0] &&
+      target === 'article-state' &&
+      Array.isArray(articleKeys) &&
+      articleKeys.includes(articleKey)
+    )
+  },
   articleInteractionStates: (accountRef: string, articleKeys: readonly string[]) =>
     [...viewerKeys.all, accountRef, 'article-interaction-state', [...articleKeys].sort()] as const,
   commentStatePrefix: (accountRef: string, articleKey: string) =>

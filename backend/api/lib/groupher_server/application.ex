@@ -26,12 +26,13 @@ defmodule GroupherServer.Application do
   @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     GroupherServer.CMS.Assets.Endpoints.validate!()
+    validate_public_cache!()
 
     children =
       [
         {Phoenix.PubSub, name: GroupherServer.PubSub},
         GroupherServer.Repo,
-        GroupherServer.CMS.ViewTracker.RateLimit,
+        GroupherServer.PublicCache.Telemetry,
         GroupherServer.ServiceAuth.Cache
       ] ++
         maybe_dns_cluster_worker() ++
@@ -86,6 +87,13 @@ defmodule GroupherServer.Application do
       []
     else
       [{Oban, Application.fetch_env!(:groupher_server, Oban)}]
+    end
+  end
+
+  defp validate_public_cache! do
+    if Application.get_env(:groupher_server, :env) == :prod and
+         not GroupherServer.PublicCache.Cloudflare.configured?() do
+      raise "Cloudflare public-cache purge is not configured"
     end
   end
 

@@ -31,8 +31,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
 
-      assert emotion_entry(article["emotions"], :beer)["count"] == 1
-      assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
+      assert emotion_entry(article["articleStats"]["reactionCounts"], :beer)["count"] == 1
+      assert article["viewerEmotion"] == "BEER"
     end
 
     test "login user can undo emotion to a post", ~m(community post user owner_conn)a do
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       article = owner_conn |> gq_mutation(S.Article.m(:undo_emotion_article, :post), variables)
 
-      assert is_nil(emotion_entry(article["emotions"], :beer))
+      assert is_nil(emotion_entry(article["articleStats"]["reactionCounts"], :beer))
     end
 
     test "duplicate same emotion counts as 1", ~m(community post user_conn)a do
@@ -55,12 +55,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
-      assert emotion_entry(article["emotions"], :beer)["count"] == 1
-      assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
+      assert emotion_entry(article["articleStats"]["reactionCounts"], :beer)["count"] == 1
+      assert article["viewerEmotion"] == "BEER"
 
       article2 = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
-      assert emotion_entry(article2["emotions"], :beer)["count"] == 1
-      assert emotion_entry(article2["emotions"], :beer)["viewerHasReacted"]
+      assert emotion_entry(article2["articleStats"]["reactionCounts"], :beer)["count"] == 1
+      assert article2["viewerEmotion"] == "BEER"
     end
 
     test "different emotions from different users both get counted",
@@ -71,7 +71,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       }
 
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables_beer)
-      assert emotion_entry(article["emotions"], :beer)["count"] == 1
+      assert emotion_entry(article["articleStats"]["reactionCounts"], :beer)["count"] == 1
 
       variables_heart = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
@@ -79,11 +79,13 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       }
 
       article2 = user2_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables_heart)
-      assert emotion_entry(article2["emotions"], :beer)["count"] == 1
+      assert emotion_entry(article2["articleStats"]["reactionCounts"], :beer)["count"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
-      assert current_post.emotions.beer_count == 1
-      assert current_post.emotions.heart_count == 1
+      counts = CMS.Interactions.counts([current_post])
+      reaction_counts = counts[{:post, current_post.id}].reaction_counts
+      assert %{type: :beer, count: 1} in reaction_counts
+      assert %{type: :heart, count: 1} in reaction_counts
     end
 
     test "same user different emotions create one record per emotion", ~m(post user)a do

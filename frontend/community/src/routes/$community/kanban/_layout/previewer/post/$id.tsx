@@ -24,7 +24,7 @@ export const Route = createFileRoute('/$community/kanban/_layout/previewer/post/
     )
     if (!post) throw notFound()
     const stats = await context.queryClient.ensureQueryData(
-      communityQueries.articleStats(params.community, THREAD.POST, [params.id]),
+      communityQueries.stats(params.community, THREAD.POST, [params.id]),
     )
     cacheArticleStatsEntities(context.queryClient, stats)
     return { post }

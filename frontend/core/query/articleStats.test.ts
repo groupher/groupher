@@ -8,13 +8,13 @@ vi.mock('~/graphql/client', () => ({ browserGraphQLRequest }))
 
 import { THREAD } from '~/const/thread'
 import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
+import type { TArticleStats } from '~/spec'
 
 import {
   ARTICLE_STATS_SNAPSHOT_MAX_AGE_MS,
   articleStats,
   cacheArticleStats,
   isArticleStatsSnapshotStale,
-  type TArticleStats,
 } from './articleStats'
 import { articleKeys } from './key'
 
@@ -28,6 +28,11 @@ const stats = (overrides: Partial<TArticleStats> = {}): TArticleStats => ({
   viewsRevision: 2,
   upvotesCount: 3,
   commentsCount: 4,
+  collectsCount: 5,
+  commentsParticipantsCount: 6,
+  interactionRevision: 7,
+  commentsRevision: 8,
+  reactionCounts: [{ type: 'HEART', count: 2 }],
   snapshotAt: new Date(NOW).toISOString(),
   ...overrides,
 })
@@ -59,7 +64,7 @@ describe('ArticleStats freshness and ordering', () => {
 
   it('rejects an older snapshot without replacing the entity', () => {
     const queryClient = new QueryClient()
-    const key = articleKeys.articleStats('home', THREAD.POST, '42')
+    const key = articleKeys.stats('home', THREAD.POST, '42')
     const current = stats()
     queryClient.setQueryData(key, current)
 
@@ -74,7 +79,7 @@ describe('ArticleStats freshness and ordering', () => {
 
   it('drops a newer mixed snapshot with a lower views revision', () => {
     const queryClient = new QueryClient()
-    const key = articleKeys.articleStats('home', THREAD.POST, '42')
+    const key = articleKeys.stats('home', THREAD.POST, '42')
     const current = stats()
     queryClient.setQueryData(key, current)
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
@@ -88,6 +93,51 @@ describe('ArticleStats freshness and ordering', () => {
 
     expect(queryClient.getQueryData(key)).toEqual(current)
     expect(warn).toHaveBeenCalledWith('[ArticleStats] mixed_snapshot', expect.any(Object))
+  })
+
+  it('drops a newer mixed snapshot when any owner revision regresses', () => {
+    const queryClient = new QueryClient()
+    const key = articleKeys.stats('home', THREAD.POST, '42')
+    const current = stats()
+    queryClient.setQueryData(key, current)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    cacheArticleStats(queryClient, {
+      ...current,
+      snapshotAt: new Date(NOW + 1_000).toISOString(),
+      interactionRevision: current.interactionRevision - 1,
+    })
+
+    expect(queryClient.getQueryData(key)).toEqual(current)
+    expect(warn).toHaveBeenCalledWith('[ArticleStats] mixed_snapshot', {
+      currentSnapshotAt: current.snapshotAt,
+      incomingSnapshotAt: new Date(NOW + 1_000).toISOString(),
+      revision: 'interactionRevision',
+      currentRevision: current.interactionRevision,
+      incomingRevision: current.interactionRevision - 1,
+    })
+  })
+
+  it('accepts a strictly advanced revision even when snapshotAt is invalid', () => {
+    const queryClient = new QueryClient()
+    const key = articleKeys.stats('home', THREAD.POST, '42')
+    const current = stats()
+    queryClient.setQueryData(key, current)
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const incoming = {
+      ...current,
+      views: current.views + 1,
+      viewsRevision: current.viewsRevision + 1,
+      snapshotAt: 'invalid-but-non-authoritative',
+    }
+    cacheArticleStats(queryClient, incoming)
+
+    expect(queryClient.getQueryData(key)).toEqual(incoming)
+    expect(queryClient.getQueryState(key)?.isInvalidated).toBe(true)
+    expect(warn).toHaveBeenCalledWith('[ArticleStats] invalid_snapshot', {
+      snapshotAt: incoming.snapshotAt,
+    })
   })
 
   it('does not read the deleted public stats contracts', () => {

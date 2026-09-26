@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import useArticleUpvote from '~/query/mutation/useArticleUpvote'
-import type { TPost } from '~/spec'
+import type { TArticleStats, TArticleViewerState, TPost } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
 import ViewsCount from '~/unit/ViewsCount'
@@ -11,13 +11,15 @@ import useSalon from '../salon/quora_layout/footer'
 
 type TProps = {
   article: TPost
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
 }
 
-const Footer: FC<TProps> = ({ article }) => {
+const Footer: FC<TProps> = ({ article, stats, viewerState }) => {
   const { meta } = article
 
   const s = useSalon()
-  const { count, isUpvoted, toggle } = useArticleUpvote(article)
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -29,7 +31,7 @@ const Footer: FC<TProps> = ({ article }) => {
         type={UPVOTE_LAYOUT.GENERAL}
       />
       {article.cat && <ArticleCatStatus left={2} cat={article.cat} status={article.status} />}
-      <ViewsCount count={article.articleStats?.views} left={3} />
+      <ViewsCount count={stats?.views} left={3} />
     </div>
   )
 }

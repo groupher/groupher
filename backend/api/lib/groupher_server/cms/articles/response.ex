@@ -113,14 +113,10 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   defp merge(article, state) do
     article
-    |> Map.put(:upvotes_count, state.upvotes_count)
-    |> Map.put(:article_interaction_revision, state.interaction_revision)
-    |> Map.put(:collects_count, state.collects_count)
     |> Map.put(:viewer_has_upvoted, state.viewer_has_upvoted)
     |> Map.put(:viewer_has_collected, state.viewer_has_collected)
     |> Map.put(:viewer_emotion, viewer_emotion(state.emotions))
     |> Map.put(:viewer_has_reported, state.viewer_has_reported)
-    |> Map.put(:emotions, emotion_map(state.emotions))
     |> Map.put(:meta, article_meta(article, state))
   end
 
@@ -134,23 +130,6 @@ defmodule GroupherServer.CMS.Articles.Response do
       |> Map.put(:latest_collected_users, state.latest_collected_users)
 
     Map.put(meta, :reported_count, Map.get(state, :reported_count, 0))
-  end
-
-  defp emotion_map(emotions) do
-    Map.new(emotions, fn emotion ->
-      {emotion.emotion,
-       %{
-         count: emotion.count,
-         latest_users: emotion.latest_users,
-         viewer_has_reacted: emotion.viewer_has_reacted
-       }}
-    end)
-    |> Enum.reduce(%{}, fn {emotion, state}, acc ->
-      acc
-      |> Map.put(:"#{emotion}_count", state.count)
-      |> Map.put(:"latest_#{emotion}_users", state.latest_users)
-      |> Map.put(:"viewer_has_#{emotion}ed", state.viewer_has_reacted)
-    end)
   end
 
   defp viewer_emotion(emotions) do

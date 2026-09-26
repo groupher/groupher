@@ -3,7 +3,7 @@ import { stripCommentViewerState } from '~/lib/commentViewerState'
 import type { TComment, TThread } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { articleKeys } from '../../key'
+import { invalidate, QueryInvalidation } from '../../invalidation'
 import { articleStatsQueryTargets } from '../article/cache'
 import { writeCommentFeedReceipt } from '../commentReceipt'
 import type { TOptimisticPlan, TOperationContext, TQueryTarget } from '../optimistic/types'
@@ -24,7 +24,7 @@ import {
 
 type TCreatedCommentResult = {
   comment: TComment
-  article: { commentsCount: number; commentsRevision?: number }
+  article: { commentsRevision?: number }
 }
 
 const lifecycleQueryTargets = (
@@ -71,7 +71,6 @@ const reconcileCreated = (
     commentRef: String(result.comment.innerId),
     parentId: target.parentId,
     publicProjection: {
-      commentsCount: result.article.commentsCount,
       commentsRevision: result.article.commentsRevision,
     },
   })
@@ -128,7 +127,6 @@ type TUpdatedCommentResult = TComment & {
   article?: {
     innerId?: string | number
     thread?: TThread
-    commentsCount?: number | null
     commentsRevision?: number | null
   }
 }
@@ -175,13 +173,14 @@ export const updateCommentOperation = {
       ...comment,
       ...stripCommentViewerState(result),
     }))
-    void context.queryClient.invalidateQueries({
-      queryKey: articleKeys.articleStats(
-        target.articlePath.community,
-        target.articlePath.thread,
-        target.articlePath.innerId,
-      ),
-    })
+    void invalidate(
+      context.queryClient,
+      QueryInvalidation.article.stats({
+        community: target.articlePath.community,
+        thread: target.articlePath.thread,
+        innerId: target.articlePath.innerId,
+      }),
+    )
     if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'update',
@@ -191,7 +190,6 @@ export const updateCommentOperation = {
       commentRef: target.commentInnerId,
       comment: stripCommentViewerState(result),
       publicProjection: {
-        commentsCount: result.article?.commentsCount ?? undefined,
         commentsRevision: result.article?.commentsRevision ?? undefined,
       },
     })
@@ -228,13 +226,14 @@ export const deleteCommentOperation = {
     result: TCommentMutationResult,
   ): void => {
     patchCommentEverywhere(context.queryClient, target.scope, target.commentInnerId, () => null)
-    void context.queryClient.invalidateQueries({
-      queryKey: articleKeys.articleStats(
-        target.articlePath.community,
-        target.articlePath.thread,
-        target.articlePath.innerId,
-      ),
-    })
+    void invalidate(
+      context.queryClient,
+      QueryInvalidation.article.stats({
+        community: target.articlePath.community,
+        thread: target.articlePath.thread,
+        innerId: target.articlePath.innerId,
+      }),
+    )
     if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'delete',
@@ -243,7 +242,6 @@ export const deleteCommentOperation = {
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
       publicProjection: {
-        commentsCount: result.article?.commentsCount ?? undefined,
         commentsRevision: result.article?.commentsRevision ?? undefined,
       },
     })

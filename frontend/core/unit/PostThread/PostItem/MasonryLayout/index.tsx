@@ -1,15 +1,15 @@
 import type { FC } from 'react'
 
-import type { TPost } from '~/spec'
+import type { TArticleListViewModel, TPost } from '~/spec'
 
 import ArticleCard from '../../ArticleCard'
 
 type TProps = {
-  article: TPost
+  viewModel: TArticleListViewModel<TPost>
 }
 
-const MasonryLayout: FC<TProps> = ({ article }) => {
-  return <ArticleCard data={article} />
+const MasonryLayout: FC<TProps> = ({ viewModel }) => {
+  return <ArticleCard viewModel={viewModel} />
 }
 
 export default MasonryLayout

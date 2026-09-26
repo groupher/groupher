@@ -143,6 +143,30 @@ describe('Auth Hono application', () => {
     )
   })
 
+  it('allows the Community application Auth CORS origins', async () => {
+    const localResponse = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://community.groupher.localhost',
+        'access-control-request-method': 'GET',
+      },
+    })
+    const productionResponse = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://community.groupher.com',
+        'access-control-request-method': 'GET',
+      },
+    })
+
+    expect(localResponse.headers.get('access-control-allow-origin')).toBe(
+      'https://community.groupher.localhost',
+    )
+    expect(productionResponse.headers.get('access-control-allow-origin')).toBe(
+      'https://community.groupher.com',
+    )
+  })
+
   it('allows explicitly configured test origins with ports outside production', async () => {
     vi.stubEnv('AUTH_TEST_ALLOWED_ORIGINS', 'http://dash.groupher.localhost:3103')
 
@@ -220,6 +244,25 @@ describe('Auth Hono application', () => {
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(response.headers.get('set-cookie')).toContain('groupher-auth.token=phoenix-token')
     await expect(response.text()).resolves.toBe('')
+  })
+
+  it('clears stale browser cookies when refresh has no Browser Session', async () => {
+    const response = await createApp({ readBrowserSession: async () => null }).request(
+      '/api/auth/token/refresh',
+      {
+        method: 'POST',
+        headers: {
+          cookie: 'groupher-auth.signed-in=1; groupher-auth.token=stale-token',
+          origin: 'https://community.groupher.localhost',
+          'x-groupher-csrf': '1',
+        },
+      },
+    )
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ code: AUTH_ERROR.SESSION_MISSING })
+    expect(response.headers.get('set-cookie')).toContain('groupher-auth.signed-in=')
+    expect(response.headers.get('set-cookie')).toContain('Max-Age=0')
   })
 
   it('maps a remotely revoked Phoenix Session to login recovery and clears stale cookies', async () => {

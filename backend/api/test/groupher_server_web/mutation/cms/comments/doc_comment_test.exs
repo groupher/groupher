@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
       assert result["article"]["innerId"] == doc.inner_id
-      assert result["article"]["commentsCount"] == 1
+      assert result["article"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community doc user user_conn)a do
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(reply comment))
-      assert result["article"]["commentsCount"] == 2
+      assert result["article"]["commentsRevision"] == 2
     end
 
     test "only owner can update a exist comment",

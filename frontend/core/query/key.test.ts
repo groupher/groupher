@@ -101,4 +101,33 @@ describe('query keys', () => {
     expect(commentKeys.matchesArticle(target, 'home', THREAD.POST, '42')).toBe(true)
     expect(commentKeys.matchesArticle(other, 'home', THREAD.POST, '42')).toBe(false)
   })
+
+  it('keeps ArticleStats query-key matching inside the key owner', () => {
+    const batch = articleKeys.statsBatch('home', THREAD.POST, ['41', '42'])
+    const other = articleKeys.statsBatch('home', THREAD.POST, ['43'])
+
+    expect(articleKeys.matchesStatsBatch(batch, 'home', THREAD.POST, '42')).toBe(true)
+    expect(articleKeys.matchesStatsBatch(other, 'home', THREAD.POST, '42')).toBe(false)
+    expect(articleKeys.matchesStatsBatchScope(batch, 'home', THREAD.POST)).toBe(true)
+  })
+
+  it('matches article lists by canonical filter and thread family', () => {
+    expect(articleKeys.matchesArticleList(articleKeys.posts({ community: 'home' }), 'home')).toBe(
+      true,
+    )
+    expect(
+      articleKeys.matchesArticleList(
+        articleKeys.changelogs({ community: 'home' }),
+        'home',
+        THREAD.POST,
+      ),
+    ).toBe(false)
+    expect(
+      articleKeys.matchesArticleList(
+        articleKeys.changelogs({ community: 'home' }),
+        'home',
+        THREAD.CHANGELOG,
+      ),
+    ).toBe(true)
+  })
 })

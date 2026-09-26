@@ -5,7 +5,7 @@ defmodule GroupherServer.Analysis.Const do
       producer action -> Analysis.Const vocabulary -> MetricEvent / query
   """
 
-  alias GroupherServer.Actor.Const, as: ActorConst
+  alias GroupherServer.RequestActor.Const, as: RequestActorConst
 
   @metrics [
     :article_view,
@@ -25,5 +25,5 @@ defmodule GroupherServer.Analysis.Const do
 
   @doc "Returns actor types plus the non-actor all aggregate dimension."
   @spec actor_dimensions() :: [atom()]
-  def actor_dimensions, do: ActorConst.actor_types() ++ [:all]
+  def actor_dimensions, do: RequestActorConst.actor_types() ++ [:all]
 end

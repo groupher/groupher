@@ -10,8 +10,11 @@
 - [`performance/`](./performance)：复杂度与性能审计。
 - [`query-store-boundary.md`](./query-store-boundary.md)：Query、Store、Draft 与缓存边界。
 - [`query-invalidation.md`](./query-invalidation.md)：TanStack Query typed target、领域 key resolver 与通用失效 executor。
+- [`orm.md`](./orm.md)：`Helper.ORM` namespace、Ecto 默认写入、AdvisoryLock API 与裸 SQL 边界。
 - [`article-stats-and-public-cache.md`](./article-stats-and-public-cache.md)：ArticleStats 公共计数、SSR hydration、HTML/CDN 缓存和 tracking 判断。
 - [`article-stats-target.md`](./article-stats-target.md)：本次改造的 canonical Article、ArticleStats 读取投影、排序索引与修复协议。
+- [`article-emotion-counts.md`](./article-emotion-counts.md)：canonical Article identity 后的 emotion typed-row、GraphQL 改名与 direct cutover。
+- [`../feature/view-tracker/article-view-counting.md`](../feature/view-tracker/article-view-counting.md)：Article view 当前唯一写协议、actor-specific 阅读资格、同步 UPSERT 与未来高流量方案的另立版本门槛。
 - [`request-actor.md`](./request-actor.md)：平台级 human/agent/crawler/unknown 请求主体分类能力。
 - [`public-cache-invalidation.md`](./public-cache-invalidation.md)：Phoenix 领域事务 outbox、Oban worker 和 Cloudflare cache-tag purge 的可靠失效协议。
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。

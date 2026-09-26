@@ -47,14 +47,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:communities, list_of(:community), resolve: dataloader(CMS, :communities))
 
       field(:meta, :article_meta)
-      field(:collects_count, :integer)
-      field(:article_interaction_revision, :integer)
       field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
       field(:reaction_outcome, :string)
-
-      field(:emotions, list_of(:emotion_stat),
-        resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
-      )
 
       field(:viewer_has_collected, :boolean)
       field(:viewer_has_upvoted, :boolean)
@@ -272,7 +266,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro comments_fields do
     quote do
       field(:comments_participants, list_of(:user))
-      field(:comments_participants_count, :integer)
     end
   end
 

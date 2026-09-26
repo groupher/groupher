@@ -18,7 +18,7 @@ export const Route = createFileRoute('/$community/changelog/$id')({
     ])
     if (!article) throw notFound()
     const stats = await context.queryClient.ensureQueryData(
-      communityQueries.articleStats(params.community, THREAD.CHANGELOG, [params.id]),
+      communityQueries.stats(params.community, THREAD.CHANGELOG, [params.id]),
     )
     cacheArticleStatsEntities(context.queryClient, stats)
     return { article }

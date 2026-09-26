@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { THREAD } from '~/const/thread'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { Q } from '~/query'
-import type { TPagedArticles } from '~/spec'
+import type { TPagedArticleViewModels, TArticleViewerState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 type TArticleKind = 'changelog' | 'post'
@@ -21,7 +21,7 @@ export default function useCmsArticles(kind: TArticleKind) {
   const query = kind === 'post' ? postsQuery : changelogsQuery
   const thread = kind === 'post' ? THREAD.POST : THREAD.CHANGELOG
   const statsQuery = useQuery(
-    Q.article.articleStatsBatch(
+    Q.article.statsBatch(
       community,
       thread,
       (query.data?.entries || []).map((article) => article.innerId),
@@ -37,13 +37,15 @@ export default function useCmsArticles(kind: TArticleKind) {
       ...page,
       entries: page.entries.map((article) => {
         const stat = stats.get(String(article.innerId))
-        return stat ? { ...article, articleStats: stat } : article
+        const articleKey = `${community}:${thread}:${String(article.innerId)}`
+        const viewerState: TArticleViewerState = { articleKey }
+        return { content: article, stats: stat || null, viewerState }
       }),
     }
-  }, [query.data, statsQuery.data])
+  }, [community, query.data, statsQuery.data, thread])
 
   return {
     loading: (!query.data || statsQuery.isFetching) && query.isFetching,
-    pagedArticles: pagedArticles as TPagedArticles,
+    pagedArticles: pagedArticles as TPagedArticleViewModels,
   }
 }

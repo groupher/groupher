@@ -16,7 +16,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
   object :cms_operation_mutations do
     @desc "Records one visible public Article read through ViewTracker"
-    field :track_article_view, non_null(:article_view_track_receipt) do
+    field :track_article_view, non_null(:article_view_track_result) do
       arg(:article, non_null(:article_path_input))
       arg(:event_id, non_null(:id))
 

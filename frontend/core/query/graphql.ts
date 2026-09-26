@@ -21,9 +21,10 @@ export const graphqlQueryOptions = <
 >(
   document: TDocument,
   variables: TVariables,
+  options?: { queryKey?: readonly unknown[] },
 ) =>
   queryOptions({
-    queryKey: graphqlKeys.document(print(document), variables),
+    queryKey: options?.queryKey || graphqlKeys.document(print(document), variables),
     queryFn: () =>
       browserGraphQLRequest<
         [TOverride] extends [never] ? ResultOf<TDocument> : TOverride,

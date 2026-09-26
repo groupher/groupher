@@ -201,8 +201,8 @@ Query 的 optimistic/confirmed 更新，不直接编排 Dash → Community → C
 | BND-01 | 已收口 | bootstrap 按 community/Dsb/wallpaper 分别 seed canonical Query key；shell 不再长期拥有 dashboard payload                                                    | refetch 或局部 patch 后数据分叉                       | hydration 后仅 canonical Query 是 confirmed owner               |
 | BND-02 | 已收口 | Provider 持续把 Query confirmed transition 送入 `reconcileConfirmed`                                                                                        | focus refetch、跨 Tab 或其他管理员修改无法进入 editor | touched/untouched 并发测试通过                                  |
 | BND-03 | 已收口 | ThemePreset confirmed 由 Query 持有，Valtio 只做同步 CSS projection/preview；共享 theme hook 为 lazy boundary 提供 SSR-stable snapshot                      | 清除 preview 后回退、dark hydration mismatch          | Provider rerender 测试与真实页面 preview/cancel/reload 复验通过 |
-| BND-04 | 已收口 | `mutationCacheEffect` 显式返回 `none/immediate/coalesced`；upvote/emotion 为 `none`                                                                         | purge 风暴、成本和延迟放大                            | 高频 interaction 不进入立即 purge 集合                          |
-| BND-05 | 已收口 | Community/Dash GraphQL server proxy 在业务 response 后以 `waitUntil` 观察 CacheEffect                                                                       | 业务成功与传播失败混为一个 pending/error              | purge 失败只记录/重试，不回滚业务                               |
+| BND-04 | 已收口 | `frontend/core/query/invalidation` 只接受 typed target；upvote/emotion 不创建 PublicCache invalidation                                                      | purge 风暴、成本和延迟放大                            | 高频 interaction 不进入 HTML purge 集合                         |
+| BND-05 | 已收口 | Phoenix domain write -> PublicCache outbox -> Oban -> Cloudflare；Community/Dash GraphQL 只转发                                                             | 业务成功与传播失败混为一个 pending/error              | purge 失败只记录/重试，不回滚业务                               |
 | BND-06 | 已收口 | `setPublicCacheHeaders` 累积当前 response context 中父子 loader 的 tag                                                                                      | tag 被覆盖时 purge 不完整                             | response-context 聚合测试断言完整 tag 集合                      |
 | BND-07 | 已收口 | Dsb edit 使用 raw store 与窄领域 UI hooks                                                                                                                   | 无关字段变更触发大范围 rerender                       | 不展开完整 store snapshot                                       |
 | BND-08 | 已收口 | `live$`、`commit`、`editField(s)`、`replaceOriginal` 等 facade caller 与实现均删除                                                                          | owner 被隐藏，旧写法继续扩散                          | 静态门禁禁止回流                                                |
@@ -300,9 +300,8 @@ Query 重建。
 - [x] 公共 `useDsbSaveRunner` 不再包含 tag、DocFAQ、media、CommunityStore 等领域分支；
 - [x] Community/Dash server proxy 共用 typed operation-to-cache-effect mapping；
 - [x] UI mutation 不等待 CDN purge；
-- [x] 修改 `frontend/core/query/cacheInvalidation.ts` 及其 contract test：从
-      `mutationCacheEffect` 的立即 purge 集合移除 upvote/emotion 等高频 interaction；如果保留映射，
-      必须先让它返回 `coalesced` typed effect，并接通真实 queue、去重和失败策略；
+- [x] 删除 `frontend/core/query/cacheInvalidation.ts` 及其 operation-name contract；由
+      `frontend/core/query/invalidation` 负责浏览器 typed target，HTML purge 交给 Phoenix PublicCache outbox；
 - [x] 高频 interaction 返回 `none`，不逐次 purge。
 
 完成标准：业务成功、Query confirmed、editor reconcile、CDN propagation 四个阶段可独立观察；任何

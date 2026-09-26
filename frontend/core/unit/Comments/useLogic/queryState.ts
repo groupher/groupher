@@ -24,7 +24,7 @@ export default function useCommentQueryState() {
     throw new Error('comments query must be used within a Comments store provider')
   const comments = useSnapshot(commentsStore)
   const account = useAccount()
-  const { article } = useViewingArticle()
+  const { article, stats } = useViewingArticle()
   const query = useQuery(
     Q.comment.list(
       article.community.slug,
@@ -81,9 +81,7 @@ export default function useCommentQueryState() {
           : {
               ...current,
               entries,
-              totalCount:
-                receipt.publicProjection.commentsCount ??
-                Math.max(0, (current.totalCount || 0) - 1),
+              totalCount: Math.max(0, (current.totalCount || 0) - 1),
             }
       }
       if (!receipt.comment) return current
@@ -109,7 +107,7 @@ export default function useCommentQueryState() {
         return {
           ...current,
           entries: [comment, ...(current.entries as TComment[])],
-          totalCount: receipt.publicProjection.commentsCount ?? (current.totalCount || 0) + 1,
+          totalCount: (current.totalCount || 0) + 1,
         }
       }
       const append = (entries: TComment[]): TComment[] =>
@@ -162,7 +160,7 @@ export default function useCommentQueryState() {
     account.user,
     article.community.slug,
     article.innerId,
-    article.articleStats?.snapshotAt,
+    stats?.snapshotAt,
     article.meta.thread,
     query.data,
     viewerQuery.data,

@@ -1,10 +1,11 @@
-import type { TArticle, TPagi, TUser } from '~/spec'
+import type { TArticle, TArticleStats, TPagi, TUser } from '~/spec'
 
 export type TTrashedPost = {
   id: string
   thread: 'POST'
   articleRef: string
   article: TArticle | null
+  stats: TArticleStats | null
   deletedBy: TUser | null
   deletedAt: string
   scheduledPermanentDeletionAt: string
@@ -16,7 +17,15 @@ export type TPagedTrashedPosts = TPagi & {
 }
 
 export type TTrashedPostsData = {
-  trashedArticles: TPagedTrashedPosts
+  trashedArticles: TRawPagedTrashedPosts
+}
+
+export type TRawTrashedPost = Omit<TTrashedPost, 'article' | 'stats'> & {
+  article: (TArticle & { articleStats?: TArticleStats | null }) | null
+}
+
+export type TRawPagedTrashedPosts = Omit<TPagedTrashedPosts, 'entries'> & {
+  entries: TRawTrashedPost[]
 }
 
 export type TRestoreTrashedPostData = {

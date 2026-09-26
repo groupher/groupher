@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewerState do
   @moduledoc """
   Authenticated viewer projection owned by ViewTracker.
 
-      ViewTracker.Project -> ViewerState -> cms.article_viewer_states
+      synchronous counted view -> ViewerState -> cms.article_viewer_states
   """
 
   use Ecto.Schema

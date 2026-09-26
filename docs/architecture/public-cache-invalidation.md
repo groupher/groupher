@@ -1,6 +1,6 @@
 # 公共缓存可靠失效
 
-> 状态：本次改造的目标架构，待实施。
+> 状态：Phoenix outbox、Oban worker、Cloudflare adapter、领域写入接线和跨语言 tag contract 已落地；真实 Cloudflare purge、告警和生产验收见文末清单。
 >
 > 本文定义 Phoenix 领域写入提交后，如何通过 typed `PublicCache.Invalidation`、transactional outbox、Oban
 > `PurgeWorker` 和 Cloudflare adapter 可靠失效公共 HTML。目标架构不保留 Community/Dash mutation proxy purge、
@@ -21,10 +21,10 @@ Repo.transaction
         │
         v commit
 Oban PublicCache.PurgeWorker
-  ├─ claim pending invalidations
+  ├─ claim one pending invalidation
   ├─ invalidation type -> semantic cache scopes
   ├─ PublicCache.Tags -> canonical cache tags
-  ├─ dedupe / batch / retry / dead-letter
+  ├─ retry / dead-letter
   └─ PublicCache.Cloudflare.purge(tags)
         │
         v
@@ -50,7 +50,7 @@ enqueue 前崩溃，永久漏掉 purge”。Cloudflare 请求失败不回滚已�
 - domain transaction 内写入 invalidation outbox；
 - invalidation type 到 semantic cache scope 的映射；
 - canonical tag 的 Elixir 生成实现；
-- claim、batch、retry、dead-letter、replay；
+- claim、retry、dead-letter、replay；
 - Cloudflare API token 与 purge API 调用；
 - health、metrics、告警和审计。
 
@@ -104,8 +104,9 @@ Cloudflare HTTP 200 只表示接受了请求，不证明此前存在目标对象
 同时检查 HTTP status 和 Cloudflare response body 的 `success`；生产验收还要请求真实 URL，确认
 `CF-Cache-Status` 不再是旧对象的 `HIT`，并验证页面版本或 hydration 已更新。
 
-purge 不修改 `ArticleStats.snapshotAt`，也不主动生成 HTML。它只删除边缘对象；下一次回源才生成新的 content、
-ArticleStats hydration 和 `snapshotAt`。
+purge 不修改 `ArticleStats.snapshotAt`，也不主动生成 HTML。它只删除边缘对象；下一次回源会读取当前 content
+和持久化的 ArticleStats snapshot 并重新生成 HTML/hydration。`snapshotAt` 只会在 ArticleStats owner transaction
+成功同步统计时推进，不会因为 purge 本身推进。
 
 ## 4. 模块结构
 
@@ -113,11 +114,10 @@ ArticleStats hydration 和 `snapshotAt`。
 GroupherServer.PublicCache
 ├─ Invalidation       持久化的确定失效记录，不叫 Intent
 ├─ Const              invalidation type/status 封闭词表
-├─ Outbox             与领域写入同事务插入、claim 和状态转换
 ├─ Tags               generated canonical tag constructors
 ├─ Scope              invalidation type 到 cache scopes 的穷举映射
-├─ PurgeWorker        Oban claim、batch、retry、dead-letter
-├─ Policy             batch/timeout/retry/coalescing/health 参数
+├─ PurgeWorker        Oban claim、retry、dead-letter
+├─ Policy             timeout/retry/max-attempts/tag-count 参数
 └─ Cloudflare         唯一外部 API adapter
 ```
 
@@ -210,30 +210,25 @@ comment upvoted/reported/reacted
 
 ## 7. 跨语言 Public Cache contract
 
-Phoenix 生成 purge tag，Community 生成 response tag；两端必须消费同一个语言无关 contract。复用现有
-`packages/contracts` 的 Auth 双端生成模式，不建立第二套 contract 系统：
+Phoenix 生成 purge tag，Community 生成 response tag；两端必须消费同一个语言无关 contract。沿用现有
+`packages/contracts` 的共享目录，不建立第二套 contract 系统：
 
 ```text
 packages/contracts/public-cache.contract.json
-  ├─ 生成 packages/contracts/src/public-cache.generated.ts
-  │    └─ 由 packages/contracts/src/public-cache.ts 统一导出
-  └─ 生成 backend/api/lib/groupher_server/public_cache/tags.generated.ex
-       └─ 由 GroupherServer.PublicCache.Tags 使用
-```
-
-生成脚本：
-
-```text
-packages/contracts/scripts/generate-public-cache-contract.mjs
+  ├─ packages/contracts/src/public-cache.ts
+  │    └─ Community / Core 的 canonical constructors
+  ├─ backend/api/lib/groupher_server/public_cache/tags.ex
+  │    └─ Phoenix 的同构实现
+  └─ fixtures/public-cache-tags-v1.json
+       └─ 两端共同验证的 golden vectors
 ```
 
 职责：
 
 - `public-cache.contract.json`：tag version、scope 名称、template 和输入规则的唯一来源；
-- `public-cache.generated.ts`：Community 使用的 TypeScript tag constructors；
-- `public-cache.ts`：手写公共入口，只转出 generated contract 与稳定类型；
-- `tags.generated.ex`：Phoenix 使用的 Elixir mirror；
-- `generate:public-cache:check`：CI stale check，任一生成文件与 contract 不一致即失败。
+- `public-cache.ts`：Community/Core 使用的 TypeScript constructors 和 validator；
+- `tags.ex`：Phoenix 使用的同构实现和 validator；
+- `public-cache-tags-v1.json`：跨语言 golden vectors；contract 变更必须同时更新两端测试。
 
 contract 示例：
 
@@ -306,6 +301,11 @@ UNIQUE(causation_id, type, aggregate_type, aggregate_id)
 
 避免重复创建逻辑 invalidation。即使 worker timeout 后重复调用 Cloudflare，相同 tag purge 也必须安全。
 
+`PublicCache.invalidate/4` 和 `invalidate_now/3` 必须显式接收 `causation_id`，不再为调用方隐式生成 UUID。当前尚未接入
+命令 receipt 的社区设置、Dashboard section、taxonomy、moderation 和 Docs tree publish 入口仍使用一次事务内生成的
+operation id，因此被标记为 non-replayable；它们不能宣称跨请求 replay 去重。后续接入 `CMS.Command` 或 release receipt
+时，必须把稳定 command/release id 传到这里并删除这些随机 operation id。
+
 ## 9. 事务边界
 
 ### 9.1 发布 Article
@@ -346,28 +346,26 @@ UpdatePost command
 
 `invalidation_id` 在构造 `Ecto.Multi` 前生成，因此 outbox row 与 Oban job 可以原子引用同一个 id。Oban job 只是 durable
 wakeup，不复制 invalidation payload，也不是第二个业务 owner。若 trigger job 重试或重复执行，worker 以 outbox status
-和 row lock 判定是否仍需发送；若运维误删 job，周期性 sweeper 只为长期 pending 且没有可运行 trigger 的 row 补建 job。
+和 row lock 判定是否仍需发送。Oban Lifeline 负责把 node/process crash 后遗留的 `executing` job 重新置为可执行；worker
+若在 lease 到期前被再次唤醒，必须 snooze 到剩余 lease 到期，而不能把 job 标记 completed。当前实现不引入独立
+sweeper；若 trigger 被运维删除或发生存储外损坏，由 health 指标和显式 replay 处理，replay 仍复用同一个 invalidation row
+和 `PurgeWorker`。
 正常路径和 repair path 最终都进入同一个 `PurgeWorker`，不建立另一套 purge executor。
 
 该原子性要求 Oban job table 与领域数据使用同一个 PostgreSQL Repo/transaction。若未来把 queue 移到外部系统，必须重新引入
 真正的 outbox relay；不能保留“同事务 enqueue”的表述却跨两个存储提交。trigger job 以 `invalidation_id` 配置唯一性，
-command replay 和 sweeper 不创建并行有效 trigger。
+command replay 不创建并行有效 trigger。
 
 ## 10. PurgeWorker
 
 ```text
 Oban PublicCache.PurgeWorker
   -> load trigger invalidation id
-  -> SELECT pending invalidations（包含 trigger row，可顺带合并同 scope 邻近 row）
-       WHERE available_at <= now()
-       ORDER BY inserted_at, id
-       FOR UPDATE SKIP LOCKED
-       LIMIT batch_size
+  -> SELECT the trigger's invalidation row
+       FOR UPDATE
   -> decode + validate version/type/payload
   -> PublicCache.Scope.resolve(invalidation)
   -> PublicCache.Tags generate canonical tags
-  -> group compatible invalidations
-  -> dedupe tags and split by max_tags_per_request
   -> PublicCache.Cloudflare.purge(tags)
   -> mark delivered or schedule retry/dead-letter
 ```
@@ -375,19 +373,17 @@ Oban PublicCache.PurgeWorker
 默认策略集中在 `PublicCache.Policy`：
 
 ```text
-batch_size
 max_tags_per_request
-max_requests_per_interval
-request_burst_capacity
 request_timeout
-retry_base_delay
-retry_max_delay
+retry_base_delay_seconds
+max_retry_delay_seconds
 max_attempts
-dead_letter_retention
-coalescing_window
+delivery_lease_seconds
+pending_slo_seconds
 ```
 
-重试使用 exponential backoff + jitter：
+Oban 的 `backoff/1` 合同单位是秒；重试使用 second-based exponential backoff + jitter，并由
+`max_retry_delay_seconds` 封顶。不能把毫秒配置原样返回给 Oban。
 
 - timeout、network、HTTP 429、HTTP 5xx：可重试；
 - contract version/type/payload 无效：dead-letter；
@@ -401,23 +397,16 @@ Oban trigger job 与 outbox 状态的配合规则：
 
 - transaction rollback 时两者都不存在；
 - job retry 只重新唤醒 worker，不增加 outbox `attempts` 之外的第二套业务重试语义；
-- worker crash 在 Cloudflare 返回前保持 pending/delivering，可通过 lease timeout 重新 claim；
+- 未过期 lease 返回剩余秒数，worker 使用 `{:snooze, seconds}` 保留同一个 trigger job；
+- worker crash 在 Cloudflare 返回前保持 `delivering`；`locked_at` 超过 `delivery_lease_seconds` 后，新的 worker
+  可以在行锁内重新 claim，并使用新的 fencing token；Oban Lifeline 保证 orphaned `executing` job 会再次运行，旧 worker
+  不能再 mark delivered/failed；
 - worker crash 在 Cloudflare 成功后、标记 delivered 前可能重复 purge；cache-tag purge 必须按幂等删除处理；
 - trigger 对应 row 已 delivered/dead 时 job 直接成功退出；
-- sweeper 只修复缺失 trigger，不直接调用 Cloudflare。
+- replay 只重新唤醒同一个 row，不直接调用 Cloudflare。
 
-### 10.1 合并
-
-同一短窗口内可以合并 tag：
-
-```text
-article detail[42] + article list
-article detail[43] + article list
-  -> one Cloudflare request with three unique tags
-```
-
-失效是删除操作，不依赖 mutation 顺序；同 tag 多次 purge 可以去重。不能为了 coalescing 无限等待，窗口必须远小于
-HTML fresh TTL，并由 `PublicCache.Policy` 固定上限。
+trigger job 的 uniqueness 只覆盖 Oban incomplete states。completed job 不得在 uniqueness period 内阻止同一 invalidation 的显式
+replay；outbox row 的 `delivered/dead` 状态仍是是否需要实际发送的最终判定。
 
 ## 11. Cloudflare adapter
 
@@ -492,6 +481,8 @@ current browser
 ```text
 public_cache_invalidations_total{type,status}
 public_cache_oldest_pending_age_seconds
+public_cache_oldest_delivering_age_seconds
+public_cache_delivering_without_lease
 public_cache_purge_requests_total{result,error_code}
 public_cache_purge_attempts_total{type,result}
 public_cache_purge_duration_ms
@@ -505,19 +496,23 @@ Health/readiness：
 
 - zone id/token 缺失或凭据被拒绝：配置错误；
 - oldest pending age 超过 SLO：degraded；
+- oldest delivering age 超过 lease：degraded；Oban Lifeline 唤醒 orphaned job 后允许 worker reclaim；
 - dead-letter 非零：degraded 并告警；
+- production 缺少 Cloudflare zone/token：启动/readiness 失败，不把确定性配置错误排队重试；
 - Cloudflare 429/5xx 短暂重试：记录指标，不让 public read 失效；
 - PurgeWorker 长期无法 claim/drain：告警，即使 Cloudflare API 自身健康。
 
-每条记录可从 `causation_id -> invalidation id -> Oban job -> Cloudflare result` 追踪。日志只包含安全 locator、type、
-tag、attempt、duration 和 error code。
+每条记录可从 `causation_id -> invalidation id -> Oban job -> Cloudflare result` 追踪。`:telemetry` 事件由
+`GroupherServer.PublicCache.Telemetry` 接到结构化日志 sink，并保留给未来 metrics exporter；日志只包含安全 locator、type、
+tag、attempt、duration 和 error code。command-backed 写入必须传稳定的 command/release operation id；没有稳定 operation
+id 的旧式入口必须被标记为 non-replayable，不得把每次随机 UUID 宣称为 replay dedupe。
 
 ## 14. 直接切换
 
 不设置兼容中间层：
 
 1. 增加 `public-cache.contract.json`、双端生成器、stale check 和 golden vectors；
-2. 建立 `PublicCache.Const/Invalidation/Outbox/Scope/Tags/Policy/Cloudflare`；
+2. 建立 `PublicCache.Const/Invalidation/Scope/Tags/Policy/Cloudflare`；
 3. 建立 outbox migration 和 `PurgeWorker`；
 4. 所有 content/publish/visibility/config command 在事务内写 typed invalidation；
 5. coverage audit 证明每个需要立即 purge 的领域写入口都有且只有一个 invalidation；
@@ -549,8 +544,8 @@ Contract：
 
 Worker 与 adapter：
 
-- 并发 worker 使用 `SKIP LOCKED` 不重复 claim；
-- tag 去重、分批和 coalescing 正确；
+- 并发 worker 使用 row lock 不重复 claim；
+- 一个 invalidation 解析出的 tags 经过 contract 校验后一次发送；
 - 429/5xx/timeout 重试，400/401/403/invalid payload 正确分类；
 - crash/restart 后 pending/delivering record 可恢复；
 - Cloudflare HTTP 200 + `success=false` 不标记 delivered；

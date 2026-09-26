@@ -10,6 +10,14 @@ export const articleStats = graphql(`
       viewsRevision
       upvotesCount
       commentsCount
+      collectsCount
+      commentsParticipantsCount
+      interactionRevision
+      commentsRevision
+      reactionCounts {
+        type
+        count
+      }
       snapshotAt
     }
   }

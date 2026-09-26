@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
-import type { TPost } from '~/spec'
+import type { TArticleViewerState, TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
@@ -10,9 +10,10 @@ import useSalon from '../salon/cover_layout/header'
 
 type TProps = {
   article: TPost
+  viewerState: TArticleViewerState
 }
 
-const Header: FC<TProps> = ({ article }) => {
+const Header: FC<TProps> = ({ article, viewerState }) => {
   const s = useSalon()
   const { title } = article
   const { slug } = useCommunity()
@@ -20,7 +21,7 @@ const Header: FC<TProps> = ({ article }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.main}>
-        <ArticleReadLabel viewed={article.viewerHasViewed} />
+        <ArticleReadLabel viewed={viewerState.viewerHasViewed} />
         <CommunityPreviewLink
           className={s.title}
           href={`/${slug}/${THREAD_PATH.POST}/${article.innerId}`}

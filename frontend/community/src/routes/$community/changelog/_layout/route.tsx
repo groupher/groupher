@@ -18,7 +18,7 @@ export const Route = createFileRoute('/$community/changelog/_layout')({
       communityQueries.changelogs(params.community),
     )
     const stats = await context.queryClient.ensureQueryData(
-      communityQueries.articleStats(
+      communityQueries.stats(
         params.community,
         THREAD.CHANGELOG,
         (changelogs.entries || []).map((article) => article.innerId),

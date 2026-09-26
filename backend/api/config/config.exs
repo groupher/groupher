@@ -23,10 +23,11 @@ config :groupher_server,
        System.get_env("VIEW_TRACKER_COOKIE_PREVIOUS_SECRET")
 
 config :groupher_server, GroupherServer.CMS.ViewTracker.Config,
-  dedupe_window_seconds: 600,
-  view_event_retention_days: 30,
-  dedupe_state_retention_days: 30,
-  view_projection_batch_size: 100
+  human_dedupe_window_seconds: 600,
+  agent_dedupe_window_seconds: 600,
+  view_count_receipt_ttl_seconds: 960,
+  watermark_retention_seconds: 2_592_000,
+  retention_batch_size: 500
 
 config :groupher_server, GroupherServer.Analysis.Config,
   metric_event_retention_days: 90,
@@ -67,7 +68,8 @@ config :logger, :console,
     :method,
     :path,
     :reason,
-    :community_id
+    :community_id,
+    :public_cache
   ]
 
 config :phoenix, :json_library, Jason
@@ -251,13 +253,14 @@ config :groupher_server, Oban,
   engine: Oban.Engines.Basic,
   repo: GroupherServer.Repo,
   plugins: [
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(3)},
     {Oban.Plugins.Cron,
      crontab: [
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted},
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads},
        {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims},
        {"*/15 * * * *", GroupherServer.Jobs.WallpaperLifecycle},
-       {"@daily", GroupherServer.Jobs.ViewEventRetention},
+       {"@daily", GroupherServer.Jobs.ViewTrackerRetention},
        {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
        {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
        {"@daily", GroupherServer.Jobs.CommandReceiptRetention}
@@ -267,9 +270,19 @@ config :groupher_server, Oban,
     default: 10,
     search: 5,
     snapshot: 5,
+    public_cache: 5,
     community_application: 5,
     community_setup: 5
   ]
+
+config :groupher_server, GroupherServer.PublicCache.Policy,
+  timeout_ms: 5_000,
+  max_attempts: 8,
+  retry_base_delay_seconds: 1,
+  max_retry_delay_seconds: 60,
+  max_tags_per_request: 100,
+  delivery_lease_seconds: 120,
+  pending_slo_seconds: 600
 
 import_config "#{config_env()}.exs"
 

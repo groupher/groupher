@@ -69,9 +69,9 @@ export const communityQueries = {
       gcTime: 10 * 60_000,
       meta: { hydration: 'public' },
     }),
-  articleStats: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
+  stats: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
     queryOptions({
-      queryKey: articleKeys.articleStatsBatch(community, thread, innerIds),
+      queryKey: articleKeys.statsBatch(community, thread, innerIds),
       queryFn: () =>
         loadArticleStats({ data: { community, thread, innerIds: innerIds.map(String) } }),
       staleTime: ARTICLE_STATS_SNAPSHOT_MAX_AGE_MS,

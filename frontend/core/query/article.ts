@@ -19,7 +19,6 @@ import type {
 
 import { articleStats, articleStatsBatch } from './articleStats'
 import { articleKeys, normalizeArticleFilter } from './key'
-import { preserveArticleProjection } from './revisionGuard'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -49,11 +48,9 @@ const posts = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.posts(filter),
     meta: { hydration: 'public' },
-    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedPosts, {
         filter: toPostsFilter(filter),
-        userHasLogin: false,
       })
       return data.pagedPosts as unknown as TPagedPosts
     },
@@ -63,11 +60,9 @@ const changelogs = (filter: TPagedArticlesParams) =>
   queryOptions({
     queryKey: articleKeys.changelogs(filter),
     meta: { hydration: 'public' },
-    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedChangelogs, {
         filter: toPostsFilter(filter) as VariablesOf<typeof pagedChangelogs>['filter'],
-        userHasLogin: false,
       })
       return data.pagedChangelogs as unknown as TPagedChangelogs
     },
@@ -88,26 +83,22 @@ const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
     queryKey: articleKeys.detail(community, thread, innerId),
     meta: { hydration: 'public' },
-    structuralSharing: preserveArticleProjection,
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
       if (thread === THREAD.CHANGELOG) {
         const data = await browserGraphQLRequest(changelog, {
           article,
-          userHasLogin: false,
         })
         return data.changelog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
         const data = await browserGraphQLRequest(doc, {
           article,
-          userHasLogin: false,
         })
         return data.doc as unknown as TPost
       }
       const data = await browserGraphQLRequest(post, {
         article,
-        userHasLogin: false,
       })
       return data.post as unknown as TPost
     },
@@ -142,6 +133,6 @@ export const articleQueries = {
   detail,
   tagGroups,
   tagStats,
-  articleStats: articleStats,
-  articleStatsBatch: articleStatsBatch,
+  stats: articleStats,
+  statsBatch: articleStatsBatch,
 }

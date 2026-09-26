@@ -12,12 +12,13 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   from `PostSolution`; the Comment row remains the body authority.
   """
 
-  alias GroupherServer.{Accounts, CMS, Jobs}
+  alias GroupherServer.{Accounts, CMS, Jobs, PublicCache, Repo}
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate, Comments}
   alias Comments.{BodyCodec, JobPolicy}
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @doc """
   Updates the authorized canonical Comment, requires audition enqueue before
@@ -68,18 +69,36 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
          {:ok, updated_article} <- ORM.inc(article, :comments_revision),
+         :ok <- CMS.ArticleStats.apply_comment_counts(updated_article),
          {:ok, synced} <- FrontDesk.sync_embed_replies(updated),
-         {:ok, _} <- JobPolicy.audition(synced) do
+         {:ok, _} <- JobPolicy.audition(synced),
+         {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id) do
       {:ok,
        synced
        |> Map.put(:article, %{
          thread: canonical.thread,
          inner_id: article.inner_id,
-         comments_count: updated_article.comments_count,
          comments_revision: updated_article.comments_revision
        })
        |> Map.put(:command_id, command_id)}
     end
+  end
+
+  defp invalidate_public_comments(article, thread, command_id) do
+    article = Repo.preload(article, :community)
+
+    PublicCache.invalidate_now(
+      PublicCacheConst.comments_content_changed(),
+      %{
+        community: article.community.slug,
+        community_id: article.community_id,
+        thread: thread,
+        inner_id: article.inner_id,
+        id: article.id
+      },
+      causation_id: command_id,
+      aggregate_type: "article"
+    )
   end
 
   defp enqueue_mentions_for(%Comment{} = comment) do

@@ -3,7 +3,8 @@ import type { Query, QueryClient } from '@tanstack/react-query'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment, TEmotionType, TThread, TUser } from '~/spec'
 
-import { articleKeys, commentKeys, viewerKeys } from '../../key'
+import { invalidate, QueryInvalidation } from '../../invalidation'
+import { commentKeys, viewerKeys } from '../../key'
 import type { TArticlePath } from '../article/cache'
 import type {
   TOptimisticChange,
@@ -446,9 +447,14 @@ export const reconcileCreatedComment = (
   article: { community: string; thread: TThread; innerId: string },
 ): void => {
   patchCommentEverywhere(queryClient, scope, pendingInnerId, () => confirmed)
-  void queryClient.invalidateQueries({
-    queryKey: articleKeys.articleStats(article.community, article.thread, article.innerId),
-  })
+  void invalidate(
+    queryClient,
+    QueryInvalidation.article.stats({
+      community: article.community,
+      thread: article.thread,
+      innerId: article.innerId,
+    }),
+  )
 }
 
 /** Updates viewer-owned comment flags without replacing public aggregates. */

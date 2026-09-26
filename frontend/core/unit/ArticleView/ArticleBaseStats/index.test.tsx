@@ -24,7 +24,7 @@ describe('ArticleBaseStats', () => {
   it('reserves the detail slot while the Summary is loading', () => {
     const article = {} as unknown as TArticle
 
-    render(<ArticleBaseStats article={article} />)
+    render(<ArticleBaseStats article={article} stats={null} />)
 
     const count = screen.getByLabelText('views')
     expect(count).toHaveClass('view-count-slot-detail')

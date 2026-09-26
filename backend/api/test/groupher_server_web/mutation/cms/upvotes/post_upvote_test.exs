@@ -82,7 +82,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert unchanged["articleStats"]["upvotesCount"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
-      assert current_post.upvotes_count == 1
+      counts = CMS.Interactions.counts([current_post])
+      assert counts[{:post, current_post.id}].upvotes_count == 1
     end
 
     test "command id replay returns the same confirmed state",
@@ -106,7 +107,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       assert replay["commandId"] == command_id
       assert replay["reactionOutcome"] == "changed"
       assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]
-      assert replay["articleInteractionRevision"] == first["articleInteractionRevision"]
+
+      assert replay["articleStats"]["interactionRevision"] ==
+               first["articleStats"]["interactionRevision"]
     end
 
     test "command id replay preserves an unchanged outcome",

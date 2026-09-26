@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   import Helper.Utils, only: [plural: 1]
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, PublicCache, Repo}
   alias CMS.{Articles, ErrorCat}
   alias Accounts.Model.User
   alias CMS.Artiment.BodyBag
@@ -58,6 +58,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias CMS.SearchArtiments.Indexer
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
+  alias PublicCache.Const, as: PublicCacheConst
 
   @doc "Creates a main Draft and publishes it atomically for direct-publish products."
   @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
@@ -184,7 +185,8 @@ defmodule GroupherServer.CMS.Articles.Publish do
              operation_ref,
              lifecycle.changed_at
            ),
-         :ok <- run_after_publish(public_article, first_publish?) do
+         :ok <-
+           run_after_publish(community, thread, public_article, first_publish?, operation_ref) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
       {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
@@ -394,11 +396,31 @@ defmodule GroupherServer.CMS.Articles.Publish do
     end
   end
 
-  defp run_after_publish(public_article, first_publish?) do
+  defp run_after_publish(community, thread, public_article, first_publish?, operation_ref) do
+    :ok = CMS.ArticleStats.initialize(public_article)
     Indexer.enqueue_upsert(public_article)
     Later.run({CMS.Press, :invalidate, [public_article.community_id]})
     Later.run({Events, :emit, [:sync_mentions, %{artiment: public_article}]})
     Later.run({Events, :emit, [:audition, %{artiment: public_article}]})
+
+    invalidation_type =
+      if first_publish?,
+        do: PublicCacheConst.article_published(),
+        else: PublicCacheConst.article_content_changed()
+
+    {:ok, _invalidation} =
+      PublicCache.invalidate_now(
+        invalidation_type,
+        %{
+          community: community.slug,
+          community_id: community.id,
+          thread: thread,
+          inner_id: public_article.inner_id,
+          id: public_article.id
+        },
+        causation_id: operation_ref,
+        aggregate_type: "article"
+      )
 
     if first_publish? do
       # Keep the durable job payload to stable identity; the notification

@@ -1,12 +1,41 @@
+import { AUTH_ERROR } from '@groupher/contracts/auth'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { beginLinkedOauthAccount, listLinkedOauthAccounts, unlinkLinkedOauthAccount } from './index'
+import {
+  beginLinkedOauthAccount,
+  listLinkedOauthAccounts,
+  unlinkLinkedOauthAccount,
+  withAuthRetry,
+} from './index'
+import { dismissLoginRequest, getLoginRequest } from './login-request'
 
 describe('Auth OAuth account helpers', () => {
   afterEach(() => {
+    dismissLoginRequest()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
     vi.unstubAllEnvs()
+  })
+
+  it('degrades to an anonymous replay without requesting login when refresh has no Session', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(async () =>
+        Response.json({ code: AUTH_ERROR.SESSION_MISSING }, { status: 401 }),
+      ),
+    )
+    const operation = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('missing token'))
+      .mockResolvedValue('anonymous')
+
+    await expect(
+      withAuthRetry(operation, () => ({ code: AUTH_ERROR.TOKEN_MISSING })),
+    ).resolves.toBe('anonymous')
+
+    expect(operation).toHaveBeenCalledTimes(2)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(getLoginRequest()).toBeNull()
   })
 
   it('lists linked accounts through the canonical Auth endpoint', async () => {

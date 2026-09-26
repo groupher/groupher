@@ -8,7 +8,7 @@ import {
 import { API_ROUTE } from '@groupher/route-contract'
 import { print, type DocumentNode } from 'graphql'
 
-import { invalidateAuthState, requestLogin, resolveAuthFailure, withAuthRetry } from '~/auth'
+import { invalidateAuthState, resolveAuthFailure, withAuthRetry } from '~/auth'
 
 const ACCOUNT_LOGIN_ERROR_CODE = 4301
 
@@ -183,7 +183,6 @@ export const createAuthFetch =
           }
           if (action === 'login') {
             invalidateAuthState()
-            requestLogin()
           }
           return response
         },

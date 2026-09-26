@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 
-import type { TArticle, TArticleStats, TThread } from '~/spec'
+import type { TArticle, TThread } from '~/spec'
 
 import { articleKeys } from '../../key'
 import type { TOptimisticChange, TOperationContext, TQueryTarget } from '../optimistic/types'
@@ -59,12 +59,8 @@ const readArticle = (value: unknown, path: TArticlePath): TArticle | null => {
   return entries.find((article) => isTarget(article, path)) || null
 }
 
-const ARTICLE_ENTITY_QUERY_KINDS = new Set(['changelogs', 'detail', 'posts'])
-
 const isArticleEntityQuery = (query: { queryKey: readonly unknown[] }): boolean =>
-  query.queryKey[0] === articleKeys.all[0] &&
-  typeof query.queryKey[1] === 'string' &&
-  ARTICLE_ENTITY_QUERY_KINDS.has(query.queryKey[1])
+  articleKeys.isArticleEntity(query.queryKey)
 
 /** Returns only loaded Query shapes that are declared owners of Article entities. */
 export const articleQueryTargets = (queryClient: QueryClient): readonly TQueryTarget[] =>
@@ -77,56 +73,8 @@ export const articleQueryTargets = (queryClient: QueryClient): readonly TQueryTa
 export const articleStatsQueryTargets = (queryClient: QueryClient): readonly TQueryTarget[] =>
   queryClient
     .getQueryCache()
-    .findAll({
-      predicate: ({ queryKey }) =>
-        queryKey[0] === articleKeys.all[0] &&
-        queryKey[1] === 'article-stats' &&
-        typeof queryKey[2] === 'string' &&
-        typeof queryKey[3] === 'string' &&
-        typeof queryKey[4] === 'string',
-    })
+    .findAll({ predicate: ({ queryKey }) => articleKeys.isStats(queryKey) })
     .map(({ queryKey }) => ({ queryKey, exact: true }))
-
-/** Applies an optimistic ArticleStats field patch and records its exact inverse. */
-export const patchArticleStatsChanges = (
-  queryClient: QueryClient,
-  path: TArticlePath,
-  field: keyof TArticleStats,
-  updater: (stats: TArticleStats) => TArticleStats,
-  context?: TOperationContext,
-): TOptimisticChange[] => {
-  const queryKey = articleKeys.articleStats(path.community, path.thread, path.innerId)
-  const previous = queryClient.getQueryData<TArticleStats>(queryKey)
-  if (!previous) return []
-  const next = updater(previous)
-  queryClient.setQueryData(queryKey, next)
-  if (!context) return []
-  return [
-    {
-      type: 'field',
-      queryKey,
-      entityKey: articleKeyFor(path),
-      field: String(field),
-      before: previous[field],
-      optimistic: next[field],
-      commandId: context.commandId,
-      rollback: 'refetch',
-      restore: () => queryClient.setQueryData(queryKey, previous),
-    },
-  ]
-}
-
-/** Applies one ArticleStats update to the canonical normalized entity cache. */
-export const patchArticleStatsEverywhere = (
-  queryClient: QueryClient,
-  path: TArticlePath,
-  updater: (stats: TArticleStats) => TArticleStats,
-): void => {
-  const queryKey = articleKeys.articleStats(path.community, path.thread, path.innerId)
-  queryClient.setQueryData<TArticleStats>(queryKey, (current) =>
-    current ? updater(current) : current,
-  )
-}
 
 /** Applies a field patch to the legacy Article entity cache. Use only for non-stat fields. */
 export const patchArticleChanges = (

@@ -54,7 +54,21 @@ export type TArticleStats = {
   viewsRevision: number
   upvotesCount: number
   commentsCount: number
+  collectsCount: number
+  commentsParticipantsCount: number
+  interactionRevision: number
+  commentsRevision: number
+  reactionCounts: Array<{ type: string; count: number }>
   snapshotAt: string
+}
+
+export type TArticleViewerState = {
+  articleKey: string
+  viewerHasViewed?: boolean
+  viewerHasUpvoted?: boolean
+  viewerHasCollected?: boolean
+  viewerEmotion?: string | null
+  interactionRevision?: number
 }
 
 type TBaseArticle = {
@@ -64,25 +78,16 @@ type TBaseArticle = {
   title?: string
   digest?: string
   body?: string
-  articleStats?: TArticleStats
   copyRight?: string
   isQuestion?: boolean
   isPinned?: boolean
   author?: TAccount
   upvotesCount?: never
-  collectsCount?: number
-  articleInteractionRevision?: number
-  emotions?: TEmotion[]
   community?: TCommunity
   communities?: readonly TCommunity[]
   commentsParticipants?: readonly TUser[]
-  commentsParticipantsCount?: number
   insertedAt?: string
   updatedAt?: string
-  viewerHasViewed?: boolean
-  viewerHasCollected?: boolean
-  viewerEmotion?: string | null
-  viewerHasUpvoted?: boolean
   commentsCount?: never
   communityTags?: readonly TTag[]
   meta?: TArticleMeta
@@ -134,6 +139,23 @@ export type TTechCommunities = {
 
 export type TArticle = TPost
 
+/** Strict detail view model; public content, aggregate stats, and viewer state have separate owners. */
+export type TArticleViewModel = {
+  content: TArticle
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
+}
+
+export type TArticleListViewModel<T extends TArticle = TArticle> = {
+  content: T
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
+}
+
+export type TPagedArticleViewModels<T extends TArticle = TArticle> = {
+  entries: readonly TArticleListViewModel<T>[]
+} & TPagi
+
 export type TPagedPosts = {
   entries: readonly TPost[]
 } & TPagi
@@ -182,7 +204,6 @@ export type TComment = {
     innerId?: string
     title?: string
     thread?: TThread
-    commentsCount?: number
     commentsRevision?: number
     author?: {
       login

@@ -8,13 +8,12 @@ import {
 describe('article view receipts', () => {
   beforeEach(() => window.sessionStorage.clear())
 
-  it('stores and reads an accepted stable event', () => {
+  it('stores and reads a committed stable event', () => {
     writeArticleViewReceipt('home:POST:42', 'event-1')
 
     expect(readArticleViewReceipt('home:POST:42')).toMatchObject({
       articleRef: 'home:POST:42',
-      viewEventId: 'event-1',
-      accepted: true,
+      eventId: 'event-1',
     })
   })
 
@@ -25,7 +24,7 @@ describe('article view receipts', () => {
     clearArticleViewReceipt('home:POST:42')
 
     expect(readArticleViewReceipt('home:POST:42')).toBeNull()
-    expect(readArticleViewReceipt('home:POST:43')?.viewEventId).toBe('event-2')
+    expect(readArticleViewReceipt('home:POST:43')?.eventId).toBe('event-2')
   })
 
   it('clears all receipts during account cleanup', () => {

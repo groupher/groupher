@@ -82,7 +82,6 @@ const loadPosts = createServerFn({ method: 'GET', strict: false })
       filter: { community: data.community, page: 1, size: 20 } satisfies VariablesOf<
         typeof pagedPosts
       >['filter'],
-      userHasLogin: false,
     })
     return result.data.pagedPosts as unknown as TPagedPosts | null
   })
@@ -96,7 +95,6 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
     ])
     const result = await fetchGraphQL<ResultOf<typeof postDocument>>(postDocument, {
       article: { community: data.community, innerId: data.innerId, thread: 'POST' },
-      userHasLogin: false,
     })
     return (result.data?.post ?? null) as unknown as TPost | null
   })
@@ -124,7 +122,6 @@ const loadChangelogs = createServerFn({ method: 'GET', strict: false })
     setPublicCacheHeaders([CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG)])
     const result = await fetchGraphQL<ResultOf<typeof pagedChangelogs>>(pagedChangelogs, {
       filter: { community: data.community, page: 1, size: 20 },
-      userHasLogin: false,
     })
     return result.data?.pagedChangelogs as unknown as TPagedChangelogs | null
   })
@@ -138,7 +135,6 @@ const loadChangelog = createServerFn({ method: 'GET', strict: false })
     ])
     const result = await fetchGraphQL<ResultOf<typeof changelog>>(changelog, {
       article: { community: data.community, innerId: data.innerId, thread: THREAD.CHANGELOG },
-      userHasLogin: false,
     })
     return (result.data?.changelog ?? null) as unknown as TPost | null
   })
@@ -169,7 +165,6 @@ const loadDoc = createServerFn({ method: 'GET', strict: false })
     setPublicCacheHeaders([CACHE_TAG.articleCache(data.community, THREAD.DOC, data.innerId)])
     const result = await fetchGraphQL<ResultOf<typeof doc>>(doc, {
       article: { community: data.community, innerId: data.innerId, thread: THREAD.DOC },
-      userHasLogin: false,
     })
     return (result.data?.doc ?? null) as unknown as TDoc | null
   })

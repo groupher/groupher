@@ -11,8 +11,8 @@ import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
+import { invalidate, QueryInvalidation } from './invalidation'
 import { viewerKeys } from './key'
-import { articleKeys } from './key'
 import { patchCommentEverywhere, type TCommentScope } from './mutation/comment'
 import {
   clearCommentReactionReceipt,
@@ -117,9 +117,14 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
   useEffect(() => {
     if (!accountRef || !scope || !query.data) return
     const confirmedArticle = query.data.article
-    void queryClient.invalidateQueries({
-      queryKey: articleKeys.articleStats(scope.community, scope.thread, scope.articleInnerId),
-    })
+    void invalidate(
+      queryClient,
+      QueryInvalidation.article.stats({
+        community: scope.community,
+        thread: scope.thread,
+        innerId: scope.articleInnerId,
+      }),
+    )
 
     for (const [commentRef, rawComment] of Object.entries(query.data.comments)) {
       const reactionReceipt = receipts.reactionByRef.get(commentRef)

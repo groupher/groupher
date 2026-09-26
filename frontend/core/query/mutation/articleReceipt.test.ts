@@ -1,9 +1,9 @@
 import { CONFIRMED_WRITE_RECEIPT_TTL_MS } from '~/constant/cache'
-import type { TArticle } from '~/spec'
+import type { TArticleStats } from '~/spec'
 
 import {
   clearArticleUpvoteReceipt,
-  overlayArticleUpvoteReceipt,
+  overlayArticleUpvoteReceiptOnViewerState,
   readArticleUpvoteReceipt,
   writeArticleUpvoteReceipt,
 } from './articleReceipt'
@@ -16,34 +16,31 @@ describe('article upvote receipts', () => {
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-1',
-      upvotesCount: 11,
       viewerHasUpvoted: true,
-      articleInteractionRevision: 42,
+      interactionRevision: 42,
     })
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-2',
-      upvotesCount: 10,
       viewerHasUpvoted: false,
-      articleInteractionRevision: 43,
+      interactionRevision: 43,
     })
 
     expect(readArticleUpvoteReceipt('acct-a', 'home:POST:42')).toMatchObject({
       commandId: 'op-2',
-      schemaVersion: 3,
-      publicProjection: { upvotesCount: 10, articleInteractionRevision: 43 },
+      schemaVersion: 4,
+      interactionRevision: 43,
       viewerState: { viewerHasUpvoted: false },
     })
     expect(readArticleUpvoteReceipt('acct-b', 'home:POST:42')).toBeNull()
   })
 
-  it('removes a receipt explicitly when the public revision catches up', () => {
+  it('removes a receipt explicitly after private reconciliation', () => {
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-1',
-      upvotesCount: 11,
       viewerHasUpvoted: true,
     })
 
@@ -57,7 +54,6 @@ describe('article upvote receipts', () => {
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-ttl',
-      upvotesCount: 11,
       viewerHasUpvoted: true,
     })
 
@@ -72,15 +68,13 @@ describe('article upvote receipts', () => {
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-new',
-      upvotesCount: 11,
       viewerHasUpvoted: true,
-      articleInteractionRevision: 42,
+      interactionRevision: 42,
     })
     writeArticleUpvoteReceipt({
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-legacy',
-      upvotesCount: 10,
       viewerHasUpvoted: false,
     })
 
@@ -92,13 +86,18 @@ describe('article upvote receipts', () => {
       accountRef: 'acct-a',
       entityKey: 'home:POST:42',
       commandId: 'op-clear',
-      upvotesCount: 10,
       viewerHasUpvoted: false,
       viewerEmotion: null,
     })
     const receipt = readArticleUpvoteReceipt('acct-a', 'home:POST:42')
     expect(
-      receipt && overlayArticleUpvoteReceipt({ viewerEmotion: 'HEART' } as TArticle, receipt),
+      receipt &&
+        overlayArticleUpvoteReceiptOnViewerState(
+          'acct-a',
+          { interactionRevision: 0 } as TArticleStats,
+          { articleKey: 'home:POST:42', viewerEmotion: 'HEART' },
+          'home:POST:42',
+        ),
     ).toMatchObject({ viewerEmotion: null })
   })
 })

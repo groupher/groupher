@@ -32,7 +32,7 @@ const INIT_VIEW_STATE = {
 export default function PostViewer({ isFullView = true }: TProps) {
   const s = useSalon()
 
-  const { loading, article } = useLogic()
+  const { loading, article, stats, viewerState } = useLogic()
   const broadcastConfig = useBroadcast()
 
   const [viewState, setViewState] = useState(INIT_VIEW_STATE)
@@ -57,14 +57,20 @@ export default function PostViewer({ isFullView = true }: TProps) {
   return (
     <>
       {isFullView && (
-        <FixedHeader article={article} visible={fixedHeaderVisible} footerVisible={footerVisible} />
+        <FixedHeader
+          article={article}
+          stats={stats}
+          viewerState={viewerState}
+          visible={fixedHeaderVisible}
+          footerVisible={footerVisible}
+        />
       )}
       <Header article={article} />
       <div className={s.title}>
         <div className={s.titleText}>{article.title}</div>
         <div className={s.subTitle}>{article.innerId}</div>
       </div>
-      <ArticleInfo article={article} />
+      <ArticleInfo article={article} stats={stats} viewerState={viewerState} />
       {isFullView && (
         <ViewportTracker
           onEnter={() => {

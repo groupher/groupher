@@ -52,6 +52,7 @@ const makeItem = (mentionedByCount: number): TTrashedPost => ({
   thread: 'POST',
   articleRef: 'article-1',
   article: { innerId: '1', title: 'Deleted post' },
+  stats: null,
   deletedBy: null,
   deletedAt: '2026-07-14T00:00:00Z',
   scheduledPermanentDeletionAt: '2026-08-13T00:00:00Z',

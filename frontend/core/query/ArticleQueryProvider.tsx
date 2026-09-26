@@ -7,22 +7,23 @@ import { useRef } from 'react'
 import { ARTICLE_THREAD } from '~/const/thread'
 import {
   isArticleUpvoteReceiptNewer,
-  overlayArticleUpvoteReceipt,
   readArticleUpvoteReceipt,
 } from '~/query/mutation/articleReceipt'
 import { clearArticleViewReceipt, readArticleViewReceipt } from '~/query/viewReceipt'
-import type { TArticle, TArticleThread, TThread } from '~/spec'
+import type { TArticle, TArticleStats, TArticleThread, TArticleViewerState, TThread } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { isArticleStatsSnapshotStale } from './articleStats'
 import { Q } from './client'
-import { articleKeys } from './key'
+import { invalidate, QueryInvalidation } from './invalidation'
 import useArticleInteractionReconcile from './useArticleInteractionReconcile'
 import type { TViewerArticleRef } from './viewer'
 
 type TValue = {
   article: TArticle | null
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
   community: string
   innerId: string
   thread: TThread
@@ -55,7 +56,7 @@ export default function ArticleQueryProvider({
   })
   const isArticleThread = Object.values(ARTICLE_THREAD).includes(thread as TArticleThread)
   const articleStatsQuery = useQuery({
-    ...Q.article.articleStats(community, thread as TArticleThread, innerId),
+    ...Q.article.stats(community, thread as TArticleThread, innerId),
     enabled: isArticleThread,
   })
   useEffect(() => {
@@ -66,10 +67,14 @@ export default function ArticleQueryProvider({
     )
       return
     refreshedStats.current = true
-    void queryClient.invalidateQueries({
-      queryKey: articleKeys.articleStats(community, thread as TArticleThread, innerId),
-      exact: true,
-    })
+    void invalidate(
+      queryClient,
+      QueryInvalidation.article.stats({
+        community,
+        thread: thread as TArticleThread,
+        innerId,
+      }),
+    )
   }, [articleStatsQuery.data, community, innerId, queryClient, thread])
   const articleRef = {
     community,
@@ -79,44 +84,50 @@ export default function ArticleQueryProvider({
   const viewerQuery = useQuery(
     Q.viewer.articleStates(account.accountRef || getAccountRef(account.user) || '', [articleRef]),
   )
+  const interactionQuery = useQuery(
+    Q.viewer.articleInteractionStates(account.accountRef || getAccountRef(account.user) || '', [
+      articleRef,
+    ]),
+  )
   useEffect(() => {
     const key = `${community}:${thread}:${String(innerId)}`
     if (viewerQuery.data?.[key]?.viewerHasViewed === true) clearArticleViewReceipt(key)
   }, [community, innerId, thread, viewerQuery.data])
   useArticleInteractionReconcile(articleQuery.data ? [articleQuery.data] : [])
-  const article = useMemo(() => {
-    if (!articleQuery.data) return null
+  const viewerState = useMemo<TArticleViewerState>(() => {
     const key = `${community}:${thread}:${String(innerId)}`
-    const viewerState = viewerQuery.data?.[key]
-    const withStats = articleStatsQuery.data
-      ? { ...articleQuery.data, articleStats: articleStatsQuery.data }
-      : articleQuery.data
-    const merged = viewerState ? ({ ...withStats, ...viewerState } as TArticle) : withStats
+    const base = {
+      articleKey: key,
+      ...viewerQuery.data?.[key],
+      ...interactionQuery.data?.[key],
+    }
     const viewReceipt = readArticleViewReceipt(key)
-    const viewed = viewReceipt ? { ...merged, viewerHasViewed: true } : merged
+    const viewed = viewReceipt ? { ...base, viewerHasViewed: true } : base
     const accountRef = account.accountRef || getAccountRef(account.user)
     const receipt = readArticleUpvoteReceipt(accountRef, key)
-    return isArticleUpvoteReceiptNewer(viewed, receipt)
-      ? overlayArticleUpvoteReceipt(viewed, receipt as NonNullable<typeof receipt>)
+    return isArticleUpvoteReceiptNewer(articleStatsQuery.data, receipt)
+      ? { ...viewed, ...receipt?.viewerState, interactionRevision: receipt?.interactionRevision }
       : viewed
   }, [
     account.accountRef,
     account.user,
-    articleQuery.data,
     community,
     innerId,
     thread,
     articleStatsQuery.data,
+    interactionQuery.data,
     viewerQuery.data,
   ])
   const value = useMemo(
     () => ({
-      article,
+      article: articleQuery.data || null,
+      stats: articleStatsQuery.data || null,
+      viewerState,
       community,
       innerId: String(innerId),
       thread,
     }),
-    [article, community, innerId, thread],
+    [articleQuery.data, articleStatsQuery.data, community, innerId, thread, viewerState],
   )
 
   return <ArticleQueryContext.Provider value={value}>{children}</ArticleQueryContext.Provider>

@@ -8,6 +8,7 @@
     "graphql:codegen": "graphql-codegen --config codegen.ts && oxfmt -c frontend/core/config/oxfmt.json frontend/core/lib/graphql/generated",
     "generate:fa-icons": "pnpm run generate:icons",
     "check:router-runtime": "node --test scripts/check-router-runtime.test.mjs && node scripts/check-router-runtime.mjs",
+    "check:query-invalidation": "node scripts/check-query-invalidation-boundary.mjs",
     "sync:icons": "node scripts/sync-fa-icons.mjs",
     "sync:icons:dash": "node scripts/sync-fa-icons.mjs dash",
     "sync:icons:landing": "node scripts/sync-fa-icons.mjs landing",

@@ -1,11 +1,11 @@
-import { queryOptions } from '@tanstack/react-query'
+import { queryOptions, type QueryClient } from '@tanstack/react-query'
 
 import { graphql } from '~/graphql/authoring'
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { ArticleRefInput } from '~/lib/graphql/generated/graphql'
 import { sessionState } from '~/schemas/pages/user'
-import type { TArticle, TCommentsState, TThread } from '~/spec'
+import type { TCommentsState, TThread } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
 import { viewerKeys } from './key'
@@ -38,23 +38,7 @@ const articleInteractionStates = graphql(`
       community
       thread
       innerId
-      articleInteractionRevision
-      upvotesCount
-      collectsCount
-      latestUpvotedUsers {
-        login
-        nickname
-        avatar
-      }
-      emotions {
-        type
-        count
-        latestUsers {
-          login
-          nickname
-          avatar
-        }
-      }
+      interactionRevision
       viewerHasUpvoted
       viewerHasCollected
       viewerEmotion
@@ -119,6 +103,33 @@ const toViewerState = (article: {
   }
 }
 
+/** Applies a committed mutation result to every active Article viewer-state batch. */
+export const cacheArticleViewedState = (
+  queryClient: QueryClient,
+  article: {
+    community: string
+    thread: string
+    innerId: string | number
+    viewerHasViewed?: boolean | null
+  },
+): void => {
+  const state = toViewerState(article)
+
+  queryClient
+    .getQueryCache()
+    .findAll({ queryKey: viewerKeys.all })
+    .filter((query) => viewerKeys.matchesArticleState(query, state.articleKey))
+    .forEach((query) => {
+      queryClient.setQueryData<Record<string, TArticleViewerState>>(query.queryKey, (current) => ({
+        ...current,
+        [state.articleKey]: {
+          ...current?.[state.articleKey],
+          ...state,
+        },
+      }))
+    })
+}
+
 const fetchArticleViewerStates = async (
   articles: readonly TViewerArticleRef[],
   signal?: AbortSignal,
@@ -144,11 +155,7 @@ export type TArticleInteractionState = {
   community: string
   thread: string
   innerId: string
-  articleInteractionRevision: number
-  upvotesCount: number
-  collectsCount: number
-  emotions: NonNullable<TArticle['emotions']>
-  latestUpvotedUsers: NonNullable<TArticle['meta']>['latestUpvotedUsers']
+  interactionRevision: number
   viewerHasUpvoted: boolean
   viewerHasCollected: boolean
   viewerEmotion?: string | null
@@ -174,11 +181,7 @@ const fetchArticleInteractionStates = async (
             ...article,
             articleKey: key,
             innerId: String(article.innerId),
-            articleInteractionRevision: article.articleInteractionRevision,
-            upvotesCount: article.upvotesCount,
-            collectsCount: article.collectsCount,
-            latestUpvotedUsers: article.latestUpvotedUsers,
-            emotions: article.emotions as unknown as NonNullable<TArticle['emotions']>,
+            interactionRevision: article.interactionRevision,
             viewerHasUpvoted: article.viewerHasUpvoted,
             viewerHasCollected: article.viewerHasCollected,
             viewerEmotion: article.viewerEmotion,

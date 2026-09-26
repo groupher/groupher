@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   foreign-key cascade semantics are not simulated here.
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
 
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate}
@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias CMS.SearchArtiments.Indexer
   alias GroupherServer.Analysis.MetricEvent
   alias Helper.{ORM, T}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @delete_hint Comment.delete_hint()
 
@@ -93,7 +94,10 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
          {:ok, deleted} <- ORM.update(comment, %{body_html: @delete_hint}),
-         :ok <- record_article_metric(counted_article, command_id, :comment_deleted) do
+         :ok <- CMS.ArticleStats.apply_comment_counts(counted_article),
+         :ok <- record_article_metric(counted_article, command_id, :comment_deleted),
+         {:ok, _invalidation} <-
+           invalidate_public_comments(counted_article, comment.thread, command_id) do
       {:ok,
        {
          deleted
@@ -114,7 +118,6 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
     %{
       thread: thread,
       inner_id: article.inner_id,
-      comments_count: article.comments_count,
       comments_revision: article.comments_revision
     }
   end
@@ -130,5 +133,22 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       :ok -> :ok
       {:error, _reason} = error -> error
     end
+  end
+
+  defp invalidate_public_comments(article, thread, command_id) do
+    article = Repo.preload(article, :community)
+
+    PublicCache.invalidate_now(
+      PublicCacheConst.comments_content_changed(),
+      %{
+        community: article.community.slug,
+        community_id: article.community_id,
+        thread: thread,
+        inner_id: article.inner_id,
+        id: article.id
+      },
+      causation_id: command_id,
+      aggregate_type: "article"
+    )
   end
 end

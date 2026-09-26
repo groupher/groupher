@@ -20,6 +20,6 @@ describe('Community query freshness', () => {
   })
 
   it('keeps the ArticleStats cache policy override', () => {
-    expect(communityQueries.articleStats('home', THREAD.POST, ['1']).staleTime).toBe(600_000)
+    expect(communityQueries.stats('home', THREAD.POST, ['1']).staleTime).toBe(600_000)
   })
 })

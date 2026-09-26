@@ -24,7 +24,6 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Helper.ArticlePath
   alias CMS.Model.Community
-  alias CMS.ViewTracker.Model.ViewSummary
   alias Helper.ORM
 
   @doc "Reads one Article through the actor-aware Article Insights scope."
@@ -90,6 +89,25 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
+  @doc "Locks one physical Article and revalidates its public Gate/Lifecycle scope."
+  @spec lock_for_view_tracking(struct()) ::
+          {:ok, struct(), Community.t(), DateTime.t()} | {:error, map()}
+  def lock_for_view_tracking(article) when is_struct(article) do
+    with {:ok, %{artiment: thread}} <- match_interaction(article),
+         {locked, %DateTime{} = received_at} <- lock_physical_article(article),
+         %Community{} = community <- Repo.get(Community, locked.community_id),
+         {:ok, scope_context} <- public_scope_context(community, thread, []),
+         %Ecto.Query{} = query <- CMS.Gate.scope(locked.__struct__, nil, :read, scope_context),
+         scoped when not is_nil(scoped) <-
+           query
+           |> where([row, ...], row.id == ^locked.id)
+           |> Repo.one() do
+      {:ok, scoped, community, received_at}
+    else
+      _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
+    end
+  end
+
   @doc "Reads one public ArticleStats batch without loading Articles one by one."
   @spec read_article_stats(String.t(), atom(), [String.t() | integer()]) ::
           {:ok, [map()]} | {:error, map()}
@@ -110,54 +128,29 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
          {:ok, info} <- match(thread),
          {:ok, scope_context} <- public_scope_context(community, thread, []),
          %Ecto.Query{} = query <- CMS.Gate.scope(info.model, nil, :read, scope_context) do
-      thread_value = Atom.to_string(thread)
-
       rows =
         query
-        |> join(:left, [article, ...], summary in ViewSummary,
-          as: :stats,
-          on: summary.thread == ^thread_value and summary.article_id == article.id
-        )
         |> where([article, ...], article.community_id == ^community_id)
         |> where([article, ...], article.inner_id in ^inner_ids)
-        |> select([article, ...], %{
-          article: article,
-          views: coalesce(as(:stats).views, 0),
-          views_revision: coalesce(as(:stats).revision, 0)
-        })
         |> Repo.all()
 
-      articles = Enum.map(rows, & &1.article)
+      articles = rows
+      stats_by_article_id = CMS.ArticleStats.for_articles(thread, articles)
 
-      with counts when is_map(counts) <- CMS.Interactions.counts(articles) do
-        snapshot_at = DateTime.utc_now()
-
+      with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
         stats_by_inner_id =
-          Map.new(rows, fn %{article: article, views: views, views_revision: views_revision} ->
-            interaction = Map.get(counts, {thread, article.id}, %{})
+          Map.new(articles, fn article ->
+            stats = Map.fetch!(stats_by_article_id, {thread, article.id})
 
             {to_string(article.inner_id),
-             %{
+             Map.merge(stats, %{
                community: community_ref,
                thread: thread,
-               inner_id: article.inner_id,
-               views: views,
-               views_revision: views_revision,
-               upvotes_count: Map.get(interaction, :upvotes_count, 0),
-               comments_count: Map.get(article, :comments_count, 0) || 0,
-               snapshot_at: snapshot_at
-             }}
+               inner_id: article.inner_id
+             })}
           end)
 
-        {:ok,
-         Enum.flat_map(inner_ids, fn inner_id ->
-           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
-             {:ok, stat} -> [stat]
-             :error -> []
-           end
-         end)}
-      else
-        {:error, _} = error -> error
+        {:ok, Enum.map(inner_ids, &Map.fetch!(stats_by_inner_id, to_string(&1)))}
       end
     else
       {:error, _} = error -> error
@@ -191,35 +184,36 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
           %{optional({atom(), integer()}) => map()} | {:error, term()}
   def stats_for_articles(thread, articles, community_ref \\ nil)
       when is_atom(thread) and is_list(articles) do
-    with summaries when is_map(summaries) <- CMS.ViewTracker.summaries(thread, articles),
-         counts when is_map(counts) <- CMS.Interactions.counts(articles) do
-      snapshot_at = DateTime.utc_now()
+    articles = preload_stats_communities(articles, community_ref)
 
+    stats_by_article_id = CMS.ArticleStats.for_articles(thread, articles)
+
+    with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
       Map.new(articles, fn article ->
-        summary = Map.get(summaries, {thread, article.id}, %{views: 0, revision: 0})
-        interaction = Map.get(counts, {thread, article.id}, %{})
-        community = community_ref || article_community_slug(article) || ""
+        stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+        community = community_ref || article_community_slug(article)
 
-        {{thread, article.id},
-         %{
-           community: community,
-           thread: thread,
-           inner_id: article.inner_id,
-           views: summary.views,
-           views_revision: summary.revision,
-           upvotes_count: Map.get(interaction, :upvotes_count, 0),
-           comments_count: Map.get(article, :comments_count, 0) || 0,
-           snapshot_at: snapshot_at
-         }}
+        {{thread, article.id}, Map.put(stats, :community, community)}
       end)
+    end
+  end
+
+  defp ensure_stats_rows(articles, stats_by_article_id, thread) do
+    if Enum.all?(articles, &Map.has_key?(stats_by_article_id, {thread, &1.id})) do
+      :ok
     else
-      {:error, _} = error -> error
+      {:error, ArticleErrorCat.projection_not_updated()}
     end
   end
 
   defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
   defp article_community_slug(%{community: %{slug: slug}}), do: slug
   defp article_community_slug(_article), do: nil
+
+  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref),
+    do: articles
+
+  defp preload_stats_communities(articles, _community_ref), do: Repo.preload(articles, :community)
 
   @doc "Reads one public Article from canonical Community/thread/id coordinates."
   @spec read(Community.t(), atom(), integer() | String.t(), keyword()) ::
@@ -259,6 +253,18 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     do:
       {:ok,
        ArticleContext.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
+
+  defp lock_physical_article(article) do
+    from(row in article.__struct__,
+      where: row.id == ^article.id,
+      lock: "FOR KEY SHARE",
+      select: {
+        row,
+        type(fragment("date_trunc('second', clock_timestamp())"), :utc_datetime)
+      }
+    )
+    |> Repo.one()
+  end
 
   defp insights_scope_context(:doc, opts),
     do:

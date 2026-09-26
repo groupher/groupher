@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, PublicCache, Repo}
 
   alias CMS.{FrontDesk, QueryBuilder}
   alias CMS.ViewTracker.Query, as: ViewTrackerQuery
@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   alias CMS.Communities.TagStats
   alias CMS.SearchArtiments.Indexer
   alias Helper.{Multi, ORM, T}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @audit_legal CMS.Artiment.Const.moderation_state(:legal)
   @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
@@ -79,6 +80,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
       update_tag_stats_on_visibility_change(article, updated_article)
     end)
+    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
+      invalidate_public_visibility(updated_article)
+    end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
       ORM.update_meta(article, legal_state)
@@ -118,6 +122,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
       update_tag_stats_on_visibility_change(article, updated_article)
+    end)
+    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
+      invalidate_public_visibility(updated_article)
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -189,5 +196,27 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   defp counted_in_tag_stats?(article) do
     not Trash.trashed_article?(article) and
       Map.get(article, :pending) != @audit_illegal
+  end
+
+  defp invalidate_public_visibility(article) do
+    with {:ok, %{artiment: thread}} <- match(article) do
+      article = Repo.preload(article, :community)
+
+      case PublicCache.invalidate_now(
+             PublicCacheConst.article_visibility_changed(),
+             %{
+               community: article.community.slug,
+               community_id: article.community_id,
+               thread: thread,
+               inner_id: article.inner_id,
+               id: article.id
+             },
+             causation_id: Ecto.UUID.generate(),
+             aggregate_type: "article"
+           ) do
+        {:ok, _invalidation} -> {:ok, :pass}
+        {:error, reason} -> {:error, reason}
+      end
+    end
   end
 end

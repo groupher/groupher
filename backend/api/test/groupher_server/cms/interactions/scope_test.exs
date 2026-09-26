@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
   alias CMS.Interactions
   alias CMS.Articles.Const, as: ArticlesConst
   alias CMS.Interactions.Const
-  alias CMS.Model.{Comment, Doc, Post, PostReactionInfo}
+  alias CMS.Model.{ArticleStats, Comment, Doc, Post}
   alias ErrorCat.Error
 
   test "keeps the complete order vocabulary in one owner" do
@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
 
     assert {:ok, query} = Interactions.scope(base, order: :upvotes)
     assert query.from.source == {"posts", Post}
-    assert [%Ecto.Query.JoinExpr{source: {_source, PostReactionInfo}}] = query.joins
+    assert [%Ecto.Query.JoinExpr{source: {_source, ArticleStats}}] = query.joins
     assert length(query.order_bys) == 1
   end
 

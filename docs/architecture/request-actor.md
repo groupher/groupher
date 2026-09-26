@@ -1,6 +1,6 @@
 # RequestActor 公共请求主体分类
 
-> 状态：本次改造的目标架构，待实施。
+> 状态：公共分类边界已落地；可信 agent/delegation/crawler verifier 与统一 request context 接线仍是剩余项，见文末清单。
 >
 > 本文定义 `GroupherServer.RequestActor` 平台能力。它只判断“当前请求主体属于哪一类”，不包含 ViewTracker、
 > Analysis、权限、限流、内容选择或其他业务规则。
@@ -251,7 +251,7 @@ Cookie、token、delegation id、IP 或 tracking key。高基数诊断信息只�
 
 本次改造不保留分类兼容层：
 
-1. 建立 `GroupherServer.RequestActor`、`Classification`、`Const` 和 verifier；
+1. 建立 `GroupherServer.RequestActor`、`Classification`、`Const` 和 verifier；当前仅完成分类边界，verifier 接线不可视为完成；
 2. 请求入口统一完成一次分类并写入 context；
 3. ViewTracker、Analysis 及其他消费者改为接收 `RequestActor.Classification`；
 4. `viewer_tracking_key` 与 counted policy 留在 ViewTracker；
@@ -265,7 +265,8 @@ Cookie、token、delegation id、IP 或 tracking key。高基数诊断信息只�
 
 ## 10. 验收
 
-- account、anonymous session、agent credential、delegation、crawler 和 unknown 各有成功与失败测试；
+- account、anonymous session、agent credential、delegation、crawler 和 unknown 各有成功与失败测试；当前 agent/delegation/crawler
+  只覆盖分类输入，不代表生产 credential/provider verifier 已接线；
 - 调用方传 `actor_type/confidence/classified_by` 不能影响分类结果；
 - 伪造内部 crawler/agent header 被拒绝；
 - 冲突的可信身份 fail closed；

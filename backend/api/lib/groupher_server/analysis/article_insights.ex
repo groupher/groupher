@@ -12,7 +12,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Analysis.{Const, Model.ArticleHourlyMetric}
-  alias GroupherServer.Actor.Const, as: ActorConst
+  alias GroupherServer.RequestActor.Const, as: RequestActorConst
   alias CMS.Artiment.Matcher
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.{Article, Doc}
@@ -141,7 +141,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
         {:ok, nil}
 
       {:ok, kinds} when is_list(kinds) ->
-        dimensions = ActorConst.actor_types()
+        dimensions = RequestActorConst.actor_types()
 
         if Enum.all?(kinds, &(&1 in dimensions)) do
           {:ok, Enum.uniq(kinds)}

@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
             }
             article {
               innerId
-              commentsCount
+              commentsRevision
             }
           }
         }
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         }
         article {
           innerId
-          commentsCount
+          commentsRevision
         }
       }
     }
@@ -46,7 +46,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         }
         article {
           innerId
-          commentsCount
           commentsRevision
         }
       }
@@ -74,7 +73,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         article {
           innerId
           thread
-          commentsCount
           commentsRevision
         }
       }
@@ -101,7 +99,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         article {
           innerId
           thread
-          commentsCount
           commentsRevision
         }
       }
@@ -119,7 +116,7 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         }
         article {
           innerId
-          commentsCount
+          commentsRevision
         }
       }
     }
@@ -137,7 +134,6 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
         }
         article {
           innerId
-          commentsCount
           commentsRevision
         }
       }

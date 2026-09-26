@@ -9,6 +9,7 @@ import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/content'
 
+import { normalizeTrashedPost } from './normalize'
 import type {
   TPagedTrashedPosts,
   TPermanentlyDeleteTrashedPostData,
@@ -24,6 +25,11 @@ const EMPTY_PAGE: TPagedTrashedPosts = {
   totalCount: 0,
   totalPages: 0,
 }
+
+const normalizePage = (page: TTrashedPostsData['trashedArticles']): TPagedTrashedPosts => ({
+  ...page,
+  entries: page.entries.map(normalizeTrashedPost),
+})
 
 /** Exposes trashed posts state and actions through the shared React hook boundary. */
 export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null) {
@@ -48,7 +54,7 @@ export default function useTrashedPosts(initialData?: TPagedTrashedPosts | null)
         })
 
         if (sequence !== requestSequence.current) return
-        setPagedPosts(data.trashedArticles ?? EMPTY_PAGE)
+        setPagedPosts(data.trashedArticles ? normalizePage(data.trashedArticles) : EMPTY_PAGE)
       } catch (error) {
         if (sequence !== requestSequence.current) return
         toast(String(error), 'error')
