@@ -1,11 +1,11 @@
 # ArticleStats 目标架构
 
-> 状态：ArticleStats 持久化公共投影、三类 owner revision、排序索引、GraphQL/SSR/Query 边界已落地；canonical
-> 全局 Article identity 与 typed emotion 行表是待实施的 direct-cutover 目标，不属于当前 V1 物理合同。
+> 状态：ArticleStats 持久化公共投影、三类 owner revision、排序索引、typed emotion 行表及 GraphQL/SSR/Query
+> 边界已在本地落地；canonical 全局 Article identity 仍是独立的长期方案，不属于 emotion direct cutover。
 >
 > 本文是本次 ArticleStats 改造的最终目标，不是后续可选优化。实现不保留旧字段、旧 Query key、双读或兼容层。
 > 本文从长期维护、读取性能和扩展能力出发，定义本次按目标直接切换的 Article 公共计数架构。
-> 当前 V1 已落地主链路及其 P0/P1 收敛补强仍以
+> 当前主链路及其 P0/P1 收敛补强仍以
 > [`article-stats-and-public-cache.md`](./article-stats-and-public-cache.md) 为准。
 > views 的 direct cutover 已按
 > [`article-view-counting.md`](../feature/view-tracker/article-view-counting.md) 落地；ViewSummary/EventProcessor 已删除，
@@ -37,7 +37,7 @@ ViewTracker owner ────────┘
 
 ## 2. 为什么需要独立读取投影
 
-当前 V1 已解决了公开计数从 Article content 分离的问题，公共读取直接使用 `cms.article_stats`；目标模型继续解决
+当前实现已解决公开计数从 Article content 分离的问题，公共读取直接使用 `cms.article_stats`；长期目标继续讨论
 跨 thread identity 和 emotion 排序扩展：
 
 ```text
@@ -53,13 +53,14 @@ scoped Article query
 - owner revision 没有全部进入 ArticleStats，客户端无法证明每个公共 count 已经追上 mutation receipt；
 - thread 对应不同物理 Article 表，ViewTracker 等多态投影无法建立统一 Article 外键。
 
-目标通过 canonical Article identity 和 typed emotion 排序投影解决剩余的跨 thread 结构问题；实施时直接删除旧 JSONB、
-旧 GraphQL 字段和旧 identity，不建立中间模型或隐式兼容路径。
+typed emotion 投影已经基于现有 `(thread, article_id)` identity 落地。canonical Article identity 若未来实施，是另一项独立
+迁移；它不再是 emotion cutover 的前置条件。
 
-## 3. Canonical Article identity（direct-cutover 目标）
+## 3. Canonical Article identity（长期候选方案）
 
-本节描述下一阶段的理想物理模型，不代表当前仓库已经存在 `cms.articles` 或全局 FK。当前 V1 仍使用
-`(thread, physical article_id)` 作为持久化 identity；公共 GraphQL locator 仍是 `community + thread + innerId`。
+本节描述长期候选物理模型，不代表当前仓库存在 `cms.articles` 或全局 FK。当前仍使用 `(thread, article_id)` 作为
+ArticleStats、typed emotion rows 和各 owner state 的内部 identity；公共 GraphQL locator 仍是
+`community + thread + innerId`。
 
 所有 Article thread 共享一个稳定、全局唯一的 Article identity：
 
@@ -77,7 +78,7 @@ cms.articles
 UNIQUE (community_id, thread, inner_id)
 ```
 
-thread 专属内容继续放在各自模型中，但以 `article_id` 一对一关联 canonical Article：
+thread 专属内容继续放在各自模型中。Post/Blog/Changelog 可以一对一关联 canonical Article；Doc 必须先明确 branch 粒度：
 
 ```text
 cms.articles
@@ -85,14 +86,21 @@ cms.articles
   ├─ cms.blogs.article_id
   ├─ cms.changelogs.article_id
   └─ cms.docs.article_id
+       ├─ branch A physical row
+       └─ branch B physical row（若 canonical 表示跨 branch logical Doc）
 ```
+
+当前合同不采用这层 canonical：不同 Doc branch 的 `docs.id` 各自拥有 stats。若未来 canonical 表示跨 branch logical Doc，
+`cms.docs.article_id` 必须是一对多，views/interactions/comments 的 owner facts、删除和 revision 都要一起迁移为聚合语义；不能一边
+共享 canonical stats，一边继续让某个 branch 的物理 projection 覆盖整行。若产品仍要求 branch 独立计数，则 canonical identity 也
+必须 branch-scoped。该选择是实施 §3 前必须解决的产品合同，不在当前 direct cutover 中暗含答案。
 
 Comments、Interactions、ViewTracker 和 ArticleStats 都只引用 `articles.id`：
 
 ```text
                         ┌─ comments.article_id
 cms.articles.id ────────┼─ article_reaction_infos.article_id
-                        ├─ article_view_watermarks.article_id
+                        ├─ article_view_dedupe_states.article_id
                         ├─ article_viewer_states.article_id
                         ├─ article_emotion_counts.article_id
                         └─ article_stats.article_id
@@ -103,7 +111,7 @@ cms.articles.id ────────┼─ article_reaction_infos.article_id
 
 ## 4. ArticleStats 数据模型
 
-### 4.0 当前 V1 已落地的物理模型
+### 4.0 当前固定字段物理模型
 
 ```text
 cms.article_stats
@@ -113,17 +121,21 @@ cms.article_stats
 ├─ upvotes_count / collects_count
 ├─ comments_count / comments_participants_count
 ├─ interaction_revision / comments_revision
-├─ reaction_counts       JSONB，每个 emotion type 各有 count，输出 typed GraphQL list；不是总和
 └─ snapshot_at           当前由每个字段 owner API 使用 DB clock_timestamp() 写入
+
+cms.article_emotion_counts
+├─ thread / article_id / type
+├─ count
+└─ interaction_revision
 
 UNIQUE (thread, article_id)
 INDEX (thread, views|upvotes_count|comments_count|collects_count)
 ```
 
 当前 owner transaction 直接 upsert 这一行；FrontDesk/GraphQL 不在 request time 从 Article、ReactionInfo 或其他
-owner 表重新拼 count，也不对缺失行做 legacy fallback。GraphQL 读取边界不变，views 由 ViewTracker 字段级 UPSERT
-直接写入这一行，所有 owner 的 `snapshot_at` 都由数据库 `clock_timestamp()` 写入。目标模型见
-下文，迁移到它时直接删除 `reaction_counts`，不增加双读、双写或兼容字段。
+owner 表重新拼 count，也不对缺失行做 legacy fallback。GraphQL 在同一 statement snapshot 中读取固定字段并聚合 typed emotion
+rows；views 由 ViewTracker 字段级 UPSERT 直接写入 ArticleStats，所有 owner 的 `snapshot_at` 都由数据库
+`clock_timestamp()` 写入。旧 `reaction_counts` 已在 direct cutover 中删除，没有双读、双写或兼容字段。
 
 ### 4.1 固定公共计数（canonical 目标模型）
 
@@ -158,11 +170,10 @@ community_id/thread 必须与 canonical Article 一致
 `community_id` 和 `thread` 是有意保留的排序维度副本，不是第二套 locator。它们由 Article 创建、移动或类型迁移
 协议维护，并可通过一致性任务从 canonical Article 修复。
 
-### 4.2 可扩展 emotion counts（canonical 目标模型）
+### 4.2 可扩展 emotion counts（当前实现）
 
-当前 V1 的 `article_stats.reaction_counts` JSONB 和 GraphQL `reactionCounts` 只是待删除的现状，不是目标接口。
-canonical Article identity 落地后，或与其在同一个受控发布窗口，direct cutover 直接创建
-`cms.article_emotion_counts`，删除 JSONB 列并将 GraphQL 字段改为 `emotionCounts`。不建立
+旧 `article_stats.reaction_counts` JSONB 和 GraphQL `reactionCounts` 已删除。当前 direct cutover 已创建
+`cms.article_emotion_counts`，并将 GraphQL 字段改为 `emotionCounts`，没有建立
 `ArticleReactionCount`、JSONB shadow、双写或兼容 alias。
 
 每个 emotion type 使用独立 `ArticleEmotionCount` 行；`UPVOTE`/`COLLECT` 继续使用 ArticleStats 固定字段。
@@ -170,9 +181,9 @@ canonical Article identity 落地后，或与其在同一个受控发布窗口�
 维护窗口迁移和验收的唯一详细合同见
 [`article-emotion-counts.md`](./article-emotion-counts.md)。
 
-这一步依赖 canonical `articles.id` 同时落地。继续使用 `(thread, physical_article_id, type)` 创建过渡表会形成另一套临时
-identity，违反 direct-cutover 合同，因此不采用。Article view 同步计数不实施此迁移；在 canonical identity cutover
-以前，当前 JSONB/GraphQL 仍是唯一生产路径，而不是新旧协议并存的兼容层。
+typed row 直接使用现有 `(thread, article_id, type)` identity；其中 `article_id` 是对应 thread 内容表的主键。
+本次没有引入 `cms.articles`，也没有保留旧 JSONB/GraphQL 生产路径。若未来采用 §3 的全局 identity，需要单独迁移这些
+typed rows，不能把该长期方案描述为当前事实。
 
 ### 4.3 revision 是 owner version vector
 
@@ -206,9 +217,8 @@ ArticleStats revision vector
 
 ### 4.4 一致快照
 
-canonical 目标模型中，固定字段和 `emotionCounts` 必须由同一个数据库 statement snapshot 读取，例如在一条 Ecto query
-中聚合 emotion rows；也可以使用明确的 repeatable-read transaction。当前 V1 已将两者写入同一 `article_stats` 行，
-因此读取时直接读取同一行；`snapshotAt` 不在 response 组装时伪造，而是返回持久化投影时间。
+当前模型中，固定字段和 `emotionCounts` 由同一个数据库 statement snapshot 读取：一条 Ecto query 按 thread JOIN
+ArticleStats 并聚合 typed emotion rows。`snapshotAt` 不在 response 组装时伪造，而是返回持久化投影时间。
 
 这是读取一致性约束；§6.3/§6.4 中 owner transaction 内同步更新 ArticleStats 是写入原子性约束。两者相互独立：
 写入不能依赖读取端修补半完成状态，读取也不能因为各 owner 分别原子提交就跨多个 statement 拼装伪快照。
@@ -218,22 +228,31 @@ canonical 目标模型中，固定字段和 `emotionCounts` 必须由同一个�
 每个允许成为列表 order 的 count，都必须先拥有预计算值和匹配索引。禁止为了支持一个排序选项，在运行时引入
 `COUNT(*)`、相关子查询或加载 interaction facts。
 
-当前 V1 已落地 `(thread, metric)` 索引；以下是 canonical `community_id + thread` 模型的目标索引：
+当前固定字段已落地 `(thread, metric, article_id)` 索引；当前 typed emotion 排序索引是：
+
+```sql
+CREATE INDEX article_emotion_counts_order_idx
+ON cms.article_emotion_counts
+  (thread, type, count DESC, article_id DESC);
+```
+
+它与当前 `(thread, physical article_id)` identity 一致。以下带 `community_id` 的索引只属于 §3 全局 identity 候选方案，
+不是当前 schema：
 
 固定排序索引：
 
 ```sql
 CREATE INDEX article_stats_views_order_idx
-ON cms.article_stats (community_id, thread, views DESC, article_id DESC);
+ON cms.article_stats (community_id, thread, views DESC, article_id ASC);
 
 CREATE INDEX article_stats_upvotes_order_idx
-ON cms.article_stats (community_id, thread, upvotes_count DESC, article_id DESC);
+ON cms.article_stats (community_id, thread, upvotes_count DESC, article_id ASC);
 
 CREATE INDEX article_stats_comments_order_idx
-ON cms.article_stats (community_id, thread, comments_count DESC, article_id DESC);
+ON cms.article_stats (community_id, thread, comments_count DESC, article_id ASC);
 ```
 
-可配置 emotion 排序索引：
+候选方案的可配置 emotion 排序索引：
 
 ```sql
 CREATE INDEX article_emotion_counts_order_idx
@@ -293,15 +312,15 @@ GET /home/post?order=views
         │
         v
 cms.article_stats order index
-  community=home
-  thread=POST
-  ORDER BY views DESC, article_id DESC
+  thread=post
+  ORDER BY views DESC, article_id ASC
         │
         v
-JOIN Gate-scoped cms.articles
+JOIN Gate-scoped cms.posts
+  community=home
   lifecycle=published
   visibility=public
-ORDER BY stats.views DESC, stats.article_id DESC
+ORDER BY stats.views DESC, stats.article_id ASC
 LIMIT 20
         │
         ├─> load Post content by article_id
@@ -313,9 +332,11 @@ one page response
   └─ ArticleStats[]
 ```
 
-Gate scope 必须组合进同一条 SQL；不能先把全部可见 Article id 物化到应用层。对公共社区列表，查询应允许
-planner 从 ArticleStats 排序索引驱动，再通过 canonical Article 过滤生命周期和可见性。读取不执行
-`COUNT(*)`，不查询 interaction facts，也不按 Article 循环加载 count。
+Gate scope 必须组合进同一条 SQL；不能先把全部可见 Article id 物化到应用层。当前 FrontDesk 按 thread dispatch 到
+`cms.posts`、`cms.blogs`、`cms.changelogs` 或 `cms.docs`，再以 `(thread, physical article_id)` 连接 ArticleStats。查询应允许
+planner 从 ArticleStats 排序索引驱动，再通过对应 physical thread 表过滤 community、生命周期和可见性。读取不执行
+`COUNT(*)`，不查询 interaction facts，也不按 Article 循环加载 count。若未来实施 §3，才把四个 physical scope 改成
+canonical Article scope。
 
 ### 6.2 详情页 SSR、CDN 与 hydration
 
@@ -478,10 +499,11 @@ compare ArticleStats count + revision
                     rebuild non-view ArticleStats fields
 ```
 
-全量重建按 Article id/keyset 分页：
+全量重建按 physical Article id/keyset 分页：
 
 ```text
-canonical Articles page
+thread-specific physical Article page
+  -> Post | Blog | Changelog | Doc Gate scope
   -> batch owner reads
   -> bulk upsert ArticleStats
   -> verify revisions
@@ -496,6 +518,8 @@ ViewSummary 或 ViewEvent 双写。
 ### 6.8 Permanent delete
 
 ```text
+§3 canonical identity 候选方案（当前未实施）
+
 permanently delete Article
         │
         v
@@ -508,9 +532,20 @@ delete canonical Article
        └─ ArticleStats
 ```
 
-当前 V1 没有 canonical Article FK；owner delete hooks 显式删除 `ArticleStats`、ViewerState、watermark 和短期 receipt。
-canonical 目标模型由 FK cascade 承担可验证的级联。Analysis MetricEvent 按自身 retention/删除快照合同处理，不伪造
-跨多态表的外键。
+当前实际链路是：
+
+```text
+permanently delete physical Post | Blog | Changelog | Doc
+  -> delete thread-owned facts/projections
+  -> ViewTracker.delete_article_state(thread, article_id)
+  -> ArticleStats.delete(thread, article_id)
+       ├─ delete ArticleEmotionCount rows
+       └─ delete ArticleStats row
+```
+
+当前没有 canonical Article FK。owner delete hooks 显式删除 ArticleStats、ArticleEmotionCount、ViewerState、dedupe state 和
+短期 receipt；Analysis MetricEvent 按自身 retention/删除快照合同处理，不伪造跨多态表的外键。若未来落地 §3，才能再
+评估哪些 cleanup 可以由 FK cascade 替代。
 
 ## 7. 配置边界
 
@@ -552,9 +587,9 @@ ViewTracker.Config
 - public/private hydration 边界；
 - owner 与 ArticleStats 的权威方向。
 
-## 8. 相比当前架构的收益
+## 8. 长期候选方案相对当前架构的取舍
 
-| 维度                | 当前架构                                                                     | 目标架构                                                                       |
+| 维度                | 当前架构                                                                     | canonical 候选架构                                                             |
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | Article identity    | `thread + physical article_id`，跨多个 Article 表                            | 一个全局 `articles.id`，其他领域使用 FK                                        |
 | 公共读取            | `cms.article_stats` 单行投影                                                 | canonical Article + ArticleStats 单一读取投影                                  |
@@ -598,8 +633,8 @@ ArticleStats 反向覆盖领域 owner
 
 ## 10. Direct-cutover 目标验收条件
 
-以下第一条和最后一条属于 canonical Article identity 的未来迁移验收；当前 V1 的公共读取验收以
-`article-stats-and-public-cache.md` 为准，不得把未来表名误读成当前已部署 schema。
+以下第一条和涉及全局 FK 的条目属于长期候选方案验收，不代表当前实现。typed emotion 与公共读取验收同时遵守
+`article-emotion-counts.md` 和 `article-stats-and-public-cache.md`。
 
 - Article、Comments、Interactions、ViewTracker、ArticleStats 都通过同一个 `articles.id` 定位；
 - permanent delete 不留下 ArticleStats、ArticleEmotionCount、ViewerState、ViewWatermark 或 ViewCountReceipt orphan；

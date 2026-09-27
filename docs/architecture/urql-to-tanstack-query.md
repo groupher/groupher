@@ -33,9 +33,9 @@
 > `PublicCache.Invalidation` outbox + Oban worker + Cloudflare；同时按本文“Query invalidation 通用能力”一节收口
 > 浏览器 Query cache。切换时删除旧 proxy/facade，不保留兼容入口。
 >
-> 本文类型示例中的 ArticleStats `reactionCounts` 记录当前实现。按
-> [`article-emotion-counts.md`](./article-emotion-counts.md) direct cutover 时，它将直接改名为
-> `emotionCounts: ArticleEmotionCount[]` 并由 `cms.article_emotion_counts` typed 行提供；旧 key 不保留 alias 或 merge。
+> 2026-09-26 后续 direct cutover 已将 ArticleStats `reactionCounts` 改为
+> `emotionCounts: ArticleEmotionCount[]`，数据由 `cms.article_emotion_counts` typed 行提供；旧 key 没有保留 alias、双读或
+> merge。实施合同见 [`article-emotion-counts.md`](./article-emotion-counts.md)。
 
 ## 实施结果
 
@@ -559,7 +559,7 @@ type ArticleStats = {
   viewsRevision: number
   upvotesCount: number
   collectsCount: number
-  reactionCounts: Array<{ type: string; count: number }>
+  emotionCounts: Array<{ type: string; count: number }>
   interactionRevision: number
   commentsCount: number
   commentsParticipantsCount: number

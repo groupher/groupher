@@ -5,8 +5,8 @@
 
 ## Todo
 
-- [x] [Article View 同步计数](./feature/view-tracker/article-view-counting.md) — 字段级 ArticleStats UPSERT、DB timestamp、短期 transport receipt 与 MetricEvent 同事务写入已直接落地；旧 Oban 投影、ViewSummary 和前端延迟 refetch 已删除。
-- [ ] [Article emotion counts direct cutover](./architecture/article-emotion-counts.md) — canonical `articles.id` 落地后，将 JSONB/`reactionCounts` 一步切换为 typed rows/`emotionCounts`；不属于 views 改造，不保留双写、双读或 alias。
+- [x] [Article View 同步计数](./feature/view-tracker/article-view-counting.md) — `ViewDedupeState`、字段级 ArticleStats 与 MetricEvent 同事务，View transport receipt/客户端幂等 ID 已删除，前端四个 surface 已统一；Cloudflare 防滥用另列部署待办。
+- [x] [Article emotion counts direct cutover](./architecture/article-emotion-counts.md) — 保留现有 `(thread, article_id)` identity，typed rows、GraphQL `emotionCounts` 与前端 consumer 已在本地一步切换；生产维护窗口、CDN purge 和线上 smoke test 待发布验收。
 - [ ] [ORM 与数据库原语边界](./architecture/orm.md) — 待将重复 advisory-lock SQL 直接收口到 `Helper.ORM.AdvisoryLock`，补齐 API 注释、示例和 runtime `Repo.query*` 静态门禁；不建立 `Database.*` 或兼容 wrapper。
 - [ ] [AI](./ai) — 首期应用仍处于规划阶段。
 - [ ] [Assets Hub V4](./assets-hub/v4.md) — thread 归属、stats 与 quota 方案待实施。
@@ -25,9 +25,9 @@
 - [ ] [Article ViewTracker / Insights V1](./feature/view-tracker/v1.md) — 核心实现完成，发布前必须完成真实浏览器 tracking 与 Insights GraphQL 授权 e2e。
 - [x] [Article ViewTracker V2](./feature/view-tracker/v2.md) — 历史异步协议已由 Article View 同步计数取代；文档保留为历史设计记录。
 - [ ] [ArticleStats 与公共页面缓存](./architecture/article-stats-and-public-cache.md) — 同步 views、owner revision DTO 与 Query/cache owner 已落地；当前剩余生产 telemetry、真实 CDN purge 与边缘验收。
-- [ ] [ArticleStats 目标架构](./architecture/article-stats-target.md) — ArticleStats 投影、排序索引和 owner revision 已落地；canonical Article identity 待 direct cutover，emotion 迁移由独立文档定义；旧 JSONB/`reactionCounts` 不保留兼容层。
+- [ ] [ArticleStats 目标架构](./architecture/article-stats-target.md) — ArticleStats、typed emotion rows、排序索引和 owner revision 已落地；canonical Article registry 仍是独立长期候选方案，不属于本次 cutover。
 - [ ] [TanStack Query 通用失效](./architecture/query-invalidation.md) — typed domain target、通用 executor、active/inactive policy、静态门禁和 CDN 边界已落地；剩余各业务 mutation 的 owner revision 收敛与生产观测。
-- [ ] [RequestActor 公共分类](./architecture/request-actor.md) — `GroupherServer.RequestActor` 与旧 Actor/ViewTracker 分类入口已直接切换；剩余可信请求入口和生产分类观测。
+- [ ] [RequestActor 公共分类](./architecture/request-actor.md) — typed evidence、account/anonymous/service/delegation request context 与 View conditional scope 已直接切换；剩余 signed crawler evidence、Edge/origin 收口和生产分类观测。
 - [ ] [公共缓存可靠失效](./architecture/public-cache-invalidation.md) — Phoenix `PublicCache` outbox、Oban、Cloudflare adapter、跨语言 tag contract 与已识别领域写入接线已落地；剩余真实 purge、purge health 与生产验收。
 - [ ] [Interaction V4](./feature/interaction/v4.md) — 主体实现完成，仍需生产存量清理。
 - [ ] [Interaction V5](./feature/interaction/v5.md) — ViewTracker 迁出与 Audit 退役已落地，ReportFact/Moderation 仍在实施。

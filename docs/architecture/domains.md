@@ -9,8 +9,8 @@ Feature 文档为准。
 
 `ArticleStats` 不是新的业务领域：它是跨 `ViewTracker`、`Interactions` 和 Article/Comment 读取投影的公共
 统计 DTO 与 Query cache 边界。它的命名、SSR hydration、缓存 TTL 和 tracking 判断见
-[ArticleStats 与公共页面缓存](./article-stats-and-public-cache.md)。Interactions 的 emotion typed-row 与 GraphQL 改名
-属于独立 direct cutover，见 [Article emotion counts](./article-emotion-counts.md)。
+[ArticleStats 与公共页面缓存](./article-stats-and-public-cache.md)。Interactions 的 emotion typed-row 与 GraphQL 改名已作为
+独立 direct cutover 在本地落地，见 [Article emotion counts](./article-emotion-counts.md)。
 
 ```text
 CMS

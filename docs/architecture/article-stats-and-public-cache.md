@@ -6,9 +6,9 @@
 > 本文定义 Article 公共统计、SSR hydration、HTML/CDN 缓存和阅读判断边界。
 > 本次改造的最终数据模型、排序投影和重建协议见
 > [`article-stats-target.md`](./article-stats-target.md)。
-> 本文中的 `reaction_counts`/`reactionCounts` 是当前 V1 实现名。target direct cutover 将直接删除它们，改用
-> `cms.article_emotion_counts` typed 行、GraphQL `ArticleEmotionCount` 和 `emotionCounts`；不保留 alias、双读或
-> JSONB fallback。独立迁移协议见 [`article-emotion-counts.md`](./article-emotion-counts.md)。
+> emotion direct cutover 已改用 `cms.article_emotion_counts` typed 行、GraphQL `ArticleEmotionCount` 和
+> `emotionCounts`；旧 `reaction_counts`/`reactionCounts` 只作为历史名称保留在迁移说明中，runtime 不保留 alias、双读
+> 或 JSONB fallback。迁移协议见 [`article-emotion-counts.md`](./article-emotion-counts.md)。
 > 可靠 CDN 失效协议见 [`public-cache-invalidation.md`](./public-cache-invalidation.md)。
 > [ViewTracker V2](../feature/view-tracker/v2.md) 只描述已经删除的历史异步实现；当前 canonical views 写协议以
 > [`article-view-counting.md`](../feature/view-tracker/article-view-counting.md) 为准。本文的 ArticleStats 公共读取、
@@ -27,7 +27,7 @@ ArticleStats（公开 headline stats）
   ├─ views              <- CMS.ViewTracker 同步字段级 UPSERT
   ├─ upvotesCount       <- CMS.Interactions 同步事实/读取投影
   ├─ collectsCount      <- CMS.Interactions 同步事实/读取投影
-  ├─ reactionCounts     <- CMS.Interactions typed emotion 读取投影
+  ├─ emotionCounts      <- CMS.Interactions typed emotion 读取投影
   ├─ commentsCount      <- Article/Comment 现有同步读取投影
   ├─ commentsParticipantsCount <- Comments 现有同步读取投影
   └─ snapshotAt         <- ArticleStats owner transaction 写入的持久化快照时间
@@ -37,7 +37,7 @@ ViewerState
 ```
 
 `ArticleStats` 是公共读取 DTO 和前端 Query cache 边界，不是新的业务事实 owner。目标范围是文章页面所有公开、
-可变、Article 级聚合计数：`views`、`upvotesCount`、`collectsCount`、`reactionCounts`、`commentsCount` 和
+可变、Article 级聚合计数：`views`、`upvotesCount`、`collectsCount`、`emotionCounts`、`commentsCount` 和
 `commentsParticipantsCount`。它们虽然写入来源不同，
 但在公共读取层使用同一个快照、同一个 `snapshotAt` 和同一套缓存策略。
 
@@ -172,7 +172,7 @@ query ArticleStats($community: String!, $thread: Thread!, $innerIds: [ID!]!) {
     upvotesCount
     collectsCount
     interactionRevision
-    reactionCounts {
+    emotionCounts {
       type
       count
     }
@@ -201,7 +201,7 @@ innerIds 去重后最多 100 个
 
 公开 locator 不允许 sentinel：`community` trim 后必须是非空 slug，`thread` 必须是支持的公开 Article thread，
 `innerId` 必须是合法公开 id。GraphQL boundary 在进入 loader 前拒绝 `community: ""`；ArticleStats DTO 和 Query key
-也不得生成空 community。只持有内部 `thread + article_id` 的 ViewTracker 路径必须先通过 canonical Article reader
+也不得生成空 community。只持有内部 `thread + article_id` 的 ViewTracker 路径必须先通过权威 public Article reader
 解析公开 locator，不能用空字符串表示“社区未知”。
 
 一次 `articleStats` batch request 返回每个 Article 的完整 headline stats；不能为了 views、upvotes 和 comments
@@ -621,7 +621,7 @@ SSR 普通 content reader 隐式 tracking
 验收至少包括：
 
 - `articleStats` 对 1、20、100 个 Article 都只产生一次 GraphQL batch request；返回每篇完整的
-  `views/upvotesCount/collectsCount/reactionCounts/commentsCount/commentsParticipantsCount` 和三个 owner revision；
+  `views/upvotesCount/collectsCount/emotionCounts/commentsCount/commentsParticipantsCount` 和三个 owner revision；
 - 后端 ArticleStats 读取使用一个 scoped SQL，或有明确上限的固定数量 owner reads；查询次数不随 Article 数量
   或 count 类型数量增长，禁止 N+1 和按 count 类型拆分查询；
 - 对 1、20、100 条输入执行 `EXPLAIN (ANALYZE, BUFFERS)` 和 select-count 测试，验证 Article locator、
@@ -663,7 +663,7 @@ SSR 普通 content reader 隐式 tracking
 
 - [ViewTracker V2](../feature/view-tracker/v2.md)：事件、去重、Summary 投影、dead-letter 和删除协议；
 - [Article View 同步计数](../feature/view-tracker/article-view-counting.md)：已替换 V2 views 写协议的当前合同；
-- [Article emotion counts](./article-emotion-counts.md)：canonical identity 后的 typed-row 与 GraphQL direct cutover；
+- [Article emotion counts](./article-emotion-counts.md)：沿用 `(thread, article_id)` 的 typed-row 与 GraphQL direct cutover；
 - [Article Insights V1](../feature/analysis/article-insights-v1.md)：MetricEvent 与小时趋势；
 - [Query/Store 边界](./query-store-boundary.md)：公共 Query、Viewer Query 和 hydration 的通用边界；
 - [TanStack Query 通用失效](./query-invalidation.md)：typed target、ArticleStats batch matcher 与通用 executor；
