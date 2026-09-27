@@ -20,7 +20,7 @@ describe('useTrackArticleView', () => {
       value: 'visible',
     })
     trackArticleView.mockReset()
-    trackArticleView.mockResolvedValue({ counted: true, eventId: 'event-1' })
+    trackArticleView.mockResolvedValue({ tracked: true })
     observe.mockReset()
     disconnect.mockReset()
     class TestIntersectionObserver {

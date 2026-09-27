@@ -58,7 +58,7 @@ export type TArticleStats = {
   commentsParticipantsCount: number
   interactionRevision: number
   commentsRevision: number
-  reactionCounts: Array<{ type: string; count: number }>
+  emotionCounts: Array<{ type: string; count: number }>
   snapshotAt: string
 }
 

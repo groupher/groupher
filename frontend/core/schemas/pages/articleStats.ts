@@ -14,7 +14,7 @@ export const articleStats = graphql(`
       commentsParticipantsCount
       interactionRevision
       commentsRevision
-      reactionCounts {
+      emotionCounts {
         type
         count
       }

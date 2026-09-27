@@ -36,7 +36,7 @@ const stats = {
   commentsParticipantsCount: 0,
   interactionRevision: 0,
   commentsRevision: 0,
-  reactionCounts: [],
+  emotionCounts: [],
   snapshotAt: new Date().toISOString(),
 }
 

@@ -32,7 +32,7 @@ const stats = (overrides: Partial<TArticleStats> = {}): TArticleStats => ({
   commentsParticipantsCount: 6,
   interactionRevision: 7,
   commentsRevision: 8,
-  reactionCounts: [{ type: 'HEART', count: 2 }],
+  emotionCounts: [{ type: 'HEART', count: 2 }],
   snapshotAt: new Date(NOW).toISOString(),
   ...overrides,
 })

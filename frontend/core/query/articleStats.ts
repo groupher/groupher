@@ -25,9 +25,9 @@ export const normalizeArticleStats = (stats: TArticleStatsResponse): TArticleSta
   commentsParticipantsCount: Number(stats.commentsParticipantsCount),
   interactionRevision: Number(stats.interactionRevision),
   commentsRevision: Number(stats.commentsRevision),
-  reactionCounts: (stats.reactionCounts || []).map((reaction) => ({
-    type: reaction.type,
-    count: Number(reaction.count),
+  emotionCounts: (stats.emotionCounts || []).map((emotion) => ({
+    type: emotion.type,
+    count: Number(emotion.count),
   })),
   snapshotAt: String(stats.snapshotAt),
 })

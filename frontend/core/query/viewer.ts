@@ -8,6 +8,7 @@ import { sessionState } from '~/schemas/pages/user'
 import type { TCommentsState, TThread } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
+import { articleRefKey } from './articleRef'
 import { viewerKeys } from './key'
 
 export type TArticleViewerState = {
@@ -62,9 +63,6 @@ const commentViewerStates = graphql(`
 
 const viewerBatchSize = 100
 
-const articleKey = (article: Pick<TViewerArticleRef, 'community' | 'thread' | 'innerId'>): string =>
-  `${article.community}:${article.thread}:${String(article.innerId)}`
-
 const normalizeArticleRefs = (articles: readonly TViewerArticleRef[]): TViewerArticleRef[] => {
   const refs = new Map<string, TViewerArticleRef>()
   for (const article of articles) {
@@ -73,7 +71,7 @@ const normalizeArticleRefs = (articles: readonly TViewerArticleRef[]): TViewerAr
       thread: article.thread,
       innerId: String(article.innerId),
     } satisfies TViewerArticleRef
-    refs.set(articleKey(normalized), normalized)
+    refs.set(articleRefKey(normalized), normalized)
   }
   return [...refs.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
@@ -95,7 +93,7 @@ const toViewerState = (article: {
   viewerHasViewed?: boolean | null
   viewerHasUpvoted?: boolean | null
 }): TArticleViewerState => {
-  const key = articleKey(article as TViewerArticleRef)
+  const key = articleRefKey(article as TViewerArticleRef)
   return {
     articleKey: key,
     viewerHasViewed: article.viewerHasViewed ?? undefined,
@@ -174,7 +172,7 @@ const fetchArticleInteractionStates = async (
   return Object.fromEntries(
     responses.flatMap((data) =>
       data.articleInteractionStates.map((article) => {
-        const key = articleKey(article as TViewerArticleRef)
+        const key = articleRefKey(article as TViewerArticleRef)
         return [
           key,
           {
@@ -230,7 +228,7 @@ const fetchCommentViewerStates = async (
 const articleStates = (accountRef: string, articles: readonly TViewerArticleRef[]) => {
   const normalized = normalizeArticleRefs(articles)
   return queryOptions({
-    queryKey: viewerKeys.articleStates(accountRef, normalized.map(articleKey)),
+    queryKey: viewerKeys.articleStates(accountRef, normalized.map(articleRefKey)),
     queryFn: ({ signal }) => (accountRef ? fetchArticleViewerStates(normalized, signal) : {}),
     enabled: !!accountRef && normalized.length > 0,
     staleTime: 30_000,
@@ -243,7 +241,7 @@ const articleInteractionStateOptions = (
 ) => {
   const normalized = normalizeArticleRefs(articles)
   return queryOptions({
-    queryKey: viewerKeys.articleInteractionStates(accountRef, normalized.map(articleKey)),
+    queryKey: viewerKeys.articleInteractionStates(accountRef, normalized.map(articleRefKey)),
     queryFn: ({ signal }) => fetchArticleInteractionStates(normalized, signal),
     enabled: !!accountRef && normalized.length > 0,
     staleTime: 0,
@@ -261,7 +259,7 @@ const commentStates = (
     thread: article.thread,
     innerId: String(article.innerId),
   } satisfies TViewerArticleRef
-  const articleKeyValue = articleKey(normalizedArticle)
+  const articleKeyValue = articleRefKey(normalizedArticle)
   const normalizedIds = [...new Set(commentInnerIds.map(String))].sort()
   return queryOptions({
     queryKey: viewerKeys.commentStates(accountRef, articleKeyValue, normalizedIds),
@@ -286,7 +284,7 @@ const commentSummary = (
   innerId: string | number,
 ) =>
   queryOptions({
-    queryKey: viewerKeys.commentSummary(accountRef, `${community}:${thread}:${String(innerId)}`),
+    queryKey: viewerKeys.commentSummary(accountRef, articleRefKey({ community, thread, innerId })),
     queryFn: async ({ signal }) => {
       const data = await browserGraphQLRequest(
         commentsSchema.commentsState,

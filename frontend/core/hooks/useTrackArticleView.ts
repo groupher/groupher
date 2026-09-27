@@ -1,6 +1,7 @@
 import { VIEW_COUNTING_CONTRACT } from '@groupher/contracts/view-counting'
 import { useEffect, useRef, type RefObject } from 'react'
 
+import { articleRefKey } from '~/query/articleRef'
 import { trackArticleView } from '~/query/viewTracker'
 import type { TArticleLoad } from '~/spec'
 
@@ -11,7 +12,7 @@ export default function useTrackArticleView(
   ready: boolean,
 ): void {
   const startedKeyRef = useRef<string | null>(null)
-  const articleKey = `${article.community}:${article.thread}:${article.innerId}`
+  const articleKey = articleRefKey(article)
 
   useEffect(() => {
     const element = wrapperRef.current

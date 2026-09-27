@@ -7,6 +7,7 @@ import type { TArticle, TArticleStats } from '~/spec'
 import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
+import { articleRefKey, articleRefOf, type TArticleRef } from './articleRef'
 import { Q } from './client'
 import { invalidate, QueryInvalidation } from './invalidation'
 import { articleKeys, viewerKeys } from './key'
@@ -16,20 +17,6 @@ import {
   clearArticleUpvoteReceipt,
 } from './mutation/articleReceipt'
 import type { TArticleInteractionState, TArticleViewerState } from './viewer'
-
-type TArticleRef = {
-  community: string
-  thread: TArticle['meta']['thread']
-  innerId: string
-}
-
-const toRef = (article: TArticle): TArticleRef => ({
-  community: article.community.slug,
-  thread: article.meta.thread,
-  innerId: String(article.innerId),
-})
-
-const toKey = (ref: TArticleRef): string => `${ref.community}:${ref.thread}:${ref.innerId}`
 
 const mergePrivateState = (
   queryClient: ReturnType<typeof useQueryClient>,
@@ -65,8 +52,8 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
     if (!accountRef) return []
     const unique = new Map<string, TArticleRef>()
     for (const article of articles || []) {
-      const ref = toRef(article)
-      const key = toKey(ref)
+      const ref = articleRefOf(article)
+      const key = articleRefKey(ref)
       const receipt = readArticleUpvoteReceipt(accountRef, key)
       const stats = queryClient.getQueryData<TArticleStats>(
         articleKeys.stats(ref.community, ref.thread, ref.innerId),
@@ -81,8 +68,8 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
   useEffect(() => {
     if (!accountRef) return
     for (const article of articles || []) {
-      const ref = toRef(article)
-      const key = toKey(ref)
+      const ref = articleRefOf(article)
+      const key = articleRefKey(ref)
       const receipt = readArticleUpvoteReceipt(accountRef, key)
       if (!receipt) continue
       const stats = queryClient.getQueryData<TArticleStats>(
@@ -100,7 +87,7 @@ export default function useArticleInteractionReconcile(articles: readonly TArtic
         thread: state.thread as TArticleRef['thread'],
         innerId: String(state.innerId),
       }
-      const key = toKey(ref)
+      const key = articleRefKey(ref)
       const receipt = readArticleUpvoteReceipt(accountRef, key)
       if (!receipt) continue
       const receiptRevision = receipt.interactionRevision

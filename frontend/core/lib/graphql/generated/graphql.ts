@@ -47,8 +47,6 @@ export type ArticleStatusEnum =
   | 'TODO'
   | 'WIP'
 
-export type ArticleViewDecisionReason = 'COUNTED' | 'DUPLICATE_IN_WINDOW' | 'EXCLUDED_BY_POLICY'
-
 export type ArtimentBodyBagInput = {
   bodyHash: string
   digest: string
@@ -520,14 +518,11 @@ export type WhenEnum = 'THIS_MONTH' | 'THIS_WEEK' | 'THIS_YEAR' | 'TODAY'
 
 export type TrackArticleViewMutationVariables = Exact<{
   article: ArticlePathInput
-  eventId: string | number
 }>
 
 export type TrackArticleViewMutation = {
   trackArticleView: {
-    counted: boolean
-    decisionReason: ArticleViewDecisionReason
-    eventId: string
+    tracked: boolean
     articleStats: {
       community: string
       thread: Thread
@@ -541,7 +536,7 @@ export type TrackArticleViewMutation = {
       interactionRevision: number
       commentsRevision: number
       snapshotAt: unknown
-      reactionCounts: Array<{ type: EmotionType; count: number }>
+      emotionCounts: Array<{ type: EmotionType; count: number }>
     }
     viewerState: {
       community: string
@@ -1246,7 +1241,7 @@ export type ArticleStatsQuery = {
     interactionRevision: number
     commentsRevision: number
     snapshotAt: unknown
-    reactionCounts: Array<{ type: EmotionType; count: number }>
+    emotionCounts: Array<{ type: EmotionType; count: number }>
   }>
 }
 
@@ -10420,14 +10415,6 @@ export const TrackArticleViewDocument = {
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ArticlePathInput' } },
           },
         },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'eventId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -10441,18 +10428,11 @@ export const TrackArticleViewDocument = {
                 name: { kind: 'Name', value: 'article' },
                 value: { kind: 'Variable', name: { kind: 'Name', value: 'article' } },
               },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'eventId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'eventId' } },
-              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'counted' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'decisionReason' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'eventId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'tracked' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'articleStats' },
@@ -10472,7 +10452,7 @@ export const TrackArticleViewDocument = {
                       { kind: 'Field', name: { kind: 'Name', value: 'commentsRevision' } },
                       {
                         kind: 'Field',
-                        name: { kind: 'Name', value: 'reactionCounts' },
+                        name: { kind: 'Name', value: 'emotionCounts' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
@@ -11740,7 +11720,7 @@ export const ArticleStatsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'commentsRevision' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'reactionCounts' },
+                  name: { kind: 'Name', value: 'emotionCounts' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [

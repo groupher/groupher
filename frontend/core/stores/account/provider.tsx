@@ -12,7 +12,7 @@ import { viewerKeys } from '~/query/key'
 import { clearArticleUpvoteReceipts } from '~/query/mutation/articleReceipt'
 import { clearCommentReactionReceipts } from '~/query/mutation/commentReactionReceipt'
 import { clearCommentFeedReceipts } from '~/query/mutation/commentReceipt'
-import { clearArticleViewReceipts } from '~/query/viewReceipt'
+import { clearArticleViewAcks } from '~/query/viewAck'
 import { sessionState } from '~/schemas/pages/user'
 import type { TUser } from '~/spec'
 
@@ -61,7 +61,7 @@ export default function Provider({ children, initData }: TProps) {
     clearArticleUpvoteReceipts(previousAccountRef)
     clearCommentFeedReceipts(previousAccountRef)
     clearCommentReactionReceipts(previousAccountRef)
-    clearArticleViewReceipts()
+    clearArticleViewAcks()
     void queryClient.removeQueries({ queryKey: viewerKeys.all })
     queryClient.setQueryData(options.queryKey, makeSessionResult(null))
   }
@@ -84,7 +84,7 @@ export default function Provider({ children, initData }: TProps) {
         clearCommentFeedReceipts(previous)
         clearCommentReactionReceipts(previous)
       }
-      clearArticleViewReceipts()
+      clearArticleViewAcks()
     }
     previousAccountRef.current = accountRef
   }, [accountRef])

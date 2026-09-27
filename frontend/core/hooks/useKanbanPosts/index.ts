@@ -1,14 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
+import useArticleStates from '~/hooks/useArticleStates'
 import { Q } from '~/query'
-import { overlayArticleUpvoteReceiptOnViewerState } from '~/query/mutation/articleReceipt'
-import type { TPagedArticleViewModels, TPagedPosts, TArticleViewerState, TResState } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
-import useAccount from '~/stores/account/hooks'
+import type { TPagedArticleViewModels, TPagedPosts, TResState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 type TRes = {
@@ -23,54 +20,27 @@ type TRes = {
 /** Reads grouped kanban server state directly from Query. */
 export default function useKanbanPosts(): TRes {
   const { slug } = useCommunity()
-  const account = useAccount()
   const query = useQuery(Q.article.kanban(slug))
   const data = query.data
   const entries = useMemo(
     () => Object.values(data || {}).flatMap((page) => page.entries || []),
     [data],
   )
-  const statsQuery = useQuery(
-    Q.article.statsBatch(
-      slug,
-      THREAD.POST,
-      entries.map((article) => article.innerId),
-    ),
-  )
-  const refs = useMemo(
-    () =>
-      entries.map((article) => ({
-        community: article.community.slug,
-        thread: article.meta.thread,
-        innerId: article.innerId,
-      })),
-    [entries],
-  )
-  const viewerQuery = useQuery(
-    Q.viewer.articleStates(account.accountRef || getAccountRef(account.user) || '', refs),
+  const states = useArticleStates(entries)
+  const stateByArticle = useMemo(
+    () => new Map(states.map((state) => [state.article, state] as const)),
+    [states],
   )
 
   const toViewModels = (page: TPagedPosts | undefined): TPagedArticleViewModels => {
-    const stats = new Map<string, NonNullable<typeof statsQuery.data>[number]>()
-    for (const stat of statsQuery.data || []) stats.set(String(stat.innerId), stat)
     return {
       ...(page || EMPTY_PAGED_ARTICLES),
       entries: (page?.entries || []).map((article) => {
-        const key = `${article.community.slug}:${article.meta.thread}:${article.innerId}`
-        const stat = stats.get(String(article.innerId)) || null
-        const viewerState: TArticleViewerState = {
-          articleKey: key,
-          ...viewerQuery.data?.[key],
-        }
+        const state = stateByArticle.get(article)!
         return {
           content: article,
-          stats: stat,
-          viewerState: overlayArticleUpvoteReceiptOnViewerState(
-            account.accountRef || getAccountRef(account.user),
-            stat,
-            viewerState,
-            key,
-          ),
+          stats: state.stats,
+          viewerState: state.viewerState,
         }
       }),
     }

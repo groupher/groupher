@@ -46,12 +46,12 @@ describe('proxyGraphQLRequest', () => {
   it('forwards an anonymous viewer session without an auth cookie', async () => {
     const fetcher = vi.fn(async () =>
       Response.json(
-        { data: { trackArticleView: { counted: true, eventId: 'event-1' } } },
+        { data: { trackArticleView: { tracked: true } } },
         { headers: { 'set-cookie': 'groupher-viewer=visitor-2; Path=/; HttpOnly' } },
       ),
     )
     const request = new Request('https://groupher.test/api/graphql', {
-      body: JSON.stringify({ query: 'mutation { trackArticleView { counted } }' }),
+      body: JSON.stringify({ query: 'mutation { trackArticleView { tracked } }' }),
       headers: {
         cookie: 'theme=dark; groupher-viewer=visitor-1',
         'content-type': 'application/json',
