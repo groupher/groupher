@@ -62,7 +62,7 @@ export default function ThreadSidebar() {
                   key={user.login}
                   className={s.joinAvatar}
                   src={user.avatar}
-                  fallback={<ImgFallback right={2} user={user} />}
+                  fallback={<ImgFallback user={user} />}
                 />
               ))}
               <button type='button' className={s.moreNum} onClick={() => listUsers('drawer')}>
@@ -74,6 +74,7 @@ export default function ThreadSidebar() {
           <div className={s.publish}>
             <PublishButton
               text='参与讨论'
+              fullWidth
               onMenuSelect={(cat) => {
                 callGEditor()
                 setTimeout(() => callSyncSelector({ cat, tag: activeTag }), 500)

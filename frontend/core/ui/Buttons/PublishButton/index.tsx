@@ -21,6 +21,7 @@ import SidebarHeaderLayout from './SidebarHeaderLayout'
 type TProps = {
   text?: string
   mode?: TPublishMode
+  fullWidth?: boolean
   onMenuSelect?: (cat: TArticleCat) => void
   menuLeft?: boolean
   offset?: [number, number]
@@ -30,13 +31,14 @@ type TProps = {
 const PublishButton: FC<TProps> = ({
   text = '',
   mode = PUBLISH_MODE.DEFAULT,
+  fullWidth = false,
   placement = 'bottom',
   onMenuSelect = console.log,
   menuLeft: _menuLeft = false,
   offset: _offset = [-5, 5],
   ...spacing
 }) => {
-  const s = useSalon({ ...spacing })
+  const s = useSalon({ fullWidth, ...spacing })
   const activeThread = useViewingThread()
 
   const _text = text || getText(activeThread)
@@ -45,7 +47,7 @@ const PublishButton: FC<TProps> = ({
     <div className={s.wrapper}>
       <div className={s.pubBtn}>
         <div className={s.mainBtn}>
-          <Button space={2.5} noBorder noRightRound>
+          <Button width={fullWidth ? 'w-full' : undefined} space={2.5} noBorder noRightRound>
             {mode === PUBLISH_MODE.DEFAULT && <PostLayout text={_text} />}
             {mode === PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER && <SidebarHeaderLayout text={text} />}
           </Button>
