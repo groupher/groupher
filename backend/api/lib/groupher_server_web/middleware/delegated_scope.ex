@@ -17,6 +17,10 @@ defmodule GroupherServerWeb.Middleware.DelegatedScope do
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
   @impl Absinthe.Middleware
+  def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
+    reject(resolution, "delegated user identity could not be verified", code)
+  end
+
   def call(%{context: %{delegated_actor: delegated}} = resolution, opts) do
     actor = delegated.service_actor
 

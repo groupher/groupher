@@ -1,42 +1,31 @@
 defmodule GroupherServer.CMS.ViewTracker.Policy do
   @moduledoc """
-  Evaluates actor-specific eligibility for one explicit Article read.
+  Decides whether one classified read may enter business deduplication.
 
-      RequestActor identity + read purpose -> Policy -> counted or excluded
+      RequestActor identity + read purpose -> Policy.allowed?/2
   """
-
-  alias GroupherServer.CMS.ViewTracker.ErrorCat
 
   @policy_version 1
 
-  @doc "Returns the current policy decision for a normalized identity."
-  @spec evaluate(map(), keyword()) :: {:ok, map()} | {:error, atom()}
-  def evaluate(identity, opts) when is_map(identity) and is_list(opts) do
-    with {:ok, read_purpose} <- Keyword.fetch(opts, :read_purpose),
-         true <-
-           read_purpose in [
-             :public_read,
-             :author_preview,
-             :moderation_review,
-             :operations_inspection,
-             :internal_probe
-           ] do
-      counted? = read_purpose == :public_read and eligible_actor?(identity)
+  @read_purposes [
+    :public_read,
+    :author_preview,
+    :moderation_review,
+    :operations_inspection,
+    :internal_probe
+  ]
 
-      {:ok,
-       %{
-         counted: counted?,
-         read_purpose: read_purpose,
-         decision_reason: if(counted?, do: :counted, else: :excluded_by_policy),
-         policy_version: @policy_version
-       }}
-    else
-      :error -> {:error, ErrorCat.missing_read_purpose()}
-      false -> {:error, ErrorCat.invalid_read_purpose()}
-    end
-  end
+  @doc "Returns whether one normalized identity and purpose may be counted."
+  @spec allowed?(map(), atom()) :: boolean()
+  def allowed?(identity, :public_read) when is_map(identity), do: allowed_actor?(identity)
+  def allowed?(_identity, purpose) when purpose in @read_purposes, do: false
+  def allowed?(_identity, _purpose), do: false
 
-  defp eligible_actor?(%{
+  @doc "Returns the policy version persisted with counted MetricEvents."
+  @spec version() :: pos_integer()
+  def version, do: @policy_version
+
+  defp allowed_actor?(%{
          actor_type: :human,
          actor_confidence: confidence,
          viewer_tracking_key: key
@@ -44,7 +33,7 @@ defmodule GroupherServer.CMS.ViewTracker.Policy do
        when confidence in [:verified, :probable] and is_binary(key),
        do: true
 
-  defp eligible_actor?(%{
+  defp allowed_actor?(%{
          actor_type: :agent,
          actor_confidence: :verified,
          viewer_tracking_key: key
@@ -52,5 +41,5 @@ defmodule GroupherServer.CMS.ViewTracker.Policy do
        when is_binary(key),
        do: true
 
-  defp eligible_actor?(_identity), do: false
+  defp allowed_actor?(_identity), do: false
 end

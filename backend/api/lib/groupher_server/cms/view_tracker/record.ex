@@ -1,37 +1,41 @@
 defmodule GroupherServer.CMS.ViewTracker.Record do
   @moduledoc """
-  Commits one Article view decision synchronously.
+  Commits one Article view synchronously.
 
-      public Article + trusted request identity
+      public Article + request-scoped classification
         -> physical Article key-share lock and Gate revalidation
-        -> receipt claim
-        -> watermark claim
+        -> Policy.allowed?/2
+        -> ViewCounter.increment_if_needed/3
         -> ArticleStats / ViewerState / MetricEvent
-        -> finalized result in one transaction
   """
 
   import Ecto.Query
 
+  alias Ecto.UUID
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Analysis.MetricEvent
-  alias CMS.Artiment.Matcher
+  alias GroupherServer.RequestActor.Classification
+  alias CMS.Artiment.{Matcher, Threads}
   alias CMS.FrontDesk
-  alias CMS.ViewTracker.{Config, ErrorCat, Identity, Policy}
-  alias CMS.ViewTracker.Model.{ViewCountReceipt, ViewerState, ViewWatermark}
+  alias CMS.ViewTracker.{ErrorCat, Identity, Policy, ViewCounter}
+  alias CMS.ViewTracker.Model.{ViewDedupeState, ViewerState}
 
-  @doc "Tracks one explicit Article read and returns its committed public/private state."
-  @spec track(struct(), struct() | nil, Ecto.UUID.t() | nil, keyword()) ::
+  @telemetry_event [:groupher, :cms, :view_tracker, :track]
+
+  @doc "Tracks one explicit Article read and returns committed public/private state."
+  @spec track(struct(), struct() | nil, Classification.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
-  def track(article, viewer, event_id, opts \\ []) do
+  def track(article, viewer, classification, opts \\ [])
+
+  def track(article, viewer, %Classification{} = classification, opts) do
     with {:ok, %{artiment: thread}} <- Matcher.match_interaction(article),
-         true <- thread in CMS.Artiment.Threads.article_enums(),
-         {:ok, event_id} <- normalize_event_id(event_id),
-         {:ok, identity} <- Identity.resolve(viewer, opts),
-         {:ok, decision} <- Policy.evaluate(identity, opts) do
+         true <- thread in Threads.article_enums(),
+         {:ok, read_purpose} <- read_purpose(opts),
+         {:ok, identity} <- Identity.resolve(viewer, classification, opts) do
       Repo.transaction(fn ->
         case FrontDesk.lock_article_for_view_tracking(article) do
           {:ok, locked, community, received_at} ->
-            process(locked, community, thread, viewer, event_id, identity, decision, received_at)
+            process(locked, community, thread, viewer, identity, read_purpose, received_at)
 
           {:error, reason} ->
             Repo.rollback(reason)
@@ -44,170 +48,37 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
     end
   end
 
+  def track(_article, _viewer, _classification, _opts),
+    do: {:error, ErrorCat.invalid_actor_type()}
+
   @doc "Deletes all ViewTracker state for a physical Article after its row is deleted."
   @spec delete_article_state(atom(), pos_integer()) :: :ok
   def delete_article_state(thread, article_id) do
-    delete_by_article(ViewCountReceipt, thread, article_id)
-    delete_by_article(ViewWatermark, thread, article_id)
+    delete_by_article(ViewDedupeState, thread, article_id)
     delete_by_article(ViewerState, thread, article_id)
     CMS.ArticleStats.delete(thread, article_id)
   end
 
-  defp process(article, community, thread, viewer, event_id, identity, decision, received_at) do
-    if decision.counted do
-      process_eligible(
-        article,
-        community,
-        thread,
-        viewer,
-        event_id,
-        identity,
-        decision,
-        received_at
-      )
+  defp process(article, community, thread, viewer, identity, read_purpose, received_at) do
+    if Policy.allowed?(identity, read_purpose) do
+      case ViewCounter.increment_if_needed(article, identity, received_at) do
+        {:counted, stats} ->
+          operation_id = UUID.generate()
+          :ok = project_viewer_state(identity, thread, article.id, received_at)
+          :ok = append_metric!(operation_id, article, identity, received_at)
+          emit_outcome(:counted, identity)
+          build_result(article, community, thread, viewer, identity, true, stats)
+
+        {:duplicate, stats} ->
+          emit_outcome(:duplicate_in_window, identity)
+          build_result(article, community, thread, viewer, identity, true, stats)
+
+        {:error, reason} ->
+          Repo.rollback(reason)
+      end
     else
-      build_result(
-        article,
-        community,
-        viewer,
-        identity,
-        %{
-          thread: thread,
-          event_id: event_id,
-          counted: false,
-          reason: :excluded_by_policy
-        }
-      )
-    end
-  end
-
-  defp process_eligible(
-         article,
-         community,
-         thread,
-         viewer,
-         event_id,
-         identity,
-         decision,
-         received_at
-       ) do
-    attrs = receipt_attrs(event_id, thread, article.id, identity, received_at)
-
-    case claim_receipt(attrs) do
-      :owned ->
-        counted = claim_watermark(thread, article.id, identity, received_at)
-        reason = if counted, do: :counted, else: :duplicate_in_window
-
-        stats =
-          if counted do
-            {:ok, committed_stats} = increment_views!(thread, article.id)
-            :ok = project_viewer_state(identity, thread, article.id, received_at)
-            :ok = append_metric!(event_id, article, identity, decision, received_at)
-            committed_stats
-          end
-
-        :ok = finalize_receipt(event_id, counted, reason)
-
-        build_result(
-          article,
-          community,
-          viewer,
-          identity,
-          %{
-            thread: thread,
-            event_id: event_id,
-            counted: counted,
-            reason: reason,
-            stats: stats
-          }
-        )
-
-      :conflict ->
-        replay_receipt(article, community, thread, viewer, identity, attrs)
-    end
-  end
-
-  defp claim_receipt(attrs) do
-    case Repo.insert_all(ViewCountReceipt, [attrs],
-           on_conflict: :nothing,
-           conflict_target: [:event_id],
-           returning: [:event_id]
-         ) do
-      {1, _rows} -> :owned
-      {0, _rows} -> :conflict
-    end
-  end
-
-  defp replay_receipt(article, community, thread, viewer, identity, attrs) do
-    case Repo.one(
-           from(receipt in ViewCountReceipt,
-             where: receipt.event_id == ^attrs.event_id,
-             lock: "FOR UPDATE"
-           )
-         ) do
-      %ViewCountReceipt{state: :finalized} = receipt ->
-        if same_identity?(receipt, attrs) do
-          build_result(
-            article,
-            community,
-            viewer,
-            identity,
-            %{
-              thread: thread,
-              event_id: receipt.event_id,
-              counted: receipt.counted,
-              reason: receipt.decision_reason
-            }
-          )
-        else
-          Repo.rollback(ErrorCat.receipt_identity_mismatch())
-        end
-
-      %ViewCountReceipt{} ->
-        Repo.rollback(ErrorCat.receipt_invalid_state())
-
-      nil ->
-        Repo.rollback(ErrorCat.receipt_invalid_state())
-    end
-  end
-
-  defp claim_watermark(thread, article_id, identity, received_at) do
-    cutoff =
-      DateTime.add(
-        received_at,
-        -Config.dedupe_window_seconds(identity.actor_type),
-        :second
-      )
-
-    attrs = %{
-      thread: thread,
-      article_id: article_id,
-      viewer_tracking_key: identity.viewer_tracking_key,
-      last_counted_at: received_at,
-      inserted_at: received_at,
-      updated_at: received_at
-    }
-
-    conflict_query =
-      from(watermark in ViewWatermark,
-        update: [set: [last_counted_at: ^received_at, updated_at: ^received_at]],
-        where: watermark.last_counted_at <= ^cutoff
-      )
-
-    case Repo.insert_all(ViewWatermark, [attrs],
-           on_conflict: conflict_query,
-           conflict_target: [:thread, :article_id, :viewer_tracking_key],
-           returning: [:article_id]
-         ) do
-      {1, _rows} -> true
-      {0, _rows} -> false
-    end
-  end
-
-  defp increment_views!(thread, article_id) do
-    case CMS.ArticleStats.increment_views(thread, article_id) do
-      {:ok, stats} -> {:ok, stats}
-      {:error, reason} -> Repo.rollback(reason)
+      emit_outcome(:excluded_by_policy, identity)
+      build_result(article, community, thread, viewer, identity, false, nil)
     end
   end
 
@@ -237,9 +108,9 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
 
   defp project_viewer_state(_identity, _thread, _article_id, _received_at), do: :ok
 
-  defp append_metric!(event_id, article, identity, decision, received_at) do
+  defp append_metric!(operation_id, article, identity, received_at) do
     case MetricEvent.append(%{
-           operation_id: event_id,
+           operation_id: operation_id,
            community_id: article.community_id,
            article_type: article_thread(article),
            article_id: article.id,
@@ -247,7 +118,7 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
            value: 1,
            actor_type: identity.actor_type,
            is_authenticated: identity.is_authenticated,
-           policy_version: decision.policy_version,
+           policy_version: Policy.version(),
            occurred_at: received_at
          }) do
       :ok -> :ok
@@ -255,29 +126,12 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
     end
   end
 
-  defp finalize_receipt(event_id, counted, reason) do
-    case Repo.update_all(
-           from(receipt in ViewCountReceipt,
-             where: receipt.event_id == ^event_id and receipt.state == :pending
-           ),
-           set: [state: :finalized, counted: counted, decision_reason: reason]
-         ) do
-      {1, _rows} -> :ok
-      _ -> Repo.rollback(ErrorCat.receipt_invalid_state())
-    end
-  end
-
-  defp build_result(article, community, viewer, identity, result) do
-    %{thread: thread, event_id: event_id, counted: counted, reason: reason} = result
-    committed_stats = Map.get(result, :stats)
-
+  defp build_result(article, community, thread, viewer, identity, tracked, committed_stats) do
     with {:ok, stats} <- resolve_stats(committed_stats, thread, article.id),
          viewer_state when is_map(viewer_state) <-
            CMS.ViewTracker.Query.viewer_state(article, viewer, actor_type: identity.actor_type) do
       %{
-        counted: counted,
-        decision_reason: reason,
-        event_id: event_id,
+        tracked: tracked,
         article_stats:
           Map.merge(stats, %{
             community: community.slug,
@@ -299,26 +153,6 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   defp resolve_stats(nil, thread, article_id), do: CMS.ArticleStats.fetch(thread, article_id)
   defp resolve_stats(stats, _thread, _article_id) when is_map(stats), do: {:ok, stats}
 
-  defp receipt_attrs(event_id, thread, article_id, identity, received_at) do
-    %{
-      event_id: event_id,
-      thread: thread,
-      article_id: article_id,
-      viewer_tracking_key: identity.viewer_tracking_key,
-      state: :pending,
-      counted: nil,
-      decision_reason: nil,
-      expires_at: DateTime.add(received_at, Config.view_count_receipt_ttl_seconds(), :second),
-      inserted_at: received_at
-    }
-  end
-
-  defp same_identity?(receipt, attrs) do
-    receipt.thread == attrs.thread and
-      receipt.article_id == attrs.article_id and
-      receipt.viewer_tracking_key == attrs.viewer_tracking_key
-  end
-
   defp article_thread(article) do
     {:ok, %{artiment: thread}} = Matcher.match_interaction(article)
     thread
@@ -332,13 +166,37 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
     :ok
   end
 
-  defp normalize_event_id(nil), do: {:ok, Ecto.UUID.generate()}
+  defp read_purpose(opts) do
+    case Keyword.fetch(opts, :read_purpose) do
+      {:ok, purpose}
+      when purpose in [
+             :public_read,
+             :author_preview,
+             :moderation_review,
+             :operations_inspection,
+             :internal_probe
+           ] ->
+        {:ok, purpose}
 
-  defp normalize_event_id(event_id) do
-    case Ecto.UUID.cast(event_id) do
-      {:ok, event_id} -> {:ok, event_id}
-      :error -> {:error, ErrorCat.invalid_event_id()}
+      {:ok, _purpose} ->
+        {:error, ErrorCat.invalid_read_purpose()}
+
+      :error ->
+        {:error, ErrorCat.missing_read_purpose()}
     end
+  end
+
+  defp emit_outcome(outcome, identity) do
+    :telemetry.execute(
+      @telemetry_event,
+      %{count: 1},
+      %{
+        outcome: outcome,
+        actor_type: identity.actor_type,
+        actor_confidence: identity.actor_confidence,
+        classified_by: identity.classified_by
+      }
+    )
   end
 
   defp transaction_result({:ok, result}), do: {:ok, result}

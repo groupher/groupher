@@ -1,28 +1,31 @@
 defmodule GroupherServer.CMS.ArticleStats do
   @moduledoc """
-  Owns field-scoped writes and public reads for the ArticleStats read model.
+  Owns field-scoped writes and consistent public reads for ArticleStats.
 
       Publish       -> initialize
       ViewTracker   -> increment_views
       Comments      -> apply_comment_counts
       Interactions  -> apply_interaction_counts
-                         |
-                         v
+                         + apply_emotion_count
+                              |
+                              v
                   cms.article_stats
+                  cms.article_emotion_counts
 
-  Every owner writes only its count/revision fields plus the shared
-  `snapshot_at`. There is no production API that rebuilds the complete row.
+  Both projections use the existing physical Article identity
+  `{thread, article_id}`. Public reads aggregate them in one PostgreSQL query.
   """
 
-  import Ecto.Query, only: [from: 2]
+  import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.Matcher
   alias CMS.Artiment.Threads
+  alias CMS.Model.ArticleEmotionCount
   alias CMS.Model.ArticleStats, as: ArticleStatsModel
 
   @article_threads Threads.article_enums()
-  @article_emotions CMS.Artiment.Config.emotions()
+  @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
   @conflict_target [:thread, :article_id]
 
   @doc "Creates the zero-valued public row on first publish without overwriting an existing row."
@@ -62,13 +65,12 @@ defmodule GroupherServer.CMS.ArticleStats do
            conflict_target: @conflict_target,
            returning: true
          ) do
-      {1, [%ArticleStatsModel{} = stats]} -> {:ok, normalize(stats)}
-      {1, [stats]} when is_map(stats) -> {:ok, normalize(struct(ArticleStatsModel, stats))}
+      {1, [_stats]} -> fetch(thread, article_id)
       _ -> {:error, :article_stats_not_updated}
     end
   end
 
-  @doc "UPSERTs every Comments-owned ArticleStats field from one canonical Article row."
+  @doc "UPSERTs every Comments-owned ArticleStats field from one physical Article row."
   @spec apply_comment_counts(struct()) :: :ok | {:error, term()}
   def apply_comment_counts(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article),
@@ -107,7 +109,7 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
-  @doc "UPSERTs every Interactions-owned field from its canonical projection facts."
+  @doc "UPSERTs the fixed Interactions-owned fields from their owner projection."
   @spec apply_interaction_counts(struct()) :: :ok | {:error, term()}
   def apply_interaction_counts(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article),
@@ -115,8 +117,7 @@ defmodule GroupherServer.CMS.ArticleStats do
          {:ok, interaction} <- owner_facts(counts, {thread, article.id}),
          {:ok, upvotes_count} <- owner_count(interaction, :upvotes_count),
          {:ok, collects_count} <- owner_count(interaction, :collects_count),
-         {:ok, interaction_revision} <- owner_count(interaction, :interaction_revision),
-         {:ok, reaction_counts} <- encode_reaction_counts(interaction) do
+         {:ok, interaction_revision} <- owner_count(interaction, :interaction_revision) do
       conflict_query =
         from(stats in ArticleStatsModel,
           update: [
@@ -124,7 +125,6 @@ defmodule GroupherServer.CMS.ArticleStats do
               upvotes_count: ^upvotes_count,
               collects_count: ^collects_count,
               interaction_revision: ^interaction_revision,
-              reaction_counts: ^reaction_counts,
               snapshot_at: fragment("date_trunc('second', clock_timestamp())"),
               updated_at: fragment("date_trunc('second', clock_timestamp())")
             ]
@@ -139,8 +139,7 @@ defmodule GroupherServer.CMS.ArticleStats do
             article_id: article.id,
             upvotes_count: upvotes_count,
             collects_count: collects_count,
-            interaction_revision: interaction_revision,
-            reaction_counts: reaction_counts
+            interaction_revision: interaction_revision
           }
         ],
         on_conflict: conflict_query,
@@ -151,6 +150,43 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
+  @doc "UPSERTs only the affected Interactions-owned emotion type."
+  @spec apply_emotion_count(struct(), atom()) :: :ok | {:error, term()}
+  def apply_emotion_count(article, emotion)
+      when is_struct(article) and emotion in @article_emotions do
+    with {:ok, thread} <- article_thread(article),
+         {:ok, owner} <- emotion_owner_facts(article, emotion) do
+      now = DateTime.utc_now(:second)
+
+      attrs = %{
+        thread: thread,
+        article_id: article.id,
+        type: emotion,
+        count: owner.count,
+        interaction_revision: owner.interaction_revision
+      }
+
+      %ArticleEmotionCount{}
+      |> ArticleEmotionCount.changeset(attrs)
+      |> Repo.insert(
+        on_conflict: [
+          set: [
+            count: owner.count,
+            interaction_revision: owner.interaction_revision,
+            updated_at: now
+          ]
+        ],
+        conflict_target: [:thread, :article_id, :type]
+      )
+      |> case do
+        {:ok, _row} -> :ok
+        {:error, _reason} = error -> error
+      end
+    end
+  end
+
+  def apply_emotion_count(_article, emotion), do: {:error, {:unsupported_emotion, emotion}}
+
   @doc "Repairs only Comments-owned fields from the current physical Article row."
   @spec rebuild_comment_fields(struct()) :: :ok | {:error, term()}
   def rebuild_comment_fields(article) when is_struct(article) do
@@ -160,18 +196,33 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
-  @doc "Repairs only Interactions-owned fields from current owner facts."
+  @doc "Repairs fixed and typed Interactions-owned fields from current owner facts."
   @spec rebuild_interaction_fields(struct()) :: :ok | {:error, term()}
   def rebuild_interaction_fields(article) when is_struct(article) do
     case Repo.get(article.__struct__, article.id) do
-      %{} = current -> apply_interaction_counts(current)
-      nil -> {:error, :article_not_found}
+      %{} = current ->
+        with :ok <- apply_interaction_counts(current),
+             counts when is_map(counts) <- CMS.Interactions.counts([current]),
+             {:ok, thread} <- article_thread(current),
+             {:ok, facts} <- owner_facts(counts, {thread, current.id}) do
+          rebuild_emotion_rows(current, thread, Map.get(facts, :emotion_counts, []))
+        end
+
+      nil ->
+        {:error, :article_not_found}
     end
   end
 
-  @doc "Removes the public row during permanent Article deletion."
+  @doc "Removes both public projections during permanent Article deletion."
   @spec delete(atom(), pos_integer()) :: :ok
-  def delete(thread, article_id) do
+  def delete(thread, article_id)
+      when thread in @article_threads and is_integer(article_id) and article_id > 0 do
+    Repo.delete_all(
+      from(emotion in ArticleEmotionCount,
+        where: emotion.thread == ^thread and emotion.article_id == ^article_id
+      )
+    )
+
     Repo.delete_all(
       from(stats in ArticleStatsModel,
         where: stats.thread == ^thread and stats.article_id == ^article_id
@@ -181,12 +232,12 @@ defmodule GroupherServer.CMS.ArticleStats do
     :ok
   end
 
-  @doc "Returns one row by physical Article identity."
+  @doc "Returns one complete row by physical Article identity."
   @spec fetch(atom(), pos_integer()) :: {:ok, map()} | {:error, :article_stats_not_found}
   def fetch(thread, article_id) when thread in @article_threads and is_integer(article_id) do
-    case Repo.get_by(ArticleStatsModel, thread: thread, article_id: article_id) do
-      %ArticleStatsModel{} = stats -> {:ok, normalize(stats)}
+    case Map.get(load_snapshots(thread, [article_id]), article_id) do
       nil -> {:error, :article_stats_not_found}
+      stats -> {:ok, stats}
     end
   end
 
@@ -195,21 +246,45 @@ defmodule GroupherServer.CMS.ArticleStats do
   def for_articles(thread, articles) when thread in @article_threads and is_list(articles) do
     ids = Enum.map(articles, & &1.id)
 
-    from(stats in ArticleStatsModel,
-      where: stats.thread == ^thread and stats.article_id in ^ids
-    )
-    |> Repo.all()
-    |> Map.new(&{{&1.thread, &1.article_id}, normalize(&1)})
+    thread
+    |> load_snapshots(ids)
+    |> Map.new(fn {article_id, stats} -> {{thread, article_id}, stats} end)
   end
 
-  @doc "Returns a public projection batch keyed by Article inner id."
-  @spec public_batch(atom(), [integer()]) :: map()
-  def public_batch(thread, ids) when thread in @article_threads and is_list(ids) do
+  defp load_snapshots(_thread, []), do: %{}
+
+  defp load_snapshots(thread, article_ids) do
+    emotion_rows =
+      from(emotion in ArticleEmotionCount,
+        where:
+          emotion.thread == ^thread and emotion.article_id in ^article_ids and emotion.count > 0,
+        group_by: emotion.article_id,
+        select: %{
+          article_id: emotion.article_id,
+          emotion_counts:
+            fragment(
+              "jsonb_agg(jsonb_build_object('type', ?, 'count', ?) ORDER BY ? DESC, ? ASC)",
+              emotion.type,
+              emotion.count,
+              emotion.count,
+              emotion.type
+            )
+        }
+      )
+
     from(stats in ArticleStatsModel,
-      where: stats.thread == ^thread and stats.article_id in ^ids
+      where: stats.thread == ^thread and stats.article_id in ^article_ids,
+      left_join: emotions in subquery(emotion_rows),
+      on: emotions.article_id == stats.article_id,
+      select: %{
+        stats: stats,
+        emotion_counts: fragment("COALESCE(?, '[]'::jsonb)", emotions.emotion_counts)
+      }
     )
     |> Repo.all()
-    |> Map.new(fn stats -> {to_string(stats.article_id), normalize(stats)} end)
+    |> Map.new(fn %{stats: stats, emotion_counts: emotion_counts} ->
+      {stats.article_id, normalize(stats, emotion_counts)}
+    end)
   end
 
   defp article_thread(article) do
@@ -218,11 +293,11 @@ defmodule GroupherServer.CMS.ArticleStats do
       {:ok, thread}
     else
       false -> {:error, :unsupported_article_thread}
-      {:error, _} = error -> error
+      {:error, _reason} = error -> error
     end
   end
 
-  defp normalize(%ArticleStatsModel{} = stats) do
+  defp normalize(%ArticleStatsModel{} = stats, emotion_counts) do
     %{
       thread: stats.thread,
       article_id: stats.article_id,
@@ -234,7 +309,7 @@ defmodule GroupherServer.CMS.ArticleStats do
       comments_participants_count: stats.comments_participants_count,
       interaction_revision: stats.interaction_revision,
       comments_revision: stats.comments_revision,
-      reaction_counts: normalize_reaction_counts(stats.reaction_counts),
+      emotion_counts: normalize_emotion_counts(emotion_counts),
       snapshot_at: stats.snapshot_at
     }
   end
@@ -250,7 +325,7 @@ defmodule GroupherServer.CMS.ArticleStats do
            upvotes_count: 0,
            collects_count: 0,
            interaction_revision: 0,
-           reaction_counts: []
+           emotion_counts: []
          }}
 
       _ ->
@@ -265,65 +340,70 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
+  defp emotion_owner_facts(article, emotion) do
+    with {:ok, info} <- Matcher.match_interaction(article) do
+      emotion_name = Atom.to_string(emotion)
+      foreign_key = info.foreign_key
+
+      from(reaction in info.reaction_info_model,
+        left_join: emotion_row in ^info.emotion_info_model,
+        on:
+          field(emotion_row, ^foreign_key) == field(reaction, ^foreign_key) and
+            emotion_row.emotion == ^emotion_name,
+        where: field(reaction, ^foreign_key) == ^article.id,
+        select: %{
+          count: coalesce(emotion_row.users_count, 0),
+          interaction_revision: reaction.interaction_revision
+        }
+      )
+      |> Repo.one()
+      |> case do
+        %{count: count, interaction_revision: revision}
+        when is_integer(count) and count >= 0 and is_integer(revision) and revision >= 0 ->
+          {:ok, %{count: count, interaction_revision: revision}}
+
+        nil ->
+          {:error, :interaction_projection_not_found}
+
+        _ ->
+          {:error, :invalid_interaction_projection}
+      end
+    end
+  end
+
+  defp rebuild_emotion_rows(article, thread, emotion_counts) when is_list(emotion_counts) do
+    Repo.delete_all(
+      from(emotion in ArticleEmotionCount,
+        where: emotion.thread == ^thread and emotion.article_id == ^article.id
+      )
+    )
+
+    emotion_counts
+    |> Enum.map(&(Map.get(&1, :type) || Map.get(&1, "type")))
+    |> Enum.filter(&(&1 in @article_emotions))
+    |> Enum.reduce_while(:ok, fn emotion, :ok ->
+      case apply_emotion_count(article, emotion) do
+        :ok -> {:cont, :ok}
+        {:error, _reason} = error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp normalize_emotion_counts(counts) when is_list(counts) do
+    counts
+    |> Enum.map(fn count ->
+      type = Map.get(count, "type") || Map.get(count, :type)
+      value = Map.get(count, "count") || Map.get(count, :count)
+
+      %{type: atomize_emotion(type), count: normalize_non_negative(value)}
+    end)
+    |> Enum.reject(&is_nil(&1.type))
+  end
+
+  defp normalize_emotion_counts(_counts), do: []
+
   defp normalize_non_negative(value) when is_integer(value) and value >= 0, do: value
   defp normalize_non_negative(_value), do: 0
-
-  defp normalize_reaction_counts(counts) when is_list(counts) do
-    counts
-    |> Enum.map(&normalize_reaction_count/1)
-    |> Enum.reject(&is_nil/1)
-  end
-
-  defp normalize_reaction_counts(counts) when is_map(counts) do
-    counts
-    |> Enum.map(fn {type, count} -> normalize_reaction_count(%{type: type, count: count}) end)
-    |> Enum.reject(&is_nil/1)
-    |> Enum.sort_by(fn %{count: count, type: type} -> {-count, Atom.to_string(type)} end)
-  end
-
-  defp normalize_reaction_counts(_), do: []
-
-  defp encode_reaction_counts(interaction) do
-    case Map.fetch(interaction, :reaction_counts) do
-      {:ok, counts} when is_list(counts) ->
-        Enum.reduce_while(counts, {:ok, %{}}, fn count, {:ok, acc} ->
-          with true <- is_map(count),
-               type when not is_nil(type) <-
-                 atomize_emotion(Map.get(count, :type) || Map.get(count, "type")),
-               {:ok, value} <- reaction_count(count) do
-            {:cont, {:ok, Map.put(acc, Atom.to_string(type), value)}}
-          else
-            _ -> {:halt, {:error, :invalid_reaction_counts}}
-          end
-        end)
-
-      _ ->
-        {:error, :invalid_reaction_counts}
-    end
-  end
-
-  defp reaction_count(count) do
-    value = Map.get(count, :count) || Map.get(count, "count")
-
-    if is_integer(value) and value >= 0,
-      do: {:ok, value},
-      else: {:error, :invalid_reaction_count}
-  end
-
-  defp normalize_reaction_count(count) when is_map(count) do
-    case atomize_emotion(Map.get(count, "type") || Map.get(count, :type)) do
-      nil ->
-        nil
-
-      type ->
-        %{
-          type: type,
-          count: normalize_non_negative(Map.get(count, "count") || Map.get(count, :count))
-        }
-    end
-  end
-
-  defp normalize_reaction_count(_), do: nil
 
   defp atomize_emotion(value) when is_atom(value), do: if(value in @article_emotions, do: value)
 

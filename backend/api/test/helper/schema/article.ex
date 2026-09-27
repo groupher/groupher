@@ -256,7 +256,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
         innerId
         viewerEmotion
         articleStats {
-          reactionCounts {
+          emotionCounts {
           type
           count
           }
@@ -272,7 +272,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
       undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion, commandId: $commandId) {
         viewerEmotion
         articleStats {
-          reactionCounts {
+          emotionCounts {
             type
             count
           }

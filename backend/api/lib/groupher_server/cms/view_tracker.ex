@@ -6,13 +6,14 @@ defmodule GroupherServer.CMS.ViewTracker do
       Article response -> ViewTracker.viewer_states/2
   """
 
-  alias __MODULE__.{Query, Record, Retention}
+  alias __MODULE__.{Query, Record, ViewDedupeCleanup}
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.RequestActor.Classification
 
-  @doc "Commits one Article view decision and its public/private projections."
-  @spec track(struct(), User.t() | nil, Ecto.UUID.t() | nil, keyword()) ::
+  @doc "Commits one Article view and its public/private projections."
+  @spec track(struct(), User.t() | nil, Classification.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
-  defdelegate track(article, viewer, event_id, opts \\ []), to: Record
+  defdelegate track(article, viewer, classification, opts \\ []), to: Record
 
   @doc "Returns viewer state for one Article. Anonymous viewers always receive false in V1."
   @spec viewer_state(struct(), User.t() | nil, keyword()) :: map() | {:error, term()}
@@ -26,7 +27,6 @@ defmodule GroupherServer.CMS.ViewTracker do
   @spec delete_article_state(atom(), pos_integer()) :: :ok
   defdelegate delete_article_state(thread, article_id), to: Record
 
-  @doc "Deletes one bounded batch of expired transport and dedupe state."
-  @spec delete_expired() :: %{receipts: non_neg_integer(), watermarks: non_neg_integer()}
-  defdelegate delete_expired(), to: Retention
+  @doc "Drains expired dedupe state within the configured row and time budgets."
+  defdelegate cleanup_expired(), to: ViewDedupeCleanup
 end

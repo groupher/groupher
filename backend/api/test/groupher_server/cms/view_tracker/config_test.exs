@@ -15,31 +15,30 @@ defmodule GroupherServer.Test.CMS.ViewTracker.ConfigTest do
     :ok
   end
 
-  test "reads actor-specific windows and retention from runtime configuration" do
+  test "reads actor windows and cleanup budgets from runtime configuration" do
     Application.put_env(:groupher_server, Config,
       human_dedupe_window_seconds: 180,
       agent_dedupe_window_seconds: 300,
-      view_count_receipt_ttl_seconds: 960,
-      watermark_retention_seconds: 86_400,
-      retention_batch_size: 250
+      cleanup_safety_margin_seconds: 86_400,
+      cleanup_batch_size: 250,
+      cleanup_row_budget: 2_500,
+      cleanup_time_budget_ms: 12_000
     )
 
     assert Config.dedupe_window_seconds(:human) == 180
     assert Config.dedupe_window_seconds(:agent) == 300
-    assert Config.view_count_receipt_ttl_seconds() == 960
-    assert Config.watermark_retention_seconds() == 86_400
-    assert Config.retention_batch_size() == 250
+    assert Config.cleanup_safety_margin_seconds() == 86_400
+    assert Config.dedupe_state_ttl_seconds(:human) == 86_580
+    assert Config.cleanup_batch_size() == 250
+    assert Config.cleanup_row_budget() == 2_500
+    assert Config.cleanup_time_budget_ms() == 12_000
   end
 
-  test "rejects watermark retention that cannot cover every actor window" do
-    Application.put_env(:groupher_server, Config,
-      human_dedupe_window_seconds: 600,
-      agent_dedupe_window_seconds: 86_400,
-      watermark_retention_seconds: 86_400
-    )
+  test "rejects invalid cleanup budgets" do
+    Application.put_env(:groupher_server, Config, cleanup_row_budget: 0)
 
-    assert_raise ArgumentError, ~r/watermark_retention_seconds/, fn ->
-      Config.watermark_retention_seconds()
+    assert_raise ArgumentError, ~r/cleanup_row_budget/, fn ->
+      Config.cleanup_row_budget()
     end
   end
 end

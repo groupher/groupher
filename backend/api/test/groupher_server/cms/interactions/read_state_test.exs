@@ -18,8 +18,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     PostReactionInfo
   }
 
-  alias CMS.ViewTracker
-
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
     post = Repo.preload(post, author: :user)
@@ -248,10 +246,9 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   test "synchronous view state affects only the counted viewer" do
     {_community, post, _attrs, user} = mock_article(:post)
-    event_id = Ecto.UUID.generate()
 
-    assert {:ok, %{event_id: ^event_id}} =
-             ViewTracker.track(post, user, event_id, read_purpose: :public_read)
+    assert {:ok, %{tracked: true}} =
+             track_article_view(post, user, read_purpose: :public_read)
 
     viewer = CMS.ViewTracker.viewer_state(post, user)
     assert viewer.viewer_has_viewed

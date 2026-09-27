@@ -1,10 +1,12 @@
 defmodule GroupherServer.RequestActorTest do
   use GroupherServer.DataCase, async: true
 
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.ViewTracker.AnonymousSession
   alias GroupherServer.RequestActor
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.RequestActor.{Classification, Crawler, Evidence}
 
-  test "prefers a verified delegation over account and anonymous signals" do
+  test "classifies a complete verified delegation" do
     assert {:ok,
             %Classification{
               type: :agent,
@@ -13,9 +15,7 @@ defmodule GroupherServer.RequestActorTest do
               classified_by: :delegation_credential
             }} =
              RequestActor.classify(
-               user: %{id: 1},
-               delegation_id: "delegation-1",
-               anonymous_id: "anonymous-1"
+               delegation: %{service_actor: service_credential(), user_actor: %User{id: 1}}
              )
   end
 
@@ -26,20 +26,59 @@ defmodule GroupherServer.RequestActorTest do
               is_authenticated: false,
               confidence: :probable,
               classified_by: :signed_anonymous_session
-            }} = RequestActor.classify(anonymous_id: "anonymous-1")
+            }} =
+             RequestActor.classify(anonymous_session: %AnonymousSession{id: "anonymous-1"})
   end
 
-  test "classifies verified crawler signals without accepting actor_type input" do
+  test "classifies verified service and crawler business objects" do
+    assert {:ok, %Classification{type: :agent, classified_by: :agent_credential}} =
+             RequestActor.classify(service_credential: service_credential())
+
+    assert {:ok, %Classification{type: :crawler, classified_by: :verified_crawler}} =
+             RequestActor.classify(crawler: %Crawler{family: "googlebot"})
+  end
+
+  test "classifies account session once without caller-selected output fields" do
     assert {:ok,
             %Classification{
-              type: :crawler,
-              is_authenticated: false,
+              type: :human,
+              is_authenticated: true,
               confidence: :verified,
-              classified_by: :verified_crawler
-            }} = RequestActor.classify(actor_type: :human, crawler_family: "googlebot")
+              classified_by: :account_session
+            }} =
+             RequestActor.classify(
+               account_session: %User{id: 1},
+               actor_type: :crawler,
+               confidence: :unknown,
+               classified_by: :fallback
+             )
   end
 
-  test "falls back to unknown when no trusted signal is present" do
+  test "bare credential identifiers cannot construct a verified actor" do
+    assert {:ok,
+            %Classification{
+              type: :unknown,
+              confidence: :unknown,
+              classified_by: :fallback
+            }} =
+             RequestActor.classify(
+               agent_credential_id: "agent-1",
+               delegation_id: "delegation-1",
+               crawler_family: "googlebot"
+             )
+  end
+
+  test "User-Agent self report remains unknown and probable" do
+    assert {:ok,
+            %Classification{
+              type: :unknown,
+              is_authenticated: false,
+              confidence: :probable,
+              classified_by: :self_reported
+            }} = RequestActor.classify(user_agent: "ExampleBot/1.0")
+  end
+
+  test "falls back to unknown when no trusted evidence is present" do
     assert {:ok,
             %Classification{
               type: :unknown,
@@ -49,30 +88,34 @@ defmodule GroupherServer.RequestActorTest do
             }} = RequestActor.classify([])
   end
 
-  test "fails closed when agent credentials conflict" do
-    assert {:error, :conflicting_signals} =
+  test "fails closed when trusted inputs conflict" do
+    assert {:error, :conflicting_evidence} =
              RequestActor.classify(
-               delegation_id: "delegation-1",
-               agent_credential_id: "agent-1"
+               account_session: %User{id: 1},
+               anonymous_session: %AnonymousSession{id: "anonymous-1"}
+             )
+
+    assert {:error, :conflicting_evidence} =
+             RequestActor.classify(
+               service_credential: service_credential(),
+               crawler: %Crawler{family: "googlebot"}
              )
   end
 
-  test "fails closed when crawler identity conflicts with a session" do
-    assert {:error, :conflicting_signals} =
-             RequestActor.classify(crawler_family: "googlebot", anonymous_id: "anonymous-1")
+  test "rejects invalid trusted objects and public Evidence injection" do
+    assert {:error, :invalid_evidence} =
+             RequestActor.classify(service_credential: %{subject: "service:broken"})
+
+    assert {:ok, %Classification{type: :unknown}} =
+             RequestActor.classify(evidence: %Evidence.Unknown{classified_by: :fallback})
   end
 
-  test "fails closed when crawler identity conflicts with either agent signal" do
-    assert {:error, :conflicting_signals} =
-             RequestActor.classify(
-               crawler_family: "googlebot",
-               delegation_id: "delegation-1"
-             )
-
-    assert {:error, :conflicting_signals} =
-             RequestActor.classify(
-               crawler_family: "googlebot",
-               agent_credential_id: "agent-1"
-             )
+  defp service_credential do
+    %{
+      audience: "phoenix:view-api",
+      scopes: MapSet.new(["view:track"]),
+      subject: "service:test",
+      token_id: "credential-1"
+    }
   end
 end

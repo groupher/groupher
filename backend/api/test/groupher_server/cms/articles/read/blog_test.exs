@@ -4,7 +4,6 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.ViewTracker
   alias CMS.Model.ArticleDocument
   @article_digest_length CMS.Artiment.Config.digest_length()
 
@@ -94,16 +93,14 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
          ~m(blog_attrs community user)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, blog2} =
         CMS.Articles.read(article_community(blog), :blog, blog.inner_id, user)
 
       assert blog.id == blog2.id
       refute CMS.ViewTracker.viewer_state(blog2, user).viewer_has_viewed
 
-      assert {:ok, %{event_id: ^event_id}} =
-               ViewTracker.track(blog2, user, event_id, read_purpose: :public_read)
+      assert {:ok, %{tracked: true}} =
+               track_article_view(blog2, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(blog2, user).viewer_has_viewed
     end
@@ -113,20 +110,16 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user, read_purpose: :public_read)
 
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(blog, user, event_id, read_purpose: :public_read)
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(blog, user, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(blog, user).viewer_has_viewed
 
-      event_id = Ecto.UUID.generate()
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(blog, user2, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Blog, blog.id)
       assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:blog, created.id)

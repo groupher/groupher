@@ -4,10 +4,11 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+  alias CMS.Articles.Publish
   alias CMS.Articles.Trash
+  alias CMS.Docs.Branch
   alias CMS.FrontDesk
-  alias CMS.ViewTracker
-  alias CMS.Model.ArticleDocument
+  alias CMS.Model.{ArticleDocument, ArticleEmotionCount, ArticleStats, Doc}
 
   @article_digest_length CMS.Artiment.Config.digest_length()
 
@@ -96,16 +97,14 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
          ~m(doc_attrs community user)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, doc2} =
         CMS.Articles.read(article_community(doc), :doc, doc.inner_id, user)
 
       assert doc.id == doc2.id
       refute CMS.ViewTracker.viewer_state(doc2, user).viewer_has_viewed
 
-      assert {:ok, %{event_id: ^event_id}} =
-               ViewTracker.track(doc2, user, event_id, read_purpose: :public_read)
+      assert {:ok, %{tracked: true}} =
+               track_article_view(doc2, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(doc2, user).viewer_has_viewed
     end
@@ -115,20 +114,16 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(doc, user, read_purpose: :public_read)
 
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(doc, user, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(doc, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(doc, user).viewer_has_viewed
 
-      event_id = Ecto.UUID.generate()
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(doc, user2, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(doc, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Doc, doc.id)
       assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:doc, created.id)
@@ -289,8 +284,16 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
     test "delete doc should also delete related document",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+      assert {:ok, _} = CMS.Interactions.emotion(doc, :heart, user)
 
       {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
+      assert Repo.get_by(ArticleStats, thread: :doc, article_id: doc.id)
+
+      assert Repo.get_by(ArticleEmotionCount,
+               thread: :doc,
+               article_id: doc.id,
+               type: :heart
+             )
 
       {:ok, action} =
         Trash.create_action(community, user, %{
@@ -305,6 +308,84 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:error, _} = ORM.find(Doc, doc.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
+      refute Repo.get_by(ArticleStats, thread: :doc, article_id: doc.id)
+      refute Repo.get_by(ArticleEmotionCount, thread: :doc, article_id: doc.id, type: :heart)
+    end
+
+    test "permanent delete keeps the same logical Doc in another branch",
+         ~m(user community doc_attrs)a do
+      {:ok, main_doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
+
+      {:ok, preview_branch} =
+        Branch.create_preview(community, %{slug: "delete-isolation"}, user)
+
+      preview_attrs =
+        doc_attrs
+        |> Map.put(:article_hash_id, main_doc.article_hash_id)
+        |> Map.put(:branch_id, preview_branch.id)
+        |> Map.put(:title, "Preview branch document")
+
+      {:ok, _preview_draft} =
+        CMS.Articles.create_draft(community, :doc, preview_attrs, user)
+
+      {:ok, %{article: preview_doc}} =
+        Publish.publish(
+          community,
+          :doc,
+          main_doc.article_hash_id,
+          user,
+          branch_id: preview_branch.id
+        )
+
+      assert main_doc.branch_id != preview_doc.branch_id
+      assert main_doc.article_hash_id == preview_doc.article_hash_id
+
+      assert {:ok, _} = CMS.Interactions.emotion(main_doc, :heart, user)
+      assert :ok = CMS.ArticleStats.initialize(preview_doc)
+
+      %ArticleEmotionCount{}
+      |> ArticleEmotionCount.changeset(%{
+        thread: :doc,
+        article_id: preview_doc.id,
+        type: :beer,
+        count: 1,
+        interaction_revision: 1
+      })
+      |> Repo.insert!()
+
+      assert Repo.get_by(ArticleStats, thread: :doc, article_id: preview_doc.id)
+
+      assert Repo.get_by(ArticleEmotionCount,
+               thread: :doc,
+               article_id: preview_doc.id,
+               type: :beer
+             )
+
+      {:ok, action} =
+        Trash.create_action(community, user, %{
+          root_type: "doc_tree_page",
+          root_ref: "branch-delete-isolation"
+        })
+
+      {:ok, trash_item} =
+        Trash.attach(action, community, :doc, main_doc.article_hash_id, user,
+          branch_id: main_doc.branch_id
+        )
+
+      assert {:ok, %{done: true}} =
+               CMS.Articles.permanently_delete_trashed(trash_item, user)
+
+      refute Repo.get(Doc, main_doc.id)
+      refute Repo.get_by(ArticleStats, thread: :doc, article_id: main_doc.id)
+
+      assert Repo.get(Doc, preview_doc.id)
+      assert Repo.get_by(ArticleStats, thread: :doc, article_id: preview_doc.id)
+
+      assert Repo.get_by(ArticleEmotionCount,
+               thread: :doc,
+               article_id: preview_doc.id,
+               type: :beer
+             )
     end
 
     test "update doc should also update related document",

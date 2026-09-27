@@ -5,7 +5,6 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   alias GroupherServer.CMS
   alias CMS.FrontDesk
-  alias CMS.ViewTracker
   alias CMS.Model.ArticleDocument
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
@@ -96,16 +95,14 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
          ~m(post_attrs community user)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, post2} =
         CMS.Articles.read(article_community(post), :post, post.inner_id, user)
 
       assert post.id == post2.id
       refute CMS.ViewTracker.viewer_state(post2, user).viewer_has_viewed
 
-      assert {:ok, %{event_id: ^event_id}} =
-               ViewTracker.track(post2, user, event_id, read_purpose: :public_read)
+      assert {:ok, %{tracked: true}} =
+               track_article_view(post2, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(post2, user).viewer_has_viewed
     end
@@ -115,20 +112,16 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(post, user, read_purpose: :public_read)
 
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(post, user, event_id, read_purpose: :public_read)
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(post, user, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(post, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(post, user).viewer_has_viewed
 
-      event_id = Ecto.UUID.generate()
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(post, user2, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(post, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Post, post.id)
       assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:post, created.id)

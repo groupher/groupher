@@ -22,6 +22,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias GroupherServer.Analysis.MetricEvent
   alias Helper.{Later, T}
 
+  @reserved_article_emotions [:upvote, :collect]
+
   @doc """
   Applies an emotion as an idempotent set-state command.
 
@@ -93,6 +95,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp allow_emotion(%Comment{} = comment, _info, emotion) do
     Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
   end
+
+  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions,
+    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
 
   defp allow_emotion(article, info, emotion) do
     Enable.emotion?(article.community.slug, :article, info.artiment, emotion)

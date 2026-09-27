@@ -434,9 +434,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   end
 
   defp track_view(article, user) do
-    event_id = Ecto.UUID.generate()
-
-    assert {:ok, %{event_id: ^event_id}} =
-             CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
+    assert {:ok, %{tracked: true}} =
+             track_article_view(article, user, read_purpose: :public_read)
   end
 end

@@ -111,7 +111,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         # used by the sparse EmotionStat API output enum, which is shared by
         # both article and comment payloads.
         :all -> @all_emotions
-        _ -> @emotions
+        # UPVOTE/COLLECT have dedicated mutations and fixed ArticleStats fields;
+        # they are not valid inputs for the generic emotion mutation.
+        _ -> @emotions -- [:upvote, :collect]
       end
 
     emotions

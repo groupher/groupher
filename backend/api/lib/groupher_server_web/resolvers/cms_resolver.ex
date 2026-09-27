@@ -42,40 +42,33 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def command_id(value, _args, _info), do: {:ok, Map.get(value, :command_id)}
 
   @doc "Records an explicit, visible public Article read."
-  def track_article_view(_root, %{article: article_path, event_id: event_id}, info) do
+  def track_article_view(_root, %{article: article_path}, info) do
     {viewer, actor_opts} = view_actor(info.context)
 
-    with {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path) do
+    with {:ok, classification} <- Map.fetch(info.context, :request_actor),
+         {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path) do
       CMS.ViewTracker.track(
         article,
         viewer,
-        event_id,
+        classification,
         Keyword.put(actor_opts, :read_purpose, :public_read)
       )
     end
   end
 
-  defp view_actor(%{delegated_actor: %{service_actor: service, user_actor: viewer}}) do
-    {viewer, [delegation_id: service_actor_id(service)]}
-  end
+  defp view_actor(%{delegated_actor: %{user_actor: viewer} = delegation}),
+    do: {viewer, [delegation: delegation]}
 
-  defp view_actor(%{service_actor: service}) do
-    {nil, [agent_credential_id: service_actor_id(service)]}
-  end
+  defp view_actor(%{service_actor: service}), do: {nil, [service_credential: service]}
 
   defp view_actor(%{service_auth_failure: _code}), do: {nil, []}
 
-  defp view_actor(context) do
-    viewer = Map.get(context, :cur_user)
+  defp view_actor(%{cur_user: viewer}), do: {viewer, []}
 
-    if viewer,
-      do: {viewer, []},
-      else: {nil, [anonymous_id: Map.get(context, :anonymous_id)]}
-  end
+  defp view_actor(%{anonymous_session: session}),
+    do: {nil, [anonymous_session: session]}
 
-  defp service_actor_id(service) do
-    Map.get(service, :token_id) || Map.get(service, :subject)
-  end
+  defp view_actor(_context), do: {nil, []}
 
   @viewer_batch_size 100
 

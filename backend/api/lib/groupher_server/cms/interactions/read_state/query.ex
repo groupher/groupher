@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
         type
         |> fixed_counts(ids)
         |> Enum.reduce(acc, fn {id, values}, counts_by_artiment ->
-          reaction_counts =
+          emotion_counts =
             emotion_values
             |> Map.get(id, %{})
             |> EmotionFormatter.counts(projection_type)
@@ -101,7 +101,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
           Map.put(
             counts_by_artiment,
             {type, id},
-            Map.put(values, :reaction_counts, reaction_counts)
+            Map.put(values, :emotion_counts, emotion_counts)
           )
         end)
       end)

@@ -462,7 +462,7 @@ type RootMutationType {
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
 
   "Records one visible public Article read through ViewTracker"
-  trackArticleView(article: ArticlePathInput!, eventId: ID!): ArticleViewTrackResult!
+  trackArticleView(article: ArticlePathInput!): ArticleViewTrackResult!
 
   "Move one logical Article into Trash"
   trashArticle(commandId: ID!, article: ArticlePathInput!): TrashedArticle
@@ -1527,21 +1527,13 @@ type DoneState {
   commandId: ID
 }
 
-enum ArticleViewDecisionReason {
-  COUNTED
-  DUPLICATE_IN_WINDOW
-  EXCLUDED_BY_POLICY
-}
-
 type ArticleViewTrackResult {
-  eventId: ID!
-  counted: Boolean!
-  decisionReason: ArticleViewDecisionReason!
+  tracked: Boolean!
   articleStats: ArticleStats!
   viewerState: ViewerArticleState!
 }
 
-type ArticleReactionCount {
+type ArticleEmotionCount {
   type: EmotionType!
   count: Int!
 }
@@ -1558,7 +1550,7 @@ type ArticleStats {
   commentsParticipantsCount: Int!
   interactionRevision: Int!
   commentsRevision: Int!
-  reactionCounts: [ArticleReactionCount!]!
+  emotionCounts: [ArticleEmotionCount!]!
   snapshotAt: DateTime!
 }
 
@@ -3653,7 +3645,6 @@ enum DocThread {
 
 "emotion options of article"
 enum ArticleEmotion {
-  UPVOTE
   DOWNVOTE
   BEER
   HEART

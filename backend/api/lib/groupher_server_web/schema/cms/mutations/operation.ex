@@ -18,7 +18,11 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
     @desc "Records one visible public Article read through ViewTracker"
     field :track_article_view, non_null(:article_view_track_result) do
       arg(:article, non_null(:article_path_input))
-      arg(:event_id, non_null(:id))
+
+      middleware(M.ConditionalServiceScope,
+        audience: "phoenix:view-api",
+        scope: "view:track"
+      )
 
       resolve(&R.CMS.track_article_view/3)
     end

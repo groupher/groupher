@@ -4,8 +4,11 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.{Activity, CMS}
+
   alias CMS.Model.{
+    ArticleEmotionCount,
     ArticleLifecycle,
+    ArticleStats,
     ArtimentMention,
     Comment,
     Post,
@@ -137,6 +140,21 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
     assert {:ok, %{entries: []}} =
              CMS.Articles.list_trashed(community, %{thread: :post, page: 1, size: 20})
+  end
+
+  test "permanent delete rejects a stale emotion request and leaves no orphan projections" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    {:ok, other_user} = db_insert(:user)
+
+    assert {:ok, _} = CMS.Interactions.emotion(post, :heart, other_user)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+
+    assert {:error, _reason} = CMS.Interactions.emotion(post, :beer, other_user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
+
+    refute Repo.get(Post, post.id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
   end
 
   test "permanent delete removes comment-owned Mention facts before comments cascade" do

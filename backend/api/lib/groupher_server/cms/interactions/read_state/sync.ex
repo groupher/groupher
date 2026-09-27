@@ -148,7 +148,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       with {:ok, projection} <-
              sync_emotion(interaction_info(thread), article.id, emotion, user, operation),
-           :ok <- CMS.ArticleStats.apply_interaction_counts(article) do
+           :ok <- CMS.ArticleStats.apply_interaction_counts(article),
+           :ok <- CMS.ArticleStats.apply_emotion_count(article, emotion) do
         {:ok, projection}
       end
     end

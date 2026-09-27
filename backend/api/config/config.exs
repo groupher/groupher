@@ -25,9 +25,10 @@ config :groupher_server,
 config :groupher_server, GroupherServer.CMS.ViewTracker.Config,
   human_dedupe_window_seconds: 600,
   agent_dedupe_window_seconds: 600,
-  view_count_receipt_ttl_seconds: 960,
-  watermark_retention_seconds: 2_592_000,
-  retention_batch_size: 500
+  cleanup_safety_margin_seconds: 86_400,
+  cleanup_batch_size: 500,
+  cleanup_row_budget: 50_000,
+  cleanup_time_budget_ms: 25_000
 
 config :groupher_server, GroupherServer.Analysis.Config,
   metric_event_retention_days: 90,
@@ -260,7 +261,7 @@ config :groupher_server, Oban,
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads},
        {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims},
        {"*/15 * * * *", GroupherServer.Jobs.WallpaperLifecycle},
-       {"@daily", GroupherServer.Jobs.ViewTrackerRetention},
+       {"0 * * * *", GroupherServer.Jobs.ViewDedupeCleanup},
        {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
        {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
        {"@daily", GroupherServer.Jobs.CommandReceiptRetention}

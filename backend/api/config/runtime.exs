@@ -20,7 +20,8 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
     "phoenix:assets-api",
     "phoenix:auth-api",
     "phoenix:content-import-api",
-    "phoenix:press-api"
+    "phoenix:press-api",
+    "phoenix:view-api"
   ]
 
 config :groupher_server, GroupherServer.ServiceAuth.Client,
@@ -159,7 +160,10 @@ if config_env() in [:prod, :seed_prod] do
   config :groupher_server, GroupherServerWeb.Endpoint, secret_key_base: secret_key_base
   config :groupher_server, :view_tracker_pepper, view_tracker_pepper
   config :groupher_server, :view_tracker_cookie_secret, view_tracker_cookie_secret
-  config :groupher_server, :view_tracker_cookie_previous_secret, view_tracker_cookie_previous_secret
+
+  config :groupher_server,
+         :view_tracker_cookie_previous_secret,
+         view_tracker_cookie_previous_secret
 
   config :groupher_server, Helper.Guardian,
     issuer: "groupher_server",

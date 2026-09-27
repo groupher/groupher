@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
 
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :blog), variables)
 
-      assert emotion_entry(article["articleStats"]["reactionCounts"], :beer)["count"] == 1
+      assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
       assert article["viewerEmotion"] == "BEER"
     end
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Mutation.Articles.BlogEmotion do
 
       article = owner_conn |> gq_mutation(S.Article.m(:undo_emotion_article, :blog), variables)
 
-      assert is_nil(emotion_entry(article["articleStats"]["reactionCounts"], :beer))
+      assert is_nil(emotion_entry(article["articleStats"]["emotionCounts"], :beer))
     end
   end
 end

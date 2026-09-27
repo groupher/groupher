@@ -4,7 +4,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.ViewTracker
   alias CMS.Model.ArticleDocument
   @article_digest_length CMS.Artiment.Config.digest_length()
 
@@ -99,16 +98,14 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
          ~m(changelog_attrs community user)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, changelog2} =
         CMS.Articles.read(article_community(changelog), :changelog, changelog.inner_id, user)
 
       assert changelog.id == changelog2.id
       refute CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
 
-      assert {:ok, %{event_id: ^event_id}} =
-               ViewTracker.track(changelog2, user, event_id, read_purpose: :public_read)
+      assert {:ok, %{tracked: true}} =
+               track_article_view(changelog2, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
     end
@@ -118,20 +115,16 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user, read_purpose: :public_read)
 
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(changelog, user, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user, read_purpose: :public_read)
 
       assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
 
-      event_id = Ecto.UUID.generate()
-
-      {:ok, %{event_id: ^event_id}} =
-        ViewTracker.track(changelog, user2, event_id, read_purpose: :public_read)
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
       assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:changelog, created.id)

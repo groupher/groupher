@@ -40,13 +40,12 @@ defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
 
   test "ViewTracker events enter Article Insights with actor filtering" do
     {_community, article, _attrs, user} = mock_article(:post)
-    event_id = Ecto.UUID.generate()
     now = DateTime.utc_now(:second)
     from = DateTime.from_unix!(div(DateTime.to_unix(now), 3600) * 3600)
     to = DateTime.add(from, 3600, :second)
 
-    assert {:ok, %{event_id: ^event_id}} =
-             CMS.ViewTracker.track(article, user, event_id, read_purpose: :public_read)
+    assert {:ok, %{tracked: true}} =
+             track_article_view(article, user, read_purpose: :public_read)
 
     assert {:ok, 1} = Aggregator.run()
 

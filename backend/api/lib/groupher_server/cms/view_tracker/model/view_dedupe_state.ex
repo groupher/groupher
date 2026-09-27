@@ -1,11 +1,14 @@
-defmodule GroupherServer.CMS.ViewTracker.Model.ViewWatermark do
+defmodule GroupherServer.CMS.ViewTracker.Model.ViewDedupeState do
   @moduledoc """
   Sliding-window state for one Article and stable viewer identity.
 
-      eligible view
+      policy-allowed view
         -> conditional UPSERT
-        -> ViewWatermark
-        -> counted or duplicate-in-window decision
+        -> ViewDedupeState
+        -> counted or duplicate
+
+  `last_counted_at` owns business deduplication. `expires_at` only schedules
+  cleanup after the actor window and its safety margin have elapsed.
   """
 
   use Ecto.Schema
@@ -16,11 +19,12 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewWatermark do
   @schema_prefix DBPrefix.cms()
   @primary_key false
 
-  schema "article_view_watermarks" do
+  schema "article_view_dedupe_states" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:article_id, :id)
     field(:viewer_tracking_key, :binary)
     field(:last_counted_at, :utc_datetime)
+    field(:expires_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end

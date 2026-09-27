@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
   alias CMS.Passport.ErrorCat, as: PassportErrorCat
 
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleStats, Post, TrashedArticle}
+  alias CMS.Model.{ArticleEmotionCount, ArticleStats, Post, TrashedArticle}
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -101,6 +101,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   test "permanent deletion removes content but leaves the item queryable until that action",
        ~m(community post owner owner_conn)a do
+    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner)
+
     ArticleStats
     |> Repo.get_by!(thread: :post, article_id: post.id)
     |> Ecto.Changeset.change(views: 12, views_revision: 3)
@@ -151,6 +153,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
     assert result["done"]
     refute Repo.get(Post, post.id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
     refute Repo.get_by(TrashedArticle, hash_id: trashed["id"])
 
     replayed =

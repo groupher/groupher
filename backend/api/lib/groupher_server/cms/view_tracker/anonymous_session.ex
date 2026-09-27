@@ -16,14 +16,19 @@ defmodule GroupherServer.CMS.ViewTracker.AnonymousSession do
   @payload_version 1
   @token_max_age 30 * 86_400
 
+  @enforce_keys [:id]
+  defstruct [:id]
+
+  @type t :: %__MODULE__{id: String.t()}
+
   @doc "Ensures a verified anonymous session value exists on the connection."
-  @spec ensure(Plug.Conn.t()) :: {Plug.Conn.t(), String.t()}
+  @spec ensure(Plug.Conn.t()) :: {Plug.Conn.t(), t()}
   def ensure(%Plug.Conn{} = conn) do
     case conn.req_cookies[@cookie_name] do
       token when is_binary(token) ->
         case verify_token(token) do
           {:ok, anonymous_id} ->
-            {conn, anonymous_id}
+            {conn, %__MODULE__{id: anonymous_id}}
 
           _ ->
             issue(conn)
@@ -51,7 +56,7 @@ defmodule GroupherServer.CMS.ViewTracker.AnonymousSession do
         path: "/"
       )
 
-    {conn, anonymous_id}
+    {conn, %__MODULE__{id: anonymous_id}}
   end
 
   defp secret do
