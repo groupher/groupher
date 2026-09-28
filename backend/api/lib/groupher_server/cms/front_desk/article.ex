@@ -89,6 +89,61 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
+  @doc "Reads visible public Articles for a bounded set of structured paths."
+  @spec read_paths([ArticlePath.t()]) :: {:ok, [%{path: map(), article: struct()}]}
+  def read_paths(paths) when is_list(paths) do
+    parsed =
+      paths
+      |> Enum.reduce([], fn path, acc ->
+        case ArticlePath.parse(path) do
+          {:ok, normalized} -> [normalized | acc]
+          {:error, _} -> acc
+        end
+      end)
+      |> Enum.reverse()
+
+    articles_by_path =
+      parsed
+      |> Enum.group_by(&{&1.community, &1.thread})
+      |> Enum.reduce(%{}, fn {{community_ref, thread}, group_paths}, acc ->
+        Map.merge(acc, read_path_group(community_ref, thread, group_paths))
+      end)
+
+    {:ok,
+     Enum.flat_map(parsed, fn path ->
+       case Map.fetch(articles_by_path, article_path_key(path)) do
+         {:ok, article} -> [%{path: path, article: article}]
+         :error -> []
+       end
+     end)}
+  end
+
+  defp read_path_group(community_ref, thread, paths) do
+    inner_ids = Enum.map(paths, & &1.inner_id)
+
+    with {:ok, %Community{id: community_id} = community} <- CommunityReader.read(community_ref),
+         {:ok, info} <- match(thread),
+         {:ok, scope_context} <- public_scope_context(community, thread, []),
+         %Ecto.Query{} = query <- CMS.Gate.scope(info.model, nil, :read, scope_context) do
+      query
+      |> where([article, ...], article.community_id == ^community_id)
+      |> where([article, ...], article.inner_id in ^inner_ids)
+      |> Repo.all()
+      |> Map.new(fn article ->
+        {article_path_key(%{
+           community: community_ref,
+           thread: thread,
+           inner_id: article.inner_id
+         }), article}
+      end)
+    else
+      _ -> %{}
+    end
+  end
+
+  defp article_path_key(path),
+    do: {path.community, path.thread, to_string(path.inner_id)}
+
   @doc "Locks one physical Article and revalidates its public Gate/Lifecycle scope."
   @spec lock_for_view_tracking(struct()) ::
           {:ok, struct(), Community.t(), DateTime.t()} | {:error, map()}
@@ -117,7 +172,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
          {:ok, stats} <- read_article_stats_batch(community_ref, thread, inner_ids) do
       {:ok, stats}
     else
-      {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
+      {:error, _} = error -> error
     end
   end
 
@@ -150,7 +205,13 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
              })}
           end)
 
-        {:ok, Enum.map(inner_ids, &Map.fetch!(stats_by_inner_id, to_string(&1)))}
+        {:ok,
+         Enum.flat_map(inner_ids, fn inner_id ->
+           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
+             {:ok, stats} -> [stats]
+             :error -> []
+           end
+         end)}
       end
     else
       {:error, _} = error -> error

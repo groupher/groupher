@@ -153,11 +153,11 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!) {
       undoUpvote#{t(thread)}(article: $article, commandId: $commandId) {
-        innerId
-        meta {
-          latestUpvotedUsers {
-            login
-          }
+        commandId
+        reactionOutcome
+        interactionState {
+          innerId
+          viewerHasUpvoted
         }
       }
     }
@@ -253,8 +253,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
       emotionTo#{t(thread)}(article: $article, emotion: $emotion, commandId: $commandId) {
-        innerId
-        viewerEmotion
+        commandId
+        reactionOutcome
+        interactionState {
+          innerId
+          viewerEmotion
+        }
         articleStats {
           emotionCounts {
           type
@@ -270,7 +274,12 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!, $commandId: ID!) {
       undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion, commandId: $commandId) {
-        viewerEmotion
+        commandId
+        reactionOutcome
+        interactionState {
+          innerId
+          viewerEmotion
+        }
         articleStats {
           emotionCounts {
             type
@@ -383,11 +392,11 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!) {
       upvote#{t(thread)}(article: $article, commandId: $commandId) {
-        innerId
-        meta {
-          latestUpvotedUsers {
-            login
-          }
+        commandId
+        reactionOutcome
+        interactionState {
+          innerId
+          viewerHasUpvoted
         }
         articleStats {
           views
@@ -405,7 +414,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation($article: ArticlePathInput!, $commandId: ID!) {
       upvote#{t(thread)}(article: $article, commandId: $commandId) {
-        innerId
+        commandId
+        reactionOutcome
         articleStats {
           views
           viewsRevision
@@ -413,9 +423,9 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
           interactionRevision
           snapshotAt
         }
-        ... on #{t(thread)} {
-          commandId
-          reactionOutcome
+        interactionState {
+          innerId
+          viewerHasUpvoted
         }
       }
     }
@@ -809,10 +819,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
             upvotesCount
             snapshotAt
           }
-          viewerHasCollected
-          viewerHasUpvoted
-          viewerHasViewed
-          viewerHasReported
           isPinned
           pending
           meta {

@@ -1,9 +1,9 @@
 defmodule GroupherServer.CMS.Articles.Response do
   @moduledoc """
-  Assembles Article API response fields from Interaction read state.
+  Assembles public Article API presentation fields from Interaction read state.
 
-  Interaction owns fact and viewer-state reads; Articles owns how that state is
-  represented on the existing Article GraphQL response.
+  Interaction owns public projection reads; current-viewer state is exposed only
+  through the dedicated private APIs.
 
       Articles Reader -> Response -> Article API response
   """
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   alias CMS.Model.{Comment, Post, PostSolution}
 
   @doc """
-  Assembles one Article with Interaction fields for the optional viewer.
+  Assembles one Article with public Interaction presentation fields.
 
   ## Examples
 
@@ -26,15 +26,13 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   """
   @spec one(struct(), User.t() | nil, keyword()) :: {:ok, struct()} | {:error, term()}
-  def one(article, viewer, opts \\ []) do
-    with state when is_map(state) <- CMS.Interactions.viewer_state(article, viewer, opts),
-         view_state when is_map(view_state) <- CMS.ViewTracker.viewer_state(article, viewer, opts) do
+  def one(article, _viewer, opts \\ []) do
+    with state when is_map(state) <- CMS.Interactions.public_state(article, opts) do
       solution_by_post = solution_by_post([article])
 
       {:ok,
        article
-       |> merge(state)
-       |> merge_view_state(view_state)
+       |> merge_public_state(state)
        |> merge_solution(solution_by_post)
        |> CMS.ShadowSync.refresh_article()}
     end
@@ -49,10 +47,8 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   """
   @spec list([struct()], User.t() | nil, keyword()) :: {:ok, [struct()]} | {:error, term()}
-  def list(articles, viewer, opts \\ []) when is_list(articles) do
-    with states when is_map(states) <- CMS.Interactions.viewer_states(articles, viewer, opts),
-         view_states when is_map(view_states) <-
-           CMS.ViewTracker.viewer_states(articles, viewer, opts) do
+  def list(articles, _viewer, opts \\ []) when is_list(articles) do
+    with states when is_map(states) <- CMS.Interactions.public_states(articles, opts) do
       solution_by_post = solution_by_post(articles)
 
       articles =
@@ -60,10 +56,7 @@ defmodule GroupherServer.CMS.Articles.Response do
           {:ok, %{artiment: type}} = Matcher.match_interaction(article)
 
           article
-          |> merge(Map.fetch!(states, {type, article.id}))
-          |> merge_view_state(
-            Map.get(view_states, {type, article.id}, %{viewer_has_viewed: false})
-          )
+          |> merge_public_state(Map.fetch!(states, {type, article.id}))
           |> merge_solution(solution_by_post)
         end)
 
@@ -111,17 +104,10 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   defp merge_solution(article, _solution_by_post), do: article
 
-  defp merge(article, state) do
+  defp merge_public_state(article, state) do
     article
-    |> Map.put(:viewer_has_upvoted, state.viewer_has_upvoted)
-    |> Map.put(:viewer_has_collected, state.viewer_has_collected)
-    |> Map.put(:viewer_emotion, viewer_emotion(state.emotions))
-    |> Map.put(:viewer_has_reported, state.viewer_has_reported)
     |> Map.put(:meta, article_meta(article, state))
   end
-
-  defp merge_view_state(article, %{viewer_has_viewed: viewer_has_viewed}),
-    do: Map.put(article, :viewer_has_viewed, viewer_has_viewed)
 
   defp article_meta(article, state) do
     meta =
@@ -130,12 +116,5 @@ defmodule GroupherServer.CMS.Articles.Response do
       |> Map.put(:latest_collected_users, state.latest_collected_users)
 
     Map.put(meta, :reported_count, Map.get(state, :reported_count, 0))
-  end
-
-  defp viewer_emotion(emotions) do
-    case Enum.find(emotions, &Map.get(&1, :viewer_has_reacted, false)) do
-      %{emotion: emotion} -> emotion
-      _ -> nil
-    end
   end
 end

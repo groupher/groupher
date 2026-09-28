@@ -284,8 +284,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     end
   end
 
-  describe "[query paged_changelogs filter has_xxx]" do
-    test "has_xxx state should work", ~m(user community)a do
+  describe "[query paged_changelogs private state boundary]" do
+    test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
@@ -299,10 +299,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       the_changelog =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(changelog.inner_id)))
 
-      assert not the_changelog["viewerHasViewed"]
-      assert not the_changelog["viewerHasUpvoted"]
-      assert not the_changelog["viewerHasCollected"]
-      assert not the_changelog["viewerHasReported"]
+      refute Map.has_key?(the_changelog, "viewerHasViewed")
+      refute Map.has_key?(the_changelog, "viewerHasUpvoted")
+      refute Map.has_key?(the_changelog, "viewerHasCollected")
+      refute Map.has_key?(the_changelog, "viewerHasReported")
 
       track_view(changelog, user)
 
@@ -315,10 +315,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       the_changelog =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(changelog.inner_id)))
 
-      assert the_changelog["viewerHasViewed"]
-      assert the_changelog["viewerHasUpvoted"]
-      assert the_changelog["viewerHasCollected"]
-      assert the_changelog["viewerHasReported"]
+      refute Map.has_key?(the_changelog, "viewerHasViewed")
+      refute Map.has_key?(the_changelog, "viewerHasUpvoted")
+      refute Map.has_key?(the_changelog, "viewerHasCollected")
+      refute Map.has_key?(the_changelog, "viewerHasReported")
 
       assert user_exist_in?(user, the_changelog["meta"]["latestUpvotedUsers"])
     end

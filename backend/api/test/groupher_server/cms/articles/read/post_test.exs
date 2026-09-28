@@ -3,9 +3,11 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   use GroupherServer.TestMate
 
+  import Ecto.Query
+
   alias GroupherServer.CMS
   alias CMS.FrontDesk
-  alias CMS.Model.ArticleDocument
+  alias CMS.Model.{ArticleDocument, ArticleStats}
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length CMS.Artiment.Config.digest_length()
@@ -18,6 +20,49 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   end
 
   describe "[cms post curd]" do
+    test "ArticleStats batch returns the visible subset in request order",
+         ~m(user community post_attrs)a do
+      {:ok, first} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, second} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      assert {:ok, stats} =
+               FrontDesk.article_stats(community.slug, :post, [
+                 second.inner_id,
+                 999_999,
+                 first.inner_id
+               ])
+
+      assert Enum.map(stats, & &1.inner_id) == [second.inner_id, first.inner_id]
+    end
+
+    test "ArticleStats batch reports a missing visible projection row",
+         ~m(user community post_attrs)a do
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      Repo.delete_all(
+        from(stats in ArticleStats, where: stats.thread == :post and stats.article_id == ^post.id)
+      )
+
+      assert {:error, %{reason: :projection_not_updated}} =
+               FrontDesk.article_stats(community.slug, :post, [post.inner_id])
+    end
+
+    test "ArticleStats batch omits trashed and missing paths without revealing which is which",
+         ~m(user community post_attrs)a do
+      {:ok, visible} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, trashed} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _trash_item} = CMS.Articles.trash(trashed, user)
+
+      assert {:ok, stats} =
+               FrontDesk.article_stats(community.slug, :post, [
+                 trashed.inner_id,
+                 999_999,
+                 visible.inner_id
+               ])
+
+      assert Enum.map(stats, & &1.inner_id) == [visible.inner_id]
+    end
+
     test "created post should have auto_increase inner_id", ~m(user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       assert post.inner_id == 2
@@ -149,7 +194,8 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
     #   assert community.subscribers_count == 1
     # end
 
-    test "read post should contains viewer_has_xxx state", ~m(post_attrs community user user2)a do
+    test "public Article reads do not hydrate viewer-private state",
+         ~m(post_attrs community user user2)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:ok, post} =
@@ -196,9 +242,12 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
           user
         )
 
-      assert post.viewer_has_collected
-      assert post.viewer_has_upvoted
-      assert post.viewer_has_reported
+      refute post.viewer_has_collected
+      refute post.viewer_has_upvoted
+      refute post.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(post, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",

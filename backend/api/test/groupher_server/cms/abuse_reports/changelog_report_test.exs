@@ -41,7 +41,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.ChangelogReport do
 
       {:ok, changelog} = Response.one(changelog, user, surface: :report)
       assert changelog.meta.reported_count == 1
-      assert changelog.viewer_has_reported
+      refute changelog.viewer_has_reported
+      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_reported
     end
 
     test "can undo a report", ~m(user changelog)a do

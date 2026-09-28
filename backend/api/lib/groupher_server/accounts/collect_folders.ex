@@ -49,7 +49,15 @@ defmodule GroupherServer.Accounts.CollectFolders do
   @spec add(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def add(article, folder_id, %User{} = user), do: Write.add(article, folder_id, user)
 
+  @doc "Runs retry-safe collect membership addition and returns its mutation payload."
+  def add_payload(article, folder_id, %User{} = user, command_id),
+    do: Write.add_payload(article, folder_id, user, command_id)
+
   @doc "Runs `remove` through the public `CollectFolders` boundary."
   @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def remove(article, folder_id, %User{} = user), do: Write.remove(article, folder_id, user)
+
+  @doc "Runs retry-safe collect membership removal and returns its mutation payload."
+  def remove_payload(article, folder_id, %User{} = user, command_id),
+    do: Write.remove_payload(article, folder_id, user, command_id)
 end

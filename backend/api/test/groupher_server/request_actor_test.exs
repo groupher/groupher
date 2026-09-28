@@ -30,6 +30,34 @@ defmodule GroupherServer.RequestActorTest do
              RequestActor.classify(anonymous_session: %AnonymousSession{id: "anonymous-1"})
   end
 
+  test "self-reported automation takes precedence over a signed anonymous session" do
+    assert {:ok,
+            %Classification{
+              type: :unknown,
+              is_authenticated: false,
+              confidence: :probable,
+              classified_by: :self_reported
+            }} =
+             RequestActor.classify(
+               anonymous_session: %AnonymousSession{id: "anonymous-1"},
+               user_agent: "ExampleBot/1.0"
+             )
+  end
+
+  test "ordinary browser User-Agent remains a probable anonymous human" do
+    assert {:ok,
+            %Classification{
+              type: :human,
+              confidence: :probable,
+              classified_by: :signed_anonymous_session
+            }} =
+             RequestActor.classify(
+               anonymous_session: %AnonymousSession{id: "anonymous-1"},
+               user_agent:
+                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Safari/537.36"
+             )
+  end
+
   test "classifies verified service and crawler business objects" do
     assert {:ok, %Classification{type: :agent, classified_by: :agent_credential}} =
              RequestActor.classify(service_credential: service_credential())

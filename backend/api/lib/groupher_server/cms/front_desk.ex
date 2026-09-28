@@ -99,6 +99,9 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, opts \\ []), do: Article.read(article_path, opts)
 
+  @doc "Reads visible public Articles for a bounded set of structured paths."
+  def article_paths(paths), do: Article.read_paths(paths)
+
   @doc "Loads one public canonical Article for an explicit ViewTracker request."
   def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
 

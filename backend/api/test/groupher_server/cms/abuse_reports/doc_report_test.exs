@@ -41,7 +41,8 @@ defmodule GroupherServer.Test.CMS.AbuseReports.DocReport do
 
       {:ok, doc} = Response.one(doc, user, surface: :report)
       assert doc.meta.reported_count == 1
-      assert doc.viewer_has_reported
+      refute doc.viewer_has_reported
+      assert CMS.Interactions.viewer_state(doc, user).viewer_has_reported
     end
 
     test "can undo a report", ~m(user doc)a do

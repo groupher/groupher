@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
 
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
-      assert article["viewerEmotion"] == "BEER"
+      assert get_in(article, ["interactionState", "viewerEmotion"]) == "BEER"
 
       assert %ArticleEmotionCount{
                count: 1,
@@ -74,11 +74,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
-      assert article["viewerEmotion"] == "BEER"
+      assert get_in(article, ["interactionState", "viewerEmotion"]) == "BEER"
 
       article2 = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
       assert emotion_entry(article2["articleStats"]["emotionCounts"], :beer)["count"] == 1
-      assert article2["viewerEmotion"] == "BEER"
+      assert get_in(article2, ["interactionState", "viewerEmotion"]) == "BEER"
     end
 
     test "different emotions from different users both get counted",
@@ -91,9 +91,6 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables_beer)
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
 
-      beer_revision =
-        Repo.get_by!(ArticleEmotionCount, thread: :post, article_id: post.id, type: :beer).interaction_revision
-
       variables_heart = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "HEART"
@@ -104,8 +101,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       beer = Repo.get_by!(ArticleEmotionCount, thread: :post, article_id: post.id, type: :beer)
       heart = Repo.get_by!(ArticleEmotionCount, thread: :post, article_id: post.id, type: :heart)
-      assert beer.interaction_revision == beer_revision
-      assert heart.interaction_revision > beer.interaction_revision
+      assert beer.count == 1
+      assert heart.count == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
       counts = CMS.Interactions.counts([current_post])

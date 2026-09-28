@@ -25,7 +25,14 @@ defmodule GroupherServer.CMS.ViewTracker.Identity do
           viewer_tracking_key: binary() | nil
         }
 
-  @doc "Builds ViewTracker identity from one classification and its trusted identity handle."
+  @doc """
+  Builds the ViewTracker identity for one already-classified request.
+
+  Only the trusted handle selected by `RequestActor` may contribute to the
+  tracking key. The key is an HMAC rather than a raw account, session, service,
+  delegation, or crawler identifier. Unknown actors intentionally receive no
+  tracking key and cannot enter counted-view deduplication.
+  """
   @spec resolve(User.t() | nil, Classification.t(), keyword()) :: {:ok, t()} | {:error, term()}
   def resolve(viewer, %Classification{} = classification, opts) when is_list(opts) do
     user_id = if match?(%User{}, viewer), do: viewer.id, else: nil

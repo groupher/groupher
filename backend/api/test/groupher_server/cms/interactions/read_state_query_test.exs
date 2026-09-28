@@ -11,7 +11,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     assert {:ok, []} =
              ResolverCMS.article_viewer_states(
                nil,
-               %{refs: [%{community: "home", thread: "POST", inner_id: "1"}]},
+               %{paths: [%{community: "home", thread: "POST", inner_id: "1"}]},
                info
              )
 
@@ -31,18 +31,82 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
     {_community, second, _attrs, _user} = mock_article(:post, community, user)
     info = %{context: %{cur_user: user}}
 
-    refs =
+    paths =
       Enum.map([second, first], fn article ->
         %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
       end)
 
-    assert {:ok, viewer_states} = ResolverCMS.article_viewer_states(nil, %{refs: refs}, info)
+    assert {:ok, viewer_states} = ResolverCMS.article_viewer_states(nil, %{paths: paths}, info)
     assert Enum.map(viewer_states, & &1.inner_id) == [second.inner_id, first.inner_id]
 
     assert {:ok, interaction_states} =
-             ResolverCMS.article_interaction_states(nil, %{refs: refs}, info)
+             ResolverCMS.article_interaction_states(nil, %{paths: paths}, info)
 
     assert Enum.map(interaction_states, & &1.inner_id) == [second.inner_id, first.inner_id]
+  end
+
+  test "Article private-state resolvers keep a bounded query shape for a larger batch" do
+    {community, first, _attrs, user} = mock_article(:post)
+    {_community, second, _attrs, _user} = mock_article(:post, community, user)
+    info = %{context: %{cur_user: user}}
+
+    path = fn article ->
+      %{community: community.slug, thread: :post, inner_id: to_string(article.inner_id)}
+    end
+
+    {_one, one_queries} =
+      capture_queries(fn ->
+        ResolverCMS.article_interaction_states(nil, %{paths: [path.(first)]}, info)
+      end)
+
+    {_many, many_queries} =
+      capture_queries(fn ->
+        ResolverCMS.article_interaction_states(
+          nil,
+          %{paths: [path.(first), path.(second)]},
+          info
+        )
+      end)
+
+    assert length(Enum.filter(many_queries, &select_query?/1)) ==
+             length(Enum.filter(one_queries, &select_query?/1))
+  end
+
+  test "Comment viewer-state resolver reuses one batch reader" do
+    {community, post, _attrs, user} = mock_article(:post)
+
+    {:ok, first} =
+      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+    {:ok, second} =
+      CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+    article = %{community: community.slug, thread: :post, inner_id: post.inner_id}
+    info = %{context: %{cur_user: user}}
+
+    {_one, one_queries} =
+      capture_queries(fn ->
+        ResolverCMS.comment_viewer_states(
+          nil,
+          %{article: article, comment_inner_ids: [to_string(first.inner_id)]},
+          info
+        )
+      end)
+
+    {_many, many_queries} =
+      capture_queries(fn ->
+        ResolverCMS.comment_viewer_states(
+          nil,
+          %{
+            article: article,
+            comment_inner_ids: [to_string(first.inner_id), to_string(second.inner_id)]
+          },
+          info
+        )
+      end)
+
+    assert length(Enum.filter(many_queries, &select_query?/1)) ==
+             length(Enum.filter(one_queries, &select_query?/1))
   end
 
   test "comment reconciliation returns one Article aggregate and preserves missing refs" do
@@ -84,7 +148,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateQueryTest do
   test "comment reconciliation rejects batches larger than the shared limit" do
     refs = Enum.map(1..101, &to_string/1)
 
-    assert {:error, "viewer batch cannot contain more than 100 refs"} =
+    assert {:error, "viewer batch cannot contain more than 100 paths"} =
              ResolverCMS.comment_reconcile_states(
                nil,
                %{

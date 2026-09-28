@@ -5,11 +5,12 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
           createComment(article: $article, body: $body, commandId: $commandId) {
+            commandId
             comment {
               innerId
               bodyHtml
             }
-            article {
+            articleStats {
               innerId
               commentsRevision
             }
@@ -22,11 +23,12 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
       createComment(article: $article, body: $body, commandId: $commandId) {
+        commandId
         comment {
           innerId
           bodyHtml
         }
-        article {
+        articleStats {
           innerId
           commentsRevision
         }
@@ -44,7 +46,7 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
           innerId
           bodyHtml
         }
-        article {
+        articleStats {
           innerId
           commentsRevision
         }
@@ -57,8 +59,15 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
       updateComment(comment: $comment, body: $body, commandId: $commandId) {
-        innerId
-        bodyHtml
+        commandId
+        comment {
+          innerId
+          bodyHtml
+        }
+        articleStats {
+          innerId
+          commentsRevision
+        }
       }
     }
     """
@@ -69,8 +78,11 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
       updateComment(comment: $comment, body: $body, commandId: $commandId) {
         commandId
-        bodyHtml
-        article {
+        comment {
+          innerId
+          bodyHtml
+        }
+        articleStats {
           innerId
           thread
           commentsRevision
@@ -84,7 +96,14 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($comment: CommentPathInput!, $commandId: ID!) {
       deleteComment(comment: $comment, commandId: $commandId) {
-        innerId
+        commandId
+        comment {
+          innerId
+        }
+        articleStats {
+          innerId
+          commentsRevision
+        }
       }
     }
     """
@@ -94,9 +113,11 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($comment: CommentPathInput!, $commandId: ID!) {
       deleteComment(comment: $comment, commandId: $commandId) {
-        innerId
         commandId
-        article {
+        comment {
+          innerId
+        }
+        articleStats {
           innerId
           thread
           commentsRevision
@@ -110,11 +131,12 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
     """
     mutation($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
       replyComment(comment: $comment, body: $body, commandId: $commandId) {
+        commandId
         comment {
           innerId
           bodyHtml
         }
-        article {
+        articleStats {
           innerId
           commentsRevision
         }
@@ -132,7 +154,7 @@ defmodule GroupherServer.Test.Helper.Schema.Comment do
           innerId
           bodyHtml
         }
-        article {
+        articleStats {
           innerId
           commentsRevision
         }

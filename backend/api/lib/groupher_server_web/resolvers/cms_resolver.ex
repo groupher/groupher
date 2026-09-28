@@ -28,7 +28,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, Activity, Analysis, CMS, ErrorCat, FrontDesk}
+  alias GroupherServer.{Accounts, Activity, Analysis, CMS, ErrorCat, FrontDesk, Repo}
+  alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
   alias Analysis.Web, as: AnalysisWeb
 
   alias Accounts.Model.User
@@ -1457,19 +1458,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.comments_state(thread, article.id)
   end
 
-  def article_viewer_states(_root, %{refs: refs}, info) do
-    with :ok <- validate_viewer_batch(refs) do
+  def article_viewer_states(_root, %{paths: paths}, info) do
+    with :ok <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
-        %User{} = user -> resolve_article_viewer_states(refs, user)
+        %User{} = user -> resolve_article_viewer_states(paths, user)
         _ -> {:ok, []}
       end
     end
   end
 
-  def article_interaction_states(_root, %{refs: refs}, info) do
-    with :ok <- validate_viewer_batch(refs) do
+  def article_interaction_states(_root, %{paths: paths}, info) do
+    with :ok <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
-        %User{} = user -> resolve_article_interaction_states(refs, user)
+        %User{} = user -> resolve_article_interaction_states(paths, user)
         _ -> {:ok, []}
       end
     end
@@ -1525,33 +1526,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  defp validate_viewer_batch(refs) when is_list(refs) and length(refs) <= @viewer_batch_size,
+  defp validate_viewer_batch(paths) when is_list(paths) and length(paths) <= @viewer_batch_size,
     do: :ok
 
-  defp validate_viewer_batch(_refs),
-    do: {:error, "viewer batch cannot contain more than 100 refs"}
+  defp validate_viewer_batch(_paths),
+    do: {:error, "viewer batch cannot contain more than 100 paths"}
 
-  defp resolve_article_viewer_states(refs, user) do
-    with {:ok, resolved} <- resolve_article_viewer_batch(refs),
-         {:ok, hydrated} <- hydrate_article_viewer_batch(resolved, user) do
-      {:ok,
-       Enum.zip(resolved, hydrated)
-       |> Enum.map(fn {%{path: path}, article} ->
-         %{
-           community: path.community,
-           thread: path.thread,
-           inner_id: article.inner_id,
-           viewer_has_viewed: article.viewer_has_viewed,
-           viewer_has_upvoted: article.viewer_has_upvoted
-         }
-       end)}
-    end
-  end
-
-  defp resolve_article_interaction_states(refs, user) do
-    with {:ok, resolved} <- resolve_article_viewer_batch(refs),
+  defp resolve_article_viewer_states(paths, user) do
+    with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
          states when is_map(states) <-
-           CMS.Interactions.viewer_states(Enum.map(resolved, & &1.article), user) do
+           CMS.ViewTracker.Query.viewer_states(Enum.map(resolved, & &1.article), user) do
       {:ok,
        Enum.map(resolved, fn %{path: path, article: article} ->
          {:ok, %{artiment: type}} = CMS.Artiment.Matcher.match_interaction(article)
@@ -1561,66 +1545,35 @@ defmodule GroupherServerWeb.Resolvers.CMS do
            community: path.community,
            thread: path.thread,
            inner_id: article.inner_id,
-           interaction_revision: state.interaction_revision || 0,
-           viewer_has_upvoted: state.viewer_has_upvoted || false,
-           viewer_has_collected: state.viewer_has_collected || false,
-           viewer_emotion: viewer_emotion(state.emotions)
+           viewer_has_viewed: state.viewer_has_viewed
          }
        end)}
     end
   end
 
-  defp resolve_article_viewer_batch(paths) do
-    paths
-    |> Enum.reduce_while({:ok, []}, fn path, {:ok, acc} ->
-      case resolve_article_path(path) do
-        {:ok, {_thread, article}} -> {:cont, {:ok, [%{path: path, article: article} | acc]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-    |> case do
-      {:ok, resolved} -> {:ok, Enum.reverse(resolved)}
-      error -> error
+  defp resolve_article_interaction_states(paths, user) do
+    with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
+         states when is_map(states) <-
+           CMS.Interactions.viewer_states(Enum.map(resolved, & &1.article), user) do
+      {:ok,
+       Enum.map(resolved, fn %{path: path, article: article} ->
+         {:ok, %{artiment: type}} = CMS.Artiment.Matcher.match_interaction(article)
+         interaction = Map.fetch!(states, {type, article.id})
+
+         ArticleInteractionPayload.from(
+           %{community: path.community, thread: path.thread, inner_id: article.inner_id},
+           interaction
+         )
+       end)}
     end
   end
-
-  defp viewer_emotion(emotions) when is_map(emotions) do
-    emotions
-    |> Map.values()
-    |> Enum.find_value(fn emotion ->
-      if Map.get(emotion, :viewer_has_reacted, false), do: Map.get(emotion, :type)
-    end)
-  end
-
-  defp viewer_emotion(_emotions), do: nil
-
-  defp hydrate_article_viewer_batch(resolved, %User{} = user) do
-    CMS.Articles.Response.list(Enum.map(resolved, & &1.article), user)
-  end
-
-  defp resolve_comment_viewer_batch(article_path, comment_inner_ids) do
-    comment_inner_ids
-    |> Enum.reduce_while({:ok, []}, fn inner_id, {:ok, acc} ->
-      case CMS.FrontDesk.comment(%{article: article_path, inner_id: inner_id}) do
-        {:ok, comment} -> {:cont, {:ok, [comment | acc]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-    |> case do
-      {:ok, comments} -> {:ok, Enum.reverse(comments)}
-      error -> error
-    end
-  end
-
-  defp hydrate_comment_viewer_batch(comments, %User{} = user),
-    do: CMS.Comments.InteractionResponse.many(comments, user)
 
   defp resolve_comment_viewer_states(article_path, comment_inner_ids, user) do
-    with {:ok, comments} <- resolve_comment_viewer_batch(article_path, comment_inner_ids),
-         {:ok, hydrated} <- hydrate_comment_viewer_batch(comments, user) do
+    with {:ok, {thread, article}} <- resolve_article_path(article_path),
+         {:ok, hydrated} <-
+           CMS.Comments.reconcile_comments(thread, article, comment_inner_ids, user) do
       {:ok,
-       Enum.zip(comments, hydrated)
-       |> Enum.map(fn {_comment, comment} ->
+       Enum.map(hydrated, fn comment ->
          %{
            inner_id: comment.inner_id,
            viewer_has_upvoted: comment.viewer_has_upvoted,
@@ -1677,25 +1630,29 @@ defmodule GroupherServerWeb.Resolvers.CMS do
           context: %{cur_user: user}
         }
       ) do
-    CMS.Comments.create_comment_payload(
-      thread,
+    thread
+    |> CMS.Comments.create_comment_payload(
       article,
       body,
       user,
       Map.get(args, :command_id)
     )
+    |> present_comment_write()
   end
 
   def update_comment(_root, ~m(body comment)a = args, %{context: %{cur_user: user}}) do
     CMS.Comments.update_comment(comment, body, user, Map.get(args, :command_id))
+    |> present_comment_write()
   end
 
   def delete_comment(_root, ~m(comment)a = args, %{context: %{cur_user: user}}) do
     CMS.Comments.delete_comment(comment, user, Map.get(args, :command_id))
+    |> present_comment_write()
   end
 
   def reply_comment(_root, %{comment: comment, body: body} = args, %{context: %{cur_user: user}}) do
     CMS.Comments.reply_comment_payload(comment, body, user, Map.get(args, :command_id))
+    |> present_comment_write()
   end
 
   def upvote_comment(_root, %{comment: comment} = args, %{context: %{cur_user: user}}) do
@@ -1885,20 +1842,58 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.Comments.InteractionResponse.one(comment, user)
 
   defp hydrate_interaction({:ok, article}, user) do
-    with {:ok, hydrated} <- CMS.Articles.Response.one(article, user),
-         {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(hydrated),
-         stats when is_map(stats) <-
-           CMS.FrontDesk.article_stats_for_articles(
-             thread,
-             [hydrated]
+    command_id = Map.get(article, :command_id)
+    reaction_outcome = Map.get(article, :reaction_outcome)
+    article = GroupherServer.Repo.preload(article, :community)
+
+    # These post-commit readers can observe different concurrent revisions.
+    # Each payload keeps the revision attached to the state it actually read.
+    with command_id when is_binary(command_id) <- command_id,
+         reaction_outcome when reaction_outcome in [:changed, :unchanged] <- reaction_outcome,
+         {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(article),
+         interaction when is_map(interaction) <- CMS.Interactions.viewer_state(article, user),
+         {:ok, article_stats} <-
+           ArticleStatsPayload.load(thread, article, article.community.slug),
+         interaction_state <-
+           ArticleInteractionPayload.from(
+             %{
+               community: article.community.slug,
+               thread: thread,
+               inner_id: article.inner_id
+             },
+             interaction
            ) do
-      {:ok, Map.put(hydrated, :article_stats, Map.fetch!(stats, {thread, hydrated.id}))}
+      {:ok,
+       %{
+         command_id: command_id,
+         reaction_outcome: reaction_outcome,
+         article_stats: article_stats,
+         interaction_state: interaction_state
+       }}
     else
       {:error, _} = error -> error
+      _ -> {:error, CmsErrorCat.command_result_unavailable()}
     end
   end
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
+
+  defp present_comment_write({:ok, %{comment: comment, article: article} = result}) do
+    article = Repo.preload(article, :community)
+
+    with {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(article),
+         {:ok, article_stats} <-
+           ArticleStatsPayload.load(thread, article, article.community.slug) do
+      {:ok,
+       %{
+         command_id: Map.fetch!(result, :command_id),
+         comment: comment,
+         article_stats: article_stats
+       }}
+    end
+  end
+
+  defp present_comment_write({:error, _reason} = error), do: error
 
   defp hydrate_report_interaction({:ok, %Comment{} = comment}, user),
     do: CMS.Comments.InteractionResponse.one(comment, user, surface: :report)

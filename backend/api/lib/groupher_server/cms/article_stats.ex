@@ -162,8 +162,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         thread: thread,
         article_id: article.id,
         type: emotion,
-        count: owner.count,
-        interaction_revision: owner.interaction_revision
+        count: owner.count
       }
 
       %ArticleEmotionCount{}
@@ -172,7 +171,6 @@ defmodule GroupherServer.CMS.ArticleStats do
         on_conflict: [
           set: [
             count: owner.count,
-            interaction_revision: owner.interaction_revision,
             updated_at: now
           ]
         ],
@@ -190,27 +188,53 @@ defmodule GroupherServer.CMS.ArticleStats do
   @doc "Repairs only Comments-owned fields from the current physical Article row."
   @spec rebuild_comment_fields(struct()) :: :ok | {:error, term()}
   def rebuild_comment_fields(article) when is_struct(article) do
-    case Repo.get(article.__struct__, article.id) do
-      %{} = current -> apply_comment_counts(current)
-      nil -> {:error, :article_not_found}
-    end
+    schema = article.__struct__
+
+    Repo.transaction(fn ->
+      current =
+        from(item in schema, where: item.id == ^article.id, lock: "FOR UPDATE")
+        |> Repo.one()
+
+      with %{} = current <- current,
+           {:ok, current} <-
+             current
+             |> Ecto.Changeset.change(comments_revision: current.comments_revision + 1)
+             |> Repo.update(),
+           :ok <- apply_comment_counts(current) do
+        :ok
+      else
+        nil -> Repo.rollback(:article_not_found)
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> transaction_result()
   end
 
   @doc "Repairs fixed and typed Interactions-owned fields from current owner facts."
   @spec rebuild_interaction_fields(struct()) :: :ok | {:error, term()}
   def rebuild_interaction_fields(article) when is_struct(article) do
-    case Repo.get(article.__struct__, article.id) do
-      %{} = current ->
-        with :ok <- apply_interaction_counts(current),
-             counts when is_map(counts) <- CMS.Interactions.counts([current]),
-             {:ok, thread} <- article_thread(current),
-             {:ok, facts} <- owner_facts(counts, {thread, current.id}) do
-          rebuild_emotion_rows(current, thread, Map.get(facts, :emotion_counts, []))
-        end
+    schema = article.__struct__
 
-      nil ->
-        {:error, :article_not_found}
-    end
+    Repo.transaction(fn ->
+      current =
+        from(item in schema, where: item.id == ^article.id, lock: "FOR UPDATE")
+        |> Repo.one()
+
+      with %{} = current <- current,
+           :ok <- bump_interaction_owner_revision(current),
+           :ok <- apply_interaction_counts(current),
+           counts when is_map(counts) <- CMS.Interactions.counts([current]),
+           {:ok, thread} <- article_thread(current),
+           {:ok, facts} <- owner_facts(counts, {thread, current.id}),
+           :ok <- rebuild_emotion_rows(current, thread, Map.get(facts, :emotion_counts, [])) do
+        :ok
+      else
+        nil -> Repo.rollback(:article_not_found)
+        {:error, reason} -> Repo.rollback(reason)
+        reason -> Repo.rollback(reason)
+      end
+    end)
+    |> transaction_result()
   end
 
   @doc "Removes both public projections during permanent Article deletion."
@@ -340,6 +364,32 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
+  defp bump_interaction_owner_revision(article) do
+    with {:ok, info} <- Matcher.match_interaction(article) do
+      now = DateTime.utc_now(:second)
+      foreign_key = info.foreign_key
+
+      Repo.insert_all(
+        info.reaction_info_model,
+        [%{foreign_key => article.id, inserted_at: now, updated_at: now}],
+        on_conflict: :nothing,
+        conflict_target: [foreign_key]
+      )
+
+      from(owner in info.reaction_info_model,
+        where: field(owner, ^foreign_key) == ^article.id
+      )
+      |> Repo.update_all(inc: [interaction_revision: 1], set: [updated_at: now])
+      |> case do
+        {1, _} -> :ok
+        _ -> {:error, :interaction_projection_not_updated}
+      end
+    end
+  end
+
+  defp transaction_result({:ok, :ok}), do: :ok
+  defp transaction_result({:error, reason}), do: {:error, reason}
+
   defp emotion_owner_facts(article, emotion) do
     with {:ok, info} <- Matcher.match_interaction(article) do
       emotion_name = Atom.to_string(emotion)
@@ -351,16 +401,12 @@ defmodule GroupherServer.CMS.ArticleStats do
           field(emotion_row, ^foreign_key) == field(reaction, ^foreign_key) and
             emotion_row.emotion == ^emotion_name,
         where: field(reaction, ^foreign_key) == ^article.id,
-        select: %{
-          count: coalesce(emotion_row.users_count, 0),
-          interaction_revision: reaction.interaction_revision
-        }
+        select: %{count: coalesce(emotion_row.users_count, 0)}
       )
       |> Repo.one()
       |> case do
-        %{count: count, interaction_revision: revision}
-        when is_integer(count) and count >= 0 and is_integer(revision) and revision >= 0 ->
-          {:ok, %{count: count, interaction_revision: revision}}
+        %{count: count} when is_integer(count) and count >= 0 ->
+          {:ok, %{count: count}}
 
         nil ->
           {:error, :interaction_projection_not_found}

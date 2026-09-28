@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
       article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :doc), variables)
 
       assert emotion_entry(article["articleStats"]["emotionCounts"], :beer)["count"] == 1
-      assert article["viewerEmotion"] == "BEER"
+      assert get_in(article, ["interactionState", "viewerEmotion"]) == "BEER"
     end
 
     test "login user can undo emotion to a doc", ~m(community doc user owner_conn)a do

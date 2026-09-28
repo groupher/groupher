@@ -48,14 +48,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
       field(:meta, :article_meta)
       field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-      field(:reaction_outcome, :string)
-
-      field(:viewer_has_collected, :boolean)
-      field(:viewer_has_upvoted, :boolean)
-      field(:viewer_emotion, :emotion_type)
-      field(:viewer_has_viewed, :boolean)
-      field(:viewer_has_reported, :boolean)
-
       field(:lifecycle, :article_lifecycle, resolve: dataloader(CMS, :lifecycle))
 
       field(:copy_right, :string)
@@ -184,7 +176,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:upvotes_count, :integer)
       field(:comment_interaction_revision, :integer)
       field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-      field(:reaction_outcome, :string)
+      field(:reaction_outcome, :reaction_outcome)
       field(:is_article_author, :boolean)
 
       field(:emotions, list_of(:emotion_stat),

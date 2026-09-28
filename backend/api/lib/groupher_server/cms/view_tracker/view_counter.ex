@@ -15,7 +15,15 @@ defmodule GroupherServer.CMS.ViewTracker.ViewCounter do
   alias CMS.ViewTracker.Config
   alias CMS.ViewTracker.Model.ViewDedupeState
 
-  @doc "Counts one view only when the actor/article dedupe window has elapsed."
+  @doc """
+  Atomically counts a view when the actor/Article window has elapsed.
+
+  A conditional PostgreSQL UPSERT both decides and advances the dedupe window,
+  so concurrent requests for the same tracking key cannot both count. A
+  counted result increments `ArticleStats`; a duplicate returns the current
+  stats without incrementing. The caller must already be inside the tracking
+  transaction and must supply a policy-admitted identity with a tracking key.
+  """
   @spec increment_if_needed(struct(), map(), DateTime.t()) ::
           {:counted, map()} | {:duplicate, map()} | {:error, term()}
   def increment_if_needed(article, identity, received_at) do

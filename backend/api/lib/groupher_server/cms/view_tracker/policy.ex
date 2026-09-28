@@ -15,13 +15,24 @@ defmodule GroupherServer.CMS.ViewTracker.Policy do
     :internal_probe
   ]
 
-  @doc "Returns whether one normalized identity and purpose may be counted."
+  @doc """
+  Decides whether one normalized request identity may enter view counting.
+
+  Only public reads from verified/probable humans or verified service agents
+  are admitted. Preview, moderation, operations, probe, unknown, and
+  self-reported automation traffic fail closed.
+  """
   @spec allowed?(map(), atom()) :: boolean()
   def allowed?(identity, :public_read) when is_map(identity), do: allowed_actor?(identity)
   def allowed?(_identity, purpose) when purpose in @read_purposes, do: false
   def allowed?(_identity, _purpose), do: false
 
-  @doc "Returns the policy version persisted with counted MetricEvents."
+  @doc """
+  Returns the policy version written to counted analytics events.
+
+  This version identifies the admission rules used for a historical event; it
+  is not a second runtime policy switch.
+  """
   @spec version() :: pos_integer()
   def version, do: @policy_version
 

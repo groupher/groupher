@@ -70,6 +70,14 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
     end
   end
 
+  @doc "Returns public presentation state without viewer bitmap membership checks."
+  @spec public_state(struct(), keyword()) :: map() | {:error, term()}
+  def public_state(artiment, opts \\ []), do: viewer_state(artiment, nil, opts)
+
+  @doc "Returns batched public presentation state without viewer bitmap membership checks."
+  @spec public_states([struct()], keyword()) :: map() | {:error, term()}
+  def public_states(artiments, opts \\ []), do: viewer_states(artiments, nil, opts)
+
   @doc """
   Returns fixed reaction counts keyed by Artiment identity.
 
@@ -164,9 +172,18 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Query do
       emotions: emotions(state, :article),
       viewer_has_upvoted: value(state, :viewer_has_upvoted, false),
       viewer_has_collected: value(state, :viewer_has_collected, false),
+      viewer_emotion: viewer_emotion(state, :article),
       viewer_has_reported: value(state, :viewer_has_reported, false)
     })
     |> maybe_add_report(state, opts)
+  end
+
+  defp viewer_emotion(state, projection_type) do
+    state
+    |> emotions(projection_type)
+    |> Enum.find_value(fn emotion ->
+      if emotion.viewer_has_reacted, do: emotion.emotion
+    end)
   end
 
   defp maybe_add_report(result, state, opts) do

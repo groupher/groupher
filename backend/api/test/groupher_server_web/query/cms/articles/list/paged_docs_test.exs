@@ -282,8 +282,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     end
   end
 
-  describe "[query paged_docs filter has_xxx]" do
-    test "has_xxx state should work", ~m(user community)a do
+  describe "[query paged_docs private state boundary]" do
+    test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, doc} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
@@ -297,10 +297,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       the_doc =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
 
-      assert not the_doc["viewerHasViewed"]
-      assert not the_doc["viewerHasUpvoted"]
-      assert not the_doc["viewerHasCollected"]
-      assert not the_doc["viewerHasReported"]
+      refute Map.has_key?(the_doc, "viewerHasViewed")
+      refute Map.has_key?(the_doc, "viewerHasUpvoted")
+      refute Map.has_key?(the_doc, "viewerHasCollected")
+      refute Map.has_key?(the_doc, "viewerHasReported")
 
       track_view(doc, user)
 
@@ -313,10 +313,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       the_doc =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
 
-      assert the_doc["viewerHasViewed"]
-      assert the_doc["viewerHasUpvoted"]
-      assert the_doc["viewerHasCollected"]
-      assert the_doc["viewerHasReported"]
+      refute Map.has_key?(the_doc, "viewerHasViewed")
+      refute Map.has_key?(the_doc, "viewerHasUpvoted")
+      refute Map.has_key?(the_doc, "viewerHasCollected")
+      refute Map.has_key?(the_doc, "viewerHasReported")
 
       assert user_exist_in?(user, the_doc["meta"]["latestUpvotedUsers"])
     end

@@ -127,7 +127,8 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       assert CMS.ViewTracker.viewer_state(blog, user2).viewer_has_viewed
     end
 
-    test "read blog should contains viewer_has_xxx state", ~m(blog_attrs community user user2)a do
+    test "public blog read does not hydrate viewer-private state",
+         ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, blog} =
@@ -174,9 +175,12 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
           user
         )
 
-      assert blog.viewer_has_collected
-      assert blog.viewer_has_upvoted
-      assert blog.viewer_has_reported
+      refute blog.viewer_has_collected
+      refute blog.viewer_has_upvoted
+      refute blog.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(blog, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",

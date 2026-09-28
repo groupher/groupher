@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       assert CMS.ViewTracker.viewer_state(doc, user2).viewer_has_viewed
     end
 
-    test "read doc should contains viewer_has_xxx state",
+    test "public doc read does not hydrate viewer-private state",
          ~m(doc_attrs community user user2)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
@@ -179,9 +179,12 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
           user
         )
 
-      assert doc.viewer_has_collected
-      assert doc.viewer_has_upvoted
-      assert doc.viewer_has_reported
+      refute doc.viewer_has_collected
+      refute doc.viewer_has_upvoted
+      refute doc.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(doc, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",

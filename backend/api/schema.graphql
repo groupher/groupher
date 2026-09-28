@@ -222,17 +222,17 @@ type RootQueryType {
   "got basic comments state"
   commentsState(article: ArticlePathInput!, freshkey: String): CommentsListState
 
-  "Reads current viewer state for up to 100 canonical Article references; anonymous requests return an empty list"
-  articleViewerStates(refs: [ArticleRefInput!]!): [ViewerArticleState!]!
+  "Reads current viewer state for up to 100 canonical Article paths; anonymous requests return an empty list"
+  articleViewerStates(paths: [ArticlePathInput!]!): [ViewerArticleState!]!
 
   "Reads the current private Article interaction projection for confirmed-write reconciliation"
-  articleInteractionStates(refs: [ArticleRefInput!]!): [ArticleInteractionState!]!
+  articleInteractionStates(paths: [ArticlePathInput!]!): [ArticleInteractionState!]!
 
   "Reads current viewer state for up to 100 canonical Comment references; anonymous requests return an empty list"
-  commentViewerStates(article: ArticleRefInput!, commentInnerIds: [ID!]!): [ViewerCommentState!]!
+  commentViewerStates(article: ArticlePathInput!, commentInnerIds: [ID!]!): [ViewerCommentState!]!
 
   "Reads up to 100 Comment projections for confirmed-write reconciliation in one request"
-  commentReconcileStates(article: ArticleRefInput!, commentInnerIds: [ID!]!): CommentReconcilePayload!
+  commentReconcileStates(article: ArticlePathInput!, commentInnerIds: [ID!]!): CommentReconcilePayload!
 
   "got spec comment by ref"
   oneComment(comment: CommentPathInput!): Comment
@@ -359,10 +359,10 @@ type RootMutationType {
   deleteCollectFolder(id: ID!): CollectFolder
 
   "add article into a collect folder"
-  addToCollect(article: ArticlePathInput!, folderId: ID!): CollectFolder
+  addToCollect(article: ArticlePathInput!, folderId: ID!, commandId: ID!): ArticleCollectResult
 
   "remove article from a collect folder"
-  removeFromCollect(article: ArticlePathInput!, folderId: ID!): CollectFolder
+  removeFromCollect(article: ArticlePathInput!, folderId: ID!, commandId: ID!): ArticleCollectResult
 
   "mark a message as read"
   markRead(ids: [ID], type: MailboxType): Done
@@ -548,10 +548,10 @@ type RootMutationType {
   setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!): Post
 
   "upvote to post"
-  upvotePost(article: ArticlePathInput!, commandId: ID!): Article
+  upvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "undo upvote to post"
-  undoUpvotePost(article: ArticlePathInput!, commandId: ID!): Article
+  undoUpvotePost(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to post"
   pinPost(article: ArticlePathInput!): Post
@@ -560,10 +560,10 @@ type RootMutationType {
   undoPinPost(article: ArticlePathInput!): Post
 
   "emotion to post"
-  emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Post
+  emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "undo emotion to post"
-  undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Post
+  undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a post"
   reportPost(article: ArticlePathInput!, reason: String!, attr: String): Post
@@ -607,10 +607,10 @@ type RootMutationType {
   publishBlogDraft(commandId: ID!, expectedVersion: Int!, expectedLifecycleVersion: Int!, community: String!, id: ID!): Blog
 
   "upvote to blog"
-  upvoteBlog(article: ArticlePathInput!, commandId: ID!): Article
+  upvoteBlog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "undo upvote to blog"
-  undoUpvoteBlog(article: ArticlePathInput!, commandId: ID!): Article
+  undoUpvoteBlog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to blog"
   pinBlog(article: ArticlePathInput!): Blog
@@ -619,10 +619,10 @@ type RootMutationType {
   undoPinBlog(article: ArticlePathInput!): Blog
 
   "emotion to blog"
-  emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Blog
+  emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "undo emotion to blog"
-  undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Blog
+  undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a blog"
   reportBlog(article: ArticlePathInput!, reason: String!, attr: String): Blog
@@ -668,10 +668,10 @@ type RootMutationType {
   ): Changelog
 
   "upvote to changelog"
-  upvoteChangelog(article: ArticlePathInput!, commandId: ID!): Article
+  upvoteChangelog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "undo upvote to changelog"
-  undoUpvoteChangelog(article: ArticlePathInput!, commandId: ID!): Article
+  undoUpvoteChangelog(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to changelog"
   pinChangelog(article: ArticlePathInput!): Changelog
@@ -680,10 +680,10 @@ type RootMutationType {
   undoPinChangelog(article: ArticlePathInput!): Changelog
 
   "emotion to changelog"
-  emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Changelog
+  emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "undo emotion to changelog"
-  undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Changelog
+  undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a changelog"
   reportChangelog(article: ArticlePathInput!, reason: String!, attr: String): Changelog
@@ -704,10 +704,10 @@ type RootMutationType {
   undoLockChangelogComment(article: ArticlePathInput!): Article
 
   "upvote to doc"
-  upvoteDoc(article: ArticlePathInput!, commandId: ID!): Article
+  upvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "undo upvote to doc"
-  undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): Article
+  undoUpvoteDoc(article: ArticlePathInput!, commandId: ID!): ArticleReactionResult
 
   "pin to doc"
   pinDoc(article: ArticlePathInput!): Doc
@@ -716,10 +716,10 @@ type RootMutationType {
   undoPinDoc(article: ArticlePathInput!): Doc
 
   "emotion to doc"
-  emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Doc
+  emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "undo emotion to doc"
-  undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): Doc
+  undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!, commandId: ID!): ArticleReactionResult
 
   "report a doc"
   reportDoc(article: ArticlePathInput!, reason: String!, attr: String): Doc
@@ -740,16 +740,16 @@ type RootMutationType {
   undoLockDocComment(article: ArticlePathInput!): Article
 
   "write a comment"
-  createComment(article: ArticlePathInput!, body: String!, commandId: ID!): CommentMutationPayload
+  createComment(article: ArticlePathInput!, body: String!, commandId: ID!): ArticleCommentResult
 
   "update a comment"
-  updateComment(comment: CommentPathInput!, body: String!, commandId: ID!): Comment
+  updateComment(comment: CommentPathInput!, body: String!, commandId: ID!): ArticleCommentResult
 
   "delete a comment"
-  deleteComment(comment: CommentPathInput!, commandId: ID!): Comment
+  deleteComment(comment: CommentPathInput!, commandId: ID!): ArticleCommentResult
 
   "reply to a comment"
-  replyComment(comment: CommentPathInput!, body: String!, commandId: ID!): CommentMutationPayload
+  replyComment(comment: CommentPathInput!, body: String!, commandId: ID!): ArticleCommentResult
 
   "upvote to a comment"
   upvoteComment(comment: CommentPathInput!, commandId: ID!): Comment
@@ -1533,8 +1533,13 @@ type ArticleViewTrackResult {
   viewerState: ViewerArticleState!
 }
 
+enum ReactionOutcome {
+  CHANGED
+  UNCHANGED
+}
+
 type ArticleEmotionCount {
-  type: EmotionType!
+  type: ArticleEmotion!
   count: Int!
 }
 
@@ -1552,6 +1557,26 @@ type ArticleStats {
   commentsRevision: Int!
   emotionCounts: [ArticleEmotionCount!]!
   snapshotAt: DateTime!
+}
+
+type ArticleReactionResult {
+  commandId: ID!
+  reactionOutcome: ReactionOutcome!
+  articleStats: ArticleStats!
+  interactionState: ArticleInteractionState!
+}
+
+type ArticleCollectResult {
+  commandId: ID!
+  folder: CollectFolder!
+  articleStats: ArticleStats!
+  interactionState: ArticleInteractionState!
+}
+
+type ArticleCommentResult {
+  commandId: ID!
+  comment: Comment
+  articleStats: ArticleStats!
 }
 
 enum CommunityApplicationStatus {
@@ -2210,12 +2235,6 @@ type CommentMutationArticle {
   commentsRevision: Int!
 }
 
-type CommentMutationPayload {
-  comment: Comment!
-  article: CommentMutationArticle!
-  commandId: ID
-}
-
 type CommentReconcileEntry {
   commentInnerId: ID!
   comment: Comment
@@ -2602,12 +2621,6 @@ type Post implements Article {
   communities: [Community]
   meta: ArticleMeta
   commandId: ID
-  reactionOutcome: String
-  viewerHasCollected: Boolean
-  viewerHasUpvoted: Boolean
-  viewerEmotion: EmotionType
-  viewerHasViewed: Boolean
-  viewerHasReported: Boolean
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
@@ -2640,12 +2653,6 @@ type Changelog implements Article {
   communities: [Community]
   meta: ArticleMeta
   commandId: ID
-  reactionOutcome: String
-  viewerHasCollected: Boolean
-  viewerHasUpvoted: Boolean
-  viewerEmotion: EmotionType
-  viewerHasViewed: Boolean
-  viewerHasReported: Boolean
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
@@ -2673,12 +2680,6 @@ type Doc implements Article {
   communities: [Community]
   meta: ArticleMeta
   commandId: ID
-  reactionOutcome: String
-  viewerHasCollected: Boolean
-  viewerHasUpvoted: Boolean
-  viewerEmotion: EmotionType
-  viewerHasViewed: Boolean
-  viewerHasReported: Boolean
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
@@ -2707,12 +2708,6 @@ type Blog implements Article {
   communities: [Community]
   meta: ArticleMeta
   commandId: ID
-  reactionOutcome: String
-  viewerHasCollected: Boolean
-  viewerHasUpvoted: Boolean
-  viewerEmotion: EmotionType
-  viewerHasViewed: Boolean
-  viewerHasReported: Boolean
   lifecycle: ArticleLifecycle
   copyRight: String
   linkAddr: String
@@ -3266,7 +3261,6 @@ type ViewerArticleState {
   thread: Thread!
   innerId: ID!
   viewerHasViewed: Boolean
-  viewerHasUpvoted: Boolean
 }
 
 "Private, no-store Article interaction projection used to reconcile confirmed writes"
@@ -3311,7 +3305,7 @@ type CommentReply {
   upvotesCount: Int
   commentInteractionRevision: Int
   commandId: ID
-  reactionOutcome: String
+  reactionOutcome: ReactionOutcome
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
@@ -3336,7 +3330,7 @@ type Comment {
   upvotesCount: Int
   commentInteractionRevision: Int
   commandId: ID
-  reactionOutcome: String
+  reactionOutcome: ReactionOutcome
   isArticleAuthor: Boolean
   emotions: [EmotionStat]
   meta: CommentMeta
@@ -3841,12 +3835,6 @@ input ReindexCommunityTagGroupInput {
 }
 
 input ArticlePathInput {
-  innerId: ID!
-  community: String!
-  thread: Thread!
-}
-
-input ArticleRefInput {
   innerId: ID!
   community: String!
   thread: Thread!

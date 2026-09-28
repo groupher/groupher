@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     ~m(post actor first)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
-    assert {:ok, deleted} = CMS.Comments.delete_comment(first, actor)
+    assert {:ok, %{comment: deleted}} = CMS.Comments.delete_comment(first, actor)
     assert deleted.body_html == Comment.delete_hint()
     refute Repo.get_by(PostSolution, post_id: post.id)
     assert Repo.get_by!(CommentLifecycle, comment_id: first.id).state == :deleted

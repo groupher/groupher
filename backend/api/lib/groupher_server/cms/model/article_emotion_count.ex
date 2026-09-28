@@ -22,14 +22,13 @@ defmodule GroupherServer.CMS.Model.ArticleEmotionCount do
   @schema_prefix DBPrefix.cms()
   @primary_key false
   @emotion_types CMS.Artiment.Config.emotions() -- [:upvote, :collect]
-  @required_fields ~w(thread article_id type count interaction_revision)a
+  @required_fields ~w(thread article_id type count)a
 
   schema "article_emotion_counts" do
     field(:thread, Ecto.Enum, values: Threads.article_enums(), primary_key: true)
     field(:article_id, :id, primary_key: true)
     field(:type, Ecto.Enum, values: @emotion_types, primary_key: true)
     field(:count, :integer, default: 0)
-    field(:interaction_revision, :integer, default: 0)
 
     timestamps(type: :utc_datetime)
   end
@@ -40,7 +39,6 @@ defmodule GroupherServer.CMS.Model.ArticleEmotionCount do
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> validate_number(:count, greater_than_or_equal_to: 0)
-    |> validate_number(:interaction_revision, greater_than_or_equal_to: 0)
     |> unique_constraint([:thread, :article_id, :type], name: :article_emotion_counts_pkey)
   end
 end

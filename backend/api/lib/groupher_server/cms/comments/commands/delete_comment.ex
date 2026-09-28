@@ -25,20 +25,22 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
 
   @delete_hint Comment.delete_hint()
 
+  @type result :: %{comment: Comment.t(), article: struct(), command_id: String.t()}
+
   @doc """
   Soft-deletes one authorized Comment without leaving a live solution relation.
 
   ## Examples
 
       DeleteComment.execute(comment, actor)
-      #=> {:ok, %Comment{body_html: "this comment is deleted"}} | {:error, reason}
+      #=> {:ok, %{comment: %Comment{}, article: article, command_id: id}} | {:error, reason}
   """
-  @spec execute(Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  @spec execute(Comment.t(), User.t()) :: T.domain_res(result())
   def execute(%Comment{} = comment, %User{} = actor),
     do: execute(comment, actor, nil)
 
   @doc "Deletes a Comment while binding retries to the supplied command id."
-  @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
+  @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(result())
   def execute(%Comment{} = comment, %User{} = actor, command_id) do
     with {:ok, command_id} <- Command.resolve_command_id(command_id) do
       command =
@@ -47,32 +49,22 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
           resource: comment,
           input: %{},
           recovery: fn _receipt ->
-            with {:ok, article} <- FrontDesk.article_of(comment) do
-              {:ok,
-               {
-                 comment
-                 |> Map.put(:article, article_summary(article, comment.thread))
-                 |> Map.put(:command_id, command_id),
-                 article
-               }}
+            with {:ok, current} <- ORM.find(Comment, comment.id),
+                 {:ok, article} <- FrontDesk.article_of(current) do
+              {:ok, %{comment: current, article: article, command_id: command_id}}
             end
           end,
-          after_commit: fn {_deleted, article} ->
+          after_commit: fn %{article: article} ->
             _ = Indexer.enqueue_metrics(article)
             :ok
           end
         )
 
-      with {:ok, {deleted, _article}} <-
-             Command.run(command, fn %{resource: comment} ->
-               Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
-                 delete_new(canonical, article, actor, command_id)
-               end)
-             end) do
-        {:ok, deleted}
-      else
-        error -> error
-      end
+      Command.run(command, fn %{resource: comment} ->
+        Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+          delete_new(canonical, article, actor, command_id)
+        end)
+      end)
     end
   end
 
@@ -98,13 +90,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          :ok <- record_article_metric(counted_article, command_id, :comment_deleted),
          {:ok, _invalidation} <-
            invalidate_public_comments(counted_article, comment.thread, command_id) do
-      {:ok,
-       {
-         deleted
-         |> Map.put(:article, article_summary(counted_article, comment.thread))
-         |> Map.put(:command_id, command_id),
-         counted_article
-       }}
+      {:ok, %{comment: deleted, article: counted_article, command_id: command_id}}
     end
   end
 
@@ -112,14 +98,6 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
     if Map.get(comment, :is_archived) == true,
       do: {:error, ErrorCat.archived("comment is archived, can not be edit or delete")},
       else: :ok
-  end
-
-  defp article_summary(article, thread) do
-    %{
-      thread: thread,
-      inner_id: article.inner_id,
-      comments_revision: article.comments_revision
-    }
   end
 
   defp revoke_if_current(%Post{} = post, comment, actor, operation_ref, occurred_at),

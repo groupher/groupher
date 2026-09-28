@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
-      {:ok, updated_comment} =
+      {:ok, %{comment: updated_comment}} =
         CMS.Comments.update_comment(comment, mock_comment("updated content"), user)
 
       assert updated_comment.body_html |> String.contains?(~s(updated content</p>))
@@ -793,7 +793,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, deleted_comment} = CMS.Comments.delete_comment(random_comment, user)
+      {:ok, %{comment: deleted_comment}} = CMS.Comments.delete_comment(random_comment, user)
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(

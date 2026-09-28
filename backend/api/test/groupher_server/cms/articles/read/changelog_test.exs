@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert CMS.ViewTracker.viewer_state(changelog, user2).viewer_has_viewed
     end
 
-    test "read changelog should contains viewer_has_xxx state",
+    test "public changelog read does not hydrate viewer-private state",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
@@ -184,9 +184,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
           user
         )
 
-      assert changelog.viewer_has_collected
-      assert changelog.viewer_has_upvoted
-      assert changelog.viewer_has_reported
+      refute changelog.viewer_has_collected
+      refute changelog.viewer_has_upvoted
+      refute changelog.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(changelog, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",

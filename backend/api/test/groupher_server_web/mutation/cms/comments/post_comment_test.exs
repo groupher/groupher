@@ -29,8 +29,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
-      assert result["article"]["innerId"] == post.inner_id
-      assert result["article"]["commentsRevision"] == 1
+      assert result["articleStats"]["innerId"] == to_string(post.inner_id)
+      assert result["articleStats"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community post user user_conn)a do
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(reply comment))
-      assert result["article"]["commentsRevision"] == 2
+      assert result["articleStats"]["commentsRevision"] == 2
     end
 
     test "create retries with one command id return the same comment",
@@ -64,8 +64,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
-      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
-      assert replay["article"]["commentsRevision"] == 1
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
+
+      assert replay["articleStats"]["commentsRevision"] == 1
     end
 
     test "reply retries with one command id return the same comment",
@@ -84,8 +87,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert replay["commandId"] == variables.commandId
       assert replay["comment"]["innerId"] == first["comment"]["innerId"]
-      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
-      assert replay["article"]["commentsRevision"] == 2
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
+
+      assert replay["articleStats"]["commentsRevision"] == 2
     end
 
     test "only owner can update a exist comment",
@@ -114,8 +120,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p))
-      assert result["bodyHtml"] |> String.contains?(~s(updated comment))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(updated comment))
     end
 
     test "update retries with one command id do not apply the body twice",
@@ -136,9 +142,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
 
       assert replay["commandId"] == variables.commandId
-      assert replay["bodyHtml"] == first["bodyHtml"]
-      assert replay["bodyHtml"] |> String.contains?(~s(idempotent update))
-      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
+      assert replay["comment"]["bodyHtml"] == first["comment"]["bodyHtml"]
+      assert replay["comment"]["bodyHtml"] |> String.contains?(~s(idempotent update))
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
     end
 
     test "only owner can delete a exist comment",
@@ -164,7 +172,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
-      assert deleted["innerId"] == to_string(comment.inner_id)
+      assert deleted["comment"]["innerId"] == to_string(comment.inner_id)
     end
 
     test "delete retries with one command id return the same tombstone and count",
@@ -185,10 +193,12 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert first["commandId"] == variables.commandId
       assert replay["commandId"] == variables.commandId
-      assert replay["innerId"] == first["innerId"]
-      assert first["article"]["commentsRevision"] == 2
-      assert replay["article"]["commentsRevision"] == 2
-      assert replay["article"]["commentsRevision"] == first["article"]["commentsRevision"]
+      assert replay["comment"]["innerId"] == first["comment"]["innerId"]
+      assert first["articleStats"]["commentsRevision"] == 2
+      assert replay["articleStats"]["commentsRevision"] == 2
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
     end
   end
 

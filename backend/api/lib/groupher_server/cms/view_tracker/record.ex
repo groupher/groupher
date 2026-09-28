@@ -22,7 +22,15 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
 
   @telemetry_event [:groupher, :cms, :view_tracker, :track]
 
-  @doc "Tracks one explicit Article read and returns committed public/private state."
+  @doc """
+  Commits one explicit Article read and returns the resulting public/private state.
+
+  The operation runs in one transaction: it locks and revalidates the physical
+  Article through Gate, applies policy, atomically advances dedupe state, and
+  writes the counter, authenticated viewer projection, and analytics event.
+  Policy-excluded traffic returns `tracked: false` without writing view state.
+  Any write/readback failure rolls the transaction back.
+  """
   @spec track(struct(), struct() | nil, Classification.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
   def track(article, viewer, classification, opts \\ [])
@@ -51,7 +59,14 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   def track(_article, _viewer, _classification, _opts),
     do: {:error, ErrorCat.invalid_actor_type()}
 
-  @doc "Deletes all ViewTracker state for a physical Article after its row is deleted."
+  @doc """
+  Deletes all view-owned state for a permanently deleted physical Article.
+
+  The caller owns lifecycle admission and transaction placement. This function
+  removes dedupe state, authenticated viewer state, and the shared public stats
+  projection for the exact `{thread, article_id}`; it does not delete another
+  branch or logical Article identity.
+  """
   @spec delete_article_state(atom(), pos_integer()) :: :ok
   def delete_article_state(thread, article_id) do
     delete_by_article(ViewDedupeState, thread, article_id)

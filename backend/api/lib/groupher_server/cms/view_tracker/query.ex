@@ -14,7 +14,12 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
   alias GroupherServer.CMS.ViewTracker.ErrorCat
   alias GroupherServer.CMS.ViewTracker.Model.ViewerState
 
-  @doc "Orders an Article query by the independent current-view Summary projection."
+  @doc """
+  Orders an existing Article query by its public ArticleStats view count.
+
+  The left join preserves Articles whose projection is absent and treats their
+  count as zero. Unsupported order values leave the caller's query unchanged.
+  """
   @spec order_by_views(Ecto.Queryable.t(), atom(), atom() | nil) :: Ecto.Query.t()
   def order_by_views(queryable, thread, order)
       when order in [:views, :most_views, :least_views] do
@@ -34,7 +39,13 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
 
   def order_by_views(queryable, _thread, _order), do: queryable
 
-  @doc "Returns one viewer state through the same batched path used by lists."
+  @doc """
+  Reads the ViewTracker-owned private state for one Article.
+
+  This delegates to `viewer_states/3`, so detail and list reads share the same
+  defaults and actor rules. The result contains only `viewer_has_viewed`;
+  Interaction-owned fields are deliberately outside this module.
+  """
   @spec viewer_state(struct(), User.t() | nil, keyword()) :: map() | {:error, term()}
   def viewer_state(article, viewer, opts \\ []) do
     case viewer_states([article], viewer, opts) do
@@ -50,7 +61,14 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
     end
   end
 
-  @doc "Returns viewer state keyed by `{article_type, article_id}` without per-Article queries."
+  @doc """
+  Reads ViewTracker-owned private state for a set of already-admitted Articles.
+
+  The result is keyed by `{article_type, article_id}` and contains a default
+  false entry for every input. Only an authenticated human can match persisted
+  viewer rows; service agents and anonymous callers receive the defaults. The
+  database lookup is batched rather than performed once per Article.
+  """
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map() | {:error, term()}
   def viewer_states(articles, viewer, opts \\ [])
 

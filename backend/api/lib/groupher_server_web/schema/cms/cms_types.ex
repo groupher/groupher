@@ -52,8 +52,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:viewer_state, non_null(:viewer_article_state))
   end
 
+  enum :reaction_outcome do
+    value(:changed)
+    value(:unchanged)
+  end
+
   object :article_emotion_count do
-    field(:type, non_null(:emotion_type))
+    field(:type, non_null(:article_emotion))
     field(:count, non_null(:integer))
   end
 
@@ -71,6 +76,26 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:comments_revision, non_null(:integer))
     field(:emotion_counts, non_null(list_of(non_null(:article_emotion_count))))
     field(:snapshot_at, non_null(:datetime))
+  end
+
+  object :article_reaction_result do
+    field(:command_id, non_null(:id))
+    field(:reaction_outcome, non_null(:reaction_outcome))
+    field(:article_stats, non_null(:article_stats))
+    field(:interaction_state, non_null(:article_interaction_state))
+  end
+
+  object :article_collect_result do
+    field(:command_id, non_null(:id))
+    field(:folder, non_null(:collect_folder))
+    field(:article_stats, non_null(:article_stats))
+    field(:interaction_state, non_null(:article_interaction_state))
+  end
+
+  object :article_comment_result do
+    field(:command_id, non_null(:id))
+    field(:comment, :comment)
+    field(:article_stats, non_null(:article_stats))
   end
 
   enum :community_application_status do
@@ -834,12 +859,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :comment_mutation_article do
     field(:inner_id, non_null(:integer))
     field(:comments_revision, non_null(:integer))
-  end
-
-  object :comment_mutation_payload do
-    field(:comment, non_null(:comment))
-    field(:article, non_null(:comment_mutation_article))
-    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   object :comment_reconcile_entry do
@@ -1762,7 +1781,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:thread, non_null(:thread))
     field(:inner_id, non_null(:id))
     field(:viewer_has_viewed, :boolean)
-    field(:viewer_has_upvoted, :boolean)
   end
 
   @desc "Private, no-store Article interaction projection used to reconcile confirmed writes"

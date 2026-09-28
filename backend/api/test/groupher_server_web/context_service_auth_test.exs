@@ -6,6 +6,7 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
 
   alias GroupherServer.{Auth, CMS, Repo}
   alias GroupherServer.Accounts.Profiles.BrowserSessions
+  alias GroupherServer.Analysis.Model.MetricEvent
   alias Auth.Contract, as: AuthContract
   alias CMS.ViewTracker.Model.ViewDedupeState
   alias GroupherServer.RequestActor.Classification
@@ -187,6 +188,43 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
 
     assert {:ok, %{views: 0, views_revision: 0}} = CMS.ArticleStats.fetch(:post, post.id)
     assert Repo.aggregate(ViewDedupeState, :count) == 0
+  end
+
+  test "trackArticleView excludes a self-reported bot even after anonymous session creation", %{
+    conn: conn
+  } do
+    {community, post, _attrs, _user} = mock_article(:post)
+
+    mutation = """
+    mutation Track($article: ArticlePathInput!) {
+      trackArticleView(article: $article) {
+        tracked
+      }
+    }
+    """
+
+    response_conn =
+      conn
+      |> put_req_header("user-agent", "ExampleBot/1.0")
+      |> post("/graphiql",
+        query: mutation,
+        variables: %{
+          "article" => %{
+            "community" => community.slug,
+            "thread" => "POST",
+            "innerId" => Integer.to_string(post.inner_id)
+          }
+        }
+      )
+
+    assert %Classification{type: :unknown, classified_by: :self_reported} =
+             response_conn.private.absinthe.context.request_actor
+
+    response = json_response(response_conn, 200)
+    assert get_in(response, ["data", "trackArticleView", "tracked"]) == false
+    assert {:ok, %{views: 0, views_revision: 0}} = CMS.ArticleStats.fetch(:post, post.id)
+    assert Repo.aggregate(ViewDedupeState, :count) == 0
+    assert Repo.aggregate(MetricEvent, :count) == 0
   end
 
   defp request_conn(key, delegated_token) do

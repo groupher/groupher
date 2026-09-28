@@ -96,13 +96,30 @@ defmodule GroupherServer.RequestActor.Evidence do
     :crawler
   ]
 
+  @doc """
+  Selects exactly one verified request identity for classification.
+
+  Conflicting or malformed trusted inputs fail closed. When no trusted input is
+  present, the User-Agent may produce self-reported automation evidence; a signed
+  anonymous session never upgrades such automation into a probable human.
+  """
   @spec select(keyword()) :: {:ok, t()} | {:error, :conflicting_evidence | :invalid_evidence}
   def select(opts) when is_list(opts) do
     with {:ok, evidence} <- trusted_evidence(opts) do
       case evidence do
-        [] -> {:ok, unknown_evidence(opts)}
-        [selected] -> {:ok, selected}
-        _multiple -> {:error, :conflicting_evidence}
+        [] ->
+          {:ok, unknown_evidence(opts)}
+
+        [%SignedAnonymousSession{} = selected] ->
+          if self_reported_automation?(Keyword.get(opts, :user_agent)),
+            do: {:ok, %Unknown{classified_by: :self_reported}},
+            else: {:ok, selected}
+
+        [selected] ->
+          {:ok, selected}
+
+        _multiple ->
+          {:error, :conflicting_evidence}
       end
     end
   end
@@ -164,7 +181,7 @@ defmodule GroupherServer.RequestActor.Evidence do
   end
 
   defp self_reported_automation?(user_agent) when is_binary(user_agent) do
-    Regex.match?(~r/(bot|crawler|spider|slurp|scraper|agent)/i, user_agent)
+    Regex.match?(~r/(bot\b|crawler\b|spider\b|slurp\b|scraper\b|headless|phantomjs)/i, user_agent)
   end
 
   defp self_reported_automation?(_user_agent), do: false

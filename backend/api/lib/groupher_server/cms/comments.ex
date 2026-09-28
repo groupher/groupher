@@ -302,12 +302,12 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.update_comment(comment, body, actor)
   """
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
-          T.domain_res(Comment.t())
+          T.domain_res(UpdateComment.result())
   def update_comment(%Comment{} = comment, body, %User{} = user),
     do: update_comment(comment, body, user, nil)
 
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
-          T.domain_res(Comment.t())
+          T.domain_res(UpdateComment.result())
   def update_comment(%Comment{} = comment, body, %User{} = user, command_id),
     do: UpdateComment.execute(comment, body, user, command_id)
 
@@ -328,11 +328,13 @@ defmodule GroupherServer.CMS.Comments do
 
       CMS.Comments.delete_comment(comment, actor)
   """
-  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
+  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
+          T.domain_res(DeleteComment.result())
   def delete_comment(%Comment{} = comment, %User{} = user),
     do: delete_comment(comment, user, nil)
 
-  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(Comment.t())
+  @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
+          T.domain_res(DeleteComment.result())
   def delete_comment(%Comment{} = comment, %User{} = user, command_id),
     do: DeleteComment.execute(comment, user, command_id)
 

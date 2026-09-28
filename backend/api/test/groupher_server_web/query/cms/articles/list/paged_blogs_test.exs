@@ -279,8 +279,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     end
   end
 
-  describe "[query paged_blogs filter has_xxx]" do
-    test "has_xxx state should work", ~m(user community)a do
+  describe "[query paged_blogs private state boundary]" do
+    test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
@@ -293,10 +293,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       the_blog = Enum.find(results["entries"], &(&1["innerId"] == to_string(blog.inner_id)))
 
-      assert not the_blog["viewerHasViewed"]
-      assert not the_blog["viewerHasUpvoted"]
-      assert not the_blog["viewerHasCollected"]
-      assert not the_blog["viewerHasReported"]
+      refute Map.has_key?(the_blog, "viewerHasViewed")
+      refute Map.has_key?(the_blog, "viewerHasUpvoted")
+      refute Map.has_key?(the_blog, "viewerHasCollected")
+      refute Map.has_key?(the_blog, "viewerHasReported")
 
       track_view(blog, user)
 
@@ -307,10 +307,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       results = user_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
       the_blog = Enum.find(results["entries"], &(&1["innerId"] == to_string(blog.inner_id)))
-      assert the_blog["viewerHasViewed"]
-      assert the_blog["viewerHasUpvoted"]
-      assert the_blog["viewerHasCollected"]
-      assert the_blog["viewerHasReported"]
+      refute Map.has_key?(the_blog, "viewerHasViewed")
+      refute Map.has_key?(the_blog, "viewerHasUpvoted")
+      refute Map.has_key?(the_blog, "viewerHasCollected")
+      refute Map.has_key?(the_blog, "viewerHasReported")
 
       assert user_exist_in?(user, the_blog["meta"]["latestUpvotedUsers"])
     end

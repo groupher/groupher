@@ -19,7 +19,14 @@ defmodule GroupherServer.CMS.ViewTracker.ViewDedupeCleanup do
 
   @telemetry_event [:groupher, :cms, :view_tracker, :dedupe_cleanup]
 
-  @doc "Deletes expired dedupe state until drained or the configured budget is reached."
+  @doc """
+  Deletes expired dedupe rows until drained or a row/time budget is exhausted.
+
+  Each batch selects the oldest candidates, then rechecks `expires_at` in the
+  DELETE so a concurrent counted view cannot lose freshly advanced state. The
+  returned counters and telemetry distinguish a drained run from one that must
+  continue during the next scheduled execution.
+  """
   @spec cleanup_expired() :: %{
           deleted_rows: non_neg_integer(),
           batch_count: non_neg_integer(),

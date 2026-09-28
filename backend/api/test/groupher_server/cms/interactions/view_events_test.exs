@@ -49,6 +49,22 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     assert Repo.aggregate(ViewDedupeState, :count) == 1
   end
 
+  test "ViewerArticleState exposes only ViewTracker-owned private state" do
+    query = """
+    query Viewer($paths: [ArticlePathInput!]!) {
+      articleViewerStates(paths: $paths) {
+        viewerHasViewed
+        viewerHasUpvoted
+      }
+    }
+    """
+
+    assert {:ok, %{errors: [error]}} =
+             Absinthe.run(query, Schema, variables: %{"paths" => []})
+
+    assert error.message =~ "Cannot query field \"viewerHasUpvoted\""
+  end
+
   test "counted result is committed synchronously with stats, viewer state, and analytics" do
     {_community, post, _attrs, user} = mock_article(:post)
 
@@ -320,6 +336,28 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
 
     assert {:ok, %{comments_count: 0, comments_revision: 0}} =
              CMS.ArticleStats.fetch(:post, post.id)
+  end
+
+  test "ArticleStats rebuilds advance the repaired owner revision" do
+    {_community, post, _attrs, _user} = mock_article(:post)
+
+    from(stats in ArticleStats,
+      where: stats.thread == :post and stats.article_id == ^post.id
+    )
+    |> Repo.update_all(
+      set: [comments_count: 9, upvotes_count: 9, comments_revision: 0, interaction_revision: 0]
+    )
+
+    assert :ok = CMS.ArticleStats.rebuild_comment_fields(post)
+    assert :ok = CMS.ArticleStats.rebuild_interaction_fields(post)
+
+    assert {:ok,
+            %{
+              comments_count: 0,
+              comments_revision: 1,
+              upvotes_count: 0,
+              interaction_revision: 1
+            }} = CMS.ArticleStats.fetch(:post, post.id)
   end
 
   test "ArticleStats snapshot default and every owner update use database clock" do

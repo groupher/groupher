@@ -13,7 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
 
   object :cms_comment_mutations do
     @desc "write a comment"
-    field :create_comment, :comment_mutation_payload do
+    field :create_comment, :article_comment_result do
       arg(:article, non_null(:article_path_input))
       arg(:body, non_null(:string))
       arg(:command_id, non_null(:id))
@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     end
 
     @desc "update a comment"
-    field :update_comment, :comment do
+    field :update_comment, :article_comment_result do
       arg(:comment, non_null(:comment_path_input))
       arg(:body, non_null(:string))
       arg(:command_id, non_null(:id))
@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     end
 
     @desc "delete a comment"
-    field :delete_comment, :comment do
+    field :delete_comment, :article_comment_result do
       arg(:comment, non_null(:comment_path_input))
       arg(:command_id, non_null(:id))
 
@@ -50,7 +50,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
     end
 
     @desc "reply to a comment"
-    field :reply_comment, :comment_mutation_payload do
+    field :reply_comment, :article_comment_result do
       arg(:comment, non_null(:comment_path_input))
       arg(:body, non_null(:string))
       arg(:command_id, non_null(:id))

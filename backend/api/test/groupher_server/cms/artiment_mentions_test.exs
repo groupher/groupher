@@ -282,7 +282,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert mention.mentioner_community_id == community.id
       assert mention.mentioned_community_id == community.id
 
-      {:ok, comment} =
+      {:ok, %{comment: comment}} =
         CMS.Comments.update_comment(
           comment,
           plate_body([block("block-b", [text("https://example.com/changed")])]),
@@ -341,7 +341,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       {single_result, single_queries} =
         capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
 
-      {:ok, mentioner} =
+      {:ok, %{comment: mentioner}} =
         CMS.Comments.update_comment(mentioner, comment_body.(target_comments), user)
 
       {many_result, many_queries} =

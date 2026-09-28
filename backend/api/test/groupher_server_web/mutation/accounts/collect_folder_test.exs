@@ -90,12 +90,15 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         folderId: folder.id
       }
 
-      folder = user_conn |> gq_mutation(@query, variables)
+      payload = user_conn |> gq_mutation(@query, variables)
+      folder = payload["folder"]
 
       assert folder["totalCount"] == 1
       assert folder["lastUpdated"] != nil
 
       assert folder["meta"] == @meta |> Map.merge(%{"hasPost" => true, "postCount" => 1})
+      assert payload["articleStats"]["collectsCount"] == 1
+      assert payload["interactionState"]["viewerHasCollected"]
 
       {:ok, article_collect} =
         ArticleCollect |> ORM.find_by(%{post_id: post.id, user_id: user.id})
@@ -115,12 +118,15 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
         folderId: folder.id
       }
 
-      folder = user_conn |> gq_mutation(@query, variables)
+      payload = user_conn |> gq_mutation(@query, variables)
+      folder = payload["folder"]
 
       assert folder["totalCount"] == 1
       assert folder["lastUpdated"] != nil
 
       assert folder["meta"] == @meta |> Map.merge(%{"hasBlog" => true, "blogCount" => 1})
+      assert payload["articleStats"]["collectsCount"] == 1
+      assert payload["interactionState"]["viewerHasCollected"]
 
       {:ok, article_collect} =
         ArticleCollect |> ORM.find_by(%{blog_id: blog.id, user_id: user.id})
@@ -129,6 +135,31 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
       assert folder_in_article_collect.meta.has_blog
       assert folder_in_article_collect.meta.blog_count == 1
+    end
+
+    test "command id replay returns the current committed collect state",
+         ~m(user user_conn community post)a do
+      {:ok, folder} = Accounts.CollectFolders.create(%{title: "folder_title"}, user)
+      command_id = Ecto.UUID.generate()
+
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        folderId: folder.id,
+        commandId: command_id
+      }
+
+      first = user_conn |> gq_mutation(@query, variables)
+      replay = user_conn |> gq_mutation(@query, variables)
+
+      assert first["commandId"] == command_id
+      assert replay["commandId"] == command_id
+      assert replay["folder"]["totalCount"] == 1
+      assert replay["articleStats"]["collectsCount"] == 1
+
+      assert replay["articleStats"]["interactionRevision"] ==
+               first["articleStats"]["interactionRevision"]
+
+      assert replay["interactionState"]["viewerHasCollected"]
     end
 
     @query S.Collect.m(:remove_from_collect)
@@ -144,8 +175,10 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
       result = user_conn |> gq_mutation(@query, variables)
 
-      assert result["meta"] == @meta
-      assert result["totalCount"] == 0
+      assert result["folder"]["meta"] == @meta
+      assert result["folder"]["totalCount"] == 0
+      assert result["articleStats"]["collectsCount"] == 0
+      refute result["interactionState"]["viewerHasCollected"]
     end
 
     test "user can remove a blog from collect folder", ~m(user user_conn community blog)a do
@@ -160,8 +193,10 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
 
       result = user_conn |> gq_mutation(@query, variables)
 
-      assert result["meta"] == @meta
-      assert result["totalCount"] == 0
+      assert result["folder"]["meta"] == @meta
+      assert result["folder"]["totalCount"] == 0
+      assert result["articleStats"]["collectsCount"] == 0
+      refute result["interactionState"]["viewerHasCollected"]
     end
   end
 end

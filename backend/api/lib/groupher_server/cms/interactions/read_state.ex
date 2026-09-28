@@ -34,6 +34,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map() | {:error, term()}
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: Query
 
+  @doc "Returns public Interaction presentation state for one Artiment."
+  defdelegate public_state(artiment, opts \\ []), to: Query
+
+  @doc "Returns batched public Interaction presentation state."
+  defdelegate public_states(artiments, opts \\ []), to: Query
+
   @doc """
   Returns lightweight fixed counts keyed by Artiment identity.
 

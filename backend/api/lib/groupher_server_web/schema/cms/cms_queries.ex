@@ -509,23 +509,23 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.comments_state/3)
     end
 
-    @desc "Reads current viewer state for up to 100 canonical Article references; anonymous requests return an empty list"
+    @desc "Reads current viewer state for up to 100 canonical Article paths; anonymous requests return an empty list"
     field :article_viewer_states, non_null(list_of(non_null(:viewer_article_state))) do
-      arg(:refs, non_null(list_of(non_null(:article_ref_input))))
+      arg(:paths, non_null(list_of(non_null(:article_path_input))))
 
       resolve(&R.CMS.article_viewer_states/3)
     end
 
     @desc "Reads the current private Article interaction projection for confirmed-write reconciliation"
     field :article_interaction_states, non_null(list_of(non_null(:article_interaction_state))) do
-      arg(:refs, non_null(list_of(non_null(:article_ref_input))))
+      arg(:paths, non_null(list_of(non_null(:article_path_input))))
 
       resolve(&R.CMS.article_interaction_states/3)
     end
 
     @desc "Reads current viewer state for up to 100 canonical Comment references; anonymous requests return an empty list"
     field :comment_viewer_states, non_null(list_of(non_null(:viewer_comment_state))) do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
 
       resolve(&R.CMS.comment_viewer_states/3)
@@ -533,7 +533,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "Reads up to 100 Comment projections for confirmed-write reconciliation in one request"
     field :comment_reconcile_states, non_null(:comment_reconcile_payload) do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
 
       resolve(&R.CMS.comment_reconcile_states/3)

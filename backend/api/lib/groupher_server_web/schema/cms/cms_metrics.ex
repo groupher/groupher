@@ -196,12 +196,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:thread, non_null(:thread))
   end
 
-  input_object :article_ref_input do
-    field(:inner_id, non_null(:id))
-    field(:community, non_null(:string))
-    field(:thread, non_null(:thread))
-  end
-
   input_object :comment_path_input do
     field(:article, non_null(:article_path_input))
     field(:inner_id, non_null(:id))

@@ -21,7 +21,13 @@ defmodule GroupherServer.CMS.ViewTracker.AnonymousSession do
 
   @type t :: %__MODULE__{id: String.t()}
 
-  @doc "Ensures a verified anonymous session value exists on the connection."
+  @doc """
+  Returns the request connection and a trusted anonymous-session identity.
+
+  A valid signed cookie is reused. A missing, expired, malformed, or
+  unverifiable cookie is replaced with a newly signed HttpOnly cookie; an
+  untrusted client value is never exposed as an identity.
+  """
   @spec ensure(Plug.Conn.t()) :: {Plug.Conn.t(), t()}
   def ensure(%Plug.Conn{} = conn) do
     case conn.req_cookies[@cookie_name] do

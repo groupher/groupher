@@ -61,6 +61,12 @@ defmodule GroupherServer.CMS.Interactions do
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map()
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: ReadState
 
+  @doc "Returns public presentation state without current-viewer fields."
+  defdelegate public_state(artiment, opts \\ []), to: ReadState
+
+  @doc "Returns batched public presentation state without current-viewer fields."
+  defdelegate public_states(artiments, opts \\ []), to: ReadState
+
   @doc """
   Returns lightweight fixed counts keyed by Artiment type and physical id.
 

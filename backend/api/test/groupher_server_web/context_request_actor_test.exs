@@ -22,6 +22,42 @@ defmodule GroupherServerWeb.ContextRequestActorTest do
            } = context.request_actor
   end
 
+  test "does not let the automatic anonymous session hide a self-reported crawler" do
+    context =
+      :get
+      |> conn("/graphiql")
+      |> put_req_header("user-agent", "ExampleBot/1.0")
+      |> Context.call([])
+      |> request_context()
+
+    assert %AnonymousSession{} = context.anonymous_session
+
+    assert %Classification{
+             type: :unknown,
+             is_authenticated: false,
+             confidence: :probable,
+             classified_by: :self_reported
+           } = context.request_actor
+  end
+
+  test "keeps an ordinary anonymous browser classified as probable human" do
+    context =
+      :get
+      |> conn("/graphiql")
+      |> put_req_header(
+        "user-agent",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Safari/537.36"
+      )
+      |> Context.call([])
+      |> request_context()
+
+    assert %Classification{
+             type: :human,
+             confidence: :probable,
+             classified_by: :signed_anonymous_session
+           } = context.request_actor
+  end
+
   test "keeps the complete verified service object beside its shared classification" do
     context =
       :post

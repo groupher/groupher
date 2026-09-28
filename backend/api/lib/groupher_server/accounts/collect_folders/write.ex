@@ -20,10 +20,18 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, Embeds, User}
+  alias CMS.{Command}
   alias CMS.Model.ArticleCollect
   alias Helper.{Datetime, Multi, ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
+
+  @doc """
+  Creates one user-owned folder with initialized per-thread counters.
+
+  Folder titles are unique within the account. A duplicate title returns the
+  CollectFolders domain error instead of overwriting the existing folder.
+  """
   @spec create(map(), User.t()) :: T.domain_res(CollectFolder.t())
   def create(%{title: title} = attrs, %User{id: user_id}) do
     case ORM.find_by(CollectFolder, ~m(user_id title)a) do
@@ -43,6 +51,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
+  @doc "Updates editable folder fields and advances its last-updated date."
   @spec update(T.id(), map()) :: T.domain_res(CollectFolder.t())
   def update(folder_id, attrs) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
@@ -51,6 +60,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
+  @doc "Deletes an empty folder and rejects folders that still own Article membership."
   @spec delete(T.id()) :: T.domain_res(CollectFolder.t())
   def delete(id) do
     with {:ok, folder} <- ORM.find(CollectFolder, id) do
@@ -61,8 +71,35 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
+  @doc """
+  Adds an Article to a folder through the command-backed membership transaction.
+
+  This convenience boundary returns the updated folder; GraphQL callers that
+  also need `command_id` and committed projections use `add_payload/4`.
+  """
   @spec add(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def add(article, folder_id, %User{} = user) do
+    with {:ok, %{folder: folder}} <- add_payload(article, folder_id, user, nil) do
+      {:ok, folder}
+    end
+  end
+
+  @doc "Adds folder membership through the retry-safe CMS Command boundary."
+  @spec add_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def add_payload(article, folder_id, %User{} = user, command_id) do
+    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
+      Command.update_user(user, command_id,
+        command: :collect_add,
+        resource: article,
+        input: %{folder_id: folder_id},
+        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
+      )
+      |> Command.run(fn _context -> add_new(article, folder_id, user) end)
+      |> collect_payload(command_id)
+    end
+  end
+
+  defp add_new(article, folder_id, %User{} = user) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
          {:ok, _} <- article_not_in_folder(article, folder.collects),
@@ -87,8 +124,35 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     end
   end
 
+  @doc """
+  Removes an Article from a folder through the command-backed membership transaction.
+
+  This convenience boundary returns the updated folder; GraphQL callers that
+  also need `command_id` and committed projections use `remove_payload/4`.
+  """
   @spec remove(T.article(), T.id(), User.t()) :: T.domain_res(T.article())
   def remove(article, folder_id, %User{} = user) do
+    with {:ok, %{folder: folder}} <- remove_payload(article, folder_id, user, nil) do
+      {:ok, folder}
+    end
+  end
+
+  @doc "Removes folder membership through the retry-safe CMS Command boundary."
+  @spec remove_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def remove_payload(article, folder_id, %User{} = user, command_id) do
+    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
+      Command.update_user(user, command_id,
+        command: :collect_remove,
+        resource: article,
+        input: %{folder_id: folder_id},
+        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
+      )
+      |> Command.run(fn _context -> remove_new(article, folder_id, user) end)
+      |> collect_payload(command_id)
+    end
+  end
+
+  defp remove_new(article, folder_id, %User{} = user) do
     with {:ok, thread} <- thread_of(article),
          {:ok, folder} <- ORM.find(CollectFolder, folder_id),
          true <- user.id == folder.user_id do
@@ -185,4 +249,9 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp result({:ok, %{add_to_collect_folder: result}}), do: {:ok, result}
   defp result({:ok, %{rm_from_collect_folder: result}}), do: {:ok, result}
   defp result({:error, _step, reason, _steps}), do: {:error, reason}
+
+  defp collect_payload({:ok, folder}, command_id),
+    do: {:ok, %{folder: folder, command_id: command_id}}
+
+  defp collect_payload({:error, _reason} = error, _command_id), do: error
 end

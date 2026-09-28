@@ -14,13 +14,13 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
   end
 
   describe "[doc upvote]" do
-    test "login user can upvote a doc", ~m(user_conn community doc user)a do
+    test "login user can upvote a doc", ~m(user_conn community doc)a do
       variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :doc), variables)
 
-      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
-      assert created["innerId"] == to_string(doc.inner_id)
+      assert get_in(created, ["interactionState", "viewerHasUpvoted"])
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(doc.inner_id)
     end
 
     test "unauth user upvote a doc fails", ~m(guest_conn community doc)a do
@@ -41,8 +41,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.DocUpvote do
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :doc), variables)
 
-      assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
-      assert updated["innerId"] == to_string(doc.inner_id)
+      refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(doc.inner_id)
     end
 
     test "unauth user undo upvote a doc fails", ~m(guest_conn community doc)a do
