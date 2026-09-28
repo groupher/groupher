@@ -59,3 +59,5 @@ full-check:
       run: pnpm run format:check
     - name: lint
       run: pnpm run lint
+    - name: documentation check
+      run: pnpm run docs:check

@@ -5,10 +5,15 @@
  * components, and local salon style factories. Those files either model
  * external inputs, inherit framework contracts, or are not reusable public
  * boundaries.
+ *
+ *   repository source -> pure documentation analyzers -> collected failures -> CLI exit status
+ *                                          |
+ *                                          `-> node:test regression fixtures
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { parse } from '@babel/parser'
 
@@ -26,7 +31,35 @@ const walk = (directory, accept, skip = () => false) =>
     return accept(file) ? [file] : []
   })
 
-const hasAsciiFlow = (text) => /-->|->|<->|\n\s*(?:\*\s*){0,1}[|+`]--?/.test(text)
+/** Reports whether documentation contains the minimum syntax for an ASCII handoff or flow. */
+export const hasAsciiFlow = (text) => /-->|->|<->|\n\s*(?:\*\s*){0,1}[|+`]--?/.test(text)
+
+/** Returns module-documentation violations found in one Elixir source string. */
+export const findElixirModuleDocumentationIssues = (source) => {
+  const issues = []
+  const modules = [...source.matchAll(/^\s*defmodule\s+([^\s]+)\s+do\s*$/gm)]
+
+  for (const [index, module] of modules.entries()) {
+    const start = module.index + module[0].length
+    const end = modules[index + 1]?.index ?? source.length
+    const moduleHeader = source.slice(start, end)
+    const name = module[1]
+
+    if (/^\s*@moduledoc\s+false/m.test(moduleHeader)) {
+      issues.push(`${name} uses @moduledoc false`)
+      continue
+    }
+
+    const heredoc = moduleHeader.match(/@moduledoc\s+"""([\s\S]*?)"""/)
+    const singleLine = moduleHeader.match(/@moduledoc\s+"([^"\n]*)"/)
+    const body = heredoc?.[1] ?? singleLine?.[1]
+    if (!body) issues.push(`${name} is missing @moduledoc`)
+    else if (!hasAsciiFlow(body))
+      issues.push(`${name} module doc is missing an ASCII business-position flow`)
+  }
+
+  return issues
+}
 
 const checkElixirModules = () => {
   const directory = path.join(root, 'backend/api/lib')
@@ -34,26 +67,7 @@ const checkElixirModules = () => {
 
   for (const file of files) {
     const source = fs.readFileSync(file, 'utf8')
-    const modules = [...source.matchAll(/^\s*defmodule\s+([^\s]+)\s+do\s*$/gm)]
-
-    for (const [index, module] of modules.entries()) {
-      const start = module.index + module[0].length
-      const end = modules[index + 1]?.index ?? source.length
-      const moduleHeader = source.slice(start, end)
-      const name = module[1]
-
-      if (/^\s*@moduledoc\s+false/m.test(moduleHeader)) {
-        fail(file, `${name} uses @moduledoc false`)
-        continue
-      }
-
-      const heredoc = moduleHeader.match(/@moduledoc\s+"""([\s\S]*?)"""/)
-      const singleLine = moduleHeader.match(/@moduledoc\s+"([^"\n]*)"/)
-      const body = heredoc?.[1] ?? singleLine?.[1]
-      if (!body) fail(file, `${name} is missing @moduledoc`)
-      else if (!hasAsciiFlow(body))
-        fail(file, `${name} module doc is missing an ASCII business-position flow`)
-    }
+    for (const issue of findElixirModuleDocumentationIssues(source)) fail(file, issue)
   }
 }
 
@@ -63,10 +77,45 @@ const productionSourceSkip = (file) =>
   ) ||
   /\.(test|spec)\.[cm]?[jt]sx?$/.test(file) ||
   /(^|\/)salon(\/|\.[cm]?[jt]sx?$)/.test(file) ||
-  /cloudflare-workers\.d\.ts$/.test(file)
+  /\.d\.[cm]?ts$/.test(file)
 
 const backendApps = ['assets-hub', 'auth', 'content-import', 'press']
 const infraApps = ['dev-gateway']
+
+const frontendFlowModules = [
+  'frontend/community/src/query/queries.ts',
+  'frontend/community/src/server/community.ts',
+  'frontend/core/hooks/useArticleState/index.ts',
+  'frontend/core/hooks/useArticleStates/index.ts',
+  'frontend/core/hooks/useArticleStates/shared.ts',
+  'frontend/core/hooks/useTrackArticleView.ts',
+  'frontend/core/query/ArticleQueryProvider.tsx',
+  'frontend/core/query/articlePath.ts',
+  'frontend/core/query/articleStats.ts',
+  'frontend/core/query/articleStatsNormalize.ts',
+  'frontend/core/query/invalidation/article.ts',
+  'frontend/core/query/key.ts',
+  'frontend/core/query/mutation/article/collect.ts',
+  'frontend/core/query/mutation/article/emotion.ts',
+  'frontend/core/query/mutation/article/result.ts',
+  'frontend/core/query/mutation/article/upvote.ts',
+  'frontend/core/query/mutation/articleReceipt.ts',
+  'frontend/core/query/queryClient.ts',
+  'frontend/core/query/viewAck.ts',
+  'frontend/core/query/viewer.ts',
+  'frontend/core/query/viewTracker.ts',
+]
+
+const checkFrontendFlowModules = () => {
+  for (const relativeFile of frontendFlowModules) {
+    const file = path.join(root, relativeFile)
+    const source = fs.readFileSync(file, 'utf8')
+    const header = source.match(/^\s*\/\*\*([\s\S]*?)\*\//)?.[1]
+    if (!header) fail(file, 'is missing a leading JSDoc module comment')
+    else if (!hasAsciiFlow(header))
+      fail(file, 'module JSDoc is missing an ASCII business-position flow')
+  }
+}
 
 const checkBackendScriptModules = () => {
   for (const [base, app] of [
@@ -99,28 +148,110 @@ const checkBackendScriptModules = () => {
   }
 }
 
-const hasAdjacentJsdoc = (node, source) =>
+/** Reports whether an AST declaration has an immediately adjacent JSDoc block. */
+export const hasAdjacentJsdoc = (node, source) =>
   (node.leadingComments || []).some((comment) => {
     if (comment.type !== 'CommentBlock' || !comment.value.startsWith('*')) return false
     const between = source.slice(comment.end, node.start)
     return /^\s*\n?[ \t]*$/.test(between) && (between.match(/\n/g) || []).length <= 1
   })
 
+/**
+ * Parses JavaScript or TypeScript without accepting a partially recovered AST.
+ *
+ * JSX is opt-in because treating a plain `.ts` generic arrow as TSX produces a false parser error.
+ */
+export const parseJavaScriptForDocumentation = (source, { jsx = false } = {}) => {
+  const ast = parse(source, {
+    sourceType: 'unambiguous',
+    errorRecovery: true,
+    plugins: ['typescript', ...(jsx ? ['jsx'] : []), 'decorators-legacy', 'importAttributes'],
+  })
+
+  if (ast.errors.length > 0) {
+    throw new SyntaxError(ast.errors.map((error) => error.message).join('; '))
+  }
+
+  return ast
+}
+
+/** Selects parser features from the source extension rather than from source-content guesses. */
+export const javaScriptParserOptionsForFile = (file) => ({
+  jsx: /\.[cm]?[jt]sx$/.test(file),
+})
+
+/** Returns exported callable names that do not have adjacent purpose-oriented JSDoc. */
+export const findExportedCallableDocumentationIssues = (source, options) => {
+  const ast = parseJavaScriptForDocumentation(source, options)
+  const locals = new Map()
+  for (const statement of ast.program.body) {
+    if (statement.type === 'FunctionDeclaration' && statement.id) {
+      locals.set(statement.id.name, statement)
+    }
+    if (statement.type === 'VariableDeclaration') {
+      for (const item of statement.declarations) {
+        if (
+          item.id.type === 'Identifier' &&
+          ['ArrowFunctionExpression', 'FunctionExpression'].includes(item.init?.type)
+        ) {
+          locals.set(item.id.name, statement)
+        }
+      }
+    }
+  }
+
+  const candidates = []
+  for (const statement of ast.program.body) {
+    if (statement.type === 'ExportDefaultDeclaration') {
+      const declaration = statement.declaration
+      if (declaration.type === 'FunctionDeclaration' && declaration.id) {
+        candidates.push({ name: declaration.id.name, statement })
+      }
+      continue
+    }
+    if (statement.type !== 'ExportNamedDeclaration') continue
+    const declaration = statement.declaration
+    if (declaration?.type === 'FunctionDeclaration' && declaration.id) {
+      candidates.push({ name: declaration.id.name, statement })
+    }
+    if (declaration?.type === 'VariableDeclaration') {
+      for (const item of declaration.declarations) {
+        if (
+          item.id.type === 'Identifier' &&
+          ['ArrowFunctionExpression', 'FunctionExpression'].includes(item.init?.type)
+        ) {
+          candidates.push({ name: item.id.name, statement })
+        }
+      }
+    }
+    if (!declaration && !statement.source) {
+      for (const specifier of statement.specifiers) {
+        if (specifier.type !== 'ExportSpecifier') continue
+        const local = locals.get(specifier.local.name)
+        if (local) candidates.push({ name: specifier.local.name, statement: local })
+      }
+    }
+  }
+
+  const issues = []
+  const checkedStarts = new Set()
+  for (const { name, statement } of candidates) {
+    if (/^[A-Z]/.test(name) || checkedStarts.has(statement.start)) continue
+    checkedStarts.add(statement.start)
+    if (!hasAdjacentJsdoc(statement, source)) issues.push(name)
+  }
+  return issues
+}
+
 const checkExportedCallables = () => {
   const sourceRoots = [
-    ...[
-      'core',
-      'community',
-      'dash',
-      'apply',
-      'widget',
-      'landing',
-      'inspire-me',
-      'mock-server',
-    ].map((app) => path.join(root, 'frontend', app)),
+    ...['core', 'community', 'dash', 'apply', 'widget', 'landing', 'inspire-me', 'mock-server'].map(
+      (app) => path.join(root, 'frontend', app),
+    ),
     ...backendApps.map((app) => path.join(root, 'backend', app)),
     ...infraApps.map((app) => path.join(root, 'infra', app)),
     path.join(root, 'packages'),
+    path.join(root, 'scripts'),
   ]
 
   for (const directory of sourceRoots) {
@@ -131,75 +262,13 @@ const checkExportedCallables = () => {
     )
     for (const file of files) {
       const source = fs.readFileSync(file, 'utf8')
-      let ast
       try {
-        ast = parse(source, {
-          sourceType: 'unambiguous',
-          errorRecovery: true,
-          plugins: ['typescript', 'jsx', 'decorators-legacy', 'importAttributes'],
-        })
-      } catch (error) {
-        fail(file, `cannot be parsed for documentation coverage: ${error.message}`)
-        continue
-      }
-
-      const locals = new Map()
-      for (const statement of ast.program.body) {
-        if (statement.type === 'FunctionDeclaration' && statement.id) {
-          locals.set(statement.id.name, statement)
-        }
-        if (statement.type === 'VariableDeclaration') {
-          for (const item of statement.declarations) {
-            if (
-              item.id.type === 'Identifier' &&
-              ['ArrowFunctionExpression', 'FunctionExpression'].includes(item.init?.type)
-            ) {
-              locals.set(item.id.name, statement)
-            }
-          }
-        }
-      }
-
-      const candidates = []
-      for (const statement of ast.program.body) {
-        if (statement.type === 'ExportDefaultDeclaration') {
-          const declaration = statement.declaration
-          if (declaration.type === 'FunctionDeclaration' && declaration.id) {
-            candidates.push({ name: declaration.id.name, statement })
-          }
-          continue
-        }
-        if (statement.type !== 'ExportNamedDeclaration') continue
-        const declaration = statement.declaration
-        if (declaration?.type === 'FunctionDeclaration' && declaration.id) {
-          candidates.push({ name: declaration.id.name, statement })
-        }
-        if (declaration?.type === 'VariableDeclaration') {
-          for (const item of declaration.declarations) {
-            if (
-              item.id.type === 'Identifier' &&
-              ['ArrowFunctionExpression', 'FunctionExpression'].includes(item.init?.type)
-            ) {
-              candidates.push({ name: item.id.name, statement })
-            }
-          }
-        }
-        if (!declaration && !statement.source) {
-          for (const specifier of statement.specifiers) {
-            if (specifier.type !== 'ExportSpecifier') continue
-            const local = locals.get(specifier.local.name)
-            if (local) candidates.push({ name: specifier.local.name, statement: local })
-          }
-        }
-      }
-
-      const checkedStarts = new Set()
-      for (const { name, statement } of candidates) {
-        if (/^[A-Z]/.test(name) || checkedStarts.has(statement.start)) continue
-        checkedStarts.add(statement.start)
-        if (!hasAdjacentJsdoc(statement, source)) {
+        const options = javaScriptParserOptionsForFile(file)
+        for (const name of findExportedCallableDocumentationIssues(source, options)) {
           fail(file, `exported callable ${name} is missing adjacent JSDoc`)
         }
+      } catch (error) {
+        fail(file, `cannot be parsed for documentation coverage: ${error.message}`)
       }
     }
   }
@@ -222,6 +291,22 @@ const checkElixirSharedFunctions = () => {
     'backend/api/lib/groupher_server/cms/comments/commands/solution.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/update_comment.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/delete_comment.ex',
+    'backend/api/lib/groupher_server/accounts/collect_folders/write.ex',
+    'backend/api/lib/groupher_server/cms/article_stats.ex',
+    'backend/api/lib/groupher_server/cms/front_desk/article.ex',
+    'backend/api/lib/groupher_server/cms/interactions/read_state.ex',
+    'backend/api/lib/groupher_server/cms/interactions/read_state/query.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/anonymous_session.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/config.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/identity.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/policy.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/query.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/record.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/view_counter.ex',
+    'backend/api/lib/groupher_server/cms/view_tracker/view_dedupe_cleanup.ex',
+    'backend/api/lib/groupher_server/request_actor/evidence.ex',
+    'backend/api/lib/groupher_server_web/resolvers/article_interaction_payload.ex',
+    'backend/api/lib/groupher_server_web/resolvers/article_stats_payload.ex',
   ].map((file) => path.join(root, file))
 
   const files = [
@@ -262,7 +347,13 @@ const checkElixirSharedFunctions = () => {
   }
 }
 
-const elixirDefinitionArity = (lines, start, name) => {
+/**
+ * Derives the declared arity of one Elixir definition from its possibly multiline signature.
+ *
+ * Commas nested inside maps, lists, tuples, or strings are ignored. Default arguments retain the
+ * arity written in the source because the documentation audit identifies the shared declaration.
+ */
+export const elixirDefinitionArity = (lines, start, name) => {
   let signature = lines[start]
   for (let index = start + 1; index < lines.length && index <= start + 30; index += 1) {
     if (/\bdo\b|,\s*do:/.test(signature)) break
@@ -337,16 +428,28 @@ const checkWorkspaceReadmes = () => {
   }
 }
 
-checkElixirModules()
-checkBackendScriptModules()
-checkExportedCallables()
-checkElixirSharedFunctions()
-checkWorkspaceReadmes()
+/** Runs the repository documentation audit and returns stable, user-facing failure descriptions. */
+export const runDocumentationCheck = () => {
+  failures.length = 0
+  checkElixirModules()
+  checkBackendScriptModules()
+  checkFrontendFlowModules()
+  checkExportedCallables()
+  checkElixirSharedFunctions()
+  checkWorkspaceReadmes()
+  return [...failures]
+}
 
-if (failures.length > 0) {
-  console.error(`Documentation coverage failed with ${failures.length} issue(s):`)
-  for (const failure of failures) console.error(`- ${failure}`)
-  process.exitCode = 1
-} else {
-  console.log('Documentation coverage passed.')
+const isMain =
+  process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+
+if (isMain) {
+  const results = runDocumentationCheck()
+  if (results.length > 0) {
+    console.error(`Documentation coverage failed with ${results.length} issue(s):`)
+    for (const failure of results) console.error(`- ${failure}`)
+    process.exitCode = 1
+  } else {
+    console.log('Documentation coverage passed.')
+  }
 }

@@ -12,13 +12,12 @@ const packages = [
   ['frontend/inspire-me/package.json', ['dependencies']],
 ]
 
+/** Extracts the unique TanStack Router runtime versions resolved in a pnpm lockfile. */
 export const collectResolvedRouterVersions = (lockfile) =>
   new Set(
-    [
-      ...lockfile.matchAll(
-        /^\s{2}'?@tanstack\/react-router@(\d+\.\d+\.\d+)/gm,
-      ),
-    ].map(([, version]) => version),
+    [...lockfile.matchAll(/^\s{2}'?@tanstack\/react-router@(\d+\.\d+\.\d+)/gm)].map(
+      ([, version]) => version,
+    ),
   )
 
 const main = async () => {
