@@ -6,24 +6,25 @@ import type { OperationDefinitionNode } from 'graphql'
 
 import { browserGraphQLRequest } from '~/graphql/client'
 import { invalidate, QueryInvalidation } from '~/query/invalidation'
-import type { TThread } from '~/spec'
 
+import { isArticleThread, type TArticlePath } from '../articlePath'
 import { mutationKeys } from '../key'
 
-const articleRef = (variables: Record<string, unknown>) => {
+const articlePath = (variables: Record<string, unknown>): TArticlePath | null => {
   const article = variables.article
   if (!article || typeof article !== 'object') return null
   const value = article as { community?: unknown; thread?: unknown; innerId?: unknown }
   if (
     typeof value.community !== 'string' ||
     typeof value.thread !== 'string' ||
+    !isArticleThread(value.thread) ||
     (typeof value.innerId !== 'string' && typeof value.innerId !== 'number')
   )
     return null
   return {
     community: value.community,
-    thread: value.thread as TThread,
-    innerId: value.innerId,
+    thread: value.thread,
+    innerId: String(value.innerId),
   }
 }
 
@@ -42,11 +43,11 @@ export default function useArticleSettingMutation<
     retry: false,
     mutationFn: (variables: TVariables) => browserGraphQLRequest(document, variables),
     onSuccess: (_data, variables) => {
-      const ref = articleRef(variables as Record<string, unknown>)
-      if (!ref) return
+      const path = articlePath(variables as Record<string, unknown>)
+      if (!path) return
       return invalidate(queryClient, [
-        QueryInvalidation.article.content(ref),
-        QueryInvalidation.article.lists({ community: ref.community, thread: ref.thread }),
+        QueryInvalidation.article.content(path),
+        QueryInvalidation.article.lists({ community: path.community, thread: path.thread }),
       ])
     },
   })

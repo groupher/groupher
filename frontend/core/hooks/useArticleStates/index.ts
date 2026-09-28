@@ -1,46 +1,48 @@
+/**
+ * Builds normalized Article states for list, changelog, and Kanban surfaces.
+ *
+ *   Article contents
+ *     -> group paths by community/thread
+ *     -> real ArticleStats batch queries
+ *     -> shared private-state/reconciliation layer
+ *     -> ordered TArticleState[]
+ *
+ * Batch grouping is transport-only: output order always follows the caller's content order, while
+ * state composition is identical to the single-Article hook.
+ */
 'use client'
 
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef } from 'react'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 import { Q } from '~/query'
-import { articleRefKey, articleRefOf, type TArticleRef } from '~/query/articleRef'
-import { isArticleStatsSnapshotStale } from '~/query/articleStats'
-import { invalidate, QueryInvalidation } from '~/query/invalidation'
-import { overlayArticleUpvoteReceiptOnViewerState } from '~/query/mutation/articleReceipt'
-import useArticleInteractionReconcile from '~/query/useArticleInteractionReconcile'
-import { clearArticleViewAck, readArticleViewAck } from '~/query/viewAck'
-import type { TArticle, TArticleStats, TArticleViewerState } from '~/spec'
-import { getAccountRef } from '~/stores/account/accountRef'
-import useAccount from '~/stores/account/hooks'
+import { articlePathKey, articlePathOf, type TArticlePath } from '~/query/articlePath'
+import type { TArticle, TArticleState, TArticleStats } from '~/spec'
 
-export type TArticleState<T extends TArticle = TArticle> = {
-  article: T
-  stats: TArticleStats | null
-  viewerState: TArticleViewerState
-}
+import { composeArticleState, useArticlePrivateStates, useRefreshStaleArticleStats } from './shared'
 
 type TStatsBatch = {
   community: string
-  thread: TArticleRef['thread']
+  thread: TArticlePath['thread']
   innerIds: string[]
 }
 
 const EMPTY_ARTICLES: readonly TArticle[] = []
 
-const validRef = (ref: TArticleRef): boolean => Boolean(ref.community && ref.thread && ref.innerId)
+const validRef = (path: TArticlePath): boolean =>
+  Boolean(path.community && path.thread && path.innerId)
 
-const groupStatsBatches = (refs: readonly TArticleRef[]): TStatsBatch[] => {
+const groupStatsBatches = (paths: readonly TArticlePath[]): TStatsBatch[] => {
   const groups = new Map<string, TStatsBatch>()
 
-  for (const ref of refs) {
-    const scope = `${ref.community}:${ref.thread}`
+  for (const path of paths) {
+    const scope = `${path.community}:${path.thread}`
     const group = groups.get(scope) || {
-      community: ref.community,
-      thread: ref.thread,
+      community: path.community,
+      thread: path.thread,
       innerIds: [],
     }
-    if (!group.innerIds.includes(String(ref.innerId))) group.innerIds.push(String(ref.innerId))
+    if (!group.innerIds.includes(String(path.innerId))) group.innerIds.push(String(path.innerId))
     groups.set(scope, group)
   }
 
@@ -50,90 +52,54 @@ const groupStatsBatches = (refs: readonly TArticleRef[]): TStatsBatch[] => {
   }))
 }
 
-/** Composes public stats, private viewer state, and confirmed local acknowledgements. */
+/**
+ * Returns Article states in input order while batching public stats by community/thread.
+ *
+ * Missing or invalid paths retain their content with `stats: null`; private viewer state and local
+ * confirmations are composed through the same shared precedence rules used by detail pages.
+ */
 export default function useArticleStates<T extends TArticle>(
   articles: readonly T[] | undefined,
 ): TArticleState<T>[] {
-  const account = useAccount()
   const queryClient = useQueryClient()
-  const refreshedStats = useRef(new Set<string>())
   const normalizedArticles = articles || (EMPTY_ARTICLES as readonly T[])
-  const refs = useMemo(
-    () => normalizedArticles.map(articleRefOf).filter(validRef),
+  const paths = useMemo(
+    () => normalizedArticles.map(articlePathOf).filter(validRef),
     [normalizedArticles],
   )
-  const batches = useMemo(() => groupStatsBatches(refs), [refs])
-  const accountRef = account.accountRef || getAccountRef(account.user) || ''
+  const batches = useMemo(() => groupStatsBatches(paths), [paths])
 
-  const batchQueries = useQueries({
+  const statsQueries = useQueries({
     queries: batches.map(({ community, thread, innerIds }) =>
-      Q.article.statsBatch(community, thread, innerIds),
+      Q.article.statsBatch(queryClient, community, thread, innerIds),
     ),
   })
-  const entityQueries = useQueries({
-    queries: refs.map(({ community, thread, innerId }) => ({
-      ...Q.article.stats(community, thread, innerId),
-      enabled: false,
-    })),
-  })
-  const viewerQuery = useQuery(Q.viewer.articleStates(accountRef, refs))
-  const interactionQuery = useQuery(Q.viewer.articleInteractionStates(accountRef, refs))
-
-  useArticleInteractionReconcile(normalizedArticles)
-
   const statsByRef = useMemo(() => {
     const index = new Map<string, TArticleStats>()
-    for (const query of batchQueries) {
-      for (const stats of query.data || []) index.set(articleRefKey(stats), stats)
-    }
-    for (const query of entityQueries) {
-      if (query.data) index.set(articleRefKey(query.data), query.data)
+    for (const query of statsQueries) {
+      for (const stats of query.data || []) index.set(articlePathKey(stats), stats)
     }
     return index
-  }, [batchQueries, entityQueries])
-
-  useEffect(() => {
-    for (const ref of refs) {
-      const key = articleRefKey(ref)
-      const stats = statsByRef.get(key)
-      if (
-        !stats ||
-        refreshedStats.current.has(key) ||
-        !isArticleStatsSnapshotStale(stats.snapshotAt)
-      ) {
-        continue
-      }
-      refreshedStats.current.add(key)
-      void invalidate(queryClient, QueryInvalidation.article.stats(ref))
-    }
-  }, [queryClient, refs, statsByRef])
-
-  useEffect(() => {
-    for (const ref of refs) {
-      const key = articleRefKey(ref)
-      if (viewerQuery.data?.[key]?.viewerHasViewed === true) clearArticleViewAck(key)
-    }
-  }, [refs, viewerQuery.data])
+  }, [statsQueries])
+  const privateState = useArticlePrivateStates(paths, statsByRef)
+  useRefreshStaleArticleStats(queryClient, paths, statsByRef)
 
   return useMemo(
     () =>
       normalizedArticles.map((article) => {
-        const ref = articleRefOf(article)
-        const key = articleRefKey(ref)
+        const path = articlePathOf(article)
+        const key = articlePathKey(path)
         const stats = statsByRef.get(key) || null
-        const base: TArticleViewerState = {
-          articleKey: key,
-          ...viewerQuery.data?.[key],
-          ...interactionQuery.data?.[key],
-        }
-        const viewed = readArticleViewAck(key) ? { ...base, viewerHasViewed: true } : base
-
-        return {
-          article,
+        return composeArticleState({
+          content: article,
+          path,
           stats,
-          viewerState: overlayArticleUpvoteReceiptOnViewerState(accountRef, stats, viewed, key),
-        }
+          viewed: privateState.viewerStates?.[key],
+          interaction: privateState.interactionStates?.[key],
+          viewAcknowledged: privateState.viewAcks.has(key),
+          receipt: privateState.receipts.get(key) || null,
+        })
       }),
-    [accountRef, interactionQuery.data, normalizedArticles, statsByRef, viewerQuery.data],
+    [normalizedArticles, privateState, statsByRef],
   )
 }

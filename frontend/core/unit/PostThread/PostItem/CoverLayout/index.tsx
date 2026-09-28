@@ -4,7 +4,7 @@ import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import Img from '~/Img'
 import { mockImage } from '~/mock'
-import type { TArticleListViewModel, TPost } from '~/spec'
+import type { TArticleState, TPost } from '~/spec'
 
 import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/cover_layout'
@@ -12,7 +12,7 @@ import Footer from './Footer'
 import Header from './Header'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TPost>
+  viewModel: TArticleState<TPost>
   // onUserSelect?: (obj: TUser) => void
 }
 

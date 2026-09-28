@@ -18,7 +18,7 @@ import type {
 } from '~/spec'
 
 import { articleStats, articleStatsBatch } from './articleStats'
-import { articleKeys, normalizeArticleFilter } from './key'
+import { articleQueryKeys, normalizeArticleFilter } from './key'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -46,7 +46,7 @@ const toPostsFilter = (filter: TPagedArticlesParams): VariablesOf<typeof pagedPo
 
 const posts = (filter: TPagedArticlesParams) =>
   queryOptions({
-    queryKey: articleKeys.posts(filter),
+    queryKey: articleQueryKeys.posts(filter),
     meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedPosts, {
@@ -58,7 +58,7 @@ const posts = (filter: TPagedArticlesParams) =>
 
 const changelogs = (filter: TPagedArticlesParams) =>
   queryOptions({
-    queryKey: articleKeys.changelogs(filter),
+    queryKey: articleQueryKeys.changelogs(filter),
     meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedChangelogs, {
@@ -70,7 +70,7 @@ const changelogs = (filter: TPagedArticlesParams) =>
 
 const kanban = (community: string) =>
   queryOptions({
-    queryKey: articleKeys.kanban(community),
+    queryKey: articleQueryKeys.kanban(community),
     meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(groupedKanbanPosts, { community })
@@ -81,7 +81,7 @@ const kanban = (community: string) =>
 
 const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
-    queryKey: articleKeys.detail(community, thread, innerId),
+    queryKey: articleQueryKeys.detail(community, thread, innerId),
     meta: { hydration: 'public' },
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
@@ -106,7 +106,7 @@ const detail = (community: string, thread: TThread, innerId: string | number) =>
 
 const tagStats = (community: string, thread: TThread, slug: string | null | undefined) =>
   queryOptions({
-    queryKey: articleKeys.tagStats(community, thread, slug),
+    queryKey: articleQueryKeys.tagStats(community, thread, slug),
     queryFn: async () => {
       if (!slug) return null
       const data = await browserGraphQLRequest(communityTagStats, { community, thread, slug })
@@ -117,7 +117,7 @@ const tagStats = (community: string, thread: TThread, slug: string | null | unde
 
 const tagGroups = (community: string, thread: TThread) =>
   queryOptions({
-    queryKey: articleKeys.tagGroups(community, thread),
+    queryKey: articleQueryKeys.tagGroups(community, thread),
     queryFn: async () => {
       const data = await browserGraphQLRequest(communityTagGroups, { community, thread })
       return (data.communityTagGroups || []) as unknown as TTagGroup[]

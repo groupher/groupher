@@ -8,7 +8,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useSyncExternalStore } from
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
 import { Q } from '~/query'
-import { viewerKeys } from '~/query/key'
+import { viewerQueryKeys } from '~/query/key'
 import { clearArticleUpvoteReceipts } from '~/query/mutation/articleReceipt'
 import { clearCommentReactionReceipts } from '~/query/mutation/commentReactionReceipt'
 import { clearCommentFeedReceipts } from '~/query/mutation/commentReceipt'
@@ -62,7 +62,7 @@ export default function Provider({ children, initData }: TProps) {
     clearCommentFeedReceipts(previousAccountRef)
     clearCommentReactionReceipts(previousAccountRef)
     clearArticleViewAcks()
-    void queryClient.removeQueries({ queryKey: viewerKeys.all })
+    void queryClient.removeQueries({ queryKey: viewerQueryKeys.all })
     queryClient.setQueryData(options.queryKey, makeSessionResult(null))
   }
 

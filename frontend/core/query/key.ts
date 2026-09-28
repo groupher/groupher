@@ -1,4 +1,13 @@
-import { THREAD } from '~/const/thread'
+/**
+ * Constructs stable TanStack Query identities for shared Groupher server state.
+ *
+ *   normalized domain input
+ *     -> domain-specific key constructor
+ *     -> Query cache / invalidation / hydration lookup
+ *
+ * This module only constructs keys and canonicalizes key inputs. Cache matching and mutation
+ * behavior remain in their owning cache or invalidation modules.
+ */
 import type { TPagedArticlesParams, TThread } from '~/spec'
 
 export type TNormalizedArticleFilter = {
@@ -54,79 +63,29 @@ export const isCanonicalDefaultArticleFilter = (filter: TPagedArticlesParams): b
   )
 }
 
-export const articleKeys = {
+/** Constructors for public Article content, stats, tag, and list query identities. */
+export const articleQueryKeys = {
   all: ['article'] as const,
   posts: (filter: TPagedArticlesParams) =>
-    [...articleKeys.all, 'posts', normalizeArticleFilter(filter)] as const,
+    [...articleQueryKeys.all, 'posts', normalizeArticleFilter(filter)] as const,
   changelogs: (filter: TPagedArticlesParams) =>
-    [...articleKeys.all, 'changelogs', normalizeArticleFilter(filter)] as const,
-  kanban: (community: string) => [...articleKeys.all, 'kanban', community] as const,
+    [...articleQueryKeys.all, 'changelogs', normalizeArticleFilter(filter)] as const,
+  kanban: (community: string) => [...articleQueryKeys.all, 'kanban', community] as const,
   detail: (community: string, thread: TThread, innerId: string | number) =>
-    [...articleKeys.all, 'detail', community, thread, String(innerId)] as const,
+    [...articleQueryKeys.all, 'detail', community, thread, String(innerId)] as const,
   statsPrefix: (community: string, thread: TThread) =>
-    [...articleKeys.all, 'article-stats', community, thread] as const,
+    [...articleQueryKeys.all, 'article-stats', community, thread] as const,
   stats: (community: string, thread: TThread, innerId: string | number) =>
-    [...articleKeys.statsPrefix(community, thread), String(innerId)] as const,
+    [...articleQueryKeys.statsPrefix(community, thread), String(innerId)] as const,
   statsBatch: (community: string, thread: TThread, innerIds: readonly (string | number)[]) =>
-    [...articleKeys.statsPrefix(community, thread), [...innerIds].map(String).sort()] as const,
+    [...articleQueryKeys.statsPrefix(community, thread), [...innerIds].map(String).sort()] as const,
   tagStats: (community: string, thread: TThread, slug: string | null | undefined) =>
-    [...articleKeys.all, 'tag-stats', community, thread, normalizeText(slug)] as const,
+    [...articleQueryKeys.all, 'tag-stats', community, thread, normalizeText(slug)] as const,
   tagGroups: (community: string, thread: TThread) =>
-    [...articleKeys.all, 'tag-groups', community, thread] as const,
-  isArticleEntity: (queryKey: readonly unknown[]): boolean =>
-    queryKey[0] === articleKeys.all[0] &&
-    typeof queryKey[1] === 'string' &&
-    ['changelogs', 'detail', 'posts'].includes(queryKey[1]),
-  isStats: (queryKey: readonly unknown[]): boolean =>
-    queryKey[0] === articleKeys.all[0] &&
-    queryKey[1] === 'article-stats' &&
-    typeof queryKey[2] === 'string' &&
-    typeof queryKey[3] === 'string' &&
-    typeof queryKey[4] === 'string',
-  isStatsBatch: (queryKey: readonly unknown[]): boolean =>
-    queryKey[0] === articleKeys.all[0] &&
-    queryKey[1] === 'article-stats' &&
-    typeof queryKey[2] === 'string' &&
-    typeof queryKey[3] === 'string' &&
-    Array.isArray(queryKey[4]),
-  matchesStatsBatch: (
-    queryKey: readonly unknown[],
-    community: string,
-    thread: TThread,
-    innerId: string | number,
-  ): boolean =>
-    articleKeys.isStatsBatch(queryKey) &&
-    queryKey[2] === community &&
-    queryKey[3] === thread &&
-    (queryKey[4] as unknown[]).map(String).includes(String(innerId)),
-  matchesStatsBatchScope: (
-    queryKey: readonly unknown[],
-    community: string,
-    thread: TThread,
-  ): boolean =>
-    articleKeys.isStatsBatch(queryKey) && queryKey[2] === community && queryKey[3] === thread,
-  matchesArticleList: (
-    queryKey: readonly unknown[],
-    community: string,
-    thread?: TThread,
-  ): boolean => {
-    const family = queryKey[1]
-    const filter = queryKey[2]
-    if (
-      queryKey[0] !== articleKeys.all[0] ||
-      !['posts', 'changelogs'].includes(String(family)) ||
-      !filter ||
-      typeof filter !== 'object'
-    ) {
-      return false
-    }
-
-    if ((filter as TNormalizedArticleFilter).community !== community) return false
-    if (!thread) return true
-    return thread === THREAD.CHANGELOG ? family === 'changelogs' : family === 'posts'
-  },
+    [...articleQueryKeys.all, 'tag-groups', community, thread] as const,
 }
 
+/** Constructors for Comment list and reconcile query identities. */
 export const commentKeys = {
   all: ['comment'] as const,
   articlePrefix: (community: string, thread: TThread, innerId: string | number) =>
@@ -160,35 +119,33 @@ export const commentKeys = {
   },
 }
 
-export const viewerKeys = {
+/** Constructors for account-scoped Article and Comment private-state query identities. */
+export const viewerQueryKeys = {
   all: ['viewer'] as const,
-  session: () => [...viewerKeys.all, 'session'] as const,
+  session: () => [...viewerQueryKeys.all, 'session'] as const,
   articleStatePrefix: (accountRef: string) =>
-    [...viewerKeys.all, accountRef, 'article-state'] as const,
-  articleStates: (accountRef: string, articleKeys: readonly string[]) =>
-    [...viewerKeys.articleStatePrefix(accountRef), [...articleKeys].sort()] as const,
-  matchesArticleState: (query: { queryKey: readonly unknown[] }, articleKey: string): boolean => {
-    const [domain, _accountRef, target, articleKeys] = query.queryKey
-    return (
-      domain === viewerKeys.all[0] &&
-      target === 'article-state' &&
-      Array.isArray(articleKeys) &&
-      articleKeys.includes(articleKey)
-    )
-  },
-  articleInteractionStates: (accountRef: string, articleKeys: readonly string[]) =>
-    [...viewerKeys.all, accountRef, 'article-interaction-state', [...articleKeys].sort()] as const,
+    [...viewerQueryKeys.all, accountRef, 'article-state'] as const,
+  articleStates: (accountRef: string, articlePathKeys: readonly string[]) =>
+    [...viewerQueryKeys.articleStatePrefix(accountRef), [...articlePathKeys].sort()] as const,
+  articleInteractionStatePrefix: (accountRef: string) =>
+    [...viewerQueryKeys.all, accountRef, 'article-interaction-state'] as const,
+  articleInteractionStates: (accountRef: string, articlePathKeys: readonly string[]) =>
+    [
+      ...viewerQueryKeys.articleInteractionStatePrefix(accountRef),
+      [...articlePathKeys].sort(),
+    ] as const,
   commentStatePrefix: (accountRef: string, articleKey: string) =>
-    [...viewerKeys.all, accountRef, 'comment-state', articleKey] as const,
+    [...viewerQueryKeys.all, accountRef, 'comment-state', articleKey] as const,
   commentStates: (accountRef: string, articleKey: string, commentInnerIds: readonly string[]) =>
     [
-      ...viewerKeys.commentStatePrefix(accountRef, articleKey),
+      ...viewerQueryKeys.commentStatePrefix(accountRef, articleKey),
       [...commentInnerIds].sort(),
     ] as const,
   commentSummary: (accountRef: string, articleKey: string) =>
-    [...viewerKeys.all, accountRef || 'anonymous', 'comment-summary', articleKey] as const,
+    [...viewerQueryKeys.all, accountRef || 'anonymous', 'comment-summary', articleKey] as const,
 }
 
+/** Constructors for serialized optimistic mutation lanes. */
 export const mutationKeys = {
   all: ['mutation'] as const,
   article: (articleKey: string, operation: string) =>
@@ -197,6 +154,7 @@ export const mutationKeys = {
     [...mutationKeys.all, 'comment', commentKey, operation] as const,
 }
 
+/** Constructors for visitor-analysis query identities. */
 export const visitorKeys = {
   all: ['visitor-location-map'] as const,
   locationMap: (community: string, locale: string) =>

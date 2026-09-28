@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { THREAD } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useActiveTag from '~/hooks/useActiveTag'
-import { articleKeys } from '~/query'
+import { articleQueryKeys } from '~/query'
 
 describe('useActiveTag', () => {
   it('returns activeTag from url slug', () => {
@@ -16,7 +16,7 @@ describe('useActiveTag', () => {
       community: { slug: 'acme' },
       queryClient,
     })
-    queryClient.setQueryData(articleKeys.tagGroups('acme', THREAD.POST), [
+    queryClient.setQueryData(articleQueryKeys.tagGroups('acme', THREAD.POST), [
       {
         id: 'g1',
         title: 'General',

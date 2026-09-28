@@ -1,6 +1,6 @@
 import { THREAD } from '~/const/thread'
 
-import { articleKeys, viewerKeys } from './key'
+import { articleQueryKeys, viewerQueryKeys } from './key'
 import { getQueryClient } from './queryClient'
 import { clearArticleViewAcks, readArticleViewAck } from './viewAck'
 import { trackArticleView } from './viewTracker'
@@ -45,7 +45,12 @@ describe('trackArticleView', () => {
 
   it('stores the acknowledgement and applies returned public/private state', async () => {
     const queryClient = getQueryClient()
-    const viewerKey = viewerKeys.articleStates('account:1', ['home:POST:42'])
+    const viewerKey = viewerQueryKeys.articleStates('account:1', ['home:POST:42'])
+    const statsKey = articleQueryKeys.stats('home', THREAD.POST, '42')
+    const batchKey = articleQueryKeys.statsBatch('home', THREAD.POST, ['42'])
+    const current = result().articleStats
+    queryClient.setQueryData(statsKey, { ...current, views: 10, viewsRevision: 2 })
+    queryClient.setQueryData(batchKey, [{ ...current, views: 10, viewsRevision: 2 }])
     queryClient.setQueryData(viewerKey, {})
     browserGraphQLRequest.mockResolvedValue({
       trackArticleView: result(),
@@ -57,7 +62,11 @@ describe('trackArticleView', () => {
       article: { community: 'home', innerId: '42', thread: THREAD.POST },
     })
     expect(readArticleViewAck('home:POST:42')).not.toBeNull()
-    expect(queryClient.getQueryData(articleKeys.stats('home', THREAD.POST, '42'))).toMatchObject({
+    expect(queryClient.getQueryData(statsKey)).toMatchObject({
+      views: 11,
+      viewsRevision: 3,
+    })
+    expect(queryClient.getQueryData<(typeof current)[]>(batchKey)?.[0]).toMatchObject({
       views: 11,
       viewsRevision: 3,
     })
@@ -67,7 +76,7 @@ describe('trackArticleView', () => {
   })
 
   it('retries the same Article without a client id', async () => {
-    browserGraphQLRequest.mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce({
+    browserGraphQLRequest.mockRejectedValueOnce(new TypeError('network')).mockResolvedValueOnce({
       trackArticleView: result(),
     })
 
@@ -75,6 +84,15 @@ describe('trackArticleView', () => {
 
     expect(browserGraphQLRequest).toHaveBeenCalledTimes(2)
     expect(browserGraphQLRequest.mock.calls[0][1]).toEqual(browserGraphQLRequest.mock.calls[1][1])
+  })
+
+  it('does not retry a deterministic request error', async () => {
+    browserGraphQLRequest.mockRejectedValueOnce(new Error('forbidden'))
+
+    await expect(
+      trackArticleView({ community: 'home', innerId: 42, thread: THREAD.POST }),
+    ).rejects.toThrow('forbidden')
+    expect(browserGraphQLRequest).toHaveBeenCalledTimes(1)
   })
 
   it('does not create an acknowledgement for a policy-excluded read', async () => {

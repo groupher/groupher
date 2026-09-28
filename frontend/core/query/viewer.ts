@@ -1,41 +1,42 @@
+/**
+ * Owns viewer-scoped query options and precise cache updates for private read state.
+ *
+ *   Article/Comment paths + accountRef
+ *     -> private GraphQL batch query
+ *     -> path-keyed viewer maps
+ *     -> mutation patch / hook composition
+ *
+ * ViewTracker-owned `viewerHasViewed` and Interactions-owned relation fields remain separate query
+ * owners. None of these values enter public SSR hydration or Article content responses.
+ */
 import { queryOptions, type QueryClient } from '@tanstack/react-query'
 
 import { graphql } from '~/graphql/authoring'
 import { browserGraphQLRequest } from '~/graphql/client'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
-import type { ArticleRefInput } from '~/lib/graphql/generated/graphql'
+import type { ArticlePathInput } from '~/lib/graphql/generated/graphql'
 import { sessionState } from '~/schemas/pages/user'
-import type { TCommentsState, TThread } from '~/spec'
+import type { TArticleViewerState, TCommentsState, TThread } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { articleRefKey } from './articleRef'
-import { viewerKeys } from './key'
-
-export type TArticleViewerState = {
-  articleKey: string
-  viewerHasViewed?: boolean
-  viewerHasUpvoted?: boolean
-  viewerHasCollected?: boolean
-  viewerEmotion?: string | null
-}
-
-export type TViewerArticleRef = ArticleRefInput
+import { articlePathKey, type TArticlePath } from './articlePath'
+import { markStale } from './invalidation'
+import { viewerQueryKeys } from './key'
 
 const articleViewerStates = graphql(`
-  query ArticleViewerStates($refs: [ArticleRefInput!]!) {
-    articleViewerStates(refs: $refs) {
+  query ArticleViewerStates($paths: [ArticlePathInput!]!) {
+    articleViewerStates(paths: $paths) {
       community
       thread
       innerId
       viewerHasViewed
-      viewerHasUpvoted
     }
   }
 `)
 
 const articleInteractionStates = graphql(`
-  query ArticleInteractionStates($refs: [ArticleRefInput!]!) {
-    articleInteractionStates(refs: $refs) {
+  query ArticleInteractionStates($paths: [ArticlePathInput!]!) {
+    articleInteractionStates(paths: $paths) {
       community
       thread
       innerId
@@ -48,7 +49,7 @@ const articleInteractionStates = graphql(`
 `)
 
 const commentViewerStates = graphql(`
-  query CommentViewerStates($article: ArticleRefInput!, $commentInnerIds: [ID!]!) {
+  query CommentViewerStates($article: ArticlePathInput!, $commentInnerIds: [ID!]!) {
     commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
       innerId
       viewerHasUpvoted
@@ -63,19 +64,55 @@ const commentViewerStates = graphql(`
 
 const viewerBatchSize = 100
 
-const normalizeArticleRefs = (articles: readonly TViewerArticleRef[]): TViewerArticleRef[] => {
-  const refs = new Map<string, TViewerArticleRef>()
+const normalizeArticlePaths = (articles: readonly TArticlePath[]): TArticlePath[] => {
+  const paths = new Map<string, TArticlePath>()
   for (const article of articles) {
     const normalized = {
       community: article.community.trim(),
       thread: article.thread,
       innerId: String(article.innerId),
-    } satisfies TViewerArticleRef
-    refs.set(articleRefKey(normalized), normalized)
+    } satisfies TArticlePath
+    paths.set(articlePathKey(normalized), normalized)
   }
-  return [...refs.entries()]
+  return [...paths.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([, article]) => article)
+}
+
+const articleStateQueryContains = (queryKey: readonly unknown[], articleKey: string): boolean => {
+  const [domain, _accountRef, target, articlePathKeys] = queryKey
+  return (
+    domain === viewerQueryKeys.all[0] &&
+    target === 'article-state' &&
+    Array.isArray(articlePathKeys) &&
+    articlePathKeys.includes(articleKey)
+  )
+}
+
+const articleInteractionStateQueryContains = (
+  queryKey: readonly unknown[],
+  articleKey: string,
+): boolean => {
+  const [domain, _accountRef, target, articlePathKeys] = queryKey
+  return (
+    domain === viewerQueryKeys.all[0] &&
+    target === 'article-interaction-state' &&
+    Array.isArray(articlePathKeys) &&
+    articlePathKeys.includes(articleKey)
+  )
+}
+
+/** Finds loaded private interaction batches for one account that contain the target Article path. */
+export const articleInteractionStateQueries = (
+  queryClient: QueryClient,
+  accountRef: string,
+  article: TArticlePath,
+) => {
+  const articleKey = articlePathKey(article)
+  return queryClient
+    .getQueryCache()
+    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountRef) })
+    .filter((query) => articleInteractionStateQueryContains(query.queryKey, articleKey))
 }
 
 const chunk = <T>(values: readonly T[], size: number): T[][] => {
@@ -91,17 +128,15 @@ const toViewerState = (article: {
   thread: string
   innerId: string | number
   viewerHasViewed?: boolean | null
-  viewerHasUpvoted?: boolean | null
 }): TArticleViewerState => {
-  const key = articleRefKey(article as TViewerArticleRef)
+  const key = articlePathKey(article as TArticlePath)
   return {
     articleKey: key,
     viewerHasViewed: article.viewerHasViewed ?? undefined,
-    viewerHasUpvoted: article.viewerHasUpvoted ?? undefined,
   }
 }
 
-/** Applies a committed mutation result to every active Article viewer-state batch. */
+/** Patches a committed ViewTracker result into every existing viewer batch containing its path. */
 export const cacheArticleViewedState = (
   queryClient: QueryClient,
   article: {
@@ -113,29 +148,30 @@ export const cacheArticleViewedState = (
 ): void => {
   const state = toViewerState(article)
 
-  queryClient
+  const queries = queryClient
     .getQueryCache()
-    .findAll({ queryKey: viewerKeys.all })
-    .filter((query) => viewerKeys.matchesArticleState(query, state.articleKey))
-    .forEach((query) => {
-      queryClient.setQueryData<Record<string, TArticleViewerState>>(query.queryKey, (current) => ({
-        ...current,
-        [state.articleKey]: {
-          ...current?.[state.articleKey],
-          ...state,
-        },
-      }))
-    })
+    .findAll({ queryKey: viewerQueryKeys.all })
+    .filter((query) => articleStateQueryContains(query.queryKey, state.articleKey))
+
+  for (const query of queries) {
+    queryClient.setQueryData<Record<string, TArticleViewerState>>(query.queryKey, (current) => ({
+      ...current,
+      [state.articleKey]: {
+        ...current?.[state.articleKey],
+        ...state,
+      },
+    }))
+  }
 }
 
 const fetchArticleViewerStates = async (
-  articles: readonly TViewerArticleRef[],
+  articles: readonly TArticlePath[],
   signal?: AbortSignal,
 ): Promise<Record<string, TArticleViewerState>> => {
-  const normalized = normalizeArticleRefs(articles)
+  const normalized = normalizeArticlePaths(articles)
   const responses = await Promise.all(
     chunk(normalized, viewerBatchSize).map((batch) =>
-      browserGraphQLRequest(articleViewerStates, { refs: batch }, { signal }),
+      browserGraphQLRequest(articleViewerStates, { paths: batch }, { signal }),
     ),
   )
   return Object.fromEntries(
@@ -156,23 +192,66 @@ export type TArticleInteractionState = {
   interactionRevision: number
   viewerHasUpvoted: boolean
   viewerHasCollected: boolean
-  viewerEmotion?: string | null
+  viewerEmotion?: TArticleViewerState['viewerEmotion']
+}
+
+/**
+ * Patches committed private Interaction state without allowing revision regression.
+ *
+ * Equal-revision field disagreement retains the current value and marks the query stale because it
+ * violates the owner revision contract; missing batches are never created as mutation side effects.
+ */
+export const cacheArticleInteractionState = (
+  queryClient: QueryClient,
+  accountRef: string,
+  state: TArticleInteractionState,
+): void => {
+  const queries = queryClient
+    .getQueryCache()
+    .findAll({ queryKey: viewerQueryKeys.articleInteractionStatePrefix(accountRef) })
+    .filter((query) => articleInteractionStateQueryContains(query.queryKey, state.articleKey))
+
+  for (const query of queries) {
+    const updatedAt = query.state.dataUpdatedAt
+    let conflict = false
+    queryClient.setQueryData<Record<string, TArticleInteractionState>>(
+      query.queryKey,
+      (current) => {
+        if (!current?.[state.articleKey]) return current
+        const existing = current[state.articleKey]
+        if (existing.interactionRevision > state.interactionRevision) return current
+        if (existing.interactionRevision === state.interactionRevision) {
+          const same =
+            existing.viewerHasUpvoted === state.viewerHasUpvoted &&
+            existing.viewerHasCollected === state.viewerHasCollected &&
+            existing.viewerEmotion === state.viewerEmotion
+          conflict = !same
+          return current
+        }
+        return { ...current, [state.articleKey]: state }
+      },
+      { updatedAt },
+    )
+    if (conflict) {
+      void markStale(queryClient, query.queryKey)
+    }
+  }
 }
 
 const fetchArticleInteractionStates = async (
-  articles: readonly TViewerArticleRef[],
+  articles: readonly TArticlePath[],
   signal?: AbortSignal,
 ): Promise<Record<string, TArticleInteractionState>> => {
-  const normalized = normalizeArticleRefs(articles)
+  const normalized = normalizeArticlePaths(articles)
   const responses = await Promise.all(
     chunk(normalized, viewerBatchSize).map((batch) =>
-      browserGraphQLRequest(articleInteractionStates, { refs: batch }, { signal }),
+      browserGraphQLRequest(articleInteractionStates, { paths: batch }, { signal }),
     ),
   )
   return Object.fromEntries(
     responses.flatMap((data) =>
       data.articleInteractionStates.map((article) => {
-        const key = articleRefKey(article as TViewerArticleRef)
+        const key = articlePathKey(article as TArticlePath)
         return [
           key,
           {
@@ -191,7 +270,7 @@ const fetchArticleInteractionStates = async (
 }
 
 const fetchCommentViewerStates = async (
-  article: ArticleRefInput,
+  article: ArticlePathInput,
   commentInnerIds: readonly string[],
   signal?: AbortSignal,
 ): Promise<TCommentViewerStates> => {
@@ -225,23 +304,20 @@ const fetchCommentViewerStates = async (
   return states
 }
 
-const articleStates = (accountRef: string, articles: readonly TViewerArticleRef[]) => {
-  const normalized = normalizeArticleRefs(articles)
+const articleStates = (accountRef: string, articles: readonly TArticlePath[]) => {
+  const normalized = normalizeArticlePaths(articles)
   return queryOptions({
-    queryKey: viewerKeys.articleStates(accountRef, normalized.map(articleRefKey)),
+    queryKey: viewerQueryKeys.articleStates(accountRef, normalized.map(articlePathKey)),
     queryFn: ({ signal }) => (accountRef ? fetchArticleViewerStates(normalized, signal) : {}),
     enabled: !!accountRef && normalized.length > 0,
     staleTime: 30_000,
   })
 }
 
-const articleInteractionStateOptions = (
-  accountRef: string,
-  articles: readonly TViewerArticleRef[],
-) => {
-  const normalized = normalizeArticleRefs(articles)
+const articleInteractionStateOptions = (accountRef: string, articles: readonly TArticlePath[]) => {
+  const normalized = normalizeArticlePaths(articles)
   return queryOptions({
-    queryKey: viewerKeys.articleInteractionStates(accountRef, normalized.map(articleRefKey)),
+    queryKey: viewerQueryKeys.articleInteractionStates(accountRef, normalized.map(articlePathKey)),
     queryFn: ({ signal }) => fetchArticleInteractionStates(normalized, signal),
     enabled: !!accountRef && normalized.length > 0,
     staleTime: 0,
@@ -251,18 +327,18 @@ const articleInteractionStateOptions = (
 
 const commentStates = (
   accountRef: string,
-  article: TViewerArticleRef,
+  article: TArticlePath,
   commentInnerIds: readonly string[],
 ) => {
   const normalizedArticle = {
     community: article.community.trim(),
     thread: article.thread,
     innerId: String(article.innerId),
-  } satisfies TViewerArticleRef
-  const articleKeyValue = articleRefKey(normalizedArticle)
+  } satisfies TArticlePath
+  const articleKeyValue = articlePathKey(normalizedArticle)
   const normalizedIds = [...new Set(commentInnerIds.map(String))].sort()
   return queryOptions({
-    queryKey: viewerKeys.commentStates(accountRef, articleKeyValue, normalizedIds),
+    queryKey: viewerQueryKeys.commentStates(accountRef, articleKeyValue, normalizedIds),
     queryFn: ({ signal }) =>
       accountRef ? fetchCommentViewerStates(normalizedArticle, normalizedIds, signal) : {},
     enabled: !!accountRef && normalizedIds.length > 0,
@@ -272,7 +348,7 @@ const commentStates = (
 
 const session = () =>
   queryOptions({
-    queryKey: viewerKeys.session(),
+    queryKey: viewerQueryKeys.session(),
     queryFn: ({ signal }) => browserGraphQLRequest(sessionState, {}, { signal }),
     staleTime: 30_000,
   })
@@ -284,7 +360,10 @@ const commentSummary = (
   innerId: string | number,
 ) =>
   queryOptions({
-    queryKey: viewerKeys.commentSummary(accountRef, articleRefKey({ community, thread, innerId })),
+    queryKey: viewerQueryKeys.commentSummary(
+      accountRef,
+      articlePathKey({ community, thread, innerId }),
+    ),
     queryFn: async ({ signal }) => {
       const data = await browserGraphQLRequest(
         commentsSchema.commentsState,
@@ -297,6 +376,7 @@ const commentSummary = (
     staleTime: 30_000,
   })
 
+/** Query-option constructors for session, Article private owners, and Comment viewer state. */
 export const viewerQueries = {
   session,
   articleStates,

@@ -54,6 +54,7 @@ const config: CodegenConfig = {
     'frontend/core/query/viewer.ts',
     'frontend/core/query/viewTracker.ts',
     'frontend/core/query/mutation/article.ts',
+    'frontend/core/query/mutation/article/schema.ts',
   ],
   pluckConfig: {
     globalGqlIdentifierName: [],
@@ -67,6 +68,11 @@ const config: CodegenConfig = {
   generates: {
     'frontend/core/lib/graphql/generated/': {
       preset: 'client',
+      config: {
+        scalars: {
+          DateTime: 'string',
+        },
+      },
       presetConfig: {
         fragmentMasking: false,
       },

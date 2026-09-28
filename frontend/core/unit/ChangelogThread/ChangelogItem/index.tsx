@@ -2,13 +2,13 @@ import type { FC } from 'react'
 
 import { CHANGELOG_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import type { TArticleListViewModel, TChangelog } from '~/spec'
+import type { TArticleState, TChangelog } from '~/spec'
 
 import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TChangelog>
+  viewModel: TArticleState<TChangelog>
 }
 
 const ChangelogItem: FC<TProps> = ({ viewModel }) => {

@@ -93,10 +93,9 @@ describe('article upvote receipts', () => {
     expect(
       receipt &&
         overlayArticleUpvoteReceiptOnViewerState(
-          'acct-a',
           { interactionRevision: 0 } as TArticleStats,
           { articleKey: 'home:POST:42', viewerEmotion: 'HEART' },
-          'home:POST:42',
+          receipt,
         ),
     ).toMatchObject({ viewerEmotion: null })
   })

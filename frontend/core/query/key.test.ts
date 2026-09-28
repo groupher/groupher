@@ -2,17 +2,17 @@ import { ARTICLE_CAT, ARTICLE_ORDER } from '~/const/gtd'
 import { THREAD } from '~/const/thread'
 
 import {
-  articleKeys,
+  articleQueryKeys,
   commentKeys,
   isCanonicalDefaultArticleFilter,
   normalizeArticleFilter,
-  viewerKeys,
+  viewerQueryKeys,
 } from './key'
 
 describe('query keys', () => {
   it('normalizes omitted, empty and default post filters to one canonical key', () => {
-    const minimal = articleKeys.posts({ community: 'home' })
-    const explicit = articleKeys.posts({
+    const minimal = articleQueryKeys.posts({ community: 'home' })
+    const explicit = articleQueryKeys.posts({
       community: 'home',
       page: 1,
       size: 20,
@@ -30,13 +30,13 @@ describe('query keys', () => {
   })
 
   it('keeps meaningful filters distinct with a fixed object shape', () => {
-    const filtered = articleKeys.posts({
+    const filtered = articleQueryKeys.posts({
       community: 'home',
       cat: ARTICLE_CAT.BUG,
       order: ARTICLE_ORDER.UPVOTES,
     })
 
-    expect(filtered).not.toEqual(articleKeys.posts({ community: 'home' }))
+    expect(filtered).not.toEqual(articleQueryKeys.posts({ community: 'home' }))
     expect(filtered[2]).toEqual({
       community: 'home',
       page: 1,
@@ -52,8 +52,11 @@ describe('query keys', () => {
   })
 
   it('normalizes multi-tag filters independently of caller order', () => {
-    const first = articleKeys.posts({ community: 'home', communityTags: ['react', 'ts'] })
-    const second = articleKeys.posts({ community: 'home', communityTags: ['ts', 'react', 'ts'] })
+    const first = articleQueryKeys.posts({ community: 'home', communityTags: ['react', 'ts'] })
+    const second = articleQueryKeys.posts({
+      community: 'home',
+      communityTags: ['ts', 'react', 'ts'],
+    })
 
     expect(first).toEqual(second)
   })
@@ -71,7 +74,7 @@ describe('query keys', () => {
   })
 
   it('scopes detail, comments and viewer state without secrets', () => {
-    expect(articleKeys.detail('home', THREAD.POST, 42)).toEqual([
+    expect(articleQueryKeys.detail('home', THREAD.POST, 42)).toEqual([
       'article',
       'detail',
       'home',
@@ -86,7 +89,7 @@ describe('query keys', () => {
       '42',
       { mode: 'REPLIES', page: 1 },
     ])
-    expect(viewerKeys.articleStates('viewer-1', ['post:2', 'post:1'])).toEqual([
+    expect(viewerQueryKeys.articleStates('viewer-1', ['post:2', 'post:1'])).toEqual([
       'viewer',
       'viewer-1',
       'article-state',
@@ -100,34 +103,5 @@ describe('query keys', () => {
 
     expect(commentKeys.matchesArticle(target, 'home', THREAD.POST, '42')).toBe(true)
     expect(commentKeys.matchesArticle(other, 'home', THREAD.POST, '42')).toBe(false)
-  })
-
-  it('keeps ArticleStats query-key matching inside the key owner', () => {
-    const batch = articleKeys.statsBatch('home', THREAD.POST, ['41', '42'])
-    const other = articleKeys.statsBatch('home', THREAD.POST, ['43'])
-
-    expect(articleKeys.matchesStatsBatch(batch, 'home', THREAD.POST, '42')).toBe(true)
-    expect(articleKeys.matchesStatsBatch(other, 'home', THREAD.POST, '42')).toBe(false)
-    expect(articleKeys.matchesStatsBatchScope(batch, 'home', THREAD.POST)).toBe(true)
-  })
-
-  it('matches article lists by canonical filter and thread family', () => {
-    expect(articleKeys.matchesArticleList(articleKeys.posts({ community: 'home' }), 'home')).toBe(
-      true,
-    )
-    expect(
-      articleKeys.matchesArticleList(
-        articleKeys.changelogs({ community: 'home' }),
-        'home',
-        THREAD.POST,
-      ),
-    ).toBe(false)
-    expect(
-      articleKeys.matchesArticleList(
-        articleKeys.changelogs({ community: 'home' }),
-        'home',
-        THREAD.CHANGELOG,
-      ),
-    ).toBe(true)
   })
 })

@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { THREAD } from '~/const/thread'
 import type { TComment } from '~/spec'
 
-import { commentKeys, viewerKeys } from '../key'
+import { commentKeys, viewerQueryKeys } from '../key'
 import useCommentUpvote from './useCommentUpvote'
 
 const mocks = vi.hoisted(() => ({ browserGraphQLRequest: vi.fn() }))
@@ -39,7 +39,7 @@ describe('useCommentUpvote', () => {
       defaultOptions: { mutations: { retry: false }, queries: { retry: false } },
     })
     const listKey = commentKeys.list('home', THREAD.POST, '42')
-    const viewerKey = viewerKeys.commentStates('alice', 'home:POST:42', ['1'])
+    const viewerKey = viewerQueryKeys.commentStates('alice', 'home:POST:42', ['1'])
     queryClient.setQueryData(listKey, { entries: [comment] })
     queryClient.setQueryData(viewerKey, {
       '1': { emotionFlags: {}, viewerHasUpvoted: false },

@@ -1,15 +1,12 @@
+import type { TArticlePath } from '../articlePath'
 import { commentKeys } from '../key'
-import type {
-  TArticleInvalidationRef,
-  TQueryInvalidationPlan,
-  TQueryInvalidationTarget,
-} from './types'
+import type { TQueryInvalidationPlan, TQueryInvalidationTarget } from './types'
 
 /** Invalidates the comment list for one article. */
-export const list = (ref: TArticleInvalidationRef): TQueryInvalidationTarget => ({
+export const list = (path: TArticlePath): TQueryInvalidationTarget => ({
   domain: 'comment',
   target: 'list',
-  ref,
+  path,
 })
 
 /** Resolves a comment invalidation target into query-key matchers. */
@@ -26,9 +23,9 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
         matches: (queryKey) =>
           commentKeys.matchesArticle(
             { queryKey },
-            target.ref.community,
-            target.ref.thread,
-            target.ref.innerId,
+            target.path.community,
+            target.path.thread,
+            target.path.innerId,
           ),
       },
     ],

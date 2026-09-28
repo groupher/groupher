@@ -12,7 +12,7 @@ describe('article view acknowledgements', () => {
     writeArticleViewAck('home:POST:42')
 
     expect(readArticleViewAck('home:POST:42')).toMatchObject({
-      articleRef: 'home:POST:42',
+      articleKey: 'home:POST:42',
     })
     expect(readArticleViewAck('home:POST:42')).not.toHaveProperty('eventId')
   })

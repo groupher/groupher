@@ -3,9 +3,8 @@ import type { Query, QueryClient } from '@tanstack/react-query'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment, TEmotionType, TThread, TUser } from '~/spec'
 
-import { invalidate, QueryInvalidation } from '../../invalidation'
-import { commentKeys, viewerKeys } from '../../key'
-import type { TArticlePath } from '../article/cache'
+import type { TArticlePath } from '../../articlePath'
+import { commentKeys, viewerQueryKeys } from '../../key'
 import type {
   TOptimisticChange,
   TOptimisticPlan,
@@ -313,7 +312,7 @@ export const patchCommentViewerChanges = (
 ): TOptimisticChange[] => {
   if (!context.accountRef) return []
   const changes: TOptimisticChange[] = []
-  const prefix = viewerKeys.commentStatePrefix(context.accountRef, target.articleKey)
+  const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
   for (const { queryKey } of queryClient.getQueryCache().findAll({ queryKey: prefix })) {
     const previous = queryClient.getQueryData<TCommentViewerStates>(queryKey)
     const current = previous?.[target.commentInnerId]
@@ -438,23 +437,14 @@ export const insertPendingReply = (
   }))
 }
 
-/** Replaces a pending comment and invalidates the canonical ArticleStats entity. */
+/** Replaces a pending comment after its mutation has applied committed ArticleStats. */
 export const reconcileCreatedComment = (
   queryClient: QueryClient,
   scope: TCommentScope,
   pendingInnerId: string | number,
   confirmed: TComment,
-  article: { community: string; thread: TThread; innerId: string },
 ): void => {
   patchCommentEverywhere(queryClient, scope, pendingInnerId, () => confirmed)
-  void invalidate(
-    queryClient,
-    QueryInvalidation.article.stats({
-      community: article.community,
-      thread: article.thread,
-      innerId: article.innerId,
-    }),
-  )
 }
 
 /** Updates viewer-owned comment flags without replacing public aggregates. */
@@ -466,7 +456,7 @@ export const patchCommentViewerState = (
   updater: (state: TCommentViewerStates[string]) => TCommentViewerStates[string],
 ): void => {
   queryClient.setQueriesData<TCommentViewerStates>(
-    { queryKey: viewerKeys.commentStatePrefix(accountRef, articleKey) },
+    { queryKey: viewerQueryKeys.commentStatePrefix(accountRef, articleKey) },
     (states) => {
       if (!states) return states
       const key = String(innerId)
@@ -539,7 +529,9 @@ export const commentTargetQueries = (
   ...(context.accountRef
     ? context.queryClient
         .getQueryCache()
-        .findAll({ queryKey: viewerKeys.commentStatePrefix(context.accountRef, target.articleKey) })
+        .findAll({
+          queryKey: viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey),
+        })
         .map(({ queryKey }) => ({ queryKey, exact: true }))
     : []),
 ]

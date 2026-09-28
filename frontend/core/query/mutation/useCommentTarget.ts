@@ -5,6 +5,7 @@ import { useMemo } from 'react'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TComment } from '~/spec'
 
+import { articlePathKey, articlePathOf } from '../articlePath'
 import type { TCommentTarget } from './comment'
 
 /** Builds the article-scoped target shared by Comment reaction Hooks. */
@@ -16,14 +17,14 @@ export default function useCommentTarget(comment: TComment): TCommentTarget {
   const commentInnerId = String(comment.innerId)
 
   return useMemo(() => {
-    const articlePath = { community, thread, innerId: articleInnerId }
+    const articlePath = articlePathOf(article)
     return {
       comment,
       articlePath,
-      articleKey: `${community}:${thread}:${articleInnerId}`,
+      articleKey: articlePathKey(articlePath),
       commentInnerId,
       commentPath: { article: articlePath, innerId: commentInnerId },
       scope: { community, thread, articleInnerId },
     }
-  }, [articleInnerId, comment, commentInnerId, community, thread])
+  }, [article, articleInnerId, comment, commentInnerId, community, thread])
 }

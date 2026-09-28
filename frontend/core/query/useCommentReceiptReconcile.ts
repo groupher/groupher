@@ -11,8 +11,7 @@ import { getAccountRef } from '~/stores/account/accountRef'
 import useAccount from '~/stores/account/hooks'
 
 import { Q } from './client'
-import { invalidate, QueryInvalidation } from './invalidation'
-import { viewerKeys } from './key'
+import { viewerQueryKeys } from './key'
 import { patchCommentEverywhere, type TCommentScope } from './mutation/comment'
 import {
   clearCommentReactionReceipt,
@@ -29,7 +28,7 @@ const mergeViewerState = (
   comment: TComment,
 ): void => {
   queryClient.setQueriesData<TCommentViewerStates>(
-    { queryKey: viewerKeys.commentStatePrefix(accountRef, articleKey) },
+    { queryKey: viewerQueryKeys.commentStatePrefix(accountRef, articleKey) },
     (states) => {
       if (!states) return states
       const emotionFlags = Object.fromEntries(
@@ -117,15 +116,6 @@ export default function useCommentReceiptReconcile(article: TArticle | null | un
   useEffect(() => {
     if (!accountRef || !scope || !query.data) return
     const confirmedArticle = query.data.article
-    void invalidate(
-      queryClient,
-      QueryInvalidation.article.stats({
-        community: scope.community,
-        thread: scope.thread,
-        innerId: scope.articleInnerId,
-      }),
-    )
-
     for (const [commentRef, rawComment] of Object.entries(query.data.comments)) {
       const reactionReceipt = receipts.reactionByRef.get(commentRef)
       const feedReceipt = receipts.feedByRef.get(commentRef)

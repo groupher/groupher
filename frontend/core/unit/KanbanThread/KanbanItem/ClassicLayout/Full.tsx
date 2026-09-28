@@ -11,7 +11,7 @@ import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
-import type { TArticleListViewModel } from '~/spec'
+import type { TArticleState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -21,7 +21,7 @@ import Upvote from '~/unit/Upvote'
 import useSalon from '../salon/classic_layout/full'
 
 type TProps = {
-  viewModel: TArticleListViewModel
+  viewModel: TArticleState
 }
 
 const KanbanItem: FC<TProps> = ({ viewModel }) => {

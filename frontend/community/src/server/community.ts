@@ -1,3 +1,14 @@
+/**
+ * Implements Community's server-function boundary for public GraphQL reads.
+ *
+ *   TanStack route loader
+ *     -> typed server function
+ *     -> Phoenix GraphQL + public cache headers
+ *     -> normalized public DTO for hydration
+ *
+ * Viewer-private state never crosses this SSR boundary. ArticleStats uses the same normalizer as
+ * browser and mutation paths before entering the shared Query cache.
+ */
 import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 import { GROUPHER_COMMUNITY_SLUG_HEADER } from '@groupher/contracts/headers'
 import { createServerFn } from '@tanstack/react-start'
@@ -6,6 +17,7 @@ import { getRequest } from '@tanstack/react-start/server'
 import { THREAD } from '~/const/thread'
 import { CACHE_TAG } from '~/constant/cache'
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
+import { normalizeArticleStats } from '~/query/articleStatsNormalize'
 import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
 import { changelog, pagedChangelogs } from '~/schemas/pages/changelog'
 import { pagedComments } from '~/schemas/pages/comment'
@@ -38,6 +50,7 @@ export type TCommunityShell = {
   wallpaper: ReturnType<typeof parseWallpaper>
 }
 
+/** Loads the request-scoped community header used by every public Community server function. */
 export const loadCommunityRequestContext = createServerFn({ method: 'GET', strict: false }).handler(
   async () => {
     const request = getRequest()
@@ -113,7 +126,7 @@ const loadArticleStats = createServerFn({ method: 'GET', strict: false })
       thread: data.thread,
       innerIds: data.innerIds,
     })
-    return result.data?.articleStats ?? []
+    return (result.data?.articleStats ?? []).map(normalizeArticleStats)
   })
 
 const loadChangelogs = createServerFn({ method: 'GET', strict: false })

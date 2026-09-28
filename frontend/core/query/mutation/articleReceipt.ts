@@ -1,4 +1,16 @@
+/**
+ * Protects a confirmed Article upvote viewer state while read projections catch up.
+ *
+ *   successful upvote payload private state
+ *     -> account/path-scoped session receipt
+ *     -> viewer-state overlay when receipt revision is newer
+ *     -> clear after public and private revisions catch up or TTL expires
+ *
+ * The receipt records the private InteractionState revision, not a separately read ArticleStats
+ * revision. It is a cache-convergence aid and never represents the domain fact itself.
+ */
 import { CONFIRMED_WRITE_RECEIPT_TTL_MS } from '~/constant/cache'
+import type { EmotionType } from '~/lib/graphql/generated/graphql'
 import type { TArticleStats, TArticleViewerState } from '~/spec'
 
 import {
@@ -15,7 +27,7 @@ const storagePrefix = 'groupher:article-upvote-receipt:'
 type TArticleReceiptViewerState = {
   viewerHasUpvoted: boolean
   viewerHasCollected: boolean | null
-  viewerEmotion: string | null
+  viewerEmotion: EmotionType | null
 }
 
 export type TArticleUpvoteReceipt = {
@@ -36,7 +48,7 @@ type TArticleUpvoteConfirmation = {
   viewerHasUpvoted: boolean
   interactionRevision?: number
   viewerHasCollected?: boolean | null
-  viewerEmotion?: string | null
+  viewerEmotion?: EmotionType | null
 }
 
 const storageKey = (accountRef: string, entityKey: string): string =>
@@ -45,7 +57,7 @@ const storageKey = (accountRef: string, entityKey: string): string =>
 const validReceipt = (receipt: TArticleUpvoteReceipt): boolean =>
   Boolean(receipt.accountRef && receipt.entityKey && receipt.viewerState)
 
-/** Reads one valid account-scoped Article reaction confirmation. */
+/** Reads one account/path-scoped confirmation and removes invalid or expired storage. */
 export const readArticleUpvoteReceipt = (
   accountRef: string | null,
   entityKey: string,
@@ -59,7 +71,7 @@ export const readArticleUpvoteReceipt = (
   )
 }
 
-/** Replaces an Article slot only when the confirmed reaction revision is not older. */
+/** Writes the latest confirmed private state without replacing a newer receipt revision. */
 export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmation): void => {
   const { accountRef, entityKey, interactionRevision } = confirmation
   const existing = readArticleUpvoteReceipt(accountRef, entityKey)
@@ -92,17 +104,17 @@ export const writeArticleUpvoteReceipt = (confirmation: TArticleUpvoteConfirmati
   writeSessionReceipt(storageKey(accountRef, entityKey), receipt)
 }
 
-/** Removes the private viewer confirmation after ViewerState has caught up. */
+/** Removes one confirmation after public and private projections have caught up. */
 export const clearArticleUpvoteReceipt = (accountRef: string | null, entityKey: string): void => {
   if (accountRef) removeSessionReceipt(storageKey(accountRef, entityKey))
 }
 
-/** Clears every Article reaction confirmation owned by one account. */
+/** Clears every Article upvote confirmation at an account/session boundary. */
 export const clearArticleUpvoteReceipts = (accountRef: string | null): void => {
   if (accountRef) clearSessionReceipts(`${storagePrefix}${accountRef}:`)
 }
 
-/** Decides whether the private viewer confirmation still needs a public refetch. */
+/** Returns whether a receipt is newer than the public Interaction owner snapshot. */
 export const isArticleUpvoteReceiptNewer = (
   stats: TArticleStats | null | undefined,
   receipt: TArticleUpvoteReceipt | null,
@@ -115,14 +127,12 @@ export const isArticleUpvoteReceiptNewer = (
   return revision > articleRevision
 }
 
-/** Applies a confirmed reaction receipt to the separate private viewer owner. */
+/** Overlays confirmed private relation fields only while the public revision is still older. */
 export const overlayArticleUpvoteReceiptOnViewerState = (
-  accountRef: string | null,
   stats: TArticleStats | null | undefined,
   viewerState: TArticleViewerState,
-  entityKey: string,
+  receipt: TArticleUpvoteReceipt | null,
 ): TArticleViewerState => {
-  const receipt = readArticleUpvoteReceipt(accountRef, entityKey)
   return isArticleUpvoteReceiptNewer(stats, receipt)
     ? {
         ...viewerState,

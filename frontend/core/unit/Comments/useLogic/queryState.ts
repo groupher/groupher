@@ -5,6 +5,7 @@ import { useSnapshot } from 'valtio'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { gatherCommentViewerIds, mergeCommentViewerState } from '~/lib/commentViewerState'
 import { Q } from '~/query'
+import { articlePathKey, articlePathOf } from '~/query/articlePath'
 import {
   overlayCommentReactionReceipt,
   readCommentReactionReceipts,
@@ -37,11 +38,7 @@ export default function useCommentQueryState() {
   const viewerQuery = useQuery(
     Q.viewer.commentStates(
       account.accountRef || getAccountRef(account.user) || '',
-      {
-        community: article.community.slug,
-        thread: article.meta.thread,
-        innerId: String(article.innerId),
-      },
+      articlePathOf(article),
       query.data ? gatherCommentViewerIds(query.data as TPagedComments) : [],
     ),
   )
@@ -56,7 +53,7 @@ export default function useCommentQueryState() {
   useCommentReceiptReconcile(article)
   const data = useMemo(() => {
     if (!query.data) return query.data
-    const articleKey = `${article.community.slug}:${article.meta.thread}:${String(article.innerId)}`
+    const articleKey = articlePathKey(articlePathOf(article))
     const reactionReceipts = new Map(
       readCommentReactionReceipts(
         account.accountRef || getAccountRef(account.user),

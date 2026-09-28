@@ -3,7 +3,7 @@ import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TEmotionRawType, TEmotionType } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { viewerKeys } from '../../key'
+import { viewerQueryKeys } from '../../key'
 import { writeCommentReactionReceipt } from '../commentReactionReceipt'
 import type { TOperationContext, TReadOperationContext } from '../optimistic/types'
 import {
@@ -25,7 +25,7 @@ export const commentUpvoteOperation = {
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
   read: (context: TReadOperationContext, target: TCommentTarget): boolean => {
     if (context.accountRef) {
-      const prefix = viewerKeys.commentStatePrefix(context.accountRef, target.articleKey)
+      const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
       for (const { queryKey } of context.queryClient
         .getQueryCache()
         .findAll({ queryKey: prefix })) {
@@ -101,7 +101,7 @@ export const commentUpvoteOperation = {
         }),
       )
     }
-    if (context.accountRef && result.reactionOutcome !== 'unchanged') {
+    if (context.accountRef && result.reactionOutcome !== 'UNCHANGED') {
       writeCommentReactionReceipt({
         commandId: context.commandId,
         accountRef: context.accountRef,
@@ -130,7 +130,7 @@ export const commentEmotionOperation = {
   queueKey: (target: TCommentEmotionTarget) => commentOperationQueueKey(target),
   read: (context: TReadOperationContext, target: TCommentEmotionTarget): boolean => {
     if (context.accountRef) {
-      const prefix = viewerKeys.commentStatePrefix(context.accountRef, target.articleKey)
+      const prefix = viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey)
       for (const { queryKey } of context.queryClient
         .getQueryCache()
         .findAll({ queryKey: prefix })) {
@@ -214,7 +214,7 @@ export const commentEmotionOperation = {
         }),
       )
     }
-    if (context.accountRef && result.reactionOutcome !== 'unchanged') {
+    if (context.accountRef && result.reactionOutcome !== 'UNCHANGED') {
       writeCommentReactionReceipt({
         commandId: context.commandId,
         accountRef: context.accountRef,

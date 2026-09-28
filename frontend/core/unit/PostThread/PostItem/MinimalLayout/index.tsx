@@ -4,7 +4,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import useArticleUpvote from '~/query/mutation/useArticleUpvote'
-import type { TArticleListViewModel, TPost } from '~/spec'
+import type { TArticleState, TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
 
 import ArticlePinLabel from '../../ArticlePinLabel'
@@ -13,7 +13,7 @@ import Footer from './Footer'
 import Header from './Header'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TPost>
+  viewModel: TArticleState<TPost>
 }
 
 const DigestView: FC<TProps> = ({ viewModel }) => {

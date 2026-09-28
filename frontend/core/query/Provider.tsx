@@ -5,7 +5,7 @@ import { type ReactNode, useEffect } from 'react'
 
 import { AUTH_EVENT, clearAuthState, sessionChannel } from '~/auth'
 
-import { viewerKeys } from './key'
+import { viewerQueryKeys } from './key'
 import { getQueryClient } from './queryClient'
 
 const SessionQueryBoundary = ({ children }: { children: ReactNode }) => {
@@ -21,7 +21,7 @@ const SessionQueryBoundary = ({ children }: { children: ReactNode }) => {
         return
       }
 
-      void queryClient.removeQueries({ queryKey: viewerKeys.all })
+      void queryClient.removeQueries({ queryKey: viewerQueryKeys.all })
       if (type !== AUTH_EVENT.LOGIN) clearAuthState()
     }
 

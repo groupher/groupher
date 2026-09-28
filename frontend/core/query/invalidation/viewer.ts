@@ -1,4 +1,4 @@
-import { viewerKeys } from '../key'
+import { viewerQueryKeys } from '../key'
 import type { TQueryInvalidationPlan, TQueryInvalidationTarget } from './types'
 
 const prefix = (key: readonly unknown[]) => (queryKey: readonly unknown[]) =>
@@ -25,8 +25,8 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
 
   const key =
     target.target === 'article-state'
-      ? viewerKeys.articleStatePrefix(target.accountRef)
-      : viewerKeys.commentStatePrefix(target.accountRef, target.articleKey)
+      ? viewerQueryKeys.articleStatePrefix(target.accountRef)
+      : viewerQueryKeys.commentStatePrefix(target.accountRef, target.articleKey)
 
   return {
     matches: [{ domain: target.domain, target: target.target, matches: prefix(key) }],

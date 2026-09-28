@@ -4,7 +4,6 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { THREAD } from '~/const/thread'
 import ArticleQueryProvider from '~/query/ArticleQueryProvider'
-import { cacheArticleStatsEntities } from '~/query/articleStats'
 import DocThread from '~/unit/DocThread'
 
 export const Route = createFileRoute('/$community/doc/$id/$slug')({
@@ -14,10 +13,9 @@ export const Route = createFileRoute('/$community/doc/$id/$slug')({
       context.queryClient.ensureQueryData(communityQueries.doc(params.community, params.id)),
     ])
     if (!doc) throw notFound()
-    const stats = await context.queryClient.ensureQueryData(
-      communityQueries.stats(params.community, THREAD.DOC, [params.id]),
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.DOC, params.id),
     )
-    cacheArticleStatsEntities(context.queryClient, stats)
     return { doc }
   },
   head: ({ loaderData, params, matches }) => ({

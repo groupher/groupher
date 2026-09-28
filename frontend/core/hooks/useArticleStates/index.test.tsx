@@ -3,9 +3,13 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
 import { THREAD } from '~/const/thread'
-import { articleKeys, viewerKeys } from '~/query'
+import { articleQueryKeys, viewerQueryKeys } from '~/query'
+import {
+  readArticleUpvoteReceipt,
+  writeArticleUpvoteReceipt,
+} from '~/query/mutation/articleReceipt'
 import { readArticleViewAck, writeArticleViewAck } from '~/query/viewAck'
-import type { TArticle, TArticleStats } from '~/spec'
+import type { TArticle, TArticleStats, TUser } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 
 import useArticleStates from '.'
@@ -33,12 +37,10 @@ const stats = (views: number, overrides: Partial<TArticleStats> = {}): TArticleS
   ...overrides,
 })
 
-const wrapperFor = (queryClient: QueryClient) => {
+const wrapperFor = (queryClient: QueryClient, user: TUser | null = null) => {
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <AccountStoreProvider initData={{ loading: false, user: null }}>
-        {children}
-      </AccountStoreProvider>
+      <AccountStoreProvider initData={{ loading: false, user }}>{children}</AccountStoreProvider>
     </QueryClientProvider>
   )
 }
@@ -46,14 +48,13 @@ const wrapperFor = (queryClient: QueryClient) => {
 describe('useArticleStates', () => {
   beforeEach(() => window.sessionStorage.clear())
 
-  it('uses entity stats and applies one shared view acknowledgement overlay', async () => {
+  it('uses the batch stats owner and applies one shared view acknowledgement overlay', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     })
     const key = 'home:POST:42'
-    queryClient.setQueryData(articleKeys.statsBatch('home', THREAD.POST, ['42']), [stats(3)])
-    queryClient.setQueryData(articleKeys.stats('home', THREAD.POST, '42'), stats(4))
-    queryClient.setQueryData(viewerKeys.articleStates('', [key]), {
+    queryClient.setQueryData(articleQueryKeys.statsBatch('home', THREAD.POST, ['42']), [stats(3)])
+    queryClient.setQueryData(viewerQueryKeys.articleStates('', [key]), {
       [key]: { articleKey: key, viewerHasViewed: false },
     })
     writeArticleViewAck(key)
@@ -62,11 +63,14 @@ describe('useArticleStates', () => {
       wrapper: wrapperFor(queryClient),
     })
 
-    expect(result.current[0]?.stats?.views).toBe(4)
+    expect(result.current[0]?.stats?.views).toBe(3)
     expect(result.current[0]?.viewerState.viewerHasViewed).toBe(true)
+    expect(
+      queryClient.getQueryState(articleQueryKeys.stats('home', THREAD.POST, '42')),
+    ).toBeUndefined()
 
     act(() => {
-      queryClient.setQueryData(viewerKeys.articleStates('', [key]), {
+      queryClient.setQueryData(viewerQueryKeys.articleStates('', [key]), {
         [key]: { articleKey: key, viewerHasViewed: true },
       })
     })
@@ -74,7 +78,7 @@ describe('useArticleStates', () => {
     await waitFor(() => expect(readArticleViewAck(key)).toBeNull())
   })
 
-  it('groups multiple batches while preserving input order and entity precedence', () => {
+  it('groups multiple real batches while preserving input order', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     })
@@ -89,20 +93,90 @@ describe('useArticleStates', () => {
       meta: { thread: THREAD.CHANGELOG },
     } as TArticle
 
-    queryClient.setQueryData(articleKeys.statsBatch('home', THREAD.POST, ['42', '7']), [
+    queryClient.setQueryData(articleQueryKeys.statsBatch('home', THREAD.POST, ['42', '7']), [
       stats(3),
       stats(7, { innerId: '7' }),
     ])
-    queryClient.setQueryData(articleKeys.statsBatch('acme', THREAD.CHANGELOG, ['9']), [
+    queryClient.setQueryData(articleQueryKeys.statsBatch('acme', THREAD.CHANGELOG, ['9']), [
       stats(9, { community: 'acme', innerId: '9', thread: THREAD.CHANGELOG }),
     ])
-    queryClient.setQueryData(articleKeys.stats('home', THREAD.POST, '42'), stats(4))
-
     const { result } = renderHook(() => useArticleStates([third, article, second]), {
       wrapper: wrapperFor(queryClient),
     })
 
-    expect(result.current.map(({ article: item }) => item.innerId)).toEqual(['9', '42', '7'])
-    expect(result.current.map(({ stats: item }) => item?.views)).toEqual([9, 4, 7])
+    expect(result.current.map(({ content }) => content.innerId)).toEqual(['9', '42', '7'])
+    expect(result.current.map(({ stats: item }) => item?.views)).toEqual([9, 3, 7])
+    expect(
+      queryClient.getQueryState(articleQueryKeys.stats('home', THREAD.POST, '42')),
+    ).toBeUndefined()
+  })
+
+  it('re-reads acknowledgements and receipts written after mount', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
+    })
+    const accountRef = 'alice'
+    const key = 'home:POST:42'
+    const statsKey = articleQueryKeys.statsBatch('home', THREAD.POST, ['42'])
+    const viewerKey = viewerQueryKeys.articleStates(accountRef, [key])
+    const interactionKey = viewerQueryKeys.articleInteractionStates(accountRef, [key])
+    const interactionState = {
+      articleKey: key,
+      community: 'home',
+      thread: THREAD.POST,
+      innerId: '42',
+      interactionRevision: 0,
+      viewerHasUpvoted: false,
+      viewerHasCollected: false,
+      viewerEmotion: null,
+    }
+
+    queryClient.setQueryData(statsKey, [stats(3)])
+    queryClient.setQueryData(viewerKey, {
+      [key]: { articleKey: key, viewerHasViewed: false },
+    })
+    queryClient.setQueryData(interactionKey, { [key]: interactionState })
+
+    const { result } = renderHook(() => useArticleStates([article]), {
+      wrapper: wrapperFor(queryClient, { accountRef, login: accountRef } as TUser),
+    })
+
+    expect(result.current[0]?.viewerState.viewerHasViewed).toBe(false)
+    expect(result.current[0]?.viewerState.viewerHasUpvoted).toBe(false)
+
+    act(() => {
+      writeArticleViewAck(key)
+      writeArticleUpvoteReceipt({
+        accountRef,
+        entityKey: key,
+        commandId: 'confirmed-after-mount',
+        interactionRevision: 2,
+        viewerHasUpvoted: true,
+      })
+      queryClient.setQueryData(statsKey, [stats(4, { interactionRevision: 1 })])
+      queryClient.setQueryData(interactionKey, {
+        [key]: { ...interactionState, interactionRevision: 1 },
+      })
+    })
+
+    await waitFor(() => {
+      expect(result.current[0]?.viewerState.viewerHasViewed).toBe(true)
+      expect(result.current[0]?.viewerState.viewerHasUpvoted).toBe(true)
+    })
+
+    act(() => {
+      queryClient.setQueryData(statsKey, [stats(5, { interactionRevision: 2 })])
+      queryClient.setQueryData(viewerKey, {
+        [key]: { articleKey: key, viewerHasViewed: true },
+      })
+      queryClient.setQueryData(interactionKey, {
+        [key]: { ...interactionState, interactionRevision: 2, viewerHasUpvoted: true },
+      })
+    })
+
+    await waitFor(() => {
+      expect(readArticleViewAck(key)).toBeNull()
+      expect(readArticleUpvoteReceipt(accountRef, key)).toBeNull()
+    })
   })
 })

@@ -7,7 +7,7 @@
 import type { FC } from 'react'
 
 import { POST_LAYOUT } from '~/const/layout'
-import type { TArticleListViewModel, TPost, TPostLayout } from '~/spec'
+import type { TArticleState, TPost, TPostLayout } from '~/spec'
 
 import CoverLayout from './CoverLayout'
 import MasonryLayout from './MasonryLayout'
@@ -16,7 +16,7 @@ import PHLayout from './PHLayout'
 import QuoraLayout from './QuoraLayout'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TPost>
+  viewModel: TArticleState<TPost>
   isMobilePreview?: boolean
   layout?: TPostLayout
 }

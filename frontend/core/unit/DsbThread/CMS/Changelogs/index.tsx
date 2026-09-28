@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 
 import { getArticleRowId } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
-import type { TArticleListViewModel } from '~/spec'
+import type { TArticleState } from '~/spec'
 
 import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
 import CmsDataTable from '../Table/CmsDataTable'
@@ -22,7 +22,7 @@ export default function Changelogs() {
 
   const data = [...pagedChangelogs.entries]
 
-  const columns = useMemo<ColumnDef<TArticleListViewModel, unknown>[]>(() => {
+  const columns = useMemo<ColumnDef<TArticleState, unknown>[]>(() => {
     return [
       {
         id: 'title',
@@ -116,7 +116,7 @@ export default function Changelogs() {
         }}
       />
 
-      <CmsDataTable<TArticleListViewModel>
+      <CmsDataTable<TArticleState>
         data={data}
         columns={columns}
         loading={loading}

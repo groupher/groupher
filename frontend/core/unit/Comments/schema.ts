@@ -55,12 +55,12 @@ const pagedCommentReplies = graphql(`
 const createComment = graphql(`
   mutation CreateComment($article: ArticlePathInput!, $body: String!, $commandId: ID!) {
     createComment(article: $article, body: $body, commandId: $commandId) {
+      commandId
       comment {
         ...CommentFields
       }
-      article {
-        innerId
-        commentsRevision
+      articleStats {
+        ...ArticleStatsFields
       }
     }
   }
@@ -69,15 +69,16 @@ const createComment = graphql(`
 const updateComment = graphql(`
   mutation UpdateComment($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
     updateComment(comment: $comment, body: $body, commandId: $commandId) {
-      innerId
-      bodyHtml
-      replyToComment {
+      commandId
+      comment {
         innerId
+        bodyHtml
+        replyToComment {
+          innerId
+        }
       }
-      article {
-        innerId
-        thread
-        commentsRevision
+      articleStats {
+        ...ArticleStatsFields
       }
     }
   }
@@ -112,7 +113,7 @@ const oneComment = graphql(`
 `)
 
 const reconcileComments = graphql(`
-  query ReconcileComments($article: ArticleRefInput!, $commentInnerIds: [ID!]!) {
+  query ReconcileComments($article: ArticlePathInput!, $commentInnerIds: [ID!]!) {
     commentReconcileStates(article: $article, commentInnerIds: $commentInnerIds) {
       article {
         innerId
@@ -136,15 +137,15 @@ const reconcileComments = graphql(`
 const replyComment = graphql(`
   mutation ReplyComment($comment: CommentPathInput!, $body: String!, $commandId: ID!) {
     replyComment(comment: $comment, body: $body, commandId: $commandId) {
+      commandId
       comment {
         ...CommentFields
         replyToComment {
           ...CommentFields
         }
       }
-      article {
-        innerId
-        commentsRevision
+      articleStats {
+        ...ArticleStatsFields
       }
     }
   }
@@ -153,11 +154,12 @@ const replyComment = graphql(`
 const deleteComment = graphql(`
   mutation DeleteComment($comment: CommentPathInput!, $commandId: ID!) {
     deleteComment(comment: $comment, commandId: $commandId) {
-      innerId
-      article {
-        thread
+      commandId
+      comment {
         innerId
-        commentsRevision
+      }
+      articleStats {
+        ...ArticleStatsFields
       }
     }
   }

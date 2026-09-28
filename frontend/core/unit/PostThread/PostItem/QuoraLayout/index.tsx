@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import type { TArticleListViewModel, TPost } from '~/spec'
+import type { TArticleState, TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
@@ -11,7 +11,7 @@ import Footer from './Footer'
 import Header from './Header'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TPost>
+  viewModel: TArticleState<TPost>
 }
 
 const PostItem: FC<TProps> = ({ viewModel }) => {

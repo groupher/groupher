@@ -125,7 +125,6 @@ const featureDocuments: Record<string, Record<string, SchemaValue>> = {
     communityTagStats: PostThreadSchema.communityTagStats,
     pagedPosts: PostThreadSchema.getPagedArticlesSchema(THREAD_PATH.POST),
     pagedChangelogs: PostThreadSchema.getPagedArticlesSchema(THREAD_PATH.CHANGELOG),
-    freshPost: PostThreadSchema.getArticleFreshSchema(),
   },
   richEditor: RichEditorSchema,
   tagSetting: TagSettingSchema,

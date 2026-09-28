@@ -1,8 +1,20 @@
+/**
+ * Resolves typed Article invalidation targets into precise TanStack Query matches.
+ *
+ *   domain invalidation target
+ *     -> Article path/list scope matcher
+ *     -> existing detail, list, or stats query keys
+ *     -> shared invalidation executor
+ *
+ * Matchers stay private here; mutation-time cache patching is owned by `articleStatsCache`.
+ */
+import { THREAD } from '~/const/thread'
 import type { TThread } from '~/spec'
 
-import { articleKeys } from '../key'
+import type { TArticlePath } from '../articlePath'
+import { articleStatsCache } from '../articleStats'
+import { articleQueryKeys } from '../key'
 import type {
-  TArticleInvalidationRef,
   TArticleListScope,
   TQueryInvalidationPlan,
   TQueryInvalidationTarget,
@@ -12,11 +24,35 @@ import type {
 const prefixMatches = (queryKey: readonly unknown[], prefix: readonly unknown[]): boolean =>
   prefix.every((part, index) => queryKey[index] === part)
 
-const statsBatchContains = (ref: TArticleInvalidationRef) => (queryKey: readonly unknown[]) =>
-  articleKeys.matchesStatsBatch(queryKey, ref.community, ref.thread, ref.innerId)
+const isStatsBatch = (queryKey: readonly unknown[]): boolean =>
+  queryKey[0] === articleQueryKeys.all[0] &&
+  queryKey[1] === 'article-stats' &&
+  typeof queryKey[2] === 'string' &&
+  typeof queryKey[3] === 'string' &&
+  Array.isArray(queryKey[4])
 
-const articleListMatches = (scope: TArticleListScope) => (queryKey: readonly unknown[]) =>
-  articleKeys.matchesArticleList(queryKey, scope.community, scope.thread)
+const statsBatchMatchesScope = (
+  queryKey: readonly unknown[],
+  community: string,
+  thread: TThread,
+): boolean => isStatsBatch(queryKey) && queryKey[2] === community && queryKey[3] === thread
+
+const articleListMatches = (scope: TArticleListScope) => (queryKey: readonly unknown[]) => {
+  const family = queryKey[1]
+  const filter = queryKey[2]
+  if (
+    queryKey[0] !== articleQueryKeys.all[0] ||
+    !['posts', 'changelogs'].includes(String(family)) ||
+    !filter ||
+    typeof filter !== 'object'
+  ) {
+    return false
+  }
+
+  if ((filter as { community?: string }).community !== scope.community) return false
+  if (!scope.thread) return true
+  return scope.thread === THREAD.CHANGELOG ? family === 'changelogs' : family === 'posts'
+}
 
 const targetMatch = (
   target: TQueryInvalidationTarget,
@@ -24,10 +60,10 @@ const targetMatch = (
 ): TQueryMatch => ({ domain: target.domain, target: target.target, matches })
 
 /** Invalidates the exact public ArticleStats query and matching batch entries. */
-export const stats = (ref: TArticleInvalidationRef): TQueryInvalidationTarget => ({
+export const stats = (path: TArticlePath): TQueryInvalidationTarget => ({
   domain: 'article',
   target: 'stats',
-  ref,
+  path,
 })
 
 /** Invalidates all ArticleStats batch queries for a community and thread. */
@@ -39,10 +75,10 @@ export const statsBatch = (community: string, thread: TThread): TQueryInvalidati
 })
 
 /** Invalidates the exact public article content query. */
-export const content = (ref: TArticleInvalidationRef): TQueryInvalidationTarget => ({
+export const content = (path: TArticlePath): TQueryInvalidationTarget => ({
   domain: 'article',
   target: 'content',
-  ref,
+  path,
 })
 
 /** Invalidates article list queries covered by a community/thread scope. */
@@ -65,14 +101,9 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
   if (target.domain !== 'article') return { matches: [], refetch: 'active' }
 
   if (target.target === 'stats') {
-    const exact = articleKeys.stats(target.ref.community, target.ref.thread, target.ref.innerId)
     return {
       matches: [
-        targetMatch(
-          target,
-          (queryKey) => prefixMatches(queryKey, exact) && queryKey.length === exact.length,
-        ),
-        targetMatch(target, statsBatchContains(target.ref)),
+        targetMatch(target, (queryKey) => articleStatsCache.contains(queryKey, target.path)),
       ],
       refetch: 'active',
     }
@@ -82,7 +113,7 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
     return {
       matches: [
         targetMatch(target, (queryKey) =>
-          articleKeys.matchesStatsBatchScope(queryKey, target.community, target.thread),
+          statsBatchMatchesScope(queryKey, target.community, target.thread),
         ),
       ],
       refetch: 'active',
@@ -90,7 +121,11 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
   }
 
   if (target.target === 'content') {
-    const exact = articleKeys.detail(target.ref.community, target.ref.thread, target.ref.innerId)
+    const exact = articleQueryKeys.detail(
+      target.path.community,
+      target.path.thread,
+      target.path.innerId,
+    )
     return {
       matches: [
         targetMatch(
@@ -109,7 +144,7 @@ export const resolve = (target: TQueryInvalidationTarget): TQueryInvalidationPla
     }
   }
 
-  const exact = articleKeys.tagGroups(target.community, target.thread)
+  const exact = articleQueryKeys.tagGroups(target.community, target.thread)
   return {
     matches: [
       targetMatch(

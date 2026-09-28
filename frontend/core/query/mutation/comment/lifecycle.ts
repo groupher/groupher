@@ -1,10 +1,10 @@
 import { browserGraphQLRequest } from '~/graphql/client'
 import { stripCommentViewerState } from '~/lib/commentViewerState'
-import type { TComment, TThread } from '~/spec'
+import type { TComment } from '~/spec'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { invalidate, QueryInvalidation } from '../../invalidation'
-import { articleStatsQueryTargets } from '../article/cache'
+import { articleStatsCache, normalizeArticleStats } from '../../articleStats'
+import type { TArticleStatsResponse } from '../../articleStatsNormalize'
 import { writeCommentFeedReceipt } from '../commentReceipt'
 import type { TOptimisticPlan, TOperationContext, TQueryTarget } from '../optimistic/types'
 import {
@@ -18,13 +18,13 @@ import {
   patchCommentEverywhere,
   reconcileCreatedComment,
   type TCommentLifecycleTarget,
-  type TCommentMutationResult,
   type TCommentTarget,
 } from './cache'
 
 type TCreatedCommentResult = {
+  commandId: string
   comment: TComment
-  article: { commentsRevision?: number }
+  articleStats: TArticleStatsResponse
 }
 
 const lifecycleQueryTargets = (
@@ -32,7 +32,9 @@ const lifecycleQueryTargets = (
   target: TCommentLifecycleTarget,
 ): readonly TQueryTarget[] => [
   ...commentQueryTargets(context.queryClient, target.scope),
-  ...articleStatsQueryTargets(context.queryClient),
+  ...articleStatsCache
+    .queries(context.queryClient, target.articlePath)
+    .map(({ queryKey }) => ({ queryKey, exact: true as const })),
 ]
 
 const makeCommentCreatePlan = (
@@ -54,24 +56,25 @@ const reconcileCreated = (
   _body: string,
   result: TCreatedCommentResult,
 ): void => {
+  const articleStats = normalizeArticleStats(result.articleStats)
+  articleStatsCache.apply(context.queryClient, articleStats)
   reconcileCreatedComment(
     context.queryClient,
     target.scope,
     `pending:${context.commandId}`,
     stripCommentViewerState(result.comment),
-    target.articlePath,
   )
   if (!context.accountRef) return
   writeCommentFeedReceipt({
     type: 'create',
-    commandId: context.commandId,
+    commandId: result.commandId,
     accountRef: context.accountRef,
     articleKey: target.articleKey,
     comment: stripCommentViewerState(result.comment),
     commentRef: String(result.comment.innerId),
     parentId: target.parentId,
     publicProjection: {
-      commentsRevision: result.article.commentsRevision,
+      commentsRevision: articleStats.commentsRevision,
     },
   })
 }
@@ -123,12 +126,10 @@ export const replyCommentOperation = {
   reconcile: reconcileCreated,
 }
 
-type TUpdatedCommentResult = TComment & {
-  article?: {
-    innerId?: string | number
-    thread?: TThread
-    commentsRevision?: number | null
-  }
+type TUpdatedCommentResult = {
+  commandId: string
+  comment: TComment
+  articleStats: TArticleStatsResponse
 }
 
 /** Updates a comment body through the same Action lifecycle as create/delete. */
@@ -138,7 +139,9 @@ export const updateCommentOperation = {
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
   queriesToCancel: (context: TOperationContext, target: TCommentTarget) => [
     ...commentQueryTargets(context.queryClient, target.scope),
-    ...articleStatsQueryTargets(context.queryClient),
+    ...articleStatsCache
+      .queries(context.queryClient, target.articlePath)
+      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
   apply: (context: TOperationContext, target: TCommentTarget, body: string): TOptimisticPlan => {
     const changes = patchCommentChanges(
@@ -169,28 +172,22 @@ export const updateCommentOperation = {
     _body: string,
     result: TUpdatedCommentResult,
   ): void => {
+    const articleStats = normalizeArticleStats(result.articleStats)
+    articleStatsCache.apply(context.queryClient, articleStats)
     patchCommentEverywhere(context.queryClient, target.scope, target.commentInnerId, (comment) => ({
       ...comment,
-      ...stripCommentViewerState(result),
+      ...stripCommentViewerState(result.comment),
     }))
-    void invalidate(
-      context.queryClient,
-      QueryInvalidation.article.stats({
-        community: target.articlePath.community,
-        thread: target.articlePath.thread,
-        innerId: target.articlePath.innerId,
-      }),
-    )
     if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'update',
-      commandId: context.commandId,
+      commandId: result.commandId,
       accountRef: context.accountRef,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
-      comment: stripCommentViewerState(result),
+      comment: stripCommentViewerState(result.comment),
       publicProjection: {
-        commentsRevision: result.article?.commentsRevision ?? undefined,
+        commentsRevision: articleStats.commentsRevision,
       },
     })
   },
@@ -202,7 +199,9 @@ export const deleteCommentOperation = {
   queueKey: (target: TCommentTarget) => commentOperationQueueKey(target),
   queriesToCancel: (context: TOperationContext, target: TCommentTarget) => [
     ...commentQueryTargets(context.queryClient, target.scope),
-    ...articleStatsQueryTargets(context.queryClient),
+    ...articleStatsCache
+      .queries(context.queryClient, target.articlePath)
+      .map(({ queryKey }) => ({ queryKey, exact: true as const })),
   ],
   apply: (context: TOperationContext, target: TCommentTarget): TOptimisticPlan => {
     const changes = patchCommentChanges(context.queryClient, target, 'innerId', () => null, context)
@@ -211,38 +210,32 @@ export const deleteCommentOperation = {
   execute: async (
     _context: TOperationContext,
     target: TCommentTarget,
-  ): Promise<TCommentMutationResult> => {
+  ): Promise<TUpdatedCommentResult> => {
     const result = await browserGraphQLRequest(commentsSchema.deleteComment, {
       comment: target.commentPath,
       commandId: _context.commandId,
     })
     if (!result.deleteComment) throw new Error('Delete comment response is empty')
-    return result.deleteComment as unknown as TCommentMutationResult
+    return result.deleteComment as unknown as TUpdatedCommentResult
   },
   reconcile: (
     context: TOperationContext,
     target: TCommentTarget,
     _input: undefined,
-    result: TCommentMutationResult,
+    result: TUpdatedCommentResult,
   ): void => {
+    const articleStats = normalizeArticleStats(result.articleStats)
+    articleStatsCache.apply(context.queryClient, articleStats)
     patchCommentEverywhere(context.queryClient, target.scope, target.commentInnerId, () => null)
-    void invalidate(
-      context.queryClient,
-      QueryInvalidation.article.stats({
-        community: target.articlePath.community,
-        thread: target.articlePath.thread,
-        innerId: target.articlePath.innerId,
-      }),
-    )
     if (!context.accountRef) return
     writeCommentFeedReceipt({
       type: 'delete',
-      commandId: context.commandId,
+      commandId: result.commandId,
       accountRef: context.accountRef,
       articleKey: target.articleKey,
       commentRef: target.commentInnerId,
       publicProjection: {
-        commentsRevision: result.article?.commentsRevision ?? undefined,
+        commentsRevision: articleStats.commentsRevision,
       },
     })
   },

@@ -1,10 +1,6 @@
 import type { TThread } from '~/spec'
 
-export type TArticleInvalidationRef = {
-  community: string
-  thread: TThread
-  innerId: string | number
-}
+import type { TArticlePath } from '../articlePath'
 
 export type TArticleListScope = {
   community: string
@@ -12,12 +8,12 @@ export type TArticleListScope = {
 }
 
 export type TQueryInvalidationTarget =
-  | { domain: 'article'; target: 'stats'; ref: TArticleInvalidationRef }
+  | { domain: 'article'; target: 'stats'; path: TArticlePath }
   | { domain: 'article'; target: 'stats-batch'; community: string; thread: TThread }
-  | { domain: 'article'; target: 'content'; ref: TArticleInvalidationRef }
+  | { domain: 'article'; target: 'content'; path: TArticlePath }
   | { domain: 'article'; target: 'lists'; scope: TArticleListScope }
   | { domain: 'article'; target: 'tag-groups'; community: string; thread: TThread }
-  | { domain: 'comment'; target: 'list'; ref: TArticleInvalidationRef }
+  | { domain: 'comment'; target: 'list'; path: TArticlePath }
   | { domain: 'community'; target: 'config'; community: string }
   | { domain: 'community'; target: 'dashboard'; community: string }
   | { domain: 'community'; target: 'wallpaper'; community: string }

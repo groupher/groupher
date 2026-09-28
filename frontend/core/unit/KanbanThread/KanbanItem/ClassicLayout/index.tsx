@@ -8,14 +8,14 @@ import type { FC } from 'react'
 
 import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import type { TArticleListViewModel } from '~/spec'
+import type { TArticleState } from '~/spec'
 // import IconButton from '~/ui/Buttons/IconButton'
 
 import Full from './Full'
 import Simple from './Simple'
 
 type TProps = {
-  viewModel: TArticleListViewModel
+  viewModel: TArticleState
 }
 
 const KanbanItem: FC<TProps> = ({ viewModel }) => {

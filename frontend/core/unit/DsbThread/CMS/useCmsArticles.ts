@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import { THREAD } from '~/const/thread'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
 import { Q } from '~/query'
+import { articlePathKey } from '~/query/articlePath'
 import type { TPagedArticleViewModels, TArticleViewerState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
@@ -11,6 +12,7 @@ type TArticleKind = 'changelog' | 'post'
 
 /** Exposes cms articles state and actions through the shared React hook boundary. */
 export default function useCmsArticles(kind: TArticleKind) {
+  const queryClient = useQueryClient()
   const { slug: community } = useCommunity()
   const filter = { page: 1, size: 20, community }
   const postsQuery = useQuery({ ...Q.article.posts(filter), enabled: kind === 'post' })
@@ -22,6 +24,7 @@ export default function useCmsArticles(kind: TArticleKind) {
   const thread = kind === 'post' ? THREAD.POST : THREAD.CHANGELOG
   const statsQuery = useQuery(
     Q.article.statsBatch(
+      queryClient,
       community,
       thread,
       (query.data?.entries || []).map((article) => article.innerId),
@@ -37,7 +40,7 @@ export default function useCmsArticles(kind: TArticleKind) {
       ...page,
       entries: page.entries.map((article) => {
         const stat = stats.get(String(article.innerId))
-        const articleKey = `${community}:${thread}:${String(article.innerId)}`
+        const articleKey = articlePathKey({ community, thread, innerId: String(article.innerId) })
         const viewerState: TArticleViewerState = { articleKey }
         return { content: article, stats: stat || null, viewerState }
       }),

@@ -1,7 +1,7 @@
 import { browserGraphQLRequest } from '~/graphql/client'
 import commentsSchema from '~/unit/Comments/schema'
 
-import { viewerKeys } from '../../key'
+import { viewerQueryKeys } from '../../key'
 import type { TOptimisticPlan, TOperationContext, TQueryTarget } from '../optimistic/types'
 import {
   patchCommentViewerChanges,
@@ -20,7 +20,7 @@ export const reportCommentOperation = {
       ? context.queryClient
           .getQueryCache()
           .findAll({
-            queryKey: viewerKeys.commentStatePrefix(context.accountRef, target.articleKey),
+            queryKey: viewerQueryKeys.commentStatePrefix(context.accountRef, target.articleKey),
           })
           .map(({ queryKey }) => ({ queryKey, exact: true }))
       : [],

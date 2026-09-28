@@ -4,8 +4,7 @@ import { THREAD } from '~/const/thread'
 import type { TCommentViewerStates } from '~/lib/commentViewerState'
 import type { TComment } from '~/spec'
 
-import { articleKeys, commentKeys, viewerKeys } from '../key'
-import { articleQueryTargets } from './article'
+import { articleQueryKeys, commentKeys, viewerQueryKeys } from '../key'
 import {
   deleteCommentOperation,
   insertPendingComment,
@@ -25,6 +24,21 @@ const root = {
 const key = commentKeys.list('home', THREAD.POST, '42')
 const otherArticleKey = commentKeys.list('home', THREAD.POST, '99')
 const scope = { community: 'home', thread: THREAD.POST, articleInnerId: '42' }
+const articleStats = {
+  community: 'home',
+  thread: THREAD.POST,
+  innerId: '42',
+  views: 10,
+  viewsRevision: 1,
+  upvotesCount: 2,
+  commentsCount: 8,
+  collectsCount: 1,
+  commentsParticipantsCount: 3,
+  interactionRevision: 2,
+  commentsRevision: 2,
+  emotionCounts: [],
+  snapshotAt: new Date().toISOString(),
+}
 
 describe('comment query mutation helpers', () => {
   it('patches a nested reply across loaded comment lists', () => {
@@ -62,7 +76,7 @@ describe('comment query mutation helpers', () => {
 
   it('patches viewer flags without changing the public comment cache', () => {
     const queryClient = new QueryClient()
-    const viewerKey = viewerKeys.commentStates('alice', 'home:POST:42', ['1'])
+    const viewerKey = viewerQueryKeys.commentStates('alice', 'home:POST:42', ['1'])
     queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
     queryClient.setQueryData<TCommentViewerStates>(viewerKey, {
       '1': { emotionFlags: { HEART: false }, viewerHasUpvoted: false },
@@ -99,37 +113,21 @@ describe('comment query mutation helpers', () => {
     ).toBe(10)
   })
 
-  it('replaces a pending comment and invalidates the ArticleStats entity', () => {
+  it('replaces a pending comment without invalidating ArticleStats', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
+    const articleStatsKey = articleQueryKeys.stats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, articleStats)
     queryClient.setQueryData(key, {
       entries: [{ ...root, innerId: 'pending:1' }],
       totalCount: 1,
     })
 
-    reconcileCreatedComment(
-      queryClient,
-      scope,
-      'pending:1',
-      { ...root, innerId: 'confirmed-1' },
-      { community: 'home', thread: THREAD.POST, innerId: '42' },
-    )
+    reconcileCreatedComment(queryClient, scope, 'pending:1', { ...root, innerId: 'confirmed-1' })
 
-    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(false)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries[0].innerId).toBe(
       'confirmed-1',
     )
-  })
-
-  it('routes article aggregate patches only to article entity queries', () => {
-    const queryClient = new QueryClient()
-    const detailKey = articleKeys.detail('home', THREAD.POST, '42')
-    const tagGroupsKey = articleKeys.tagGroups('home', THREAD.POST)
-    queryClient.setQueryData(detailKey, { innerId: '42' })
-    queryClient.setQueryData(tagGroupsKey, { innerId: '42' })
-
-    expect(articleQueryTargets(queryClient).map(({ queryKey }) => queryKey)).toEqual([detailKey])
   })
 
   it('restores a deleted entity at its original slot when the operation fails', () => {
@@ -158,8 +156,8 @@ describe('comment query mutation helpers', () => {
 
   it('reconciles the Article comment revision returned by an update', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleStatsKey, { commentsCount: 8 })
+    const articleStatsKey = articleQueryKeys.stats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, articleStats)
     const target = {
       comment: root,
       scope,
@@ -177,19 +175,20 @@ describe('comment query mutation helpers', () => {
       target,
       'updated body',
       {
-        ...root,
-        bodyHtml: 'updated body',
-        article: { innerId: '42', commentsRevision: 3 },
+        commandId: 'op-update',
+        comment: { ...root, bodyHtml: 'updated body' },
+        articleStats: { ...articleStats, commentsRevision: 3 },
       },
     )
 
-    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryData<typeof articleStats>(articleStatsKey)?.commentsRevision).toBe(3)
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(false)
   })
 
-  it('invalidates ArticleStats after delete', () => {
+  it('applies returned ArticleStats after delete without invalidation', () => {
     const queryClient = new QueryClient()
-    const articleStatsKey = articleKeys.stats('home', THREAD.POST, '42')
-    queryClient.setQueryData(articleStatsKey, { commentsCount: 7 })
+    const articleStatsKey = articleQueryKeys.stats('home', THREAD.POST, '42')
+    queryClient.setQueryData(articleStatsKey, { ...articleStats, commentsCount: 7 })
     queryClient.setQueryData(key, { entries: [root], totalCount: 1 })
     const target = {
       comment: root,
@@ -208,12 +207,17 @@ describe('comment query mutation helpers', () => {
       target,
       undefined,
       {
-        ...root,
-        article: { innerId: '42', commentsRevision: 3 },
+        commandId: 'op-delete',
+        comment: root,
+        articleStats: { ...articleStats, commentsCount: 6, commentsRevision: 3 },
       },
     )
 
-    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(true)
+    expect(queryClient.getQueryData<typeof articleStats>(articleStatsKey)).toMatchObject({
+      commentsCount: 6,
+      commentsRevision: 3,
+    })
+    expect(queryClient.getQueryState(articleStatsKey)?.isInvalidated).toBe(false)
     expect(queryClient.getQueryData<{ entries: TComment[] }>(key)?.entries).toEqual([])
   })
 })

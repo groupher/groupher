@@ -29,8 +29,8 @@ export default function usePagedChangelogs(): TRes {
 
     return {
       ...query.data,
-      entries: states.map(({ article, stats, viewerState }) => ({
-        content: article,
+      entries: states.map(({ content, stats, viewerState }) => ({
+        content,
         stats,
         viewerState,
       })),

@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import type { TArticleListViewModel } from '~/spec'
+import type { TArticleState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
@@ -14,7 +14,7 @@ import Footer from './Footer'
 import useSalon from './salon'
 
 type TProps = {
-  viewModel: TArticleListViewModel
+  viewModel: TArticleState
 }
 
 const ArticleCard: FC<TProps> = ({ viewModel }) => {

@@ -28,7 +28,7 @@ export default function useKanbanPosts(): TRes {
   )
   const states = useArticleStates(entries)
   const stateByArticle = useMemo(
-    () => new Map(states.map((state) => [state.article, state] as const)),
+    () => new Map(states.map((state) => [state.content, state] as const)),
     [states],
   )
 

@@ -1,9 +1,3 @@
-export {
-  articleQueryTargets,
-  articleStatsQueryTargets,
-  patchArticleChanges,
-  patchArticleEverywhere,
-  selectArticleFromCache,
-  type TArticlePath,
-} from './article/cache'
 export { articleUpvoteOperation } from './article/upvote'
+export { articleCollectOperation, setArticleCollected } from './article/collect'
+export { articleEmotionOperation, setArticleEmotion } from './article/emotion'

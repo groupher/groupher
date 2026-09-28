@@ -1,3 +1,4 @@
+import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 
 import { THREAD } from '~/const/thread'
@@ -20,6 +21,10 @@ describe('Community query freshness', () => {
   })
 
   it('keeps the ArticleStats cache policy override', () => {
-    expect(communityQueries.stats('home', THREAD.POST, ['1']).staleTime).toBe(600_000)
+    const queryClient = new QueryClient()
+    const query = communityQueries.stats(queryClient, 'home', THREAD.POST, ['1'])
+
+    expect(query.staleTime).toBe(600_000)
+    expect(query.structuralSharing).toBeTypeOf('function')
   })
 })

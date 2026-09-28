@@ -1,3 +1,13 @@
+/**
+ * Persists short-lived same-session confirmation for an accepted anonymous or signed-in view.
+ *
+ *   trackArticleView tracked=true
+ *     -> ViewAck in sessionStorage
+ *     -> Article state overlay
+ *     -> clear after viewerHasViewed catches up or TTL expires
+ *
+ * An Ack is not an event log or idempotency receipt; server dedupe remains the counting authority.
+ */
 import { CONFIRMED_WRITE_RECEIPT_TTL_MS } from '~/constant/cache'
 
 import {
@@ -8,45 +18,45 @@ import {
   writeSessionReceipt,
 } from './sessionReceiptStorage'
 
-const ACK_VERSION = 1
+const ACK_VERSION = 2
 const storagePrefix = 'groupher:view-ack:'
 
 export type TArticleViewAck = {
-  schemaVersion: 1
-  articleRef: string
+  schemaVersion: 2
+  articleKey: string
   confirmedAt: number
   expiresAt: number
 }
 
-const storageKey = (articleRef: string): string => `${storagePrefix}${articleRef}`
-const validAck = (ack: TArticleViewAck): boolean => Boolean(ack.articleRef)
+const storageKey = (articleKey: string): string => `${storagePrefix}${articleKey}`
+const validAck = (ack: TArticleViewAck): boolean => Boolean(ack.articleKey)
 
-/** Remembers that the server accepted one view until viewer state catches up. */
-export const writeArticleViewAck = (articleRef: string): void => {
+/** Stores a bounded confirmation that the server accepted this path as viewed. */
+export const writeArticleViewAck = (articleKey: string): void => {
   const confirmedAt = Date.now()
   listSessionReceipts(storagePrefix, ACK_VERSION, validAck)
-  writeSessionReceipt(storageKey(articleRef), {
+  writeSessionReceipt(storageKey(articleKey), {
     schemaVersion: ACK_VERSION,
-    articleRef,
+    articleKey,
     confirmedAt,
     expiresAt: confirmedAt + CONFIRMED_WRITE_RECEIPT_TTL_MS,
   })
 }
 
-/** Reads a live same-session acknowledgement for one Article view. */
-export const readArticleViewAck = (articleRef: string): TArticleViewAck | null =>
+/** Reads and validates one live Ack, pruning malformed or expired storage eagerly. */
+export const readArticleViewAck = (articleKey: string): TArticleViewAck | null =>
   readSessionReceipt(
-    storageKey(articleRef),
+    storageKey(articleKey),
     ACK_VERSION,
-    (ack: TArticleViewAck) => validAck(ack) && ack.articleRef === articleRef,
+    (ack: TArticleViewAck) => validAck(ack) && ack.articleKey === articleKey,
   )
 
-/** Removes one acknowledgement after authoritative viewer state confirms it. */
-export const clearArticleViewAck = (articleRef: string): void => {
-  removeSessionReceipt(storageKey(articleRef))
+/** Removes one Ack after authoritative viewer state confirms the read. */
+export const clearArticleViewAck = (articleKey: string): void => {
+  removeSessionReceipt(storageKey(articleKey))
 }
 
-/** Clears all same-session view acknowledgements at an account boundary. */
+/** Clears all Article ViewAcks when the active account/session boundary changes. */
 export const clearArticleViewAcks = (): void => {
   clearSessionReceipts(storagePrefix)
 }

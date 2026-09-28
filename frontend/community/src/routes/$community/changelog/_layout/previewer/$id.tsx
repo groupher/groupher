@@ -6,7 +6,6 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
 import ArticleQueryProvider from '~/query/ArticleQueryProvider'
-import { cacheArticleStatsEntities } from '~/query/articleStats'
 import CommentsStoreProvider from '~/stores/comments/provider'
 import Drawer from '~/ui/@Drawer'
 import ArticleViewer from '~/unit/ArticleView'
@@ -23,10 +22,9 @@ export const Route = createFileRoute('/$community/changelog/_layout/previewer/$i
       communityQueries.changelog(params.community, params.id),
     )
     if (!article) throw notFound()
-    const stats = await context.queryClient.ensureQueryData(
-      communityQueries.stats(params.community, THREAD.CHANGELOG, [params.id]),
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.CHANGELOG, params.id),
     )
-    cacheArticleStatsEntities(context.queryClient, stats)
     return { article }
   },
   component: ChangelogPreview,

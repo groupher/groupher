@@ -6,7 +6,7 @@ import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedPosts from '~/hooks/usePagedPosts'
-import { articleKeys } from '~/query'
+import { articleQueryKeys } from '~/query'
 import AccountStoreProvider from '~/stores/account/provider'
 
 describe('usePagedPosts', () => {
@@ -21,7 +21,7 @@ describe('usePagedPosts', () => {
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     })
     queryClient.setQueryData(
-      articleKeys.posts({
+      articleQueryKeys.posts({
         community: 'acme',
         page: 2,
         size: 20,

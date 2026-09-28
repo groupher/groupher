@@ -1,18 +1,34 @@
+/**
+ * Connects rendered Article visibility to the shared ViewTracker mutation.
+ *
+ *   visible DOM element + ready Article
+ *     -> visibility/intersection dwell threshold
+ *     -> trackArticleView
+ *     -> committed stats/viewer cache patch
+ *
+ * The hook starts at most one request per Article mount; server-side dedupe remains authoritative
+ * for repeated visits and transport retries.
+ */
 import { VIEW_COUNTING_CONTRACT } from '@groupher/contracts/view-counting'
 import { useEffect, useRef, type RefObject } from 'react'
 
-import { articleRefKey } from '~/query/articleRef'
+import { articlePathKey } from '~/query/articlePath'
 import { trackArticleView } from '~/query/viewTracker'
 import type { TArticleLoad } from '~/spec'
 
-/** Tracks once after a rendered Article satisfies the shared human visibility threshold. */
+/**
+ * Tracks once after the Article stays visible for the configured human dwell threshold.
+ *
+ * Visibility loss cancels the pending timer, unmount disconnects all observers, and failures are
+ * intentionally non-blocking because reading the Article must not depend on analytics delivery.
+ */
 export default function useTrackArticleView(
   wrapperRef: RefObject<HTMLElement | null>,
   article: TArticleLoad,
   ready: boolean,
 ): void {
   const startedKeyRef = useRef<string | null>(null)
-  const articleKey = articleRefKey(article)
+  const articleKey = articlePathKey(article)
 
   useEffect(() => {
     const element = wrapperRef.current

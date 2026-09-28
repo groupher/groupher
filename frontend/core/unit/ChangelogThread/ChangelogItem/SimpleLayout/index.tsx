@@ -9,7 +9,7 @@ import { type FC, memo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
-import type { TArticleListViewModel, TChangelog } from '~/spec'
+import type { TArticleState, TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ReadableDate from '~/ui/ReadableDate'
@@ -21,7 +21,7 @@ import { demoEmotion, demoTags } from '../constant'
 import useSalon from './salon/article_layout'
 
 type TProps = {
-  viewModel: TArticleListViewModel<TChangelog>
+  viewModel: TArticleState<TChangelog>
 }
 
 const SimpleLayout: FC<TProps> = ({ viewModel }) => {

@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 const fixture = vi.hoisted(() => ({
+  queryClient: {},
   posts: {
     entries: [{ innerId: '20', title: 'A stale article' }],
     pageNumber: 1,
@@ -13,6 +14,7 @@ const fixture = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => fixture.queryClient,
   useQuery: (options: { queryKey: unknown[] }) => {
     if (options.queryKey[1] === 'posts') {
       return { data: fixture.posts, isFetching: false }
@@ -31,7 +33,7 @@ vi.mock('~/query', () => ({
     article: {
       posts: (filter: unknown) => ({ queryKey: ['article', 'posts', filter] }),
       changelogs: (filter: unknown) => ({ queryKey: ['article', 'changelogs', filter] }),
-      statsBatch: (community: string, thread: string, ids: string[]) => ({
+      statsBatch: (_queryClient: unknown, community: string, thread: string, ids: string[]) => ({
         queryKey: ['article', 'article-stats', community, thread, ids],
       }),
     },

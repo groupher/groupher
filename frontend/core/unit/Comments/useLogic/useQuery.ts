@@ -6,6 +6,7 @@ import { scrollIntoEle } from '~/dom'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { Q } from '~/query'
+import { articlePathKey, articlePathOf } from '~/query/articlePath'
 import {
   createCommentOperation,
   replyCommentOperation,
@@ -53,17 +54,17 @@ export default function useQuery(): TRet {
   const commentsRequestRef = useRef(0)
   const repliesRequestRef = useRef(0)
 
-  const articlePath = `${article.community?.slug || ''}:${article.meta.thread}:${article.innerId}`
+  const articleKey = articlePathKey(articlePathOf(article))
   const commentScope = {
     community: article.community.slug,
     thread: article.meta.thread,
     articleInnerId: article.innerId,
   }
-  const latestArticlePathRef = useRef(articlePath)
+  const latestArticlePathRef = useRef(articleKey)
 
   useEffect(() => {
-    latestArticlePathRef.current = articlePath
-  }, [articlePath])
+    latestArticlePathRef.current = articleKey
+  }, [articleKey])
 
   useEffect(() => {
     isMountedRef.current = true
@@ -87,11 +88,7 @@ export default function useQuery(): TRet {
     )
   }
 
-  const buildArticlePath = () => ({
-    innerId: String(article.innerId),
-    community: article.community?.slug,
-    thread: article.meta.thread,
-  })
+  const buildArticlePath = () => articlePathOf(article)
 
   const buildCommentPath = (commentOrInnerId: TComment | TID) => ({
     article: buildArticlePath(),
@@ -101,7 +98,7 @@ export default function useQuery(): TRet {
   const createAction = useOptimisticAction(createCommentOperation, {
     scope: commentScope,
     articlePath: buildArticlePath(),
-    articleKey: articlePath,
+    articleKey,
     author: account.user,
   })
   const replyAction = useOptimisticAction(
@@ -110,7 +107,7 @@ export default function useQuery(): TRet {
       ? {
           scope: commentScope,
           articlePath: buildArticlePath(),
-          articleKey: articlePath,
+          articleKey,
           author: account.user,
           parentId: String(replyToComment.innerId),
           parent: replyToComment,
@@ -124,7 +121,7 @@ export default function useQuery(): TRet {
           comment: { innerId: String(commentsStore.updateInnerId) } as TComment,
           scope: commentScope,
           articlePath: buildArticlePath(),
-          articleKey: articlePath,
+          articleKey,
           commentInnerId: String(commentsStore.updateInnerId),
           commentPath: buildCommentPath(commentsStore.updateInnerId),
         }
