@@ -14,6 +14,10 @@
 > [`tanstack_rewrite/optimistic_read_your_writes.md`](../migrations/tanstack/optimistic-read-your-writes.md)；
 > Article/Comment 的窄 receipt/revision 链路已在当前客户端落地，但不改变本文“一份 confirmed server
 > state 只有一个客户端 owner”的约束；View durable projection 与生产 purge 仍按各自文档边界推进。
+> 当前 Article 写后同步见
+> [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md)：viewer confirmed writer 除 hydration 后的
+> batch response 外，还包括 typed mutation response 与 command replay/reconcile response；它们写入同一 canonical Query owner，
+> 不建立第二份 store。
 > 其前置的内存 operation identity、inverse patch 与 confirmed transition 见
 > [`tanstack_rewrite/optimistic_operation.md`](../migrations/tanstack/optimistic-operation.md)。
 >
@@ -105,7 +109,7 @@ CDN cache effect 随后由 server proxy 执行。purge 失败不得把已经成�
 | dashboard    | `Q.dsb.config(slug)`                               | `DsbEditStore.current/original/touched` 是编辑 working copy                | SSR seed、领域 save response、refetch                          | Community 展示、Dash editors、SavingBar          |
 | wallpaper    | `Q.wallpaper.config(slug)`                         | wallpaper store 是 draft/preview projection                                | SSR seed、wallpaper mutation response、refetch                 | Community renderer、Dash wallpaper editor        |
 | theme preset | `Q.dsb.config(slug).themePreset`                   | `ThemePresetStore` 只负责 CSS projection/preview                           | theme mutation response、Dsb refetch                           | pre-paint、Theme editor、CSS variable projection |
-| viewer       | `Q.viewer.*(accountRef, refs)`                     | render-time selector；unknown 保持 `undefined`                             | hydration 后 viewer batch response                             | article/comment/account UI                       |
+| viewer       | `Q.viewer.*(accountRef, refs)`                     | render-time selector；unknown 保持 `undefined`                             | viewer batch、typed mutation、replay/reconcile response        | article/comment/account UI                       |
 | baseInfo     | `Q.community.config` + `Q.dsb.config` 各自领域字段 | 无独立 baseInfo cache/store                                                | baseInfo typed mutation response 同时 patch 两个 canonical key | Community brand/SEO、Dash baseInfo editor        |
 
 `loadCommunity` 可以只发起一次 GraphQL bootstrap；`projectCommunityConfig`、dashboard 和 wallpaper

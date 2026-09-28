@@ -619,17 +619,28 @@ account ref。生产实现不再以可变 login 作为 key；仅测试 fixture �
 目标 operation 固定为 `articleViewerStates` 和 `commentViewerStates`：
 
 ```graphql
-query ArticleViewerStates($refs: [ArticleRefInput!]!) {
-  articleViewerStates(refs: $refs) {
+query ArticleViewerStates($paths: [ArticlePathInput!]!) {
+  articleViewerStates(paths: $paths) {
     community
     thread
     innerId
     viewerHasViewed
-    viewerHasUpvoted
   }
 }
 
-query CommentViewerStates($article: ArticleRefInput!, $commentInnerIds: [ID!]!) {
+query ArticleInteractionStates($paths: [ArticlePathInput!]!) {
+  articleInteractionStates(paths: $paths) {
+    community
+    thread
+    innerId
+    interactionRevision
+    viewerHasUpvoted
+    viewerHasCollected
+    viewerEmotion
+  }
+}
+
+query CommentViewerStates($article: ArticlePathInput!, $commentInnerIds: [ID!]!) {
   commentViewerStates(article: $article, commentInnerIds: $commentInnerIds) {
     innerId
     viewerHasUpvoted
@@ -644,10 +655,10 @@ query CommentViewerStates($article: ArticleRefInput!, $commentInnerIds: [ID!]!) 
 
 合同约束：
 
-- `ArticleRefInput` 只包含 `community`、`thread`、`innerId`；
-- 单个 GraphQL request 最多接受 100 个 article refs 或 comment ids，超过上限返回 GraphQL
+- `ArticlePathInput` 只包含 `community`、`thread`、`innerId`；
+- 单个 GraphQL request 最多接受 100 个 article paths 或 comment ids，超过上限返回 GraphQL
   validation error；
-- Query factory 对完整 refs 排序、去重并生成一个 query key；queryFn 再按 100 条自动分片、并行请求
+- Query factory 对完整 paths 排序、去重并生成一个 query key；queryFn 再按 100 条自动分片、并行请求
   并按 canonical identity 合并，业务组件不感知分片；
 - 任一分片失败时整个 Query 失败，不返回可能被误认为完整结果的部分 record；
 - 服务端从 auth session 确定 viewer，`accountRef` 只进入客户端 query key，不作为 GraphQL variable；
@@ -696,7 +707,7 @@ entry 或只沿 `replies` 递归。
 组合规则固定为：
 
 - `upvotesCount`、emotion `count`、`latestUsers` 等 aggregate 永远来自 comment list query；
-- `viewerHasUpvoted`、`viewerHasReported` 永远来自 `viewerKeys.commentStates`；
+- `viewerHasUpvoted`、`viewerHasReported` 永远来自 `viewerQueryKeys.commentStates`；
 - emotions 按 `type` 合并，只把 viewer query 的 `viewerHasReacted` overlay 到公共 emotion；
 - 禁止 spread 整个 viewer emotions 数组覆盖公共数组；viewer query 尚未返回时，viewer flag
   保持 `undefined`/unknown，公共 count 仍正常展示。
@@ -715,7 +726,7 @@ type TCommentViewerStates = Record<string, TCommentViewerState> // key = comment
 
 它不再保存包含公共 count 的整个 emotions 数组。comment upvote/emotion 的 optimistic、rollback
 和 server reconcile 必须分别更新 public-owned aggregate 与 viewer-owned flag。report 本轮只在
-transport 迁移成功后精确 invalidate/refetch `viewerKeys.commentStates`，其 optimistic 和快速重复
+transport 迁移成功后精确 invalidate/refetch `viewerQueryKeys.commentStates`，其 optimistic 和快速重复
 提交语义后续单独处理。
 
 ## Optimistic mutation
@@ -766,7 +777,7 @@ receipt + projection revision，而不是持久化完整 Query cache。
 - `QueryInvalidation.article.stats(ref)` 同时覆盖单篇 stats key 和包含该 entity 的已加载 `statsBatch`；
 - content mutation 只 patch/invalidate Article content 与受影响的 list membership。
 
-组件不能遍历 `articleKeys.all`、按 data shape 猜测 Article，或把 count merge 回 content。Query key fan-out 由
+组件不能遍历 `articleQueryKeys.all`、按 data shape 猜测 Article，或把 count merge 回 content。Query key fan-out 由
 `frontend/core/query/invalidation/article.ts` 的领域 resolver 统一描述。
 
 按 upvote 排序的列表通过预计算 ArticleStats 排序列与精确 invalidate/refetch 收敛；客户端不自行重排跨页结果。
@@ -891,7 +902,7 @@ mutation confirmed
 - optimistic patch、rollback、server-confirmed reconcile、revision guard 和 receipt 仍属于 mutation domain；
 - invalidation 层不修改实体、不计算 count、不推进 `snapshotAt`；
 - ArticleStats 的单篇 key 与所有包含该实体的 `statsBatch` key 都由 `article.stats(ref)` resolver 覆盖；
-- `article.lists(scope)` 只覆盖匹配的 community/thread/filter family，不清空 `articleKeys.all`；
+- `article.lists(scope)` 只覆盖匹配的 community/thread/filter family，不清空 `articleQueryKeys.all`；
 - 新领域先建立 canonical key factory 和 resolver，再允许业务调用通用 executor。
 
 本次改造直接迁移所有散落的 `queryClient.invalidateQueries`、手写 batch predicate 与旧 helper，完成后删除旧入口；
@@ -952,9 +963,9 @@ prefetch/dehydrate，`useActiveTag` 直接从 Query 读取。完成 consumer 切
 - `TagNote/useLogic` 对 `activeTagStats` 的 fallback，以及 ArticleList store 中仅初始化/读取、从未
   commit 的 `activeTagStats` 死字段。TagNote 只读取 `Q.article.tagStats`。
 
-`tagGroups` key 会位于 `articleKeys.all` 下，它也因此成为 typed shape routing 的第一个实际
+`tagGroups` key 会位于 `articleQueryKeys.all` 下，它也因此成为 typed shape routing 的第一个实际
 落点：`patchArticleEverywhere` 只能调度已声明的 article-bearing shape adapter，不再对未知
-`articleKeys.all` data 做隐式 shape 猜测。`tagGroups`/`tagStats` 明确标记为 non-entity query 并
+`articleQueryKeys.all` data 做隐式 shape 猜测。`tagGroups`/`tagStats` 明确标记为 non-entity query 并
 跳过；不要为它们伪造一个“article locator”。routing 必须先匹配 query key，再选择 adapter；
 实现可遍历 `getQueriesData` 返回的 `[queryKey, data]`，或按已注册前缀分别调用
 `setQueriesData`，不能只根据 data 长相猜测。
@@ -1193,7 +1204,7 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
 - 所有 `createXxx` mutation 显式 `retry: false`。本轮不增加创建请求去重协议；create 的自动
   重放、离线队列和 Article 创建身份另行设计；
 - comment upvote/emotion optimistic mutation 必须同时 patch/rollback comment list 中的
-  public-owned aggregate 与 `viewerKeys.commentStates`，避免旧 viewer 快照覆盖按钮状态或触发
+  public-owned aggregate 与 `viewerQueryKeys.commentStates`，避免旧 viewer 快照覆盖按钮状态或触发
   重复 mutation；
 - 提取共享 `stripCommentViewerState`，browser `Q.comment.list` queryFn 与 SSR loader 都在写入
   cache/dehydration 前递归裁剪 viewer fields，使 comment list cache 结构上只有 public-owned
@@ -1218,7 +1229,7 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
 - 增加 `Q.article.tagGroups` 和同 key 的 SSR factory，迁移 `useActiveTag` 后删除
   ArticleList store 中的 `tagGroups` server state；同步删除 paged hooks 的无调用者 `update()`/
   `TUpdate` 和 `activeTagStats` 幽灵 fallback；
-- 以 tagGroups 加入 `articleKeys.all` 为首个落点，引入 typed shape routing：只对明确声明的
+- 以 tagGroups 加入 `articleQueryKeys.all` 为首个落点，引入 typed shape routing：只对明确声明的
   article-bearing query 调用 adapter，`tagGroups`/`tagStats` 显式标记为 non-entity，不再依赖
   `patchData` 对未知 shape 恰好安全跳过；
 - 完成上述 Doc article detail Query 垂直切片，并删除 `useArticle()` 的 server-state fallback；
@@ -1230,7 +1241,7 @@ Main、Dashboard 与 Dash 均已退出 urql。根依赖中的 `urql`、`@urql/co
   refetch 不得让已有列表、筛选器或分页闪回 loading；
 - 删除无 emitter 的 `EVENT.REFRESH_ARTICLES`、`useFetchPagedPosts` 适配器和无人读取的
   ArticleList `resState` 写入；
-- 删除未被 query factory 使用的 `articleKeys.preview`，避免与实际复用的 detail key 漂移；
+- 删除未被 query factory 使用的 `articleQueryKeys.preview`，避免与实际复用的 detail key 漂移；
 - Changelog SSR 只 prefetch canonical default filter；非默认 filter 由客户端 Query 请求。
   不扩展当前按 community 缓存/失效的 SSR loader 去消费完整 filter，避免同 tag 多 key；
 - 禁止 paged article 通用 filter 重新引入 `filter.author`。当前产品没有该筛选需求，按作者查询
@@ -1306,7 +1317,7 @@ wrapper、过渡 `~/hooks/useQuery` 或依赖；ArticleList/Comments Valtio stor
 - comment upvote 和 emotion；
 - comment upvote/emotion 分别覆盖 optimistic patch、失败 rollback、server reconcile；
 - comment report 使用 TanStack mutation、`retry: false`，成功后失效
-  `viewerKeys.commentStates`；本轮不要求 report optimistic；
+  `viewerQueryKeys.commentStates`；本轮不要求 report optimistic；
 - `TCommentViewerStates` 只含 upvote/report flags 和按 emotion type 的 reaction flags，不含公共
   emotion count/latestUsers；
 - `Q.viewer.commentStates` 能从未裁剪 response 提取 render view 所需的 root/reply viewer flags，

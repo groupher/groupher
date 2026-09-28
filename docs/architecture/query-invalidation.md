@@ -5,6 +5,9 @@
 >
 > 本文定义 `frontend/core/query/invalidation` 的唯一公共合同。它统一执行浏览器 Query cache invalidation，
 > 但不拥有领域 key、optimistic mutation、receipt、SSR cache 或 Cloudflare purge。
+>
+> [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md) 已让成功的 Article 写操作直接
+> functional-patch 真实 Detail/Batch query；本文的 invalidation target 继续保留，但不承担正常写后 count 同步。
 
 ## 1. 结论
 
@@ -14,7 +17,7 @@
 mutation confirmed / projection receipt
         │
         v
-QueryInvalidation.<domain>.<target>(ref)
+QueryInvalidation.<domain>.<target>(path)
         │
         v
 domain resolver
@@ -93,10 +96,11 @@ shape 判断实体类型。
 
 - canonical exact key；
 - canonical prefix；
-- key owner 导出的受控 matcher。
+- domain cache 或 invalidation resolver 内部的受控 matcher。
 
-matcher 用于 `statsBatch` 等无法只靠 prefix 表达的成员关系。它必须先验证 key family/version，再读取 normalized refs；
-matcher 由 `frontend/core/query/key.ts` 的 key owner 导出，resolver 不得硬编码数组下标，也不得读取 query data 判断是否命中。
+matcher 用于 `statsBatch` 等无法只靠 prefix 表达的成员关系。它必须先验证 key family/version，再读取 normalized paths；
+`articleQueryKeys` / `viewerQueryKeys` 只生成 key，成员匹配分别由 `articleStatsCache`、`viewer.ts` 或领域 invalidation resolver
+私有拥有。resolver 不得在调用点硬编码数组下标，也不得读取 query data 判断是否命中。
 
 ## 4. 默认执行策略
 
@@ -130,8 +134,8 @@ type TQueryInvalidationResult = {
 
 结果不包含 Query data、用户 token 或完整 query key dump。生产 metric 使用 domain/target/result 等低基数 label。
 
-执行成本以当前 QueryClient 中的 query 数量为上限，不扫描分页 entry data。`statsBatch` ref 在 key factory 中已排序去重，
-matcher 对 normalized ref 使用集合查找。首期不维护全局 entity-to-query 反向索引；只有 production telemetry 证明 cache
+执行成本以当前 QueryClient 中的 query 数量为上限，不扫描分页 entry data。`statsBatch` path 在 key factory 中已排序去重，
+matcher 对 normalized path 使用集合查找。首期不维护全局 entity-to-query 反向索引；只有 production telemetry 证明 cache
 规模使 predicate scan 成为热点时，才引入由 key owner 维护且可重建的二级索引，避免为通常几十个 query 的浏览器 cache
 提前增加一致性状态。
 
@@ -140,24 +144,28 @@ matcher 对 normalized ref 使用集合查找。首期不维护全局 entity-to-
 ### 5.1 Article
 
 ```text
-article.content(ref)       detail/preview 中 canonical content identity
-article.stats(ref)         单篇 stats entity + 所有包含 ref 的 statsBatch
+article.content(path)      detail/preview 中 canonical content identity
+article.stats(path)        真实 detail stats query + 所有包含 path 的 statsBatch
 article.lists(scope)       community/thread/filter family
-article.membership(ref)    可能包含该 Article 的列表归属
+article.membership(path)   可能包含该 Article 的列表归属
 ```
 
-`article.stats(ref)` 是公开 count 的唯一失效目标：
+`article.stats(path)` 是公开 count 的唯一失效目标：
 
 ```text
 ArticleStats mutation receipt
-  -> article.stats(ref)
-  -> exact articleKeys.stats(ref)
-  -> matcher articleKeys.statsBatchContains(ref)
+  -> article.stats(path)
+  -> exact articleQueryKeys.stats(path)
+  -> matcher articleStatsCache.contains(queryKey, path)
   -> active detail/list/Drawer stats refetch once
 ```
 
 它不命中 Article content，也不把 receipt 写入 ArticleStats cache。`article.lists(scope)` 只覆盖匹配 scope，不清空
-`articleKeys.all`；服务端排序/筛选通过 refetch 收敛，客户端不复制 query builder。
+`articleQueryKeys.all`；服务端排序/筛选通过 refetch 收敛，客户端不复制 query builder。
+
+当前实现中 `articleQueryKeys.stats(path)` 是 Detail/Drawer 的真实 query key；已删除 batch response 对它的 seed 和列表中的
+disabled observer。成功且返回完整 `ArticleStats` 的 mutation 直接 patch detail/batch，只有缺少完整结果、列表成员/排序变化或
+恢复异常时才使用本 target invalidation。
 
 ### 5.2 Comment
 
@@ -238,9 +246,9 @@ fallback。
 
 - exact、prefix 与受控 matcher 只命中声明的 key family；
 - 重复/重叠 target 在一次执行中去重，active query 不重复 refetch；
-- 1、20、100 个 batch refs 的 matcher 不扫描 query data，执行次数不随页面 entry 嵌套层级增长；
+- 1、20、100 个 batch paths 的 matcher 不扫描 query data，执行次数不随页面 entry 嵌套层级增长；
 - active 立即 refetch、inactive 只 stale，await 语义稳定；
-- `article.stats(ref)` 命中单篇 key 和所有包含 ref 的 normalized `statsBatch`，不命中其他 Article；
+- `article.stats(path)` 命中单篇 key 和所有包含 path 的 normalized `statsBatch`，不命中其他 Article；
 - list scope 覆盖 community/thread/filter family，但不清空无关列表；
 - accountRef 不匹配时 viewer target 不跨账号失效；logout/account switch 有独立清理测试；
 - 空 community、非法 thread/innerId、未知 target/version fail closed；

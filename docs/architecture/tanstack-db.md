@@ -26,7 +26,7 @@ comment/reply、快速 toggle 的最终意图，以及服务端排序/筛选结�
 完整后端 query builder，因此复杂度保持在有限的业务规则内。
 
 这不表示现有 fan-out 已完整正确：comment optimistic mutation 当前只 patch 公共 comment
-cache，没有同步 `viewerKeys.commentStates`；view model merge 时旧 viewer 快照会覆盖
+cache，没有同步 `viewerQueryKeys.commentStates`；view model merge 时旧 viewer 快照会覆盖
 `viewerHasUpvoted`、emotion reaction 和 report 状态。该问题应先在 Query ownership 层修复，
 并用 public/viewer 双 cache 的 patch、rollback 和 server reconcile 测试覆盖。单个一致性缺陷
 本身不是引入 TanStack DB 的理由。
@@ -79,7 +79,7 @@ Phase 8 在修正字段所有权和回归测试的同时，落地中间方案的
    variables。同一 `entity + operation` 使用相同 `scope.id` 串行，`mutationKey` 负责观察，
    `scope.id` 负责调度；最后意图合并仍由业务 intent buffer 完成；
 3. **以 tagGroups 为压力测试增加 typed shape routing。** `Q.article.tagGroups` 加入
-   `articleKeys.all` 后，`patchArticleEverywhere` 不再对整个前缀下的未知 data 猜 shape；为
+   `articleQueryKeys.all` 后，`patchArticleEverywhere` 不再对整个前缀下的未知 data 猜 shape；为
    article direct/detail、paged entries 等 article-bearing query 声明 adapter，并把
    `tagGroups`/`tagStats` 显式分类为 non-entity query。后续新增 shape 时优先新增 adapter，不在
    mutation 中增加分支。dispatch 必须先匹配 query key，再调用 adapter，不能只看 data shape。
@@ -125,7 +125,7 @@ hydration、logout、账号切换和 cache eviction 生命周期，并违反当�
 - 现有 Query fan-out 出现无法通过集中 helper 和测试可靠控制的一致性缺陷。
 
 单个漏 patch 不构成上述信号。例如 comment mutation 同步更新 comment list 的 public-owned
-aggregate 与 `viewerKeys.commentStates`，并覆盖 REPLIES/TIMELINE 两种 shape，即可解决当前
+aggregate 与 `viewerQueryKeys.commentStates`，并覆盖 REPLIES/TIMELINE 两种 shape，即可解决当前
 stale viewer 覆盖问题，无需为此引入 DB。
 
 重新评估必须同时比较客户端体积、SSR/hydration、账号切换、tab focus、测试成本和故障

@@ -74,14 +74,14 @@ UI 文案通常应保持原样；跨文件、跨 package、跨前后端共享的
 
 下表是修复前审计快照，用于保留问题证据；其中位置和次数不是当前源码检索结果。
 
-| 值                     | 修复前位置                                                                                                | 修复前次数 | 当前归属                                     |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- | ---------: | -------------------------------------------- |
-| `comment-state`        | `frontend/core/query/key.ts:114`；`frontend/core/query/mutation/comment.ts:318、647、717、749、855、1027` |          6 | `viewerKeys.commentStatePrefix`              |
-| `article-state`        | `frontend/core/query/key.ts:97`；`frontend/core/query/mutation/article.ts:135`                            |          2 | `viewerKeys.articleStatePrefix`              |
-| `config` / `event`     | `frontend/core/query/activity.ts:46`、`:64`                                                               |       各 1 | `activityKeys.config` / `activityKeys.event` |
-| `dsb` / `save`         | `frontend/core/query/mutation/useDsbSaveRunner.ts:33`、`:80`                                              |          2 | `dsbMutationKeys.save`                       |
-| `visitor-location-map` | `frontend/core/unit/AboutThread/VisitorLocationMap/index.tsx:23`                                          |          1 | `visitorKeys.locationMap`                    |
-| `graphql`              | `frontend/core/query/graphql.ts:20`；`frontend/community/src/query/queries.ts:75`                         |          2 | `graphqlKeys.document`                       |
+| 值                     | 修复前位置                                                                        | 修复前次数 | 当前归属                                     |
+| ---------------------- | --------------------------------------------------------------------------------- | ---------: | -------------------------------------------- |
+| `comment-state`        | `frontend/core/query/key.ts`；Comment private-state query/cache                   |          6 | `viewerQueryKeys.commentStatePrefix`         |
+| `article-state`        | `frontend/core/query/key.ts`；Article private-state query/cache                   |          2 | `viewerQueryKeys.articleStatePrefix`         |
+| `config` / `event`     | `frontend/core/query/activity.ts:46`、`:64`                                       |       各 1 | `activityKeys.config` / `activityKeys.event` |
+| `dsb` / `save`         | `frontend/core/query/mutation/useDsbSaveRunner.ts:33`、`:80`                      |          2 | `dsbMutationKeys.save`                       |
+| `visitor-location-map` | `frontend/core/unit/AboutThread/VisitorLocationMap/index.tsx:23`                  |          1 | `visitorKeys.locationMap`                    |
+| `graphql`              | `frontend/core/query/graphql.ts:20`；`frontend/community/src/query/queries.ts:75` |          2 | `graphqlKeys.document`                       |
 
 最终采用各领域 key factory，没有建立全局 `QUERY_KEYS` 字符串表。调用方不再重建相同层级的
 cache key，从而保证 invalidate、remove 和 refetch 使用相同 identity。

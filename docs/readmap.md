@@ -36,6 +36,8 @@
 
 ## Done
 
+- [x] [ArticleStats / View 全链路收口](./architecture/article-stats-view-chain-audit.md) — correctness、content/private GraphQL 边界、批量 reader、mutation payload、前端 Query cache/hooks/types 与数据库残留清理均已完成并通过全链路验收；Cloudflare/Edge 防滥用继续作为独立待办。
+- [x] [ArticleStats 与 private state 写后同步](./architecture/article-stats-and-viewer-state-sync.md) — mutation 返回完整公共 ArticleStats 与 owner-specific private state；前端按 owner revision patch 真实 Detail/Batch query，已删除 batch -> entity seed 与 per-article disabled observers。
 - [x] [Activity V1](./feature/activity/v1.md) — 统一 Activity 写入和读取边界已实现。
 - [x] [Activity V2](./feature/activity/v2.md) — Dashboard Community Activity 已完成。
 - [x] [Gate V4](./feature/gate/v4.md) — typed Access/Scope context 已落地。

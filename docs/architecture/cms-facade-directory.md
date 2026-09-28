@@ -498,10 +498,9 @@ mix test                          2156 passed, 0 failures, 1 excluded
 git diff --check                  passed
 ```
 
-`pnpm docs:check` 已覆盖到本次新增模块，本次新增 facade/owner module 没有文档错误；全仓检查仍被
-两个未在 F1–F7 修改的既有文件阻塞：`Assets.Endpoints` 缺少 ASCII business-position flow，
-`CanonicalJSON` 缺少同类 flow，且 `encode/1` 缺少 `@doc`。它们属于独立 source-documentation
-清理，不混入本次纯目录重构。
+`pnpm docs:check` 已覆盖到本次新增模块，当前全仓检查通过。此前阻塞检查的
+`Assets.Endpoints` 与 `CanonicalJSON` 源码文档缺口已经在后续 source-documentation 清理中修复；
+这两项不属于 F1–F7 的目录重构改动。
 
 ## 7. 非目标
 

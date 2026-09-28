@@ -15,6 +15,8 @@
 - [`article-stats-target.md`](./article-stats-target.md)：本次改造的 canonical Article、ArticleStats 读取投影、排序索引与修复协议。
 - [`article-emotion-counts.md`](./article-emotion-counts.md)：canonical Article identity 后的 emotion typed-row、GraphQL 改名与 direct cutover。
 - [`../feature/view-tracker/article-view-counting.md`](../feature/view-tracker/article-view-counting.md)：Article view 当前唯一写协议、actor-specific 阅读资格、同步 UPSERT 与未来高流量方案的另立版本门槛。
+- [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md)：已落地的 Article 写后完整 ArticleStats、owner-specific private state、前端 owner-wise merge 与多 surface 同步合同。
+- [`article-stats-view-chain-audit.md`](./article-stats-view-chain-audit.md)：ArticleStats/View 已实施的全链路审计与收口记录。
 - [`request-actor.md`](./request-actor.md)：平台级 human/agent/crawler/unknown 请求主体分类能力。
 - [`public-cache-invalidation.md`](./public-cache-invalidation.md)：Phoenix 领域事务 outbox、Oban worker 和 Cloudflare cache-tag purge 的可靠失效协议。
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。

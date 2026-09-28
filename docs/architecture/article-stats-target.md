@@ -297,9 +297,9 @@ GraphQL operation、Query key、selector 和组件调用方，然后删除旧字
 ```text
 Q.article.stats(ref)
 Q.article.statsBatch(refs)
-articleKeys.stats(ref)
-articleKeys.statsBatch(refs)
-articleKeys.statsPrefix(scope)
+articleQueryKeys.stats(path)
+articleQueryKeys.statsBatch(paths)
+articleStatsCache.contains(queryKey, path)
 ```
 
 GraphQL type/operation 继续使用领域全名 `ArticleStats`，源文件继续使用 `articleStats.ts`，wire key 继续使用

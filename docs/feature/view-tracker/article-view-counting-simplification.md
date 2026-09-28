@@ -7,6 +7,9 @@
 > 当前运行时协议：[Article View 计数写链路](./article-view-counting.md)
 >
 > 后续边缘防滥用：[Article View Cloudflare 防滥用待办](./cloudflare-abuse-protection-todo.md)
+>
+> 当前写后同步：
+> [ArticleStats 与 private state 写后同步](../../architecture/article-stats-and-viewer-state-sync.md)
 
 本文记录 Article View 计数链路已经落地的简化 cutover。改造继续保留同步计数、actor/article 时间窗口去重和
 ArticleStats 字段级 ownership，但删除 View 专属 transport receipt、客户端 `eventId`、误导性的 watermark
@@ -328,6 +331,10 @@ ViewAck 只用于匿名/缓存尚未收敛时的页面状态确认；服务端 V
 
 ## 8. 统一 Article 状态组装
 
+> 当前实现按
+> [ArticleStats 与 private state 写后同步](../../architecture/article-stats-and-viewer-state-sync.md) 使用真实 Detail/Batch query，
+> view、interaction 和 comment mutation 返回并应用完整公共 ArticleStats 与各 owner private state，不建立 entity 中转层。
+
 ### 8.1 公共 API
 
 前端调用方只使用：
@@ -388,7 +395,7 @@ Article content 不再携带 stats 兼容快照；entity 与 batch 都缺失时�
 
 以下实现细节不得暴露给调用方：
 
-- `articleRefKey`；
+- `articlePathKey`；
 - stats/viewer Map；
 - batch 与 entity 的覆盖顺序；
 - receipt/ViewAck storage key；

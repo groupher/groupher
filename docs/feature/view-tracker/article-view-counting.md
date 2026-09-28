@@ -6,6 +6,10 @@
 >
 > 直接切换设计与删改清单见
 > [`article-view-counting-simplification.md`](./article-view-counting-simplification.md)。
+>
+> 当前前端写后同步见
+> [`ArticleStats 与 private state 写后同步`](../../architecture/article-stats-and-viewer-state-sync.md)。真实 Detail/Batch query 与
+> owner-wise patch 已取代 canonical entity/优先级实现。
 
 本文是 Article `views` 当前运行时合同。实现不保留旧异步投影、View transport receipt、客户端幂等 ID、双写、双读或
 兼容 wrapper。
@@ -53,7 +57,7 @@ CMS.ViewTracker.track
         |
         v
 applyViewResult
-  -> canonical ArticleStats entity
+  -> 已存在的真实 Detail/Batch stats query
   -> current viewer cache
   -> tracked=true 时写 ViewAck
         |
@@ -180,10 +184,13 @@ expired rows。
 
 ## 7. 前端状态收敛
 
+> 当前实现已删除 batch -> entity seed 和 disabled entity observers；ViewTracker 后端计数、ViewAck 与
+> `useArticleState/useArticleStates` 页面 API 保持不变。
+
 Tracking 返回后统一调用 `applyViewResult`：
 
 ```text
-ArticleStats -> canonical entity cache
+ArticleStats -> 已存在的真实 Detail/Batch query
 ViewerState  -> 当前 viewer batches
 tracked=true -> same-tab ViewAck
 ```
@@ -198,7 +205,7 @@ useArticleState(article)
 useArticleStates(articles)
 ```
 
-公共 hook 内部统一 Article ref/key、stats batch、canonical entity 优先级、viewer batches、ViewAck 和 interaction receipt
+公共 hook 内部统一 Article ref/key、真实 detail/batch stats、viewer batches、ViewAck 和 interaction receipt
 overlay。详情与列表仍各自拥有内容查询；分页、URL filter、刷新和 Kanban 分组不进入公共状态 hook。
 
 ## 8. 安全边界
@@ -218,6 +225,8 @@ fail closed；这不影响 browser/account/service 的业务去重正确性，�
 
 ## 9. 删除与测试合同
 
+> 前端测试验证真实 Detail/Batch query 的 owner-wise functional patch，不再验证 canonical entity 优先级。
+
 永久删除 physical Article 时，同一事务按生命周期语义删除 Article 本体及其 ArticleStats、ViewDedupeState 和 ViewerState。
 Doc 多 branch 共享逻辑 identity 时，canonical/physical 删除规则仍由 Article Trash 合同负责，ViewTracker 只按实际 physical
 Article id 清理自己的状态。
@@ -232,7 +241,7 @@ Article id 清理自己的状态。
 - service scope 的允许、拒绝和 verifier-failure 路径；
 - Cleanup 多批 drain、预算退出/续跑及并发推进后的 delete recheck；
 - permanent delete 后不留 View projection，旧请求不能复活；
-- Detail、Posts、Changelogs、Kanban 统一组装，canonical entity 优先，ViewAck 收敛；
+- Detail、Posts、Changelogs、Kanban 统一组装，真实 Detail/Batch stats 按 owner revision 收敛，ViewAck 收敛；
 - generated GraphQL 不再包含 View 客户端幂等字段或公开 decision 明细。
 
 生产发布仍需观察 ViewTracker outcome、Cleanup backlog、数据库写延迟，并单独完成 Cloudflare 待办和真实流量压测。

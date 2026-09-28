@@ -14,6 +14,9 @@
 > [`article-view-counting.md`](../feature/view-tracker/article-view-counting.md) 为准。本文的 ArticleStats 公共读取、
 > SSR/CDN 与 hydration 边界继续有效。
 > ViewTracker 只拥有阅读去重状态与当前 views，本文定义这些状态如何和其他公开计数一起被读取。
+> 当前前端写后同步合同见
+> [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md)。它已取代本文 §3.2 的 batch -> entity
+> normalization 与 §6.2 的 whole-snapshot rejection；以下旧段落仅保留历史背景。
 
 ## 1. 结论
 
@@ -107,13 +110,13 @@ viewerHasViewed       -> 按 viewer 隔离 -> ViewerState  -> 私有缓存
 前端命名：
 
 ```text
-Q.article.stats(ref)                    单篇公共统计 Query option
-Q.article.statsBatch(refs)              列表批量公共统计 Query option
-articleKeys.stats(ref)                  单篇 entity key
-articleKeys.statsBatch(refs)            列表 transport key
-articleKeys.statsPrefix(scope)          失效匹配边界
-usePagedPosts/usePagedChangelogs        列表消费方
-trackArticleView(ref)                   单篇可见阅读 tracking；不是批量统计查询
+Q.article.stats(path)                         单篇公共统计 Query option
+Q.article.statsBatch(paths)                   列表批量公共统计 Query option
+articleQueryKeys.stats(path)                  真实单篇 query key
+articleQueryKeys.statsBatch(paths)            真实列表 batch query key
+articleStatsCache.contains(queryKey, path)    Detail/Batch 成员匹配边界
+usePagedPosts/usePagedChangelogs              列表消费方
+trackArticleView(path)                        单篇可见阅读 tracking；不是批量统计查询
 ```
 
 产品列表通过 `usePagedPosts` / `usePagedChangelogs` 消费 `statsBatch`，Drawer 和详情通过同一 `stats` entity key
@@ -211,6 +214,10 @@ innerIds 去重后最多 100 个
 所有字段 owner API 都使用数据库 `clock_timestamp()` 写入，不能退回应用节点时间或 transaction-start `now()`。
 
 ### 3.2 前端 cache identity
+
+> 历史合同，已被
+> [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md) 取代。当前不再 batch -> entity seed；
+> `articleQueryKeys.stats(path)` 只作为 Detail/Drawer 的真实 query key 保留。
 
 网络层可以是批量请求，缓存层必须按单篇公开 locator 归一化：
 
@@ -523,6 +530,10 @@ trackArticleView
 > 当前客户端 guard 是 revision-vector-first：任一 owner revision 倒退时拒绝整份 ArticleStats；没有倒退且至少
 > 一个 revision 前进时接受，`snapshotAt` 只在 revisions 全部相等时排序。合法的 ViewerState 始终独立应用，
 > 不随 ArticleStats 一起丢弃。
+>
+> 以下 whole-snapshot guard 是历史合同，已被
+> [`article-stats-and-viewer-state-sync.md`](./article-stats-and-viewer-state-sync.md) 的 owner-wise merge 取代。服务端
+> `snapshotAt` 语义不变，前端合成对象的 `snapshotAt` 只用于 stale/refetch 提示与诊断。
 
 写入 cache 前执行：
 
@@ -594,7 +605,7 @@ SSR 普通 content reader 隐式 tracking
 ```
 
 本设计不迁移历史 `Article.views`，不从旧字段、已删除的 ViewEvent 或 Analysis hourly metric 重算当前 views。
-目标改造完成后 Article content schema、GraphQL fragments、DTO 和前端类型中不再存在旧
+当前 Article content schema、GraphQL fragments、DTO 和前端类型中不再存在旧
 `views/viewsRevision/upvotesCount/commentsCount/commentsParticipantsCount/collectsCount/emotions` 公共字段。
 
 ## 8. 实施状态与验收
