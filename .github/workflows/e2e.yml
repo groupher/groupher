@@ -14,6 +14,8 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
   push:
+    branches:
+      - dev
     paths:
       - 'frontend/dash/**'
       - 'frontend/landing/**'
@@ -29,6 +31,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   changes:
@@ -63,7 +69,7 @@ jobs:
     name: playwright (dash)
     needs: changes
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     timeout-minutes: 30
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.dash == 'true'
 
@@ -82,6 +88,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run e2e
+        timeout-minutes: 5
         env:
           CI: true
         run: pnpm run test:e2e:dash
@@ -99,7 +106,7 @@ jobs:
     name: playwright (landing)
     needs: changes
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     timeout-minutes: 30
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.landing == 'true'
 
@@ -118,6 +125,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run e2e
+        timeout-minutes: 5
         env:
           CI: true
         run: pnpm run test:e2e:landing
@@ -135,7 +143,7 @@ jobs:
     name: playwright (auth)
     needs: changes
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.62.1-noble
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     timeout-minutes: 30
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.auth == 'true' || needs.changes.outputs.dash == 'true'
 
@@ -154,6 +162,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run auth e2e
+        timeout-minutes: 5
         env:
           CI: true
         run: pnpm run test:e2e:auth --grep "P0"

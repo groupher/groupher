@@ -13,7 +13,7 @@ const repoRoot = path.join(landingRoot, '../..')
 const landingPort = Number.parseInt(process.env.PORT || '3002', 10)
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   publicDir: path.join(landingRoot, 'public'),
   resolve: { tsconfigPaths: true },
   server: {
@@ -31,6 +31,15 @@ export default defineConfig({
   ssr: { noExternal: ['@groupher/tooltip'] },
   plugins: [
     cloudflare({
+      assetsOnly: true,
+      config:
+        command === 'serve'
+          ? {
+              compatibilityFlags: ['nodejs_compat'],
+              entrypoint: '@tanstack/react-start/server-entry',
+            }
+          : undefined,
+      viteEnvironment: { name: 'ssr' },
       prerenderWorker: {
         config: {
           name: 'landing-prerender',
@@ -62,4 +71,4 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
-})
+}))
