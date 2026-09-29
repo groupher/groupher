@@ -11,6 +11,7 @@ const repoRoot = path.resolve(__dirname, '../..')
 type TWebServer = {
   command: string
   cwd: string
+  env?: Record<string, string>
   gracefulShutdown: {
     signal: 'SIGINT'
     timeout: number
@@ -25,6 +26,14 @@ const gracefulShutdown = {
   signal: 'SIGINT' as const,
   timeout: 5_000,
 }
+
+const webServerCommand = (command: string) =>
+  process.env.CI
+    ? {
+        command: 'exec node frontend/e2e/ci-web-server.mjs',
+        env: { E2E_SERVER_COMMAND: command },
+      }
+    : { command }
 
 const appConfig = {
   dash: {
@@ -57,7 +66,9 @@ const authHostResolverRules = [
 const webServer: TWebServer[] = authStack
   ? [
       {
-        command: 'pnpm exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 pnpm run mock:server',
+        ...webServerCommand(
+          'pnpm exec cross-env MOCK_GRAPHQL_PORT=4104 E2E_AUTH_STACK=1 pnpm run mock:server',
+        ),
         cwd: repoRoot,
         gracefulShutdown,
         url: 'http://localhost:4104/health',
@@ -65,8 +76,9 @@ const webServer: TWebServer[] = authStack
         timeout: 120_000,
       },
       {
-        command:
+        ...webServerCommand(
           'pnpm exec cross-env NODE_ENV=test PORT=3104 AUTH_URL=http://auth.groupher.localhost:3104 AUTH_COOKIE_SECURE=true AUTH_COOKIE_DOMAIN=.groupher.localhost NEXTAUTH_SECRET=e2e-auth-secret-e2e-auth-secret SERVICE_AUTH_CLIENT_ID=auth-e2e SERVICE_AUTH_CLIENT_SECRET=e2e-secret SERVICE_AUTH_TOKEN_ENDPOINT=http://127.0.0.1:4104/oauth2/token PHOENIX_GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql AUTH_TEST_ALLOWED_ORIGINS=http://dash.groupher.localhost:3103 pnpm --filter @groupher/backend-auth exec tsx src/e2e/server.ts',
+        ),
         cwd: repoRoot,
         gracefulShutdown,
         url: 'http://localhost:3104/health',
@@ -74,8 +86,9 @@ const webServer: TWebServer[] = authStack
         timeout: 120_000,
       },
       {
-        command:
+        ...webServerCommand(
           'pnpm exec cross-env PORT=3103 GRAPHQL_ENDPOINT=http://127.0.0.1:4104/graphiql NEXT_PUBLIC_AUTH_ENDPOINT=http://auth.groupher.localhost:3104/api/auth E2E_AUTH_STACK=1 pnpm --filter @groupher/frontend-dash run dev',
+        ),
         cwd: repoRoot,
         gracefulShutdown,
         url: 'http://localhost:3103/health',
@@ -85,7 +98,7 @@ const webServer: TWebServer[] = authStack
     ]
   : [
       {
-        command: 'pnpm run mock:server',
+        ...webServerCommand('pnpm run mock:server'),
         cwd: repoRoot,
         gracefulShutdown,
         url: `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/health`,
@@ -94,7 +107,7 @@ const webServer: TWebServer[] = authStack
         timeout: 120_000,
       },
       {
-        command: cmd,
+        ...webServerCommand(cmd),
         cwd: repoRoot,
         gracefulShutdown,
         url,
