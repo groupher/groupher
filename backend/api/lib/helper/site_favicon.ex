@@ -12,6 +12,7 @@ defmodule Helper.SiteFavicon do
         -> SiteFavicon
         -> normalized value / infrastructure
   """
+  alias GroupherServerWeb.ErrorCat
   alias Helper.UrlSafety
 
   @doc "Finds page through the `SiteFavicon` boundary."
@@ -72,7 +73,7 @@ defmodule Helper.SiteFavicon do
 
           case UrlSafety.validate_http_url(merged_location) do
             {:ok, safe_location} -> req(safe_location)
-            _ -> {:error, GroupherServerWeb.ErrorCat.unsafe_url()}
+            _ -> {:error, ErrorCat.unsafe_url()}
           end
 
         _ ->

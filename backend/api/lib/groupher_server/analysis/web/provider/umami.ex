@@ -1,6 +1,4 @@
 defmodule GroupherServer.Analysis.Web.Provider.Umami do
-  alias GroupherServer.CMS.ErrorCat
-
   @moduledoc """
   Umami adapter for Groupher Web Analysis.
 
@@ -17,13 +15,17 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         -> Repo / analytics provider
   """
 
-  @behaviour GroupherServer.Analysis.Web.Provider
-
   use Tesla
 
-  alias GroupherServer.Analysis.Web.Community
-  alias GroupherServer.Analysis.Web.Config
   require Logger
+  require GroupherServer.CMS.ErrorCat
+
+  alias GroupherServer.{Analysis, CMS}
+  alias CMS.ErrorCat
+
+  alias Analysis.Web.{Community, Config}
+
+  @behaviour GroupherServer.Analysis.Web.Provider
 
   @config Config.base()
   @page_dimensions [:path, :entry, :exit, :title, :query]
@@ -149,7 +151,7 @@ defmodule GroupherServer.Analysis.Web.Provider.Umami do
         {:ok, website_id} ->
           {:ok, website_id}
 
-        {:error, %GroupherServer.ErrorCat.Error{reason: :external_not_found}} ->
+        {:error, ErrorCat.error_pattern(reason: :external_not_found)} ->
           post_website(request, slug, "groupher.com")
 
         {:error, reason} ->

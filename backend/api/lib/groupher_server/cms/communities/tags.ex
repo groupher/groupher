@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Tags do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Owns community-tag creation, update, grouping, and article assignment workflows.
 
@@ -10,20 +9,20 @@ defmodule GroupherServer.CMS.Communities.Tags do
         -> Tags
         -> Repo / Oban
   """
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
   import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.{Community, CommunityTag, CommunityTagGroup}
+  alias Accounts.Model.User
+  alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
+  alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, T}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @doc """
   create a community tag
@@ -61,6 +60,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
           :community_tags_count
         )
       end)
+      |> Multi.run(:public_cache, fn _, _ ->
+        case invalidate_taxonomy(community, thread) do
+          :ok -> {:ok, :pass}
+          {:error, reason} -> {:error, reason}
+        end
+      end)
       |> Repo.transaction()
       |> result()
     end
@@ -73,9 +78,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
   def update(id, attrs) do
     with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, attrs} <- normalize_update_attrs(tag, attrs) do
-      tag
-      |> ORM.update(attrs)
-      |> preload_tag_group()
+      Repo.transaction(fn ->
+        with {:ok, updated} <- ORM.update(tag, attrs),
+             {:ok, updated} <- preload_tag_group({:ok, updated}),
+             :ok <- invalidate_taxonomy_by_tag(updated) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -94,9 +105,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
           index: next_group_index(community, thread)
         })
 
-      CommunityTagGroup
-      |> ORM.create(attrs)
-      |> preload_group_tags()
+      Repo.transaction(fn ->
+        with {:ok, group} <- ORM.create(CommunityTagGroup, attrs),
+             :ok <- invalidate_taxonomy(community, thread),
+             {:ok, group} <- preload_group_tags({:ok, group}) do
+          group
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -108,7 +125,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
   def update_group(%Community{} = community, thread, id, attrs) do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
-      group |> ORM.update(attrs) |> preload_group_tags()
+      Repo.transaction(fn ->
+        with {:ok, updated} <- ORM.update(group, attrs),
+             :ok <- invalidate_taxonomy(community, thread),
+             {:ok, updated} <- preload_group_tags({:ok, updated}) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -130,7 +155,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
     with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
          {:ok, group} <- find_group_in_thread(community, thread, id) do
       Repo.transaction(fn ->
-        delete_group_and_update_count(community, group)
+        with {:ok, deleted_group} <- delete_group_and_update_count(community, group),
+             :ok <- invalidate_taxonomy(community, thread) do
+          deleted_group
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
       end)
     end
   end
@@ -139,7 +169,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     case ORM.delete(group) do
       {:ok, deleted_group} ->
         case CMS.Communities.update_count_field(community, :community_tags_count) do
-          {:ok, _} -> deleted_group
+          {:ok, _} -> {:ok, deleted_group}
           {:error, reason} -> Repo.rollback(reason)
         end
 
@@ -164,6 +194,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
           community,
           :community_tags_count
         )
+      end)
+      |> Multi.run(:public_cache, fn _, _ ->
+        case invalidate_taxonomy(community, tag.thread) do
+          :ok -> {:ok, :pass}
+          {:error, reason} -> {:error, reason}
+        end
       end)
       |> Repo.transaction()
       |> result()
@@ -192,7 +228,10 @@ defmodule GroupherServer.CMS.Communities.Tags do
                |> Ecto.Changeset.change()
                |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
                |> Repo.update(),
-             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags),
+             {:ok, thread} <- FrontDesk.thread_of(updated_article),
+             :ok <-
+               invalidate_taxonomy(Repo.get!(Community, updated_article.community_id), thread) do
           updated_article
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -650,6 +689,23 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp preload_tag_group(result), do: result
+
+  defp invalidate_taxonomy(%Community{} = community, thread) do
+    case PublicCache.invalidate_now(
+           PublicCacheConst.taxonomy_changed(),
+           %{community: community.slug, community_id: community.id, thread: thread},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community_tag"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp invalidate_taxonomy_by_tag(tag) do
+    community = Repo.get!(Community, tag.community_id)
+    invalidate_taxonomy(community, tag.thread)
+  end
 
   defp replace_community_ifneed(filter) when is_map(filter) do
     filter

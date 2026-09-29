@@ -8,8 +8,11 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       Gate policy -> CMS.Passport.Authorization -> allow or deny
   """
 
-  alias GroupherServer.CMS.Passport.ErrorCat
-  alias GroupherServer.CMS.Passport.Registry
+  require GroupherServer.CMS.Passport.ErrorCat
+
+  alias GroupherServer.CMS
+
+  alias CMS.Passport.{ErrorCat, Registry}
 
   @doc """
   Asks whether one normalized passport grants an action in a community.
@@ -23,7 +26,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       #=> {:ok, true}
 
       Authorization.allowed?(passport, "community-slug", "unknown.action")
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}}
+      #=> {:error, ErrorCat.error_pattern(reason: :unknown_action)}
 
   """
   def allowed?(passport, community, action),
@@ -42,10 +45,10 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       #=> {:ok, true}
 
       Authorization.check(user, "post.edit", %{community: %{slug: "elixir"}})
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}}
+      #=> {:error, ErrorCat.error_pattern(reason: :permission_denied)}
 
       Authorization.check(user, "unknown.action", %{})
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_passport_action}}
+      #=> {:error, ErrorCat.error_pattern(reason: :unknown_passport_action)}
 
   """
   def check(user, action, context \\ %{}) when is_map(context) do
@@ -59,7 +62,7 @@ defmodule GroupherServer.CMS.Passport.Authorization do
       {:ok, false} ->
         {:error, ErrorCat.permission_denied()}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
+      {:error, ErrorCat.error_pattern(reason: :unknown_action)} ->
         {:error, ErrorCat.unknown_passport_action()}
 
       {:error, reason} ->

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.DocSnapshot do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Immutable revision checkpoint for Doc content.
 
@@ -16,18 +15,18 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
   is a branch-local timeline shared by draft and public events.
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset
 
+  alias __MODULE__
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.{Author, Community, DocBranch}
+  alias CMS.Model.{Author, Community, DocBranch}
   alias Helper.Constant.DBPrefix
-
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -61,6 +60,7 @@ defmodule GroupherServer.CMS.Model.DocSnapshot do
     field(:revision_number, :integer)
     field(:schema_version, :integer, default: 1)
     field(:message, :string)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     timestamps(type: :utc_datetime)
   end

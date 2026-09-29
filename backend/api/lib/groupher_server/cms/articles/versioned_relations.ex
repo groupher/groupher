@@ -16,8 +16,10 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.Model.{Community, CommunityTag, CoverEditInfo}
+  alias CMS.ErrorCat
+
+  alias CMS.Communities.TagStats
+  alias CMS.Model.{Community, CommunityTag, CoverEditInfo}
   alias Helper.{ORM, T}
 
   @doc "Returns relation state suitable for immutable DocSnapshot data."
@@ -54,7 +56,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
       case option(attrs, :community_tag_ids) || option(attrs, :community_tags) do
         nil -> {:ok, article}
         tag_ids when is_list(tag_ids) -> put_tags(article, tag_ids)
-        _ -> {:error, GroupherServer.ErrorCat.custom("Article community tags are invalid")}
+        _ -> {:error, ErrorCat.custom("Article community tags are invalid")}
       end
     end
   end
@@ -142,7 +144,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
         |> Repo.update()
       else
         {:error,
-         GroupherServer.ErrorCat.custom(
+         ErrorCat.custom(
            "Article community tags do not belong to its Community and thread"
          )}
       end
@@ -156,7 +158,7 @@ defmodule GroupherServer.CMS.Articles.VersionedRelations do
 
       has_option?(attrs, :cover_url) or has_option?(attrs, :cover_url_dark) ->
         {:error,
-         GroupherServer.ErrorCat.custom("Article cover URLs require editable Cover state")}
+         ErrorCat.custom("Article cover URLs require editable Cover state")}
 
       true ->
         {:ok, article}

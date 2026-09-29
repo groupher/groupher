@@ -14,7 +14,8 @@ defmodule GroupherServer.Analysis.Web.Provider do
         -> Repo / analytics provider
   """
 
-  alias GroupherServer.Analysis.Web.Community
+  alias GroupherServer.Analysis
+  alias Analysis.Web.Community
 
   @doc """
   Returns the legacy summary DTO for one community and time range.

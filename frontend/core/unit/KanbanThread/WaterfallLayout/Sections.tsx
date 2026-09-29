@@ -15,7 +15,7 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
-import type { TKanbanBoard, TPagedPosts } from '~/spec'
+import type { TKanbanBoard, TPagedArticleViewModels } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
@@ -27,7 +27,7 @@ type TSection = {
   countClassName: string
   headClassName: string
   icon: ReactNode
-  posts: TPagedPosts
+  posts: TPagedArticleViewModels
 }
 
 export default function Sections() {
@@ -102,7 +102,9 @@ export default function Sections() {
           <div className={s.content}>
             {section.posts.totalCount === 0 && <EmptyItem />}
             {section.posts.totalCount !== 0 &&
-              section.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+              section.posts.entries.map((item) => (
+                <KanbanItem key={item.content.innerId} viewModel={item} />
+              ))}
           </div>
         </div>
       ))}

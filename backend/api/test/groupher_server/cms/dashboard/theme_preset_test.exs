@@ -3,8 +3,11 @@ defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Dashboard.ThemePreset
-  alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout
+  alias GroupherServer.ErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Dashboard.ThemePreset
+  alias CMS.Model.Embeds.Dashboard.Layout
 
   test "default theme preset state is seeded in layout default" do
     assert Layout.default().theme_preset == :default
@@ -73,35 +76,35 @@ defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
              })
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "invalid theme overwrite key: \"light.unknownToken\""
             }} =
              ThemePreset.validate_overwrite(%{"light" => %{"unknownToken" => "#fff"}})
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "invalid theme overwrite value: light.gaussBlur"
             }} =
              ThemePreset.validate_overwrite(%{"light" => %{"gaussBlur" => "72"}})
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "invalid theme overwrite value: light.primaryColor"
             }} =
              ThemePreset.validate_overwrite(%{"light" => %{"primaryColor" => "YELLOW"}})
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "invalid theme overwrite value: dark.glowOpacity"
             }} =
              ThemePreset.validate_overwrite(%{"dark" => %{"glowOpacity" => 101}})
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               reason: :custom,
               details: "invalid theme overwrite value: light.pageBgHue"
             }} =

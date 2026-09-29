@@ -11,7 +11,7 @@ import { THREAD_PATH } from '~/const/thread'
 import { getRandomInt } from '~/helper'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
-import type { TArticle } from '~/spec'
+import type { TArticleState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -22,10 +22,11 @@ import Upvote from '~/unit/Upvote'
 import useSalon from '../salon/classic_layout/simple'
 
 type TProps = {
-  article: TArticle
+  viewModel: TArticleState
 }
 
-const KanbanItem: FC<TProps> = ({ article }) => {
+const KanbanItem: FC<TProps> = ({ viewModel }) => {
+  const { content: article, stats } = viewModel
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
@@ -49,13 +50,13 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <div className={s.footer}>
         <div className='row-center'>
           <Upvote
-            count={article.upvotesCount}
+            count={stats?.upvotesCount}
             avatarList={mockUsers(3)}
             type={UPVOTE_LAYOUT.SIMPLE}
           />
           <div className='mr-4' />
-          {article.commentsCount !== 0 && (
-            <CommentsCount count={article.commentsCount} size='medium' />
+          {(stats?.commentsCount ?? 0) !== 0 && (
+            <CommentsCount count={stats?.commentsCount} size='medium' />
           )}
         </div>
         <ArticleCatStatus cat={article.cat} status={article.status} />

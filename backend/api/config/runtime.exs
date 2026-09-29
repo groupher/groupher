@@ -20,7 +20,8 @@ config :groupher_server, GroupherServerWeb.ServiceAuth.Verifier,
     "phoenix:assets-api",
     "phoenix:auth-api",
     "phoenix:content-import-api",
-    "phoenix:press-api"
+    "phoenix:press-api",
+    "phoenix:view-api"
   ]
 
 config :groupher_server, GroupherServer.ServiceAuth.Client,
@@ -59,6 +60,16 @@ if config_env() in [:prod, :seed_prod] do
       environment variable SECRET_KEY_BASE is missing.
       You can generate one by calling: mix phx.gen.secret
       """
+
+  view_tracker_pepper =
+    System.get_env("VIEW_TRACKER_PEPPER") ||
+      raise """
+      environment variable VIEW_TRACKER_PEPPER is missing.
+      It is required to derive ViewTracker visitor tracking keys.
+      """
+
+  view_tracker_cookie_secret = System.get_env("VIEW_TRACKER_COOKIE_SECRET") || secret_key_base
+  view_tracker_cookie_previous_secret = System.get_env("VIEW_TRACKER_COOKIE_PREVIOUS_SECRET")
 
   host =
     System.get_env("PHX_HOST") || "groupher-server.fly.dev"
@@ -147,6 +158,12 @@ if config_env() in [:prod, :seed_prod] do
   # import_config "prod.secret.exs"
 
   config :groupher_server, GroupherServerWeb.Endpoint, secret_key_base: secret_key_base
+  config :groupher_server, :view_tracker_pepper, view_tracker_pepper
+  config :groupher_server, :view_tracker_cookie_secret, view_tracker_cookie_secret
+
+  config :groupher_server,
+         :view_tracker_cookie_previous_secret,
+         view_tracker_cookie_previous_secret
 
   config :groupher_server, Helper.Guardian,
     issuer: "groupher_server",

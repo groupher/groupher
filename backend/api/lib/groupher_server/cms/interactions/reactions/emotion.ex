@@ -11,15 +11,18 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.{Events, Gate}
-  alias GroupherServer.CMS.Interactions.{Config, ErrorCat, ReadState}
-  alias GroupherServer.CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Communities.Enable
+  alias CMS.{Events, Gate, Command}
+  alias CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
+  alias Analysis.MetricEvent
   alias Helper.{Later, T}
+
+  @reserved_article_emotions [:upvote, :collect]
 
   @doc """
   Applies an emotion as an idempotent set-state command.
@@ -29,8 +32,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.add(comment, :heart, actor)
 
   """
-  @spec add(struct(), atom(), User.t()) :: T.domain_res(struct())
-  def add(artiment, emotion, %User{} = actor), do: mutate(artiment, emotion, actor, :add)
+  @spec add(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
+  def add(artiment, emotion, %User{} = actor, command_id \\ nil),
+    do: mutate(artiment, emotion, actor, :add, command_id)
 
   @doc """
   Removes an emotion as an idempotent set-state command.
@@ -40,33 +44,60 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       Reactions.Emotion.remove(comment, :heart, actor)
 
   """
-  @spec remove(struct(), atom(), User.t()) :: T.domain_res(struct())
-  def remove(artiment, emotion, %User{} = actor),
-    do: mutate(artiment, emotion, actor, :remove)
+  @spec remove(struct(), atom(), User.t(), String.t() | nil) :: T.domain_res(struct())
+  def remove(artiment, emotion, %User{} = actor, command_id \\ nil),
+    do: mutate(artiment, emotion, actor, :remove, command_id)
 
-  defp mutate(input, emotion, actor, operation) when is_atom(emotion) do
-    MutationLock.observe_transaction(fn ->
-      Repo.transaction(fn ->
+  defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
+    with {:ok, command_id} <- Command.resolve_command_id(command_id),
+         {:ok, info} <- Matcher.match_interaction(input) do
+      Command.update_user(actor, command_id,
+        command: emotion_command(operation),
+        resource: input,
+        input: %{operation: operation, emotion: emotion},
+        recovery: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end,
+        after_commit: fn
+          {canonical, :changed} ->
+            if match?(%Comment{}, canonical) do
+              Later.run(
+                {Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]}
+              )
+            end
+
+            :ok
+
+          _ ->
+            :ok
+        end
+      )
+      |> Command.run(fn %{resource: input} ->
         with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
-             {:ok, info} <- Matcher.match_interaction(canonical),
              {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
              {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-             :ok <- sync_state(canonical, emotion, actor, operation, change) do
-          {canonical, change}
-        else
-          {:error, reason} -> Repo.rollback(reason)
+             :ok <- sync_state(canonical, emotion, actor, operation, change),
+             :ok <- record_metric(canonical, operation, change, command_id) do
+          {:ok, {canonical, change}, %{outcome: change}}
         end
       end)
-    end)
-    |> after_commit(operation, actor)
+      |> present_reaction(command_id)
+    end
   end
 
-  defp mutate(_input, emotion, _actor, _operation),
+  defp mutate(_input, emotion, _actor, _operation, _command_id),
     do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
+
+  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
+  defp recovery_outcome(_receipt), do: :changed
+
+  defp emotion_command(:add), do: :emotion_add
+  defp emotion_command(:remove), do: :emotion_remove
 
   defp allow_emotion(%Comment{} = comment, _info, emotion) do
     Enable.emotion?(comment.community.slug, :comment, comment.thread, emotion)
   end
+
+  defp allow_emotion(_article, _info, emotion) when emotion in @reserved_article_emotions,
+    do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
 
   defp allow_emotion(article, info, emotion) do
     Enable.emotion?(article.community.slug, :article, info.artiment, emotion)
@@ -86,16 +117,28 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp after_commit({:ok, {canonical, :changed}}, :add, actor) do
-    if match?(%Comment{}, canonical) do
-      Later.run({Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]})
-    end
+  defp record_metric(%Comment{}, _operation, _change, _operation_id), do: :ok
+  defp record_metric(_article, _operation, :unchanged, _operation_id), do: :ok
 
-    {:ok, canonical}
+  defp record_metric(article, operation, :changed, operation_id) do
+    metric = if operation == :add, do: :emotion_added, else: :emotion_removed
+
+    case MetricEvent.append_article_action(article, operation_id, metric) do
+      :ok -> :ok
+      {:error, _reason} = error -> error
+    end
   end
 
-  defp after_commit({:ok, {canonical, _change}}, _operation, _actor), do: {:ok, canonical}
-  defp after_commit({:error, reason}, _operation, _actor), do: {:error, reason}
+  defp present_reaction({:ok, {canonical, outcome}}, command_id),
+    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
+
+  defp present_reaction(error, _command_id), do: error
+
+  defp put_reaction_metadata(canonical, command_id, outcome) do
+    canonical
+    |> Map.put(:command_id, command_id)
+    |> Map.put(:reaction_outcome, outcome)
+  end
 
   @doc """
   Safely decodes a persisted emotion using the bounded vocabulary.
@@ -107,9 +150,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   """
   @spec decode(String.t(), :article | :comment) ::
-          {:ok, atom()} | {:error, GroupherServer.ErrorCat.Error.t()}
-  def decode(value, kind) when is_binary(value) and kind in [:article, :comment] do
-    vocabulary = if kind == :article, do: Config.emotions(), else: Config.comment_emotions()
+          {:ok, atom()} | {:error, ErrorCat.error()}
+  def decode(value, type) when is_binary(value) and type in [:article, :comment] do
+    vocabulary = if type == :article, do: Config.emotions(), else: Config.comment_emotions()
 
     case Enum.find(vocabulary, &(Atom.to_string(&1) == value)) do
       emotion when is_atom(emotion) and not is_nil(emotion) -> {:ok, emotion}
@@ -117,7 +160,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  def decode(_value, _kind), do: {:error, ErrorCat.unknown_emotion()}
+  def decode(_value, _type), do: {:error, ErrorCat.unknown_emotion()}
 
   defp change_fact(%Comment{} = comment, _info, emotion, actor, :add) do
     insert_fact(

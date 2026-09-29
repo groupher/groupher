@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Changelog do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Activity.Model.ChangelogLog
+  alias GroupherServer.Activity
+  alias Activity.Model.ChangelogLog
 
   test "keeps an ordinary Changelog draft until explicit publish" do
     {community, public, _attrs, user} = mock_article(:changelog)

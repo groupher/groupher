@@ -135,6 +135,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     @desc "delete a global community"
     field :request_destroy_community, :community do
       arg(:community, non_null(:string))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.request_destroy")

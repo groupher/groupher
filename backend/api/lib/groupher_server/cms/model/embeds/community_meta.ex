@@ -14,8 +14,9 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
   """
 
   import Helper.Utils, only: [plural: 1]
+  alias GroupherServer.CMS
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc "Generates one pluralized thread count field per configured thread."
   defmacro thread_count_fields do
@@ -38,8 +39,6 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 end
 
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
-  @type t :: %__MODULE__{}
-
   @moduledoc """
   Embedded community counters, membership projections, and per-thread indexes.
 
@@ -50,6 +49,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
         -> Community row
         -> Community and dashboard read models
   """
+
   use Ecto.Schema
   use Accessible
 
@@ -57,7 +57,10 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   import Helper.Utils, only: [plural: 1]
   import GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  alias GroupherServer.CMS
+
+  @type t :: %__MODULE__{}
+  @threads CMS.Artiment.Config.threads()
 
   @general_options %{
     moderators_ids: [],

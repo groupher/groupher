@@ -14,21 +14,21 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
 
   Example contract:
 
-      Access.Policy.article(actor, :publish, article, %Context.Access.Article{})
+      Access.Policy.Article.check_access(actor, :publish, article, %Context.Access.Article{})
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.CMS.{
-    Communities
-  }
+  alias Accounts.Model.User
 
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Communities
+
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias CMS.Gate.Context.Access.Doc, as: DocContext
+  alias CMS.Gate.ErrorCat
+  alias CMS.Model.Community
 
   @actions [
     :publish,
@@ -42,10 +42,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
     :collect,
     :report
   ]
+  @interaction_actions [:upvote, :emotion, :collect, :report]
 
   @doc "Checks Article or Doc mutation admission without loading or locking resources."
   @spec check_access(User.t() | nil, atom(), map(), ArticleContext.t() | DocContext.t()) ::
-          :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+          :ok | {:error, ErrorCat.error()}
   def check_access(%User{} = _user, action, article, context)
       when action in @actions and is_map(article) and
              (is_struct(context, ArticleContext) or is_struct(context, DocContext)),
@@ -75,7 +76,7 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   end
 
   defp doc_branch_allowed(action, %{doc_branch: %{type: type}})
-       when action in [:upvote, :emotion, :collect, :report] and type != :main,
+       when action in @interaction_actions and type != :main,
        do: {:error, ErrorCat.article_not_mutable()}
 
   defp doc_branch_allowed(_action, _context), do: :ok
@@ -137,19 +138,19 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Article do
   # 1 deliberately denies both add and remove unless the Article is public and
   # its Community remains writable; a future undo-only policy must be explicit.
   defp action_allowed(action, %{state: :published}, _article)
-       when action in [:upvote, :emotion, :collect, :report],
+       when action in @interaction_actions,
        do: :ok
 
   defp action_allowed(action, %{state: :archived}, _article)
-       when action in [:upvote, :emotion, :collect, :report],
+       when action in @interaction_actions,
        do: {:error, ErrorCat.article_archived()}
 
   defp action_allowed(action, %{state: :deleted}, _article)
-       when action in [:upvote, :emotion, :collect, :report],
+       when action in @interaction_actions,
        do: {:error, ErrorCat.article_deleted()}
 
   defp action_allowed(action, %{state: :destroy}, _article)
-       when action in [:upvote, :emotion, :collect, :report],
+       when action in @interaction_actions,
        do: {:error, ErrorCat.article_destroyed()}
 
   defp action_allowed(:delete, %{state: state}, _article)

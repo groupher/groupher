@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Helper.Macros do
-  require GroupherServer.CMS.Const
   @moduledoc """
   Defines shared artiment schema fields and CMS changeset validation macros.
 
@@ -10,11 +9,14 @@ defmodule GroupherServer.CMS.Helper.Macros do
         -> Macros
         -> Repo / external boundary
   """
+
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleCollect,
     ArticleLifecycle,
     ArticleUpvote,
@@ -29,7 +31,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Embeds
   }
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc """
   generate base schema type with shared fields for artiments
@@ -125,6 +127,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     quote do
       field(:comments_participants_count, :integer, default: 0)
       field(:comments_count, :integer, default: 0)
+      field(:comments_revision, :integer, default: 0)
       has_many(:comments, {"comments", Comment})
       # 评论参与者，只保留最近 5 个
       embeds_many(:comments_participants, Embeds.User, on_replace: :delete)
@@ -273,9 +276,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
   add(:author_id, references(:cms_authors, on_delete: :delete_all), null: false)
   create(index(:cms_[article]s, [:author_id]))
 
-  # for :views
-  add(:views, :integer, default: 0)
-
   # for :meta
   add(:meta, :map)
 
@@ -308,7 +308,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:title, :string)
       field(:digest, :string)
 
-      field(:views, :integer, default: 0)
+      field(:article_stats, :map, virtual: true)
       field(:is_pinned, :boolean, default: false, virtual: true)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
@@ -339,6 +339,8 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:active_at, :utc_datetime)
 
       field(:pending, :integer, default: 0)
+      # Mutation-only metadata; it carries the request command identity.
+      field(:command_id, Ecto.UUID, virtual: true)
 
       timestamps(type: :utc_datetime)
     end

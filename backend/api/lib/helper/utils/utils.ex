@@ -15,11 +15,10 @@ defmodule Helper.Utils do
   """
   import Ecto.Query, warn: false
   import Helper.ErrorHandler
-  alias GroupherServer.ErrorCat
 
   import Helper.Validator.Guards, only: [g_none_empty_str: 1]
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{ErrorCat, Repo}
   alias Helper.{Cache, Utils}
 
   # Map utils
@@ -95,9 +94,9 @@ defmodule Helper.Utils do
   def done(_, :boolean), do: {:ok, true}
 
   def done(nil, err_msg) when is_binary(err_msg),
-    do: {:error, GroupherServer.ErrorCat.custom(err_msg)}
+    do: {:error, ErrorCat.custom(err_msg)}
 
-  def done(nil, err_msg), do: {:error, GroupherServer.ErrorCat.custom(err_msg)}
+  def done(nil, err_msg), do: {:error, ErrorCat.custom(err_msg)}
   def done({:ok, _}, with: result), do: {:ok, result}
   def done({:error, reason}, with: _result), do: {:error, normalize_error(reason)}
 
@@ -114,7 +113,7 @@ defmodule Helper.Utils do
 
   def done(result, _, _), do: {:ok, result}
 
-  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+  defp normalize_error(%ErrorCat.Error{} = error), do: error
   defp normalize_error({reason, _meta}), do: ErrorCat.custom(%{reason: reason})
   defp normalize_error(reason) when is_atom(reason), do: ErrorCat.custom(%{reason: reason})
   defp normalize_error(reason) when is_binary(reason), do: ErrorCat.custom(reason)
@@ -150,7 +149,7 @@ defmodule Helper.Utils do
   @doc "Projects a domain failure into Absinthe's error result shape."
   def handle_absinthe_error(
         resolution,
-        %GroupherServer.ErrorCat.Error{} = error,
+        %ErrorCat.Error{} = error,
         _code
       ) do
     {:error, [message: message, code: error_code]} = ErrorCat.gq_format(error)

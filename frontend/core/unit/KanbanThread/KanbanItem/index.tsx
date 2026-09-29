@@ -8,22 +8,22 @@ import type { FC } from 'react'
 
 import { KANBAN_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import type { TArticle } from '~/spec'
+import type { TArticleState } from '~/spec'
 
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 
 type TProps = {
-  article: TArticle
+  viewModel: TArticleState
 }
 
-const KanbanItem: FC<TProps> = ({ article }) => {
+const KanbanItem: FC<TProps> = ({ viewModel }) => {
   const { kanbanLayout } = useLayout()
 
   return kanbanLayout === KANBAN_LAYOUT.WATERFALL ? (
-    <WaterfallLayout article={article} />
+    <WaterfallLayout viewModel={viewModel} />
   ) : (
-    <ClassicLayout article={article} />
+    <ClassicLayout viewModel={viewModel} />
   )
 }
 

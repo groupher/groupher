@@ -9,11 +9,15 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserContribute do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.Embeds
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.Embeds
 
   @optional_fields ~w(reported_count)a
 

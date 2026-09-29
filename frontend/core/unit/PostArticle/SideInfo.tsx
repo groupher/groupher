@@ -1,6 +1,6 @@
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import Img from '~/Img'
-import useArticleUpvoteMutation from '~/query/mutation/useArticleUpvoteMutation'
+import useArticleUpvote from '~/query/mutation/useArticleUpvote'
 import useArticle from '~/stores/article/hooks'
 import ReadableDate from '~/ui/ReadableDate'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -11,29 +11,29 @@ import useSalon from './salon/side_info'
 
 export default function SideInfo() {
   const s = useSalon()
-  const { article } = useArticle()
-  const upvoteArticle = useArticleUpvoteMutation(article)
+  const { article, stats, viewerState } = useArticle()
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   if (!article) {
     return <h1>Error article</h1>
   }
 
-  const { insertedAt, communityTags, upvotesCount, meta, viewerHasUpvoted, cat, status } = article
+  const { insertedAt, communityTags, meta, cat, status } = article
   const { latestUpvotedUsers } = meta
 
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
         <Upvote
-          count={upvotesCount}
+          count={count}
           avatarList={latestUpvotedUsers}
-          viewerHasUpvoted={viewerHasUpvoted}
-          onAction={upvoteArticle}
+          viewerHasUpvoted={isUpvoted}
+          onAction={() => toggle()}
           type={UPVOTE_LAYOUT.ARTICLE}
           bottom={8}
         />
         <div className={s.label}>
-          参与投票 <div className={s.count}>{upvotesCount}</div>
+          参与投票 <div className={s.count}>{count}</div>
         </div>
         <div className={s.userList}>
           {latestUpvotedUsers.map((user) => (

@@ -10,24 +10,25 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
       Gate.Access
         -> Access.Check resource function
-        -> resource check: aggregate lock + Access.Load + Access.Policy
-        -> with_authorized: Access.Load + Access.Policy inside an existing lock
+        -> resource check: aggregate lock + Access.Load + resource Policy
+        -> with_authorized: Access.Load + resource Policy inside an existing lock
         -> Gate.Decision
   """
 
-  alias GroupherServer.CMS.{Articles, FrontDesk}
-  alias GroupherServer.CMS.Gate.Access.{Load, Policy}
-  alias GroupherServer.CMS.Gate.Config
-  alias GroupherServer.CMS.Gate.Context.Access.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Access.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Post}
-  alias GroupherServer.CMS.Model.Doc, as: DocModel
-  alias GroupherServer.Repo
+  require GroupherServer.CMS.Gate.ErrorCat
+
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.{Articles, FrontDesk}
+  alias CMS.Gate.Access.{Load, Policy}
+  alias CMS.Gate.Context.Access.Article, as: ArticleContext
+  alias CMS.Gate.Context.Access.Doc, as: DocContext
+  alias CMS.Gate.{Decision, Config, ErrorCat}
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Post, Doc}
+
   @article_threads Config.article_threads()
 
-  @article_models [Post, Blog, Changelog, DocModel]
+  @article_models [Post, Blog, Changelog, Doc]
 
   @doc """
   Checks access to one Community and returns its canonical loaded value.
@@ -41,13 +42,13 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, context} <- Load.community(community),
          %Decision{allowed: true} <-
            Decision.from_result(
-             Policy.community(actor, action, context.community, context),
+             Policy.Community.check_access(actor, action, context.community, context),
              context
            ) do
       {:ok, context.community}
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -69,13 +70,16 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
            Articles.MutationLock.with_article(community, article, fn ->
              with {:ok, context} <- Load.comment(community, thread, article, comment),
                   %Decision{allowed: true} <-
-                    Decision.from_result(Policy.comment(actor, action, comment, context), context) do
+                    Decision.from_result(
+                      Policy.Comment.check_access(actor, action, comment, context),
+                      context
+                    ) do
                {:ok, Map.put(context.comment, :community, context.community)}
              else
                %Decision{} = decision ->
                  {:error, decision}
 
-               {:error, %GroupherServer.ErrorCat.Error{} = error} ->
+               {:error, ErrorCat.error_pattern() = error} ->
                  {:error, Decision.deny(error)}
              end
            end) do
@@ -83,7 +87,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     else
       nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
       {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -105,7 +109,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              with {:ok, context} <- Load.article(community, thread, resource),
                   %Decision{allowed: true} <-
                     Decision.from_result(
-                      Policy.article(actor, action, resource, context),
+                      Policy.Article.check_access(actor, action, resource, context),
                       context
                     ) do
                {:ok, canonical_resource(context_resource(context), context.community)}
@@ -113,7 +117,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
                %Decision{} = decision ->
                  {:error, decision}
 
-               {:error, %GroupherServer.ErrorCat.Error{} = error} ->
+               {:error, ErrorCat.error_pattern() = error} ->
                  {:error, Decision.deny(error)}
              end
            end) do
@@ -121,7 +125,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     else
       nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
       {:error, %Decision{} = decision} -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -147,14 +151,40 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       when is_function(callback, 1) do
     with {:ok, context} <- Load.comment(community, thread, article, comment),
          %Decision{allowed: true} = decision <-
-           Decision.from_result(Policy.comment(actor, action, context.comment, context), context) do
+           Decision.from_result(
+             Policy.Comment.check_access(actor, action, context.comment, context),
+             context
+           ) do
       decision.context.comment
       |> Map.put(:community, decision.context.community)
       |> callback.()
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
+  @spec with_authorized(
+          term(),
+          atom(),
+          tuple(),
+          (struct(), struct() -> term())
+        ) ::
+          {:ok, term()} | {:error, term()}
+  def with_authorized(actor, action, {community, thread, article, %Comment{} = comment}, callback)
+      when is_function(callback, 2) do
+    with {:ok, context} <- Load.comment(community, thread, article, comment),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(
+             Policy.Comment.check_access(actor, action, context.comment, context),
+             context
+           ) do
+      callback.(decision.context.comment, decision.context.article)
+      |> normalize_callback_result()
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 
@@ -163,7 +193,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     with {:ok, thread} <- article_thread(article),
          {:ok, context} <- Load.article(community, thread, article),
          %Decision{allowed: true} = decision <-
-           Decision.from_result(Policy.article(actor, action, article, context), context) do
+           Decision.from_result(
+             Policy.Article.check_access(actor, action, article, context),
+             context
+           ) do
       decision.context
       |> context_resource()
       |> canonical_resource(decision.context.community)
@@ -171,7 +204,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
-      {:error, %GroupherServer.ErrorCat.Error{} = error} -> {:error, Decision.deny(error)}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
     end
   end
 

@@ -15,23 +15,21 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   `preview_ref` is the idempotency boundary: a retry may return the existing Job
   only when the complete confirmed intent still matches.
 
-  See `docs/bulk-import/content-import-architecture.md` and
-  `docs/bulk-import/article-publish-import-refactor.md`.
+  See `docs/content-import/content-import-architecture.md` and
+  `docs/content-import/article-publish-import-refactor.md`.
   """
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ContentImport.Persistence.Connection
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
-  alias GroupherServer.CMS.ContentImport.Process
-  alias GroupherServer.CMS.ContentImport.Threads.Doc.Validator
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.ErrorCat
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.ContentImport.Persistence.{Connection, Job}
+  alias CMS.ContentImport.Persistence.Job.Body, as: StagedBody
+  alias CMS.ContentImport.{Persistence.Job.Item, Process, Threads.Doc.Validator}
+  alias CMS.Docs.Branch
+  alias CMS.Model.Community
 
   @doc "Creates or idempotently resumes the Job bound to one confirmed Preview intent."
   @spec create(Community.t(), User.t(), map()) :: {:ok, map()} | {:error, term()}
@@ -110,7 +108,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   @doc "Loads the internal Job record without projecting it for GraphQL."
   @spec get_record(pos_integer(), Ecto.UUID.t()) ::
-          {:ok, Job.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, Job.t()} | {:error, ErrorCat.error()}
   def get_record(community_id, job_ref) do
     case Repo.get_by(Job, community_id: community_id, hash_id: job_ref) do
       %Job{} = job -> {:ok, job}
@@ -120,7 +118,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   @doc "Locks one community Job for a staging, failure, cancel, or apply transaction."
   @spec lock_job(pos_integer(), Ecto.UUID.t()) ::
-          {:ok, Job.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, Job.t()} | {:error, ErrorCat.error()}
   def lock_job(community_id, job_ref) do
     case Repo.one(
            from(job in Job,
@@ -243,22 +241,22 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
       cond do
         not is_binary(external_ref) or external_ref == "" ->
-          {:halt, {:error, GroupherServer.ErrorCat.custom("sourceRef is required")}}
+          {:halt, {:error, ErrorCat.custom("sourceRef is required")}}
 
         MapSet.member?(refs, external_ref) ->
           {:halt,
            {:error,
-            GroupherServer.ErrorCat.custom("source documents contain a duplicate sourceRef")}}
+            ErrorCat.custom("source documents contain a duplicate sourceRef")}}
 
         not is_map(target) ->
           {:halt,
            {:error,
-            GroupherServer.ErrorCat.custom("source document is missing from confirmed TargetTree")}}
+            ErrorCat.custom("source document is missing from confirmed TargetTree")}}
 
         not is_binary(source_hash) or
             not String.match?(source_hash, ~r/\Asource-md-v1:[0-9a-f]{64}\z/) ->
           {:halt,
-           {:error, GroupherServer.ErrorCat.custom("source document hash contract is invalid")}}
+           {:error, ErrorCat.custom("source document hash contract is invalid")}}
 
         true ->
           item = %{
@@ -283,7 +281,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     end)
     |> case do
       {:ok, [], _refs} ->
-        {:error, GroupherServer.ErrorCat.custom("Select at least one document to import")}
+        {:error, ErrorCat.custom("Select at least one document to import")}
 
       {:ok, items, _refs} ->
         {:ok, Enum.reverse(items)}
@@ -294,7 +292,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
   end
 
   defp build_item_attrs(_documents, _target_tree, _source_info),
-    do: {:error, GroupherServer.ErrorCat.custom("source documents must be a list")}
+    do: {:error, ErrorCat.custom("source documents must be a list")}
 
   defp insert_items(job, attrs) do
     Enum.reduce_while(attrs, :ok, fn attrs, :ok ->
@@ -373,7 +371,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
     if same?,
       do: :ok,
       else:
-        {:error, GroupherServer.ErrorCat.custom("previewRef is already bound to another intent")}
+        {:error, ErrorCat.custom("previewRef is already bound to another intent")}
   end
 
   defp counts(target_tree) do

@@ -50,6 +50,7 @@ export const CommentFields = graphql(`
     isSolution
     floor
     upvotesCount
+    commentInteractionRevision
     isArticleAuthor
     viewerHasUpvoted
     viewerHasReported
@@ -76,6 +77,7 @@ export const CommentReplyFields = graphql(`
     isSolution
     floor
     upvotesCount
+    commentInteractionRevision
     isArticleAuthor
     viewerHasUpvoted
     viewerHasReported
@@ -119,6 +121,7 @@ export const CommentPublicFields = graphql(`
     isSolution
     floor
     upvotesCount
+    commentInteractionRevision
     isArticleAuthor
     repliesCount
     insertedAt
@@ -143,6 +146,7 @@ export const CommentPublicReplyFields = graphql(`
     isSolution
     floor
     upvotesCount
+    commentInteractionRevision
     isArticleAuthor
     repliesCount
     insertedAt

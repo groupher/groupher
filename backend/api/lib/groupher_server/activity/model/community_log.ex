@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.CommunityLog do
 
       Community Activity contract -> activity.community_logs -> management surface
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "community_logs",
     stream_field: :community_ref,

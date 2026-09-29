@@ -17,6 +17,7 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
   @behaviour Absinthe.Middleware
   import Helper.Utils, only: [handle_absinthe_error: 3]
   alias GroupherServer.ErrorCat
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   alias GroupherServerWeb.Gettext, as: Translator
 
@@ -24,7 +25,7 @@ defmodule GroupherServerWeb.Middleware.ChangesetErrors do
     resolution
     |> handle_absinthe_error(
       transform_errors(changeset),
-      ErrorCat.code(GroupherServerWeb.ErrorCat.changeset())
+      ErrorCat.code(WebErrorCat.changeset())
     )
   end
 

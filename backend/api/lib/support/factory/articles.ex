@@ -12,8 +12,9 @@ defmodule GroupherServer.Support.Factory.Articles do
         -> endpoint / fixture / Repo
   """
 
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.Support.FakeData
+  alias GroupherServer.{CMS, Support}
+  alias CMS.Artiment.BodyBag
+  alias Support.FakeData
   alias Helper.Datetime
 
   defmacro __using__(_opts) do
@@ -364,7 +365,6 @@ defmodule GroupherServer.Support.Factory.Articles do
       meta: meta,
       title: title,
       body: rich_text(text),
-      views: 0,
       emotions: default_emotions,
       active_at: active_at,
       pending: 0

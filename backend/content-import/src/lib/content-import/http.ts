@@ -14,9 +14,9 @@
  * projection. Source parsing and database writes remain behind their dedicated
  * boundaries.
  *
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/bulk-import.md
- * @see docs/bulk-import/import-error-handling.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/bulk-import.md
+ * @see docs/content-import/import-error-handling.md
  */
 import { createHmac, randomUUID } from 'node:crypto'
 

@@ -2,7 +2,7 @@
 
 import { THREAD } from '~/const/thread'
 import { useArticleQueryContext } from '~/query/ArticleQueryProvider'
-import type { TChangelog, TDoc, TPost } from '~/spec'
+import type { TArticleState, TChangelog, TDoc, TPost } from '~/spec'
 
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './context'
@@ -16,10 +16,13 @@ export default function useArticle() {
     throw new Error('useArticle must be used within an ArticleQueryProvider')
   }
 
-  const { article, thread } = queryArticle
+  const { article, stats, thread, viewerState } = queryArticle
 
   return {
     article,
+    stats,
+    viewerState,
+    viewModel: article ? ({ content: article, stats, viewerState } satisfies TArticleState) : null,
     post: thread === THREAD.POST ? (article as TPost | null) : null,
     changelog: thread === THREAD.CHANGELOG ? (article as TChangelog | null) : null,
     doc: thread === THREAD.DOC ? (article as TDoc | null) : null,

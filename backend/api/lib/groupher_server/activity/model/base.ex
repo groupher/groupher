@@ -23,7 +23,8 @@ defmodule GroupherServer.Activity.Model.Base do
       import Ecto.Changeset
 
       alias Helper.Constant.DBPrefix
-      alias GroupherServer.Activity.Const
+      alias GroupherServer.Activity
+      alias Activity.Const
 
       @schema_prefix DBPrefix.activity()
       @stream_field stream_field

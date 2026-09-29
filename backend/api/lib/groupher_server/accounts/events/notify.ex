@@ -13,8 +13,10 @@ defmodule GroupherServer.Accounts.Events.Notify do
         -> Notify
         -> Repo
   """
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Messaging
+
+  alias GroupherServer.{Accounts, Messaging}
+
+  alias Accounts.Model.User
 
   @doc "Creates a follow notification for the target user."
   def handle(:follow, %User{} = user, %User{} = from_user) do

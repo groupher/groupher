@@ -1,6 +1,8 @@
 defmodule GroupherServerWeb.ServiceAuthVerifierTest do
   use ExUnit.Case, async: false
 
+  alias GroupherServer.ErrorCat
+
   alias GroupherServerWeb.ServiceAuth.Verifier
 
   setup do
@@ -31,7 +33,7 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
   end
 
   test "rejects the same signature for another audience", %{key: key} do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_claims}} =
+    assert {:error, %ErrorCat.Error{reason: :invalid_claims}} =
              key
              |> token(%{"aud" => "press:internal-api"})
              |> Verifier.verify()
@@ -45,21 +47,21 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
           %{"nbf" => (DateTime.utc_now() |> DateTime.to_unix()) + 601},
           %{"exp" => (DateTime.utc_now() |> DateTime.to_unix()) - 601}
         ] do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_claims}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_claims}} =
                key |> token(overrides) |> Verifier.verify()
     end
   end
 
   test "preserves malformed, unknown-key, and signature failures", %{key: key} do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :malformed_token}} =
+    assert {:error, %ErrorCat.Error{reason: :malformed_token}} =
              Verifier.verify("not-a-jwt")
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_kid}} =
+    assert {:error, %ErrorCat.Error{reason: :unknown_kid}} =
              key |> token(%{}, "service_access+jwt", "unknown-key") |> Verifier.verify()
 
     other_key = JOSE.JWK.generate_key({:rsa, 2048})
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_service_token}} =
+    assert {:error, %ErrorCat.Error{reason: :invalid_service_token}} =
              other_key |> token() |> Verifier.verify()
   end
 
@@ -70,7 +72,7 @@ defmodule GroupherServerWeb.ServiceAuthVerifierTest do
       jwks_url: "http://127.0.0.1:1/.well-known/jwks.json"
     )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :jwks_unavailable}} =
+    assert {:error, %ErrorCat.Error{reason: :jwks_unavailable}} =
              key |> token() |> Verifier.verify()
   end
 

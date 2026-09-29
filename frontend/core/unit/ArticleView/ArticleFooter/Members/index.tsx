@@ -8,18 +8,19 @@ export default function Members() {
   const s = useSalon()
   const { t } = useTrans()
 
-  const { article } = useViewingArticle()
-  const { meta, upvotesCount, commentsParticipantsCount, commentsParticipants } = article
+  const { article, stats } = useViewingArticle()
+  const { meta, commentsParticipants } = article
 
   return (
     <div className={s.wrapper}>
       <div className={s.title}>
-        {t('article.footer.members.upvotes')} <span className='pretty-num'>({upvotesCount})</span>
+        {t('article.footer.members.upvotes')}{' '}
+        <span className='pretty-num'>({stats?.upvotesCount ?? 0})</span>
       </div>
       <UserList users={meta.latestUpvotedUsers} />
       <div className='mb-5' />
       <div className={s.title}>
-        {t('article.footer.members.comments')} ({commentsParticipantsCount})
+        {t('article.footer.members.comments')} ({stats?.commentsParticipantsCount ?? 0})
       </div>
       <UserList users={commentsParticipants} />
     </div>

@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Helper.ORMUpsert do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Model.Achievement
+  alias GroupherServer.Accounts
+  alias Accounts.Model.Achievement
   alias Helper.ORM
 
   describe "upsert helpers" do

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Scope.Comment do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Builds complete public Comment visibility through its stable Community relation.
 
@@ -15,26 +14,26 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
+  alias GroupherServer.{Accounts, CMS}
 
-
+  alias Accounts.Model.User
+  alias CMS.Gate.{ErrorCat, Scope.Policy}
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
+  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
 
   @behaviour Policy
 
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
   @doc "Builds thread-aware Comment visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Comment.t()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context) when action in @actions do
     with :ok <- validate_thread(context),

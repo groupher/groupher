@@ -14,12 +14,13 @@ defmodule GroupherServer.Accounts.Events do
         -> Repo
   """
 
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
 
   @type event_result :: {:ok, map()} | {:error, any()}
 
-  @spec emit(atom(), map()) :: event_result()
   @doc "Runs `emit` through the public `Events` boundary."
+  @spec emit(atom(), map()) :: event_result()
   def emit(:follow, %{user: user, from_user: from_user}) do
     __MODULE__.Notify.handle(:follow, user, from_user)
   end
@@ -28,5 +29,5 @@ defmodule GroupherServer.Accounts.Events do
     __MODULE__.Notify.handle(:undo, :follow, user, from_user)
   end
 
-  def emit(type, _payload), do: {:error, ErrorCat.custom("invalid account event: #{type}")}
+  def emit(type, _payload), do: {:error, ProfileErrorCat.custom("invalid account event: #{type}")}
 end

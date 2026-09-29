@@ -3,8 +3,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{Activity, CMS}
+
+  alias CMS.Model.{
+    ArticleEmotionCount,
     ArticleLifecycle,
+    ArticleStats,
     ArtimentMention,
     Comment,
     Post,
@@ -12,9 +16,9 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     TrashedArticle
   }
 
-  alias GroupherServer.Activity.Model.PostLog
+  alias Activity.Model.PostLog
 
-  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
+  @site_host CMS.ArtimentMentions.Config.site_host()
 
   test "Trash hides, lists and restores one logical Article without deleting content" do
     {community, post, _attrs, user} = mock_article(:post)
@@ -138,6 +142,21 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
              CMS.Articles.list_trashed(community, %{thread: :post, page: 1, size: 20})
   end
 
+  test "permanent delete rejects a stale emotion request and leaves no orphan projections" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    {:ok, other_user} = db_insert(:user)
+
+    assert {:ok, _} = CMS.Interactions.emotion(post, :heart, other_user)
+    assert {:ok, item} = CMS.Articles.trash(post, user)
+
+    assert {:error, _reason} = CMS.Interactions.emotion(post, :beer, other_user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
+
+    refute Repo.get(Post, post.id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
+  end
+
   test "permanent delete removes comment-owned Mention facts before comments cascade" do
     {community, post, _attrs, user} = mock_article(:post)
     {_, target, _, _} = mock_article(:blog, community, user)
@@ -181,7 +200,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
         }
       ])
 
-    assert {:ok, mentioner} = CMS.Articles.update(mentioner, %{body_bag: mock_body_bag(body)})
+    assert {:ok, mentioner} =
+             CMS.Articles.update(mentioner, %{
+               body_bag: mock_body_bag(body),
+               expected_version: mentioner.version
+             })
+
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(mentioner)
 
     assert {:ok, item} = CMS.Articles.trash(target, user)
@@ -234,7 +258,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
   test "standalone Doc Trash is rejected so Tree placement cannot become dangling" do
     {_community, doc, _attrs, user} = mock_article(:doc)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: message}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: message}} =
              CMS.Articles.trash(doc, user)
 
     assert message =~ "Docs Tree lifecycle"

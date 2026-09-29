@@ -6,7 +6,7 @@ defmodule Helper.ContentThumbnail do
   persisted only on public ArticleDocuments and rendered with the current site
   tokens by the frontend.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for ArticleDocument ownership.
+  See `docs/content-import/article-publish-import-refactor.md` for ArticleDocument ownership.
 
   Business position:
 

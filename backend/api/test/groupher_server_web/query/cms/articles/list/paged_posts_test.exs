@@ -3,8 +3,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
   use GroupherServer.TestMate
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Model.ArticleStats
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias GroupherServer.CMS
+
+  @article_cat CMS.Artiment.Const.cat_map()
+  @article_status CMS.Artiment.Const.status_map()
 
   @page_size GroupherServerWeb.Config.page_size()
 
@@ -82,7 +87,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
 
-      assert first_post["upvotesCount"] === 3
+      assert first_post["innerId"] === to_string(post_last_week.inner_id)
     end
 
     test "comments_count order should work",
@@ -98,7 +103,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
         guest_conn |> gq_query(S.Article.q(:paged_articles, :post, "cat status"), variables)
 
       first_post = results["entries"] |> List.first()
-      assert first_post["commentsCount"] === 3
+      assert first_post["innerId"] === to_string(post_last_week.inner_id)
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
@@ -107,34 +112,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user2
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user3
-        )
+      track_view(post, user)
+      track_view(post, user2)
+      track_view(post, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
-      last_post = results["entries"] |> List.last()
-      assert first_post["views"] > last_post["views"]
+      assert first_post["innerId"] == to_string(post.inner_id)
     end
 
     test "should get valid cat & status", ~m(guest_conn post_last_week)a do
@@ -246,7 +230,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+               ErrorCat.code(ArticleErrorCat.thread_not_visible())
              )
     end
 
@@ -257,7 +241,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -269,14 +253,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables_0,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :post),
                variables_neg_1,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -322,20 +306,49 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
-      most_views_post = Post |> order_by(desc: :views) |> limit(1) |> Repo.one()
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn post_last_year)a do
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :post and summary.article_id == ^post_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
+
+      most_views_post =
+        ArticleStats
+        |> where([summary], summary.thread == :post)
+        |> order_by(desc: :views)
+        |> limit(1)
+        |> Repo.one()
+
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       find_post = results |> Map.get("entries") |> hd
 
-      # assert find_post["id"] == most_views_post |> Map.get(:id) |> to_string
-      assert find_post["views"] == most_views_post |> Map.get(:views)
+      assert most_views_post.article_id == post_last_year.id
+      assert find_post["innerId"] == to_string(post_last_year.inner_id)
+    end
+
+    test "filter sort LEAST_VIEWS should use Summary zero-row semantics",
+         ~m(guest_conn community post_last_year)a do
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :post and summary.article_id == ^post_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
+
+      variables = %{filter: %{community: community.slug, sort: "LEAST_VIEWS"}}
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
+      find_post = results |> Map.get("entries") |> hd
+
+      refute find_post["innerId"] == to_string(post_last_year.inner_id)
     end
   end
 
-  describe "[query paged_posts filter has_xxx]" do
-    test "has_xxx status should work", ~m(user community)a do
+  describe "[query paged_posts private state boundary]" do
+    test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
@@ -347,18 +360,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 5
 
       the_post = Enum.find(results["entries"], &(&1["innerId"] == to_string(post.inner_id)))
-      assert not the_post["viewerHasViewed"]
-      assert not the_post["viewerHasUpvoted"]
-      assert not the_post["viewerHasCollected"]
-      assert not the_post["viewerHasReported"]
+      refute Map.has_key?(the_post, "viewerHasViewed")
+      refute Map.has_key?(the_post, "viewerHasUpvoted")
+      refute Map.has_key?(the_post, "viewerHasCollected")
+      refute Map.has_key?(the_post, "viewerHasReported")
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(post),
-          :post,
-          post.inner_id,
-          user
-        )
+      track_view(post, user)
 
       {:ok, _} = CMS.Interactions.upvote(post, user)
       {:ok, _} = CMS.Interactions.collect(post, user)
@@ -369,10 +376,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       the_post = Enum.find(results["entries"], &(&1["innerId"] == to_string(post.inner_id)))
 
-      assert the_post["viewerHasViewed"]
-      assert the_post["viewerHasUpvoted"]
-      assert the_post["viewerHasCollected"]
-      assert the_post["viewerHasReported"]
+      refute Map.has_key?(the_post, "viewerHasViewed")
+      refute Map.has_key?(the_post, "viewerHasUpvoted")
+      refute Map.has_key?(the_post, "viewerHasCollected")
+      refute Map.has_key?(the_post, "viewerHasReported")
 
       assert user_exist_in?(user, the_post["meta"]["latestUpvotedUsers"])
     end
@@ -480,5 +487,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       assert first_post["innerId"] !== to_string(post_last_week.inner_id)
     end
+  end
+
+  defp track_view(article, user) do
+    assert {:ok, %{tracked: true}} =
+             track_article_view(article, user, read_purpose: :public_read)
   end
 end

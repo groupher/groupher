@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Communities.Jobs.Setup do
   all retries are exhausted.
   """
   @impl Oban.Worker
+
   def perform(%Oban.Job{
         args: %{
           "community_ref" => community_ref,

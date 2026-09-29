@@ -13,16 +13,18 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
 
   Example contract:
 
-      Access.Policy.comment(actor, :edit, comment, %Context.Access.Comment{})
+      Access.Policy.Comment.check_access(actor, :edit, comment, %Context.Access.Comment{})
       #=> :ok | {:error, reason}
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Access.Comment, as: CommentContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Model.{CommentLifecycle, Community}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Access.Comment, as: CommentContext
+  alias CMS.Gate.ErrorCat
+  alias CMS.Model.{CommentLifecycle, Community}
 
   @actions [
     :reply_comment,
@@ -35,10 +37,11 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
     :accept_solution,
     :revoke_solution
   ]
+  @solution_actions [:accept_solution, :revoke_solution]
 
   @doc "Checks Comment mutation admission without loading or locking resources."
   @spec check_access(User.t() | nil, atom(), map(), CommentContext.t()) ::
-          :ok | {:error, GroupherServer.ErrorCat.Error.t()}
+          :ok | {:error, ErrorCat.error()}
   def check_access(%User{} = user, action, _comment, %CommentContext{} = context)
       when action in @actions do
     with {:ok, community} <- community(context),
@@ -98,16 +101,16 @@ defmodule GroupherServer.CMS.Gate.Access.Policy.Comment do
          article_author_user_id: actor_id,
          article_cat: :qa
        })
-       when action in [:accept_solution, :revoke_solution] do
+       when action in @solution_actions do
     :ok
   end
 
   defp action_allowed(_user, action, %{article_cat: :qa})
-       when action in [:accept_solution, :revoke_solution],
+       when action in @solution_actions,
        do: {:error, ErrorCat.permission_denied()}
 
   defp action_allowed(_user, action, _context)
-       when action in [:accept_solution, :revoke_solution],
+       when action in @solution_actions,
        do: {:error, ErrorCat.solution_not_supported()}
 
   defp action_allowed(_user, action, _context)

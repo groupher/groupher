@@ -13,14 +13,14 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
         -> SubscribeCommunity
         -> bounded side effect
   """
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Events.Event
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
+  alias CMS.{Communities, FrontDesk}
+  alias CMS.Events.Event
+  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
 
   @behaviour CMS.Events.Handler
 
@@ -40,8 +40,8 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
     handle(target, user)
   end
 
-  @spec handle(Community.t(), map()) :: subscribe_result()
   @doc "Subscribes a user to a community unless the relationship already exists."
+  @spec handle(Community.t(), map()) :: subscribe_result()
   def handle(%Community{} = community, user) do
     Communities.subscribe_ifnot(community, user)
   end

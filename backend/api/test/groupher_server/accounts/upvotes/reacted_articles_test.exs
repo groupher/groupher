@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Upvotes, as: Accounts
+  alias GroupherServer.Accounts
+  alias Accounts.Upvotes, as: Accounts
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -45,7 +46,7 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
       filter = %{thread: "INVALID", page: 1, size: 20}
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
                Accounts.paged_articles(user, filter)
     end
   end

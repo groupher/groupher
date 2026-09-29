@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       {:ok, %{community: "home", thread: :post, inner_id: "12"}}
 
       iex> ArticlePath.parse(%{community: "home", thread: :blog, inner_id: "12"}, thread: :post)
-      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}}
+      {:error, ErrorCat.error_pattern(reason: :invalid_article_path)}
 
       iex> ArticlePath.parse_arguments(%{article: %{community: "home", thread: :post, inner_id: "12"}})
       {:ok, %{article: %{community: "home", thread: :post, inner_id: "12"}, article_path: %{community: "home", thread: :post, inner_id: "12"}}}
@@ -28,8 +28,10 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
+  alias CMS.Artiment.Threads
 
   @type t :: %{
           community: String.t(),
@@ -51,7 +53,7 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       {:ok, %{community: "home", thread: :post, inner_id: "12"}}
   """
   @spec parse(map(), keyword()) ::
-          {:ok, t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, t()} | {:error, ErrorCat.error()}
   def parse(article_path, opts \\ [])
 
   def parse(%{community: community, thread: thread, inner_id: inner_id}, opts) do
@@ -80,7 +82,7 @@ defmodule GroupherServer.CMS.Helper.ArticlePath do
       {:ok, %{article: %{community: "home", thread: :post, inner_id: "12"}, article_path: %{community: "home", thread: :post, inner_id: "12"}}}
   """
   @spec parse_arguments(map(), keyword()) ::
-          {:ok, map()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, map()} | {:error, ErrorCat.error()}
   def parse_arguments(arguments, opts \\ []) when is_map(arguments) do
     # Prefer an already parsed value so Passport and article loading can share
     # the same path without repeating validation or changing middleware order.

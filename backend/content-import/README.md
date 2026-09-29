@@ -58,7 +58,7 @@ live repositories or generate fixture output during tests.
 
 ## Related documentation
 
-- [`docs/sub-apps/content_import.md`](../../docs/sub-apps/content_import.md)
-- [`docs/bulk-import/README.md`](../../docs/bulk-import/README.md)
-- [`docs/bulk-import/content_import_architecture.md`](../../docs/bulk-import/content_import_architecture.md)
-- [`docs/bulk-import/import_error_handling.md`](../../docs/bulk-import/import_error_handling.md)
+- [`docs/content-import/app-boundary.md`](../../docs/content-import/app-boundary.md)
+- [`docs/content-import/README.md`](../../docs/content-import/README.md)
+- [`docs/content-import/content-import-architecture.md`](../../docs/content-import/content-import-architecture.md)
+- [`docs/content-import/import-error-handling.md`](../../docs/content-import/import-error-handling.md)

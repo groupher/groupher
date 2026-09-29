@@ -14,14 +14,14 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   """
 
   import GroupherServer.Support.Factory
+
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
+  alias CMS.Seeds.{Comments, Config, Tags}
 
-  alias GroupherServer.CMS.Seeds.{Comments, Config, Tags}
-
-  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
   @article_count_range {Config.article_count_per_thread(), Config.article_count_per_thread()}
   @article_upvotes_range Config.article_upvotes_range()
   @comment_count_range Config.comment_count_range()
@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
           |> maybe_put_post_title(index, count, thread)
 
         {:ok, article} = CMS.Articles.create(community, thread, attrs, author)
-        {:ok, article} = seed_views(article)
+        article = seed_views(article)
 
         attach_tags(article, tag_ids)
         {:ok, article} = seed_upvotes(article, article_upvotes_range)
@@ -172,33 +172,9 @@ defmodule GroupherServer.CMS.Seeds.Articles do
   defp seed_emotions(article) do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@article_emotions),
-         {:ok, _} <- CMS.Interactions.emotion(article, emotion, user),
-         {:ok, article} <- ORM.find(article.__struct__, article.id),
-         emotions <- randomize_emotions(article.emotions) do
-      ORM.update_embed(article, :emotions, emotions)
+         {:ok, _} <- CMS.Interactions.emotion(article, emotion, user) do
+      ORM.find(article.__struct__, article.id)
     end
-  end
-
-  defp randomize_emotions(emotions) do
-    emotions
-    |> Map.from_struct()
-    |> Enum.reduce(%{}, fn {key, value}, acc ->
-      key_str = Atom.to_string(key)
-
-      cond do
-        String.ends_with?(key_str, "_count") ->
-          Map.put(acc, key, Enum.random(0..8))
-
-        String.starts_with?(key_str, "viewer_has_") ->
-          Map.put(acc, key, false)
-
-        String.starts_with?(key_str, "latest_") ->
-          Map.put(acc, key, value || [])
-
-        true ->
-          Map.put(acc, key, value)
-      end
-    end)
   end
 
   defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,
@@ -221,6 +197,5 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     Map.put(attrs, :title, title)
   end
 
-  defp seed_views(article),
-    do: ORM.update(article, %{views: Enum.random(100..1000)}, strict: false)
+  defp seed_views(article), do: article
 end

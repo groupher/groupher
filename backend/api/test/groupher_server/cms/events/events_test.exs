@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Events
-  alias GroupherServer.Messaging
+  alias GroupherServer.{CMS, Messaging}
+  alias CMS.Events
 
   setup do
     {community, post, _post_attrs, user} = mock_article(:post)
@@ -28,7 +28,7 @@ defmodule GroupherServer.Test.CMS.Events.EventsTest do
 
     test "returns error for unknown event type" do
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :invalid_event_type,
                 details: :unknown_type
               }} = Events.emit(:unknown_type, %{})

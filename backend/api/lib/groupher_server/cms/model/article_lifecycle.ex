@@ -17,11 +17,13 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
+  @article_threads CMS.Artiment.Config.threads() -- [:doc]
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @required_fields ~w(community_id thread article_hash_id state version changed_at)a
   @optional_fields ~w(archived_at deleted_at destroyed_at)a

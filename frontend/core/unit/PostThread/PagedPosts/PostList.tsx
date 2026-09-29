@@ -43,7 +43,7 @@ export default function PostList() {
       <div className={s.cards}>
         <MasonryCards column={2}>
           {entries.map((entry) => (
-            <PostItem key={entry.innerId} article={entry} layout={postLayout} />
+            <PostItem key={entry.content.innerId} viewModel={entry} layout={postLayout} />
           ))}
         </MasonryCards>
       </div>
@@ -51,6 +51,6 @@ export default function PostList() {
   }
 
   return entries?.map((entry) => (
-    <PostItem key={entry.innerId} article={entry} layout={postLayout} />
+    <PostItem key={entry.content.innerId} viewModel={entry} layout={postLayout} />
   ))
 }

@@ -13,7 +13,8 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  alias GroupherServer.CMS
+  @threads CMS.Artiment.Config.threads()
 
   defmacro threads_fields do
     @threads
@@ -37,10 +38,15 @@ defmodule GroupherServer.Accounts.Model.Embeds.CollectFolderMeta do
         -> User collection-folder row
         -> Accounts read model
   """
+
   use Ecto.Schema
+
   import Ecto.Changeset
   import GroupherServer.Accounts.Model.Embeds.CollectFolderMeta.Macros
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+
+  alias GroupherServer.CMS
+
+  @threads CMS.Artiment.Config.threads()
 
   @optional_fields Enum.map(@threads, &:"#{&1}_count") ++
                      Enum.map(@threads, &:"has_#{&1}")

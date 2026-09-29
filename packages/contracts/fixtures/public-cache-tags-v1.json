@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "vectors": [
+    {
+      "kind": "community",
+      "input": { "community": "home" },
+      "expected": "community[home]"
+    },
+    {
+      "kind": "articleList",
+      "input": { "community": "home", "thread": "POST" },
+      "expected": "community[home]-thread[POST]-articles"
+    },
+    {
+      "kind": "articleDetail",
+      "input": { "community": "home", "thread": "POST", "innerId": "42" },
+      "expected": "community[home]-thread[POST]-article[42]"
+    },
+    {
+      "kind": "comments",
+      "input": { "community": "home", "thread": "POST", "innerId": "42" },
+      "expected": "community[home]-thread[POST]-article[42]-comments"
+    },
+    {
+      "kind": "tags",
+      "input": { "community": "home", "thread": "POST" },
+      "expected": "community[home]-thread[POST]-tags"
+    },
+    {
+      "kind": "docTree",
+      "input": { "community": "home" },
+      "expected": "community[home]-doc-tree"
+    }
+  ]
+}

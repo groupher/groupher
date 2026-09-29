@@ -4,13 +4,14 @@ defmodule GroupherServer.Activity.Doc do
 
       Doc command -> Doc Activity contract -> DocLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.DocLog
 
   use GroupherServer.Activity.ArtimentEvent,
     thread: :doc,
-    schema: DocLog,
+    schema: GroupherServer.Activity.Model.DocLog,
     stream_field: :doc_ref
+
+  alias GroupherServer.Activity
+  alias Activity.Event
 
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),

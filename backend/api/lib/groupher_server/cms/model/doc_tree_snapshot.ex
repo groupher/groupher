@@ -21,15 +21,16 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, DocBranch}
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

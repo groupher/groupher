@@ -9,7 +9,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
 
   alias __MODULE__.{Query, Sync}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
 
   @doc """
   Returns Interaction state for one Artiment and optional viewer.
@@ -32,6 +33,12 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map() | {:error, term()}
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: Query
+
+  @doc "Returns public Interaction presentation state for one Artiment."
+  defdelegate public_state(artiment, opts \\ []), to: Query
+
+  @doc "Returns batched public Interaction presentation state."
+  defdelegate public_states(artiments, opts \\ []), to: Query
 
   @doc """
   Returns lightweight fixed counts keyed by Artiment identity.
@@ -131,15 +138,4 @@ defmodule GroupherServer.CMS.Interactions.ReadState do
   """
   @spec remove_report(struct(), User.t()) :: {:ok, map()} | {:error, term()}
   defdelegate remove_report(artiment, actor), to: Sync
-
-  @doc """
-  Merges asynchronously projected Article viewer ids.
-
-  ## Examples
-
-      ReadState.merge_viewed_users(:post, article.id, [viewer.id])
-
-  """
-  @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
-  defdelegate merge_viewed_users(thread, target_id, user_ids), to: Sync
 end

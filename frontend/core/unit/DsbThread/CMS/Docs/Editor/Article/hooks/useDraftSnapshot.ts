@@ -4,6 +4,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -67,7 +68,11 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
 
       setSnapshotStatus((current) => ({ ...current, creating: true }))
 
-      browserGraphQLRequest(S.checkpointDocDraftSnapshot, { community, id: docId })
+      browserGraphQLRequest(S.checkpointDocDraftSnapshot, {
+        community,
+        id: docId,
+        commandId: createCommandId(),
+      })
         .then(() => {
           if (latestDocIdRef.current !== docId) return
 

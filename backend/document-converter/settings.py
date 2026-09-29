@@ -2,7 +2,7 @@
 
 Deployment environment -> validated Settings -> HTTP/conversion limits
 
-See docs/bulk-import/article-publish-import-refactor.md for fixed service ownership.
+See docs/content-import/article-publish-import-refactor.md for fixed service ownership.
 """
 
 from __future__ import annotations

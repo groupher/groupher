@@ -1,12 +1,13 @@
 defmodule GroupherServer.ErrorCatTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
-  alias GroupherServer.ErrorCat.Validator
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.{Articles, Comments, Gate}
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+  alias ErrorCat.{Error, Validator}
 
   test "catalog declarations produce structured errors" do
-    error = GroupherServer.CMS.Gate.ErrorCat.article_archived("read only")
+    error = Gate.ErrorCat.article_archived("read only")
 
     assert %Error{
              namespace: {:cms, :gate},
@@ -23,8 +24,8 @@ defmodule GroupherServer.ErrorCatTest do
   end
 
   test "catalog definition is the same complete definition used by its constructor" do
-    error = GroupherServer.CMS.Articles.ErrorCat.archived("read only")
-    definition = GroupherServer.CMS.Articles.ErrorCat.definition(:archived)
+    error = Articles.ErrorCat.archived("read only")
+    definition = Articles.ErrorCat.definition(:archived)
 
     assert definition == error |> Map.from_struct() |> Map.delete(:details)
     assert definition == ErrorCat.definition({:cms, :article}, :archived)
@@ -50,7 +51,7 @@ defmodule GroupherServer.ErrorCatTest do
 
   test "global validation covers ranges, codes, and reserved codes" do
     assert :ok = ErrorCat.validate!()
-    assert ErrorCat.code(GroupherServerWeb.ErrorCat.pagination()) == 4002
+    assert ErrorCat.code(WebErrorCat.pagination()) == 4002
     assert ErrorCat.code(ErrorCat.custom()) == 4001
     assert ErrorCat.code(ErrorCat.gate_unknown()) == 4699
   end
@@ -98,7 +99,7 @@ defmodule GroupherServer.ErrorCatTest do
   end
 
   test "formats declared errors for the GraphQL boundary" do
-    error = GroupherServer.CMS.Comments.ErrorCat.comment_pin_limit("max 3 pinned comments")
+    error = Comments.ErrorCat.comment_pin_limit("max 3 pinned comments")
 
     assert {:error, [message: "max 3 pinned comments", code: 4403]} =
              ErrorCat.gq_format(error)
@@ -120,7 +121,7 @@ defmodule GroupherServer.ErrorCatTest do
   end
 
   test "rejects an ErrorCat struct whose definition fields were changed" do
-    error = GroupherServer.CMS.Articles.ErrorCat.archived()
+    error = Articles.ErrorCat.archived()
 
     for changed <- [
           %{error | code: 9999},
@@ -135,7 +136,7 @@ defmodule GroupherServer.ErrorCatTest do
   end
 
   test "allows details to vary when formatting a declared error" do
-    error = GroupherServer.CMS.Articles.ErrorCat.archived(%{message: "read only"})
+    error = Articles.ErrorCat.archived(%{message: "read only"})
 
     assert {:error, [message: "read only", code: 6004]} = ErrorCat.gq_format(error)
   end

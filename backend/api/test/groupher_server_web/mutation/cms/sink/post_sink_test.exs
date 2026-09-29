@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Sink.PostSink do
   @moduledoc false
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {community, post, _, user} = mock_article(:post)

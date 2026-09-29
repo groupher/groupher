@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.CMS.Hash do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Docs.Snapshot
-  alias GroupherServer.CMS.DocTree.ChangeDetection
-  alias GroupherServer.CMS.Model.{Doc, DocSnapshot}
+  alias CMS.Docs.Snapshot
+  alias CMS.DocTree.ChangeDetection
+  alias CMS.Model.{Doc, DocSnapshot}
 
   describe "[cms hash]" do
     test "article version hash matches doc tree change detection hash" do

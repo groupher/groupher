@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.Interactions.ReactionsEmotionTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Interactions.Reactions.Emotion
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Interactions.Reactions.Emotion
+  alias ErrorCat.Error
 
   test "accepts configured emotions without creating atoms" do
     assert {:ok, :beer} = Emotion.decode("beer", :article)

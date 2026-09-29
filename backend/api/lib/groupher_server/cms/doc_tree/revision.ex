@@ -28,10 +28,10 @@ defmodule GroupherServer.CMS.DocTree.Revision do
         -> Repo / published projection
   """
 
+  alias GroupherServer.{CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.CMS.DocTree.Reader
-  alias GroupherServer.CMS.Model.{Community, DocsSiteState}
-  alias GroupherServer.Repo
+  alias CMS.DocTree.Reader
+  alias CMS.Model.{Community, DocsSiteState}
   alias Helper.{ORM, T}
 
   @doc """

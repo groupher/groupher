@@ -7,6 +7,7 @@ import { fetchCommunitySnapshot } from './communitySource'
 export const communityKeys = {
   all: ['community-config'] as const,
   config: (community: string) => [...communityKeys.all, community] as const,
+  pressConfig: (community: string) => [...communityKeys.all, 'press-config', community] as const,
 }
 
 /** Removes dashboard and viewer fields before Community becomes canonical Query data. */

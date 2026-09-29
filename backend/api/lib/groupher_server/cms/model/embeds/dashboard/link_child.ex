@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 

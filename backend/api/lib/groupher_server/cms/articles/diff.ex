@@ -20,8 +20,10 @@ defmodule GroupherServer.CMS.Articles.Diff do
         -> Repo / domain event
   """
 
-  alias GroupherServer.CMS.Docs.Snapshot
-  alias GroupherServer.CMS.Model.DocSnapshot
+  alias GroupherServer.CMS
+
+  alias CMS.Docs.Snapshot
+  alias CMS.Model.DocSnapshot
   alias Helper.T
 
   @common_fields [:title, :digest, :slug, :subtitle]

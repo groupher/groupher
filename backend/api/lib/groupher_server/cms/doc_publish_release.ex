@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocPublishRelease do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Persists release history for one unified docs publish.
 
@@ -22,14 +21,18 @@ defmodule GroupherServer.CMS.DocPublishRelease do
   changed.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.DocTree.Publish.{Checklist, PublicProjection, Result}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias Accounts.Model.User
+  alias CMS.DocTree.{Events, Snapshot}
+  alias CMS.DocTree.Publish.{Checklist, PublicProjection, Result}
+
+  alias CMS.Model.{
     Community,
     DocPublishRelease,
     DocPublishReleaseArticle,
@@ -40,10 +43,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
     DocTreeNode
   }
 
-  alias GroupherServer.CMS.DocTree.Snapshot
   alias Helper.ORM
-
-  require CMS.Const
 
   @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
   @tree_node_type_page CMS.DocTree.Const.tree_node_type(:page)

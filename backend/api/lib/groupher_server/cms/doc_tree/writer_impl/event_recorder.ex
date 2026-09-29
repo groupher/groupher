@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Records staged tree events and converts delete/discard counts into deltas.
 
@@ -26,13 +25,15 @@ defmodule GroupherServer.CMS.DocTree.Writer.EventRecorder do
   events are published together with article content.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
-  require CMS.Const
+  alias CMS.DocTree.Events
+  alias CMS.Model.{Community, DocTreeNode}
 
   @doc """
   Records staged tree events and returns the tree-owner event count.

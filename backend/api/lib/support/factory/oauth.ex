@@ -12,7 +12,8 @@ defmodule GroupherServer.Support.Factory.Oauth do
         -> endpoint / fixture / Repo
   """
 
-  alias GroupherServer.Support.FakeData
+  alias GroupherServer.Support
+  alias Support.FakeData
 
   defmacro __using__(_opts) do
     quote do

@@ -68,7 +68,7 @@ const referencedSourcePaths = (nodes: TSourceNode[]): Set<string> => {
 
 /** Maps VitePress scopes, sidebars, links, and unlisted pages into SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeVitePress = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const configPaths = workspace.files.map((file) => file.path).filter((file) => CONFIG.test(file))

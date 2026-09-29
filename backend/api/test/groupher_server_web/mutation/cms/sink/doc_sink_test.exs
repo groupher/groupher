@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Sink.DocSink do
   @moduledoc false
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {community, doc, _, user} = mock_article(:doc)

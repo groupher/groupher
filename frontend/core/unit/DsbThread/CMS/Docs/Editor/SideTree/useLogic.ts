@@ -7,6 +7,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
 import { graphqlQueryOptions } from '~/query'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -888,7 +889,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      browserGraphQLRequest<TMoveDocToDraftData>(S.moveDocToDraft, { community, id: childId })
+      browserGraphQLRequest<TMoveDocToDraftData>(S.moveDocToDraft, {
+        community,
+        id: childId,
+        commandId: createCommandId(),
+      })
         .then((data) => {
           const payload = data?.moveDocToDraft
           const current = findChild(readGroups(), childId)

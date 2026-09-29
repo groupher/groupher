@@ -14,9 +14,12 @@ defmodule GroupherServer.Accounts.Model.BrowserSession do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()

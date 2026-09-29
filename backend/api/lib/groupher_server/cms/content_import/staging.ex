@@ -15,19 +15,19 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   A ready BodyBag cannot be replaced by a skip/failure, and the same external
   ref cannot be restaged with different bytes after completion.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` and
-  `docs/bulk-import/import-error-handling.md`.
+  See `docs/content-import/article-publish-import-refactor.md` and
+  `docs/content-import/import-error-handling.md`.
   """
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.ContentImport.Jobs
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Body, as: StagedBody
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias CMS.Artiment.BodyBag
+  alias CMS.ContentImport.{Jobs, Persistence.Job, Persistence.Job.Item}
+  alias CMS.ContentImport.Persistence.Job.Body, as: StagedBody
+  alias CMS.Model.Community
 
   @max_batch_count 4
   @max_body_bytes 5 * 1024 * 1024
@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
 
   def stage(%Community{}, _job_ref, _items),
     do:
-      {:error, GroupherServer.ErrorCat.custom("BodyBag batch must contain between 1 and 4 items")}
+      {:error, ErrorCat.custom("BodyBag batch must contain between 1 and 4 items")}
 
   defp validate_unique_refs(items) do
     refs = Enum.map(items, &value(&1, "external_ref"))
@@ -61,7 +61,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
       do: :ok,
       else:
         {:error,
-         GroupherServer.ErrorCat.custom(
+         ErrorCat.custom(
            "BodyBag batch contains an invalid or duplicate externalRef"
          )}
   end
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
     do: :ok
 
   defp ensure_stageable(job),
-    do: {:error, GroupherServer.ErrorCat.custom("ImportJob is not stageable from #{job.status}")}
+    do: {:error, ErrorCat.custom("ImportJob is not stageable from #{job.status}")}
 
   defp stage_items(job, items) do
     Enum.reduce_while(items, :ok, fn input, :ok ->
@@ -112,7 +112,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
 
       _ ->
         {:error,
-         GroupherServer.ErrorCat.custom(
+         ErrorCat.custom(
            "Each staging item requires exactly one bodyBag, skipped, or failed value"
          )}
     end
@@ -124,7 +124,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
       :ok
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("Completed ImportJob staging payload changed")}
+        {:error, ErrorCat.custom("Completed ImportJob staging payload changed")}
 
       {:error, reason} ->
         {:error, reason}
@@ -226,7 +226,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
 
       %StagedBody{} ->
         {:error,
-         GroupherServer.ErrorCat.custom("BodyBag staging changed for an existing externalRef")}
+         ErrorCat.custom("BodyBag staging changed for an existing externalRef")}
 
       nil ->
         attrs = %{
@@ -246,7 +246,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   end
 
   defp stage_skip(%Item{content_status: :ready}, _code),
-    do: {:error, GroupherServer.ErrorCat.custom("A ready BodyBag cannot be replaced with a skip")}
+    do: {:error, ErrorCat.custom("A ready BodyBag cannot be replaced with a skip")}
 
   defp stage_skip(item, "content_too_large") do
     case item
@@ -265,7 +265,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   end
 
   defp stage_skip(_item, _code),
-    do: {:error, GroupherServer.ErrorCat.custom("Only content_too_large may be skipped")}
+    do: {:error, ErrorCat.custom("Only content_too_large may be skipped")}
 
   defp stage_failure(
          %Job{status: :completed},
@@ -282,12 +282,12 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
        do: :ok
 
   defp stage_failure(%Job{status: :completed}, _item, _code, _message, _stage),
-    do: {:error, GroupherServer.ErrorCat.custom("Completed ImportJob staging payload changed")}
+    do: {:error, ErrorCat.custom("Completed ImportJob staging payload changed")}
 
   defp stage_failure(_job, %Item{content_status: :ready}, _code, _message, _stage),
     do:
       {:error,
-       GroupherServer.ErrorCat.custom("A ready BodyBag cannot be replaced with a failure")}
+       ErrorCat.custom("A ready BodyBag cannot be replaced with a failure")}
 
   defp stage_failure(_job, item, code, message, stage)
        when is_binary(code) and byte_size(code) > 0 and is_binary(message) and
@@ -310,7 +310,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
   defp stage_failure(_job, _item, _code, _message, _stage),
     do:
       {:error,
-       GroupherServer.ErrorCat.custom(
+       ErrorCat.custom(
          "A failed staging item requires code, message, and a valid stage"
        )}
 
@@ -325,7 +325,7 @@ defmodule GroupherServer.CMS.ContentImport.Staging do
         {:ok, item}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("BodyBag source is not part of this ImportJob")}
+        {:error, ErrorCat.custom("BodyBag source is not part of this ImportJob")}
     end
   end
 

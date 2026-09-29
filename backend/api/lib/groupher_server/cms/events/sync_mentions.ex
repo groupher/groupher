@@ -23,9 +23,10 @@ defmodule GroupherServer.CMS.Events.SyncMentions do
   """
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Events.Event
 
-  @behaviour GroupherServer.CMS.Events.Handler
+  alias CMS.Events.Event
+
+  @behaviour CMS.Events.Handler
 
   @doc "Handles the `:sync_mentions` event by refreshing mention facts for the payload artiment."
   @impl true

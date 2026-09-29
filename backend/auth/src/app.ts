@@ -77,9 +77,17 @@ type TOptions = {
   testLogin?: (request: Request) => Promise<Response>
 }
 
-const FIRST_PARTY_AUTH_HOSTS = new Set(['groupher.com', 'dash.groupher.com'])
+const FIRST_PARTY_AUTH_HOSTS = new Set([
+  'groupher.com',
+  'community.groupher.com',
+  'dash.groupher.com',
+])
 
-const LOCAL_AUTH_HOSTS = new Set(['groupher.localhost', 'dash.groupher.localhost'])
+const LOCAL_AUTH_HOSTS = new Set([
+  'groupher.localhost',
+  'community.groupher.localhost',
+  'dash.groupher.localhost',
+])
 
 const isAllowedLocalAuthOrigin = (url: URL): boolean => {
   if (!['http:', 'https:'].includes(url.protocol)) return false
@@ -386,7 +394,12 @@ export const createApp = ({
     }
 
     const session = await readSession(context.req.raw)
-    if (!session) return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    if (!session) {
+      for (const cookie of buildAuthCookieClearingHeaders(context.req.raw)) {
+        context.header('Set-Cookie', cookie, { append: true })
+      }
+      return context.json({ code: AUTH_ERROR.SESSION_MISSING }, 401, noStore())
+    }
 
     const sessionLimit = await limiter.limit({
       key: `refresh:session:${session.browserSessionRef}`,

@@ -14,6 +14,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   object :cms_doc_tree_mutations do
     @desc "create one recursive docs navigation node"
     field :create_doc_tree_node, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:base_revision, non_null(:integer))
       @desc "Immediate parent logical node id; null only for a root Tab."
@@ -28,6 +29,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "update a docs tree node"
     field :update_doc_tree_node, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
@@ -41,6 +43,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "update a docs draft document"
     field :update_doc_draft, :doc_draft do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:expected_version, non_null(:integer))
@@ -52,12 +55,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, {:article_editor, thread: :doc})
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)
     end
 
     @desc "save current docs draft as an article revision checkpoint"
     field :checkpoint_doc_draft_snapshot, :doc_snapshot do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
@@ -69,6 +74,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "publish selected docs content and tree changes as one release"
     field :publish_doc_changes, :doc_publish_changes_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:input, :doc_publish_changes_input)
       arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
@@ -81,6 +87,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "move one published docs page back to draft visibility"
     field :move_doc_to_draft, :move_doc_to_draft_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
@@ -92,6 +99,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "create missing article drafts for every published Page in one navigation subtree"
     field :move_doc_tree_subtree_to_draft, :done_state do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
@@ -103,6 +111,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "restore a docs draft from an article revision"
     field :restore_doc_draft_snapshot, :doc_draft do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:snapshot_id, non_null(:id))
@@ -115,6 +124,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "delete a docs tree node"
     field :delete_doc_tree_node, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
@@ -127,6 +137,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "restore a docs tree item from product trash"
     field :restore_doc_tree_trash_item, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
@@ -142,6 +153,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "duplicate a docs tree node"
     field :duplicate_doc_tree_node, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
@@ -154,6 +166,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
     @desc "move a docs tree node"
     field :move_doc_tree_node, :doc_tree_mutation_payload do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))

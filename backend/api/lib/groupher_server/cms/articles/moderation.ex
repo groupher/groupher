@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Moderation do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Article moderation helpers.
 
@@ -14,21 +13,22 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
-
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, PublicCache, Repo}
 
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias CMS.{FrontDesk, QueryBuilder}
+  alias CMS.ViewTracker.Query, as: ViewTrackerQuery
+  alias CMS.Articles.Trash
+  alias CMS.Communities.TagStats
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{Multi, ORM, T}
+  alias PublicCache.Const, as: PublicCacheConst
 
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Returns a paged list of audit-failed articles for one thread.
@@ -47,6 +47,10 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       info.model
       |> Trash.not_trashed_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+      |> ViewTrackerQuery.order_by_views(
+        thread,
+        Map.get(filter, :order) || Map.get(filter, :sort)
+      )
       |> ORM.paginator(~m(page size)a)
       |> done()
     end
@@ -75,6 +79,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
       update_tag_stats_on_visibility_change(article, updated_article)
+    end)
+    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
+      invalidate_public_visibility(updated_article)
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -115,6 +122,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
       update_tag_stats_on_visibility_change(article, updated_article)
+    end)
+    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
+      invalidate_public_visibility(updated_article)
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -186,5 +196,27 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   defp counted_in_tag_stats?(article) do
     not Trash.trashed_article?(article) and
       Map.get(article, :pending) != @audit_illegal
+  end
+
+  defp invalidate_public_visibility(article) do
+    with {:ok, %{artiment: thread}} <- match(article) do
+      article = Repo.preload(article, :community)
+
+      case PublicCache.invalidate_now(
+             PublicCacheConst.article_visibility_changed(),
+             %{
+               community: article.community.slug,
+               community_id: article.community_id,
+               thread: thread,
+               inner_id: article.inner_id,
+               id: article.id
+             },
+             causation_id: Ecto.UUID.generate(),
+             aggregate_type: "article"
+           ) do
+        {:ok, _invalidation} -> {:ok, :pass}
+        {:error, reason} -> {:error, reason}
+      end
+    end
   end
 end

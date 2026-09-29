@@ -33,8 +33,9 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
         -> Repo / external boundary
   """
 
-  @article_emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  alias GroupherServer.CMS
+  @article_emotions CMS.Artiment.Config.emotions()
+  @comment_emotions CMS.Artiment.Config.comment_emotions()
   @all_emotions (@article_emotions ++ @comment_emotions) |> Enum.uniq()
 
   @doc """
@@ -75,6 +76,22 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
       else
         acc
       end
+    end)
+    |> Enum.sort_by(fn %{count: count, type: type} -> {-count, Atom.to_string(type)} end)
+  end
+
+  @doc "Returns public reaction totals without viewer flags or latest-user snapshots."
+  @spec counts(map() | nil, :article | :comment | nil) :: [map()]
+  def counts(%{emotions: emotions}, article_type), do: counts(emotions, article_type)
+  def counts(nil, _article_type), do: []
+  def counts(%_{} = emotions, article_type), do: counts(Map.from_struct(emotions), article_type)
+
+  def counts(emotions, article_type) when is_map(emotions) do
+    supported_emotions(article_type)
+    |> Enum.reduce([], fn emotion, acc ->
+      count = Map.get(emotions, :"#{emotion}_count", 0) || 0
+
+      if count > 0, do: [%{type: emotion, count: count} | acc], else: acc
     end)
     |> Enum.sort_by(fn %{count: count, type: type} -> {-count, Atom.to_string(type)} end)
   end

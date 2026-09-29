@@ -12,8 +12,9 @@ defmodule Mix.Tasks.SearchArtiments.Reindex do
 
   use Mix.Task
 
-  alias GroupherServer.CMS.SearchArtiments
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias GroupherServer.CMS
+  alias CMS.SearchArtiments
+  alias CMS.SearchArtiments.Indexer
 
   @shortdoc "Rebuild the Search Artiments Article index"
 

@@ -6,6 +6,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import CloseLightSVG from '~/icons/CloseLight'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import Drawer from '~/ui/Drawer'
 import { SegmentTab } from '~/ui/Switcher'
@@ -87,6 +88,7 @@ const RevisionDrawer: FC<TProps> = ({
           community,
           id: docDraftId,
           snapshotId: revisionId,
+          commandId: createCommandId(),
         })
         toast(t(REVISION_LABEL_KEY.RESTORED))
         reloadDocDraft?.()

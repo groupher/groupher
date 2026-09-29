@@ -18,13 +18,17 @@ defmodule GroupherServer.CMS.DocTree.Writer do
       doc_tree_events(owner=doc, doc_id)  ->  Doc publish
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Draft, MutationLock}
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.DocTree.{Events, Reader}
+  require GroupherServer.CMS.Const
 
-  alias GroupherServer.CMS.DocTree.Writer.{
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias Accounts.Model.User
+  alias CMS.Articles.{Draft, MutationLock}
+  alias CMS.Artiment.BodyBag
+  alias CMS.DocTree.{Events, Reader}
+
+  alias CMS.DocTree.Writer.{
     DraftDoc,
     EventRecorder,
     Identity,
@@ -34,16 +38,14 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     Trash
   }
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Doc,
     DocTreeNode
   }
 
-  alias GroupherServer.CMS.Docs.Branch
+  alias CMS.Docs.Branch
   alias Helper.{ORM, T}
-
-  require CMS.Const
 
   @type payload :: map()
 
@@ -357,7 +359,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
       else
         false ->
           {:error,
-           GroupherServer.ErrorCat.custom("only Group, Page, and Link nodes can be duplicated")}
+           ErrorCat.custom("only Group, Page, and Link nodes can be duplicated")}
 
         error ->
           error
@@ -444,7 +446,8 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     case Repo.get(User, Map.get(args, :actor_id)) do
       %User{} = actor ->
         MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
-          with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
+          with {:ok, source} <-
+                 CMS.Articles.read_editor_head(community, :doc, node.doc_id, branch),
                source <- Repo.preload(source, :document),
                %{json: json} = document when is_binary(json) <- source.document,
                {:ok, body_bag} <- BodyBag.from_document(document),
@@ -476,13 +479,13 @@ defmodule GroupherServer.CMS.DocTree.Writer do
               slug: slug
             )
           else
-            nil -> {:error, GroupherServer.ErrorCat.custom("Source Doc content is missing")}
+            nil -> {:error, ErrorCat.custom("Source Doc content is missing")}
             error -> error
           end
         end)
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("Duplicate Page requires an authenticated actor")}
+        {:error, ErrorCat.custom("Duplicate Page requires an authenticated actor")}
     end
   end
 
@@ -576,12 +579,12 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   defp load_actor(args, error_message) do
     case Map.get(args, :actor_id) do
       nil ->
-        {:error, GroupherServer.ErrorCat.custom(error_message)}
+        {:error, ErrorCat.custom(error_message)}
 
       actor_id ->
         case Repo.get(User, actor_id) do
           %User{} = actor -> {:ok, actor}
-          nil -> {:error, GroupherServer.ErrorCat.custom(error_message)}
+          nil -> {:error, ErrorCat.custom(error_message)}
         end
     end
   end

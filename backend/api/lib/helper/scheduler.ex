@@ -18,9 +18,9 @@ defmodule Helper.Scheduler do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Events
+  alias CMS.Events
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc """
   Compatibility hook reserved for a full Cachex clear.

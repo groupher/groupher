@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Events do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Event log for Tree staged changes.
 
@@ -29,14 +28,16 @@ defmodule GroupherServer.CMS.DocTree.Events do
         -> Repo / published projection
   """
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree.Snapshot
-  alias GroupherServer.CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
-  alias Helper.{ORM, T}
 
+  alias CMS.Docs.Branch
+  alias CMS.DocTree.Snapshot
+  alias CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
+  alias Helper.{ORM, T}
 
   @tree_fields ~w(title marker badge hidden href)a
   @doc_tree_json_key_node CMS.DocTree.Const.doc_tree_json_key(:node)

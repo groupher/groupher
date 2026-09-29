@@ -13,6 +13,7 @@ defmodule GroupherServer.FrontDesk do
         -> FrontDesk
         -> domain / infrastructure boundary
   """
+
   alias __MODULE__.Cache
   alias GroupherServer.{Accounts, CMS}
 

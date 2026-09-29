@@ -6,7 +6,7 @@ import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import { articleKeys } from '~/query'
+import { articleQueryKeys } from '~/query'
 import AccountStoreProvider from '~/stores/account/provider'
 
 describe('usePagedChangelogs', () => {
@@ -21,7 +21,7 @@ describe('usePagedChangelogs', () => {
       defaultOptions: { queries: { retry: false, staleTime: Number.POSITIVE_INFINITY } },
     })
     queryClient.setQueryData(
-      articleKeys.changelogs({
+      articleQueryKeys.changelogs({
         community: 'acme',
         page: 2,
         size: 20,

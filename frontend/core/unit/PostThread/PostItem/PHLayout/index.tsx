@@ -4,8 +4,8 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import Img from '~/Img'
-import useArticleUpvoteMutation from '~/query/mutation/useArticleUpvoteMutation'
-import type { TPost } from '~/spec'
+import useArticleUpvote from '~/query/mutation/useArticleUpvote'
+import type { TArticleState, TPost } from '~/spec'
 import ImgFallback from '~/ui/ImgFallback'
 import Upvote from '~/unit/Upvote'
 
@@ -15,14 +15,15 @@ import Body from './Body'
 import Header from './Header'
 
 type TProps = {
-  article: TPost
+  viewModel: TArticleState<TPost>
 }
 
-const DigestView: FC<TProps> = ({ article }) => {
+const DigestView: FC<TProps> = ({ viewModel }) => {
+  const { content: article, stats, viewerState } = viewModel
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
   const { author } = article
-  const upvoteArticle = useArticleUpvoteMutation(article)
+  const { count, isUpvoted, toggle } = useArticleUpvote(article, stats, viewerState)
 
   return (
     <div className={s.wrapper}>
@@ -32,16 +33,16 @@ const DigestView: FC<TProps> = ({ article }) => {
         <Img src={author.avatar} className={s.avatar} fallback={<ImgFallback user={author} />} />
       </div>
       <div className={s.main}>
-        <Header article={article} />
-        <Body article={article} />
+        <Header article={article} viewerState={viewerState} />
+        <Body article={article} stats={stats} />
       </div>
 
       <div className={s.upvoteWrapper}>
         <Upvote
           type={UPVOTE_LAYOUT.POST_MINIMAL}
-          count={article.upvotesCount}
-          viewerHasUpvoted={article.viewerHasUpvoted}
-          onAction={upvoteArticle}
+          count={count}
+          viewerHasUpvoted={isUpvoted}
+          onAction={() => toggle()}
         />
       </div>
     </div>

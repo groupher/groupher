@@ -4,11 +4,12 @@ defmodule GroupherServer.CMS.ContentImport.ImportSourceMapping do
 
       externalRef + source hash <-> Groupher Doc ref + rendered-content hash
 
-  See `docs/bulk-import/content-import-architecture.md`.
+  See `docs/content-import/content-import-architecture.md`.
   """
 
-  alias GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping, as: Mapping
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.ContentImport.Persistence.ImportSourceMapping, as: Mapping
 
   @replace_fields [
     :thread_ref,

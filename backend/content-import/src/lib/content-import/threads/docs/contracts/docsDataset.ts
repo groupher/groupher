@@ -3,7 +3,7 @@
  *
  *   Preview manifest JSON -> DocsDataset decoder -> artifact refs -> apply workflow
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import type {
   TArtifactRef,

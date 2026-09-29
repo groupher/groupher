@@ -14,9 +14,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   import GroupherServerWeb.Schema.Helper.Fields
   import Helper.Utils, only: [module_to_atom: 1]
 
-  alias GroupherServer.CMS.Articles.Const, as: ArticlesConst
-  alias GroupherServer.CMS.Artiment.Const, as: ArtimentConst
-  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS
+  alias CMS.Articles.Const, as: ArticlesConst
+  alias CMS.Artiment.Const, as: ArtimentConst
+  alias CMS.Artiment.Threads
 
   require ArticlesConst
   require ArtimentConst
@@ -29,8 +30,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     # article 所包含的共同字段
     field(:inner_id, :id)
     field(:title, :string)
-    field(:views, :integer)
-    field(:upvotes_count, :integer)
+    field(:article_stats, :article_stats)
     field(:meta, :article_meta)
     field(:pending, :integer)
     field(:cover_url, :string)
@@ -191,12 +191,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   input_object :article_path_input do
-    field(:inner_id, non_null(:id))
-    field(:community, non_null(:string))
-    field(:thread, non_null(:thread))
-  end
-
-  input_object :article_ref_input do
     field(:inner_id, non_null(:id))
     field(:community, non_null(:string))
     field(:thread, non_null(:thread))

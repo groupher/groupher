@@ -14,7 +14,8 @@ defmodule GroupherServer.Messaging.Inbox do
           +--> Notifications
   """
 
-  alias GroupherServer.Messaging.{Mentions, Notifications}
+  alias GroupherServer.Messaging
+  alias Messaging.{Mentions, Notifications}
 
   @doc "Returns paged messages from the `Inbox` read boundary."
   def paged_messages(:mention, user, filter), do: Mentions.paged(user, filter)

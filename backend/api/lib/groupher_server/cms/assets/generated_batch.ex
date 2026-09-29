@@ -11,8 +11,9 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch do
     -> frozen generated Batch result
   """
 
-  alias GroupherServer.ServiceAuth.Client
-  alias GroupherServer.CMS.Wallpaper.ErrorCat
+  alias GroupherServer.{CMS, ServiceAuth}
+  alias ServiceAuth.Client
+  alias CMS.Wallpaper.ErrorCat
 
   @timeout 5_000
 

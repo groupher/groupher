@@ -12,15 +12,16 @@ defmodule GroupherServer.CMS.Model.CommunityTagGroup do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{Community, CommunityTag}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{Community, CommunityTag}
   alias Helper.Constant.DBPrefix
 
   @required_fields ~w(thread title community_id)a

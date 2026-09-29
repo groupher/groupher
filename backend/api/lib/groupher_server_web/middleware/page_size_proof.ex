@@ -20,6 +20,7 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
 
   import Helper.Utils, only: [handle_absinthe_error: 3]
   alias GroupherServer.ErrorCat
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
 
   @max_page_size GroupherServerWeb.Config.page_size()
   @inner_page_size GroupherServerWeb.Config.inner_page_size()
@@ -33,7 +34,7 @@ defmodule GroupherServerWeb.Middleware.PageSizeProof do
     case valid_size(resolution.arguments) do
       {:error, msg} ->
         resolution
-        |> handle_absinthe_error(msg, ErrorCat.code(GroupherServerWeb.ErrorCat.pagination()))
+        |> handle_absinthe_error(msg, ErrorCat.code(WebErrorCat.pagination()))
 
       arguments ->
         %{resolution | arguments: set_sort_ifneed(arguments, args)}

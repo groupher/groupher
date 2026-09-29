@@ -12,6 +12,7 @@ export type TPublishChecklistItem = {
 }
 
 export type TPublishChecklist = {
+  revision?: number | null
   totalCount: number
   docChanges: TPublishChecklistItem[]
   treeChanges: TPublishChecklistItem[]

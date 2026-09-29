@@ -44,7 +44,7 @@ scripts, not edited directly.
 
 ## Related documentation
 
-- [`docs/rules_fe.md`](../../docs/rules_fe.md)
-- [`docs/platform/links.md`](../../docs/platform/links.md)
-- [`docs/urql_to_tanstack_query.md`](../../docs/urql_to_tanstack_query.md)
-- [`docs/ssr_theme.md`](../../docs/ssr_theme.md)
+- [`docs/rules/fe.md`](../../docs/rules/fe.md)
+- [`docs/architecture/platform/links.md`](../../docs/architecture/platform/links.md)
+- [`docs/architecture/urql-to-tanstack-query.md`](../../docs/architecture/urql-to-tanstack-query.md)
+- [`docs/architecture/ssr-theme.md`](../../docs/architecture/ssr-theme.md)

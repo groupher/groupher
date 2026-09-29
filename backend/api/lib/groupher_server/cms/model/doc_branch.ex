@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.DocBranch do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Docs-only workspace branch.
 
@@ -9,19 +8,19 @@ defmodule GroupherServer.CMS.Model.DocBranch do
   community + branch identity -> DocBranch row -> branch-scoped document ownership
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.Community
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
-
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

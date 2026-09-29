@@ -25,8 +25,6 @@ defmodule GroupherServer.TestMate do
       import Ecto.Query, warn: false
       import GroupherServer.ErrorCat
 
-      alias GroupherServer.ErrorCat
-
       import Helper.Utils,
         only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
 
@@ -34,7 +32,9 @@ defmodule GroupherServer.TestMate do
 
       import ShortMaps
 
-      alias GroupherServer.CMS.Model.{
+      alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+
+      alias CMS.Model.{
         Author,
         Blog,
         Changelog,
@@ -45,11 +45,11 @@ defmodule GroupherServer.TestMate do
         Post
       }
 
-      alias GroupherServer.{Accounts, CMS, Repo}
-      alias GroupherServer.Test.Helper.Schema, as: S
+      alias GroupherServer.Test
+      alias Test.Helper.Schema, as: S
       alias Helper.{Constant, Datetime, ORM}
 
-      alias GroupherServer.Accounts.Model.User
+      alias Accounts.Model.User
 
       @now Datetime.now(:second)
 
@@ -75,6 +75,38 @@ defmodule GroupherServer.TestMate do
 
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do
         %{article: article_path(community, article, thread), inner_id: comment.inner_id}
+      end
+
+      def service_credential(id \\ "test-service") do
+        %{
+          audience: "phoenix:view-api",
+          scopes: MapSet.new(["view:track"]),
+          subject: "service:#{id}",
+          token_id: id
+        }
+      end
+
+      def track_article_view(article, viewer, opts \\ []) do
+        request_actor_input =
+          cond do
+            Keyword.has_key?(opts, :delegation) ->
+              [delegation: Keyword.fetch!(opts, :delegation)]
+
+            Keyword.has_key?(opts, :service_credential) ->
+              [service_credential: Keyword.fetch!(opts, :service_credential)]
+
+            match?(%User{}, viewer) ->
+              [account_session: viewer]
+
+            Keyword.has_key?(opts, :anonymous_session) ->
+              [anonymous_session: Keyword.fetch!(opts, :anonymous_session)]
+
+            true ->
+              []
+          end
+
+        {:ok, classification} = GroupherServer.RequestActor.classify(request_actor_input)
+        CMS.ViewTracker.track(article, viewer, classification, opts)
       end
 
       @doc """

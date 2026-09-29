@@ -12,12 +12,14 @@ defmodule GroupherServer.Accounts.Model.OauthProvider do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias __MODULE__
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Writer.Node do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Finds draft tree nodes and validates structural parent rules.
 
@@ -18,12 +17,15 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   its descendants is rejected here.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias CMS.Model.{Community, DocTreeNode}
 
   @max_depth CMS.DocTree.Const.max_depth()
 
@@ -43,7 +45,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
     |> Repo.one()
     |> case do
       %DocTreeNode{} = node -> {:ok, node}
-      _ -> {:error, GroupherServer.ErrorCat.custom("doc tree node not found")}
+      _ -> {:error, ErrorCat.custom("doc tree node not found")}
     end
   end
 
@@ -55,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
       {:ok, parent}
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("navigation parent must be a tab or group")}
+        {:error, ErrorCat.custom("navigation parent must be a tab or group")}
 
       error ->
         error
@@ -69,7 +71,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
          :ok <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
-      false -> {:error, GroupherServer.ErrorCat.custom("page and link parents must be a group")}
+      false -> {:error, ErrorCat.custom("page and link parents must be a group")}
       error -> error
     end
   end
@@ -80,7 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
          true <- parent.type == :tab do
       {:ok, parent}
     else
-      false -> {:error, GroupherServer.ErrorCat.custom("doc tree parent must be a tab")}
+      false -> {:error, ErrorCat.custom("doc tree parent must be a tab")}
       error -> error
     end
   end
@@ -124,16 +126,16 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   end
 
   def validate_target(_community, _branch, _node, _parent_node_id),
-    do: {:error, GroupherServer.ErrorCat.custom("invalid docs tree target")}
+    do: {:error, ErrorCat.custom("invalid docs tree target")}
 
   defp reject_cycle(_community, _branch, %{node_id: node_id}, %{node_id: node_id}),
-    do: {:error, GroupherServer.ErrorCat.custom("a group can not be its own parent")}
+    do: {:error, ErrorCat.custom("a group can not be its own parent")}
 
   defp reject_cycle(community, branch, node, parent) do
     if descendant?(community, branch, node.node_id, parent.node_id),
       do:
         {:error,
-         GroupherServer.ErrorCat.custom("a group can not move below one of its descendants")},
+         ErrorCat.custom("a group can not move below one of its descendants")},
       else: :ok
   end
 
@@ -162,7 +164,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
 
   defp validate_max_depth(_depth),
     do:
-      {:error, GroupherServer.ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}
+      {:error, ErrorCat.custom("Docs Tree exceeds maximum depth of #{@max_depth}")}
 
   defp node_depth(placements, node_id) do
     placements
@@ -173,7 +175,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
   defp walk_ancestor_depth(parents, current, depth, seen) do
     cond do
       MapSet.member?(seen, current) ->
-        {:error, GroupherServer.ErrorCat.custom("Docs Tree contains a parent cycle")}
+        {:error, ErrorCat.custom("Docs Tree contains a parent cycle")}
 
       true ->
         case Map.fetch(parents, current) do
@@ -189,14 +191,14 @@ defmodule GroupherServer.CMS.DocTree.Writer.Node do
             )
 
           :error ->
-            {:error, GroupherServer.ErrorCat.custom("Docs Tree parent chain is incomplete")}
+            {:error, ErrorCat.custom("Docs Tree parent chain is incomplete")}
         end
     end
   end
 
   defp subtree_height(children_by_parent, node_id, seen) do
     if MapSet.member?(seen, node_id) do
-      {:error, GroupherServer.ErrorCat.custom("Docs Tree contains a parent cycle")}
+      {:error, ErrorCat.custom("Docs Tree contains a parent cycle")}
     else
       children_by_parent
       |> Map.get(node_id, [])

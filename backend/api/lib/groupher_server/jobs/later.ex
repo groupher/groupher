@@ -10,13 +10,12 @@ defmodule GroupherServer.Jobs.Later do
         -> context / service
   """
 
-  alias GroupherServer.Jobs.Config
-
   use Oban.Worker,
-    queue: Config.queue(:later),
-    max_attempts: Config.max_attempts(:later)
+    queue: GroupherServer.Jobs.Config.queue(:later),
+    max_attempts: GroupherServer.Jobs.Config.max_attempts(:later)
 
-  alias GroupherServer.Jobs.Codec
+  alias GroupherServer.Jobs
+  alias Jobs.Codec
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"job" => encoded}}) do

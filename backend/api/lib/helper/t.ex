@@ -8,10 +8,11 @@ defmodule Helper.T do
         -> T
         -> normalized value / infrastructure
   """
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
+  alias GroupherServer.{Accounts, CMS, ErrorCat}
+  alias Accounts.Model.User
+  alias CMS.Model.{Blog, Changelog, Doc, Post}
 
-  @type error :: GroupherServer.ErrorCat.Error.t()
+  @type error :: ErrorCat.Error.t()
 
   @typedoc """
   general response conventions

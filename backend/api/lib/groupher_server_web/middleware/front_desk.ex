@@ -6,7 +6,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   Resolves public GraphQL references into domain models before a resolver runs.
 
   It loads community, account, article, or comment records and enriches resolver
-  arguments with ownership flags so resolvers do not duplicate lookup logic.
+  arguments with ownership flags so resolvers do not duplicate lookup logic. The
+  `:article_editor` variant stores the selected Draft/Public editor head under
+  `arguments.article` before the resolver runs.
 
   Business position:
 
@@ -18,17 +20,19 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   @behaviour Absinthe.Middleware
 
-  import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.ErrorCat
+  require GroupherServer.CMS.ErrorCat
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias GroupherServer.{CMS, FrontDesk, Repo}
-  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.{Comment, Community}
+  import Helper.Utils, only: [handle_absinthe_error: 3]
+  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
+
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.ErrorCat, as: CmsErrorCat
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.{Comment, Community}
 
   def call(%{errors: errors} = resolution, _) when errors != [] do
     resolution
@@ -53,6 +57,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   def call(resolution, {:article, opts}), do: fetch_article(resolution, List.wrap(opts))
 
   def call(resolution, :article), do: fetch_article(resolution, [])
+
+  def call(resolution, :article_insights), do: fetch_article_insights(resolution)
 
   def call(resolution, {:article_editor, opts}) do
     fetch_article_editor(resolution, List.wrap(opts))
@@ -87,11 +93,36 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
       {:ok, arguments} ->
         do_fetch_article(%{resolution | arguments: arguments}, opts)
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_article_path}} ->
+      {:error, CmsErrorCat.error_pattern(reason: :invalid_article_path)} ->
         resolution
         |> handle_absinthe_error("invalid article input", ErrorCat.code(ErrorCat.custom()))
     end
   end
+
+  defp fetch_article_insights(%{arguments: arguments, context: context} = resolution) do
+    with {:ok, arguments} <- ArticlePath.parse_arguments(arguments),
+         article_path <- arguments.article_path,
+         actor <- Map.get(context, :cur_user),
+         grants <- article_insight_grants(actor),
+         {:ok, article} <-
+           CMS.FrontDesk.article_insights(article_path, actor,
+             passport_granted_community_slugs: grants
+           ) do
+      %{resolution | arguments: Map.put(arguments, :article, article)}
+    else
+      {:error, err_msg} ->
+        resolution
+        |> handle_absinthe_error(
+          ArticleErrorCat.not_exist(error_details(err_msg)),
+          ErrorCat.code(ArticleErrorCat.not_exist())
+        )
+    end
+  end
+
+  defp article_insight_grants(nil), do: []
+
+  defp article_insight_grants(actor),
+    do: GroupherServer.Analysis.ArticleInsights.passport_granted_community_slugs(actor)
 
   defp do_fetch_article(
          %{
@@ -127,11 +158,13 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article} <- CMS.Articles.read_editor(community, thread, article_hash_id) do
+         {:ok, article} <- CMS.Articles.read_editor_head(community, thread, article_hash_id) do
       article = Repo.preload(article, author: :user)
 
       updated_arguments =
-        maybe_put_article_passport_is_owner(arguments, article, resolution)
+        arguments
+        |> Map.put(:article, article)
+        |> maybe_put_article_passport_is_owner(article, resolution)
 
       %{resolution | arguments: updated_arguments}
     else

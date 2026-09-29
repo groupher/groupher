@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Reader do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Reader helpers for articles.
 
@@ -12,39 +11,35 @@ defmodule GroupherServer.CMS.Articles.Reader do
         -> Repo / domain event
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-
-  alias GroupherServer.CMS.{
-    Interactions
-  }
-
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Articles.InteractionResponse
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Scope
-  alias GroupherServer.CMS.Model.{Community, DocBranch, PinnedArticle}
+  alias Accounts.Model.User
+  alias CMS.Articles.{ErrorCat, Response}
+  alias CMS.Communities.Enable
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Scope
+  alias CMS.Model.{Community, DocBranch, PinnedArticle}
   alias Helper.{Datetime, Multi, ORM, T}
 
-
-  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
+  @active_period CMS.Artiment.Config.active_period_days()
+  @threads CMS.Artiment.Config.threads()
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Reads one article by community, thread, and inner id for an anonymous viewer.
 
-  Records the view, loads the article document, marks the pinned flag, and
-  returns the article with viewer interaction states.
+  Loads the article document, marks the pinned flag, and returns the article
+  with viewer interaction states. Effective views are recorded through the
+  independent ViewTracker transport boundary after content becomes visible.
 
   ## Examples
 
@@ -53,42 +48,29 @@ defmodule GroupherServer.CMS.Articles.Reader do
   """
   @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id) when thread in @threads do
-    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
-         {:ok, article} <- if_article_legal(community, thread, inner_id) do
-      with {:ok, article} <- do_read_article(article, community, thread, nil, nil) do
-        InteractionResponse.one(article, nil)
-      end
-    end
+    read(community, thread, inner_id, nil)
   end
 
   @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(%Community{} = community, thread, inner_id, %User{} = user)
-      when thread in @threads,
-      do: read(community, thread, inner_id, user, nil)
-
-  @spec read(Community.t(), T.thread(), T.id(), User.t(), Ecto.UUID.t() | nil) ::
-          T.domain_res(T.article())
-  def read(%Community{} = community, thread, inner_id, %User{} = user, event_id)
       when thread in @threads do
     with {:ok, _thread} <- Enable.thread?(community.slug, thread),
-         {:ok, article} <- if_article_legal(community, thread, inner_id, user) do
-      Multi.new()
-      |> Multi.run(:normal_read, fn _, _ ->
-        do_read_article(article, community, thread, user, event_id)
-      end)
-      |> Multi.run(:set_viewer_has_states, fn _, %{normal_read: article} ->
-        InteractionResponse.one(article, user)
-      end)
-      |> Repo.transaction()
-      |> result()
+         {:ok, article} <- if_article_legal(community, thread, inner_id, user),
+         {:ok, article} <- do_read_article(article, community, thread) do
+      Response.one(article, user)
     end
   end
 
-  defp do_read_article(article, %Community{} = community, thread, user, event_id) do
+  def read(%Community{} = community, thread, inner_id, nil) when thread in @threads do
+    with {:ok, _thread} <- Enable.thread?(community.slug, thread),
+         {:ok, article} <- if_article_legal(community, thread, inner_id),
+         {:ok, article} <- do_read_article(article, community, thread) do
+      Response.one(article, nil)
+    end
+  end
+
+  defp do_read_article(article, %Community{} = community, thread) do
     Multi.new()
-    |> Multi.run(:record_view, fn _, _ ->
-      Interactions.record_view(article, user, event_id)
-    end)
     |> Multi.run(:load_html, fn _, _ ->
       article |> Repo.preload(:document) |> done()
     end)
@@ -150,7 +132,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
            type: CMS.Docs.Const.doc_branch_type(:main)
          ) do
       %DocBranch{id: branch_id} ->
-        {:ok, DocScope.public_branch(branch_id)}
+        {:ok, DocContext.public_branch(branch_id)}
 
       nil ->
         {:error, CMS.Articles.ErrorCat.not_exist("Doc main branch")}
@@ -158,7 +140,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   defp public_scope_context(_community_id, thread),
-    do: {:ok, ArticleScope.public(thread)}
+    do: {:ok, ArticleContext.public(thread)}
 
   defp diagnose_moderation(model, community_id, thread, inner_id) do
     model
@@ -197,8 +179,6 @@ defmodule GroupherServer.CMS.Articles.Reader do
   end
 
   # Make transaction return shape explicit and stable.
-  defp result({:ok, %{set_viewer_has_states: {:ok, article}}}), do: {:ok, article}
-  defp result({:ok, %{set_viewer_has_states: article}}), do: {:ok, article}
   defp result({:ok, %{update_article_meta: article}}), do: {:ok, article}
   defp result({:error, _step, reason, _changes}), do: {:error, reason}
 

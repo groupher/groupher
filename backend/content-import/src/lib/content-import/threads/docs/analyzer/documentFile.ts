@@ -3,7 +3,7 @@
  *
  *   raw source -> frontmatter + body -> AST title provenance -> route metadata
  *
- * @see docs/bulk-import/markdown-title-normalization.md
+ * @see docs/content-import/markdown-title-normalization.md
  */
 import path from 'node:path'
 

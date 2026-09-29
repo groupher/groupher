@@ -7,15 +7,17 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
   Resolvers adapt names and auth context only. Source parsing belongs to Node;
   target validation and transactional persistence belong to Phoenix.
 
-  See `docs/bulk-import/content-import-architecture.md`.
+  See `docs/content-import/content-import-architecture.md`.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ContentImport.{Jobs, Staging}
-  alias GroupherServer.CMS.ContentImport.Threads.Doc.{Validator, Writer}
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.CMS.Passport.ErrorCat
-  alias GroupherServer.CMS.Passport.Registry
+  require GroupherServer.CMS.Passport.ErrorCat
+
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.ContentImport.{Jobs, Staging}
+  alias CMS.ContentImport.Threads.Doc.{Validator, Writer}
+  alias CMS.Model.Community
+  alias CMS.Passport.{ErrorCat, Registry}
 
   @doc "Checks one registered community Passport action for the current caller."
   def check_passport(
@@ -27,10 +29,10 @@ defmodule GroupherServerWeb.Resolvers.ContentImport do
       {:ok, allowed} ->
         {:ok, allowed}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} ->
+      {:error, ErrorCat.error_pattern(reason: :unknown_action)} ->
         {:error, ErrorCat.unknown_action("unknown Passport action #{action}")}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :community_required}} ->
+      {:error, ErrorCat.error_pattern(reason: :community_required)} ->
         {:error, ErrorCat.community_required("community is required for action #{action}")}
     end
   end

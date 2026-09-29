@@ -1,19 +1,19 @@
 defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
-  require CMS.Const
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
 
   import Ecto.Query, warn: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias GroupherServer.CMS.DocTree.Writer.Index
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.DocTree.Writer.Index
 
-  alias GroupherServer.CMS.Communities.Lifecycle
+  alias CMS.Communities.Lifecycle
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Doc,
     DocBranch,
     DocsSiteState,
@@ -267,7 +267,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
         })
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "A trashed tree item with this title is pending restore."
               }} =
@@ -492,7 +492,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       {:ok, community} = empty_docs_community(user)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "base_revision is required"
               }} =
@@ -777,7 +777,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
         {:ok, event}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("Tree create event not found.")}
+        {:error, ErrorCat.custom("Tree create event not found.")}
     end
   end
 
@@ -796,7 +796,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
         {:ok, event}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("Tree move event not found.")}
+        {:error, ErrorCat.custom("Tree move event not found.")}
     end
   end
 

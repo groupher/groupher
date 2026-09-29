@@ -2,6 +2,8 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   @moduledoc false
   use ExUnit.Case, async: true
 
+  alias GroupherServer.ErrorCat
+
   alias Helper.PermissionRegistry
 
   @schema_root Path.expand("../../lib/groupher_server_web/schema", __DIR__)
@@ -37,7 +39,7 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
   end
 
   test "unknown action returns unknown_action error" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
+    assert {:error, %ErrorCat.Error{reason: :unknown_action}} =
              PermissionRegistry.requirement("this_action_does_not_exist")
   end
 
@@ -64,7 +66,7 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
 
     assert {:ok, true} = PermissionRegistry.allowed?(passport, "demo", "post.update")
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :community_required}} =
+    assert {:error, %ErrorCat.Error{reason: :community_required}} =
              PermissionRegistry.allowed?(passport, nil, "post.update")
   end
 

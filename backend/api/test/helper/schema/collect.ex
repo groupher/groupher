@@ -45,8 +45,10 @@ defmodule GroupherServer.Test.Helper.Schema.Collect do
 
   def m(:add_to_collect) do
     """
-    mutation($article: ArticlePathInput!, $folderId: ID!) {
-          addToCollect(article: $article, folderId: $folderId) {
+    mutation($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
+          addToCollect(article: $article, folderId: $folderId, commandId: $commandId) {
+            commandId
+            folder {
             id
             title
             totalCount
@@ -58,6 +60,16 @@ defmodule GroupherServer.Test.Helper.Schema.Collect do
               postCount
               blogCount
             }
+            }
+            articleStats {
+              innerId
+              collectsCount
+              interactionRevision
+            }
+            interactionState {
+              innerId
+              viewerHasCollected
+            }
           }
         }
     """
@@ -65,8 +77,10 @@ defmodule GroupherServer.Test.Helper.Schema.Collect do
 
   def m(:remove_from_collect) do
     """
-    mutation($article: ArticlePathInput!, $folderId: ID!) {
-          removeFromCollect(article: $article, folderId: $folderId) {
+    mutation($article: ArticlePathInput!, $folderId: ID!, $commandId: ID!) {
+          removeFromCollect(article: $article, folderId: $folderId, commandId: $commandId) {
+            commandId
+            folder {
             id
             title
             totalCount
@@ -77,6 +91,16 @@ defmodule GroupherServer.Test.Helper.Schema.Collect do
               hasBlog
               postCount
               blogCount
+            }
+            }
+            articleStats {
+              innerId
+              collectsCount
+              interactionRevision
+            }
+            interactionState {
+              innerId
+              viewerHasCollected
             }
           }
         }

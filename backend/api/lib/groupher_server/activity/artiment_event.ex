@@ -11,8 +11,11 @@ defmodule GroupherServer.Activity.ArtimentEvent do
     stream_field = Keyword.fetch!(opts, :stream_field)
 
     quote bind_quoted: [thread: thread, schema: schema, stream_field: stream_field] do
-      alias GroupherServer.Activity.Event
-      alias GroupherServer.CMS.Model.Comment
+      alias GroupherServer.Activity
+      alias Activity.Event
+      alias GroupherServer.CMS
+
+      alias CMS.Model.Comment
 
       @thread thread
       @schema schema

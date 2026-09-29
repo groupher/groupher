@@ -2,7 +2,7 @@
  *
  *   admitted repository files -> normalized paths -> SourceWorkspace -> analyzer
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import fs from 'node:fs/promises'
 import path from 'node:path'

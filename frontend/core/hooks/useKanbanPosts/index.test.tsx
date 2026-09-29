@@ -4,16 +4,22 @@ import type { ReactNode } from 'react'
 
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useKanbanPosts from '~/hooks/useKanbanPosts'
+import AccountStoreProvider from '~/stores/account/provider'
 
 describe('useKanbanPosts', () => {
   it('reads kanban lists + resState', () => {
     const queryClient = new QueryClient()
+    const article = (innerId: string) => ({
+      innerId,
+      community: { slug: 'acme' },
+      meta: { thread: 'POST' },
+    })
     queryClient.setQueryData(['article', 'kanban', 'acme'], {
-      backlog: { entries: [{ id: 'a0' }] },
-      todo: { entries: [{ id: 'a1' }] },
+      backlog: { entries: [article('a0')] },
+      todo: { entries: [article('a1')] },
       wip: { entries: [] },
-      done: { entries: [{ id: 'a2' }] },
-      rejected: { entries: [{ id: 'a3' }] },
+      done: { entries: [article('a2')] },
+      rejected: { entries: [article('a3')] },
     })
     const StoreWrapper = makeStoreWrapper({
       articleList: true,
@@ -21,7 +27,9 @@ describe('useKanbanPosts', () => {
     })
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>
-        <StoreWrapper>{children}</StoreWrapper>
+        <AccountStoreProvider initData={{ loading: false, user: null }}>
+          <StoreWrapper>{children}</StoreWrapper>
+        </AccountStoreProvider>
       </QueryClientProvider>
     )
 

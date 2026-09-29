@@ -14,15 +14,14 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   """
 
   import GroupherServer.Support.Factory
-  alias GroupherServer.CMS
-  alias GroupherServer.Support.FakeData
 
-  alias GroupherServer.CMS.Model.{Comment, Community}
-  alias GroupherServer.CMS.Seeds.Config
-
+  alias GroupherServer.{CMS, Support}
+  alias Support.FakeData
+  alias CMS.Model.{Comment, Community}
+  alias CMS.Seeds.Config
   alias Helper.{ORM, T}
 
-  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @comment_emotions CMS.Artiment.Config.comment_emotions()
   @comment_count_range Config.comment_count_range()
   @comment_upvotes_range Config.comment_upvotes_range()
   @comment_replies_range Config.comment_replies_range()

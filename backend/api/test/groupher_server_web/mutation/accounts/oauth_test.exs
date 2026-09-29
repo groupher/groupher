@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   use GroupherServer.TestMate
   import Helper.Utils
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, Repo}
 
-  alias GroupherServer.Accounts.Model.OauthProvider
+  alias Accounts.Model.OauthProvider
 
   @test_service_auth "enabled"
 

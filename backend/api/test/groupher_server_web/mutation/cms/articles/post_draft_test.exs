@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.CMS.Passport.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Passport.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -72,7 +73,9 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
       context.user_conn
       |> gq_mutation(S.Article.m(:publish_article_draft, :post), %{
         community: context.community.slug,
-        id: draft["id"]
+        id: draft["id"],
+        expectedVersion: updated["version"],
+        expectedLifecycleVersion: 1
       })
 
     assert published["innerId"]
@@ -113,7 +116,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostDraft do
     assert privileged_non_author
            |> mutation_error?(
              S.Article.m(:publish_article_draft, :post),
-             %{community: context.community.slug, id: draft["id"]},
+             %{
+               community: context.community.slug,
+               id: draft["id"],
+               expectedVersion: draft["version"],
+               expectedLifecycleVersion: 1
+             },
              ErrorCat.code(ErrorCat.passport())
            )
 

@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.PostLog do
 
       Post Activity contract -> activity.post_logs -> safe surfaces
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "post_logs",
     stream_field: :post_ref,

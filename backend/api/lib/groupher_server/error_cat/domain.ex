@@ -13,9 +13,53 @@ defmodule GroupherServer.ErrorCat.Domain do
 
     quote do
       import GroupherServer.ErrorCat.Domain, only: [error: 1, error: 2]
+      alias GroupherServer.ErrorCat.Error, as: GlobalError
+
       Module.register_attribute(__MODULE__, :error_cat_entries, accumulate: true)
       @error_cat_namespace unquote(Macro.escape(namespace))
       @before_compile GroupherServer.ErrorCat.Domain
+
+      @type error :: GlobalError.t()
+
+      @doc "Returns whether a value is a structured ErrorCat error."
+      @spec error?(term()) :: boolean()
+      def error?(%GlobalError{}), do: true
+      def error?(_), do: false
+
+      @doc "Returns the declared reason from a structured error, or nil."
+      @spec reason(term()) :: atom() | nil
+      def reason(%GlobalError{reason: reason}), do: reason
+      def reason(_), do: nil
+
+      @doc "Builds a reserved custom error at a domain boundary."
+      @spec custom(term()) :: error()
+      def custom(details \\ nil), do: GroupherServer.ErrorCat.custom(details)
+
+      @doc "Builds the reserved unknown-gate error at the Gate boundary."
+      @spec gate_unknown(term()) :: error()
+      def gate_unknown(details \\ nil), do: GroupherServer.ErrorCat.gate_unknown(details)
+
+      @doc "Normalizes common ErrorCat results without exposing the global struct."
+      @spec normalize_result(term()) :: term()
+      def normalize_result(%GlobalError{} = error), do: {:error, error}
+      def normalize_result({:error, %GlobalError{}} = error), do: error
+      def normalize_result({:error, %Ecto.Changeset{}} = error), do: error
+      def normalize_result(error), do: error
+
+      @doc "Builds a pattern for a structured ErrorCat error."
+      @spec error_pattern() :: term()
+      defmacro error_pattern do
+        quote do
+          %GlobalError{}
+        end
+      end
+
+      @doc "Builds a pattern for a structured ErrorCat error with selected fields."
+      defmacro error_pattern(fields) do
+        quote do
+          %GlobalError{unquote_splicing(fields)}
+        end
+      end
 
       @doc false
       def namespace, do: @error_cat_namespace
@@ -62,8 +106,6 @@ defmodule GroupherServer.ErrorCat.Domain do
           code: unquote(code),
           retryable: unquote(retryable),
           actions: unquote(Macro.escape(actions)),
-          # credo:disable-for-next-line Credo.Check.Design.AliasUsage
-          # credo:disable-line Credo.Check.Design.AliasUsage
           message_key:
             unquote(message_key) ||
               GroupherServer.ErrorCat.Validator.default_message_key(

@@ -9,7 +9,9 @@ defmodule GroupherServer.CMS.Gate.Config do
   CMS Article config -> Gate boundary -> resource classification.
   """
 
-  alias GroupherServer.CMS.Artiment.Config, as: ArtimentConfig
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config, as: ArtimentConfig
 
   @article_threads ArtimentConfig.threads()
   @ordinary_article_threads @article_threads -- [:doc]

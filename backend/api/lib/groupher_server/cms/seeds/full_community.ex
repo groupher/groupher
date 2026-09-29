@@ -16,9 +16,11 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Seeds.{Articles, Communities, Config, Tags}
+  alias CMS.ErrorCat
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Seeds.{Articles, Communities, Config, Tags}
+
+  alias CMS.Model.{
     ArticleUpvote,
     ArticleUserEmotion,
     Changelog,
@@ -82,13 +84,13 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
       false ->
         {:error,
-         GroupherServer.ErrorCat.custom("full_community mock opts must be a keyword list")}
+         ErrorCat.custom("full_community mock opts must be a keyword list")}
     end
   end
 
   def mock(_slug, _opts),
     do:
-      {:error, GroupherServer.ErrorCat.custom("full_community mock opts must be a keyword list")}
+      {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
 
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do

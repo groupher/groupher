@@ -5,6 +5,7 @@ import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -26,6 +27,7 @@ type TArgs = {
   selectedInput: () => TPublishSelectedInput | undefined
   selectedPublishDisabled: boolean
   onPublished: () => void
+  checklistRevision?: number | null
 }
 
 /** Exposes publish actions state and actions through the shared React hook boundary. */
@@ -34,6 +36,7 @@ export default function usePublishActions({
   selectedInput,
   selectedPublishDisabled,
   onPublished,
+  checklistRevision,
 }: TArgs) {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
@@ -56,7 +59,16 @@ export default function usePublishActions({
 
       try {
         if (publishView.isDirty) await saveDocDraft()
-        const input = mode === PUBLISH_MODE.SELECTED ? selectedInput() : undefined
+        const selected = mode === PUBLISH_MODE.SELECTED ? selectedInput() : undefined
+        const input =
+          checklistRevision == null
+            ? selected
+            : {
+                docChangeIds: selected?.docChangeIds ?? [],
+                treeChangeIds: selected?.treeChangeIds ?? [],
+                restoreTreeChangeIds: selected?.restoreTreeChangeIds ?? [],
+                expectedChecklistRevision: checklistRevision,
+              }
         const publishAction =
           mode === PUBLISH_MODE.SELECTED && input ? getPublishInputAction(input) : 'publish'
         const currentDocId = docDraftInfo.id
@@ -69,8 +81,10 @@ export default function usePublishActions({
               ? [currentDocId]
               : []
         const currentDocPublished = currentDocId ? publishedDocIds.includes(currentDocId) : false
+        const commandId = createCommandId()
         const data = await browserGraphQLRequest<TPublishChangesData>(S.publishDocChanges, {
           community,
+          commandId,
           input,
           mode: 'WITH_COVER_SYNC',
         })
@@ -129,6 +143,7 @@ export default function usePublishActions({
       community,
       docDraftInfo,
       onPublished,
+      checklistRevision,
       publishView.isDirty,
       publishView.publishDisabled,
       reloadPublishChecklist,

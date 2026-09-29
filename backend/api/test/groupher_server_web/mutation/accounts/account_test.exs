@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {:ok, user} = db_insert(:user)

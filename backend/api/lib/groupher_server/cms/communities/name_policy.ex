@@ -15,9 +15,10 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunitySlugClaim}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Communities.ErrorCat
+  alias CMS.Model.{Community, CommunitySlugClaim}
 
   @reserved ~w(
     home dash dashboard apply api auth login logout pricing assets static _next
@@ -49,7 +50,7 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
 
   @doc "Checks whether a normalized name is available in the shared namespace."
   @spec check(term(), keyword()) ::
-          {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, String.t()} | {:error, ErrorCat.error()}
   def check(slug, opts \\ []) do
     with {:ok, slug} <- format_check(slug) do
       cond do
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.Communities.NamePolicy do
   end
 
   @doc "Normalizes and validates syntax/reserved routes without checking occupancy."
-  @spec format_check(term()) :: {:ok, String.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec format_check(term()) :: {:ok, String.t()} | {:error, ErrorCat.error()}
   def format_check(slug) do
     slug = normalize(slug)
 

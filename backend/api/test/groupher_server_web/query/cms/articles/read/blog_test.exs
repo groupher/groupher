@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.CMS.Articles.ErrorCat
+  alias GroupherServer.CMS
+  alias CMS.Articles.ErrorCat
 
   setup do
     {community, blog, blog_attrs, user} = mock_article(:blog)

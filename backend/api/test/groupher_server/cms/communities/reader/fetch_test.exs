@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Communities.Reader do
   @moduledoc false
-  alias GroupherServer.CMS.Model.CommunityLifecycle
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityLifecycle
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -33,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Communities.Reader do
 
     test "missing public community preserves the community not-exist error" do
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :community},
                 reason: :not_exist,
                 code: 5504
@@ -46,7 +47,7 @@ defmodule GroupherServer.Test.CMS.Communities.Reader do
       |> Repo.update!()
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :community},
                 reason: :not_exist,
                 details: "Community"

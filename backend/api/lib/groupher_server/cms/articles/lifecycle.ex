@@ -12,12 +12,12 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, Repo}
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Model.ArticleLifecycle
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias CMS.Articles.ErrorCat
+  alias CMS.Artiment.Matcher
+  alias CMS.Model.ArticleLifecycle
 
-  @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
+  @article_threads CMS.Artiment.Config.threads() -- [:doc]
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   end
 
   @spec state(integer(), atom(), Ecto.UUID.t()) ::
-          {:ok, ArticleLifecycle.state()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, ArticleLifecycle.state()} | {:error, ErrorCat.error()}
   def state(community_id, thread, article_hash_id) do
     case Repo.get_by(ArticleLifecycle,
            community_id: community_id,
@@ -112,7 +112,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   @spec transition(integer(), atom(), Ecto.UUID.t(), ArticleLifecycle.state()) ::
           {:ok, ArticleLifecycle.t()}
-          | {:error, GroupherServer.ErrorCat.Error.t() | Ecto.Changeset.t()}
+          | {:error, ErrorCat.error() | Ecto.Changeset.t()}
   def transition(community_id, thread, article_hash_id, state) when state in @states do
     lifecycle =
       ArticleLifecycle

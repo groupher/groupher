@@ -5,6 +5,24 @@ import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import Button from './Button'
 
 describe('<Button />', () => {
+  it('uses mutually exclusive fit and full width classes', () => {
+    const { rerender } = render(<Button>Publish</Button>, { wrapper: makeStoreWrapper() })
+
+    let button = screen.getByRole('button', { name: 'Publish' })
+    expect(button).toHaveClass('w-max')
+    expect(button).not.toHaveClass('w-full')
+    expect(button.firstElementChild).toHaveClass('w-max')
+    expect(button.firstElementChild).not.toHaveClass('w-full')
+
+    rerender(<Button width='w-full'>Publish</Button>)
+
+    button = screen.getByRole('button', { name: 'Publish' })
+    expect(button).toHaveClass('w-full')
+    expect(button).not.toHaveClass('w-max')
+    expect(button.firstElementChild).toHaveClass('w-full')
+    expect(button.firstElementChild).not.toHaveClass('w-max')
+  })
+
   it('uses a solid red surface and button foreground on hover for destructive buttons', () => {
     render(<Button red>Delete</Button>, { wrapper: makeStoreWrapper() })
 

@@ -17,7 +17,8 @@ import type {
   TThread,
 } from '~/spec'
 
-import { articleKeys, normalizeArticleFilter } from './key'
+import { articleStats, articleStatsBatch } from './articleStats'
+import { articleQueryKeys, normalizeArticleFilter } from './key'
 
 type TGroupedKanbanPosts = {
   backlog: TPagedPosts
@@ -45,11 +46,11 @@ const toPostsFilter = (filter: TPagedArticlesParams): VariablesOf<typeof pagedPo
 
 const posts = (filter: TPagedArticlesParams) =>
   queryOptions({
-    queryKey: articleKeys.posts(filter),
+    queryKey: articleQueryKeys.posts(filter),
+    meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedPosts, {
         filter: toPostsFilter(filter),
-        userHasLogin: false,
       })
       return data.pagedPosts as unknown as TPagedPosts
     },
@@ -57,11 +58,11 @@ const posts = (filter: TPagedArticlesParams) =>
 
 const changelogs = (filter: TPagedArticlesParams) =>
   queryOptions({
-    queryKey: articleKeys.changelogs(filter),
+    queryKey: articleQueryKeys.changelogs(filter),
+    meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(pagedChangelogs, {
         filter: toPostsFilter(filter) as VariablesOf<typeof pagedChangelogs>['filter'],
-        userHasLogin: false,
       })
       return data.pagedChangelogs as unknown as TPagedChangelogs
     },
@@ -69,7 +70,8 @@ const changelogs = (filter: TPagedArticlesParams) =>
 
 const kanban = (community: string) =>
   queryOptions({
-    queryKey: articleKeys.kanban(community),
+    queryKey: articleQueryKeys.kanban(community),
+    meta: { hydration: 'public' },
     queryFn: async () => {
       const data = await browserGraphQLRequest(groupedKanbanPosts, { community })
       return data.groupedKanbanPosts as unknown as TGroupedKanbanPosts
@@ -79,25 +81,32 @@ const kanban = (community: string) =>
 
 const detail = (community: string, thread: TThread, innerId: string | number) =>
   queryOptions({
-    queryKey: articleKeys.detail(community, thread, innerId),
+    queryKey: articleQueryKeys.detail(community, thread, innerId),
+    meta: { hydration: 'public' },
     queryFn: async () => {
       const article = { community, thread, innerId: String(innerId) }
       if (thread === THREAD.CHANGELOG) {
-        const data = await browserGraphQLRequest(changelog, { article, userHasLogin: false })
+        const data = await browserGraphQLRequest(changelog, {
+          article,
+        })
         return data.changelog as unknown as TPost
       }
       if (thread === THREAD.DOC) {
-        const data = await browserGraphQLRequest(doc, { article, userHasLogin: false })
+        const data = await browserGraphQLRequest(doc, {
+          article,
+        })
         return data.doc as unknown as TPost
       }
-      const data = await browserGraphQLRequest(post, { article, userHasLogin: false })
+      const data = await browserGraphQLRequest(post, {
+        article,
+      })
       return data.post as unknown as TPost
     },
   })
 
 const tagStats = (community: string, thread: TThread, slug: string | null | undefined) =>
   queryOptions({
-    queryKey: articleKeys.tagStats(community, thread, slug),
+    queryKey: articleQueryKeys.tagStats(community, thread, slug),
     queryFn: async () => {
       if (!slug) return null
       const data = await browserGraphQLRequest(communityTagStats, { community, thread, slug })
@@ -108,7 +117,7 @@ const tagStats = (community: string, thread: TThread, slug: string | null | unde
 
 const tagGroups = (community: string, thread: TThread) =>
   queryOptions({
-    queryKey: articleKeys.tagGroups(community, thread),
+    queryKey: articleQueryKeys.tagGroups(community, thread),
     queryFn: async () => {
       const data = await browserGraphQLRequest(communityTagGroups, { community, thread })
       return (data.communityTagGroups || []) as unknown as TTagGroup[]
@@ -117,4 +126,13 @@ const tagGroups = (community: string, thread: TThread) =>
     staleTime: 60_000,
   })
 
-export const articleQueries = { posts, changelogs, kanban, detail, tagGroups, tagStats }
+export const articleQueries = {
+  posts,
+  changelogs,
+  kanban,
+  detail,
+  tagGroups,
+  tagStats,
+  stats: articleStats,
+  statsBatch: articleStatsBatch,
+}

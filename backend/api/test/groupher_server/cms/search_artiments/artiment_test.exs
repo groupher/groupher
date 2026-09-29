@@ -1,10 +1,12 @@
 defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.CMS.Model.Embeds.ArticleMeta
-  alias GroupherServer.CMS.Model.Post
-  alias GroupherServer.CMS.SearchArtiments
-  alias GroupherServer.CMS.SearchArtiments.{Artiment, Indexer, Query}
+  alias GroupherServer.ErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.{Embeds.ArticleMeta, Post}
+  alias CMS.SearchArtiments
+  alias CMS.SearchArtiments.{Artiment, Indexer, Query}
   alias Helper.TestFakes.SearchArtiments, as: SearchPlatform
   alias Helper.TestFakes.SearchArtimentsQueue
 
@@ -69,13 +71,13 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
 
   test "rejects an empty query" do
     assert {:error,
-            %GroupherServer.ErrorCat.Error{reason: :custom, details: "search text is required"}} =
+            %ErrorCat.Error{reason: :custom, details: "search text is required"}} =
              Query.new(%{text: "  "})
   end
 
   test "rejects invalid filters instead of silently broadening the query" do
     assert {:error,
-            %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid search filter enum"}} =
+            %ErrorCat.Error{reason: :custom, details: "invalid search filter enum"}} =
              Query.new(%{text: "search", filters: %{threads: [:doc, :invalid]}})
   end
 

@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish.Selection do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Normalizes publish input into one explicit selection.
 
@@ -23,9 +22,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   which unified publish path should run.
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.Publish.Result
+  require GroupherServer.CMS.DocTree.Const
 
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
+  alias CMS.DocTree.Publish.Result
 
   @publish_input_key_doc_changes CMS.DocTree.Const.doc_publish_input_key(:doc_change_ids)
   @publish_input_key_tree_changes CMS.DocTree.Const.doc_publish_input_key(:tree_change_ids)
@@ -140,18 +142,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   end
 
   defp checklist_item_ids_from(_checklist_item_ids, _items),
-    do: {:error, GroupherServer.ErrorCat.custom("Selected publish item ids must be a list.")}
+    do: {:error, ErrorCat.custom("Selected publish item ids must be a list.")}
 
   defp selected_checklist_item_id(id, by_id),
     do: selectable_checklist_item_id(id, Map.get(by_id, id))
 
   defp selectable_checklist_item_id(_id, nil),
-    do: {:error, GroupherServer.ErrorCat.custom("Selected publish item no longer exists.")}
+    do: {:error, ErrorCat.custom("Selected publish item no longer exists.")}
 
   defp selectable_checklist_item_id(_id, %{selectable: false, disabled_reason: reason}),
     do:
       {:error,
-       GroupherServer.ErrorCat.custom(reason || "Selected publish item is not available.")}
+       ErrorCat.custom(reason || "Selected publish item is not available.")}
 
   defp selectable_checklist_item_id(id, _item), do: {:ok, id}
 
@@ -168,7 +170,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
       :ok
     else
       {:error,
-       GroupherServer.ErrorCat.custom(
+       ErrorCat.custom(
          "Tree publish items can not be both published and restored."
        )}
     end
@@ -177,7 +179,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   defp publish_flow(%{total_count: 0}, [], [], []), do: {:ok, @publish_flow_noop}
 
   defp publish_flow(_checklist, [], [], []),
-    do: {:error, GroupherServer.ErrorCat.custom("No publish changes selected.")}
+    do: {:error, ErrorCat.custom("No publish changes selected.")}
 
   defp publish_flow(_checklist, [], [], _restore_tree_checklist_item_ids),
     do: {:ok, @publish_flow_restore}

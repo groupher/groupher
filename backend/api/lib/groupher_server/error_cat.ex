@@ -9,7 +9,8 @@ defmodule GroupherServer.ErrorCat do
   Context catalog -> global registry and validation -> protocol error.
   """
 
-  alias GroupherServer.ErrorCat.{Error, Registry, Validator}
+  alias GroupherServer.ErrorCat
+  alias ErrorCat.{Error, Registry, Validator}
 
   @ranges %{
     {:web} => 4000..4199,

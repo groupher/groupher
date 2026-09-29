@@ -10,8 +10,9 @@ defmodule GroupherServerWeb.Schema.Helper.Objects do
         -> GraphQL response
   """
   import Helper.Utils, only: [plural: 1]
+  alias GroupherServer.CMS
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc """
   paged articles helper

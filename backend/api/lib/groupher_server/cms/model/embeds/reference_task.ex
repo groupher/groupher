@@ -11,8 +11,10 @@ defmodule GroupherServer.CMS.Model.Embeds.ReferenceTask do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
+
   import Ecto.Changeset
 
   @optional_fields ~w(bi_link_tasks mention_user_tasks)a

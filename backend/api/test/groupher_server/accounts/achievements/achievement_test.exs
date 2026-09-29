@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Accounts.Achievement do
   @moduledoc false
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Model.Achievement
+  alias GroupherServer.Accounts
+  alias Accounts.Model.Achievement
 
   @follow_weight GroupherServer.Accounts.Config.achieve_follow_weight()
   @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()

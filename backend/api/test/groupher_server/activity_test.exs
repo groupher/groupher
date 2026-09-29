@@ -1,11 +1,11 @@
 defmodule GroupherServer.Test.ActivityTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.Activity
-  alias GroupherServer.Activity.Artiment
-  alias GroupherServer.Activity.Const, as: ActivityConst
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Artiment
+  alias Activity.Const, as: ActivityConst
 
-  alias GroupherServer.Activity.Model.{
+  alias Activity.Model.{
     BlogLog,
     ChangelogLog,
     CommunityLog,
@@ -15,8 +15,8 @@ defmodule GroupherServer.Test.ActivityTest do
     PressLog
   }
 
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{Comment, PressConfig}
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{Comment, PressConfig}
 
   test "routes abstract Articles, rejects invalid contracts and deduplicates event refs" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -146,6 +146,7 @@ defmodule GroupherServer.Test.ActivityTest do
   test "authenticated Gate denials append a denied Activity fact" do
     {community, post, _attrs, _owner} = mock_article(:post)
     {:ok, stranger} = db_insert(:user)
+    command_id = Ecto.UUID.generate()
 
     assert {:ok, _lifecycle} =
              CMS.Articles.Lifecycle.transition(
@@ -156,13 +157,21 @@ defmodule GroupherServer.Test.ActivityTest do
              )
 
     assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
-             CMS.Articles.trash(post, stranger)
+             CMS.Articles.trash(post, stranger, command_id: command_id)
+
+    assert {:error, %CMS.Gate.Decision{primary: %{reason: :article_archived}}} =
+             CMS.Articles.trash(post, stranger, command_id: command_id)
 
     denied = Repo.get_by!(PostLog, post_ref: post.article_hash_id, action: :trashed)
     assert denied.outcome == :denied
     assert denied.denial_code == "article_archived"
     assert denied.actor_type == :user
     assert denied.actor_ref == stranger.login
+
+    assert 1 ==
+             PostLog
+             |> Repo.all()
+             |> Enum.count(&(&1.post_ref == post.article_hash_id && &1.action == :trashed))
   end
 
   test "handler registry, Comment routing and surface contracts fail closed" do
@@ -229,6 +238,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:error, _} = Activity.log(%{thread: :unknown}, :created, actor: user)
     assert {:error, _} = Activity.log(post, :created, actor: user, source: :unknown)
+    assert {:error, _} = Activity.log(post, :created, actor: user, source: "unknown")
 
     assert {:error, _} =
              Activity.log(post, :solution_accepted,

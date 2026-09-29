@@ -5,8 +5,8 @@ defmodule GroupherServer.Test.Helper.UtilsTest do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Model.Post
+  alias CMS.Communities.ErrorCat
+  alias CMS.Model.Post
   alias Helper.Utils
 
   describe "map atom value up upcase str" do

@@ -41,8 +41,8 @@ defmodule GroupherServer.Test.Helper.Schema.Community do
 
   def m(:request_destroy_community) do
     """
-    mutation($community: String!){
-      requestDestroyCommunity(community: $community) {
+    mutation($community: String!, $commandId: ID!){
+      requestDestroyCommunity(community: $community, commandId: $commandId) {
             slug
           }
         }

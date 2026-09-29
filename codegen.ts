@@ -6,6 +6,7 @@ const config: CodegenConfig = {
     'frontend/core/schemas/pages/user.ts',
     'frontend/core/schemas/pages/user.fragments.ts',
     'frontend/core/schemas/pages/article.fragments.ts',
+    'frontend/core/schemas/pages/articleStats.ts',
     'frontend/core/schemas/pages/misc.fragments.ts',
     'frontend/core/schemas/pages/post.ts',
     'frontend/core/schemas/pages/changelog.ts',
@@ -51,7 +52,9 @@ const config: CodegenConfig = {
     'frontend/core/unit/DsbThread/CMS/Docs/Import/schema.ts',
     'frontend/core/unit/DsbThread/CMS/Docs/Import/fragments.ts',
     'frontend/core/query/viewer.ts',
+    'frontend/core/query/viewTracker.ts',
     'frontend/core/query/mutation/article.ts',
+    'frontend/core/query/mutation/article/schema.ts',
   ],
   pluckConfig: {
     globalGqlIdentifierName: [],
@@ -65,6 +68,11 @@ const config: CodegenConfig = {
   generates: {
     'frontend/core/lib/graphql/generated/': {
       preset: 'client',
+      config: {
+        scalars: {
+          DateTime: 'string',
+        },
+      },
       presetConfig: {
         fragmentMasking: false,
       },

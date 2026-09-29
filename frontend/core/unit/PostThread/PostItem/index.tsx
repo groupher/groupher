@@ -7,7 +7,7 @@
 import type { FC } from 'react'
 
 import { POST_LAYOUT } from '~/const/layout'
-import type { TPost, TPostLayout } from '~/spec'
+import type { TArticleState, TPost, TPostLayout } from '~/spec'
 
 import CoverLayout from './CoverLayout'
 import MasonryLayout from './MasonryLayout'
@@ -16,31 +16,31 @@ import PHLayout from './PHLayout'
 import QuoraLayout from './QuoraLayout'
 
 type TProps = {
-  article: TPost
+  viewModel: TArticleState<TPost>
   isMobilePreview?: boolean
   layout?: TPostLayout
 }
 
-const PostItem: FC<TProps> = ({ article, layout = POST_LAYOUT.QUORA }) => {
+const PostItem: FC<TProps> = ({ viewModel, layout = POST_LAYOUT.QUORA }) => {
   switch (layout) {
     case POST_LAYOUT.MINIMAL: {
-      return <MinimalLayout article={article} />
+      return <MinimalLayout viewModel={viewModel} />
     }
 
     case POST_LAYOUT.PH: {
-      return <PHLayout article={article} />
+      return <PHLayout viewModel={viewModel} />
     }
 
     case POST_LAYOUT.COVER: {
-      return <CoverLayout article={article} />
+      return <CoverLayout viewModel={viewModel} />
     }
 
     case POST_LAYOUT.MASONRY: {
-      return <MasonryLayout article={article} />
+      return <MasonryLayout viewModel={viewModel} />
     }
 
     default: {
-      return <QuoraLayout article={article} />
+      return <QuoraLayout viewModel={viewModel} />
     }
   }
 }

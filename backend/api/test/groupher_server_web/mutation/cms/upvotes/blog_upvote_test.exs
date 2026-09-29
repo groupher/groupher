@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
   @moduledoc false
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {community, blog, _, user} = mock_article(:blog, preload: [author: :user])
@@ -13,15 +14,15 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
   end
 
   describe "[blog upvote]" do
-    test "login user can upvote a blog", ~m(user_conn community blog user)a do
+    test "login user can upvote a blog", ~m(user_conn community blog)a do
       variables = %{
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :blog), variables)
 
-      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
-      assert created["innerId"] == to_string(blog.inner_id)
+      assert get_in(created, ["interactionState", "viewerHasUpvoted"])
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(blog.inner_id)
     end
 
     test "unauth user upvote a blog fails", ~m(guest_conn community blog)a do
@@ -46,8 +47,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :blog), variables)
 
-      assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
-      assert updated["innerId"] == to_string(blog.inner_id)
+      refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(blog.inner_id)
     end
 
     test "unauth user undo upvote a blog fails", ~m(guest_conn community blog)a do

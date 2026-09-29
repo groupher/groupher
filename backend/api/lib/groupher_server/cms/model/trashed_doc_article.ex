@@ -10,8 +10,10 @@ defmodule GroupherServer.CMS.Model.TrashedDocArticle do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, DocBranch, TrashAction}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, DocBranch, TrashAction}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

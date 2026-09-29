@@ -11,15 +11,18 @@ defmodule GroupherServer.Accounts.FrontDesk do
         -> Repo
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias GroupherServer.ErrorCat, as: GlobalErrorCat
+  require GroupherServer.Accounts.Profiles.ErrorCat
+
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Helper.{Cache, ORM}
 
   @cache_pool :user_login
 
-  @spec userid(String.t()) :: {:ok, integer()} | {:error, any()}
   @doc "Runs `userid` through the public `FrontDesk` boundary."
+  @spec userid(String.t()) :: {:ok, integer()} | {:error, any()}
   def userid(login) when is_binary(login) do
     case Cache.get(@cache_pool, login) do
       {:ok, user_id} -> {:ok, user_id}
@@ -27,12 +30,12 @@ defmodule GroupherServer.Accounts.FrontDesk do
     end
   end
 
-  @spec user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
   @doc "Runs `user` through the public `FrontDesk` boundary."
+  @spec user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
   def user(login, opts \\ []) when is_binary(login), do: live_user(login, opts)
 
-  @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
   @doc "Runs `live_user` through the public `FrontDesk` boundary."
+  @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
   def live_user(login, opts \\ []) when is_binary(login) do
     with {:ok, user_id} <- userid(login) do
       case fetch_user_by_id(user_id, opts) do
@@ -48,7 +51,8 @@ defmodule GroupherServer.Accounts.FrontDesk do
         Cache.put(@cache_pool, login, user.id)
         {:ok, user.id}
 
-      {:error, %GlobalErrorCat.Error{details: %{reason: :not_exist, message: message}}} ->
+      {:error,
+       ProfileErrorCat.error_pattern(details: %{reason: :not_exist, message: message})} ->
         {:error, ProfileErrorCat.not_exist(message)}
 
       {:error, error} ->

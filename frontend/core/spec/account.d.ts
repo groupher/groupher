@@ -15,6 +15,10 @@ type TUserSocial = {
 }
 
 export type TSimpleUser = {
+  /** Stable opaque account reference; unlike login, it never changes. */
+  accountRef?: string
+  /** Kept for local/test data that predates the accountRef contract. */
+  id?: string
   login?: string
   nickname?: string
   name?: string

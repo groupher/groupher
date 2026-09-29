@@ -10,14 +10,15 @@ defmodule GroupherServer.CMS.Communities.List do
         -> Repo / Oban
   """
 
+  import Ecto.Query, only: [order_by: 3]
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.QueryBuilder
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.QueryBuilder
+  alias Accounts.Model.User
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   @doc """
@@ -50,9 +51,18 @@ defmodule GroupherServer.CMS.Communities.List do
     %{page: page, size: size} = filter
 
     Community
-    |> CMS.Gate.scope(nil, :list, CommunityScope.public())
-    |> QueryBuilder.filter_pack(filter)
+    |> CMS.Gate.scope(nil, :list, CommunityContext.public())
+    |> QueryBuilder.filter_pack(Map.drop(filter, [:sort]))
+    |> order_by_views(Map.get(filter, :sort))
     |> ORM.paginator(page: page, size: size)
     |> done()
   end
+
+  defp order_by_views(queryable, :most_views),
+    do: order_by(queryable, [community], desc: community.views, desc: community.inserted_at)
+
+  defp order_by_views(queryable, :least_views),
+    do: order_by(queryable, [community], asc: community.views, desc: community.inserted_at)
+
+  defp order_by_views(queryable, _sort), do: queryable
 end

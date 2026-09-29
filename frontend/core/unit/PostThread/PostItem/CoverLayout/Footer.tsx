@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
-import type { TPost } from '~/spec'
+import type { TArticleStats, TArticleViewerState, TPost } from '~/spec'
 import TimeAgo from '~/ui/TimeAgo'
 import Upvote from '~/unit/Upvote'
 
@@ -9,19 +9,21 @@ import useSalon from '../salon/cover_layout/footer'
 
 type TProps = {
   article: TPost
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
 }
 
-const Footer: FC<TProps> = ({ article }) => {
+const Footer: FC<TProps> = ({ article, stats, viewerState }) => {
   const s = useSalon()
 
-  const { upvotesCount, meta, viewerHasUpvoted, insertedAt } = article
+  const { meta, insertedAt } = article
 
   return (
     <div className={s.wrapper}>
       <Upvote
-        count={upvotesCount}
+        count={stats?.upvotesCount}
         avatarList={meta.latestUpvotedUsers}
-        viewerHasUpvoted={viewerHasUpvoted}
+        viewerHasUpvoted={viewerState.viewerHasUpvoted}
         type={UPVOTE_LAYOUT.GENERAL}
         left={-2}
         top={-1}

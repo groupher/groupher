@@ -13,8 +13,8 @@ import { useLocation } from '@tanstack/react-router'
  * Polling projects server facts and never acts as the source of truth. Stage
  * updates are monotonic within Preview and Job phases to avoid visual rollback.
  *
- * @see docs/bulk-import/bulk-import.md
- * @see docs/bulk-import/import-process-log.md
+ * @see docs/content-import/bulk-import.md
+ * @see docs/content-import/import-process-log.md
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 

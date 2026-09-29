@@ -13,18 +13,27 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
       iex> %__MODULE__{thread: :post, stage: :draft} = draft(:post)
   """
 
-  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS
+
+  alias CMS.Gate.Config
 
   @threads Config.ordinary_article_threads()
-  @modes [:public, :owner_management, :moderator_management, :operations]
+  @modes [:public, :owner_management, :moderator_management, :operations, :insights_management]
   @enforce_keys [:thread, :stage, :policy_mode]
-  defstruct [:thread, :stage, :policy_mode, include_illegal: false]
+  defstruct [
+    :thread,
+    :stage,
+    :policy_mode,
+    include_illegal: false,
+    passport_granted_community_slugs: []
+  ]
 
   @type t :: %__MODULE__{
           thread: atom(),
           stage: :public | :draft,
           policy_mode: atom(),
-          include_illegal: boolean()
+          include_illegal: boolean(),
+          passport_granted_community_slugs: [String.t()]
         }
 
   @doc "Builds a public Article read intent for a supported thread."
@@ -34,6 +43,11 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
   @doc "Builds a management-scoped draft Article read intent."
   def draft(thread, policy_mode \\ :owner_management, opts \\ []) when thread in @threads do
     build(thread, :draft, policy_mode, opts)
+  end
+
+  @doc "Builds the public Article Insights read intent with optional Passport grants."
+  def insights(thread, opts \\ []) when thread in @threads do
+    build(thread, :public, :insights_management, opts)
   end
 
   @doc "Builds the default public read intent for a supported thread."
@@ -52,7 +66,12 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
       thread: thread,
       stage: stage,
       policy_mode: policy_mode,
-      include_illegal: Keyword.get(opts, :include_illegal, false)
+      include_illegal: Keyword.get(opts, :include_illegal, false),
+      passport_granted_community_slugs:
+        opts
+        |> Keyword.get(:passport_granted_community_slugs, [])
+        |> Enum.filter(&is_binary/1)
+        |> Enum.uniq()
     }
   end
 end

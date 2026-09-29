@@ -3,9 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.CMS.Model.ArticleDocument
-  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
+  alias GroupherServer.CMS
+  alias CMS.Model.ArticleDocument
+  @article_digest_length CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, changelog_attrs, user} = mock_article(:changelog)
@@ -98,69 +98,41 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
          ~m(changelog_attrs community user)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, changelog2} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+        CMS.Articles.read(article_community(changelog), :changelog, changelog.inner_id, user)
 
       assert changelog.id == changelog2.id
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(changelog2, user).viewer_has_viewed
+      refute CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
+
+      assert {:ok, %{tracked: true}} =
+               track_article_view(changelog2, user, read_purpose: :public_read)
+
+      assert CMS.ViewTracker.viewer_state(changelog2, user).viewer_has_viewed
     end
 
-    test "read changelog should update views and meta viewed_user_list",
+    test "track projection updates views and meta viewed_user_list",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user, read_purpose: :public_read)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user, read_purpose: :public_read)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user,
-          event_id
-        )
+      assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
 
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
-
-      event_id = Ecto.UUID.generate()
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(changelog),
-          :changelog,
-          changelog.inner_id,
-          user2,
-          event_id
-        )
+      {:ok, %{tracked: true}} =
+        track_article_view(changelog, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
-      assert :ok = ViewEvents.project(event_id)
-      assert created.views == 1
-      assert CMS.Interactions.viewer_state(changelog, user).viewer_has_viewed
-      assert CMS.Interactions.viewer_state(changelog, user2).viewer_has_viewed
+      assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:changelog, created.id)
+      assert CMS.ViewTracker.viewer_state(changelog, user).viewer_has_viewed
+      assert CMS.ViewTracker.viewer_state(changelog, user2).viewer_has_viewed
     end
 
-    test "read changelog should contains viewer_has_xxx state",
+    test "public changelog read does not hydrate viewer-private state",
          ~m(changelog_attrs community user user2)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
@@ -212,9 +184,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
           user
         )
 
-      assert changelog.viewer_has_collected
-      assert changelog.viewer_has_upvoted
-      assert changelog.viewer_has_reported
+      refute changelog.viewer_has_collected
+      refute changelog.viewer_has_upvoted
+      refute changelog.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(changelog, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",
@@ -339,7 +314,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       body = mock_rich_text(~s(new content))
-      {:ok, changelog} = CMS.Articles.update(changelog, %{body_bag: mock_body_bag(body)})
+
+      {:ok, changelog} =
+        CMS.Articles.update(changelog, %{
+          body_bag: mock_body_bag(body),
+          expected_version: changelog.version
+        })
 
       {:ok, article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})

@@ -12,12 +12,15 @@ defmodule GroupherServer.CMS.Model.CommentUpvote do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.Comment
+
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Model.Comment
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

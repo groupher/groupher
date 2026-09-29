@@ -13,12 +13,12 @@ defmodule GroupherServer.CMS.Events.Notify do
         -> Notify
         -> bounded side effect
   """
-  alias GroupherServer.{CMS, Messaging, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Events.Event
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.Comment
+  require GroupherServer.CMS.ErrorCat
+
+  alias GroupherServer.{Accounts, CMS, Messaging, Repo}
+  alias Accounts.Model.User
+  alias CMS.{ErrorCat, Events.Event, FrontDesk, Model.Comment}
 
   @behaviour CMS.Events.Handler
 
@@ -183,15 +183,11 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   # Background jobs may arrive after related content is deleted; skip quietly.
   defp handle_missing_target(
-         {:error,
-          %GroupherServer.ErrorCat.Error{
-            reason: :custom,
-            details: %{reason: :not_exist}
-          }}
+         {:error, ErrorCat.error_pattern(reason: :custom, details: %{reason: :not_exist})}
        ),
        do: {:ok, :pass}
 
-  defp handle_missing_target({:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}}),
+  defp handle_missing_target({:error, ErrorCat.error_pattern(reason: :not_exist)}),
     do: {:ok, :pass}
 
   defp handle_missing_target({:error, _} = error), do: error

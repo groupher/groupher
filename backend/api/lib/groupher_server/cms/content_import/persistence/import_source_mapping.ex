@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping do
   @moduledoc """
   Last successful source and Groupher synchronization baseline.
 
-  See `docs/bulk-import/content-import-architecture.md` for mapping ownership and identity.
+  See `docs/content-import/content-import-architecture.md` for mapping ownership and identity.
 
   Business position:
 
@@ -17,7 +17,9 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.ImportSourceMapping do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Connection
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Connection
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

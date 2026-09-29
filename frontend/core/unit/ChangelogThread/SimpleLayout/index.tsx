@@ -49,7 +49,7 @@ export default function SimpleLayout() {
       {filterExpand && <FilterBar tab={tab} />}
       <div className={s.main}>
         {pagedChangelogs?.entries.map((item) => (
-          <ChangelogItem key={item.innerId} article={item} />
+          <ChangelogItem key={item.content.innerId} viewModel={item} />
         ))}
       </div>
     </div>

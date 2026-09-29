@@ -15,11 +15,12 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
 
   @behaviour Absinthe.Middleware
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
-  alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{Accounts, CMS, ErrorCat}
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias ErrorCat.Error
 
-  alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishThrottle
+  alias CMS.Gate.RateLimit.Publish, as: PublishThrottle
 
   def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
     case PublishThrottle.check(cur_user, opt) do
@@ -57,7 +58,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
     resolution
     |> handle_absinthe_error(
       "Authorize: need login",
-      ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+      ErrorCat.code(ProfileErrorCat.account_login())
     )
   end
 end

@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Press do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+  alias CMS.Model.{
     CommunityLifecycle,
     DocPublishRelease,
     DocTreeNode,
@@ -13,7 +14,7 @@ defmodule GroupherServer.Test.CMS.Press do
   }
 
   alias Ecto.Changeset
-  alias GroupherServer.CMS.Docs.Branch
+  alias CMS.Docs.Branch
   alias GroupherServerWeb.Schema
 
   setup do
@@ -34,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Press do
     assert projection.canonical_path == "/#{community.slug}/post/#{post.inner_id}"
 
     persisted = Repo.get!(Post, post.id)
-    assert persisted.views == post.views
+    refute Map.has_key?(persisted, :views)
   end
 
   test "origin projections hide communities that are not publicly active", ~m(community post)a do
@@ -47,7 +48,7 @@ defmodule GroupherServer.Test.CMS.Press do
     |> Repo.update!()
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               namespace: {:cms, :community},
               reason: :not_exist,
               details: "Public Community"
@@ -64,7 +65,7 @@ defmodule GroupherServer.Test.CMS.Press do
     path = %{community: community.slug, thread: :doc, inner_id: doc.inner_id}
 
     assert {:error,
-            %GroupherServer.ErrorCat.Error{
+            %ErrorCat.Error{
               namespace: {:cms, :article},
               reason: :not_exist,
               details: "Published Doc"
@@ -271,7 +272,7 @@ defmodule GroupherServer.Test.CMS.Press do
 
   test "feed validation rejects disabled or invalid configuration", ~m(community user)a do
     assert {:error,
-            %GroupherServer.ErrorCat.Error{reason: :custom, details: "Press output is disabled"}} =
+            %ErrorCat.Error{reason: :custom, details: "Press output is disabled"}} =
              CMS.Press.community_rss_feed(community)
 
     assert {:error, %Ecto.Changeset{}} =

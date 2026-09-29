@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.MarkerTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Marker
+  alias GroupherServer.CMS
+  alias CMS.Marker
 
   describe "normalize/1" do
     test "normalizes icon appearance for both themes" do

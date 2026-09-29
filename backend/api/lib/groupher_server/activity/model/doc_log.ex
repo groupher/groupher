@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.DocLog do
 
       Doc Activity contract -> activity.doc_logs -> safe surfaces
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "doc_logs",
     stream_field: :doc_ref,

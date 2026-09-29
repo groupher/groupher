@@ -16,6 +16,9 @@ export const Route = createFileRoute('/$community/post/$id')({
       ),
     ])
     if (!post) throw notFound()
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.POST, params.id),
+    )
     return { post }
   },
   head: ({ loaderData, params, matches }) => ({

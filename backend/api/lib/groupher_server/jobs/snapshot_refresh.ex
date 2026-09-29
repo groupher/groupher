@@ -10,15 +10,13 @@ defmodule GroupherServer.Jobs.SnapshotRefresh do
         -> context / service
   """
 
-  alias GroupherServer.Jobs.Config
-
   use Oban.Worker,
-    queue: Config.queue(:snapshot_refresh),
-    max_attempts: Config.max_attempts(:snapshot_refresh),
-    unique: Config.unique(:snapshot_refresh)
+    queue: GroupherServer.Jobs.Config.queue(:snapshot_refresh),
+    max_attempts: GroupherServer.Jobs.Config.max_attempts(:snapshot_refresh),
+    unique: GroupherServer.Jobs.Config.unique(:snapshot_refresh)
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Jobs.Codec
+  alias GroupherServer.{CMS, Jobs}
+  alias Jobs.Codec
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"kind" => kind, "refs" => refs, "opts" => opts}}) do

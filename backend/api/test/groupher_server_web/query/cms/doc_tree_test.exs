@@ -2,7 +2,8 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   @moduledoc false
 
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   @query S.DocTree.q(:doc_tree)
 

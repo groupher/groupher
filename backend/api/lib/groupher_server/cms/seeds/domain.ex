@@ -25,11 +25,11 @@ defmodule GroupherServer.CMS.Seeds.Domain do
     ]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Threads
+  alias CMS.ErrorCat
 
-  alias GroupherServer.CMS.Model.{Category, Community}
-  alias GroupherServer.CMS.Seeds.Communities, as: CommunitySeeds
-
+  alias CMS.Seeds.Threads
+  alias CMS.Model.{Category, Community}
+  alias CMS.Seeds.Communities, as: CommunitySeeds
   alias Helper.{ORM, T}
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"
@@ -68,7 +68,7 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   end
 
   def community(_slug, _type),
-    do: {:error, GroupherServer.ErrorCat.custom("unknown community type")}
+    do: {:error, ErrorCat.custom("unknown community type")}
 
   @spec set_category([atom() | String.t()], atom() | String.t()) :: T.domain_res(:ok)
   def set_category(communities_names, cat_name) when is_list(communities_names) do
@@ -85,10 +85,10 @@ defmodule GroupherServer.CMS.Seeds.Domain do
   end
 
   # seed community
-  @spec seed_community(:blackhole | :feedback | :home) :: any
   @doc """
   seed community for home
   """
+  @spec seed_community(:blackhole | :feedback | :home) :: any
   def seed_community(:home) do
     with {:error, _} <- ORM.find_by(Community, %{slug: "home"}),
          {:ok, bot} <- seed_bot() do

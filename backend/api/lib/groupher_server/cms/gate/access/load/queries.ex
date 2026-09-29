@@ -18,7 +18,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Model.{
     ArticleLifecycle,
     CommentLifecycle,
     CommunityLifecycle,
@@ -26,9 +28,12 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     DocLifecycle
   }
 
-  alias GroupherServer.Repo
+  @doc """
+  Reloads one resource row by primary key under `FOR UPDATE`.
 
-  @doc false
+  This lock protects the canonical resource consumed by the surrounding Gate
+  transaction; callers must not use it as a general resource reader.
+  """
   def resource(schema, id) when is_atom(schema) and not is_nil(id) do
     schema
     |> where([resource], resource.id == ^id)
@@ -36,7 +41,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc false
+  @doc """
+  Loads a Community lifecycle row under `FOR SHARE` for ancestor-state checks.
+  """
   def community_lifecycle(community_id) do
     CommunityLifecycle
     |> where([lifecycle], lifecycle.community_id == ^community_id)
@@ -44,7 +51,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc false
+  @doc """
+  Loads an Article lifecycle row under `FOR UPDATE` for mutation admission.
+  """
   def article_lifecycle(community_id, thread, article_hash_id) do
     ArticleLifecycle
     |> where(
@@ -56,7 +65,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc false
+  @doc """
+  Loads a branch-specific Doc lifecycle row under `FOR UPDATE`.
+  """
   def doc_lifecycle(community_id, branch_id, article_hash_id) do
     DocLifecycle
     |> where(
@@ -68,7 +79,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc false
+  @doc """
+  Loads a Doc branch under `FOR SHARE` so policy can enforce branch capability.
+  """
   def doc_branch(community_id, branch_id) do
     DocBranch
     |> where([branch], branch.community_id == ^community_id and branch.id == ^branch_id)
@@ -76,7 +89,9 @@ defmodule GroupherServer.CMS.Gate.Access.Load.Queries do
     |> Repo.one()
   end
 
-  @doc false
+  @doc """
+  Loads a Comment lifecycle row under `FOR UPDATE` for mutation admission.
+  """
   def comment_lifecycle(comment_id) do
     CommentLifecycle
     |> where([lifecycle], lifecycle.comment_id == ^comment_id)

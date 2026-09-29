@@ -140,7 +140,7 @@
 // /**
 //  * toggle emotion action
 //  */
-// export const handleEmotion = (
+// export const toggleEmotion = (
 //   comment: TComment,
 //   name: TEmotionType,
 //   viewerHasEmotioned: boolean,
@@ -173,7 +173,7 @@
 // /**
 //  * toggle upvote action
 //  */
-// export const handleUpvote = (comment: TComment, viewerHasUpvoted: boolean): void => {
+// export const toggleUpvote = (comment: TComment, viewerHasUpvoted: boolean): void => {
 //   const { id, upvotesCount } = comment
 
 //   if (viewerHasUpvoted) {

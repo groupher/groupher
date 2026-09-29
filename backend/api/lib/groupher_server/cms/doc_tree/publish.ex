@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Publish workflows for docs and docs tree snapshots.
 
@@ -26,12 +25,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   lets history and rollback talk about the full public docs site at one moment.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
 
-  alias GroupherServer.CMS.DocTree.Publish.{
+  alias Accounts.Model.User
+
+  alias CMS.DocTree.Publish.{
     Checklist,
     DocPublisher,
     PublicProjection,
@@ -40,11 +42,14 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
-  alias GroupherServer.CMS.DocPublishRelease
-  alias GroupherServer.CMS.Docs.Branch
+  alias CMS.{
+    ErrorCat,
+    DocPublishRelease,
+    Docs.Branch,
+    DocTree.Reader
+  }
 
-
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Doc,
     DocTreeEvent,
@@ -52,6 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   }
 
   alias Helper.{T, Transaction}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
   @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
@@ -112,10 +118,21 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp publish_changes_locked(community, branch, args, user, sync_cover?) do
-    case CMS.Gate.access_check(user, :manage_docs, community) do
-      {:ok, _canonical} -> prepare_publish_flow(community, branch, args, user, sync_cover?)
+    with {:ok, _canonical} <- CMS.Gate.access_check(user, :manage_docs, community),
+         {:ok, state} <- Reader.ensure_draft_state(community, branch_id: branch.id),
+         :ok <- verify_checklist_revision(state, args) do
+      prepare_publish_flow(community, branch, args, user, sync_cover?)
+    else
       {:error, reason} -> Repo.rollback(reason)
       reason -> Repo.rollback(reason)
+    end
+  end
+
+  defp verify_checklist_revision(state, args) do
+    case Map.get(args, :expected_checklist_revision) do
+      nil -> :ok
+      revision when revision == state.site_draft_version -> :ok
+      _ -> {:error, ErrorCat.custom("Docs publish checklist conflict")}
     end
   end
 
@@ -257,7 +274,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       {:ok, %{done: true, affected_count: length(drafts)}}
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("Draft subtree root must be a Tab or Group.")}
+        {:error, ErrorCat.custom("Draft subtree root must be a Tab or Group.")}
 
       error ->
         error
@@ -293,7 +310,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          next_checklist <- checklist(community, branch_id: branch.id),
          {:ok, _state} <-
            DocPublishRelease.mark_site_draft_clean(community, branch, next_checklist) do
-      {:ok, publish_payload(true, nil, next_checklist)}
+      with :ok <- invalidate_doc_tree(community) do
+        {:ok, publish_payload(true, nil, next_checklist)}
+      end
     end
   end
 
@@ -339,7 +358,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              user,
              next_checklist
            ) do
-      {:ok, publish_payload(true, release, next_checklist)}
+      with :ok <- invalidate_doc_tree(community) do
+        {:ok, publish_payload(true, release, next_checklist)}
+      end
     end
   end
 
@@ -350,6 +371,18 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       checklist: checklist,
       scope: %{total_count: checklist.total_count}
     }
+  end
+
+  defp invalidate_doc_tree(community) do
+    case PublicCache.invalidate_now(
+           PublicCacheConst.doc_tree_changed(),
+           %{community: community.slug, community_id: community.id},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp publish_doc_checklist_items(
@@ -375,7 +408,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
         {:ok, %{snapshot: snapshot, checklist_item: item}}
       else
         nil ->
-          {:error, GroupherServer.ErrorCat.custom("Selected docs publish item no longer exists.")}
+          {:error, ErrorCat.custom("Selected docs publish item no longer exists.")}
 
         error ->
           error
@@ -421,7 +454,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, tree_checklist_item_ids)
 
     if length(events) != length(tree_checklist_item_ids) do
-      {:error, GroupherServer.ErrorCat.custom("Selected tree publish item no longer exists.")}
+      {:error, ErrorCat.custom("Selected tree publish item no longer exists.")}
     else
       doc_snapshots =
         DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
@@ -468,10 +501,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          MapSet.disjoint?(selected_doc_ids, deleted_doc_ids) do
       :ok
     else
-      {:error,
-       GroupherServer.ErrorCat.custom(
-         "Selected docs publish item is also selected for tree deletion."
-       )}
+      {:error, ErrorCat.custom("Selected docs publish item is also selected for tree deletion.")}
     end
   end
 
@@ -501,7 +531,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     events = selected_tree_events(community, branch, restore_tree_checklist_item_ids)
 
     if length(events) != length(restore_tree_checklist_item_ids) do
-      {:error, GroupherServer.ErrorCat.custom("Selected tree restore item no longer exists.")}
+      {:error, ErrorCat.custom("Selected tree restore item no longer exists.")}
     else
       Restore.restore_tree_events(community, branch, events, user)
     end

@@ -4,13 +4,14 @@ defmodule GroupherServer.Activity.Post do
 
       Post command -> Post Activity contract -> PostLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.PostLog
 
   use GroupherServer.Activity.ArtimentEvent,
     thread: :post,
-    schema: PostLog,
+    schema: GroupherServer.Activity.Model.PostLog,
     stream_field: :post_ref
+
+  alias GroupherServer.Activity
+  alias Activity.Event
 
   @trash_denial_codes [
     :permission_denied,

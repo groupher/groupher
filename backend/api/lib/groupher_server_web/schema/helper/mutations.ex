@@ -60,8 +60,9 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   defmacro article_upvote_mutation(thread) do
     quote do
       @desc unquote("upvote to #{thread}")
-      field unquote(:"upvote_#{thread}"), :article do
+      field unquote(:"upvote_#{thread}"), :article_reaction_result do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -70,8 +71,9 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       end
 
       @desc unquote("undo upvote to #{thread}")
-      field unquote(:"undo_upvote_#{thread}"), :article do
+      field unquote(:"undo_upvote_#{thread}"), :article_reaction_result do
         arg(:article, non_null(:article_path_input))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -136,9 +138,10 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   defmacro article_emotion_mutation(thread) do
     quote do
       @desc unquote("emotion to #{thread}")
-      field unquote(:"emotion_to_#{thread}"), unquote(thread) do
+      field unquote(:"emotion_to_#{thread}"), :article_reaction_result do
         arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
@@ -147,9 +150,10 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       end
 
       @desc unquote("undo emotion to #{thread}")
-      field unquote(:"undo_emotion_to_#{thread}"), unquote(thread) do
+      field unquote(:"undo_emotion_to_#{thread}"), :article_reaction_result do
         arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
+        arg(:command_id, non_null(:id))
 
         middleware(M.Authorize, :login)
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})

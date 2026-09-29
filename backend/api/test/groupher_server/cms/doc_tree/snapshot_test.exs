@@ -1,14 +1,14 @@
 defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
+  require GroupherServer.CMS.DocTree.Const
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.Snapshot
-  alias GroupherServer.CMS.Model.DocTreeNode
+  alias CMS.DocTree.Snapshot
+  alias CMS.Model.DocTreeNode
 
-  require CMS.Const
+  require GroupherServer.CMS.Const
 
   @doc_id_key CMS.DocTree.Const.doc_tree_json_key(:doc_id)
   @id_key CMS.DocTree.Const.doc_tree_json_key(:id)

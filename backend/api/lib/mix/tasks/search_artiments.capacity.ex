@@ -12,7 +12,8 @@ defmodule Mix.Tasks.SearchArtiments.Capacity do
 
   use Mix.Task
 
-  alias GroupherServer.CMS.SearchArtiments.Capacity
+  alias GroupherServer.CMS
+  alias CMS.SearchArtiments.Capacity
 
   @shortdoc "Measure Search Artiments source volume"
 

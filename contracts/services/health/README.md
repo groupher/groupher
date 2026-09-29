@@ -2,7 +2,7 @@
 
 Machine-readable contract for `GET /health` responses across Groupher HTTP services.
 
-Human-facing design notes live in `docs/contract/health.md`.
+Human-facing design notes live in `docs/infra/contracts/health.md`.
 
 ## Layout
 

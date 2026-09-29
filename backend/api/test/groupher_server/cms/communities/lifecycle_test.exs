@@ -1,13 +1,14 @@
 defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
-  require GroupherServer.CMS.Communities.Const
   use GroupherServer.TestMate, async: false
+  require GroupherServer.CMS.Communities.Const
 
   import Ecto.Query
 
-  alias GroupherServer.Activity.Model.CommunityLog
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Model.CommunityLog
+  alias CMS.Communities.Lifecycle
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   test "projects blocker combinations into the strictest public state" do
     assert :active = Lifecycle.resolve_state([])
@@ -113,7 +114,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
   end
 
   test "reclaim requires blockers when the materialized state is eligible" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_not_loaded}} =
+    assert {:error, %ErrorCat.Error{reason: :lifecycle_not_loaded}} =
              Lifecycle.can_destroy(%CommunityLifecycle{state: :active})
 
     assert {:ok, true} =
@@ -175,7 +176,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_operation_ref}} =
+    assert {:error, %ErrorCat.Error{reason: :invalid_operation_ref}} =
              Lifecycle.request_destroy(community.slug, operation_ref: "op_owner_archive")
 
     assert Repo.aggregate(CommunityLifecycleBlocker, :count) == 0
@@ -244,7 +245,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
         |> Repo.update!()
 
       visible? =
-        CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
+        CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
         |> where([candidate], candidate.id == ^community.id)
         |> Repo.exists?()
 
@@ -269,7 +270,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
     assert blocker.blocker_type == :owner_archive
     assert Repo.get!(CommunityLifecycle, lifecycle.id).state == :archived
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_state_conflict}} =
+    assert {:error, %ErrorCat.Error{reason: :lifecycle_state_conflict}} =
              Lifecycle.restore(community.slug,
                expected_version: 1,
                operation_ref: Ecto.UUID.generate()
@@ -284,7 +285,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
                operation_ref: Ecto.UUID.generate()
              )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :archive_recovery_window_expired}} =
+    assert {:error, %ErrorCat.Error{reason: :archive_recovery_window_expired}} =
              Lifecycle.restore(community.slug, operation_ref: Ecto.UUID.generate())
 
     assert blocker.blocker_type == :owner_archive
@@ -388,7 +389,7 @@ defmodule GroupherServer.Test.CMS.Communities.LifecycleTest do
                operation_ref: Ecto.UUID.generate()
              )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :destroy_blocked}} =
+    assert {:error, %ErrorCat.Error{reason: :destroy_blocked}} =
              Lifecycle.schedule_destroy(community.slug, operation_ref: Ecto.UUID.generate())
   end
 end

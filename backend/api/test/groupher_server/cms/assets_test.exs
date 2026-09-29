@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Hash
-  alias GroupherServer.CMS.Model.{ArticleDocumentAssetRef, CommunityAsset}
+  alias GroupherServer.CMS
+  alias CMS.Hash
+  alias CMS.Model.{ArticleDocumentAssetRef, CommunityAsset}
 
   describe "[cms assets]" do
     setup do
@@ -208,7 +209,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         CMS.Assets.register_to_community(community, image_asset_attrs("existing.png", 50), user)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "asset_id and asset are mutually exclusive"
               }} =
@@ -245,7 +246,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       for usage <- [:cover, "cover_dark"] do
         assert {:error,
-                %GroupherServer.ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
+                %ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
                  CMS.Assets.link_refs(
                    post,
                    %{
@@ -394,7 +395,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "community asset storage quota exceeded"
               }} =
@@ -414,7 +415,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "community asset storage quota exceeded"
               }} =
@@ -463,7 +464,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert deleted_asset.status == :deleted
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :asset},
                 reason: :not_exist,
                 details: "asset not found"
@@ -471,7 +472,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.origin_info(asset.public_ref)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :asset},
                 reason: :not_exist,
                 details: "asset not found"
@@ -493,7 +494,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         )
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "asset is still referenced"
               }} =

@@ -1,18 +1,20 @@
 defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
-  require GroupherServer.CMS.Communities.Const
   @moduledoc false
+
   use GroupherServer.TestMate, async: false
+  require GroupherServer.CMS.Communities.Const
 
   import Ecto.Query
 
   alias Ecto.Adapters.SQL
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle}
+  alias GroupherServer.CMS
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Model.{Community, CommunityLifecycle}
 
   defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
 
   test "Community scope compiles the public lifecycle boundary" do
-    query = CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
+    query = CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
     assert %Ecto.Query{} = query
 
     {sql, params} = to_sql(query)
@@ -22,10 +24,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
   end
 
   test "scope rejects an omitted policy mode instead of defaulting to public" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Community, nil, :read, %{})
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Post, nil, :read, %{thread: :post})
   end
 
@@ -33,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
     {:ok, owner} = db_insert(:user)
 
     owner_query =
-      CMS.Gate.scope(Community, owner, :read, CommunityScope.owner_management())
+      CMS.Gate.scope(Community, owner, :read, CommunityContext.owner_management())
 
     assert %Ecto.Query{} = owner_query
 
@@ -50,18 +52,18 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
              "pending_destroy"
            ] in owner_params
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
-             CMS.Gate.scope(Community, nil, :read, CommunityScope.owner_management())
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(Community, nil, :read, CommunityContext.owner_management())
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
-             CMS.Gate.scope(Community, owner, :read, CommunityScope.operations())
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(Community, owner, :read, CommunityContext.operations())
   end
 
   test "Community scope compiles moderator and operations modes explicitly" do
     {:ok, moderator} = db_insert(:user)
 
     moderator_query =
-      CMS.Gate.scope(Community, moderator, :list, CommunityScope.moderator_management())
+      CMS.Gate.scope(Community, moderator, :list, CommunityContext.moderator_management())
 
     assert %Ecto.Query{} = moderator_query
     {moderator_sql, _moderator_params} = to_sql(moderator_query)
@@ -69,7 +71,7 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
     assert moderator_sql =~ "exists("
 
     operations_query =
-      CMS.Gate.scope(Community, :operations, :read, CommunityScope.operations())
+      CMS.Gate.scope(Community, :operations, :read, CommunityContext.operations())
 
     assert %Ecto.Query{} = operations_query
     {_operations_sql, operations_params} = to_sql(operations_query)
@@ -96,11 +98,11 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
       |> Repo.update!()
 
       public_query =
-        CMS.Gate.scope(Community, owner, :read, CommunityScope.public())
+        CMS.Gate.scope(Community, owner, :read, CommunityContext.public())
         |> where([candidate], candidate.id == ^community.id)
 
       management_query =
-        CMS.Gate.scope(Community, owner, :read, CommunityScope.owner_management())
+        CMS.Gate.scope(Community, owner, :read, CommunityContext.owner_management())
         |> where([candidate], candidate.id == ^community.id)
 
       assert Repo.exists?(public_query) == state in [:active, :read_only]
@@ -109,11 +111,11 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
   end
 
   test "scope rejects unsupported roots, actions, and reserved bindings" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
-             CMS.Gate.scope(CommunityLifecycle, nil, :read, CommunityScope.public())
+    assert {:error, %ErrorCat.Error{reason: :scope_root_mismatch}} =
+             CMS.Gate.scope(CommunityLifecycle, nil, :read, CommunityContext.public())
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :unknown_action}} =
-             CMS.Gate.scope(Community, nil, :publish, CommunityScope.public())
+    assert {:error, %ErrorCat.Error{reason: :unknown_action}} =
+             CMS.Gate.scope(Community, nil, :publish, CommunityContext.public())
 
     query =
       from(community in Community,
@@ -122,8 +124,8 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
         on: lifecycle.community_id == community.id
       )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
-             CMS.Gate.scope(query, nil, :read, CommunityScope.public())
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(query, nil, :read, CommunityContext.public())
   end
 
   test "Community scope rejects named and anonymous lifecycle joins" do
@@ -138,10 +140,10 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.CommunityTest do
         left_join: lifecycle in assoc(community, :lifecycle)
       )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
-             CMS.Gate.scope(direct_join, nil, :read, CommunityScope.public())
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(direct_join, nil, :read, CommunityContext.public())
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
-             CMS.Gate.scope(association_join, nil, :read, CommunityScope.public())
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(association_join, nil, :read, CommunityContext.public())
   end
 end

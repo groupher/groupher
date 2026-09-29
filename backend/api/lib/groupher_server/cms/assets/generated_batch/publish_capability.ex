@@ -11,7 +11,9 @@ defmodule GroupherServer.CMS.Assets.GeneratedBatch.PublishCapability do
     -> shared manifest digest
   """
 
-  alias GroupherServer.CMS.Assets.Capability
+  alias GroupherServer.CMS
+
+  alias CMS.Assets.Capability
 
   @purpose "generated_image_publish"
 

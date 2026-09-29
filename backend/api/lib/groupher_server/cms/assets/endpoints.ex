@@ -5,6 +5,10 @@ defmodule GroupherServer.CMS.Assets.Endpoints do
   Public reads, generated Batch operations, and provider deletion deliberately
   use separate environment keys. Missing configuration must never redirect an
   internal write to a public or production host.
+
+      application startup / Assets capability / generated Batch / deletion
+        -> role-specific environment key
+        -> validated, normalized HTTP endpoint
   """
 
   @required_keys ~w(ASSETS_PUBLIC_ENDPOINT ASSETS_HUB_BATCH_ENDPOINT ASSETS_HUB_DELETE_ENDPOINT)

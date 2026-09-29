@@ -13,16 +13,16 @@ defmodule GroupherServer.CMS.Model.Post do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Model.Embeds
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Const
+  alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

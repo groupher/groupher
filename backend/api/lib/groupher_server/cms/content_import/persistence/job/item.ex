@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Item do
   @moduledoc """
   One selected source document and its bounded staging status.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for terminal item outcomes.
+  See `docs/content-import/article-publish-import-refactor.md` for terminal item outcomes.
 
   Business position:
 
@@ -17,7 +17,9 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Item do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Job
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

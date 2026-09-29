@@ -4,10 +4,11 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   use GroupherServer.TestMate, async: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias GroupherServer.CMS.ArtimentMentions
-  alias GroupherServer.CMS.Model.ArtimentMention
+  alias GroupherServer.CMS
+  alias CMS.ArtimentMentions
+  alias CMS.Model.ArtimentMention
 
-  @site_host GroupherServer.CMS.ArtimentMentions.Config.site_host()
+  @site_host CMS.ArtimentMentions.Config.site_host()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post, preload: [author: :user])
@@ -178,10 +179,17 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, blog_draft} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(blog_body)})
+      {:ok, blog_draft} =
+        CMS.Articles.update(blog, %{
+          body_bag: mock_body_bag(blog_body),
+          expected_version: blog.version
+        })
 
       {:ok, changelog_draft} =
-        CMS.Articles.update(changelog, %{body_bag: mock_body_bag(changelog_body)})
+        CMS.Articles.update(changelog, %{
+          body_bag: mock_body_bag(changelog_body),
+          expected_version: changelog.version
+        })
 
       {:ok, %{article: blog}} =
         CMS.Articles.publish_draft(community, :blog, blog_draft.article_hash_id, user)
@@ -237,7 +245,11 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
         |> Jason.encode!()
 
-      {:ok, draft} = CMS.Articles.update(post, %{body_bag: mock_body_bag(self_body)})
+      {:ok, draft} =
+        CMS.Articles.update(post, %{
+          body_bag: mock_body_bag(self_body),
+          expected_version: post.version
+        })
 
       {:ok, %{article: post}} =
         CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
@@ -270,7 +282,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert mention.mentioner_community_id == community.id
       assert mention.mentioned_community_id == community.id
 
-      {:ok, comment} =
+      {:ok, %{comment: comment}} =
         CMS.Comments.update_comment(
           comment,
           plate_body([block("block-b", [text("https://example.com/changed")])]),
@@ -329,7 +341,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       {single_result, single_queries} =
         capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
 
-      {:ok, mentioner} =
+      {:ok, %{comment: mentioner}} =
         CMS.Comments.update_comment(mentioner, comment_body.(target_comments), user)
 
       {many_result, many_queries} =
@@ -362,6 +374,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       {:ok, draft} =
         CMS.Articles.update(post, %{
+          expected_version: post.version,
           body_bag:
             mock_body_bag(
               plate_body([block("block-b", [text("clean content without mentions")])])
@@ -554,7 +567,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
       insert_incoming_mentions(community, post, 2, old_updated_at)
 
-      rollback_error = GroupherServer.ErrorCat.custom("forced rollback")
+      rollback_error = ErrorCat.custom("forced rollback")
 
       assert {:error, ^rollback_error} =
                Repo.transaction(fn ->

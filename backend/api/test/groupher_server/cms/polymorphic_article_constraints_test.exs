@@ -4,7 +4,8 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
   use GroupherServer.TestMate
   import GroupherServer.DataCase, only: [errors_on: 1]
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+  alias CMS.Model.{
     AbuseReport,
     ArticleCollect,
     ArticleUpvote,

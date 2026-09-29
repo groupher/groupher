@@ -3,11 +3,12 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   import Ecto.Query
 
-  alias GroupherServer.ErrorCat.Error
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+  alias ErrorCat.Error
 
-  alias GroupherServer.Accounts.Model.Achievement
+  alias Accounts.Model.Achievement
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleCollect,
     ArticleLifecycle,
     ArticleUpvote,
@@ -16,9 +17,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     Post,
     PostReactionInfo
   }
-
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.Repo
 
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
@@ -231,6 +229,9 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     {_community, zero, _attrs, _other_user} = mock_article(:post)
     {_community, absent, _attrs, _third_user} = mock_article(:post)
 
+    assert :ok = CMS.ArticleStats.apply_interaction_counts(zero)
+    assert :ok = CMS.ArticleStats.apply_interaction_counts(absent)
+
     assert {:ok, _} = CMS.Interactions.upvote(positive, user)
     assert {:ok, _} = Repo.insert(%PostReactionInfo{post_id: zero.id})
 
@@ -243,16 +244,17 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     assert ids == [positive.id, zero.id, absent.id]
   end
 
-  test "pending view events affect only the event viewer until projection runs" do
+  test "synchronous view state affects only the counted viewer" do
     {_community, post, _attrs, user} = mock_article(:post)
-    event_id = Ecto.UUID.generate()
 
-    assert {:ok, ^event_id} = ViewEvents.record(post, user, event_id)
-    viewer = CMS.Interactions.viewer_state(post, user)
+    assert {:ok, %{tracked: true}} =
+             track_article_view(post, user, read_purpose: :public_read)
+
+    viewer = CMS.ViewTracker.viewer_state(post, user)
     assert viewer.viewer_has_viewed
 
     {:ok, other_user} = db_insert(:user)
-    other_view = CMS.Interactions.viewer_state(post, other_user)
+    other_view = CMS.ViewTracker.viewer_state(post, other_user)
     refute other_view.viewer_has_viewed
   end
 

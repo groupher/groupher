@@ -4,9 +4,11 @@ defmodule GroupherServer.Activity.Community do
 
       Community command -> Community Activity contract -> CommunityLog
   """
-  alias GroupherServer.Activity.Event
-  alias GroupherServer.Activity.Model.CommunityLog
-  alias GroupherServer.CMS.Model.Community
+
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Event
+  alias Activity.Model.CommunityLog
+  alias CMS.Model.Community
 
   @contracts %{
     blocker_created: Event.contract([], [:kind, :ref, :reason], [:community_log]),

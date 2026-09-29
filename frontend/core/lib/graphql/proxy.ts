@@ -3,6 +3,7 @@ import {
   GROUPHER_AUTH_CSRF_HEADER,
   GROUPHER_AUTH_CSRF_VALUE,
   GROUPHER_AUTH_TOKEN_COOKIE,
+  GROUPHER_VIEWER_COOKIE,
 } from '@groupher/contracts/auth'
 
 const HOP_BY_HOP_HEADERS = new Set([
@@ -59,21 +60,44 @@ const proxyHeaders = (request: Request): Headers => {
   // turn an otherwise valid GraphQL request into HTTP 431.
   const headers = new Headers()
   const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
+  const viewerSession = readCookie(request.headers, GROUPHER_VIEWER_COOKIE)
 
-  for (const name of ['accept', 'content-type', 'origin', GROUPHER_AUTH_CSRF_HEADER]) {
+  for (const name of [
+    'accept',
+    'content-type',
+    'origin',
+    'user-agent',
+    GROUPHER_AUTH_CSRF_HEADER,
+  ]) {
     const value = request.headers.get(name)
     if (value) headers.set(name, value)
   }
 
-  if (authToken) {
-    headers.set('cookie', `${GROUPHER_AUTH_TOKEN_COOKIE}=${authToken}`)
-  }
+  const selectedCookies = [
+    authToken && `${GROUPHER_AUTH_TOKEN_COOKIE}=${authToken}`,
+    viewerSession && `${GROUPHER_VIEWER_COOKIE}=${viewerSession}`,
+  ].filter(Boolean)
+
+  if (selectedCookies.length > 0) headers.set('cookie', selectedCookies.join('; '))
 
   return headers
 }
 
 const responseHeaders = (headers: Headers): Headers => {
-  const nextHeaders = new Headers(headers)
+  const nextHeaders = new Headers()
+  const getSetCookie = (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie
+  const setCookies = typeof getSetCookie === 'function' ? getSetCookie.call(headers) : undefined
+
+  for (const [name, value] of headers) {
+    if (name !== 'set-cookie') nextHeaders.append(name, value)
+  }
+
+  for (const cookie of setCookies || []) nextHeaders.append('set-cookie', cookie)
+  if (!setCookies?.length) {
+    const cookie = headers.get('set-cookie')
+    if (cookie) nextHeaders.set('set-cookie', cookie)
+  }
+
   for (const header of HOP_BY_HOP_HEADERS) nextHeaders.delete(header)
   // Fetch transparently decodes an upstream compressed response before its body
   // reaches this route handler. Forwarding the original encoding would make the
@@ -87,8 +111,8 @@ const responseHeaders = (headers: Headers): Headers => {
  *
  * TanStack server routes delegate to this helper from `/api/graphql`. It strips
  * browser credentials before
- * forwarding, then only forwards the canonical Groupher Phoenix token as the
- * same cookie Phoenix reads. Anonymous requests remain anonymous.
+ * forwarding, then only forwards the canonical auth and anonymous ViewTracker
+ * session cookies Phoenix reads.
  *
  * @example
  * ```ts

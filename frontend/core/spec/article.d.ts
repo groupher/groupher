@@ -6,13 +6,14 @@ import type {
   ARTICLE_STATUS,
 } from '~/const/gtd'
 import type { UPVOTE_LAYOUT } from '~/const/layout'
+import type { ArticleEmotion, EmotionType, ReactionOutcome } from '~/lib/graphql/generated/graphql'
 import type { TConstValues } from '~/spec'
 
 import type { TCommunity, TTag } from '.'
 import type { TAccount, TSimpleUser, TUser } from './account'
 import type { TColor } from './color'
 import type { TEmotion } from './emotion'
-import type { TThread } from './thread'
+import type { TArticleThread, TThread } from './thread'
 import type { TID, TPagi } from './utils'
 
 export type TArticleTitle = { $isPinned?: boolean; viewerHasViewed?: boolean } & TColor
@@ -46,6 +47,31 @@ export type TViewingInfo = {
   id: TID
 }
 
+export type TArticleStats = {
+  community: string
+  thread: TArticleThread
+  innerId: string
+  views: number
+  viewsRevision: number
+  upvotesCount: number
+  commentsCount: number
+  collectsCount: number
+  commentsParticipantsCount: number
+  interactionRevision: number
+  commentsRevision: number
+  emotionCounts: Array<{ type: ArticleEmotion; count: number }>
+  snapshotAt: string
+}
+
+export type TArticleViewerState = {
+  articleKey: string
+  viewerHasViewed?: boolean
+  viewerHasUpvoted?: boolean
+  viewerHasCollected?: boolean
+  viewerEmotion?: EmotionType | null
+  interactionRevision?: number
+}
+
 type TBaseArticle = {
   id?: TID
   innerId?: TID
@@ -53,22 +79,17 @@ type TBaseArticle = {
   title?: string
   digest?: string
   body?: string
-  views?: number
   copyRight?: string
   isQuestion?: boolean
   isPinned?: boolean
   author?: TAccount
-  upvotesCount?: number
+  upvotesCount?: never
   community?: TCommunity
   communities?: readonly TCommunity[]
   commentsParticipants?: readonly TUser[]
-  commentsParticipantsCount?: number
   insertedAt?: string
   updatedAt?: string
-  viewerHasViewed?: boolean
-  viewerHasCollected?: boolean
-  viewerHasUpvoted?: boolean
-  commentsCount?: number
+  commentsCount?: never
   communityTags?: readonly TTag[]
   meta?: TArticleMeta
   document?: TDocument
@@ -119,6 +140,17 @@ export type TTechCommunities = {
 
 export type TArticle = TPost
 
+/** Strict detail view model; public content, aggregate stats, and viewer state have separate owners. */
+export type TArticleState<T extends TArticle = TArticle> = {
+  content: T
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
+}
+
+export type TPagedArticleViewModels<T extends TArticle = TArticle> = {
+  entries: readonly TArticleState<T>[]
+} & TPagi
+
 export type TPagedPosts = {
   entries: readonly TPost[]
 } & TPagi
@@ -150,6 +182,8 @@ export type TComment = {
   replies?: TComment[]
   replyToComment?: TComment
   upvotesCount?: number
+  commentInteractionRevision?: number
+  reactionOutcome?: ReactionOutcome
   viewerHasUpvoted?: boolean
   viewerHasReported?: boolean
   isArticleAuthor?: boolean
@@ -165,6 +199,7 @@ export type TComment = {
     innerId?: string
     title?: string
     thread?: TThread
+    commentsRevision?: number
     author?: {
       login
       nickname

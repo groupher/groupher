@@ -9,12 +9,16 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
         -> Subscribe
         -> Repo / Oban
   """
-  alias GroupherServer.{Accounts, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunitySubscriber}
+  require GroupherServer.CMS.Communities.ErrorCat
+
+  alias GroupherServer.{Accounts, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Communities
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Model.{Community, CommunitySubscriber}
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
   alias Helper.{Multi, ORM, T}
 
   @doc """
@@ -60,7 +64,7 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
       |> result()
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("can not unsubscribe home community")}
+        {:error, CommunityErrorCat.custom("can not unsubscribe home community")}
 
       error ->
         error
@@ -101,17 +105,17 @@ defmodule GroupherServer.CMS.Communities.Subscribe do
     {:error, normalize_error(result)}
   end
 
-  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+  defp normalize_error(CommunityErrorCat.error_pattern() = error), do: error
 
   defp normalize_error(%Ecto.Changeset{} = changeset),
-    do: GroupherServerWeb.ErrorCat.changeset(changeset)
+    do: WebErrorCat.changeset(changeset)
 
   defp normalize_error({reason, message}) when is_atom(reason) and is_binary(message),
     do: CommunityErrorCat.not_exist(message)
 
   defp normalize_error(reason) when is_atom(reason),
-    do: GroupherServer.ErrorCat.custom("community subscription failed: #{reason}")
+    do: CommunityErrorCat.custom("community subscription failed: #{reason}")
 
   defp normalize_error(error),
-    do: GroupherServer.ErrorCat.custom("community subscription failed: #{inspect(error)}")
+    do: CommunityErrorCat.custom("community subscription failed: #{inspect(error)}")
 end

@@ -7,7 +7,7 @@
  *   ready receipt -> building_preview / completed
  *   failed run    -> current stage / failed
  *
- * @see docs/bulk-import/import-process-log.md
+ * @see docs/content-import/import-process-log.md
  */
 import { getRun } from 'workflow/api'
 import { WorkflowRunFailedError } from 'workflow/errors'

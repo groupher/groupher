@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Publish do
-  require GroupherServer.CMS.Docs.Const
-
   @moduledoc """
   Owns the only transition from a main Draft to the permanent public runtime row.
 
@@ -29,11 +27,18 @@ defmodule GroupherServer.CMS.Articles.Publish do
         -> Repo / domain event
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.BodyBag
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Const
 
-  alias GroupherServer.CMS.Articles.{
+  import Helper.Utils, only: [plural: 1]
+  import Ecto.Query
+
+  alias GroupherServer.{Accounts, Activity, CMS, PublicCache, Repo}
+  alias CMS.{Articles, ErrorCat}
+  alias Accounts.Model.User
+  alias CMS.Artiment.BodyBag
+
+  alias CMS.Articles.{
     Document,
     Draft,
     MutationLock,
@@ -42,22 +47,18 @@ defmodule GroupherServer.CMS.Articles.Publish do
     Write
   }
 
-  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias GroupherServer.CMS.Docs.{Branch, Snapshot}
-  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
-
+  alias CMS.Articles.Lifecycle, as: ArticleLifecycleService
+  alias CMS.Docs.{Branch, Snapshot}
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
   alias Ecto.Multi
-  alias GroupherServer.CMS.{Assets, Communities, Events, Gate}
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Gate.RateLimit.Publish, as: PublishRateLimit
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias CMS.{Assets, Communities, Events, Gate}
+  alias CMS.Gate.Decision
+  alias CMS.Gate.RateLimit.Publish, as: PublishRateLimit
+  alias CMS.Model.{ArticleDocument, ArticleLifecycle, Author, Community, DocSnapshot}
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
-
-  import Helper.Utils, only: [plural: 1]
-
-  require CMS.Const
+  alias PublicCache.Const, as: PublicCacheConst
 
   @doc "Creates a main Draft and publishes it atomically for direct-publish products."
   @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
@@ -88,7 +89,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
         public_article.article_hash_id,
         nil,
         fn ->
-          with {:ok, _canonical_article} <- Gate.access_check(user, :edit, public_article),
+          with {:ok, canonical_article} <- Gate.access_check(user, :edit, public_article),
                {:ok, draft} <-
                  Draft.ensure_from_public_unlocked(
                    community,
@@ -106,7 +107,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
                    attrs,
                    require_version?: true
                  ),
-               {:ok, _public_article} <- States.update_edit_status(public_article),
+               {:ok, _public_article} <- States.update_edit_status(canonical_article),
                {:ok, updated_draft} <- States.update_edit_status(updated_draft) do
             {:ok, updated_draft}
           else
@@ -146,14 +147,22 @@ defmodule GroupherServer.CMS.Articles.Publish do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
          :ok <- validate_publish_branch(thread, branch),
          {:ok, draft} <- Draft.read(community, thread, article_hash_id, branch),
-         {:ok, _canonical_draft} <- Gate.access_check(user, :publish, draft),
-         :ok <- validate_version(draft),
-         restored_publish? <- thread == :doc and Snapshot.restored_draft?(draft),
-         previous <- previous_public(community, thread, branch, draft),
+         :ok <- ensure_expected_version(draft, branch_ref),
+         {:ok, canonical_draft} <- Gate.access_check(user, :publish, draft),
+         :ok <- validate_version(canonical_draft),
+         restored_publish? <- thread == :doc and Snapshot.restored_draft?(canonical_draft),
+         previous <- previous_public(community, thread, branch, canonical_draft),
          {:ok, public_article, first_publish?} <-
-           apply_draft(community, thread, branch, draft),
+           apply_draft(community, thread, branch, canonical_draft),
          {:ok, lifecycle} <-
-           transition_lifecycle(community, thread, draft, branch, :published),
+           transition_lifecycle(
+             community,
+             thread,
+             canonical_draft,
+             branch,
+             :published,
+             branch_ref
+           ),
          {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
@@ -176,7 +185,8 @@ defmodule GroupherServer.CMS.Articles.Publish do
              operation_ref,
              lifecycle.changed_at
            ),
-         :ok <- run_after_publish(public_article, first_publish?) do
+         :ok <-
+           run_after_publish(community, thread, public_article, first_publish?, operation_ref) do
       {:ok, %{article: public_article, snapshot: snapshot}}
     else
       {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
@@ -270,7 +280,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   defp validate_publish_branch(_thread, branch) do
     if is_nil(branch),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("ordinary Articles have no branch")}
+      else: {:error, ErrorCat.custom("ordinary Articles have no branch")}
   end
 
   defp apply_draft(%Community{} = community, thread, branch, draft) do
@@ -386,14 +396,39 @@ defmodule GroupherServer.CMS.Articles.Publish do
     end
   end
 
-  defp run_after_publish(public_article, first_publish?) do
+  defp run_after_publish(community, thread, public_article, first_publish?, operation_ref) do
+    :ok = CMS.ArticleStats.initialize(public_article)
     Indexer.enqueue_upsert(public_article)
     Later.run({CMS.Press, :invalidate, [public_article.community_id]})
     Later.run({Events, :emit, [:sync_mentions, %{artiment: public_article}]})
     Later.run({Events, :emit, [:audition, %{artiment: public_article}]})
 
+    invalidation_type =
+      if first_publish?,
+        do: PublicCacheConst.article_published(),
+        else: PublicCacheConst.article_content_changed()
+
+    {:ok, _invalidation} =
+      PublicCache.invalidate_now(
+        invalidation_type,
+        %{
+          community: community.slug,
+          community_id: community.id,
+          thread: thread,
+          inner_id: public_article.inner_id,
+          id: public_article.id
+        },
+        causation_id: operation_ref,
+        aggregate_type: "article"
+      )
+
     if first_publish? do
-      Later.run({Write, :notify_admin_new_article, [public_article]})
+      # Keep the durable job payload to stable identity; the notification
+      # worker reloads the current Article authority when it executes.
+      Later.run(
+        {Write, :notify_admin_new_article,
+         [%{target: public_article.__struct__, id: public_article.id}]}
+      )
     end
 
     :ok
@@ -415,22 +450,85 @@ defmodule GroupherServer.CMS.Articles.Publish do
   defp validate_version(%{slug: slug}) when is_binary(slug) do
     if Slug.valid?(slug),
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("Article slug is invalid")}
+      else: {:error, ErrorCat.custom("Article slug is invalid")}
   end
 
   defp validate_version(_article), do: :ok
+
+  defp ensure_expected_version(%{version: version}, opts) when is_map(opts) do
+    required? = Map.get(opts, :require_expected_version, false)
+
+    case Map.fetch(opts, :expected_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, Articles.ErrorCat.draft_conflict()}
+      :error -> :ok
+      _ -> {:error, Articles.ErrorCat.draft_conflict()}
+    end
+  end
+
+  defp ensure_expected_version(%{version: version}, opts) when is_list(opts) do
+    required? = Keyword.get(opts, :require_expected_version, false)
+
+    case Keyword.fetch(opts, :expected_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, Articles.ErrorCat.draft_conflict()}
+      :error -> :ok
+      _ -> {:error, Articles.ErrorCat.draft_conflict()}
+    end
+  end
+
+  defp ensure_expected_version(_draft, _opts), do: :ok
+
+  defp ensure_expected_lifecycle_version(%{version: version}, opts) when is_map(opts) do
+    required? = Map.get(opts, :require_expected_version, false)
+
+    case Map.fetch(opts, :expected_lifecycle_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, Articles.ErrorCat.lifecycle_conflict()}
+      :error -> :ok
+      _ -> {:error, Articles.ErrorCat.lifecycle_conflict()}
+    end
+  end
+
+  defp ensure_expected_lifecycle_version(%{version: version}, opts) when is_list(opts) do
+    required? = Keyword.get(opts, :require_expected_version, false)
+
+    case Keyword.fetch(opts, :expected_lifecycle_version) do
+      {:ok, ^version} -> :ok
+      :error when required? -> {:error, Articles.ErrorCat.lifecycle_conflict()}
+      :error -> :ok
+      _ -> {:error, Articles.ErrorCat.lifecycle_conflict()}
+    end
+  end
+
+  defp ensure_expected_lifecycle_version(_lifecycle, _opts), do: :ok
 
   defp resolve_branch(%Community{} = community, :doc, branch_ref),
     do: Branch.resolve(community, branch_ref)
 
   defp resolve_branch(_community, _thread, _branch_ref), do: {:ok, nil}
 
-  defp transition_lifecycle(community, :doc, draft, branch, state) do
+  defp transition_lifecycle(community, :doc, draft, branch, state, _opts) do
     DocLifecycle.transition(community.id, branch.id, draft.article_hash_id, state)
   end
 
-  defp transition_lifecycle(community, thread, draft, _branch, state) do
-    ArticleLifecycle.transition(community.id, thread, draft.article_hash_id, state)
+  defp transition_lifecycle(community, thread, draft, _branch, state, opts) do
+    lifecycle_query =
+      ArticleLifecycle
+      |> where(
+        [lifecycle],
+        lifecycle.community_id == ^community.id and lifecycle.thread == ^thread and
+          lifecycle.article_hash_id == ^draft.article_hash_id
+      )
+      |> lock("FOR UPDATE")
+
+    with %ArticleLifecycle{} = lifecycle <- Repo.one(lifecycle_query),
+         :ok <- ensure_expected_lifecycle_version(lifecycle, opts) do
+      ArticleLifecycleService.transition(lifecycle, state)
+    else
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
+      error -> error
+    end
   end
 
   defp maybe_snapshot(:doc, article, user),

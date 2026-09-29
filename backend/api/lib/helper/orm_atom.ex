@@ -13,11 +13,10 @@ defmodule Helper.ORMAtom do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [strip_struct: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, Community}
+  alias Accounts.Model.User
+  alias CMS.Model.{Comment, Community}
 
   @default_user_meta Accounts.Model.Embeds.UserMeta.default_meta()
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()

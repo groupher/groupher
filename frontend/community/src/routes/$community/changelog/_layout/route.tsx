@@ -12,8 +12,20 @@ export const Route = createFileRoute('/$community/changelog/_layout')({
       { rel: 'canonical', href: communityPublicPath(params.community, '/changelog', matches) },
     ],
   }),
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(communityQueries.changelogs(params.community)),
+  loader: async ({ context, params }) => {
+    const changelogs = await context.queryClient.ensureQueryData(
+      communityQueries.changelogs(params.community),
+    )
+    await context.queryClient.ensureQueryData(
+      communityQueries.stats(
+        context.queryClient,
+        params.community,
+        THREAD.CHANGELOG,
+        (changelogs.entries || []).map((article) => article.innerId),
+      ),
+    )
+    return { changelogs }
+  },
   component: ChangelogListLayout,
 })
 

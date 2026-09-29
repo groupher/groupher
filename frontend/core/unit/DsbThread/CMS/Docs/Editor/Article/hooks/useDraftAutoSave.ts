@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { saveDocDraft } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/ui/Toaster'
 
@@ -79,6 +80,8 @@ export default function useDraftAutoSave(
         slug: input.slug,
         subtitle: input.subtitle,
         title: input.title,
+        expectedVersion: startedDraft.version,
+        commandId: createCommandId(),
       })
       failedAutoSaveDraftRef.current = null
       const publishState = composeDraftPublishState(activePage.publishState)

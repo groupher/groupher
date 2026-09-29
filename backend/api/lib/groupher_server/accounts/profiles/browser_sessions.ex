@@ -11,9 +11,10 @@ defmodule GroupherServer.Accounts.Profiles.BrowserSessions do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.{BrowserSession, User}
-  alias GroupherServer.Accounts.Profiles.ErrorCat
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, Repo}
+
+  alias Accounts.Model.{BrowserSession, User}
+  alias Accounts.Profiles.ErrorCat
   alias Helper.Guardian.BrowserAccess
 
   @absolute_ttl_seconds 90 * 24 * 60 * 60

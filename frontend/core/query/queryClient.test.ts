@@ -10,7 +10,11 @@ describe('QueryClient lifecycle', () => {
     const requestB = createQueryClient()
     const fetcher = vi.fn(async () => ({ entries: [{ innerId: '1' }] }))
 
-    await requestA.prefetchQuery({ queryKey: ['article', 'posts'], queryFn: fetcher })
+    await requestA.prefetchQuery({
+      queryKey: ['article', 'posts'],
+      queryFn: fetcher,
+      meta: { hydration: 'public' },
+    })
 
     expect(requestA).not.toBe(requestB)
     expect(requestB.getQueryData(['article', 'posts'])).toBeUndefined()
@@ -38,7 +42,7 @@ describe('QueryClient lifecycle', () => {
     const serverFetcher = vi.fn(async () => ({ entries: [{ innerId: '1' }] }))
     const browserFetcher = vi.fn(async () => ({ entries: [{ innerId: '2' }] }))
 
-    await server.prefetchQuery({ queryKey, queryFn: serverFetcher })
+    await server.prefetchQuery({ queryKey, queryFn: serverFetcher, meta: { hydration: 'public' } })
     hydrate(browser, dehydrate(server))
 
     const data = await browser.fetchQuery({ queryKey, queryFn: browserFetcher })

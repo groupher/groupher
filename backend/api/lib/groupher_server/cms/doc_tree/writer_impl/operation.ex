@@ -24,9 +24,11 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   """
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree.{Reader, Revision}
-  alias GroupherServer.CMS.Model.{Community, DocsSiteState, DocTreeNode}
+  alias CMS.ErrorCat
+
+  alias CMS.Docs.Branch
+  alias CMS.DocTree.{Reader, Revision}
+  alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
   @doc """
@@ -89,7 +91,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Operation do
   end
 
   defp revision_check(%DocsSiteState{}, nil),
-    do: {:error, GroupherServer.ErrorCat.custom("base_revision is required")}
+    do: {:error, ErrorCat.custom("base_revision is required")}
 
   defp revision_check(%DocsSiteState{} = state, revision)
        when revision == state.tree_lock_version,

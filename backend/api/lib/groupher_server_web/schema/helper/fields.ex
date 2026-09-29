@@ -14,15 +14,15 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.CMS.Dashboard.KanbanBoards
+  alias CMS.Dashboard.Fields, as: Dashboard
+  alias CMS.Dashboard.KanbanBoards
 
   @page_size GroupherServerWeb.Config.page_size()
 
-  @emotions GroupherServer.CMS.Artiment.Config.emotions()
-  @comment_emotions GroupherServer.CMS.Artiment.Config.comment_emotions()
+  @emotions CMS.Artiment.Config.emotions()
+  @comment_emotions CMS.Artiment.Config.comment_emotions()
   @all_emotions (@emotions ++ @comment_emotions) |> Enum.uniq()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do
@@ -32,7 +32,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:title, :string)
       field(:document, :article_document, resolve: dataloader(CMS, :document))
       field(:digest, :string)
-      field(:views, :integer)
+      field(:article_stats, :article_stats)
       field(:is_pinned, :boolean)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
@@ -47,18 +47,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:communities, list_of(:community), resolve: dataloader(CMS, :communities))
 
       field(:meta, :article_meta)
-      field(:upvotes_count, :integer)
-      field(:collects_count, :integer)
-
-      field(:emotions, list_of(:emotion_stat),
-        resolve: &GroupherServerWeb.Resolvers.CMS.emotions/3
-      )
-
-      field(:viewer_has_collected, :boolean)
-      field(:viewer_has_upvoted, :boolean)
-      field(:viewer_has_viewed, :boolean)
-      field(:viewer_has_reported, :boolean)
-
+      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
       field(:lifecycle, :article_lifecycle, resolve: dataloader(CMS, :lifecycle))
 
       field(:copy_right, :string)
@@ -114,7 +103,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         # used by the sparse EmotionStat API output enum, which is shared by
         # both article and comment payloads.
         :all -> @all_emotions
-        _ -> @emotions
+        # UPVOTE/COLLECT have dedicated mutations and fixed ArticleStats fields;
+        # they are not valid inputs for the generic emotion mutation.
+        _ -> @emotions -- [:upvote, :collect]
       end
 
     emotions
@@ -183,6 +174,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:is_pinned, :boolean)
       field(:floor, :integer)
       field(:upvotes_count, :integer)
+      field(:comment_interaction_revision, :integer)
+      field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+      field(:reaction_outcome, :reaction_outcome)
       field(:is_article_author, :boolean)
 
       field(:emotions, list_of(:emotion_stat),
@@ -266,8 +260,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defmacro comments_fields do
     quote do
       field(:comments_participants, list_of(:user))
-      field(:comments_participants_count, :integer)
-      field(:comments_count, :integer)
     end
   end
 

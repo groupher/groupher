@@ -12,12 +12,14 @@ defmodule GroupherServer.CMS.Model.Category do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{Author, Community, CommunityCategory}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.{Author, Community, CommunityCategory}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

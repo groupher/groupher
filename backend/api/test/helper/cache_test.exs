@@ -2,6 +2,8 @@ defmodule GroupherServer.Test.Helper.Cache do
   @moduledoc false
 
   use GroupherServerWeb.ConnCase, async: true
+
+  alias GroupherServer.ErrorCat
   alias Helper.Cache
 
   @pool :common
@@ -69,7 +71,7 @@ defmodule GroupherServer.Test.Helper.Cache do
     test "get_or_fetch does not cache loader errors" do
       key = "get-or-fetch-error-#{System.unique_integer([:positive])}"
 
-      upstream_error = GroupherServer.ErrorCat.custom("upstream unavailable")
+      upstream_error = ErrorCat.custom("upstream unavailable")
 
       assert {:error, ^upstream_error} =
                Cache.get_or_fetch(@pool, key, [expire_sec: 30], fn ->
@@ -93,7 +95,7 @@ defmodule GroupherServer.Test.Helper.Cache do
       key = "get-or-fetch-exception-#{System.unique_integer([:positive])}"
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: %{reason: :exception, message: "loader failed"}
               }} =

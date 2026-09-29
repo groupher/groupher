@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{AbuseReport, ArticleCollect, ArticleUpvote}
+  alias GroupherServer.CMS
+  alias CMS.Model.{AbuseReport, ArticleCollect, ArticleUpvote}
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])

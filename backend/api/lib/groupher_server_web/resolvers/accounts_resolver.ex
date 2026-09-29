@@ -9,14 +9,16 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
         -> Accounts
         -> web or domain boundary
   """
+  require GroupherServer.Accounts.Profiles.ErrorCat
+
   import ShortMaps
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.{Accounts, Auth, CMS, Repo}
+  alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
+  alias Accounts.Profiles.ErrorCat
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Passport.Registry
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias Accounts.Model.User
+  alias CMS.Passport.Registry
+  alias Auth.Contract, as: AuthContract
 
   def me(_root, _args, %{context: %{cur_user: cur_user}}), do: {:ok, cur_user}
   def me(_root, _args, _info), do: {:ok, nil}
@@ -131,7 +133,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
 
   defp browser_session_result(result), do: result
 
-  defp error_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp error_reason(ErrorCat.error_pattern(reason: reason)), do: reason
   defp error_reason(reason) when is_atom(reason), do: reason
   defp error_reason(_reason), do: :unknown
 
@@ -189,15 +191,56 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     Accounts.CollectFolders.delete(id)
   end
 
-  def add_to_collect(_root, ~m(article folder_id)a, %{context: %{cur_user: cur_user}}) do
-    Accounts.CollectFolders.add(article, folder_id, cur_user)
-  end
-
-  def remove_from_collect(_root, ~m(article folder_id)a, %{
+  def add_to_collect(_root, %{article: article, folder_id: folder_id} = args, %{
         context: %{cur_user: cur_user}
       }) do
-    Accounts.CollectFolders.remove(article, folder_id, cur_user)
+    Accounts.CollectFolders.add_payload(article, folder_id, cur_user, Map.get(args, :command_id))
+    |> present_collect(article, cur_user)
   end
+
+  def remove_from_collect(_root, %{article: article, folder_id: folder_id} = args, %{
+        context: %{cur_user: cur_user}
+      }) do
+    Accounts.CollectFolders.remove_payload(
+      article,
+      folder_id,
+      cur_user,
+      Map.get(args, :command_id)
+    )
+    |> present_collect(article, cur_user)
+  end
+
+  defp present_collect({:ok, result}, article, user) do
+    article = Repo.preload(article, :community)
+
+    # These post-commit readers can observe different concurrent revisions.
+    # Each payload keeps the revision attached to the state it actually read.
+    with {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(article),
+         {:ok, article_stats} <-
+           ArticleStatsPayload.load(thread, article, article.community.slug),
+         interaction when is_map(interaction) <- CMS.Interactions.viewer_state(article, user),
+         interaction_state <-
+           ArticleInteractionPayload.from(
+             %{
+               community: article.community.slug,
+               thread: thread,
+               inner_id: article.inner_id
+             },
+             interaction
+           ) do
+      {:ok,
+       %{
+         command_id: result.command_id,
+         folder: result.folder,
+         article_stats: article_stats,
+         interaction_state: interaction_state
+       }}
+    else
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp present_collect({:error, _reason} = error, _article, _user), do: error
 
   def paged_collect_folders(_root, %{user: user, filter: filter}, %{
         context: %{cur_user: cur_user}

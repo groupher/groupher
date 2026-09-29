@@ -17,10 +17,11 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   import GroupherServer.Support.Factory
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Model.{Changelog, Community, Doc, Post}
-  alias GroupherServer.CMS.Seeds.{Communities, FullCommunity}
-  alias GroupherServer.CMS.Seeds.Helper, as: SeedHelper
+
+  alias CMS.Articles.Trash
+  alias CMS.Model.{Changelog, Community, Doc, Post}
+  alias CMS.Seeds.{Communities, FullCommunity}
+  alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
 
   @slug "home"

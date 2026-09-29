@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const post = graphql(`
-  query Post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+  query Post($article: ArticlePathInput!) {
     post(article: $article) {
       ...PagePostFields
       ...PagePostDetailFields
@@ -10,7 +10,7 @@ export const post = graphql(`
 `)
 
 export const pagedPosts = graphql(`
-  query PagedPosts($filter: PagedPostsFilter!, $userHasLogin: Boolean!) {
+  query PagedPosts($filter: PagedPostsFilter!) {
     pagedPosts(filter: $filter) {
       entries {
         ...PagePostFields
@@ -26,8 +26,6 @@ export const pagedPosts = graphql(`
         commentsParticipants {
           ...PageAuthorFields
         }
-        viewerHasViewed @include(if: $userHasLogin)
-        viewerHasUpvoted @include(if: $userHasLogin)
       }
       ...PagePostPageInfo
     }
@@ -35,7 +33,7 @@ export const pagedPosts = graphql(`
 `)
 
 export const pagedPublishedPosts = graphql(`
-  query PagedPublishedPosts($login: String!, $filter: PagiFilter!, $userHasLogin: Boolean!) {
+  query PagedPublishedPosts($login: String!, $filter: PagiFilter!) {
     pagedPublishedPosts(login: $login, filter: $filter) {
       entries {
         ...PagePostFields
@@ -47,8 +45,6 @@ export const pagedPublishedPosts = graphql(`
         commentsParticipants {
           ...PageAuthorFields
         }
-        viewerHasViewed @include(if: $userHasLogin)
-        viewerHasUpvoted @include(if: $userHasLogin)
       }
       ...PagePostPageInfo
     }

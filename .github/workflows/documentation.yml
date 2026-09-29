@@ -1,0 +1,35 @@
+name: Documentation
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  documentation:
+    name: Validate source documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/setup@v1
+        with:
+          install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate source documentation
+        run: pnpm run docs:check

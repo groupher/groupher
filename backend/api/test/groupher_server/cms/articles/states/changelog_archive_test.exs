@@ -2,8 +2,9 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
 
-  @archive_threshold GroupherServer.CMS.Artiment.Config.archive_threshold()
+  @archive_threshold CMS.Artiment.Config.archive_threshold()
   @changelog_archive_threshold Datetime.shift(
                                  @now,
                                  @archive_threshold[:changelog] || @archive_threshold[:default]
@@ -47,7 +48,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
 
       archived_changelog = archived_changelogs |> List.first()
       {:error, reason} = CMS.Articles.update(archived_changelog, %{"title" => "new title"})
-      assert %GroupherServer.ErrorCat.Error{reason: :article_archived} = reason
+      assert %ErrorCat.Error{reason: :article_archived} = reason
     end
 
     test "can not delete archived changelog" do

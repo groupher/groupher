@@ -143,7 +143,14 @@ export default function useDraftEditorState(
       savedDraft: savedDraftDTO,
       startedDraft,
     }: TApplySavedParams) => {
-      const nextSavedDraft = composeSavedDraft(requestDraft)
+      const persistedDraft = {
+        ...requestDraft,
+        // The downstream publisher returns the new optimistic-concurrency
+        // version. Keep the started version as a narrow fallback for older
+        // publisher responses while the contract is rolled out.
+        version: savedDraftDTO?.version ?? startedDraft.version + 1,
+      }
+      const nextSavedDraft = composeSavedDraft(persistedDraft)
 
       setSavedDraft(nextSavedDraft)
       setDraftSource('draft')
@@ -162,6 +169,7 @@ export default function useDraftEditorState(
           slug,
           subtitle,
           title,
+          version: persistedDraft.version,
         })
       })
       setSaveStatus({ error: null, lastSavedAt: Date.now(), saving: false })

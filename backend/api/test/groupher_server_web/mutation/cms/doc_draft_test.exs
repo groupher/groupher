@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Activity.Model.DocLog
-  alias GroupherServer.CMS.Docs.Branch
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.Model.DocLog
+  alias CMS.Docs.Branch
 
   @plate_body Jason.encode!([
                 %{"type" => "h1", "children" => [%{"text" => "Draft Title"}]},

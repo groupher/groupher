@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.DocTree.Revision do
   @moduledoc false
 
-  alias GroupherServer.CMS.DocTree.Revision
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
+  alias CMS.DocTree.Revision
 
   describe "[doc tree revision]" do
     setup do

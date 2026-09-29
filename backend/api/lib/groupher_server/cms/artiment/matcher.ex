@@ -19,15 +19,13 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.MatcherMacros
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Interactions.ErrorCat
+  alias Accounts.Model.{Embeds.UserMeta, User}
+  alias CMS.Interactions.ErrorCat
+  alias CMS.Model.Embeds.CommentMeta
 
-  alias GroupherServer.Accounts.Model.Embeds.UserMeta
-  alias GroupherServer.CMS.Model.Embeds.CommentMeta
-
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Blog,
     BlogEmotionInfo,
     BlogReactionInfo,
@@ -62,8 +60,8 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
           collection?: boolean()
         }
 
-  @spec match(map()) :: {:ok, match_info()} | {:error, GroupherServer.ErrorCat.custom(String.t())}
   @doc "Resolves matcher metadata from an artiment or metadata map."
+  @spec match(map()) :: {:ok, match_info()} | {:error, ErrorCat.custom(String.t())}
   def match(%{thread: thread}) when is_atom(thread) do
     match(thread)
   end
@@ -72,7 +70,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
     match(thread)
   end
 
-  def match(%{}), do: {:error, GroupherServer.ErrorCat.custom("invalid article")}
+  def match(%{}), do: {:error, ErrorCat.custom("invalid article")}
 
   @spec match(:account) :: {:ok, match_info()}
   def match(:account) do
@@ -108,7 +106,7 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
 
   @doc "Resolves the complete Interaction metadata for an Artiment kind, schema, or struct."
   @spec match_interaction(atom() | struct()) ::
-          {:ok, interaction_info()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, interaction_info()} | {:error, ErrorCat.error()}
   def match_interaction(%Post{}), do: match_interaction(:post)
   def match_interaction(Post), do: match_interaction(:post)
 

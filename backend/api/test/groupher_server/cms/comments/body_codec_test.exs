@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Comments.BodyCodec do
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Comments.BodyCodec
+  alias GroupherServer.CMS
+  alias CMS.Comments.BodyCodec
 
   test "derives only the fields persisted by Comments" do
     body =

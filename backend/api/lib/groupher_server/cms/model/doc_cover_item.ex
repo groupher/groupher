@@ -10,14 +10,14 @@ defmodule GroupherServer.CMS.Model.DocCoverItem do
   `hidden` and `appearance` are cover-local. They survive future publish sync.
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{Community, DocCoverCard, DocTreeNode}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.{Community, DocCoverCard, DocTreeNode}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

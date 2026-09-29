@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Artiment.PlateJSON do
-  alias GroupherServer.CMS.ErrorCat
   @moduledoc """
   Decodes the canonical Plate JSON envelope without deriving content formats.
 
@@ -7,7 +6,7 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
   Elixir only for consumers such as Comment mention extraction that need to
   inspect the persisted AST shape.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for why Elixir does not serialize Plate.
+  See `docs/content-import/article-publish-import-refactor.md` for why Elixir does not serialize Plate.
 
   Business position:
 
@@ -17,6 +16,10 @@ defmodule GroupherServer.CMS.Artiment.PlateJSON do
         -> PlateJSON
         -> Repo / domain event
   """
+
+  alias GroupherServer.CMS
+  alias CMS.ErrorCat
+
 
   @doc "Decodes a persisted Plate JSON root list without deriving content formats."
   @spec decode(String.t()) :: {:ok, list()} | {:error, term()}

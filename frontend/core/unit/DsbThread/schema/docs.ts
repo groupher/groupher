@@ -38,6 +38,7 @@ export const docTree = graphql(`
 export const docPublishChecklist = graphql(`
   query DashboardDocPublishChecklist($community: String!) {
     docPublishChecklist(community: $community) {
+      revision
       totalCount
       docChanges {
         ...DashboardDocPublishChecklistItemFields
@@ -70,6 +71,7 @@ export const docDraft = graphql(`
     docDraft(community: $community, id: $id) {
       id
       docId
+      version
       title
       subtitle
       slug
@@ -121,12 +123,14 @@ export const docDraftSnapshots = graphql(`
 export const createDocTreeNode = graphql(`
   mutation CreateDocTreeNode(
     $community: String!
+    $commandId: ID!
     $baseRevision: Int!
     $parentNodeId: ID
     $input: DocTreeNodeInput!
   ) {
     createDocTreeNode(
       community: $community
+      commandId: $commandId
       baseRevision: $baseRevision
       parentNodeId: $parentNodeId
       input: $input
@@ -140,10 +144,17 @@ export const updateDocTreeNode = graphql(`
   mutation UpdateDocTreeNode(
     $community: String!
     $id: ID!
+    $commandId: ID!
     $baseRevision: Int!
     $patch: DocTreeNodePatchInput!
   ) {
-    updateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision, patch: $patch) {
+    updateDocTreeNode(
+      community: $community
+      id: $id
+      commandId: $commandId
+      baseRevision: $baseRevision
+      patch: $patch
+    ) {
       ...DashboardDocTreeMutationPayload
     }
   }
@@ -153,6 +164,7 @@ export const updateDocDraft = graphql(`
   mutation UpdateDocDraft(
     $community: String!
     $id: ID!
+    $commandId: ID!
     $expectedVersion: Int!
     $title: String
     $subtitle: String
@@ -162,6 +174,7 @@ export const updateDocDraft = graphql(`
     updateDocDraft(
       community: $community
       id: $id
+      commandId: $commandId
       expectedVersion: $expectedVersion
       title: $title
       subtitle: $subtitle
@@ -170,6 +183,7 @@ export const updateDocDraft = graphql(`
     ) {
       id
       docId
+      version
       title
       subtitle
       slug
@@ -192,8 +206,8 @@ export const updateDocDraft = graphql(`
 `)
 
 export const checkpointDocDraftSnapshot = graphql(`
-  mutation checkpointDocDraftSnapshot($community: String!, $id: ID!) {
-    checkpointDocDraftSnapshot(community: $community, id: $id) {
+  mutation checkpointDocDraftSnapshot($community: String!, $id: ID!, $commandId: ID!) {
+    checkpointDocDraftSnapshot(community: $community, id: $id, commandId: $commandId) {
       id
       thread
       stage
@@ -220,10 +234,11 @@ export const checkpointDocDraftSnapshot = graphql(`
 export const publishDocChanges = graphql(`
   mutation publishDocChanges(
     $community: String!
+    $commandId: ID!
     $input: DocPublishChangesInput
     $mode: DocPublishMode
   ) {
-    publishDocChanges(community: $community, input: $input, mode: $mode) {
+    publishDocChanges(community: $community, commandId: $commandId, input: $input, mode: $mode) {
       done
       release {
         id
@@ -231,6 +246,7 @@ export const publishDocChanges = graphql(`
         publishedAt
       }
       checklist {
+        revision
         totalCount
         docChanges {
           ...DashboardDocPublishChecklistItemFields
@@ -244,8 +260,8 @@ export const publishDocChanges = graphql(`
 `)
 
 export const moveDocToDraft = graphql(`
-  mutation moveDocToDraft($community: String!, $id: ID!) {
-    moveDocToDraft(community: $community, id: $id) {
+  mutation moveDocToDraft($community: String!, $id: ID!, $commandId: ID!) {
+    moveDocToDraft(community: $community, id: $id, commandId: $commandId) {
       docId
       stage
       publishState {
@@ -266,16 +282,26 @@ export const moveDocToDraft = graphql(`
 `)
 
 export const moveDocTreeSubtreeToDraft = graphql(`
-  mutation moveDocTreeSubtreeToDraft($community: String!, $nodeId: ID!) {
-    moveDocTreeSubtreeToDraft(community: $community, nodeId: $nodeId) {
+  mutation moveDocTreeSubtreeToDraft($community: String!, $nodeId: ID!, $commandId: ID!) {
+    moveDocTreeSubtreeToDraft(community: $community, nodeId: $nodeId, commandId: $commandId) {
       done
     }
   }
 `)
 
 export const restoreDocDraftSnapshot = graphql(`
-  mutation restoreDocDraftSnapshot($community: String!, $id: ID!, $snapshotId: ID!) {
-    restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId) {
+  mutation restoreDocDraftSnapshot(
+    $community: String!
+    $id: ID!
+    $snapshotId: ID!
+    $commandId: ID!
+  ) {
+    restoreDocDraftSnapshot(
+      community: $community
+      id: $id
+      snapshotId: $snapshotId
+      commandId: $commandId
+    ) {
       id
       title
       subtitle
@@ -299,8 +325,13 @@ export const restoreDocDraftSnapshot = graphql(`
 `)
 
 export const deleteDocTreeNode = graphql(`
-  mutation DeleteDocTreeNode($community: String!, $id: ID!, $baseRevision: Int!) {
-    deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+  mutation DeleteDocTreeNode($community: String!, $id: ID!, $commandId: ID!, $baseRevision: Int!) {
+    deleteDocTreeNode(
+      community: $community
+      id: $id
+      commandId: $commandId
+      baseRevision: $baseRevision
+    ) {
       ...DashboardDocTreeMutationPayload
     }
   }
@@ -310,6 +341,7 @@ export const restoreDocTreeTrashItem = graphql(`
   mutation RestoreDocTreeTrashItem(
     $community: String!
     $id: ID!
+    $commandId: ID!
     $baseRevision: Int!
     $targetParentNodeId: ID
     $targetIndex: Int
@@ -317,6 +349,7 @@ export const restoreDocTreeTrashItem = graphql(`
     restoreDocTreeTrashItem(
       community: $community
       id: $id
+      commandId: $commandId
       baseRevision: $baseRevision
       targetParentNodeId: $targetParentNodeId
       targetIndex: $targetIndex
@@ -327,8 +360,18 @@ export const restoreDocTreeTrashItem = graphql(`
 `)
 
 export const duplicateDocTreeNode = graphql(`
-  mutation DuplicateDocTreeNode($community: String!, $id: ID!, $baseRevision: Int!) {
-    duplicateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+  mutation DuplicateDocTreeNode(
+    $community: String!
+    $id: ID!
+    $commandId: ID!
+    $baseRevision: Int!
+  ) {
+    duplicateDocTreeNode(
+      community: $community
+      id: $id
+      commandId: $commandId
+      baseRevision: $baseRevision
+    ) {
       ...DashboardDocTreeMutationPayload
     }
   }
@@ -338,6 +381,7 @@ export const moveDocTreeNode = graphql(`
   mutation MoveDocTreeNode(
     $community: String!
     $id: ID!
+    $commandId: ID!
     $baseRevision: Int!
     $targetParentNodeId: ID
     $targetIndex: Int
@@ -345,6 +389,7 @@ export const moveDocTreeNode = graphql(`
     moveDocTreeNode(
       community: $community
       id: $id
+      commandId: $commandId
       baseRevision: $baseRevision
       targetParentNodeId: $targetParentNodeId
       targetIndex: $targetIndex

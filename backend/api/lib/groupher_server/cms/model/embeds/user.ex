@@ -13,9 +13,10 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   """
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User, as: AccountUser
+  alias GroupherServer.Accounts
 
   @primary_key {:id, :integer, autogenerate: false}
 
@@ -29,8 +30,8 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   @doc """
   Builds embed user data from an account user.
   """
-  @spec from_account_user(AccountUser.t()) :: t()
-  def from_account_user(%AccountUser{} = user) do
+  @spec from_account_user(Accounts.Model.User.t()) :: t()
+  def from_account_user(%Accounts.Model.User{} = user) do
     %__MODULE__{
       id: user.id,
       user_id: user.id,
@@ -47,7 +48,7 @@ defmodule GroupherServer.CMS.Model.Embeds.User do
   maps are expected from Ecto structs and application code.
   """
   @spec normalize(term()) :: t()
-  def normalize(%AccountUser{} = user), do: from_account_user(user)
+  def normalize(%Accounts.Model.User{} = user), do: from_account_user(user)
 
   def normalize(%__MODULE__{} = user) do
     %__MODULE__{

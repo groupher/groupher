@@ -1,14 +1,15 @@
 defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc false
 
   use GroupherServer.TestMate
-  require CMS.Const
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
 
-  alias GroupherServer.CMS.Communities.Lifecycle
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
+  alias GroupherServer.CMS
+  alias CMS.Communities.Lifecycle
+  alias CMS.Docs.Branch
+  alias CMS.DocTree.Events
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   describe "[doc publish release]" do
     setup do
@@ -53,6 +54,38 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert doc_change.selectable
     end
 
+    test "checklist revision advances for a Doc-only edit", ~m(user community page_payload)a do
+      initial = CMS.DocTree.publish_checklist(community)
+
+      {:ok, current} =
+        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+
+      assert {:ok, _draft} =
+               CMS.DocTree.update_draft(
+                 community,
+                 page_payload.node.doc_id,
+                 %{subtitle: "Doc-only edit", expected_version: current.version},
+                 user
+               )
+
+      changed = CMS.DocTree.publish_checklist(community)
+      assert changed.revision > initial.revision
+
+      assert {:error, %ErrorCat.Error{details: "Docs publish checklist conflict"}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{expected_checklist_revision: initial.revision},
+                 user
+               )
+
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{expected_checklist_revision: changed.revision},
+                 user
+               )
+    end
+
     test "rejects moving a public Doc back to draft when the Community is not writable",
          ~m(user community page_payload)a do
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
@@ -64,8 +97,44 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           operation_ref: Ecto.UUID.generate()
         )
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :ancestor_community_not_writable}} =
+      assert {:error, %ErrorCat.Error{reason: :ancestor_community_not_writable}} =
                CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
+    end
+
+    test "move-to-Draft replay follows the committed Doc across a later publish",
+         ~m(user community page_payload)a do
+      command_id = Ecto.UUID.generate()
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, draft} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert {:ok, immediate_replay} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert immediate_replay.article_hash_id == draft.article_hash_id
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, published_replay} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert published_replay.article_hash_id == draft.article_hash_id
+      assert published_replay.stage == :public
     end
 
     test "returns a domain error for an unknown branch", ~m(community)a do
@@ -81,7 +150,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           %{
             CMS.DocTree.Const.doc_tree_json_key(:node) => %{
               CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
+              CMS.DocTree.Const.doc_tree_json_key(:type) =>
+                to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
               CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
@@ -116,7 +186,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           %{
             CMS.DocTree.Const.doc_tree_json_key(:node) => %{
               CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
+              CMS.DocTree.Const.doc_tree_json_key(:type) =>
+                to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
               CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
@@ -226,8 +297,26 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           user
         )
 
+      command_id = Ecto.UUID.generate()
+
       assert {:ok, %{done: true, release: release, checklist: %{total_count: 0}}} =
-               CMS.DocTree.publish_changes(community, %{branch_id: branch.id}, user)
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{branch_id: branch.id},
+                 user,
+                 command_id: command_id
+               )
+
+      assert {:ok, %{done: true, release: replayed_release, checklist: replayed_checklist}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{branch_id: branch.id},
+                 user,
+                 command_id: command_id
+               )
+
+      assert replayed_release.id == release.id
+      assert replayed_checklist.total_count == 0
 
       assert release.branch_id == branch.id
 
@@ -243,7 +332,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, ^release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
 
       public_scope =
-        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocScope.public_branch(branch.id))
+        CMS.Gate.scope(CMS.Model.Doc, nil, :read, DocContext.public_branch(branch.id))
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
       refute Repo.exists?(public_scope)
@@ -253,7 +342,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           CMS.Model.Doc,
           :operations,
           :read,
-          DocScope.public_branch(branch.id, policy_mode: :operations)
+          DocContext.public_branch(branch.id, policy_mode: :operations)
         )
         |> where([doc], doc.community_id == ^community.id and doc.branch_id == ^branch.id)
 
@@ -275,7 +364,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       release_count_before = release_count(community)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "No publish changes selected."
               }} =
@@ -435,7 +524,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert rename_change
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :custom,
                 details: "Only deleted tree publish items can be restored."
               }} =
@@ -523,7 +612,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         {:ok, event}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("Tree create event not found.")}
+        {:error, ErrorCat.custom("Tree create event not found.")}
     end
   end
 end

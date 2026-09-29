@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.SearchArtiments.Artiment
+  alias GroupherServer.CMS
+  alias CMS.SearchArtiments.Artiment
   alias Helper.TestFakes.SearchArtiments
 
   defp create_community!(user, attrs) do

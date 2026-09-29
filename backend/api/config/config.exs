@@ -10,6 +10,36 @@ config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 config :groupher_server, :allow_test_service_auth, false
 
+config :groupher_server,
+       :view_tracker_pepper,
+       System.get_env("VIEW_TRACKER_PEPPER", "development-view-tracker-pepper")
+
+config :groupher_server,
+       :view_tracker_cookie_secret,
+       System.get_env("VIEW_TRACKER_COOKIE_SECRET", "development-view-tracker-cookie-secret")
+
+config :groupher_server,
+       :view_tracker_cookie_previous_secret,
+       System.get_env("VIEW_TRACKER_COOKIE_PREVIOUS_SECRET")
+
+config :groupher_server, GroupherServer.CMS.ViewTracker.Config,
+  human_dedupe_window_seconds: 600,
+  agent_dedupe_window_seconds: 600,
+  cleanup_safety_margin_seconds: 86_400,
+  cleanup_batch_size: 500,
+  cleanup_row_budget: 50_000,
+  cleanup_time_budget_ms: 25_000
+
+config :groupher_server, GroupherServer.Analysis.Config,
+  metric_event_retention_days: 90,
+  hourly_metric_retention_months: 13,
+  aggregation_batch_size: 100,
+  aggregation_max_batches: 10,
+  aggregation_snooze_seconds: 5,
+  retention_batch_size: 500,
+  retention_max_batches: 100,
+  retention_snooze_seconds: 5
+
 config :groupher_server, :web_analysis,
   website_id: nil,
   api_token: nil,
@@ -42,7 +72,8 @@ config :logger, :console,
     :method,
     :path,
     :reason,
-    :community_id
+    :community_id,
+    :public_cache
   ]
 
 config :phoenix, :json_library, Jason
@@ -169,10 +200,7 @@ config :groupher_server, :search_artiments,
     max_plain_text_bytes: 7_000
   ]
 
-config :groupher_server, GroupherServer.CMS.Interactions.Config,
-  view_batch_size: 100,
-  view_event_retention_days: 30,
-  latest_users_limit: 5
+config :groupher_server, GroupherServer.CMS.Interactions.Config, latest_users_limit: 5
 
 config :groupher_server, :cache,
   pool: %{
@@ -229,23 +257,36 @@ config :groupher_server, Oban,
   engine: Oban.Engines.Basic,
   repo: GroupherServer.Repo,
   plugins: [
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(3)},
     {Oban.Plugins.Cron,
      crontab: [
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireSubmitted},
        {"*/15 * * * *", GroupherServer.CMS.CommunityApplications.Jobs.ExpireLogoUploads},
        {"*/15 * * * *", GroupherServer.CMS.Communities.Jobs.ReleaseExpiredSlugClaims},
        {"*/15 * * * *", GroupherServer.Jobs.WallpaperLifecycle},
-       {"@daily", GroupherServer.Jobs.ViewEventRetention},
-       {"@daily", GroupherServer.Jobs.InteractionAudit}
+       {"0 * * * *", GroupherServer.Jobs.ViewDedupeCleanup},
+       {"* * * * *", GroupherServer.Jobs.ArticleInsightsAggregation},
+       {"@daily", GroupherServer.Jobs.ArticleInsightsRetention},
+       {"@daily", GroupherServer.Jobs.CommandReceiptRetention}
      ]}
   ],
   queues: [
     default: 10,
     search: 5,
     snapshot: 5,
+    public_cache: 5,
     community_application: 5,
     community_setup: 5
   ]
+
+config :groupher_server, GroupherServer.PublicCache.Policy,
+  timeout_ms: 5_000,
+  max_attempts: 8,
+  retry_base_delay_seconds: 1,
+  max_retry_delay_seconds: 60,
+  max_tags_per_request: 100,
+  delivery_lease_seconds: 120,
+  pending_slo_seconds: 600
 
 import_config "#{config_env()}.exs"
 

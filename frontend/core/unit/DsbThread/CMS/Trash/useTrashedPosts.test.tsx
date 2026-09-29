@@ -38,6 +38,7 @@ const page = {
       thread: 'POST',
       articleRef: 'article-1',
       article: { innerId: '1', title: 'Deleted post' },
+      stats: null,
       deletedBy: null,
       deletedAt: '2026-07-14T00:00:00Z',
       scheduledPermanentDeletionAt: '2026-08-13T00:00:00Z',
@@ -81,10 +82,14 @@ describe('useTrashedPosts', () => {
       expect(await result.current.restore('trash-1')).toBe(true)
     })
 
-    expect(mocks.mutate).toHaveBeenCalledWith(S.restoreTrashedPost, {
-      community: 'home',
-      id: 'trash-1',
-    })
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      S.restoreTrashedPost,
+      expect.objectContaining({
+        community: 'home',
+        id: 'trash-1',
+        commandId: expect.any(String),
+      }),
+    )
     expect(mocks.query).toHaveBeenCalledTimes(2)
     expect(mocks.toast).toHaveBeenCalledWith('dsb.cms.trash.restored')
   })
@@ -99,10 +104,14 @@ describe('useTrashedPosts', () => {
       expect(await result.current.permanentlyDelete('trash-1')).toBe(true)
     })
 
-    expect(mocks.mutate).toHaveBeenCalledWith(S.permanentlyDeleteTrashedPost, {
-      community: 'home',
-      id: 'trash-1',
-    })
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      S.permanentlyDeleteTrashedPost,
+      expect.objectContaining({
+        community: 'home',
+        id: 'trash-1',
+        commandId: expect.any(String),
+      }),
+    )
     expect(mocks.query).toHaveBeenCalledTimes(2)
     expect(mocks.toast).toHaveBeenCalledWith('dsb.cms.trash.permanently_deleted')
   })

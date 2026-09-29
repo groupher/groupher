@@ -16,7 +16,9 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
         -> CommunityDashboard / Repo
   """
 
-  alias GroupherServer.CMS.Dashboard.KanbanBoards
+  alias GroupherServer.CMS
+
+  alias CMS.Dashboard.KanbanBoards
 
   @rainbow_colors [
     :black,

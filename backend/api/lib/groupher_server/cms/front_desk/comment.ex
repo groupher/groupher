@@ -1,0 +1,111 @@
+defmodule GroupherServer.CMS.FrontDesk.Comment do
+  @moduledoc """
+  Resolves Comments and their parent Article information for the CMS FrontDesk facade.
+
+  Business position:
+
+      CMS.FrontDesk facade
+        -> FrontDesk.Comment
+        -> FrontDesk.Article / Community / Relation
+        -> Repo
+  """
+
+  import Ecto.Query, warn: false
+  import GroupherServer.CMS.Artiment.Matcher
+
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias CMS.Artiment.Config
+  alias CMS.Comments.ErrorCat, as: CommentErrorCat
+  alias CMS.FrontDesk.{Article, Community, Relation}
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.Comment
+  alias Helper.{ORM, T}
+
+  @threads Config.threads()
+
+  @doc "Reads one Comment from a structured path or database id."
+  @spec read(map()) :: T.domain_res(Comment.t())
+  def read(comment_path) when is_map(comment_path), do: read(comment_path, [])
+
+  @spec read(integer()) :: T.domain_res(Comment.t())
+  def read(comment_id) when is_integer(comment_id) do
+    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @doc "Reads one Comment path with explicit preload options."
+  @spec read(map(), keyword()) :: T.domain_res(Comment.t())
+  def read(comment_path, opts) when is_map(comment_path) and is_list(opts) do
+    with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
+      read(article_path, inner_id, opts)
+    end
+  end
+
+  @doc "Reads one Comment under a structured Article path."
+  @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
+  def read(article_path, inner_id, opts) do
+    preload = Keyword.get(opts, :preload, :author)
+
+    with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
+           ArticlePath.parse(article_path),
+         {:ok, community} <- Community.read(community),
+         {:ok, inner_id} <- parse_comment_inner_id(inner_id),
+         {:ok, article} <- Article.read(community, thread, article_inner_id, []),
+         {:ok, info} <- match(thread),
+         query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
+         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @doc "Returns the parent Article and author information for one Comment."
+  @spec full(integer()) :: T.domain_res(T.article_info())
+  def full(comment_id) do
+    query = from(comment in Comment, where: comment.id == ^comment_id, preload: ^@threads)
+
+    with {:ok, comment} <- Repo.one(query) |> comment_done(),
+         {:ok, thread} <- Relation.thread_of(comment) do
+      extract_article_info(thread, Map.get(comment, thread))
+    end
+  end
+
+  defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
+
+  defp parse_comment_inner_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} when int >= 0 -> {:ok, int}
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
+    end
+  end
+
+  defp parse_comment_inner_id(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
+
+  defp parse_comment_path(%{article: article_path, inner_id: inner_id}),
+    do: {:ok, article_path, inner_id}
+
+  defp parse_comment_path(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
+
+  defp extract_article_info(thread, article) do
+    with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
+         article_author <- get_in(article_with_author, [:author, :user]) do
+      article_info = %{title: article.title, id: article.id}
+
+      author_info = %{
+        id: article_author.id,
+        login: article_author.login,
+        nickname: article_author.nickname
+      }
+
+      {:ok, %{thread: thread, article: article_info, author: author_info}}
+    end
+  end
+
+  defp done(nil), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
+  defp done(result), do: {:ok, result}
+
+  defp comment_done(nil), do: {:error, CommentErrorCat.not_exist("comment not found")}
+  defp comment_done(result), do: {:ok, result}
+end

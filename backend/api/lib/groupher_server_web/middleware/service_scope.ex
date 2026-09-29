@@ -12,17 +12,20 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
 
   @behaviour Absinthe.Middleware
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
   @impl Absinthe.Middleware
+  def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts) do
+    reject(resolution, "delegated user identity could not be verified", code)
+  end
+
   def call(%{context: %{service_actor: actor}} = resolution, opts) do
     audience = Keyword.fetch!(opts, :audience)
     scope = Keyword.fetch!(opts, :scope)
 
-    test_actor = actor.subject == "service:test-suite" and MapSet.member?(actor.scopes, "*")
-
-    if test_actor or (actor.audience == audience and MapSet.member?(actor.scopes, scope)) do
+    if authorized?(actor, audience, scope) do
       resolution
     else
       reject(
@@ -48,4 +51,20 @@ defmodule GroupherServerWeb.Middleware.ServiceScope do
   defp reject(resolution, message, code) do
     handle_absinthe_error(resolution, message, code)
   end
+
+  @doc "Checks one verified service credential against an exact audience and scope."
+  @spec authorized?(map(), String.t(), String.t()) :: boolean()
+  def authorized?(actor, audience, scope) when is_map(actor) do
+    test_actor =
+      Map.get(actor, :subject) == "service:test-suite" and
+        match?(%MapSet{}, Map.get(actor, :scopes)) and
+        MapSet.member?(actor.scopes, "*")
+
+    test_actor or
+      (Map.get(actor, :audience) == audience and
+         match?(%MapSet{}, Map.get(actor, :scopes)) and
+         MapSet.member?(actor.scopes, scope))
+  end
+
+  def authorized?(_actor, _audience, _scope), do: false
 end

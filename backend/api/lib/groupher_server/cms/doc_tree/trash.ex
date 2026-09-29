@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Trash do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Product Trash drawer for Docs Tree actions.
 
@@ -15,17 +14,21 @@ defmodule GroupherServer.CMS.DocTree.Trash do
         -> Repo / published projection
   """
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{Activity, CMS, ErrorCat, Repo}
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Docs.Trash, as: DocTrash
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.DocTree.Writer.{EventRecorder, Index, Operation}
+  alias GroupherServer.{Accounts, Activity, CMS, ErrorCat, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias Accounts.Model.User
+
+  alias CMS.Articles.MutationLock
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Trash, as: DocTrash
+  alias CMS.DocTree.Events
+  alias CMS.DocTree.Writer.{EventRecorder, Index, Operation}
+
+  alias CMS.Model.{
     Community,
     DocTreeNode,
     TrashAction,
@@ -33,9 +36,8 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     TrashedDocTreeNode
   }
 
-  alias GroupherServer.CMS.SearchArtiments.Indexer
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{ORM, T, Transaction}
-
 
   @doc "Lists current Docs Trash actions for one branch under an explicit read policy."
   @spec list(Community.t(), keyword() | map()) :: T.domain_res(list(map()))
@@ -146,7 +148,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       end)
     else
       nil -> {:ok, %{done: true}}
-      _ -> {:error, GroupherServer.ErrorCat.custom("Trash action is not a Docs Tree action")}
+      _ -> {:error, ErrorCat.custom("Trash action is not a Docs Tree action")}
     end
   end
 
@@ -210,7 +212,8 @@ defmodule GroupherServer.CMS.DocTree.Trash do
          articles: articles,
          draft_nodes: draft_nodes,
          public_nodes: public_nodes,
-         tree_event_count: Enum.count(events, &(&1.owner == CMS.DocTree.Const.tree_event_owner(:tree)))
+         tree_event_count:
+           Enum.count(events, &(&1.owner == CMS.DocTree.Const.tree_event_owner(:tree)))
        }}
     end
   end
@@ -259,7 +262,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     case Map.get(args, :actor_id) do
       nil ->
         {:error,
-         GroupherServer.ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+         ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
 
       actor_id ->
         case Repo.get(User, actor_id) do
@@ -268,7 +271,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
           nil ->
             {:error,
-             GroupherServer.ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+             ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
         end
     end
   end
@@ -305,7 +308,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
           error
       end
     else
-      {:error, GroupherServer.ErrorCat.custom("Docs Trash root node is missing")}
+      {:error, ErrorCat.custom("Docs Trash root node is missing")}
     end
   end
 
@@ -399,13 +402,13 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
       {_type, nil} ->
         {:error,
-         GroupherServer.ErrorCat.custom(
+         ErrorCat.custom(
            "The selected restore parent does not exist in every restored stage."
          )}
 
       _ ->
         {:error,
-         GroupherServer.ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
+         ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
     end
   end
 
@@ -490,7 +493,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     if conflicts?,
       do:
         {:error,
-         GroupherServer.ErrorCat.custom("A Docs Tree node with the same identity already exists")},
+         ErrorCat.custom("A Docs Tree node with the same identity already exists")},
       else: :ok
   end
 
@@ -608,14 +611,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   defp parent_id(%DocTreeNode{} = node), do: node.parent_node_id
 
   defp activity_source(opts) do
-    case Keyword.get(opts, :source, :api) do
-      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
-      "api" -> :api
-      "admin" -> :admin
-      "worker" -> :worker
-      "scheduler" -> :scheduler
-      "maintenance" -> :maintenance
-    end
+    opts |> Keyword.get(:source, :api) |> Activity.Const.normalize_source()
   end
 
   defp type_rank(:tab), do: 0

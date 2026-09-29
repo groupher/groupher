@@ -11,9 +11,10 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Comments.ErrorCat
-  alias GroupherServer.CMS.Model.CommentLifecycle
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Comments.ErrorCat
+  alias CMS.Model.CommentLifecycle
 
   @states [:visible, :deleted, :destroy]
   @allowed_transitions %{
@@ -31,7 +32,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
   """
   @spec state(integer()) ::
-          {:ok, CommentLifecycle.state()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, CommentLifecycle.state()} | {:error, ErrorCat.error()}
   def state(comment_id) do
     case Repo.get_by(CommentLifecycle, comment_id: comment_id) do
       %CommentLifecycle{state: state} -> {:ok, state}
@@ -39,7 +40,6 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
     end
   end
 
-  @spec ensure_created(integer()) :: {:ok, CommentLifecycle.t()} | {:error, term()}
   @doc """
   Creates the initial visible Lifecycle row for a newly inserted Comment.
 
@@ -49,6 +49,7 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
 
       Comments.Lifecycle.ensure_created(comment.id)
   """
+  @spec ensure_created(integer()) :: {:ok, CommentLifecycle.t()} | {:error, term()}
   def ensure_created(comment_id) when is_integer(comment_id) do
     %CommentLifecycle{}
     |> CommentLifecycle.changeset(%{
@@ -60,9 +61,6 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
     |> Repo.insert()
   end
 
-  @spec transition(integer(), CommentLifecycle.state()) ::
-          {:ok, CommentLifecycle.t()}
-          | {:error, GroupherServer.ErrorCat.Error.t() | Ecto.Changeset.t()}
   @doc """
   Locks and transitions an existing Comment Lifecycle row. When passed an
   already locked `CommentLifecycle` struct, it performs only the transition.
@@ -76,6 +74,9 @@ defmodule GroupherServer.CMS.Comments.Lifecycle do
       Comments.Lifecycle.transition(comment.id, :deleted)
       Comments.Lifecycle.transition(locked_lifecycle, :deleted)
   """
+  @spec transition(integer(), CommentLifecycle.state()) ::
+          {:ok, CommentLifecycle.t()}
+          | {:error, ErrorCat.error() | Ecto.Changeset.t()}
   def transition(comment_id, state) when is_integer(comment_id) and state in @states do
     lifecycle =
       CommentLifecycle

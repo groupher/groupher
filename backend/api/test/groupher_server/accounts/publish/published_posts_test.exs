@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Accounts.Publish.Post do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.Accounts.Publish, as: Accounts
+  alias GroupherServer.Accounts
+  alias Accounts.Publish, as: Accounts
 
   @publish_count 10
 

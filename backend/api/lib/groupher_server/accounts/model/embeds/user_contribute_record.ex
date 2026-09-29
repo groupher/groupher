@@ -9,8 +9,10 @@ defmodule GroupherServer.Accounts.Model.Embeds.UserContributeRecord do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
+
   import Ecto.Changeset
 
   @optional_fields ~w(count date)a

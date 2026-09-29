@@ -11,7 +11,7 @@ PDF or OOXML structure checks
     v
 MarkItDown -> Markdown + source metadata + diagnostics
 
-See docs/bulk-import/article-publish-import-refactor.md for ownership boundaries.
+See docs/content-import/article-publish-import-refactor.md for ownership boundaries.
 """
 
 from __future__ import annotations

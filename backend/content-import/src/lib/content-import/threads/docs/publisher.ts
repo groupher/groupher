@@ -13,9 +13,9 @@
  * does not abort otherwise valid documents. Batch/request failures remain
  * workflow failures.
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
- * @see docs/bulk-import/markdown-title-normalization.md
- * @see docs/bulk-import/import-error-handling.md
+ * @see docs/content-import/article-publish-import-refactor.md
+ * @see docs/content-import/markdown-title-normalization.md
+ * @see docs/content-import/import-error-handling.md
  */
 import { ArtimentPublisherError, publishArtiment } from '@groupher/artiment-publisher'
 

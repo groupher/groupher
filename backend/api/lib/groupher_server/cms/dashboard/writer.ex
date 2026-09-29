@@ -24,17 +24,19 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   section helpers.
   """
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Dashboard.{BaseInfo, SectionPayload}
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias GroupherServer.ErrorCat, as: GenericErrorCat
+  alias GroupherServer.{CMS, PublicCache, Repo}
+
+  alias CMS.Communities.ErrorCat
+  alias CMS.ErrorCat, as: CmsErrorCat
+  alias CMS.Dashboard.{BaseInfo, SectionPayload}
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T, Transaction}
+  alias PublicCache.Const, as: PublicCacheConst
 
   @default_dashboard CommunityDashboard.default()
 
-  @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   @doc "Updates the dashboard section named by the GraphQL `dsb_section` payload."
+  @spec update(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def update(%Community{} = community, %{dsb_section: key} = args) do
     update(community, key, SectionPayload.section_args(key, args))
   end
@@ -42,9 +44,9 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
   def update(%Community{}, _args),
     do: {:error, ErrorCat.invalid_dsb_section()}
 
+  @doc "Updates one explicit dashboard section, including base-info synchronization."
   @spec update(Community.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Updates one explicit dashboard section, including base-info synchronization."
   def update(%Community{} = community, :base_info, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
          {:ok, section_payload} <-
@@ -54,9 +56,11 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
              Map.merge(args, BaseInfo.take_community_fields(args))
            ) do
       Repo.transaction(fn ->
-        with {:ok, _community} <- CMS.Communities.sync_base_info(community, args, :operations),
+        with {:ok, updated_community} <-
+               CMS.Communities.sync_base_info(community, args, :operations),
              {:ok, community_dashboard} <-
-               ORM.replace_dsb_section(community_dashboard, :base_info, section_payload) do
+               ORM.replace_dsb_section(community_dashboard, :base_info, section_payload),
+             :ok <- invalidate_public_presentation(updated_community.id) do
           community_dashboard
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -69,36 +73,65 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
     update_section(community, key, args)
   end
 
+  @doc "Ensures a dashboard exists and replaces one non-base-info section."
   @spec update_section(Community.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Ensures a dashboard exists and replaces one non-base-info section."
   def update_section(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community) do
       replace_section(community_dashboard, key, args)
     end
   end
 
+  @doc "Normalizes and persists one section on an existing dashboard."
   @spec replace_section(CommunityDashboard.t(), atom(), map() | list() | boolean()) ::
           T.domain_res(CommunityDashboard.t())
-  @doc "Normalizes and persists one section on an existing dashboard."
   def replace_section(%CommunityDashboard{} = community_dashboard, :content_shadow, enabled)
       when is_boolean(enabled) do
-    community_dashboard
-    |> Ecto.Changeset.change(%{content_shadow: enabled})
-    |> Repo.update()
+    Repo.transaction(fn ->
+      with {:ok, updated} <-
+             community_dashboard
+             |> Ecto.Changeset.change(%{content_shadow: enabled})
+             |> Repo.update(),
+           :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+        updated
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def replace_section(%CommunityDashboard{}, :content_shadow, _args),
-    do: {:error, GenericErrorCat.custom("invalid dashboard content shadow")}
+    do: {:error, CmsErrorCat.custom("invalid dashboard content shadow")}
 
   def replace_section(%CommunityDashboard{} = community_dashboard, key, args) do
     with {:ok, section_payload} <- SectionPayload.prepare(community_dashboard, key, args) do
-      ORM.replace_dsb_section(community_dashboard, key, section_payload)
+      Repo.transaction(fn ->
+        with {:ok, updated} <- ORM.replace_dsb_section(community_dashboard, key, section_payload),
+             :ok <- invalidate_public_presentation(community_dashboard.community_id) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
-  @spec ensure_exist(Community.t()) :: T.domain_res(CommunityDashboard.t())
+  defp invalidate_public_presentation(community_id) do
+    community = Repo.get!(Community, community_id)
+
+    case PublicCache.invalidate_now(
+           PublicCacheConst.community_presentation_changed(),
+           %{community: community.slug, community_id: community.id},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @doc "Returns the community dashboard, creating it once under a global lock when absent."
+  @spec ensure_exist(Community.t()) :: T.domain_res(CommunityDashboard.t())
   def ensure_exist(%Community{} = community) do
     Transaction.lock_global("community_dashboard:init:#{community.id}", fn ->
       case ORM.find_by(CommunityDashboard, community_id: community.id) do

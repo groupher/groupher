@@ -9,16 +9,17 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
         -> Report
         -> Repo / external boundary
   """
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, strip_struct: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.CMS.Interactions.ErrorCat
-  alias GroupherServer.Repo
-  alias Helper.{Multi, ORM, T, Transaction}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{AbuseReport, Embeds}
+  alias CMS.Interactions.ErrorCat
+  alias Helper.{Multi, ORM, T, Transaction}
+  alias Accounts.Model.User
+  alias CMS.Model.{AbuseReport, Embeds}
 
   @doc """
   Files an abuse report against one user account.

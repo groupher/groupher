@@ -6,14 +6,16 @@ import usePublicTree from './usePublicTree'
 
 type TProps = {
   initialTree?: TDocPublicTree | null
+  community?: string
+  innerId?: number
 }
 
-export default function ArticleEntry({ initialTree }: TProps) {
+export default function ArticleEntry({ initialTree, community, innerId }: TProps) {
   const tree = usePublicTree(initialTree)
 
   return (
     <Shell tree={tree}>
-      <Article tree={tree} />
+      <Article tree={tree} community={community} innerId={innerId} />
     </Shell>
   )
 }

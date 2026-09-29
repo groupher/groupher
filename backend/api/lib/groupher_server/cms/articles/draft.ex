@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Articles.Draft do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Owns the mutable draft head for ordinary Articles and Doc content.
 
@@ -18,28 +17,26 @@ defmodule GroupherServer.CMS.Articles.Draft do
   editor input -> Draft head -> publish boundary -> public Article head
   """
 
+  require GroupherServer.CMS.Docs.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset, only: [put_change: 3, put_embed: 3]
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Document, MutationLock, VersionedRelations, Writer}
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Articles.Lifecycle, as: ArticleLifecycle
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Assets
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Docs.Lifecycle, as: DocLifecycle
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
-  alias Helper.{ORM, T}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require CMS.Const
+  alias Accounts.Model.User
+  alias CMS.Articles.{Document, ErrorCat, MutationLock, VersionedRelations, Writer, Trash}
+  alias CMS.Articles.Lifecycle, as: ArticleLifecycle
+  alias CMS.Artiment.{BodyBag, Matcher}
+  alias CMS.{Assets, Gate}
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Lifecycle, as: DocLifecycle
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Decision
+  alias CMS.Model.{ArticleDocument, Author, Community, DocBranch, Embeds}
+  alias Helper.{ORM, T}
 
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_emotions Embeds.ArticleEmotion.default_persisted_emotions()
@@ -120,14 +117,14 @@ defmodule GroupherServer.CMS.Articles.Draft do
   Ordinary Articles prefer their Draft and fall back to Public. Docs resolve
   the editor's explicit branch and never fall back across branches.
   """
-  @spec read_editor(
+  @spec read_editor_head(
           Community.t(),
           T.thread(),
           Ecto.UUID.t(),
           DocBranch.t() | map() | keyword() | nil
         ) ::
           T.domain_res(T.article())
-  def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
+  def read_editor_head(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- resolve_branch(community, thread, branch_ref) do
       case read(community, thread, article_hash_id, branch_ref) do
         {:ok, draft} ->
@@ -144,6 +141,56 @@ defmodule GroupherServer.CMS.Articles.Draft do
           error
       end
     end
+  end
+
+  @doc """
+  Reconstructs a committed command result by stable Article identity.
+
+  Recovery is independent of the Article's current Draft/Public and Trash
+  presentation state. The command receipt already binds the original actor,
+  owner and input, so this internal reader does not re-run current read policy;
+  it prefers the branch-local Draft head and falls back to Public.
+  """
+  @spec read_command_result(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          DocBranch.t() | map() | keyword() | nil
+        ) :: T.domain_res(T.article())
+  def read_command_result(%Community{} = community, thread, article_hash_id, branch_ref) do
+    with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
+         {:ok, %{model: model}} <- Matcher.match(thread) do
+      case find_command_result(
+             model,
+             community,
+             article_hash_id,
+             branch,
+             CMS.Const.stage(:draft)
+           ) do
+        {:ok, draft} ->
+          {:ok, draft}
+
+        {:error, _reason} ->
+          find_command_result(
+            model,
+            community,
+            article_hash_id,
+            branch,
+            CMS.Const.stage(:public)
+          )
+      end
+    end
+  end
+
+  @doc "Compatibility alias for `read_editor_head/4`."
+  @spec read_editor(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          DocBranch.t() | map() | keyword() | nil
+        ) :: T.domain_res(T.article())
+  def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
+    read_editor_head(community, thread, article_hash_id, branch_ref)
   end
 
   @doc "Creates a new Article draft and its derived ArticleDocument."
@@ -213,9 +260,9 @@ defmodule GroupherServer.CMS.Articles.Draft do
     run_locked(community, thread, article_hash_id, attrs, fn ->
       draft_result = read(community, thread, article_hash_id, attrs)
 
-      with {:ok, editor_article} <- read_editor(community, thread, article_hash_id, attrs),
-           {:ok, _canonical_article} <- Gate.access_check(user, :edit, editor_article),
-           :ok <- validate_version(editor_article, attrs, require_version?: true),
+      with {:ok, editor_article} <- read_editor_head(community, thread, article_hash_id, attrs),
+           {:ok, canonical_article} <- Gate.access_check(user, :edit, editor_article),
+           :ok <- validate_version(canonical_article, attrs, require_version?: true),
            {:ok, _draft} <-
              ensure_from_public_unlocked(community, thread, article_hash_id, attrs, user) do
         update_opts =
@@ -333,25 +380,38 @@ defmodule GroupherServer.CMS.Articles.Draft do
     end
   end
 
+  defp find_command_result(model, community, article_hash_id, branch, stage) do
+    model
+    |> where([article], article.article_hash_id == ^article_hash_id)
+    |> where([article], article.community_id == ^community.id)
+    |> maybe_where_branch(branch)
+    |> where([article], article.stage == ^stage)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist(model)}
+      article -> {:ok, article}
+    end
+  end
+
   defp scope_context(:doc, :draft, policy_mode, %DocBranch{id: branch_id}, _opts),
-    do: DocScope.draft(branch_id, policy_mode)
+    do: DocContext.draft(branch_id, policy_mode)
 
   defp scope_context(:doc, :public, policy_mode, %DocBranch{id: branch_id}, opts),
     do:
-      DocScope.public_branch(branch_id,
+      DocContext.public_branch(branch_id,
         policy_mode: policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
 
   defp scope_context(thread, :draft, policy_mode, _branch, opts),
     do:
-      ArticleScope.draft(thread, policy_mode,
+      ArticleContext.draft(thread, policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
 
   defp scope_context(thread, :public, policy_mode, _branch, opts),
     do:
-      ArticleScope.public(thread,
+      ArticleContext.public(thread,
         policy_mode: policy_mode,
         include_illegal: option(opts, :include_illegal, false)
       )
@@ -475,7 +535,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   defp parse_body(%{body_bag: body_bag}, thread), do: BodyBag.cast(body_bag, thread: thread)
 
   defp parse_body(_attrs, _thread),
-    do: {:error, GroupherServer.ErrorCat.custom("Article draft BodyBag is required")}
+    do: {:error, ErrorCat.custom("Article draft BodyBag is required")}
 
   defp maybe_parse_body(%{body_bag: body_bag}, thread),
     do: BodyBag.cast(body_bag, thread: thread)

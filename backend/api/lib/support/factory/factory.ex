@@ -11,15 +11,17 @@ defmodule GroupherServer.Support.Factory do
         -> Factory
         -> endpoint / fixture / Repo
   """
+  require GroupherServer.CMS.Const
+
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{CMS, Messaging}
-  alias GroupherServer.Support.FakeData
+  alias GroupherServer.{Accounts, CMS, Messaging, Support}
+  alias Support.FakeData
 
-  alias GroupherServer.Accounts.Model.User
+  alias Accounts.Model.User
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Author,
     Blog,
     Category,
@@ -32,13 +34,11 @@ defmodule GroupherServer.Support.Factory do
     Post
   }
 
-  alias GroupherServer.CMS.Docs.Branch
+  alias CMS.Docs.Branch
   alias Helper.ORM
 
-  require CMS.Const
-
-  @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
-  @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
+  @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
+  @default_emotions CMS.Model.Embeds.CommentEmotion.default_emotions()
   @retryable_constraints ["users_login_index"]
 
   use GroupherServer.Support.Factory.Articles

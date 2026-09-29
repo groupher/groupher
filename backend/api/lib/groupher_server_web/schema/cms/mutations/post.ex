@@ -16,6 +16,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
   object :cms_post_mutations do
     @desc "create a post"
     field :create_post, :post do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -35,6 +36,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
     @desc "save a new post as a draft"
     field :create_post_draft, :article_draft do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -52,6 +54,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
     @desc "update a cms/post"
     field :update_post, :post do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:expected_version, non_null(:integer))
       arg(:title, :string)
@@ -73,6 +76,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
     @desc "save changes to a post draft without publishing"
     field :update_post_draft, :article_draft do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:expected_version, non_null(:integer))
@@ -95,6 +99,9 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
     @desc "publish an existing post draft"
     field :publish_post_draft, :post do
+      arg(:command_id, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      arg(:expected_lifecycle_version, non_null(:integer))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 

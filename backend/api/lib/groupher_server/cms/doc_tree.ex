@@ -26,9 +26,11 @@ defmodule GroupherServer.CMS.DocTree do
   own display lane. Every node uses the same staged Tree workflow.
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.DocTree.{Publish, Reader, Trash, Writer}
-  alias GroupherServer.CMS.Model.{Community, Doc}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.DocTree.{Commands, Publish, Reader, Trash, Writer}
+  alias CMS.Model.{Community, Doc}
   alias Helper.T
 
   @doc """
@@ -62,16 +64,8 @@ defmodule GroupherServer.CMS.DocTree do
 
   @doc "Creates one recursive navigation node using its declared node type."
   @spec create_node(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
-  def create_node(%Community{} = community, %{type: type} = args, user \\ nil) do
-    case type do
-      :tab -> Writer.create_tab(community, args)
-      :group -> Writer.create_group(community, args)
-      :page -> Writer.create_page(community, args, user)
-      :link -> Writer.create_link(community, args)
-      :pin -> Writer.create_pin(community, args)
-      _ -> {:error, GroupherServer.ErrorCat.custom("unsupported docs tree node type")}
-    end
-  end
+  def create_node(%Community{} = community, args, user \\ nil),
+    do: Commands.Node.create_node(community, args, user)
 
   @doc """
   Builds the unified docs publish checklist.
@@ -94,9 +88,8 @@ defmodule GroupherServer.CMS.DocTree do
       {:ok, %{done: true}}
   """
   @spec publish_changes(Community.t(), map(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
-    Publish.publish_changes(community, args, user, opts)
-  end
+  def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []),
+    do: Commands.Publish.publish_changes(community, args, user, opts)
 
   @doc """
   Moves one public docs page back to draft visibility.
@@ -104,7 +97,7 @@ defmodule GroupherServer.CMS.DocTree do
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
           T.domain_res(Doc.t())
   def move_doc_to_draft(%Community{} = community, id, %User{} = user, opts \\ []),
-    do: Publish.move_doc_to_draft(community, id, user, opts)
+    do: Commands.Publish.move_doc_to_draft(community, id, user, opts)
 
   @doc """
   Creates missing article drafts for every published Page in one Tab/Group subtree.
@@ -112,71 +105,81 @@ defmodule GroupherServer.CMS.DocTree do
   @spec move_subtree_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
           T.domain_res(map())
   def move_subtree_to_draft(%Community{} = community, id, %User{} = user, opts \\ []),
-    do: Publish.move_subtree_to_draft(community, id, user, opts)
+    do: Commands.Publish.move_subtree_to_draft(community, id, user, opts)
 
   @doc """
   Creates a draft tab node.
   """
   @spec create_tab(Community.t(), map()) :: T.domain_res(map())
-  def create_tab(%Community{} = community, args), do: Writer.create_tab(community, args)
+  def create_tab(%Community{} = community, args),
+    do: Writer.create_tab(community, drop_command_id(args))
 
   @doc """
   Creates a draft group node.
   """
   @spec create_group(Community.t(), map()) :: T.domain_res(map())
-  def create_group(%Community{} = community, args), do: Writer.create_group(community, args)
+  def create_group(%Community{} = community, args),
+    do: Writer.create_group(community, drop_command_id(args))
 
   @doc """
   Creates a draft page node and its draft doc when `doc_id` is absent.
   """
   @spec create_page(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
-  def create_page(%Community{} = community, args, user \\ nil) do
-    Writer.create_page(community, args, user)
-  end
+  def create_page(%Community{} = community, args, user \\ nil),
+    do: Commands.Node.create_page(community, args, user)
 
   @doc """
   Creates a draft external-link node.
   """
   @spec create_link(Community.t(), map()) :: T.domain_res(map())
-  def create_link(%Community{} = community, args), do: Writer.create_link(community, args)
+  def create_link(%Community{} = community, args),
+    do: Writer.create_link(community, drop_command_id(args))
 
   @doc """
   Creates a draft pin node.
   """
   @spec create_pin(Community.t(), map()) :: T.domain_res(map())
-  def create_pin(%Community{} = community, args), do: Writer.create_pin(community, args)
+  def create_pin(%Community{} = community, args),
+    do: Writer.create_pin(community, drop_command_id(args))
 
   @doc """
   Updates mutable metadata for a draft tree node.
   """
   @spec update_node(Community.t(), T.id(), map()) :: T.domain_res(map())
-  def update_node(%Community{} = community, id, args), do: Writer.update_node(community, id, args)
+  def update_node(%Community{} = community, id, args),
+    do: Commands.Node.update_node(community, id, args)
 
   @doc """
   Updates the draft content associated with a docs page.
   """
+  @spec update_draft(Community.t(), Doc.t(), map(), User.t()) :: T.domain_res(map())
+  def update_draft(%Community{} = community, %Doc{} = doc, args, %User{} = user),
+    do: Commands.Node.update_draft(community, doc, args, user)
+
   @spec update_draft(Community.t(), T.id(), map(), User.t()) :: T.domain_res(map())
   def update_draft(%Community{} = community, id, args, %User{} = user),
-    do: Writer.update_draft(community, id, args, user)
+    do: Commands.Node.update_draft(community, id, args, user)
 
   @doc """
   Deletes a draft tree node and writes recoverable trash snapshots.
   """
   @spec delete_node(Community.t(), T.id(), map()) :: T.domain_res(map())
-  def delete_node(%Community{} = community, id, args), do: Writer.delete_node(community, id, args)
+  def delete_node(%Community{} = community, id, args),
+    do: Commands.Node.delete_node(community, id, args)
 
   @doc """
   Duplicates a Group subtree, Page, or Link in the draft tree.
   """
   @spec duplicate_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def duplicate_node(%Community{} = community, id, args),
-    do: Writer.duplicate_node(community, id, args)
+    do: Commands.Node.duplicate_node(community, id, args)
 
   @doc """
   Moves a draft tree node to a new parent/index.
   """
   @spec move_node(Community.t(), T.id(), map()) :: T.domain_res(map())
-  def move_node(%Community{} = community, id, args), do: Writer.move_node(community, id, args)
+  def move_node(%Community{} = community, id, args),
+    do: Commands.Node.move_node(community, id, args)
 
   @doc """
   Lists visible product Trash drawer items for the resolved docs branch.
@@ -189,5 +192,9 @@ defmodule GroupherServer.CMS.DocTree do
   """
   @spec restore_trash_item(Community.t(), T.id(), map()) :: T.domain_res(map())
   def restore_trash_item(%Community{} = community, id, args),
-    do: Trash.restore(community, id, args)
+    do: Commands.Trash.restore(community, id, args)
+
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
 end

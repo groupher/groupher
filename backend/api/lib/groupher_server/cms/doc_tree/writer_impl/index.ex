@@ -19,12 +19,13 @@ defmodule GroupherServer.CMS.DocTree.Writer.Index do
   or the Group-first mixed pages of any Tab/Group.
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
 
-  require CMS.Const
+  alias CMS.Model.{Community, DocTreeNode}
 
   @temporary_index_offset 100_000
 

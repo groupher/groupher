@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
 
   describe "[accounts mailbox status]" do
     test "update_status_many returns error when any user update fails" do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} =
+      assert {:error, %ErrorCat.Error{reason: :not_exist}} =
                Accounts.Mailbox.update_status_many([-1])
     end
 

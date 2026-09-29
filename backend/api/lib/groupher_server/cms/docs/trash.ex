@@ -7,11 +7,13 @@ defmodule GroupherServer.CMS.Docs.Trash do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.CMS.Docs.Lifecycle
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias CMS.{Articles, ErrorCat}
+  alias Accounts.Model.User
+  alias CMS.Docs.Lifecycle
+  alias CMS.Articles.Trash
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleDocument,
     Community,
     Doc,
@@ -21,7 +23,6 @@ defmodule GroupherServer.CMS.Docs.Trash do
     TrashedDocArticle
   }
 
-  alias GroupherServer.CMS.Articles.Trash
   alias Helper.ORM
 
   @doc """
@@ -236,7 +237,8 @@ defmodule GroupherServer.CMS.Docs.Trash do
                  where: document.thread == :doc and document.article_id == ^doc.id
                )
              ),
-           {:ok, _} <- Repo.delete(doc) do
+           {:ok, _} <- Repo.delete(doc),
+           :ok <- CMS.ViewTracker.delete_article_state(:doc, doc.id) do
         {:cont, :ok}
       else
         error -> {:halt, error}
@@ -263,8 +265,7 @@ defmodule GroupherServer.CMS.Docs.Trash do
   defp restore_state(community, branch, article_hash_id) do
     case Lifecycle.state(community.id, branch.id, article_hash_id) do
       {:ok, :archived} ->
-        {:error,
-         GroupherServer.CMS.Articles.ErrorCat.archived("Doc is archived, can not be deleted")}
+        {:error, Articles.ErrorCat.archived("Doc is archived, can not be deleted")}
 
       {:ok, state} ->
         {:ok, state}
@@ -290,19 +291,12 @@ defmodule GroupherServer.CMS.Docs.Trash do
   defp load_action(action_id) do
     case Repo.get(TrashAction, action_id) do
       %TrashAction{} = trash_action -> {:ok, trash_action}
-      nil -> {:error, GroupherServer.ErrorCat.custom("Trash action does not exist")}
+      nil -> {:error, ErrorCat.custom("Trash action does not exist")}
     end
   end
 
   defp activity_source(opts) do
-    case Keyword.get(opts, :source, :api) do
-      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
-      "api" -> :api
-      "admin" -> :admin
-      "worker" -> :worker
-      "scheduler" -> :scheduler
-      "maintenance" -> :maintenance
-    end
+    opts |> Keyword.get(:source, :api) |> Activity.Const.normalize_source()
   end
 
   defp actor_id(%User{id: id}), do: id

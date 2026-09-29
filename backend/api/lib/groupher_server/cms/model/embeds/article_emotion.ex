@@ -13,8 +13,10 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.Embeds
+
+  alias CMS.Model.Embeds
 
   @supported_emotions CMS.Artiment.Config.emotions()
 
@@ -33,8 +35,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros do
 end
 
 defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
-  @type t :: %__MODULE__{}
-
   @moduledoc """
   Embedded emotion counters and recent-user snapshots for an artiment.
 
@@ -45,13 +45,17 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleEmotion do
         -> Artiment row
         -> Viewer-aware GraphQL projection
   """
+
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
   import GroupherServer.CMS.Model.Embeds.ArticleEmotion.Macros
 
-  @supported_emotions GroupherServer.CMS.Artiment.Config.emotions()
+  alias GroupherServer.CMS
+
+  @type t :: %__MODULE__{}
+  @supported_emotions CMS.Artiment.Config.emotions()
   @optional_fields Enum.map(@supported_emotions, &:"#{&1}_count") ++
                      Enum.map(@supported_emotions, &:"#{&1}_user_logins")
 

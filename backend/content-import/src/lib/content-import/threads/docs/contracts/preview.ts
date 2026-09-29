@@ -13,7 +13,7 @@ import type { TBadSmell } from '../../../core/contracts'
 /**
  * Public Review contract produced only after Phoenix target validation.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 import { array, integer, literal, record, string } from './decoder'
 import { decodeBadSmells } from './diagnostic'

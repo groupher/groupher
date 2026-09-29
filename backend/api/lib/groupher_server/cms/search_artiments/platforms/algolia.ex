@@ -10,12 +10,14 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
         -> search platform
   """
 
-  @behaviour GroupherServer.CMS.SearchArtiments.PlatformAdapter
-
   require Logger
 
-  alias GroupherServer.CMS.{ErrorCat, SearchArtiments}
+  alias GroupherServer.CMS
+
+  alias CMS.{ErrorCat, SearchArtiments}
   alias SearchArtiments.{Artiment, Config, Query, Result}
+
+  @behaviour CMS.SearchArtiments.PlatformAdapter
 
   @timeout 5_000
   @task_poll_interval 100
@@ -81,7 +83,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
 
   @impl true
   def search(%Query{sort: sort}) when sort != :relevance do
-    {:error, GroupherServer.ErrorCat.custom("Algolia sort replicas are not configured")}
+    {:error, ErrorCat.custom("Algolia sort replicas are not configured")}
   end
 
   def search(%Query{} = query) do

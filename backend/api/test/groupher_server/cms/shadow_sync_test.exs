@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.ShadowSyncTest do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.{Model.Embeds, ShadowSync}
+  alias GroupherServer.CMS
+  alias CMS.{Model.Embeds, ShadowSync}
   alias Helper.Cache
 
   setup do

@@ -6,6 +6,7 @@ import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import { browserGraphQLRequest } from '~/graphql/client'
 import useTrans from '~/hooks/useTrans'
 import { dsbKeys } from '~/query'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type {
   TParseDashboard,
   TResolvedThemePreset,
@@ -104,7 +105,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
         confirmed,
       })
       if (!layout) {
-        void queryClient.invalidateQueries({ queryKey: dsbKeys.config(community), exact: true })
+        void invalidate(queryClient, QueryInvalidation.community.dashboard(community))
       }
 
       toast(t('dsb.appearance.saved'))

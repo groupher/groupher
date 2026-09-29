@@ -15,14 +15,12 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   import ShortMaps
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{Category, Community}
-  alias GroupherServer.CMS.Seeds.SeedsConfig
-
-  alias GroupherServer.CMS.Seeds.Tags
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{Category, Community}
+  alias CMS.Seeds.{SeedsConfig, Tags}
   alias Helper.ORM
 
   @oss_endpoint "https://cps-oss.oss-cn-shanghai.aliyuncs.com"

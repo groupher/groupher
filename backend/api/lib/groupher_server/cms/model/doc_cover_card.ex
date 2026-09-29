@@ -23,7 +23,9 @@ defmodule GroupherServer.CMS.Model.DocCoverCard do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{Community, DocTreeNode}
+  alias GroupherServer.CMS
+
+  alias CMS.Model.{Community, DocTreeNode}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

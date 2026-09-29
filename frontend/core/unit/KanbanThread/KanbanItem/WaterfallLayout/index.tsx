@@ -10,7 +10,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockUsers } from '~/mock'
-import type { TArticle } from '~/spec'
+import type { TArticleState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
@@ -20,15 +20,16 @@ import Upvote from '~/unit/Upvote'
 import useSalon from '../salon/waterfall_layout'
 
 type TProps = {
-  article: TArticle
+  viewModel: TArticleState
 }
 
-const KanbanItem: FC<TProps> = ({ article }) => {
+const KanbanItem: FC<TProps> = ({ viewModel }) => {
+  const { content: article, stats } = viewModel
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
-  const { title, communityTags, cat, upvotesCount } = article
+  const { title, communityTags, cat } = article
 
   return (
     <div className={s.wrapper}>
@@ -44,7 +45,11 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       <TagsList items={communityTags} right={1} />
       <ArticleCatStatus cat={cat} right={10} top={-1} />
       <div className={s.upvotes}>
-        <Upvote count={upvotesCount} avatarList={mockUsers(3)} type={UPVOTE_LAYOUT.GENERAL} />
+        <Upvote
+          count={stats?.upvotesCount}
+          avatarList={mockUsers(3)}
+          type={UPVOTE_LAYOUT.GENERAL}
+        />
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import { COMMUNITY_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
-import type { TPost } from '~/spec'
+import type { TArticleStats, TArticleViewerState, TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import LavaLampLoading from '~/ui/Loading/LavaLampLoading'
@@ -20,16 +20,18 @@ const UserCard = lazy(() => import('~/ui/Cards/UserCard'))
 
 type TProps = {
   article: TPost
+  stats: TArticleStats | null
+  viewerState: TArticleViewerState
 }
 
-const Header: FC<TProps> = ({ article }) => {
+const Header: FC<TProps> = ({ article, stats, viewerState }) => {
   const { slug } = useCommunity()
   const { communityLayout } = useLayout()
   const { isPinned } = article
 
   const s = useSalon({ isPinned })
 
-  const { author, title, commentsCount, innerId, communityTags, insertedAt } = article
+  const { author, title, innerId, communityTags, insertedAt } = article
 
   return (
     <section className={s.wrapper}>
@@ -59,15 +61,15 @@ const Header: FC<TProps> = ({ article }) => {
           href={`/${slug}/${THREAD_PATH.POST}/${innerId}`}
           previewId={innerId}
         >
-          <ArticleReadLabel viewed={article.viewerHasViewed} />
+          <ArticleReadLabel viewed={viewerState.viewerHasViewed} />
           {title}
         </CommunityPreviewLink>
 
         <TagsList items={communityTags} left={2} top='px' />
         <div className='grow' />
-        {commentsCount !== 0 && (
+        {(stats?.commentsCount ?? 0) !== 0 && (
           <CommentsCount
-            count={commentsCount}
+            count={stats?.commentsCount}
             size={SIZE.MEDIUM}
             right={communityLayout === COMMUNITY_LAYOUT.SIDEBAR ? 4 : 0}
           />

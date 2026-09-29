@@ -1,17 +1,19 @@
 defmodule GroupherServer.Test.ArticleCoverHelper do
   @moduledoc false
 
-  alias GroupherServer.CMS.Articles
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.Test.Helper.Schema.Article
+  alias GroupherServer.{CMS, Test}
+  alias CMS.{Articles, FrontDesk}
+  alias Test.Helper.Schema.Article
 
   defmacro __using__(thread: thread) do
     thread_name = thread |> to_string()
 
     quote do
-      alias GroupherServer.CMS.Articles
-      alias GroupherServer.CMS.FrontDesk
-      alias GroupherServer.Test.Helper.Schema.Article
+      alias GroupherServer.CMS
+      alias CMS.Articles
+      alias CMS.FrontDesk
+      alias GroupherServer.Test
+      alias Test.Helper.Schema.Article
       use GroupherServer.TestMate
 
       import GroupherServer.Test.ArticleCoverHelper

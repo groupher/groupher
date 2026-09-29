@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Publishes one docs article draft and its public tree shell.
 
@@ -20,20 +19,22 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   projected by `PublicProjection`, and release history is recorded by `Release`.
   """
 
-  alias GroupherServer.CMS.DocCover.Sync
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.Draft
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.DocTree.Events
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
-  alias Helper.{ORM, T}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias CMS.DocCover.Sync
+  alias Accounts.Model.User
+  alias CMS.Articles.{Draft, MutationLock}
+  alias CMS.Artiment.BodyBag
+  alias CMS.DocTree.Events
+  alias CMS.Gate.Decision
+  alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
+  alias Helper.{ORM, T}
 
   @tree_node_type_tab CMS.DocTree.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.DocTree.Const.tree_node_type(:group)
@@ -103,8 +104,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
       MutationLock.with_article(community, :doc, branch.id, public_doc.article_hash_id, fn ->
         case CMS.Gate.access_check(user, :edit, public_doc) do
-          {:ok, _canonical_doc} ->
-            read_or_create_draft(community, branch, public_doc, document, user)
+          {:ok, canonical_doc} ->
+            read_or_create_draft(community, branch, canonical_doc, document, user)
 
           {:error, %Decision{} = decision} ->
             {:error, Decision.primary_error(decision)}
@@ -158,7 +159,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     |> Repo.one()
     |> case do
       %DocTreeNode{} = node -> {:ok, node}
-      nil -> {:error, GroupherServer.ErrorCat.custom("Doc tree node(draft) not found")}
+      nil -> {:error, ErrorCat.custom("Doc tree node(draft) not found")}
     end
   end
 
@@ -174,7 +175,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         {:ok, node}
 
       nil ->
-        {:error, GroupherServer.ErrorCat.custom("docs page has not been added to the side tree")}
+        {:error, ErrorCat.custom("docs page has not been added to the side tree")}
     end
   end
 
@@ -219,7 +220,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
   defp collect_ancestors(nodes, node_id, ancestors, seen) do
     cond do
       MapSet.member?(seen, node_id) ->
-        {:error, GroupherServer.ErrorCat.custom("docs navigation contains a cycle")}
+        {:error, ErrorCat.custom("docs navigation contains a cycle")}
 
       parent = Map.get(nodes, node_id) ->
         collect_ancestors(
@@ -230,7 +231,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         )
 
       true ->
-        {:error, GroupherServer.ErrorCat.custom("docs page ancestor does not exist")}
+        {:error, ErrorCat.custom("docs page ancestor does not exist")}
     end
   end
 

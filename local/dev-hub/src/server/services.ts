@@ -240,7 +240,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['run', 'dev:community'],
     env: {
       GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
-      NEXT_PUBLIC_AUTH_ENDPOINT: `${LOCAL_SERVICE_ENDPOINTS.auth}/api/auth`,
+      NEXT_PUBLIC_AUTH_ENDPOINT: `${LOCAL_SERVICE_AUTH_ISSUER}/api/auth`,
     },
     port: 3007,
     url: 'http://127.0.0.1:3007/health',

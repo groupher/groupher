@@ -13,11 +13,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Group do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Embeds.Dashboard.DocFAQ
 
   @primary_key false
   embedded_schema do

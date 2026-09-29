@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.DocTreeNode do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Versioned docs tree node.
 
@@ -26,19 +25,19 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Changeset
 
+  alias __MODULE__
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Marker
-  alias GroupherServer.CMS.Model.{Community, DocBranch}
+  alias CMS.Marker
+  alias CMS.Model.{Community, DocBranch}
   alias Helper.Constant.DBPrefix
-
-  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

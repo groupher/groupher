@@ -17,7 +17,7 @@ export default function ClassicLayout() {
     <div className={s.wrapper}>
       <div className={s.main}>
         {pagedChangelogs.entries.map((item) => (
-          <ChangelogItem key={item.innerId} article={item} />
+          <ChangelogItem key={item.content.innerId} viewModel={item} />
         ))}
       </div>
       <Sidebar tagsMode='all' />

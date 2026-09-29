@@ -3,11 +3,12 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Model.PinnedComment
+  alias GroupherServer.CMS
+  alias CMS.Comments.InteractionResponse
+  alias CMS.Model.PinnedComment
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @active_period GroupherServer.CMS.Artiment.Config.active_period_days()
+  @article_cat CMS.Artiment.Const.cat_map()
+  @active_period CMS.Artiment.Config.active_period_days()
 
   @delete_hint Comment.delete_hint()
   @report_threshold_for_fold Comment.report_threshold_for_fold()
@@ -186,7 +187,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       # {:ok, comment} = CMS.Comments.create_comment(:post, post.id, mock_comment(), user)
-      {:ok, updated_comment} =
+      {:ok, %{comment: updated_comment}} =
         CMS.Comments.update_comment(comment, mock_comment("updated content"), user)
 
       assert updated_comment.body_html |> String.contains?(~s(updated content))
@@ -532,7 +533,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 reason: :comment_pin_limit,
                 details: @pinned_comment_limit
               }} =
@@ -839,7 +840,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       random_comment = all_comments |> Enum.at(1)
 
-      {:ok, deleted_comment} = CMS.Comments.delete_comment(random_comment, user)
+      {:ok, %{comment: deleted_comment}} = CMS.Comments.delete_comment(random_comment, user)
 
       {:ok, paged_comments} =
         CMS.Comments.paged_comments(

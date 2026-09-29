@@ -1,3 +1,14 @@
+/**
+ * Implements Community's server-function boundary for public GraphQL reads.
+ *
+ *   TanStack route loader
+ *     -> typed server function
+ *     -> Phoenix GraphQL + public cache headers
+ *     -> normalized public DTO for hydration
+ *
+ * Viewer-private state never crosses this SSR boundary. ArticleStats uses the same normalizer as
+ * browser and mutation paths before entering the shared Query cache.
+ */
 import type { ResultOf, VariablesOf } from '@graphql-typed-document-node/core'
 import { GROUPHER_COMMUNITY_SLUG_HEADER } from '@groupher/contracts/headers'
 import { createServerFn } from '@tanstack/react-start'
@@ -6,6 +17,8 @@ import { getRequest } from '@tanstack/react-start/server'
 import { THREAD } from '~/const/thread'
 import { CACHE_TAG } from '~/constant/cache'
 import { parseDashboard, parseWallpaper } from '~/lib/ssr/parse'
+import { normalizeArticleStats } from '~/query/articleStatsNormalize'
+import { articleStats as articleStatsDocument } from '~/schemas/pages/articleStats'
 import { changelog, pagedChangelogs } from '~/schemas/pages/changelog'
 import { pagedComments } from '~/schemas/pages/comment'
 import { community as communityDocument } from '~/schemas/pages/community'
@@ -37,6 +50,7 @@ export type TCommunityShell = {
   wallpaper: ReturnType<typeof parseWallpaper>
 }
 
+/** Loads the request-scoped community header used by every public Community server function. */
 export const loadCommunityRequestContext = createServerFn({ method: 'GET', strict: false }).handler(
   async () => {
     const request = getRequest()
@@ -81,7 +95,6 @@ const loadPosts = createServerFn({ method: 'GET', strict: false })
       filter: { community: data.community, page: 1, size: 20 } satisfies VariablesOf<
         typeof pagedPosts
       >['filter'],
-      userHasLogin: false,
     })
     return result.data.pagedPosts as unknown as TPagedPosts | null
   })
@@ -95,9 +108,25 @@ const loadPost = createServerFn({ method: 'GET', strict: false })
     ])
     const result = await fetchGraphQL<ResultOf<typeof postDocument>>(postDocument, {
       article: { community: data.community, innerId: data.innerId, thread: 'POST' },
-      userHasLogin: false,
     })
     return (result.data?.post ?? null) as unknown as TPost | null
+  })
+
+const loadArticleStats = createServerFn({ method: 'GET', strict: false })
+  .validator((data: { community: string; thread: TThread; innerIds: string[] }) => data)
+  .handler(async ({ data }) => {
+    setPublicCacheHeaders([
+      CACHE_TAG.articlesCache(data.community, data.thread),
+      ...data.innerIds.map((innerId) =>
+        CACHE_TAG.articleCache(data.community, data.thread, innerId),
+      ),
+    ])
+    const result = await fetchGraphQL<ResultOf<typeof articleStatsDocument>>(articleStatsDocument, {
+      community: data.community,
+      thread: data.thread,
+      innerIds: data.innerIds,
+    })
+    return (result.data?.articleStats ?? []).map(normalizeArticleStats)
   })
 
 const loadChangelogs = createServerFn({ method: 'GET', strict: false })
@@ -106,7 +135,6 @@ const loadChangelogs = createServerFn({ method: 'GET', strict: false })
     setPublicCacheHeaders([CACHE_TAG.articlesCache(data.community, THREAD.CHANGELOG)])
     const result = await fetchGraphQL<ResultOf<typeof pagedChangelogs>>(pagedChangelogs, {
       filter: { community: data.community, page: 1, size: 20 },
-      userHasLogin: false,
     })
     return result.data?.pagedChangelogs as unknown as TPagedChangelogs | null
   })
@@ -120,7 +148,6 @@ const loadChangelog = createServerFn({ method: 'GET', strict: false })
     ])
     const result = await fetchGraphQL<ResultOf<typeof changelog>>(changelog, {
       article: { community: data.community, innerId: data.innerId, thread: THREAD.CHANGELOG },
-      userHasLogin: false,
     })
     return (result.data?.changelog ?? null) as unknown as TPost | null
   })
@@ -151,7 +178,6 @@ const loadDoc = createServerFn({ method: 'GET', strict: false })
     setPublicCacheHeaders([CACHE_TAG.articleCache(data.community, THREAD.DOC, data.innerId)])
     const result = await fetchGraphQL<ResultOf<typeof doc>>(doc, {
       article: { community: data.community, innerId: data.innerId, thread: THREAD.DOC },
-      userHasLogin: false,
     })
     return (result.data?.doc ?? null) as unknown as TDoc | null
   })
@@ -171,6 +197,7 @@ const loadComments = createServerFn({ method: 'GET', strict: false })
 export {
   loadChangelog,
   loadChangelogs,
+  loadArticleStats,
   loadComments,
   loadCommunity,
   loadDoc,

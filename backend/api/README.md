@@ -72,9 +72,9 @@ regular migration datetime columns use `:timestamptz`.
 
 ## Related documentation
 
-- [`docs/reorg_be_modules.md`](../../docs/reorg_be_modules.md)
-- [`docs/rules_be.md`](../../docs/rules_be.md)
-- [`docs/community/gate.md`](../../docs/community/gate.md)
-- [`docs/community/lifecycle.md`](../../docs/community/lifecycle.md)
+- [`docs/architecture/backend-module-reorganization.md`](../../docs/architecture/backend-module-reorganization.md)
+- [`docs/rules/be.md`](../../docs/rules/be.md)
+- [`docs/feature/gate/legacy-overview.md`](../../docs/feature/gate/legacy-overview.md)
+- [`docs/feature/lifecycle/contract.md`](../../docs/feature/lifecycle/contract.md)
 - [`docs/auth/v1.md`](../../docs/auth/v1.md)
-- [`docs/sub-apps/README.md`](../../docs/sub-apps/README.md)
+- [`docs/architecture/apps.md`](../../docs/architecture/apps.md)

@@ -11,9 +11,9 @@ defmodule GroupherServer.CMS.Comments.Replies do
         -> Repo / domain event
   """
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
   @doc """
@@ -57,6 +57,24 @@ defmodule GroupherServer.CMS.Comments.Replies do
   def root(comment_id) do
     with {:ok, comment} <- ORM.find(Comment, comment_id) do
       {:ok, root_comment(comment)}
+    end
+  end
+
+  @doc "Synchronizes one updated reply into the root Comment's embedded reply projection."
+  @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
+  def sync_embed_replies(%Comment{reply_to_comment_id: nil} = comment), do: {:ok, comment}
+
+  def sync_embed_replies(%Comment{} = comment) do
+    with %Comment{} = parent_comment <- root_comment(comment),
+         embed_index <- Enum.find_index(parent_comment.replies, &(&1.id == comment.id)) do
+      unless is_nil(embed_index) do
+        replies = List.replace_at(parent_comment.replies, embed_index, comment)
+
+        {:ok, parent_comment} = ORM.update_embed(parent_comment, :replies, [])
+        {:ok, _} = ORM.update_embed(parent_comment, :replies, replies)
+      end
+
+      {:ok, comment}
     end
   end
 end

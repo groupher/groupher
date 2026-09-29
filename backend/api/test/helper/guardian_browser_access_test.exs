@@ -1,6 +1,8 @@
 defmodule Helper.Guardian.BrowserAccessTest do
   use ExUnit.Case, async: true
 
+  alias GroupherServer.ErrorCat
+
   alias Helper.Guardian
   alias Helper.Guardian.BrowserAccess
 
@@ -45,7 +47,7 @@ defmodule Helper.Guardian.BrowserAccessTest do
   test "expired persisted Session cannot issue a browser access token" do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :session_expired}} =
+    assert {:error, %ErrorCat.Error{reason: :session_expired}} =
              BrowserAccess.encode(%{id: 42}, @session_ref, now, now)
   end
 end

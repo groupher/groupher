@@ -4,15 +4,13 @@ on:
   pull_request:
     paths:
       - 'contracts/services/health/**'
-      - 'docs/contract/**'
-      - 'docs/sub-apps/health.md'
+      - 'docs/infra/contracts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
   push:
     paths:
       - 'contracts/services/health/**'
-      - 'docs/contract/**'
-      - 'docs/sub-apps/health.md'
+      - 'docs/infra/contracts/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
 

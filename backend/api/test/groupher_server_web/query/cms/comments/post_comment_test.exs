@@ -123,11 +123,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
 
       comments_participants = results["commentsParticipants"]
-      comments_participants_count = results["commentsParticipantsCount"]
 
       assert is_list(comments_participants)
       assert length(comments_participants) == 2
-      assert comments_participants_count == 2
     end
 
     @query S.Comment.q(:paged_comments)

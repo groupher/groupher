@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Model.Comment do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
@@ -28,15 +27,17 @@ defmodule GroupherServer.CMS.Model.Comment do
       articles_thread_matches_ref_constraint: 2
     ]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
+  alias CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 
   # alias Helper.HTML
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(body author_id community_id article_hash_id)a
   @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question pending)a
@@ -114,6 +115,8 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:is_pinned, :boolean, default: false)
     field(:viewer_has_upvoted, :boolean, default: false, virtual: true)
     field(:viewer_has_reported, :boolean, default: false, virtual: true)
+    # Command metadata is attached to mutation responses only.
+    field(:command_id, Ecto.UUID, virtual: true)
 
     belongs_to(:reply_to_comment, Comment, foreign_key: :reply_to_comment_id)
     field(:root_comment_id, :integer, default: nil)

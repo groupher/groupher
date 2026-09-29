@@ -1,10 +1,13 @@
 defmodule GroupherServerWeb.Middleware.GeneralErrorTest do
   use ExUnit.Case, async: true
 
+  alias GroupherServer.{CMS, ErrorCat}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+
   alias GroupherServerWeb.Middleware.GeneralError
 
   test "formats a typed ErrorCat value" do
-    error = GroupherServer.CMS.Communities.ErrorCat.active_application_exists()
+    error = CommunityErrorCat.active_application_exists()
 
     result = GeneralError.call(%{errors: [error], value: nil}, [])
 
@@ -22,7 +25,7 @@ defmodule GroupherServerWeb.Middleware.GeneralErrorTest do
     assert result.errors == [
              %{
                message: "Unexpected legacy domain error.",
-               extensions: %{code: GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())}
+               extensions: %{code: ErrorCat.code(ErrorCat.custom())}
              }
            ]
   end

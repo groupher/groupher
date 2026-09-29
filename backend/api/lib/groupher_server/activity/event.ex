@@ -5,10 +5,10 @@ defmodule GroupherServer.Activity.Event do
       resource handler -> validated event envelope -> append-only schema
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Activity.{Const, ErrorCat}
-  alias GroupherServer.Activity.EventRef
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, Activity, Repo}
+
+  alias Accounts.Model.User
+  alias Activity.{Const, ErrorCat, EventRef}
 
   def contract(
         payload \\ [],
@@ -18,36 +18,7 @@ defmodule GroupherServer.Activity.Event do
         opts \\ []
       ) do
     surface_contract = fn surface ->
-      fields =
-        case surface do
-          :article_log ->
-            [:actor, :subject, :target, :payload, :occurred_at]
-
-          :community_log ->
-            [
-              :resource,
-              :actor,
-              :on_behalf_of,
-              :subject,
-              :target,
-              :source,
-              :payload,
-              :metadata,
-              :outcome,
-              :denial_code,
-              :changed_fields,
-              :occurred_at,
-              :recorded_at,
-              :event_ref,
-              :operation_ref,
-              :parent_event_ref,
-              :operation_index,
-              :record_sequence,
-              :category,
-              :high_risk,
-              :message_key
-            ]
-        end
+      fields = surface_fields(surface)
 
       exposed_metadata = if surface == :article_log, do: [], else: metadata
 
@@ -81,6 +52,35 @@ defmodule GroupherServer.Activity.Event do
       retention: :long_term
     }
   end
+
+  # Surface schemas intentionally stay here: these are projection contracts,
+  # not general Activity field vocabulary exposed to producers.
+  defp surface_fields(:article_log), do: [:actor, :subject, :target, :payload, :occurred_at]
+
+  defp surface_fields(:community_log),
+    do: [
+      :resource,
+      :actor,
+      :on_behalf_of,
+      :subject,
+      :target,
+      :source,
+      :payload,
+      :metadata,
+      :outcome,
+      :denial_code,
+      :changed_fields,
+      :occurred_at,
+      :recorded_at,
+      :event_ref,
+      :operation_ref,
+      :parent_event_ref,
+      :operation_index,
+      :record_sequence,
+      :category,
+      :high_risk,
+      :message_key
+    ]
 
   @doc "Marks a declared event contract that intentionally has no V1 producer."
   def contract_only(contract), do: Map.put(contract, :producer_status, :contract_only)
@@ -175,9 +175,7 @@ defmodule GroupherServer.Activity.Event do
 
       insert(schema, attrs)
     else
-      %GroupherServer.ErrorCat.Error{} = error -> {:error, error}
-      {:error, %GroupherServer.ErrorCat.Error{}} = error -> error
-      {:error, %Ecto.Changeset{}} = error -> error
+      error -> ErrorCat.normalize_result(error)
     end
   end
 
@@ -475,8 +473,7 @@ defmodule GroupherServer.Activity.Event do
          occurred_at: occurred_at
        })}
     else
-      %GroupherServer.ErrorCat.Error{} = error -> {:error, error}
-      {:error, _} = error -> error
+      error -> ErrorCat.normalize_result(error)
     end
   end
 

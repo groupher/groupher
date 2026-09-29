@@ -3,9 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Interactions.ViewEvents
-  alias GroupherServer.CMS.Model.ArticleDocument
-  @article_digest_length GroupherServer.CMS.Artiment.Config.digest_length()
+  alias GroupherServer.CMS
+  alias CMS.Model.ArticleDocument
+  @article_digest_length CMS.Artiment.Config.digest_length()
 
   setup do
     {community, _, blog_attrs, user} = mock_article(:blog)
@@ -93,62 +93,42 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
          ~m(blog_attrs community user)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-      event_id = Ecto.UUID.generate()
-
       {:ok, blog2} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user,
-          event_id
-        )
+        CMS.Articles.read(article_community(blog), :blog, blog.inner_id, user)
 
       assert blog.id == blog2.id
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(blog2, user).viewer_has_viewed
+      refute CMS.ViewTracker.viewer_state(blog2, user).viewer_has_viewed
+
+      assert {:ok, %{tracked: true}} =
+               track_article_view(blog2, user, read_purpose: :public_read)
+
+      assert CMS.ViewTracker.viewer_state(blog2, user).viewer_has_viewed
     end
 
-    test "read blog should update views and meta viewed_user_list",
+    test "track projection updates views and meta viewed_user_list",
          ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       # same user duplicate case
-      event_id = Ecto.UUID.generate()
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user, read_purpose: :public_read)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user,
-          event_id
-        )
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user, read_purpose: :public_read)
 
-      {:ok, _} = CMS.Articles.read(article_community(blog), :blog, blog.inner_id, user, event_id)
+      assert CMS.ViewTracker.viewer_state(blog, user).viewer_has_viewed
 
-      assert :ok = ViewEvents.project(event_id)
-      assert CMS.Interactions.viewer_state(blog, user).viewer_has_viewed
-
-      event_id = Ecto.UUID.generate()
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(blog),
-          :blog,
-          blog.inner_id,
-          user2,
-          event_id
-        )
+      {:ok, %{tracked: true}} =
+        track_article_view(blog, user2, read_purpose: :public_read)
 
       {:ok, created} = ORM.find(Blog, blog.id)
-      assert :ok = ViewEvents.project(event_id)
-      assert created.views == 1
-      assert CMS.Interactions.viewer_state(blog, user).viewer_has_viewed
-      assert CMS.Interactions.viewer_state(blog, user2).viewer_has_viewed
+      assert {:ok, %{views: 2}} = CMS.ArticleStats.fetch(:blog, created.id)
+      assert CMS.ViewTracker.viewer_state(blog, user).viewer_has_viewed
+      assert CMS.ViewTracker.viewer_state(blog, user2).viewer_has_viewed
     end
 
-    test "read blog should contains viewer_has_xxx state", ~m(blog_attrs community user user2)a do
+    test "public blog read does not hydrate viewer-private state",
+         ~m(blog_attrs community user user2)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, blog} =
@@ -195,9 +175,12 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
           user
         )
 
-      assert blog.viewer_has_collected
-      assert blog.viewer_has_upvoted
-      assert blog.viewer_has_reported
+      refute blog.viewer_has_collected
+      refute blog.viewer_has_upvoted
+      refute blog.viewer_has_reported
+
+      assert %{viewer_has_collected: true, viewer_has_upvoted: true} =
+               CMS.Interactions.viewer_state(blog, user)
     end
 
     test "add user to cms authors, if the user is not exist in cms authors",
@@ -315,7 +298,9 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       body = mock_rich_text(~s(new content))
-      {:ok, blog} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(body)})
+
+      {:ok, blog} =
+        CMS.Articles.update(blog, %{body_bag: mock_body_bag(body), expected_version: blog.version})
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
 

@@ -11,10 +11,14 @@ defmodule GroupherServer.CMS.Model.Embeds.AbuseReportCase do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Embeds
 
   @optional_fields [:reason, :attr]
 

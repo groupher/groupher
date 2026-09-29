@@ -2,7 +2,7 @@
  *
  *   GitHub tree -> candidate filter -> bounded text/config files -> SourceWorkspace
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 import path from 'node:path'
 

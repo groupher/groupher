@@ -1,21 +1,19 @@
 defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   @moduledoc false
   use GroupherServerWeb.ConnCase, async: false
+  require GroupherServer.CMS.Const
   @moduletag timeout: 300_000
   @moduletag :later
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Artiment.Const
+  alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
-  alias GroupherServer.CMS.Model.{Changelog, Comment, Community, Doc, Post}
-
-  require CMS.Const
+  alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do

@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import useArticleSettingMutation from '~/query/mutation/useArticleSettingMutation'
 import { updateViewingArticle } from '~/signal'
 import { toast } from '~/ui/Toaster'
@@ -29,6 +30,7 @@ const Mirrow2Home: FC<TProps> = ({ onBack }) => {
         thread: article.meta.thread,
       },
       expectedVersion: article.version,
+      commandId: createCommandId(),
     }
 
     console.log('## ## handle action')

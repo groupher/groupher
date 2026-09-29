@@ -9,7 +9,7 @@ import { type FC, memo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
-import type { TChangelog } from '~/spec'
+import type { TArticleState, TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 import ReadableDate from '~/ui/ReadableDate'
@@ -21,10 +21,11 @@ import { demoEmotion, demoTags } from '../constant'
 import useSalon from './salon/article_layout'
 
 type TProps = {
-  article: TChangelog
+  viewModel: TArticleState<TChangelog>
 }
 
-const SimpleLayout: FC<TProps> = ({ article }) => {
+const SimpleLayout: FC<TProps> = ({ viewModel }) => {
+  const { content: article, stats } = viewModel
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.CHANGELOG)
   const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
@@ -54,7 +55,7 @@ const SimpleLayout: FC<TProps> = ({ article }) => {
         <div className={s.footer}>
           <EmotionSelector emotions={demoEmotion} isLegal />
           <div className='grow' />
-          <CommentsCount count={article.commentsCount} size='medium' right={15} />
+          <CommentsCount count={stats?.commentsCount} size='medium' right={15} />
           <ShareSVG className={s.shareIcon} />
         </div>
       </div>

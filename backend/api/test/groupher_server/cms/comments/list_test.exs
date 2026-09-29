@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.Comments.List do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Model.Post
+  alias GroupherServer.CMS
+  alias CMS.Model.Post
   alias Helper.ORM
 
   test "participant projection repair never changes a successful read result" do

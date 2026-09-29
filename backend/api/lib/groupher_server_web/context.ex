@@ -14,6 +14,9 @@ defmodule GroupherServerWeb.Context do
         -> Absinthe resolver
   """
 
+  require GroupherServerWeb.ErrorCat
+  require GroupherServer.Accounts.Profiles.ErrorCat
+
   @allow_test_service_auth Application.compile_env(
                              :groupher_server,
                              :allow_test_service_auth,
@@ -24,23 +27,60 @@ defmodule GroupherServerWeb.Context do
   import Plug.Conn
   # import Ecto.Query, only: [first: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, Auth, CMS, RequestActor}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.BrowserSessions
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: ProfileErrorCat
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias Accounts.Model.User
+  alias Accounts.Profiles.BrowserSessions
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.ServiceAuth.Verifier
+  alias GroupherServerWeb.ErrorCat
   alias Helper.{Guardian, ORM}
   alias Helper.Guardian.BrowserAccess
+  alias CMS.ViewTracker.AnonymousSession
 
   def init(opts), do: opts
 
   def call(conn, _) do
     conn = fetch_cookies(conn)
-    context = build_context(conn)
+    {conn, anonymous_session} = AnonymousSession.ensure(conn)
+
+    context =
+      conn
+      |> build_context()
+      |> Map.put(:anonymous_session, anonymous_session)
+      |> put_request_actor(conn)
+
     Absinthe.Plug.put_options(conn, context: context)
   end
+
+  defp put_request_actor(%{service_auth_failure: code} = context, _conn),
+    do: Map.put(context, :request_actor_failure, code)
+
+  defp put_request_actor(%{delegation_auth_failure: code} = context, _conn),
+    do: Map.put(context, :request_actor_failure, code)
+
+  defp put_request_actor(%{service_actor: _actor, auth_failure: code} = context, _conn),
+    do: Map.put(context, :request_actor_failure, code)
+
+  defp put_request_actor(context, conn) do
+    opts = request_actor_input(context)
+    user_agent = conn |> get_req_header("user-agent") |> List.first()
+
+    case RequestActor.classify(Keyword.put(opts, :user_agent, user_agent)) do
+      {:ok, classification} -> Map.put(context, :request_actor, classification)
+      {:error, reason} -> Map.put(context, :request_actor_failure, reason)
+    end
+  end
+
+  defp request_actor_input(%{delegated_actor: delegation}), do: [delegation: delegation]
+  defp request_actor_input(%{service_actor: credential}), do: [service_credential: credential]
+  defp request_actor_input(%{cur_user: user}), do: [account_session: user]
+
+  defp request_actor_input(%{anonymous_session: session}),
+    do: [anonymous_session: session]
+
+  defp request_actor_input(_context), do: []
 
   @doc """
   Return the current user context from the Groupher auth cookie or an
@@ -85,7 +125,7 @@ defmodule GroupherServerWeb.Context do
 
   defp maybe_bind_delegated_actor(context), do: context
 
-  defp service_auth_failure_code(%GroupherServer.ErrorCat.Error{reason: :jwks_unavailable}),
+  defp service_auth_failure_code(ErrorCat.error_pattern(reason: :jwks_unavailable)),
     do: AuthContract.service_jwks_unavailable()
 
   defp service_auth_failure_code(_reason), do: AuthContract.service_token_invalid()
@@ -107,6 +147,9 @@ defmodule GroupherServerWeb.Context do
 
   defp maybe_put_delegated_user(context, conn) do
     case get_req_header(conn, "x-groupher-user-authorization") do
+      [] ->
+        context
+
       ["Bearer " <> token] ->
         case authorize_delegated_browser_token(token) do
           {:ok, cur_user} ->
@@ -118,11 +161,11 @@ defmodule GroupherServerWeb.Context do
             })
 
           {:error, reason} ->
-            maybe_put_browser_auth_failure(context, {:bearer, token}, reason)
+            Map.put(context, :delegation_auth_failure, delegation_auth_failure_code(reason))
         end
 
-      _ ->
-        context
+      _malformed ->
+        Map.put(context, :delegation_auth_failure, AuthContract.token_invalid())
     end
   end
 
@@ -132,6 +175,7 @@ defmodule GroupherServerWeb.Context do
          true <- BrowserSessions.active_for_user?(cur_user.id, claims["sid"]) do
       {:ok, cur_user}
     else
+      # Missing, revoked, and otherwise inactive Sessions share one terminal result.
       false -> {:error, ProfileErrorCat.session_revoked()}
       error -> error
     end
@@ -154,6 +198,13 @@ defmodule GroupherServerWeb.Context do
   end
 
   defp maybe_put_browser_auth_failure(context, _token, _reason), do: context
+
+  defp delegation_auth_failure_code(:token_expired), do: AuthContract.token_expired()
+
+  defp delegation_auth_failure_code(ProfileErrorCat.error_pattern(reason: :session_revoked)),
+    do: AuthContract.session_revoked()
+
+  defp delegation_auth_failure_code(_reason), do: AuthContract.token_invalid()
 
   # --------------------------------------------------
   # Browser cookies must satisfy the V1 issuer/audience/type/session claims.

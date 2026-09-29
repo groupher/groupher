@@ -11,7 +11,7 @@ defmodule GroupherServer.Analysis.Web.Community do
         -> Repo / analytics provider
   """
 
-  alias GroupherServer.CMS.Model.Community, as: CMSCommunity
+  alias GroupherServer.CMS
 
   @type t :: %__MODULE__{
           community: String.t(),
@@ -30,13 +30,13 @@ defmodule GroupherServer.Analysis.Web.Community do
       #=> %GroupherServer.Analysis.Web.Community{community: "home", path_prefix: "/home", umami_website_id: nil}
 
   """
-  @spec from_community(CMSCommunity.t()) :: t()
-  def from_community(%CMSCommunity{slug: slug}) when is_binary(slug) do
+  @spec from_community(CMS.Model.Community.t()) :: t()
+  def from_community(%CMS.Model.Community{slug: slug}) when is_binary(slug) do
     %__MODULE__{community: slug, path_prefix: "/#{slug}", umami_website_id: nil}
   end
 
-  @spec from_community(CMSCommunity.t(), String.t() | nil) :: t()
-  def from_community(%CMSCommunity{slug: slug}, umami_website_id) when is_binary(slug) do
+  @spec from_community(CMS.Model.Community.t(), String.t() | nil) :: t()
+  def from_community(%CMS.Model.Community{slug: slug}, umami_website_id) when is_binary(slug) do
     %__MODULE__{
       community: slug,
       path_prefix: "/#{slug}",

@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Communities.Enable
+  alias GroupherServer.CMS
+  alias CMS.Communities.Enable
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -81,7 +82,7 @@ defmodule GroupherServer.Test.CMS.Communities.Enable do
     end
 
     test "allow_thread rejects non-atom threads", ~m(community)a do
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid thread"}} =
                Enable.thread?(community.slug, "POST")
     end
 

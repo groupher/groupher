@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   setup do
     {community, post, _, user} = mock_article(:post)
 
@@ -96,7 +99,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -225,21 +228,21 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -264,7 +267,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
              |> mutation_error?(
                S.Article.m(:update_article, :post),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       {:ok, found} = CMS.FrontDesk.article(community_b, :post, post_b.inner_id)

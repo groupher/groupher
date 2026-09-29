@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.PublishRequest do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Review gate for future publish workflows.
 
@@ -27,17 +26,17 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
-
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
@@ -79,7 +78,10 @@ defmodule GroupherServer.CMS.Model.PublishRequest do
     request
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:target_type, CMS.DocTree.Const.publish_request_target_type_enum_values())
+    |> validate_inclusion(
+      :target_type,
+      CMS.DocTree.Const.publish_request_target_type_enum_values()
+    )
     |> validate_inclusion(:status, CMS.DocTree.Const.publish_request_status_enum_values())
     |> validate_length(:target_id, min: 1, max: 120)
     |> foreign_key_constraint(:requested_by_id)

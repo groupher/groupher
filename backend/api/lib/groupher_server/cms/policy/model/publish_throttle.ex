@@ -12,12 +12,14 @@ defmodule GroupherServer.CMS.Policy.Model.PublishThrottle do
         -> PublishThrottle
         -> Repo / external boundary
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias __MODULE__
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.statistics()

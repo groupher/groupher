@@ -12,12 +12,13 @@ defmodule GroupherServer.CMS.Model.CommunityJoinChangelog do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
-  alias GroupherServer.CMS.Model.{Changelog, Community}
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.{Changelog, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

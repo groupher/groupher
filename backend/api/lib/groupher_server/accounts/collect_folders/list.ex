@@ -18,7 +18,9 @@ defmodule GroupherServer.Accounts.CollectFolders.List do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Accounts.Model.{CollectFolder, User}
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.{CollectFolder, User}
   alias Helper.{ORM, QueryBuilder, T}
 
   @spec page(T.id(), map()) :: T.domain_res(T.paged_data())

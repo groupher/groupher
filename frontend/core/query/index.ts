@@ -1,6 +1,12 @@
 export { Q } from './client'
 export { default as QueryProvider } from './Provider'
-export { articleKeys, commentKeys, mutationKeys, normalizeArticleFilter, viewerKeys } from './key'
+export {
+  articleQueryKeys,
+  commentKeys,
+  mutationKeys,
+  normalizeArticleFilter,
+  viewerQueryKeys,
+} from './key'
 export { dsbKeys, dsbMutationKeys, dsbQueries } from './dsb'
 export {
   communityKeys,

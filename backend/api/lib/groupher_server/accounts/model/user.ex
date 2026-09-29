@@ -13,15 +13,16 @@ defmodule GroupherServer.Accounts.Model.User do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
-  # import GroupherServerWeb.Schema.Helper.Fields
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.{
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.{
     Achievement,
     CollectFolder,
     Embeds,
@@ -31,8 +32,10 @@ defmodule GroupherServer.Accounts.Model.User do
     UserFollowing
   }
 
-  alias GroupherServer.CMS.Model.{CommunitySubscriber, Passport}
+  alias CMS.Model.{CommunitySubscriber, Passport}
   alias Helper.Constant.DBPrefix
+
+  # import GroupherServerWeb.Schema.Helper.Fields
 
   @schema_prefix DBPrefix.account()
 

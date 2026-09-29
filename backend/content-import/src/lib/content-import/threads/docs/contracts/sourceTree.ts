@@ -3,7 +3,7 @@
  *
  *   framework adapter -> SourceTree -> Preview artifact -> Phoenix Docs tree plan
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import {
   array,

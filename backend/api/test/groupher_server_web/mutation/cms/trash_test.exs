@@ -3,7 +3,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{Post, TrashedArticle}
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.{ArticleEmotionCount, ArticleStats, Post, TrashedArticle}
 
   setup do
     {community, post, _, owner} = mock_article(:post)
@@ -28,15 +32,28 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     rule_conn =
       simu_conn(:user, cms: %{community.slug => %{"post.restore" => true}})
 
+    command_id = Ecto.UUID.generate()
+
     restored =
       gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
-        thread: "POST"
+        thread: "POST",
+        commandId: command_id
       })
 
     assert restored["innerId"] == to_string(post.inner_id)
     assert {:ok, _} = CMS.Articles.read(community, :post, post.inner_id)
+
+    replayed =
+      gq_mutation(rule_conn, S.Article.m(:restore_trashed_article), %{
+        id: trashed["id"],
+        community: community.slug,
+        thread: "POST",
+        commandId: command_id
+      })
+
+    assert replayed["innerId"] == restored["innerId"]
   end
 
   test "Trash requires login and either ownership or the thread grant",
@@ -48,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+             ErrorCat.code(ProfileErrorCat.account_login())
            )
 
     unrelated = simu_conn(:user, cms: %{community.slug => %{"post.edit" => true}})
@@ -57,7 +74,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              schema,
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.passport())
            )
 
     moderator = simu_conn(:user, cms: %{community.slug => %{"post.trash" => true}})
@@ -76,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
            |> mutation_error?(
              S.Article.m(:trash_article),
              variables,
-             ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+             ErrorCat.code(PassportErrorCat.passport())
            )
 
     assert {:ok, _} = CMS.Articles.read(community_b, :post, post_b.inner_id)
@@ -84,6 +101,13 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
 
   test "permanent deletion removes content but leaves the item queryable until that action",
        ~m(community post owner owner_conn)a do
+    {:ok, _} = CMS.Interactions.emotion(post, :beer, owner)
+
+    ArticleStats
+    |> Repo.get_by!(thread: :post, article_id: post.id)
+    |> Ecto.Changeset.change(views: 12, views_revision: 3)
+    |> Repo.update!()
+
     trashed =
       gq_mutation(owner_conn, S.Article.m(:trash_article), %{
         article: article_path(community, post, :post)
@@ -106,18 +130,41 @@ defmodule GroupherServer.Test.Mutation.CMS.Trash do
     assert hd(listed["entries"])["mentionedByCount"] == 0
     assert hd(listed["entries"])["article"]["innerId"] == to_string(post.inner_id)
 
+    assert hd(listed["entries"])["article"]["articleStats"]
+           |> Map.take(["views", "viewsRevision", "upvotesCount", "commentsCount"]) == %{
+             "views" => 12,
+             "viewsRevision" => 3,
+             "upvotesCount" => 0,
+             "commentsCount" => 0
+           }
+
     permanent_conn =
       simu_conn(:user, owner, cms: %{community.slug => %{"post.permanent_delete" => true}})
+
+    command_id = Ecto.UUID.generate()
 
     result =
       gq_mutation(permanent_conn, S.Article.m(:permanently_delete_trashed_article), %{
         id: trashed["id"],
         community: community.slug,
-        thread: "POST"
+        thread: "POST",
+        commandId: command_id
       })
 
     assert result["done"]
     refute Repo.get(Post, post.id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
     refute Repo.get_by(TrashedArticle, hash_id: trashed["id"])
+
+    replayed =
+      gq_mutation(permanent_conn, S.Article.m(:permanently_delete_trashed_article), %{
+        id: trashed["id"],
+        community: community.slug,
+        thread: "POST",
+        commandId: command_id
+      })
+
+    assert replayed["done"]
   end
 end

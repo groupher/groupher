@@ -9,16 +9,17 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         -> post-commit notification
   """
 
-  alias GroupherServer.{Accounts, Repo}
-  alias GroupherServer.Accounts.Model.User
   import Ecto.Query
 
-  alias GroupherServer.CMS.Articles.MutationLock
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.{Events, Gate}
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Interactions.{ErrorCat, ReadState}
-  alias GroupherServer.CMS.Model.{ArticleCollect, Author}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
+
+  alias Accounts.Model.User
+  alias CMS.Articles.MutationLock
+  alias CMS.Artiment.Matcher
+  alias CMS.{Events, FrontDesk, Gate}
+  alias CMS.Interactions.{ErrorCat, ReadState}
+  alias CMS.Model.{ArticleCollect, Author}
+  alias Analysis.MetricEvent
   alias Helper.{Later, T}
 
   @doc """
@@ -50,6 +51,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
              {:ok, %{collection?: true} = info} <- Matcher.match_interaction(canonical),
              {:ok, change} <- change_fact(canonical, info, actor, operation),
              :ok <- sync_state(canonical, actor, operation, change),
+             :ok <- record_metric(canonical, operation, change),
              :ok <- sync_achievement(canonical, operation, change) do
           {canonical, change}
         else
@@ -74,6 +76,17 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
 
     case result do
       {:ok, _projection} -> :ok
+      {:error, _reason} = error -> error
+    end
+  end
+
+  defp record_metric(_article, _operation, :unchanged), do: :ok
+
+  defp record_metric(article, operation, :changed) do
+    metric = if operation == :add, do: :collect_added, else: :collect_removed
+
+    case MetricEvent.append_article_action(article, Ecto.UUID.generate(), metric) do
+      :ok -> :ok
       {:error, _reason} = error -> error
     end
   end

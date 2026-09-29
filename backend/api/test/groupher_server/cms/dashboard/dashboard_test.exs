@@ -3,7 +3,9 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunityDashboard
+  alias GroupherServer.{CMS, PublicCache}
+  alias CMS.Model.CommunityDashboard
+  alias PublicCache.Model.Invalidation
 
   @default_dashboard CommunityDashboard.default()
 
@@ -54,7 +56,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
          ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_dsb_section}} =
+      assert {:error, %ErrorCat.Error{reason: :invalid_dsb_section}} =
                CMS.Dashboard.update(community, %{})
     end
 
@@ -86,6 +88,19 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       assert community.title == "new title"
       assert community.slug == "new-slug"
+    end
+
+    test "base info emits one public presentation invalidation", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+      before_count = Repo.aggregate(Invalidation, :count)
+
+      assert {:ok, _dashboard} =
+               CMS.Dashboard.update(community, :base_info, %{
+                 homepage: "https://groupher.com",
+                 title: "One invalidation"
+               })
+
+      assert Repo.aggregate(Invalidation, :count) == before_count + 1
     end
 
     test "update base info should reject invalid slug format", ~m(community_attrs user)a do
@@ -597,16 +612,13 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     test "rejects non-list dashboard link payloads", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
 
-      assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
 
-      assert {:error,
-              %GroupherServer.ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
+      assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid dashboard links"}} =
                CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
     end
 

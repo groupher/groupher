@@ -12,13 +12,16 @@ defmodule GroupherServer.Accounts.Model.CollectFolder do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
+
   import Ecto.Changeset
-  alias GroupherServer.Accounts.Model.{Embeds, User}
-  alias GroupherServer.CMS.Model.ArticleCollect
+
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.{Embeds, User}
+  alias CMS.Model.ArticleCollect
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.account()

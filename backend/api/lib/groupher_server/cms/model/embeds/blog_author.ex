@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.Embeds.BlogAuthor do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 

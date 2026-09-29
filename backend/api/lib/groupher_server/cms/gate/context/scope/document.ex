@@ -13,7 +13,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Document do
       iex> %__MODULE__{thread: :doc, branch_policy: :main} = public_main()
   """
 
-  alias GroupherServer.CMS.Gate.Config
+  alias GroupherServer.CMS
+
+  alias CMS.Gate.Config
 
   @ordinary_threads Config.ordinary_article_threads()
   @modes [:public, :owner_management, :moderator_management, :operations]

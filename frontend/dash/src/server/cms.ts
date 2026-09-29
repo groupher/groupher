@@ -5,7 +5,8 @@ import { THREAD } from '~/const/thread'
 import { themePresets } from '~/schemas/pages/misc'
 import type { TPagedArticles, TTagGroup, TThemePresetOption } from '~/spec'
 import type { TPagedAssets } from '~/unit/DsbThread/AssetsHub/spec'
-import type { TPagedTrashedPosts, TTrashedPost } from '~/unit/DsbThread/CMS/Trash/spec'
+import { normalizeTrashedPost } from '~/unit/DsbThread/CMS/Trash/normalize'
+import type { TRawPagedTrashedPosts, TPagedTrashedPosts } from '~/unit/DsbThread/CMS/Trash/spec'
 import DashboardAssetsSchema from '~/unit/DsbThread/schema/assets'
 import DashboardContentSchema from '~/unit/DsbThread/schema/content'
 import DashboardTagsSchema from '~/unit/DsbThread/schema/tags'
@@ -36,7 +37,6 @@ export const loadPagedPosts = createServerFn({ method: 'GET', strict: false })
       DashboardContentSchema.pagedPosts,
       {
         filter: { page: data.page || 1, size: 20, community: data.community },
-        userHasLogin: false,
       },
       token,
     )
@@ -54,7 +54,6 @@ export const loadPagedChangelogs = createServerFn({ method: 'GET', strict: false
       DashboardContentSchema.pagedChangelogs,
       {
         filter: { page: data.page || 1, size: 20, community: data.community },
-        userHasLogin: false,
       },
       token,
     )
@@ -118,15 +117,14 @@ export const loadTrash = createServerFn({ method: 'GET', strict: false })
       token,
     )
 
-    const trashedArticles = result.data?.trashedArticles as unknown as TPagedTrashedPosts | null
+    const trashedArticles = result.data?.trashedArticles as unknown as TRawPagedTrashedPosts | null
     if (!trashedArticles) {
       return null
     }
 
     return {
       ...trashedArticles,
-      entries:
-        (trashedArticles.entries as readonly TTrashedPost[])?.map((entry) => ({ ...entry })) || [],
+      entries: trashedArticles.entries?.map(normalizeTrashedPost) || [],
     }
   })
 

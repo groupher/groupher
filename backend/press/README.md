@@ -41,5 +41,5 @@ pnpm --filter @groupher/press run db:migrate
 ## Related documentation
 
 - [`docs/press/v1.md`](../../docs/press/v1.md)
-- [`docs/sub-apps/README.md`](../../docs/sub-apps/README.md)
-- [`docs/sub-apps/health.md`](../../docs/sub-apps/health.md)
+- [`docs/architecture/apps.md`](../../docs/architecture/apps.md)
+- [`docs/infra/contracts/health.md`](../../docs/infra/contracts/health.md)

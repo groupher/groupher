@@ -1,7 +1,8 @@
 defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.Middleware.ServiceScope
 
   @opts [audience: "phoenix:auth-api", scope: "auth:session:refresh"]
@@ -51,6 +52,26 @@ defmodule GroupherServerWeb.Middleware.ServiceScopeTest do
 
     assert [[message: _message, extensions: %{code: code}]] = result.errors
     assert code == AuthContract.service_jwks_unavailable()
+  end
+
+  test "rejects delegation verification failure before an otherwise authorized service" do
+    result =
+      ServiceScope.call(
+        %Absinthe.Resolution{
+          context: %{
+            delegation_auth_failure: AuthContract.token_invalid(),
+            service_actor: %{
+              audience: "phoenix:auth-api",
+              scopes: MapSet.new(["auth:session:refresh"]),
+              subject: "service:auth"
+            }
+          }
+        },
+        @opts
+      )
+
+    assert [[message: _message, extensions: %{code: code}]] = result.errors
+    assert code == AuthContract.token_invalid()
   end
 
   test "returns an authentication code when no service identity is present" do

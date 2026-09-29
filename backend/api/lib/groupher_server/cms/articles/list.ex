@@ -1,6 +1,4 @@
 defmodule GroupherServer.CMS.Articles.List do
-  alias GroupherServer.CMS.QueryBuilder
-
   @moduledoc """
   Article listing helpers.
 
@@ -24,20 +22,20 @@ defmodule GroupherServer.CMS.Articles.List do
       module_to_atom: 1
     ]
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.InteractionResponse
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.Artiment.Const
-  alias GroupherServer.CMS.Communities.Enable
-  alias GroupherServer.CMS.Dashboard.KanbanBoards
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Scope
-  alias GroupherServer.CMS.Interactions
+  alias CMS.{Interactions, QueryBuilder}
+  alias CMS.ViewTracker.Query, as: ViewTrackerQuery
+  alias Accounts.Model.User
+  alias CMS.Articles.{Response, Trash}
+  alias CMS.Artiment.Const
+  alias CMS.Communities.Enable
+  alias CMS.Dashboard.KanbanBoards
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Scope
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Embeds,
     PinnedArticle,
@@ -87,6 +85,7 @@ defmodule GroupherServer.CMS.Articles.List do
            |> Scope.scope(nil, :list, scope_context(thread))
            |> QueryBuilder.domain_query(filter)
            |> QueryBuilder.filter_pack(filter_for_interaction_order(Map.merge(filter, flags)))
+           |> ViewTrackerQuery.order_by_views(thread, view_order(filter))
            |> Interactions.scope(order: Map.get(filter, :order)) do
       query
       |> ORM.paginator(~m(page size)a)
@@ -164,6 +163,7 @@ defmodule GroupherServer.CMS.Articles.List do
         Post
         |> Trash.not_trashed_scope(:post)
         |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+        |> ViewTrackerQuery.order_by_views(:post, view_order(filter))
         |> where([p], p.status in ^valid_statuses)
         |> ORM.paginator(~m(page size)a)
         |> done()
@@ -178,6 +178,7 @@ defmodule GroupherServer.CMS.Articles.List do
     Post
     |> Trash.not_trashed_scope(:post)
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))
+    |> ViewTrackerQuery.order_by_views(:post, view_order(filter))
     |> ORM.paginator(~m(page size)a)
     |> done()
   end
@@ -196,6 +197,7 @@ defmodule GroupherServer.CMS.Articles.List do
            |> where([_article, ...], as(:published_author).user_id == ^target_user.id)
            |> select([article, ...], article)
            |> QueryBuilder.filter_pack(filter_for_interaction_order(filter))
+           |> ViewTrackerQuery.order_by_views(thread, view_order(filter))
            |> Interactions.scope(order: Map.get(filter, :order)) do
       query
       |> ORM.paginator(~m(page size)a)
@@ -224,11 +226,15 @@ defmodule GroupherServer.CMS.Articles.List do
   defp maybe_mark_viewer_states(paged_articles, _thread, nil),
     do: read_articles(paged_articles, nil)
 
-  defp scope_context(:doc), do: DocScope.public_main()
-  defp scope_context(thread), do: ArticleScope.public(thread)
+  defp view_order(filter) do
+    Map.get(filter, :order) || Map.get(filter, :sort)
+  end
+
+  defp scope_context(:doc), do: DocContext.public_main()
+  defp scope_context(thread), do: ArticleContext.public(thread)
 
   defp read_articles(%{entries: entries} = paged_articles, actor) do
-    case InteractionResponse.many(entries, actor) do
+    case Response.list(entries, actor) do
       {:ok, entries} -> Map.put(paged_articles, :entries, entries)
       {:error, _reason} = error -> error
     end

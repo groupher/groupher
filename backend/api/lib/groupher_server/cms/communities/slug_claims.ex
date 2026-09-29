@@ -12,9 +12,9 @@ defmodule GroupherServer.CMS.Communities.SlugClaims do
 
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.CMS.Model.{CommunityApplication, CommunitySlugClaim}
-  alias GroupherServer.Repo
+  alias CMS.Model.{CommunityApplication, CommunitySlugClaim}
 
   @doc """
   Adds a Multi step inserting the slug claim for the application carried in

@@ -22,13 +22,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS, Repo}
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Dashboard.ThemePreset
-  alias GroupherServer.CMS.Dashboard.ThirdPartyAnalytics
-  alias GroupherServer.CMS.Marker
-  alias GroupherServer.CMS.Model.{Community, CoverBackground}
-  alias GroupherServer.CMS.Passport.Registry
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
+  alias CMS.Marker
+  alias CMS.Model.{Community, CoverBackground}
+  alias CMS.Passport.Registry
   alias GroupherServerWeb.Schema
   alias Helper.ORM
 
@@ -44,6 +43,59 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
+  end
+
+  object :article_view_track_result do
+    field(:tracked, non_null(:boolean))
+    field(:article_stats, non_null(:article_stats))
+    field(:viewer_state, non_null(:viewer_article_state))
+  end
+
+  enum :reaction_outcome do
+    value(:changed)
+    value(:unchanged)
+  end
+
+  object :article_emotion_count do
+    field(:type, non_null(:article_emotion))
+    field(:count, non_null(:integer))
+  end
+
+  object :article_stats do
+    field(:community, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:inner_id, non_null(:id))
+    field(:views, non_null(:integer))
+    field(:views_revision, non_null(:integer))
+    field(:upvotes_count, non_null(:integer))
+    field(:comments_count, non_null(:integer))
+    field(:collects_count, non_null(:integer))
+    field(:comments_participants_count, non_null(:integer))
+    field(:interaction_revision, non_null(:integer))
+    field(:comments_revision, non_null(:integer))
+    field(:emotion_counts, non_null(list_of(non_null(:article_emotion_count))))
+    field(:snapshot_at, non_null(:datetime))
+  end
+
+  object :article_reaction_result do
+    field(:command_id, non_null(:id))
+    field(:reaction_outcome, non_null(:reaction_outcome))
+    field(:article_stats, non_null(:article_stats))
+    field(:interaction_state, non_null(:article_interaction_state))
+  end
+
+  object :article_collect_result do
+    field(:command_id, non_null(:id))
+    field(:folder, non_null(:collect_folder))
+    field(:article_stats, non_null(:article_stats))
+    field(:interaction_state, non_null(:article_interaction_state))
+  end
+
+  object :article_comment_result do
+    field(:command_id, non_null(:id))
+    field(:comment, :comment)
+    field(:article_stats, non_null(:article_stats))
   end
 
   enum :community_application_status do
@@ -100,6 +152,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :article_lifecycle do
     field(:state, non_null(:article_lifecycle_state))
+    field(:version, non_null(:integer))
     field(:changed_at, :datetime)
     field(:archived_at, :datetime)
     field(:deleted_at, :datetime)
@@ -323,6 +376,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
     field(:deleted_at, non_null(:datetime))
     field(:mentioned_by_count, non_null(:integer))
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
 
     field(:scheduled_permanent_deletion_at, non_null(:datetime),
       resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
@@ -773,6 +827,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :doc_publish_checklist do
+    field(:revision, non_null(:integer))
     field(:total_count, non_null(:integer))
     field(:doc_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
     field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
@@ -803,12 +858,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :comment_mutation_article do
     field(:inner_id, non_null(:integer))
-    field(:comments_count, non_null(:integer))
+    field(:comments_revision, non_null(:integer))
   end
 
-  object :comment_mutation_payload do
-    field(:comment, non_null(:comment))
+  object :comment_reconcile_entry do
+    field(:comment_inner_id, non_null(:id))
+    field(:comment, :comment)
+  end
+
+  object :comment_reconcile_payload do
     field(:article, non_null(:comment_mutation_article))
+    field(:entries, non_null(list_of(non_null(:comment_reconcile_entry))))
   end
 
   object :doc_publish_changes_payload do
@@ -816,9 +876,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:release, :doc_publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   input_object :doc_publish_changes_input do
+    field(:expected_checklist_revision, :integer)
     field(:doc_change_ids, list_of(:id))
     field(:tree_change_ids, list_of(:id))
     field(:restore_tree_change_ids, list_of(:id))
@@ -866,6 +928,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:stage, :doc_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
@@ -888,6 +951,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:slug, :string)
     field(:subtitle, :string)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:document, :article_document, resolve: dataloader(CMS, :document))
     timestamp_fields()
   end
@@ -898,12 +962,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
     field(:affected_nodes, list_of(:doc_tree_node))
     field(:conflict, :boolean)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   object :move_doc_to_draft_payload do
     field(:doc_id, :id)
     field(:stage, :doc_snapshot_stage)
     field(:publish_state, :doc_tree_node_publish_state)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
   end
 
   input_object :doc_tree_node_input do
@@ -946,6 +1012,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:inner_id, :id)
     # field(:body_html, :string)
     field(:title, :string)
+    field(:comments_revision, :integer)
+    field(:article_stats, :article_stats)
     field(:author, :common_user)
   end
 
@@ -1173,6 +1241,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:schema_version, :integer)
     field(:data, :json)
     field(:message, :string)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
   end
@@ -1642,6 +1711,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     )
 
     field(:pending, :integer)
+    field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
 
     timestamp_fields()
   end
@@ -1711,7 +1781,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:thread, non_null(:thread))
     field(:inner_id, non_null(:id))
     field(:viewer_has_viewed, :boolean)
-    field(:viewer_has_upvoted, :boolean)
+  end
+
+  @desc "Private, no-store Article interaction projection used to reconcile confirmed writes"
+  object :article_interaction_state do
+    field(:community, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:inner_id, non_null(:id))
+    field(:interaction_revision, non_null(:integer))
+    field(:viewer_has_upvoted, non_null(:boolean))
+    field(:viewer_has_collected, non_null(:boolean))
+    field(:viewer_emotion, :emotion_type)
   end
 
   object :viewer_comment_emotion_state do

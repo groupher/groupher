@@ -4,7 +4,8 @@ import { pick } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
 
 import { browserGraphQLRequest } from '~/graphql/client'
-import { graphqlQueryOptions } from '~/query'
+import { communityKeys, graphqlQueryOptions } from '~/query'
+import { invalidate, QueryInvalidation } from '~/query/invalidation'
 import type { TEditFunc, TRSSType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDsbEdit from '~/stores/dsbEdit/hooks'
@@ -45,7 +46,13 @@ export default function useRSS(): TRet {
   const dsb$ = useDsbEdit()
   const { slug: community } = useCommunity()
   const { edit, isChanged } = useHelper()
-  const pressConfigQuery = graphqlQueryOptions(S.pressConfig, { community })
+  const pressConfigQuery = graphqlQueryOptions(
+    S.pressConfig,
+    { community },
+    {
+      queryKey: communityKeys.pressConfig(community),
+    },
+  )
   const { data } = useQuery(pressConfigQuery)
   const queryClient = useQueryClient()
   const [options, setOptions] = useState<TOptions>(DEFAULT_OPTIONS)
@@ -58,7 +65,7 @@ export default function useRSS(): TRet {
     onSuccess: (_data, input) => {
       original.current = input.options
       dsb$.accept([FIELD.RSS_FEED_TYPE, FIELD.RSS_FEED_COUNT])
-      void queryClient.invalidateQueries({ queryKey: pressConfigQuery.queryKey })
+      void invalidate(queryClient, QueryInvalidation.community.pressConfig(community))
     },
   })
 

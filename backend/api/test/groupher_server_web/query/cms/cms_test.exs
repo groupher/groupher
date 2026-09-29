@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.Category
+  alias GroupherServer.CMS
+  alias CMS.Model.Category
 
   defp create_community!(user, attrs \\ %{}) do
     community_attrs = mock_attrs(:community, attrs)

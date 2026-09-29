@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.ContentImport.Process do
 
   This is a projection only; it never persists a second process state machine.
 
-  See `docs/bulk-import/import-process-log.md`.
+  See `docs/content-import/import-process-log.md`.
 
   Business position:
 
@@ -20,7 +20,9 @@ defmodule GroupherServer.CMS.ContentImport.Process do
         -> Repo
   """
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Job
 
   @doc "Projects one persisted Job into the shared UI process shape."
   @spec project(Job.t()) :: map()

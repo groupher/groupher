@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:update_draft) do
     """
-    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $subtitle: String, $slug: String, $bodyBag: ArtimentBodyBagInput) {
-      updateDocDraft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, subtitle: $subtitle, slug: $slug, bodyBag: $bodyBag) {
+    mutation($community: String!, $id: ID!, $expectedVersion: Int!, $title: String, $subtitle: String, $slug: String, $bodyBag: ArtimentBodyBagInput, $commandId: ID!) {
+      updateDocDraft(community: $community, id: $id, expectedVersion: $expectedVersion, title: $title, subtitle: $subtitle, slug: $slug, bodyBag: $bodyBag, commandId: $commandId) {
         id
         docId
         version
@@ -32,8 +32,8 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:checkpoint_snapshot) do
     """
-    mutation($community: String!, $id: ID!) {
-      checkpointDocDraftSnapshot(community: $community, id: $id) {
+    mutation($community: String!, $id: ID!, $commandId: ID!) {
+      checkpointDocDraftSnapshot(community: $community, id: $id, commandId: $commandId) {
         id
         thread
         stage
@@ -56,8 +56,8 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:publish_changes) do
     """
-    mutation($community: String!, $input: DocPublishChangesInput) {
-      publishDocChanges(community: $community, input: $input) {
+    mutation($community: String!, $input: DocPublishChangesInput, $commandId: ID!) {
+      publishDocChanges(community: $community, input: $input, commandId: $commandId) {
         done
         release {
           id
@@ -73,8 +73,8 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:restore_snapshot) do
     """
-    mutation($community: String!, $id: ID!, $snapshotId: ID!) {
-      restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId) {
+    mutation($community: String!, $id: ID!, $snapshotId: ID!, $commandId: ID!) {
+      restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId, commandId: $commandId) {
         id
         title
         subtitle

@@ -23,14 +23,12 @@ defmodule GroupherServer.CMS.Assets do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.{Community, CommunityAsset}
-  alias Helper.T
-
-  import Ecto.Query, only: [from: 2]
-
   alias __MODULE__.{ApplicationUploads, Deletion, Reader, Upload, Writer}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, CommunityAsset}
+  alias Helper.T
 
   @doc """
   Lists active assets owned by a community.
@@ -127,15 +125,8 @@ defmodule GroupherServer.CMS.Assets do
     do: ApplicationUploads.register(community, upload, user)
 
   @doc "Requests best-effort deletion for an expired Application Logo object."
-  def delete_application_upload_object(upload) do
-    Deletion.enqueue(%CommunityAsset{
-      id: upload.id,
-      public_ref: upload.public_ref,
-      community_id: nil,
-      storage: upload.storage,
-      storage_key: upload.storage_key
-    })
-  end
+  def delete_application_upload_object(upload),
+    do: Deletion.delete_application_upload_object(upload)
 
   @doc "Creates a short-lived upload capability for assets-hub."
   @spec create_upload_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
@@ -155,22 +146,8 @@ defmodule GroupherServer.CMS.Assets do
 
   @doc "Soft-deletes generated asset rows after an abandoned Wallpaper Batch."
   @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
-  def delete_generated_assets(%Community{id: community_id} = community, public_refs)
-      when is_list(public_refs) do
-    public_refs = Enum.filter(public_refs, &is_binary/1)
-
-    from(asset in CommunityAsset,
-      where:
-        asset.community_id == ^community_id and asset.public_ref in ^public_refs and
-          is_nil(asset.deleted_at)
-    )
-    |> Repo.all()
-    |> Enum.each(fn asset ->
-      _ = delete(community, asset.id)
-    end)
-
-    :ok
-  end
+  def delete_generated_assets(%Community{} = community, public_refs),
+    do: Deletion.delete_generated_assets(community, public_refs)
 
   @doc """
   Soft-deletes an unreferenced community asset.

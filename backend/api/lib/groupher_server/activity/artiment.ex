@@ -5,9 +5,9 @@ defmodule GroupherServer.Activity.Artiment do
       Activity facade -> CMS Artiment matcher -> thread handler
   """
 
-  alias GroupherServer.Activity
-  alias GroupherServer.Activity.ErrorCat
-  alias GroupherServer.CMS.Artiment.Matcher
+  alias GroupherServer.{Activity, CMS}
+  alias Activity.ErrorCat
+  alias CMS.Artiment.Matcher
 
   @handlers %{
     post: Activity.Post,

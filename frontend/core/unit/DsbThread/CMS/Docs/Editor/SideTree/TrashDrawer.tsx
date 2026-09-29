@@ -5,6 +5,7 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import CloseLightSVG from '~/icons/CloseLight'
 import FileTextSVG from '~/icons/FileText'
 import RotateSVG from '~/icons/Rotate'
+import { createCommandId } from '~/query/mutation/optimistic/execute'
 import BaseDrawer from '~/ui/Drawer'
 import { toast } from '~/ui/Toaster'
 import S from '~/unit/DsbThread/schema/docs'
@@ -133,6 +134,7 @@ const TrashDrawer: FC<TProps> = ({
       const data = await browserGraphQLRequest<TDocTreeMutationData>(S.restoreDocTreeTrashItem, {
         community,
         id: item.id,
+        commandId: createCommandId(),
         baseRevision,
         targetParentNodeId,
         targetIndex: targetParentNodeId ? (item.deletedFromIndex ?? 0) : undefined,

@@ -8,9 +8,12 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
   draft + public heads -> transient field/document comparison -> editor change fact
   """
 
+  require GroupherServer.CMS.Articles.ErrorCat
+
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Draft, ErrorCat}
-  alias GroupherServer.CMS.Model.{ArticleDocument, Community}
+
+  alias CMS.Articles.{Draft, ErrorCat}
+  alias CMS.Model.{ArticleDocument, Community}
 
   @doc """
   Compares one draft head with the public head and returns the transient change
@@ -65,7 +68,7 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
          {:ok, public} <- Draft.read_public(community, thread, article_hash_id, opts) do
       {:ok, compare(draft, public).changed}
     else
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
+      {:error, ErrorCat.error_pattern(reason: :not_exist)} ->
         case Draft.read(community, thread, article_hash_id, opts) do
           {:ok, _draft} -> {:ok, true}
           _ -> {:ok, false}
@@ -83,14 +86,14 @@ defmodule GroupherServer.CMS.Articles.DraftDiff do
           {:ok, public} ->
             {:ok, compare(draft, public)}
 
-          {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
+          {:error, ErrorCat.error_pattern(reason: :not_exist)} ->
             {:ok, %{changed: true, document_changed: true, fields: %{}}}
 
           error ->
             error
         end
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_exist}} ->
+      {:error, ErrorCat.error_pattern(reason: :not_exist)} ->
         {:ok, %{changed: false, document_changed: false, fields: %{}}}
 
       error ->

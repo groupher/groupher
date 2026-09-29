@@ -14,7 +14,7 @@ import GtdDoneSVG from '~/icons/GtdDone'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
-import type { TKanbanBoard, TPagedPosts } from '~/spec'
+import type { TKanbanBoard, TPagedArticleViewModels } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
@@ -26,7 +26,7 @@ type TColumn = {
   icon: ReactNode
   title: string
   bodyClassName: string
-  posts: TPagedPosts
+  posts: TPagedArticleViewModels
 }
 
 function HeaderColumn({ column, className = '' }: { column: TColumn; className?: string }) {
@@ -53,7 +53,9 @@ function BodyColumn({ column, className = '' }: { column: TColumn; className?: s
       <div className={column.bodyClassName}>
         {!hasEntries && <EmptyItem />}
         {hasEntries &&
-          column.posts.entries.map((item) => <KanbanItem key={item.innerId} article={item} />)}
+          column.posts.entries.map((item) => (
+            <KanbanItem key={item.content.innerId} viewModel={item} />
+          ))}
       </div>
     </div>
   )

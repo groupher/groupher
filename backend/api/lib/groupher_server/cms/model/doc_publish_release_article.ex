@@ -29,15 +29,14 @@ defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
+  alias __MODULE__
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.{DocPublishRelease, DocSnapshot}
+  alias CMS.Model.{DocPublishRelease, DocSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

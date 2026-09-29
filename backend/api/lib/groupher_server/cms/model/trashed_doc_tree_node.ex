@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Docs-only structural recovery state for one logical Tree node.
 
@@ -17,13 +16,15 @@ defmodule GroupherServer.CMS.Model.TrashedDocTreeNode do
   use Ecto.Schema
   use Accessible
 
+  require GroupherServer.CMS.DocTree.Const
+
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Model.{Community, DocBranch, TrashAction}
-  alias Helper.Constant.DBPrefix
+  alias GroupherServer.{Accounts, CMS}
 
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, DocBranch, TrashAction}
+  alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]

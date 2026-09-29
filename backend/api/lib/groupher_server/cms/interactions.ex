@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Interactions do
 
       GraphQL / service Reader
         -> CMS.Interactions
-        -> Reaction / ReadState / Scope / ViewEvents
+        -> Reaction / ReadState / Scope
         -> authoritative facts and derived read state
 
   The facade owns the stable Interaction reaction and read contracts. SQL,
@@ -12,9 +12,10 @@ defmodule GroupherServer.CMS.Interactions do
   behind their respective domain owners.
   """
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS}
 
-  alias GroupherServer.CMS.Interactions.{Reactions, ReadState, Scope, ViewEvents}
+  alias Accounts.Model.User
+  alias CMS.Interactions.{ErrorCat, Reactions, ReadState, Scope}
 
   @doc """
   Reports an Artiment using the immutable reporter identity.
@@ -60,6 +61,12 @@ defmodule GroupherServer.CMS.Interactions do
   @spec viewer_states([struct()], User.t() | nil, keyword()) :: map()
   defdelegate viewer_states(artiments, viewer, opts \\ []), to: ReadState
 
+  @doc "Returns public presentation state without current-viewer fields."
+  defdelegate public_state(artiment, opts \\ []), to: ReadState
+
+  @doc "Returns batched public presentation state without current-viewer fields."
+  defdelegate public_states(artiments, opts \\ []), to: ReadState
+
   @doc """
   Returns lightweight fixed counts keyed by Artiment type and physical id.
 
@@ -68,20 +75,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.counts([article, comment])
 
   """
-  @spec counts([struct()]) :: map() | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec counts([struct()]) :: map() | {:error, ErrorCat.error()}
   defdelegate counts(artiments), to: ReadState
-
-  @doc """
-  Records a durable Article view without taking the aggregate mutation lock.
-
-  ## Examples
-
-      CMS.Interactions.record_view(article, viewer, event_id)
-
-  """
-  @spec record_view(struct(), User.t() | nil, Ecto.UUID.t() | nil) ::
-          {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate record_view(article, viewer, event_id), to: ViewEvents, as: :record
 
   @doc """
   Collects an Article idempotently and returns the canonical Article.
@@ -124,8 +119,9 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.emotion(comment, :heart, actor)
 
   """
-  @spec emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor), to: Reactions
+  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment emotion idempotently and returns the canonical Artiment.
@@ -135,8 +131,9 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.undo_emotion(comment, :heart, actor)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor), to: Reactions
+  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Adds an Artiment upvote idempotently and returns the canonical Artiment.
@@ -146,8 +143,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.upvote(article, actor)
 
   """
-  @spec upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor), to: Reactions
+  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Removes an Artiment upvote idempotently and returns the canonical Artiment.
@@ -157,8 +154,8 @@ defmodule GroupherServer.CMS.Interactions do
       CMS.Interactions.undo_upvote(article, actor)
 
   """
-  @spec undo_upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor), to: Reactions
+  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Reactions
 
   @doc """
   Returns public paged users who upvoted an already-scoped Article.
@@ -180,6 +177,6 @@ defmodule GroupherServer.CMS.Interactions do
 
   """
   @spec scope(Ecto.Queryable.t(), keyword()) ::
-          {:ok, Ecto.Query.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, Ecto.Query.t()} | {:error, ErrorCat.error()}
   defdelegate scope(queryable, opts), to: Scope
 end

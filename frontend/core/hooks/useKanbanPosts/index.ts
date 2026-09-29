@@ -1,17 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
 import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
+import useArticleStates from '~/hooks/useArticleStates'
 import { Q } from '~/query'
-import type { TPagedPosts, TResState } from '~/spec'
+import type { TPagedArticleViewModels, TPagedPosts, TResState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 type TRes = {
-  backlog: TPagedPosts
-  todo: TPagedPosts
-  wip: TPagedPosts
-  done: TPagedPosts
-  rejected: TPagedPosts
+  backlog: TPagedArticleViewModels
+  todo: TPagedArticleViewModels
+  wip: TPagedArticleViewModels
+  done: TPagedArticleViewModels
+  rejected: TPagedArticleViewModels
   resState: TResState
 }
 
@@ -20,15 +22,38 @@ export default function useKanbanPosts(): TRes {
   const { slug } = useCommunity()
   const query = useQuery(Q.article.kanban(slug))
   const data = query.data
+  const entries = useMemo(
+    () => Object.values(data || {}).flatMap((page) => page.entries || []),
+    [data],
+  )
+  const states = useArticleStates(entries)
+  const stateByArticle = useMemo(
+    () => new Map(states.map((state) => [state.content, state] as const)),
+    [states],
+  )
+
+  const toViewModels = (page: TPagedPosts | undefined): TPagedArticleViewModels => {
+    return {
+      ...(page || EMPTY_PAGED_ARTICLES),
+      entries: (page?.entries || []).map((article) => {
+        const state = stateByArticle.get(article)!
+        return {
+          content: article,
+          stats: state.stats,
+          viewerState: state.viewerState,
+        }
+      }),
+    }
+  }
 
   return {
     resState: (!data && query.isFetching
       ? TYPE.RES_STATE.LOADING
       : TYPE.RES_STATE.DONE) as TResState,
-    backlog: data?.backlog || EMPTY_PAGED_ARTICLES,
-    todo: data?.todo || EMPTY_PAGED_ARTICLES,
-    wip: data?.wip || EMPTY_PAGED_ARTICLES,
-    done: data?.done || EMPTY_PAGED_ARTICLES,
-    rejected: data?.rejected || EMPTY_PAGED_ARTICLES,
+    backlog: toViewModels(data?.backlog),
+    todo: toViewModels(data?.todo),
+    wip: toViewModels(data?.wip),
+    done: toViewModels(data?.done),
+    rejected: toViewModels(data?.rejected),
   }
 }

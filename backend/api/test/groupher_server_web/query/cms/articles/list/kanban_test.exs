@@ -2,9 +2,10 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
   @moduledoc false
 
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
+  @article_cat CMS.Artiment.Const.cat_map()
+  @article_status CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)

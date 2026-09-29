@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const changelog = graphql(`
-  query Changelog($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+  query Changelog($article: ArticlePathInput!) {
     changelog(article: $article) {
       ...PageChangelogFields
       ...PageChangelogDetailFields
@@ -10,7 +10,7 @@ export const changelog = graphql(`
 `)
 
 export const pagedChangelogs = graphql(`
-  query PagedChangelogs($filter: PagedChangelogsFilter!, $userHasLogin: Boolean!) {
+  query PagedChangelogs($filter: PagedChangelogsFilter!) {
     pagedChangelogs(filter: $filter) {
       entries {
         ...PageChangelogFields
@@ -25,8 +25,6 @@ export const pagedChangelogs = graphql(`
         commentsParticipants {
           ...PageAuthorFields
         }
-        viewerHasViewed @include(if: $userHasLogin)
-        viewerHasUpvoted @include(if: $userHasLogin)
       }
       ...PageChangelogPageInfo
     }

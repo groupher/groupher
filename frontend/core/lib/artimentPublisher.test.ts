@@ -9,6 +9,8 @@ const input = {
   title: 'Introduction',
   subtitle: 'Intro',
   slug: 'introduction',
+  expectedVersion: 3,
+  commandId: '00000000-0000-4000-8000-000000000001',
 }
 
 describe('saveDocDraft', () => {
@@ -33,13 +35,15 @@ describe('saveDocDraft', () => {
     expect(JSON.parse(String(request.body))).toEqual({
       action: 'updateDocDraft',
       value: input.value,
-      variables: {
+      variables: expect.objectContaining({
         community: 'home',
         id: 'doc-id',
         slug: 'introduction',
         subtitle: 'Intro',
         title: 'Introduction',
-      },
+        expectedVersion: 3,
+        commandId: expect.any(String),
+      }),
     })
   })
 

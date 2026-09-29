@@ -74,7 +74,7 @@ const directoryItems = async (
 
 /** Maps Nextra pages/app-router metadata and directory ordering into SourceTree.
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 export const analyzeNextra = async (workspace: TSourceWorkspace): Promise<TSourceTree> => {
   const appRouter = workspace.files.some((file) => file.path === 'app/_meta.global.tsx')

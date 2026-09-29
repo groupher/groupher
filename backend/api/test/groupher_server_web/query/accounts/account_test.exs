@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunitySubscriber
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunitySubscriber
   alias Helper.Guardian.BrowserAccess
 
   @default_subscribed_communities GroupherServer.Accounts.Config.default_subscribed_communities()

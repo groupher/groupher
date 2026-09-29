@@ -9,7 +9,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
   """
 
   alias __MODULE__.{Collect, Emotion, Report, Upvote}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+  alias Accounts.Model.User
 
   @doc """
   Adds an Artiment upvote idempotently.
@@ -19,8 +20,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.upvote(article, actor)
 
   """
-  @spec upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate upvote(artiment, actor), to: Upvote, as: :add
+  @spec upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :add
 
   @doc """
   Removes an Artiment upvote idempotently.
@@ -30,8 +31,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.undo_upvote(article, actor)
 
   """
-  @spec undo_upvote(struct(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_upvote(artiment, actor), to: Upvote, as: :remove
+  @spec undo_upvote(struct(), User.t(), String.t() | nil) :: {:ok, struct()} | {:error, term()}
+  defdelegate undo_upvote(artiment, actor, command_id \\ nil), to: Upvote, as: :remove
 
   @doc """
   Applies an emotion idempotently.
@@ -41,8 +42,9 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.emotion(comment, :heart, actor)
 
   """
-  @spec emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate emotion(artiment, emotion, actor), to: Emotion, as: :add
+  @spec emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate emotion(artiment, emotion, actor, command_id \\ nil), to: Emotion, as: :add
 
   @doc """
   Removes an emotion idempotently.
@@ -52,8 +54,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions do
       Reactions.undo_emotion(comment, :heart, actor)
 
   """
-  @spec undo_emotion(struct(), atom(), User.t()) :: {:ok, struct()} | {:error, term()}
-  defdelegate undo_emotion(artiment, emotion, actor), to: Emotion, as: :remove
+  @spec undo_emotion(struct(), atom(), User.t(), String.t() | nil) ::
+          {:ok, struct()} | {:error, term()}
+  defdelegate undo_emotion(artiment, emotion, actor, command_id \\ nil),
+    to: Emotion,
+    as: :remove
 
   @doc """
   Collects an Article idempotently.

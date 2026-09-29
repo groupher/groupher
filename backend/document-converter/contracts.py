@@ -2,7 +2,7 @@
 
 HTTP boundary -> Pydantic DTO -> bounded JSON response -> Content Import caller
 
-See docs/bulk-import/article-publish-import-refactor.md for the HTTP contract.
+See docs/content-import/article-publish-import-refactor.md for the HTTP contract.
 """
 
 from typing import Literal

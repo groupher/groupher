@@ -14,12 +14,15 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Link do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
+
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild
+  alias GroupherServer.CMS
+
+  alias CMS.Model.Embeds.Dashboard.LinkChild
 
   @primary_key false
   embedded_schema do

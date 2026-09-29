@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.SnapshotTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Comments.Lifecycle
-  alias GroupherServer.CMS.Snapshot
+  alias GroupherServer.CMS
+  alias CMS.Comments.Lifecycle
+  alias CMS.Snapshot
   alias Helper.Cache
 
   describe "[cms snapshot]" do

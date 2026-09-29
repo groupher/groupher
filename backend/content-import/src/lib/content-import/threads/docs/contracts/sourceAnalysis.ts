@@ -3,8 +3,8 @@
  *
  *   analyzer -> SourceAnalysis artifact -> contract decoder -> review/apply workflow
  *
- * @see docs/bulk-import/content-import-architecture.md
- * @see docs/bulk-import/markdown-title-normalization.md
+ * @see docs/content-import/content-import-architecture.md
+ * @see docs/content-import/markdown-title-normalization.md
  */
 import type { TBadSmell } from '../../../core/contracts'
 import {

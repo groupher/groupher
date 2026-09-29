@@ -13,13 +13,12 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
         -> PostgreSQL
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
+  alias __MODULE__
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

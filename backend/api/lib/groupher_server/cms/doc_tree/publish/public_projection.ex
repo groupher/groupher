@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Applies staged tree events to public doc tree rows.
 
@@ -17,13 +16,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   in `DocPublisher`, and release history stays in `Release`.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
-  alias Helper.ORM
+  alias CMS.ErrorCat
 
-  require CMS.Const
+  alias CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
+  alias Helper.ORM
 
   @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.DocTree.Const.doc_tree_json_key(:doc_id)
@@ -64,7 +66,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   def preapply_tree_delete_events(%Community{} = community, branch, events) do
     events
     |> Enum.filter(
-      &(&1.event_type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)])
+      &(&1.event_type in [
+          CMS.DocTree.Const.tree_event(:node_delete),
+          CMS.DocTree.Const.tree_event(:pin_remove)
+        ])
     )
     |> apply_tree_events(community, branch)
   end
@@ -137,7 +142,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.DocTree.Const.tree_event(:node_create), CMS.DocTree.Const.tree_event(:pin_add)] do
+       when type in [
+              CMS.DocTree.Const.tree_event(:node_create),
+              CMS.DocTree.Const.tree_event(:pin_add)
+            ] do
     event_node = event.payload["node"] || %{}
     draft = draft_node_by_node_id(community, branch, event_node["id"])
     node = authoritative_placement(event_node, draft)
@@ -154,7 +162,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.DocTree.Const.tree_event(:node_delete), CMS.DocTree.Const.tree_event(:pin_remove)] do
+       when type in [
+              CMS.DocTree.Const.tree_event(:node_delete),
+              CMS.DocTree.Const.tree_event(:pin_remove)
+            ] do
     node = event.payload["node"] || %{}
 
     delete_public_node_by_node_id(community, branch, node["id"], node["type"])
@@ -165,7 +176,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          branch,
          %DocTreeEvent{event_type: type} = event
        )
-       when type in [CMS.DocTree.Const.tree_event(:node_move), CMS.DocTree.Const.tree_event(:pin_reorder)] do
+       when type in [
+              CMS.DocTree.Const.tree_event(:node_move),
+              CMS.DocTree.Const.tree_event(:pin_reorder)
+            ] do
     payload = event.payload
 
     update_public_node_by_node_id(
@@ -216,16 +230,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
             end
 
           nil ->
-            {:error, GroupherServer.ErrorCat.custom("Publish the parent navigation node first.")}
+            {:error, ErrorCat.custom("Publish the parent navigation node first.")}
 
           %DocTreeNode{} ->
-            {:error, GroupherServer.ErrorCat.custom("Navigation parent must be a Tab or Group.")}
+            {:error, ErrorCat.custom("Navigation parent must be a Tab or Group.")}
         end
     end
   end
 
   defp ensure_public_parent(_community, _branch, _node),
-    do: {:error, GroupherServer.ErrorCat.custom("Navigation parent is required.")}
+    do: {:error, ErrorCat.custom("Navigation parent is required.")}
 
   defp public_attrs_from_event_node(
          %Community{} = community,
@@ -258,7 +272,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          }}
 
       {:error, _} ->
-        {:error, GroupherServer.ErrorCat.custom("Publish docs before publishing tree.")}
+        {:error, ErrorCat.custom("Publish docs before publishing tree.")}
     end
   end
 
@@ -423,7 +437,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   defp field_atom(field) do
     case Map.fetch(@event_public_fields, field) do
       {:ok, atom} -> {:ok, atom}
-      :error -> {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree field: #{field}")}
+      :error -> {:error, ErrorCat.custom("Unsupported docs tree field: #{field}")}
     end
   end
 
@@ -433,7 +447,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
         {:ok, atom}
 
       :error ->
-        {:error, GroupherServer.ErrorCat.custom("Unsupported docs tree node type: #{type}")}
+        {:error, ErrorCat.custom("Unsupported docs tree node type: #{type}")}
     end
   end
 end

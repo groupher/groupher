@@ -16,10 +16,11 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS.Articles.Trash
-  alias GroupherServer.CMS.FrontDesk
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.{Articles.Trash, Communities.ErrorCat, FrontDesk}
+
+  alias CMS.Model.{
     Blog,
     Changelog,
     Community,
@@ -28,12 +29,10 @@ defmodule GroupherServer.CMS.Communities.TagStats do
     Post
   }
 
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.Repo
   alias Helper.{Datetime, ORM, T}
 
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @tracked_threads GroupherServer.CMS.Communities.Config.ordinary_article_threads()
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @tracked_threads CMS.Communities.Config.ordinary_article_threads()
   @default_thread :post
 
   @doc """

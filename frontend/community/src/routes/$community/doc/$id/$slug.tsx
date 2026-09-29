@@ -13,6 +13,9 @@ export const Route = createFileRoute('/$community/doc/$id/$slug')({
       context.queryClient.ensureQueryData(communityQueries.doc(params.community, params.id)),
     ])
     if (!doc) throw notFound()
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.DOC, params.id),
+    )
     return { doc }
   },
   head: ({ loaderData, params, matches }) => ({
@@ -31,7 +34,7 @@ function DocArticle() {
   const { community, id } = Route.useParams()
   return (
     <ArticleQueryProvider community={community} innerId={id} thread={THREAD.DOC}>
-      <DocThread article />
+      <DocThread article community={community} innerId={Number(id)} />
     </ArticleQueryProvider>
   )
 }

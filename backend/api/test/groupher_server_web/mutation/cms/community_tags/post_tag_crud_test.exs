@@ -3,7 +3,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.CommunityTag
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityTag
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -89,21 +94,21 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @create_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -191,7 +196,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(
                @update_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+               ErrorCat.code(CommunityErrorCat.invalid_domain_tag())
              )
     end
 
@@ -224,21 +229,21 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @delete_tag_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -263,7 +268,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(
                @update_group_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+               ErrorCat.code(CommunityErrorCat.invalid_domain_tag())
              )
     end
 
@@ -287,7 +292,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(
                @delete_group_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.invalid_domain_tag())
+               ErrorCat.code(CommunityErrorCat.invalid_domain_tag())
              )
     end
   end

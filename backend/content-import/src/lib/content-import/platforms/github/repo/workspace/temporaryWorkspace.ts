@@ -3,7 +3,7 @@
  *
  *   mkdtemp -> operation -> finally recursive cleanup
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import fs from 'node:fs/promises'
 import os from 'node:os'

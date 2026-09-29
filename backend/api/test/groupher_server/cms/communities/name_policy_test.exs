@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Communities.NamePolicyTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS.Communities.NamePolicy
-  alias GroupherServer.CMS.Model.CommunitySlugClaim
+  alias GroupherServer.CMS
+  alias CMS.Communities.NamePolicy
+  alias CMS.Model.CommunitySlugClaim
 
   setup do
     {:ok, user} = db_insert(:user)
@@ -12,7 +13,7 @@ defmodule GroupherServer.Test.CMS.Communities.NamePolicyTest do
   end
 
   test "reserved and normalized names are checked before namespace queries" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :reserved_slug}} =
+    assert {:error, %ErrorCat.Error{reason: :reserved_slug}} =
              NamePolicy.check(" Home ")
 
     assert {:ok, "new-community"} = NamePolicy.check(" New-Community ")
@@ -21,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Communities.NamePolicyTest do
   test "disputed claims keep a name unavailable", %{user: user} do
     insert_claim!(user, "acme", :disputed)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :slug_disputed}} =
+    assert {:error, %ErrorCat.Error{reason: :slug_disputed}} =
              NamePolicy.check("acme")
 
     assert {:ok, result} = CMS.Communities.check_name("acme")
@@ -34,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Communities.NamePolicyTest do
       cooldown_until: DateTime.add(DateTime.utc_now(:second), 3600, :second)
     )
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :slug_in_cooldown}} =
+    assert {:error, %ErrorCat.Error{reason: :slug_in_cooldown}} =
              NamePolicy.check("cooldown-name")
   end
 

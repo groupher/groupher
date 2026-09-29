@@ -13,6 +13,7 @@ defmodule GroupherServer.Application do
         -> Repo + PubSub + Endpoint + Finch + Oban + Cachex
         -> GraphQL/domain/background execution
   """
+
   use Application
 
   alias Helper.Cache
@@ -21,15 +22,18 @@ defmodule GroupherServer.Application do
 
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
-  @spec start(any, any) :: {:error, any} | {:ok, pid}
   @doc "Starts the environment-appropriate Groupher supervision tree."
+  @spec start(any, any) :: {:error, any} | {:ok, pid}
   def start(_type, _args) do
     GroupherServer.CMS.Assets.Endpoints.validate!()
+    validate_public_cache!()
 
     children =
       [
         {Phoenix.PubSub, name: GroupherServer.PubSub},
-        GroupherServer.Repo
+        GroupherServer.Repo,
+        GroupherServer.PublicCache.Telemetry,
+        GroupherServer.ServiceAuth.Cache
       ] ++
         maybe_dns_cluster_worker() ++
         maybe_endpoint_worker() ++
@@ -83,6 +87,13 @@ defmodule GroupherServer.Application do
       []
     else
       [{Oban, Application.fetch_env!(:groupher_server, Oban)}]
+    end
+  end
+
+  defp validate_public_cache! do
+    if Application.get_env(:groupher_server, :env) == :prod and
+         not GroupherServer.PublicCache.Cloudflare.configured?() do
+      raise "Cloudflare public-cache purge is not configured"
     end
   end
 

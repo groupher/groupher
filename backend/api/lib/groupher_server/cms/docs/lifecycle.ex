@@ -7,9 +7,10 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Model.{DocBranch, DocLifecycle}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Articles.ErrorCat
+  alias CMS.Model.{DocBranch, DocLifecycle}
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
       #=> {:ok, :published}
 
       Lifecycle.state(community.id, branch.id, "missing")
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :lifecycle_not_found}}
+      #=> {:error, ErrorCat.error_pattern(reason: :lifecycle_not_found)}
 
   """
   def state(community_id, branch_id, article_hash_id) do

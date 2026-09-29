@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   setup do
     {community, post, _, user} = mock_article(:post)
 
@@ -51,21 +54,21 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
              |> mutation_error?(
                S.Article.m(:mirror_article),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Article.m(:mirror_article),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                S.Article.m(:mirror_article),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 

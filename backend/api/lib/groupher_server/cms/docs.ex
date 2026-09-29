@@ -7,17 +7,23 @@ defmodule GroupherServer.CMS.Docs do
   Docs branch/editor -> snapshot and tree boundaries -> public Docs release
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Articles.Diff
-  alias GroupherServer.CMS.Articles.Publish
-  alias GroupherServer.CMS.Docs.Snapshot
-  alias GroupherServer.CMS.Model.{Community, DocSnapshot}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Command
+  alias CMS.Articles.{Diff, Publish}
+  alias CMS.Docs.Snapshot
+  alias CMS.Model.{Community, DocSnapshot}
   alias Helper.T
 
-  @doc "Reads the current Doc editor head in the selected branch."
+  @doc "Reads the current Doc content head shown by the editor; this is not the rich-text editor implementation."
+  def read_editor_head(%Community{} = community, doc_id, opts \\ []) do
+    CMS.Articles.read_editor_head(community, :doc, doc_id, opts)
+  end
+
+  @doc "Compatibility alias for `read_editor_head/3`."
   def read_editor(%Community{} = community, doc_id, opts \\ []) do
-    CMS.Articles.read_editor(community, :doc, doc_id, opts)
+    read_editor_head(community, doc_id, opts)
   end
 
   @doc "Lists immutable revisions for one Doc in the selected branch."
@@ -38,7 +44,28 @@ defmodule GroupherServer.CMS.Docs do
   @spec checkpoint_snapshot(Community.t(), T.id(), User.t() | nil, keyword() | map()) ::
           T.domain_res(DocSnapshot.t())
   def checkpoint_snapshot(%Community{} = community, doc_id, user \\ nil, opts \\ []) do
-    Snapshot.checkpoint(community, :doc, doc_id, user, opts)
+    if match?(%User{}, user) do
+      with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+        opts = drop_command_id(opts)
+
+        Command.create_user(user, command_id,
+          command: :doc_checkpoint_snapshot,
+          resource: :doc,
+          owner: community,
+          input: %{doc_id: doc_id, opts: opts},
+          recovery: fn receipt ->
+            Snapshot.get(community, :doc, doc_id, receipt.result_key, opts)
+          end
+        )
+        |> Command.run(fn %{input: %{doc_id: doc_id, opts: opts}} ->
+          with {:ok, result} <- Snapshot.checkpoint(community, :doc, doc_id, user, opts) do
+            {:ok, result, %{result_key: result.id}}
+          end
+        end)
+      end
+    else
+      Snapshot.checkpoint(community, :doc, doc_id, user, opts)
+    end
   end
 
   @doc "Restores a Doc revision into the selected branch draft."
@@ -50,7 +77,31 @@ defmodule GroupherServer.CMS.Docs do
           keyword() | map()
         ) :: T.domain_res(T.article())
   def restore_snapshot(community, doc_id, snapshot_id, user \\ nil, opts \\ []) do
-    Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts)
+    if match?(%User{}, user) do
+      with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
+        opts = drop_command_id(opts)
+
+        Command.create_user(user, command_id,
+          command: :doc_restore_snapshot,
+          resource: :doc,
+          owner: community,
+          input: %{doc_id: doc_id, snapshot_id: snapshot_id, opts: opts},
+          recovery: fn _receipt ->
+            CMS.Articles.read_editor_head(community, :doc, doc_id, opts)
+          end
+        )
+        |> Command.run(fn %{
+                            input: %{doc_id: doc_id, snapshot_id: snapshot_id, opts: opts}
+                          } ->
+          with {:ok, result} <-
+                 Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts) do
+            {:ok, result, %{result_key: result.article_hash_id}}
+          end
+        end)
+      end
+    else
+      Snapshot.restore(community, :doc, doc_id, snapshot_id, user, opts)
+    end
   end
 
   @doc "Publishes one Doc draft and returns its immutable Doc revision."
@@ -68,4 +119,12 @@ defmodule GroupherServer.CMS.Docs do
 
   @doc "Compares a current Doc Article row to an immutable Doc revision."
   def diff_current(article, snapshot), do: Diff.compare_current(article, snapshot)
+
+  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
+  defp drop_command_id(opts), do: opts
+
+  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
+  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
+  defp option(_opts, _key), do: nil
 end

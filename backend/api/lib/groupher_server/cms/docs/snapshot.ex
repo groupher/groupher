@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Docs.Snapshot do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Stores the append-only revision timeline for Docs.
 
@@ -17,17 +16,20 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
   remain auditable.
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
-  alias GroupherServer.CMS.Artiment.BodyBag
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Gate.Decision
-  alias GroupherServer.CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
-  alias Helper.{ORM, T}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
 
+  alias Accounts.Model.User
+  alias CMS.Articles.{Draft, MutationLock, VersionedRelations, Writer}
+  alias CMS.Artiment.BodyBag
+  alias CMS.Docs.Branch
+  alias CMS.Gate.Decision
+  alias CMS.Model.{ArticleDocument, Author, Community, DocSnapshot}
+  alias Helper.{ORM, T}
 
   @default_limit 30
   @common_snapshot_fields [:title, :digest, :slug, :subtitle]
@@ -85,8 +87,13 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
     run_locked(community, thread, article_hash_id, opts, fn ->
       with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts),
            {:ok, actor} <- snapshot_actor(user, draft),
-           {:ok, _canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
-        checkpoint_article(draft, CMS.Docs.Const.doc_snapshot_action(:checkpoint), user, opts)
+           {:ok, canonical_draft} <- CMS.Gate.access_check(actor, :edit, draft) do
+        checkpoint_article(
+          canonical_draft,
+          CMS.Docs.Const.doc_snapshot_action(:checkpoint),
+          user,
+          opts
+        )
       else
         {:error, %Decision{} = decision} -> {:error, Decision.primary_error(decision)}
       end
@@ -164,7 +171,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
              get(community, thread, article_hash_id, snapshot_hash_id, opts),
            {:ok, actor} <- snapshot_actor(user, source_snapshot),
            {:ok, target_article} <-
-             Draft.read_editor(community, thread, article_hash_id, opts),
+             Draft.read_editor_head(community, thread, article_hash_id, opts),
            {:ok, _canonical_article} <-
              CMS.Gate.access_check(actor, :restore_snapshot, target_article),
            {:ok, _draft} <- restore_into_draft(community, thread, source_snapshot, user, opts),
@@ -307,7 +314,7 @@ defmodule GroupherServer.CMS.Docs.Snapshot do
 
   defp create_restored_draft(_community, _thread, _snapshot, nil, _opts) do
     {:error,
-     GroupherServer.ErrorCat.custom("DocSnapshot restore requires a user to create a Draft")}
+     ErrorCat.custom("DocSnapshot restore requires a user to create a Draft")}
   end
 
   defp create_restored_draft(community, thread, snapshot, %User{} = user, opts) do

@@ -42,5 +42,8 @@ describe('Community response cache tags', () => {
     expect(responseHeaders.get('cache-tag')).toBe(
       'community[home], community[home]-thread[POST]-articles, community[home]-thread[POST]-article[42]',
     )
+    expect(responseHeaders.get('cache-control')).toBe(
+      'public, s-maxage=600, stale-while-revalidate=300',
+    )
   })
 })

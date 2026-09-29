@@ -4,6 +4,7 @@ defmodule GroupherServer.Activity.Model.ChangelogLog do
 
       Changelog Activity contract -> activity.changelog_logs -> safe surfaces
   """
+
   use GroupherServer.Activity.Model.Base,
     table: "changelog_logs",
     stream_field: :changelog_ref,

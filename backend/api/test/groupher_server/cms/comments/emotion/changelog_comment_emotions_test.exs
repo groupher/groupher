@@ -3,8 +3,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogCommentEmotions do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Comments.InteractionResponse
-  alias GroupherServer.CMS.Model.CommentUserEmotion
+  alias GroupherServer.CMS
+  alias CMS.Comments.InteractionResponse
+  alias CMS.Model.CommentUserEmotion
 
   @default_emotions Embeds.CommentEmotion.default_persisted_emotions()
 

@@ -1,7 +1,8 @@
 defmodule GroupherServer.Auth.ContractTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract
+  alias GroupherServer.Auth
+  alias Auth.Contract
 
   test "keeps auth error codes stable" do
     assert Contract.invalid_request() == "INVALID_REQUEST"

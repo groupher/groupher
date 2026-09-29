@@ -1,18 +1,20 @@
 defmodule GroupherServer.CMS.Docs.Branch do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Resolves the Docs-only workspace branch coordinate.
 
   community + branch ref -> canonical DocBranch -> branch-scoped Docs reads/writes
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Model.{Community, DocBranch}
-  alias Helper.{ORM, Transaction}
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias CMS.ErrorCat
 
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, DocBranch}
+  alias Helper.{ORM, Transaction}
 
   @main_slug "main"
 
@@ -32,7 +34,7 @@ defmodule GroupherServer.CMS.Docs.Branch do
       #=> {:ok, %DocBranch{slug: "main"}}
 
       Branch.resolve(community, "missing")
-      #=> {:error, GroupherServer.ErrorCat.custom("Doc branch not found")}
+      #=> {:error, ErrorCat.custom("Doc branch not found")}
 
   """
   def resolve(%Community{} = community, %DocBranch{} = branch) do
@@ -40,7 +42,7 @@ defmodule GroupherServer.CMS.Docs.Branch do
       do: {:ok, branch},
       else:
         {:error,
-         GroupherServer.ErrorCat.custom("Doc branch does not belong to the requested scope")}
+         ErrorCat.custom("Doc branch does not belong to the requested scope")}
   end
 
   def resolve(%Community{} = community, ref) when is_map(ref) or is_list(ref) do
@@ -65,12 +67,12 @@ defmodule GroupherServer.CMS.Docs.Branch do
     |> Repo.one()
     |> case do
       %DocBranch{} = branch -> {:ok, branch}
-      nil -> {:error, GroupherServer.ErrorCat.custom("Doc branch not found")}
+      nil -> {:error, ErrorCat.custom("Doc branch not found")}
     end
   end
 
   def resolve(_community, _ref),
-    do: {:error, GroupherServer.ErrorCat.custom("Doc branch is invalid")}
+    do: {:error, ErrorCat.custom("Doc branch is invalid")}
 
   def branch_id(%Community{} = community, ref) do
     with {:ok, branch} <- resolve(community, ref), do: {:ok, branch.id}

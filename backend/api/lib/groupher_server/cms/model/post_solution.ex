@@ -14,8 +14,10 @@ defmodule GroupherServer.CMS.Model.PostSolution do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Comment, Post}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Comment, Post}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

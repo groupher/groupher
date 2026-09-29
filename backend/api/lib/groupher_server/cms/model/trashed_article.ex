@@ -18,13 +18,15 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, TrashAction}
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.Model.{Community, TrashAction}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
-  @threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
+  @threads CMS.Artiment.Config.threads() -- [:doc]
   @required_fields ~w(
     trash_action_id community_id thread article_hash_id restore_state deleted_at
   )a
@@ -43,6 +45,7 @@ defmodule GroupherServer.CMS.Model.TrashedArticle do
     field(:deleted_at, :utc_datetime)
     field(:article, :map, virtual: true)
     field(:mentioned_by_count, :integer, virtual: true, default: 0)
+    field(:command_id, Ecto.UUID, virtual: true)
 
     timestamps(type: :utc_datetime)
   end

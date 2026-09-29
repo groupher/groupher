@@ -12,10 +12,12 @@ defmodule GroupherServer.Accounts.Model.SourceContribute do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
+
   import Ecto.Changeset
+
+  alias __MODULE__
 
   @optional_fields ~w(web server mobile we_app h5)a
 

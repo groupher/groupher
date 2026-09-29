@@ -15,7 +15,9 @@ defmodule GroupherServer.Accounts.Fans.ViewerState do
         -> Repo
   """
 
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.User
 
   def mark_viewer_follow_status({:ok, %{entries: entries} = paged_users}, cur_user) do
     entries = Enum.map(entries, &Map.merge(&1, do_mark_viewer_has_states(&1.id, cur_user)))

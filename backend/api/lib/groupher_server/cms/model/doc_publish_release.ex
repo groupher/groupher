@@ -19,16 +19,16 @@ defmodule GroupherServer.CMS.Model.DocPublishRelease do
   JSON or tree JSON in this table.
   """
 
-  alias __MODULE__
-
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     DocBranch,
     DocPublishReleaseArticle,

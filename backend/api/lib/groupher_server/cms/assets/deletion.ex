@@ -17,15 +17,53 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   use Tesla
 
   require Logger
+  require GroupherServer.CMS.Assets.ErrorCat
 
-  alias GroupherServer.CMS.Assets.ErrorCat
-  alias GroupherServer.CMS.Model.CommunityAsset
-  alias GroupherServer.ServiceAuth.Client
+  import Ecto.Query, only: [from: 2]
+
+  alias GroupherServer.{CMS, Repo, ServiceAuth}
+
+  alias CMS.Assets.{ErrorCat, Writer}
+  alias CMS.Model.{Community, CommunityAsset}
+  alias ServiceAuth.Client
 
   @timeout 10_000
 
   plug(Tesla.Middleware.JSON, engine: Jason)
   plug(Tesla.Middleware.Timeout, timeout: @timeout)
+
+  @doc "Builds the provider-deletion projection for an expired Application upload."
+  @spec delete_application_upload_object(map()) :: :ok
+  def delete_application_upload_object(upload) do
+    enqueue(%CommunityAsset{
+      id: upload.id,
+      public_ref: upload.public_ref,
+      community_id: nil,
+      storage: upload.storage,
+      storage_key: upload.storage_key
+    })
+  end
+
+  @doc "Soft-deletes generated assets and enqueues provider cleanup."
+  @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
+  def delete_generated_assets(%Community{id: community_id} = community, public_refs)
+      when is_list(public_refs) do
+    public_refs = Enum.filter(public_refs, &is_binary/1)
+
+    from(asset in CommunityAsset,
+      where:
+        asset.community_id == ^community_id and asset.public_ref in ^public_refs and
+          is_nil(asset.deleted_at)
+    )
+    |> Repo.all()
+    |> Enum.each(fn asset ->
+      with {:ok, deleted} <- Writer.delete(community, asset.id) do
+        enqueue(deleted)
+      end
+    end)
+
+    :ok
+  end
 
   @doc """
   Sends a best-effort provider delete request to assets-hub.
@@ -45,7 +83,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
       :ok ->
         :ok
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :skipped}} ->
+      {:error, ErrorCat.error_pattern(reason: :skipped)} ->
         :ok
 
       {:error, reason} ->

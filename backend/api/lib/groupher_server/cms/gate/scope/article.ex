@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Gate.Scope.Article do
-  require GroupherServer.CMS.Docs.Const
   @moduledoc """
   Builds complete public Article visibility into one query.
 
@@ -10,30 +9,36 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
         -> public Article boundary
   """
 
+  require GroupherServer.CMS.Docs.Const
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias GroupherServer.CMS.Gate.Scope.Policy
-  alias GroupherServer.CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
+  alias GroupherServer.{Accounts, CMS}
 
+  alias Accounts.Model.User
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.ErrorCat
+  alias CMS.Gate.Scope.{ArticleSchema, CommunityChain, Policy}
+  alias CMS.Model.{ArticleLifecycle, Author, DocBranch, DocLifecycle}
 
   @behaviour Policy
 
   @public_lifecycle_states [:published, :archived]
   @draft_lifecycle_states [:draft_only, :published, :archived]
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
 
-  @actions [:read, :read_draft, :list]
-  @management_policy_modes [:owner_management, :moderator_management, :operations]
+  @actions [:read, :read_draft, :list, :read_insights]
+  @management_policy_modes [
+    :owner_management,
+    :moderator_management,
+    :operations,
+    :insights_management
+  ]
 
   @doc "Compiles Article or Doc visibility predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), ArticleContext.t() | DocContext.t()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   @impl Policy
   def scope(%Ecto.Query{} = query, actor, action, context)
       when (is_struct(context, ArticleContext) or is_struct(context, DocContext)) and
@@ -44,7 +49,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
          {:ok, branch_id} <- branch_id(context, thread),
          %Ecto.Query{} = query <- base_scope(query, thread, policy_mode, branch_id),
          {:ok, query} <- apply_stage(query, stage, actor, policy_mode, context),
-         {:ok, query} <- apply_actor_policy(query, actor, policy_mode) do
+         {:ok, query} <- apply_actor_policy(query, actor, policy_mode, context) do
       query
     end
   end
@@ -53,7 +58,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
 
   @doc false
   @spec moderation_diagnostic_scope(Ecto.Queryable.t(), atom()) ::
-          Ecto.Query.t() | {:error, GroupherServer.ErrorCat.Error.t()}
+          Ecto.Query.t() | {:error, ErrorCat.error()}
   def moderation_diagnostic_scope(queryable, thread) do
     query = Ecto.Queryable.to_query(queryable)
     branch_id = if thread == :doc, do: :main, else: nil
@@ -105,7 +110,8 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
     end
   end
 
-  defp doc_branch_scope(query, :main, :public) do
+  defp doc_branch_scope(query, :main, policy_mode)
+       when policy_mode in [:public, :insights_management] do
     from([article, ...] in query,
       join: branch in DocBranch,
       as: :gate_doc_branch,
@@ -126,6 +132,24 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
        when mode in @management_policy_modes,
        do: {:ok, mode}
 
+  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, :read_insights),
+    do: {:ok, :insights_management}
+
+  defp policy_mode(%DocContext{policy_mode: :insights_management}, :read_insights),
+    do: {:ok, :insights_management}
+
+  defp policy_mode(%ArticleContext{policy_mode: :insights_management}, _action),
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+
+  defp policy_mode(%DocContext{policy_mode: :insights_management}, _action),
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+
+  defp policy_mode(%ArticleContext{}, :read_insights),
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+
+  defp policy_mode(%DocContext{}, :read_insights),
+    do: {:error, ErrorCat.scope_policy_actor_mismatch()}
+
   defp policy_mode(%ArticleContext{policy_mode: mode}, _action)
        when mode in [:public | @management_policy_modes],
        do: {:ok, mode}
@@ -140,6 +164,18 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
   defp stage(%DocContext{stage: :draft}, :read_draft), do: {:ok, :draft}
   defp stage(%ArticleContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
   defp stage(%DocContext{}, :read_draft), do: {:error, ErrorCat.scope_context_missing()}
+
+  defp stage(%ArticleContext{policy_mode: :insights_management, stage: :public}, :read_insights),
+    do: {:ok, :public}
+
+  defp stage(%ArticleContext{policy_mode: :insights_management}, :read_insights),
+    do: {:error, ErrorCat.scope_context_missing()}
+
+  defp stage(%DocContext{policy_mode: :insights_management, stage: :public}, :read_insights),
+    do: {:ok, :public}
+
+  defp stage(%DocContext{policy_mode: :insights_management}, :read_insights),
+    do: {:error, ErrorCat.scope_context_missing()}
 
   defp stage(%ArticleContext{stage: stage}, _action) when stage in [:public, :draft],
     do: {:ok, stage}
@@ -179,10 +215,19 @@ defmodule GroupherServer.CMS.Gate.Scope.Article do
      )}
   end
 
-  defp apply_actor_policy(query, :public, :public), do: {:ok, query}
-  defp apply_actor_policy(query, _actor, :public), do: {:ok, query}
+  defp apply_actor_policy(query, :public, :public, _context), do: {:ok, query}
+  defp apply_actor_policy(query, _actor, :public, _context), do: {:ok, query}
 
-  defp apply_actor_policy(query, actor, policy_mode)
+  defp apply_actor_policy(query, actor, :insights_management, %{
+         passport_granted_community_slugs: slugs
+       }) do
+    case CommunityChain.insights_actor(query, actor, slugs) do
+      %Ecto.Query{} = scoped -> {:ok, scoped}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp apply_actor_policy(query, actor, policy_mode, _context)
        when policy_mode in [:owner_management, :moderator_management, :operations] do
     case CommunityChain.community_actor(query, policy_mode, actor) do
       %Ecto.Query{} = scoped -> {:ok, scoped}

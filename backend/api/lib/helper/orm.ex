@@ -34,16 +34,15 @@ defmodule Helper.ORM do
 
   import Helper.ErrorHandler
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.ErrorCat
+  alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias Accounts.Model.User
+  alias CMS.Gate
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @doc """
   Safely updates JSONB `meta` fields and returns the updated struct.
@@ -157,7 +156,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1, preload: :author)
-      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
+      {:error, %ErrorCat.Error{reason: :custom}}
   """
   def find(queryable, id, preload: preload) do
     queryable
@@ -175,7 +174,7 @@ defmodule Helper.ORM do
       {:ok, %Post{}}
 
       iex> ORM.find(Post, -1)
-      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
+      {:error, %ErrorCat.Error{reason: :custom}}
   """
   @spec find(Ecto.Queryable.t(), T.id()) :: {:ok, any()} | {:error, T.error()}
   def find(queryable, id) do
@@ -193,7 +192,7 @@ defmodule Helper.ORM do
       {:ok, %User{}}
 
       iex> ORM.find_by(User, login: "missing")
-      {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
+      {:error, %ErrorCat.Error{reason: :custom}}
   """
   def find_by(queryable, clauses) do
     queryable
@@ -648,7 +647,7 @@ defmodule Helper.ORM do
       {:ok, %Community{}}
   """
   def find_community(slug) do
-    Gate.scope(Community, nil, :read, CommunityScope.public())
+    Gate.scope(Community, nil, :read, CommunityContext.public())
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
     |> preload(:lifecycle)

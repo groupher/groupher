@@ -3,24 +3,21 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   Synchronizes derived Interaction state after an authoritative fact changes.
 
   Reaction callers invoke these functions inside their existing transaction.
-  View projection invokes `merge_viewed_users/3` from its durable event flow.
-
-      Reactions / ViewEvents.Project -> Sync -> reaction and emotion info rows
+  Reactions -> Sync -> reaction and emotion info rows
   """
+
+  require GroupherServer.CMS.Model.Interaction.RoaringBitmap
 
   import Ecto.Query
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Interactions.{Config, ErrorCat}
-  alias GroupherServer.CMS.Model.{Comment, Embeds}
-  alias GroupherServer.CMS.Model.Interaction.RoaringBitmap
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  require RoaringBitmap
-
-  @article_threads Config.article_threads()
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.FrontDesk
+  alias CMS.Interactions.{Config, ErrorCat}
+  alias CMS.Model.{Comment, Embeds}
+  alias CMS.Model.Interaction.RoaringBitmap
 
   @doc """
   Applies an already-created upvote fact.
@@ -130,37 +127,14 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   def remove_report(article, actor), do: sync_article_fixed(article, :report, actor, :remove)
 
-  @doc """
-  Merges asynchronously projected viewer ids for one Article.
-
-  ## Examples
-
-      ReadState.Sync.merge_viewed_users(:post, article.id, [viewer.id])
-
-  """
-  @spec merge_viewed_users(:post | :blog | :changelog | :doc, integer(), [integer()]) :: :ok
-  def merge_viewed_users(thread, target_id, user_ids)
-      when thread in @article_threads and is_list(user_ids) do
-    info = interaction_info(thread)
-    reaction_info = lock_reaction_info(info, target_id)
-
-    from(info in info.reaction_info_model, where: info.id == ^reaction_info.id)
-    |> update(
-      [info],
-      set: [
-        viewed_user_ids: RoaringBitmap.merge(info.viewed_user_ids, ^user_ids),
-        updated_at: ^DateTime.utc_now(:second)
-      ]
-    )
-    |> Repo.update_all([])
-
-    :ok
-  end
-
   defp sync_article_fixed(article, reaction, %User{} = user, operation)
        when reaction in [:collect, :report, :upvote] and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_fixed(interaction_info(thread), article.id, reaction, user, operation)
+      with {:ok, projection} <-
+             sync_fixed(interaction_info(thread), article.id, reaction, user, operation),
+           :ok <- maybe_sync_article_stats(article, reaction) do
+        {:ok, projection}
+      end
     end
   end
 
@@ -172,9 +146,19 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
   defp sync_article_emotion(article, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
-      sync_emotion(interaction_info(thread), article.id, emotion, user, operation)
+      with {:ok, projection} <-
+             sync_emotion(interaction_info(thread), article.id, emotion, user, operation),
+           :ok <- CMS.ArticleStats.apply_interaction_counts(article),
+           :ok <- CMS.ArticleStats.apply_emotion_count(article, emotion) do
+        {:ok, projection}
+      end
     end
   end
+
+  defp maybe_sync_article_stats(_article, :report), do: :ok
+
+  defp maybe_sync_article_stats(article, _reaction),
+    do: CMS.ArticleStats.apply_interaction_counts(article)
 
   defp sync_comment_emotion(comment, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do
@@ -202,7 +186,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
              operation,
              count_field,
              latest_field,
-             latest_users
+             latest_users,
+             reaction in [:upvote, :collect]
            ) do
       {:ok, reaction_info}
     end
@@ -221,9 +206,27 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
              operation,
              :users_count,
              :latest_users,
-             latest_users
-           ) do
+             latest_users,
+             false
+           ),
+         :ok <- bump_interaction_revision(info, target_id) do
       {:ok, emotion_info}
+    end
+  end
+
+  defp bump_interaction_revision(
+         %{reaction_info_model: schema, foreign_key: target_id_field},
+         target_id
+       ) do
+    insert_info(schema, target_id_field, target_id)
+
+    case from(info in schema, where: field(info, ^target_id_field) == ^target_id)
+         |> Repo.update_all(
+           inc: [interaction_revision: 1],
+           set: [updated_at: DateTime.utc_now(:second)]
+         ) do
+      {1, _} -> :ok
+      {0, _} -> {:error, ErrorCat.projection_not_updated()}
     end
   end
 
@@ -300,7 +303,8 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
          operation,
          count_field,
          latest_field,
-         latest_users
+         latest_users,
+         increment_revision?
        ) do
     bitmap =
       case operation do
@@ -318,9 +322,19 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
         field -> Keyword.put(updates, :inc, [{field, if(operation == :add, do: 1, else: -1)}])
       end
 
+    updates = if increment_revision?, do: maybe_increment_revision(updates, schema), else: updates
+
     case from(info in schema, where: info.id == ^info_id) |> Repo.update_all(updates) do
       {1, _} -> :ok
       {0, _} -> {:error, ErrorCat.projection_not_updated()}
+    end
+  end
+
+  defp maybe_increment_revision(updates, schema) do
+    if :interaction_revision in schema.__schema__(:fields) do
+      Keyword.update(updates, :inc, [], fn existing -> [{:interaction_revision, 1} | existing] end)
+    else
+      updates
     end
   end
 

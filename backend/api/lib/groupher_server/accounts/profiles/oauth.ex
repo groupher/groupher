@@ -14,16 +14,15 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   """
 
   import Ecto.Query, warn: false
-  alias GroupherServer.ErrorCat
   import Helper.Utils, only: [keys_to_atoms: 1]
 
+  alias GroupherServer.{Accounts, Auth, ErrorCat, Messaging, Repo}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
-  alias GroupherServer.{Messaging, Repo}
-
-  alias GroupherServer.Accounts.FrontDesk
-  alias GroupherServer.Accounts.Model.{Achievement, OauthProvider, Social, User}
-  alias GroupherServer.Accounts.Profiles.BrowserSessions
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias Accounts.FrontDesk
+  alias Accounts.Model.{Achievement, OauthProvider, Social, User}
+  alias Accounts.Profiles.BrowserSessions
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias Auth.Contract, as: AuthContract
   alias Helper.{Multi, ORM}
 
   def link_oauth(login, provider) do
@@ -247,7 +246,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
           nil ->
             Repo.rollback(
               message: "user no longer exists",
-              code: ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+              code: ErrorCat.code(ProfileErrorCat.account_login())
             )
         end
 

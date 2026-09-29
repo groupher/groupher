@@ -9,17 +9,21 @@ defmodule GroupherServer.CMS.Communities.Writer do
         -> Writer
         -> Repo / Oban
   """
+
+  require Logger
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Analysis, CMS}
-  alias GroupherServer.CMS.Communities.{Lifecycle, Moderator, Reader}
-  alias GroupherServer.CMS.Dashboard.BaseInfo
-
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
+  alias GroupherServer.{Accounts, Analysis, CMS, PublicCache, Repo}
+  alias CMS.Communities.{Lifecycle, Moderator, Reader}
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Dashboard.BaseInfo
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
-  require Logger
+  alias PublicCache.Const, as: PublicCacheConst
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -61,7 +65,14 @@ defmodule GroupherServer.CMS.Communities.Writer do
   defp update_unlocked(%Community{} = community, args, actor) do
     with {:ok, _canonical} <- CMS.Gate.access_check(actor, :update, community),
          {:ok, community} <- ORM.fill_meta(community) do
-      ORM.update(community, args)
+      Repo.transaction(fn ->
+        with {:ok, updated} <- ORM.update(community, args),
+             :ok <- invalidate_public_presentation(updated) do
+          updated
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -83,8 +94,23 @@ defmodule GroupherServer.CMS.Communities.Writer do
     args = BaseInfo.take_community_fields(args)
 
     case map_size(args) do
-      0 -> {:ok, community}
-      _ -> ORM.update(community, args)
+      0 ->
+        {:ok, community}
+
+      _ ->
+        ORM.update(community, args)
+    end
+  end
+
+  defp invalidate_public_presentation(community) do
+    case PublicCache.invalidate_now(
+           PublicCacheConst.community_presentation_changed(),
+           %{community: community.slug, community_id: community.id},
+           causation_id: Ecto.UUID.generate(),
+           aggregate_type: "community"
+         ) do
+      {:ok, _invalidation} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -106,7 +132,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
       {:ok, _website_id} ->
         :ok
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :not_configured}} ->
+      {:error, CommunityErrorCat.error_pattern(reason: :not_configured)} ->
         :ok
 
       {:error, reason} ->

@@ -13,14 +13,13 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
 
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS
-  alias GroupherServer.CMS.Assets.Capability
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.CommunityApplications.{Config, Policy}
-  alias GroupherServer.CMS.Model.CommunityApplicationLogoUpload
-  alias GroupherServer.Repo
+  alias Accounts.Model.User
+  alias CMS.Assets.Capability
+  alias CMS.Communities.ErrorCat
+  alias CMS.CommunityApplications.{Config, Policy}
+  alias CMS.Model.CommunityApplicationLogoUpload
   alias Helper.Utils
 
   @allowed_mime_types ~w(image/jpeg image/png image/webp image/gif)
@@ -140,7 +139,7 @@ defmodule GroupherServer.CMS.CommunityApplications.LogoUploads do
   end
 
   @spec fetch_finalized(String.t(), User.t()) ::
-          {:ok, CommunityApplicationLogoUpload.t()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, CommunityApplicationLogoUpload.t()} | {:error, ErrorCat.error()}
   def fetch_finalized(public_ref, %User{id: user_id}) when is_binary(public_ref) do
     case Repo.get_by(CommunityApplicationLogoUpload, public_ref: public_ref) do
       nil ->

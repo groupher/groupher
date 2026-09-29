@@ -3,14 +3,14 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Activity.Model.PostLog
-  alias GroupherServer.CMS.Comments.Lifecycle
-  alias GroupherServer.CMS.Model.{Comment, CommentLifecycle, PinnedComment, Post, PostSolution}
-  alias GroupherServer.Repo
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias Activity.Model.PostLog
+  alias CMS.Comments.Lifecycle
+  alias CMS.Model.{Comment, CommentLifecycle, PinnedComment, Post, PostSolution}
   alias Helper.ORM
 
-  @article_cat GroupherServer.CMS.Artiment.Const.cat_map()
-  @article_status GroupherServer.CMS.Artiment.Const.status_map()
+  @article_cat CMS.Artiment.Const.cat_map()
+  @article_status CMS.Artiment.Const.status_map()
 
   setup do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     ~m(post actor first)a = context
     {:ok, _} = CMS.Comments.accept_solution(first.id, actor)
 
-    assert {:ok, deleted} = CMS.Comments.delete_comment(first, actor)
+    assert {:ok, %{comment: deleted}} = CMS.Comments.delete_comment(first, actor)
     assert deleted.body_html == Comment.delete_hint()
     refute Repo.get_by(PostSolution, post_id: post.id)
     assert Repo.get_by!(CommentLifecycle, comment_id: first.id).state == :deleted
@@ -161,13 +161,13 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     assert {:ok, %{is_solution: true}} = CMS.Comments.one_comment(first.id)
 
-    {:ok, post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert post.is_solved
     assert post.solution_comment_id == first.inner_id
     assert post.solution_digest == "first"
 
     {:ok, _} = CMS.Comments.update_comment(first, mock_comment("changed"), actor)
-    {:ok, post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert post.solution_digest == "changed"
   end
 
@@ -246,7 +246,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
     assert match?({:ok, _}, replace_result)
     assert Repo.get_by!(PostSolution, post_id: post.id).comment_id == second.id
 
-    {:ok, projected_post} = CMS.Articles.InteractionResponse.one(Repo.get!(Post, post.id), nil)
+    {:ok, projected_post} = CMS.Articles.Response.one(Repo.get!(Post, post.id), nil)
     assert projected_post.solution_comment_id == second.inner_id
     assert projected_post.solution_digest == "second"
   end
@@ -265,7 +265,7 @@ defmodule GroupherServer.Test.CMS.Comments.Commands.SolutionCommands do
 
     {{:ok, [projected_post]}, article_queries} =
       capture_queries(fn ->
-        CMS.Articles.InteractionResponse.many([Repo.get!(Post, post.id)], nil)
+        CMS.Articles.Response.list([Repo.get!(Post, post.id)], nil)
       end)
 
     assert projected_post.is_solved

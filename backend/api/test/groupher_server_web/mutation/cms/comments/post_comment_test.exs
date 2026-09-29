@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
   end
@@ -25,8 +29,8 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
-      assert result["article"]["innerId"] == post.inner_id
-      assert result["article"]["commentsCount"] == 1
+      assert result["articleStats"]["innerId"] == to_string(post.inner_id)
+      assert result["articleStats"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community post user user_conn)a do
@@ -42,7 +46,52 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(reply comment))
-      assert result["article"]["commentsCount"] == 2
+      assert result["articleStats"]["commentsRevision"] == 2
+    end
+
+    test "create retries with one command id return the same comment",
+         ~m(community post user_conn)a do
+      variables = %{
+        article: article_path(community, post, :post),
+        body: mock_comment("idempotent create"),
+        commandId: Ecto.UUID.generate()
+      }
+
+      first = user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_id), variables)
+
+      replay =
+        user_conn |> gq_mutation(S.Comment.m(:create_comment_with_command_id), variables)
+
+      assert replay["commandId"] == variables.commandId
+      assert replay["comment"]["innerId"] == first["comment"]["innerId"]
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
+
+      assert replay["articleStats"]["commentsRevision"] == 1
+    end
+
+    test "reply retries with one command id return the same comment",
+         ~m(community post user user_conn)a do
+      {:ok, parent} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      variables = %{
+        comment: comment_path(community, post, :post, parent),
+        body: mock_comment("idempotent reply"),
+        commandId: Ecto.UUID.generate()
+      }
+
+      first = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
+      replay = user_conn |> gq_mutation(S.Comment.m(:reply_comment_with_command_id), variables)
+
+      assert replay["commandId"] == variables.commandId
+      assert replay["comment"]["innerId"] == first["comment"]["innerId"]
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
+
+      assert replay["articleStats"]["commentsRevision"] == 2
     end
 
     test "only owner can update a exist comment",
@@ -59,20 +108,45 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p))
-      assert result["bodyHtml"] |> String.contains?(~s(updated comment))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(updated comment))
+    end
+
+    test "update retries with one command id do not apply the body twice",
+         ~m(community post user owner_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      variables = %{
+        comment: comment_path(community, post, :post, comment),
+        body: mock_comment("idempotent update"),
+        commandId: Ecto.UUID.generate()
+      }
+
+      first =
+        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
+
+      replay =
+        owner_conn |> gq_mutation(S.Comment.m(:update_comment_with_command_id), variables)
+
+      assert replay["commandId"] == variables.commandId
+      assert replay["comment"]["bodyHtml"] == first["comment"]["bodyHtml"]
+      assert replay["comment"]["bodyHtml"] |> String.contains?(~s(idempotent update))
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
     end
 
     test "only owner can delete a exist comment",
@@ -86,19 +160,45 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
-      assert deleted["innerId"] == to_string(comment.inner_id)
+      assert deleted["comment"]["innerId"] == to_string(comment.inner_id)
+    end
+
+    test "delete retries with one command id return the same tombstone and count",
+         ~m(community post user owner_conn)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      variables = %{
+        comment: comment_path(community, post, :post, comment),
+        commandId: Ecto.UUID.generate()
+      }
+
+      first =
+        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_id), variables)
+
+      replay =
+        owner_conn |> gq_mutation(S.Comment.m(:delete_comment_with_command_id), variables)
+
+      assert first["commandId"] == variables.commandId
+      assert replay["commandId"] == variables.commandId
+      assert replay["comment"]["innerId"] == first["comment"]["innerId"]
+      assert first["articleStats"]["commentsRevision"] == 2
+      assert replay["articleStats"]["commentsRevision"] == 2
+
+      assert replay["articleStats"]["commentsRevision"] ==
+               first["articleStats"]["commentsRevision"]
     end
   end
 
@@ -114,7 +214,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
@@ -136,7 +236,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
@@ -162,7 +262,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:report_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
@@ -191,7 +291,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_report_comment),
                undo_variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_report_comment), undo_variables)
@@ -316,7 +416,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:emotion_to_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.emotion_not_allowed())
+               ErrorCat.code(ArticleErrorCat.emotion_not_allowed())
              )
     end
   end
@@ -347,7 +447,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Article.m(:lock_comment, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -380,7 +480,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Article.m(:unlock_comment, :post),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end
@@ -407,7 +507,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -435,7 +535,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
              |> mutation_error?(
                S.Comment.m(:undo_pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

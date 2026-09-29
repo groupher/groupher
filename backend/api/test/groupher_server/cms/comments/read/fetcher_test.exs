@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
 
     test "fetch_comment returns ErrorCat error on missing comment" do
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :comment},
                 reason: :not_exist,
                 details: reason
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Comments.FetcherTest do
 
     test "fetch_full_comment returns not_exist tuple on missing comment" do
       assert {:error,
-              %GroupherServer.ErrorCat.Error{
+              %ErrorCat.Error{
                 namespace: {:cms, :comment},
                 reason: :not_exist
               }} = CMS.Comments.fetch_full_comment(9_999_999)

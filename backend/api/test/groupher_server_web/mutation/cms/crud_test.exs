@@ -3,7 +3,13 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Model.{Category, CommunityLifecycle, CommunityModerator, Passport}
 
   setup do
     {:ok, category} = db_insert(:category)
@@ -60,21 +66,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @create_category_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @create_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -86,21 +92,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @update_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @update_category_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @update_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -159,42 +165,42 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @set_category_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @set_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert user_conn
              |> mutation_error?(
                @unset_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @unset_category_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @unset_category_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
   end
@@ -271,21 +277,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -303,7 +309,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.changeset())
+               ErrorCat.code(WebErrorCat.changeset())
              )
     end
 
@@ -327,21 +333,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @create_community_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
 
@@ -462,7 +468,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @update_moderator_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.community_root_only())
+               ErrorCat.code(CommunityErrorCat.community_root_only())
              )
 
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
@@ -509,21 +515,21 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       assert rule_conn
              |> mutation_error?(
                @set_moderator_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
     end
   end
@@ -558,7 +564,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @subscribe_query,
                variables,
-               ErrorCat.code(GroupherServer.CMS.Communities.ErrorCat.not_exist())
+               ErrorCat.code(CommunityErrorCat.not_exist())
              )
     end
 
@@ -569,7 +575,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @subscribe_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -627,7 +633,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(
                @unsubscribe_query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

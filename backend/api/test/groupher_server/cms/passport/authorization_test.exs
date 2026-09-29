@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Passport.Authorization
+  alias GroupherServer.CMS
+  alias CMS.Passport.Authorization
 
   test "passport check accepts a normalized global reviewer passport" do
     reviewer = %{cur_passport: %{"global" => %{"community.application.review" => true}}}
@@ -15,14 +16,14 @@ defmodule GroupherServer.Test.CMS.Passport.Authorization do
   test "passport check returns a stable denial" do
     reviewer = %{cur_passport: %{"global" => %{}}}
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :permission_denied}} =
+    assert {:error, %ErrorCat.Error{reason: :permission_denied}} =
              Authorization.check(reviewer, "community.application.review", %{})
   end
 
   test "authorize returns a review denial for an unprivileged passport" do
     reviewer = %{cur_passport: %{"global" => %{}}}
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :review_permission_denied}} =
+    assert {:error, %ErrorCat.Error{reason: :review_permission_denied}} =
              Authorization.authorize(reviewer, "community.application.review")
   end
 end

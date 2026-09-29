@@ -16,15 +16,17 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
            v
       typed BodyBag -> Draft / Snapshot / ContentImport Writer
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for the shared publisher boundary.
+  See `docs/content-import/article-publish-import-refactor.md` for the shared publisher boundary.
   """
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Artiment.Config
-  alias GroupherServer.CMS.Model.ArticleDocument
+  alias GroupherServer.CMS
+
+  alias CMS.Artiment.Config
+  alias CMS.Model.ArticleDocument
 
   @primary_key false
 

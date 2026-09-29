@@ -13,6 +13,8 @@ const AUTH_COOKIE_BASENAME = {
 
 export const GROUPHER_AUTH_CSRF_HEADER = 'X-Groupher-CSRF'
 export const GROUPHER_AUTH_CSRF_VALUE = '1'
+/** First-party anonymous ViewTracker session cookie issued by Phoenix. */
+export const GROUPHER_VIEWER_COOKIE = 'groupher-viewer'
 /**
  * Readable browser hint that tells frontend account stores they may probe
  * the current session with `me`.

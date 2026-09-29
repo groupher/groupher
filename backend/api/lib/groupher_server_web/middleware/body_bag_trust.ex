@@ -12,12 +12,13 @@ defmodule GroupherServerWeb.Middleware.BodyBagTrust do
            `-- BodyBag + trusted? --+-> continue
                                     `-> reject
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for publisher trust boundaries.
+  See `docs/content-import/article-publish-import-refactor.md` for publisher trust boundaries.
   """
 
   @behaviour Absinthe.Middleware
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   import Helper.Utils, only: [handle_absinthe_error: 3]
 
   @doc "Allows ordinary mutations and requires a bounded publisher scope for BodyBag writes."

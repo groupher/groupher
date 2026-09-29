@@ -4,17 +4,18 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
 
   import Ecto.Query
   alias Ecto.Adapters.SQL
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Document, as: DocumentScope
-  alias GroupherServer.CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
+  alias GroupherServer.CMS
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
+  alias CMS.Gate.Context.Scope.Document, as: DocumentContext
+  alias CMS.Model.{ArticleDocument, Blog, Changelog, Doc, Post}
 
   test "Article scope compiles complete public visibility for every thread" do
     for {thread, schema} <- article_schemas() do
       context =
         case thread do
-          :doc -> DocScope.public_main()
-          _ -> ArticleScope.public(thread)
+          :doc -> DocContext.public_main()
+          _ -> ArticleContext.public(thread)
         end
 
       query =
@@ -47,15 +48,15 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
   end
 
   test "Article scope validates an explicit thread against the root schema" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
-             CMS.Gate.scope(Post, nil, :read, ArticleScope.public(:blog))
+    assert {:error, %ErrorCat.Error{reason: :scope_root_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read, ArticleContext.public(:blog))
   end
 
   test "Doc scope requires an explicit branch and makes public main policy visible" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Doc, nil, :read, %{thread: :doc})
 
-    query = CMS.Gate.scope(Doc, nil, :read, DocScope.public_branch(42))
+    query = CMS.Gate.scope(Doc, nil, :read, DocContext.public_branch(42))
     assert %Ecto.Query{} = query
 
     {sql, params} = to_sql(query)
@@ -65,14 +66,14 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert "main" in params
 
     management_query =
-      CMS.Gate.scope(Doc, :operations, :read, DocScope.draft(42, :operations))
+      CMS.Gate.scope(Doc, :operations, :read, DocContext.draft(42, :operations))
 
     assert %Ecto.Query{} = management_query
   end
 
   test "Article Draft scope has an explicit management action" do
     query =
-      CMS.Gate.scope(Post, :operations, :read_draft, ArticleScope.draft(:post, :operations))
+      CMS.Gate.scope(Post, :operations, :read_draft, ArticleContext.draft(:post, :operations))
 
     assert %Ecto.Query{} = query
     {sql, params} = to_sql(query)
@@ -80,21 +81,21 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
     assert "draft" in params
     assert ["draft_only", "published", "archived"] in params
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
-             CMS.Gate.scope(Post, nil, :read_draft, ArticleScope.draft(:post, :operations))
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read_draft, ArticleContext.draft(:post, :operations))
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(
                Post,
                :operations,
                :read_draft,
-               ArticleScope.public(:post, policy_mode: :operations)
+               ArticleContext.public(:post, policy_mode: :operations)
              )
   end
 
   test "Document draft scope requires an explicit management policy" do
     operations_query =
-      CMS.Gate.scope(ArticleDocument, :operations, :read, DocumentScope.draft(42, :operations))
+      CMS.Gate.scope(ArticleDocument, :operations, :read, DocumentContext.draft(42, :operations))
 
     assert %Ecto.Query{} = operations_query
     {sql, params} = to_sql(operations_query)
@@ -115,18 +116,18 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
              "destroy"
            ] in params
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentScope.draft(42, :operations))
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentContext.draft(42, :operations))
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
-             CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentScope{
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
+             CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentContext{
                thread: :doc,
                stage: :draft,
                policy_mode: :public
              })
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
-             CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentScope{
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
+             CMS.Gate.scope(ArticleDocument, :operations, :read, %DocumentContext{
                thread: :doc,
                stage: :draft,
                branch_policy: :main,
@@ -136,11 +137,54 @@ defmodule GroupherServer.Test.CMS.Gate.Scope.ArticleTest do
 
   test "actor-aware Article scope keeps moderation visibility inside SQL" do
     {:ok, actor} = db_insert(:user)
-    query = CMS.Gate.scope(Post, actor, :read, ArticleScope.public(:post))
+    query = CMS.Gate.scope(Post, actor, :read, ArticleContext.public(:post))
     {sql, _params} = to_sql(query)
 
     assert sql =~ ~s(FROM "cms"."authors")
     assert sql =~ "user_id"
+  end
+
+  test "Article Insights scope combines author, owner, and scoped moderator access" do
+    {:ok, actor} = db_insert(:user)
+
+    query =
+      CMS.Gate.scope(
+        Post,
+        actor,
+        :read_insights,
+        ArticleContext.insights(:post, passport_granted_community_slugs: ["community-a"])
+      )
+
+    assert %Ecto.Query{} = query
+    {sql, params} = to_sql(query)
+
+    assert sql =~ ~s(FROM "cms"."authors")
+    assert sql =~ ~s("cms"."communities_moderators")
+    assert sql =~ "slug"
+    assert ["community-a"] in params
+
+    assert [
+             "setting_up",
+             "setup_failed",
+             "active",
+             "read_only",
+             "suspended",
+             "archived",
+             "pending_destroy"
+           ] in params
+
+    assert {:error, %ErrorCat.Error{reason: :scope_policy_actor_mismatch}} =
+             CMS.Gate.scope(Post, nil, :read_insights, ArticleContext.insights(:post))
+  end
+
+  test "Doc Article Insights scope is pinned to the main branch" do
+    {:ok, actor} = db_insert(:user)
+    query = CMS.Gate.scope(Doc, actor, :read_insights, DocContext.insights())
+
+    assert %Ecto.Query{} = query
+    {sql, params} = to_sql(query)
+    assert sql =~ ~s(JOIN "cms"."doc_branches")
+    assert "main" in params
   end
 
   defp to_sql(query), do: SQL.to_sql(:all, Repo, query)

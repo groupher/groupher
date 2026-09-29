@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Body do
   @moduledoc """
   Authoritative PostgreSQL staging row for one canonical BodyBag.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for staging and apply ownership.
+  See `docs/content-import/article-publish-import-refactor.md` for staging and apply ownership.
 
   Business position:
 
@@ -17,8 +17,10 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job.Body do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Persistence.Job
-  alias GroupherServer.CMS.ContentImport.Persistence.Job.Item
+  alias GroupherServer.CMS
+
+  alias CMS.ContentImport.Persistence.Job
+  alias CMS.ContentImport.Persistence.Job.Item
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

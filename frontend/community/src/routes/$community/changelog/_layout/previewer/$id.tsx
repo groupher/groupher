@@ -22,6 +22,9 @@ export const Route = createFileRoute('/$community/changelog/_layout/previewer/$i
       communityQueries.changelog(params.community, params.id),
     )
     if (!article) throw notFound()
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.CHANGELOG, params.id),
+    )
     return { article }
   },
   component: ChangelogPreview,

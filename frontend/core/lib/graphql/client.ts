@@ -8,13 +8,19 @@ import {
 import { API_ROUTE } from '@groupher/route-contract'
 import { print, type DocumentNode } from 'graphql'
 
-import { invalidateAuthState, requestLogin, resolveAuthFailure, withAuthRetry } from '~/auth'
+import { invalidateAuthState, resolveAuthFailure, withAuthRetry } from '~/auth'
 
 const ACCOUNT_LOGIN_ERROR_CODE = 4301
 
 type TGraphQLError = {
   message?: unknown
   extensions?: Record<string, unknown>
+}
+
+const COMMAND_ERROR_MESSAGES: Readonly<Record<string, string>> = {
+  '4530': 'This operation changed elsewhere. Refresh and try again.',
+  '4531': 'This operation is still being processed. Please try again shortly.',
+  '4532': 'This operation is missing its command key. Please submit it again.',
 }
 
 type TGraphQLPayload<TResult> = {
@@ -40,6 +46,15 @@ const formatGraphQLErrorMessage = (message: unknown): string => {
   return message == null ? '' : String(message)
 }
 
+const commandErrorMessage = (extensions?: Record<string, unknown>): string | undefined => {
+  const code = extensions?.reasonCode ?? extensions?.code
+  if (typeof code !== 'string' && typeof code !== 'number') return undefined
+  return COMMAND_ERROR_MESSAGES[String(code)]
+}
+
+const formatRequestErrorMessage = (error: TGraphQLError): string =>
+  commandErrorMessage(error.extensions) || formatGraphQLErrorMessage(error.message)
+
 const graphQLErrors = (payload: unknown): TGraphQLError[] => {
   if (!payload || typeof payload !== 'object') return []
   const errors = (payload as TGraphQLPayload<unknown>).errors
@@ -64,10 +79,7 @@ export class GraphQLRequestError extends Error {
 
   constructor(response: Response, errors: TGraphQLError[]) {
     super(
-      errors
-        .map((error) => formatGraphQLErrorMessage(error.message))
-        .filter(Boolean)
-        .join('\n') || 'GraphQL request failed.',
+      errors.map(formatRequestErrorMessage).filter(Boolean).join('\n') || 'GraphQL request failed.',
     )
     this.name = 'GraphQLRequestError'
     this.errors = errors
@@ -171,7 +183,6 @@ export const createAuthFetch =
           }
           if (action === 'login') {
             invalidateAuthState()
-            requestLogin()
           }
           return response
         },

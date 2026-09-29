@@ -3,14 +3,16 @@ import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-type TProps = TSpace
+type TProps = {
+  fullWidth: boolean
+} & TSpace
 
-export default function useSalon({ ...spacing }: TProps) {
+export default function useSalon({ fullWidth, ...spacing }: TProps) {
   const { cn, fg, margin, fill, bg } = useTwBelt()
   const { communityLayout } = useLayout()
 
   return {
-    wrapper: cn('row-center', margin(spacing)),
+    wrapper: cn('row-center', fullWidth && 'w-full', margin(spacing)),
     pubBtn: cn(
       'row-center w-full max-w-full p-1 rounded-xl overflow-hidden',
       bg('divider'),

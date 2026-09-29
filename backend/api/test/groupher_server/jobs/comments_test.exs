@@ -1,10 +1,10 @@
 defmodule GroupherServer.Test.Jobs.Comments do
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.Jobs
-  alias GroupherServer.Jobs.Codec
-  alias GroupherServer.CMS.Model.{Comment, Community, Post}
-  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.{Accounts, CMS, Jobs}
+  alias Jobs.Codec
+  alias CMS.Model.{Comment, Community, Post}
+  alias Accounts.Model.User
 
   setup do
     oban_config =

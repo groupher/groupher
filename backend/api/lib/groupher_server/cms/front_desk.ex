@@ -1,366 +1,126 @@
 defmodule GroupherServer.CMS.FrontDesk do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
-  CMS domain front desk for reading/fetching and helper operations.
+  Stable CMS facade for public reads, relationship lookup, and reply projection sync.
 
   Business position:
 
-      GraphQL resolver / job
-        -> CMS facade
-        -> FrontDesk
-        -> Repo / external boundary
+      GraphQL resolver / job / CMS domain
+        -> CMS.FrontDesk facade
+        -> Article / Comment / Community / Lookup / Relation / ReactionUsers
   """
-  import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
-  import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS
+
+  alias CMS.Comments.Replies
+
+  alias CMS.FrontDesk.{
+    Article,
+    Community,
+    Lookup,
+    ReactionUsers,
+    Relation
+  }
+
+  alias CMS.FrontDesk.Comment, as: CommentReader
+
+  alias CMS.Helper.ArticlePath
+  alias CMS.Model.{Comment, CommunityTag}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
+  alias Helper.T
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.ErrorCat, as: ArticleErrorCat
-  alias GroupherServer.CMS.Articles.InteractionResponse
-  alias GroupherServer.CMS.Artiment.Threads
-  alias GroupherServer.CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias GroupherServer.CMS.Comments.Replies
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
-  alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.{Comment, Community, CommunityTag}
-  alias Helper.{ORM, T}
+  @doc "Reads one public Community by slug or alias."
+  def community(slug), do: Community.read(slug)
 
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @doc "Reads one live User through the root FrontDesk boundary."
+  def live_user(login, opts \\ []), do: RootFrontDesk.live_user(login, opts)
 
-  @spec community(String.t()) :: {:ok, Community.t()} | {:error, map()}
-  @doc "Runs `community` through the public `FrontDesk` boundary."
-  def community(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, CommunityScope.public())
-    |> where([c], c.slug == ^slug or c.aka == ^slug)
-    |> preload(:dashboard)
-    |> preload(:lifecycle)
-    |> preload(moderators: [:community, :user])
-    |> Repo.one()
-    |> done()
-    |> case do
-      {:ok, community} -> ORM.fill_meta(community)
-      {:error, _} = error -> error
-    end
-  end
+  @doc "Revalidates one User through the root FrontDesk boundary."
+  def revalidate_user(login), do: RootFrontDesk.revalidate().user(login)
 
-  @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
-  @doc "Runs `live_user` through the public `FrontDesk` boundary."
-  def live_user(login, opts \\ []) when is_binary(login), do: RootFrontDesk.live_user(login, opts)
+  @doc "Reads one Comment from a path or database id."
+  def comment(comment_path_or_id), do: CommentReader.read(comment_path_or_id)
 
-  @spec revalidate_user(String.t()) :: {:ok, User.t()} | {:error, any()}
-  @doc "Runs `revalidate_user` through the public `FrontDesk` boundary."
-  def revalidate_user(login) when is_binary(login), do: RootFrontDesk.revalidate().user(login)
+  @doc "Reads one Comment from a path with preload options, or under an Article path."
+  def comment(path, opts_or_inner_id)
 
-  @spec comment(map()) :: T.domain_res(Comment.t())
-  @doc "Runs `comment` through the public `FrontDesk` boundary."
-  def comment(%{} = comment_path), do: comment(comment_path, [])
+  def comment(path, opts) when is_map(path) and is_list(opts), do: CommentReader.read(path, opts)
+  def comment(article_path, inner_id), do: CommentReader.read(article_path, inner_id, [])
 
-  @spec comment(integer()) :: T.domain_res(Comment.t())
-  def comment(comment_id) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
-      ORM.fill_meta(comment)
-    end
-  end
+  @doc "Reads one Comment under an Article path with preload options."
+  def comment(article_path, inner_id, opts), do: CommentReader.read(article_path, inner_id, opts)
 
-  @spec comment(map(), keyword()) :: T.domain_res(Comment.t())
-  def comment(%{} = comment_path, opts) when is_list(opts) do
-    with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
-      comment(article_path, inner_id, opts)
-    end
-  end
-
-  @spec comment(map(), integer() | String.t()) :: T.domain_res(Comment.t())
-  def comment(%{} = article_path, inner_id), do: comment(article_path, inner_id, [])
-
-  @spec comment(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
-  def comment(%{} = article_path, inner_id, opts) do
-    preload = Keyword.get(opts, :preload, :author)
-
-    with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
-           ArticlePath.parse(article_path),
-         {:ok, community} <- community(community),
-         {:ok, inner_id} <- parse_comment_inner_id(inner_id),
-         {:ok, article} <- article(community, thread, article_inner_id),
-         {:ok, info} <- match(thread),
-         query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
-         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
-      ORM.fill_meta(comment)
-    end
-  end
-
+  @doc "Reads one Community Tag by database id."
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
-  @doc "Runs `community_tag` through the public `FrontDesk` boundary."
-  def community_tag(id), do: ORM.find(CommunityTag, id)
+  def community_tag(id), do: Community.tag(id)
 
-  @spec community_tag(String.t(), atom(), String.t()) :: T.domain_res(CommunityTag.t())
-  def community_tag(community, thread, slug) do
-    with {:ok, community} <- community(community) do
-      ORM.find_by(CommunityTag, community_id: community.id, thread: thread, slug: slug)
-    end
-  end
+  @doc "Reads one Community Tag by public coordinates."
+  def community_tag(community, thread, slug), do: Community.tag(community, thread, slug)
 
-  @spec community_tags([T.id()]) :: T.domain_res([CommunityTag.t()])
-  @doc "Runs `community_tags` through the public `FrontDesk` boundary."
-  def community_tags(tag_ids) when is_list(tag_ids) do
-    pos =
-      tag_ids
-      |> Enum.with_index()
-      |> Map.new(fn {id, idx} -> {to_string(id), idx} end)
+  @doc "Reads Community Tags in the caller's requested order."
+  def community_tags(tag_ids), do: Community.tags(tag_ids)
 
-    CommunityTag
-    |> where([t], t.id in ^tag_ids)
-    |> Repo.all()
-    |> Enum.sort_by(&Map.get(pos, to_string(&1.id), 9_999_999))
-    |> done()
-  end
+  @doc "Returns the parent Article and author information for one Comment."
+  def full_comment(comment_id), do: CommentReader.full(comment_id)
 
-  @spec full_comment(integer()) :: T.domain_res(T.article_info())
-  @doc "Runs `full_comment` through the public `FrontDesk` boundary."
-  def full_comment(comment_id) do
-    get_full_comment(comment_id)
-  end
+  @doc "Finds one schema row by primary id."
+  def get(queryable, id), do: Lookup.get(queryable, id)
 
-  @spec get(Ecto.Queryable.t(), T.id()) :: T.domain_res(term())
-  @doc "Runs `get` through the public `FrontDesk` boundary."
-  def get(queryable, id), do: ORM.find(queryable, id)
+  @doc "Finds one schema row by primary id with preloads."
+  def get(queryable, id, preload: preload), do: Lookup.get(queryable, id, preload: preload)
 
-  @spec get(Ecto.Queryable.t(), T.id(), keyword()) :: T.domain_res(term())
-  def get(queryable, id, preload: preload), do: ORM.find(queryable, id, preload: preload)
+  @doc "Finds one schema row by clauses."
+  def get_by(queryable, clauses), do: Lookup.get_by(queryable, clauses)
 
-  @spec get_by(Ecto.Queryable.t(), map()) :: T.domain_res(term())
-  @doc "Returns by through the `FrontDesk` boundary."
-  def get_by(queryable, clauses), do: ORM.find_by(queryable, clauses)
-
-  @spec get_by(Ecto.Queryable.t(), map(), keyword()) :: T.domain_res(term())
+  @doc "Finds one schema row by clauses with preloads."
   def get_by(queryable, clauses, preload: preload),
-    do: ORM.find_by(queryable, clauses, preload: preload)
+    do: Lookup.get_by(queryable, clauses, preload: preload)
 
-  @spec preload_author(Comment.t() | map()) :: {:ok, Comment.t() | map()} | {:error, map()}
-  @doc "Runs `preload_author` through the public `FrontDesk` boundary."
-  def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done
+  @doc "Preloads the author relation expected by Article or Comment callers."
+  def preload_author(resource), do: Relation.preload_author(resource)
 
-  def preload_author(article) do
-    case article do
-      %{author: %Ecto.Association.NotLoaded{}} ->
-        Repo.preload(article, author: :user)
+  @doc "Returns the author of an Article or Comment."
+  def author_of(resource), do: Relation.author_of(resource)
 
-      %{author: %{user: %Ecto.Association.NotLoaded{}}} ->
-        Repo.preload(article, author: :user)
+  @doc "Returns the parent Article of a Comment."
+  def article_of(comment, opts \\ []), do: Relation.article_of(comment, opts)
 
-      %{author: nil} ->
-        article
+  @doc "Returns the canonical thread of a Comment or Article projection."
+  def thread_of(resource), do: Relation.thread_of(resource)
 
-      %{author: %{user: _}} ->
-        article
-
-      _ ->
-        Repo.preload(article, author: :user)
-    end
-    |> done
-  end
-
-  @doc "get author of article or comment"
-  @spec author_of(Comment.t()) :: {:ok, map()} | {:error, map()}
-  def author_of(%Comment{} = comment) do
-    case Ecto.assoc_loaded?(comment.author) do
-      true -> comment.author
-      false -> Repo.preload(comment, :author) |> Map.get(:author)
-    end
-    |> done
-  end
-
-  @spec author_of(map()) :: {:ok, User.t()} | {:error, map()}
-  def author_of(article) do
-    case Ecto.assoc_loaded?(article.author) do
-      true -> article.author.user
-      false -> Repo.preload(article, author: :user) |> get_in([:author, :user])
-    end
-    |> done
-  end
-
-  @doc "get parent article of a comment"
-  @spec article_of(Comment.t(), keyword()) :: {:ok, map()} | {:error, map()}
-  def article_of(comment, opts \\ [])
-
-  def article_of(%Comment{} = comment, opts) when is_list(opts) do
-    preload = Keyword.get(opts, :preload, [])
-
-    with {:ok, thread} <- thread_of(comment),
-         {:ok, info} <- match(thread),
-         article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
-         {:ok, article} <- get(info.model, article_id, preload: preload) do
-      {:ok, article}
-    else
-      nil -> {:error, GroupherServer.ErrorCat.custom("invalid article")}
-      {:error, _} = error -> error
-    end
-  end
-
-  def article_of(_, _opts), do: {:error, GroupherServer.ErrorCat.custom("only support comment")}
-
-  @doc "get thread of comment or article"
-  @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%Comment{thread: thread}) when is_atom(thread) and not is_nil(thread) do
-    Threads.to_atom(thread)
-  end
-
-  @spec thread_of(map()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread) do
-    Threads.to_atom(thread)
-  end
-
-  @spec thread_of(any()) :: {:error, GroupherServer.ErrorCat.custom(String.t())}
-  def thread_of(_), do: {:error, GroupherServer.ErrorCat.custom("invalid article")}
-
+  @doc "Synchronizes one updated reply into the root Comment's embedded reply projection."
   @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
-  @doc "Synchronizes embed replies through the `FrontDesk` boundary."
-  def sync_embed_replies(%Comment{reply_to_comment_id: nil} = comment) do
-    {:ok, comment}
-  end
+  def sync_embed_replies(comment), do: Replies.sync_embed_replies(comment)
 
-  def sync_embed_replies(%Comment{} = comment) do
-    with %Comment{} = parent_comment <- Replies.root_comment(comment),
-         embed_index <- Enum.find_index(parent_comment.replies, &(&1.id == comment.id)) do
-      case is_nil(embed_index) do
-        true ->
-          {:ok, comment}
+  @doc "Loads one page of users attached to an Article reaction projection."
+  def load_reaction_users(queryable, article, filter),
+    do: ReactionUsers.load(queryable, article, filter)
 
-        false ->
-          replies = List.replace_at(parent_comment.replies, embed_index, comment)
-
-          {:ok, parent_comment} = ORM.update_embed(parent_comment, :replies, [])
-          {:ok, _} = ORM.update_embed(parent_comment, :replies, replies)
-      end
-
-      {:ok, comment}
-    end
-  end
-
-  @doc """
-  paged [reaction] users list
-  """
-  @spec load_reaction_users(Ecto.Queryable.t(), map(), map()) :: {:ok, map()} | {:error, map()}
-  def load_reaction_users(queryable, article, filter) do
-    {:ok, thread} = thread_of(article)
-    %{page: page, size: size} = filter
-
-    with {:ok, info} <- match(thread) do
-      queryable
-      |> where([u], field(u, ^info.foreign_key) == ^article.id)
-      |> QueryBuilder.load_inner_users(filter)
-      |> ORM.paginator(~m(page size)a)
-      |> done()
-    end
-  end
-
+  @doc "Reads one public Article from a structured path."
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
-  @doc "Runs `article` through the public `FrontDesk` boundary."
-  def article(%{} = article_path, opts \\ []) do
-    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.parse(article_path),
-         {:ok, community} <- community(community) do
-      article(community, thread, inner_id, opts)
-    end
-  end
+  def article(article_path, opts \\ []), do: Article.read(article_path, opts)
 
-  @spec article(Community.t(), atom(), integer() | String.t(), keyword()) ::
-          {:ok, struct()} | {:error, map()}
-  def article(community, thread, inner_id, opts \\ [])
+  @doc "Reads visible public Articles for a bounded set of structured paths."
+  def article_paths(paths), do: Article.read_paths(paths)
 
-  def article(%Community{id: community_id} = community, thread, inner_id, opts) do
-    preload = Keyword.get(opts, :preload, [])
+  @doc "Loads one public canonical Article for an explicit ViewTracker request."
+  def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)
 
-    with {:ok, info} <- match(thread),
-         {:ok, scope_context} <- public_scope_context(community, thread, opts),
-         %Ecto.Query{} = query <-
-           CMS.Gate.scope(info.model, nil, :read, scope_context),
-         {:ok, article} <-
-           query
-           |> where(
-             [article],
-             article.community_id == ^community_id and article.inner_id == ^inner_id
-           )
-           |> preload(^preload)
-           |> Repo.one()
-           |> done(),
-         {:ok, article} <- ORM.fill_meta(article) do
-      InteractionResponse.one(article, nil)
-    else
-      {:error, _} -> {:error, ArticleErrorCat.article_not_found("article not found")}
-    end
-  end
+  @doc "Locks and revalidates one physical Article inside the ViewTracker transaction."
+  def lock_article_for_view_tracking(article), do: Article.lock_for_view_tracking(article)
 
-  defp public_scope_context(%Community{} = community, :doc, opts) do
-    with {:ok, branch} <- Branch.resolve(community, Branch.main_slug()) do
-      {:ok,
-       DocScope.public_branch(branch.id,
-         include_illegal: Keyword.get(opts, :include_illegal, false)
-       )}
-    end
-  end
+  @doc "Reads public ArticleStats for one Community/thread batch."
+  def article_stats(community, thread, inner_ids),
+    do: Article.read_article_stats(community, thread, inner_ids)
 
-  defp public_scope_context(_community, thread, opts),
-    do:
-      {:ok,
-       ArticleScope.public(thread, include_illegal: Keyword.get(opts, :include_illegal, false))}
+  @doc "Builds ArticleStats for already-authorized canonical Articles."
+  def article_stats_for_articles(thread, articles, community_ref \\ nil),
+    do: Article.stats_for_articles(thread, articles, community_ref)
 
-  defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
+  @doc "Reads one Article through the actor-aware Article Insights scope."
+  def article_insights(article_path, actor, opts \\ []),
+    do: Article.read_insights(article_path, actor, opts)
 
-  defp parse_comment_inner_id(value) when is_binary(value) do
-    case Integer.parse(value) do
-      {int, ""} when int >= 0 -> {:ok, int}
-      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
-    end
-  end
-
-  defp parse_comment_inner_id(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
-
-  defp parse_comment_path(%{article: article_path, inner_id: inner_id}) do
-    {:ok, article_path, inner_id}
-  end
-
-  defp parse_comment_path(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
-
-  @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
-  defp get_full_comment(comment_id) do
-    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
-
-    with {:ok, comment} <- Repo.one(query) |> comment_done(),
-         {:ok, thread} <- thread_of(comment) do
-      do_extract_article_info(thread, Map.get(comment, thread))
-    end
-  end
-
-  @spec do_extract_article_info(T.thread(), T.article_common()) ::
-          T.domain_res(T.article_info())
-  defp do_extract_article_info(thread, article) do
-    with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
-         article_author <- get_in(article_with_author, [:author, :user]) do
-      article_info = %{title: article.title, id: article.id}
-
-      author_info = %{
-        id: article_author.id,
-        login: article_author.login,
-        nickname: article_author.nickname
-      }
-
-      {:ok, %{thread: thread, article: article_info, author: author_info}}
-    end
-  end
-
-  defp done({:ok, _} = result), do: result
-  defp done({:error, _} = result), do: result
-  defp done(nil), do: {:error, GroupherServer.ErrorCat.custom(%{reason: :not_exist})}
-  defp done(result), do: {:ok, result}
-
-  defp comment_done({:ok, _} = result), do: result
-  defp comment_done({:error, _} = result), do: result
-  defp comment_done(nil), do: {:error, CommentErrorCat.not_exist("comment not found")}
-  defp comment_done(result), do: {:ok, result}
+  @doc "Reads one public Article from canonical Community/thread/id coordinates."
+  def article(community, thread, inner_id, opts \\ []),
+    do: Article.read(community, thread, inner_id, opts)
 end

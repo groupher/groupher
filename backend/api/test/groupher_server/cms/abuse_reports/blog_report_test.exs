@@ -1,8 +1,9 @@
 defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
   @moduledoc false
 
-  alias GroupherServer.CMS.Articles.InteractionResponse
   use GroupherServer.TestMate
+  alias GroupherServer.CMS
+  alias CMS.Articles.Response
 
   setup do
     {_, blog, _, user} = mock_article(:blog)
@@ -38,9 +39,10 @@ defmodule GroupherServer.Test.CMS.AbuseReports.BlogReport do
       assert report.report_cases_count == 1
       assert List.first(report_cases).user.login == user.login
 
-      {:ok, blog} = InteractionResponse.one(blog, user, surface: :report)
+      {:ok, blog} = Response.one(blog, user, surface: :report)
       assert blog.meta.reported_count == 1
-      assert blog.viewer_has_reported
+      refute blog.viewer_has_reported
+      assert CMS.Interactions.viewer_state(blog, user).viewer_has_reported
     end
 
     test "can undo a report", ~m(user blog)a do

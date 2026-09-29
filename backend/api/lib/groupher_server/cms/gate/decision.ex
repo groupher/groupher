@@ -18,12 +18,14 @@ defmodule GroupherServer.CMS.Gate.Decision do
       iex> {:error, error} = {:error, primary_error(decision)}
   """
 
-  alias GroupherServer.ErrorCat
-  alias GroupherServer.ErrorCat.Error
+  require GroupherServer.CMS.Gate.ErrorCat
+
+  alias GroupherServer.CMS
+  alias CMS.Gate.ErrorCat
 
   @type violation :: %{
           reason: atom(),
-          error: Error.t(),
+          error: ErrorCat.error(),
           err_code: non_neg_integer(),
           source: atom(),
           retryable: boolean(),
@@ -97,7 +99,7 @@ defmodule GroupherServer.CMS.Gate.Decision do
     do: %__MODULE__{allowed: true, context: context, primary: nil, violations: []}
 
   @doc "Builds a denied Decision from one or more internal reasons."
-  @spec deny(Error.t() | [Error.t()], map()) :: t()
+  @spec deny(ErrorCat.error() | [ErrorCat.error()], map()) :: t()
   def deny(errors, context \\ %{}) do
     violations =
       errors
@@ -114,10 +116,10 @@ defmodule GroupherServer.CMS.Gate.Decision do
   end
 
   @doc "Converts a policy result into a structured Decision."
-  @spec from_result(:ok | {:error, Error.t()}, map()) :: t()
+  @spec from_result(:ok | {:error, ErrorCat.error()}, map()) :: t()
   def from_result(:ok, context), do: allow(context)
 
-  def from_result({:error, %Error{} = error}, context), do: deny(error, context)
+  def from_result({:error, ErrorCat.error_pattern() = error}, context), do: deny(error, context)
 
   @doc "Returns the selected primary reason, or `:ok` for an allowed Decision."
   @spec primary_reason(t()) :: atom()
@@ -125,11 +127,11 @@ defmodule GroupherServer.CMS.Gate.Decision do
   def primary_reason(%__MODULE__{primary: %{reason: reason}}), do: reason
 
   @doc "Returns the selected declared ErrorCat value, or nil for an allowed Decision."
-  @spec primary_error(t()) :: Error.t() | nil
+  @spec primary_error(t()) :: ErrorCat.error() | nil
   def primary_error(%__MODULE__{allowed: true}), do: nil
-  def primary_error(%__MODULE__{primary: %{error: %Error{} = error}}), do: error
+  def primary_error(%__MODULE__{primary: %{error: ErrorCat.error_pattern() = error}}), do: error
 
-  defp metadata(%Error{} = error) do
+  defp metadata(ErrorCat.error_pattern() = error) do
     reason = if error.reason in @known_reasons, do: error.reason, else: :gate_unknown
     error = if reason == error.reason, do: error, else: ErrorCat.gate_unknown()
 

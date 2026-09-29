@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.AbuseReports.List do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   List operations for abuse reports.
 
@@ -10,21 +9,22 @@ defmodule GroupherServer.CMS.AbuseReports.List do
         -> List
         -> Repo / external boundary
   """
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
+  import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.CMS
 
-  alias GroupherServer.CMS.Model.{AbuseReport, Comment}
+  alias CMS.QueryBuilder
+  alias CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, T}
 
-  import Helper.Utils, only: [done: 1]
-
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @export_author_keys [:id, :login, :nickname, :avatar]
-  @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :views]
+  @export_article_keys [:id, :inner_id, :title, :digest, :article_stats]
   @export_report_keys [
     :id,
     :deal_with,
@@ -116,11 +116,16 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp do_paged_reports(query, thread, filter) do
     %{page: page, size: size} = filter
 
-    query
-    |> QueryBuilder.filter_pack(filter)
-    |> ORM.paginator(~m(page size)a)
-    |> reports_formatter(thread)
-    |> done()
+    formatted =
+      query
+      |> QueryBuilder.filter_pack(filter)
+      |> ORM.paginator(~m(page size)a)
+      |> reports_formatter(thread)
+
+    case formatted do
+      {:error, _} = error -> error
+      result -> done(result)
+    end
   end
 
   defp do_paged_reports(query, %{page: page, size: size}) do
@@ -139,39 +144,51 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp reports_formatter(%{entries: entries} = paged_reports, :comment) do
-    paged_reports
-    |> Map.put(
-      :entries,
-      Enum.map(entries, fn report ->
-        basic_report = report |> Map.take(@export_report_keys)
-        basic_report |> Map.put(:comment, extract_article_comment_info(report))
-      end)
-    )
+    with {:ok, comments} <-
+           Enum.reduce_while(entries, {:ok, []}, fn report, {:ok, acc} ->
+             basic_report = Map.take(report, @export_report_keys)
+
+             case extract_article_comment_info(report) do
+               {:ok, comment} ->
+                 {:cont, {:ok, [Map.put(basic_report, :comment, comment) | acc]}}
+
+               {:error, _} = error ->
+                 {:halt, error}
+             end
+           end) do
+      Map.put(paged_reports, :entries, Enum.reverse(comments))
+    end
   end
 
   defp reports_formatter(%{entries: entries} = paged_reports, thread)
        when thread in @threads do
-    paged_reports
-    |> Map.put(
-      :entries,
-      Enum.map(entries, fn report ->
-        basic_report = report |> Map.take(@export_report_keys)
-        basic_report |> Map.put(:article, extract_article_info(thread, report))
-      end)
-    )
+    with {:ok, stats} <- article_stats(entries, thread),
+         {:ok, articles} <-
+           Enum.reduce_while(entries, {:ok, []}, fn report, {:ok, acc} ->
+             basic_report = Map.take(report, @export_report_keys)
+
+             case extract_article_info(thread, report, stats) do
+               {:ok, article} ->
+                 {:cont, {:ok, [Map.put(basic_report, :article, article) | acc]}}
+
+               {:error, _} = error ->
+                 {:halt, error}
+             end
+           end) do
+      Map.put(paged_reports, :entries, Enum.reverse(articles))
+    end
   end
 
   defp extract_account_info(%AbuseReport{} = report) do
     report |> Map.get(:account) |> Map.take(@export_author_keys)
   end
 
-  defp extract_article_info(thread, %AbuseReport{} = report) do
+  defp extract_article_info(thread, %AbuseReport{} = report, stats) do
     article = report |> Map.get(thread)
 
-    article
-    |> article_with_projection_count(thread)
-    |> Map.take(@export_article_keys)
-    |> Map.merge(%{thread: thread})
+    with {:ok, article} <- article_with_projection_count(article, thread, stats) do
+      {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: thread})}
+    end
   end
 
   defp extract_article_comment_info(%AbuseReport{} = report) do
@@ -188,8 +205,9 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
     comment = Map.merge(comment, %{author: author})
 
-    article = extract_article_in_comment(report.comment)
-    Map.merge(comment, %{article: article})
+    with {:ok, article} <- extract_article_in_comment(report.comment) do
+      {:ok, Map.merge(comment, %{article: article})}
+    end
   end
 
   defp extract_article_in_comment(%Comment{} = comment) do
@@ -200,21 +218,55 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
     case thread do
       nil ->
-        %{thread: nil}
+        {:ok, %{thread: nil}}
 
-      _ ->
-        comment
-        |> Map.get(thread)
-        |> article_with_projection_count(thread)
-        |> Map.take(@export_article_keys)
-        |> Map.merge(%{thread: thread})
+      thread ->
+        case Map.get(comment, thread) do
+          nil ->
+            {:ok, %{thread: thread}}
+
+          %Ecto.Association.NotLoaded{} ->
+            {:ok, %{thread: thread}}
+
+          article ->
+            with {:ok, article} <- article_with_projection_count(article, thread) do
+              {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: thread})}
+            end
+        end
     end
   end
 
-  defp article_with_projection_count(%{id: id} = article, thread) do
-    counts = CMS.Interactions.counts([article]) |> Map.get({thread, id}, %{})
-    Map.put(article, :upvotes_count, Map.get(counts, :upvotes_count, 0))
+  defp article_with_projection_count(article, thread),
+    do: article_with_projection_count(article, thread, nil)
+
+  defp article_with_projection_count(%{id: id} = article, thread, stats) do
+    with {:ok, article_stats} <- article_stats_for_article(article, thread, stats) do
+      projection = if is_map(article_stats), do: Map.get(article_stats, {thread, id})
+      {:ok, Map.put(article, :article_stats, projection)}
+    end
   end
 
-  defp article_with_projection_count(article, _thread), do: article
+  defp article_with_projection_count(_article, _thread, _summaries),
+    do: {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+
+  defp article_stats_for_article(article, thread, nil) do
+    case CMS.FrontDesk.article_stats_for_articles(thread, [article]) do
+      stats when is_map(stats) -> {:ok, stats}
+      {:error, _} -> {:ok, nil}
+    end
+  end
+
+  defp article_stats_for_article(_article, _thread, stats) when is_map(stats), do: {:ok, stats}
+
+  defp article_stats(entries, thread) do
+    articles =
+      entries
+      |> Enum.map(&Map.get(&1, thread))
+      |> Enum.reject(&is_nil/1)
+
+    case CMS.FrontDesk.article_stats_for_articles(thread, articles) do
+      stats when is_map(stats) -> {:ok, stats}
+      {:error, _} -> {:ok, nil}
+    end
+  end
 end

@@ -310,12 +310,12 @@ Dev Hub 和类似服务清单中的陈旧条目。它可能命中普通说明文
 Status、Dev Hub、Portless、ignore 或部署配置命中。剩余结果归为：
 
 - `infra/clean_up.md`：清理合同本身必须引用待删除名称；
-- `docs/dashboard-to-tanstack/*`、`docs/tanstack_rewrite/*`、`docs/dash_route.md`、
-  `docs/ssr_theme.md`、`docs/sub-apps/gateway_hono_migration.md`、
+- `docs/migrations/tanstack/*`、`docs/dash/routes.md`、
+  `docs/architecture/ssr-theme.md`、`docs/gateway/hono-migration.md`、
   `frontend/dash/docs/rewrites.md`：已明确标记的历史迁移记录；
 - Auth、Analytics、Activity、Assets、Apply、GraphQL、Query、Lefthook 等领域文档中的旧路径：
   已更新为当前路径，或在文件头明确标注为迁移期证据/继续实施前必须重做清点；
-- `docs/deploy/cf_arch.md` 中的 `/_next`：当前 Edge Router 的显式 `404` 负面合同，不是代理
+- `docs/deploy/cloudflare.md` 中的 `/_next`：当前 Edge Router 的显式 `404` 负面合同，不是代理
   路由；
 - `backend/content-import/.../candidateFilter.ts` 中的 `.next`：过滤导入的第三方 GitHub
   workspace 生成目录，不是 Groupher build/cache 约定；

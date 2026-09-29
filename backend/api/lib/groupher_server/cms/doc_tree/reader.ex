@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.DocTree.Reader do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Reader helpers for the docs editor tree.
 
@@ -15,17 +14,19 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   intentionally not exposed.
   """
 
+  require GroupherServer.CMS.DocTree.Const
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.DocTree.{ChangeDetection, Events}
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Doc, as: DocScope
 
-  require CMS.Const
+  alias CMS.Docs.Branch
+  alias CMS.DocTree.{ChangeDetection, Events}
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     Community,
     Doc,
     DocCoverCard,
@@ -38,7 +39,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     DocTreeNode
   }
 
-  alias GroupherServer.CMS.Articles.Trash
+  alias CMS.Articles.Trash
   alias Helper.{ORM, T, Transaction}
 
   @doc """
@@ -146,7 +147,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       query =
         Doc
         |> Trash.not_trashed_scope(:doc)
-        |> CMS.Gate.scope(actor, :read_draft, DocScope.draft(branch.id, policy_mode))
+        |> CMS.Gate.scope(actor, :read_draft, DocContext.draft(branch.id, policy_mode))
 
       case query do
         %Ecto.Query{} = query ->
@@ -220,7 +221,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   # Re-scope it here so that path cannot bypass the public Community lifecycle
   # boundary merely because it did not originate from `Communities.read/1`.
   defp public_community(%Community{} = community) do
-    case CMS.Gate.scope(Community, nil, :read, CommunityScope.public()) do
+    case CMS.Gate.scope(Community, nil, :read, CommunityContext.public()) do
       %Ecto.Query{} = query ->
         query
         |> where([candidate], candidate.id == ^community.id)
@@ -236,7 +237,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   end
 
   defp scoped_community(%Community{} = community, actor, policy_mode) do
-    case CMS.Gate.scope(Community, actor, :read, CommunityScope.new(policy_mode)) do
+    case CMS.Gate.scope(Community, actor, :read, CommunityContext.new(policy_mode)) do
       %Ecto.Query{} = query ->
         query
         |> where([candidate], candidate.id == ^community.id)
@@ -263,7 +264,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Enum.uniq()
 
     Doc
-    |> CMS.Gate.scope(nil, :list, DocScope.public_branch(branch.id))
+    |> CMS.Gate.scope(nil, :list, DocContext.public_branch(branch.id))
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == ^CMS.Const.stage(:public))

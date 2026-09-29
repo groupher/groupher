@@ -9,6 +9,7 @@ export const serializeGraphQLError = (message: string, code?: string): string =>
 /** Reads graph qlerror code through the bounded frontend shared interface. */
 export const readGraphQLErrorCode = (error: Error & { code?: unknown }): string | undefined => {
   if (typeof error.code === 'string' && isMachineCode(error.code)) return error.code
+  if (isMachineCode(error.message)) return error.message
   if (!error.message.startsWith(ERROR_CODE_PREFIX)) return undefined
 
   const end = error.message.indexOf(']', ERROR_CODE_PREFIX.length)

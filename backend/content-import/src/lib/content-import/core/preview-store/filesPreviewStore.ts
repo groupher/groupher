@@ -9,7 +9,7 @@
  * In-process write chaining only serializes same-key races; durable
  * immutability is enforced again against the storage backend.
  *
- * @see docs/bulk-import/import-file-sdk.md
+ * @see docs/content-import/import-file-sdk.md
  */
 import { Files, FilesError, type StoredFile } from 'files-sdk'
 

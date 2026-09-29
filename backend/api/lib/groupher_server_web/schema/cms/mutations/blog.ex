@@ -16,6 +16,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
   object :cms_blog_mutations do
     @desc "create a blog"
     field :create_blog, :blog do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -35,6 +36,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
     @desc "save a new blog as a draft"
     field :create_blog_draft, :article_draft do
+      arg(:command_id, non_null(:id))
       arg(:title, non_null(:string))
       arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
@@ -52,6 +54,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
     @desc "update a cms/blog"
     field :update_blog, :blog do
+      arg(:command_id, non_null(:id))
       arg(:article, non_null(:article_path_input))
       arg(:expected_version, non_null(:integer))
       arg(:title, :string)
@@ -73,6 +76,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
     @desc "save changes to a blog draft without publishing"
     field :update_blog_draft, :article_draft do
+      arg(:command_id, non_null(:id))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:expected_version, non_null(:integer))
@@ -95,6 +99,9 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
     @desc "publish an existing blog draft"
     field :publish_blog_draft, :blog do
+      arg(:command_id, non_null(:id))
+      arg(:expected_version, non_null(:integer))
+      arg(:expected_lifecycle_version, non_null(:integer))
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 

@@ -137,9 +137,10 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     end
 
     @desc "add article into a collect folder"
-    field :add_to_collect, :collect_folder do
+    field :add_to_collect, :article_collect_result do
       arg(:article, non_null(:article_path_input))
       arg(:folder_id, non_null(:id))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :article)
@@ -148,9 +149,10 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     end
 
     @desc "remove article from a collect folder"
-    field :remove_from_collect, :collect_folder do
+    field :remove_from_collect, :article_collect_result do
       arg(:article, non_null(:article_path_input))
       arg(:folder_id, non_null(:id))
+      arg(:command_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :article)

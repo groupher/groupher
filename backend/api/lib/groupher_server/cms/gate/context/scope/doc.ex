@@ -13,16 +13,24 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
       iex> %__MODULE__{stage: :draft, branch_id: 42} = draft(42)
   """
 
-  @modes [:public, :owner_management, :moderator_management, :operations]
+  @modes [:public, :owner_management, :moderator_management, :operations, :insights_management]
   @enforce_keys [:stage, :policy_mode]
-  defstruct [:stage, :policy_mode, :branch_id, :branch_policy, include_illegal: false]
+  defstruct [
+    :stage,
+    :policy_mode,
+    :branch_id,
+    :branch_policy,
+    include_illegal: false,
+    passport_granted_community_slugs: []
+  ]
 
   @type t :: %__MODULE__{
           stage: :public | :draft,
           policy_mode: atom(),
           branch_id: integer() | nil,
           branch_policy: :main | nil,
-          include_illegal: boolean()
+          include_illegal: boolean(),
+          passport_granted_community_slugs: [String.t()]
         }
 
   @doc "Builds a public Doc read intent for the official main branch."
@@ -37,6 +45,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
   def draft(branch_id, policy_mode \\ :owner_management, opts \\ []) do
     build(:draft, policy_mode, branch_id, nil, opts)
   end
+
+  @doc "Builds the public Doc Insights read intent for the official main branch."
+  def insights(opts \\ []), do: build(:public, :insights_management, nil, :main, opts)
 
   defp build(stage, policy_mode, branch_id, branch_policy, opts) do
     unless policy_mode in @modes do
@@ -56,7 +67,12 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Doc do
       policy_mode: policy_mode,
       branch_id: branch_id,
       branch_policy: branch_policy,
-      include_illegal: Keyword.get(opts, :include_illegal, false)
+      include_illegal: Keyword.get(opts, :include_illegal, false),
+      passport_granted_community_slugs:
+        opts
+        |> Keyword.get(:passport_granted_community_slugs, [])
+        |> Enum.filter(&is_binary/1)
+        |> Enum.uniq()
     }
   end
 end

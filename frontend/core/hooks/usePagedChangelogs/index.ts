@@ -2,51 +2,43 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
-import { EMPTY_PAGED_ARTICLES } from '~/const/utils'
+import useArticleStates from '~/hooks/useArticleStates'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { Q } from '~/query'
-import type { TPagedChangelogs, TResState } from '~/spec'
-import useAccount from '~/stores/account/hooks'
+import type { TChangelog, TPagedArticleViewModels, TResState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 type TRes = {
   resState: TResState
-  pagedChangelogs: TPagedChangelogs
+  pagedChangelogs: TPagedArticleViewModels<TChangelog>
   pagedParams: ReturnType<typeof getPagedArticlesParams>
 }
 
+const EMPTY_CHANGELOG_VIEW_MODELS: TPagedArticleViewModels<TChangelog> = { entries: [] }
+
 /** Reads changelog server state directly from the canonical Query cache. */
 export default function usePagedChangelogs(): TRes {
-  const account = useAccount()
   const { slug } = useCommunity()
   const searchParams = useURLSearchParams()
   const pagedParams = getPagedArticlesParams(slug, searchParams)
   const query = useQuery(Q.article.changelogs(pagedParams))
-  const articleRefs = useMemo(
-    () =>
-      (query.data?.entries || []).map((article) => ({
-        community: article.community.slug,
-        thread: article.meta.thread,
-        innerId: article.innerId,
-      })),
-    [query.data?.entries],
-  )
-  const viewerQuery = useQuery(Q.viewer.articleStates(account.user?.login || '', articleRefs))
+  const states = useArticleStates(query.data?.entries)
   const pagedChangelogs = useMemo(() => {
-    if (!query.data || !viewerQuery.data) return query.data || EMPTY_PAGED_ARTICLES
+    if (!query.data) return EMPTY_CHANGELOG_VIEW_MODELS
+
     return {
       ...query.data,
-      entries: query.data.entries.map((article) => {
-        const key = `${article.community.slug}:${article.meta.thread}:${article.innerId}`
-        const viewerState = viewerQuery.data[key]
-        return viewerState ? { ...article, ...viewerState, articleKey: undefined } : article
-      }),
-    }
-  }, [query.data, viewerQuery.data])
+      entries: states.map(({ content, stats, viewerState }) => ({
+        content,
+        stats,
+        viewerState,
+      })),
+    } as TPagedArticleViewModels<TChangelog>
+  }, [query.data, states])
   return {
     resState: (query.isPending ? TYPE.RES_STATE.LOADING : TYPE.RES_STATE.DONE) as TResState,
-    pagedChangelogs: pagedChangelogs as TPagedChangelogs,
+    pagedChangelogs,
     pagedParams,
   }
 }

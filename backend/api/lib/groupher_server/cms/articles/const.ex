@@ -5,7 +5,9 @@ defmodule GroupherServer.CMS.Articles.Const do
       Article query input -> Articles.Const -> Article list ordering
   """
 
-  alias GroupherServer.CMS.Interactions.Const, as: InteractionsConst
+  alias GroupherServer.CMS
+
+  alias CMS.Interactions.Const, as: InteractionsConst
 
   @native_orders [:publish, :comments, :views]
   @orders @native_orders ++ InteractionsConst.interaction_order_values()

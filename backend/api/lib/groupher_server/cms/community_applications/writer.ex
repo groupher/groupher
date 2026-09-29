@@ -11,15 +11,16 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Ecto.Multi
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat
-  alias GroupherServer.CMS.Communities.{NamePolicy, SlugClaims}
-  alias GroupherServer.CMS.CommunityApplications.{Config, LogoUploads, Policy, Transitions}
-  alias GroupherServer.CMS.Model.CommunityApplication
-  alias GroupherServer.Repo
+  alias Accounts.Model.User
+  alias CMS.Communities.{ErrorCat, NamePolicy, SlugClaims}
+  alias CMS.CommunityApplications.{Config, LogoUploads, Policy, Transitions}
+  alias CMS.Model.CommunityApplication
   alias Helper.Utils
 
   @categories %{
@@ -234,7 +235,7 @@ defmodule GroupherServer.CMS.CommunityApplications.Writer do
       {:hit, application} ->
         {:ok, application}
 
-      {:error, %GroupherServer.ErrorCat.Error{reason: :idempotency_conflict}} ->
+      {:error, ErrorCat.error_pattern(reason: :idempotency_conflict)} ->
         {:error, ErrorCat.idempotency_conflict()}
 
       :miss ->

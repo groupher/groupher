@@ -1,7 +1,7 @@
 import { graphql } from '~/graphql/authoring'
 
 export const doc = graphql(`
-  query PageDoc($article: ArticlePathInput!, $userHasLogin: Boolean!) {
+  query PageDoc($article: ArticlePathInput!) {
     doc(article: $article) {
       ...PageDocFields
       subtitle
@@ -27,7 +27,7 @@ export const docPublicTree = graphql(`
 `)
 
 export const pagedDocs = graphql(`
-  query PagePagedDocs($filter: PagedDocsFilter!, $userHasLogin: Boolean!) {
+  query PagePagedDocs($filter: PagedDocsFilter!) {
     pagedDocs(filter: $filter) {
       entries {
         ...PageDocFields
@@ -40,8 +40,6 @@ export const pagedDocs = graphql(`
         commentsParticipants {
           ...PageAuthorFields
         }
-        viewerHasViewed @include(if: $userHasLogin)
-        viewerHasUpvoted @include(if: $userHasLogin)
       }
       ...PageDocPageInfo
     }

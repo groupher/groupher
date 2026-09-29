@@ -45,7 +45,7 @@ type TProps = {
 /**
  * Renders Preview or Job process stages from the shared process contract.
  *
- * @see docs/bulk-import/import-process-log.md
+ * @see docs/content-import/import-process-log.md
  */
 export default function ImportProcessLog({ disconnected = false, process }: TProps) {
   const s = useSalon()

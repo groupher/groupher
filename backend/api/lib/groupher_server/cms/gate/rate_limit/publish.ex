@@ -19,12 +19,13 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   import Ecto.Query, warn: false
   import ShortMaps
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Passport.Registry
-  alias GroupherServer.CMS.Policy.Config
-  alias GroupherServer.CMS.Policy.Model.PublishThrottle, as: ThrottleRecord
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.Gate.ErrorCat
+  alias CMS.Passport.Registry
+  alias CMS.Policy.{Config, Model.PublishThrottle}
   alias Helper.{Datetime, ORM}
 
   @interval_minutes Config.publish_throttle().interval_minutes
@@ -32,7 +33,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   @day_total Config.publish_throttle().day_limit
 
   @doc "Checks whether the actor may publish within the configured limits."
-  @spec check(map(), keyword()) :: {:ok, :publish} | {:error, GroupherServer.ErrorCat.Error.t()}
+  @spec check(map(), keyword()) :: {:ok, :publish} | {:error, ErrorCat.error()}
   def check(user, opts \\ [])
 
   def check(user, opts) when is_map(user) do
@@ -53,7 +54,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
 
   def check(_user, _opts), do: {:error, AuthErrorCat.account_login()}
 
-  defp interval_check(%ThrottleRecord{last_publish_time: last_publish_time}, opts) do
+  defp interval_check(%PublishThrottle{last_publish_time: last_publish_time}, opts) do
     interval = Keyword.get(opts, :interval) || @interval_minutes
     latest_valid_time = Datetime.shift(last_publish_time, minutes: interval)
 
@@ -62,13 +63,13 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
       else: {:error, ErrorCat.throttle_interval()}
   end
 
-  defp hour_limit_check(%ThrottleRecord{hour_count: hour_count}, opts) do
+  defp hour_limit_check(%PublishThrottle{hour_count: hour_count}, opts) do
     limit = Keyword.get(opts, :hour_limit) || @hour_limit
 
     if hour_count < limit, do: {:ok, :hour_limit_check}, else: {:error, ErrorCat.throttle_hour()}
   end
 
-  defp day_limit_check(%ThrottleRecord{date_count: day_count}, opts) do
+  defp day_limit_check(%PublishThrottle{date_count: day_count}, opts) do
     limit = Keyword.get(opts, :day_limit) || @day_total
 
     if day_count < limit, do: {:ok, :day_limit_check}, else: {:error, ErrorCat.throttle_day()}
@@ -83,7 +84,7 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
     publish_hour = cur_datetime
     publish_date = cur_date
 
-    case ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    case PublishThrottle |> ORM.find_by(~m(user_id)a) do
       {:ok, record} ->
         date_count = record.date_count + 1
         hour_count = record.hour_count + 1
@@ -95,14 +96,14 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
         date_count = 1
         hour_count = 1
         attrs = ~m(user_id publish_date publish_hour date_count hour_count last_publish_time)a
-        ThrottleRecord |> ORM.create(attrs)
+        PublishThrottle |> ORM.create(attrs)
     end
   end
 
   @doc false
   # auto run check for same hour / day
   def load_publish_throttle(%User{id: user_id}) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       date_count = if same_day?(record.publish_date), do: record.date_count, else: 0
       hour_count = if same_hour?(record.publish_hour), do: record.hour_count, else: 0
 
@@ -139,33 +140,33 @@ defmodule GroupherServer.CMS.Gate.RateLimit.Publish do
   @doc false
   # NOTE: the mock_xxx helpers are only used by tests.
   def mock_publish_throttle_attr(:last_publish_time, %User{id: user_id}, minutes: minutes) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       last_publish_time = Datetime.shift(record.last_publish_time, minutes: minutes)
       record |> ORM.update(~m(last_publish_time)a)
     end
   end
 
   def mock_publish_throttle_attr(:hour_count, %User{id: user_id}, count: hour_count) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       record |> ORM.update(~m(hour_count)a)
     end
   end
 
   def mock_publish_throttle_attr(:publish_hour, %User{id: user_id}, hours: hours) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       publish_hour = Datetime.shift(record.publish_hour, hours: hours)
       record |> ORM.update(~m(publish_hour)a)
     end
   end
 
   def mock_publish_throttle_attr(:date_count, %User{id: user_id}, count: date_count) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       record |> ORM.update(~m(date_count)a)
     end
   end
 
   def mock_publish_throttle_attr(:publish_date, %User{id: user_id}, days: days) do
-    with {:ok, record} <- ThrottleRecord |> ORM.find_by(~m(user_id)a) do
+    with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
       publish_date = record.publish_hour |> Datetime.shift(days: days) |> Datetime.to_date()
       record |> ORM.update(~m(publish_date)a)
     end

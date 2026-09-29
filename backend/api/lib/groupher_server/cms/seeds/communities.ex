@@ -13,10 +13,11 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Seeds.Domain
-  alias GroupherServer.CMS.Seeds.Helper, as: SeedHelper
+  alias CMS.ErrorCat
 
-  alias GroupherServer.CMS.Model.Community
+  alias CMS.Seeds.Domain
+  alias CMS.Seeds.Helper, as: SeedHelper
+  alias CMS.Model.Community
   alias Helper.{ORM, T}
 
   @community_types [:pl, :framework]
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
   end
 
   def mock(_slug, type) when is_atom(type),
-    do: {:error, GroupherServer.ErrorCat.custom("unknown community type")}
+    do: {:error, ErrorCat.custom("unknown community type")}
 
   @spec mock(String.t() | atom(), keyword()) :: T.domain_res(Community.t())
   def mock(slug, opts) when is_list(opts) do

@@ -18,8 +18,8 @@ defmodule GroupherServer.DataCase do
         -> endpoint / fixture / Repo
   """
 
-  alias Ecto.Adapters.SQL.Sandbox
   use ExUnit.CaseTemplate
+  alias Ecto.Adapters.SQL.Sandbox
 
   using do
     quote do

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Result do
   project-wide result abstraction.
   """
 
+
   @doc """
   Maps an enumerable while every function result is `{:ok, value}`.
 
@@ -28,10 +29,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.Result do
       #=> {:ok, [2, 4, 6]}
 
       Result.map_while_ok([1, 2, 3], fn
-        2 -> {:error, GroupherServer.ErrorCat.custom("boom")}
+        2 -> {:error, ErrorCat.custom("boom")}
         x -> {:ok, x}
       end)
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :custom}}
+      #=> {:error, ErrorCat.error_pattern(reason: :custom)}
 
   """
   def map_while_ok(enumerable, fun) do

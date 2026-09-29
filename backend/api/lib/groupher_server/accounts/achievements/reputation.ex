@@ -16,7 +16,9 @@ defmodule GroupherServer.Accounts.Achievements.Reputation do
 
   import ShortMaps
 
-  alias GroupherServer.Accounts.Model.{Achievement, User}
+  alias GroupherServer.Accounts
+
+  alias Accounts.Model.{Achievement, User}
   alias Helper.{ORM, Transaction}
 
   @collect_weight GroupherServer.Accounts.Config.achieve_collect_weight()

@@ -22,6 +22,9 @@ export const Route = createFileRoute('/$community/kanban/_layout/previewer/post/
       communityQueries.post(params.community, params.id),
     )
     if (!post) throw notFound()
+    await context.queryClient.ensureQueryData(
+      communityQueries.stat(context.queryClient, params.community, THREAD.POST, params.id),
+    )
     return { post }
   },
   component: KanbanPostPreview,

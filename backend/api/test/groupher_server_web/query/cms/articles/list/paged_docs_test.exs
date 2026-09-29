@@ -3,6 +3,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
   use GroupherServer.TestMate
 
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Model.ArticleStats
+  alias GroupherServerWeb.ErrorCat, as: WebErrorCat
+
   @page_size GroupherServerWeb.Config.page_size()
 
   @today_count 3
@@ -82,7 +86,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
 
-      assert first_doc["upvotesCount"] === 3
+      assert first_doc["innerId"] === to_string(doc_last_week.inner_id)
     end
 
     test "comments_count order should work",
@@ -96,7 +100,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
-      assert first_doc["commentsCount"] === 3
+      assert first_doc["innerId"] === to_string(doc_last_week.inner_id)
     end
 
     test "views order should work", ~m(guest_conn community user user2 user3)a do
@@ -105,34 +109,13 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       doc_attrs = mock_attrs(:doc, %{community_id: community.id})
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(doc),
-          :doc,
-          doc.inner_id,
-          user
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(doc),
-          :doc,
-          doc.inner_id,
-          user2
-        )
-
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(doc),
-          :doc,
-          doc.inner_id,
-          user3
-        )
+      track_view(doc, user)
+      track_view(doc, user2)
+      track_view(doc, user3)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       first_doc = results["entries"] |> List.first()
-      last_doc = results["entries"] |> List.last()
-      assert first_doc["views"] > last_doc["views"]
+      assert first_doc["innerId"] == to_string(doc.inner_id)
     end
 
     test "should get valid article document", ~m(guest_conn community user)a do
@@ -198,7 +181,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Articles.ErrorCat.thread_not_visible())
+               ErrorCat.code(ArticleErrorCat.thread_not_visible())
              )
     end
 
@@ -209,7 +192,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -221,14 +204,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_0,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
 
       assert guest_conn
              |> query_error?(
                S.Article.q(:paged_articles, :doc),
                variables_neg_1,
-               ErrorCat.code(GroupherServerWeb.ErrorCat.pagination())
+               ErrorCat.code(WebErrorCat.pagination())
              )
     end
 
@@ -274,20 +257,33 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       assert :gt = DateTime.compare(first_inserted_time, last_inserted_time)
     end
 
-    test "filter sort MOST_VIEWS should work", ~m(guest_conn)a do
-      most_views_doc = Doc |> order_by(desc: :views) |> limit(1) |> Repo.one()
+    test "filter sort MOST_VIEWS should work", ~m(guest_conn doc_last_year)a do
+      Repo.update_all(
+        from(summary in ArticleStats,
+          where: summary.thread == :doc and summary.article_id == ^doc_last_year.id
+        ),
+        set: [views: 10, views_revision: 1, snapshot_at: DateTime.utc_now(:second)]
+      )
+
+      most_views_doc =
+        ArticleStats
+        |> where([summary], summary.thread == :doc)
+        |> order_by(desc: :views)
+        |> limit(1)
+        |> Repo.one()
+
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       find_doc = results |> Map.get("entries") |> hd
 
-      # assert find_doc["id"] == most_views_doc |> Map.get(:id) |> to_string
-      assert find_doc["views"] == most_views_doc |> Map.get(:views)
+      assert most_views_doc.article_id == doc_last_year.id
+      assert find_doc["innerId"] == to_string(doc_last_year.inner_id)
     end
   end
 
-  describe "[query paged_docs filter has_xxx]" do
-    test "has_xxx state should work", ~m(user community)a do
+  describe "[query paged_docs private state boundary]" do
+    test "public content never exposes viewer-private fields", ~m(user community)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, doc} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
@@ -301,18 +297,12 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       the_doc =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
 
-      assert not the_doc["viewerHasViewed"]
-      assert not the_doc["viewerHasUpvoted"]
-      assert not the_doc["viewerHasCollected"]
-      assert not the_doc["viewerHasReported"]
+      refute Map.has_key?(the_doc, "viewerHasViewed")
+      refute Map.has_key?(the_doc, "viewerHasUpvoted")
+      refute Map.has_key?(the_doc, "viewerHasCollected")
+      refute Map.has_key?(the_doc, "viewerHasReported")
 
-      {:ok, _} =
-        CMS.Articles.read(
-          article_community(doc),
-          :doc,
-          doc.inner_id,
-          user
-        )
+      track_view(doc, user)
 
       {:ok, _} = CMS.Interactions.upvote(doc, user)
       {:ok, _} = CMS.Interactions.collect(doc, user)
@@ -323,10 +313,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       the_doc =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(doc.inner_id)))
 
-      assert the_doc["viewerHasViewed"]
-      assert the_doc["viewerHasUpvoted"]
-      assert the_doc["viewerHasCollected"]
-      assert the_doc["viewerHasReported"]
+      refute Map.has_key?(the_doc, "viewerHasViewed")
+      refute Map.has_key?(the_doc, "viewerHasUpvoted")
+      refute Map.has_key?(the_doc, "viewerHasCollected")
+      refute Map.has_key?(the_doc, "viewerHasReported")
 
       assert user_exist_in?(user, the_doc["meta"]["latestUpvotedUsers"])
     end
@@ -441,5 +431,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
 
       assert first_doc["innerId"] !== to_string(doc_last_week.inner_id)
     end
+  end
+
+  defp track_view(article, user) do
+    assert {:ok, %{tracked: true}} =
+             track_article_view(article, user, read_purpose: :public_read)
   end
 end

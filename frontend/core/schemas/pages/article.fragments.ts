@@ -71,10 +71,6 @@ export const PagePostFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    commentsCount
-    upvotesCount
-    commentsParticipantsCount
     author {
       ...PageAuthorFields
     }
@@ -108,13 +104,11 @@ export const PagePostDetailFields = graphql(`
     commentsParticipants {
       ...PageAuthorFields
     }
-    collectsCount
     lifecycle {
       state
+      version
       archivedAt
     }
-    viewerHasCollected @include(if: $userHasLogin)
-    viewerHasUpvoted @include(if: $userHasLogin)
   }
 `)
 
@@ -127,10 +121,6 @@ export const PageChangelogFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    commentsCount
-    upvotesCount
-    commentsParticipantsCount
     author {
       ...PageAuthorFields
     }
@@ -164,13 +154,11 @@ export const PageChangelogDetailFields = graphql(`
     commentsParticipants {
       ...PageAuthorFields
     }
-    collectsCount
     lifecycle {
       state
+      version
       archivedAt
     }
-    viewerHasCollected @include(if: $userHasLogin)
-    viewerHasUpvoted @include(if: $userHasLogin)
   }
 `)
 
@@ -200,10 +188,6 @@ export const PageDocFields = graphql(`
     insertedAt
     activeAt
     updatedAt
-    views
-    commentsCount
-    upvotesCount
-    commentsParticipantsCount
     author {
       ...PageAuthorFields
     }
@@ -237,13 +221,11 @@ export const PageDocDetailFields = graphql(`
     commentsParticipants {
       ...PageAuthorFields
     }
-    collectsCount
     lifecycle {
       state
+      version
       archivedAt
     }
-    viewerHasCollected @include(if: $userHasLogin)
-    viewerHasUpvoted @include(if: $userHasLogin)
   }
 `)
 

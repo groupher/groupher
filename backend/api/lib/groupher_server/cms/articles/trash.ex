@@ -15,15 +15,22 @@ defmodule GroupherServer.CMS.Articles.Trash do
         -> Repo / domain event
   """
 
+  require GroupherServer.CMS.Const
+
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.CMS.Articles.{Document, Lifecycle, MutationLock}
-  alias GroupherServer.CMS.Communities.TagStats
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Docs.Trash, as: DocTrash
+  alias GroupherServer.{Accounts, Activity, CMS, PublicCache, Repo}
+  alias CMS.{Articles, ErrorCat}
+  alias CMS.Articles.{Document, Lifecycle, MutationLock}
+  alias CMS.Communities.TagStats
+  alias CMS.Docs.Branch
+  alias CMS.Docs.Trash, as: DocTrash
+  alias CMS.SearchArtiments.Indexer
+  alias CMS.Gate.Decision
+  alias PublicCache.Const, as: PublicCacheConst
 
-  alias GroupherServer.CMS.Model.{
+  alias CMS.Model.{
     ArticleLifecycle,
     ArtimentMention,
     Community,
@@ -35,16 +42,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
     TrashedDocTreeNode
   }
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Publish
-  alias GroupherServer.{Activity, CMS, Repo}
-  alias GroupherServer.CMS.SearchArtiments.Indexer
-  alias GroupherServer.CMS.Gate.Decision
+  alias Accounts.Model.User
+  alias Accounts.Publish
   alias Helper.{ORM, T}
 
-  require CMS.Const
-
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
   @default_retention_days 30
 
   @doc """
@@ -139,9 +141,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   def trash(_article, _actor, _opts \\ [])
 
   def trash(%Doc{}, _actor, _opts),
-    do:
-      {:error,
-       GroupherServer.ErrorCat.custom("Doc deletion must go through the Docs Tree lifecycle")}
+    do: {:error, ErrorCat.custom("Doc deletion must go through the Docs Tree lifecycle")}
 
   def trash(article, actor, opts) do
     result =
@@ -161,35 +161,19 @@ defmodule GroupherServer.CMS.Articles.Trash do
                 )
 
               {:error, %Decision{} = decision} ->
-                record_denied_trash(article, actor, decision)
+                {:error, decision}
 
               error ->
                 error
             end
         end
       else
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Article Community")}
+        nil -> {:error, Articles.ErrorCat.not_exist("Article Community")}
         error -> error
       end
 
     sync_search(result, :delete)
   end
-
-  defp record_denied_trash(article, %User{} = actor, %Decision{} = decision) do
-    reason = Decision.primary_reason(decision)
-
-    with {:ok, _event} <-
-           Activity.log(article, :trashed,
-             actor: actor,
-             outcome: :denied,
-             denial_code: reason
-           ) do
-      {:error, decision}
-    end
-  end
-
-  defp record_denied_trash(_article, _actor, %Decision{} = decision),
-    do: {:error, decision}
 
   @doc """
   Creates one Article membership under an already-created action.
@@ -388,15 +372,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
             {:ok, doc}
           else
             true ->
-              {:error,
-               GroupherServer.ErrorCat.custom("Trash action must be restored as one group")}
+              {:error, ErrorCat.custom("Trash action must be restored as one group")}
 
             error ->
               error
           end
         end)
       else
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
+        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -411,7 +394,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
           do_restore(item.id, community, actor, opts)
         end)
       else
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
+        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -443,17 +426,14 @@ defmodule GroupherServer.CMS.Articles.Trash do
             {:ok, %{done: true}}
           else
             true ->
-              {:error,
-               GroupherServer.ErrorCat.custom(
-                 "Trash action must be permanently deleted as one group"
-               )}
+              {:error, ErrorCat.custom("Trash action must be permanently deleted as one group")}
 
             error ->
               error
           end
         end)
       else
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
+        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
         error -> error
       end
 
@@ -470,7 +450,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       sync_search(result, {:delete, item.thread, item.article_hash_id})
     else
-      nil -> {:error, CMS.Articles.ErrorCat.not_exist("Trash Community")}
+      nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
       error -> error
     end
   end
@@ -482,8 +462,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
     |> preload([:trash_action, :deleted_by])
     |> Repo.one()
     |> case do
-      %TrashedArticle{} = item -> {:ok, hydrate(item)}
-      nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
+      %TrashedArticle{} = item -> hydrate(item)
+      nil -> {:error, Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
@@ -500,7 +480,10 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> preload([:trash_action, :deleted_by])
 
     paged = ORM.paginator(query, page: page, size: size)
-    {:ok, %{paged | entries: hydrate_entries(paged.entries, community)}}
+
+    with {:ok, entries} <- hydrate_entries(paged.entries, community) do
+      {:ok, %{paged | entries: entries}}
+    end
   end
 
   @spec create_action(Community.t(), User.t() | nil, map()) :: T.domain_res(TrashAction.t())
@@ -555,7 +538,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
     if count in [0, 1],
       do: :ok,
-      else: {:error, GroupherServer.ErrorCat.custom("invalid Trash action cleanup")}
+      else: {:error, ErrorCat.custom("invalid Trash action cleanup")}
   end
 
   defp do_trash(community, thread, article_hash_id, actor, opts) do
@@ -585,7 +568,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
                {:ok, _lifecycle} <-
                  Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
                {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-               :ok <- update_visibility_stats(article, thread, :trash),
+               :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
                {:ok, _activity} <-
                  Activity.log(article, :trashed,
                    actor: activity_actor(actor),
@@ -625,7 +608,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
          {:ok, _lifecycle} <-
            Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-         :ok <- update_visibility_stats(article, thread, :trash),
+         :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
          {:ok, _activity} <-
            maybe_record_activity(
              article,
@@ -648,7 +631,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
     case item do
       nil ->
-        {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
+        {:error, Articles.ErrorCat.not_exist("TrashedArticle")}
 
       %TrashedArticle{} = item ->
         action =
@@ -663,7 +646,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
           {:ok, article}
         else
           true ->
-            {:error, GroupherServer.ErrorCat.custom("Trash action must be restored as one group")}
+            {:error, ErrorCat.custom("Trash action must be restored as one group")}
 
           error ->
             error
@@ -684,7 +667,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
              item.restore_state
            ),
          {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :active),
-         :ok <- update_visibility_stats(article, item.thread, :restore),
+         :ok <- update_visibility_stats(article, item.thread, :restore, Ecto.UUID.generate()),
          {:ok, _activity} <-
            maybe_record_activity(
              article,
@@ -727,10 +710,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
           {:ok, %{done: true}}
         else
           true ->
-            {:error,
-             GroupherServer.ErrorCat.custom(
-               "Trash action must be permanently deleted as one group"
-             )}
+            {:error, ErrorCat.custom("Trash action must be permanently deleted as one group")}
 
           error ->
             error
@@ -843,7 +823,8 @@ defmodule GroupherServer.CMS.Articles.Trash do
            {:ok, _} <- CMS.Assets.cleanup_refs(thread, article.id),
            _ <- Document.remove(thread, article.id),
            {:ok, _} <- CMS.Covers.delete_cover_edit_info(article.cover_edit_info_id),
-           {:ok, _} <- Repo.delete(article) do
+           {:ok, _} <- Repo.delete(article),
+           :ok <- CMS.ViewTracker.delete_article_state(thread, article.id) do
         {:cont, :ok}
       else
         error -> {:halt, error}
@@ -874,7 +855,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> preload([:community_tags, :communities, author: :user])
       |> Repo.one()
       |> case do
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("logical Article")}
+        nil -> {:error, Articles.ErrorCat.not_exist("logical Article")}
         article -> {:ok, article}
       end
     end
@@ -899,15 +880,17 @@ defmodule GroupherServer.CMS.Articles.Trash do
 
       case Enum.find(article_hash_ids, &(not Map.has_key?(articles_by_hash_id, &1))) do
         nil -> {:ok, articles_by_hash_id}
-        _missing_id -> {:error, CMS.Articles.ErrorCat.not_exist("logical Article")}
+        _missing_id -> {:error, Articles.ErrorCat.not_exist("logical Article")}
       end
     end
   end
 
   defp hydrate(%TrashedArticle{} = item) do
     community = Repo.get!(Community, item.community_id)
-    [hydrated] = hydrate_entries([item], community)
-    hydrated
+
+    with {:ok, [hydrated]} <- hydrate_entries([item], community) do
+      {:ok, hydrated}
+    end
   end
 
   defp hydrate_entries(items, %Community{} = community) do
@@ -915,10 +898,11 @@ defmodule GroupherServer.CMS.Articles.Trash do
       items
       |> Enum.group_by(& &1.thread)
       |> Enum.reduce(%{}, fn {thread, thread_items}, acc ->
-        Map.merge(acc, hydrate_thread_entries(thread_items, community, thread))
+        {:ok, hydrated} = hydrate_thread_entries(thread_items, community, thread)
+        Map.merge(acc, hydrated)
       end)
 
-    Enum.map(items, &Map.fetch!(hydrated_by_id, &1.id))
+    {:ok, Enum.map(items, &Map.fetch!(hydrated_by_id, &1.id))}
   end
 
   defp hydrate_thread_entries(items, %Community{} = community, thread) do
@@ -948,11 +932,33 @@ defmodule GroupherServer.CMS.Articles.Trash do
       |> Enum.map(& &1.id)
       |> mentioned_by_counts(thread)
 
-    Map.new(items, fn item ->
-      article = Map.get(articles_by_hash_id, item.article_hash_id)
-      mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
-      {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
-    end)
+    stats =
+      case CMS.FrontDesk.article_stats_for_articles(
+             thread,
+             Map.values(articles_by_hash_id),
+             community.slug
+           ) do
+        stats when is_map(stats) -> stats
+        {:error, _} -> nil
+      end
+
+    {:ok,
+     Map.new(items, fn item ->
+       article = Map.get(articles_by_hash_id, item.article_hash_id)
+       mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
+
+       article =
+         case article do
+           nil ->
+             nil
+
+           article ->
+             projection = if is_map(stats), do: Map.get(stats, {thread, article.id}), else: nil
+             Map.put(article, :article_stats, projection)
+         end
+
+       {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
+     end)}
   end
 
   defp mentioned_by_counts([], _thread), do: %{}
@@ -972,34 +978,47 @@ defmodule GroupherServer.CMS.Articles.Trash do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
          {:ok, state} <- Lifecycle.state(article.community_id, thread, article.article_hash_id) do
       if state == :archived,
-        do:
-          {:error,
-           GroupherServer.CMS.Articles.ErrorCat.archived(
-             "article is archived, can not be deleted"
-           )},
+        do: {:error, Articles.ErrorCat.archived("article is archived, can not be deleted")},
         else: {:ok, state}
     end
   end
 
   defp ensure_standalone_trash_supported(:doc),
-    do:
-      {:error,
-       GroupherServer.ErrorCat.custom(
-         "Docs Articles must be moved to Trash through their Tree node"
-       )}
+    do: {:error, ErrorCat.custom("Docs Articles must be moved to Trash through their Tree node")}
 
   defp ensure_standalone_trash_supported(_thread), do: :ok
 
-  defp update_visibility_stats(article, thread, operation) do
-    if visible_public_article?(article) do
-      delta = if operation == :trash, do: :dec, else: :inc
+  defp update_visibility_stats(article, thread, operation, causation_id) do
+    result =
+      if visible_public_article?(article) do
+        delta = if operation == :trash, do: :dec, else: :inc
 
-      with :ok <- update_tag_stats(article, delta),
-           {:ok, _} <- CMS.Communities.update_count_field(article.communities, thread) do
+        with :ok <- update_tag_stats(article, delta),
+             {:ok, _} <- CMS.Communities.update_count_field(article.communities, thread) do
+          :ok
+        end
+      else
         :ok
       end
-    else
-      :ok
+
+    with :ok <- result do
+      article = Repo.preload(article, :community)
+
+      case PublicCache.invalidate_now(
+             PublicCacheConst.article_visibility_changed(),
+             %{
+               community: article.community.slug,
+               community_id: article.community_id,
+               thread: thread,
+               inner_id: article.inner_id,
+               id: article.id
+             },
+             causation_id: causation_id,
+             aggregate_type: "article"
+           ) do
+        {:ok, _invalidation} -> :ok
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
@@ -1038,14 +1057,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
   end
 
   defp activity_source(opts) do
-    case Keyword.get(opts, :source, :api) do
-      source when source in [:api, :admin, :worker, :scheduler, :maintenance] -> source
-      "api" -> :api
-      "admin" -> :admin
-      "worker" -> :worker
-      "scheduler" -> :scheduler
-      "maintenance" -> :maintenance
-    end
+    opts |> Keyword.get(:source, :api) |> Activity.Const.normalize_source()
   end
 
   defp maybe_filter_thread(query, nil), do: query

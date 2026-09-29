@@ -16,11 +16,10 @@ defmodule GroupherServer.Jobs do
         -> log safely on enqueue failure, preserve caller result
   """
 
-  alias GroupherServer.Jobs
-  alias GroupherServer.Jobs.Codec
-  alias GroupherServer.Jobs.Config
-
   require Logger
+
+  alias GroupherServer.Jobs
+  alias Jobs.{Codec, Config}
 
   @type later_job :: {module(), atom(), list()}
   @type safe_resource_ref :: integer() | String.t() | atom() | nil
@@ -168,18 +167,6 @@ defmodule GroupherServer.Jobs do
     else
       %{kind: Atom.to_string(kind), refs: Codec.encode(refs), opts: Codec.encode(opts)}
       |> Jobs.SnapshotRefresh.new()
-      |> Oban.insert()
-    end
-  end
-
-  @doc "Enqueues a durable Artiment view projection by its idempotency key."
-  @spec view_projection(Ecto.UUID.t()) :: {:ok, Oban.Job.t() | :pass} | {:error, term()}
-  def view_projection(event_id) do
-    if Config.skip_enqueue?() do
-      {:ok, :pass}
-    else
-      %{event_id: event_id}
-      |> Jobs.ViewProjection.new()
       |> Oban.insert()
     end
   end

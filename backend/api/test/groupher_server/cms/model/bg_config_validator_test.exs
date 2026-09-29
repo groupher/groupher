@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Model.BgConfigValidatorTest do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.BgConfigValidator
+  alias GroupherServer.CMS
+  alias CMS.Model.BgConfigValidator
 
   test "validates effect ranges in order" do
     for {field, value, message} <- [

@@ -1,7 +1,8 @@
 defmodule GroupherServerWeb.Middleware.ServiceIdentityMiddlewareTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
+  alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.Middleware.{BodyBagTrust, DelegatedScope}
 
   test "DelegatedScope distinguishes verifier, user-proof, and scope failures" do

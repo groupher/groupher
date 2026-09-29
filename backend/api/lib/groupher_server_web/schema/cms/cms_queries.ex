@@ -13,11 +13,11 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
         -> resolver or domain context
         -> GraphQL response
   """
+  use Helper.GqlSchemaSuite
   import GroupherServerWeb.Schema.Helper.Queries
 
-  use Helper.GqlSchemaSuite
-
-  alias GroupherServer.CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
+  alias GroupherServer.CMS
+  alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
 
   object :cms_queries do
     @desc "Safe product ArticleLog for one readable Article"
@@ -27,6 +27,29 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
       middleware(M.FrontDesk, :article)
       resolve(&R.CMS.article_logs/3)
+    end
+
+    @desc "Hourly business metrics for one readable Article"
+    field :article_insights, non_null(:article_insights_trend) do
+      arg(:article, non_null(:article_path_input))
+      arg(:from, :datetime)
+      arg(:to, :datetime)
+      arg(:metrics, list_of(non_null(:article_insights_metric)))
+      arg(:actor_types, list_of(non_null(:article_insights_actor_type)))
+      arg(:is_authenticated, :boolean)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :article_insights)
+      resolve(&R.CMS.article_insights/3)
+    end
+
+    @desc "Current public Article headline stats for one Community/thread batch"
+    field :article_stats, non_null(list_of(non_null(:article_stats))) do
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+      arg(:inner_ids, non_null(list_of(non_null(:id))))
+
+      resolve(&R.CMS.article_stats/3)
     end
 
     @desc "Safe Community Activity timeline across readable resource streams"
@@ -486,19 +509,34 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.comments_state/3)
     end
 
-    @desc "Reads current viewer state for up to 100 canonical Article references; anonymous requests return an empty list"
+    @desc "Reads current viewer state for up to 100 canonical Article paths; anonymous requests return an empty list"
     field :article_viewer_states, non_null(list_of(non_null(:viewer_article_state))) do
-      arg(:refs, non_null(list_of(non_null(:article_ref_input))))
+      arg(:paths, non_null(list_of(non_null(:article_path_input))))
 
       resolve(&R.CMS.article_viewer_states/3)
     end
 
+    @desc "Reads the current private Article interaction projection for confirmed-write reconciliation"
+    field :article_interaction_states, non_null(list_of(non_null(:article_interaction_state))) do
+      arg(:paths, non_null(list_of(non_null(:article_path_input))))
+
+      resolve(&R.CMS.article_interaction_states/3)
+    end
+
     @desc "Reads current viewer state for up to 100 canonical Comment references; anonymous requests return an empty list"
     field :comment_viewer_states, non_null(list_of(non_null(:viewer_comment_state))) do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
 
       resolve(&R.CMS.comment_viewer_states/3)
+    end
+
+    @desc "Reads up to 100 Comment projections for confirmed-write reconciliation in one request"
+    field :comment_reconcile_states, non_null(:comment_reconcile_payload) do
+      arg(:article, non_null(:article_path_input))
+      arg(:comment_inner_ids, non_null(list_of(non_null(:id))))
+
+      resolve(&R.CMS.comment_reconcile_states/3)
     end
 
     @desc "got spec comment by ref"

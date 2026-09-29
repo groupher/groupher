@@ -12,7 +12,6 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
 
@@ -27,12 +26,14 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
       articles_upvote_unique_key_constraint: 1
     ]
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
+  alias __MODULE__
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @threads GroupherServer.CMS.Artiment.Config.threads()
+  @threads CMS.Artiment.Config.threads()
 
   @required_fields ~w(user_id)a
   @optional_fields ~w(thread)a

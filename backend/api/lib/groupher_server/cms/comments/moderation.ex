@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.Comments.Moderation do
-  alias GroupherServer.CMS.QueryBuilder
   @moduledoc """
   Moderation operations for comments.
 
@@ -13,19 +12,18 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   """
 
   import Ecto.Query, warn: false
-
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
 
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Model.Comment
+  alias CMS.{FrontDesk, QueryBuilder}
+  alias CMS.Model.Comment
   alias Helper.{Multi, ORM, T}
 
-  @audit_legal GroupherServer.CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed GroupherServer.CMS.Artiment.Const.moderation_state(:audit_failed)
+  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
+  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
 
   @doc """
   Marks a comment as audited illegal with the given audit details.

@@ -23,7 +23,7 @@ const Share = lazy(() => import('~/unit/Share'))
 
 export default function Digest() {
   const navigate = useNavigate()
-  const { post } = useArticle()
+  const { post, stats } = useArticle()
 
   const isPinned = post?.isPinned ?? false
   const s = useSalon({ isPinned })
@@ -69,7 +69,7 @@ export default function Digest() {
             />
             {author.nickname}
           </Link>
-          <ArticleBaseStats article={post as TPost} right={2} />
+          <ArticleBaseStats article={post as TPost} stats={stats} right={2} />
         </div>
       </div>
     </div>

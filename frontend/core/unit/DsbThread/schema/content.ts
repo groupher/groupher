@@ -18,15 +18,19 @@ export const trashedPosts = graphql(`
         article {
           innerId
           title
-          views
-          upvotesCount
+          articleStats {
+            views
+            viewsRevision
+            upvotesCount
+            commentsCount
+            snapshotAt
+          }
           meta {
             thread
           }
           ... on Post {
             cat
             status
-            commentsCount
             insertedAt
             activeAt
             author {
@@ -44,8 +48,8 @@ export const trashedPosts = graphql(`
 `)
 
 export const restoreTrashedPost = graphql(`
-  mutation restoreTrashedPost($community: String!, $id: ID!) {
-    restoreTrashedArticle(community: $community, id: $id, thread: POST) {
+  mutation restoreTrashedPost($community: String!, $id: ID!, $commandId: ID!) {
+    restoreTrashedArticle(community: $community, id: $id, thread: POST, commandId: $commandId) {
       innerId
       title
     }
@@ -53,8 +57,13 @@ export const restoreTrashedPost = graphql(`
 `)
 
 export const permanentlyDeleteTrashedPost = graphql(`
-  mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!) {
-    permanentlyDeleteTrashedArticle(community: $community, id: $id, thread: POST) {
+  mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!, $commandId: ID!) {
+    permanentlyDeleteTrashedArticle(
+      community: $community
+      id: $id
+      thread: POST
+      commandId: $commandId
+    ) {
       done
     }
   }

@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   @moduledoc false
   use GroupherServer.TestMate
-  alias GroupherServer.Accounts.Profiles.ErrorCat
+  alias GroupherServer.Accounts
+  alias Accounts.Profiles.ErrorCat
 
   setup do
     {community, post, _, user} = mock_article(:post, preload: [author: :user])
@@ -14,20 +15,20 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
   end
 
   describe "[post upvote]" do
-    test "tmp login user can upvote a post", ~m(user_conn user2_conn community post user)a do
+    test "tmp login user can upvote a post", ~m(user_conn user2_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
       _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       created = user2_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
-      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
+      assert get_in(created, ["interactionState", "viewerHasUpvoted"])
 
-      assert created["innerId"] == to_string(post.inner_id)
-      assert created["upvotesCount"] == 2
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert created["articleStats"]["upvotesCount"] == 2
     end
 
-    test "login user can upvote a post", ~m(user_conn user2_conn community post user)a do
+    test "login user can upvote a post", ~m(user_conn user2_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
@@ -35,10 +36,10 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
       _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       created = user2_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
 
-      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
+      assert get_in(created, ["interactionState", "viewerHasUpvoted"])
 
-      assert created["innerId"] == to_string(post.inner_id)
-      assert created["upvotesCount"] == 2
+      assert get_in(created, ["interactionState", "innerId"]) == to_string(post.inner_id)
+      assert created["articleStats"]["upvotesCount"] == 2
     end
 
     test "unauth user upvote a post fails", ~m(guest_conn community post)a do
@@ -63,25 +64,75 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
-      assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
-      assert updated["innerId"] == to_string(post.inner_id)
+      refute get_in(updated, ["interactionState", "viewerHasUpvoted"])
+      assert get_in(updated, ["interactionState", "innerId"]) == to_string(post.inner_id)
     end
 
     test "duplicate upvote is idempotent and count does not increase",
-         ~m(user_conn community post user)a do
+         ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
       created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
-      assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
-      assert created["upvotesCount"] == 1
+      assert get_in(created, ["interactionState", "viewerHasUpvoted"])
+      assert created["articleStats"]["upvotesCount"] == 1
 
       unchanged = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
-      assert unchanged["upvotesCount"] == 1
+      assert unchanged["articleStats"]["upvotesCount"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
-      assert current_post.upvotes_count == 1
+      counts = CMS.Interactions.counts([current_post])
+      assert counts[{:post, current_post.id}].upvotes_count == 1
+    end
+
+    test "command id replay returns the same confirmed state",
+         ~m(user_conn community post)a do
+      command_id = Ecto.UUID.generate()
+
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        commandId: command_id
+      }
+
+      first =
+        user_conn
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
+
+      replay =
+        user_conn
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
+
+      assert first["commandId"] == command_id
+      assert replay["commandId"] == command_id
+      assert replay["reactionOutcome"] == "CHANGED"
+      assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]
+
+      assert replay["articleStats"]["interactionRevision"] ==
+               first["articleStats"]["interactionRevision"]
+    end
+
+    test "command id replay preserves an unchanged outcome",
+         ~m(user_conn community post user)a do
+      {:ok, _} = CMS.Interactions.upvote(post, user)
+      command_id = Ecto.UUID.generate()
+
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
+        commandId: command_id
+      }
+
+      first =
+        user_conn
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
+
+      replay =
+        user_conn
+        |> gq_mutation(S.Article.m(:upvote_article_with_command_id, :post), variables)
+
+      assert first["reactionOutcome"] == "UNCHANGED"
+      assert replay["reactionOutcome"] == "UNCHANGED"
+      assert replay["articleStats"]["upvotesCount"] == first["articleStats"]["upvotesCount"]
     end
 
     test "undo upvote is idempotent (can undo even if not upvoted)",
@@ -92,7 +143,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       result = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
-      assert result["innerId"] == to_string(post.inner_id)
+      assert get_in(result, ["interactionState", "innerId"]) == to_string(post.inner_id)
     end
 
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do

@@ -1,7 +1,4 @@
 defmodule GroupherServer.CMS.Communities.Lifecycle do
-  require GroupherServer.CMS.Communities.Const
-  require GroupherServer.CMS.Communities.Const
-
   @moduledoc """
   State, blocker and capability authority for Community availability.
 
@@ -13,17 +10,17 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Communities.Const
+
   import Ecto.Query, warn: false
 
+  alias GroupherServer.{Activity, CMS, ErrorCat, Repo}
   alias Ecto.Multi
-  alias GroupherServer.{Activity, Repo}
-  alias GroupherServer.Activity.Model.CommunityLog
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Communities.Const
-  alias GroupherServer.CMS.Gate.ErrorCat, as: GateErrorCat
-  alias GroupherServer.CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
-
-  require Const
+  alias Activity.Model.CommunityLog
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Communities.Const
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias CMS.Model.{Community, CommunityLifecycle, CommunityLifecycleBlocker}
 
   @archive_blockers [:owner_archive, :moderation_archive]
   @hidden_blockers [:moderation_suspend, :moderation_archive, :owner_archive]
@@ -89,7 +86,7 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @doc "Checks a Community Lifecycle state for an explicit read policy mode."
   @spec can_read_mode(Community.t() | CommunityLifecycle.t(), read_mode(), map()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_read_mode(resource, mode, _context)
       when mode in [:public, :owner_management, :moderator_management, :operations] do
     with {:ok, lifecycle} <- lifecycle_from(resource) do
@@ -114,19 +111,19 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   @doc "Answers a state-only capability without interpreting actor identity."
   @spec can_read(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_read(resource, context \\ %{}), do: capability(resource, :read, context)
 
   @spec can_write(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_write(resource, context \\ %{}), do: capability(resource, :write, context)
 
   @spec can_manage(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_manage(resource, context \\ %{}), do: capability(resource, :manage, context)
 
   @spec can_destroy(Community.t() | CommunityLifecycle.t(), map()) ::
-          {:ok, boolean()} | {:error, GroupherServer.ErrorCat.Error.t()}
+          {:ok, boolean()} | {:error, ErrorCat.Error.t()}
   def can_destroy(resource, context \\ %{}), do: capability(resource, :destroy, context)
 
   @doc "Creates a Lifecycle changeset for a guarded state transition."

@@ -12,8 +12,8 @@
  * A ready receipt is the completion marker. No mutable "current attempt"
  * pointer is maintained, and large source bodies stay outside workflow state.
  *
- * @see docs/bulk-import/import-file-sdk.md
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/import-file-sdk.md
+ * @see docs/content-import/content-import-architecture.md
  */
 import { createHash } from 'node:crypto'
 

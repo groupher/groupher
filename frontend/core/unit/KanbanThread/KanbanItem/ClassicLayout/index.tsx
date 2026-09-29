@@ -8,23 +8,23 @@ import type { FC } from 'react'
 
 import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import type { TArticle } from '~/spec'
+import type { TArticleState } from '~/spec'
 // import IconButton from '~/ui/Buttons/IconButton'
 
 import Full from './Full'
 import Simple from './Simple'
 
 type TProps = {
-  article: TArticle
+  viewModel: TArticleState
 }
 
-const KanbanItem: FC<TProps> = ({ article }) => {
+const KanbanItem: FC<TProps> = ({ viewModel }) => {
   const { kanbanCardLayout } = useLayout()
 
   return kanbanCardLayout === KANBAN_CARD_LAYOUT.FULL ? (
-    <Full article={article} />
+    <Full viewModel={viewModel} />
   ) : (
-    <Simple article={article} />
+    <Simple viewModel={viewModel} />
   )
 }
 

@@ -10,8 +10,9 @@ defmodule GroupherServer.CMS.Covers do
         -> Repo / external boundary
   """
 
-  alias GroupherServer.CMS.Model.{CoverBackground, CoverEditInfo}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Model.{CoverBackground, CoverEditInfo}
   alias GroupherServerWeb.ErrorCat
   alias Helper.{ORM, T}
 
@@ -61,8 +62,8 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  @spec remove_article_cover(article()) :: T.domain_res(article())
   @doc "Removes article cover through the `Covers` boundary."
+  @spec remove_article_cover(article()) :: T.domain_res(article())
   def remove_article_cover(article) do
     Repo.transaction(fn ->
       old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
@@ -81,8 +82,8 @@ defmodule GroupherServer.CMS.Covers do
     end)
   end
 
-  @spec delete_cover_edit_info(nil | T.id()) :: {:ok, :pass | CoverEditInfo.t()}
   @doc "Removes cover edit info through the `Covers` boundary."
+  @spec delete_cover_edit_info(nil | T.id()) :: {:ok, :pass | CoverEditInfo.t()}
   def delete_cover_edit_info(nil), do: {:ok, :pass}
 
   def delete_cover_edit_info(id) do

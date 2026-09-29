@@ -1,6 +1,4 @@
 defmodule GroupherServer.Analysis.Web do
-  alias GroupherServer.CMS.ErrorCat
-
   @moduledoc """
   Groupher-owned Web Analysis context.
 
@@ -17,11 +15,15 @@ defmodule GroupherServer.Analysis.Web do
         -> Repo / analytics provider
   """
 
+  require GroupherServer.CMS.ErrorCat
+
   alias __MODULE__.Community, as: AnalysisCommunity
   alias __MODULE__.Config
-  alias GroupherServer.CMS.Dashboard.Writer
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
+
+  alias CMS.Dashboard.Writer
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{Cache, Transaction}
 
   @config Config.base()
@@ -198,8 +200,8 @@ defmodule GroupherServer.Analysis.Web do
     end
   end
 
-  @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
   @doc "Runs `tracking_website_id` through the public `Web` boundary."
+  @spec tracking_website_id(Community.t()) :: {:ok, String.t() | nil}
   def tracking_website_id(%Community{} = community) do
     case dashboard_for(community) do
       {:ok, dashboard} -> {:ok, dashboard.umami_website_id}
@@ -582,7 +584,7 @@ defmodule GroupherServer.Analysis.Web do
     }
   end
 
-  defp error_reason(%GroupherServer.ErrorCat.Error{reason: reason}), do: reason
+  defp error_reason(ErrorCat.error_pattern(reason: reason)), do: reason
   defp error_reason(reason), do: reason
 
   defp error_code(:not_configured), do: "not_configured"

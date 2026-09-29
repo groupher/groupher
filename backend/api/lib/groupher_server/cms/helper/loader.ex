@@ -12,10 +12,12 @@ defmodule GroupherServer.CMS.Helper.Loader do
         -> Loader
         -> Repo / external boundary
   """
+
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Model.Author
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Model.Author
 
   @doc "Returns the CMS Ecto Dataloader source."
   def data, do: Dataloader.Ecto.new(Repo, query: &query/2)

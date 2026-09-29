@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
 import { cutRest } from '~/fmt'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
-import type { TArticle } from '~/spec'
+import type { TArticleState } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityPreviewLink from '~/ui/CommunityPreviewLink'
 
@@ -14,15 +14,16 @@ import Footer from './Footer'
 import useSalon from './salon'
 
 type TProps = {
-  data: TArticle
+  viewModel: TArticleState
 }
 
-const ArticleCard: FC<TProps> = ({ data }) => {
+const ArticleCard: FC<TProps> = ({ viewModel }) => {
+  const { content: data, stats, viewerState } = viewModel
   const isActive = usePreviewItemActive(data.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
 
   const { slug } = useCommunity()
-  const { innerId, title, digest, isPinned, viewerHasViewed } = data
+  const { innerId, title, digest, isPinned } = data
 
   return (
     <div className={s.wrapper}>
@@ -31,7 +32,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       </div>
 
       <div className={s.viewHintDot}>
-        <ArticleReadLabel viewed={viewerHasViewed} top={0} right={0} />
+        <ArticleReadLabel viewed={viewerState.viewerHasViewed} top={0} right={0} />
       </div>
 
       <div className='mt-1' />
@@ -51,7 +52,7 @@ const ArticleCard: FC<TProps> = ({ data }) => {
       <ArticleImgWindow />
       <div className='mt-4' />
       <div className='grow' />
-      <Footer data={data} />
+      <Footer article={data} stats={stats} viewerState={viewerState} />
     </div>
   )
 }

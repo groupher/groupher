@@ -8,7 +8,7 @@
  * GitHub Docs Bulk Import already owns Markdown source files and enters at the
  * shared codec/publisher boundary rather than calling this HTTP handler.
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 import { Buffer } from 'node:buffer'
 

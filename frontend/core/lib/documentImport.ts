@@ -4,7 +4,7 @@ import { API_ROUTE } from '@groupher/route-contract'
 /**
  * Browser client for the shared single-document Import Content boundary.
  *
- * @see docs/bulk-import/article-publish-import-refactor.md
+ * @see docs/content-import/article-publish-import-refactor.md
  */
 
 export const DOCUMENT_IMPORT_ACCEPT = '.pdf,.docx,.pptx,.xlsx,.html,.htm'

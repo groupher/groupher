@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
   use GroupherServer.TestMate
   @moduletag timeout: 300_000
 
-  alias GroupherServer.CMS.Seeds.{Articles, Communities}
+  alias GroupherServer.CMS
+  alias CMS.Seeds.{Articles, Communities}
 
   describe "[articles seeds]" do
     test "mock seeds articles with comments and reactions" do
@@ -16,8 +17,8 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
       assert length(articles) == 2
 
       [first | _] = articles
-      {:ok, reloaded_post} = ORM.find(Post, first.id)
       counts = CMS.Interactions.counts([first]) |> Map.fetch!({:post, first.id})
+      {:ok, public_stats} = CMS.ArticleStats.fetch(:post, first.id)
 
       comments_count =
         from(c in Comment, where: c.post_id == ^first.id)
@@ -25,15 +26,9 @@ defmodule GroupherServer.Test.Seeds.ArticlesTest do
 
       assert comments_count >= 2
       assert counts.upvotes_count > 0
-
-      emotion_total =
-        reloaded_post.emotions
-        |> Map.from_struct()
-        |> Enum.filter(fn {k, _v} -> String.ends_with?(Atom.to_string(k), "_count") end)
-        |> Enum.map(fn {_k, v} -> v end)
-        |> Enum.sum()
-
-      assert emotion_total > 0
+      assert [%{type: emotion, count: 1}] = counts.emotion_counts
+      assert [%{type: ^emotion, count: 1}] = public_stats.emotion_counts
+      refute emotion in [:upvote, :collect]
     end
   end
 

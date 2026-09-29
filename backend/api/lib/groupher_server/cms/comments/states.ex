@@ -11,19 +11,17 @@ defmodule GroupherServer.CMS.Comments.States do
         -> Repo / domain event
   """
 
-  import Ecto.Query, warn: false
+  require GroupherServer.CMS.Comments.ErrorCat
 
+  import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.Accounts.Profiles.ErrorCat, as: AuthErrorCat
-  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias Accounts.Model.User
+  alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
+  alias CMS.{Comments.ErrorCat, FrontDesk, Gate}
+  alias CMS.Model.{Comment, PinnedComment}
   alias Helper.{Multi, ORM, T}
-
-  alias GroupherServer.CMS.Comments.ErrorCat
-  alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Model.{Comment, PinnedComment}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
@@ -35,11 +33,16 @@ defmodule GroupherServer.CMS.Comments.States do
   ## Examples
 
       CMS.Comments.States.pin(comment_id)
-      #=> {:error, %GroupherServer.ErrorCat.Error{reason: :account_login}}
+      #=> {:error, ErrorCat.error_pattern(reason: :account_login)}
 
   """
   @spec pin(T.id()) :: T.domain_res(Comment.t())
   def pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
+
+  @spec pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  def pin(%Comment{} = comment, %User{} = user) do
+    pin(comment, user, operation_ref: Ecto.UUID.generate())
+  end
 
   @spec pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def pin(comment_id, %User{} = user) do
@@ -47,16 +50,26 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   @doc false
+  def pin(%Comment{} = comment, %User{} = user, opts) do
+    Gate.Access.with_check(user, :pin, comment, fn canonical, article ->
+      pin_unlocked(canonical, article, user, opts)
+    end)
+  end
+
   def pin(comment_id, %User{} = user, opts) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
-         {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-      pin_unlocked(comment, article, user, opts)
+         {:ok, result} <- pin(comment, user, opts) do
+      {:ok, result}
     end
   end
 
   @spec undo_pin(T.id()) :: T.domain_res(Comment.t())
   def undo_pin(_comment_id), do: {:error, AuthErrorCat.account_login()}
+
+  @spec undo_pin(Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  def undo_pin(%Comment{} = comment, %User{} = user) do
+    undo_pin(comment, user, operation_ref: Ecto.UUID.generate())
+  end
 
   @spec undo_pin(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_pin(comment_id, %User{} = user) do
@@ -64,11 +77,16 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   @doc false
+  def undo_pin(%Comment{} = comment, %User{} = user, opts) do
+    Gate.Access.with_check(user, :pin, comment, fn canonical, article ->
+      undo_pin_unlocked(canonical, article, user, opts)
+    end)
+  end
+
   def undo_pin(comment_id, %User{} = user, opts) do
     with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-         {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
-         {:ok, comment} <- Gate.access_check(user, :pin, comment) do
-      undo_pin_unlocked(comment, article, user, opts)
+         {:ok, result} <- undo_pin(comment, user, opts) do
+      {:ok, result}
     end
   end
 
@@ -80,6 +98,9 @@ defmodule GroupherServer.CMS.Comments.States do
       do_fold_comment(comment, true)
     end
   end
+
+  @spec unfold(Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  def unfold(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, false)
 
   @spec unfold(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold(comment_id, %User{} = _user) do
@@ -207,7 +228,7 @@ defmodule GroupherServer.CMS.Comments.States do
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
 
-  defp result({:error, %GroupherServer.ErrorCat.Error{reason: :already_pinned, details: result}}),
+  defp result({:error, ErrorCat.error_pattern(reason: :already_pinned, details: result)}),
     do: {:ok, result}
 
   defp result({:error, :update_comment_flag, _result, _steps}),

@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias Accounts.Fans.ErrorCat, as: FansErrorCat
+
   setup do
     {:ok, user} = db_insert(:user)
 
@@ -35,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Fans.ErrorCat.already_did())
+               ErrorCat.code(FansErrorCat.already_did())
              )
     end
 
@@ -46,7 +49,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Fans.ErrorCat.self_conflict())
+               ErrorCat.code(FansErrorCat.self_conflict())
              )
     end
 
@@ -57,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.not_exist())
+               ErrorCat.code(ProfileErrorCat.not_exist())
              )
     end
 
@@ -69,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
              |> mutation_error?(
                @query,
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 

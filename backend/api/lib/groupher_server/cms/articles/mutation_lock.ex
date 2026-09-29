@@ -20,14 +20,15 @@ defmodule GroupherServer.CMS.Articles.MutationLock do
              -> advisory lock -> callback -> commit / rollback
   """
 
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Gate.ErrorCat
-  alias GroupherServer.CMS.Interactions.ErrorCat, as: InteractionErrorCat
-  alias GroupherServer.CMS.Model.Community
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+
+  alias CMS.Artiment.Matcher
+  alias CMS.Gate.ErrorCat
+  alias CMS.Interactions.ErrorCat, as: InteractionErrorCat
+  alias CMS.Model.Community
   alias Helper.{T, Transaction}
 
-  @article_threads GroupherServer.CMS.Artiment.Config.threads() -- [:doc]
+  @article_threads CMS.Artiment.Config.threads() -- [:doc]
 
   @observer_key {__MODULE__, :transaction_observer}
 

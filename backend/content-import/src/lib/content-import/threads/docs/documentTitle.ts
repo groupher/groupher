@@ -5,7 +5,7 @@
  *   first meaningful root H1 ----------+--> title + titleSource
  *   filename fallback -----------------+
  *
- * @see docs/bulk-import/markdown-title-normalization.md
+ * @see docs/content-import/markdown-title-normalization.md
  */
 import type { TRichEditorNodeValue } from '@groupher/rich-editor/node'
 import { fromMarkdown } from 'mdast-util-from-markdown'

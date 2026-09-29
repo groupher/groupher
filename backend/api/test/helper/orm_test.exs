@@ -5,9 +5,10 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   import GroupherServer.Support.Factory
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Articles.ErrorCat
-  alias GroupherServer.CMS.Model.{Author, Post}
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Articles.ErrorCat
+  alias CMS.Model.{Author, Post}
   alias Helper.ORM
 
   @posts_count 20
@@ -182,7 +183,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc(post, :title)
-      assert error_code(reason) == GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "dec should return error for non-existent field", ~m(community user)a do
@@ -190,7 +191,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.dec(post, :not_a_field)
-      assert error_code(reason) == GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "dec should below 0", ~m(community user)a do
@@ -389,7 +390,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
       {:error, reason} = ORM.update_meta(post, %{"stats.views" => 42})
 
-      assert error_code(reason) == GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 
@@ -415,7 +416,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc_meta(post, :thread)
-      assert error_code(reason) == GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
 
     test "inc_meta should return error for non-existent field", ~m(community user)a do
@@ -423,7 +424,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
       {:error, reason} = ORM.inc_meta(post, :non_existent_field)
-      assert error_code(reason) == GroupherServer.ErrorCat.code(GroupherServer.ErrorCat.custom())
+      assert error_code(reason) == ErrorCat.code(ErrorCat.custom())
     end
   end
 end

@@ -14,16 +14,18 @@ defmodule GroupherServer.CMS.Communities.Reader do
         -> Repo / Oban
   """
 
+  require GroupherServer.CMS.Communities.ErrorCat
+
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{Accounts, CMS, Repo}
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Communities.ErrorCat, as: CommunityErrorCat
-  alias GroupherServer.CMS.Gate
-  alias GroupherServer.CMS.Gate.Context.Scope.Community, as: CommunityScope
-  alias GroupherServer.CMS.Model.{Community, CommunityDashboard}
+  alias Accounts.Model.User
+  alias CMS.Communities.ErrorCat, as: CommunityErrorCat
+  alias CMS.Gate
+  alias CMS.Gate.Context.Scope.Community, as: CommunityContext
+  alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()
@@ -83,10 +85,9 @@ defmodule GroupherServer.CMS.Communities.Reader do
     end
   end
 
-  defp normalize_fetch_error(%GroupherServer.ErrorCat.Error{
-         reason: :custom,
-         details: %{reason: :not_exist}
-       }),
+  defp normalize_fetch_error(
+         CommunityErrorCat.error_pattern(reason: :custom, details: %{reason: :not_exist})
+       ),
        do: CommunityErrorCat.not_exist("Community")
 
   defp normalize_fetch_error(reason), do: reason
@@ -94,7 +95,7 @@ defmodule GroupherServer.CMS.Communities.Reader do
   defp scoped_query(slug, actor, opt) do
     policy_mode = Keyword.get(opt, :policy_mode, :public)
 
-    case Gate.scope(Community, actor, :read, CommunityScope.new(policy_mode)) do
+    case Gate.scope(Community, actor, :read, CommunityContext.new(policy_mode)) do
       %Ecto.Query{} = query ->
         where(query, [community], community.slug == ^slug or community.aka == ^slug)
 

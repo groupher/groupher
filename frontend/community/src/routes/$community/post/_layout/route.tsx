@@ -14,6 +14,14 @@ export const Route = createFileRoute('/$community/post/_layout')({
     const posts = await context.queryClient.ensureQueryData(
       communityQueries.posts(params.community),
     )
+    await context.queryClient.ensureQueryData(
+      communityQueries.stats(
+        context.queryClient,
+        params.community,
+        THREAD.POST,
+        (posts.entries || []).map((article) => article.innerId),
+      ),
+    )
     return { posts }
   },
   component: PostListLayout,

@@ -2,22 +2,22 @@ import type { FC } from 'react'
 
 import { CHANGELOG_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
-import type { TChangelog } from '~/spec'
+import type { TArticleState, TChangelog } from '~/spec'
 
 import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'
 
 type TProps = {
-  article: TChangelog
+  viewModel: TArticleState<TChangelog>
 }
 
-const ChangelogItem: FC<TProps> = ({ article }) => {
+const ChangelogItem: FC<TProps> = ({ viewModel }) => {
   const { changelogLayout } = useLayout()
 
   return (
     <div>
-      {changelogLayout === CHANGELOG_LAYOUT.CLASSIC && <ClassicLayout article={article} />}
-      {changelogLayout === CHANGELOG_LAYOUT.SIMPLE && <SimpleLayout article={article} />}
+      {changelogLayout === CHANGELOG_LAYOUT.CLASSIC && <ClassicLayout viewModel={viewModel} />}
+      {changelogLayout === CHANGELOG_LAYOUT.SIMPLE && <SimpleLayout viewModel={viewModel} />}
     </div>
   )
 }

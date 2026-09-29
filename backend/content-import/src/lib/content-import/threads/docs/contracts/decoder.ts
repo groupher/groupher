@@ -3,7 +3,7 @@
  *
  *   untrusted JSON -> primitive decoder -> typed contract or ContractError
  *
- * @see docs/bulk-import/content-import-architecture.md
+ * @see docs/content-import/content-import-architecture.md
  */
 /** Identifies the exact contract path that rejected an untrusted value. */
 export class ContractError extends Error {

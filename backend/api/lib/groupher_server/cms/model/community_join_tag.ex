@@ -12,14 +12,15 @@ defmodule GroupherServer.CMS.Model.CommunityJoinTag do
         -> GroupherServer.Repo
         -> PostgreSQL
   """
-  alias __MODULE__
 
   use Ecto.Schema
   use Accessible
 
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS.Model.CommunityTag
+  alias __MODULE__
+  alias GroupherServer.CMS
+  alias CMS.Model.CommunityTag
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

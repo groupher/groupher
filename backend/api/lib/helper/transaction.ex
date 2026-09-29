@@ -28,9 +28,8 @@ defmodule Helper.Transaction do
   """
 
   import Ecto.Query, warn: false
-  alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
-  alias GroupherServer.ErrorCat
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, ErrorCat, Repo}
+  alias CMS.Model.{Blog, Changelog, Doc, Post}
 
   @article_schemas [Post, Blog, Changelog, Doc]
 
@@ -131,7 +130,7 @@ defmodule Helper.Transaction do
     key
   end
 
-  defp normalize_error(%GroupherServer.ErrorCat.Error{} = error), do: error
+  defp normalize_error(%ErrorCat.Error{} = error), do: error
   defp normalize_error(%GroupherServer.CMS.Gate.Decision{} = decision), do: decision
   defp normalize_error(%Ecto.Changeset{} = changeset), do: changeset
   defp normalize_error({:error, _step, reason, _changes}), do: normalize_error(reason)

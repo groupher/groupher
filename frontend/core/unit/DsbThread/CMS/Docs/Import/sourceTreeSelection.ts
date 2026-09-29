@@ -3,7 +3,7 @@
  *
  *   SourceTree metadata + TargetTree tabs -> selectable page refs -> apply payload
  *
- * @see docs/bulk-import/bulk-import.md
+ * @see docs/content-import/bulk-import.md
  */
 import type { TImportSourceNode, TImportTreeNode, TImportTreeTab } from './spec'
 

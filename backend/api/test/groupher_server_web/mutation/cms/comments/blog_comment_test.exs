@@ -3,6 +3,9 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
   use GroupherServer.TestMate
 
+  alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
+  alias CMS.Passport.ErrorCat, as: PassportErrorCat
+
   defp emotion_entry(emotions, type) do
     Enum.find(emotions || [], &(&1["type"] == String.upcase(to_string(type))))
   end
@@ -25,8 +28,8 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(comment))
-      assert result["article"]["innerId"] == blog.inner_id
-      assert result["article"]["commentsCount"] == 1
+      assert result["articleStats"]["innerId"] == to_string(blog.inner_id)
+      assert result["articleStats"]["commentsRevision"] == 1
     end
 
     test "login user can reply to a comment", ~m(community blog user user_conn)a do
@@ -42,7 +45,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
 
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
       assert result["comment"]["bodyHtml"] |> String.contains?(~s(reply comment))
-      assert result["article"]["commentsCount"] == 2
+      assert result["articleStats"]["commentsRevision"] == 2
     end
 
     test "only owner can update a exist comment",
@@ -59,20 +62,20 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:update_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
 
-      assert result["bodyHtml"] |> String.contains?(~s(<p))
-      assert result["bodyHtml"] |> String.contains?(~s(updated comment))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(<p))
+      assert result["comment"]["bodyHtml"] |> String.contains?(~s(updated comment))
     end
 
     test "only owner can delete a exist comment",
@@ -86,19 +89,19 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.CMS.Passport.ErrorCat.passport())
+               ErrorCat.code(PassportErrorCat.passport())
              )
 
       assert guest_conn
              |> mutation_error?(
                S.Comment.m(:delete_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
-      assert deleted["innerId"] == to_string(comment.inner_id)
+      assert deleted["comment"]["innerId"] == to_string(comment.inner_id)
     end
   end
 
@@ -114,7 +117,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
@@ -136,7 +139,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:undo_upvote_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
 
       result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
@@ -260,7 +263,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Article.m(:lock_comment, :blog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -293,7 +296,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Article.m(:unlock_comment, :blog),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end
@@ -320,7 +323,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
 
@@ -348,7 +351,7 @@ defmodule GroupherServer.Test.Mutation.Comments.BlogComment do
              |> mutation_error?(
                S.Comment.m(:undo_pin_comment),
                variables,
-               ErrorCat.code(GroupherServer.Accounts.Profiles.ErrorCat.account_login())
+               ErrorCat.code(ProfileErrorCat.account_login())
              )
     end
   end

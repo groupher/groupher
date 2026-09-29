@@ -4,7 +4,8 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
   import Ecto.Query
 
-  alias GroupherServer.CMS.Model.{
+  alias GroupherServer.CMS
+  alias CMS.Model.{
     ArticleDocument,
     Blog,
     Changelog,
@@ -16,34 +17,34 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   }
 
   alias Ecto.Adapters.SQL
-  alias GroupherServer.CMS.Gate.Context.Scope.Article, as: ArticleScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Comment, as: CommentScope
-  alias GroupherServer.CMS.Gate.Context.Scope.Document, as: DocumentScope
+  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
+  alias CMS.Gate.Context.Scope.Comment, as: CommentContext
+  alias CMS.Gate.Context.Scope.Document, as: DocumentContext
 
   test "Comment all-thread scope is constructed only by all_public" do
-    assert_raise FunctionClauseError, fn -> apply(CommentScope, :for_thread, [:all]) end
+    assert_raise FunctionClauseError, fn -> apply(CommentContext, :for_thread, [:all]) end
 
-    assert %CommentScope{thread: :all, policy_mode: :public} = CommentScope.all_public()
+    assert %CommentContext{thread: :all, policy_mode: :public} = CommentContext.all_public()
   end
 
   test "Comment thread scope validates Doc branch and policy coordinates" do
-    assert %CommentScope{thread: :doc, branch_policy: :main} =
-             CommentScope.for_thread(:doc, branch_policy: :main)
+    assert %CommentContext{thread: :doc, branch_policy: :main} =
+             CommentContext.for_thread(:doc, branch_policy: :main)
 
     assert_raise ArgumentError, ~r/requires branch_policy/, fn ->
-      CommentScope.for_thread(:doc)
+      CommentContext.for_thread(:doc)
     end
 
     assert_raise ArgumentError, ~r/only accepts branch_policy/, fn ->
-      CommentScope.for_thread(:doc, branch_policy: :preview)
+      CommentContext.for_thread(:doc, branch_policy: :preview)
     end
 
     assert_raise ArgumentError, ~r/only Doc Comment scope/, fn ->
-      CommentScope.for_thread(:post, branch_policy: :main)
+      CommentContext.for_thread(:post, branch_policy: :main)
     end
 
     assert_raise ArgumentError, ~r/invalid Comment scope policy mode/, fn ->
-      CommentScope.for_thread(:post, policy_mode: :unknown)
+      CommentContext.for_thread(:post, policy_mode: :unknown)
     end
   end
 
@@ -51,12 +52,12 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     contextless =
       Comment
       |> select([comment], %{id: comment.id})
-      |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
+      |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
 
     threaded =
       Comment
       |> select([comment], %{id: comment.id})
-      |> CMS.Gate.scope(nil, :list, CommentScope.for_thread(:post))
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post))
 
     for query <- [contextless, threaded] do
       assert %Ecto.Query{} = query
@@ -79,15 +80,15 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   end
 
   test "Comment rejects an unknown thread and Document requires a thread" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(Comment, nil, :read, %{thread: :unknown})
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_context_missing}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
              CMS.Gate.scope(ArticleDocument, nil, :read, %{})
   end
 
   test "Scope rejects an unknown Context struct as a root mismatch" do
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_root_mismatch}} =
+    assert {:error, %ErrorCat.Error{reason: :scope_root_mismatch}} =
              CMS.Gate.scope(Post, nil, :read, %GroupherServer.Accounts.Model.User{})
   end
 
@@ -95,8 +96,8 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     for {thread, _schema} <- article_schemas() do
       context =
         case thread do
-          :doc -> DocumentScope.public_main()
-          _ -> DocumentScope.public(thread)
+          :doc -> DocumentContext.public_main()
+          _ -> DocumentContext.public(thread)
         end
 
       query = CMS.Gate.scope(ArticleDocument, nil, :read, context)
@@ -113,11 +114,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     article_query = from(post in Post, join: community in assoc(post, :community))
     comment_query = from(comment in Comment, join: community in assoc(comment, :community))
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
-             CMS.Gate.scope(article_query, nil, :read, ArticleScope.public(:post))
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(article_query, nil, :read, ArticleContext.public(:post))
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :scope_binding_conflict}} =
-             CMS.Gate.scope(comment_query, nil, :read, CommentScope.all_public())
+    assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
+             CMS.Gate.scope(comment_query, nil, :read, CommentContext.all_public())
   end
 
   test "scope composes after select, distinct, and group_by" do
@@ -127,7 +128,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
       |> distinct([_comment, author], author.id)
       |> group_by([comment, author], [comment.id, author.id])
       |> select([_comment, author], author)
-      |> CMS.Gate.scope(nil, :list, CommentScope.for_thread(:post))
+      |> CMS.Gate.scope(nil, :list, CommentContext.for_thread(:post))
 
     assert %Ecto.Query{} = query
     {sql, _params} = to_sql(query)
@@ -150,11 +151,11 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    assert %Ecto.Query{} = CMS.Gate.scope(Post, nil, :read, ArticleScope.public(:post))
-    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentScope.all_public())
+    assert %Ecto.Query{} = CMS.Gate.scope(Post, nil, :read, ArticleContext.public(:post))
+    assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentContext.all_public())
 
     assert %Ecto.Query{} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentScope.public(:post))
+             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentContext.public(:post))
 
     refute_receive :scope_query
   end
@@ -162,12 +163,12 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   test "high-frequency Article and Comment scopes produce valid EXPLAIN plans" do
     queries = [
       Post
-      |> CMS.Gate.scope(nil, :list, ArticleScope.public(:post))
+      |> CMS.Gate.scope(nil, :list, ArticleContext.public(:post))
       |> where([article], article.community_id == ^0)
       |> order_by([article], desc: article.active_at)
       |> limit(20),
       Comment
-      |> CMS.Gate.scope(nil, :list, CommentScope.all_public())
+      |> CMS.Gate.scope(nil, :list, CommentContext.all_public())
       |> where([comment], comment.community_id == ^0)
       |> order_by([comment], desc: comment.inserted_at)
       |> limit(20)
@@ -187,7 +188,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     visible_query =
       Post
-      |> CMS.Gate.scope(nil, :read, ArticleScope.public(:post))
+      |> CMS.Gate.scope(nil, :read, ArticleContext.public(:post))
       |> where([candidate], candidate.id == ^post.id)
 
     assert Repo.exists?(visible_query)

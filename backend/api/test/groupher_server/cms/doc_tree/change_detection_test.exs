@@ -4,8 +4,8 @@ defmodule GroupherServer.Test.CMS.DocTree.ChangeDetection do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.DocTree.ChangeDetection
-  alias GroupherServer.CMS.Model.Doc
+  alias CMS.DocTree.ChangeDetection
+  alias CMS.Model.Doc
 
   describe "[doc tree change detection]" do
     test "treats missing public snapshot as changed" do

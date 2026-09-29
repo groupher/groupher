@@ -1,9 +1,9 @@
 defmodule GroupherServer.Test.CMS.Gate.Access.WithCheck do
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS.Gate.Access
-  alias GroupherServer.CMS.Model.Comment
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Gate.Access
+  alias CMS.Model.Comment
   alias Helper.ORM
 
   setup do

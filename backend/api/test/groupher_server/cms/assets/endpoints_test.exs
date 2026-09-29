@@ -3,7 +3,8 @@ defmodule GroupherServer.Test.CMS.Assets.Endpoints do
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Assets.Endpoints
+  alias GroupherServer.CMS
+  alias CMS.Assets.Endpoints
 
   test "normalizes only the requested endpoint role" do
     env = %{

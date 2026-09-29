@@ -1,5 +1,4 @@
 defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
-  require GroupherServer.CMS.DocTree.Const
   @moduledoc """
   Validates SourceTree and confirmed Docs target intent without parsing source files.
 
@@ -17,16 +16,20 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   introduced only by target planning. Confirmed intent is revalidated, never
   silently replanned, before Job creation and again inside atomic apply.
 
-  See `docs/bulk-import/content-import-architecture.md` and
-  `docs/bulk-import/bulk-import.md`.
+  See `docs/content-import/content-import-architecture.md` and
+  `docs/content-import/bulk-import.md`.
   """
+
+  require GroupherServer.CMS.DocTree.Const
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
-  alias GroupherServer.CMS.Docs.Branch
-  alias GroupherServer.CMS.Model.{Community, DocBranch, DocsSiteState}
+  alias CMS.ErrorCat
+
+  alias CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
+  alias CMS.Docs.Branch
+  alias CMS.Model.{Community, DocBranch, DocsSiteState}
 
   @max_depth CMS.DocTree.Const.max_depth()
   @max_nodes 6_000
@@ -65,11 +68,11 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
       :ok
     else
       false ->
-        {:error, GroupherServer.ErrorCat.custom("The Docs target changed after Review")}
+        {:error, ErrorCat.custom("The Docs target changed after Review")}
 
       [_ | _] ->
         {:error,
-         GroupherServer.ErrorCat.custom("The confirmed Docs target is no longer available")}
+         ErrorCat.custom("The confirmed Docs target is no longer available")}
 
       error ->
         error
@@ -174,7 +177,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   end
 
   defp normalize_source_info(_),
-    do: {:error, GroupherServer.ErrorCat.custom("invalid sourceInfo contract")}
+    do: {:error, ErrorCat.custom("invalid sourceInfo contract")}
 
   defp validate_source_tree(%{
          "schemaVersion" => 2,
@@ -191,23 +194,23 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   end
 
   defp validate_source_tree(_),
-    do: {:error, GroupherServer.ErrorCat.custom("invalid SourceTree contract")}
+    do: {:error, ErrorCat.custom("invalid SourceTree contract")}
 
   defp validate_source_nodes(_nodes, depth, _state) when depth > @max_depth,
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree exceeds depth #{@max_depth}")}
+    do: {:error, ErrorCat.custom("SourceTree exceeds depth #{@max_depth}")}
 
   defp validate_source_nodes(nodes, depth, state) when is_list(nodes) do
     Enum.reduce_while(nodes, {:ok, state}, &validate_source_node_step(&1, &2, depth))
   end
 
   defp validate_source_nodes(_nodes, _depth, _state),
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree pages must be a list")}
+    do: {:error, ErrorCat.custom("SourceTree pages must be a list")}
 
   defp validate_source_node_step(node, {:ok, current}, depth) do
     count = current.count + 1
 
     if count > @max_nodes do
-      {:halt, {:error, GroupherServer.ErrorCat.custom("SourceTree exceeds #{@max_nodes} nodes")}}
+      {:halt, {:error, ErrorCat.custom("SourceTree exceeds #{@max_nodes} nodes")}}
     else
       case validate_source_node(node, depth, current, count) do
         {:ok, next} -> {:cont, {:ok, next}}
@@ -217,16 +220,16 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   end
 
   defp validate_source_node(node, _depth, _current, _count) when not is_map(node),
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree contains an invalid node")}
+    do: {:error, ErrorCat.custom("SourceTree contains an invalid node")}
 
   defp validate_source_node(node, depth, current, _count) do
     cond do
       not valid_text?(node["sourceId"]) or not valid_text?(node["title"]) ->
         {:error,
-         GroupherServer.ErrorCat.custom("SourceTree node identity and title are required")}
+         ErrorCat.custom("SourceTree node identity and title are required")}
 
       MapSet.member?(current.ids, node["sourceId"]) ->
-        {:error, GroupherServer.ErrorCat.custom("SourceTree contains a duplicate sourceId")}
+        {:error, ErrorCat.custom("SourceTree contains a duplicate sourceId")}
 
       true ->
         next = %{count: current.count + 1, ids: MapSet.put(current.ids, node["sourceId"])}
@@ -251,24 +254,24 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
        do: validate_source_link(href, next)
 
   defp validate_source_node_type(%{"type" => "page"}, _next, _depth),
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree page is invalid")}
+    do: {:error, ErrorCat.custom("SourceTree page is invalid")}
 
   defp validate_source_node_type(%{"type" => "link"}, _next, _depth),
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree link is invalid")}
+    do: {:error, ErrorCat.custom("SourceTree link is invalid")}
 
   defp validate_source_node_type(_node, _next, _depth),
-    do: {:error, GroupherServer.ErrorCat.custom("SourceTree node type is invalid")}
+    do: {:error, ErrorCat.custom("SourceTree node type is invalid")}
 
   defp validate_source_page(route, path, next) do
     if valid_text?(route) and valid_text?(path),
       do: {:ok, next},
-      else: {:error, GroupherServer.ErrorCat.custom("SourceTree page is invalid")}
+      else: {:error, ErrorCat.custom("SourceTree page is invalid")}
   end
 
   defp validate_source_link(href, next) do
     if valid_text?(href),
       do: {:ok, next},
-      else: {:error, GroupherServer.ErrorCat.custom("SourceTree link is invalid")}
+      else: {:error, ErrorCat.custom("SourceTree link is invalid")}
   end
 
   defp validate_source_match(info, %{"source" => source}) do
@@ -278,7 +281,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
       :ok
     else
       {:error,
-       GroupherServer.ErrorCat.custom("sourceInfo does not match the SourceTree source contract")}
+       ErrorCat.custom("sourceInfo does not match the SourceTree source contract")}
     end
   end
 
@@ -382,7 +385,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   defp validate_target_tree(_, _, _),
     do:
       {:error,
-       GroupherServer.ErrorCat.custom("confirmed TargetTree does not match source intent")}
+       ErrorCat.custom("confirmed TargetTree does not match source intent")}
 
   defp validate_target_tabs(tabs, branch_slug, mapping_refs) do
     Enum.reduce_while(tabs, {:ok, MapSet.new()}, fn tab, {:ok, ids} ->
@@ -401,7 +404,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
       end
     else
       {:halt,
-       {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid tab")}}
+       {:error, ErrorCat.custom("confirmed TargetTree contains an invalid tab")}}
     end
   end
 
@@ -412,7 +415,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
        when depth > @max_depth,
        do:
          {:error,
-          GroupherServer.ErrorCat.custom("confirmed TargetTree exceeds depth #{@max_depth}")}
+          ErrorCat.custom("confirmed TargetTree exceeds depth #{@max_depth}")}
 
   defp validate_target_children(pages, branch_slug, mapping_refs, ids, depth) do
     Enum.reduce_while(pages, {:ok, ids}, fn child, {:ok, current} ->
@@ -427,7 +430,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
        when not is_map(child),
        do:
          {:error,
-          GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}
+          ErrorCat.custom("confirmed TargetTree contains an invalid child")}
 
   defp validate_target_child(child, branch_slug, mapping_refs, ids, depth) do
     source_id = child["sourceId"]
@@ -490,15 +493,15 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     do: invalid_target_intent()
 
   defp invalid_target_child,
-    do: {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree contains an invalid child")}
+    do: {:error, ErrorCat.custom("confirmed TargetTree contains an invalid child")}
 
   defp duplicate_target_child,
     do:
       {:error,
-       GroupherServer.ErrorCat.custom("confirmed TargetTree contains a duplicate sourceId")}
+       ErrorCat.custom("confirmed TargetTree contains a duplicate sourceId")}
 
   defp invalid_target_intent,
-    do: {:error, GroupherServer.ErrorCat.custom("confirmed TargetTree child intent is invalid")}
+    do: {:error, ErrorCat.custom("confirmed TargetTree child intent is invalid")}
 
   defp validate_target_link(href, ids, source_id) do
     if valid_text?(href),
@@ -609,7 +612,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   defp required_string(map, key) do
     case Map.get(map, key, Map.get(map, String.to_atom(key))) do
       value when is_binary(value) and value != "" -> {:ok, value}
-      _ -> {:error, GroupherServer.ErrorCat.custom("#{key} is required")}
+      _ -> {:error, ErrorCat.custom("#{key} is required")}
     end
   end
 
@@ -618,10 +621,10 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
       values when is_list(values) ->
         if Enum.all?(values, &is_binary/1),
           do: {:ok, values},
-          else: {:error, GroupherServer.ErrorCat.custom("#{key} must contain strings")}
+          else: {:error, ErrorCat.custom("#{key} must contain strings")}
 
       _ ->
-        {:error, GroupherServer.ErrorCat.custom("#{key} must be a list")}
+        {:error, ErrorCat.custom("#{key} must be a list")}
     end
   end
 

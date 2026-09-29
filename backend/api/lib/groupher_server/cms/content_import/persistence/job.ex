@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job do
   @moduledoc """
   Persisted execution state for one confirmed Docs import preview.
 
-  See `docs/bulk-import/article-publish-import-refactor.md` for the Job state machine.
+  See `docs/content-import/article-publish-import-refactor.md` for the Job state machine.
 
   Business position:
 
@@ -17,9 +17,11 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Job do
 
   import Ecto.Changeset
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ContentImport.Persistence.Connection
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.{Accounts, CMS}
+
+  alias Accounts.Model.User
+  alias CMS.ContentImport.Persistence.Connection
+  alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
