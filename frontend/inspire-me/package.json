@@ -14,8 +14,8 @@
     "format": "pnpm exec oxfmt -c ./oxfmt.json ./src",
     "format:check": "pnpm exec oxfmt -c ./oxfmt.json --check ./src",
     "clean": "rimraf --glob .output .tanstack dist 'vite.config.*.timestamp-*' '*.tsbuildinfo'",
-    "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) cf deploy",
-    "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) cf deploy --dry-run"
+    "deploy": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --mode production",
+    "deploy:dry-run": "VITE_GIT_COMMIT_SHA=$(git rev-parse --short HEAD) pnpm run build && cf deploy --prebuilt --dry-run --mode production"
   },
   "dependencies": {
     "@groupher/frontend-core": "workspace:*",

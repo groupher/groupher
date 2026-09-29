@@ -121,7 +121,8 @@ Auth 侧的 `assets-hub-development` client 还必须注册
 
 这是首版已落地的本地修复，不需要把 secret 提交到仓库：
 
-1. `dev:read-worker` 通过 `cf dev --mode development` 启动，Cloudflare Vite 插件读取本地 `.env` / `.dev.vars` service-auth 配置。
+1. `dev:local` 从 `backend/assets-hub/.env` 加载 service-auth 配置，再以继承环境启动
+   `dev:read-worker` 的 `cf dev --mode development`；`.dev.vars` 不再是该链路的配置源。
 2. 使用现有本地 secret 来源提供 `SERVICE_AUTH_CLIENT_ID` 和 `SERVICE_AUTH_CLIENT_SECRET`，不要把 secret 提交到仓库。
 3. 在 `.env` 中同时显式覆盖 `SERVICE_AUTH_TOKEN_ENDPOINT`、`SERVICE_AUTH_ISSUER` 和 `SERVICE_AUTH_JWKS_URL`，不能依赖配置文件的默认值；确认 issuer、audience、scope 与 Phoenix 的验证配置一致。
 4. 重启 `cf` read worker；这些变量在 worker 启动时读取，运行中补变量不会自动生效。

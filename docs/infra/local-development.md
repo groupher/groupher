@@ -142,6 +142,8 @@ Community 由 Cloudflare Vite 插件直接读取 `cloudflare.config.ts`：
 
 ```bash
 cd frontend/community
+pnpm --dir ../.. run sync:assets:community
+pnpm run build:revision-worker
 pnpm exec cf dev --mode development --port 8790
 ```
 

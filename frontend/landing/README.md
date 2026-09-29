@@ -34,9 +34,9 @@ and is not deployed. Public Vite assets use `/landing/assets/*`, which the Edge
 Router and local Gateway map to the static bundle's `/assets/*` path.
 
 The target deployment is the `landing` Worker Static Assets project configured
-by `cloudflare.config.ts` and built through the Cloudflare Vite plugin. Local development also exposes `/health` for Dev Hub and
-local Status checks; production availability is covered by Edge Router health
-and Gatus page probes.
+by `cloudflare.config.ts` and built through the Cloudflare Vite plugin. Local
+development also exposes `/health` for Dev Hub and local Status checks;
+production availability is covered by Edge Router health and Gatus page probes.
 
 ## Related documentation
 

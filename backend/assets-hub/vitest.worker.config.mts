@@ -15,6 +15,8 @@ export default defineConfig({
       experimental: {
         newConfig: { configPath: './cloudflare.test.config.ts' },
       },
+      // The Vitest plugin reads the binding from newConfig, but it does not yet
+      // instantiate the referenced Durable Object service for the test runtime.
       miniflare: {
         durableObjects: {
           GENERATED_IMAGE_BATCHES: {

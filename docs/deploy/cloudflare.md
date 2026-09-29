@@ -318,7 +318,8 @@ smoke；不能同时配置同 hostname 的 Worker Route 与 Custom Domain。
 `infra/edge-router/cloudflare.config.ts` 是 Edge Router 的部署配置源，至少包含：
 
 - `name`、`entrypoint`、`compatibilityDate` 和必要的 compatibility flags。
-- 当前使用 `2026-08-06` compatibility date；不需要日常跟随 Cloudflare 日期变更。
+- 当前使用 `2026-08-06` compatibility date；不需要日常跟随 Cloudflare 日期变更，
+  只有在升级锁定工具链并完成兼容性验证后才推进。
 - Landing、Community、Auth 等 Service Bindings。
 - Logs 与 Trace observability 配置。
 - version metadata binding。

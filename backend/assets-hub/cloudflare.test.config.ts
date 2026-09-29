@@ -8,7 +8,7 @@ import { bindings, defineConfig, exports as workerExports } from 'cf/config'
 export default defineConfig({
   worker: {
     name: 'assets-hub-test',
-    compatibilityDate: '2026-08-22',
+    compatibilityDate: '2026-07-28',
     compatibilityFlags: ['nodejs_compat'],
     entrypoint: 'src/worker.ts',
     env: {

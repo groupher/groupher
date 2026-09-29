@@ -11,8 +11,11 @@ const child = spawn(command, {
   detached: process.platform !== 'win32',
   env: process.env,
   shell: true,
-  stdio: 'ignore',
+  stdio: ['ignore', 'pipe', 'pipe'],
 })
+
+child.stdout?.pipe(process.stdout)
+child.stderr?.pipe(process.stderr)
 
 let stopping = false
 let forceTimer
@@ -22,8 +25,16 @@ const killChild = (signal) => {
   if (!child.pid) return
 
   try {
-    if (process.platform === 'win32') child.kill(signal)
-    else process.kill(-child.pid, signal)
+    if (process.platform === 'win32') {
+      const taskkill = spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], {
+        stdio: 'ignore',
+        windowsHide: true,
+      })
+      taskkill.once('error', console.error)
+      return
+    }
+
+    process.kill(-child.pid, signal)
   } catch (error) {
     if (error?.code !== 'ESRCH') console.error(error)
   }
@@ -52,4 +63,6 @@ child.once('error', (error) => {
   finish(1)
 })
 
-child.once('exit', (code) => finish(stopping ? 0 : (code ?? 1)))
+child.once('exit', (code) => {
+  if (!stopping) finish(code ?? 1)
+})
