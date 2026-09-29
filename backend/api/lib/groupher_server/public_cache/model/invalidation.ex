@@ -15,7 +15,8 @@ defmodule GroupherServer.PublicCache.Model.Invalidation do
 
   import Ecto.Changeset
 
-  alias GroupherServer.PublicCache.Const
+  alias GroupherServer.PublicCache
+  alias PublicCache.Const
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

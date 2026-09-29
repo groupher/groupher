@@ -12,9 +12,9 @@ defmodule GroupherServer.CMS.ViewTracker.Record do
   import Ecto.Query
 
   alias Ecto.UUID
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Analysis.MetricEvent
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.{Analysis, CMS, Repo, RequestActor}
+  alias Analysis.MetricEvent
+  alias RequestActor.Classification
   alias CMS.Artiment.{Matcher, Threads}
   alias CMS.FrontDesk
   alias CMS.ViewTracker.{ErrorCat, Identity, Policy, ViewCounter}

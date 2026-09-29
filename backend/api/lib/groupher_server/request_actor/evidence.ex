@@ -9,9 +9,10 @@ defmodule GroupherServer.RequestActor.Evidence do
         -> one typed variant or conflict error
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ViewTracker.AnonymousSession
-  alias GroupherServer.RequestActor.Crawler
+  alias GroupherServer.{Accounts, CMS, RequestActor}
+  alias Accounts.Model.User
+  alias CMS.ViewTracker.AnonymousSession
+  alias RequestActor.Crawler
 
   defmodule AccountSession do
     @moduledoc """

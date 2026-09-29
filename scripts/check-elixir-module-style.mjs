@@ -3,6 +3,10 @@
  *
  * Credo owns general readability checks. This script covers repository-specific
  * namespace and documentation rules that Credo's generic checks cannot express.
+ * It is also the sole owner of the alias ordering Groupher requires:
+ * directives stay in their semantic blocks, `__MODULE__` comes first, and a
+ * GroupherServer root alias precedes aliases through its shortened child.
+ * Ordering inside a semantic alias group is intentionally not alphabetical.
  */
 
 import fs from 'node:fs'
@@ -16,6 +20,16 @@ const allElixirRoots = [
   testRoot,
   path.join(root, 'backend/api/scripts'),
 ]
+const groupherRootModules = new Set(
+  fs
+    .readdirSync(sourceRoot, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.ex'))
+    .flatMap((entry) => {
+      const source = fs.readFileSync(path.join(sourceRoot, entry.name), 'utf8')
+      const match = /^defmodule GroupherServer\.([A-Z][A-Za-z0-9_]*)\b/m.exec(source)
+      return match ? [match[1]] : []
+    }),
+)
 const failures = []
 
 const errorCatInfrastructure = (file) =>
@@ -166,11 +180,23 @@ for (const file of allElixirRoots.flatMap(walk)) {
   }
 
   const aliasesByParent = new Map()
+  const rootAliasLocations = new Map()
   let firstAlias = -1
   let moduleAlias = -1
   for (let index = 0; index < header.length; index += 1) {
     if (/^  alias\b/.test(header[index]) && firstAlias === -1) firstAlias = index
     if (moduleAlias === -1 && /^  alias __MODULE__/.test(header[index])) moduleAlias = index
+
+    const directRootAlias = /^  alias GroupherServer\.([A-Z][A-Za-z0-9_]*)$/.exec(header[index])
+    if (directRootAlias) rootAliasLocations.set(directRootAlias[1], index)
+
+    const groupedRootAlias = /^  alias GroupherServer\.\{([^}]+)\}$/.exec(header[index])
+    if (groupedRootAlias) {
+      for (const child of groupedRootAlias[1].split(',').map((value) => value.trim())) {
+        rootAliasLocations.set(child, index)
+      }
+    }
+
     const match = /^  alias ([A-Z][A-Za-z0-9_.]+)$/.exec(header[index])
     if (!match) continue
     const segments = match[1].split('.')
@@ -187,6 +213,22 @@ for (const file of allElixirRoots.flatMap(walk)) {
 
   if (moduleAlias !== -1 && firstAlias !== moduleAlias) {
     fail(file, moduleAlias + 1, 'alias __MODULE__ must be the first alias in its list')
+  }
+
+  for (let index = 0; index < header.length; index += 1) {
+    const shortenedChild = /^  alias ([A-Z][A-Za-z0-9_]*)\.(?:[A-Z{])/.exec(header[index])
+    if (!shortenedChild) continue
+
+    if (!groupherRootModules.has(shortenedChild[1])) continue
+
+    const rootLocation = rootAliasLocations.get(shortenedChild[1])
+    if (rootLocation === undefined || rootLocation > index) {
+      fail(
+        file,
+        index + 1,
+        `alias GroupherServer.${shortenedChild[1]} before aliases through ${shortenedChild[1]}`,
+      )
+    }
   }
 
   const aliasesByCommonParent = new Map()

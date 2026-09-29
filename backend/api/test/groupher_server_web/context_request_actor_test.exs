@@ -4,9 +4,10 @@ defmodule GroupherServerWeb.ContextRequestActorTest do
   import Plug.Conn
   import Plug.Test
 
-  alias GroupherServer.CMS.ViewTracker.AnonymousSession
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.{CMS, RequestActor}
   alias GroupherServerWeb.Context
+  alias CMS.ViewTracker.AnonymousSession
+  alias RequestActor.Classification
 
   test "classifies the signed anonymous session once at the request boundary" do
     context = :get |> conn("/graphiql") |> Context.call([]) |> request_context()

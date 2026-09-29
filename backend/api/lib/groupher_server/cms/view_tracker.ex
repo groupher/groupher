@@ -7,8 +7,9 @@ defmodule GroupherServer.CMS.ViewTracker do
   """
 
   alias __MODULE__.{Query, Record, ViewDedupeCleanup}
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.{Accounts, RequestActor}
+  alias Accounts.Model.User
+  alias RequestActor.Classification
 
   @doc "Commits one Article view and its public/private projections."
   @spec track(struct(), User.t() | nil, Classification.t(), keyword()) ::

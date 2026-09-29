@@ -1,8 +1,9 @@
 defmodule GroupherServerWeb.Resolvers.ArticleStatsPayloadTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.ErrorCat, as: CmsErrorCat
+  alias GroupherServer.CMS
   alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
+  alias CMS.ErrorCat, as: CmsErrorCat
 
   test "presents the requested article stats with its public locator" do
     article = %{id: 7, inner_id: 42}

@@ -7,7 +7,8 @@ defmodule GroupherServer.Jobs.ViewDedupeCleanup do
 
   use Oban.Worker, queue: :default, max_attempts: 3
 
-  alias GroupherServer.CMS.ViewTracker
+  alias GroupherServer.CMS
+  alias CMS.ViewTracker
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do

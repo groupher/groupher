@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   alias Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias CMS.SearchArtiments.Indexer
-  alias GroupherServer.Analysis.MetricEvent
+  alias Analysis.MetricEvent
   alias Helper.{Later, T}
 
   @article_threads Config.article_threads()

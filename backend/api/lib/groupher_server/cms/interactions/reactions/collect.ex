@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
 
   import Ecto.Query
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   alias CMS.{Events, FrontDesk, Gate}
   alias CMS.Interactions.{ErrorCat, ReadState}
   alias CMS.Model.{ArticleCollect, Author}
-  alias GroupherServer.Analysis.MetricEvent
+  alias Analysis.MetricEvent
   alias Helper.{Later, T}
 
   @doc """

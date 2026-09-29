@@ -7,8 +7,9 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewerState do
 
   use Ecto.Schema
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.{Accounts, CMS}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

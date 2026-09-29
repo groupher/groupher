@@ -7,9 +7,8 @@ defmodule GroupherServer.Analysis.MetricEvent do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Analysis.Const
-  alias GroupherServer.Analysis.Model.MetricEvent
+  alias GroupherServer.{Analysis, CMS, Repo}
+  alias Analysis.{Const, Model.MetricEvent}
   alias CMS.Artiment.Matcher
 
   @doc "Appends an Article action using the non-visitor `all` dimension."

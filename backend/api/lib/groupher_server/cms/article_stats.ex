@@ -19,10 +19,8 @@ defmodule GroupherServer.CMS.ArticleStats do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Artiment.Matcher
-  alias CMS.Artiment.Threads
-  alias CMS.Model.ArticleEmotionCount
-  alias CMS.Model.ArticleStats, as: ArticleStatsModel
+  alias CMS.Artiment.{Matcher, Threads}
+  alias CMS.Model.{ArticleEmotionCount, ArticleStats}
 
   @article_threads Threads.article_enums()
   @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
@@ -33,7 +31,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   def initialize(article) when is_struct(article) do
     with {:ok, thread} <- article_thread(article) do
       Repo.insert_all(
-        ArticleStatsModel,
+        ArticleStats,
         [%{thread: thread, article_id: article.id}],
         on_conflict: :nothing,
         conflict_target: @conflict_target
@@ -48,7 +46,7 @@ defmodule GroupherServer.CMS.ArticleStats do
   def increment_views(thread, article_id)
       when thread in @article_threads and is_integer(article_id) and article_id > 0 do
     conflict_query =
-      from(stats in ArticleStatsModel,
+      from(stats in ArticleStats,
         update: [
           inc: [views: 1, views_revision: 1],
           set: [
@@ -59,7 +57,7 @@ defmodule GroupherServer.CMS.ArticleStats do
       )
 
     case Repo.insert_all(
-           ArticleStatsModel,
+           ArticleStats,
            [%{thread: thread, article_id: article_id, views: 1, views_revision: 1}],
            on_conflict: conflict_query,
            conflict_target: @conflict_target,
@@ -78,7 +76,7 @@ defmodule GroupherServer.CMS.ArticleStats do
          {:ok, participants_count} <- owner_count(article, :comments_participants_count),
          {:ok, comments_revision} <- owner_count(article, :comments_revision) do
       conflict_query =
-        from(stats in ArticleStatsModel,
+        from(stats in ArticleStats,
           update: [
             set: [
               comments_count: ^comments_count,
@@ -91,7 +89,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         )
 
       Repo.insert_all(
-        ArticleStatsModel,
+        ArticleStats,
         [
           %{
             thread: thread,
@@ -119,7 +117,7 @@ defmodule GroupherServer.CMS.ArticleStats do
          {:ok, collects_count} <- owner_count(interaction, :collects_count),
          {:ok, interaction_revision} <- owner_count(interaction, :interaction_revision) do
       conflict_query =
-        from(stats in ArticleStatsModel,
+        from(stats in ArticleStats,
           update: [
             set: [
               upvotes_count: ^upvotes_count,
@@ -132,7 +130,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         )
 
       Repo.insert_all(
-        ArticleStatsModel,
+        ArticleStats,
         [
           %{
             thread: thread,
@@ -248,7 +246,7 @@ defmodule GroupherServer.CMS.ArticleStats do
     )
 
     Repo.delete_all(
-      from(stats in ArticleStatsModel,
+      from(stats in ArticleStats,
         where: stats.thread == ^thread and stats.article_id == ^article_id
       )
     )
@@ -296,7 +294,7 @@ defmodule GroupherServer.CMS.ArticleStats do
         }
       )
 
-    from(stats in ArticleStatsModel,
+    from(stats in ArticleStats,
       where: stats.thread == ^thread and stats.article_id in ^article_ids,
       left_join: emotions in subquery(emotion_rows),
       on: emotions.article_id == stats.article_id,
@@ -321,7 +319,7 @@ defmodule GroupherServer.CMS.ArticleStats do
     end
   end
 
-  defp normalize(%ArticleStatsModel{} = stats, emotion_counts) do
+  defp normalize(%ArticleStats{} = stats, emotion_counts) do
     %{
       thread: stats.thread,
       article_id: stats.article_id,

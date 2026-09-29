@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   import Helper.Utils, only: [done: 1]
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Jobs, PublicCache, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Jobs, PublicCache, Repo}
   alias Accounts.Model.User
   alias CMS.{Comments.ErrorCat, Artiment.Const, SearchArtiments.Indexer, Command, FrontDesk, Gate}
   alias CMS.Gate.ErrorCat, as: GateErrorCat
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
     Post
   }
 
-  alias GroupherServer.Analysis.MetricEvent
+  alias Analysis.MetricEvent
   alias PublicCache.Const, as: PublicCacheConst
   alias Helper.{ORM, T}
 

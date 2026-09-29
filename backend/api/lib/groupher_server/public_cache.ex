@@ -15,8 +15,8 @@ defmodule GroupherServer.PublicCache do
   import Ecto.Query
 
   alias Ecto.Multi
-  alias GroupherServer.{Jobs, Repo}
-  alias GroupherServer.PublicCache.{Model.Invalidation, Policy, PurgeWorker}
+  alias GroupherServer.{Jobs, PublicCache, Repo}
+  alias PublicCache.{Model.Invalidation, Policy, PurgeWorker}
 
   @doc "Adds an invalidation row and durable worker trigger to an Ecto.Multi."
   @spec invalidate(Ecto.Multi.t(), atom(), map() | struct(), keyword()) :: Ecto.Multi.t()

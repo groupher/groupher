@@ -12,7 +12,8 @@ defmodule GroupherServer.PublicCache.Tags do
       typed invalidation -> Tags -> validated Cloudflare tag wire protocol
   """
 
-  alias GroupherServer.PublicCache.{Const, Policy}
+  alias GroupherServer.PublicCache
+  alias PublicCache.{Const, Policy}
 
   @tag_pattern ~r/^community\[[A-Za-z0-9][A-Za-z0-9-]*\](?:-[A-Za-z0-9\[\]-]+)?$/
 

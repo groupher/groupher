@@ -13,7 +13,8 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewDedupeState do
 
   use Ecto.Schema
 
-  alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

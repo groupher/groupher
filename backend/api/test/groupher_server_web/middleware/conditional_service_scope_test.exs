@@ -1,9 +1,10 @@
 defmodule GroupherServerWeb.Middleware.ConditionalServiceScopeTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.{Auth, RequestActor}
   alias GroupherServerWeb.Middleware.ConditionalServiceScope
+  alias Auth.Contract, as: AuthContract
+  alias RequestActor.Classification
 
   @opts [audience: "phoenix:view-api", scope: "view:track"]
 

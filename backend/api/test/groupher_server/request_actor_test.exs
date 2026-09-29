@@ -1,10 +1,10 @@
 defmodule GroupherServer.RequestActorTest do
   use GroupherServer.DataCase, async: true
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ViewTracker.AnonymousSession
-  alias GroupherServer.RequestActor
-  alias GroupherServer.RequestActor.{Classification, Crawler, Evidence}
+  alias GroupherServer.{Accounts, CMS, RequestActor}
+  alias Accounts.Model.User
+  alias CMS.ViewTracker.AnonymousSession
+  alias RequestActor.{Classification, Crawler, Evidence}
 
   test "classifies a complete verified delegation" do
     assert {:ok,

@@ -10,9 +10,8 @@ defmodule GroupherServer.Jobs.ArticleInsightsAggregation do
     max_attempts: GroupherServer.Jobs.Config.max_attempts(:article_insights_aggregation),
     unique: GroupherServer.Jobs.Config.unique(:article_insights_aggregation)
 
-  alias GroupherServer.Analysis.Aggregator
-  alias GroupherServer.Analysis.Config
-  alias GroupherServer.Analysis.Maintenance
+  alias GroupherServer.Analysis
+  alias Analysis.{Aggregator, Config, Maintenance}
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do

@@ -12,8 +12,7 @@ defmodule GroupherServer.CMS.ViewTracker.ViewCounter do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.Matcher
-  alias CMS.ViewTracker.Config
-  alias CMS.ViewTracker.Model.ViewDedupeState
+  alias CMS.ViewTracker.{Config, Model.ViewDedupeState}
 
   @doc """
   Atomically counts a view when the actor/Article window has elapsed.

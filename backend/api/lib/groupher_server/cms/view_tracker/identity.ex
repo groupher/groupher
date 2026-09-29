@@ -12,9 +12,10 @@ defmodule GroupherServer.CMS.ViewTracker.Identity do
         -> HMAC viewer_tracking_key + actor dimensions
   """
 
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.ViewTracker.{AnonymousSession, ErrorCat}
-  alias GroupherServer.RequestActor.Classification
+  alias GroupherServer.{Accounts, CMS, RequestActor}
+  alias Accounts.Model.User
+  alias CMS.ViewTracker.{AnonymousSession, ErrorCat}
+  alias RequestActor.Classification
 
   @type t :: %{
           actor_type: atom(),

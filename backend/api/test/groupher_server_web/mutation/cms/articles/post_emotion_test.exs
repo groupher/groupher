@@ -3,9 +3,8 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.ErrorCat.Error
   alias GroupherServer.CMS
-  alias CMS.Articles.ErrorCat
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Model.{ArticleEmotionCount, ArticleUserEmotion}
 
   defp emotion_entry(emotions, type) do
@@ -126,7 +125,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     end
 
     test "generic Article emotion rejects the dedicated UPVOTE reaction", ~m(post user)a do
-      assert {:error, %Error{reason: :emotion_not_allowed}} =
+      assert {:error, %ErrorCat.Error{reason: :emotion_not_allowed}} =
                CMS.Interactions.emotion(post, :upvote, user)
 
       refute Repo.get_by(ArticleUserEmotion,
@@ -166,7 +165,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
              |> mutation_error?(
                S.Article.m(:emotion_article, :post),
                variables,
-               ErrorCat.code(ErrorCat.emotion_not_allowed())
+               ArticleErrorCat.code(ArticleErrorCat.emotion_not_allowed())
              )
     end
   end

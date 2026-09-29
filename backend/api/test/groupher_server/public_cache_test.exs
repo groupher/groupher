@@ -3,12 +3,8 @@ defmodule GroupherServer.PublicCacheTest do
 
   import Ecto.Query
 
-  alias GroupherServer.PublicCache
-  alias GroupherServer.PublicCache.Model.Invalidation
-  alias GroupherServer.PublicCache.Policy
-  alias GroupherServer.PublicCache.PurgeWorker
-  alias GroupherServer.PublicCache.Tags
-  alias GroupherServer.Repo
+  alias GroupherServer.{PublicCache, Repo}
+  alias PublicCache.{Model.Invalidation, Policy, PurgeWorker, Tags}
 
   @tag_fixture_path Path.expand(
                       "../../../../packages/contracts/fixtures/public-cache-tags-v1.json",

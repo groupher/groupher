@@ -4,15 +4,15 @@ defmodule GroupherServerWeb.ContextServiceAuthTest do
   import Plug.Conn
   import Plug.Test
 
-  alias GroupherServer.{Auth, CMS, Repo}
-  alias GroupherServer.Accounts.Profiles.BrowserSessions
-  alias GroupherServer.Analysis.Model.MetricEvent
+  alias GroupherServer.{Accounts, Analysis, Auth, CMS, Repo, RequestActor}
+  alias Accounts.Profiles.BrowserSessions
+  alias Analysis.Model.MetricEvent
   alias Auth.Contract, as: AuthContract
   alias CMS.ViewTracker.Model.ViewDedupeState
-  alias GroupherServer.RequestActor.Classification
   alias GroupherServerWeb.Context
   alias GroupherServerWeb.ServiceAuth.Verifier
   alias Helper.Guardian.BrowserAccess
+  alias RequestActor.Classification
 
   setup do
     key = JOSE.JWK.generate_key({:rsa, 2048})

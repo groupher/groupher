@@ -1,9 +1,10 @@
 defmodule GroupherServer.Test.Analysis.ArticleInsightsTest do
   use GroupherServer.TestMate
 
-  alias GroupherServer.Analysis.{Aggregator, ArticleInsights}
-  alias GroupherServer.Analysis.MetricEvent, as: MetricEventAPI
-  alias GroupherServer.Analysis.Model.{ArticleHourlyMetric, MetricEvent}
+  alias GroupherServer.Analysis
+  alias Analysis.{Aggregator, ArticleInsights, MetricEvent, Model}
+  alias MetricEvent, as: MetricEventAPI
+  alias Model.{ArticleHourlyMetric, MetricEvent}
 
   test "aggregates each metric event once and preserves actor dimensions" do
     {_community, article, _attrs, _user} = mock_article(:post)

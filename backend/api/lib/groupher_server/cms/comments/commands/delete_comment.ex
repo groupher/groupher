@@ -12,14 +12,14 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   foreign-key cascade semantics are not simulated here.
   """
 
-  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, PublicCache, Repo}
 
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate}
   alias CMS.Comments.{Lifecycle, ErrorCat, Commands.Solution}
   alias CMS.Model.{Comment, PinnedComment, Post}
   alias CMS.SearchArtiments.Indexer
-  alias GroupherServer.Analysis.MetricEvent
+  alias Analysis.MetricEvent
   alias Helper.{ORM, T}
   alias PublicCache.Const, as: PublicCacheConst
 

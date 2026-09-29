@@ -173,7 +173,10 @@
           {Credo.Check.Design.DuplicatedCode, []},
           {Credo.Check.Design.SkipTestWithoutComment, []},
           {Credo.Check.Readability.AliasAs, []},
-          # The project-specific module-style checker owns root-first aliases.
+          # The project-specific module-style checker owns the alias ordering
+          # Groupher requires: directive blocks, __MODULE__ first, and root
+          # aliases before shortened children. Semantic groups intentionally
+          # do not use Credo's global alphabetical order.
           {Credo.Check.Readability.AliasOrder, []},
           {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Readability.ImplTrue, []},

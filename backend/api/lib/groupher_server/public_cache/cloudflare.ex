@@ -26,7 +26,8 @@ defmodule GroupherServer.PublicCache.Cloudflare do
       PurgeWorker -> Phoenix adapter -> Cloudflare Cache API
   """
 
-  alias GroupherServer.PublicCache.{Policy, Tags}
+  alias GroupherServer.PublicCache
+  alias PublicCache.{Policy, Tags}
 
   @spec purge([String.t()]) :: :ok | {:error, term()}
   def purge(tags) when is_list(tags) do

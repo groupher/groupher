@@ -5,7 +5,8 @@ defmodule GroupherServer.Analysis.Const do
       producer action -> Analysis.Const vocabulary -> MetricEvent / query
   """
 
-  alias GroupherServer.RequestActor.Const, as: RequestActorConst
+  alias GroupherServer.RequestActor
+  alias RequestActor.Const, as: RequestActorConst
 
   @metrics [
     :article_view,

@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
   import Ecto.Query
   import Plug.Conn, only: [fetch_cookies: 1]
 
-  alias GroupherServer.{CMS, Repo, RequestActor}
-  alias GroupherServer.Analysis.Model.MetricEvent
-  alias GroupherServer.CMS.Model.ArticleStats
+  alias GroupherServer.{Analysis, CMS, Repo, RequestActor}
+  alias Analysis.Model.MetricEvent
+  alias CMS.Model.ArticleStats
   alias CMS.ViewTracker
   alias CMS.ViewTracker.AnonymousSession
   alias CMS.ViewTracker.Model.{ViewDedupeState, ViewerState}
@@ -396,10 +396,10 @@ defmodule GroupherServer.Test.CMS.ViewTrackerTest do
     {_community, post, _attrs, user} = mock_article(:post)
     {:ok, classification} = RequestActor.classify(account_session: user)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :missing_read_purpose}} =
+    assert {:error, %ErrorCat.Error{reason: :missing_read_purpose}} =
              ViewTracker.track(post, user, classification)
 
-    assert {:error, %GroupherServer.ErrorCat.Error{reason: :invalid_read_purpose}} =
+    assert {:error, %ErrorCat.Error{reason: :invalid_read_purpose}} =
              ViewTracker.track(post, user, classification, read_purpose: :made_up)
 
     assert Repo.aggregate(ViewDedupeState, :count) == 0

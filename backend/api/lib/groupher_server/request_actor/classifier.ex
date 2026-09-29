@@ -8,7 +8,8 @@ defmodule GroupherServer.RequestActor.Classifier do
         -> Classification
   """
 
-  alias GroupherServer.RequestActor.{Classification, Evidence}
+  alias GroupherServer.RequestActor
+  alias RequestActor.{Classification, Evidence}
 
   @spec classify(Evidence.t()) :: Classification.t()
   def classify(%Evidence.Delegation{delegation: %{user_actor: user}}),

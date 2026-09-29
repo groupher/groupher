@@ -13,9 +13,8 @@ defmodule GroupherServer.CMS.ViewTracker.ViewDedupeCleanup do
 
   import Ecto.Query
 
-  alias GroupherServer.Repo
-  alias GroupherServer.CMS.ViewTracker.Config
-  alias GroupherServer.CMS.ViewTracker.Model.ViewDedupeState
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.ViewTracker.{Config, Model.ViewDedupeState}
 
   @telemetry_event [:groupher, :cms, :view_tracker, :dedupe_cleanup]
 

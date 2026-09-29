@@ -10,9 +10,9 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, Repo}
-  alias GroupherServer.Analysis.{Const, Model.ArticleHourlyMetric}
-  alias GroupherServer.RequestActor.Const, as: RequestActorConst
+  alias GroupherServer.{Analysis, CMS, Repo, RequestActor}
+  alias Analysis.{Const, Model.ArticleHourlyMetric}
+  alias RequestActor.Const, as: RequestActorConst
   alias CMS.Artiment.Matcher
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.{Article, Doc}

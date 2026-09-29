@@ -13,7 +13,8 @@ defmodule GroupherServer.RequestActor do
         -> Classification
   """
 
-  alias GroupherServer.RequestActor.{Classification, Classifier, Evidence}
+  alias GroupherServer.RequestActor
+  alias RequestActor.{Classification, Classifier, Evidence}
 
   @doc "Classifies one request from complete trusted identity and credential objects."
   @spec classify(keyword()) ::

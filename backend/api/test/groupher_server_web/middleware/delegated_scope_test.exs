@@ -1,8 +1,9 @@
 defmodule GroupherServerWeb.Middleware.DelegatedScopeTest do
   use ExUnit.Case, async: true
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
+  alias GroupherServer.Auth
   alias GroupherServerWeb.Middleware.DelegatedScope
+  alias Auth.Contract, as: AuthContract
 
   @opts [audience: "phoenix:auth-api", scope: "auth:oauth:read"]
 

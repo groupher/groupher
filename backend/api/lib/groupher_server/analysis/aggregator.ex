@@ -7,10 +7,10 @@ defmodule GroupherServer.Analysis.Aggregator do
 
   import Ecto.Query
 
-  alias GroupherServer.Repo
-  alias GroupherServer.Analysis.Config
-  alias GroupherServer.Analysis.MetricEvent, as: MetricEventAPI
-  alias GroupherServer.Analysis.Model.{ArticleHourlyMetric, MetricEvent}
+  alias GroupherServer.{Analysis, Repo}
+  alias Analysis.{Config, MetricEvent, Model}
+  alias MetricEvent, as: MetricEventAPI
+  alias Model.{ArticleHourlyMetric, MetricEvent}
 
   @doc "Consumes a bounded batch with row locks and an atomic aggregate/ack transaction."
   @spec run(pos_integer()) :: {:ok, non_neg_integer()} | {:error, term()}

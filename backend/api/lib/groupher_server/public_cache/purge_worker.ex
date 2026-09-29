@@ -7,12 +7,12 @@ defmodule GroupherServer.PublicCache.PurgeWorker do
       Oban job -> claim invalidation -> resolve tags -> purge -> delivered/dead
   """
 
-  require Logger
-
   use Oban.Worker,
     queue: :public_cache,
     max_attempts: GroupherServer.PublicCache.Policy.max_attempts(),
     unique: [period: 86_400, keys: [:invalidation_id], states: :incomplete]
+
+  require Logger
 
   alias GroupherServer.{PublicCache, Repo}
   alias PublicCache.{Cloudflare, Model.Invalidation, Policy, Scope}

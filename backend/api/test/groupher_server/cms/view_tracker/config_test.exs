@@ -1,7 +1,8 @@
 defmodule GroupherServer.Test.CMS.ViewTracker.ConfigTest do
   use ExUnit.Case, async: false
 
-  alias GroupherServer.CMS.ViewTracker.Config
+  alias GroupherServer.CMS
+  alias CMS.ViewTracker.Config
 
   setup do
     original = Application.get_env(:groupher_server, Config)

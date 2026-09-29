@@ -10,9 +10,11 @@ defmodule GroupherServerWeb.Middleware.ConditionalServiceScope do
 
   @behaviour Absinthe.Middleware
 
-  alias GroupherServer.Auth.Contract, as: AuthContract
-  alias GroupherServerWeb.Middleware.ServiceScope
   import Helper.Utils, only: [handle_absinthe_error: 3]
+
+  alias GroupherServer.Auth
+  alias GroupherServerWeb.Middleware.ServiceScope
+  alias Auth.Contract, as: AuthContract
 
   @impl Absinthe.Middleware
   def call(%{context: %{delegation_auth_failure: code}} = resolution, _opts),

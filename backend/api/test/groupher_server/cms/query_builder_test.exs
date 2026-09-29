@@ -1,8 +1,8 @@
 defmodule GroupherServer.Test.CMS.QueryBuilderTest do
   use GroupherServer.TestMate, async: true
 
-  alias GroupherServer.CMS.Model.Post
-  alias GroupherServer.CMS.QueryBuilder
+  alias GroupherServer.CMS
+  alias CMS.{Model.Post, QueryBuilder}
 
   test "ignores absent single-tag filters" do
     for filter <- [

@@ -7,7 +7,8 @@ defmodule GroupherServer.Analysis.Model.ArticleHourlyMetric do
 
   use Ecto.Schema
 
-  alias GroupherServer.Analysis.Const
+  alias GroupherServer.Analysis
+  alias Analysis.Const
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
