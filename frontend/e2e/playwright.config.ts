@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 const app = process.env.E2E_APP ?? 'dash'
 const useSystemChrome = process.env.PLAYWRIGHT_USE_SYSTEM_CHROME === '1'
+const browserChannel = useSystemChrome ? 'chrome' : 'chromium'
 const mockGraphQLEndpoint = `http://localhost:${process.env.MOCK_GRAPHQL_PORT ?? '4001'}/graphiql`
 const repoRoot = path.resolve(__dirname, '../..')
 
@@ -126,7 +127,8 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        ...(useSystemChrome ? { channel: 'chrome' } : {}),
+        // Use real Chromium's new headless mode instead of chrome-headless-shell, which can hang on CI teardown.
+        channel: browserChannel,
         ...(authStack
           ? {
               launchOptions: {
