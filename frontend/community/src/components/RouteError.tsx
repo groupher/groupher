@@ -1,6 +1,8 @@
 import { Link, type ErrorComponentProps } from '@tanstack/react-router'
 
 export default function RouteError({ error, reset }: ErrorComponentProps) {
+  const message = error instanceof Error ? error.message : ''
+
   return (
     <div className='column-center min-h-80 w-full justify-center px-6 py-12'>
       <div className='column w-full max-w-md items-start rounded-xl bg-white p-6 shadow-sm dark:bg-neutral-900'>
@@ -8,7 +10,7 @@ export default function RouteError({ error, reset }: ErrorComponentProps) {
           Community page could not be loaded
         </h1>
         <p className='mt-2 text-sm text-neutral-500 dark:text-neutral-400'>
-          {error.message || 'An unexpected route error occurred.'}
+          {message || 'An unexpected route error occurred.'}
         </p>
         <div className='row mt-6 gap-3'>
           <button

@@ -3,16 +3,26 @@
  *
  * Vitest
  *   -> Cloudflare pool
- *   -> workerd with Wrangler test bindings
+ *   -> workerd with cf test bindings
  *   -> generated Batch integration tests
  */
-import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { cloudflareTest } from '@cloudflare/vitest-plugin'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      wrangler: { configPath: './wrangler.test.jsonc' },
+      experimental: {
+        newConfig: { configPath: './cloudflare.test.config.ts' },
+      },
+      miniflare: {
+        durableObjects: {
+          GENERATED_IMAGE_BATCHES: {
+            className: 'GeneratedImageBatchDO',
+            useSQLite: true,
+          },
+        },
+      },
     }),
   ],
   test: {

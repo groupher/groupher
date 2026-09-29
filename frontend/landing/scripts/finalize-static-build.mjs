@@ -3,7 +3,35 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const landingRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const clientRoot = path.join(landingRoot, 'dist/client')
+
+/** Finds Landing's static assets from Cloudflare worker metadata, independent of output version names. */
+const resolveClientRoot = async () => {
+  const outputRoot = path.join(landingRoot, '.cloudflare/output')
+  const outputEntries = await readdir(outputRoot, { recursive: true, withFileTypes: true })
+  const candidates = []
+
+  for (const entry of outputEntries) {
+    if (!entry.isFile() || entry.name !== 'worker.config.json') continue
+
+    const workerRoot = entry.parentPath
+    const config = JSON.parse(await readFile(path.join(workerRoot, entry.name), 'utf8'))
+    if (config.name !== 'landing' || config.assets === undefined) continue
+
+    const assetsRoot = path.join(workerRoot, 'assets')
+    await access(assetsRoot)
+    candidates.push(assetsRoot)
+  }
+
+  if (candidates.length !== 1) {
+    throw new Error(
+      `Expected one Landing assets output under ${outputRoot}, found ${candidates.length}`,
+    )
+  }
+
+  return candidates[0]
+}
+
+const clientRoot = await resolveClientRoot()
 
 const entries = await readdir(clientRoot, { recursive: true, withFileTypes: true })
 const htmlFiles = entries
@@ -39,7 +67,7 @@ for (const htmlFile of htmlFiles) {
       throw new Error(`Landing asset escapes the bundle directory: ${reference}`)
     }
     await access(assetPath).catch(() => {
-      throw new Error(`Landing asset is missing from dist/client/assets: ${reference}`)
+      throw new Error(`Landing asset is missing from the Cloudflare assets output: ${reference}`)
     })
   }
 

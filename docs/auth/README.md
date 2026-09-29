@@ -312,7 +312,7 @@ Docs Import 使用两段互不复用的身份合同：
 trigger，Auth 不为 Docs Import 注册 scheduler audience。
 
 Cloudflare Worker 部署还声明 `AUTH_REFRESH_RATE_LIMITER` 原生 Rate Limiting binding，
-同时按客户端和 `browserSessionRef` 计数。修改 `wrangler.jsonc` 中的 namespace 时必须
+同时按客户端和 `browserSessionRef` 计数。修改 `cloudflare.config.ts` 中的 namespace 时必须
 保证它在当前 Cloudflare account 内唯一；触发限制返回 `429 RATE_LIMITED` 与
 `Retry-After`。Node 和本地运行时的有界内存 limiter 只作为开发 fallback。
 

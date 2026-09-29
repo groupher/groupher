@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { cloudflare } from '@cloudflare/vite-plugin'
 import { createVgpuWgslVitePlugin } from '@groupher/frontend-core/vgpu-vite'
 import tailwindcss from '@tailwindcss/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
@@ -29,6 +30,17 @@ export default defineConfig({
   },
   ssr: { noExternal: ['@groupher/tooltip'] },
   plugins: [
+    cloudflare({
+      prerenderWorker: {
+        config: {
+          name: 'landing-prerender',
+          compatibilityDate: '2026-08-06',
+          compatibilityFlags: ['nodejs_compat'],
+          entrypoint: '@tanstack/react-start/server-entry',
+        },
+        viteEnvironment: { name: 'ssr' },
+      },
+    }),
     tanstackStart({
       spa: { enabled: false },
       sitemap: { enabled: false },

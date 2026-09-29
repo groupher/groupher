@@ -29,7 +29,7 @@ export default function RouteError({ error, reset }: ErrorComponentProps) {
           This dashboard section could not be loaded
         </h1>
         <p className='mt-2 text-sm leading-6 text-pretty text-neutral-500 dark:text-neutral-400'>
-          {readGraphQLErrorMessage(error.message) || 'An unexpected route error occurred.'}
+          {readGraphQLErrorMessage(routeError.message) || 'An unexpected route error occurred.'}
         </p>
 
         <div className='row mt-6 gap-3'>
@@ -49,9 +49,9 @@ export default function RouteError({ error, reset }: ErrorComponentProps) {
           </Link>
         </div>
 
-        {import.meta.env.DEV && error.stack && (
+        {import.meta.env.DEV && routeError.stack && (
           <pre className='mt-6 max-h-52 w-full overflow-auto rounded-lg bg-neutral-100 p-3 text-xs leading-5 whitespace-pre-wrap text-neutral-600 dark:bg-neutral-950 dark:text-neutral-400'>
-            {error.stack}
+            {routeError.stack}
           </pre>
         )}
       </div>

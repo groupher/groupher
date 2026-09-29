@@ -194,7 +194,7 @@ packages/route-contract
 - 不导入 Hono、Node API、Cloudflare `env`、`Request`、具体 fetcher 或 Gateway dev 逻辑。
 - `edge-router` 和 `infra/dev-gateway` 分别实现 Worker/Node adapter、代理和运行时测试。
 
-Wrangler 和 Gateway 的 esbuild 都直接 bundle 这个 package。生产路径分类只在 package 中测试
+Cloudflare Vite plugin 和 Gateway 的 esbuild 都直接 bundle 这个 package。生产路径分类只在 package 中测试
 一次；Service Binding、header/cookie、HTTPS fetch、开发资产和 WebSocket 行为留在各自
 adapter 测试中。
 
@@ -211,7 +211,7 @@ frontend/landing/out
 
 主要收益是概念和运维模型统一，不假设它天然比旧静态托管更快：
 
-- 所有 Cloudflare 子项目统一使用 Wrangler、Worker versions 和 deployments。
+- 所有 Cloudflare 子项目统一使用 `cf`、Worker versions 和 deployments。
 - Logs、Traces、bindings、环境变量和本地开发使用同一套配置方式。
 - Landing 与 Router 之间形成明确的 Service Binding 边界。
 - 生产链路只维护 Landing Worker，不保留旧托管平台的兼容入口或回滚通道。
@@ -255,7 +255,7 @@ auth.groupher.localhost               Auth
   `-- infra/dev-gateway: local adapter + dev-only routes
 ```
 
-`edge-router` 也应能通过 Wrangler 的多 Worker 本地开发模式连接本地 Service Bindings，用于
+`edge-router` 也应能通过 `cf` 的多 Worker 本地开发模式连接本地 Service Bindings，用于
 生产一致性 smoke。它不必替代日常 Dev Gateway；两者共享纯路由契约和测试即可。
 
 以下开发路径只属于 Dev Gateway，生产 `edge-router` 不得暴露：
@@ -313,18 +313,33 @@ Worker Custom Domains 是未来可选的 DNS 清理方式，不是当前架构�
 Domains，应先删除冲突 DNS 记录，再由 Cloudflare 创建目标记录和证书，并完成同一套公网
 smoke；不能同时配置同 hostname 的 Worker Route 与 Custom Domain。
 
-## Wrangler 基线
+## cf 配置基线
 
-`infra/edge-router/wrangler.jsonc` 跟随仓库现有 Worker 惯例，至少包含：
+`infra/edge-router/cloudflare.config.ts` 是 Edge Router 的部署配置源，至少包含：
 
-- `$schema`、`name`、`main`、`compatibility_date` 和必要的 compatibility flags。
-- 当前锁定的 Wrangler 4.118.0 使用 `2026-08-06` compatibility date；升级 Wrangler
-  后才可将日期推进到更晚版本，不需要日常跟随 Cloudflare 日期变更。
+- `name`、`entrypoint`、`compatibilityDate` 和必要的 compatibility flags。
+- 当前使用 `2026-08-06` compatibility date；不需要日常跟随 Cloudflare 日期变更。
 - Landing、Community、Auth 等 Service Bindings。
 - Logs 与 Trace observability 配置。
 - version metadata binding。
-- `workers_dev: false`，生产只使用显式 Worker Routes；preview URL 只用于验证。
-- `preview_urls: true`，preview URL 通过 Cloudflare Access 或同等措施保护。
+- `workersDev: false`，生产只使用显式 Worker Routes；preview URL 只用于验证。
+- `previewUrls: true`，preview URL 通过 Cloudflare Access 或同等措施保护。
+- `cf deploy --mode production` 负责构建并部署；`cf deploy --dry-run --mode production` 用于 CI 校验。
+
+### Beta 采用与回滚
+
+当前生产构建链有意精确锁定 `cf@1.0.0-beta.5` 和
+`@cloudflare/vite-plugin@2.0.0-beta.sha-ad79608dd`。这是基于现有 Worker、Static Assets、
+Service Binding、Durable Object、Queue、R2、路由和类型生成能力均已完成 dry-run 与构建验证后的
+主动选择，不是允许自动漂移的宽松 beta 范围。两项版本及其平台 binding 被列入
+`minimumReleaseAgeExclude`，只用于放行这组已审查的精确版本；升级到后续 beta、SHA 或 stable
+版本时必须同步更新排除项并重跑全套构建、Worker 测试和各项目部署 dry-run。
+
+迁移期间不并行维护两套配置源，避免 `cloudflare.config.ts` 与 Wrangler 配置产生资源漂移。
+如果 beta 阻断生产发布，回滚路径是将本次 `cf` 迁移提交整体 revert，恢复迁移前的 Wrangler
+配置、脚本、直接依赖和锁文件，然后执行 frozen install、全部 Wrangler dry-run 与 Service
+Binding smoke；若新版已经部署，则再把 Cloudflare deployment 切回上一已验证 Worker version。
+不得只回退 CLI 而继续读取新的 TypeScript 配置。
 
 ## Community 运行状态
 
@@ -347,7 +362,7 @@ Community 已独立部署并承担自身域名流量，不再设置单独的“�
 
 1. 建立 `@groupher/route-contract`，完整覆盖平台根域、自定义域名、slug、根级静态资产、
    Press transform 和目标 404。
-2. 建立 `infra/edge-router` Worker、Wrangler 配置、bindings、observability 和单元测试。
+2. 建立 `infra/edge-router` Worker、Cloudflare 配置、bindings、observability 和单元测试。
 3. 让 Dev Gateway 复用共享生产规则，并在本地 adapter 中保留 dev-only 规则。
 4. Dash 保持独立产品域名，不接入 Edge Router。
 5. 配置 Landing、Community、Auth Service Bindings，并验证 host/header 契约。
@@ -367,13 +382,13 @@ Community 已独立部署并承担自身域名流量，不再设置单独的“�
 pnpm --filter @groupher/route-contract run test
 pnpm --filter @groupher/edge-router run test
 pnpm --filter @groupher/dev-gateway run test
-pnpm --filter @groupher/frontend-landing run build:worker
+pnpm --filter @groupher/frontend-landing run build
 pnpm --filter @groupher/frontend-landing run deploy:worker:dry-run
 pnpm --filter @groupher/edge-router run deploy:dry-run
 ```
 
-`build:worker` 内部会先运行 `sync:assets:landing`，确保 Worker 上传的 icons 和 wallpaper
-来自当前源码；不要改成只执行 `pnpm run build` 的部署链路。
+`build` 内部会先运行 `sync:assets:landing`，确保 Worker 上传的 icons 和 wallpaper
+来自当前源码；部署链路不要绕开该 workspace script 直接调用底层构建器。
 
 `edge-router` 的首次正式部署会立即激活 `groupher.com/*` 和 `www.groupher.com/*` Worker
 Routes。部署前必须人工确认 Landing、Community、Auth 三个下游 Worker 已部署且 Service

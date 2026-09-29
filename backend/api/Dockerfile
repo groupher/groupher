@@ -9,10 +9,10 @@
 #   - https://hub.docker.com/r/hexpm/elixir/tags - for the build image
 #   - https://hub.docker.com/_/ubuntu?tab=tags&page=1&name=noble-20260810 - for the release image
 #   - https://pkgs.org/ - resource for finding needed packages
-#   - Ex: hexpm/elixir:1.20.3-erlang-29.0.5-ubuntu-noble-20260810
+#   - Ex: hexpm/elixir:1.20.4-erlang-29.0.6-ubuntu-noble-20260810
 #
-ARG ELIXIR_VERSION=1.20.3
-ARG OTP_VERSION=29.0.5
+ARG ELIXIR_VERSION=1.20.4
+ARG OTP_VERSION=29.0.6
 ARG BUILDER_OS_VERSION=ubuntu-noble-20260810
 ARG RUNNER_OS_VERSION=noble-20260810
 

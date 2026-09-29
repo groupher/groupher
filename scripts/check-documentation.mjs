@@ -72,7 +72,7 @@ const checkElixirModules = () => {
 }
 
 const productionSourceSkip = (file) =>
-  /(^|\/)(node_modules|dist|\.wrangler|coverage|e2e|fixtures|generated|public|__test__)(\/|$)/.test(
+  /(^|\/)(node_modules|dist|\.cloudflare|\.wrangler|coverage|e2e|fixtures|generated|public|__test__)(\/|$)/.test(
     file,
   ) ||
   /\.(test|spec)\.[cm]?[jt]sx?$/.test(file) ||
