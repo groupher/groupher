@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
   defp tree_revision(community, branch) do
     case Repo.get_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
-      %DocsSiteState{tree_lock_version: revision} -> revision
+      %DocsSiteState{site_draft_version: revision} -> revision
       _ -> 0
     end
   end

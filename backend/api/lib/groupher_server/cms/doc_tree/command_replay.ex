@@ -15,17 +15,13 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
   alias GroupherServer.CMS
   alias CMS.ErrorCat
 
-
   @schema_version 1
   @enum_fields [:type, :stage, :status, :restore_state]
   @enum_values ~w(tab group page link pin draft public icon emoji)
 
   @doc "Encodes a tree mutation result as a versioned receipt payload."
   @spec tree_metadata(map(), String.t()) :: map()
-  def tree_metadata(
-        %{revision: revision, node: node, affected_nodes: affected_nodes} = result,
-        result_key
-      )
+  def tree_metadata(%{revision: revision, affected_nodes: affected_nodes} = result, result_key)
       when is_integer(revision) and is_list(affected_nodes) do
     %{
       result_key: result_key,
@@ -33,7 +29,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
         "schema_version" => @schema_version,
         "revision" => revision,
         "tree_state" => json_safe(Map.get(result, :tree_state)),
-        "node" => json_safe(node),
+        "node" => json_safe(Map.get(result, :node)),
         "affected_nodes" => json_safe(affected_nodes),
         "conflict" => Map.get(result, :conflict, false)
       }
@@ -87,6 +83,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
   def replay_subtree(_receipt), do: {:error, ErrorCat.command_id_conflict()}
 
   defp json_safe(nil), do: nil
+  defp json_safe(value) when is_boolean(value), do: value
   defp json_safe(value) when is_atom(value), do: Atom.to_string(value)
   defp json_safe(value) when is_list(value), do: Enum.map(value, &json_safe/1)
 

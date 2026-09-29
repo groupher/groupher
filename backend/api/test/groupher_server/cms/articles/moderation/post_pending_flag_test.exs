@@ -32,6 +32,24 @@ defmodule GroupherServer.Test.CMS.PostPendingFlag do
   end
 
   describe "[pending posts flags]" do
+    test "orders a multi-tag audit query by projected views", ~m(community user post_m)a do
+      {:ok, tag} =
+        CMS.Communities.create_tag(community, :post, mock_attrs(:community_tag), user)
+
+      assert {:ok, _post} = CMS.Communities.set_tag(post_m, tag.id)
+      assert {:ok, _post} = CMS.Articles.set_audit_failed(post_m, %{})
+
+      assert {:ok, %{entries: entries}} =
+               CMS.Articles.paged_audit_failed(:post, %{
+                 article_tags: [tag.slug],
+                 order: :views,
+                 page: 1,
+                 size: 20
+               })
+
+      assert Enum.any?(entries, &(&1.id == post_m.id))
+    end
+
     test "pending post can not be read", ~m(post_m)a do
       {:ok, _} =
         CMS.Articles.read(

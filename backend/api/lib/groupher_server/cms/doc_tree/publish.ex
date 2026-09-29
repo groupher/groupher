@@ -131,7 +131,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp verify_checklist_revision(state, args) do
     case Map.get(args, :expected_checklist_revision) do
       nil -> :ok
-      revision when revision == state.tree_lock_version -> :ok
+      revision when revision == state.site_draft_version -> :ok
       _ -> {:error, ErrorCat.custom("Docs publish checklist conflict")}
     end
   end

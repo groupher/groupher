@@ -54,6 +54,38 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert doc_change.selectable
     end
 
+    test "checklist revision advances for a Doc-only edit", ~m(user community page_payload)a do
+      initial = CMS.DocTree.publish_checklist(community)
+
+      {:ok, current} =
+        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+
+      assert {:ok, _draft} =
+               CMS.DocTree.update_draft(
+                 community,
+                 page_payload.node.doc_id,
+                 %{subtitle: "Doc-only edit", expected_version: current.version},
+                 user
+               )
+
+      changed = CMS.DocTree.publish_checklist(community)
+      assert changed.revision > initial.revision
+
+      assert {:error, %ErrorCat.Error{details: "Docs publish checklist conflict"}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{expected_checklist_revision: initial.revision},
+                 user
+               )
+
+      assert {:ok, %{done: true}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{expected_checklist_revision: changed.revision},
+                 user
+               )
+    end
+
     test "rejects moving a public Doc back to draft when the Community is not writable",
          ~m(user community page_payload)a do
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
@@ -69,6 +101,42 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
     end
 
+    test "move-to-Draft replay follows the committed Doc across a later publish",
+         ~m(user community page_payload)a do
+      command_id = Ecto.UUID.generate()
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, draft} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert {:ok, immediate_replay} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert immediate_replay.article_hash_id == draft.article_hash_id
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert {:ok, published_replay} =
+               CMS.DocTree.move_doc_to_draft(
+                 community,
+                 page_payload.node.id,
+                 user,
+                 command_id: command_id
+               )
+
+      assert published_replay.article_hash_id == draft.article_hash_id
+      assert published_replay.stage == :public
+    end
+
     test "returns a domain error for an unknown branch", ~m(community)a do
       assert {:error, _reason} = CMS.DocTree.publish_checklist(community, branch_id: -1)
     end
@@ -82,7 +150,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           %{
             CMS.DocTree.Const.doc_tree_json_key(:node) => %{
               CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
+              CMS.DocTree.Const.doc_tree_json_key(:type) =>
+                to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
               CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
@@ -117,7 +186,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           %{
             CMS.DocTree.Const.doc_tree_json_key(:node) => %{
               CMS.DocTree.Const.doc_tree_json_key(:id) => page_payload.node.id,
-              CMS.DocTree.Const.doc_tree_json_key(:type) => to_string(CMS.DocTree.Const.tree_node_type(:page)),
+              CMS.DocTree.Const.doc_tree_json_key(:type) =>
+                to_string(CMS.DocTree.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "parentNodeId" => group_payload.node.id,
               CMS.DocTree.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
@@ -227,8 +297,26 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           user
         )
 
+      command_id = Ecto.UUID.generate()
+
       assert {:ok, %{done: true, release: release, checklist: %{total_count: 0}}} =
-               CMS.DocTree.publish_changes(community, %{branch_id: branch.id}, user)
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{branch_id: branch.id},
+                 user,
+                 command_id: command_id
+               )
+
+      assert {:ok, %{done: true, release: replayed_release, checklist: replayed_checklist}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{branch_id: branch.id},
+                 user,
+                 command_id: command_id
+               )
+
+      assert replayed_release.id == release.id
+      assert replayed_checklist.total_count == 0
 
       assert release.branch_id == branch.id
 

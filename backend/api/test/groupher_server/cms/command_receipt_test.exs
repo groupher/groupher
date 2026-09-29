@@ -345,6 +345,8 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                fn receipt ->
                  assert receipt.result_payload["schema_version"] == 1
                  assert receipt.result_payload["node"]["type"] == "page"
+                 assert receipt.result_payload["tree_state"]["has_unpublished_changes"] == true
+                 assert receipt.result_payload["conflict"] == false
                  {:ok, result}
                end
              )
@@ -363,6 +365,22 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  {:ok, result}
                end
              )
+  end
+
+  test "tree conflict replay accepts results without a node" do
+    result = %{revision: 5, tree_state: %{}, affected_nodes: [], conflict: true}
+    metadata = CommandReplay.tree_metadata(result, "community:1:page-1")
+
+    receipt = %{
+      result_key: metadata.result_key,
+      result_payload: metadata.result_payload
+    }
+
+    assert metadata.result_payload["node"] == nil
+    assert metadata.result_payload["conflict"] == true
+
+    assert {:ok, %{node: nil, conflict: true, revision: 5}} =
+             CommandReplay.replay_tree(receipt)
   end
 
   test "failed command execution rolls back its receipt claim" do

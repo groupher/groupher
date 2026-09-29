@@ -174,8 +174,13 @@ defmodule GroupherServer.CMS.Comments.Reader do
 
   defp parse_inner_id(value) when is_binary(value) do
     case Integer.parse(value) do
-      {integer, ""} when integer >= 0 -> {:ok, integer}
-      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
+      {integer, ""} when integer >= 0 ->
+        if Integer.to_string(integer) == value,
+          do: {:ok, integer},
+          else: {:error, CommentErrorCat.not_exist("comment not found")}
+
+      _ ->
+        {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
 

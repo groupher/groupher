@@ -35,7 +35,10 @@ config :groupher_server, GroupherServer.Analysis.Config,
   hourly_metric_retention_months: 13,
   aggregation_batch_size: 100,
   aggregation_max_batches: 10,
-  aggregation_snooze_seconds: 5
+  aggregation_snooze_seconds: 5,
+  retention_batch_size: 500,
+  retention_max_batches: 100,
+  retention_snooze_seconds: 5
 
 config :groupher_server, :web_analysis,
   website_id: nil,

@@ -31,7 +31,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
         recovery: fn _receipt ->
           with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
                %Community{} = community <- Repo.get(Community, article.community_id),
-               {:ok, result} <- Draft.read(community, thread, article.article_hash_id, attrs) do
+               {:ok, result} <-
+                 Draft.read_command_result(community, thread, article.article_hash_id, attrs) do
             {:ok, Map.put(result, :command_id, command_id)}
           end
         end

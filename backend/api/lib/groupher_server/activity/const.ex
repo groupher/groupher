@@ -30,13 +30,14 @@ defmodule GroupherServer.Activity.Const do
   def valid_source?(source), do: source in @sources
 
   @doc "Normalizes the Activity source accepted by keyword/API boundaries."
-  @spec normalize_source(atom() | String.t()) :: atom()
+  @spec normalize_source(term()) :: term()
   def normalize_source(source) when source in @sources, do: source
   def normalize_source("api"), do: :api
   def normalize_source("admin"), do: :admin
   def normalize_source("worker"), do: :worker
   def normalize_source("scheduler"), do: :scheduler
   def normalize_source("maintenance"), do: :maintenance
+  def normalize_source(source), do: source
 
   @spec valid_actor_type?(term()) :: boolean()
   def valid_actor_type?(actor_type), do: actor_type in @actor_types

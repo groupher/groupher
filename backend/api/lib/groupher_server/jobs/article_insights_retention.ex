@@ -10,11 +10,14 @@ defmodule GroupherServer.Jobs.ArticleInsightsRetention do
     max_attempts: GroupherServer.Jobs.Config.max_attempts(:article_insights_retention),
     unique: GroupherServer.Jobs.Config.unique(:article_insights_retention)
 
-  alias GroupherServer.Analysis.Maintenance
+  alias GroupherServer.Analysis
+  alias Analysis.{Config, Maintenance}
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
-    _ = Maintenance.delete_expired()
-    :ok
+    case Maintenance.delete_expired() do
+      %{more?: true} -> {:snooze, Config.retention_snooze_seconds()}
+      %{more?: false} -> :ok
+    end
   end
 end

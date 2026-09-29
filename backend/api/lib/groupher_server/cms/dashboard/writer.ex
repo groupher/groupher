@@ -56,9 +56,11 @@ defmodule GroupherServer.CMS.Dashboard.Writer do
              Map.merge(args, BaseInfo.take_community_fields(args))
            ) do
       Repo.transaction(fn ->
-        with {:ok, _community} <- CMS.Communities.sync_base_info(community, args, :operations),
+        with {:ok, updated_community} <-
+               CMS.Communities.sync_base_info(community, args, :operations),
              {:ok, community_dashboard} <-
-               ORM.replace_dsb_section(community_dashboard, :base_info, section_payload) do
+               ORM.replace_dsb_section(community_dashboard, :base_info, section_payload),
+             :ok <- invalidate_public_presentation(updated_community.id) do
           community_dashboard
         else
           {:error, reason} -> Repo.rollback(reason)

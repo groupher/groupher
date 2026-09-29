@@ -143,6 +143,45 @@ defmodule GroupherServer.CMS.Articles.Draft do
     end
   end
 
+  @doc """
+  Reconstructs a committed command result by stable Article identity.
+
+  Recovery is independent of the Article's current Draft/Public and Trash
+  presentation state. The command receipt already binds the original actor,
+  owner and input, so this internal reader does not re-run current read policy;
+  it prefers the branch-local Draft head and falls back to Public.
+  """
+  @spec read_command_result(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          DocBranch.t() | map() | keyword() | nil
+        ) :: T.domain_res(T.article())
+  def read_command_result(%Community{} = community, thread, article_hash_id, branch_ref) do
+    with {:ok, branch} <- resolve_branch(community, thread, branch_ref),
+         {:ok, %{model: model}} <- Matcher.match(thread) do
+      case find_command_result(
+             model,
+             community,
+             article_hash_id,
+             branch,
+             CMS.Const.stage(:draft)
+           ) do
+        {:ok, draft} ->
+          {:ok, draft}
+
+        {:error, _reason} ->
+          find_command_result(
+            model,
+            community,
+            article_hash_id,
+            branch,
+            CMS.Const.stage(:public)
+          )
+      end
+    end
+  end
+
   @doc "Compatibility alias for `read_editor_head/4`."
   @spec read_editor(
           Community.t(),
@@ -338,6 +377,19 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
       {:error, reason} ->
         {:error, reason}
+    end
+  end
+
+  defp find_command_result(model, community, article_hash_id, branch, stage) do
+    model
+    |> where([article], article.article_hash_id == ^article_hash_id)
+    |> where([article], article.community_id == ^community.id)
+    |> maybe_where_branch(branch)
+    |> where([article], article.stage == ^stage)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist(model)}
+      article -> {:ok, article}
     end
   end
 

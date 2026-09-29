@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.{Command, DocPublishRelease}
-  alias CMS.DocTree.{CommandReplay, Publish, Reader}
-  alias CMS.Model.{Community, Doc}
+  alias CMS.Command
+  alias CMS.DocTree.{CommandReplay, Publish}
+  alias CMS.Model.{Community, Doc, DocPublishRelease}
   alias Helper.T
 
   @doc "Publishes selected Docs changes under a stable command id."
@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
         owner: community,
         input: args,
         recovery: fn receipt ->
-          case Publish.checklist(community, opts) do
+          case Publish.checklist(community, args) do
             {:error, reason} ->
               {:error, reason}
 
@@ -70,8 +70,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       user,
       :doc_move_to_draft,
       opts,
-      fn -> Publish.move_doc_to_draft(community, id, user, opts) end,
-      fn _receipt -> Reader.read_draft(community, id, opts) end
+      fn ->
+        with {:ok, doc} <- Publish.move_doc_to_draft(community, id, user, opts) do
+          {:ok, doc, %{result_key: doc.article_hash_id}}
+        end
+      end,
+      fn receipt ->
+        CMS.Articles.Draft.read_command_result(community, :doc, receipt.result_key, opts)
+      end
     )
   end
 

@@ -238,6 +238,7 @@ defmodule GroupherServer.Test.ActivityTest do
 
     assert {:error, _} = Activity.log(%{thread: :unknown}, :created, actor: user)
     assert {:error, _} = Activity.log(post, :created, actor: user, source: :unknown)
+    assert {:error, _} = Activity.log(post, :created, actor: user, source: "unknown")
 
     assert {:error, _} =
              Activity.log(post, :solution_accepted,

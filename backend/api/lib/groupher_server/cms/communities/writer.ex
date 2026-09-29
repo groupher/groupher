@@ -98,14 +98,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
         {:ok, community}
 
       _ ->
-        Repo.transaction(fn ->
-          with {:ok, updated} <- ORM.update(community, args),
-               :ok <- invalidate_public_presentation(updated) do
-            updated
-          else
-            {:error, reason} -> Repo.rollback(reason)
-          end
-        end)
+        ORM.update(community, args)
     end
   end
 

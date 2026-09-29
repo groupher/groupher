@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
         input: %{thread: thread, attrs: attrs},
         recovery: fn receipt ->
           article_hash_id = receipt.result_key || Map.get(attrs, :article_hash_id)
-          Draft.read_public(community, thread, article_hash_id, attrs)
+          Draft.read_command_result(community, thread, article_hash_id, attrs)
         end
       )
       |> Command.run(fn %{input: %{thread: thread, attrs: attrs}} ->

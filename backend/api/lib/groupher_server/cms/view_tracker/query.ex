@@ -7,12 +7,11 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
 
   import Ecto.Query
 
-  alias GroupherServer.Repo
-  alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Artiment.Matcher
-  alias GroupherServer.CMS.Model.ArticleStats
-  alias GroupherServer.CMS.ViewTracker.ErrorCat
-  alias GroupherServer.CMS.ViewTracker.Model.ViewerState
+  alias GroupherServer.{Accounts, CMS, Repo}
+  alias Accounts.Model.User
+  alias CMS.Artiment.Matcher
+  alias CMS.Model.ArticleStats
+  alias CMS.ViewTracker.{ErrorCat, Model.ViewerState}
 
   @doc """
   Orders an existing Article query by its public ArticleStats view count.
@@ -25,16 +24,21 @@ defmodule GroupherServer.CMS.ViewTracker.Query do
       when order in [:views, :most_views, :least_views] do
     thread_value = Atom.to_string(thread)
     direction = if order == :least_views, do: :asc, else: :desc
+    query = queryable |> Ecto.Queryable.to_query() |> exclude(:order_by)
 
-    queryable
-    |> exclude(:order_by)
-    |> then(fn query ->
+    if query.group_bys == [] do
       from(article in query,
         left_join: stats in ArticleStats,
         on: stats.thread == ^thread_value and stats.article_id == article.id,
         order_by: [{^direction, coalesce(stats.views, 0)}, asc: article.id]
       )
-    end)
+    else
+      from(article in query,
+        left_join: stats in ArticleStats,
+        on: stats.thread == ^thread_value and stats.article_id == article.id,
+        order_by: [{^direction, coalesce(max(stats.views), 0)}, asc: article.id]
+      )
+    end
   end
 
   def order_by_views(queryable, _thread, _order), do: queryable
