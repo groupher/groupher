@@ -12,7 +12,7 @@ type TWebServer = {
   command: string
   cwd: string
   gracefulShutdown: {
-    signal: 'SIGTERM'
+    signal: 'SIGINT'
     timeout: number
   }
   reuseExistingServer: boolean
@@ -22,7 +22,7 @@ type TWebServer = {
 
 // Let pnpm/Vite process trees close inherited stdio before Playwright falls back to SIGKILL.
 const gracefulShutdown = {
-  signal: 'SIGTERM' as const,
+  signal: 'SIGINT' as const,
   timeout: 5_000,
 }
 
