@@ -1,5 +1,6 @@
 import path from 'node:path'
 
+import { AUTH_ERROR } from '@groupher/contracts/auth'
 import {
   expect,
   type APIRequestContext,
@@ -71,7 +72,12 @@ const clearAccessCookie = async (context: BrowserContext): Promise<void> => {
 
 const runProtectedOperation = async (
   page: Page,
-): Promise<{ data?: { me?: { login?: string } }; error?: string; status?: number }> =>
+): Promise<{
+  data?: { me?: { login?: string } }
+  errors?: Array<{ extensions?: { code?: string }; message?: string }>
+  error?: string
+  status?: number
+}> =>
   page.evaluate(async (moduleUrl) => {
     try {
       const authModule = (await import(/* @vite-ignore */ moduleUrl)) as {
@@ -182,20 +188,10 @@ test.describe('Auth V1 browser protocol', () => {
 
       await clearAccessCookie(contextB)
       const revokedResult = await runProtectedOperation(pageB)
-      expect(revokedResult.error).toContain('status 401')
-      await expect
-        .poll(
-          () =>
-            pageB.evaluate(() =>
-              Boolean(
-                (window as Window & { __groupherAuthLoginRequest?: unknown })
-                  .__groupherAuthLoginRequest,
-              ),
-            ),
-          { timeout: 15_000 },
-        )
-        .toBe(true)
-      await expect(pageB.getByRole('button', { name: /Github/i })).toBeVisible({ timeout: 15_000 })
+      expect(revokedResult.error).toBeUndefined()
+      expect(revokedResult.status).toBe(200)
+      expect(revokedResult.errors?.[0]?.extensions?.code).toBe(AUTH_ERROR.TOKEN_MISSING)
+      expect((await readState(request)).stats.refreshCalls).toBe(1)
 
       const remainingCookies = await contextB.cookies()
       expect(remainingCookies.some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)
