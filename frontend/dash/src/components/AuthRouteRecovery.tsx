@@ -40,13 +40,19 @@ const startRecovery = (shouldRefresh: boolean): TRecoveryAttempt => {
 
 export default function AuthRouteRecovery() {
   const attempted = useRef(false)
+  const mounted = useRef(false)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    if (attempted.current) return
+    mounted.current = true
+
+    if (attempted.current) {
+      return () => {
+        mounted.current = false
+      }
+    }
     attempted.current = true
 
-    let active = true
     const href = window.location.href
     const shouldRefresh = !hasAuthRouteRecoveryAttempt(href)
     if (shouldRefresh) markAuthRouteRecoveryAttempt(href)
@@ -64,11 +70,11 @@ export default function AuthRouteRecovery() {
       attempt.loginRequested = true
       if (attempt.clearStateOnLogin) invalidateAuthState()
       requestLogin({ returnTo: href })
-      if (active) setFailed(true)
+      if (mounted.current) setFailed(true)
     })
 
     return () => {
-      active = false
+      mounted.current = false
     }
   }, [])
 

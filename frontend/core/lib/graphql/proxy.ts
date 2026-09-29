@@ -62,7 +62,13 @@ const proxyHeaders = (request: Request): Headers => {
   const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
   const viewerSession = readCookie(request.headers, GROUPHER_VIEWER_COOKIE)
 
-  for (const name of ['accept', 'content-type', 'origin', GROUPHER_AUTH_CSRF_HEADER]) {
+  for (const name of [
+    'accept',
+    'content-type',
+    'origin',
+    'user-agent',
+    GROUPHER_AUTH_CSRF_HEADER,
+  ]) {
     const value = request.headers.get(name)
     if (value) headers.set(name, value)
   }

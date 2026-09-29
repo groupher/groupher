@@ -3,8 +3,16 @@
 import type { ResultOf } from '@graphql-typed-document-node/core'
 import { GROUPHER_AUTH_SIGNED_IN_COOKIE } from '@groupher/contracts/auth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type ReactNode, useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 
+import { AUTH_EVENT, sessionChannel } from '~/auth'
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
 import { Q } from '~/query'
@@ -13,6 +21,7 @@ import { clearArticleUpvoteReceipts } from '~/query/mutation/articleReceipt'
 import { clearCommentReactionReceipts } from '~/query/mutation/commentReactionReceipt'
 import { clearCommentFeedReceipts } from '~/query/mutation/commentReceipt'
 import { clearArticleViewAcks } from '~/query/viewAck'
+import { clearViewerSessionCache } from '~/query/viewer'
 import { sessionState } from '~/schemas/pages/user'
 import type { TUser } from '~/spec'
 
@@ -55,25 +64,39 @@ export default function Provider({ children, initData }: TProps) {
     enabled: shouldFetchSession,
     initialData: makeSessionResult(seed.user ?? null),
   })
-
-  const clearSession = () => {
-    const previousAccountRef = getAccountRef(query.data?.sessionState.user as TUser | null)
-    clearArticleUpvoteReceipts(previousAccountRef)
-    clearCommentFeedReceipts(previousAccountRef)
-    clearCommentReactionReceipts(previousAccountRef)
-    clearArticleViewAcks()
-    void queryClient.removeQueries({ queryKey: viewerQueryKeys.all })
-    queryClient.setQueryData(options.queryKey, makeSessionResult(null))
-  }
-
-  useEvent(EVENT.LOGOUT, clearSession, [queryClient])
-
   const session = query.data?.sessionState
   const user =
     session?.isValid && session.user
       ? ({ ...session.user, passport: session.user.passport as TUser['passport'] } as TUser)
       : null
   const accountRef = getAccountRef(user)
+
+  const clearSession = useCallback(() => {
+    clearArticleUpvoteReceipts(accountRef)
+    clearCommentFeedReceipts(accountRef)
+    clearCommentReactionReceipts(accountRef)
+    clearArticleViewAcks()
+    clearViewerSessionCache(queryClient)
+  }, [accountRef, queryClient])
+
+  useEvent(EVENT.LOGOUT, clearSession, [clearSession])
+
+  useEffect(() => {
+    const channel = sessionChannel()
+    if (!channel) return
+
+    channel.onmessage = (event: MessageEvent<{ type?: string }>) => {
+      const type = event.data?.type
+      if (type === AUTH_EVENT.LOGIN) {
+        void queryClient.removeQueries({ queryKey: viewerQueryKeys.all })
+      } else if (type === AUTH_EVENT.LOGOUT || type === AUTH_EVENT.INVALID) {
+        clearSession()
+      }
+    }
+
+    return () => channel.close()
+  }, [clearSession, queryClient])
+
   const previousAccountRef = useRef<string | null>(accountRef)
 
   useEffect(() => {

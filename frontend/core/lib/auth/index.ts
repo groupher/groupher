@@ -57,6 +57,7 @@ const LOGIN_REQUIRED_CODES: ReadonlySet<string> = new Set([
 ])
 let refreshPromise: Promise<void> | null = null
 let discardPromise: Promise<void> | null = null
+let broadcastChannel: BroadcastChannel | null = null
 
 const appendHiddenField = (form: HTMLFormElement, name: string, value: string) => {
   const input = document.createElement('input')
@@ -71,10 +72,12 @@ const stateChangeHeaders = (): HeadersInit => ({
 })
 
 const broadcast = (type: TAuthEvent) => {
-  if (typeof BroadcastChannel === 'undefined') return
-  const channel = new BroadcastChannel(AUTH_CHANNEL)
-  channel.postMessage({ type })
-  channel.close()
+  if (typeof window === 'undefined') return
+
+  if (typeof BroadcastChannel !== 'undefined') {
+    broadcastChannel ??= new BroadcastChannel(AUTH_CHANNEL)
+    broadcastChannel.postMessage({ type })
+  }
 }
 
 const responseFailure = async (response: Response): Promise<TAuthFailure> => {

@@ -64,6 +64,22 @@ const commentViewerStates = graphql(`
 
 const viewerBatchSize = 100
 
+/**
+ * Replaces the private Session snapshot with anonymous state and drops all other viewer caches.
+ *
+ * The Session key stays mounted so an active observer cannot restore a signed-in SSR seed while
+ * logout propagation is still completing.
+ */
+export const clearViewerSessionCache = (queryClient: QueryClient): void => {
+  queryClient.setQueryData(viewerQueryKeys.session(), {
+    sessionState: { isValid: false, user: null },
+  })
+  void queryClient.removeQueries({
+    predicate: (cachedQuery) =>
+      cachedQuery.queryKey[0] === viewerQueryKeys.all[0] && cachedQuery.queryKey[1] !== 'session',
+  })
+}
+
 const normalizeArticlePaths = (articles: readonly TArticlePath[]): TArticlePath[] => {
   const paths = new Map<string, TArticlePath>()
   for (const article of articles) {

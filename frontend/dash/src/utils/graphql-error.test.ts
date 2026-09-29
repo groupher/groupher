@@ -20,6 +20,10 @@ describe('GraphQL route error serialization', () => {
     expect(readGraphQLErrorCode(new Error(message))).toBe(AUTH_ERROR.TOKEN_EXPIRED)
   })
 
+  it('accepts an exact machine-code message from a hydrated route error', () => {
+    expect(readGraphQLErrorCode(new Error(AUTH_ERROR.TOKEN_MISSING))).toBe(AUTH_ERROR.TOKEN_MISSING)
+  })
+
   it('does not infer a code from arbitrary error text', () => {
     expect(readGraphQLErrorCode(new Error('Request failed: TOKEN_EXPIRED'))).toBeUndefined()
   })

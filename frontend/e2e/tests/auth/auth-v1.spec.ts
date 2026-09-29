@@ -94,9 +94,24 @@ const runProtectedOperation = async (
     }
   }, authClientModule)
 
+/** Opens the hydrated account menu without racing its SSR-only trigger markup. */
 const openAccountMenu = async (page: Page): Promise<void> => {
-  await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible()
-  await page.getByRole('button', { name: 'Open account menu' }).click()
+  const trigger = page.getByRole('button', { name: 'Open account menu' })
+  const menuAction = page.getByRole('button', { name: /^(Log out|Login & devices)$/ })
+  await expect(trigger).toBeVisible()
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await trigger.click()
+
+    try {
+      await expect(menuAction.first()).toBeVisible({ timeout: 2_000 })
+      return
+    } catch {
+      // SSR can expose the trigger just before hydration attaches its click handler.
+    }
+  }
+
+  throw new Error('Account menu did not become interactive after hydration.')
 }
 
 test.describe('Auth V1 browser protocol', () => {
@@ -197,6 +212,9 @@ test.describe('Auth V1 browser protocol', () => {
       expect(remainingCookies.some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)
       expect(remainingCookies.some((cookie) => cookie.name === HINT_COOKIE)).toBe(false)
       expect(remainingCookies.some((cookie) => cookie.name === SESSION_COOKIE)).toBe(false)
+
+      await pageB.reload()
+      await expect(pageB.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible()
 
       const revokerResult = await runProtectedOperation(pageA)
       expect(revokerResult.data?.me?.login).toBe('e2e')
@@ -301,9 +319,18 @@ test.describe('Auth V1 browser protocol', () => {
       page.goto(`${DASH_ORIGIN}/home/overview`),
       sibling.goto(`${DASH_ORIGIN}/home/overview`),
     ])
+    await Promise.all([
+      expect(page.getByTestId('dashboard-overview-title')).toBeVisible(),
+      expect(sibling.getByTestId('dashboard-overview-title')).toBeVisible(),
+    ])
+    await openAccountMenu(sibling)
+    await sibling.keyboard.press('Escape')
     await openAccountMenu(page)
     await page.getByRole('button', { name: /log out/i }).click()
 
+    await expect
+      .poll(async () => (await context.cookies()).some((cookie) => cookie.name === ACCESS_COOKIE))
+      .toBe(false)
     await expect(sibling.getByRole('button', { name: 'Sign in' })).toBeVisible()
     const cookies = await context.cookies()
     expect(cookies.some((cookie) => cookie.name === ACCESS_COOKIE)).toBe(false)
@@ -329,6 +356,11 @@ test.describe('Auth V1 browser protocol', () => {
       await Promise.all(
         [pageA, pageB, pageC].map((currentPage) =>
           currentPage.goto(`${DASH_ORIGIN}/home/overview`),
+        ),
+      )
+      await Promise.all(
+        [pageA, pageB, pageC].map((currentPage) =>
+          expect(currentPage.getByTestId('dashboard-overview-title')).toBeVisible(),
         ),
       )
       await openAccountMenu(pageA)
@@ -361,8 +393,16 @@ test.describe('Auth V1 browser protocol', () => {
       ).toBe('revoked')
 
       await Promise.all([clearAccessCookie(contextB), clearAccessCookie(contextC)])
-      expect((await runProtectedOperation(pageB)).error).toContain('status 401')
-      expect((await runProtectedOperation(pageC)).error).toContain('status 401')
+      const [browserBResult, browserCResult] = await Promise.all([
+        runProtectedOperation(pageB),
+        runProtectedOperation(pageC),
+      ])
+
+      for (const result of [browserBResult, browserCResult]) {
+        expect(result.error).toBeUndefined()
+        expect(result.status).toBe(200)
+        expect(result.errors?.[0]?.extensions?.code).toBe(AUTH_ERROR.TOKEN_MISSING)
+      }
     } finally {
       await Promise.all(contexts.map((context) => context.close()))
     }
