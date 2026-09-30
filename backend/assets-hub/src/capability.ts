@@ -11,9 +11,7 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-import type {
-  TGeneratedImageUploadBatchTarget,
-} from '@groupher/contracts/wallpaper'
+import type { TGeneratedImageUploadBatchTarget } from '@groupher/contracts/wallpaper'
 
 type TBaseUploadCapability = {
   /** Server-side MIME allowlist copied from Phoenix policy, for example ["image/png"]. */

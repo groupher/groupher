@@ -36,7 +36,7 @@ local development
 - 它兼容 Dev Hub 现有的启动链。
 - 它使用稳定的 Portless 名称，例如 `https://groupher.localhost`。
 - 它将本地 cookie 作用域保持在 `.groupher.localhost` 下。
-- 对于每次 Community 或其他子应用变更，它避免强制要求 Wrangler 与 Cloudflare 本地运行时。
+- 对于每次 Community 或其他子应用变更，它避免强制要求 `cf` 与 Cloudflare 本地运行时。
 
 生产环境的 Cloudflare Router 和本地 Dev Gateway 应共享纯生产路由契约，但不需要共享同一个
 runtime。Dev Gateway 还可以保留 HMR、开发资产和 referer 分流等本地专用能力。
@@ -134,20 +134,21 @@ curl -i http://127.0.0.1:8788/api/graphql
 
 ## Edge Router 本地一致性模式
 
-独立 `edge-router` 已落地。生产一致性 smoke 应使用 Wrangler 的多 Worker 本地开发和
-Service Bindings 同时启动 Router、Landing、Community、Auth 等目标；日常产品开发仍使用
-Dev Gateway，避免强制所有下游都运行在 Wrangler 中。
+独立 `edge-router` 已落地。生产一致性 smoke 应使用 `cf dev` 和 Service Bindings 同时启动
+Router、Landing、Community、Auth 等目标；日常产品开发仍使用 Dev Gateway，避免强制所有
+下游都运行在 Cloudflare runtime 中。
 
-Community 的 Wrangler 入口由 TanStack Start build 生成，不能直接对源码配置运行：
+Community 由 Cloudflare Vite 插件直接读取 `cloudflare.config.ts`：
 
 ```bash
-pnpm --filter @groupher/frontend-community run build
 cd frontend/community
-pnpm exec wrangler dev --config dist/server/wrangler.json --port 8790
+pnpm --dir ../.. run sync:assets:community
+pnpm run build:revision-worker
+pnpm exec cf dev --mode development --port 8790
 ```
 
 随后分别启动 Landing Worker、Auth Worker 和 Edge Router；当四个 Worker 使用各自的
-Wrangler 配置运行时，Edge Router 的 Service Bindings 会显示为 `local [connected]`。
+`cf` 配置运行时，Edge Router 的 Service Bindings 会显示为 `local [connected]`。
 本地 smoke 入口固定为 `http://127.0.0.1:8787`，至少验证 `/health`、`/pricing`、`/home`、
 `/api/auth/providers` 和 `/api/graphql`。
 

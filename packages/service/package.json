@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@groupher/contracts": "workspace:*",
-    "jose": "^6.2.4"
+    "jose": "^6.2.12"
   },
   "devDependencies": {
     "@types/node": "^24.0.0"

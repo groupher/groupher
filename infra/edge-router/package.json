@@ -4,26 +4,28 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --config wrangler.jsonc",
-    "dev:local": "wrangler dev --config wrangler.local.jsonc",
+    "dev": "cf dev --mode production",
+    "dev:local": "cf dev --mode local",
     "test": "pnpm exec vitest --config vitest.config.mts run",
-    "type-check": "pnpm --workspace-root exec tsc --noEmit --project infra/edge-router/tsconfig.json",
-    "types": "wrangler types --config wrangler.jsonc",
-    "deploy": "wrangler deploy --config wrangler.jsonc",
-    "deploy:dry-run": "wrangler deploy --dry-run --config wrangler.jsonc",
+    "type-check": "pnpm run types && pnpm --workspace-root exec tsc --noEmit --project infra/edge-router/tsconfig.json",
+    "types": "cf workers types --mode production",
+    "deploy": "cf deploy --mode production",
+    "deploy:dry-run": "cf deploy --dry-run --mode production",
     "lint": "pnpm exec oxlint src --threads=1",
     "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json *.mts",
     "format:check": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.ts *.json *.mts",
-    "build": "wrangler deploy --dry-run --config wrangler.jsonc"
+    "build": "cf build --mode production"
   },
   "dependencies": {
     "@groupher/contracts": "workspace:*",
     "@groupher/route-contract": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260823.1",
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
+    "@cloudflare/workers-types": "^5.20260929.1",
+    "cf": "1.0.0-beta.5",
     "typescript": "7.0.2",
-    "vitest": "^4.1.5",
-    "wrangler": "^4.118.0"
+    "vite": "^8.3.1",
+    "vitest": "^4.1.11"
   }
 }

@@ -50,6 +50,7 @@ npm-debug.log
 **/.dev.vars
 .wrangler/
 **/.wrangler/
+.cloudflare/
 output/
 backend/assets-hub/src/worker-configuration.d.ts
 !.env.development

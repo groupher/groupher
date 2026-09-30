@@ -2,7 +2,7 @@ FROM node:24-bookworm-slim AS build
 
 WORKDIR /app
 
-RUN npm install --global pnpm@12.0.0
+RUN npm install --global pnpm@12.6.0
 RUN pnpm --version
 ENV HUSKY=0
 

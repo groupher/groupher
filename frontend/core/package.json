@@ -44,7 +44,7 @@
     "cobe": "^2.0.1",
     "copy-to-clipboard": "3.3.3",
     "emoji-picker-react": "^4.19.1",
-    "graphql": "^16.13.2",
+    "graphql": "^17.0.2",
     "markdown-to-jsx": "^9.7.16",
     "motion": "^12.43.0",
     "nanoid": "^5.1.9",
@@ -76,26 +76,26 @@
     "vgpu": "0.3.1"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.101.4",
-    "@tanstack/react-router": "1.170.21",
+    "@tanstack/react-query": "^5.104.0",
+    "@tanstack/react-router": "1.170.40",
     "@testing-library/react": "^16.3.2",
     "@types/node": "24.13.3",
     "@types/ramda": "^0.31.1",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/sanitize-html": "^2.16.1",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.1",
     "@webgpu/types": "0.1.72",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "tailwindcss": "4.3.3",
-    "vite": "^8.2.0",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.1",
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.101.4",
-    "@tanstack/react-router": "1.170.21",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "@tanstack/react-query": "^5.104.0",
+    "@tanstack/react-router": "1.170.40",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }

@@ -19,7 +19,7 @@ fe.dev.inspire:
 	pnpm --filter @groupher/inspire-me run dev --port 3010
 
 fe.inspire-me.deploy:
-	@pnpm --filter @groupher/inspire-me exec wrangler whoami >/dev/null 2>&1 || pnpm --filter @groupher/inspire-me exec wrangler login
+	@pnpm --filter @groupher/inspire-me exec cf auth whoami >/dev/null 2>&1 || pnpm --filter @groupher/inspire-me exec cf auth login
 	pnpm --filter @groupher/inspire-me run deploy
 
 inspire: fe.dev.inspire

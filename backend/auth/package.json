@@ -8,8 +8,8 @@
     "test": "pnpm exec vitest --root ../.. --config frontend/core/vitest.config.mts run backend/auth",
     "type-check": "pnpm exec tsc --noEmit --project ./tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@auth/core --external:'@auth/core/*' --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js",
-    "deploy:worker": "pnpm exec wrangler deploy --config wrangler.jsonc",
-    "deploy:worker:dry-run": "pnpm exec wrangler deploy --dry-run --config wrangler.jsonc",
+    "deploy:worker": "cf deploy",
+    "deploy:worker:dry-run": "cf deploy --dry-run",
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "lint": "pnpm exec oxlint . --threads=1",
     "format": "pnpm exec oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json",
@@ -23,15 +23,18 @@
     "@groupher/service": "workspace:*",
     "@hono/node-server": "^2.0.11",
     "dotenv": "^17.4.2",
-    "hono": "^4.13.0",
-    "jose": "^6.2.4"
+    "hono": "^4.13.9",
+    "jose": "^6.2.12"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-beta.sha-ad79608dd",
     "@types/node": "^24.0.0",
+    "cf": "1.0.0-beta.5",
     "cross-env": "^10.1.0",
     "esbuild": "^0.28.1",
     "rimraf": "^6.1.3",
-    "tsx": "^4.23.5",
-    "vitest": "^4.1.10"
+    "tsx": "^4.23.15",
+    "vite": "^8.3.1",
+    "vitest": "^4.1.11"
   }
 }

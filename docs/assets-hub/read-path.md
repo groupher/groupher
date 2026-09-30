@@ -73,10 +73,10 @@ GET /a/:assetPublicRef/original
 
 ### 本地配置分裂
 
-本地上传 API 和 Wrangler read worker 都使用 `backend/assets-hub/.env`；`.dev.vars` 不再作为
+本地上传 API 和 `cf` read worker 都使用 `backend/assets-hub/.env`；`.dev.vars` 不再作为
 read worker 的第二套配置入口。
 
-旧的 `.dev.vars` 没有完整提供 read worker 所需的 service-auth 配置。更重要的是，Wrangler 在
+旧的 `.dev.vars` 没有完整提供 read worker 所需的 service-auth 配置。更重要的是，旧配置在
 `.dev.vars` 缺少变量时会继续使用 `wrangler.jsonc` 中的 `vars` 默认值；修复前这些默认值是生产拓扑：
 
 ```text
@@ -115,19 +115,20 @@ Auth 侧的 `assets-hub-development` client 还必须注册
 
 ### 当前本地启动拓扑
 
-修复前 `dev:local` 会启动 Assets upload API 和独立的 Wrangler read worker；Dev Hub 虽然启动了组合命令，但没有把 read worker 的 readiness 作为 Assets 服务就绪条件。现在 Assets Hub 的 Dev Hub 服务定义显式依赖 Auth/Phoenix，并将 read worker 的 `/health/ready` 作为 endpoint readiness。
+修复前 `dev:local` 会启动 Assets upload API 和独立的 read worker；Dev Hub 虽然启动了组合命令，但没有把 read worker 的 readiness 作为 Assets 服务就绪条件。现在 Assets Hub 的 Dev Hub 服务定义显式依赖 Auth/Phoenix，并将 read worker 的 `/health/ready` 作为 endpoint readiness。
 
 ## 直接修复：本地运行时配置
 
 这是首版已落地的本地修复，不需要把 secret 提交到仓库：
 
-1. `dev:read-worker` 通过 Wrangler `--env-file .env` 读取本地 service-auth 配置。
+1. `dev:local` 从 `backend/assets-hub/.env` 加载 service-auth 配置，再以继承环境启动
+   `dev:read-worker` 的 `cf dev --mode development`；`.dev.vars` 不再是该链路的配置源。
 2. 使用现有本地 secret 来源提供 `SERVICE_AUTH_CLIENT_ID` 和 `SERVICE_AUTH_CLIENT_SECRET`，不要把 secret 提交到仓库。
-3. 在 `.env` 中同时显式覆盖 `SERVICE_AUTH_TOKEN_ENDPOINT`、`SERVICE_AUTH_ISSUER` 和 `SERVICE_AUTH_JWKS_URL`，不能依赖 `wrangler.jsonc` 的默认值；确认 issuer、audience、scope 与 Phoenix 的验证配置一致。
-4. 重启 Wrangler read worker；这些变量在 worker 启动时读取，运行中补变量不会自动生效。
+3. 在 `.env` 中同时显式覆盖 `SERVICE_AUTH_TOKEN_ENDPOINT`、`SERVICE_AUTH_ISSUER` 和 `SERVICE_AUTH_JWKS_URL`，不能依赖配置文件的默认值；确认 issuer、audience、scope 与 Phoenix 的验证配置一致。
+4. 重启 `cf` read worker；这些变量在 worker 启动时读取，运行中补变量不会自动生效。
 5. 直接请求 light/dark 两个 `/a/.../original` URL，必须返回 `200` 和 `image/*`，再排查浏览器缓存或页面层问题。
 
-同时，`wrangler.jsonc` 顶层 vars 已改为本地默认值，生产 endpoint/issuer/JWKS/token endpoint 已移动到 `env.production`；部署脚本显式使用 `--env production`，避免本地默认值被部署。
+同时，`cloudflare.config.ts` 以 `mode` 映射本地和生产 bindings；部署脚本显式使用 `--mode production`，避免本地默认值被部署。
 
 ## 系统性方案
 
@@ -157,7 +158,7 @@ Assets read worker
    PHOENIX_GRAPHQL_ENDPOINT
    ```
 
-2. 将生产 endpoint 从通用 `wrangler.jsonc.vars` 移到生产专属环境配置；本地 `.env` 必须显式覆盖本地 Auth 的 token endpoint、issuer 和 JWKS URL。
+2. 将生产 endpoint 放在 `cloudflare.config.ts` 的 production mode；本地 `.env` 必须显式覆盖本地 Auth 的 token endpoint、issuer 和 JWKS URL。
 3. 将 read worker 纳入 Dev Hub 服务编排。Dev Hub 启动 read worker 时注入统一的 `LOCAL_SERVICE_AUTH_ISSUER`、loopback token/JWKS endpoint、Phoenix endpoint 和本地 secrets；端口转发不再是唯一的集成关系。
 4. 本地、测试、预览和生产使用统一的配置注入约定，避免 upload API 与 read worker 各自维护一套不完整配置。
 5. 本地 `dev-local.ts` 启动器和 Worker 的 readiness 检查都校验必需变量；缺失时在启动/readiness 阶段失败，而不是等到用户访问图片时才返回 502。
@@ -280,7 +281,7 @@ GET /internal/assets/:assetPublicRef/origin
 
 ## 生产环境说明
 
-当前问题没有证据表明是生产事故，原因是生产部署具备与 `wrangler.jsonc` 生产 vars 对应的 `secrets.required`，并且生产 Auth、Phoenix 和 Assets Worker 使用同一套生产 service-auth 拓扑。当前 502 发生在本地手动启动的 read worker：它缺少本地 secrets，同时回退到了通用配置中的生产 endpoint。
+当前问题没有证据表明是生产事故，原因是生产部署具备与 `cloudflare.config.ts` production mode 对应的 required secret bindings，并且生产 Auth、Phoenix 和 Assets Worker 使用同一套生产 service-auth 拓扑。当前 502 发生在本地手动启动的 read worker：它缺少本地 secrets，同时回退到了错误的 endpoint。
 
 这不是放松生产检查的理由。生产仍应保留启动契约、readiness contract probe 和部署前 secret 校验，以防未来出现 issuer、JWKS、scope 或 client secret 分裂。
 

@@ -13,6 +13,7 @@
 - [ ] [OAuth 帐户链接与取消链接](./auth/link-unlink-oauth.md) — 设计方案尚未实施。
 - [ ] [Post Merge](./feature/post/merge.md) — relation-based merge 仍为草案。
 - [ ] [Docs Snapshot Update](./feature/docs/snapshot-update-proposal.md) — 仍为设计讨论稿。
+- [ ] [Article Revision / Draft 目标架构](./feature/article/revision-draft-target.md) — 以 stable Article、mutable Draft、immutable Revision 和 ArticlePublic Projection 直接替换 stage 双行模型；Doc 在 v1 以 Core IndexedDB 替代服务端 staged history，其他 Article 编辑器交付时接入同一能力；不保留旧数据或逻辑兼容。
 - [ ] [About 访客分布地图](./feature/community/about-visitor-map.md) — 方案已确认，尚未实现。
 - [ ] [Posthouse](./posthouse) — 应用仍处于规划阶段。
 - [ ] [Risk Center](./risk-center) — 应用仍处于规划阶段。

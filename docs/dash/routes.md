@@ -140,8 +140,8 @@ https://groupher.com/<community>/dashboard/<rest>?<query>
 从 Phoenix 移走授权权限。
 
 `SERVICE_AUTH_RESOURCES_JSON` 描述的是服务 API audience，不是浏览器入口。
-当前 `backend/auth/wrangler.jsonc` 中的 `dashboard.groupher.com/scheduler`
-只应在 Dash 实际拥有对应服务 API 时扩展；不能仅因为新增
+未来若在 `backend/auth/cloudflare.config.ts` 中增加 `dash.groupher.com/scheduler`
+resource，只应在 Dash 实际拥有对应服务 API 时扩展；不能仅因为新增
 `dash.groupher.com` 浏览器主机就盲目增加 Dash resource。
 
 ## 端到端变更清单

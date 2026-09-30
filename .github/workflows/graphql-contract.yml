@@ -54,8 +54,8 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '29.0.5'
-          elixir-version: '1.20.3'
+          otp-version: '29.0.6'
+          elixir-version: '1.20.4'
 
       - name: Install backend dependencies
         working-directory: backend/api

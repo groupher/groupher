@@ -3,16 +3,28 @@
  *
  * Vitest
  *   -> Cloudflare pool
- *   -> workerd with Wrangler test bindings
+ *   -> workerd with cf test bindings
  *   -> generated Batch integration tests
  */
-import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { cloudflareTest } from '@cloudflare/vitest-plugin'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [
     cloudflareTest({
-      wrangler: { configPath: './wrangler.test.jsonc' },
+      experimental: {
+        newConfig: { configPath: './cloudflare.test.config.ts' },
+      },
+      // The Vitest plugin reads the binding from newConfig, but it does not yet
+      // instantiate the referenced Durable Object service for the test runtime.
+      miniflare: {
+        durableObjects: {
+          GENERATED_IMAGE_BATCHES: {
+            className: 'GeneratedImageBatchDO',
+            useSQLite: true,
+          },
+        },
+      },
     }),
   ],
   test: {
