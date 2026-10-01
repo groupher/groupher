@@ -118,6 +118,10 @@ defmodule GroupherServer.CMS.Command do
 
   defp validate_target(%__MODULE__{resource: resource}) when is_struct(resource), do: :ok
 
+  defp validate_target(%__MODULE__{resource: %{id: id, thread: thread}})
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc],
+       do: :ok
+
   defp validate_target(%__MODULE__{resource: resource, owner: owner})
        when not is_nil(resource) and not is_nil(owner),
        do: :ok
@@ -150,6 +154,10 @@ defmodule GroupherServer.CMS.Command do
     build_target_identity(resource, resource_key(resource))
   end
 
+  defp target_identity(%__MODULE__{resource: %{id: id, thread: thread}})
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc],
+       do: {:ok, {"article", id}}
+
   defp target_identity(%__MODULE__{resource: resource, owner: owner}) do
     build_target_identity(resource, owner_key(owner))
   end
@@ -174,7 +182,6 @@ defmodule GroupherServer.CMS.Command do
 
   defp resource_key(resource) do
     Map.get(resource, :id) ||
-      Map.get(resource, :article_hash_id) ||
       Map.get(resource, :hash_id) ||
       Map.get(resource, :inner_id)
   end

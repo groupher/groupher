@@ -1,60 +1,68 @@
 defmodule GroupherServer.CMS.Articles.Commands.Publish do
   @moduledoc """
-  Runs the idempotent command that publishes an ordinary Article Draft.
+  Runs ordinary Article publication through the idempotent command boundary.
 
-  Business position:
-
-      CMS.Articles facade
-        -> Commands.Publish
-        -> CMS.Command
-        -> Articles.Publish / Articles.Draft
+      Article + command id
+        -> CMS.Command receipt
+        -> Articles.publish without a second receipt
+        -> stable publish result or canonical recovery result
   """
 
-  alias GroupherServer.{Accounts, CMS}
-
-  alias Accounts.Model.User
-  alias CMS.Articles.{Draft, Publish}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
   alias CMS.Command
-  alias CMS.Model.Community
-  alias Helper.T
+  alias CMS.Articles.Publish.Effects
+  alias CMS.Model.{Article, ArticlePublic, ArticleRevision, Community}
 
-  @doc "Publishes an Article Draft under a stable command id."
-  @spec publish(Community.t(), T.thread(), T.article(), User.t(), keyword() | map()) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish(community, thread, article, %User{} = user, opts) when is_struct(article) do
-    publish(community, thread, article.article_hash_id, user, opts)
-  end
+  @doc "Publishes one ordinary Article Draft with retry-safe command recovery."
+  @spec publish(Ecto.UUID.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def publish(article_id, %User{} = user, opts) when is_binary(article_id) do
+    with %Article{} = article <- Repo.get(Article, article_id),
+         %Community{} = community <- Repo.get(Community, article.community_id),
+         {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+      command_opts = Keyword.delete(opts, :command_id)
 
-  @spec publish(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
-          T.domain_res(%{article: T.article(), snapshot: nil})
-  def publish(community, thread, article_hash_id, %User{} = user, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      opts = drop_command_id(opts)
-
-      Command.create_user(user, command_id,
-        command: :article_publish_draft,
-        resource: :article,
-        owner: community,
-        input: %{thread: thread, article_hash_id: article_hash_id, opts: opts},
-        recovery: fn _receipt ->
-          with {:ok, article} <- Draft.read_public(community, thread, article_hash_id, opts) do
-            {:ok, %{article: article, snapshot: nil}}
-          end
+      Command.update_user(user, command_id,
+        command: :article_publish,
+        resource: article,
+        input: Map.new(command_opts),
+        recovery: fn _receipt -> recover(article_id, community) end,
+        after_commit: fn result ->
+          _ = Effects.run(result)
+          :ok
         end
       )
-      |> Command.run(fn %{input: %{opts: opts}} ->
-        with {:ok, result} <- Publish.publish(community, thread, article_hash_id, user, opts) do
-          {:ok, result, %{result_key: result.article.article_hash_id}}
+      |> Command.run(fn %{resource: %Article{id: id}, input: input} ->
+        CMS.Articles.publish(id, user, Map.to_list(input) |> Keyword.put(:skip_effects, true))
+        |> case do
+          {:ok, result} -> {:ok, result, %{result_key: id}}
+          {:error, reason} -> {:error, reason}
         end
       end)
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+      {:error, _reason} = error -> error
     end
   end
 
-  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
-  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
-  defp drop_command_id(opts), do: opts
+  def publish(_article_id, _actor, _opts), do: {:error, :invalid_publish_actor}
 
-  defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
-  defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)
-  defp option(_opts, _key), do: nil
+  defp recover(article_id, community) do
+    with %Article{} = article <- Repo.get(Article, article_id),
+         %ArticlePublic{} = public <- Repo.get(ArticlePublic, article.id),
+         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, public.revision_id) do
+      {:ok,
+       %{
+         article: article,
+         public: public,
+         revision: revision,
+         first_publish?: false,
+         changed_fields: [],
+         published_by_id: public.published_by_id,
+         community: community
+       }}
+    else
+      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
+    end
+  end
 end

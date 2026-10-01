@@ -6,9 +6,6 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
   @total_count 35
 
-  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -34,24 +31,28 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
   describe "[pending blogs flags]" do
     test "pending blog can not be read", ~m(blog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog_m),
           :blog,
           blog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:blog, blog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          blog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, blog_m} = ORM.find(Blog, blog_m.id)
-      assert blog_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
+      assert stable.moderation_state == :illegal
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog_m),
           :blog,
           blog_m.inner_id
@@ -65,17 +66,21 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
       {:ok, _} =
-        CMS.Articles.read(article_community(blog), :blog, blog.inner_id)
+        read_article(article_community(blog), :blog, blog.inner_id)
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:blog, blog.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          blog.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
       {:ok, blog_read} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog),
           :blog,
           blog.inner_id,
@@ -87,7 +92,7 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog),
           :blog,
           blog.inner_id,
@@ -99,29 +104,33 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
     test "pending blog can set/unset pending", ~m(blog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog_m),
           :blog,
           blog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:blog, blog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          blog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, blog_m} = ORM.find(Blog, blog_m.id)
-      assert blog_m.pending == @audit_illegal
+      stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
+      assert stable.moderation_state == :illegal
 
-      {:ok, _} = CMS.Articles.unset_illegal(:blog, blog_m.id, %{})
+      {:ok, _} = CMS.Articles.unset_illegal(blog_m.article_id, %{}, :operations)
 
-      {:ok, blog_m} = ORM.find(Blog, blog_m.id)
-      assert blog_m.pending == @audit_legal
+      stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
+      assert stable.moderation_state == :legal
 
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog_m),
           :blog,
           blog_m.inner_id
@@ -130,47 +139,53 @@ defmodule GroupherServer.Test.CMS.BlogPendingFlag do
 
     test "pending blog's meta should have info", ~m(blog_m)a do
       {:ok, _} =
-        CMS.Articles.read(
+        read_article(
           article_community(blog_m),
           :blog,
           blog_m.inner_id
         )
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:blog, blog_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"],
-          illegal_articles: ["/blog/#{blog_m.id}"]
-        })
+        CMS.Articles.set_illegal(
+          blog_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"],
+            illegal_articles: ["/blog/#{blog_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, blog_m} = ORM.find(Blog, blog_m.id)
-      assert blog_m.pending == @audit_illegal
-      assert not blog_m.meta.is_legal
-      assert blog_m.meta.illegal_reason == ["some-reason"]
-      assert blog_m.meta.illegal_words == ["some-word"]
+      stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
+      assert stable.moderation_state == :illegal
+      assert stable.illegal_reason == ["some-reason"]
+      assert stable.illegal_words == ["some-word"]
 
-      blog_m = Repo.preload(blog_m, :author)
-      {:ok, user} = ORM.find(User, blog_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert user.meta.has_illegal_articles
       assert user.meta.illegal_articles == ["/blog/#{blog_m.id}"]
 
       {:ok, _} =
-        CMS.Articles.unset_illegal(:blog, blog_m.id, %{
-          is_legal: true,
-          illegal_reason: [],
-          illegal_words: [],
-          illegal_articles: ["/blog/#{blog_m.id}"]
-        })
+        CMS.Articles.unset_illegal(
+          blog_m.article_id,
+          %{
+            is_legal: true,
+            illegal_reason: [],
+            illegal_words: [],
+            illegal_articles: ["/blog/#{blog_m.id}"]
+          },
+          :operations
+        )
 
-      {:ok, blog_m} = ORM.find(Blog, blog_m.id)
-      assert blog_m.pending == @audit_legal
-      assert blog_m.meta.is_legal
-      assert blog_m.meta.illegal_reason == []
-      assert blog_m.meta.illegal_words == []
+      stable = Repo.get!(CMS.Model.Article, blog_m.article_id)
+      assert stable.moderation_state == :legal
+      assert stable.illegal_reason == []
+      assert stable.illegal_words == []
 
-      blog_m = Repo.preload(blog_m, :author)
-      {:ok, user} = ORM.find(User, blog_m.author.user_id)
+      stable = Repo.preload(stable, author: :user)
+      user = stable.author.user
       assert not user.meta.has_illegal_articles
       assert user.meta.illegal_articles == []
     end

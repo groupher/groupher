@@ -22,12 +22,12 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   match basic threads
 
   {:ok, info} <- match(:post)
-  info:
+  Stable Article info:
   %{
-    model: Post,
+    model: Article,
     thread: :post,
-    foreign_key: post_id,
-    preload: :post
+    foreign_key: article_id,
+    preload: :article
     default_meta: ...
   }
   """
@@ -37,14 +37,12 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
       quote do
         @spec match(unquote(thread)) :: {:ok, GroupherServer.CMS.Artiment.Matcher.match_info()}
         def match(unquote(thread)) do
-          thread_module = unquote(thread) |> to_string |> Recase.to_pascal()
-
           {:ok,
            %{
-             model: Module.concat(CMS.Model, thread_module),
+             model: CMS.Model.Article,
              thread: unquote(thread),
-             foreign_key: unquote(:"#{thread}_id"),
-             preload: unquote(thread),
+             foreign_key: :article_id,
+             preload: :article,
              default_meta: Embeds.ArticleMeta.default_meta()
            }}
         end
@@ -57,14 +55,14 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
 
   {:ok, info} <- match(:post, :query, id)
   info:
-  %{dynamic([c], field(c, :post_id) == ^id)}
+  %{dynamic([c], field(c, :article_id) == ^id)}
   """
   defmacro thread_query_matches do
     @threads
     |> Enum.map(fn thread ->
       quote do
         def match(unquote(thread), :query, id) do
-          {:ok, dynamic([c], field(c, unquote(:"#{thread}_id")) == ^id)}
+          {:ok, dynamic([c], c.article_id == ^id and c.thread == unquote(thread))}
         end
       end
     end)

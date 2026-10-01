@@ -5,11 +5,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
   alias GroupherServer.CMS
   alias CMS.Hash
-  alias CMS.Model.{ArticleDocumentAssetRef, CommunityAsset}
+  alias CMS.Model.{Article, ArticleAssetRef, Author, CommunityAsset}
 
   describe "[cms assets]" do
     setup do
       {community, post, _attrs, user} = mock_article(:post)
+      assert {:ok, _draft} = open_draft(post, user)
 
       {:ok, ~m(community post user)a}
     end
@@ -245,8 +246,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                )
 
       for usage <- [:cover, "cover_dark"] do
-        assert {:error,
-                %ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
+        assert {:error, %ErrorCat.Error{reason: :custom, details: "asset usage is invalid"}} =
                  CMS.Assets.link_refs(
                    post,
                    %{
@@ -261,7 +261,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                    community: community
                  )
 
-        assert [%ArticleDocumentAssetRef{id: ref_id, usage: :cover}] =
+        assert [%ArticleAssetRef{id: ref_id, usage: :cover}] =
                  article_refs(:post, post.id)
 
         assert ref_id == cover_ref.id
@@ -543,7 +543,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
       assert asset_ref_count(ref.asset_id) == 1
 
-      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item, user)
+      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item.hash_id, user)
 
       assert article_refs(:post, post.id) == []
       assert asset_ref_count(ref.asset_id) == 0
@@ -553,6 +553,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "permanently deleting one article keeps shared asset refs from other articles",
          ~m(community post user)a do
       {_community, other_post, _attrs, _user} = mock_article(:post, community, user)
+      assert {:ok, _draft} = open_draft(other_post, user)
 
       {:ok, asset} =
         CMS.Assets.register_to_community(community, image_asset_attrs("shared.png", 90), user)
@@ -580,7 +581,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert asset_ref_count(asset.id) == 2
 
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
-      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item, user)
+      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item.hash_id, user)
 
       assert asset_ref_count(asset.id) == 1
       assert article_refs(:post, post.id) == []
@@ -599,15 +600,33 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     }
   end
 
+  defp open_draft(article_projection, user) do
+    article = Repo.get!(Article, article_projection.article_id)
+    author = Repo.get_by!(Author, user_id: user.id)
+    CMS.Articles.Draft.Store.ensure_from_public(article, author)
+  end
+
   defp article_refs(thread, article_id) do
-    ArticleDocumentAssetRef
-    |> where([ref], ref.thread == ^thread and ref.article_id == ^article_id)
+    ArticleAssetRef
+    |> join(:left, [ref], draft in CMS.Model.ArticleDraft,
+      on: draft.body_draft_id == ref.body_draft_id
+    )
+    |> join(:left, [ref, _draft], revision in CMS.Model.ArticleRevision,
+      on: revision.id == ref.revision_id
+    )
+    |> join(:inner, [ref, draft, revision], article in Article,
+      on: article.id == draft.article_id or article.id == revision.article_id
+    )
+    |> where(
+      [_ref, _draft, _revision, article],
+      article.thread == ^thread and article.id == ^article_id
+    )
     |> order_by([ref], asc: ref.usage)
     |> Repo.all()
   end
 
   defp asset_ref_count(asset_id) do
-    ArticleDocumentAssetRef
+    ArticleAssetRef
     |> where([ref], ref.asset_id == ^asset_id)
     |> Repo.aggregate(:count, :id)
   end

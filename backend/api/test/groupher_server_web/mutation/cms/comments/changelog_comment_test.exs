@@ -312,8 +312,8 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       assert result["innerId"] == to_string(changelog.inner_id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.meta.is_comment_locked
+      changelog = Repo.get!(CMS.Model.Article, changelog.id)
+      assert changelog.comments_locked
     end
 
     test "unauth user fails", ~m(guest_conn community changelog)a do
@@ -329,9 +329,9 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
              )
     end
 
-    test "can undo lock a changelog's comment", ~m(community changelog)a do
-      {:ok, _} = CMS.Articles.lock_comments(changelog)
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+    test "can undo lock a changelog's comment", ~m(community changelog user)a do
+      {:ok, _} = CMS.Articles.lock_comments(changelog.id, user)
+      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
       assert changelog.meta.is_comment_locked
 
       variables = %{
@@ -345,7 +345,7 @@ defmodule GroupherServer.Test.Mutation.Comments.ChangelogComment do
 
       assert result["innerId"] == to_string(changelog.inner_id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
+      {:ok, changelog} = read_article(community, :changelog, changelog.inner_id)
       assert not changelog.meta.is_comment_locked
     end
 

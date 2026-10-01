@@ -25,7 +25,7 @@ export const ContentImportJobFields = graphql(`
     failedItems
     skipped
     targetBranch
-    firstImportedDocRef
+    firstImportedDocId
     sourceInfo {
       repo
       repoUrl

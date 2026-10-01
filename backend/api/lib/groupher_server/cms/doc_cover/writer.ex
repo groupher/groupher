@@ -39,12 +39,15 @@ defmodule GroupherServer.CMS.DocCover.Writer do
   alias CMS.DocTree.Publish, as: DocTreePublish
 
   alias CMS.Model.{
+    Article,
+    ArticleRevision,
     Community,
-    Doc,
+    DocBranchVersion,
     DocCoverCard,
     DocCoverItem,
     DocCoverPinnedDoc,
-    DocSnapshot,
+    DocDraft,
+    DocPublic,
     DocTreeNode
   }
 
@@ -319,32 +322,32 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
   defp ensure_clean_published(%Community{} = community, page) do
     draft =
-      Doc
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.branch_id == ^page.branch_id)
-      |> where([d], d.article_hash_id == ^page.doc_id)
-      |> where([d], d.stage == CMS.Const.stage(:draft))
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> where([draft, article], article.community_id == ^community.id)
+      |> where([draft, _article], draft.branch_id == ^page.branch_id)
+      |> where([draft, _article], draft.article_id == ^page.doc_id)
       |> limit(1)
       |> Repo.one()
 
-    latest_public_snapshot =
-      DocSnapshot
-      |> where([s], s.community_id == ^community.id)
-      |> where([s], s.branch_id == ^page.branch_id)
-      |> where([s], s.article_hash_id == ^page.doc_id)
-      |> where([s], s.stage == CMS.Const.stage(:public))
-      |> order_by([s], desc: s.revision_number, desc: s.id)
+    public_revision =
+      ArticleRevision
+      |> join(:inner, [revision], version in DocBranchVersion,
+        on: version.revision_id == revision.id
+      )
+      |> join(:inner, [revision, version], public in DocPublic,
+        on: public.branch_version_id == version.id
+      )
+      |> where([revision, _version, public], revision.article_id == ^page.doc_id)
+      |> where([_revision, _version, public], public.branch_id == ^page.branch_id)
       |> limit(1)
       |> Repo.one()
 
     if is_nil(draft) or
-         not ChangeDetection.draft_content_changed?(draft, latest_public_snapshot) do
+         not ChangeDetection.draft_content_changed?(draft, public_revision) do
       :ok
     else
-      {:error,
-       ErrorCat.custom(
-         "Publish the latest doc changes before pinning it to cover."
-       )}
+      {:error, ErrorCat.custom("Publish the latest doc changes before pinning it to cover.")}
     end
   end
 
@@ -357,9 +360,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
       MapSet.new(requested) != MapSet.new(current_ids) ->
         {:error,
-         ErrorCat.custom(
-           "Pinned doc order must contain the complete current collection."
-         )}
+         ErrorCat.custom("Pinned doc order must contain the complete current collection.")}
 
       true ->
         :ok
@@ -373,8 +374,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
     if is_map(light) and is_map(dark) do
       {:ok, %{"light" => light, "dark" => dark}}
     else
-      {:error,
-       ErrorCat.custom("Pinned doc appearance must contain Light and Dark maps.")}
+      {:error, ErrorCat.custom("Pinned doc appearance must contain Light and Dark maps.")}
     end
   end
 
@@ -532,10 +532,7 @@ defmodule GroupherServer.CMS.DocCover.Writer do
       )
 
     if Enum.any?(result.rows, fn [_id, _index, relation] -> relation == "ancestor" end) do
-      {:error,
-       ErrorCat.custom(
-         "This Group is already represented by an ancestor Cover Card."
-       )}
+      {:error, ErrorCat.custom("This Group is already represented by an ancestor Cover Card.")}
     else
       descendants = for [id, index, "descendant"] <- result.rows, do: {id, index}
 
@@ -558,16 +555,13 @@ defmodule GroupherServer.CMS.DocCover.Writer do
 
           if count == length(ids),
             do: {:ok, replacement_index},
-            else:
-              {:error,
-               ErrorCat.custom("Doc Cover Cards changed during replacement.")}
+            else: {:error, ErrorCat.custom("Doc Cover Cards changed during replacement.")}
       end
     end
   end
 
   defp ensure_has_leaves([]),
-    do:
-      {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
+    do: {:error, ErrorCat.custom("Publish a doc before adding this group to cover.")}
 
   defp ensure_has_leaves(_leaves), do: :ok
 

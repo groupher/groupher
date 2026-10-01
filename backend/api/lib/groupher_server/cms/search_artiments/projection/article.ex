@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   @moduledoc """
-  Projects one public Article and its ArticleDocument into a Search Artiment.
+  Projects one stable public Article DTO into a Search Artiment.
 
   Business position:
 
@@ -10,22 +10,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
         -> search platform
   """
 
-  require GroupherServer.CMS.Const
-
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS
   alias CMS.ErrorCat
 
   alias CMS.SearchArtiments.Artiment
 
-  @legal CMS.Artiment.Const.moderation_state(:legal)
-
   @doc """
   Projects one public article into a Search Artiment.
 
-  Reloads the article with community, document, and author data before building
-  the canonical projection with live interaction counts. Non-public articles
-  return an `ErrorCat.Error` with reason `:not_searchable`; incomplete articles return an
-  invalid projection error.
+  The caller must supply the actor-scoped public DTO returned by FrontDesk.
 
   ## Examples
 
@@ -34,15 +27,13 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
   """
   @spec project(Artiment.thread(), struct()) :: {:ok, Artiment.t()} | {:error, term()}
   def project(thread, article) do
-    article = Repo.preload(article, [:community, :document, author: :user])
-
-    with :ok <- searchable?(article),
-         %{slug: community_ref} <- article.community,
+    with %{slug: community_ref} <- article.community,
          %{plain_text: plain_text, body_hash: body_hash} = document <- article.document,
          true <- is_binary(plain_text) and is_binary(body_hash),
-         true <- is_binary(article.article_hash_id),
+         true <- is_binary(article.id),
+         true <- is_binary(article.revision_id),
          true <- not is_nil(article.inner_id) do
-      ref = Artiment.article_ref(thread, article.article_hash_id)
+      ref = Artiment.article_key(thread, article.id)
       counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       {:ok,
@@ -51,7 +42,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          type: :article,
          community_ref: community_ref,
          thread: thread,
-         article_ref: ref,
+         article_id: article.id,
+         indexed_revision_id: article.revision_id,
          title: article.title,
          plain_text: plain_text,
          digest: article.digest || document.digest,
@@ -76,14 +68,6 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
     end
   end
 
-  defp searchable?(article) do
-    if article.stage == CMS.Const.stage(:public) and article.pending == @legal do
-      :ok
-    else
-      {:error, ErrorCat.not_searchable("Article is not publicly searchable")}
-    end
-  end
-
-  defp author_ref(%{author: %{user: %{login: login}}}) when is_binary(login), do: login
+  defp author_ref(%{author: %{login: login}}) when is_binary(login), do: login
   defp author_ref(_article), do: nil
 end

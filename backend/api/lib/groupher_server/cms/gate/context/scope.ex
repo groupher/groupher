@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope do
 
   alias GroupherServer.CMS
 
-  alias CMS.Gate.Context.Scope.{Article, Comment, Community, Doc, Document}
+  alias CMS.Gate.Context.Scope.{Article, Comment, Community, Doc}
 
-  @type t :: Community.t() | Article.t() | Doc.t() | Comment.t() | Document.t()
+  @type t :: Community.t() | Article.t() | Doc.t() | Comment.t()
 end

@@ -106,7 +106,8 @@ defmodule GroupherServer.CMS.Comments.Reader do
         |> CMS.Gate.scope(viewer, :read, comment_scope(thread))
         |> where(
           [comment],
-          field(comment, ^:"#{thread}_id") == ^article.id and comment.inner_id in ^inner_ids
+          comment.article_id == ^article.id and comment.thread == ^thread and
+            comment.inner_id in ^inner_ids
         )
         |> preload(:author)
         |> Repo.all()

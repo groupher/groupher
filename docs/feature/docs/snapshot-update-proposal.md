@@ -1,8 +1,13 @@
 # Snapshot Update
 
-> 状态：设计讨论稿
+> 状态：superseded（Doc 内容历史）；display snapshot 部分仍可作为独立 read-model 讨论。
 >
 > 目标：为文章、评论、用户等局部展示信息提供统一的 snapshot 刷新机制，避免列表页被实时权威查询拖慢，同时允许详情页按需拿到最新信息。
+>
+> 命名边界：本文的 Snapshot 是 notification/activity/list 等 read model 保存的轻量
+> display snapshot，不是 Doc 内容历史。旧 `DocSnapshot` 内容版本由
+> [Article Revision / Draft 目标架构](../article/revision-draft-target.md) 的
+> `DocBranchVersion + ArticleRevision` 取代，不影响本文讨论的 display snapshot。
 
 ## Background
 

@@ -11,7 +11,6 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     ArticleStats,
     ArtimentMention,
     Comment,
-    Post,
     TrashAction,
     TrashedArticle
   }
@@ -25,10 +24,10 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     post_id = post.id
 
     assert {:ok, %TrashedArticle{} = item} = CMS.Articles.trash(post, user)
-    assert Repo.get(Post, post_id)
-    assert CMS.Articles.Trash.trashed?(community, :post, post.article_hash_id)
+    assert Repo.get(CMS.Model.Article, post_id)
+    assert CMS.Articles.Trash.trashed_article?(post)
 
-    assert {:error, _} = CMS.Articles.read(community, :post, post.inner_id)
+    assert {:error, _} = read_article(community, :post, post.inner_id)
 
     assert {:ok, %{entries: []}} =
              CMS.Articles.page(:post, %{community: community.slug, page: 1, size: 20})
@@ -40,16 +39,16 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     action = Repo.get!(TrashAction, item.trash_action_id)
     assert Repo.get_by(PostLog, action: :trashed, operation_ref: action.hash_id)
 
-    assert {:ok, restored} = CMS.Articles.restore_trashed(item, user)
-    assert restored.article_hash_id == post.article_hash_id
-    assert {:ok, _} = CMS.Articles.read(community, :post, post.inner_id)
+    assert {:ok, restored} = CMS.Articles.restore_trashed(item.hash_id, user)
+    assert restored.id == post.id
+    assert {:ok, _} = read_article(community, :post, post.inner_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
     refute Repo.get(TrashAction, item.trash_action_id)
   end
 
   test "Trash excludes Posts from scalar, grouped and multi-status Kanban lists" do
     {community, post, _attrs, user} = mock_article(:post)
-    assert {:ok, post} = CMS.Articles.set_status(post, :todo)
+    assert {:ok, post} = CMS.Articles.set_status(post.id, :todo, user)
 
     assert {:ok, %{entries: [listed]}} =
              CMS.Articles.paged_kanban(community, %{status: :todo, page: 1, size: 20})
@@ -104,7 +103,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
 
   test "Trash excludes Articles from the audit-failed list" do
     {_community, post, _attrs, user} = mock_article(:post)
-    assert {:ok, post} = CMS.Articles.set_audit_failed(post, %{})
+    assert {:ok, post} = CMS.Articles.set_audit_failed(post.id, %{}, :operations)
 
     assert {:ok, %{entries: entries}} =
              CMS.Articles.paged_audit_failed(:post, %{page: 1, size: 20})
@@ -123,19 +122,19 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     {community, post, _attrs, user} = mock_article(:post)
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
-    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
-    refute Repo.get(Post, post.id)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
+    refute Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     refute Repo.get_by(ArticleLifecycle,
              community_id: community.id,
              thread: :post,
-             article_hash_id: post.article_hash_id
+             article_id: post.article_id
            )
 
     assert Repo.get_by(PostLog,
              action: :permanently_deleted,
-             post_ref: post.article_hash_id
+             article_id: post.article_id
            )
 
     assert {:ok, %{entries: []}} =
@@ -150,11 +149,11 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, item} = CMS.Articles.trash(post, user)
 
     assert {:error, _reason} = CMS.Interactions.emotion(post, :beer, other_user)
-    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
-    refute Repo.get(Post, post.id)
-    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.id)
-    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
+    refute Repo.get_by(ArticleStats, thread: :post, article_id: post.article_id)
+    refute Repo.get_by(ArticleEmotionCount, thread: :post, article_id: post.article_id)
   end
 
   test "permanent delete removes comment-owned Mention facts before comments cascade" do
@@ -179,7 +178,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert Repo.get_by(ArtimentMention, mentioner_type: :comment, mentioner_id: comment.id)
 
     assert {:ok, item} = CMS.Articles.trash(post, user)
-    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     refute Repo.get(Comment, comment.id)
     refute Repo.get_by(ArtimentMention, mentioner_type: :comment, mentioner_id: comment.id)
@@ -201,15 +200,26 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       ])
 
     assert {:ok, mentioner} =
-             CMS.Articles.update(mentioner, %{
-               body_bag: mock_body_bag(body),
-               expected_version: mentioner.version
-             })
+             CMS.Articles.update(
+               mentioner,
+               %{
+                 body_bag: mock_body_bag(body),
+                 expected_version: mentioner.version
+               },
+               user,
+               Ecto.UUID.generate()
+             )
 
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(mentioner)
 
     assert {:ok, item} = CMS.Articles.trash(target, user)
-    mention = Repo.get_by!(ArtimentMention, mentioned_type: :post, mentioned_id: target.id)
+
+    mention =
+      Repo.get_by!(ArtimentMention,
+        mentioned_type: :post,
+        mentioned_article_id: target.article_id
+      )
+
     assert mention.mentioned_snapshot["deletionState"] == "trashed"
     assert mention.meta["mentionedDeleted"]
 
@@ -224,13 +234,13 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
                size: 20
              })
 
-    assert {:ok, _} = CMS.Articles.restore_trashed(item, user)
+    assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
     mention = Repo.get!(ArtimentMention, mention.id)
     refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
     refute Map.has_key?(mention.meta, "mentionedDeleted")
 
     assert {:ok, item} = CMS.Articles.trash(target, user)
-    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item, user)
+    assert {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(item.hash_id, user)
 
     mention = Repo.get!(ArtimentMention, mention.id)
     assert mention.mentioned_snapshot["deletionState"] == "permanently_deleted"
@@ -245,12 +255,12 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
     assert {:ok, %{deleted: 1, failed: []}} =
              CMS.Trash.purge_due(now: DateTime.utc_now(:second), size: 10)
 
-    refute Repo.get(Post, post.id)
+    refute Repo.get(CMS.Model.Article, post.article_id)
     refute Repo.get_by(TrashedArticle, hash_id: item.hash_id)
 
     assert Repo.get_by(PostLog,
              action: :permanently_deleted,
-             post_ref: post.article_hash_id,
+             article_id: post.article_id,
              source: :scheduler
            )
   end
@@ -274,7 +284,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
       assert {:ok, item} = CMS.Articles.trash(article, user)
       assert Repo.get!(CMS.Model.Community, community.id).meta |> Map.fetch!(count_field) == 0
 
-      assert {:ok, _} = CMS.Articles.restore_trashed(item, user)
+      assert {:ok, _} = CMS.Articles.restore_trashed(item.hash_id, user)
       assert Repo.get!(CMS.Model.Community, community.id).meta |> Map.fetch!(count_field) == 1
     end)
   end

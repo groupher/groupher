@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
   alias Accounts.Model.User
   alias CMS.Command
   alias CMS.DocTree.{CommandReplay, Publish}
-  alias CMS.Model.{Community, Doc, DocPublishRelease}
+  alias CMS.Model.{Community, DocPublishRelease}
   alias Helper.T
 
   @doc "Publishes selected Docs changes under a stable command id."
@@ -62,7 +62,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
 
   @doc "Moves one public Docs page back to Draft visibility."
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
-          T.domain_res(Doc.t())
+          T.domain_res(CMS.Model.DocDraft.t() | map())
   def move_doc_to_draft(%Community{} = community, id, %User{} = user, opts) do
     run_doc_command(
       community,
@@ -71,12 +71,12 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       :doc_move_to_draft,
       opts,
       fn ->
-        with {:ok, doc} <- Publish.move_doc_to_draft(community, id, user, opts) do
-          {:ok, doc, %{result_key: doc.article_hash_id}}
+        with {:ok, draft} <- Publish.move_doc_to_draft(community, id, user, opts) do
+          {:ok, draft, %{result_key: draft.article_id}}
         end
       end,
       fn receipt ->
-        CMS.Articles.Draft.read_command_result(community, :doc, receipt.result_key, opts)
+        CMS.Docs.read_editor_head(community, receipt.result_key, opts)
       end
     )
   end

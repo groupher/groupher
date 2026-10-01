@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       created = user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
 
       {:ok, post} =
-        CMS.FrontDesk.article(community, :post, created["innerId"], preload: :community_tags)
+        read_article(community, :post, created["innerId"], preload: :community_tags)
 
       assert exist_in?(%{id: community_tag.id}, post.community_tags)
     end
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
 
-      {:ok, post} = CMS.FrontDesk.article(community, :post, result["innerId"], preload: :document)
+      {:ok, post} = read_article(community, :post, result["innerId"], preload: :document)
       body_html = post |> get_in([:document, :html])
 
       assert not String.contains?(body_html, "<script")
@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       result = user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
 
-      {:ok, post} = CMS.FrontDesk.article(community, :post, result["innerId"], preload: :document)
+      {:ok, post} = read_article(community, :post, result["innerId"], preload: :document)
       body_html = post |> get_in([:document, :html])
 
       assert String.contains?(body_html, "&amp;lt;script&amp;gt;blackmail&amp;lt;/script&amp;gt;")
@@ -192,7 +192,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     end
 
     test "login user with auth passport update a post", ~m(community post)a do
-      post = post |> Repo.preload(:communities)
       belongs_community_slug = post.communities |> List.first() |> Map.get(:slug)
 
       passport_rules = %{belongs_community_slug => %{"post.edit" => true}}
@@ -270,7 +269,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
                ErrorCat.code(PassportErrorCat.passport())
              )
 
-      {:ok, found} = CMS.FrontDesk.article(community_b, :post, post_b.inner_id)
+      {:ok, found} = read_article(community_b, :post, post_b.inner_id)
       refute found.title == "cross-community-update-#{unique_num}"
     end
   end

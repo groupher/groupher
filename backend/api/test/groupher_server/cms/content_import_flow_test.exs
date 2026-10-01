@@ -5,7 +5,6 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
   import GroupherServer.Support.Factory
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Draft
   alias CMS.Artiment.BodyBag
   alias CMS.ContentImport.{Jobs, Staging}
   alias CMS.ContentImport.Persistence.{ImportSourceMapping, Job}
@@ -86,18 +85,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert mapping.groupher_hash =~ "doc-sync-v1:"
 
     assert {:ok, _draft} =
-             Draft.read(
-               community,
-               :doc,
-               completed.first_imported_doc_ref,
-               completed.target_branch
-             )
+             CMS.Docs.read_editor_head(community, completed.first_imported_doc_id)
 
     assert {:ok, tree} = DocTree.read(community)
     [tab] = tree.tabs
     [group] = tab.groups
 
-    assert Enum.any?(group.pages, &(&1.doc_id == completed.first_imported_doc_ref))
+    assert Enum.any?(group.pages, &(&1.doc_id == completed.first_imported_doc_id))
 
     assert {:ok, replayed} = Writer.apply(community, job.job_ref)
     assert replayed == completed
@@ -223,14 +217,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              ])
 
     assert {:ok, first_import} = Writer.apply(community, first_job.job_ref)
-    first_doc_ref = first_import.first_imported_doc_ref
+    first_doc_id = first_import.first_imported_doc_id
 
     {:ok, branch} = Branch.resolve(community, nil)
 
     assert Repo.get_by(DocLifecycle,
-             community_id: community.id,
-             branch_id: branch.id,
-             article_hash_id: first_doc_ref
+             article_id: first_doc_id,
+             branch_id: branch.id
            )
 
     # Simulate a tree written by the previous revision-scoped namespace.
@@ -264,7 +257,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              "pages",
              Access.at(0),
              "docId"
-           ]) == first_doc_ref
+           ]) == first_doc_id
 
     assert {:ok, second_job} =
              Jobs.create(community, actor, %{
@@ -283,15 +276,15 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              ])
 
     assert {:ok, second_import} = Writer.apply(community, second_job.job_ref)
-    assert second_import.first_imported_doc_ref == first_doc_ref
+    assert second_import.first_imported_doc_id == first_doc_id
     assert Repo.aggregate(ImportSourceMapping, :count) == 1
     assert Repo.aggregate(DocTreeNode, :count) == 3
 
-    assert {:ok, draft} = Draft.read(community, :doc, first_doc_ref, Branch.main_slug())
-    assert draft.body_hash == String.duplicate("b", 64)
+    assert {:ok, draft} = CMS.Docs.read_editor_head(community, first_doc_id)
+    assert draft.document.body_hash == String.duplicate("b", 64)
 
     assert [mapping] = Repo.all(ImportSourceMapping)
-    assert mapping.thread_ref == first_doc_ref
+    assert mapping.thread_ref == first_doc_id
     assert mapping.source_revision == next_source_info["commit"]
     assert mapping.source_hash == "source-md-v1:" <> String.duplicate("b", 64)
   end
@@ -306,16 +299,15 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              ])
 
     assert {:ok, first_import} = Writer.apply(community, first_job.job_ref)
-    first_doc_ref = first_import.first_imported_doc_ref
+    first_doc_id = first_import.first_imported_doc_id
     page = Repo.get_by!(DocTreeNode, community_id: community.id, type: :page)
-    assert page.doc_id == first_doc_ref
+    assert page.doc_id == first_doc_id
 
     {:ok, branch} = Branch.resolve(community, nil)
 
     assert Repo.get_by(DocLifecycle,
-             community_id: community.id,
-             branch_id: branch.id,
-             article_hash_id: first_doc_ref
+             article_id: first_doc_id,
+             branch_id: branch.id
            )
 
     assert {:ok, tree} = DocTree.read(community)
@@ -326,13 +318,8 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
                base_revision: tree.revision
              })
 
-    assert {:error,
-            %ErrorCat.Error{
-              namespace: {:cms, :article},
-              reason: :not_exist,
-              details: _model
-            }} =
-             Draft.read(community, :doc, first_doc_ref, Branch.main_slug())
+    assert {:error, :doc_not_readable} =
+             CMS.Docs.read_editor_head(community, first_doc_id)
 
     assert {:ok, [_trash_item]} =
              DocTree.trash_items(community, actor: :operations, policy_mode: :operations)
@@ -351,7 +338,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              "pages",
              Access.at(0),
              "docId"
-           ]) == first_doc_ref
+           ]) == first_doc_id
 
     assert {:ok, second_job} =
              Jobs.create(community, actor, %{
@@ -370,7 +357,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              ])
 
     assert {:ok, second_import} = Writer.apply(community, second_job.job_ref)
-    assert second_import.first_imported_doc_ref == first_doc_ref
+    assert second_import.first_imported_doc_id == first_doc_id
 
     assert {:ok, []} =
              DocTree.trash_items(community, actor: :operations, policy_mode: :operations)
@@ -378,8 +365,8 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert Repo.aggregate(ImportSourceMapping, :count) == 1
     assert Repo.aggregate(DocTreeNode, :count) == 3
 
-    assert {:ok, draft} = Draft.read(community, :doc, first_doc_ref, Branch.main_slug())
-    assert draft.body_hash == String.duplicate("b", 64)
+    assert {:ok, draft} = CMS.Docs.read_editor_head(community, first_doc_id)
+    assert draft.document.body_hash == String.duplicate("b", 64)
   end
 
   test "cancels an unfinished Job idempotently and deletes staged BodyBags" do

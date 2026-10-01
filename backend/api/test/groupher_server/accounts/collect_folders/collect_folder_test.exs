@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       assert folder.total_count == 1
       assert folder.collects |> length == 1
-      assert folder.collects |> List.first() |> Map.get(:post_id) == post.id
+      assert folder.collects |> List.first() |> Map.get(:article_id) == post.id
     end
 
     test "can not collect some article in one collect-folder", ~m(user post)a do
@@ -156,9 +156,9 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _folder} = CollectFolders.add(post, folder2.id, user)
 
       {:ok, article_collect} =
-        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
+        ORM.find_by(ArticleCollect, %{user_id: user.id, article_id: post.id})
 
-      assert article_collect.post_id == post.id
+      assert article_collect.article_id == post.id
     end
 
     test "can remove post to exist collect-folder", ~m(user post post2)a do
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _} = CollectFolders.remove(post, folder.id, user)
 
       {:ok, result} =
-        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
+        ORM.find_by(ArticleCollect, %{user_id: user.id, article_id: post.id})
 
       article_collect = result.collect_folders |> List.first()
 
@@ -205,12 +205,12 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _} = CollectFolders.remove(post, folder.id, user)
 
       {:ok, article_collect} =
-        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
+        ORM.find_by(ArticleCollect, %{user_id: user.id, article_id: post.id})
 
       assert article_collect.collect_folders |> length == 1
 
       {:ok, _} = CollectFolders.remove(post, folder2.id, user)
-      assert {:error, _} = ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
+      assert {:error, _} = ORM.find_by(ArticleCollect, %{user_id: user.id, article_id: post.id})
     end
 
     test "add post to exist collect-folder should update meta", ~m(user post post2)a do

@@ -8,7 +8,5 @@ defmodule GroupherServer.CMS.Model.BlogEmotionInfo do
   """
 
   use GroupherServer.CMS.Model.Interaction.EmotionInfo,
-    table: "blog_emotion_infos",
-    target: :blog,
-    target_schema: GroupherServer.CMS.Model.Blog
+    table: "blog_emotion_infos"
 end

@@ -26,8 +26,8 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
 
       assert result["innerId"] == to_string(changelog.inner_id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert changelog.meta.is_sunk
+      changelog = Repo.get!(CMS.Model.Article, changelog.id)
+      assert changelog.is_sunk
       assert changelog.active_at == changelog.inserted_at
     end
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
              )
     end
 
-    test "login user can undo sink to a changelog", ~m(community changelog)a do
+    test "login user can undo sink to a changelog", ~m(community changelog user)a do
       variables = %{
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
       }
@@ -52,14 +52,13 @@ defmodule GroupherServer.Test.Mutation.Sink.ChangelogSink do
       passport_rules = %{community.slug => %{"changelog.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      {:ok, _} = CMS.Articles.sink(changelog)
+      {:ok, _} = CMS.Articles.sink(changelog.id, user)
 
       updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :changelog), variables)
 
       assert updated["innerId"] == to_string(changelog.inner_id)
 
-      {:ok, changelog} = ORM.find(Changelog, changelog.id)
-      assert not changelog.meta.is_sunk
+      refute Repo.get!(CMS.Model.Article, changelog.id).is_sunk
     end
 
     test "unauth user undo sink a changelog fails", ~m(guest_conn community changelog)a do

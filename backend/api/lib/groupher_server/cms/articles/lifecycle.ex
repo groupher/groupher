@@ -14,8 +14,7 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
 
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.ErrorCat
-  alias CMS.Artiment.Matcher
-  alias CMS.Model.ArticleLifecycle
+  alias CMS.Model.{Article, ArticleLifecycle}
 
   @article_threads CMS.Artiment.Config.threads() -- [:doc]
 
@@ -36,102 +35,6 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   @doc "Returns the lifecycle states readable through the public gate."
   @spec public_readable_states() :: [ArticleLifecycle.state()]
   def public_readable_states, do: @public_readable_states
-
-  @doc """
-  Creates lifecycle rows for Article records that entered outside the normal
-  Draft producer, then leaves existing lifecycle authority untouched.
-
-  This keeps operational maintenance commands safe for imported/legacy rows
-  created after the one-time migration backfill.
-  """
-  @spec ensure_thread_backfill(atom(), DateTime.t()) :: non_neg_integer()
-  def ensure_thread_backfill(thread, now) when thread in @article_threads do
-    table = thread_table(thread)
-
-    """
-    INSERT INTO cms.article_lifecycles (
-      community_id, thread, article_hash_id, state, version, changed_at, inserted_at, updated_at
-    )
-    SELECT
-      article.community_id,
-      $1,
-      article.article_hash_id,
-      CASE WHEN BOOL_OR(article.stage = 'public') THEN 'published' ELSE 'draft_only' END,
-      1,
-      $2,
-      $2,
-      $2
-    FROM cms.#{table} AS article
-    GROUP BY article.community_id, article.article_hash_id
-    ON CONFLICT (community_id, thread, article_hash_id) DO NOTHING
-    """
-    |> Repo.query!([to_string(thread), now])
-    |> Map.fetch!(:num_rows)
-  end
-
-  @spec state(integer(), atom(), Ecto.UUID.t()) ::
-          {:ok, ArticleLifecycle.state()} | {:error, ErrorCat.error()}
-  def state(community_id, thread, article_hash_id) do
-    case Repo.get_by(ArticleLifecycle,
-           community_id: community_id,
-           thread: thread,
-           article_hash_id: article_hash_id
-         ) do
-      %ArticleLifecycle{state: state} -> {:ok, state}
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
-    end
-  end
-
-  @spec ensure_created(integer(), atom(), Ecto.UUID.t(), keyword()) ::
-          {:ok, ArticleLifecycle.t()} | {:error, term()}
-  def ensure_created(community_id, thread, article_hash_id, opts \\ [])
-      when is_integer(community_id) and thread in @article_threads do
-    attrs = %{
-      community_id: community_id,
-      thread: thread,
-      article_hash_id: article_hash_id,
-      state: Keyword.get(opts, :state, :draft_only),
-      version: 1,
-      changed_at: DateTime.utc_now(:second)
-    }
-
-    case Repo.get_by(ArticleLifecycle,
-           community_id: community_id,
-           thread: thread,
-           article_hash_id: article_hash_id
-         ) do
-      %ArticleLifecycle{} = lifecycle ->
-        {:ok, lifecycle}
-
-      nil ->
-        %ArticleLifecycle{}
-        |> ArticleLifecycle.changeset(attrs)
-        |> Repo.insert()
-    end
-  end
-
-  @spec transition(integer(), atom(), Ecto.UUID.t(), ArticleLifecycle.state()) ::
-          {:ok, ArticleLifecycle.t()}
-          | {:error, ErrorCat.error() | Ecto.Changeset.t()}
-  def transition(community_id, thread, article_hash_id, state) when state in @states do
-    lifecycle =
-      ArticleLifecycle
-      |> where(
-        [lifecycle],
-        lifecycle.community_id == ^community_id and lifecycle.thread == ^thread and
-          lifecycle.article_hash_id == ^article_hash_id
-      )
-      |> lock("FOR UPDATE")
-      |> Repo.one()
-
-    case lifecycle do
-      nil ->
-        {:error, ErrorCat.lifecycle_not_found()}
-
-      %ArticleLifecycle{} = lifecycle ->
-        transition(lifecycle, state)
-    end
-  end
 
   @doc "Transitions a Lifecycle row already locked by its command loader."
   @spec transition(ArticleLifecycle.t(), ArticleLifecycle.state()) ::
@@ -155,47 +58,62 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
     end
   end
 
+  @doc "Locks and returns the Lifecycle row belonging to a stable Article."
+  @spec lock(Article.t()) :: {:ok, ArticleLifecycle.t()} | {:error, ErrorCat.error()}
+  def lock(%Article{id: article_id}) do
+    ArticleLifecycle
+    |> where([lifecycle], lifecycle.article_id == ^article_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      %ArticleLifecycle{} = lifecycle -> {:ok, lifecycle}
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
+    end
+  end
+
+  @doc "Transitions a stable Article with an optimistic Lifecycle version guard."
+  @spec transition(Article.t(), ArticleLifecycle.state(), pos_integer()) ::
+          {:ok, ArticleLifecycle.t()} | {:error, term()}
+  def transition(%Article{} = article, state, expected_version) when state in @states do
+    with {:ok, lifecycle} <- lock(article),
+         :ok <- ensure_version(lifecycle.version, expected_version) do
+      transition(lifecycle, state)
+    end
+  end
+
   @doc "Archives stale public heads through the Lifecycle authority."
   @spec archive_before(atom(), module(), DateTime.t(), DateTime.t()) :: non_neg_integer()
-  def archive_before(thread, article_model, threshold, _now)
+  def archive_before(thread, _article_model, threshold, _now)
       when thread in @article_threads do
     operation_ref = Ecto.UUID.generate()
 
     {:ok, count} =
       Repo.transaction(fn ->
-        candidate_ids =
+        candidates =
           ArticleLifecycle
-          |> join(:inner, [lifecycle], article in ^article_model,
-            on:
-              article.community_id == lifecycle.community_id and
-                article.article_hash_id == lifecycle.article_hash_id
-          )
+          |> join(:inner, [lifecycle], article in Article, on: article.id == lifecycle.article_id)
           |> where(
             [lifecycle, article],
             lifecycle.thread == ^thread and lifecycle.state == :published and
-              article.stage == :public and article.inserted_at < ^threshold
+              article.active_at < ^threshold
           )
-          |> distinct([lifecycle, _article], lifecycle.id)
-          |> select([lifecycle, _article], lifecycle.id)
+          |> select([lifecycle, article], {lifecycle.id, article.id})
           |> Repo.all()
 
         lifecycles =
-          Enum.map(candidate_ids, fn id ->
+          Enum.map(candidates, fn {lifecycle_id, article_id} ->
             ArticleLifecycle
-            |> where([lifecycle], lifecycle.id == ^id)
+            |> where([lifecycle], lifecycle.id == ^lifecycle_id)
             |> lock("FOR UPDATE")
             |> Repo.one!()
+            |> then(&{&1, Repo.get!(Article, article_id)})
           end)
 
-        Enum.reduce_while(lifecycles, 0, fn lifecycle, count ->
+        Enum.reduce_while(lifecycles, 0, fn {lifecycle, article}, count ->
           with {:ok, archived} <- transition(lifecycle, :archived),
                {:ok, _activity} <-
                  Activity.log(
-                   %{
-                     thread: thread,
-                     community_id: archived.community_id,
-                     article_hash_id: archived.article_hash_id
-                   },
+                   article,
                    :archived,
                    operation_ref: operation_ref,
                    source: :maintenance,
@@ -215,8 +133,6 @@ defmodule GroupherServer.CMS.Articles.Lifecycle do
   defp state_time(state, state, now, _current), do: now
   defp state_time(_state, _target, _now, current), do: current
 
-  defp thread_table(thread) do
-    {:ok, %{model: model}} = Matcher.match_interaction(thread)
-    model.__schema__(:source)
-  end
+  defp ensure_version(version, version), do: :ok
+  defp ensure_version(_actual, _expected), do: {:error, :lifecycle_version_conflict}
 end

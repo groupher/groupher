@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       trashed = rule_conn |> gq_mutation(S.Article.m(:trash_article), variables)
 
       assert trashed["article"]["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = CMS.Articles.read(community, :post, post.inner_id)
+      assert {:error, _} = read_article(community, :post, post.inner_id)
     end
 
     test "god can permanently delete a trashed post", ~m(community post)a do
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
         })
 
       assert deleted["done"]
-      refute Repo.get(CMS.Model.Post, post.id)
+      refute Repo.get(CMS.Model.Article, post.article_id)
     end
   end
 end

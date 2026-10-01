@@ -24,22 +24,23 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   alias CMS.Docs.Branch
   alias CMS.DocTree.{ChangeDetection, Events}
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   alias CMS.Model.{
+    Article,
+    ArticleRevision,
     Community,
-    Doc,
     DocCoverCard,
     DocCoverItem,
     DocCoverPinnedDoc,
+    DocBranchVersion,
+    DocDraft,
     DocPublishRelease,
-    DocSnapshot,
+    DocPublic,
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode
   }
 
-  alias CMS.Articles.Trash
   alias Helper.{ORM, T, Transaction}
 
   @doc """
@@ -136,34 +137,15 @@ defmodule GroupherServer.CMS.DocTree.Reader do
   ## Examples
 
       iex> Reader.read_draft(community, page.doc_id)
-      {:ok, %Doc{stage: CMS.Const.stage(:draft)}}
+      {:ok, %{stage: :draft}}
   """
-  @spec read_draft(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
+  @spec read_draft(Community.t(), String.t(), keyword() | map()) :: T.domain_res(map())
   def read_draft(%Community{} = community, doc_id, opts \\ []) do
-    actor = option(opts, :actor, :operations)
-    policy_mode = option(opts, :policy_mode, :operations)
-
     with {:ok, branch} <- Branch.resolve(community, opts) do
-      query =
-        Doc
-        |> Trash.not_trashed_scope(:doc)
-        |> CMS.Gate.scope(actor, :read_draft, DocContext.draft(branch.id, policy_mode))
-
-      case query do
-        %Ecto.Query{} = query ->
-          query
-          |> where([doc], doc.article_hash_id == ^doc_id)
-          |> where([doc], doc.community_id == ^community.id)
-          |> where([doc], doc.branch_id == ^branch.id)
-          |> where([doc], doc.stage == CMS.Const.stage(:draft))
-          |> Repo.one()
-          |> case do
-            %Doc{} = doc -> {:ok, doc}
-            nil -> {:error, CMS.Articles.ErrorCat.not_exist("Doc draft")}
-          end
-
-        {:error, reason} ->
-          {:error, reason}
+      case CMS.Docs.read_editor_head(community, doc_id, branch_id: branch.id) do
+        {:ok, %{stage: :draft} = draft} -> {:ok, draft}
+        {:ok, %{stage: :public}} -> {:error, CMS.Articles.ErrorCat.not_exist("Doc draft")}
+        {:error, reason} -> {:error, reason}
       end
     end
   end
@@ -263,14 +245,23 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
-    Doc
-    |> CMS.Gate.scope(nil, :list, DocContext.public_branch(branch.id))
-    |> where([d], d.community_id == ^community.id)
-    |> where([d], d.branch_id == ^branch.id)
-    |> where([d], d.stage == ^CMS.Const.stage(:public))
-    |> where([d], d.article_hash_id in ^doc_ids)
+    Article
+    |> join(:inner, [article], public in DocPublic, on: public.article_id == article.id)
+    |> join(:inner, [article, public], lifecycle in CMS.Model.DocLifecycle,
+      on: lifecycle.article_id == article.id and lifecycle.branch_id == public.branch_id
+    )
+    |> where([article, public, lifecycle], article.community_id == ^community.id)
+    |> where([_article, public, _lifecycle], public.branch_id == ^branch.id)
+    |> where([article, _public, _lifecycle], article.id in ^doc_ids)
+    |> where([_article, public, lifecycle], public.visible and lifecycle.state == :published)
+    |> select([article, public, _lifecycle], %{
+      id: article.id,
+      inner_id: article.inner_id,
+      slug: public.slug,
+      title: public.title
+    })
     |> Repo.all()
-    |> Map.new(&{&1.article_hash_id, &1})
+    |> Map.new(&{&1.id, &1})
   end
 
   defp build_public_tabs(%Community{} = community, nodes, docs_by_doc_id) do
@@ -403,7 +394,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
          docs_by_doc_id
        ) do
     case Map.get(docs_by_doc_id, node.doc_id) do
-      %Doc{inner_id: inner_id, slug: slug}
+      %{inner_id: inner_id, slug: slug}
       when not is_nil(inner_id) and is_binary(slug) and slug != "" ->
         node
         |> public_node_base()
@@ -517,25 +508,30 @@ defmodule GroupherServer.CMS.DocTree.Reader do
       |> Map.new(&{&1.node_id, &1})
 
     draft_versions =
-      Doc
-      |> Trash.not_trashed_scope(:doc)
-      |> where([v], v.community_id == ^community.id)
-      |> where([v], v.branch_id == ^branch.id)
-      |> where([v], v.article_hash_id in ^doc_ids)
-      |> where([v], v.stage == CMS.Const.stage(:draft))
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> where([draft, article], article.community_id == ^community.id)
+      |> where([draft, _article], draft.branch_id == ^branch.id)
+      |> where([draft, _article], draft.article_id in ^doc_ids)
       |> Repo.all()
-      |> Map.new(&{&1.article_hash_id, &1})
+      |> Map.new(&{&1.article_id, &1})
 
     public_versions =
-      DocSnapshot
-      |> where([s], s.community_id == ^community.id)
-      |> where([s], s.branch_id == ^branch.id)
-      |> where([s], s.stage == CMS.Const.stage(:public))
-      |> where([s], s.article_hash_id in ^doc_ids)
-      |> order_by([s], desc: s.revision_number, desc: s.id)
+      ArticleRevision
+      |> join(:inner, [revision], version in DocBranchVersion,
+        on: version.revision_id == revision.id
+      )
+      |> join(:inner, [revision, version], public in DocPublic,
+        on: public.branch_version_id == version.id
+      )
+      |> join(:inner, [revision, _version, _public], article in Article,
+        on: article.id == revision.article_id
+      )
+      |> where([_revision, _version, public, article], article.community_id == ^community.id)
+      |> where([_revision, _version, public, _article], public.branch_id == ^branch.id)
+      |> where([revision, _version, _public, _article], revision.article_id in ^doc_ids)
       |> Repo.all()
-      |> Enum.uniq_by(& &1.article_hash_id)
-      |> Map.new(&{&1.article_hash_id, &1})
+      |> Map.new(&{&1.article_id, &1})
 
     public_row_ids =
       public_nodes

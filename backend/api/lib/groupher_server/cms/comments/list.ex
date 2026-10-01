@@ -14,27 +14,16 @@ defmodule GroupherServer.CMS.Comments.List do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
   import ShortMaps
-  import GroupherServer.CMS.Artiment.Matcher
-
   alias GroupherServer.{Accounts, CMS, Jobs, Repo}
 
   alias CMS.QueryBuilder
   alias Accounts.Model.User
-  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Comments.{InteractionResponse, Replies}
-  alias CMS.Model.{Comment, PinnedComment}
+  alias CMS.Model.{Article, ArticleStats, Author, Comment, PinnedComment}
   alias Helper.{ORM, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
-  @published_article_preloads [
-    post: [author: :user],
-    blog: [author: :user],
-    changelog: [author: :user],
-    doc: [author: :user]
-  ]
-
   @doc """
   Returns the comment summary state for one article: total count, participant
   count, latest participants, and whether the viewer joined the conversation.
@@ -48,14 +37,14 @@ defmodule GroupherServer.CMS.Comments.List do
   def comments_state(thread, article_id) do
     filter = %{page: 1, size: 20}
 
-    with {:ok, thread_query} <- match(thread, :query, article_id),
-         {:ok, info} <- match(thread),
-         {:ok, article} <- public_article(info.model, thread, article_id),
+    with {:ok, article} <- stable_article(thread, article_id),
+         thread_query <- article_comments(article.id),
+         stats <- Repo.get_by(ArticleStats, thread: thread, article_id: article.id),
          {:ok, paged_participants} <-
            do_paged_comments_participants(thread, thread_query, filter) do
       %{
-        total_count: article.comments_count,
-        participants_count: article.comments_participants_count,
+        total_count: stats_value(stats, :comments_count),
+        participants_count: stats_value(stats, :comments_participants_count),
         participants: paged_participants.entries,
         is_viewer_joined: false
       }
@@ -72,7 +61,8 @@ defmodule GroupherServer.CMS.Comments.List do
   """
   @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   def comments_state(thread, article_id, %User{} = user) do
-    with {:ok, thread_query} <- match(thread, :query, article_id),
+    with {:ok, article} <- stable_article(thread, article_id),
+         thread_query <- article_comments(article.id),
          {:ok, state} <- comments_state(thread, article_id) do
       user_joined =
         case state.participants |> Enum.any?(&(&1.id == user.id)) do
@@ -147,7 +137,6 @@ defmodule GroupherServer.CMS.Comments.List do
     %{page: page, size: size} = filter
 
     Comment
-    |> preload(^@published_article_preloads)
     |> CMS.Gate.scope(actor, :list, CommentContext.all_public())
     |> join(:inner, [comment, ...], author in assoc(comment, :author),
       as: :published_comment_author
@@ -155,7 +144,7 @@ defmodule GroupherServer.CMS.Comments.List do
     |> where([_comment, ...], as(:published_comment_author).id == ^user_id)
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
-    |> ORM.extract_and_assign_article()
+    |> assign_stable_articles()
     |> done()
   end
 
@@ -171,10 +160,7 @@ defmodule GroupherServer.CMS.Comments.List do
   def paged_published_comments(%User{id: user_id}, thread, filter, actor) do
     %{page: page, size: size} = filter
 
-    article_preload = Keyword.new([{thread, [author: :user]}])
-    query = from(comment in Comment, preload: ^article_preload)
-
-    query
+    Comment
     |> CMS.Gate.scope(actor, :list, comment_scope(thread))
     |> join(:inner, [comment, ...], author in assoc(comment, :author),
       as: :published_comment_author
@@ -183,8 +169,20 @@ defmodule GroupherServer.CMS.Comments.List do
     |> where([_comment, ...], as(:published_comment_author).id == ^user_id)
     |> QueryBuilder.filter_pack(filter)
     |> ORM.paginator(~m(page size)a)
-    |> ORM.extract_and_assign_article()
+    |> assign_stable_articles()
     |> done()
+  end
+
+  defp assign_stable_articles(%{entries: entries} = page) do
+    entries =
+      Enum.flat_map(entries, fn comment ->
+        case CMS.FrontDesk.article_of(comment) do
+          {:ok, article} -> [Map.put(comment, :article, article)]
+          {:error, _reason} -> []
+        end
+      end)
+
+    Map.put(page, :entries, entries)
   end
 
   @doc """
@@ -248,12 +246,12 @@ defmodule GroupherServer.CMS.Comments.List do
   @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters) do
-    with {:ok, thread_query} <- match(thread, :query, article_id),
-         {:ok, info} <- match(thread),
-         {:ok, article} <- public_article(info.model, thread, article_id),
+    with {:ok, article} <- stable_article(thread, article_id),
+         thread_query <- article_comments(article.id),
+         stats <- Repo.get_by(ArticleStats, thread: thread, article_id: article.id),
          {:ok, paged_data} <-
            do_paged_comments_participants(thread, thread_query, filters) do
-      case article.comments_participants_count !== paged_data.total_count do
+      case stats_value(stats, :comments_participants_count) !== paged_data.total_count do
         true ->
           :ok =
             Jobs.enqueue_best_effort(:reconcile_comments_participants, article.id, fn ->
@@ -271,27 +269,24 @@ defmodule GroupherServer.CMS.Comments.List do
   defp do_paged_comments_participants(thread, query, filters) do
     %{page: page, size: size} = filters
 
-    Comment
-    |> where(^query)
-    |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: :desc_inserted}))
-    |> join(:inner, [c], a in assoc(c, :author))
-    |> distinct([c, a], a.id)
-    |> group_by([c, a], a.id)
-    |> group_by([c, a], c.inserted_at)
-    |> group_by([c, a], c.id)
-    |> select([c, a], a)
-    |> CMS.Gate.scope(nil, :list, comment_scope(thread))
+    participant_activity =
+      Comment
+      |> where(^query)
+      |> CMS.Gate.scope(nil, :list, comment_scope(thread))
+      |> group_by([comment], comment.author_id)
+      |> select([comment], %{
+        author_id: comment.author_id,
+        last_commented_at: max(comment.inserted_at),
+        last_comment_id: max(comment.id)
+      })
+
+    from(activity in subquery(participant_activity),
+      join: author in User,
+      on: author.id == activity.author_id,
+      order_by: [desc: activity.last_commented_at, desc: activity.last_comment_id],
+      select: author
+    )
     |> ORM.paginator(~m(page size)a)
-    |> done()
-  end
-
-  defp public_article(schema, thread, article_id) do
-    context = article_scope(thread)
-
-    schema
-    |> CMS.Gate.scope(nil, :read, context)
-    |> where([article], article.id == ^article_id)
-    |> Repo.one()
     |> done()
   end
 
@@ -299,7 +294,8 @@ defmodule GroupherServer.CMS.Comments.List do
     %{page: page, size: size} = filters
     sort = Map.get(filters, :sort, :asc_inserted)
 
-    with {:ok, thread_query} <- match(thread, :query, article_id) do
+    with {:ok, article} <- stable_article(thread, article_id) do
+      thread_query = article_comments(article.id)
       article_author_id = article_author_id(thread, article_id)
       query = from(c in Comment, preload: [reply_to_comment: :author])
 
@@ -378,8 +374,8 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   defp add_pinned_comments_ifneed(paged_comments, thread, article_id, %{page: 1}) do
-    with {:ok, info} <- match(thread),
-         {:ok, pinned_comments} <- list_pinned_comments(info, thread, article_id) do
+    with {:ok, article} <- stable_article(thread, article_id),
+         {:ok, pinned_comments} <- list_pinned_comments(thread, article) do
       case pinned_comments do
         [] ->
           paged_comments
@@ -402,18 +398,13 @@ defmodule GroupherServer.CMS.Comments.List do
   defp add_pinned_comments_ifneed(paged_comments, _thread, _article_id, _), do: paged_comments
 
   defp article_author_id(thread, article_id) do
-    case match(thread) do
-      {:ok, %{model: model}} ->
-        from(article in model,
-          join: author in assoc(article, :author),
-          where: article.id == ^article_id,
-          select: author.user_id
-        )
-        |> Repo.one()
-
-      _ ->
-        nil
-    end
+    from(article in Article,
+      join: author in Author,
+      on: author.id == article.author_id,
+      where: article.id == ^article_id and article.thread == ^thread,
+      select: author.user_id
+    )
+    |> Repo.one()
   end
 
   defp article_author_id(comment) do
@@ -428,14 +419,11 @@ defmodule GroupherServer.CMS.Comments.List do
   defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
   defp comment_scope(thread), do: CommentContext.for_thread(thread)
 
-  defp article_scope(:doc), do: DocContext.public_main()
-  defp article_scope(thread), do: ArticleContext.public(thread)
-
-  defp list_pinned_comments(%{foreign_key: foreign_key}, thread, article_id) do
+  defp list_pinned_comments(thread, %Article{id: article_id}) do
     from(c in Comment,
       join: p in PinnedComment,
       on: p.comment_id == c.id,
-      where: field(p, ^foreign_key) == ^article_id,
+      where: p.article_id == ^article_id,
       order_by: [desc: p.inserted_at, desc: p.id],
       select: c
     )
@@ -443,4 +431,16 @@ defmodule GroupherServer.CMS.Comments.List do
     |> Repo.all()
     |> done
   end
+
+  defp stable_article(thread, article_id) do
+    case Repo.get(Article, article_id) do
+      %Article{thread: ^thread} = article -> {:ok, article}
+      _ -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+    end
+  end
+
+  defp article_comments(article_id), do: dynamic([comment], comment.article_id == ^article_id)
+
+  defp stats_value(nil, _field), do: 0
+  defp stats_value(stats, field), do: Map.fetch!(stats, field)
 end

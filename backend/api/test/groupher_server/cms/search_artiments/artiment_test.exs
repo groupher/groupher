@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   alias GroupherServer.ErrorCat
 
   alias GroupherServer.CMS
-  alias CMS.Model.{Embeds.ArticleMeta, Post}
+  alias CMS.Model.Article
   alias CMS.SearchArtiments
   alias CMS.SearchArtiments.{Artiment, Indexer, Query}
   alias Helper.TestFakes.SearchArtiments, as: SearchPlatform
@@ -17,25 +17,28 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   end
 
   test "builds deterministic Article and Comment refs with Thread namespace" do
-    article_hash_id = "550e8400-e29b-41d4-a716-446655440000"
+    article_id = "550e8400-e29b-41d4-a716-446655440000"
 
-    assert Artiment.article_ref(:doc, article_hash_id) ==
+    assert Artiment.article_key(:doc, article_id) ==
              "ARTICLE:DOC:550e8400-e29b-41d4-a716-446655440000"
 
-    assert Artiment.comment_ref(:post, article_hash_id, 18) ==
+    assert Artiment.comment_ref(:post, article_id, 18) ==
              "COMMENT:POST:550e8400-e29b-41d4-a716-446655440000:18"
   end
 
   test "round trips an Article through the platform JSON shape" do
     now = ~U[2026-07-14 10:00:00Z]
-    ref = Artiment.article_ref(:doc, "550e8400-e29b-41d4-a716-446655440000")
+    article_id = "550e8400-e29b-41d4-a716-446655440000"
+    revision_id = Ecto.UUID.generate()
+    ref = Artiment.article_key(:doc, article_id)
 
     artiment = %Artiment{
       ref: ref,
       type: :article,
       community_ref: "groupher",
       thread: :doc,
-      article_ref: ref,
+      article_id: article_id,
+      indexed_revision_id: revision_id,
       title: "Search architecture",
       plain_text: "Platform-neutral search content",
       locator: %{community: "groupher", thread: :doc, inner_id: "12"},
@@ -70,44 +73,41 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
   end
 
   test "rejects an empty query" do
-    assert {:error,
-            %ErrorCat.Error{reason: :custom, details: "search text is required"}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: "search text is required"}} =
              Query.new(%{text: "  "})
   end
 
   test "rejects invalid filters instead of silently broadening the query" do
-    assert {:error,
-            %ErrorCat.Error{reason: :custom, details: "invalid search filter enum"}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: "invalid search filter enum"}} =
              Query.new(%{text: "search", filters: %{threads: [:doc, :invalid]}})
   end
 
   test "enqueues deterministic indexing jobs through the configured queue" do
-    article = %Post{
-      id: 42,
-      article_hash_id: Ecto.UUID.generate(),
-      meta: %ArticleMeta{thread: :post}
-    }
+    article_id = Ecto.UUID.generate()
+    article = %Article{id: article_id, thread: :post}
 
     assert {:ok, :pass} = Indexer.enqueue_upsert(article)
     assert {:ok, :pass} = Indexer.enqueue_metrics(article)
 
     assert SearchArtimentsQueue.jobs() == [
-             {:upsert_article, :post, 42},
-             {:sync_article_metrics, :post, 42}
+             {:upsert_article, :post, article_id},
+             {:sync_article_metrics, :post, article_id}
            ]
   end
 
   test "partially updates mutable metrics without replacing indexed content" do
     now = ~U[2026-07-14 10:00:00Z]
     updated_at = ~U[2026-07-14 11:00:00Z]
-    ref = Artiment.article_ref(:post, Ecto.UUID.generate())
+    article_id = Ecto.UUID.generate()
+    ref = Artiment.article_key(:post, article_id)
 
     artiment = %Artiment{
       ref: ref,
       type: :article,
       community_ref: "home",
       thread: :post,
-      article_ref: ref,
+      article_id: article_id,
+      indexed_revision_id: Ecto.UUID.generate(),
       title: "Stable title",
       plain_text: "Stable body",
       locator: %{community: "home", thread: :post, inner_id: "1"},

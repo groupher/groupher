@@ -9,6 +9,9 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
+    article = Repo.get!(CMS.Model.Article, post.article_id)
+    author = Repo.get_by!(CMS.Model.Author, user_id: user.id)
+    assert {:ok, _draft} = CMS.Articles.Draft.Store.ensure_from_public(article, author)
     asset_conn = simu_conn(:user, user, cms: %{community.slug => %{"asset.upload" => true}})
 
     server_conn =

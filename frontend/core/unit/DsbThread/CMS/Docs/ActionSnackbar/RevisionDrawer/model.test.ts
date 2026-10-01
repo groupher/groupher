@@ -8,7 +8,7 @@ import {
   EMPTY_REVISION_VALUE,
   parseRevisionDocumentValue,
 } from './model'
-import type { TDocSnapshot } from './spec'
+import type { TDocBranchRevision } from './spec'
 
 const value = (...texts: string[]): TRichEditorValue =>
   texts.map((text, index) => ({
@@ -20,14 +20,12 @@ const value = (...texts: string[]): TRichEditorValue =>
 const snapshot = (
   id: string,
   documentValue: TRichEditorValue,
-  stage: TDocSnapshot['stage'] = 'DRAFT',
-): TDocSnapshot => ({
-  action: 'CHECKPOINT',
+  _stage = 'DRAFT',
+): TDocBranchRevision => ({
+  branchVersionId: id,
   id,
-  versionHash: id,
   documentJson: JSON.stringify(documentValue),
   insertedAt: '2026-06-29T10:00:00Z',
-  stage,
 })
 
 describe('revision history model', () => {
@@ -86,11 +84,9 @@ describe('revision history model', () => {
     expect(history.publishedBaselineValue).toBe(EMPTY_REVISION_VALUE)
   })
 
-  it('deduplicates snapshots before constructing stable cache keys', () => {
+  it('deduplicates branch revisions before constructing stable cache keys', () => {
     const duplicate = snapshot('duplicate', value('same'))
-    duplicate.versionHash = 'same-hash'
     const original = snapshot('original', value('same'))
-    original.versionHash = 'same-hash'
 
     const deduped = dedupeRevisionsBySnapshot([duplicate, original])
     const history = buildRevisionHistory({
@@ -101,10 +97,10 @@ describe('revision history model', () => {
     expect(deduped).toEqual({ hiddenCount: 1, revisions: [duplicate] })
     expect(history.hiddenDraftDuplicateCount).toBe(1)
     expect(history.stagedPairs).toHaveLength(1)
-    expect(history.stagedPairs[0].key).toBe('revision:same-hash:empty')
+    expect(history.stagedPairs[0].key).toBe('revision:duplicate:empty')
   })
 
-  it('falls back to an empty Plate document for invalid snapshots', () => {
+  it('falls back to an empty Plate document for invalid branch revision payloads', () => {
     expect(parseRevisionDocumentValue()).toBe(EMPTY_REVISION_VALUE)
     expect(parseRevisionDocumentValue('{invalid')).toBe(EMPTY_REVISION_VALUE)
     expect(parseRevisionDocumentValue('{"type":"p"}')).toBe(EMPTY_REVISION_VALUE)

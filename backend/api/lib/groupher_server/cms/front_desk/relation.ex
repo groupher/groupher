@@ -9,18 +9,34 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
         -> Repo / FrontDesk.Lookup
   """
 
-  import GroupherServer.CMS.Artiment.Matcher
-
   alias GroupherServer.{Accounts, CMS, Repo}
   alias CMS.ErrorCat
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.FrontDesk.Lookup
-  alias CMS.Model.Comment
+  alias CMS.FrontDesk.Article, as: ArticleReader
+  alias CMS.Model.{Article, Comment}
 
   @doc "Preloads the author relation expected by Article or Comment callers."
   def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done()
+
+  def preload_author(%{article_id: article_id, author: %User{}} = article)
+      when is_binary(article_id),
+      do: done(article)
+
+  def preload_author(%CMS.Model.Article{} = article) do
+    with %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, article.community_id),
+         {:ok, projection} <-
+           ArticleReader.read(
+             %{community: community.slug, thread: article.thread, inner_id: article.inner_id},
+             nil,
+             []
+           ) do
+      {:ok, projection}
+    else
+      _ -> {:error, ErrorCat.custom(%{reason: :not_exist})}
+    end
+  end
 
   def preload_author(article) do
     case article do
@@ -44,6 +60,9 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   end
 
   @spec author_of(map()) :: {:ok, User.t()} | {:error, map()}
+  def author_of(%{article_id: article_id, author: %User{} = author}) when is_binary(article_id),
+    do: {:ok, author}
+
   def author_of(article) do
     case Ecto.assoc_loaded?(article.author) do
       true -> article.author.user
@@ -57,14 +76,22 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   def article_of(comment, opts \\ [])
 
   def article_of(%Comment{} = comment, opts) when is_list(opts) do
-    preload = Keyword.get(opts, :preload, [])
+    _preload = Keyword.get(opts, :preload, [])
 
-    with {:ok, thread} <- thread_of(comment),
-         {:ok, info} <- match(thread),
-         article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
-         {:ok, article} <- Lookup.get(info.model, article_id, preload: preload) do
-      {:ok, article}
+    with {:stable, article_id} when is_binary(article_id) <-
+           {:stable, comment.article_id},
+         {:ok, thread} <- thread_of(comment),
+         %CMS.Model.Article{} = article <- Repo.get(CMS.Model.Article, article_id),
+         %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, comment.community_id),
+         {:ok, projection} <-
+           ArticleReader.read(
+             %{community: community.slug, thread: thread, inner_id: article.inner_id},
+             nil,
+             []
+           ) do
+      {:ok, projection}
     else
+      {:stable, nil} -> {:error, ErrorCat.custom("invalid article")}
       nil -> {:error, ErrorCat.custom("invalid article")}
       {:error, _} = error -> error
     end
@@ -76,6 +103,14 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   @spec thread_of(Comment.t() | map()) :: {:ok, atom()} | {:error, map()}
   def thread_of(%Comment{thread: thread}) when is_atom(thread) and not is_nil(thread),
     do: Threads.to_atom(thread)
+
+  def thread_of(%Article{thread: thread}) when is_atom(thread), do: Threads.to_atom(thread)
+
+  def thread_of(%{article_id: article_id, thread: thread})
+      when is_binary(article_id) and is_atom(thread),
+      do: Threads.to_atom(thread)
+
+  def thread_of(%{article_id: article_id}) when is_binary(article_id), do: {:ok, :doc}
 
   def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread),
     do: Threads.to_atom(thread)

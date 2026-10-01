@@ -136,7 +136,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     article = %{
       community_id: community.id,
-      article_hash_id: Ecto.UUID.generate(),
+      id: Ecto.UUID.generate(),
+      thread: :post,
       meta: %{is_comment_locked: false}
     }
 
@@ -192,7 +193,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     article = %{
       community_id: community.id,
-      article_hash_id: Ecto.UUID.generate(),
+      id: Ecto.UUID.generate(),
+      thread: :post,
       meta: %{is_comment_locked: false}
     }
 
@@ -273,7 +275,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     article = %{
       community_id: community.id,
-      article_hash_id: Ecto.UUID.generate(),
+      id: Ecto.UUID.generate(),
+      thread: :post,
       meta: %{is_comment_locked: false}
     }
 
@@ -299,7 +302,8 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
 
     article = %{
       community_id: community.id,
-      article_hash_id: Ecto.UUID.generate(),
+      id: Ecto.UUID.generate(),
+      thread: :post,
       meta: %{is_comment_locked: false}
     }
 

@@ -4,12 +4,13 @@ defmodule GroupherServer.Test.CMS.Press do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{
+    ArticleStats,
     CommunityLifecycle,
     DocPublishRelease,
     DocTreeNode,
     DocTreeSnapshot,
-    Post,
     PressConfig
   }
 
@@ -30,12 +31,11 @@ defmodule GroupherServer.Test.CMS.Press do
         inner_id: post.inner_id
       })
 
-    assert projection.article_ref == post.article_hash_id
+    assert projection.article_id == post.id
     assert is_binary(projection.markdown)
     assert projection.canonical_path == "/#{community.slug}/post/#{post.inner_id}"
 
-    persisted = Repo.get!(Post, post.id)
-    refute Map.has_key?(persisted, :views)
+    assert Repo.get_by!(ArticleStats, thread: :post, article_id: post.id).views == 0
   end
 
   test "origin projections hide communities that are not publicly active", ~m(community post)a do
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.CMS.Press do
       %{
         node_id: "page-1",
         parent_node_id: "group-1",
-        doc_id: doc.article_hash_id,
+        doc_id: doc.id,
         type: :page,
         title: doc.title,
         index: 0
@@ -102,8 +102,8 @@ defmodule GroupherServer.Test.CMS.Press do
       |> Repo.insert!()
     end
 
-    assert {:ok, %{article_ref: article_ref, markdown: markdown}} = CMS.Press.article(path)
-    assert article_ref == doc.article_hash_id
+    assert {:ok, %{article_id: article_id, markdown: markdown}} = CMS.Press.article(path)
+    assert article_id == doc.id
     assert is_binary(markdown)
   end
 
@@ -219,8 +219,8 @@ defmodule GroupherServer.Test.CMS.Press do
 
     assert {:ok, feed} = CMS.Press.community_rss_feed(community)
     assert feed.config_revision == 1
-    assert [%{article_ref: article_ref, thread: :post}] = feed.items
-    assert article_ref == post.article_hash_id
+    assert [%{item_id: article_id, thread: :post}] = feed.items
+    assert article_id == post.id
 
     assert {:ok, thread_feed} = CMS.Press.thread_rss_feed(community, :post)
     assert thread_feed.thread == :post
@@ -265,14 +265,13 @@ defmodule GroupherServer.Test.CMS.Press do
              )
 
     assert {:ok, %{items: [item]}} = CMS.Press.thread_rss_feed(community, :doc)
-    assert item.article_ref == "#{community.slug}:docs:v2"
+    assert item.item_id == "#{community.slug}:docs:v2"
     assert item.article_revision == "release-2"
     assert item.thread == :doc
   end
 
   test "feed validation rejects disabled or invalid configuration", ~m(community user)a do
-    assert {:error,
-            %ErrorCat.Error{reason: :custom, details: "Press output is disabled"}} =
+    assert {:error, %ErrorCat.Error{reason: :custom, details: "Press output is disabled"}} =
              CMS.Press.community_rss_feed(community)
 
     assert {:error, %Ecto.Changeset{}} =

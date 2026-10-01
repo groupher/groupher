@@ -12,23 +12,27 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
   alias GroupherServer.{CMS, PublicCache, Repo}
 
-  alias CMS.{FrontDesk, QueryBuilder}
-  alias CMS.ViewTracker.Query, as: ViewTrackerQuery
   alias CMS.Articles.Trash
   alias CMS.Communities.TagStats
-  alias CMS.SearchArtiments.Indexer
-  alias Helper.{Multi, ORM, T}
-  alias PublicCache.Const, as: PublicCacheConst
 
-  @audit_legal CMS.Artiment.Const.moderation_state(:legal)
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-  @audit_failed CMS.Artiment.Const.moderation_state(:audit_failed)
+  alias CMS.Model.{
+    Article,
+    ArticleCommunity,
+    ArticleCommunityTag,
+    ArticlePublic,
+    CommunityTag,
+    DocBranch,
+    DocBranchState,
+    DocPublic
+  }
+
+  alias CMS.SearchArtiments.Indexer
+  alias Helper.{ORM, T}
 
   @doc """
   Returns a paged list of audit-failed articles for one thread.
@@ -41,182 +45,177 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @spec paged_audit_failed(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed(thread, filter) do
     %{page: page, size: size} = filter
-    flags = %{pending: :audit_failed}
 
-    with {:ok, info} <- match(thread) do
-      info.model
-      |> Trash.not_trashed_scope(thread)
-      |> QueryBuilder.filter_pack(Map.merge(filter, flags))
-      |> ViewTrackerQuery.order_by_views(
-        thread,
-        Map.get(filter, :order) || Map.get(filter, :sort)
-      )
-      |> ORM.paginator(~m(page size)a)
-      |> done()
+    Article
+    |> Trash.not_trashed_scope(thread)
+    |> where([article], article.thread == ^thread and article.moderation_state == :audit_failed)
+    |> order_by([article], desc: article.updated_at)
+    |> ORM.paginator(~m(page size)a)
+    |> done()
+  end
+
+  @doc "Applies one moderation state to a Gate-authorized stable Article."
+  @spec set_state(Article.t(), atom(), map(), keyword()) :: T.domain_res(term())
+  def set_state(%Article{thread: :doc} = article, state, audit_state, opts)
+      when state in [:legal, :illegal, :audit_failed] do
+    update_doc_moderation(article, state, audit_state, opts)
+  end
+
+  def set_state(%Article{} = article, state, audit_state, _opts)
+      when state in [:legal, :illegal, :audit_failed] do
+    update_stable_moderation(article, state, audit_state)
+  end
+
+  defp update_doc_moderation(article, state, audit_state, opts) do
+    branch =
+      case Keyword.get(opts, :branch_id) do
+        nil -> Repo.get_by(DocBranch, community_id: article.community_id, type: :main)
+        branch_id -> Repo.get_by(DocBranch, id: branch_id, community_id: article.community_id)
+      end
+
+    with %DocBranch{id: branch_id} <- branch,
+         %DocBranchState{} = branch_state <-
+           Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
+      with {:ok, updated} <-
+             branch_state
+             |> DocBranchState.changeset(doc_moderation_attrs(state, audit_state))
+             |> Repo.update(),
+           :ok <- update_doc_visibility(article.id, branch_id, state),
+           :ok <- update_author_moderation(article, state, audit_state),
+           :ok <- sync_stable_search(article, state) do
+        {:ok, updated}
+      end
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end
   end
 
-  @spec set_audit_failed(term(), term()) :: T.domain_res(term())
-  def set_audit_failed(article, _audit_state) do
-    ORM.update(article, %{pending: @audit_failed})
-  end
-
-  @spec set_illegal(atom(), T.id(), map()) :: T.domain_res(term())
-  def set_illegal(thread, id, audit_state) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- FrontDesk.get(info.model, id) do
-      set_illegal(article, audit_state)
+  defp update_stable_moderation(%Article{} = article, state, audit_state) do
+    with {:ok, updated} <-
+           article
+           |> Article.changeset(stable_moderation_attrs(state, audit_state))
+           |> Repo.update(),
+         :ok <- update_public_visibility(article.id, state),
+         :ok <- update_author_moderation(article, state, audit_state),
+         :ok <- rebuild_tag_stats(article.id),
+         :ok <- sync_stable_search(updated, state),
+         :ok <- invalidate_public_cache(updated) do
+      {:ok, updated}
     end
   end
 
-  @spec set_illegal(term(), map()) :: T.domain_res(term())
-  def set_illegal(article, audit_state) do
-    article = Repo.preload(article, :community_tags)
+  defp stable_moderation_attrs(state, audit_state) do
+    %{
+      moderation_state: state,
+      illegal_reason:
+        if(state == :legal, do: [], else: Map.get(audit_state, :illegal_reason, [])),
+      illegal_words: if(state == :legal, do: [], else: Map.get(audit_state, :illegal_words, []))
+    }
+  end
 
-    Multi.new()
-    |> Multi.run(:update_pending_state, fn _, _ ->
-      ORM.update(article, %{pending: @audit_illegal})
-    end)
-    |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
-      update_tag_stats_on_visibility_change(article, updated_article)
-    end)
-    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
-      invalidate_public_visibility(updated_article)
-    end)
-    |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
-      legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-      ORM.update_meta(article, legal_state)
-    end)
-    |> Multi.run(:update_author_meta, fn _, _ ->
-      article = Repo.preload(article, author: :user)
-      illegal_articles = Map.get(audit_state, :illegal_articles, [])
+  defp doc_moderation_attrs(state, audit_state) do
+    reason = Map.get(audit_state, :illegal_reason)
 
-      with {:ok, user} <- FrontDesk.live_user(article.author.user.login) do
-        illegal_articles = user.meta.illegal_articles ++ illegal_articles
+    %{
+      moderation_state: state,
+      illegal_reason: if(state == :legal, do: nil, else: reason |> List.wrap() |> List.first()),
+      illegal_words: if(state == :legal, do: [], else: Map.get(audit_state, :illegal_words, []))
+    }
+  end
 
-        user
-        |> ORM.update_meta(%{has_illegal_articles: true, illegal_articles: illegal_articles})
-        |> revalidate_user(user.login)
+  defp update_author_moderation(article, state, audit_state) do
+    article = Repo.preload(article, author: :user)
+    user = article.author.user
+    changed = Map.get(audit_state, :illegal_articles, [])
+
+    illegal_articles =
+      case state do
+        :legal -> user.meta.illegal_articles -- changed
+        _ -> Enum.uniq(user.meta.illegal_articles ++ changed)
+      end
+
+    case ORM.update_meta(user, %{
+           has_illegal_articles: illegal_articles != [],
+           illegal_articles: illegal_articles
+         }) do
+      {:ok, _user} ->
+        CMS.FrontDesk.revalidate_user(user.login)
+        :ok
+
+      {:error, _reason} = error ->
+        error
+    end
+  end
+
+  defp update_public_visibility(article_id, state) do
+    ArticlePublic
+    |> where([public], public.article_id == ^article_id)
+    |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
+
+    ArticleCommunity
+    |> where([relation], relation.article_id == ^article_id)
+    |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
+
+    :ok
+  end
+
+  defp update_doc_visibility(article_id, branch_id, state) do
+    DocPublic
+    |> where([public], public.article_id == ^article_id and public.branch_id == ^branch_id)
+    |> Repo.update_all(set: [visible: state == :legal, updated_at: DateTime.utc_now(:second)])
+
+    :ok
+  end
+
+  defp rebuild_tag_stats(article_id) do
+    CommunityTag
+    |> join(:inner, [tag], assignment in ArticleCommunityTag, on: assignment.tag_id == tag.id)
+    |> join(:inner, [_tag, assignment], relation in ArticleCommunity,
+      on: relation.id == assignment.article_community_id
+    )
+    |> where([_tag, _assignment, relation], relation.article_id == ^article_id)
+    |> Repo.all()
+    |> Enum.reduce_while(:ok, fn tag, :ok ->
+      case TagStats.rebuild(tag) do
+        {:ok, _stat} -> {:cont, :ok}
+        {:error, _reason} = error -> {:halt, error}
       end
     end)
-    |> Repo.transaction()
-    |> result()
-    |> sync_search(:delete)
   end
 
-  @spec unset_illegal(atom(), T.id(), map()) :: T.domain_res(term())
-  def unset_illegal(thread, id, audit_state) do
-    with {:ok, info} <- match(thread),
-         {:ok, article} <- FrontDesk.get(info.model, id) do
-      unset_illegal(article, audit_state)
-    end
+  defp sync_stable_search(article, :legal) do
+    _ = Indexer.enqueue_upsert(article)
+    :ok
   end
 
-  @spec unset_illegal(term(), map()) :: T.domain_res(term())
-  def unset_illegal(article, audit_state) do
-    article = Repo.preload(article, :community_tags)
-
-    Multi.new()
-    |> Multi.run(:update_pending_state, fn _, _ ->
-      ORM.update(article, %{pending: @audit_legal})
-    end)
-    |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
-      update_tag_stats_on_visibility_change(article, updated_article)
-    end)
-    |> Multi.run(:public_cache, fn _, %{update_pending_state: updated_article} ->
-      invalidate_public_visibility(updated_article)
-    end)
-    |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
-      legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
-
-      ORM.update_meta(article, legal_state)
-    end)
-    |> Multi.run(:update_author_meta, fn _, _ ->
-      article = Repo.preload(article, author: :user)
-      illegal_articles = Map.get(audit_state, :illegal_articles, [])
-
-      with {:ok, user} <- FrontDesk.live_user(article.author.user.login) do
-        illegal_articles = user.meta.illegal_articles -- illegal_articles
-        has_illegal_articles = not Enum.empty?(illegal_articles)
-
-        user
-        |> ORM.update_meta(%{
-          has_illegal_articles: has_illegal_articles,
-          illegal_articles: illegal_articles
-        })
-        |> revalidate_user(user.login)
-      end
-    end)
-    |> Repo.transaction()
-    |> result()
-    |> sync_search(:upsert)
+  defp sync_stable_search(article, _state) do
+    _ = Indexer.enqueue_delete(article)
+    :ok
   end
 
-  defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
-  defp result({:error, _, result, _steps}), do: {:error, result}
+  defp invalidate_public_cache(%Article{inner_id: inner_id}) when not is_integer(inner_id),
+    do: :ok
 
-  defp revalidate_user({:ok, _result} = response, login) do
-    FrontDesk.revalidate_user(login)
-    response
-  end
-
-  defp revalidate_user(response, _login), do: response
-
-  defp update_tag_stats(article, action) do
-    article = Repo.preload(article, :community_tags)
-
-    Enum.reduce_while(article.community_tags, {:ok, :pass}, fn tag, {:ok, :pass} ->
-      case apply(TagStats, action, [article, tag]) do
-        {:ok, :pass} -> {:cont, {:ok, :pass}}
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp update_tag_stats_on_visibility_change(article, updated_article) do
-    case {counted_in_tag_stats?(article), counted_in_tag_stats?(updated_article)} do
-      {true, false} -> update_tag_stats(article, :dec)
-      {false, true} -> update_tag_stats(updated_article, :inc)
-      _ -> {:ok, :pass}
-    end
-  end
-
-  defp sync_search({:ok, article} = result, :delete) do
-    Indexer.enqueue_delete(article)
-    result
-  end
-
-  defp sync_search({:ok, article} = result, :upsert) do
-    Indexer.enqueue_upsert(article)
-    result
-  end
-
-  defp sync_search(result, _action), do: result
-
-  defp counted_in_tag_stats?(article) do
-    not Trash.trashed_article?(article) and
-      Map.get(article, :pending) != @audit_illegal
-  end
-
-  defp invalidate_public_visibility(article) do
-    with {:ok, %{artiment: thread}} <- match(article) do
-      article = Repo.preload(article, :community)
-
+  defp invalidate_public_cache(%Article{} = article) do
+    article
+    |> CMS.Articles.Communities.communities()
+    |> Enum.reduce_while(:ok, fn community, :ok ->
       case PublicCache.invalidate_now(
-             PublicCacheConst.article_visibility_changed(),
+             :article_visibility_changed,
              %{
-               community: article.community.slug,
-               community_id: article.community_id,
-               thread: thread,
-               inner_id: article.inner_id,
-               id: article.id
+               id: article.id,
+               community: community.slug,
+               community_id: community.id,
+               thread: article.thread,
+               inner_id: article.inner_id
              },
              causation_id: Ecto.UUID.generate(),
+             aggregate_id: article.id,
              aggregate_type: "article"
            ) do
-        {:ok, _invalidation} -> {:ok, :pass}
-        {:error, reason} -> {:error, reason}
+        {:ok, _invalidation} -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
-    end
+    end)
   end
 end

@@ -7,7 +7,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
   alias CMS.Interactions
   alias CMS.Articles.Const, as: ArticlesConst
   alias CMS.Interactions.Const
-  alias CMS.Model.{ArticleStats, Comment, Doc, Post}
+  alias CMS.Model.{Article, ArticleStats, Comment}
   alias ErrorCat.Error
 
   test "keeps the complete order vocabulary in one owner" do
@@ -19,31 +19,31 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
   end
 
   test "infers the Article schema and compiles reaction ordering" do
-    base = from(post in Post, where: post.is_legal == true)
+    base = from(article in Article, where: article.moderation_state == :legal)
 
-    assert {:ok, query} = Interactions.scope(base, order: :upvotes)
-    assert query.from.source == {"posts", Post}
+    assert {:ok, query} = Interactions.scope(base, thread: :post, order: :upvotes)
+    assert query.from.source == {"articles", Article}
     assert [%Ecto.Query.JoinExpr{source: {_source, ArticleStats}}] = query.joins
     assert length(query.order_bys) == 1
   end
 
   test "interaction ordering replaces an existing order so it remains the primary order" do
-    base = from(post in Post, order_by: [asc: post.title])
+    base = from(article in Article, order_by: [asc: article.inserted_at])
 
-    assert {:ok, query} = Interactions.scope(base, order: :upvotes)
+    assert {:ok, query} = Interactions.scope(base, thread: :post, order: :upvotes)
     assert length(query.order_bys) == 1
 
     [order] = query.order_bys
     rendered = Macro.to_string(order.expr)
     assert rendered =~ "upvotes_count"
-    refute rendered =~ "title"
+    refute rendered =~ "inserted_at"
   end
 
   test "returns validated passthrough queries unchanged" do
-    base = Ecto.Queryable.to_query(Doc)
+    base = Ecto.Queryable.to_query(Article)
 
     for order <- [nil, :publish, :comments, :views] do
-      assert {:ok, ^base} = Interactions.scope(base, order: order)
+      assert {:ok, ^base} = Interactions.scope(base, thread: :doc, order: order)
     end
   end
 
@@ -55,6 +55,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ScopeTest do
              Interactions.scope(:not_queryable, order: :upvotes)
 
     assert {:error, %Error{reason: :unsupported_order}} =
-             Interactions.scope(Post, order: :unknown)
+             Interactions.scope(Article, thread: :post, order: :unknown)
   end
 end

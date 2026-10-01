@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.Trash
-  alias CMS.Model.{Changelog, Community, Doc, Post}
+  alias CMS.Model.{Article, ArticlePublic, Community, PostState}
   alias CMS.Seeds.{Communities, FullCommunity}
   alias CMS.Seeds.Helper, as: SeedHelper
   alias Helper.{ORM, T}
@@ -116,8 +116,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   defp seed_articles(%Community{} = community, thread, titles)
        when thread in [:post, :changelog] do
-    schema = schema_for(thread)
-    existing_articles = existing_articles_by_title(schema, thread, community.id, titles)
+    existing_articles = existing_articles_by_title(thread, community.id, titles)
 
     with {:ok, author} <- SeedHelper.seed_bot() do
       titles
@@ -146,14 +145,16 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     end
   end
 
-  defp schema_for(:post), do: Post
-  defp schema_for(:changelog), do: Changelog
-
-  defp existing_articles_by_title(schema, thread, community_id, titles) do
-    schema
+  defp existing_articles_by_title(thread, community_id, titles) do
+    Article
     |> Trash.not_trashed_scope(thread)
-    |> join(:inner, [item], community in assoc(item, :communities))
-    |> where([item, community], community.id == ^community_id and item.title in ^titles)
+    |> join(:inner, [article], public in ArticlePublic, on: public.article_id == article.id)
+    |> where(
+      [article, public],
+      article.community_id == ^community_id and article.thread == ^thread and
+        public.title in ^titles
+    )
+    |> select([article, public], %{id: article.id, thread: article.thread, title: public.title})
     |> Repo.all()
     |> Map.new(&{&1.title, &1})
   end
@@ -162,7 +163,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     posts
     |> Enum.zip(Stream.cycle(@post_statuses))
     |> Enum.reduce_while({:ok, []}, fn {post, status}, {:ok, acc} ->
-      case CMS.Articles.set_status(post, status) do
+      post = Repo.get!(Article, post.id)
+
+      case CMS.Articles.States.set_status(post, status) do
         {:ok, post} -> {:cont, {:ok, [post | acc]}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -176,32 +179,33 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp summary(%Community{id: community_id}) do
     %{
       slug: @slug,
-      posts: count(Post, :post, community_id),
+      posts: count(:post, community_id),
       kanban_posts: count_kanban_posts(community_id),
-      changelogs: count(Changelog, :changelog, community_id),
-      docs: count(Doc, :doc, community_id)
+      changelogs: count(:changelog, community_id),
+      docs: count(:doc, community_id)
     }
   end
 
   defp count_kanban_posts(community_id) do
-    active_posts = Trash.not_trashed_scope(Post, :post)
+    active_posts = Trash.not_trashed_scope(Article, :post)
 
     Repo.aggregate(
       from(post in active_posts,
-        join: community in assoc(post, :communities),
-        where: community.id == ^community_id and not is_nil(post.status)
+        join: state in PostState,
+        on: state.article_id == post.id,
+        where:
+          post.community_id == ^community_id and post.thread == :post and not is_nil(state.status)
       ),
       :count
     )
   end
 
-  defp count(schema, thread, community_id) do
-    active_articles = Trash.not_trashed_scope(schema, thread)
+  defp count(thread, community_id) do
+    active_articles = Trash.not_trashed_scope(Article, thread)
 
     Repo.aggregate(
       from(item in active_articles,
-        join: community in assoc(item, :communities),
-        where: community.id == ^community_id
+        where: item.community_id == ^community_id and item.thread == ^thread
       ),
       :count
     )

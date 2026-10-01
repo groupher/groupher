@@ -15,14 +15,13 @@ defmodule GroupherServer.Accounts.Upvotes do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
   alias Accounts.Model.User
-  alias CMS.Model.ArticleUpvote
+  alias CMS.FrontDesk
+  alias CMS.Model.{ArticleStats, ArticleUpvote}
   alias Helper.{ORM, QueryBuilder}
-
-  @threads CMS.Artiment.Config.threads()
 
   @doc "Returns paged articles from the `Upvotes` read boundary."
   def paged_articles(%User{id: user_id}, %{thread: thread} = filter) when is_atom(thread) do
@@ -40,18 +39,40 @@ defmodule GroupherServer.Accounts.Upvotes do
   end
 
   defp load_articles(where_query, %{page: page, size: size} = filter) do
-    article_preload =
-      Enum.reduce(@threads, [], fn thread, acc ->
-        acc ++ Keyword.new([{thread, [author: :user]}])
+    query = from(upvote in ArticleUpvote, preload: [article: :community])
+
+    paged =
+      query
+      |> where(^where_query)
+      |> QueryBuilder.filter_pack(filter)
+      |> ORM.paginator(~m(page size)a)
+
+    entries =
+      Enum.flat_map(paged.entries, fn upvote ->
+        article = upvote.article
+
+        case FrontDesk.article(%{
+               community: article.community.slug,
+               thread: article.thread,
+               inner_id: article.inner_id
+             }) do
+          {:ok, projection} ->
+            stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
+
+            [
+              %{
+                author: projection.author,
+                id: projection.id,
+                inner_id: projection.inner_id,
+                thread: projection.thread,
+                title: projection.title,
+                upvotes_count: if(stats, do: stats.upvotes_count, else: 0)
+              }
+            ]
+          {:error, _reason} -> []
+        end
       end)
 
-    query = from(a in ArticleUpvote, preload: ^article_preload)
-
-    query
-    |> where(^where_query)
-    |> QueryBuilder.filter_pack(filter)
-    |> ORM.paginator(~m(page size)a)
-    |> ORM.extract_articles()
-    |> done()
+    paged |> Map.put(:entries, entries) |> done()
   end
 end

@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert beer.count == 1
       assert heart.count == 1
 
-      {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
+      {:ok, current_post} = read_article(community, :post, post.inner_id)
       counts = CMS.Interactions.counts([current_post])
       emotion_counts = counts[{:post, current_post.id}].emotion_counts
       assert %{type: :beer, count: 1} in emotion_counts
@@ -118,10 +118,10 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert records.total_count == 2
 
       {:ok, _beer_record} =
-        ORM.find_by(ArticleUserEmotion, %{post_id: post.id, user_id: user.id, emotion: "beer"})
+        ORM.find_by(ArticleUserEmotion, %{article_id: post.id, user_id: user.id, emotion: "beer"})
 
       {:ok, _heart_record} =
-        ORM.find_by(ArticleUserEmotion, %{post_id: post.id, user_id: user.id, emotion: "heart"})
+        ORM.find_by(ArticleUserEmotion, %{article_id: post.id, user_id: user.id, emotion: "heart"})
     end
 
     test "generic Article emotion rejects the dedicated UPVOTE reaction", ~m(post user)a do
@@ -129,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
                CMS.Interactions.emotion(post, :upvote, user)
 
       refute Repo.get_by(ArticleUserEmotion,
-               post_id: post.id,
+               article_id: post.id,
                user_id: user.id,
                emotion: "upvote"
              )

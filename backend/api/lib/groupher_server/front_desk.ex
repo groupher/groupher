@@ -37,16 +37,7 @@ defmodule GroupherServer.FrontDesk do
   def comment(article_path, inner_id), do: CMS.FrontDesk.comment(article_path, inner_id)
 
   @doc "Loads an article from its public article path."
-  def article(article_path, opts \\ []) when is_map(article_path) and is_list(opts) do
-    CMS.FrontDesk.article(article_path, opts)
-  end
-
-  @doc "Loads an article from community slug, thread, and public inner id."
-  def article(community, thread, inner_id) when is_binary(community) do
-    preload = [[author: :user], :community]
-
-    with {:ok, community} <- community(community) do
-      CMS.FrontDesk.article(community, thread, inner_id, preload: preload)
-    end
+  def article(article_path, actor \\ nil, opts \\ []) when is_map(article_path) do
+    CMS.FrontDesk.article(article_path, actor, opts)
   end
 end

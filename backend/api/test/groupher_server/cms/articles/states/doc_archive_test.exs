@@ -1,81 +1,76 @@
 defmodule GroupherServer.Test.CMS.DocArchive do
   @moduledoc false
-  use GroupherServer.TestMate
-  alias GroupherServer.CMS
-  alias CMS.Articles.Trash
 
-  @archive_threshold CMS.Artiment.Config.archive_threshold()
-  @doc_archive_threshold Datetime.shift(
-                           @now,
-                           @archive_threshold[:doc] || @archive_threshold[:default]
-                         )
+  use GroupherServer.TestMate
+
+  alias GroupherServer.CMS
+  alias CMS.Articles.Draft.Store
+  alias CMS.Model.{DocLifecycle, DocPublic}
 
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
+    {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
+    {:ok, branch} = CMS.Docs.Branch.resolve(community, [])
 
-    {:ok, doc_long_ago} = db_insert(:doc, %{title: "last week", inserted_at: @last_year})
+    {:ok, %{article: article, draft: draft}} =
+      Store.create(
+        community,
+        :doc,
+        %{
+          title: "Archived Doc",
+          slug: "archived-doc",
+          subtitle: "archive boundary",
+          body_bag: mock_body_bag(mock_rich_text("archived body"))
+        },
+        author,
+        branch_id: branch.id
+      )
 
-    db_insert_multi(:doc, 5)
+    {:ok, _published} =
+      CMS.Docs.publish_branch(article.id, branch.id, user,
+        expected_draft_version: draft.version,
+        expected_lifecycle_version: 1
+      )
 
-    {:ok, ~m(user community doc_long_ago)a}
+    public = Repo.get_by!(DocPublic, article_id: article.id, branch_id: branch.id)
+
+    public
+    |> Ecto.Changeset.change(inserted_at: @last_year)
+    |> Repo.update!()
+
+    {:ok, ~m(user community branch article)a}
   end
 
-  describe "[cms doc archive]" do
-    test "can archive docs", ~m(doc_long_ago)a do
-      assert {:ok, _} = CMS.Articles.archive(:doc)
+  test "archives old stable Doc public heads per branch", ~m(branch article)a do
+    assert {:ok, 1} = CMS.Articles.archive(:doc)
 
-      archived_docs =
-        Doc
-        |> where([article], article.inserted_at < ^@doc_archive_threshold)
-        |> Repo.all()
+    assert Repo.get_by!(DocLifecycle, article_id: article.id, branch_id: branch.id).state ==
+             :archived
+  end
 
-      assert length(archived_docs) == 1
-      archived_doc = archived_docs |> List.first()
-      assert archived_doc.id == doc_long_ago.id
-    end
+  test "an archived stable Doc cannot re-enter draft editing", ~m(user branch article)a do
+    assert {:ok, 1} = CMS.Articles.archive(:doc)
 
-    test "can not edit archived doc" do
-      {:ok, _} = CMS.Articles.archive(:doc)
+    assert {:error, _reason} =
+             CMS.Docs.update_draft(
+               article.id,
+               branch.id,
+               %{title: "new title", expected_version: 1},
+               user
+             )
+  end
 
-      archived_docs =
-        Doc
-        |> where([article], article.inserted_at < ^@doc_archive_threshold)
-        |> Repo.all()
+  test "an archived stable Doc cannot enter branch Trash", ~m(user community branch article)a do
+    assert {:ok, 1} = CMS.Articles.archive(:doc)
 
-      archived_doc = archived_docs |> List.first()
-      {:error, reason} = CMS.Articles.update(archived_doc, %{"title" => "new title"})
-      assert %ErrorCat.Error{reason: :article_archived} = reason
-    end
+    {:ok, action} =
+      CMS.Docs.Trash.create_action(community, user, %{
+        root_type: "doc_tree_page",
+        root_ref: "archive-test"
+      })
 
-    test "can not delete archived doc" do
-      {:ok, _} = CMS.Articles.archive(:doc)
-
-      archived_docs =
-        Doc
-        |> where([article], article.inserted_at < ^@doc_archive_threshold)
-        |> Repo.all()
-
-      archived_doc = archived_docs |> List.first()
-
-      community = Repo.get!(Community, archived_doc.community_id)
-
-      {:ok, action} =
-        Trash.create_action(community, :system, %{
-          root_type: "doc_tree_page",
-          root_ref: "archive-test"
-        })
-
-      {:error, reason} =
-        Trash.attach(
-          action,
-          community,
-          :doc,
-          archived_doc.article_hash_id,
-          :system
-        )
-
-      assert reason |> is_error?({{:cms, :article}, :archived})
-    end
+    assert {:error, _reason} =
+             CMS.Docs.Trash.attach(action, community, branch, article.id, user)
   end
 end

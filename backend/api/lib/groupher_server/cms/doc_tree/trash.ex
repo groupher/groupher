@@ -254,15 +254,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   defp action_doc_ids(%TrashAction{} = action, branch) do
     TrashedDocArticle
     |> where([item], item.trash_action_id == ^action.id and item.branch_id == ^branch.id)
-    |> select([item], item.article_hash_id)
+    |> select([item], item.article_id)
     |> Repo.all()
   end
 
   defp load_actor(args) do
     case Map.get(args, :actor_id) do
       nil ->
-        {:error,
-         ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+        {:error, ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
 
       actor_id ->
         case Repo.get(User, actor_id) do
@@ -270,8 +269,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
             {:ok, actor}
 
           nil ->
-            {:error,
-             ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
+            {:error, ErrorCat.custom("Docs Trash restore requires an authenticated actor")}
         end
     end
   end
@@ -402,13 +400,10 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
       {_type, nil} ->
         {:error,
-         ErrorCat.custom(
-           "The selected restore parent does not exist in every restored stage."
-         )}
+         ErrorCat.custom("The selected restore parent does not exist in every restored stage.")}
 
       _ ->
-        {:error,
-         ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
+        {:error, ErrorCat.custom("The selected node can not parent this Docs Tree item.")}
     end
   end
 
@@ -491,9 +486,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       end)
 
     if conflicts?,
-      do:
-        {:error,
-         ErrorCat.custom("A Docs Tree node with the same identity already exists")},
+      do: {:error, ErrorCat.custom("A Docs Tree node with the same identity already exists")},
       else: :ok
   end
 

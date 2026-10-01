@@ -17,6 +17,7 @@ import type {
 
 const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   id: '',
+  branchId: '',
   title: '',
   subtitle: '',
   slug: '',

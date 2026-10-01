@@ -43,10 +43,10 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
         command: :comment_update,
         resource: comment,
         input: body,
-        recovery: fn _receipt ->
+        recovery: fn receipt ->
           with {:ok, current} <- ORM.find(Comment, comment.id),
                {:ok, article} <- FrontDesk.article_of(current) do
-            {:ok, %{comment: current, article: article, command_id: command_id}}
+            {:ok, %{comment: current, article: article, command_id: receipt.command_id}}
           end
         end
       )
@@ -76,12 +76,11 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
-         {:ok, updated_article} <- ORM.inc(article, :comments_revision),
-         :ok <- CMS.ArticleStats.apply_comment_counts(updated_article),
+         :ok <- CMS.ArticleStats.record_comment_change(article),
          {:ok, synced} <- FrontDesk.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced),
          {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id) do
-      {:ok, %{comment: synced, article: updated_article, command_id: command_id}}
+      {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
   end
 

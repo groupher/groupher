@@ -8,7 +8,7 @@ defmodule GroupherServer.Activity.Blog do
   use GroupherServer.Activity.ArtimentEvent,
     thread: :blog,
     schema: GroupherServer.Activity.Model.BlogLog,
-    stream_field: :blog_ref
+    stream_field: :article_id
 
   alias GroupherServer.Activity
   alias Activity.Event
@@ -24,11 +24,11 @@ defmodule GroupherServer.Activity.Blog do
 
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),
-    title_changed: Event.contract([:title], [:revision_ref], [:article_log, :community_log]),
+    title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(
         [:body_hash, :schema_version, :summary],
-        [:revision_ref],
+        [:revision_id],
         [:article_log, :community_log]
       ),
     trashed:

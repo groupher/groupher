@@ -173,7 +173,7 @@ defmodule GroupherServer.CMS.Interactions do
 
   ## Examples
 
-      CMS.Interactions.scope(Post, order: :upvotes)
+      CMS.Interactions.scope(CMS.Model.Article, thread: :post, order: :upvotes)
 
   """
   @spec scope(Ecto.Queryable.t(), keyword()) ::

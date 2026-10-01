@@ -18,16 +18,11 @@ defmodule GroupherServer.CMS.Press.Reader do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Artiment.Matcher
-  alias CMS.Docs.Branch
-  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.{Community, Doc, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
+  alias CMS.Model.{Community, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
   alias CMS.Press.{Config, Projection}
 
   @threads Config.article_threads()
-  @public_stage CMS.Const.stage(:public)
   @manifest_limit 500
 
   @doc "Reads persisted Press config, falling back to the legacy dashboard projection."
@@ -117,40 +112,32 @@ defmodule GroupherServer.CMS.Press.Reader do
   end
 
   defp current_article(community, :doc, inner_id) do
-    with {:ok, branch} <- public_branch(community, :doc) do
-      Doc
-      |> CMS.Gate.scope(nil, :read, DocContext.public_branch(branch.id))
-      |> join(:inner, [article, ...], branch in DocBranch,
-        as: :press_branch,
-        on: branch.id == article.branch_id
-      )
-      |> where([article], article.community_id == ^community.id)
-      |> where([_article, ...], as(:press_branch).type == ^CMS.Docs.Const.doc_branch_type(:main))
-      |> where([article], article.inner_id == ^inner_id)
-      |> preload([article, ...], [:document, :community_tags, author: :user])
-      |> Repo.one()
-      |> case do
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article")}
-        %{document: nil} -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article document")}
-        article -> ensure_current_public_article(:doc, article)
-      end
+    with {:ok, article} <-
+           CMS.FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
+         :ok <- ensure_stable_public_doc(article) do
+      {:ok, article}
+    else
+      {:error, _reason} = error -> error
     end
   end
 
   defp current_article(community, thread, inner_id) do
-    with {:ok, info} <- Matcher.match(thread) do
-      info.model
-      |> CMS.Gate.scope(nil, :read, ArticleContext.public(thread))
-      |> where([article], article.community_id == ^community.id)
-      |> where([article], article.inner_id == ^inner_id)
-      |> preload([article], [:document, :community_tags, author: :user])
-      |> Repo.one()
-      |> case do
-        nil -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article")}
-        %{document: nil} -> {:error, CMS.Articles.ErrorCat.not_exist("Press Article document")}
-        article -> ensure_current_public_article(thread, article)
-      end
-    end
+    CMS.FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
+  end
+
+  defp ensure_stable_public_doc(article) do
+    visible =
+      DocTreeNode
+      |> where([node], node.community_id == ^article.community_id)
+      |> where([node], node.branch_id == ^article.branch_id)
+      |> where([node], node.stage == ^CMS.Const.stage(:public))
+      |> where([node], node.type == :page)
+      |> where([node], node.doc_id == ^article.id)
+      |> Repo.exists?()
+
+    if visible,
+      do: :ok,
+      else: {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
   end
 
   defp feed_items(community, threads, limit) do
@@ -189,72 +176,21 @@ defmodule GroupherServer.CMS.Press.Reader do
     |> Enum.map(&Projection.feed_item(community, thread, &1))
   end
 
-  defp current_articles(community, :doc, limit) do
-    case public_branch(community, :doc) do
-      {:ok, branch} ->
-        Doc
-        |> CMS.Gate.scope(nil, :list, DocContext.public_branch(branch.id))
-        |> join(:inner, [article, ...], branch in DocBranch,
-          as: :press_branch,
-          on: branch.id == article.branch_id
-        )
-        |> join(:inner, [article, ...], node in DocTreeNode,
-          on:
-            node.community_id == article.community_id and node.branch_id == article.branch_id and
-              node.doc_id == article.article_hash_id and node.stage == ^@public_stage and
-              node.type == :page
-        )
-        |> where([article], article.community_id == ^community.id)
-        |> where(
-          [_article, ...],
-          as(:press_branch).type == ^CMS.Docs.Const.doc_branch_type(:main)
-        )
-        |> order_by([article], desc: article.active_at, desc: article.inserted_at)
-        |> limit(^limit)
-        |> preload([article, ...], [:document, :community_tags, author: :user])
-        |> Repo.all()
-        |> Enum.reject(&is_nil(&1.document))
-
-      _ ->
-        []
-    end
-  end
-
   defp current_articles(community, thread, limit) do
-    case Matcher.match(thread) do
-      {:ok, info} ->
-        info.model
-        |> CMS.Gate.scope(nil, :list, ArticleContext.public(thread))
-        |> where([article], article.community_id == ^community.id)
-        |> order_by([article], desc: article.active_at, desc: article.inserted_at)
-        |> limit(^limit)
-        |> preload([article, ...], [:document, :community_tags, author: :user])
-        |> Repo.all()
-        |> Enum.reject(&is_nil(&1.document))
+    case CMS.Articles.page(thread, %{community: community.slug, page: 1, size: limit}) do
+      {:ok, %{entries: entries}} ->
+        if thread == :doc do
+          Enum.filter(entries, &stable_public_doc?/1)
+        else
+          entries
+        end
 
-      _ ->
+      {:error, _reason} ->
         []
     end
   end
 
-  defp public_branch(community, :doc), do: Branch.resolve(community, Branch.main_slug())
-
-  defp ensure_current_public_article(:doc, article) do
-    visible =
-      DocTreeNode
-      |> where([node], node.community_id == ^article.community_id)
-      |> where([node], node.branch_id == ^article.branch_id)
-      |> where([node], node.stage == ^CMS.Const.stage(:public))
-      |> where([node], node.type == :page)
-      |> where([node], node.doc_id == ^article.article_hash_id)
-      |> Repo.exists?()
-
-    if visible,
-      do: {:ok, article},
-      else: {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
-  end
-
-  defp ensure_current_public_article(_thread, article), do: {:ok, article}
+  defp stable_public_doc?(article), do: ensure_stable_public_doc(article) == :ok
 
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 

@@ -14,7 +14,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   alias CMS.Communities.Lifecycle
 
   alias CMS.Model.{
-    Doc,
     DocBranch,
     DocsSiteState,
     DocTreeEvent,
@@ -83,9 +82,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
       assert doc_draft.json == ~s([{"children":[{"text":""}],"type":"p"}])
 
       assert stage_count(DocTreeNode, community.id, :draft) == 3
-      assert stage_count(Doc, community.id, :draft) == 1
+      assert Repo.aggregate(CMS.Model.DocDraft, :count) == 1
       assert stage_count(DocTreeNode, community.id, :public) == 0
-      assert stage_count(Doc, community.id, :public) == 0
+      assert public_doc_count(community.id) == 0
 
       {:ok, tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
       {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -233,7 +232,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
 
       {:ok, doc_draft} = draft_doc(community, rebuilt_page_payload.node.doc_id)
       assert doc_draft.title == "Install-copy"
-      assert doc_draft.slug == "install"
+      assert doc_draft.slug == "install-copy"
     end
 
     test "trashed group name blocks renaming another group into it" do
@@ -634,8 +633,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
           user
         )
 
+      {:ok, branch} = CMS.Docs.Branch.resolve(community, nil)
+
       {:ok, current} =
-        CMS.Articles.read_editor(community, :doc, page_payload.node.doc_id)
+        CMS.Docs.read_editor_head(community, page_payload.node.doc_id, branch_id: branch.id)
 
       {:ok, draft} =
         CMS.DocTree.update_draft(
@@ -652,7 +653,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
 
       assert draft.title == "Updated Install"
       assert draft.slug == "updated-install"
-      assert draft.json == @plate_body
+      assert draft.document.json == @plate_body
       assert draft.digest =~ "Updated Draft"
 
       {:ok, page_node} =
@@ -734,6 +735,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
     |> Repo.aggregate(:count, :id)
   end
 
+  defp public_doc_count(community_id) do
+    CMS.Model.DocPublic
+    |> join(:inner, [public], article in CMS.Model.Article, on: article.id == public.article_id)
+    |> where([_public, article], article.community_id == ^community_id)
+    |> Repo.aggregate(:count, :article_id)
+  end
+
   defp draft_node(community, node_id) do
     ORM.find_by(DocTreeNode,
       community_id: community.id,
@@ -755,11 +763,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Writer.Mutation do
   end
 
   defp draft_doc(community, doc_id) do
-    ORM.find_by(Doc,
-      community_id: community.id,
-      article_hash_id: doc_id,
-      stage: CMS.Const.stage(:draft)
-    )
+    with {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil),
+         %CMS.Model.DocDraft{} = draft <-
+           Repo.get_by(CMS.Model.DocDraft, article_id: doc_id, branch_id: branch.id),
+         %CMS.Model.ArticleBodyDraft{} = body <-
+           Repo.get(CMS.Model.ArticleBodyDraft, draft.body_draft_id) do
+      {:ok, Map.put(Map.from_struct(draft), :json, body.json)}
+    else
+      _ -> {:error, ErrorCat.custom("stable Doc draft not found")}
+    end
   end
 
   defp tree_create_event(community, node_id) do

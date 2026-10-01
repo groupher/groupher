@@ -1,11 +1,11 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import type { TRichEditorDiffStats } from '@groupher/rich-editor/diff'
 
-import type { TDocSnapshot } from './spec'
+import type { TDocBranchRevision } from './spec'
 
 export type TDedupedRevisions = {
   hiddenCount: number
-  revisions: TDocSnapshot[]
+  revisions: TDocBranchRevision[]
 }
 
 export type TRevisionDiffPair = {
@@ -15,7 +15,7 @@ export type TRevisionDiffPair = {
 }
 
 export type TRevisionSnapshotPair = TRevisionDiffPair & {
-  revision: TDocSnapshot
+  revision: TDocBranchRevision
 }
 
 export type TRevisionDiffSummary = {
@@ -65,12 +65,12 @@ export const parseRevisionDocumentValue = (json?: string | null): TRichEditorVal
 }
 
 /** Runs the dedupe revisions by snapshot operation at the frontend shared boundary. */
-export const dedupeRevisionsBySnapshot = (revisions: TDocSnapshot[]): TDedupedRevisions => {
+export const dedupeRevisionsBySnapshot = (revisions: TDocBranchRevision[]): TDedupedRevisions => {
   const seen = new Set<string>()
-  const deduped: TDocSnapshot[] = []
+  const deduped: TDocBranchRevision[] = []
 
   for (const revision of revisions) {
-    const key = revision.versionHash || revision.documentJson || revision.id
+    const key = revision.documentJson || revision.id
 
     if (seen.has(key)) continue
 
@@ -84,14 +84,14 @@ export const dedupeRevisionsBySnapshot = (revisions: TDocSnapshot[]): TDedupedRe
   }
 }
 
-const snapshotIdentity = (revision?: TDocSnapshot): string =>
-  revision ? revision.versionHash || revision.id : 'empty'
+const snapshotIdentity = (revision?: TDocBranchRevision): string =>
+  revision ? revision.id : 'empty'
 
 /** Builds snapshot diff pairs from typed frontend shared inputs. */
 export const buildSnapshotDiffPairs = (
-  revisions: TDocSnapshot[],
+  revisions: TDocBranchRevision[],
   options: {
-    latestPublishedRevision?: TDocSnapshot
+    latestPublishedRevision?: TDocBranchRevision
     useLatestPublishedFallback?: boolean
   } = {},
 ): TRevisionSnapshotPair[] =>
@@ -112,8 +112,8 @@ export const buildSnapshotDiffPairs = (
 
 /** Builds revision history from typed frontend shared inputs. */
 export const buildRevisionHistory = (params: {
-  draftRevisions: TDocSnapshot[]
-  publishedRevisions: TDocSnapshot[]
+  draftRevisions: TDocBranchRevision[]
+  publishedRevisions: TDocBranchRevision[]
 }): TRevisionHistory => {
   const { hiddenCount: hiddenDraftDuplicateCount, revisions: draftRevisions } =
     dedupeRevisionsBySnapshot(params.draftRevisions)

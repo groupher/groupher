@@ -3,7 +3,7 @@ import type { TArticle, TArticleStats, TPagi, TUser } from '~/spec'
 export type TTrashedPost = {
   id: string
   thread: 'POST'
-  articleRef: string
+  articleId: string
   article: TArticle | null
   stats: TArticleStats | null
   deletedBy: TUser | null

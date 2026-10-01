@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Community, Doc, DocTreeEvent, DocTreeNode}
+  alias CMS.Model.{Article, Community, DocDraft, DocTreeEvent, DocTreeNode}
   alias Helper.ORM
 
   @doc_tree_json_key_type CMS.DocTree.Const.doc_tree_json_key(:type)
@@ -248,12 +248,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        ) do
     doc_id = node[@doc_tree_json_key_doc_id]
 
-    case ORM.find_by(Doc,
-           doc_id: doc_id,
-           branch_id: branch.id,
-           community_id: community.id
-         ) do
-      {:ok, _draft} ->
+    draft_exists? =
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> where(
+        [draft, article],
+        draft.article_id == ^doc_id and draft.branch_id == ^branch.id and
+          article.community_id == ^community.id
+      )
+      |> Repo.exists?()
+
+    case draft_exists? do
+      true ->
         {:ok,
          %{
            community_id: community.id,
@@ -271,7 +277,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
            hidden: Map.get(node, "hidden", false)
          }}
 
-      {:error, _} ->
+      false ->
         {:error, ErrorCat.custom("Publish docs before publishing tree.")}
     end
   end

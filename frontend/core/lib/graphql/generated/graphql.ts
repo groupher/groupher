@@ -39,6 +39,8 @@ export type ArticlePathInput = {
   thread: Thread
 }
 
+export type ArticleStage = 'DRAFT' | 'PUBLIC'
+
 export type ArticleStatusEnum =
   | 'BACKLOG'
   | 'DEFAULT'
@@ -187,10 +189,6 @@ export type DocPublishChangesInput = {
 export type DocPublishMode = 'DOC_ONLY' | 'WITH_COVER_SYNC'
 
 export type DocPublishStatus = 'DRAFT' | 'PUBLIC'
-
-export type DocSnapshotAction = 'CHECKPOINT' | 'FORK' | 'PROMOTE' | 'PUBLISH' | 'RESTORE'
-
-export type DocSnapshotStage = 'DRAFT' | 'PUBLIC'
 
 export type DocTreeNodeInput = {
   badge?: string | null | undefined
@@ -5436,7 +5434,7 @@ export type ContentImportJobFieldsFragment = {
   failedItems: unknown
   skipped: unknown
   targetBranch: string
-  firstImportedDocRef: string | null
+  firstImportedDocId: string | null
   tree: unknown
   badSmells: unknown
   process: {
@@ -5473,7 +5471,7 @@ export type ContentImportJobQuery = {
     failedItems: unknown
     skipped: unknown
     targetBranch: string
-    firstImportedDocRef: string | null
+    firstImportedDocId: string | null
     tree: unknown
     badSmells: unknown
     process: {
@@ -5771,7 +5769,7 @@ export type DashboardTrashedPostsQuery = {
     entries: Array<{
       id: string
       thread: Thread
-      articleRef: string
+      articleId: string
       deletedAt: string
       scheduledPermanentDeletionAt: string
       mentionedByCount: number
@@ -6455,11 +6453,14 @@ export type DocDraftQuery = {
   docDraft: {
     id: string | null
     docId: string | null
+    branchId: string
     version: number
+    contentHash: string | null
+    baseRevisionId: string | null
     title: string | null
     subtitle: string | null
     slug: string | null
-    stage: DocSnapshotStage | null
+    stage: ArticleStage | null
     digest: string | null
     insertedAt: string | null
     updatedAt: string | null
@@ -6473,30 +6474,49 @@ export type DocDraftQuery = {
   } | null
 }
 
-export type DocDraftSnapshotsQueryVariables = Exact<{
-  community: string
-  id: string | number
-  stage?: DocSnapshotStage | null | undefined
+export type DocBranchVersionsQueryVariables = Exact<{
+  docId: string | number
+  branchId: string | number
 }>
 
-export type DocDraftSnapshotsQuery = {
-  docDraftSnapshots: Array<{
-    id: string | null
-    thread: Thread | null
-    stage: DocSnapshotStage | null
-    action: DocSnapshotAction | null
-    articleHashId: string | null
-    title: string | null
-    slug: string | null
-    subtitle: string | null
-    digest: string | null
-    documentJson: string | null
-    versionHash: string | null
-    revisionNumber: number | null
-    schemaVersion: number | null
-    insertedAt: string | null
-    author: { login: string | null; nickname: string | null; avatar: string | null } | null
+export type DocBranchVersionsQuery = {
+  docBranchVersions: Array<{
+    id: string
+    revisionId: string
+    versionNumber: number
+    publishedAt: string | null
+    message: string | null
+    content: {
+      title: string | null
+      slug: string | null
+      subtitle: string | null
+      digest: string | null
+      documentJson: string | null
+      bodyHash: string | null
+      schemaVersion: number | null
+    }
   } | null> | null
+}
+
+export type RestoreDocRevisionToDraftMutationVariables = Exact<{
+  commandId: string | number
+  docId: string | number
+  branchId: string | number
+  revisionId: string | number
+  expectedVersion?: number | null | undefined
+}>
+
+export type RestoreDocRevisionToDraftMutation = {
+  restoreDocRevisionToDraft: {
+    docId: string | null
+    branchId: string
+    version: number
+    baseRevisionId: string | null
+    title: string | null
+    subtitle: string | null
+    slug: string | null
+    document: { json: string | null } | null
+  } | null
 }
 
 export type CreateDocTreeNodeMutationVariables = Exact<{
@@ -6719,32 +6739,6 @@ export type UpdateDocDraftMutation = {
   } | null
 }
 
-export type CheckpointDocDraftSnapshotMutationVariables = Exact<{
-  community: string
-  id: string | number
-  commandId: string | number
-}>
-
-export type CheckpointDocDraftSnapshotMutation = {
-  checkpointDocDraftSnapshot: {
-    id: string | null
-    thread: Thread | null
-    stage: DocSnapshotStage | null
-    action: DocSnapshotAction | null
-    articleHashId: string | null
-    title: string | null
-    slug: string | null
-    subtitle: string | null
-    documentJson: string | null
-    digest: string | null
-    versionHash: string | null
-    revisionNumber: number | null
-    schemaVersion: number | null
-    insertedAt: string | null
-    author: { login: string | null; nickname: string | null; avatar: string | null } | null
-  } | null
-}
-
 export type PublishDocChangesMutationVariables = Exact<{
   community: string
   commandId: string | number
@@ -6788,7 +6782,7 @@ export type MoveDocToDraftMutationVariables = Exact<{
 export type MoveDocToDraftMutation = {
   moveDocToDraft: {
     docId: string | null
-    stage: DocSnapshotStage | null
+    stage: ArticleStage | null
     publishState: {
       status: DocPublishStatus | null
       published: boolean | null
@@ -6813,32 +6807,6 @@ export type MoveDocTreeSubtreeToDraftMutationVariables = Exact<{
 
 export type MoveDocTreeSubtreeToDraftMutation = {
   moveDocTreeSubtreeToDraft: { done: boolean | null } | null
-}
-
-export type RestoreDocDraftSnapshotMutationVariables = Exact<{
-  community: string
-  id: string | number
-  snapshotId: string | number
-  commandId: string | number
-}>
-
-export type RestoreDocDraftSnapshotMutation = {
-  restoreDocDraftSnapshot: {
-    id: string | null
-    title: string | null
-    subtitle: string | null
-    slug: string | null
-    digest: string | null
-    insertedAt: string | null
-    updatedAt: string | null
-    author: { login: string | null; nickname: string | null; avatar: string | null } | null
-    document: {
-      json: string | null
-      markdown: string | null
-      markdownToc: unknown
-      html: string | null
-    } | null
-  } | null
 }
 
 export type DeleteDocTreeNodeMutationVariables = Exact<{
@@ -10493,7 +10461,7 @@ export const ContentImportJobFieldsFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'failedItems' } },
           { kind: 'Field', name: { kind: 'Name', value: 'skipped' } },
           { kind: 'Field', name: { kind: 'Name', value: 'targetBranch' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'firstImportedDocRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstImportedDocId' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'sourceInfo' },
@@ -24578,7 +24546,7 @@ export const ContentImportJobDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'failedItems' } },
           { kind: 'Field', name: { kind: 'Name', value: 'skipped' } },
           { kind: 'Field', name: { kind: 'Name', value: 'targetBranch' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'firstImportedDocRef' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'firstImportedDocId' } },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'sourceInfo' },
@@ -25811,7 +25779,7 @@ export const DashboardTrashedPostsDocument = {
                     selections: [
                       { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'articleRef' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'articleId' } },
                       { kind: 'Field', name: { kind: 'Name', value: 'deletedAt' } },
                       {
                         kind: 'Field',
@@ -26576,7 +26544,10 @@ export const DocDraftDocument = {
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'contentHash' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'baseRevisionId' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'title' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
@@ -26617,25 +26588,17 @@ export const DocDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<DocDraftQuery, DocDraftQueryVariables>
-export const DocDraftSnapshotsDocument = {
+export const DocBranchVersionsDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'docDraftSnapshots' },
+      name: { kind: 'Name', value: 'docBranchVersions' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'docId' } },
           type: {
             kind: 'NonNullType',
             type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
@@ -26643,8 +26606,11 @@ export const DocDraftSnapshotsDocument = {
         },
         {
           kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'stage' } },
-          type: { kind: 'NamedType', name: { kind: 'Name', value: 'DocSnapshotStage' } },
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'branchId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
         },
       ],
       selectionSet: {
@@ -26652,50 +26618,40 @@ export const DocDraftSnapshotsDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'docDraftSnapshots' },
+            name: { kind: 'Name', value: 'docBranchVersions' },
             arguments: [
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
+                name: { kind: 'Name', value: 'docId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'docId' } },
               },
               {
                 kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'stage' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'stage' } },
+                name: { kind: 'Name', value: 'branchId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'branchId' } },
               },
             ],
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'stage' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'articleHashId' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'documentJson' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'versionHash' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'revisionNumber' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'schemaVersion' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'revisionId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'versionNumber' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'publishedAt' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'message' } },
                 {
                   kind: 'Field',
-                  name: { kind: 'Name', value: 'author' },
+                  name: { kind: 'Name', value: 'content' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'login' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'documentJson' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'bodyHash' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'schemaVersion' } },
                     ],
                   },
                 },
@@ -26706,7 +26662,115 @@ export const DocDraftSnapshotsDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<DocDraftSnapshotsQuery, DocDraftSnapshotsQueryVariables>
+} as unknown as DocumentNode<DocBranchVersionsQuery, DocBranchVersionsQueryVariables>
+export const RestoreDocRevisionToDraftDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'mutation',
+      name: { kind: 'Name', value: 'restoreDocRevisionToDraft' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'docId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'branchId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'revisionId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'restoreDocRevisionToDraft' },
+            arguments: [
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'commandId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'docId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'docId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'branchId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'branchId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'revisionId' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'revisionId' } },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'expectedVersion' },
+                value: { kind: 'Variable', name: { kind: 'Name', value: 'expectedVersion' } },
+              },
+            ],
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'docId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'branchId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'version' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'baseRevisionId' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'document' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [{ kind: 'Field', name: { kind: 'Name', value: 'json' } }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<
+  RestoreDocRevisionToDraftMutation,
+  RestoreDocRevisionToDraftMutationVariables
+>
 export const CreateDocTreeNodeDocument = {
   kind: 'Document',
   definitions: [
@@ -27328,102 +27392,6 @@ export const UpdateDocDraftDocument = {
     },
   ],
 } as unknown as DocumentNode<UpdateDocDraftMutation, UpdateDocDraftMutationVariables>
-export const CheckpointDocDraftSnapshotDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'checkpointDocDraftSnapshot' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'checkpointDocDraftSnapshot' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'commandId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'thread' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'stage' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'action' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'articleHashId' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'documentJson' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'versionHash' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'revisionNumber' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'schemaVersion' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'author' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'login' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  CheckpointDocDraftSnapshotMutation,
-  CheckpointDocDraftSnapshotMutationVariables
->
 export const PublishDocChangesDocument = {
   kind: 'Document',
   definitions: [
@@ -27730,121 +27698,6 @@ export const MoveDocTreeSubtreeToDraftDocument = {
 } as unknown as DocumentNode<
   MoveDocTreeSubtreeToDraftMutation,
   MoveDocTreeSubtreeToDraftMutationVariables
->
-export const RestoreDocDraftSnapshotDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'mutation',
-      name: { kind: 'Name', value: 'restoreDocDraftSnapshot' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'snapshotId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'ID' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'restoreDocDraftSnapshot' },
-            arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'community' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'community' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'id' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'snapshotId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'snapshotId' } },
-              },
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'commandId' },
-                value: { kind: 'Variable', name: { kind: 'Name', value: 'commandId' } },
-              },
-            ],
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'title' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'subtitle' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'digest' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'insertedAt' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'updatedAt' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'author' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'login' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'nickname' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'avatar' } },
-                    ],
-                  },
-                },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'document' },
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'json' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'markdown' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'markdownToc' } },
-                      { kind: 'Field', name: { kind: 'Name', value: 'html' } },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<
-  RestoreDocDraftSnapshotMutation,
-  RestoreDocDraftSnapshotMutationVariables
 >
 export const DeleteDocTreeNodeDocument = {
   kind: 'Document',

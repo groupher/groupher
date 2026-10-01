@@ -14,8 +14,7 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
 
   alias GroupherServer.{CMS, Repo}
 
-  alias CMS.Artiment.Matcher
-  alias CMS.Model.{Author, Comment, CommentReactionInfo}
+  alias CMS.Model.{Article, Author, Comment, CommentReactionInfo}
   alias CMS.Model.Interaction.RoaringBitmap
 
   @doc """
@@ -31,11 +30,7 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
   """
   @spec upvoted_ids([Comment.t()]) :: MapSet.t(integer())
   def upvoted_ids(comments) when is_list(comments) do
-    comments
-    |> Enum.group_by(& &1.thread)
-    |> Enum.reduce(MapSet.new(), fn {thread, thread_comments}, acc ->
-      MapSet.union(acc, upvoted_ids_for_thread(thread_comments, thread))
-    end)
+    upvoted_ids_for_articles(comments)
   end
 
   @doc """
@@ -63,27 +58,21 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
     |> MapSet.new()
   end
 
-  defp upvoted_ids_for_thread(comments, thread) do
+  defp upvoted_ids_for_articles(comments) do
     comment_ids = Enum.map(comments, & &1.id)
 
-    case Matcher.match_interaction(thread) do
-      {:ok, %{model: article_model, foreign_key: foreign_key}} ->
-        from(comment in Comment,
-          join: article in ^article_model,
-          on: field(comment, ^foreign_key) == article.id,
-          join: author in Author,
-          on: author.id == article.author_id,
-          join: info in CommentReactionInfo,
-          on: info.comment_id == comment.id,
-          where: comment.id in ^comment_ids,
-          where: RoaringBitmap.contains(info.upvoted_user_ids, author.user_id),
-          select: comment.id
-        )
-        |> Repo.all()
-        |> MapSet.new()
-
-      _ ->
-        MapSet.new()
-    end
+    from(comment in Comment,
+      join: article in Article,
+      on: comment.article_id == article.id,
+      join: author in Author,
+      on: author.id == article.author_id,
+      join: info in CommentReactionInfo,
+      on: info.comment_id == comment.id,
+      where: comment.id in ^comment_ids,
+      where: RoaringBitmap.contains(info.upvoted_user_ids, author.user_id),
+      select: comment.id
+    )
+    |> Repo.all()
+    |> MapSet.new()
   end
 end

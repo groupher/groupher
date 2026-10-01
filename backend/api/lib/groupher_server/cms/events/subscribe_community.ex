@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   alias CMS.{Communities, FrontDesk}
   alias CMS.Events.Event
-  alias CMS.Model.{Blog, Changelog, Comment, Community, Doc, Post}
+  alias CMS.Model.{Article, Comment, Community}
 
   @behaviour CMS.Events.Handler
 
@@ -47,34 +47,14 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
   end
 
   @spec handle(Comment.t(), map()) :: subscribe_result()
-  def handle(%Comment{post_id: post_id}, user) when not is_nil(post_id) do
-    with {:ok, article} <- comment_parent_article(Post, post_id) do
+  def handle(%Comment{article_id: article_id}, user) when is_binary(article_id) do
+    with {:ok, article} <- comment_parent_article(article_id) do
       Communities.subscribe_ifnot(article.community, user)
     end
   end
 
-  def handle(%Comment{changelog_id: changelog_id}, user)
-      when not is_nil(changelog_id) do
-    with {:ok, article} <- comment_parent_article(Changelog, changelog_id) do
-      Communities.subscribe_ifnot(article.community, user)
-    end
-  end
-
-  def handle(%Comment{blog_id: blog_id}, user) when not is_nil(blog_id) do
-    with {:ok, article} <- comment_parent_article(Blog, blog_id) do
-      Communities.subscribe_ifnot(article.community, user)
-    end
-  end
-
-  def handle(%Comment{doc_id: doc_id}, user) when not is_nil(doc_id) do
-    with {:ok, article} <- comment_parent_article(Doc, doc_id) do
-      Communities.subscribe_ifnot(article.community, user)
-    end
-  end
-
-  @spec comment_parent_article(module(), integer() | String.t()) ::
-          {:ok, struct()} | {:error, map()}
-  defp comment_parent_article(article, id) do
-    FrontDesk.get(article, id, preload: [[author: :user], :community])
+  @spec comment_parent_article(Ecto.UUID.t()) :: {:ok, Article.t()} | {:error, map()}
+  defp comment_parent_article(article_id) do
+    FrontDesk.get(Article, article_id, preload: [:community])
   end
 end

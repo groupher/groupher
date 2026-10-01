@@ -10,24 +10,17 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
         -> search platform
   """
 
-  require GroupherServer.CMS.Const
   require GroupherServer.CMS.ErrorCat
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
-
   alias GroupherServer.{CMS, Repo}
-
-  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.{ErrorCat, SearchArtiments}
   alias CMS.SearchArtiments.{Artiment, Config, Projection}
+  alias CMS.Model.{Article, Community}
 
   @article_threads Config.article_threads()
 
   @batch_size 500
-  @legal CMS.Artiment.Const.moderation_state(:legal)
-
   @doc """
   Enqueues a background upsert job for one article.
 
@@ -42,68 +35,61 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @spec enqueue_upsert(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_upsert(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
-      enqueue({__MODULE__, :upsert_article, [thread, article.id]})
+      enqueue({__MODULE__, :upsert_article, [thread, stable_id(article)]})
     end
   end
 
   @spec enqueue_metrics(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_metrics(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
-      enqueue({__MODULE__, :sync_article_metrics, [thread, article.id]})
+      enqueue({__MODULE__, :sync_article_metrics, [thread, stable_id(article)]})
     end
   end
 
   @spec enqueue_delete(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_delete(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
-      enqueue_delete(thread, article.article_hash_id)
+      enqueue_delete(thread, stable_id(article))
     end
   end
 
   @spec enqueue_delete(Artiment.thread(), Ecto.UUID.t()) :: {:ok, :pass}
-  def enqueue_delete(thread, article_hash_id) do
-    enqueue(:delete_article, thread, article_hash_id)
+  def enqueue_delete(thread, article_id) do
+    enqueue(:delete_article, thread, article_id)
   end
 
   @doc "Reloads one Article before projection so jobs never depend on stale structs."
-  @spec upsert_article(Artiment.thread(), pos_integer()) :: :ok | {:error, term()}
+  @spec upsert_article(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
   def upsert_article(thread, article_id) do
-    with {:ok, info} <- match(thread),
-         article when not is_nil(article) <-
-           info.model
-           |> CMS.Gate.scope(nil, :read, scope_context(thread))
-           |> where([article], article.id == ^article_id)
-           |> Repo.one() do
+    with {:ok, article} <- public_article(thread, article_id) do
       case Projection.Article.project(thread, article) do
         {:ok, artiment} ->
           SearchArtiments.upsert([artiment])
 
         {:error, ErrorCat.error_pattern(reason: :not_searchable)} ->
-          delete_article(thread, article.article_hash_id)
+          delete_article(thread, article_id)
 
         error ->
           error
       end
     else
-      nil -> :ok
-      error -> error
+      {:error, :not_found} -> delete_article(thread, article_id)
     end
   end
 
   @spec delete_article(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
-  def delete_article(thread, article_hash_id) do
-    SearchArtiments.delete([Artiment.article_ref(thread, article_hash_id)])
+  def delete_article(thread, article_id) do
+    SearchArtiments.delete([Artiment.article_key(thread, article_id)])
   end
 
   @doc "Reloads and partially updates the mutable ranking metrics of one public Article."
-  @spec sync_article_metrics(Artiment.thread(), pos_integer()) :: :ok | {:error, term()}
+  @spec sync_article_metrics(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
   def sync_article_metrics(thread, article_id) do
-    with {:ok, info} <- match(thread),
-         article when not is_nil(article) <- searchable_article(info.model, thread, article_id) do
+    with {:ok, article} <- public_article(thread, article_id) do
       counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
       SearchArtiments.update_metrics([
-        {Artiment.article_ref(thread, article.article_hash_id),
+        {Artiment.article_key(thread, article.id),
          %{
            upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
            comments_count: article.comments_count || 0,
@@ -111,8 +97,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
          }}
       ])
     else
-      nil -> :ok
-      error -> error
+      {:error, :not_found} -> delete_article(thread, article_id)
     end
   end
 
@@ -120,20 +105,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @spec reindex_articles() :: :ok | {:error, term()}
   def reindex_articles do
     Enum.reduce_while(@article_threads, :ok, fn thread, :ok ->
-      case reindex_thread(thread, 0) do
+      case reindex_thread(thread, nil) do
         :ok -> {:cont, :ok}
         error -> {:halt, error}
       end
     end)
-  end
-
-  defp searchable_article(model, thread, article_id) do
-    model
-    |> CMS.Gate.scope(nil, :read, scope_context(thread))
-    |> where([article], article.id == ^article_id)
-    |> where([article], article.stage == ^CMS.Const.stage(:public))
-    |> where([article], article.pending == ^@legal)
-    |> Repo.one()
   end
 
   defp enqueue(action, thread, ref), do: SearchArtiments.queue().enqueue({action, thread, ref})
@@ -147,13 +123,11 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   end
 
   defp reindex_thread(thread, after_id) do
-    with {:ok, info} <- match(thread) do
+    with true <- thread in @article_threads do
       articles =
-        info.model
-        |> CMS.Gate.scope(nil, :list, scope_context(thread))
-        |> where([article], article.id > ^after_id)
-        |> where([article], article.stage == ^CMS.Const.stage(:public))
-        |> where([article], article.pending == ^@legal)
+        Article
+        |> where([article], article.thread == ^thread)
+        |> after_article(after_id)
         |> order_by([article], asc: article.id)
         |> limit(^@batch_size)
         |> Repo.all()
@@ -162,12 +136,15 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
         [] ->
           :ok
 
-        articles ->
-          with {:ok, artiments} <- project_batch(thread, articles),
+        roots ->
+          with {:ok, public_articles} <- load_public_articles(thread, roots),
+               {:ok, artiments} <- project_batch(thread, public_articles),
                :ok <- SearchArtiments.upsert(artiments, wait_for_task: true) do
-            reindex_thread(thread, List.last(articles).id)
+            reindex_thread(thread, List.last(roots).id)
           end
       end
+    else
+      false -> {:error, ErrorCat.invalid_search_artiment("unsupported Article thread")}
     end
   end
 
@@ -184,6 +161,39 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end
   end
 
-  defp scope_context(:doc), do: DocContext.public_main()
-  defp scope_context(thread), do: ArticleContext.public(thread)
+  defp after_article(query, nil), do: query
+  defp after_article(query, article_id), do: where(query, [article], article.id > ^article_id)
+
+  defp load_public_articles(thread, roots) do
+    roots
+    |> Enum.reduce_while({:ok, []}, fn root, {:ok, acc} ->
+      case public_article(thread, root.id) do
+        {:ok, article} -> {:cont, {:ok, [article | acc]}}
+        {:error, :not_found} -> {:cont, {:ok, acc}}
+      end
+    end)
+    |> case do
+      {:ok, articles} -> {:ok, Enum.reverse(articles)}
+      error -> error
+    end
+  end
+
+  defp public_article(thread, article_id) do
+    with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
+         %Community{} = community <- Repo.get(Community, article.community_id),
+         {:ok, public} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: article.inner_id
+           }) do
+      {:ok, public}
+    else
+      _ -> {:error, :not_found}
+    end
+  end
+
+  defp stable_id(%Article{id: article_id}), do: article_id
+  defp stable_id(%{article_id: article_id}) when is_binary(article_id), do: article_id
+  defp stable_id(%{id: article_id}) when is_binary(article_id), do: article_id
 end

@@ -19,12 +19,12 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     assert {:ok, replayed} =
              CMS.Articles.create(community, :post, attrs, user, command_id: command_id)
 
-    assert replayed.article_hash_id == created.article_hash_id
+    assert replayed.article_id == created.article_id
     assert replayed.id == created.id
   end
 
-  test "update replay survives its Draft being published" do
-    {community, public, _attrs, user} = mock_article(:post)
+  test "update replay returns the canonical published result" do
+    {_community, public, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
     attrs = %{
@@ -32,14 +32,42 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
       expected_version: public.version
     }
 
-    assert {:ok, draft} = CMS.Articles.update(public, attrs, user, command_id)
-
-    assert {:ok, %{article: published}} =
-             CMS.Articles.publish_draft(community, :post, draft.article_hash_id, user)
+    assert {:ok, published} = CMS.Articles.update(public, attrs, user, command_id)
 
     assert {:ok, replayed} = CMS.Articles.update(public, attrs, user, command_id)
     assert replayed.id == published.id
     assert replayed.stage == :public
     assert replayed.title == "Updated through a command"
+  end
+
+  test "publish replay returns the committed stable result" do
+    {_community, public, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    lifecycle =
+      GroupherServer.Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: public.article_id)
+
+    article = GroupherServer.Repo.get!(CMS.Model.Article, public.article_id)
+    {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
+    assert {:ok, _draft} = CMS.Articles.Draft.Store.ensure_from_public(article, author)
+
+    assert {:ok, draft} =
+             CMS.Articles.update_draft(
+               public.article_id,
+               %{title: "Published through a command"},
+               user,
+               expected_version: public.version
+             )
+
+    opts = [
+      expected_draft_version: draft.version,
+      expected_lifecycle_version: lifecycle.version,
+      command_id: command_id
+    ]
+
+    assert {:ok, published} = CMS.Articles.publish(public.article_id, user, opts)
+    assert {:ok, replayed} = CMS.Articles.publish(public.article_id, user, opts)
+    assert replayed.article.id == published.article.id
+    assert replayed.public.revision_id == published.public.revision_id
   end
 end

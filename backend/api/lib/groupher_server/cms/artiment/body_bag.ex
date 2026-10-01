@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.Config
-  alias CMS.Model.ArticleDocument
+  alias CMS.Model.{ArticleBodyDraft, ArticleBodySnapshot}
 
   @primary_key false
 
@@ -132,17 +132,24 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     cast(%{}, options)
   end
 
-  @doc "Builds a validated BodyBag from an already-persisted ArticleDocument."
-  @spec from_document(ArticleDocument.t()) :: {:ok, t()} | {:error, Ecto.Changeset.t()}
-  def from_document(%ArticleDocument{} = document) do
+  @doc "Builds a validated BodyBag from a persisted body row or editor projection."
+  @spec from_document(ArticleBodyDraft.t() | ArticleBodySnapshot.t() | map()) ::
+          {:ok, t()} | {:error, Ecto.Changeset.t()}
+  def from_document(%model{} = body) when model in [ArticleBodyDraft, ArticleBodySnapshot] do
+    body
+    |> stable_body_map()
+    |> cast(thread: :doc)
+  end
+
+  def from_document(document) when is_map(document) do
     document
     |> from_document_map()
-    |> cast(thread: document.thread)
+    |> cast(thread: Map.get(document, :thread, :doc))
   end
 
   @doc "Projects persisted document fields into the BodyBag input shape."
-  @spec from_document_map(ArticleDocument.t()) :: map()
-  def from_document_map(%ArticleDocument{} = document) do
+  @spec from_document_map(map()) :: map()
+  def from_document_map(document) when is_map(document) do
     %{
       json: document.json,
       markdown: document.markdown,
@@ -155,7 +162,20 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
     }
   end
 
-  @doc "Returns ArticleDocument persistence attributes without regenerating content."
+  defp stable_body_map(body) do
+    %{
+      json: body.json,
+      markdown: body.markdown,
+      html: body.html,
+      toc: document_toc(body.markdown_toc),
+      plain_text: body.plain_text,
+      digest: body.plain_text || "",
+      body_hash: body.body_hash,
+      schema_version: body.schema_version
+    }
+  end
+
+  @doc "Returns canonical body persistence attributes without regenerating content."
   @spec to_document_attrs(t()) :: map()
   def to_document_attrs(%__MODULE__{} = body_bag) do
     %{

@@ -3,13 +3,13 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.BodyBag
-  alias CMS.Model.ArticleDocument
+  alias CMS.Model.ArticleBodySnapshot
 
   @json Jason.encode!([
           %{"type" => "p", "children" => [%{"text" => "Published body content"}]}
         ])
 
-  test "casts the publisher contract and maps it to ArticleDocument fields" do
+  test "casts the publisher contract and maps it to version-owned body fields" do
     assert {:ok, body_bag} = BodyBag.cast(valid_attrs())
 
     assert body_bag.plain_text == "Published body content"
@@ -25,15 +25,14 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
     assert body_hash == String.duplicate("a", 64)
   end
 
-  test "rebuilds the input contract from a persisted ArticleDocument" do
+  test "rebuilds the input contract from a persisted ArticleBodySnapshot" do
     document =
-      struct(ArticleDocument, %{
+      struct(ArticleBodySnapshot, %{
         json: @json,
         markdown: "Published body content",
         markdown_toc: %{"items" => [%{"id" => "intro", "title" => "Intro", "level" => 1}]},
         html: "<p>Published body content</p>",
         plain_text: "Published body content",
-        digest: "Published body content",
         body_hash: String.duplicate("a", 64),
         schema_version: 1
       })

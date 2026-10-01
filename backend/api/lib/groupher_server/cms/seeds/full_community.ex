@@ -21,27 +21,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   alias CMS.Seeds.{Articles, Communities, Config, Tags}
 
   alias CMS.Model.{
-    ArticleUpvote,
-    ArticleUserEmotion,
-    Changelog,
-    Comment,
-    CommentReply,
-    CommentUpvote,
-    CommentUserEmotion,
     Community,
-    CommunityCategory,
-    CommunityDashboard,
-    CommunityJoinChangelog,
-    CommunityJoinDoc,
-    CommunityJoinPost,
-    CommunityJoinTag,
-    CommunityModerator,
-    CommunitySubscriber,
-    CommunityTag,
-    Doc,
-    PinnedArticle,
-    PinnedComment,
-    Post
+    Article
   }
 
   alias Helper.{ORM, T}
@@ -83,25 +64,19 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
         end
 
       false ->
-        {:error,
-         ErrorCat.custom("full_community mock opts must be a keyword list")}
+        {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
     end
   end
 
   def mock(_slug, _opts),
-    do:
-      {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
+    do: {:error, ErrorCat.custom("full_community mock opts must be a keyword list")}
 
   @spec delete(String.t() | atom()) :: T.domain_res(:ok)
   def delete(slug) do
     with {:ok, community} <- ORM.find_by(Community, %{slug: to_string(slug)}),
-         {post_ids, changelog_ids, doc_ids} <- article_ids(community),
-         comment_ids <- comments_ids(post_ids, changelog_ids, doc_ids),
-         {:ok, _} <- delete_comment_relations(comment_ids),
-         {:ok, _} <- delete_article_relations(post_ids, changelog_ids, doc_ids),
-         {:ok, _} <- delete_tag_relations(community.id),
-         {:ok, _} <- delete_community_relations(community.id),
-         {_count, _} <- delete_all(from(c in Community, where: c.id == ^community.id)) do
+         {_count, _} <-
+           delete_all(from(article in Article, where: article.community_id == ^community.id)),
+         {:ok, _community} <- Repo.delete(community, timeout: 300_000) do
       {:ok, :ok}
     end
   end
@@ -176,19 +151,22 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     posts
     |> Enum.zip(post_modes)
     |> Enum.reduce_while({:ok, :ok}, fn {post, mode}, _acc ->
+      post = Repo.get!(Article, post.id)
+
       case mode do
         :none ->
           {:cont, {:ok, :ok}}
 
         :cat_only ->
-          case CMS.Articles.set_cat(post, Enum.random(@post_cats)) do
+          case CMS.Articles.States.set_cat(post, Enum.random(@post_cats)) do
             {:ok, _} -> {:cont, {:ok, :ok}}
             {:error, reason} -> {:halt, {:error, reason}}
           end
 
         :cat_and_state ->
-          with {:ok, post} <- CMS.Articles.set_cat(post, Enum.random(@post_cats)),
-               {:ok, _post} <- CMS.Articles.set_status(post, Enum.random(@post_statuses)) do
+          with {:ok, post} <- CMS.Articles.States.set_cat(post, Enum.random(@post_cats)),
+               {:ok, _post} <-
+                 CMS.Articles.States.set_status(post, Enum.random(@post_statuses)) do
             {:cont, {:ok, :ok}}
           else
             {:error, reason} -> {:halt, {:error, reason}}
@@ -247,116 +225,6 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
            ]) do
       {:ok, :ok}
     end
-  end
-
-  defp article_ids(%Community{id: community_id}) do
-    post_ids =
-      Repo.all(
-        from(p in Post,
-          where: p.community_id == ^community_id,
-          select: p.id
-        )
-      )
-
-    changelog_ids =
-      Repo.all(
-        from(c in Changelog,
-          where: c.community_id == ^community_id,
-          select: c.id
-        )
-      )
-
-    doc_ids =
-      Repo.all(
-        from(d in Doc,
-          where: d.community_id == ^community_id,
-          select: d.id
-        )
-      )
-
-    {post_ids, changelog_ids, doc_ids}
-  end
-
-  defp comments_ids(post_ids, changelog_ids, doc_ids) do
-    Repo.all(
-      from(c in Comment,
-        where: c.post_id in ^post_ids or c.changelog_id in ^changelog_ids or c.doc_id in ^doc_ids,
-        select: c.id
-      )
-    )
-  end
-
-  defp delete_comment_relations(comment_ids) do
-    delete_all(
-      from(c in CommentReply,
-        where: c.comment_id in ^comment_ids or c.reply_to_comment_id in ^comment_ids
-      )
-    )
-
-    delete_all(from(c in CommentUpvote, where: c.comment_id in ^comment_ids))
-    delete_all(from(c in CommentUserEmotion, where: c.comment_id in ^comment_ids))
-    delete_all(from(c in PinnedComment, where: c.comment_id in ^comment_ids))
-    delete_all(from(c in Comment, where: c.id in ^comment_ids))
-
-    {:ok, :ok}
-  end
-
-  defp delete_article_relations(post_ids, changelog_ids, doc_ids) do
-    delete_all(
-      from(a in ArticleUpvote,
-        where: a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or a.doc_id in ^doc_ids
-      )
-    )
-
-    delete_all(
-      from(a in ArticleUserEmotion,
-        where: a.post_id in ^post_ids or a.changelog_id in ^changelog_ids or a.doc_id in ^doc_ids
-      )
-    )
-
-    delete_all(
-      from(c in CommunityJoinTag,
-        where: c.post_id in ^post_ids or c.changelog_id in ^changelog_ids or c.doc_id in ^doc_ids
-      )
-    )
-
-    delete_all(
-      from(p in PinnedArticle,
-        where: p.post_id in ^post_ids or p.changelog_id in ^changelog_ids or p.doc_id in ^doc_ids
-      )
-    )
-
-    delete_all(from(c in CommunityJoinPost, where: c.post_id in ^post_ids))
-    delete_all(from(c in CommunityJoinChangelog, where: c.changelog_id in ^changelog_ids))
-    delete_all(from(c in CommunityJoinDoc, where: c.doc_id in ^doc_ids))
-
-    delete_all(from(p in Post, where: p.id in ^post_ids))
-    delete_all(from(c in Changelog, where: c.id in ^changelog_ids))
-    delete_all(from(d in Doc, where: d.id in ^doc_ids))
-
-    {:ok, :ok}
-  end
-
-  defp delete_tag_relations(community_id) do
-    tag_ids =
-      Repo.all(from(t in CommunityTag, where: t.community_id == ^community_id, select: t.id))
-
-    delete_all(from(c in CommunityJoinTag, where: c.community_tag_id in ^tag_ids))
-    delete_all(from(t in CommunityTag, where: t.id in ^tag_ids))
-
-    {:ok, :ok}
-  end
-
-  defp delete_community_relations(community_id) do
-    delete_all(from(c in CommunityDashboard, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityCategory, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunitySubscriber, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityModerator, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityJoinPost, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityJoinChangelog, where: c.community_id == ^community_id))
-    delete_all(from(c in CommunityJoinDoc, where: c.community_id == ^community_id))
-
-    {:ok, :ok}
   end
 
   defp random_range({min, max}) when is_integer(min) and is_integer(max) and min <= max,

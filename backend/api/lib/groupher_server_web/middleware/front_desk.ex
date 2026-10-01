@@ -153,17 +153,19 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp fetch_article_editor(
          %{
-           arguments: %{community: %Community{} = community, id: article_hash_id} = arguments
+           arguments: %{community: %Community{} = community, id: article_id} = arguments
          } = resolution,
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article} <- CMS.Articles.read_editor_head(community, thread, article_hash_id) do
+         {:ok, article, branch_id} <-
+           fetch_editor_article(community, thread, article_id) do
       article = Repo.preload(article, author: :user)
 
       updated_arguments =
         arguments
         |> Map.put(:article, article)
+        |> maybe_put_branch_id(branch_id)
         |> maybe_put_article_passport_is_owner(article, resolution)
 
       %{resolution | arguments: updated_arguments}
@@ -183,6 +185,29 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         )
     end
   end
+
+  defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
+    with %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article <-
+           Repo.get(CMS.Model.Article, article_id),
+         {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
+      {:ok, article, branch.id}
+    else
+      _ -> {:error, ArticleErrorCat.not_exist("stable Doc not found")}
+    end
+  end
+
+  defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
+    case Repo.get(CMS.Model.Article, article_id) do
+      %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article ->
+        {:ok, article, nil}
+
+      _ ->
+        {:error, ArticleErrorCat.not_exist("stable Article not found")}
+    end
+  end
+
+  defp maybe_put_branch_id(arguments, nil), do: arguments
+  defp maybe_put_branch_id(arguments, branch_id), do: Map.put(arguments, :branch_id, branch_id)
 
   defp fetch_comment(%{arguments: %{comment: comment_path} = arguments} = resolution) do
     case fetch_comment_by_path(comment_path) do
@@ -210,7 +235,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   defp maybe_put_article_passport_is_owner(arguments, article, %{
          context: %{cur_user: %{id: user_id}}
        }) do
-    Map.put(arguments, :passport_is_owner, article.author.user.id == user_id)
+    author_id =
+      case article.author do
+        %{user: %{id: id}} -> id
+        %{id: id} -> id
+        _ -> nil
+      end
+
+    Map.put(arguments, :passport_is_owner, author_id == user_id)
   end
 
   defp maybe_put_article_passport_is_owner(arguments, _article, _resolution), do: arguments

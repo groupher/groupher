@@ -14,8 +14,6 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       iex> %Ecto.Query{} = scope(Ecto.Queryable.to_query(GroupherServer.CMS.Model.Comment), nil, :read, context)
   """
 
-  require GroupherServer.CMS.Docs.Const
-
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS}
@@ -23,11 +21,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
   alias Accounts.Model.User
   alias CMS.Gate.{ErrorCat, Scope.Policy}
   alias CMS.Gate.Scope.{ArticleSchema, CommunityChain}
-  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocBranch, DocLifecycle}
+  alias CMS.Model.{ArticleLifecycle, CommentLifecycle, DocLifecycle}
 
   @behaviour Policy
 
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal GroupherServer.CMS.Artiment.Const.moderation_state(:illegal)
 
   @actions [:read, :list]
 
@@ -80,17 +78,11 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       join: lifecycle in CommentLifecycle,
       as: :gate_comment_lifecycle,
       on: lifecycle.comment_id == comment.id,
-      join: branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        branch.community_id == comment.community_id and
-          branch.type == ^CMS.Docs.Const.doc_branch_type(:main),
       join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
-        doc_lifecycle.community_id == comment.community_id and
-          doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.article_hash_id == comment.article_hash_id,
+        doc_lifecycle.article_id == comment.article_id and
+          doc_lifecycle.branch_id == comment.branch_id,
       where: lifecycle.state != :destroy,
       where: doc_lifecycle.state in [:published, :archived]
     )
@@ -107,21 +99,12 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       left_join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
       on:
-        article_lifecycle.community_id == comment.community_id and
-          article_lifecycle.thread == comment.thread and
-          article_lifecycle.article_hash_id == comment.article_hash_id and
-          comment.thread != ^:doc,
-      left_join: branch in DocBranch,
-      as: :gate_doc_branch,
-      on:
-        branch.community_id == comment.community_id and
-          branch.type == ^CMS.Docs.Const.doc_branch_type(:main) and comment.thread == ^:doc,
+        article_lifecycle.article_id == comment.article_id and comment.thread != ^:doc,
       left_join: doc_lifecycle in DocLifecycle,
       as: :gate_doc_lifecycle,
       on:
-        doc_lifecycle.community_id == comment.community_id and
-          doc_lifecycle.branch_id == branch.id and
-          doc_lifecycle.article_hash_id == comment.article_hash_id and comment.thread == ^:doc,
+        doc_lifecycle.article_id == comment.article_id and
+          doc_lifecycle.branch_id == comment.branch_id and comment.thread == ^:doc,
       where: lifecycle.state != :destroy,
       where:
         (comment.thread != ^:doc and article_lifecycle.state in [:published, :archived]) or
@@ -136,10 +119,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Comment do
       on: lifecycle.comment_id == comment.id,
       join: article_lifecycle in ArticleLifecycle,
       as: :gate_article_lifecycle,
-      on:
-        article_lifecycle.community_id == comment.community_id and
-          article_lifecycle.thread == comment.thread and
-          article_lifecycle.article_hash_id == comment.article_hash_id,
+      on: article_lifecycle.article_id == comment.article_id,
       where: lifecycle.state != :destroy,
       where: article_lifecycle.state in [:published, :archived]
     )

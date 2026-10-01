@@ -16,37 +16,32 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-  import GroupherServer.CMS.Helper.Constraints, only: [articles_foreign_key_constraint: 1]
 
   alias __MODULE__
   alias GroupherServer.CMS
   alias CMS.Artiment.Threads
-  alias CMS.Model.Community
+  alias CMS.Model.{ArticleCommunity, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(community_id thread)a
-  # @optional_fields ~w(post_id job_id repo_id)a
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
+  @required_fields ~w(community_id thread article_community_id)a
 
   @type t :: %PinnedArticle{}
   schema "pinned_articles" do
     belongs_to(:community, Community, foreign_key: :community_id)
+    belongs_to(:article_community, ArticleCommunity)
     field(:thread, Ecto.Enum, values: Threads.article_enums())
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(%PinnedArticle{} = pinned_article, attrs) do
     pinned_article
-    |> cast(attrs, @article_fields ++ @required_fields)
+    |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
-    |> articles_foreign_key_constraint
+    |> foreign_key_constraint(:article_community_id)
+    |> unique_constraint(:article_community_id)
   end
 end

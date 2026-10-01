@@ -10,7 +10,11 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
     {community, post, _, user} = mock_article(:post)
 
     {:ok, post} =
-      CMS.Articles.set_cat(post, GroupherServer.CMS.Artiment.Const.cat_map().qa)
+      CMS.Articles.set_cat(
+        post.id,
+        GroupherServer.CMS.Artiment.Const.cat_map().qa,
+        user
+      )
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user)
@@ -22,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
   describe "[post only: article comment solution]" do
     @query S.Comment.m(:accept_solution)
     test "questioner can accept a post comment as solution", ~m(community post)a do
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
+      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
       post_author = post.author.user
 
       {:ok, comment} =
@@ -40,7 +44,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
     test "other user can not accept a post comment as solution",
          ~m(guest_conn user_conn community post)a do
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
+      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
       post_author = post.author.user
 
       {:ok, comment} =
@@ -65,7 +69,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
     @query S.Comment.m(:revoke_solution)
     test "questioner can revoke a post comment solution", ~m(community post)a do
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
+      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
       post_author = post.author.user
 
       {:ok, comment} =
@@ -84,7 +88,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
     test "other user can not revoke a post comment solution",
          ~m(guest_conn user_conn community post)a do
-      {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
+      post = CMS.Model.Article |> Repo.get!(post.id) |> Repo.preload(author: :user)
       post_author = post.author.user
 
       {:ok, comment} =

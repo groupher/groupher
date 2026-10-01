@@ -196,7 +196,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
       error_code: job.error_code,
       error_message: job.error_message,
       failed_items: result["failedItems"] || [],
-      first_imported_doc_ref: result["firstImportedDocRef"],
+      first_imported_doc_id: result["firstImportedDocId"],
       job_ref: job.hash_id,
       process: Process.project(job),
       target_branch: result["targetBranch"] || Branch.main_slug(),
@@ -244,19 +244,15 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
           {:halt, {:error, ErrorCat.custom("sourceRef is required")}}
 
         MapSet.member?(refs, external_ref) ->
-          {:halt,
-           {:error,
-            ErrorCat.custom("source documents contain a duplicate sourceRef")}}
+          {:halt, {:error, ErrorCat.custom("source documents contain a duplicate sourceRef")}}
 
         not is_map(target) ->
           {:halt,
-           {:error,
-            ErrorCat.custom("source document is missing from confirmed TargetTree")}}
+           {:error, ErrorCat.custom("source document is missing from confirmed TargetTree")}}
 
         not is_binary(source_hash) or
             not String.match?(source_hash, ~r/\Asource-md-v1:[0-9a-f]{64}\z/) ->
-          {:halt,
-           {:error, ErrorCat.custom("source document hash contract is invalid")}}
+          {:halt, {:error, ErrorCat.custom("source document hash contract is invalid")}}
 
         true ->
           item = %{
@@ -370,8 +366,7 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
     if same?,
       do: :ok,
-      else:
-        {:error, ErrorCat.custom("previewRef is already bound to another intent")}
+      else: {:error, ErrorCat.custom("previewRef is already bound to another intent")}
   end
 
   defp counts(target_tree) do

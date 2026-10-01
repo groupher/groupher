@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.ErrorCat
-  alias CMS.Model.{DocBranch, DocLifecycle}
+  alias CMS.Model.{DocBranch, DocLifecycle, DocPublic}
 
   @states [:draft_only, :published, :archived, :deleted, :destroy]
   @public_readable_states [:published, :archived]
@@ -28,60 +28,26 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
   @doc "Returns the states visible through public reads."
   def public_readable_states, do: @public_readable_states
 
-  @doc """
-  Reads the current lifecycle state for one article hash inside a branch.
-
-  ## Examples
-
-      Lifecycle.state(community.id, branch.id, article_hash_id)
-      #=> {:ok, :published}
-
-      Lifecycle.state(community.id, branch.id, "missing")
-      #=> {:error, ErrorCat.error_pattern(reason: :lifecycle_not_found)}
-
-  """
-  def state(community_id, branch_id, article_hash_id) do
-    case Repo.get_by(DocLifecycle,
-           community_id: community_id,
-           branch_id: branch_id,
-           article_hash_id: article_hash_id
-         ) do
+  @doc "Reads the branch lifecycle state for one stable Doc Article."
+  def state(article_id, branch_id) when is_binary(article_id) and is_integer(branch_id) do
+    case Repo.get_by(DocLifecycle, article_id: article_id, branch_id: branch_id) do
       %DocLifecycle{state: state} -> {:ok, state}
       nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 
-  def ensure_created(community_id, branch_id, article_hash_id, opts \\ [])
-      when is_integer(community_id) and is_integer(branch_id) do
-    attrs = %{
-      community_id: community_id,
-      branch_id: branch_id,
-      article_hash_id: article_hash_id,
-      state: Keyword.get(opts, :state, :draft_only),
-      version: 1,
-      changed_at: DateTime.utc_now(:second)
-    }
-
-    case Repo.get_by(DocLifecycle, Map.take(attrs, [:community_id, :branch_id, :article_hash_id])) do
-      %DocLifecycle{} = lifecycle -> {:ok, lifecycle}
-      nil -> %DocLifecycle{} |> DocLifecycle.changeset(attrs) |> Repo.insert()
-    end
-  end
-
-  def transition(community_id, branch_id, article_hash_id, state) when state in @states do
+  @doc "Transitions one stable Doc Article lifecycle inside a branch."
+  def transition(article_id, branch_id, state)
+      when is_binary(article_id) and is_integer(branch_id) and state in @states do
     lifecycle =
       DocLifecycle
-      |> where(
-        [lifecycle],
-        lifecycle.community_id == ^community_id and lifecycle.branch_id == ^branch_id and
-          lifecycle.article_hash_id == ^article_hash_id
-      )
+      |> where([row], row.article_id == ^article_id and row.branch_id == ^branch_id)
       |> lock("FOR UPDATE")
       |> Repo.one()
 
     case lifecycle do
-      nil -> {:error, ErrorCat.lifecycle_not_found()}
       %DocLifecycle{} = lifecycle -> transition(lifecycle, state)
+      nil -> {:error, ErrorCat.lifecycle_not_found()}
     end
   end
 
@@ -104,28 +70,25 @@ defmodule GroupherServer.CMS.Docs.Lifecycle do
     end
   end
 
-  def archive_before(
-        %DocBranch{} = branch,
-        article_model,
-        threshold,
-        _now
-      ) do
+  @doc "Archives stable public Docs older than the threshold in one active branch."
+  @spec archive_before(DocBranch.t(), DateTime.t()) :: {:ok, non_neg_integer()} | {:error, term()}
+  def archive_before(%DocBranch{} = branch, threshold) do
     Repo.transaction(fn ->
-      candidates =
-        article_model
-        |> join(:inner, [article], lifecycle in DocLifecycle,
+      lifecycles =
+        DocLifecycle
+        |> join(:inner, [lifecycle], public in DocPublic,
           on:
-            lifecycle.community_id == article.community_id and
-              lifecycle.branch_id == ^branch.id and
-              lifecycle.article_hash_id == article.article_hash_id
+            public.article_id == lifecycle.article_id and
+              public.branch_id == lifecycle.branch_id
         )
-        |> where([article, lifecycle], lifecycle.state == :published and article.stage == :public)
-        |> where([article, _lifecycle], article.inserted_at < ^threshold)
-        |> select([_article, lifecycle], lifecycle)
+        |> where([lifecycle, public], lifecycle.branch_id == ^branch.id)
+        |> where([lifecycle, _public], lifecycle.state == :published)
+        |> where([_lifecycle, public], public.inserted_at < ^threshold)
+        |> select([lifecycle, _public], lifecycle)
         |> lock("FOR UPDATE")
         |> Repo.all()
 
-      Enum.reduce(candidates, 0, fn lifecycle, count ->
+      Enum.reduce(lifecycles, 0, fn lifecycle, count ->
         case transition(lifecycle, :archived) do
           {:ok, _} -> count + 1
           {:error, reason} -> Repo.rollback(reason)

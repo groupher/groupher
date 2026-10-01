@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, changelog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, changelog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert notify.action == "UPVOTE"
       assert notify.article_id == changelog.id
       assert notify.thread == :changelog
-      assert notify.user_id == changelog.author.user.id
+      assert notify.user_id == changelog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, changelog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, changelog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, changelog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, changelog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert notify.action == "COLLECT"
       assert notify.article_id == changelog.id
       assert notify.thread == :changelog
-      assert notify.user_id == changelog.author.user.id
+      assert notify.user_id == changelog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       Events.emit(:notify_undo_collect, %{article: changelog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, changelog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, changelog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, changelog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, changelog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -151,7 +151,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       assert notify.action == "COMMENT"
       assert notify.thread == :changelog
       assert notify.article_id == changelog.id
-      assert notify.user_id == changelog.author.user.id
+      assert notify.user_id == changelog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 

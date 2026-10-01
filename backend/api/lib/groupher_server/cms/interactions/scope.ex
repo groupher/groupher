@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   alias CMS.Artiment.Matcher
   alias CMS.Articles.Const, as: ArticlesConst
   alias CMS.Interactions.{Config, ErrorCat}
-  alias CMS.Model.ArticleStats
+  alias CMS.Model.{Article, ArticleStats}
 
   @article_types Config.article_threads()
   @passthrough_orders [nil | ArticlesConst.native_order_values()]
@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
 
   ## Examples
 
-      Scope.scope(Post, order: :upvotes)
+      Scope.scope(Article, thread: :post, order: :upvotes)
 
   """
   @spec scope(Ecto.Queryable.t(), keyword()) :: result()
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
 
     with :ok <- validate_order(order),
          {:ok, query} <- to_query(queryable),
-         {:ok, info} <- interaction_info(query) do
+         {:ok, info} <- interaction_info(query, opts) do
       compile_order(query, info, order)
     end
   end
@@ -57,7 +57,15 @@ defmodule GroupherServer.CMS.Interactions.Scope do
       {:error, ErrorCat.unsupported_artiment_query(inspect(queryable))}
   end
 
-  defp interaction_info(%Ecto.Query{from: %{source: {_source, schema}}}) when is_atom(schema) do
+  defp interaction_info(%Ecto.Query{from: %{source: {_source, Article}}}, opts) do
+    case Keyword.get(opts, :thread) do
+      thread when thread in @article_types -> Matcher.match_interaction(thread)
+      _ -> {:error, ErrorCat.unsupported_artiment_query("stable Article query requires thread")}
+    end
+  end
+
+  defp interaction_info(%Ecto.Query{from: %{source: {_source, schema}}}, _opts)
+       when is_atom(schema) do
     with {:ok, %{artiment: artiment} = info} <- Matcher.match_interaction(schema),
          true <- artiment in @article_types do
       {:ok, info}
@@ -66,7 +74,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     end
   end
 
-  defp interaction_info(_query),
+  defp interaction_info(_query, _opts),
     do: {:error, ErrorCat.unsupported_artiment_query("query has no Article root schema")}
 
   defp compile_order(query, _info, order)
@@ -89,7 +97,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
         left_join: stats in ArticleStats,
         on: stats.thread == ^Atom.to_string(thread) and stats.article_id == article.id,
         order_by: [
-          desc: coalesce(field(stats, ^count_field), 0),
+          desc_nulls_last: field(stats, ^count_field),
           asc: article.id
         ]
       )

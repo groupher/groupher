@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
-    {:ok, user_conn: simu_conn(:user, user), community: community}
+    {:ok, user: user, user_conn: simu_conn(:user, user), community: community}
   end
 
   test "default Changelog creation publishes through the revision lifecycle", context do
@@ -21,11 +21,12 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
       })
 
     {:ok, public_changelog} =
-      CMS.FrontDesk.article(context.community, :changelog, result["innerId"])
+      read_article(context.community, :changelog, result["innerId"])
 
     assert public_changelog.stage == :public
 
-    context.user_conn
+    updated =
+      context.user_conn
     |> gq_mutation(S.Article.m(:update_article, :changelog), %{
       article: %{
         inner_id: result["innerId"],
@@ -37,22 +38,8 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
       body: mock_rich_text("republished changelog")
     })
 
-    {:ok, draft} =
-      CMS.Articles.read_draft(context.community, :changelog, public_changelog.article_hash_id)
-
-    assert draft.title == "Republished Changelog"
-
-    {:ok, actor} = CMS.FrontDesk.author_of(public_changelog)
-
-    {:ok, %{article: published, snapshot: nil}} =
-      CMS.Articles.publish_draft(
-        context.community,
-        :changelog,
-        public_changelog.article_hash_id,
-        actor
-      )
-
-    assert published.title == "Republished Changelog"
+    assert updated["title"] == "Republished Changelog"
+    assert {:error, :not_found} = CMS.Articles.read_draft(public_changelog.id, context.user)
   end
 
   test "Changelog Draft stays private until its explicit publish mutation", context do
@@ -67,8 +54,8 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
     assert draft["stage"] == "DRAFT"
     assert draft["thread"] == "CHANGELOG"
 
-    assert {:error, _} =
-             CMS.Articles.read_public(context.community, :changelog, draft["id"])
+    assert {:ok, stored_draft} = CMS.Articles.read_draft(draft["id"], context.user)
+    assert stored_draft.title == "Changelog Draft"
 
     updated =
       context.user_conn
@@ -139,12 +126,10 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
            )
 
     assert {:ok, stored_draft} =
-             CMS.Articles.read_draft(context.community, :changelog, draft["id"])
+             CMS.Articles.read_draft(draft["id"], context.user)
 
     assert stored_draft.title == "Author Changelog Draft"
 
-    assert {:error, _} =
-             CMS.Articles.read_public(context.community, :changelog, draft["id"])
   end
 
   test "only the public Changelog author can start its first Draft", context do
@@ -157,7 +142,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
       })
 
     {:ok, public_changelog} =
-      CMS.FrontDesk.article(context.community, :changelog, published["innerId"])
+      read_article(context.community, :changelog, published["innerId"])
 
     privileged_non_author =
       simu_conn(:user,
@@ -168,7 +153,7 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
 
     variables = %{
       community: context.community.slug,
-      id: public_changelog.article_hash_id,
+      id: public_changelog.id,
       expectedVersion: public_changelog.version,
       title: "First Changelog Draft",
       body: mock_rich_text("unauthorized first draft")
@@ -183,7 +168,16 @@ defmodule GroupherServer.Test.Mutation.Articles.ChangelogDraft do
 
     owner_draft =
       context.user_conn
-      |> gq_mutation(S.Article.m(:update_article_draft, :changelog), variables)
+      |> gq_mutation(S.Article.m(:update_article, :changelog), %{
+        article: %{
+          inner_id: public_changelog.inner_id,
+          community: context.community.slug,
+          thread: "CHANGELOG"
+        },
+        expectedVersion: public_changelog.version,
+        title: variables.title,
+        body: variables.body
+      })
 
     assert owner_draft["title"] == "First Changelog Draft"
   end

@@ -7,7 +7,6 @@ import useTrans from '~/hooks/useTrans'
 import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import CloseLightSVG from '~/icons/CloseLight'
 import { createCommandId } from '~/query/mutation/optimistic/execute'
-import useCommunity from '~/stores/community/hooks'
 import Drawer from '~/ui/Drawer'
 import { SegmentTab } from '~/ui/Switcher'
 import { toast } from '~/ui/Toaster'
@@ -55,13 +54,13 @@ const RevisionDrawer: FC<TProps> = ({
 }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const { slug: community } = useCommunity()
   const { docDraftInfo, reloadDocDraft, saveStatus } = useDocsEditor()
   const [activeTab, setActiveTab] = useState<TRevisionDiffTab>('staged')
   const [selectedKey, setSelectedKey] = useState(CURRENT_CHANGES_KEY)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [selectedDiffValue, setSelectedDiffValue] = useState<TRichEditorDiffValue | null>(null)
   const docDraftId = docDraftInfo.id
+  const branchId = docDraftInfo.branchId
 
   useEffect(() => {
     setSelectedKey((currentKey) => {
@@ -79,15 +78,15 @@ const RevisionDrawer: FC<TProps> = ({
 
   const restoreRevision = useCallback(
     async (revisionId: string) => {
-      if (!docDraftId || restoringId) return
+      if (!docDraftId || !branchId || restoringId) return
 
       setRestoringId(revisionId)
 
       try {
-        await browserGraphQLRequest(S.restoreDocDraftSnapshot, {
-          community,
-          id: docDraftId,
-          snapshotId: revisionId,
+        await browserGraphQLRequest(S.restoreDocRevisionToDraft, {
+          docId: docDraftId,
+          branchId,
+          revisionId,
           commandId: createCommandId(),
         })
         toast(t(REVISION_LABEL_KEY.RESTORED))
@@ -100,7 +99,7 @@ const RevisionDrawer: FC<TProps> = ({
         setRestoringId(null)
       }
     },
-    [community, docDraftId, onReload, reloadDocDraft, restoringId, t],
+    [branchId, docDraftId, onReload, reloadDocDraft, restoringId, t],
   )
 
   const restoreDisabled = saveStatus !== 'saved'

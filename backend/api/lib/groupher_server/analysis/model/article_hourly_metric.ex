@@ -16,7 +16,7 @@ defmodule GroupherServer.Analysis.Model.ArticleHourlyMetric do
   schema "article_hourly_metrics" do
     field(:community_id, :id)
     field(:article_type, Ecto.Enum, values: GroupherServer.CMS.Artiment.Threads.article_enums())
-    field(:article_id, :id)
+    field(:article_id, Ecto.UUID)
     field(:bucket_started_at, :utc_datetime)
     field(:metric, Ecto.Enum, values: Const.metrics())
     field(:actor_type, Ecto.Enum, values: Const.actor_dimensions())

@@ -346,7 +346,7 @@ defmodule GroupherServer.Activity.CommunityLog do
            parent_event_ref,
            action,
            source,
-           #{stream_field} AS stream_ref,
+           #{stream_field}::text AS stream_ref,
            stream_snapshot,
            subject_type,
            subject_ref,

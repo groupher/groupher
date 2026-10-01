@@ -31,7 +31,7 @@ defmodule GroupherServer.Activity.ArtimentEvent do
       def describe(%Comment{thread: @thread} = comment, _action, _opts) do
         {:ok,
          %{
-           @stream_field => Event.stringify(comment.article_hash_id),
+           @stream_field => comment.article_id,
            community_id: comment.community_id,
            stream_snapshot: %{},
            subject_type: "comment",
@@ -51,16 +51,16 @@ defmodule GroupherServer.Activity.ArtimentEvent do
 
           {:ok,
            %{
-             @stream_field => Event.stringify(Map.fetch!(resource, :article_hash_id)),
+             @stream_field => stable_article_id(resource),
              community_id: Map.fetch!(resource, :community_id),
              stream_snapshot: Event.snapshot(resource, [:title, :thread]),
              subject_type: to_string(@thread),
-             subject_ref: Event.stringify(Map.fetch!(resource, :article_hash_id)),
+             subject_ref: Event.stringify(stable_article_id(resource)),
              subject_snapshot: Event.snapshot(resource, [:title, :inner_id]),
              target_type: target_type(target),
              target_ref: target_ref(target),
              target_snapshot: target_snapshot(target),
-             branch_ref: branch_ref(resource)
+             branch_id: branch_id(resource)
            }
            |> Map.take(@schema.__schema__(:fields))}
         else
@@ -85,10 +85,14 @@ defmodule GroupherServer.Activity.ArtimentEvent do
       defp target_snapshot(nil), do: %{}
       defp target_snapshot(target), do: Event.snapshot(target, [:title, :inner_id])
 
-      defp branch_ref(%{branch_id: branch_id}) when not is_nil(branch_id),
-        do: Event.stringify(branch_id)
+      defp stable_article_id(%{article_id: article_id}) when is_binary(article_id),
+        do: article_id
 
-      defp branch_ref(_), do: nil
+      defp stable_article_id(%{id: article_id}) when is_binary(article_id), do: article_id
+
+      defp branch_id(%{branch_id: branch_id}) when is_integer(branch_id), do: branch_id
+
+      defp branch_id(_), do: nil
     end
   end
 end

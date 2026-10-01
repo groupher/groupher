@@ -129,9 +129,10 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   defp sync_article_fixed(article, reaction, %User{} = user, operation)
        when reaction in [:collect, :report, :upvote] and operation in [:add, :remove] do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
+    with {:ok, _thread} <- FrontDesk.thread_of(article),
+         {:ok, info} <- Matcher.match_interaction(article) do
       with {:ok, projection} <-
-             sync_fixed(interaction_info(thread), article.id, reaction, user, operation),
+             sync_fixed(info, article.id, reaction, user, operation),
            :ok <- maybe_sync_article_stats(article, reaction) do
         {:ok, projection}
       end
@@ -145,9 +146,10 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
 
   defp sync_article_emotion(article, emotion, %User{} = user, operation)
        when is_atom(emotion) and operation in [:add, :remove] do
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
+    with {:ok, _thread} <- FrontDesk.thread_of(article),
+         {:ok, info} <- Matcher.match_interaction(article) do
       with {:ok, projection} <-
-             sync_emotion(interaction_info(thread), article.id, emotion, user, operation),
+             sync_emotion(info, article.id, emotion, user, operation),
            :ok <- CMS.ArticleStats.apply_interaction_counts(article),
            :ok <- CMS.ArticleStats.apply_emotion_count(article, emotion) do
         {:ok, projection}
@@ -273,7 +275,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
       schema,
       [%{target_id_field => target_id, inserted_at: now, updated_at: now}],
       on_conflict: :nothing,
-      conflict_target: [target_id_field]
+      conflict_target: projection_conflict_target(target_id_field)
     )
   end
 
@@ -291,7 +293,7 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
         }
       ],
       on_conflict: :nothing,
-      conflict_target: [target_id_field, :emotion]
+      conflict_target: emotion_projection_conflict_target(target_id_field)
     )
   end
 
@@ -377,4 +379,16 @@ defmodule GroupherServer.CMS.Interactions.ReadState.Sync do
     {:ok, info} = Matcher.match_interaction(artiment)
     info
   end
+
+  defp projection_conflict_target(:article_id),
+    do: {:unsafe_fragment, "(article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+
+  defp projection_conflict_target(target_id_field), do: [target_id_field]
+
+  defp emotion_projection_conflict_target(:article_id),
+    do:
+      {:unsafe_fragment,
+       "(article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+
+  defp emotion_projection_conflict_target(target_id_field), do: [target_id_field, :emotion]
 end

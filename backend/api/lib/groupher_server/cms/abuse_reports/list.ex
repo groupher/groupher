@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   import ShortMaps
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
 
   alias CMS.QueryBuilder
   alias CMS.Model.{AbuseReport, Comment}
@@ -66,12 +66,22 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
+  def paged_reports(%{content_type: :account} = filter) do
+    query =
+      from(report in AbuseReport,
+        where: not is_nil(report.account_id),
+        preload: [account: [], operate_user: []]
+      )
+
+    do_paged_reports(query, :account, filter)
+  end
+
+  @spec paged_reports(map()) :: T.domain_res(T.paged_data())
   def paged_reports(%{content_type: :comment, content_id: content_id} = filter) do
     with {:ok, info} <- match(:comment) do
       query =
         from(r in AbuseReport,
           where: field(r, ^info.foreign_key) == ^content_id,
-          preload: [comment: ^@threads],
           preload: [comment: :author]
         )
 
@@ -80,31 +90,44 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
+  def paged_reports(%{content_type: :comment} = filter) do
+    query =
+      from(report in AbuseReport,
+        where: not is_nil(report.comment_id),
+        preload: [comment: :author, operate_user: []]
+      )
+
+    do_paged_reports(query, :comment, filter)
+  end
+
+  @spec paged_reports(map()) :: T.domain_res(T.paged_data())
   def paged_reports(%{content_type: thread, content_id: content_id} = filter)
       when thread in @threads do
-    with {:ok, info} <- match(thread) do
-      query =
-        from(r in AbuseReport,
-          where: field(r, ^info.foreign_key) == ^content_id,
-          preload: [^thread, :operate_user]
-        )
+    case Ecto.UUID.cast(content_id) do
+      {:ok, article_id} ->
+        query =
+          from(r in AbuseReport,
+            where: r.article_id == ^article_id,
+            preload: [:article, :operate_user]
+          )
 
-      do_paged_reports(query, thread, filter)
+        do_paged_reports(query, thread, filter)
+
+      :error ->
+        {:ok, %{entries: [], total_count: 0, page_number: filter.page, page_size: filter.size}}
     end
   end
 
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
-  def paged_reports(%{content_type: thread} = filter) do
-    with {:ok, info} <- match(thread) do
-      query =
-        from(r in AbuseReport,
-          where: not is_nil(field(r, ^info.foreign_key)),
-          preload: [^thread, :operate_user],
-          preload: [comment: :author]
-        )
+  def paged_reports(%{content_type: thread} = filter) when thread in @threads do
+    query =
+      from(report in AbuseReport,
+        join: article in assoc(report, :article),
+        where: article.thread == ^thread,
+        preload: [article: :community, operate_user: []]
+      )
 
-      do_paged_reports(query, thread, filter)
-    end
+    do_paged_reports(query, thread, filter)
   end
 
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
@@ -118,7 +141,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
     formatted =
       query
-      |> QueryBuilder.filter_pack(filter)
+      |> QueryBuilder.filter_pack(Map.drop(filter, [:content_type, :content_id]))
       |> ORM.paginator(~m(page size)a)
       |> reports_formatter(thread)
 
@@ -184,12 +207,25 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_info(thread, %AbuseReport{} = report, stats) do
-    article = report |> Map.get(thread)
+    article = report.article || Map.get(report, thread)
 
-    with {:ok, article} <- article_with_projection_count(article, thread, stats) do
+    with {:ok, article} <- public_article(article),
+         {:ok, article} <- article_with_projection_count(article, thread, stats) do
       {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: thread})}
     end
   end
+
+  defp public_article(%CMS.Model.Article{} = article) do
+    article = Repo.preload(article, :community)
+
+    CMS.FrontDesk.article(%{
+      community: article.community.slug,
+      thread: article.thread,
+      inner_id: article.inner_id
+    })
+  end
+
+  defp public_article(article), do: {:ok, article}
 
   defp extract_article_comment_info(%AbuseReport{} = report) do
     keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]
@@ -211,6 +247,17 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_in_comment(%Comment{} = comment) do
+    if is_binary(comment.article_id) do
+      with {:ok, article} <- CMS.FrontDesk.article_of(comment),
+           {:ok, article} <- article_with_projection_count(article, comment.thread) do
+        {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: comment.thread})}
+      end
+    else
+      extract_legacy_article_in_comment(comment)
+    end
+  end
+
+  defp extract_legacy_article_in_comment(%Comment{} = comment) do
     thread =
       Enum.find(@threads, fn thread ->
         not is_nil(Map.get(comment, :"#{thread}_id"))
@@ -239,6 +286,12 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp article_with_projection_count(article, thread),
     do: article_with_projection_count(article, thread, nil)
 
+  defp article_with_projection_count(%{id: id} = article, thread, nil)
+       when is_binary(id) and not is_struct(article) do
+    stats = Repo.get_by(CMS.Model.ArticleStats, article_id: id, thread: thread)
+    {:ok, Map.put(article, :article_stats, stats)}
+  end
+
   defp article_with_projection_count(%{id: id} = article, thread, stats) do
     with {:ok, article_stats} <- article_stats_for_article(article, thread, stats) do
       projection = if is_map(article_stats), do: Map.get(article_stats, {thread, id})
@@ -261,7 +314,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp article_stats(entries, thread) do
     articles =
       entries
-      |> Enum.map(&Map.get(&1, thread))
+      |> Enum.map(&(Map.get(&1, :article) || Map.get(&1, thread)))
       |> Enum.reject(&is_nil/1)
 
     case CMS.FrontDesk.article_stats_for_articles(thread, articles) do

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.Model.{Article, Community, DocDraft, DocPublic, DocTreeNode, TrashedDocTreeNode}
   alias Helper.Validator.Slug
 
   # Explicit slugs are user input and win over title-derived slugs; title is
@@ -93,14 +93,25 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
     do: unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
 
   def unique_doc_slug(%Community{} = community, branch, slug) do
-    existing =
-      Doc
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.branch_id == ^branch.id)
-      |> where([d], d.stage == CMS.Const.stage(:draft))
-      |> select([d], d.slug)
+    draft_slugs =
+      DocDraft
+      |> join(:inner, [draft], article in Article, on: article.id == draft.article_id)
+      |> where([draft, article], article.community_id == ^community.id)
+      |> where([draft], draft.branch_id == ^branch.id)
+      |> select([draft], draft.slug)
       |> Repo.all()
       |> MapSet.new()
+
+    public_slugs =
+      DocPublic
+      |> join(:inner, [public], article in Article, on: article.id == public.article_id)
+      |> where([public, article], article.community_id == ^community.id)
+      |> where([public], public.branch_id == ^branch.id)
+      |> select([public], public.slug)
+      |> Repo.all()
+      |> MapSet.new()
+
+    existing = MapSet.union(draft_slugs, public_slugs)
 
     if MapSet.member?(existing, slug),
       do: unique_from_set(existing, "#{slug}-copy", "-"),
@@ -125,10 +136,7 @@ defmodule GroupherServer.CMS.DocTree.Writer.Identity do
              Map.get(attrs, field)
            ) do
         {:halt,
-         {:error,
-          ErrorCat.custom(
-            "A trashed tree item with this title is pending restore."
-          )}}
+         {:error, ErrorCat.custom("A trashed tree item with this title is pending restore.")}}
       else
         {:cont, :ok}
       end

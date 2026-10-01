@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                  v
           publish_changes/3
                  |
-                 ├─ docs + ArticleDocument
+                 ├─ DocDraft + ArticleBodyDraft
                  ├─ doc_tree_nodes(stage=public)
                  └─ doc_publish_releases
                       ├─ tree_snapshot_id -> doc_tree_snapshots
@@ -51,7 +51,6 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   alias CMS.Model.{
     Community,
-    Doc,
     DocTreeEvent,
     DocTreeNode
   }
@@ -233,17 +232,17 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   the same `doc_id`. The public row is left untouched — it stays served until
   the next publish overwrites it.
 
-  Content is copied from the public `ArticleDocument` as one validated BodyBag.
+  Content is copied from the public immutable body snapshot as one validated BodyBag.
   Derived fields and `body_hash` are preserved without running an Elixir
   serializer. The caller's `user` is recorded as the draft author for audit.
 
   ## Examples
 
       iex> Publish.move_doc_to_draft(community, draft_node.node_id, user)
-      {:ok, %Doc{stage: CMS.Const.stage(:draft), article_hash_id: "a1b2c3d4-..."}}
+      {:ok, %{article_id: "a1b2c3d4-...", stage: CMS.Const.stage(:draft)}}
   """
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
-          T.domain_res(Doc.t())
+          T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, node_id, %User{} = user, opts \\ []) do
     with {:ok, branch} <- Branch.resolve(community, opts) do
       DocPublisher.move_doc_to_draft(community, branch, node_id, user)
@@ -397,7 +396,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
     Result.map_while_ok(doc_checklist_item_ids, fn checklist_item_id ->
       with %{doc_id: _doc_id} = item <- Map.get(items, checklist_item_id),
-           {:ok, snapshot} <-
+           {:ok, published} <-
              DocPublisher.publish_doc_draft(
                community,
                branch,
@@ -405,7 +404,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                user,
                sync_cover?
              ) do
-        {:ok, %{snapshot: snapshot, checklist_item: item}}
+        {:ok, %{published: published, checklist_item: item}}
       else
         nil ->
           {:error, ErrorCat.custom("Selected docs publish item no longer exists.")}
@@ -456,10 +455,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     if length(events) != length(tree_checklist_item_ids) do
       {:error, ErrorCat.custom("Selected tree publish item no longer exists.")}
     else
-      doc_snapshots =
-        DocPublishRelease.doc_snapshots_before_tree_events(community, branch, events)
+      branch_versions =
+        DocPublishRelease.branch_versions_before_tree_events(community, branch, events)
 
-      {:ok, %{events: events, doc_snapshots: doc_snapshots}}
+      {:ok, %{events: events, branch_versions: branch_versions}}
     end
   end
 

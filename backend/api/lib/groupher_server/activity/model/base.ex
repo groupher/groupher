@@ -77,7 +77,7 @@ defmodule GroupherServer.Activity.Model.Base do
 
       schema table do
         field(:community_id, :id)
-        field(@stream_field, :string)
+        field(@stream_field, if(@stream_field == :article_id, do: Ecto.UUID, else: :string))
 
         for {name, type} <- @extra_fields do
           field(name, type)

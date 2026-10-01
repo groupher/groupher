@@ -1,7 +1,6 @@
 defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   @moduledoc false
   use GroupherServerWeb.ConnCase, async: false
-  require GroupherServer.CMS.Const
   @moduletag timeout: 300_000
   @moduletag :later
   @default_threads [:post, :changelog, :kanban, :doc, :about]
@@ -13,7 +12,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
-  alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
+  alias CMS.Model.{Article, ArticlePublic, Comment, Community, DocPublic, PostState}
 
   describe "[full community seeds]" do
     test "seeds full community data including about dashboard" do
@@ -28,15 +27,14 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       assert Enum.all?(@default_threads, &Map.get(community.dashboard.enable, &1))
 
-      post_count =
-        from(p in Post, where: p.community_id == ^community.id) |> count()
-
-      changelog_count =
-        from(p in Changelog, where: p.community_id == ^community.id) |> count()
+      post_count = article_count(community.id, :post)
+      changelog_count = article_count(community.id, :changelog)
 
       doc_count =
-        from(p in Doc,
-          where: p.community_id == ^community.id and p.stage == ^CMS.Const.stage(:public)
+        from(article in Article,
+          join: public in DocPublic,
+          on: public.article_id == article.id,
+          where: article.community_id == ^community.id and article.thread == :doc
         )
         |> count()
 
@@ -44,7 +42,18 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert changelog_count == 23
       assert doc_count == 23
 
-      posts = Repo.all(from(p in Post, where: p.community_id == ^community.id))
+      posts =
+        Repo.all(
+          from(article in Article,
+            join: state in PostState,
+            on: state.article_id == article.id,
+            join: public in ArticlePublic,
+            on: public.article_id == article.id,
+            where: article.community_id == ^community.id and article.thread == :post,
+            select: %{id: article.id, cat: state.cat, status: state.status, title: public.title}
+          )
+        )
+
       post = List.first(posts)
 
       assert Enum.all?(posts, &(&1.cat in allowed_cats))
@@ -55,7 +64,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert Enum.any?(posts, &(not is_nil(&1.cat) and not is_nil(&1.status)))
 
       comments_count =
-        from(c in Comment, where: c.post_id == ^post.id) |> count()
+        from(c in Comment, where: c.article_id == ^post.id) |> count()
 
       post_counts = CMS.Interactions.counts([post]) |> Map.fetch!({:post, post.id})
 
@@ -84,7 +93,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       top_comment =
         Repo.one!(
           from(c in Comment,
-            where: c.post_id == ^post.id and is_nil(c.reply_to_comment_id),
+            where: c.article_id == ^post.id and is_nil(c.reply_to_comment_id),
             limit: 1,
             order_by: [asc: c.id]
           )
@@ -105,7 +114,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert comment_emotion_total > 0
 
       reply_count =
-        from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_comment_id))
+        from(c in Comment,
+          where: c.article_id == ^post.id and not is_nil(c.reply_to_comment_id)
+        )
         |> count()
 
       assert reply_count > 0
@@ -128,5 +139,12 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   defp count(queryable) do
     {:ok, total_count} = ORM.count(queryable)
     total_count
+  end
+
+  defp article_count(community_id, thread) do
+    from(article in Article,
+      where: article.community_id == ^community_id and article.thread == ^thread
+    )
+    |> count()
   end
 end

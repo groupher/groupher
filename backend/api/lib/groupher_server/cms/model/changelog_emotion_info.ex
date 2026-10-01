@@ -8,7 +8,5 @@ defmodule GroupherServer.CMS.Model.ChangelogEmotionInfo do
   """
 
   use GroupherServer.CMS.Model.Interaction.EmotionInfo,
-    table: "changelog_emotion_infos",
-    target: :changelog,
-    target_schema: GroupherServer.CMS.Model.Changelog
+    table: "changelog_emotion_infos"
 end

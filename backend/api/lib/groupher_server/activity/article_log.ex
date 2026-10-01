@@ -7,31 +7,28 @@ defmodule GroupherServer.Activity.ArticleLog do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Activity, CMS, Repo}
+  alias GroupherServer.{Activity, CMS}
 
-  alias CMS.Artiment.Matcher
   alias Activity.Artiment
-  alias Activity.ErrorCat, as: ActivityErrorCat
-  alias CMS.Articles.ErrorCat, as: ArticlesErrorCat
   alias CMS.Gate
-  alias CMS.Gate.Context.Scope.Article, as: ArticleContext
-  alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias Helper.ORM
 
   @page_size 20
 
+  @doc "Lists the permission-filtered Activity surface for one Article or Doc branch."
+  @spec list(struct(), struct() | nil, map()) :: {:ok, map()} | {:error, term()}
   def list(article, actor, filter) do
     with {:ok, canonical} <- authorize_read(article, actor),
          {:ok, handler} <- Artiment.handler(canonical),
          {:ok, page} <- pagination(filter) do
       actions = handler.surface_actions(:article_log)
-      stream_ref = to_string(canonical.article_hash_id)
+      article_id = canonical.id
 
       query =
         handler.schema()
-        |> where([log], field(log, ^handler.stream_field()) == ^stream_ref)
+        |> where([log], field(log, ^handler.stream_field()) == ^article_id)
         |> where([log], log.action in ^actions)
-        |> maybe_branch(canonical)
+        |> maybe_branch(article)
         |> order_by([log], desc: log.occurred_at, desc: log.record_sequence)
 
       paged = ORM.paginator(query, page: page, size: @page_size)
@@ -46,36 +43,34 @@ defmodule GroupherServer.Activity.ArticleLog do
     end
   end
 
+  defp authorize_read(
+         %{stage: :draft, article_id: article_id, branch_id: branch_id, thread: :doc},
+         actor
+       ) do
+    Gate.Access.access_check(actor, :edit, %{
+      id: article_id,
+      thread: :doc,
+      branch_id: branch_id
+    })
+  end
+
+  defp authorize_read(%{article_id: article_id, branch_id: branch_id}, actor)
+       when is_binary(article_id) and is_integer(branch_id) do
+    Gate.Access.access_check(actor, :read, %{
+      id: article_id,
+      thread: :doc,
+      branch_id: branch_id
+    })
+  end
+
   defp authorize_read(article, actor) do
-    with {:ok, %{thread: thread}} <- Matcher.match(article),
-         {:ok, action, context} <- scope_context(article, thread),
-         %Ecto.Query{} = query <- Gate.scope(article.__struct__, actor, action, context),
-         canonical when not is_nil(canonical) <-
-           query |> where([candidate], candidate.id == ^article.id) |> Repo.one() do
+    with {:ok, canonical} <- Gate.Access.access_check(actor, :read, article) do
       {:ok, canonical}
-    else
-      nil -> {:error, ArticlesErrorCat.not_exist("Article")}
-      {:error, _} = error -> error
     end
   end
 
-  defp scope_context(%{stage: :draft, branch_id: branch_id}, :doc) when not is_nil(branch_id),
-    do: {:ok, :read_draft, DocContext.draft(branch_id, :owner_management)}
-
-  defp scope_context(%{stage: :public, branch_id: branch_id}, :doc) when not is_nil(branch_id),
-    do: {:ok, :read, DocContext.public_branch(branch_id)}
-
-  defp scope_context(%{stage: :draft}, thread),
-    do: {:ok, :read_draft, ArticleContext.draft(thread, :owner_management)}
-
-  defp scope_context(%{stage: :public}, thread),
-    do: {:ok, :read, ArticleContext.public(thread)}
-
-  defp scope_context(_article, _thread),
-    do: {:error, ActivityErrorCat.custom("invalid Activity Article scope")}
-
   defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id),
-    do: where(query, [log], log.branch_ref == ^to_string(branch_id))
+    do: where(query, [log], log.branch_id == ^branch_id)
 
   defp maybe_branch(query, _article), do: query
 

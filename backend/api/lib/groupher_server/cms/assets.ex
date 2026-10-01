@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Assets do
         - one row per uploaded/community-owned resource
         - owns storage metadata and billing bytes
 
-      article_document_asset_refs
+      article_asset_refs
         - many rows per article document
         - records where an asset is used: inline block, cover, attachment
 
@@ -198,27 +198,14 @@ defmodule GroupherServer.CMS.Assets do
   @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
   def link_refs(article, attrs, opts \\ []) do
     case Keyword.get(opts, :community) do
-      %Community{} = community -> Writer.sync_article_refs(community, article, attrs)
-      nil -> Writer.sync_article_refs(article, attrs)
+      %Community{} = community -> Writer.sync_refs(community, article, attrs)
+      nil -> Writer.sync_refs(article, attrs)
     end
   end
 
-  @doc "Deprecated alias for link_refs/3."
-  @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(%Community{} = community, article, attrs),
-    do: link_refs(article, attrs, community: community)
-
-  @doc "Deprecated alias for link_refs/2."
-  @spec sync_article_refs(T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(article, attrs), do: link_refs(article, attrs)
-
   @doc "Copies all derived document asset refs between two versions of one Article."
   @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_refs(source, target), do: Writer.copy_article_refs(source, target)
-
-  @doc "Deprecated alias for copy_refs/2."
-  @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_article_refs(source, target), do: copy_refs(source, target)
+  def copy_refs(source, target), do: Writer.copy_refs(source, target)
 
   @doc """
   Cleans up all persisted asset refs for one permanently deleted article.
@@ -233,9 +220,5 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
-  def cleanup_refs(thread, article_id), do: Writer.purge_article_refs(thread, article_id)
-
-  @doc "Deprecated alias for cleanup_refs/2."
-  @spec purge_article_refs(atom(), T.id()) :: T.domain_res(term())
-  def purge_article_refs(thread, article_id), do: cleanup_refs(thread, article_id)
+  def cleanup_refs(thread, article_id), do: Writer.purge_refs(thread, article_id)
 end

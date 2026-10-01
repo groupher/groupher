@@ -33,7 +33,6 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
 
   @required_fields ~w(
     mentioner_type
-    mentioner_id
     mentioner_community_id
     mentioned_scope
     mentioned_type
@@ -43,7 +42,12 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
 
   @optional_fields ~w(
     mentioner_url
+    mentioner_id
+    mentioner_article_id
+    mentioner_branch_id
     mentioned_id
+    mentioned_article_id
+    mentioned_branch_id
     mentioned_community_id
     mentioned_url
     mentioned_url_hash
@@ -58,12 +62,16 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
   schema "artiment_mentions" do
     field(:mentioner_type, Ecto.Enum, values: @mentioner_types)
     field(:mentioner_id, :id)
+    field(:mentioner_article_id, Ecto.UUID)
+    field(:mentioner_branch_id, :id)
     field(:mentioner_community_id, :id)
     field(:mentioner_url, :string)
 
     field(:mentioned_scope, Ecto.Enum, values: @mentioned_scopes)
     field(:mentioned_type, Ecto.Enum, values: @mentioned_types)
     field(:mentioned_id, :id)
+    field(:mentioned_article_id, Ecto.UUID)
+    field(:mentioned_branch_id, :id)
     field(:mentioned_community_id, :id)
     field(:mentioned_url, :string)
     field(:mentioned_url_hash, :string)
@@ -82,6 +90,7 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
+    |> validate_mentioner_identity()
     |> validate_internal_mention()
     |> validate_external_mention()
     |> validate_scope_case()
@@ -91,15 +100,32 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
   def update_changeset(%ArtimentMention{} = mention, attrs) do
     mention
     |> cast(attrs, @optional_fields ++ @required_fields)
+    |> validate_mentioner_identity()
     |> validate_internal_mention()
     |> validate_external_mention()
     |> validate_scope_case()
     |> validate_scope_fields()
   end
 
+  defp validate_mentioner_identity(changeset) do
+    case {get_field(changeset, :mentioner_id), get_field(changeset, :mentioner_article_id)} do
+      {nil, nil} -> add_error(changeset, :mentioner_id, "requires a comment id or Article id")
+      {_id, nil} -> changeset
+      {nil, _article_id} -> changeset
+      {_id, _article_id} -> add_error(changeset, :mentioner_id, "cannot accompany Article id")
+    end
+  end
+
   defp validate_internal_mention(changeset) do
     case get_field(changeset, :mentioned_scope) do
-      :internal -> validate_required(changeset, [:mentioned_id])
+      :internal -> validate_internal_identity(changeset)
+      _ -> changeset
+    end
+  end
+
+  defp validate_internal_identity(changeset) do
+    case {get_field(changeset, :mentioned_id), get_field(changeset, :mentioned_article_id)} do
+      {nil, nil} -> add_error(changeset, :mentioned_id, "requires an entity id or Article id")
       _ -> changeset
     end
   end

@@ -33,8 +33,8 @@ defmodule GroupherServer.Jobs.SearchIndex do
   end
 
   def perform(%Oban.Job{
-        args: %{"action" => "delete_article", "thread" => thread, "ref" => article_hash_id}
+        args: %{"action" => "delete_article", "thread" => thread, "ref" => article_id}
       }) do
-    Indexer.delete_article(String.to_existing_atom(thread), article_hash_id)
+    Indexer.delete_article(String.to_existing_atom(thread), article_id)
   end
 end

@@ -18,28 +18,18 @@ defmodule GroupherServer.CMS.Model.Comment do
   use Accessible
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [
-      articles_exactly_one_ref_constraint: 2,
-      articles_foreign_key_constraint: 1,
-      articles_thread_matches_ref_constraint: 2
-    ]
-
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
-  alias CMS.Model.{CommentLifecycle, CommentUpvote, Community, Embeds}
+  alias CMS.Model.{Article, CommentLifecycle, CommentUpvote, Community, DocBranch, Embeds}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
+  @type t :: %__MODULE__{}
 
   # alias Helper.HTML
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(body author_id community_id article_hash_id)a
+  @required_fields ~w(body author_id community_id)a
   @optional_fields ~w(body_html reply_to_comment_id root_comment_id replies_count is_folded inner_id floor is_article_author thread is_for_question pending)a
   @updatable_fields ~w(
     body_html
@@ -54,8 +44,6 @@ defmodule GroupherServer.CMS.Model.Comment do
     is_article_author
     root_comment_id
   )a
-
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @max_participator_count 5
   @max_parent_replies_count 3
@@ -86,13 +74,12 @@ defmodule GroupherServer.CMS.Model.Comment do
   @doc "Returns the maximum number of pinned comments per article."
   def pinned_comment_limit, do: @pinned_comment_limit
 
-  schema_artiment_type()
-
   schema "comments" do
     belongs_to(:author, User, foreign_key: :author_id)
     belongs_to(:community, Community)
     has_one(:lifecycle, CommentLifecycle)
-    field(:article_hash_id, Ecto.UUID)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
 
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:body, :string)
@@ -131,7 +118,6 @@ defmodule GroupherServer.CMS.Model.Comment do
 
     field(:pending, :integer, default: 0)
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
@@ -139,7 +125,10 @@ defmodule GroupherServer.CMS.Model.Comment do
   @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(%Comment{} = comment, attrs) do
     comment
-    |> cast(attrs, @required_fields ++ @optional_fields ++ @article_fields)
+    |> cast(
+      attrs,
+      [:article_id, :branch_id] ++ @required_fields ++ @optional_fields
+    )
     |> cast_embed(:emotions, required: true, with: &Embeds.CommentEmotion.changeset/2)
     |> cast_embed(:meta, required: true, with: &Embeds.CommentMeta.changeset/2)
     |> validate_required(@required_fields)
@@ -149,7 +138,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   # @doc false
   def update_changeset(%Comment{} = comment, attrs) do
     comment
-    |> cast(attrs, @required_fields ++ @updatable_fields ++ @article_fields)
+    |> cast(attrs, @required_fields ++ @updatable_fields)
     |> cast_embed(:meta, required: true, with: &Embeds.CommentMeta.changeset/2)
     |> geneal_changeset
   end
@@ -158,10 +147,9 @@ defmodule GroupherServer.CMS.Model.Comment do
     content
     |> foreign_key_constraint(:author_id)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
     |> check_constraint(:community_id, name: :comments_community_matches_article)
-    |> articles_foreign_key_constraint
-    |> articles_exactly_one_ref_constraint(:comments)
-    |> articles_thread_matches_ref_constraint(:comments)
 
     # |> validate_length(:body_html, min: 3, max: 2000)
     # |> HTML.safe_string(:body_html)

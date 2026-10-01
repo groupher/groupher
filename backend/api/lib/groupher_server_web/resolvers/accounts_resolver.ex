@@ -211,7 +211,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   defp present_collect({:ok, result}, article, user) do
-    article = Repo.preload(article, :community)
+    article = if is_struct(article), do: Repo.preload(article, :community), else: article
 
     # These post-commit readers can observe different concurrent revisions.
     # Each payload keeps the revision attached to the state it actually read.

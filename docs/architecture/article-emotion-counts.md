@@ -1,5 +1,10 @@
 # Article emotion counts direct cutover
 
+> 状态说明：本文记录已经落地的 physical `(thread, article_id)` direct cutover。
+> [Article Revision / Draft 目标架构](../feature/article/revision-draft-target.md) 发布时，
+> emotion facts 将与其他 runtime relations 一次性迁到 stable Article identity；本文不是
+> stable identity 的并行长期方案。Doc 届时仍按 `article_id + branch_id` 保持 branch 隔离。
+
 > 状态：本地实现完成；生产迁移窗口、CDN purge 与线上 smoke test 待验收。
 >
 > 本文是 Article 公共 emotion count 从 JSONB 切换为 typed rows 的实施合同。切换不保留双写、双读、fallback、

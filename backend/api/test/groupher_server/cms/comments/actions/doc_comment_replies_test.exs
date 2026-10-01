@@ -141,10 +141,10 @@ defmodule GroupherServer.Test.CMS.Comments.DocCommentReplies do
 
       {:ok, _} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
 
-      {:ok, article} = ORM.find(Doc, doc.id)
+      {:ok, state} = CMS.Comments.comments_state(:doc, doc.article_id)
 
-      assert exist_in?(user, article.comments_participants)
-      assert exist_in?(user2, article.comments_participants)
+      assert exist_in?(user, state.participants)
+      assert exist_in?(user2, state.participants)
     end
 
     test "replies count should inc by 1 after got replied", ~m(community doc user user2)a do

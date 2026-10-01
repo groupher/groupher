@@ -251,7 +251,14 @@ defmodule GroupherServerWeb.Middleware.Passport do
          arguments: %{article_path: %{community: community, thread: thread, inner_id: inner_id}}
        })
        when not is_nil(cur_user) do
-    case apply(FrontDesk, :article, [community_slug(community), thread, inner_id]) do
+    article_path = %{
+      community: community_slug(community),
+      thread: thread,
+      inner_id: inner_id
+    }
+
+    case FrontDesk.article(article_path, cur_user, preload: [author: :user]) do
+      {:ok, %{author: %User{id: author_id}}} -> author_id == cur_user.id
       {:ok, article} -> article.author.user.id == cur_user.id
       _ -> false
     end

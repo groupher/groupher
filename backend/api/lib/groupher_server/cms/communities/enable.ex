@@ -102,6 +102,11 @@ defmodule GroupherServer.CMS.Communities.Enable do
           {:ok, map()} | {:error, CommunityErrorCat.error()}
   def allow_comment(%{meta: %{is_comment_locked: false}} = article, _user), do: done(article)
 
+  def allow_comment(%{comments_locked: false} = article, _user), do: done(article)
+
+  def allow_comment(%{comments_locked: true}, _user),
+    do: {:error, GateErrorCat.article_comments_locked()}
+
   def allow_comment(%{meta: %{is_comment_locked: true}}, _user),
     do: {:error, GateErrorCat.article_comments_locked()}
 

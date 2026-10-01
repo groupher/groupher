@@ -73,6 +73,28 @@ defmodule GroupherServer.TestMate do
         }
       end
 
+      @doc "Reads an Article through the production ArticlePath-only FrontDesk contract."
+      def read_article(article_path), do: CMS.FrontDesk.article(article_path)
+
+      def read_article(article_path, actor) when is_map(article_path),
+        do: CMS.FrontDesk.article(article_path, actor)
+
+      def read_article(community, thread, inner_id),
+        do: read_article(community, thread, inner_id, [])
+
+      def read_article(%Community{slug: slug}, thread, inner_id, actor_or_opts),
+        do: read_article(slug, thread, inner_id, actor_or_opts)
+
+      def read_article(community, thread, inner_id, actor_or_opts) when is_binary(community) do
+        article_path = %{community: community, thread: thread, inner_id: inner_id}
+
+        if is_list(actor_or_opts) do
+          CMS.FrontDesk.article(article_path, nil, actor_or_opts)
+        else
+          CMS.FrontDesk.article(article_path, actor_or_opts, [])
+        end
+      end
+
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do
         %{article: article_path(community, article, thread), inner_id: comment.inner_id}
       end

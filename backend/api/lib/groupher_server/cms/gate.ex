@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Gate do
   Examples:
 
       iex> context = CMS.Gate.Context.Scope.Article.public(:post)
-      iex> {:ok, query} = CMS.Gate.scope(GroupherServer.CMS.Model.Post, nil, :read, context)
+      iex> {:ok, query} = CMS.Gate.scope(GroupherServer.CMS.Model.Article, nil, :read, context)
       iex> %Ecto.Query{} = query
 
       iex> {:ok, _community} = CMS.Gate.access_check(actor, :update, community)

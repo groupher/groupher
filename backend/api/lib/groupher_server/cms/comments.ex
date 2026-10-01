@@ -263,7 +263,9 @@ defmodule GroupherServer.CMS.Comments do
         command_id
       ) do
     with {:ok, article} <-
-           FrontDesk.article(community, thread, article_id,
+           FrontDesk.article(
+             %{community: community.slug, thread: thread, inner_id: article_id},
+             user,
              preload: [[author: :user], :community]
            ),
          {:ok, %{comment: comment}} <-

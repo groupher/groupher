@@ -11,7 +11,11 @@ defmodule GroupherServer.CMS.Comments.Numbering do
         -> Repo / domain event
   """
 
-  alias Helper.{ORM, T}
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.Article
+  alias Helper.T
 
   @doc """
   Allocates the next comment floor for an article.
@@ -25,18 +29,23 @@ defmodule GroupherServer.CMS.Comments.Numbering do
 
   """
   @spec next_floor(map(), atom()) :: T.domain_res(integer())
-  def next_floor(article, _foreign_key) do
-    case ORM.inc_meta(article, :next_floor) do
-      {:ok, _updated_article, new_floor} -> {:ok, new_floor}
-      {:error, reason} -> {:error, reason}
-    end
+  def next_floor(%Article{id: article_id}, _foreign_key) do
+    allocate(article_id, :next_floor)
   end
 
+  @doc "Allocates the next public comment identifier for a stable article."
   @spec next_inner_id(map(), atom()) :: T.domain_res(integer())
-  def next_inner_id(article, _foreign_key) do
-    case ORM.inc_meta(article, :next_comment_inner_id) do
-      {:ok, _updated_article, new_inner_id} -> {:ok, new_inner_id}
-      {:error, reason} -> {:error, reason}
+  def next_inner_id(%Article{id: article_id}, _foreign_key) do
+    allocate(article_id, :next_comment_inner_id)
+  end
+
+  defp allocate(article_id, field) do
+    case Article
+         |> where([article], article.id == ^article_id)
+         |> select([article], %{value: field(article, ^field)})
+         |> Repo.update_all(inc: [{field, 1}]) do
+      {1, [%{value: value}]} -> {:ok, value - 1}
+      _ -> {:error, CMS.ErrorCat.custom(%{reason: :article_counter_not_updated})}
     end
   end
 end

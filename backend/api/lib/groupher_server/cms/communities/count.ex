@@ -12,15 +12,14 @@ defmodule GroupherServer.CMS.Communities.Count do
 
   import Ecto.Query, only: [from: 2, where: 3]
   import Helper.Utils, only: [plural: 1, strip_struct: 1]
-  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.Articles.Trash
   alias CMS.Communities.ErrorCat
-  alias CMS.Model.{Community, CommunityTag}
-  alias Helper.{Constant, ORM, T, Transaction}
+  alias CMS.Model.{Article, ArticleCommunity, ArticlePublic, Community, CommunityTag, DocPublic}
+  alias Helper.{ORM, T, Transaction}
 
   @threads CMS.Communities.Config.threads()
 
@@ -87,15 +86,32 @@ defmodule GroupherServer.CMS.Communities.Count do
 
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
-    with {:ok, info} <- match(thread) do
-      active_articles = Trash.not_trashed_scope(info.model, thread)
+    if thread in @threads do
+      active_articles = Trash.not_trashed_scope(Article, thread)
 
-      {:ok, thread_article_count} =
-        from(a in active_articles,
-          join: c in assoc(a, :communities),
-          where: c.id == ^community.id
+      query =
+        from(article in active_articles,
+          join: relation in ArticleCommunity,
+          on:
+            relation.article_id == article.id and relation.community_id == ^community.id and
+              relation.visible == true,
+          where: article.thread == ^thread
         )
-        |> ORM.count(prefix: Constant.DBPrefix.cms())
+
+      query =
+        if thread == :doc do
+          from([article, _relation] in query,
+            join: public in DocPublic,
+            on: public.article_id == article.id and public.visible == true
+          )
+        else
+          from([article, _relation] in query,
+            join: public in ArticlePublic,
+            on: public.article_id == article.id and public.visible == true
+          )
+        end
+
+      thread_article_count = Repo.aggregate(query, :count, :id)
 
       Transaction.lock_row(community, fn community ->
         with {:ok, community} <- ORM.fill_meta(community),
@@ -104,6 +120,8 @@ defmodule GroupherServer.CMS.Communities.Count do
           ORM.update(community, %{articles_count: recount_articles_count(community.meta)})
         end
       end)
+    else
+      {:error, ErrorCat.custom("invalid article thread")}
     end
   end
 

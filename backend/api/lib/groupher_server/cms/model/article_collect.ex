@@ -16,49 +16,43 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
   use Ecto.Schema
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [
-      articles_exactly_one_ref_constraint: 2,
-      articles_foreign_key_constraint: 1,
-      articles_thread_matches_ref_constraint: 2
-    ]
-
   alias __MODULE__
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Artiment.Threads
+  alias CMS.Model.{Article, DocBranch}
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
 
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(user_id)a
-  @optional_fields ~w(thread)a
-
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
+  @required_fields ~w(user_id article_id thread)a
+  @optional_fields ~w(branch_id)a
 
   @type t :: %ArticleCollect{}
   schema "article_collects" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     belongs_to(:user, User, foreign_key: :user_id)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
     embeds_many(:collect_folders, CollectFolder, on_replace: :delete)
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
   @doc false
   def changeset(%ArticleCollect{} = article_collect, attrs) do
     article_collect
-    |> cast(attrs, @optional_fields ++ @required_fields ++ @article_fields)
+    |> cast(
+      attrs,
+      @required_fields ++ @optional_fields
+    )
     |> validate_required(@required_fields)
     |> cast_embed(:collect_folders, with: &CollectFolder.changeset/2)
     |> foreign_key_constraint(:user_id)
-    |> articles_foreign_key_constraint
-    |> articles_exactly_one_ref_constraint(:article_collects)
-    |> articles_thread_matches_ref_constraint(:article_collects)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
+    |> unique_constraint([:user_id, :article_id, :branch_id],
+      name: :article_collects_user_stable_article_index
+    )
   end
 end

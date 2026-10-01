@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "UPVOTE"
       assert notify.article_id == blog.id
       assert notify.thread == :blog
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "COLLECT"
       assert notify.article_id == blog.id
       assert notify.thread == :blog
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_undo_collect, %{article: blog, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, blog.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, blog.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       assert notify.action == "COMMENT"
       assert notify.thread == :blog
       assert notify.article_id == blog.id
-      assert notify.user_id == blog.author.user.id
+      assert notify.user_id == blog.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 

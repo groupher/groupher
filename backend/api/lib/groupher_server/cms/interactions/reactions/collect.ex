@@ -154,7 +154,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
 
     case Repo.insert_all(ArticleCollect, [attrs],
            on_conflict: :nothing,
-           conflict_target: [:user_id, info.foreign_key]
+           conflict_target: collect_conflict_target(info.foreign_key)
          ) do
       {1, _rows} -> {:ok, :changed}
       {0, _rows} -> {:ok, :unchanged}
@@ -176,4 +176,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
       _ -> {:error, ErrorCat.interaction_state_conflict("multiple collect facts deleted")}
     end
   end
+
+  defp collect_conflict_target(:article_id),
+    do:
+      {:unsafe_fragment,
+       "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+
+  defp collect_conflict_target(foreign_key), do: [:user_id, foreign_key]
 end

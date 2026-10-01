@@ -95,9 +95,14 @@ defmodule GroupherServer.CMS.FrontDesk do
   def load_reaction_users(queryable, article, filter),
     do: ReactionUsers.load(queryable, article, filter)
 
-  @doc "Reads one public Article from a structured path."
-  @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
-  def article(article_path, opts \\ []), do: Article.read(article_path, opts)
+  @doc "Reads one public Article from its sole external locator, an ArticlePath."
+  @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
+  def article(article_path, actor \\ nil, opts \\ [])
+
+  def article(article_path, opts, []) when is_list(opts),
+    do: Article.read(article_path, nil, opts)
+
+  def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
 
   @doc "Reads visible public Articles for a bounded set of structured paths."
   def article_paths(paths), do: Article.read_paths(paths)
@@ -119,8 +124,4 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "Reads one Article through the actor-aware Article Insights scope."
   def article_insights(article_path, actor, opts \\ []),
     do: Article.read_insights(article_path, actor, opts)
-
-  @doc "Reads one public Article from canonical Community/thread/id coordinates."
-  def article(community, thread, inner_id, opts \\ []),
-    do: Article.read(community, thread, inner_id, opts)
 end

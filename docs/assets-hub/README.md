@@ -15,6 +15,7 @@
 - [V2](./v2.md)：公共读取和 Worker 边界，部分阶段已实现。
 - [V3](./v3.md)：资源管理、stats/quota 与删除链路，实施中。
 - [V4](./v4.md)：内容生产与稳定 asset identity，规划中。
+- [V5](./v5.md)：Revision-owned usage、替换操作、删除保护与 GC 目标重构。
 
 ## 定位
 

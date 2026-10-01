@@ -36,7 +36,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
-  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
+  alias CMS.Model.{Author, Category, Comment, Community, DraftCoverEdit, RevisionCoverEdit}
   alias Helper.{OgInfo, ORM}
 
   @doc "Resolves the public command id from the internal receipt metadata on a domain result."
@@ -525,34 +525,52 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def doc_draft_snapshots(_root, %{community: %Community{} = community, id: doc_id} = args, _info) do
-    opts =
-      args
-      |> Map.take([:stage, :limit])
-      |> Enum.to_list()
-
-    CMS.Docs.list_snapshots(community, doc_id, opts)
-  end
-
-  def doc_draft_snapshots(_root, %{community: community} = args, _info) do
-    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
-      doc_draft_snapshots(nil, Map.put(args, :community, community), nil)
+  @doc "Lists immutable published versions for one stable Doc branch."
+  def doc_branch_versions(_root, %{doc_id: doc_id, branch_id: branch_id} = args, _info) do
+    with {:ok, branch_id} <- positive_integer_id(branch_id) do
+      CMS.Docs.list_branch_versions(doc_id, branch_id, limit: Map.get(args, :limit, 30))
     end
   end
 
-  def doc_draft_snapshot(
+  @doc "Loads one immutable published version for a stable Doc branch."
+  def doc_branch_version(
         _root,
-        %{community: %Community{} = community, id: doc_id, snapshot_id: snapshot_id},
+        %{doc_id: doc_id, branch_id: branch_id, branch_version_id: branch_version_id},
         _info
       ) do
-    CMS.Docs.get_snapshot(community, doc_id, snapshot_id)
-  end
-
-  def doc_draft_snapshot(_root, %{community: community} = args, _info) do
-    with {:ok, community} <- CMS.Communities.fetch(community, inc_views: false) do
-      doc_draft_snapshot(nil, Map.put(args, :community, community), nil)
+    with {:ok, branch_id} <- positive_integer_id(branch_id),
+         {:ok, branch_version_id} <- positive_integer_id(branch_version_id) do
+      CMS.Docs.get_branch_version(doc_id, branch_id, branch_version_id)
     end
   end
+
+  @doc "Restores one immutable Doc Revision into its branch Draft workspace."
+  def restore_doc_revision_to_draft(
+        _root,
+        %{doc_id: doc_id, branch_id: branch_id, revision_id: revision_id, cur_user: user} = args,
+        _info
+      ) do
+    with {:ok, branch_id} <- positive_integer_id(branch_id) do
+      opts =
+        case args[:expected_version] do
+          version when is_integer(version) -> [expected_version: version]
+          _ -> []
+        end
+
+      CMS.Docs.restore_revision_to_draft(doc_id, branch_id, revision_id, user, opts)
+    end
+  end
+
+  defp positive_integer_id(value) when is_integer(value) and value > 0, do: {:ok, value}
+
+  defp positive_integer_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {id, ""} when id > 0 -> {:ok, id}
+      _ -> {:error, CmsErrorCat.custom("invalid id")}
+    end
+  end
+
+  defp positive_integer_id(_value), do: {:error, CmsErrorCat.custom("invalid id")}
 
   def create_doc_tree_node(
         _root,
@@ -587,43 +605,22 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def update_doc_draft(
         _root,
-        %{community: community, article: doc, cur_user: user} = args,
+        %{
+          community: community,
+          article: %CMS.Model.Article{} = doc,
+          branch_id: branch_id,
+          cur_user: user
+        } = args,
         _info
       ) do
     CMS.DocTree.update_draft(
       community,
       doc,
-      Map.take(args, [:title, :subtitle, :slug, :body_bag, :expected_version, :command_id]),
+      args
+      |> Map.take([:title, :subtitle, :slug, :body_bag, :expected_version, :command_id])
+      |> Map.put(:branch_id, branch_id),
       user
     )
-  end
-
-  def checkpoint_doc_draft_snapshot(
-        _root,
-        %{community: community, id: doc_id, cur_user: user} = args,
-        _info
-      ) do
-    CMS.Docs.checkpoint_snapshot(community, doc_id, user, command_id: args[:command_id])
-  end
-
-  def checkpoint_doc_draft_snapshot(_root, %{community: community, id: doc_id}, _info) do
-    CMS.Docs.checkpoint_snapshot(community, doc_id)
-  end
-
-  def restore_doc_draft_snapshot(
-        _root,
-        %{community: community, id: doc_id, snapshot_id: snapshot_id, cur_user: user} = args,
-        _info
-      ) do
-    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id, user, command_id: args[:command_id])
-  end
-
-  def restore_doc_draft_snapshot(
-        _root,
-        %{community: community, id: doc_id, snapshot_id: snapshot_id},
-        _info
-      ) do
-    CMS.Docs.restore_snapshot(community, doc_id, snapshot_id)
   end
 
   def doc_publish_checklist(_root, %{community: community}, _info) do
@@ -659,14 +656,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
            CMS.DocTree.move_doc_to_draft(community, id, user, command_id: args[:command_id]) do
       {:ok,
        %{
-         doc_id: draft.article_hash_id,
+         doc_id: draft.article_id,
          stage: draft.stage,
          publish_state: %{
            status: CMS.Const.stage(:draft),
            published: true,
            published_before: true,
            has_draft: true,
-           public_doc_id: draft.article_hash_id,
+           public_doc_id: draft.article_id,
            has_unpublished_changes: false
          },
          command_id: Map.get(draft, :command_id)
@@ -803,35 +800,42 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def check_community_name(_root, %{slug: slug}, _info),
     do: CMS.Communities.check_name(slug)
 
-  def cover_edit_info(%{cover_edit_info_id: nil}, _, _), do: {:ok, nil}
-
-  def cover_edit_info(
-        %{
-          __struct__: article_schema,
-          id: article_id,
-          author_id: author_id,
-          cover_edit_info_id: cover_edit_info_id
-        },
-        _,
-        %{
-          context: %{cur_user: %User{id: user_id}}
-        }
-      ) do
-    with {:ok, %Author{user_id: ^user_id}} <- ORM.find(Author, author_id),
-         {:ok, _article} <-
-           ORM.find_by(article_schema,
-             id: article_id,
-             author_id: author_id,
-             cover_edit_info_id: cover_edit_info_id
-           ),
-         {:ok, cover_edit_info} <- ORM.find(CoverEditInfo, cover_edit_info_id) do
-      {:ok, cover_edit_info}
+  @doc "Returns version-owned cover editor state only to the Article author."
+  def cover_edit_info(article, _, %{context: %{cur_user: %User{id: user_id}}}) do
+    with author_id when not is_nil(author_id) <- Map.get(article, :author_id),
+         {:ok, %Author{user_id: ^user_id}} <- ORM.find(Author, author_id),
+         %{} = edit <- load_cover_edit(article) do
+      {:ok, present_cover_edit(edit)}
     else
       _ -> {:ok, nil}
     end
   end
 
   def cover_edit_info(_, _, _), do: {:ok, nil}
+
+  defp load_cover_edit(%{body_draft_id: body_draft_id}) when is_binary(body_draft_id),
+    do: Repo.get(DraftCoverEdit, body_draft_id)
+
+  defp load_cover_edit(%{revision_id: revision_id}) when is_binary(revision_id),
+    do: Repo.get(RevisionCoverEdit, revision_id)
+
+  defp load_cover_edit(_article), do: nil
+
+  defp present_cover_edit(edit) do
+    edit
+    |> Map.from_struct()
+    |> Map.put(:id, Map.get(edit, :body_draft_id) || Map.get(edit, :revision_id))
+    |> Map.put(:light, %{
+      background_id: edit.light_background_id,
+      original_background_id: edit.light_original_background_id,
+      images: edit.light_images
+    })
+    |> Map.put(:dark, %{
+      background_id: edit.dark_background_id,
+      original_background_id: edit.dark_original_background_id,
+      images: edit.dark_images
+    })
+  end
 
   # #######################
   # community thread (post, job), login user should be logged
@@ -861,23 +865,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          %{community: community, thread: thread, inner_id: inner_id},
          %{context: context}
        ) do
-    with {:ok, community} <- FrontDesk.community(community) do
-      case Map.get(context, :cur_user) do
-        %User{} = user ->
-          CMS.Articles.read(community, thread, inner_id, user)
-
-        _ ->
-          CMS.Articles.read(community, thread, inner_id)
-      end
-    end
+    article_path = %{community: community, thread: thread, inner_id: inner_id}
+    FrontDesk.article(article_path, Map.get(context, :cur_user))
   end
 
-  def set_post_cat(_root, %{article: article, cat: cat}, _info) do
-    CMS.Articles.set_cat(article, cat)
+  def set_post_cat(_root, %{article: article, cat: cat}, %{context: %{cur_user: user}}) do
+    with {:ok, _} <- CMS.Articles.set_cat(article.id, cat, user),
+         do: {:ok, Map.put(article, :cat, cat)}
   end
 
-  def set_post_status(_root, %{article: article, status: status}, _info) do
-    CMS.Articles.set_status(article, status)
+  def set_post_status(_root, %{article: article, status: status}, %{context: %{cur_user: user}}) do
+    with {:ok, _} <- CMS.Articles.set_status(article.id, status, user),
+         do: {:ok, Map.put(article, :status, status)}
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
@@ -967,25 +966,29 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          ~m(community thread)a = args,
          %{context: %{cur_user: user}}
        ) do
-    CMS.Articles.create_draft(community, thread, Map.put(args, :cur_user, user), user,
-      command_id: args[:command_id]
-    )
+    with {:ok, %{article: article, draft: draft}} <-
+           CMS.Articles.create_stable_draft(
+             community,
+             thread,
+             Map.put(args, :cur_user, user),
+             user
+           ) do
+      {:ok, Map.put(Map.from_struct(draft), :article, article)}
+    end
   end
 
   defp update_article_draft(
          _root,
-         %{community: community, thread: thread, article: article} = args,
+         %{article: article} = args,
          %{context: %{cur_user: user}}
        ) do
     CMS.Articles.update_draft(
-      community,
-      thread,
-      article,
+      article.id,
       args
       |> Map.drop([:community, :thread, :id, :article, :passport_is_owner])
       |> Map.put(:cur_user, user),
       user,
-      command_id: args[:command_id]
+      expected_version: args[:expected_version]
     )
   end
 
@@ -994,13 +997,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          %{community: community, thread: thread, article: article} = args,
          %{context: %{cur_user: user}}
        ) do
-    with {:ok, %{article: public_article}} <-
-           CMS.Articles.publish_draft(community, thread, article, user,
-             command_id: args[:command_id],
-             expected_version: args[:expected_version],
+    with {:ok, %{article: published}} <-
+           CMS.Articles.publish(article.id, user,
+             expected_draft_version: args[:expected_version],
              expected_lifecycle_version: args[:expected_lifecycle_version],
-             require_expected_version: true
-           ) do
+             command_id: args[:command_id]
+           ),
+         {:ok, public_article} <-
+           CMS.FrontDesk.article(%{
+             community: community.slug,
+             thread: thread,
+             inner_id: published.inner_id
+           }) do
       {:ok, public_article}
     end
   end
@@ -1040,7 +1048,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     case CMS.Articles.get_trashed(id) do
       {:ok, item} ->
         with :ok <- verify_trash_scope(item, community, thread) do
-          CMS.Articles.restore_trashed(item, user, opts)
+          CMS.Articles.restore_trashed(item.hash_id, user, opts)
         end
 
       {:error, _reason} when is_binary(command_id) ->
@@ -1062,7 +1070,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     case CMS.Articles.get_trashed(id) do
       {:ok, item} ->
         with :ok <- verify_trash_scope(item, community, thread) do
-          CMS.Articles.permanently_delete_trashed(item, user, opts)
+          CMS.Articles.permanently_delete_trashed(item.hash_id, user, opts)
         end
 
       {:error, _reason} when is_binary(command_id) ->
@@ -1174,15 +1182,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.ArtimentMentions.mentions(item.thread, item.article.id, Map.get(args, :filter))
   end
 
-  def pin_article(_root, ~m(article article_path)a, _info) do
+  def pin_article(_root, ~m(article article_path)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- article_path_community(article_path) do
-      CMS.Articles.pin(community, article)
+      CMS.Articles.pin(community, article.id, user)
     end
   end
 
-  def undo_pin_article(_root, ~m(article article_path)a, _info) do
+  def undo_pin_article(_root, ~m(article article_path)a, %{context: %{cur_user: user}}) do
     with {:ok, community} <- article_path_community(article_path) do
-      CMS.Articles.undo_pin(community, article)
+      CMS.Articles.undo_pin(community, article.id, user)
     end
   end
 
@@ -1217,15 +1225,26 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # thread reaction ..
   # #######################
-  def lock_article_comments(_root, ~m(article)a, _info),
-    do: CMS.Articles.lock_comments(article)
+  def lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}),
+    do: article_state_result(CMS.Articles.lock_comments(article.id, user), article)
 
-  def undo_lock_article_comments(_root, ~m(article)a, _info) do
-    CMS.Articles.undo_lock_comments(article)
+  def undo_lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    article_state_result(CMS.Articles.undo_lock_comments(article.id, user), article)
   end
 
-  def sink_article(_root, ~m(article)a, _info), do: CMS.Articles.sink(article)
-  def undo_sink_article(_root, ~m(article)a, _info), do: CMS.Articles.undo_sink(article)
+  def sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}),
+    do:
+      article_state_result(
+        CMS.Articles.sink(article.id, user, branch_opts(article)),
+        article
+      )
+
+  def undo_sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}),
+    do:
+      article_state_result(
+        CMS.Articles.undo_sink(article.id, user, branch_opts(article)),
+        article
+      )
 
   def upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.Interactions.upvote(article, user, Map.get(args, :command_id))
@@ -1425,24 +1444,32 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def paged_community_subscribers(_root, _args, _info), do: {:error, "invalid args"}
 
-  def mirror_article(_root, ~m(target_community article community_tags)a, _info) do
-    CMS.Articles.mirror(target_community, article, community_tags)
+  def mirror_article(_root, ~m(target_community article community_tags)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.mirror(target_community, article.id, community_tags, user)
   end
 
-  def unmirror_article(_root, ~m(target_community article)a, _info) do
-    CMS.Articles.unmirror(target_community, article)
+  def unmirror_article(_root, ~m(target_community article)a, %{context: %{cur_user: user}}) do
+    CMS.Articles.unmirror(target_community, article.id, user)
   end
 
-  def move_article(_root, ~m(target_community article community_tags)a, _info) do
-    CMS.Articles.move(target_community, article, community_tags)
+  def move_article(_root, ~m(target_community article community_tags)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.move(target_community, article.id, community_tags, user)
   end
 
-  def mirror_to_home(_root, ~m(target_community article community_tags)a, _info) do
-    CMS.Articles.mirror_to_home(target_community, article, community_tags)
+  def mirror_to_home(_root, ~m(target_community article community_tags)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.mirror_to_home(target_community, article.id, community_tags, user)
   end
 
-  def move_to_blackhole(_root, ~m(target_community article community_tags)a, _info) do
-    CMS.Articles.move_to_blackhole(target_community, article, community_tags)
+  def move_to_blackhole(_root, ~m(target_community article community_tags)a, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Articles.move_to_blackhole(target_community, article.id, community_tags, user)
   end
 
   # #######################
@@ -1461,7 +1488,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def article_viewer_states(_root, %{paths: paths}, info) do
     with :ok <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
-        %User{} = user -> resolve_article_viewer_states(paths, user)
+        %User{} = user -> article_viewer_states_for_paths(paths, user)
         _ -> {:ok, []}
       end
     end
@@ -1470,7 +1497,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def article_interaction_states(_root, %{paths: paths}, info) do
     with :ok <- validate_viewer_batch(paths) do
       case Map.get(info.context, :cur_user) do
-        %User{} = user -> resolve_article_interaction_states(paths, user)
+        %User{} = user -> article_interaction_states_for_paths(paths, user)
         _ -> {:ok, []}
       end
     end
@@ -1495,10 +1522,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         info
       ) do
     with :ok <- validate_viewer_batch(comment_inner_ids),
-         {:ok, {thread, article}} <- resolve_article_path(article_path),
+         {:ok, {thread, article}} <- article(article_path),
          viewer <- Map.get(info.context, :cur_user),
          {:ok, comments} <-
            CMS.Comments.reconcile_comments(thread, article, comment_inner_ids, viewer) do
+      stats =
+        CMS.ArticleStats.for_articles(thread, [article])
+        |> Map.get({thread, article.id}, %{})
+
       comments_by_inner_id = Map.new(comments, &{to_string(&1.inner_id), &1})
 
       entries =
@@ -1518,8 +1549,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
        %{
          article: %{
            inner_id: article.inner_id,
-           comments_count: article.comments_count || 0,
-           comments_revision: article.comments_revision || 0
+           comments_count: Map.get(stats, :comments_count, 0),
+           comments_revision: Map.get(stats, :comments_revision, 0)
          },
          entries: entries
        }}
@@ -1532,7 +1563,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp validate_viewer_batch(_paths),
     do: {:error, "viewer batch cannot contain more than 100 paths"}
 
-  defp resolve_article_viewer_states(paths, user) do
+  defp article_viewer_states_for_paths(paths, user) do
     with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
          states when is_map(states) <-
            CMS.ViewTracker.Query.viewer_states(Enum.map(resolved, & &1.article), user) do
@@ -1551,7 +1582,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  defp resolve_article_interaction_states(paths, user) do
+  defp article_interaction_states_for_paths(paths, user) do
     with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
          states when is_map(states) <-
            CMS.Interactions.viewer_states(Enum.map(resolved, & &1.article), user) do
@@ -1569,7 +1600,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp resolve_comment_viewer_states(article_path, comment_inner_ids, user) do
-    with {:ok, {thread, article}} <- resolve_article_path(article_path),
+    with {:ok, {thread, article}} <- article(article_path),
          {:ok, hydrated} <-
            CMS.Comments.reconcile_comments(thread, article, comment_inner_ids, user) do
       {:ok,
@@ -1728,7 +1759,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def comment_inner_id(_comment, _args, _info), do: {:ok, nil}
 
-  defp resolve_article_path(article_path) do
+  defp article(article_path) do
     with {:ok, %{thread: thread} = article_path} <-
            ArticlePath.parse(article_path),
          {:ok, article} <- CMS.FrontDesk.article(article_path) do
@@ -1740,7 +1771,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     with {:ok, key, value} <- one_of_input(source, [:article, :comment], "mention source") do
       case key do
         :article ->
-          with {:ok, {thread, article}} <- resolve_article_path(value) do
+          with {:ok, {thread, article}} <- article(value) do
             {:ok, {thread, article.id}}
           end
 
@@ -1757,7 +1788,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
            one_of_input(target, [:article, :comment, :user_login], "mention target") do
       case key do
         :article ->
-          with {:ok, {thread, article}} <- resolve_article_path(value) do
+          with {:ok, {thread, article}} <- article(value) do
             {:ok, {thread, article.id}}
           end
 
@@ -1844,7 +1875,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp hydrate_interaction({:ok, article}, user) do
     command_id = Map.get(article, :command_id)
     reaction_outcome = Map.get(article, :reaction_outcome)
-    article = GroupherServer.Repo.preload(article, :community)
+    article = preload_interaction_community(article)
 
     # These post-commit readers can observe different concurrent revisions.
     # Each payload keeps the revision attached to the state it actually read.
@@ -1878,8 +1909,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 
+  defp preload_interaction_community(%{__struct__: _} = article),
+    do: GroupherServer.Repo.preload(article, :community)
+
+  defp preload_interaction_community(article) when is_map(article), do: article
+
   defp present_comment_write({:ok, %{comment: comment, article: article} = result}) do
-    article = Repo.preload(article, :community)
+    article =
+      if is_struct(article),
+        do: Repo.preload(article, :community),
+        else: article
 
     with {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(article),
          {:ok, article_stats} <-
@@ -1902,6 +1941,28 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: CMS.Articles.Response.one(article, user, surface: :report)
 
   defp hydrate_report_interaction({:error, _reason} = error, _user), do: error
+
+  defp article_state_result({:ok, updated}, article) do
+    meta =
+      article
+      |> Map.get(:meta, %{})
+      |> Map.merge(%{
+        is_comment_locked: updated.comments_locked,
+        is_sunk: updated.is_sunk,
+        last_active_at: updated.last_active_at
+      })
+
+    {:ok, article |> Map.put(:active_at, updated.active_at) |> Map.put(:meta, meta)}
+  end
+
+  defp article_state_result({:error, _reason} = error, _article), do: error
+
+  defp branch_opts(article) do
+    case Map.get(article, :branch_id) do
+      branch_id when is_integer(branch_id) -> [branch_id: branch_id]
+      _ -> []
+    end
+  end
 
   defp normalize_application_filter(filter) do
     filter

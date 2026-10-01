@@ -10,16 +10,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
         -> search platform
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
-
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
-  alias CMS.Model.{ArticleDocument, Comment, CommentLifecycle}
+  alias CMS.Model.{Article, ArticleBodySnapshot, ArticleRevision, Comment, CommentLifecycle}
   alias CMS.SearchArtiments.Config
 
   @article_threads Config.article_threads()
@@ -29,41 +25,41 @@ defmodule GroupherServer.CMS.SearchArtiments.Capacity do
   @doc """
   Measures the source volume used for search platform cost estimates.
 
-  Returns per-thread public article counts, ArticleDocument plain text byte
+  Returns per-thread public article counts, immutable body plain text byte
   stats, and comment counts with body byte percentiles.
   """
   @spec measure() :: map()
   def measure do
     %{
       articles: article_counts(),
-      article_documents: article_document_bytes(),
+      article_documents: article_body_bytes(),
       comments: comment_counts()
     }
   end
 
   defp article_counts do
     Map.new(@article_threads, fn thread ->
-      {:ok, info} = match(thread)
-
       count =
-        info.model
+        Article
         |> CMS.Gate.scope(nil, :list, scope_context(thread))
-        |> where([article], article.stage == ^CMS.Const.stage(:public))
-        |> where([article], article.pending == ^@legal)
         |> Repo.aggregate(:count, :id)
 
       {thread, count}
     end)
   end
 
-  defp article_document_bytes do
-    ArticleDocument
-    |> group_by([document], document.thread)
-    |> select([document], {
-      document.thread,
-      count(document.id),
-      avg(fragment("octet_length(?)", document.plain_text)),
-      max(fragment("octet_length(?)", document.plain_text))
+  defp article_body_bytes do
+    ArticleRevision
+    |> join(:inner, [revision], article in Article, on: article.id == revision.article_id)
+    |> join(:inner, [revision, _article], body in ArticleBodySnapshot,
+      on: body.id == revision.body_snapshot_id
+    )
+    |> group_by([_revision, article, _body], article.thread)
+    |> select([_revision, article, body], {
+      article.thread,
+      count(body.id),
+      avg(fragment("octet_length(?)", body.plain_text)),
+      max(fragment("octet_length(?)", body.plain_text))
     })
     |> Repo.all()
     |> Map.new(fn {thread, count, average, maximum} ->

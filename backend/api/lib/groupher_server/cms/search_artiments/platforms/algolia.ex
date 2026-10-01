@@ -119,7 +119,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
         "filterOnly(type)",
         "filterOnly(thread)",
         "filterOnly(communityRef)",
-        "filterOnly(articleRef)",
+        "filterOnly(articleId)",
         "filterOnly(authorRef)",
         "filterOnly(locale)"
       ],
@@ -168,7 +168,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Platforms.Algolia do
   defp filters(query) do
     [
       equality("communityRef", query.scope[:community_ref]),
-      equality("articleRef", query.scope[:article_ref]),
+      equality("articleId", query.scope[:article_id]),
       any_of("type", Enum.map(Query.types(query), &encode_enum/1)),
       any_of("thread", Enum.map(Query.threads(query), &encode_enum/1)),
       any_of("authorRef", query.filters[:author_refs]),

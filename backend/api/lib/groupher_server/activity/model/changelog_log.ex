@@ -7,7 +7,7 @@ defmodule GroupherServer.Activity.Model.ChangelogLog do
 
   use GroupherServer.Activity.Model.Base,
     table: "changelog_logs",
-    stream_field: :changelog_ref,
+    stream_field: :article_id,
     actions: [
       :created,
       :title_changed,

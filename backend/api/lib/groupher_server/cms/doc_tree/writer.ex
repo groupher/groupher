@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   alias CMS.ErrorCat
 
   alias Accounts.Model.User
-  alias CMS.Articles.{Draft, MutationLock}
+  alias CMS.Articles.Draft.Store
   alias CMS.Artiment.BodyBag
   alias CMS.DocTree.{Events, Reader}
 
@@ -40,7 +40,6 @@ defmodule GroupherServer.CMS.DocTree.Writer do
 
   alias CMS.Model.{
     Community,
-    Doc,
     DocTreeNode
   }
 
@@ -275,9 +274,10 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   ## Examples
 
       iex> Writer.update_draft(community, page.doc_id, %{body_bag: body_bag})
-      {:ok, %Doc{stage: CMS.Const.stage(:draft)}}
+      {:ok, %CMS.Model.DocDraft{}}
   """
-  @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
+  @spec update_draft(Community.t(), Ecto.UUID.t(), map(), User.t()) ::
+          T.domain_res(CMS.Model.DocDraft.t())
   def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
     with {:ok, branch} <- Branch.resolve(community, args) do
       DraftDoc.update(community, branch, doc_id, args, user)
@@ -358,8 +358,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
          )}
       else
         false ->
-          {:error,
-           ErrorCat.custom("only Group, Page, and Link nodes can be duplicated")}
+          {:error, ErrorCat.custom("only Group, Page, and Link nodes can be duplicated")}
 
         error ->
           error
@@ -445,44 +444,44 @@ defmodule GroupherServer.CMS.DocTree.Writer do
        ) do
     case Repo.get(User, Map.get(args, :actor_id)) do
       %User{} = actor ->
-        MutationLock.with_article(community, :doc, branch.id, node.doc_id, fn ->
-          with {:ok, source} <-
-                 CMS.Articles.read_editor_head(community, :doc, node.doc_id, branch),
-               source <- Repo.preload(source, :document),
-               %{json: json} = document when is_binary(json) <- source.document,
-               {:ok, body_bag} <- BodyBag.from_document(document),
-               title <-
-                 Map.get(args, :duplicate_title) ||
-                   Identity.unique_copy_title(
-                     community,
-                     branch,
-                     node.parent_node_id,
-                     node.title
-                   ),
-               slug <- Identity.unique_doc_slug(community, branch, source.slug),
-               {:ok, draft} <-
-                 Draft.create(
+        with {:ok, source} <-
+               CMS.Docs.read_editor_head(community, node.doc_id, branch_id: branch.id),
+             %{json: json} = document when is_binary(json) <- source.document,
+             {:ok, body_bag} <- BodyBag.from_document(document),
+             title <-
+               Map.get(args, :duplicate_title) ||
+                 Identity.unique_copy_title(
                    community,
-                   :doc,
-                   %{
-                     branch_id: branch.id,
-                     title: title,
-                     slug: slug,
-                     subtitle: source.subtitle,
-                     body_bag: body_bag
-                   },
-                   actor
+                   branch,
+                   node.parent_node_id,
+                   node.title
                  ),
-               {:ok, _mentions} <- CMS.ArtimentMentions.sync(draft) do
-            duplicate_tree_node(community, branch, node, args, draft.article_hash_id,
-              title: title,
-              slug: slug
-            )
-          else
-            nil -> {:error, ErrorCat.custom("Source Doc content is missing")}
-            error -> error
-          end
-        end)
+             slug <- Identity.unique_doc_slug(community, branch, source.slug),
+             {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(actor),
+             {:ok, %{article: article}} <-
+               Store.create(
+                 community,
+                 :doc,
+                 %{
+                   title: title,
+                   slug: slug,
+                   subtitle: source.subtitle,
+                   body_bag: body_bag
+                 },
+                 author,
+                 branch_id: branch.id
+               ),
+             {:ok, duplicate} <-
+               CMS.Docs.read_editor_head(community, article.id, branch_id: branch.id),
+             {:ok, _mentions} <- CMS.ArtimentMentions.sync(duplicate) do
+          duplicate_tree_node(community, branch, node, args, article.id,
+            title: title,
+            slug: slug
+          )
+        else
+          nil -> {:error, ErrorCat.custom("Source Doc content is missing")}
+          error -> error
+        end
 
       nil ->
         {:error, ErrorCat.custom("Duplicate Page requires an authenticated actor")}

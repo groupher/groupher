@@ -60,18 +60,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.update_doc_draft/3)
     end
 
-    @desc "save current docs draft as an article revision checkpoint"
-    field :checkpoint_doc_draft_snapshot, :doc_snapshot do
-      arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.checkpoint_doc_draft_snapshot/3)
-    end
-
     @desc "publish selected docs content and tree changes as one release"
     field :publish_doc_changes, :doc_publish_changes_payload do
       arg(:command_id, non_null(:id))
@@ -109,17 +97,17 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.move_doc_tree_subtree_to_draft/3)
     end
 
-    @desc "restore a docs draft from an article revision"
-    field :restore_doc_draft_snapshot, :doc_draft do
+    @desc "restore one immutable Doc Revision into its branch Draft workspace"
+    field :restore_doc_revision_to_draft, :doc_draft do
       arg(:command_id, non_null(:id))
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-      arg(:snapshot_id, non_null(:id))
+      arg(:doc_id, non_null(:id))
+      arg(:branch_id, non_null(:id))
+      arg(:revision_id, non_null(:id))
+      arg(:expected_version, :integer)
 
       middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.restore_doc_draft_snapshot/3)
+      resolve(&R.CMS.restore_doc_revision_to_draft/3)
     end
 
     @desc "delete a docs tree node"

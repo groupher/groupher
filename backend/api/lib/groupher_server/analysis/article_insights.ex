@@ -16,17 +16,14 @@ defmodule GroupherServer.Analysis.ArticleInsights do
   alias CMS.Artiment.Matcher
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.{Article, Doc}
-  alias CMS.Model.{Blog, Changelog, Post}
-
-  @article_models [Post, Blog, Changelog, CMS.Model.Doc]
   @default_hours 48
   @max_buckets 720
 
   @doc "Returns an authorized Article hourly trend with zero-filled buckets."
-  @spec trend(struct(), term(), keyword()) :: {:ok, map()} | {:error, term()}
+  @spec trend(map(), term(), keyword()) :: {:ok, map()} | {:error, term()}
   def trend(article, viewer, opts \\ [])
 
-  def trend(article, viewer, opts) when is_struct(article) and is_list(opts) do
+  def trend(%{id: _id} = article, viewer, opts) when is_list(opts) do
     with {:ok, article_type} <- article_type(article),
          :ok <- authorize(article, viewer, article_type, opts),
          {:ok, metrics} <- requested_metrics(opts),
@@ -71,8 +68,7 @@ defmodule GroupherServer.Analysis.ArticleInsights do
 
   defp article_type(article) do
     with {:ok, %{artiment: type}} <- Matcher.match_interaction(article),
-         true <- type in CMS.Artiment.Threads.article_enums(),
-         true <- article.__struct__ in @article_models do
+         true <- type in CMS.Artiment.Threads.article_enums() do
       {:ok, type}
     else
       _ -> {:error, :unsupported_artiment}
@@ -90,6 +86,21 @@ defmodule GroupherServer.Analysis.ArticleInsights do
   end
 
   defp authorize_with_scope(article, viewer, context) do
+    if is_binary(article.id) do
+      authorize_stable(article, viewer)
+    else
+      authorize_legacy(article, viewer, context)
+    end
+  end
+
+  defp authorize_stable(article, viewer) do
+    case Gate.access_check(viewer, :read_insights, article) do
+      {:ok, _canonical} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp authorize_legacy(article, viewer, context) do
     scope_actor = if global_god?(viewer), do: :operations, else: viewer
 
     case Gate.scope(article.__struct__, scope_actor, :read_insights, context) do

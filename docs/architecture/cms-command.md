@@ -11,6 +11,10 @@ Gate、Lifecycle 或 version 规则，也不记录迁移步骤。
   [CMS Command Receipt 重构](../migrations/cms-command-receipt-refactor.md)。
 - Command、Writer、事务和 effect 的通用领域边界见
   [Command：复杂领域操作的组织边界](../feature/artiment/command.md)。
+- GraphQL、CLI、MCP 与 Plugin 如何共同调用领域 Command，见
+  [CMS 多入口与领域用例边界](./cms-multi-entry-boundary.md)。
+- 事务内 effect intent、统一 Outbox 与消费幂等见
+  [CMS Domain Outbox](./cms-outbox.md)。
 
 发生冲突时，领域行为以 Transition Contract 为准，长期模块与 API 边界以本文为准，
 阶段顺序和临时状态以迁移文档为准。
@@ -25,7 +29,7 @@ canonical business result，不重复执行领域写入或 effect。
 
 ```text
 CMS.Command
-├── run/create 等面向真实业务形态的用户命令入口
+├── execute
 ├── Receipt
 └── Store
 ```
@@ -110,24 +114,24 @@ GraphQL / CMS facade
   -> CMS.Command
        -> BEGIN + timeout policy
        -> Receipt.claim(actor, command_id, command, resource/input identity)
-            -> new: execute domain callback
+            -> first execution: execute domain callback
                  -> Gate
                  -> canonical resource lock
                  -> expected version/revision
                  -> Lifecycle/precondition
                  -> domain writes + transaction-owned Audit/outbox
                  -> persist stable result ref or minimal versioned payload
-            -> existing compatible receipt: recover result ref/payload
+            -> completed retry: skip domain callback and reuse result ref/payload
             -> incompatible fingerprint: command identity conflict
        -> finalize receipt in the same transaction
        -> COMMIT
-       -> load/project canonical result through FrontDesk or owner codec
-       -> run first-execution-only effect internally
+       -> both branches resolve result through FrontDesk or owner codec
+       -> first execution persists required effects to transactional outbox
        -> return the same business result shape
 ```
 
 Claim、领域写入和 finalize 必须处于同一事务。失败时三者一起回滚；成功时一起提交。
-`Command.run/2` 把已解析的 command context 传给 execute callback；context 中的 `resource` 是调用方声明的
+`CMS.Command.execute/2` 把已解析的 command context 传给 `action` callback；context 中的 `resource` 是调用方声明的
 领域资源，canonical resource 仍由领域 Gate 在锁内解析。Callback 从 context 读取 actor、resource、owner 和
 input，不重复闭包捕获 declaration 中的值，并统一返回
 `{:ok, result} | {:error, reason}`。异常继续按 Elixir 异常语义向外传播，不转换成领域错误。
@@ -138,10 +142,22 @@ input，不重复闭包捕获 declaration 中的值，并统一返回
 慢查询或连接异常无限占用连接。它们不是三次重试，也不改变幂等语义，超时统一转为可重试的
 command resolution pending 错误。
 
-结果恢复不是调用方需要处理的 replay-status 分支。常见实体结果可以通过 FrontDesk 或领域
-Reader 读取；无法重读的最小结果由领域 owner 提供版本化 recovery codec，`CMS.Command` 只保存
-和取回 opaque payload。这里的 recovery projection 是 Command owner 的声明，不是产品层的
-“重放状态” API。
+已完成重试不是调用方需要处理的 replay-status 分支。常见实体结果可以通过 FrontDesk 或领域
+Reader 读取；无法重读的最小结果由领域 owner 提供版本化 result codec，`CMS.Command` 只保存
+和取回 opaque payload。面向领域 Command 作者的目标 API 使用 `action` 与 `result`：只有首次分支
+调用 `action`，首次与已完成重试在汇合后都调用 `result`。不使用容易被理解为事务补偿或失败修复的
+`recovery`，也不暴露容易被误读为第三个顺序步骤的 `after_commit` callback。必须送达的 effect
+由 `action` 同事务写入 Outbox，提交后异步消费。
+
+`action` 写入的是 effect intent，不是在数据库事务内直接执行外部 effect：
+
+```text
+action: domain writes + OutboxEvent -> COMMIT
+worker:  search / notification / Webhook / cache purge -> mark event completed
+```
+
+事务回滚时 OutboxEvent 与领域写入一起消失；commit 后进程崩溃时 pending event 仍可重试。禁止在
+`action` 内直接发送通知、调用 Webhook 或请求外部搜索服务。
 
 `command` atom 到 Receipt 文本的编码也只发生在 `CMS.Command` 边界：普通命令只把第一个 `_`
 切成 namespace，例如 `:article_update_draft -> "article.update_draft"`；`doc_tree_` 前缀
@@ -170,8 +186,8 @@ Receipt 内部的 target 也不是 Artiment 专属字段：已存在实体可能
 或 Community；create、restore、DocTree 和 batch command 则使用 owner 或领域 scope。Article create
 执行前没有 Article id，Trash restore 的 item ref 也可能只存在于业务 input。因此 `artiment_type/id`
 不能作为所有 command 的通用身份；领域入口负责提供真实资源或 scope，Receipt Store 只保存统一的
-`target_type/target_key` 索引。
-以下示例冻结形状级合同：`Command.run/2` 的 callback 接收由具体入口构造的 context，并返回
+`resource_type/resource_id` 索引。
+以下示例冻结形状级合同：`CMS.Command.execute/2` 的 callback 接收由具体入口构造的 context，并返回
 `{:ok, result} | {:error, reason}`；最终 Elixir 类型和函数名称在实施阶段以四个样板验证。
 
 ### 6.1 更新已存在实体：Comment Update
@@ -188,11 +204,14 @@ command =
     input: body
   )
 
-Command.run(command, fn %{actor: actor, resource: comment, input: input} ->
-  Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
-    Comments.update(canonical, article, input)
-  end)
-end)
+CMS.Command.execute(command,
+  action: fn %{actor: actor, resource: comment, input: input} ->
+    Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+      Comments.update(canonical, article, input)
+    end)
+  end,
+  result: &CMS.FrontDesk.comment/1
+)
 ```
 
 以上仅冻结信息形状，不冻结最终 Elixir 语法。最终 API 必须满足：
@@ -217,9 +236,12 @@ command =
     input: attrs
   )
 
-Command.run(command, fn %{actor: actor, owner: community, input: attrs} ->
-  Articles.create(community, attrs, actor)
-end)
+CMS.Command.execute(command,
+  action: fn %{actor: actor, owner: community, input: attrs} ->
+    Articles.create(community, attrs, actor)
+  end,
+  result: &CMS.FrontDesk.article/1
+)
 ```
 
 Command identity 由 actor、commandId、固定 command、真实 owner 和业务 input 绑定；成功后
@@ -255,7 +277,7 @@ DocTree execute
 ## 7. FrontDesk 与结果恢复
 
 FrontDesk 统一负责根据稳定领域引用加载当前 canonical result。`CMS.Command` 负责取得该引用，
-并在返回前完成组合；普通业务调用点不额外调用 `load_result/1`。
+并在返回前完成组合；普通业务调用点不额外调用 `result/1`。
 
 ```text
 new execution -> result ref --+

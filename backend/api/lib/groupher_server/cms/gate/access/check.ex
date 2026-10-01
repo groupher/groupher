@@ -24,11 +24,11 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   alias CMS.Gate.Context.Access.Article, as: ArticleContext
   alias CMS.Gate.Context.Access.Doc, as: DocContext
   alias CMS.Gate.{Decision, Config, ErrorCat}
-  alias CMS.Model.{Blog, Changelog, Comment, Community, Post, Doc}
+  alias CMS.Model.{Article, Comment, Community}
 
   @article_threads Config.article_threads()
 
-  @article_models [Post, Blog, Changelog, Doc]
+  @article_models [Article]
 
   @doc """
   Checks access to one Community and returns its canonical loaded value.
@@ -64,10 +64,10 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
   """
   def comment(actor, action, %Comment{} = comment) do
     with {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
-         %Community{} = community <- article.community,
+         {:ok, article} <- parent_article(comment),
+         %Community{} = community <- Repo.get(Community, article.community_id),
          {:ok, result} <-
-           Articles.MutationLock.with_article(community, article, fn ->
+           with_parent_lock(community, article, comment.branch_id, fn ->
              with {:ok, context} <- Load.comment(community, thread, article, comment),
                   %Decision{allowed: true} <-
                     Decision.from_result(
@@ -131,6 +131,36 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
   def article(_actor, _action, _resource), do: unsupported_resource()
 
+  @doc "Checks access to one stable Doc Article in an explicit branch."
+  @spec doc(term(), atom(), Article.t(), pos_integer()) ::
+          {:ok, Article.t()} | {:error, Decision.t()}
+  def doc(actor, action, %Article{thread: :doc} = resource, branch_id)
+      when is_integer(branch_id) do
+    with %Community{} = community <- Repo.get(Community, resource.community_id),
+         {:ok, result} <-
+           Articles.MutationLock.with_article(community, :doc, branch_id, resource.id, fn ->
+             with {:ok, context} <- Load.doc(community, resource, branch_id),
+                  %Decision{allowed: true} <-
+                    Decision.from_result(
+                      Policy.Article.check_access(actor, action, resource, context),
+                      context
+                    ) do
+               {:ok, canonical_resource(context.doc, context.community)}
+             else
+               %Decision{} = decision -> {:error, decision}
+               {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+             end
+           end) do
+      {:ok, result}
+    else
+      nil -> {:error, Decision.deny(ErrorCat.resource_not_found())}
+      {:error, %Decision{} = decision} -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
+  def doc(_actor, _action, _resource, _branch_id), do: unsupported_resource()
+
   @doc """
   Loads, authorizes and invokes a callback after the caller has acquired the
   aggregate transaction and advisory lock.
@@ -180,7 +210,14 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
              Policy.Comment.check_access(actor, action, context.comment, context),
              context
            ) do
-      callback.(decision.context.comment, decision.context.article)
+      parent =
+        if decision.context.article.thread == :doc do
+          Map.put(decision.context.article, :branch_id, decision.context.comment.branch_id)
+        else
+          decision.context.article
+        end
+
+      callback.(decision.context.comment, parent)
       |> normalize_callback_result()
     else
       %Decision{} = decision -> {:error, decision}
@@ -194,7 +231,34 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
          {:ok, context} <- Load.article(community, thread, article),
          %Decision{allowed: true} = decision <-
            Decision.from_result(
-             Policy.Article.check_access(actor, action, article, context),
+             Policy.Article.check_access(actor, action, context_resource(context), context),
+             context
+           ) do
+      decision.context
+      |> context_resource()
+      |> canonical_resource(decision.context.community)
+      |> callback.()
+      |> normalize_callback_result()
+    else
+      %Decision{} = decision -> {:error, decision}
+      {:error, ErrorCat.error_pattern() = error} -> {:error, Decision.deny(error)}
+    end
+  end
+
+  @doc "Authorizes one stable Doc Article in an explicit branch inside an existing lock."
+  @spec with_authorized_doc(term(), atom(), tuple(), (Article.t() -> term())) ::
+          {:ok, term()} | {:error, term()}
+  def with_authorized_doc(
+        actor,
+        action,
+        {community, %Article{thread: :doc} = article, branch_id},
+        callback
+      )
+      when is_integer(branch_id) and is_function(callback, 1) do
+    with {:ok, context} <- Load.doc(community, article, branch_id),
+         %Decision{allowed: true} = decision <-
+           Decision.from_result(
+             Policy.Article.check_access(actor, action, context_resource(context), context),
              context
            ) do
       decision.context
@@ -230,10 +294,28 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
 
   defp canonical_resource(resource, community), do: Map.put(resource, :community, community)
   defp context_resource(%ArticleContext{article: article}), do: article
-  defp context_resource(%DocContext{doc: doc}), do: doc
+
+  defp context_resource(%DocContext{doc: doc, doc_branch_state: state}),
+    do: %{doc | comments_locked: state.comments_locked}
 
   defp article_thread(%{thread: thread}) when thread in @article_threads,
     do: {:ok, thread}
 
   defp article_thread(resource), do: FrontDesk.thread_of(resource)
+
+  defp parent_article(%Comment{article_id: article_id}) when is_binary(article_id) do
+    case Repo.get(Article, article_id) do
+      %Article{} = article -> {:ok, article}
+      nil -> {:error, ErrorCat.resource_not_found()}
+    end
+  end
+
+  defp parent_article(comment), do: FrontDesk.article_of(comment, preload: :community)
+
+  defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
+       when is_integer(branch_id),
+       do: Articles.MutationLock.with_article(community, :doc, branch_id, article_id, fun)
+
+  defp with_parent_lock(community, article, _branch_id, fun),
+    do: Articles.MutationLock.with_article(community, article, fun)
 end

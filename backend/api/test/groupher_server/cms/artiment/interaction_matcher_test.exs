@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.CMS.Artiment.InteractionMatcherTest do
     Comment,
     CommentEmotionInfo,
     CommentReactionInfo,
-    Post,
+    Article,
     PostEmotionInfo,
     PostReactionInfo
   }
@@ -18,16 +18,16 @@ defmodule GroupherServer.Test.CMS.Artiment.InteractionMatcherTest do
   test "matches a complete interaction definition by kind, schema, and struct" do
     expected = %{
       artiment: :post,
-      model: Post,
-      foreign_key: :post_id,
+      model: Article,
+      foreign_key: :article_id,
       reaction_info_model: PostReactionInfo,
       emotion_info_model: PostEmotionInfo,
       collection?: true
     }
 
     assert {:ok, ^expected} = Matcher.match_interaction(:post)
-    assert {:ok, ^expected} = Matcher.match_interaction(Post)
-    assert {:ok, ^expected} = Matcher.match_interaction(%Post{})
+
+    assert {:ok, ^expected} = Matcher.match_interaction(%Article{thread: :post})
   end
 
   test "keeps Comment capabilities explicit" do

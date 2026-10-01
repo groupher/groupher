@@ -21,32 +21,17 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     {:ok, user2} = db_insert(:user)
     {:ok, user3} = db_insert(:user)
 
-    {:ok, doc_last_week} =
-      ORM.update(doc, %{title: "last week", inserted_at: @last_week, active_at: @last_week},
-        strict: false
-      )
+    {:ok, doc_last_week} = backdate(doc, @last_week)
 
     {_, doc, _, _} = mock_article(:doc)
 
-    {:ok, doc_last_month} =
-      ORM.update(
-        doc,
-        %{title: "last month", inserted_at: @last_month, active_at: @last_month},
-        strict: false
-      )
+    {:ok, doc_last_month} = backdate(doc, @last_month)
 
     {community, doc, _, user} = mock_article(:doc, community, user)
 
-    {:ok, doc_last_year} =
-      ORM.update(doc, %{title: "last year", inserted_at: @last_year, active_at: @last_year},
-        strict: false
-      )
+    {:ok, doc_last_year} = backdate(doc, @last_year)
 
-    {:ok, today_docs} = db_insert_multi(:doc, @today_count)
-
-    Enum.each(today_docs, fn doc ->
-      ORM.update(doc, %{active_at: doc.inserted_at}, strict: false)
-    end)
+    Enum.each(1..@today_count, fn _index -> mock_article(:doc) end)
 
     guest_conn = simu_conn(:guest)
 
@@ -414,7 +399,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
       {:ok, _fresh_doc} = CMS.Articles.create(community, :doc, mock_attrs(:doc), user)
 
       variables = %{filter: %{page: 1, size: 20, community: community.slug}}
-      {:ok, doc} = ORM.find(Doc, doc_last_week.id, preload: [author: :user])
+      doc = CMS.Model.Article |> Repo.get!(doc_last_week.id) |> Repo.preload(author: :user)
 
       {:ok, _} =
         CMS.Comments.create_comment(
@@ -436,5 +421,26 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
   defp track_view(article, user) do
     assert {:ok, %{tracked: true}} =
              track_article_view(article, user, read_purpose: :public_read)
+  end
+
+  defp backdate(article, timestamp) do
+    CMS.Model.DocBranchState
+    |> Repo.get_by!(article_id: article.id, branch_id: article.branch_id)
+    |> Ecto.Changeset.change(%{active_at: timestamp})
+    |> Repo.update!()
+
+    result =
+      CMS.Model.Article
+      |> Repo.get!(article.id)
+      |> Ecto.Changeset.change(%{inserted_at: timestamp, active_at: timestamp})
+      |> Repo.update()
+
+    case result do
+      {:ok, _stable_article} ->
+        {:ok, Map.merge(article, %{inserted_at: timestamp, active_at: timestamp})}
+
+      error ->
+        error
+    end
   end
 end

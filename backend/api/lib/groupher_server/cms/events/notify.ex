@@ -69,14 +69,16 @@ defmodule GroupherServer.CMS.Events.Notify do
   def handle(:comment, %Comment{} = comment, %User{} = from_user) do
     with {:ok, article} <- FrontDesk.article_of(comment),
          {:ok, article} <- FrontDesk.preload_author(article),
-         {:ok, thread} <- FrontDesk.thread_of(article) do
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, author} <- article_author(article) do
       notify_attrs = %{
         action: :comment,
         thread: thread,
         article_id: article.id,
+        branch_id: Map.get(article, :branch_id),
         title: article.title,
         comment_id: comment.id,
-        user_id: article.author.user.id
+        user_id: author.id
       }
 
       Messaging.send_notification(notify_attrs, from_user)
@@ -96,6 +98,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: :reply,
         thread: thread,
         article_id: article.id,
+        branch_id: Map.get(article, :branch_id),
         title: article.title,
         comment_id: reply_comment.id,
         user_id: reply_to_author_id
@@ -116,6 +119,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
+        branch_id: Map.get(article, :branch_id),
         title: article.title,
         user_id: comment.author_id,
         comment_id: comment.id
@@ -130,13 +134,15 @@ defmodule GroupherServer.CMS.Events.Notify do
   @spec handle(notify_action(), map(), User.t()) :: notify_result()
   def handle(action, article, %User{} = from_user) do
     with {:ok, article} <- FrontDesk.preload_author(article),
-         {:ok, thread} <- FrontDesk.thread_of(article) do
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, author} <- article_author(article) do
       notify_attrs = %{
         action: action,
         thread: thread,
         article_id: article.id,
+        branch_id: Map.get(article, :branch_id),
         title: article.title,
-        user_id: article.author.user.id
+        user_id: author.id
       }
 
       Messaging.send_notification(notify_attrs, from_user)
@@ -153,6 +159,7 @@ defmodule GroupherServer.CMS.Events.Notify do
         action: action,
         thread: thread,
         article_id: article.id,
+        branch_id: Map.get(article, :branch_id),
         title: article.title,
         comment_id: comment.id,
         user_id: comment.author_id
@@ -167,12 +174,13 @@ defmodule GroupherServer.CMS.Events.Notify do
   @spec handle(:undo, notify_action(), map(), User.t()) :: notify_result()
   def handle(:undo, action, article, %User{} = from_user) do
     with {:ok, article} <- FrontDesk.preload_author(article),
-         {:ok, thread} <- FrontDesk.thread_of(article) do
+         {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, author} <- article_author(article) do
       notify_attrs = %{
         action: action,
         thread: thread,
         article_id: article.id,
-        user_id: article.author.user.id
+        user_id: author.id
       }
 
       Messaging.revoke_notification(notify_attrs, from_user)
@@ -180,6 +188,10 @@ defmodule GroupherServer.CMS.Events.Notify do
       error -> handle_missing_target(error)
     end
   end
+
+  defp article_author(%{author: %User{} = user}), do: {:ok, user}
+  defp article_author(%{author: %{user: %User{} = user}}), do: {:ok, user}
+  defp article_author(_article), do: {:error, ErrorCat.custom("article author not found")}
 
   # Background jobs may arrive after related content is deleted; skip quietly.
   defp handle_missing_target(

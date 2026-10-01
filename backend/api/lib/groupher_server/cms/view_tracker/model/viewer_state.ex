@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewerState do
 
   schema "article_viewer_states" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
-    field(:article_id, :id)
+    field(:article_id, Ecto.UUID)
     belongs_to(:user, User, foreign_key: :user_id)
     timestamps(type: :utc_datetime, updated_at: false)
   end

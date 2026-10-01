@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.ArticleCoverHelper do
   @moduledoc false
 
-  alias GroupherServer.{CMS, Test}
+  alias GroupherServer.{CMS, Repo, Test}
   alias CMS.{Articles, FrontDesk}
   alias Test.Helper.Schema.Article
 
@@ -69,11 +69,16 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert result["coverEditInfo"]["dark"]["images"] |> length == 1
 
           {:ok, article} =
-            FrontDesk.article(community, @thread, result["innerId"])
+            read_article(community, @thread, result["innerId"])
 
           assert article.cover_url == variables.coverUrl
           assert article.cover_url_dark == variables.coverUrlDark
-          assert article.cover_edit_info_id
+
+          assert {:ok, _cover_edit_info} =
+                   Helper.ORM.find(
+                     GroupherServer.CMS.Model.RevisionCoverEdit,
+                     article.revision_id
+                   )
         end
 
         test unquote("read #{thread_name} returns cover edit info") do
@@ -146,12 +151,17 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert result["coverUrlDark"] == variables.coverUrlDark
           assert result["coverEditInfo"]["canvasWidth"] == variables.coverEditInfo.canvasWidth
 
-          {:ok, article} =
-            FrontDesk.article(community, @thread, article.inner_id, preload: :cover_edit_info)
+          {:ok, article} = read_article(community, @thread, article.inner_id)
+
+          {:ok, cover_edit_info} =
+            Helper.ORM.find(
+              GroupherServer.CMS.Model.RevisionCoverEdit,
+              article.revision_id
+            )
 
           assert article.cover_url == variables.coverUrl
           assert article.cover_url_dark == variables.coverUrlDark
-          assert article.cover_edit_info.light.background_id
+          assert cover_edit_info.light_background_id
         end
 
         test unquote("update #{thread_name} can remove cover edit info") do
@@ -183,8 +193,8 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert is_nil(removed["coverUrlDark"])
           assert is_nil(removed["coverEditInfo"])
 
-          assert {:error, _} =
-                   Helper.ORM.find(GroupherServer.CMS.Model.CoverEditInfo, cover_edit_info_id)
+          assert {:ok, _} =
+                   Helper.ORM.find(GroupherServer.CMS.Model.RevisionCoverEdit, cover_edit_info_id)
         end
 
         test unquote(
@@ -215,7 +225,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
             )
 
           assert {:ok, _} =
-                   Helper.ORM.find(GroupherServer.CMS.Model.CoverEditInfo, cover_edit_info_id)
+                   Helper.ORM.find(GroupherServer.CMS.Model.RevisionCoverEdit, cover_edit_info_id)
 
           permanent_conn =
             simu_conn(:user, user,
@@ -237,7 +247,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           )
 
           assert {:error, _} =
-                   Helper.ORM.find(GroupherServer.CMS.Model.CoverEditInfo, cover_edit_info_id)
+                   Helper.ORM.find(GroupherServer.CMS.Model.RevisionCoverEdit, cover_edit_info_id)
 
           assert {:ok, _} =
                    Helper.ORM.find(GroupherServer.CMS.Model.CoverBackground, background_id)
@@ -407,15 +417,25 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
   def cover_url(thread, suffix), do: "https://img.test/#{thread}-cover-#{suffix}.png"
 
   def publish_cover_draft(community, article, thread) do
-    with {:ok, actor} <- FrontDesk.author_of(article),
-         {:ok, _result} <-
-           Articles.publish_draft(
-             community,
-             thread,
-             article.article_hash_id,
-             actor
-           ) do
-      :ok
+    case Repo.get(CMS.Model.ArticleDraft, article.id) do
+      nil ->
+        :ok
+
+      %CMS.Model.ArticleDraft{} = draft ->
+        with {:ok, actor} <- FrontDesk.author_of(article),
+             %CMS.Model.ArticleLifecycle{} = lifecycle <-
+               Repo.get_by(CMS.Model.ArticleLifecycle, article_id: article.id),
+             {:ok, _result} <-
+               Articles.publish(
+                 article.id,
+                 actor,
+                 expected_draft_version: draft.version,
+                 expected_lifecycle_version: lifecycle.version
+               ) do
+          _ = community
+          _ = thread
+          :ok
+        end
     end
   end
 

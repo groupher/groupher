@@ -40,7 +40,7 @@ const ConfirmPermanentDeleteModal: FC<TProps> = ({ item, loading, onClose, onCon
     >
       <div className={s.modalBody}>
         <h3 className={s.modalTitle}>{t('dsb.cms.trash.confirm_title')}</h3>
-        <div className={s.modalArticleTitle}>{item?.article?.title || item?.articleRef}</div>
+        <div className={s.modalArticleTitle}>{item?.article?.title || item?.articleId}</div>
         <p className={s.modalDesc}>{t('dsb.cms.trash.confirm_desc')}</p>
         {(item?.mentionedByCount ?? 0) > 0 ? (
           <p className={s.mentionWarning}>{mentionWarning}</p>

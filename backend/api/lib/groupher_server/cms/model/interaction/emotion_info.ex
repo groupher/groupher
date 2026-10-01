@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
   @moduledoc """
-  Generates the per-emotion schema shared by physical Artiment models.
+  Generates per-emotion projections keyed by stable Article identity.
 
       concrete EmotionInfo model
         -> shared Ecto fields and constraints
@@ -10,10 +10,40 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
   @doc "Generates a per-emotion Ecto model from table and target options."
   defmacro __using__(opts) do
     table = Keyword.fetch!(opts, :table)
-    target = Keyword.fetch!(opts, :target)
-    target_schema = Keyword.fetch!(opts, :target_schema)
-    target_id = String.to_atom("#{target}_id")
-    unique_index = String.to_atom("#{table}_#{target_id}_emotion_index")
+    target = Keyword.get(opts, :target, :article)
+    unique_index = String.to_atom("#{table}_stable_article_emotion_index")
+
+    owner_fields =
+      if target == :comment do
+        quote do
+          belongs_to(:comment, Model.Comment)
+        end
+      else
+        quote do
+          belongs_to(:article, Model.Article, type: Ecto.UUID)
+          belongs_to(:branch, Model.DocBranch)
+        end
+      end
+
+    owner_changeset =
+      if target == :comment do
+        quote do
+          struct
+          |> cast(attrs, [:comment_id, :emotion])
+          |> validate_required([:comment_id, :emotion])
+          |> foreign_key_constraint(:comment_id)
+          |> unique_constraint([:comment_id, :emotion])
+        end
+      else
+        quote do
+          struct
+          |> cast(attrs, [:article_id, :branch_id, :emotion])
+          |> validate_required([:article_id, :emotion])
+          |> foreign_key_constraint(:article_id)
+          |> foreign_key_constraint(:branch_id)
+          |> unique_constraint([:article_id, :branch_id, :emotion], name: unquote(unique_index))
+        end
+      end
 
     quote do
       use Ecto.Schema
@@ -26,10 +56,8 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
       alias Helper.Constant.DBPrefix
 
       @schema_prefix DBPrefix.cms()
-      @target_id unquote(target_id)
-
       schema unquote(table) do
-        belongs_to(unquote(target), unquote(target_schema), foreign_key: unquote(target_id))
+        unquote(owner_fields)
 
         field(:emotion, :string)
         field(:user_ids, Model.Interaction.RoaringBitmap)
@@ -41,11 +69,7 @@ defmodule GroupherServer.CMS.Model.Interaction.EmotionInfo do
 
       @doc false
       def changeset(struct, attrs) do
-        struct
-        |> cast(attrs, [@target_id, :emotion])
-        |> validate_required([@target_id, :emotion])
-        |> foreign_key_constraint(@target_id)
-        |> unique_constraint(@target_id, name: unquote(unique_index))
+        unquote(owner_changeset)
       end
     end
   end

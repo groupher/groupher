@@ -21,7 +21,17 @@ defmodule GroupherServer.CMS.DocCover.Reader do
 
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat
-  alias CMS.Model.{Community, Doc, DocCoverCard, DocCoverPinnedDoc, DocTreeNode}
+
+  alias CMS.Model.{
+    Article,
+    Community,
+    DocBranch,
+    DocCoverCard,
+    DocCoverPinnedDoc,
+    DocPublic,
+    DocTreeNode
+  }
+
   alias Helper.T
 
   @type view :: :public | :dashboard
@@ -293,7 +303,7 @@ defmodule GroupherServer.CMS.DocCover.Reader do
          %Community{slug: community},
          :public,
          %DocTreeNode{type: :page},
-         %Doc{inner_id: inner_id, slug: slug},
+         %{inner_id: inner_id, slug: slug},
          _draft_node
        )
        when not is_nil(inner_id) and is_binary(slug) and slug != "",
@@ -329,12 +339,22 @@ defmodule GroupherServer.CMS.DocCover.Reader do
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
-    Doc
-    |> where([doc], doc.community_id == ^community.id)
-    |> where([doc], doc.stage == CMS.Const.stage(:public))
-    |> where([doc], doc.article_hash_id in ^doc_ids)
+    Article
+    |> join(:inner, [article], public in DocPublic, on: public.article_id == article.id)
+    |> join(:inner, [article, public], branch in DocBranch,
+      on: branch.id == public.branch_id and branch.type == :main
+    )
+    |> where([article, _public, _branch], article.community_id == ^community.id)
+    |> where([article, _public, _branch], article.id in ^doc_ids)
+    |> where([_article, public, _branch], public.visible)
+    |> select([article, public, _branch], %{
+      id: article.id,
+      inner_id: article.inner_id,
+      slug: public.slug,
+      title: public.title
+    })
     |> Repo.all()
-    |> Map.new(&{&1.article_hash_id, &1})
+    |> Map.new(&{&1.id, &1})
   end
 
   defp draft_nodes_by_node_id(%Community{} = community, public_nodes) do

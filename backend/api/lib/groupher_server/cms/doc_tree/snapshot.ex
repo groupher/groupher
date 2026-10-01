@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       "type" => to_string(node.type),
       "title" => node.title,
       "parentNodeId" => node.parent_node_id,
-      CMS.DocTree.Const.doc_tree_json_key(:doc_id) => article_ref_id(node),
+      CMS.DocTree.Const.doc_tree_json_key(:doc_id) => article_id(node),
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,
@@ -176,9 +176,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     end
   end
 
-  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),
+  defp article_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),
     do: node.doc_id && to_string(node.doc_id)
 
-  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:public)} = node),
+  defp article_id(%DocTreeNode{stage: CMS.Const.stage(:public)} = node),
     do: node.doc_id && to_string(node.doc_id)
 end

@@ -21,17 +21,17 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   alias CMS.{Articles.Trash, Communities.ErrorCat, FrontDesk}
 
   alias CMS.Model.{
-    Blog,
-    Changelog,
+    Article,
+    ArticleCommunity,
+    ArticleCommunityTag,
     Community,
     CommunityTag,
-    CommunityTagStat,
-    Post
+    CommunityTagStat
   }
 
   alias Helper.{Datetime, ORM, T}
 
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
+  @audit_illegal :illegal
   @tracked_threads CMS.Communities.Config.ordinary_article_threads()
   @default_thread :post
 
@@ -138,12 +138,12 @@ defmodule GroupherServer.CMS.Communities.TagStats do
 
     base_query = base_rebuild_query(tag)
 
-    contents_count = base_query |> select([a, _t], count(a.id)) |> Repo.one()
+    contents_count = base_query |> select([a, ...], count(a.id)) |> Repo.one()
 
     today_contents_count =
       base_query
-      |> where([a, _t], a.inserted_at >= ^day_start and a.inserted_at <= ^day_end)
-      |> select([a, _t], count(a.id))
+      |> where([a, ...], a.inserted_at >= ^day_start and a.inserted_at <= ^day_end)
+      |> select([a, ...], count(a.id))
       |> Repo.one()
 
     attrs = %{
@@ -165,17 +165,20 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   end
 
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
-    thread
-    |> article_schema()
+    Article
     |> Trash.not_trashed_scope(thread)
-    |> join(:inner, [a], t in assoc(a, :community_tags))
-    |> where([_a, t], t.id == ^tag.id)
-    |> where([a, _t], a.pending != ^@audit_illegal)
+    |> join(:inner, [article], relation in ArticleCommunity,
+      on: relation.article_id == article.id and relation.community_id == ^tag.community_id
+    )
+    |> join(:inner, [_article, relation], assignment in ArticleCommunityTag,
+      on: assignment.article_community_id == relation.id
+    )
+    |> where([article, _relation, assignment], assignment.tag_id == ^tag.id)
+    |> where(
+      [article, ...],
+      article.thread == ^thread and article.moderation_state != ^@audit_illegal
+    )
   end
-
-  defp article_schema(:post), do: Post
-  defp article_schema(:blog), do: Blog
-  defp article_schema(:changelog), do: Changelog
 
   @spec get(CommunityTag.t() | T.id()) :: T.domain_res(CommunityTagStat.t())
   def get(tag) do

@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
 
   defp normalize_scope(scope) when is_map(scope) do
     scope
-    |> Map.take([:community_ref, :article_ref])
+    |> Map.take([:community_ref, :article_id])
     |> Enum.reject(fn {_key, value} -> not is_binary(value) or value == "" end)
     |> Map.new()
   end

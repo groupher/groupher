@@ -22,45 +22,49 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleWritesTest do
       {:ok, comment} = ORM.find(Comment, comment.id)
 
       assert comment.thread == :post
-      assert comment.post_id == post.id
-      assert is_nil(comment.blog_id)
-      assert is_nil(comment.changelog_id)
-      assert is_nil(comment.doc_id)
+      assert comment.article_id == post.id
+      refute Map.has_key?(comment, :post_id)
+      refute Map.has_key?(comment, :blog_id)
+      refute Map.has_key?(comment, :changelog_id)
+      refute Map.has_key?(comment, :doc_id)
     end
 
     test "upvote persists only the matching article ref", ~m(post user)a do
       {:ok, _post} = CMS.Interactions.upvote(post, user)
 
       assert {:ok, upvote} =
-               ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: :post, post_id: post.id})
+               ORM.find_by(ArticleUpvote, %{user_id: user.id, thread: :post, article_id: post.id})
 
-      assert upvote.post_id == post.id
-      assert is_nil(upvote.blog_id)
-      assert is_nil(upvote.changelog_id)
-      assert is_nil(upvote.doc_id)
+      assert upvote.article_id == post.id
+      refute Map.has_key?(upvote, :post_id)
+      refute Map.has_key?(upvote, :blog_id)
+      refute Map.has_key?(upvote, :changelog_id)
+      refute Map.has_key?(upvote, :doc_id)
     end
 
     test "collect persists only the matching article ref", ~m(post user)a do
       {:ok, _collect} = CMS.Interactions.collect(post, user)
 
       assert {:ok, collect} =
-               ORM.find_by(ArticleCollect, %{user_id: user.id, thread: :post, post_id: post.id})
+               ORM.find_by(ArticleCollect, %{user_id: user.id, thread: :post, article_id: post.id})
 
-      assert collect.post_id == post.id
-      assert is_nil(collect.blog_id)
-      assert is_nil(collect.changelog_id)
-      assert is_nil(collect.doc_id)
+      assert collect.article_id == post.id
+      refute Map.has_key?(collect, :post_id)
+      refute Map.has_key?(collect, :blog_id)
+      refute Map.has_key?(collect, :changelog_id)
+      refute Map.has_key?(collect, :doc_id)
     end
 
     test "article report persists at most one article ref", ~m(post other_user)a do
       {:ok, _post} = CMS.AbuseReports.article(post, "spam", "title", other_user)
 
-      assert {:ok, report} = ORM.find_by(AbuseReport, %{post_id: post.id})
+      assert {:ok, report} = ORM.find_by(AbuseReport, %{article_id: post.id})
 
-      assert report.post_id == post.id
-      assert is_nil(report.blog_id)
-      assert is_nil(report.changelog_id)
-      assert is_nil(report.doc_id)
+      assert report.article_id == post.id
+      refute Map.has_key?(report, :post_id)
+      refute Map.has_key?(report, :blog_id)
+      refute Map.has_key?(report, :changelog_id)
+      refute Map.has_key?(report, :doc_id)
     end
   end
 end

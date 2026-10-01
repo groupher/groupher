@@ -5,21 +5,18 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   import Ecto.Query
 
   alias GroupherServer.CMS
+
   alias CMS.Model.{
-    ArticleDocument,
-    Blog,
-    Changelog,
+    Article,
     Comment,
     Community,
-    CommunityLifecycle,
-    Doc,
-    Post
+    CommunityLifecycle
   }
 
   alias Ecto.Adapters.SQL
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
-  alias CMS.Gate.Context.Scope.Document, as: DocumentContext
+  alias CMS.Gate.Context.Scope.Doc, as: DocContext
 
   test "Comment all-thread scope is constructed only by all_public" do
     assert_raise FunctionClauseError, fn -> apply(CommentContext, :for_thread, [:all]) end
@@ -84,34 +81,34 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
              CMS.Gate.scope(Comment, nil, :read, %{thread: :unknown})
 
     assert {:error, %ErrorCat.Error{reason: :scope_context_missing}} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, %{})
+             CMS.Gate.scope(Article, nil, :read, %{})
   end
 
   test "Scope rejects an unknown Context struct as a root mismatch" do
     assert {:error, %ErrorCat.Error{reason: :scope_root_mismatch}} =
-             CMS.Gate.scope(Post, nil, :read, %GroupherServer.Accounts.Model.User{})
+             CMS.Gate.scope(Article, nil, :read, %GroupherServer.Accounts.Model.User{})
   end
 
-  test "ArticleDocument scope compiles every parent table" do
-    for {thread, _schema} <- article_schemas() do
+  test "stable Article scope compiles every thread projection" do
+    for thread <- [:post, :blog, :changelog, :doc] do
       context =
         case thread do
-          :doc -> DocumentContext.public_main()
-          _ -> DocumentContext.public(thread)
+          :doc -> DocContext.public_main()
+          _ -> ArticleContext.public(thread)
         end
 
-      query = CMS.Gate.scope(ArticleDocument, nil, :read, context)
+      query = CMS.Gate.scope(Article, nil, :read, context)
       assert %Ecto.Query{} = query
 
       {sql, params} = to_sql(query)
-      assert sql =~ ~s(JOIN "cms"."#{thread_table(thread)}")
+      assert sql =~ ~s(FROM "cms"."articles")
       assert sql =~ ~s(JOIN "cms"."communities")
       assert ["active", "read_only"] in params
     end
   end
 
   test "child scopes reject caller-owned Community and Lifecycle joins" do
-    article_query = from(post in Post, join: community in assoc(post, :community))
+    article_query = from(article in Article, join: community in assoc(article, :community))
     comment_query = from(comment in Comment, join: community in assoc(comment, :community))
 
     assert {:error, %ErrorCat.Error{reason: :scope_binding_conflict}} =
@@ -151,18 +148,18 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
 
     on_exit(fn -> :telemetry.detach(handler_id) end)
 
-    assert %Ecto.Query{} = CMS.Gate.scope(Post, nil, :read, ArticleContext.public(:post))
+    assert %Ecto.Query{} = CMS.Gate.scope(Article, nil, :read, ArticleContext.public(:post))
     assert %Ecto.Query{} = CMS.Gate.scope(Comment, nil, :list, CommentContext.all_public())
 
     assert %Ecto.Query{} =
-             CMS.Gate.scope(ArticleDocument, nil, :read, DocumentContext.public(:post))
+             CMS.Gate.scope(Article, nil, :read, DocContext.public_main())
 
     refute_receive :scope_query
   end
 
   test "high-frequency Article and Comment scopes produce valid EXPLAIN plans" do
     queries = [
-      Post
+      Article
       |> CMS.Gate.scope(nil, :list, ArticleContext.public(:post))
       |> where([article], article.community_id == ^0)
       |> order_by([article], desc: article.active_at)
@@ -187,7 +184,7 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
     {community, post, _attrs, _user} = mock_article(:post)
 
     visible_query =
-      Post
+      Article
       |> CMS.Gate.scope(nil, :read, ArticleContext.public(:post))
       |> where([candidate], candidate.id == ^post.id)
 
@@ -237,12 +234,4 @@ defmodule GroupherServer.Test.CMS.Gate.ScopeTest do
   end
 
   defp to_sql(query), do: SQL.to_sql(:all, Repo, query)
-
-  defp article_schemas,
-    do: [post: Post, blog: Blog, changelog: Changelog, doc: Doc]
-
-  defp thread_table(:post), do: "posts"
-  defp thread_table(:blog), do: "blogs"
-  defp thread_table(:changelog), do: "changelogs"
-  defp thread_table(:doc), do: "docs"
 end

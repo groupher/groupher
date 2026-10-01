@@ -90,7 +90,12 @@ export default function useDraftEditorState(
     [],
   )
   const [draft, setDraft] = useState<TEditorDraft>(initialDraft)
-  const [savedDraft, setSavedDraft] = useState<TSavedDraft>(() => composeSavedDraft(initialDraft))
+  const [savedDraft, setSavedDraft] = useState<TSavedDraft>(() =>
+    composeSavedDraft(initialDraft, {
+      contentHash: initialSession?.serverContentHash,
+      baseRevisionId: initialSession?.baseRevisionId,
+    }),
+  )
   const [draftSource, setDraftSource] = useState<TDocDraftSource>(() =>
     initialSession ? initialSession.source : 'public',
   )
@@ -129,7 +134,12 @@ export default function useDraftEditorState(
     const nextDraft = composeEditorDraftFromSession(session)
 
     setDraft(nextDraft)
-    setSavedDraft(composeSavedDraft(nextDraft))
+    setSavedDraft(
+      composeSavedDraft(nextDraft, {
+        contentHash: session.serverContentHash,
+        baseRevisionId: session.baseRevisionId,
+      }),
+    )
     setDraftSource(session.source)
     setMeta(composeEditorDraftMeta(session.info))
     setLoadStatus({ error: null, loadedDocId: nextDraft.docId || null, loading: false })
@@ -150,7 +160,10 @@ export default function useDraftEditorState(
         // publisher responses while the contract is rolled out.
         version: savedDraftDTO?.version ?? startedDraft.version + 1,
       }
-      const nextSavedDraft = composeSavedDraft(persistedDraft)
+      const nextSavedDraft = composeSavedDraft(persistedDraft, {
+        contentHash: savedDraftDTO?.contentHash,
+        baseRevisionId: savedDraftDTO?.baseRevisionId,
+      })
 
       setSavedDraft(nextSavedDraft)
       setDraftSource('draft')

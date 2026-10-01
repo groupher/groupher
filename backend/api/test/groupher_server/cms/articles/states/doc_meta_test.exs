@@ -2,8 +2,6 @@ defmodule GroupherServer.Test.CMS.DocMeta do
   @moduledoc false
   use GroupherServer.TestMate
 
-  @default_article_meta Embeds.ArticleMeta.default_meta()
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -16,40 +14,39 @@ defmodule GroupherServer.Test.CMS.DocMeta do
   describe "[cms doc meta info]" do
     test "can get default meta info", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc} = ORM.find_by(Doc, id: doc.id)
-      meta = doc.meta |> Map.from_struct() |> Map.delete(:id)
-
-      assert meta == @default_article_meta |> Map.merge(%{thread: :doc})
+      branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
+      state = Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id)
+      refute state.is_edited
+      refute state.comments_locked
     end
 
     test "is_edited flag should set to true after doc updated",
          ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc} = ORM.find_by(Doc, id: doc.id)
-
-      assert not doc.meta.is_edited
+      branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
 
       {:ok, _} =
-        CMS.Articles.update(doc, %{"title" => "new title", expected_version: doc.version})
+        CMS.Docs.update_draft(
+          doc.id,
+          branch.id,
+          %{title: "new title", expected_version: doc.version},
+          user
+        )
 
-      {:ok, doc} = ORM.find_by(Doc, id: doc.id)
-
-      assert doc.meta.is_edited
+      assert Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).is_edited
     end
 
     test "doc's lock/undo_lock article should work", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      assert not doc.meta.is_comment_locked
+      branch = Repo.get_by!(CMS.Model.DocBranch, community_id: community.id, type: :main)
 
-      {:ok, _} = CMS.Articles.lock_comments(doc)
-      {:ok, doc} = ORM.find_by(Doc, id: doc.id)
+      {:ok, _} = CMS.Articles.lock_comments(doc.id, user, branch_id: branch.id)
 
-      assert doc.meta.is_comment_locked
+      assert Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
 
-      {:ok, _} = CMS.Articles.undo_lock_comments(doc)
-      {:ok, doc} = ORM.find_by(Doc, id: doc.id)
+      {:ok, _} = CMS.Articles.undo_lock_comments(doc.id, user, branch_id: branch.id)
 
-      assert not doc.meta.is_comment_locked
+      refute Repo.get_by!(CMS.Model.DocBranchState, article_id: doc.id, branch_id: branch.id).comments_locked
     end
   end
 end

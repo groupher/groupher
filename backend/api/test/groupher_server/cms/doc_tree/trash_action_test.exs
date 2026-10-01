@@ -4,9 +4,9 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.{Activity, CMS}
+
   alias CMS.Model.{
     Community,
-    Doc,
     DocsSiteState,
     DocTreeNode,
     TrashAction,
@@ -55,22 +55,22 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     refute tree_node_exists?(community, page.node.id, :public)
 
     membership =
-      Repo.get_by!(TrashedDocArticle, article_hash_id: page.node.doc_id)
+      Repo.get_by!(TrashedDocArticle, article_id: page.node.doc_id)
 
     assert {:ok, [trash_item]} = CMS.DocTree.trash_items(community, actor: user)
     action = Repo.get_by!(TrashAction, hash_id: trash_item.id)
     item = Repo.get_by!(TrashedDocTreeNode, trash_action_id: action.id, node_id: page.node.id)
     assert item.draft_snapshot
     assert item.public_snapshot
-    assert Repo.get_by(Doc, article_hash_id: page.node.doc_id)
-    assert {:error, _} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
+    assert Repo.get(CMS.Model.Article, page.node.doc_id)
+    assert {:error, _} = CMS.Docs.read_editor_head(community, page.node.doc_id)
 
     assert {:error,
             %ErrorCat.Error{
               reason: :custom,
               details: "Trash action must be restored as one group"
             }} =
-             CMS.Articles.restore_trashed(membership, user)
+             CMS.Articles.restore_trashed(membership.hash_id, user)
 
     assert {:ok, restored} =
              CMS.DocTree.restore_trash_item(community, trash_item.id, %{
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert tree_node_exists?(community, page.node.id, :draft)
     assert tree_node_exists?(community, page.node.id, :public)
     refute Repo.get(TrashAction, action.id)
-    assert {:ok, _doc} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
+    assert {:ok, _doc} = CMS.Docs.read_editor_head(community, page.node.doc_id)
   end
 
   test "deleting an unpublished Page stores and restores only the draft placement" do
@@ -209,8 +209,8 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert tree_node_exists?(community, group.node.id, :draft)
     assert tree_node_exists?(community, first.node.id, :draft)
     assert tree_node_exists?(community, second.node.id, :draft)
-    assert {:ok, _} = CMS.Articles.read_editor(community, :doc, first.node.doc_id)
-    assert {:ok, _} = CMS.Articles.read_editor(community, :doc, second.node.doc_id)
+    assert {:ok, _} = CMS.Docs.read_editor_head(community, first.node.doc_id)
+    assert {:ok, _} = CMS.Docs.read_editor_head(community, second.node.doc_id)
     assert {:ok, []} = CMS.DocTree.trash_items(community, actor: user)
   end
 
@@ -307,7 +307,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
         }
       ])
 
-    {:ok, current} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
+    {:ok, current} = CMS.Docs.read_editor_head(community, page.node.doc_id)
 
     assert {:ok, original_draft} =
              CMS.DocTree.update_draft(
@@ -328,24 +328,25 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
     assert duplicate.node.id != page.node.id
     assert duplicate.node.doc_id != page.node.doc_id
 
-    {:ok, original_doc} = CMS.Articles.read_editor(community, :doc, page.node.doc_id)
-    {:ok, copied_doc} = CMS.Articles.read_editor(community, :doc, duplicate.node.doc_id)
+    {:ok, original_doc} = CMS.Docs.read_editor_head(community, page.node.doc_id)
+    {:ok, copied_doc} = CMS.Docs.read_editor_head(community, duplicate.node.doc_id)
 
-    assert Repo.preload(original_doc, :document).document.json ==
-             Repo.preload(copied_doc, :document).document.json
+    assert original_doc.document.json == copied_doc.document.json
 
     assert Repo.get_by(CMS.Model.ArtimentMention,
              mentioner_type: :doc,
-             mentioner_id: original_doc.id,
+             mentioner_article_id: original_doc.article_id,
+             mentioner_branch_id: original_doc.branch_id,
              mentioned_type: :blog,
-             mentioned_id: target.id
+             mentioned_article_id: target.article_id
            )
 
     assert Repo.get_by(CMS.Model.ArtimentMention,
              mentioner_type: :doc,
-             mentioner_id: copied_doc.id,
+             mentioner_article_id: copied_doc.article_id,
+             mentioner_branch_id: copied_doc.branch_id,
              mentioned_type: :blog,
-             mentioned_id: target.id
+             mentioned_article_id: target.article_id
            )
   end
 

@@ -82,7 +82,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Types do
 
   object :press_article do
     field(:community_ref, non_null(:string))
-    field(:article_ref, non_null(:string))
+    field(:article_id, non_null(:id))
     field(:article_revision, non_null(:string))
     field(:thread, non_null(:thread))
     field(:canonical_path, non_null(:string))
@@ -102,7 +102,7 @@ defmodule GroupherServerWeb.Schema.CMS.Press.Types do
   end
 
   object :press_rss_feed_item, name: "PressRSSFeedItem" do
-    field(:article_ref, non_null(:string))
+    field(:item_id, non_null(:string))
     field(:article_revision, non_null(:string))
     field(:thread, non_null(:thread))
     field(:title, non_null(:string))

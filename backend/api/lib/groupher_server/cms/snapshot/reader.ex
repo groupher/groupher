@@ -38,6 +38,14 @@ defmodule GroupherServer.CMS.Snapshot.Reader do
         model
         |> CMS.Gate.scope(nil, :list, scope_context(thread))
         |> where([article], article.id in ^ids)
+        |> select([article, ...], %{
+          id: article.id,
+          inner_id: article.inner_id,
+          title: as(:gate_article_public).title,
+          slug: as(:gate_article_public).slug,
+          thread: article.thread,
+          updated_at: as(:gate_article_public).updated_at
+        })
         |> Repo.all()
         |> Map.new(&{&1.id, article_summary(thread, &1)})
         |> with_unavailable(ids, &unavailable_article(thread, &1))
@@ -95,7 +103,7 @@ defmodule GroupherServer.CMS.Snapshot.Reader do
     %{
       id: comment.id,
       body_digest: digest(comment.body),
-      article_id: Map.get(comment, :"#{thread}_id"),
+      article_id: comment.article_id,
       thread: thread,
       updated_at: comment.updated_at
     }

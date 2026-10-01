@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
   Read-side helpers for the community asset library.
 
   Billing-oriented reads only look at active rows in `community_assets`. Usage
-  reads go through `article_document_asset_refs`.
+  reads go through version-owned `article_asset_refs`.
 
   Business position:
 
@@ -19,7 +19,17 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   alias CMS.Artiment.Threads
   alias CMS.Assets.ErrorCat
-  alias CMS.Model.{ArticleDocumentAssetRef, Community, CommunityAsset}
+
+  alias CMS.Model.{
+    Article,
+    ArticleAssetRef,
+    ArticleDraft,
+    ArticleRevision,
+    Community,
+    CommunityAsset,
+    DocDraft
+  }
+
   alias Helper.{ORM, T}
 
   @default_page 1
@@ -114,8 +124,24 @@ defmodule GroupherServer.CMS.Assets.Reader do
     %{page: page, size: size} = normalize_filter(filter)
 
     with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community_id, asset_id) do
-      ArticleDocumentAssetRef
+      ArticleAssetRef
       |> where([ref], ref.community_id == ^community_id and ref.asset_id == ^asset_id)
+      |> join(:left, [ref], draft in ArticleDraft, on: draft.body_draft_id == ref.body_draft_id)
+      |> join(:left, [ref, _draft], doc_draft in DocDraft,
+        on: doc_draft.body_draft_id == ref.body_draft_id
+      )
+      |> join(:left, [ref, _draft, _doc_draft], revision in ArticleRevision,
+        on: revision.id == ref.revision_id
+      )
+      |> join(:inner, [ref, draft, doc_draft, revision], article in Article,
+        on:
+          article.id == draft.article_id or article.id == doc_draft.article_id or
+            article.id == revision.article_id
+      )
+      |> select_merge([ref, _draft, _doc_draft, _revision, article], %{
+        article_id: article.id,
+        thread: article.thread
+      })
       |> order_by([ref], desc: ref.inserted_at, desc: ref.id)
       |> ORM.paginator(page: page, size: size)
       |> then(&{:ok, &1})

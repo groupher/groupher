@@ -136,7 +136,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> validate_length(:href, max: 400)
     |> validate_title(type)
     |> validate_parent_ref(type, get_field(changeset, :parent_node_id))
-    |> validate_article_ref(type, doc_id)
+    |> validate_doc_id(type, doc_id)
     |> validate_link_href(type, href)
   end
 
@@ -154,13 +154,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   defp validate_parent_ref(changeset, _type, _parent_node_id),
     do: add_error(changeset, :parent_node_id, "node has an invalid docs tree parent")
 
-  defp validate_article_ref(changeset, :page, nil),
+  defp validate_doc_id(changeset, :page, nil),
     do: add_error(changeset, :doc_id, "page nodes require doc_id")
 
-  defp validate_article_ref(changeset, :page, doc_id) when not is_nil(doc_id),
+  defp validate_doc_id(changeset, :page, doc_id) when not is_nil(doc_id),
     do: changeset
 
-  defp validate_article_ref(changeset, type, doc_id)
+  defp validate_doc_id(changeset, type, doc_id)
        when type in [:tab, :group, :link, :pin] do
     if is_nil(doc_id) do
       changeset
@@ -169,7 +169,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     end
   end
 
-  defp validate_article_ref(changeset, _type, _doc_id),
+  defp validate_doc_id(changeset, _type, _doc_id),
     do: changeset
 
   defp validate_link_href(changeset, type, href) when type in [:link, :pin] and is_binary(href) do

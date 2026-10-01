@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate}
   alias CMS.Comments.{Lifecycle, ErrorCat, Commands.Solution}
-  alias CMS.Model.{Comment, PinnedComment, Post}
+  alias CMS.Model.{Article, Comment, PinnedComment}
   alias CMS.SearchArtiments.Indexer
   alias Analysis.MetricEvent
   alias Helper.{ORM, T}
@@ -81,16 +81,14 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
     operation_ref = Ecto.UUID.generate()
 
     with {:ok, _} <- revoke_if_current(article, comment, actor, operation_ref, occurred_at),
-         {:ok, counted_article} <- ORM.dec(article, :comments_count),
-         {:ok, counted_article} <- ORM.inc(counted_article, :comments_revision),
          {:ok, _} <- ORM.findby_delete(PinnedComment, %{comment_id: comment.id}),
          {:ok, _} <- Lifecycle.transition(comment.id, :deleted),
          {:ok, deleted} <- ORM.update(comment, %{body_html: @delete_hint}),
-         :ok <- CMS.ArticleStats.apply_comment_counts(counted_article),
-         :ok <- record_article_metric(counted_article, command_id, :comment_deleted),
+         :ok <- CMS.ArticleStats.record_comment_change(article),
+         :ok <- record_article_metric(article, command_id, :comment_deleted),
          {:ok, _invalidation} <-
-           invalidate_public_comments(counted_article, comment.thread, command_id) do
-      {:ok, %{comment: deleted, article: counted_article, command_id: command_id}}
+           invalidate_public_comments(article, comment.thread, command_id) do
+      {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end
   end
 
@@ -100,7 +98,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       else: :ok
   end
 
-  defp revoke_if_current(%Post{} = post, comment, actor, operation_ref, occurred_at),
+  defp revoke_if_current(%Article{thread: :post} = post, comment, actor, operation_ref, occurred_at),
     do: Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
 
   defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at),

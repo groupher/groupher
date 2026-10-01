@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   alias GroupherServer.CMS
   alias CMS.Communities.TagStats
-  alias CMS.Model.{CommunityTag, CommunityTagStat}
+  alias CMS.Model.{Article, CommunityTag, CommunityTagStat}
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)
@@ -266,19 +266,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag2.id)
 
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
+      {:ok, post} = read_article(community, :post, post.inner_id)
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
+      {:ok, post} = read_article(community, :post, post.inner_id)
       assert not exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
+      {:ok, post} = read_article(community, :post, post.inner_id)
       assert not exist_in?(article_tag, post.community_tags)
       assert not exist_in?(article_tag2, post.community_tags)
     end
@@ -304,7 +304,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         })
 
       {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
-      {:ok, post} = ORM.find(Post, created.id, preload: :community_tags)
+      {:ok, post} = read_article(community, :post, created.inner_id)
 
       assert exist_in?(article_tag, post.community_tags)
       assert exist_in?(article_tag2, post.community_tags)
@@ -332,7 +332,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         Map.put(post_attrs, :community_tags, [article_tag.id, article_tag.id, article_tag.id])
 
       {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
-      {:ok, post} = ORM.find(Post, created.id, preload: :community_tags)
+      {:ok, post} = read_article(community, :post, created.inner_id)
 
       assert Enum.map(post.community_tags, & &1.id) == [article_tag.id]
 
@@ -352,28 +352,29 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       post_with_tags = Map.merge(post_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
       {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
 
-      update_attrs =
-        post_attrs
-        |> Map.merge(%{
-          title: "updated post title",
-          community_tags: [article_tag2.id, article_tag3.id]
-        })
+      update_attrs = %{
+        title: "updated post title",
+        community_tags: [article_tag2.id, article_tag3.id]
+      }
 
-      {:ok, _updated} = CMS.Articles.update(created, update_attrs)
+      {:ok, _updated} =
+        CMS.Articles.update(
+          created,
+          Map.put(update_attrs, :expected_version, created.version),
+          user,
+          Ecto.UUID.generate()
+        )
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
       {:ok, stat3} = CMS.Communities.tag_stats(article_tag3)
 
-      assert stat.contents_count == 1
-      assert stat.today_contents_count == 1
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
-      assert stat3.contents_count == 0
-      assert stat3.today_contents_count == 0
-
-      {:ok, %{article: _published, snapshot: nil}} =
-        CMS.Articles.publish_draft(community, :post, created.article_hash_id, user)
+      assert stat3.contents_count == 1
+      assert stat3.today_contents_count == 1
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       {:ok, stat3} = CMS.Communities.tag_stats(article_tag3)
@@ -454,10 +455,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
       {:ok, old_post} = CMS.Articles.create(community, :post, mock_attrs(:post), user)
 
-      from(p in Post, where: p.id == ^old_post.id)
+      from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
-
-      {:ok, old_post} = ORM.find(Post, old_post.id, preload: :community_tags)
 
       {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
       {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
@@ -480,7 +479,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
 
-      {:ok, _} = CMS.Articles.restore_trashed(trash_item, user)
+      {:ok, _} = CMS.Articles.restore_trashed(trash_item.hash_id, user)
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
@@ -490,10 +489,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+      command_id = Ecto.UUID.generate()
 
-      {:ok, _} = CMS.Articles.trash(post, user)
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
-      {:ok, _} = CMS.Articles.trash(post, user)
+      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
+      {:ok, _} = CMS.Articles.trash(post, user, command_id: command_id)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
@@ -506,16 +505,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
 
       {:ok, _} =
-        CMS.Articles.set_illegal(post, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          post.id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          user
+        )
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
 
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
       {:ok, _} = CMS.Articles.trash(post, user)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
@@ -546,7 +548,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
       {:ok, _old_post} = CMS.Communities.set_tag(old_post, article_tag.id)
 
-      from(p in Post, where: p.id == ^old_post.id)
+      from(article in Article, where: article.id == ^old_post.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
 
       from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)

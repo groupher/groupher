@@ -12,8 +12,8 @@
 - [ ] [Assets Hub V4](./assets-hub/v4.md) — thread 归属、stats 与 quota 方案待实施。
 - [ ] [OAuth 帐户链接与取消链接](./auth/link-unlink-oauth.md) — 设计方案尚未实施。
 - [ ] [Post Merge](./feature/post/merge.md) — relation-based merge 仍为草案。
-- [ ] [Docs Snapshot Update](./feature/docs/snapshot-update-proposal.md) — 仍为设计讨论稿。
-- [ ] [Article Revision / Draft 目标架构](./feature/article/revision-draft-target.md) — 以 stable Article、mutable Draft、immutable Revision 和 ArticlePublic Projection 直接替换 stage 双行模型；Doc 在 v1 以 Core IndexedDB 替代服务端 staged history，其他 Article 编辑器交付时接入同一能力；不保留旧数据或逻辑兼容。
+- [x] [Docs Snapshot Update](./feature/docs/snapshot-update-proposal.md) — Doc 内容历史已由 ArticleRevision + DocBranchVersion 取代；本文仅保留 display snapshot 讨论，旧 DocSnapshot 方案 superseded。
+- [x] [Article Revision / Draft 目标架构](./feature/article/revision-draft-target.md) — stable Article、mutable Draft、immutable Revision、ArticlePublic Projection 与 Doc LocalDraftHistory 已在本地落地；生产 cutover、全量重建和线上验收待完成。
 - [ ] [About 访客分布地图](./feature/community/about-visitor-map.md) — 方案已确认，尚未实现。
 - [ ] [Posthouse](./posthouse) — 应用仍处于规划阶段。
 - [ ] [Risk Center](./risk-center) — 应用仍处于规划阶段。
@@ -26,7 +26,7 @@
 - [ ] [Article ViewTracker / Insights V1](./feature/view-tracker/v1.md) — 核心实现完成，发布前必须完成真实浏览器 tracking 与 Insights GraphQL 授权 e2e。
 - [x] [Article ViewTracker V2](./feature/view-tracker/v2.md) — 历史异步协议已由 Article View 同步计数取代；文档保留为历史设计记录。
 - [ ] [ArticleStats 与公共页面缓存](./architecture/article-stats-and-public-cache.md) — 同步 views、owner revision DTO 与 Query/cache owner 已落地；当前剩余生产 telemetry、真实 CDN purge 与边缘验收。
-- [ ] [ArticleStats 目标架构](./architecture/article-stats-target.md) — ArticleStats、typed emotion rows、排序索引和 owner revision 已落地；canonical Article registry 仍是独立长期候选方案，不属于本次 cutover。
+- [x] [ArticleStats 目标架构](./architecture/article-stats-target.md) — ArticleStats、typed emotion rows、排序索引和 owner revision 已落地；canonical Article registry 已由 Article Revision / Draft 目标架构吸收，不再作为独立候选方案。
 - [ ] [TanStack Query 通用失效](./architecture/query-invalidation.md) — typed domain target、通用 executor、active/inactive policy、静态门禁和 CDN 边界已落地；剩余各业务 mutation 的 owner revision 收敛与生产观测。
 - [ ] [RequestActor 公共分类](./architecture/request-actor.md) — typed evidence、account/anonymous/service/delegation request context 与 View conditional scope 已直接切换；剩余 signed crawler evidence、Edge/origin 收口和生产分类观测。
 - [ ] [公共缓存可靠失效](./architecture/public-cache-invalidation.md) — Phoenix `PublicCache` outbox、Oban、Cloudflare adapter、跨语言 tag contract 与已识别领域写入接线已落地；剩余真实 purge、purge health 与生产验收。

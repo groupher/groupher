@@ -27,12 +27,13 @@ defmodule GroupherServer.Messaging.Model.Mention do
   @schema_prefix DBPrefix.messaging()
 
   @required_fields ~w(from_user_id to_user_id title article_id thread)a
-  @optional_fields ~w(comment_id read)a
+  @optional_fields ~w(branch_id comment_id read)a
 
   @type t :: %Mention{}
   schema "mentions" do
     field(:thread, Ecto.Enum, values: Threads.enums())
-    field(:article_id, :id)
+    field(:article_id, Ecto.UUID)
+    field(:branch_id, :id)
     field(:title, :string)
     field(:comment_id, :id)
     field(:read, :boolean)

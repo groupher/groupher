@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Comments.BodyCodec
-  alias CMS.Model.{Comment, Post, PostSolution}
+  alias CMS.Model.{Comment, PostSolution}
 
   @doc """
   Assembles one Article with public Interaction presentation fields.
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   end
 
   defp solution_by_post(articles) do
-    post_ids = for %Post{id: id} <- articles, do: id
+    post_ids = for %{id: id, thread: :post} <- articles, do: id
 
     fetch_solutions(post_ids)
   end
@@ -75,10 +75,10 @@ defmodule GroupherServer.CMS.Articles.Response do
   defp fetch_solutions(post_ids) do
     PostSolution
     |> join(:inner, [solution], comment in Comment, on: comment.id == solution.comment_id)
-    |> where([solution], solution.post_id in ^post_ids)
+    |> where([solution], solution.article_id in ^post_ids)
     |> select(
       [solution, comment],
-      {solution.post_id, comment.inner_id, comment.body, comment.body_html}
+      {solution.article_id, comment.inner_id, comment.body, comment.body_html}
     )
     |> Repo.all()
     |> Map.new(fn {post_id, comment_ref, body, body_html} ->
@@ -92,13 +92,19 @@ defmodule GroupherServer.CMS.Articles.Response do
     end)
   end
 
-  defp merge_solution(%{__struct__: Post, id: post_id} = post, solution_by_post) do
+  defp merge_solution(%{id: post_id, thread: :post} = post, solution_by_post) do
     case Map.get(solution_by_post, post_id) do
       nil ->
-        %{post | is_solved: false, solution_comment_id: nil, solution_digest: nil}
+        post
+        |> Map.put(:is_solved, false)
+        |> Map.put(:solution_comment_id, nil)
+        |> Map.put(:solution_digest, nil)
 
       %{comment_ref: comment_ref, digest: digest} ->
-        %{post | is_solved: true, solution_comment_id: comment_ref, solution_digest: digest}
+        post
+        |> Map.put(:is_solved, true)
+        |> Map.put(:solution_comment_id, comment_ref)
+        |> Map.put(:solution_digest, digest)
     end
   end
 
@@ -111,7 +117,7 @@ defmodule GroupherServer.CMS.Articles.Response do
 
   defp article_meta(article, state) do
     meta =
-      (article.meta || %{})
+      (Map.get(article, :meta) || %{})
       |> Map.put(:latest_upvoted_users, state.latest_upvoted_users)
       |> Map.put(:latest_collected_users, state.latest_collected_users)
 

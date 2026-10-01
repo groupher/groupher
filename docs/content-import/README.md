@@ -12,6 +12,7 @@
 | [`content-import-refactor-plan.md`](./content-import-refactor-plan.md)       | 重构实施计划、历史迁移证据与剩余 release gate                  |
 | [`import-file-sdk.md`](./import-file-sdk.md)                                 | PreviewStore、Files SDK、PostgreSQL staging 与临时对象生命周期 |
 | [`import-process-log.md`](./import-process-log.md)                           | Preview/Job Process 投影、轮询与过程日志                       |
+| [`import-plan.md`](./import-plan.md)                                         | 不可变 ImportPlan、Review 决策、Apply 确定性与演进路径         |
 | [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) | 共享 Import Content、Rich Editor codec、publisher 与 BodyBag   |
 | [`import-error-handling.md`](./import-error-handling.md)                     | 联调错误复盘、Back/reset、重复来源覆盖与回归清单               |
 

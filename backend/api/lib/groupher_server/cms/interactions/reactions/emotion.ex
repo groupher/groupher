@@ -194,9 +194,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
       }
       |> Map.put(info.foreign_key, article.id)
 
-    conflict_target =
-      {:unsafe_fragment,
-       "(user_id, #{info.foreign_key}, emotion) WHERE #{info.foreign_key} IS NOT NULL"}
+    conflict_target = emotion_conflict_target(info.foreign_key)
 
     insert_fact(ArticleUserEmotion, attrs, conflict_target)
   end
@@ -237,4 +235,12 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
 
   defp author_user_id(%{author: %{user_id: user_id}}), do: user_id
   defp author_user_id(%{author_id: author_id}), do: Repo.get!(Author, author_id).user_id
+
+  defp emotion_conflict_target(:article_id),
+    do:
+      {:unsafe_fragment,
+       "(user_id, article_id, emotion) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+
+  defp emotion_conflict_target(foreign_key),
+    do: {:unsafe_fragment, "(user_id, #{foreign_key}, emotion) WHERE #{foreign_key} IS NOT NULL"}
 end

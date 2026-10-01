@@ -231,7 +231,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   defp update_folder_meta(thread, collects, folder) do
     total_count = length(collects)
     last_updated = Datetime.today() |> Datetime.to_datetime()
-    thread_count = Enum.filter(collects, &(not is_nil(Map.get(&1, :"#{thread}_id")))) |> length()
+    thread_count = Enum.count(collects, &(&1.thread == thread))
 
     meta =
       folder.meta

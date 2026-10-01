@@ -7,13 +7,12 @@ import { browserGraphQLRequest } from '~/graphql/client'
 import useEvent from '~/hooks/useEvent'
 import useTrans from '~/hooks/useTrans'
 import MergeSVG from '~/icons/Merge'
-import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DsbThread/schema/docs'
 
 import useDocsEditor from '../Editor/store/hooks'
 import { DOC_ACTION_LABEL_KEY } from './constant'
 import { buildRevisionHistory } from './RevisionDrawer/model'
-import type { TDocSnapshot, TDocDraftSnapshotsPayload } from './RevisionDrawer/spec'
+import type { TDocBranchRevision, TDocBranchVersionsPayload } from './RevisionDrawer/spec'
 import useRevisionDiffModel from './RevisionDrawer/useRevisionDiffModel'
 import useSalon, { cn } from './salon/diff_status'
 
@@ -22,19 +21,17 @@ const RevisionDrawer = lazy(() => import('./RevisionDrawer'))
 const DiffStatus: FC = () => {
   const s = useSalon()
   const { t } = useTrans()
-  const { slug: community } = useCommunity()
   const { bodyValue, docDraftInfo } = useDocsEditor()
   const [visible, setVisible] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [draftRevisions, setDraftRevisions] = useState<TDocSnapshot[]>([])
-  const [publishedRevisions, setPublishedRevisions] = useState<TDocSnapshot[]>([])
+  const [publishedRevisions, setPublishedRevisions] = useState<TDocBranchRevision[]>([])
   const docDraftId = docDraftInfo.id
+  const branchId = docDraftInfo.branchId
   const label = t(DOC_ACTION_LABEL_KEY.DIFF)
 
   const loadRevisions = useCallback(async (): Promise<void> => {
-    if (!docDraftId) {
-      setDraftRevisions([])
+    if (!docDraftId || !branchId) {
       setPublishedRevisions([])
       setError(null)
       setLoading(false)
@@ -45,29 +42,29 @@ const DiffStatus: FC = () => {
     setError(null)
 
     try {
-      const [draftData, publishedData] = await Promise.all([
-        browserGraphQLRequest<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
-          community,
-          id: docDraftId,
-          stage: 'DRAFT',
-        }),
-        browserGraphQLRequest<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
-          community,
-          id: docDraftId,
-          stage: 'PUBLIC',
-        }),
-      ])
+      const data = await browserGraphQLRequest<TDocBranchVersionsPayload>(S.docBranchVersions, {
+        docId: docDraftId,
+        branchId,
+      })
 
-      setDraftRevisions(draftData?.docDraftSnapshots || [])
-      setPublishedRevisions(publishedData?.docDraftSnapshots || [])
+      setPublishedRevisions(
+        (data?.docBranchVersions || []).map((version) => ({
+          id: version.revisionId,
+          branchVersionId: version.id,
+          documentJson: version.content.documentJson,
+          insertedAt: version.publishedAt,
+          revisionNumber: version.versionNumber,
+          title: version.content.title,
+          subtitle: version.content.subtitle,
+        })),
+      )
     } catch (err) {
-      setDraftRevisions([])
       setPublishedRevisions([])
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
-  }, [community, docDraftId])
+  }, [branchId, docDraftId])
 
   useEffect(() => {
     void loadRevisions()
@@ -84,10 +81,10 @@ const DiffStatus: FC = () => {
   const revisionHistory = useMemo(
     () =>
       buildRevisionHistory({
-        draftRevisions,
+        draftRevisions: [],
         publishedRevisions,
       }),
-    [draftRevisions, publishedRevisions],
+    [publishedRevisions],
   )
   const { loadDiffResult, revisionDiffModel, startHistoryDiff } = useRevisionDiffModel(
     revisionHistory,

@@ -50,7 +50,7 @@ vi.mock('./salon', () => ({
 const makeItem = (mentionedByCount: number): TTrashedPost => ({
   id: 'trash-1',
   thread: 'POST',
-  articleRef: 'article-1',
+  articleId: 'article-1',
   article: { innerId: '1', title: 'Deleted post' },
   stats: null,
   deletedBy: null,

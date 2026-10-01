@@ -3,8 +3,8 @@ import type { TDocDraftInitialData } from '../spec'
 import useDraftAutoSave from './useDraftAutoSave'
 import useDraftEditorState from './useDraftEditorState'
 import useDraftLoader from './useDraftLoader'
-import useDraftSnapshot from './useDraftSnapshot'
 import useDraftStoreSync from './useDraftStoreSync'
+import useLocalDraftHistory from './useLocalDraftHistory'
 
 /** Exposes logic state and actions through the shared React hook boundary. */
 export default function useLogic(
@@ -17,7 +17,7 @@ export default function useLogic(
   })
 
   useDraftLoader(draftState)
-  useDraftSnapshot(draftState)
+  const localDraftHistory = useLocalDraftHistory(draftState)
   useDraftStoreSync(draftState)
 
   return {
@@ -29,6 +29,7 @@ export default function useLogic(
     error: draftState.saveStatus.error || draftState.loadStatus.error,
     invalid: draftState.invalid,
     loading: draftState.loadStatus.loading,
+    localDraftHistory,
     save,
     saving: draftState.saveStatus.saving,
     setBodyValue: draftState.editBodyValue,

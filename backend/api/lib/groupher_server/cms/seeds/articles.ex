@@ -162,7 +162,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
       end)
     end
 
-    ORM.find(article.__struct__, article.id)
+    {:ok, article}
   end
 
   defp seed_upvotes(article, _) do
@@ -173,7 +173,7 @@ defmodule GroupherServer.CMS.Seeds.Articles do
     with {:ok, user} <- db_insert(:user),
          emotion <- Enum.random(@article_emotions),
          {:ok, _} <- CMS.Interactions.emotion(article, emotion, user) do
-      ORM.find(article.__struct__, article.id)
+      {:ok, article}
     end
   end
 

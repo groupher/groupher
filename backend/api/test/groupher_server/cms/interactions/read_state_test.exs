@@ -10,17 +10,16 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   alias CMS.Model.{
     ArticleCollect,
+    Article,
     ArticleLifecycle,
     ArticleUpvote,
     ArticleUserEmotion,
     CommunityLifecycle,
-    Post,
     PostReactionInfo
   }
 
   test "upvote count is materialized in the projection and decremented on undo" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert 1 == upvotes_count(post.id)
@@ -40,7 +39,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     Repo.get_by!(ArticleLifecycle,
       community_id: community.id,
       thread: :post,
-      article_hash_id: post.article_hash_id
+      article_id: post.id
     )
     |> ArticleLifecycle.changeset(%{state: :archived})
     |> Repo.update!()
@@ -65,37 +64,37 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
     assert Repo.exists?(
              from(row in ArticleUpvote,
-               where: row.post_id == ^post.id and row.user_id == ^user.id
+               where: row.article_id == ^post.id and row.user_id == ^user.id
              )
            )
 
     assert Repo.exists?(
              from(row in ArticleCollect,
-               where: row.post_id == ^post.id and row.user_id == ^user.id
+               where: row.article_id == ^post.id and row.user_id == ^user.id
              )
            )
 
     assert Repo.exists?(
              from(row in ArticleUserEmotion,
-               where: row.post_id == ^post.id and row.user_id == ^user.id
+               where: row.article_id == ^post.id and row.user_id == ^user.id
              )
            )
 
     refute Repo.exists?(
              from(row in ArticleUpvote,
-               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+               where: row.article_id == ^post.id and row.user_id == ^other_user.id
              )
            )
 
     refute Repo.exists?(
              from(row in ArticleCollect,
-               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+               where: row.article_id == ^post.id and row.user_id == ^other_user.id
              )
            )
 
     refute Repo.exists?(
              from(row in ArticleUserEmotion,
-               where: row.post_id == ^post.id and row.user_id == ^other_user.id
+               where: row.article_id == ^post.id and row.user_id == ^other_user.id
              )
            )
 
@@ -113,7 +112,7 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
       assert {:error, %{primary: %{reason: :ancestor_community_not_writable}}} =
                CMS.Interactions.upvote(post, user)
 
-      refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))
+      refute Repo.exists?(from(row in ArticleUpvote, where: row.article_id == ^post.id))
     end
   end
 
@@ -121,13 +120,15 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     {_community, post, _attrs, user} = mock_article(:post, preload: [author: :user])
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
-    baseline = Repo.get_by!(Achievement, user_id: post.author.user_id)
+    baseline = Repo.get_by!(Achievement, user_id: post.author.id)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
     assert 1 == upvotes_count(post.id)
-    assert 1 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
 
-    unchanged = Repo.get_by!(Achievement, user_id: post.author.user_id)
+    assert 1 ==
+             Repo.aggregate(from(row in ArticleUpvote, where: row.article_id == ^post.id), :count)
+
+    unchanged = Repo.get_by!(Achievement, user_id: post.author.id)
     assert baseline.articles_upvotes_count == unchanged.articles_upvotes_count
     assert baseline.reputation == unchanged.reputation
   end
@@ -161,13 +162,12 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
       Repo.query!("DROP FUNCTION cms.#{function_name}()")
     end
 
-    refute Repo.exists?(from(row in ArticleUpvote, where: row.post_id == ^post.id))
+    refute Repo.exists?(from(row in ArticleUpvote, where: row.article_id == ^post.id))
     assert is_nil(upvotes_count(post.id))
   end
 
   test "viewer_state returns projection counts rather than main-record counts" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
     hydrated = CMS.Interactions.viewer_state(post, user)
@@ -178,7 +178,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   test "concurrent upvotes keep the projection count in step with fact rows" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
     {:ok, second_user} = db_insert(:user)
 
     results =
@@ -192,7 +191,6 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
   test "concurrent undo only removes projection state for the transaction that deletes the fact" do
     {_community, post, _attrs, user} = mock_article(:post)
-    post = Repo.preload(post, author: :user)
 
     assert {:ok, _} = CMS.Interactions.upvote(post, user)
 
@@ -203,7 +201,9 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
 
     assert Enum.all?(results, &match?({:ok, _}, &1))
     assert 0 == upvotes_count(post.id)
-    assert 0 == Repo.aggregate(from(row in ArticleUpvote, where: row.post_id == ^post.id), :count)
+
+    assert 0 ==
+             Repo.aggregate(from(row in ArticleUpvote, where: row.article_id == ^post.id), :count)
   end
 
   test "read batches projection state and keeps viewer membership isolated" do
@@ -229,15 +229,19 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     {_community, zero, _attrs, _other_user} = mock_article(:post)
     {_community, absent, _attrs, _third_user} = mock_article(:post)
 
-    assert :ok = CMS.ArticleStats.apply_interaction_counts(zero)
-    assert :ok = CMS.ArticleStats.apply_interaction_counts(absent)
+    zero_article = Repo.get!(Article, zero.article_id)
+
+    assert :ok = CMS.ArticleStats.apply_interaction_counts(zero_article)
+    Repo.delete_all(from(stats in CMS.Model.ArticleStats, where: stats.article_id == ^absent.id))
 
     assert {:ok, _} = CMS.Interactions.upvote(positive, user)
-    assert {:ok, _} = Repo.insert(%PostReactionInfo{post_id: zero.id})
+    assert {:ok, _} = Repo.insert(%PostReactionInfo{article_id: zero.id})
 
     {:ok, ordered_query} =
-      from(post in Post, where: post.id in ^[positive.id, zero.id, absent.id])
-      |> CMS.Interactions.scope(order: :upvotes)
+      from(post in Article,
+        where: post.thread == :post and post.id in ^[positive.id, zero.id, absent.id]
+      )
+      |> CMS.Interactions.scope(thread: :post, order: :upvotes)
 
     ids = ordered_query |> select([post], post.id) |> Repo.all()
 
@@ -273,9 +277,9 @@ defmodule GroupherServer.Test.CMS.Interactions.ReadStateTest do
     assert select_count <= 3
   end
 
-  defp upvotes_count(post_id) do
+  defp upvotes_count(article_id) do
     from(info in PostReactionInfo,
-      where: info.post_id == ^post_id,
+      where: info.article_id == ^article_id,
       select: info.upvotes_count
     )
     |> Repo.one()

@@ -20,7 +20,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   alias Accounts.Model.User
   alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
-  alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
+  alias CMS.Articles.Communities, as: ArticleCommunities
+  alias CMS.Model.{Article, ArticleCommunity, Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, T}
   alias PublicCache.Const, as: PublicCacheConst
 
@@ -207,6 +208,50 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp do_update_tags_assoc(article, tags, opt) when is_list(tags) do
+    case Ecto.UUID.cast(Map.get(article, :id)) do
+      {:ok, article_id} -> update_stable_tags(article, article_id, tags, opt)
+      :error -> update_legacy_tags(article, tags, opt)
+    end
+  end
+
+  defp update_stable_tags(article, article_id, tags, opt) do
+    community_id = article.community_id
+
+    with %ArticleCommunity{} = relation <-
+           Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community_id) do
+      old_tags =
+        CommunityTag
+        |> join(:inner, [tag], assignment in CMS.Model.ArticleCommunityTag,
+          on: assignment.tag_id == tag.id
+        )
+        |> where([_tag, assignment], assignment.article_community_id == ^relation.id)
+        |> order_by([tag, _assignment], asc: tag.id)
+        |> Repo.all()
+
+      removing_ids = MapSet.new(tags, & &1.id)
+
+      community_tags =
+        case opt do
+          :add -> Enum.uniq_by(old_tags ++ tags, & &1.id)
+          :remove -> Enum.reject(old_tags, &MapSet.member?(removing_ids, &1.id))
+          :overwrite -> tags
+        end
+
+      updated_article = Map.put(article, :community_tags, community_tags)
+
+      with {:ok, _relation} <-
+             ArticleCommunities.replace_tags(relation, Enum.map(community_tags, & &1.id)),
+           :ok <- sync_tag_stats(updated_article, Repo.get!(Article, article_id), old_tags),
+           {:ok, thread} <- FrontDesk.thread_of(article),
+           :ok <- invalidate_taxonomy(Repo.get!(Community, community_id), thread) do
+        {:ok, updated_article}
+      end
+    else
+      nil -> {:error, ErrorCat.not_exist("Article Community")}
+    end
+  end
+
+  defp update_legacy_tags(article, tags, opt) do
     article = Repo.preload(article, :community_tags)
     old_tags = article.community_tags
 
@@ -228,7 +273,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
                |> Ecto.Changeset.change()
                |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
                |> Repo.update(),
-             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags),
+             :ok <- sync_tag_stats(updated_article, article, old_tags),
              {:ok, thread} <- FrontDesk.thread_of(updated_article),
              :ok <-
                invalidate_taxonomy(Repo.get!(Community, updated_article.community_id), thread) do
@@ -324,7 +369,10 @@ defmodule GroupherServer.CMS.Communities.Tags do
     removed_tags = Enum.reject(old_tags, &MapSet.member?(new_ids, &1.id))
 
     deltas = Enum.map(added_tags, &{&1, 1}) ++ Enum.map(removed_tags, &{&1, -1})
-    TagStats.update_many(article, deltas)
+    case TagStats.update_many(article, deltas) do
+      {:ok, _result} -> :ok
+      {:error, _reason} = error -> error
+    end
   end
 
   @doc """

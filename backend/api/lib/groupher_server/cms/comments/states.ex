@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Comments.States do
   require GroupherServer.CMS.Comments.ErrorCat
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
@@ -111,47 +110,17 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @doc false
   @spec fold_for_report(Comment.t()) :: T.domain_res(Comment.t())
-  def fold_for_report(%Comment{} = comment) do
-    with {:ok, folded_comment} <- ORM.update(comment, %{is_folded: true}),
-         {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, article} <- FrontDesk.article_of(comment),
-         {:ok, %{total_count: total_count}} <-
-           CMS.Comments.List.paged_folded_comments(thread, article.id, %{page: 1, size: 1}),
-         {:ok, _article} <-
-           ORM.update_meta(article, Map.put(article.meta, :folded_comment_count, total_count)) do
-      {:ok, folded_comment}
-    end
-  end
+  def fold_for_report(%Comment{} = comment), do: ORM.update(comment, %{is_folded: true})
 
-  defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded) do
-    Multi.new()
-    |> Multi.run(:fold_comment, fn _, _ ->
-      comment |> ORM.update(%{is_folded: is_folded})
-    end)
-    |> Multi.run(:update_article_fold_count, fn _, _ ->
-      {:ok, thread} = FrontDesk.thread_of(comment)
-      {:ok, article} = FrontDesk.article_of(comment)
-
-      {:ok, %{total_count: total_count}} =
-        CMS.Comments.List.paged_folded_comments(thread, article.id, %{page: 1, size: 1})
-
-      meta = article.meta |> Map.put(:folded_comment_count, total_count)
-      article |> ORM.update_meta(meta)
-    end)
-    |> Repo.transaction()
-    |> result()
-  end
+  defp do_fold_comment(%Comment{} = comment, is_folded) when is_boolean(is_folded),
+    do: ORM.update(comment, %{is_folded: is_folded})
 
   defp pin_unlocked(%Comment{} = comment, article, user, opts) do
     with {:ok, comment} <- maybe_existing_pinned_comment(comment),
-         {:ok, thread} <- FrontDesk.thread_of(comment),
-         {:ok, info} <- match(thread) do
+         {:ok, thread} <- FrontDesk.thread_of(comment) do
       Multi.new()
       |> Multi.run(:checked_pined_comments_count, fn _, _ ->
-        pined_comments_query =
-          from(p in PinnedComment,
-            where: field(p, ^info.foreign_key) == ^article.id
-          )
+        pined_comments_query = pinned_comments_query(article, comment.branch_id, thread)
 
         check_pined_comments_count(pined_comments_query)
       end)
@@ -159,7 +128,7 @@ defmodule GroupherServer.CMS.Comments.States do
         ORM.update(comment, %{is_pinned: true})
       end)
       |> Multi.run(:add_pined_comment, fn _, _ ->
-        attrs = %{comment_id: comment.id} |> Map.put(info.foreign_key, article.id)
+        attrs = pinned_comment_attrs(article, comment, thread)
 
         PinnedComment |> ORM.create(attrs)
       end)
@@ -170,6 +139,21 @@ defmodule GroupherServer.CMS.Comments.States do
       |> result()
     end
   end
+
+  defp pinned_comments_query(%{id: article_id}, nil, _thread) do
+    from(pin in PinnedComment,
+      where: pin.article_id == ^article_id and is_nil(pin.branch_id)
+    )
+  end
+
+  defp pinned_comments_query(%{id: article_id}, branch_id, _thread) do
+    from(pin in PinnedComment,
+      where: pin.article_id == ^article_id and pin.branch_id == ^branch_id
+    )
+  end
+
+  defp pinned_comment_attrs(%{id: article_id}, comment, _thread),
+    do: %{comment_id: comment.id, article_id: article_id, branch_id: comment.branch_id}
 
   defp undo_pin_unlocked(%Comment{} = comment, article, user, opts) do
     Multi.new()

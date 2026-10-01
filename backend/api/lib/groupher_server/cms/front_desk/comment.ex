@@ -16,14 +16,12 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
 
-  alias CMS.Artiment.Config
   alias CMS.Comments.ErrorCat, as: CommentErrorCat
-  alias CMS.FrontDesk.{Article, Community, Relation}
+  alias CMS.FrontDesk.{Article, Relation}
   alias CMS.Helper.ArticlePath
-  alias CMS.Model.Comment
+  alias CMS.Model.{ArticlePublic, Comment}
+  alias CMS.Model.Article, as: ArticleModel
   alias Helper.{ORM, T}
-
-  @threads Config.threads()
 
   @doc "Reads one Comment from a structured path or database id."
   @spec read(map()) :: T.domain_res(Comment.t())
@@ -51,24 +49,39 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
 
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
            ArticlePath.parse(article_path),
-         {:ok, community} <- Community.read(community),
          {:ok, inner_id} <- parse_comment_inner_id(inner_id),
-         {:ok, article} <- Article.read(community, thread, article_inner_id, []),
-         {:ok, info} <- match(thread),
-         query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
+         {:ok, article} <-
+           Article.read(
+             %{community: community, thread: thread, inner_id: article_inner_id},
+             nil,
+             []
+           ),
+         query <- stable_comment_query(article, thread, inner_id),
          {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
       ORM.fill_meta(comment)
     end
   end
 
+  defp stable_comment_query(%{id: article_id}, thread, inner_id) when is_binary(article_id),
+    do: %{thread: thread, inner_id: inner_id, article_id: article_id}
+
+  defp stable_comment_query(article, thread, inner_id) do
+    {:ok, info} = match(thread)
+    %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id)
+  end
+
   @doc "Returns the parent Article and author information for one Comment."
   @spec full(integer()) :: T.domain_res(T.article_info())
   def full(comment_id) do
-    query = from(comment in Comment, where: comment.id == ^comment_id, preload: ^@threads)
+    query =
+      from(comment in Comment,
+        where: comment.id == ^comment_id,
+        preload: [article: [author: :user]]
+      )
 
     with {:ok, comment} <- Repo.one(query) |> comment_done(),
          {:ok, thread} <- Relation.thread_of(comment) do
-      extract_article_info(thread, Map.get(comment, thread))
+      extract_article_info(thread, comment.article)
     end
   end
 
@@ -87,6 +100,20 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
     do: {:ok, article_path, inner_id}
 
   defp parse_comment_path(_), do: {:error, CommentErrorCat.not_exist("comment not found")}
+
+  defp extract_article_info(thread, %ArticleModel{} = article) do
+    public = Repo.get(ArticlePublic, article.id)
+    article_author = article.author.user
+    article_info = %{title: public && public.title, id: article.id}
+
+    author_info = %{
+      id: article_author.id,
+      login: article_author.login,
+      nickname: article_author.nickname
+    }
+
+    {:ok, %{thread: thread, article: article_info, author: author_info}}
+  end
 
   defp extract_article_info(thread, article) do
     with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),

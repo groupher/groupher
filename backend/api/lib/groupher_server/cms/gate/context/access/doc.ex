@@ -10,12 +10,20 @@ defmodule GroupherServer.CMS.Gate.Context.Access.Doc do
   """
 
   @enforce_keys [:doc, :doc_lifecycle, :doc_branch, :community, :community_lifecycle]
-  defstruct [:doc, :doc_lifecycle, :doc_branch, :community, :community_lifecycle]
+  defstruct [
+    :doc,
+    :doc_lifecycle,
+    :doc_branch,
+    :doc_branch_state,
+    :community,
+    :community_lifecycle
+  ]
 
   @type t :: %__MODULE__{
           doc: struct(),
           doc_lifecycle: struct(),
           doc_branch: struct(),
+          doc_branch_state: struct() | nil,
           community: struct(),
           community_lifecycle: struct()
         }

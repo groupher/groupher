@@ -27,7 +27,15 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   alias Accounts.Model.User
   alias CMS.{Artiment.Threads, ArtimentMentions.Config, ErrorCat, FrontDesk}
-  alias CMS.Model.Comment
+  alias CMS.Model.{
+    Article,
+    ArticlePublic,
+    ArticleRevision,
+    Comment,
+    DocBranch,
+    DocBranchVersion,
+    DocPublic
+  }
 
   @threads Config.threads()
   @valid_article_prefix Config.valid_article_prefixes()
@@ -321,7 +329,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp resolve_internal_mention(%{type: type, value: value} = candidate, cache)
        when type in @threads do
-    with id when not is_nil(id) <- cast_id(value),
+    with id when not is_nil(id) <- cast_article_id(value),
          articles <- Map.get(cache.articles_by_thread, type, %{}),
          article when not is_nil(article) <- Map.get(articles, id) do
       candidate
@@ -407,7 +415,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       ids =
         candidates
         |> Enum.filter(&(&1.type == thread))
-        |> Enum.map(&cast_id(&1.value))
+        |> Enum.map(&cast_article_id(&1.value))
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()
 
@@ -418,16 +426,48 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp load_articles(_thread, []), do: %{}
 
   defp load_articles(thread, ids) do
-    case match(thread) do
-      {:ok, info} ->
-        info.model
-        |> where([a], a.id in ^ids)
-        |> Repo.all()
-        |> Map.new(&{&1.id, &1})
+    query =
+      case thread do
+        :doc ->
+          from(article in Article,
+            join: branch in DocBranch,
+            on: branch.community_id == article.community_id and branch.type == :main,
+            join: public in DocPublic,
+            on: public.article_id == article.id and public.branch_id == branch.id,
+            join: version in DocBranchVersion,
+            on: version.id == public.branch_version_id,
+            join: revision in ArticleRevision,
+            on: revision.id == version.revision_id,
+            where: article.id in ^ids and article.thread == :doc,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: branch.id,
+              thread: article.thread,
+              community_id: article.community_id,
+              title: revision.title
+            }
+          )
 
-      _ ->
-        %{}
-    end
+        _ ->
+          from(article in Article,
+            join: public in ArticlePublic,
+            on: public.article_id == article.id,
+            join: revision in ArticleRevision,
+            on: revision.id == public.revision_id,
+            where: article.id in ^ids and article.thread == ^thread,
+            select: %{
+              id: article.id,
+              article_id: article.id,
+              branch_id: nil,
+              thread: article.thread,
+              community_id: article.community_id,
+              title: revision.title
+            }
+          )
+      end
+
+    query |> Repo.all() |> Map.new(&{&1.id, &1})
   end
 
   defp load_comments(candidates) do
@@ -482,6 +522,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp cast_id(value) do
     case Ecto.Type.cast(:id, value) do
+      {:ok, id} -> id
+      :error -> nil
+    end
+  end
+
+  defp cast_article_id(value) do
+    case Ecto.UUID.cast(value) do
       {:ok, id} -> id
       :error -> nil
     end

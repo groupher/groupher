@@ -93,7 +93,7 @@ defmodule Helper.TestFakes.SearchArtiments do
 
   defp matches_scope?(artiment, scope) do
     matches_optional?(artiment.community_ref, scope[:community_ref]) and
-      matches_optional?(artiment.article_ref, scope[:article_ref])
+      matches_optional?(artiment.article_id, scope[:article_id])
   end
 
   defp matches_optional?(_actual, nil), do: true

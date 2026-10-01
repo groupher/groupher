@@ -100,15 +100,16 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
   defp search_article(title, inner_id) do
     now = DateTime.utc_now(:second)
-    article_hash_id = Ecto.UUID.generate()
-    ref = Artiment.article_ref(:post, article_hash_id)
+    article_id = Ecto.UUID.generate()
+    ref = Artiment.article_key(:post, article_id)
 
     %Artiment{
       ref: ref,
       type: :article,
       community_ref: "home",
       thread: :post,
-      article_ref: ref,
+      article_id: article_id,
+      indexed_revision_id: Ecto.UUID.generate(),
       title: title,
       plain_text: "#{title} body",
       locator: %{community: "home", thread: :post, inner_id: to_string(inner_id)},

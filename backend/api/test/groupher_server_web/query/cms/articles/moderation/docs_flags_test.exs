@@ -3,13 +3,8 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
 
   use GroupherServer.TestMate
   alias GroupherServer.CMS
-  alias CMS.Articles.Trash
 
   @total_count 35
-  @page_size GroupherServerWeb.Config.page_size()
-
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -38,14 +33,24 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
       assert results["totalCount"] == @total_count
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:doc, doc_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          doc_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"],
+            branch_id: doc_m.branch_id
+          },
+          :operations
+        )
 
-      {:ok, doc_m} = CMS.FrontDesk.article(community, :doc, doc_m.inner_id, include_illegal: true)
-      assert doc_m.pending == @audit_illegal
+      state =
+        Repo.get_by!(CMS.Model.DocBranchState,
+          article_id: doc_m.article_id,
+          branch_id: doc_m.branch_id
+        )
+
+      assert state.moderation_state == :illegal
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
       assert results["totalCount"] == @total_count - 1
@@ -53,67 +58,10 @@ defmodule GroupherServer.Test.Query.Flags.DocsFlags do
   end
 
   describe "[pinned docs flags]" do
-    test "if have pinned docs, the pinned docs should at the top of entries",
-         ~m(guest_conn community doc_m)a do
-      variables = %{filter: %{community: community.slug}}
-
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-
-      assert results |> is_valid_pagination?
-      assert results["pageSize"] == @page_size
-      assert results["totalCount"] == @total_count
-
-      {:ok, _} = CMS.Articles.pin(community, doc_m)
-
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-      entries_first = results["entries"] |> List.first()
-
-      assert results["totalCount"] == @total_count
-      assert entries_first["innerId"] == to_string(doc_m.inner_id)
-      assert entries_first["isPinned"] == true
-    end
-
-    test "pinned docs should not appear when page > 1", ~m(guest_conn community)a do
-      variables = %{filter: %{page: 2, size: 20}}
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-      assert results |> is_valid_pagination?
-
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, doc} = CMS.FrontDesk.article(community, :doc, random_id)
-      {:ok, _} = CMS.Articles.pin(community, doc)
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-
-      assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
-    end
-
-    test "trashed docs do not appear in results, including pinned injection",
-         ~m(guest_conn community)a do
-      variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-
-      random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, random_doc} = CMS.FrontDesk.article(community, :doc, random_id)
-      {:ok, _} = CMS.Articles.pin(community, random_doc)
-
-      {:ok, action} =
-        Trash.create_action(community, :system, %{
-          root_type: "doc_tree_page",
-          root_ref: "active-scope-test"
-        })
-
-      {:ok, _} =
-        Trash.attach(
-          action,
-          community,
-          :doc,
-          random_doc.article_hash_id,
-          :system
-        )
-
-      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :doc), variables)
-
-      refute results["entries"] |> Enum.any?(&(&1["innerId"] == random_id))
-      assert results["totalCount"] == @total_count - 1
+    test "Doc pinning is rejected because Doc navigation is owned by DocTree",
+         ~m(community doc_m user)a do
+      assert {:error, :unsupported_for_doc} =
+               CMS.Articles.pin(community, doc_m.article_id, user)
     end
   end
 end

@@ -417,6 +417,7 @@ defmodule GroupherServer.Support.Factory.Articles do
     )
     |> Map.merge(%{
       digest: String.slice(text, 100, 150),
+      slug: "doc-#{System.unique_integer([:positive, :monotonic])}",
       length: String.length(text)
     })
   end

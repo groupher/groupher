@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
-      {:ok, found} = ORM.find(Post, post.id, preload: :communities)
+      found = %{communities: CMS.Articles.Communities.communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
-      {:ok, found} = ORM.find(Post, post.id, preload: :communities)
+      found = %{communities: CMS.Articles.Communities.communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables2)
 
-      {:ok, found} = ORM.find(Post, post.id, preload: :communities)
+      found = %{communities: CMS.Articles.Communities.communities(post)}
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id in assoc_communities
@@ -132,7 +132,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
-      {:ok, found} = ORM.find(Post, post.id, preload: :communities)
+      found = %{communities: CMS.Articles.Communities.communities(post)}
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
       assert community3.id in assoc_communities
@@ -150,7 +150,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
 
-      {:ok, post} = ORM.find(Post, post.id, preload: [:communities, :community_tags])
+      post = %{communities: CMS.Articles.Communities.communities(post)}
 
       assert exist_in?(home_community, post.communities)
     end
@@ -164,8 +164,8 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
-      {:ok, post} = ORM.find(Post, post.id, preload: [:community, :communities, :community_tags])
-      assert post.community.id == blackhole.id
+      post = Repo.get!(CMS.Model.Article, post.id)
+      assert post.community_id == blackhole.id
     end
 
     test "auth user can move post to other community", ~m(community community2 post)a do
@@ -178,14 +178,14 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
 
       rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
-      {:ok, found} = ORM.find(Post, post.id, preload: [:community, :communities])
-      assoc_communities = found.communities |> Enum.map(& &1.id)
+      found = Repo.get!(CMS.Model.Article, post.id)
+      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
       assert community.id in assoc_communities
 
       passport_rules = %{"post.community.move" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      pre_community_id = found.community.id
+      pre_community_id = found.community_id
 
       article_tag_attrs = mock_attrs(:community_tag)
       {:ok, user} = db_insert(:user)
@@ -199,10 +199,11 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       rule_conn |> gq_mutation(S.Article.m(:move_article), variables)
 
-      {:ok, found} = ORM.find(Post, post.id, preload: [:community, :communities, :community_tags])
+      found = Repo.get!(CMS.Model.Article, post.id)
 
-      assoc_communities = found.communities |> Enum.map(& &1.id)
-      assoc_article_tags = found.community_tags |> Enum.map(& &1.id)
+      assoc_communities = CMS.Articles.Communities.communities(found) |> Enum.map(& &1.id)
+      {:ok, tags} = CMS.Articles.Communities.tags(found, community2)
+      assoc_article_tags = Enum.map(tags, & &1.id)
 
       assert pre_community_id not in assoc_communities
       assert community2.id in assoc_communities
@@ -210,7 +211,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
 
       assert article_tag.id in assoc_article_tags
 
-      assert found.community.id == community2.id
+      assert found.community_id == community2.id
     end
 
     test "mirror article with invalid thread is rejected without crash",

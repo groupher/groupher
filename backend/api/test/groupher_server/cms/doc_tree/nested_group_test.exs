@@ -4,9 +4,7 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.{Doc, DocsSiteState}
-
-  require GroupherServer.CMS.Const
+  alias CMS.Model.{DocDraft, DocsSiteState}
 
   describe "recursive docs navigation" do
     setup do
@@ -119,12 +117,8 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
 
       refute duplicated_doc_id == page.node.doc_id
 
-      assert {:ok, %Doc{title: "Install"}} =
-               ORM.find_by(Doc,
-                 community_id: community.id,
-                 article_hash_id: duplicated_doc_id,
-                 stage: CMS.Const.stage(:draft)
-               )
+      assert {:ok, %DocDraft{title: "Install"}} =
+               ORM.find_by(DocDraft, article_id: duplicated_doc_id)
     end
 
     test "accepts depth 32 and rejects deeper creates and subtree moves", context do

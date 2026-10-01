@@ -37,7 +37,11 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:cover_url_dark, :string)
 
     # 这里只是遵循 absinthe 的规范，并不是指返回以下的字段
-    resolve_type(fn parent_module, _ -> module_to_atom(parent_module) end)
+    resolve_type(fn
+      %{thread: thread}, _ when thread in [:post, :blog, :changelog, :doc] -> thread
+      %{meta: %{thread: thread}}, _ when thread in [:post, :blog, :changelog, :doc] -> thread
+      parent_module, _ -> module_to_atom(parent_module)
+    end)
   end
 
   thread_enums()
@@ -66,7 +70,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   input_object :search_artiments_scope_input do
     field(:community_ref, :string)
-    field(:article_ref, :string)
+    field(:article_id, :id)
   end
 
   input_object :search_artiments_filters_input do

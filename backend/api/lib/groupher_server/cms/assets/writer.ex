@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
       upload service  ->  community_assets
                          /        |
       article cover --'         billing/counting
-      editor block ---->  article_document_asset_refs
+      editor block ---->  article_asset_refs
 
   The upload service owns bytes in object storage. This module records the
   uploaded object's URL/size and projects article usage into queryable rows.
@@ -21,10 +21,12 @@ defmodule GroupherServer.CMS.Assets.Writer do
   alias CMS.FrontDesk
 
   alias CMS.Model.{
-    ArticleDocument,
-    ArticleDocumentAssetRef,
+    Article,
+    ArticleAssetRef,
+    ArticleDraft,
     Community,
-    CommunityAsset
+    CommunityAsset,
+    DocDraft
   }
 
   alias Accounts.Model.User
@@ -35,7 +37,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
     %{usage: :cover, asset_key: :cover_asset, asset_id_key: :cover_asset_id},
     %{usage: :cover_dark, asset_key: :cover_asset_dark, asset_id_key: :cover_asset_dark_id}
   ]
-  @all_usages ArticleDocumentAssetRef.usage_values()
+  @all_usages ArticleAssetRef.usage_values()
   @asset_url_conflict_target {:unsafe_fragment,
                               "(community_id, url_hash) WHERE deleted_at IS NULL"}
   @asset_storage_conflict_target {:unsafe_fragment,
@@ -73,7 +75,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
   Soft-deletes one active community asset when it has no refs.
 
   The asset row is selected `FOR UPDATE` before the ref check. If any
-  `article_document_asset_refs` row still points to the asset, deletion is
+  `article_asset_refs` row still points to the asset, deletion is
   rejected.
 
   ## Examples
@@ -106,12 +108,12 @@ defmodule GroupherServer.CMS.Assets.Writer do
   @doc """
   Synchronizes refs for an article using an explicit community boundary.
 
-  The article document row is locked while body and cover refs are replaced, so
+  The body Draft row is locked while body and cover refs are replaced, so
   concurrent syncs for the same article cannot interleave delete/insert steps.
 
   ## Examples
 
-      Writer.sync_article_refs(community, post, %{
+      Writer.sync_refs(community, post, %{
         asset_refs: [%{asset_id: asset.id, block_id: "image-1"}],
         cover_asset_id: cover_asset.id,
         cur_user: user
@@ -119,9 +121,9 @@ defmodule GroupherServer.CMS.Assets.Writer do
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
 
   """
-  @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(%Community{id: community_id}, article, attrs) do
-    do_sync_article_refs(community_id, article, attrs)
+  @spec sync_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
+  def sync_refs(%Community{id: community_id}, article, attrs) do
+    do_sync_refs(community_id, article, attrs)
   end
 
   @doc """
@@ -132,45 +134,43 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   ## Examples
 
-      Writer.sync_article_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
+      Writer.sync_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
 
-      Writer.sync_article_refs(%{post | community_id: nil}, %{asset_refs: []})
+      Writer.sync_refs(%{post | community_id: nil}, %{asset_refs: []})
       #=> {:ok, :pass}
 
   """
-  @spec sync_article_refs(T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(article, attrs) do
+  @spec sync_refs(T.article(), map()) :: T.domain_res(term())
+  def sync_refs(article, attrs) do
     case Map.get(article, :community_id) do
       nil -> {:ok, :pass}
-      community_id -> do_sync_article_refs(community_id, article, attrs)
+      community_id -> do_sync_refs(community_id, article, attrs)
     end
   end
 
   @doc "Copies the complete asset-ref projection from one Article version to another."
-  @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_article_refs(source, target) do
+  @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
+  def copy_refs(source, target) do
     with {:ok, source_thread} <- FrontDesk.thread_of(source),
          {:ok, target_thread} <- FrontDesk.thread_of(target),
          true <- source_thread == target_thread,
-         {:ok, source_document} <-
-           ORM.find_by(ArticleDocument, article_id: source.id, thread: source_thread),
-         {:ok, target_document} <-
-           ORM.find_by(ArticleDocument, article_id: target.id, thread: target_thread) do
+         {:ok, source_body_id} <- draft_body_id(source),
+         {:ok, target_body_id} <- draft_body_id(target) do
       Repo.transaction(fn ->
-        ArticleDocumentAssetRef
-        |> where([ref], ref.article_document_id == ^target_document.id)
+        ArticleAssetRef
+        |> where([ref], ref.body_draft_id == ^target_body_id)
         |> Repo.delete_all()
 
         source_refs =
-          ArticleDocumentAssetRef
-          |> where([ref], ref.article_document_id == ^source_document.id)
+          ArticleAssetRef
+          |> where([ref], ref.body_draft_id == ^source_body_id)
           |> Repo.all()
 
         Enum.reduce_while(
           source_refs,
           {:ok, []},
-          &copy_article_ref(&1, &2, target, target_document, target_thread)
+          &copy_ref(&1, &2, target, target_body_id)
         )
         |> case do
           {:ok, copied} -> Enum.reverse(copied)
@@ -179,15 +179,14 @@ defmodule GroupherServer.CMS.Assets.Writer do
       end)
     else
       false ->
-        {:error,
-         AssetErrorCat.custom("Article asset refs can only copy within one thread")}
+        {:error, AssetErrorCat.custom("Article asset refs can only copy within one thread")}
 
       error ->
         error
     end
   end
 
-  defp copy_article_ref(source_ref, {:ok, copied}, target, target_document, target_thread) do
+  defp copy_ref(source_ref, {:ok, copied}, target, target_body_id) do
     attrs =
       source_ref
       |> Map.from_struct()
@@ -204,50 +203,60 @@ defmodule GroupherServer.CMS.Assets.Writer do
       ])
       |> Map.merge(%{
         community_id: target.community_id,
-        article_document_id: target_document.id,
-        article_id: target.id,
-        thread: target_thread
+        body_draft_id: target_body_id
       })
 
-    case ORM.create(ArticleDocumentAssetRef, attrs) do
+    case ORM.create(ArticleAssetRef, attrs) do
       {:ok, ref} -> {:cont, {:ok, [ref | copied]}}
       {:error, reason} -> {:halt, {:error, reason}}
     end
   end
 
   @doc """
-  Removes all article-document asset refs for an article.
+  Removes every Draft- and Revision-owned asset ref for an Article.
 
   The community asset rows remain intact; only usage projections are deleted.
   This is used by article deletion cleanup.
 
   ## Examples
 
-      Writer.purge_article_refs(:post, post.id)
+      Writer.purge_refs(:post, post.id)
       #=> {:ok, {deleted_count, nil}}
 
   """
-  @spec purge_article_refs(atom(), T.id()) :: T.domain_res(term())
-  def purge_article_refs(thread, article_id) do
-    ArticleDocumentAssetRef
-    |> where([ref], ref.thread == ^thread and ref.article_id == ^article_id)
+  @spec purge_refs(atom(), T.id()) :: T.domain_res(term())
+  def purge_refs(thread, article_id) do
+    revision_ids =
+      from(revision in CMS.Model.ArticleRevision,
+        where: revision.article_id == ^article_id,
+        select: revision.id
+      )
+
+    body_draft_ids = draft_body_ids(thread, article_id)
+
+    ArticleAssetRef
+    |> where(
+      [ref],
+      ref.revision_id in subquery(revision_ids) or ref.body_draft_id in subquery(body_draft_ids)
+    )
     |> Repo.delete_all()
     |> then(&{:ok, &1})
   end
 
-  defp do_sync_article_refs(community_id, article, attrs) do
+  defp do_sync_refs(community_id, article, attrs) do
     case sync_requested?(attrs) do
       false ->
         {:ok, :pass}
 
       true ->
         Repo.transaction(fn ->
-          with {:ok, thread} <- FrontDesk.thread_of(article),
-               {:ok, document} <- find_article_document_for_update(thread, article.id),
-               base <- base_ref_attrs(community_id, document, thread, article.id),
+          with {:ok, _thread} <- FrontDesk.thread_of(article),
+               {:ok, body_draft_id} <- draft_body_id(article),
+               :ok <- lock_body_draft(body_draft_id),
+               base <- base_ref_attrs(community_id, body_draft_id),
                user <- get_attr(attrs, :cur_user),
-               {:ok, body_refs} <- sync_body_refs(document, base, attrs, user),
-               {:ok, cover_refs} <- sync_cover_refs(document, base, attrs, user) do
+               {:ok, body_refs} <- sync_body_refs(body_draft_id, base, attrs, user),
+               {:ok, cover_refs} <- sync_cover_refs(body_draft_id, base, attrs, user) do
             %{body: body_refs, cover: cover_refs}
           else
             {:error, reason} -> Repo.rollback(reason)
@@ -337,15 +346,15 @@ defmodule GroupherServer.CMS.Assets.Writer do
   end
 
   defp replace_refs(
-         %ArticleDocument{id: document_id},
+         body_draft_id,
          usages,
          inputs,
          base,
          user,
          normalize_usage_fun
        ) do
-    ArticleDocumentAssetRef
-    |> where([ref], ref.article_document_id == ^document_id and ref.usage in ^usages)
+    ArticleAssetRef
+    |> where([ref], ref.body_draft_id == ^body_draft_id and ref.usage in ^usages)
     |> Repo.delete_all()
 
     inputs
@@ -392,7 +401,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
           meta: get_attr(input, :meta) || %{}
         })
 
-      ORM.create(ArticleDocumentAssetRef, attrs)
+      ORM.create(ArticleAssetRef, attrs)
     end
   end
 
@@ -503,30 +512,53 @@ defmodule GroupherServer.CMS.Assets.Writer do
   end
 
   defp referenced?(%CommunityAsset{id: asset_id}) do
-    ArticleDocumentAssetRef
+    ArticleAssetRef
     |> where([ref], ref.asset_id == ^asset_id)
     |> Repo.exists?()
   end
 
-  defp find_article_document_for_update(thread, article_id) do
-    ArticleDocument
-    |> where([document], document.thread == ^thread and document.article_id == ^article_id)
+  defp lock_body_draft(body_draft_id) do
+    CMS.Model.ArticleBodyDraft
+    |> where([body], body.id == ^body_draft_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
-      nil -> {:error, AssetErrorCat.not_exist("article document not found")}
-      document -> {:ok, document}
+      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
+      _body -> :ok
     end
   end
 
-  defp base_ref_attrs(community_id, %ArticleDocument{id: document_id}, thread, article_id) do
-    %{
-      community_id: community_id,
-      article_document_id: document_id,
-      thread: thread,
-      article_id: article_id
-    }
+  defp base_ref_attrs(community_id, body_draft_id),
+    do: %{community_id: community_id, body_draft_id: body_draft_id}
+
+  defp draft_body_id(%{thread: :doc, id: article_id, branch_id: branch_id})
+       when is_integer(branch_id) do
+    case Repo.get_by(DocDraft, article_id: article_id, branch_id: branch_id) do
+      %DocDraft{body_draft_id: body_draft_id} -> {:ok, body_draft_id}
+      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
+    end
   end
+
+  defp draft_body_id(%Article{thread: :doc}),
+    do: {:error, CMS.Gate.ErrorCat.doc_branch_required()}
+
+  defp draft_body_id(%{id: article_id}) when is_binary(article_id) do
+    case Repo.get(ArticleDraft, article_id) do
+      %ArticleDraft{body_draft_id: body_draft_id} -> {:ok, body_draft_id}
+      nil -> {:error, AssetErrorCat.not_exist("article body draft not found")}
+    end
+  end
+
+  defp draft_body_ids(:doc, article_id),
+    do:
+      from(draft in DocDraft, where: draft.article_id == ^article_id, select: draft.body_draft_id)
+
+  defp draft_body_ids(_thread, article_id),
+    do:
+      from(draft in ArticleDraft,
+        where: draft.article_id == ^article_id,
+        select: draft.body_draft_id
+      )
 
   defp put_uploader(attrs, %User{id: user_id}), do: Map.put(attrs, :uploader_id, user_id)
   defp put_uploader(attrs, _), do: attrs

@@ -18,11 +18,20 @@ defmodule GroupherServer.CMS.Articles.States do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.ErrorCat
-  alias CMS.{Articles.Lifecycle, Artiment.Const, Communities, Comments.Writer, FrontDesk}
+  alias CMS.{Articles.Lifecycle, Artiment.Const, Comments.Writer}
+  alias CMS.Articles.Communities, as: ArticleCommunities
   alias CMS.Docs.Lifecycle, as: DocLifecycle
-  alias CMS.Model.{Community, Doc, DocBranch, PinnedArticle, Post}
-  alias Ecto.Multi
-  alias Helper.{Datetime, ORM, T}
+
+  alias CMS.Model.{
+    Article,
+    Community,
+    DocBranch,
+    DocBranchState,
+    PinnedArticle,
+    PostState
+  }
+
+  alias Helper.{Datetime, T}
 
   @active_period CMS.Artiment.Config.active_period_days()
   @archive_threshold CMS.Artiment.Config.archive_threshold()
@@ -38,45 +47,71 @@ defmodule GroupherServer.CMS.Articles.States do
       CMS.Articles.States.set_cat(post, :qa)
 
   """
-  @spec set_cat(Post.t(), term()) :: T.domain_res(term())
-  def set_cat(%Post{} = post, cat) do
-    with {:ok, updated} <- ORM.update(post, %{cat: cat}),
-         {:ok, _} <- Writer.batch_update_question_flag(post, cat == @article_cat.qa) do
-      updated |> done
+  @spec set_cat(map(), term()) :: T.domain_res(term())
+  def set_cat(%Article{id: article_id, thread: :post} = article, cat) do
+    with %PostState{} = state <- Repo.get(PostState, article_id),
+         {:ok, _state} <- state |> PostState.changeset(%{cat: cat}) |> Repo.update(),
+         {:ok, _} <- Writer.batch_update_question_flag(article, cat == @article_cat.qa) do
+      {:ok, article}
+    else
+      nil -> {:error, ErrorCat.article_not_found("article not found")}
+      {:error, reason} -> {:error, reason}
     end
   end
 
-  @spec set_status(Post.t(), term()) :: T.domain_res(term())
-  def set_status(%Post{} = post, status) do
-    with {:ok, updated} <- ORM.update(post, %{status: status}) do
-      updated |> done
+  @doc "Sets the immediate Kanban status of a stable Post projection."
+  def set_status(%Article{id: article_id, thread: :post} = article, status) do
+    with %PostState{} = state <- Repo.get(PostState, article_id),
+         {:ok, _state} <- state |> PostState.changeset(%{status: status}) |> Repo.update() do
+      {:ok, article}
+    else
+      nil -> {:error, ErrorCat.article_not_found("article not found")}
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @spec update_active_timestamp(atom(), term()) :: T.domain_res(term())
-  def update_active_timestamp(thread, article) do
-    case in_active_period?(thread, article) do
-      true -> ORM.update(article, %{active_at: DateTime.utc_now()})
-      _ -> {:ok, :pass}
+  def update_active_timestamp(:doc, %{id: article_id, branch_id: branch_id} = article)
+      when is_binary(article_id) and is_integer(branch_id) do
+    if in_active_period?(:doc, article) do
+      with %DocBranchState{} = state <-
+             Repo.get_by(DocBranchState, article_id: article_id, branch_id: branch_id),
+           {:ok, _state} <-
+             state
+             |> DocBranchState.changeset(%{active_at: DateTime.utc_now(:second)})
+             |> Repo.update() do
+        {:ok, article}
+      else
+        nil -> {:error, ErrorCat.article_not_found("doc branch state not found")}
+        {:error, reason} -> {:error, reason}
+      end
+    else
+      {:ok, :pass}
+    end
+  end
+
+  def update_active_timestamp(thread, %{id: article_id} = article) when is_binary(article_id) do
+    if in_active_period?(thread, article) do
+      update_stable_article(article, %{active_at: DateTime.utc_now(:second)})
+    else
+      {:ok, :pass}
     end
   end
 
   @spec update_edit_status(term()) :: T.domain_res(term())
-  def update_edit_status(%{meta: _} = content),
-    do: ORM.update_meta(content, %{is_edited: true})
-
-  def update_edit_status(content), do: {:ok, content}
+  def update_edit_status(%{id: article_id} = content) when is_binary(article_id),
+    do: update_stable_article(content, %{is_edited: true})
 
   @spec archive(atom()) :: T.domain_res(term())
   def archive(:doc) do
     now = Datetime.now(:second)
-    threshold = Datetime.shift(now, @archive_threshold[:default])
+    threshold = Datetime.shift(now, @archive_threshold[:doc] || @archive_threshold[:default])
 
     DocBranch
     |> where([branch], branch.status == :active)
     |> Repo.all()
     |> Enum.reduce_while({:ok, 0}, fn branch, {:ok, archived_count} ->
-      case DocLifecycle.archive_before(branch, Doc, threshold, now) do
+      case DocLifecycle.archive_before(branch, threshold) do
         {:ok, count} -> {:cont, {:ok, archived_count + count}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
@@ -89,66 +124,87 @@ defmodule GroupherServer.CMS.Articles.States do
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
       archive_threshold = Datetime.shift(now, threshold)
 
-      Lifecycle.ensure_thread_backfill(thread, now)
-
       Lifecycle.archive_before(thread, info.model, archive_threshold, now)
       |> done()
     end
   end
 
-  @spec sink(term()) :: T.domain_res(term())
-  def sink(article) do
-    %{inserted_at: inserted_at} = article
-
-    case ORM.update_meta(article, %{
-           is_sunk: true,
-           last_active_at: inserted_at
-         }) do
-      {:ok, article} ->
-        ORM.update(article, %{active_at: inserted_at})
-
-      {:error, reason} ->
-        {:error, reason}
-    end
+  @doc "Sinks an ordinary Article or an explicit Doc branch."
+  @spec sink(Article.t(), keyword()) :: T.domain_res(term())
+  def sink(%Article{thread: :doc} = article, opts) do
+    update_doc_branch_state(article, opts, %{
+      is_sunk: true,
+      last_active_at: article.inserted_at,
+      active_at: article.inserted_at
+    })
   end
 
-  @spec undo_sink(term()) :: T.domain_res(term())
-  def undo_sink(article) do
-    {:ok, thread} = FrontDesk.thread_of(article)
+  def sink(%Article{inserted_at: inserted_at} = article, _opts) do
+    update_stable_article(article, %{
+      is_sunk: true,
+      last_active_at: inserted_at,
+      active_at: inserted_at
+    })
+  end
 
-    with true <- in_active_period?(thread, article),
-         {:ok, article} <- ORM.update_meta(article, %{is_sunk: false}) do
-      ORM.update(article, %{active_at: article.meta.last_active_at})
+  @doc "Unsinks an ordinary Article or an explicit Doc branch."
+  @spec undo_sink(Article.t(), keyword()) :: T.domain_res(term())
+  def undo_sink(%Article{thread: :doc} = article, opts) do
+    with branch_id when is_integer(branch_id) <- Keyword.get(opts, :branch_id),
+         %DocBranchState{} = state <-
+           Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id),
+         true <- in_active_period?(:doc, state) do
+      state
+      |> DocBranchState.changeset(%{is_sunk: false, active_at: state.last_active_at})
+      |> Repo.update()
     else
       false -> undo_sink_old_article("can not undo sink old article")
+      _ -> {:error, ErrorCat.article_not_found("doc branch state not found")}
     end
   end
 
-  @spec lock_comments(term()) :: T.domain_res(term())
-  def lock_comments(article) do
-    ORM.update_meta(article, %{is_comment_locked: true})
+  def undo_sink(%Article{thread: thread} = article, _opts) do
+    with true <- in_active_period?(thread, article),
+         %Article{} = canonical <- Repo.get(Article, article.id) do
+      update_stable_article(article, %{
+        is_sunk: false,
+        active_at: canonical.last_active_at
+      })
+    else
+      false -> undo_sink_old_article("can not undo sink old article")
+      nil -> {:error, ErrorCat.article_not_found("article not found")}
+    end
   end
 
-  @spec undo_lock_comments(term()) :: T.domain_res(term())
-  def undo_lock_comments(article) do
-    ORM.update_meta(article, %{is_comment_locked: false})
-  end
+  @doc "Locks comments in the Article aggregate or one Doc branch state."
+  @spec lock_comments(Article.t(), keyword()) :: T.domain_res(term())
+  def lock_comments(%Article{thread: :doc} = article, opts),
+    do: update_doc_branch_state(article, opts, %{comments_locked: true})
+
+  def lock_comments(%Article{} = article, _opts),
+    do: update_stable_article(article, %{comments_locked: true})
+
+  @doc "Unlocks comments in the Article aggregate or one Doc branch state."
+  @spec undo_lock_comments(Article.t(), keyword()) :: T.domain_res(term())
+  def undo_lock_comments(%Article{thread: :doc} = article, opts),
+    do: update_doc_branch_state(article, opts, %{comments_locked: false})
+
+  def undo_lock_comments(%Article{} = article, _opts),
+    do: update_stable_article(article, %{comments_locked: false})
 
   @spec pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def pin(%Community{} = community, article) do
-    with {:ok, thread} <- FrontDesk.thread_of(article),
-         args <- pack_pin_args(community, thread, article.id),
-         {:ok, _} <- check_pinned_article_count(community, thread),
-         {:ok, _} <- ORM.create(PinnedArticle, args) do
+    with {:ok, stable} <- stable_article(article),
+         {:ok, _} <- check_pinned_article_count(community, stable.thread),
+         {:ok, _} <- ArticleCommunities.pin(stable, community) do
       {:ok, article}
     end
   end
 
   @spec undo_pin(Community.t(), T.article()) :: T.domain_res(T.article())
   def undo_pin(%Community{} = community, article) do
-    with {:ok, thread} <- FrontDesk.thread_of(article),
-         args <- pack_pin_args(community, thread, article.id),
-         {:ok, _} <- ORM.findby_delete(PinnedArticle, args) do
+    with {:ok, stable} <- stable_article(article),
+         {:ok, _} <- ArticleCommunities.unpin(stable, community) do
       {:ok, article}
     end
   end
@@ -156,155 +212,51 @@ defmodule GroupherServer.CMS.Articles.States do
   @spec mirror(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec mirror(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def mirror(%Community{} = target_community, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, :communities)
-
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      communities =
-        (article.communities ++ [target_community])
-        |> Enum.uniq_by(& &1.id)
-
-      Multi.new()
-      |> Multi.run(:mirror_target_community, fn _, _ ->
-        article
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:communities, communities)
-        |> Repo.update()
-      end)
-      |> Multi.run(:set_target_tags, fn _, %{mirror_target_community: article} ->
-        Communities.set_tags(target_community, thread, article, %{
-          community_tags: community_tag_ids
-        })
-      end)
-      |> Repo.transaction()
-      |> result()
+    with {:ok, stable} <- stable_article(article),
+         {:ok, relation} <- ArticleCommunities.mirror(stable, target_community),
+         {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
+      {:ok, article}
     end
   end
 
   @spec unmirror(Community.t(), T.article()) :: T.domain_res(T.article())
   def unmirror(%Community{} = target_community, article) do
-    article = Repo.preload(article, [:communities, :community, :community_tags])
-
-    case article.community.id == target_community.id do
-      true ->
-        mirror_article("can not unmirror original community")
-
-      false ->
-        community_tags = tags_without_community(article, target_community)
-
-        article
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(
-          :communities,
-          Enum.reject(article.communities, &(&1.slug == target_community.slug))
-        )
-        |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
-        |> Repo.update()
+    with {:ok, stable} <- stable_article(article),
+         {:ok, _} <- ArticleCommunities.unmirror(stable, target_community) do
+      {:ok, article}
     end
   end
 
   @spec move(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move(%Community{} = target_community, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :community, :community_tags])
-
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      original_community = article.community
-
-      Multi.new()
-      |> Multi.run(:move_article, fn _, _ ->
-        communities =
-          (article.communities -- [original_community])
-          |> Kernel.++([target_community])
-          |> Enum.uniq_by(& &1.id)
-
-        community_tags = tags_without_community(article, original_community)
-
-        article
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:community_id, target_community.id)
-        |> Ecto.Changeset.put_assoc(:communities, communities)
-        |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
-        |> Repo.update()
-      end)
-      |> Multi.run(:set_target_tags, fn _, %{move_article: article} ->
-        Communities.set_tags(target_community, thread, article, %{
-          community_tags: community_tag_ids
-        })
-      end)
-      |> Repo.transaction()
-      |> result()
+    with {:ok, stable} <- stable_article(article),
+         {:ok, moved} <- ArticleCommunities.move(stable, target_community),
+         relation <- Repo.get_by!(CMS.Model.ArticleCommunity, article_id: moved.id, role: :home),
+         {:ok, _relation} <- ArticleCommunities.replace_tags(relation, community_tag_ids) do
+      {:ok, Map.merge(article, %{community_id: moved.community_id, inner_id: moved.inner_id})}
     end
   end
 
   @spec mirror_to_home(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec mirror_to_home(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def mirror_to_home(%Community{} = home_community, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :community_tags])
-
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      communities =
-        (article.communities ++ [home_community])
-        |> Enum.uniq_by(& &1.id)
-
-      Multi.new()
-      |> Multi.run(:set_community, fn _, _ ->
-        article
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_assoc(:communities, communities)
-        |> Repo.update()
-      end)
-      |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
-        Communities.set_tags(home_community, thread, article, %{
-          community_tags: community_tag_ids
-        })
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
+    mirror(home_community, article, community_tag_ids)
   end
 
   @spec move_to_blackhole(Community.t(), T.article()) :: T.domain_res(T.article())
   @spec move_to_blackhole(Community.t(), T.article(), [T.id()]) :: T.domain_res(T.article())
   def move_to_blackhole(%Community{} = blackhole, article, community_tag_ids \\ []) do
-    article = Repo.preload(article, [:communities, :community, :community_tags])
-
-    with {:ok, thread} <- FrontDesk.thread_of(article) do
-      Multi.new()
-      |> Multi.run(:set_community, fn _, _ ->
-        article
-        |> Ecto.Changeset.change()
-        |> Ecto.Changeset.put_change(:community_id, blackhole.id)
-        |> Ecto.Changeset.put_assoc(:communities, [blackhole])
-        |> Ecto.Changeset.put_assoc(:community_tags, [])
-        |> Repo.update()
-      end)
-      |> Multi.run(:set_target_tags, fn _, %{set_community: article} ->
-        Communities.set_tags(blackhole, thread, article, %{
-          community_tags: community_tag_ids
-        })
-      end)
-      |> Repo.transaction()
-      |> result()
-    end
+    move(blackhole, article, community_tag_ids)
   end
 
   defp in_active_period?(thread, article) do
     active_period_days = @active_period[thread] || @active_period[:default]
 
-    inserted_at = article.inserted_at
+    inserted_at = Map.get(article, :inserted_at) || Map.get(article, :active_at)
     active_threshold = Datetime.now() |> Datetime.shift(days: -active_period_days)
 
     :gt == DateTime.compare(inserted_at, active_threshold)
-  end
-
-  defp pack_pin_args(%Community{} = community, thread, article_id) do
-    with {:ok, info} <- match(thread) do
-      Map.put(
-        %{community_id: community.id, thread: thread},
-        info.foreign_key,
-        article_id
-      )
-    end
   end
 
   defp check_pinned_article_count(%Community{} = community, thread) do
@@ -319,16 +271,28 @@ defmodule GroupherServer.CMS.Articles.States do
     end
   end
 
-  defp tags_without_community(article, %Community{id: community_id}) do
-    %{community_tags: community_tags} = article
-    community_tags -- Enum.filter(community_tags, &(&1.community_id === community_id))
+  defp stable_article(%Article{} = article), do: {:ok, article}
+
+  defp stable_article(%{id: article_id}) when is_binary(article_id) do
+    case Repo.get(Article, article_id) do
+      %Article{} = article -> {:ok, article}
+      nil -> {:error, ErrorCat.article_not_found("article not found")}
+    end
   end
 
-  defp result({:ok, %{set_target_tags: result}}), do: result |> done()
-  defp result({:ok, %{mirror_target_community: result}}), do: result |> done()
-  defp result({:error, _, result, _steps}), do: {:error, result}
+  defp update_stable_article(%Article{} = article, attrs),
+    do: article |> Article.changeset(attrs) |> Repo.update()
+
+  defp update_doc_branch_state(article, opts, attrs) do
+    with branch_id when is_integer(branch_id) <- Keyword.get(opts, :branch_id),
+         %DocBranchState{} = state <-
+           Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
+      state |> DocBranchState.changeset(attrs) |> Repo.update()
+    else
+      _ -> {:error, ErrorCat.article_not_found("doc branch state not found")}
+    end
+  end
 
   defp undo_sink_old_article(details), do: {:error, ErrorCat.undo_sink_old_article(details)}
-  defp mirror_article(details), do: {:error, ErrorCat.mirror_article(details)}
   defp too_much_pinned_article(details), do: {:error, ErrorCat.too_much_pinned_article(details)}
 end

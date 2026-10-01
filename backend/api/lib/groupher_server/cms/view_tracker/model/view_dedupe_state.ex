@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.ViewTracker.Model.ViewDedupeState do
 
   schema "article_view_dedupe_states" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
-    field(:article_id, :id)
+    field(:article_id, Ecto.UUID)
     field(:viewer_tracking_key, :binary)
     field(:last_counted_at, :utc_datetime)
     field(:expires_at, :utc_datetime)

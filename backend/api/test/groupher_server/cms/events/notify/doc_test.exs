@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, doc.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, doc.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -34,7 +34,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       assert notify.action == "UPVOTE"
       assert notify.article_id == doc.id
       assert notify.thread == :doc
-      assert notify.user_id == doc.author.user.id
+      assert notify.user_id == doc.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       Events.emit(:notify_undo_upvote, %{target: article, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, doc.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, doc.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       Events.emit(:notify_collect, %{article: doc, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, doc.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, doc.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       assert notify.action == "COLLECT"
       assert notify.article_id == doc.id
       assert notify.thread == :doc
-      assert notify.user_id == doc.author.user.id
+      assert notify.user_id == doc.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 
@@ -120,7 +120,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       Events.emit(:notify_undo_collect, %{article: doc, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, doc.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, doc.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 0
     end
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       Events.emit(:notify_comment, %{comment: comment, from_user: user2})
 
       {:ok, notifications} =
-        Messaging.paged_messages(:notification, doc.author.user, %{page: 1, size: 20})
+        Messaging.paged_messages(:notification, doc.author, %{page: 1, size: 20})
 
       assert notifications.total_count == 1
 
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.DocTest do
       assert notify.action == "COMMENT"
       assert notify.thread == :doc
       assert notify.article_id == doc.id
-      assert notify.user_id == doc.author.user.id
+      assert notify.user_id == doc.author.id
       assert user_exist_in?(user2, notify.from_users)
     end
 

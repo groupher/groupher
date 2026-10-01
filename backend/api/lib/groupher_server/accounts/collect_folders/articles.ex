@@ -22,8 +22,6 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.{ORM, T}
 
-  @threads CMS.Artiment.Config.threads()
-
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
@@ -47,14 +45,26 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   end
 
   defp do_paged(folder, filter) do
-    article_preload =
-      Enum.reduce(@threads, [], fn thread, acc ->
-        acc ++ Keyword.new([{thread, [author: :user]}])
+    paged = ORM.embeds_paginator(folder.collects, filter)
+
+    entries =
+      Enum.flat_map(paged.entries, fn collect ->
+        case Repo.get(CMS.Model.Article, collect.article_id) |> Repo.preload(:community) do
+          %CMS.Model.Article{} = article ->
+            case CMS.FrontDesk.article(%{
+                   community: article.community.slug,
+                   thread: article.thread,
+                   inner_id: article.inner_id
+                 }) do
+              {:ok, projection} -> [projection]
+              {:error, _reason} -> []
+            end
+
+          nil ->
+            []
+        end
       end)
 
-    Repo.preload(folder.collects, article_preload)
-    |> ORM.embeds_paginator(filter)
-    |> ORM.extract_articles()
-    |> done()
+    paged |> Map.put(:entries, entries) |> done()
   end
 end

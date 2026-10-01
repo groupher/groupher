@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.Jobs.Comments do
 
   alias GroupherServer.{Accounts, CMS, Jobs}
   alias Jobs.Codec
-  alias CMS.Model.{Comment, Community, Post}
+  alias CMS.Model.{Article, Comment, Community}
   alias Accounts.Model.User
 
   setup do
@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Jobs.Comments do
     comment = %Comment{id: 11}
     actor = %User{id: 12}
     community = %Community{id: 13}
-    article = %Post{id: 14}
+    article = %Article{id: Ecto.UUID.generate(), thread: :post}
 
     calls = [
       {:sync_mentions, fn -> Jobs.sync_mentions(comment) end},

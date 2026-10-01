@@ -30,7 +30,18 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:inner_id, :id)
       field(:version, non_null(:integer))
       field(:title, :string)
-      field(:document, :article_document, resolve: dataloader(CMS, :document))
+
+      field(:document, :article_document,
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :document
+          )
+        end
+      )
+
       field(:digest, :string)
       field(:article_stats, :article_stats)
       field(:is_pinned, :boolean)
@@ -41,20 +52,84 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         resolve: &GroupherServerWeb.Resolvers.CMS.cover_edit_info/3
       )
 
-      field(:community_tags, list_of(:community_tag), resolve: dataloader(CMS, :community_tags))
-      field(:author, :user, resolve: dataloader(CMS, :author))
-      field(:community, :community, resolve: dataloader(CMS, :community))
-      field(:communities, list_of(:community), resolve: dataloader(CMS, :communities))
+      field(:community_tags, list_of(:community_tag),
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :community_tags
+          )
+        end
+      )
+
+      field(:author, :user,
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :author
+          )
+        end
+      )
+
+      field(:community, :community,
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :community
+          )
+        end
+      )
+
+      field(:communities, list_of(:community),
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :communities
+          )
+        end
+      )
 
       field(:meta, :article_meta)
       field(:command_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.command_id/3)
-      field(:lifecycle, :article_lifecycle, resolve: dataloader(CMS, :lifecycle))
+
+      field(:lifecycle, :article_lifecycle,
+        resolve: fn source, args, resolution ->
+          GroupherServerWeb.Schema.Helper.Fields.article_relation(
+            source,
+            args,
+            resolution,
+            :lifecycle
+          )
+        end
+      )
 
       field(:copy_right, :string)
       field(:link_addr, :string)
 
       field(:pending, :integer)
     end
+  end
+
+  @doc "Returns an already assembled Article DTO relation or delegates legacy structs to Dataloader."
+  @spec article_relation(map(), map(), Absinthe.Resolution.t(), atom()) :: term()
+  def article_relation(source, args, resolution, relation) do
+    case Map.fetch(source, relation) do
+      {:ok, %Ecto.Association.NotLoaded{}} -> load_relation(source, args, resolution, relation)
+      {:ok, value} -> {:ok, value}
+      :error -> load_relation(source, args, resolution, relation)
+    end
+  end
+
+  defp load_relation(source, args, resolution, relation) do
+    resolver = Absinthe.Resolution.Helpers.dataloader(CMS, relation)
+    resolver.(source, args, resolution)
   end
 
   @doc """

@@ -17,31 +17,21 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   use Accessible
 
   import Ecto.Changeset
-  import GroupherServer.CMS.Helper.Macros
-
-  import GroupherServer.CMS.Helper.Constraints,
-    only: [articles_exactly_one_ref_constraint: 2, articles_foreign_key_constraint: 1]
-
   alias __MODULE__
-  alias GroupherServer.CMS
-  alias CMS.Model.Comment
+  alias GroupherServer.CMS.Model.{Article, Comment, DocBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML
-  @threads CMS.Artiment.Config.threads()
-
-  @required_fields ~w(comment_id)a
-  # @optional_fields ~w(post_id job_id repo_id)a
-
-  @article_fields @threads |> Enum.map(&:"#{&1}_id")
-
-  schema_base_type(comment_id: integer() | nil)
+  @required_fields ~w(comment_id article_id)a
+  @optional_fields ~w(branch_id)a
+  @type t :: %__MODULE__{}
 
   schema "pinned_comments" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
+    belongs_to(:article, Article, type: Ecto.UUID)
+    belongs_to(:branch, DocBranch)
 
-    article_belongs_to_fields()
     timestamps(type: :utc_datetime)
   end
 
@@ -49,27 +39,31 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
   @spec changeset(t(), map()) :: Ecto.Changeset.t(t())
   def changeset(%PinnedComment{} = article_pined_comment, attrs) do
     article_pined_comment
-    |> cast(attrs, @required_fields ++ @article_fields)
+    |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> articles_foreign_key_constraint
-    |> articles_exactly_one_ref_constraint(:pinned_comments)
-    |> unique_article_comment_constraint()
+    |> foreign_key_constraint(:comment_id)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
+    |> stable_unique_constraints()
   end
 
   # @doc false
   def update_changeset(%PinnedComment{} = article_pined_comment, attrs) do
     article_pined_comment
-    |> cast(attrs, @required_fields ++ @article_fields)
-    |> articles_foreign_key_constraint
-    |> articles_exactly_one_ref_constraint(:pinned_comments)
-    |> unique_article_comment_constraint()
+    |> cast(attrs, @required_fields ++ @optional_fields)
+    |> foreign_key_constraint(:comment_id)
+    |> foreign_key_constraint(:article_id)
+    |> foreign_key_constraint(:branch_id)
+    |> stable_unique_constraints()
   end
 
-  defp unique_article_comment_constraint(%Ecto.Changeset{} = changeset) do
-    Enum.reduce(@article_fields, changeset, fn article_field, acc ->
-      unique_constraint(acc, :comment_id,
-        name: :"pinned_comments_#{article_field}_comment_id_index"
-      )
-    end)
+  defp stable_unique_constraints(changeset) do
+    changeset
+    |> unique_constraint([:article_id, :comment_id],
+      name: :pinned_comments_stable_article_target_index
+    )
+    |> unique_constraint([:article_id, :branch_id, :comment_id],
+      name: :pinned_comments_stable_doc_target_index
+    )
   end
 end

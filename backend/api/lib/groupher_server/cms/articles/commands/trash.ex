@@ -1,240 +1,158 @@
 defmodule GroupherServer.CMS.Articles.Commands.Trash do
   @moduledoc """
-  Runs idempotent Article trash, restore, and permanent-delete commands.
+  Runs retry-safe stable Article Trash, restore, and permanent-delete commands.
 
-  Gate admission and Article lifecycle writes remain in `Articles.Trash`.
-  Denied Activity facts are persisted outside the receipt transaction here.
+  Command receipts retain only an opaque Trash id or stable Article UUID; they
+  never recover through a retired physical Draft/Public row.
 
-  Business position:
-
-      CMS.Articles facade
-        -> Commands.Trash
-        -> CMS.Command
-        -> Articles.Trash / Articles.Draft
-        -> Activity for denied facts
+      caller -> Command receipt -> Gate + Trash aggregate -> canonical result
   """
-
-  require GroupherServer.CMS.Articles.ErrorCat
 
   alias GroupherServer.{Accounts, Activity, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Articles.{Draft, Trash, ErrorCat}
+  alias CMS.Articles.Trash
   alias CMS.Command
-  alias CMS.Model.{Community, TrashedArticle, TrashedDocArticle}
-  alias Helper.T
+  alias CMS.Model.{Article, TrashedArticle, TrashedDocArticle}
 
-  @doc "Moves one logical Article into Trash."
-  @spec trash(T.article(), User.t() | nil, keyword()) :: T.domain_res(TrashedArticle.t())
-  def trash(article, actor, opts)
-
+  @doc "Moves one stable Article into Trash under an idempotent command id."
+  @spec trash(map(), User.t() | nil, keyword()) :: {:ok, TrashedArticle.t()} | {:error, term()}
   def trash(article, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      opts = drop_command_id(opts)
+    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+      result =
+        Command.update_user(actor, command_id,
+          command: :article_trash,
+          resource: article,
+          input: Keyword.delete(opts, :command_id),
+          recovery: fn receipt -> Trash.get(receipt.result_key) end
+        )
+        |> Command.run(fn %{resource: canonical, input: input} ->
+          with {:ok, item} <- Trash.trash(canonical, actor, input) do
+            {:ok, item, %{result_key: item.hash_id}}
+          end
+        end)
 
-      Command.update_user(actor, command_id,
-        command: :article_trash,
-        resource: article,
-        input: opts,
-        recovery: fn receipt -> Trash.get(receipt.result_key) end
-      )
-      |> Command.run(fn %{resource: article, input: opts} ->
-        with {:ok, result} <- Trash.trash(article, actor, opts) do
-          {:ok, result, %{result_key: result.hash_id}}
-        end
-      end)
-      |> persist_denied_trash(article, actor, command_id)
+      audit_trash_denial(result, article, actor, command_id, opts)
     end
   end
 
   def trash(article, actor, opts), do: Trash.trash(article, actor, opts)
 
-  @doc "Restores one logical Article from Trash."
+  @doc "Restores one Trash membership under an idempotent command id."
   @spec restore(
           Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(),
           User.t() | nil,
           keyword()
         ) ::
-          T.domain_res(T.article())
-  def restore(item_or_ref, actor, opts)
-
+          {:ok, term()} | {:error, term()}
   def restore(%TrashedDocArticle{} = item, actor, opts), do: Trash.restore(item, actor, opts)
 
-  def restore(item_or_ref, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      clean_opts = drop_command_id(opts)
-
-      case resolve_trash_item(item_or_ref) do
+  def restore(item_or_id, %User{} = actor, opts) do
+    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+      case resolve_item(item_or_id) do
         {:ok, item} ->
+          restore_command(item, actor, command_id, opts)
+
+        {:error, _reason} ->
           Command.create_user(actor, command_id,
             command: :article_restore,
             resource: :article_trash,
-            owner: item.community_id,
-            input: %{item_ref: item.hash_id, opts: clean_opts},
-            recovery: fn receipt ->
-              replay_restored_article(receipt, item.community_id, item.thread, clean_opts)
-            end
+            owner: Keyword.get(opts, :community_id),
+            input: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)},
+            recovery: &recover_article/1
           )
-          |> Command.run(fn %{input: %{opts: opts}} ->
-            with {:ok, result} <- Trash.restore(item, actor, opts) do
-              {:ok, result, %{result_key: result.article_hash_id}}
-            end
+          |> Command.run(fn _command ->
+            {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
           end)
-
-        {:error, _reason} ->
-          replay_or_resolve_missing_trash(
-            item_or_ref,
-            actor,
-            command_id,
-            clean_opts,
-            :article_restore,
-            fn receipt ->
-              with community_id when is_integer(community_id) <- option(clean_opts, :community_id),
-                   thread when is_atom(thread) <- option(clean_opts, :thread),
-                   article_hash_id when is_binary(article_hash_id) <- receipt.result_key,
-                   {:ok, community} <- fetch_community(community_id) do
-                Draft.read_editor_head(community, thread, article_hash_id, clean_opts)
-              else
-                _ -> {:error, ErrorCat.not_exist("Article")}
-              end
-            end
-          )
       end
     end
   end
 
-  def restore(item_or_ref, actor, opts), do: Trash.restore(item_or_ref, actor, opts)
+  def restore(item_or_id, actor, opts), do: Trash.restore(item_or_id, actor, opts)
 
-  @doc "Permanently removes one standalone trashed Article aggregate."
+  @doc "Permanently deletes one trashed stable aggregate under an idempotent command id."
   @spec permanently_delete(
           Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(),
           User.t() | nil,
           keyword()
-        ) ::
-          T.domain_res(map())
-  def permanently_delete(item_or_ref, actor, opts)
-
+        ) :: {:ok, term()} | {:error, term()}
   def permanently_delete(%TrashedDocArticle{} = item, actor, opts),
     do: Trash.permanently_delete(item, actor, opts)
 
-  def permanently_delete(item_or_ref, actor, opts) do
-    if match?(%User{}, actor) do
-      with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-        clean_opts = drop_command_id(opts)
+  def permanently_delete(item_or_id, %User{} = actor, opts) do
+    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+      case resolve_item(item_or_id) do
+        {:ok, item} ->
+          permanently_delete_command(item, actor, command_id, opts)
 
-        case resolve_trash_item(item_or_ref) do
-          {:ok, item} ->
-            Command.create_user(actor, command_id,
-              command: :article_permanently_delete,
-              resource: :article_trash,
-              owner: item.community_id,
-              input: %{item_ref: item.hash_id, opts: clean_opts},
-              recovery: fn _receipt -> {:ok, %{done: true}} end
-            )
-            |> Command.run(fn %{input: %{opts: opts}} ->
-              Trash.permanently_delete(item, actor, opts)
-            end)
-
-          {:error, _reason} ->
-            replay_or_resolve_missing_trash(
-              item_or_ref,
-              actor,
-              command_id,
-              clean_opts,
-              :article_permanently_delete,
-              fn _receipt -> {:ok, %{done: true}} end
-            )
-        end
+        {:error, _reason} ->
+          Command.create_user(actor, command_id,
+            command: :article_permanently_delete,
+            resource: :article_trash,
+            owner: Keyword.get(opts, :community_id),
+            input: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)},
+            recovery: fn _receipt -> {:ok, %{done: true}} end
+          )
+          |> Command.run(fn _command ->
+            {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
+          end)
       end
-    else
-      Trash.permanently_delete(item_or_ref, actor, opts)
     end
   end
 
-  defp replay_or_resolve_missing_trash(
-         item_or_ref,
-         actor,
-         command_id,
-         opts,
-         command,
-         replay
-       ) do
+  def permanently_delete(item_or_id, actor, opts),
+    do: Trash.permanently_delete(item_or_id, actor, opts)
+
+  defp resolve_item(%TrashedArticle{} = item), do: {:ok, item}
+  defp resolve_item(item_id), do: Trash.get(item_id)
+
+  defp restore_command(item, actor, command_id, opts) do
     Command.create_user(actor, command_id,
-      command: command,
+      command: :article_restore,
       resource: :article_trash,
-      owner: option(opts, :community_id, "unknown"),
-      input: %{item_ref: item_or_ref, opts: opts},
-      recovery: replay
+      owner: item.community_id,
+      input: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)},
+      recovery: &recover_article/1
     )
-    |> Command.run(fn %{input: %{item_ref: item_or_ref, opts: opts}} ->
-      with {:ok, item} <- resolve_trash_item(item_or_ref),
-           :ok <- verify_trash_scope(item, opts),
-           {:ok, result} <-
-             if(command == :article_restore,
-               do: Trash.restore(item, actor, opts),
-               else: Trash.permanently_delete(item, actor, opts)
-             ) do
-        target_key = command_target(item.community_id, item.thread, item.hash_id)
-
-        result_key =
-          if command == :article_restore, do: result.article_hash_id, else: target_key
-
-        {:ok, result, %{result_key: result_key}}
+    |> Command.run(fn %{input: %{opts: input}} ->
+      with {:ok, article} <- Trash.restore(item, actor, input) do
+        {:ok, article, %{result_key: article.id}}
       end
     end)
   end
 
-  defp replay_restored_article(receipt, community_id, thread, opts) do
-    with {:ok, community} <- fetch_community(community_id),
-         article_hash_id when is_binary(article_hash_id) <- receipt.result_key do
-      Draft.read_editor_head(community, thread, article_hash_id, opts)
-    else
-      _ -> {:error, ErrorCat.not_exist("Article")}
-    end
+  defp permanently_delete_command(item, actor, command_id, opts) do
+    Command.create_user(actor, command_id,
+      command: :article_permanently_delete,
+      resource: :article_trash,
+      owner: item.community_id,
+      input: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)},
+      recovery: fn _receipt -> {:ok, %{done: true}} end
+    )
+    |> Command.run(fn %{input: %{opts: input}} ->
+      Trash.permanently_delete(item, actor, input)
+    end)
   end
 
-  defp persist_denied_trash(
-         {:error, %CMS.Gate.Decision{} = decision},
-         article,
-         %User{} = actor,
-         command_id
-       ) do
-    reason = CMS.Gate.Decision.primary_reason(decision)
-
+  defp audit_trash_denial({:error, %{reason: reason}} = result, article, actor, command_id, opts) do
     case Activity.log(article, :trashed,
            actor: actor,
+           source: Keyword.get(opts, :source, :api),
            outcome: :denied,
            denial_code: reason,
            operation_ref: command_id
          ) do
-      {:ok, _event} -> {:error, decision}
-      {:error, ErrorCat.error_pattern(reason: :duplicate_event)} -> {:error, decision}
-      {:error, _reason} = error -> error
+      {:ok, _event} -> result
+      {:error, %{reason: :duplicate_event}} -> result
+      {:error, _audit_reason} -> result
     end
   end
 
-  defp persist_denied_trash(result, _article, _actor, _command_id), do: result
+  defp audit_trash_denial(result, _article, _actor, _command_id, _opts), do: result
 
-  defp resolve_trash_item(%TrashedArticle{} = item), do: {:ok, item}
-  defp resolve_trash_item(ref), do: Trash.get(ref)
-
-  defp fetch_community(community_id), do: {:ok, Repo.get!(Community, community_id)}
-
-  defp verify_trash_scope(item, opts) do
-    if option(opts, :community_id) in [nil, item.community_id] and
-         option(opts, :thread) in [nil, item.thread],
-       do: :ok,
-       else: {:error, ErrorCat.not_exist("TrashedArticle")}
+  defp recover_article(%{result_key: article_id}) do
+    case Repo.get(Article, article_id) do
+      %Article{} = article -> {:ok, article}
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+    end
   end
-
-  defp option(opts, key, default \\ nil)
-  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
-  defp option(opts, key, default) when is_map(opts), do: Map.get(opts, key, default)
-  defp option(_opts, _key, default), do: default
-
-  defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
-  defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
-  defp drop_command_id(opts), do: opts
-
-  defp command_target(%{community_id: id}, thread, key), do: command_target(id, thread, key)
-  defp command_target(community, thread, key), do: "#{community}:#{thread}:#{key}"
 end

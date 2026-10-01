@@ -1,10 +1,6 @@
 defmodule GroupherServer.CMS.Model.ArticleLifecycle do
   @moduledoc """
-  Materialized lifecycle authority for one logical Article.
-
-  `article_hash_id` identifies the logical Article across its draft/public
-  version rows; `thread` selects the concrete Article table. Versioning owns
-  physical rows and stages, while this schema owns the logical resource state.
+  Materialized lifecycle authority for one stable Article aggregate.
 
   Business position:
 
@@ -19,13 +15,13 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
 
   alias GroupherServer.CMS
 
-  alias CMS.Model.Community
+  alias CMS.Model.{Article, Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @article_threads CMS.Artiment.Config.threads() -- [:doc]
   @states [:draft_only, :published, :archived, :deleted, :destroy]
-  @required_fields ~w(community_id thread article_hash_id state version changed_at)a
+  @required_fields ~w(article_id community_id thread state version changed_at)a
   @optional_fields ~w(archived_at deleted_at destroyed_at)a
 
   @type state :: :draft_only | :published | :archived | :deleted | :destroy
@@ -33,8 +29,8 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
 
   schema "article_lifecycles" do
     belongs_to(:community, Community)
+    belongs_to(:article, Article, type: Ecto.UUID)
     field(:thread, Ecto.Enum, values: @article_threads)
-    field(:article_hash_id, Ecto.UUID)
     field(:state, Ecto.Enum, values: @states, default: :draft_only)
     field(:version, :integer, default: 1)
     field(:changed_at, :utc_datetime)
@@ -44,6 +40,7 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Builds the Lifecycle changeset keyed by a stable Article."
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = lifecycle, attrs) do
     lifecycle
@@ -51,7 +48,8 @@ defmodule GroupherServer.CMS.Model.ArticleLifecycle do
     |> validate_required(@required_fields)
     |> validate_inclusion(:state, @states)
     |> validate_number(:version, greater_than: 0)
+    |> foreign_key_constraint(:article_id)
     |> foreign_key_constraint(:community_id)
-    |> unique_constraint([:community_id, :thread, :article_hash_id])
+    |> unique_constraint(:article_id, name: :article_lifecycles_article_id_index)
   end
 end

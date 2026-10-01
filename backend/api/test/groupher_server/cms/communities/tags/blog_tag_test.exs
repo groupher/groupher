@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.CommunityTag
+  alias CMS.Model.{Article, CommunityTag}
 
   setup do
     {community, blog, blog_attrs, user} = mock_article(:blog)
@@ -76,19 +76,19 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag.id)
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag2.id)
 
-      {:ok, blog} = ORM.find(Blog, blog.id, preload: :community_tags)
+      {:ok, blog} = read_article(community, :blog, blog.inner_id)
       assert exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag.id)
 
-      {:ok, blog} = ORM.find(Blog, blog.id, preload: :community_tags)
+      {:ok, blog} = read_article(community, :blog, blog.inner_id)
       assert not exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
 
       {:ok, _} = CMS.Communities.delete_tag(article_tag2.id)
 
-      {:ok, blog} = ORM.find(Blog, blog.id, preload: :community_tags)
+      {:ok, blog} = read_article(community, :blog, blog.inner_id)
       assert not exist_in?(article_tag, blog.community_tags)
       assert not exist_in?(article_tag2, blog.community_tags)
     end
@@ -104,7 +104,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       blog_with_tags = Map.merge(blog_attrs, %{community_tags: [article_tag.id, article_tag2.id]})
 
       {:ok, created} = CMS.Articles.create(community, :blog, blog_with_tags, user)
-      {:ok, blog} = ORM.find(Blog, created.id, preload: :community_tags)
+      {:ok, blog} = read_article(community, :blog, created.inner_id)
 
       assert exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
@@ -180,10 +180,8 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
       {:ok, old_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
 
-      from(b in Blog, where: b.id == ^old_blog.id)
+      from(article in Article, where: article.id == ^old_blog.id)
       |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
-
-      {:ok, old_blog} = ORM.find(Blog, old_blog.id, preload: :community_tags)
 
       {:ok, _blog} = CMS.Communities.set_tag(blog, article_tag.id)
       {:ok, _old_blog} = CMS.Communities.set_tag(old_blog, article_tag.id)

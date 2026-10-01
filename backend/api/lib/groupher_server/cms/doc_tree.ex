@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree do
               |
               | publish article / publish tree
               v
-      doc_tree_nodes(stage=public) --->  docs  --->  article_documents
+      doc_tree_nodes(stage=public) ---> DocPublic ---> ArticleBodySnapshot
               |
               v
       doc_cover_cards/items/pinned_docs
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.DocTree do
 
   alias Accounts.Model.User
   alias CMS.DocTree.{Commands, Publish, Reader, Trash, Writer}
-  alias CMS.Model.{Community, Doc}
+  alias CMS.Model.{Article, Community}
   alias Helper.T
 
   @doc """
@@ -95,7 +95,7 @@ defmodule GroupherServer.CMS.DocTree do
   Moves one public docs page back to draft visibility.
   """
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
-          T.domain_res(Doc.t())
+          T.domain_res(CMS.Model.DocDraft.t())
   def move_doc_to_draft(%Community{} = community, id, %User{} = user, opts \\ []),
     do: Commands.Publish.move_doc_to_draft(community, id, user, opts)
 
@@ -152,9 +152,14 @@ defmodule GroupherServer.CMS.DocTree do
   @doc """
   Updates the draft content associated with a docs page.
   """
-  @spec update_draft(Community.t(), Doc.t(), map(), User.t()) :: T.domain_res(map())
-  def update_draft(%Community{} = community, %Doc{} = doc, args, %User{} = user),
-    do: Commands.Node.update_draft(community, doc, args, user)
+  @spec update_draft(Community.t(), Article.t(), map(), User.t()) :: T.domain_res(map())
+  def update_draft(
+        %Community{} = community,
+        %Article{thread: :doc} = article,
+        args,
+        %User{} = user
+      ),
+      do: Commands.Node.update_draft(community, article, args, user)
 
   @spec update_draft(Community.t(), T.id(), map(), User.t()) :: T.domain_res(map())
   def update_draft(%Community{} = community, id, args, %User{} = user),

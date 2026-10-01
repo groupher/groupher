@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.ArticleStats do
   @schema_prefix DBPrefix.cms()
   schema "article_stats" do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
-    field(:article_id, :id)
+    field(:article_id, Ecto.UUID)
     field(:views, :integer, default: 0)
     field(:views_revision, :integer, default: 0)
     field(:upvotes_count, :integer, default: 0)

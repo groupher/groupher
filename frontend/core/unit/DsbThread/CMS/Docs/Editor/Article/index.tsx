@@ -15,6 +15,7 @@ import Cover from './Cover'
 import useCover from './Cover/useCover'
 import Footer from './Footer'
 import useLogic from './hooks/useLogic'
+import LocalDraftHistoryNotice from './LocalDraftHistoryNotice'
 import useSalon from './salon'
 import type { TDocDraftInitialData } from './spec'
 import Title from './Title'
@@ -38,6 +39,7 @@ const Article: FC<TProps> = ({ initialData, sideTree }) => {
     editorDocId,
     error,
     loading,
+    localDraftHistory,
     setBodyValue,
     setSubtitle,
     setTitle,
@@ -101,6 +103,7 @@ const Article: FC<TProps> = ({ initialData, sideTree }) => {
           />
         ) : null}
         {error ? <div className={s.error}>{error}</div> : null}
+        <LocalDraftHistoryNotice controller={localDraftHistory} />
         <Footer />
       </article>
       <ImportDrawer

@@ -1,1082 +1,347 @@
 defmodule GroupherServer.CMS.Articles.Trash do
   @moduledoc """
-  Current Trash lifecycle for every logical Article thread.
+  Owns stable ordinary-Article Trash membership and aggregate destruction.
 
-  Product tables retain draft/public rows while one `TrashedArticle` row makes
-  the logical Article inactive. Docs Tree placement remains a Docs concern and
-  attaches its structural snapshots to the same `TrashAction`.
+      stable Article -> Lifecycle :deleted -> TrashedArticle
+                     -> restore or permanent aggregate deletion
 
-  Business position:
-
-      Client / importer
-        -> GraphQL or service boundary
-        -> CMS.Articles
-        -> Trash
-        -> Repo / domain event
+  Doc membership remains branch-scoped under `CMS.Docs.Trash`. Trash keeps the
+  Draft/Public/Revision aggregate intact until permanent deletion.
   """
 
-  require GroupherServer.CMS.Const
-
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, Activity, CMS, PublicCache, Repo}
-  alias CMS.{Articles, ErrorCat}
-  alias CMS.Articles.{Document, Lifecycle, MutationLock}
+  alias GroupherServer.{Activity, CMS, Repo}
+  alias CMS.Articles.Lifecycle
   alias CMS.Communities.TagStats
-  alias CMS.Docs.Branch
   alias CMS.Docs.Trash, as: DocTrash
-  alias CMS.SearchArtiments.Indexer
-  alias CMS.Gate.Decision
-  alias PublicCache.Const, as: PublicCacheConst
 
   alias CMS.Model.{
-    ArticleLifecycle,
+    Article,
+    ArticleCommunity,
+    ArticleCommunityTag,
+    ArticlePublic,
+    ArticleStats,
     ArtimentMention,
     Community,
-    Doc,
-    DocBranch,
+    CommunityTag,
     TrashAction,
     TrashedArticle,
     TrashedDocArticle,
     TrashedDocTreeNode
   }
 
-  alias Accounts.Model.User
-  alias Accounts.Publish
-  alias Helper.{ORM, T}
+  alias Helper.ORM
 
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
   @default_retention_days 30
 
-  @doc """
-  Restricts a queryable to articles without an active trash membership.
-
-  The `:doc` clause filters against `TrashedDocArticle` using the branch
-  coordinate; all other threads filter against `TrashedArticle`.
-
-  ## Examples
-
-      Post
-      |> CMS.Articles.Trash.not_trashed_scope(:post)
-
-  """
-  @spec not_trashed_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
-  def not_trashed_scope(queryable, :doc) do
+  @doc "Excludes stable Articles with an active ordinary Trash membership."
+  @spec not_trashed_scope(Ecto.Queryable.t(), atom()) :: Ecto.Query.t()
+  def not_trashed_scope(queryable, _thread) do
     from(article in queryable,
-      as: :active_doc,
+      as: :article,
       where:
         not exists(
-          from(trashed in TrashedDocArticle,
-            where:
-              trashed.community_id == parent_as(:active_doc).community_id and
-                trashed.branch_id == parent_as(:active_doc).branch_id and
-                trashed.article_hash_id == parent_as(:active_doc).article_hash_id,
+          from(item in TrashedArticle,
+            where: item.article_id == parent_as(:article).id,
             select: 1
           )
         )
     )
   end
 
-  def not_trashed_scope(queryable, thread) do
-    from(article in queryable,
-      as: :active_article,
-      where:
-        not exists(
-          from(trashed in TrashedArticle,
-            where:
-              trashed.community_id == parent_as(:active_article).community_id and
-                trashed.thread == ^thread and
-                trashed.article_hash_id == parent_as(:active_article).article_hash_id,
-            select: 1
-          )
-        )
-    )
-  end
-
-  @spec trashed?(Community.t(), T.thread(), Ecto.UUID.t()) :: boolean()
-  def trashed?(%Community{} = community, thread, article_hash_id) do
-    case thread do
-      :doc ->
-        TrashedDocArticle
-        |> where([item], item.community_id == ^community.id)
-        |> where([item], item.article_hash_id == ^article_hash_id)
-        |> Repo.exists?()
-
-      _ ->
-        TrashedArticle
-        |> where([item], item.community_id == ^community.id)
-        |> where([item], item.thread == ^thread)
-        |> where([item], item.article_hash_id == ^article_hash_id)
-        |> Repo.exists?()
-    end
-  end
-
+  @doc "Returns whether one stable Article currently belongs to Trash."
   @spec trashed_article?(map()) :: boolean()
-  def trashed_article?(article) do
-    case CMS.FrontDesk.thread_of(article) do
-      {:ok, thread} ->
-        case thread do
-          :doc ->
-            TrashedDocArticle
-            |> where([item], item.community_id == ^article.community_id)
-            |> where([item], item.branch_id == ^article.branch_id)
-            |> where([item], item.article_hash_id == ^article.article_hash_id)
-            |> Repo.exists?()
+  def trashed_article?(%{article_id: article_id}) when is_binary(article_id),
+    do: Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
 
-          _ ->
-            TrashedArticle
-            |> where([item], item.community_id == ^article.community_id)
-            |> where([item], item.thread == ^thread)
-            |> where([item], item.article_hash_id == ^article.article_hash_id)
-            |> Repo.exists?()
-        end
+  def trashed_article?(%Article{id: article_id}),
+    do: Repo.exists?(from(item in TrashedArticle, where: item.article_id == ^article_id))
 
-      _ ->
-        false
-    end
-  end
+  def trashed_article?(_article), do: false
 
-  @spec trash(map(), User.t() | nil, keyword()) :: T.domain_res(TrashedArticle.t())
-  def trash(_article, _actor, _opts \\ [])
-
-  def trash(%Doc{}, _actor, _opts),
-    do: {:error, ErrorCat.custom("Doc deletion must go through the Docs Tree lifecycle")}
-
-  def trash(article, actor, opts) do
-    result =
-      with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
-           %Community{} = community <- Repo.get(Community, article.community_id) do
-        case find_membership(community, thread, article.article_hash_id) do
-          %TrashedArticle{} = item ->
-            {:ok, item}
-
-          nil ->
-            case CMS.Gate.access_check(actor, :delete, article) do
-              {:ok, canonical} ->
-                MutationLock.with_article(
-                  community,
-                  article,
-                  fn -> do_trash(community, thread, canonical.article_hash_id, actor, opts) end
-                )
-
-              {:error, %Decision{} = decision} ->
-                {:error, decision}
-
-              error ->
-                error
-            end
-        end
-      else
-        nil -> {:error, Articles.ErrorCat.not_exist("Article Community")}
-        error -> error
-      end
-
-    sync_search(result, :delete)
-  end
-
-  @doc """
-  Creates one Article membership under an already-created action.
-
-  This is intentionally domain-specific for Docs subtree orchestration and
-  assumes the caller already owns the Article lifecycle lock and transaction.
-  """
-  @spec attach(
-          TrashAction.t(),
-          Community.t(),
-          T.thread(),
-          Ecto.UUID.t(),
-          User.t() | nil,
-          keyword()
-        ) :: T.domain_res(TrashedArticle.t())
-  def attach(_action, _community, _thread, _article_hash_id, _actor, _opts \\ [])
-
-  def attach(
-        %TrashAction{} = action,
-        %Community{} = community,
-        :doc,
-        article_hash_id,
-        actor,
-        opts
-      ) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      DocTrash.attach(action, community, branch, article_hash_id, actor, opts)
-    end
-  end
-
-  def attach(
-        %TrashAction{} = action,
-        %Community{} = community,
-        thread,
-        article_hash_id,
-        actor,
-        opts
-      ) do
-    case find_membership(community, thread, article_hash_id) do
-      %TrashedArticle{} = item ->
-        {:ok, item}
-
-      nil ->
-        with {:ok, article} <- representative_article(community, thread, article_hash_id) do
-          attach_article(action, community, thread, article_hash_id, article, actor, opts)
-        end
-    end
-  end
-
-  @doc "Attaches many logical Articles after bulk-loading memberships and representative rows."
-  @spec attach_many(
-          TrashAction.t(),
-          Community.t(),
-          T.thread(),
-          [Ecto.UUID.t()],
-          User.t() | nil,
-          keyword()
-        ) :: T.domain_res([TrashedArticle.t()])
-  def attach_many(
-        %TrashAction{} = action,
-        %Community{} = community,
-        thread,
-        article_hash_ids,
-        actor,
-        opts \\ []
-      ) do
-    article_hash_ids = Enum.uniq(article_hash_ids)
-
-    existing_by_hash_id =
-      TrashedArticle
-      |> where([item], item.community_id == ^community.id)
-      |> where([item], item.thread == ^thread)
-      |> where([item], item.article_hash_id in ^article_hash_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.article_hash_id, &1})
-
-    missing_ids = Enum.reject(article_hash_ids, &Map.has_key?(existing_by_hash_id, &1))
-
-    with {:ok, articles_by_hash_id} <- representative_articles(community, thread, missing_ids) do
-      Enum.reduce_while(
-        article_hash_ids,
-        {:ok, []},
-        &attach_many_item(&1, &2, %{
-          action: action,
-          community: community,
-          thread: thread,
-          existing_by_hash_id: existing_by_hash_id,
-          articles_by_hash_id: articles_by_hash_id,
-          actor: actor,
-          opts: opts
-        })
-      )
-      |> case do
-        {:ok, items} -> {:ok, Enum.reverse(items)}
-        error -> error
-      end
-    end
-  end
-
-  defp attach_many_item(article_hash_id, {:ok, items}, context) do
-    case Map.fetch(context.existing_by_hash_id, article_hash_id) do
-      {:ok, item} ->
-        {:cont, {:ok, [item | items]}}
-
-      :error ->
-        article = Map.fetch!(context.articles_by_hash_id, article_hash_id)
-
-        case attach_article(
-               context.action,
-               context.community,
-               context.thread,
-               article_hash_id,
-               article,
-               context.actor,
-               context.opts
-             ) do
-          {:ok, item} -> {:cont, {:ok, [item | items]}}
-          error -> {:halt, error}
-        end
-    end
-  end
-
-  @doc "Restores all Article memberships in one action while the caller owns their locks."
-  @spec restore_action_articles(TrashAction.t(), Community.t(), User.t() | nil, keyword()) ::
-          T.domain_res([map()])
-  def restore_action_articles(
-        %TrashAction{} = action,
-        %Community{} = community,
-        actor,
-        opts \\ []
-      ) do
-    items =
-      TrashedArticle
-      |> where([item], item.trash_action_id == ^action.id)
-      |> order_by([item], asc: item.thread, asc: item.article_hash_id)
-      |> lock("FOR UPDATE")
-      |> Repo.all()
-
-    items
-    |> Enum.reduce_while({:ok, []}, fn item, {:ok, articles} ->
-      case restore_membership(item, action, community, actor, opts) do
-        {:ok, article} -> {:cont, {:ok, [article | articles]}}
-        error -> {:halt, error}
-      end
-    end)
-    |> case do
-      {:ok, articles} -> {:ok, Enum.reverse(articles)}
-      error -> error
-    end
-  end
-
-  @doc "Permanently deletes every Article aggregate in one action under caller-owned locks."
-  @spec permanently_delete_action_articles(
-          TrashAction.t(),
-          Community.t(),
-          User.t() | nil,
-          keyword()
-        ) :: T.domain_res(:done)
-  def permanently_delete_action_articles(
-        %TrashAction{} = action,
-        %Community{} = community,
-        actor,
-        opts \\ []
-      ) do
-    items =
-      TrashedArticle
-      |> where([item], item.trash_action_id == ^action.id)
-      |> order_by([item], asc: item.thread, asc: item.article_hash_id)
-      |> lock("FOR UPDATE")
-      |> Repo.all()
-
-    Enum.reduce_while(items, {:ok, :done}, fn item, {:ok, :done} ->
-      case permanently_delete_membership(item, action, community, actor, opts) do
-        {:ok, :done} -> {:cont, {:ok, :done}}
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  @spec restore(Ecto.UUID.t() | TrashedArticle.t(), User.t() | nil, keyword()) ::
-          T.domain_res(map())
-  def restore(_item_or_ref, _actor, _opts \\ [])
-
-  def restore(%TrashedDocArticle{} = item, actor, opts) do
-    result =
-      with %Community{} = community <- Repo.get(Community, item.community_id),
-           {:ok, branch} <- Branch.resolve(community, item.branch_id),
-           %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
-        doc_ids = doc_action_article_hash_ids(action, branch)
-
-        MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
-          with false <- action_has_other_children?(action.id, item.id, :doc),
-               {:ok, [doc]} <-
-                 DocTrash.restore_action_articles(action, community, branch, actor, opts),
-               :ok <- delete_empty_action(action.id) do
-            {:ok, doc}
-          else
-            true ->
-              {:error, ErrorCat.custom("Trash action must be restored as one group")}
-
-            error ->
-              error
-          end
-        end)
-      else
-        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
-        error -> error
-      end
-
-    sync_search(result, :upsert)
-  end
-
-  def restore(item_or_ref, actor, opts) do
-    result =
-      with {:ok, item} <- resolve_item(item_or_ref),
-           %Community{} = community <- Repo.get(Community, item.community_id) do
-        run_item_locked(community, item, fn ->
-          do_restore(item.id, community, actor, opts)
-        end)
-      else
-        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
-        error -> error
-      end
-
-    sync_search(result, :upsert)
-  end
-
-  @spec permanently_delete(Ecto.UUID.t() | TrashedArticle.t(), User.t() | nil, keyword()) ::
-          T.domain_res(map())
-  def permanently_delete(_item_or_ref, _actor, _opts \\ [])
-
-  def permanently_delete(%TrashedDocArticle{} = item, actor, opts) do
-    result =
-      with %Community{} = community <- Repo.get(Community, item.community_id),
-           {:ok, branch} <- Branch.resolve(community, item.branch_id),
-           %TrashAction{} = action <- Repo.get(TrashAction, item.trash_action_id) do
-        doc_ids = doc_action_article_hash_ids(action, branch)
-
-        MutationLock.with_articles(community, :doc, branch.id, doc_ids, fn ->
-          with false <- action_has_other_children?(action.id, item.id, :doc),
-               {:ok, :done} <-
-                 DocTrash.permanently_delete_action_articles(
-                   action,
-                   community,
-                   branch,
-                   actor,
-                   opts
-                 ),
-               :ok <- delete_empty_action(action.id) do
-            {:ok, %{done: true}}
-          else
-            true ->
-              {:error, ErrorCat.custom("Trash action must be permanently deleted as one group")}
-
-            error ->
-              error
-          end
-        end)
-      else
-        nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
-        error -> error
-      end
-
-    sync_search(result, {:delete, :doc, item.article_hash_id})
-  end
-
-  def permanently_delete(item_or_ref, actor, opts) do
-    with {:ok, item} <- resolve_item(item_or_ref),
-         %Community{} = community <- Repo.get(Community, item.community_id) do
-      result =
-        run_item_locked(community, item, fn ->
-          do_permanently_delete(item.id, community, actor, opts)
-        end)
-
-      sync_search(result, {:delete, item.thread, item.article_hash_id})
-    else
-      nil -> {:error, Articles.ErrorCat.not_exist("Trash Community")}
-      error -> error
-    end
-  end
-
-  @spec get(Ecto.UUID.t()) :: T.domain_res(TrashedArticle.t())
-  def get(hash_id) do
-    TrashedArticle
-    |> where([item], item.hash_id == ^hash_id)
-    |> preload([:trash_action, :deleted_by])
-    |> Repo.one()
-    |> case do
-      %TrashedArticle{} = item -> hydrate(item)
-      nil -> {:error, Articles.ErrorCat.not_exist("TrashedArticle")}
-    end
-  end
-
-  @spec list(Community.t(), map()) :: T.domain_res(map())
-  def list(%Community{} = community, filter \\ %{}) do
-    page = Map.get(filter, :page, 1)
-    size = Map.get(filter, :size, 20)
-
-    query =
-      TrashedArticle
-      |> where([item], item.community_id == ^community.id)
-      |> maybe_filter_thread(Map.get(filter, :thread))
-      |> order_by([item], desc: item.deleted_at, desc: item.id)
-      |> preload([:trash_action, :deleted_by])
-
-    paged = ORM.paginator(query, page: page, size: size)
-
-    with {:ok, entries} <- hydrate_entries(paged.entries, community) do
-      {:ok, %{paged | entries: entries}}
-    end
-  end
-
-  @spec create_action(Community.t(), User.t() | nil, map()) :: T.domain_res(TrashAction.t())
+  @doc "Creates the shared audit/grouping row for a Trash operation."
+  @spec create_action(Community.t(), term(), map()) :: {:ok, TrashAction.t()} | {:error, term()}
   def create_action(%Community{} = community, actor, attrs) do
-    now = Map.get(attrs, :deleted_at, DateTime.utc_now(:second))
+    now = DateTime.utc_now(:second)
     retention_days = Map.get(attrs, :retention_days, @default_retention_days)
 
     ORM.create(TrashAction, %{
       community_id: community.id,
       actor_id: actor_id(actor),
-      root_type: to_string(Map.fetch!(attrs, :root_type)),
-      root_ref: to_string(Map.fetch!(attrs, :root_ref)),
+      root_type: attrs.root_type |> to_string(),
+      root_ref: to_string(attrs.root_ref),
       deleted_at: now,
-      scheduled_permanent_deletion_at: DateTime.add(now, retention_days * 86_400, :second)
+      scheduled_permanent_deletion_at: DateTime.add(now, retention_days, :day)
     })
   end
 
-  @spec delete_empty_action(T.id()) :: :ok | {:error, term()}
+  @doc "Deletes an empty TrashAction after its final membership is removed."
+  @spec delete_empty_action(pos_integer()) :: :ok | {:error, term()}
   def delete_empty_action(action_id) do
-    {count, _} =
-      TrashAction
-      |> from(as: :action)
-      |> where([action], action.id == ^action_id)
-      |> where(
-        [action],
-        not exists(
-          from(item in TrashedArticle,
-            where: item.trash_action_id == parent_as(:action).id,
-            select: 1
-          )
-        )
-      )
-      |> where(
-        [action],
-        not exists(
-          from(node in TrashedDocTreeNode,
-            where: node.trash_action_id == parent_as(:action).id,
-            select: 1
-          )
-        )
-      )
-      |> where(
-        [action],
-        not exists(
-          from(item in TrashedDocArticle,
-            where: item.trash_action_id == parent_as(:action).id,
-            select: 1
-          )
-        )
-      )
-      |> Repo.delete_all()
+    occupied? =
+      Enum.any?([TrashedArticle, TrashedDocArticle, TrashedDocTreeNode], fn model ->
+        Repo.exists?(from(item in model, where: item.trash_action_id == ^action_id))
+      end)
 
-    if count in [0, 1],
-      do: :ok,
-      else: {:error, ErrorCat.custom("invalid Trash action cleanup")}
-  end
-
-  defp do_trash(community, thread, article_hash_id, actor, opts) do
-    with :ok <- ensure_standalone_trash_supported(thread) do
-      case find_membership(community, thread, article_hash_id) do
-        %TrashedArticle{} = item ->
-          {:ok, item}
-
-        nil ->
-          with {:ok, article} <- representative_article(community, thread, article_hash_id),
-               {:ok, restore_state} <- trash_restore_state(article),
-               {:ok, action} <-
-                 create_action(community, actor, %{
-                   root_type: :article,
-                   root_ref: "#{thread}:#{article_hash_id}",
-                   retention_days: Keyword.get(opts, :retention_days, @default_retention_days)
-                 }),
-               {:ok, item} <-
-                 create_membership(
-                   action,
-                   community,
-                   thread,
-                   article_hash_id,
-                   actor,
-                   Keyword.put(opts, :restore_state, restore_state)
-                 ),
-               {:ok, _lifecycle} <-
-                 Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
-               {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-               :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
-               {:ok, _activity} <-
-                 Activity.log(article, :trashed,
-                   actor: activity_actor(actor),
-                   operation_ref: action.hash_id,
-                   source: activity_source(opts),
-                   occurred_at: action.deleted_at
-                 ) do
-            {:ok, item}
-          end
+    if occupied? do
+      :ok
+    else
+      case Repo.get(TrashAction, action_id) do
+        nil -> :ok
+        action -> action |> Repo.delete() |> normalize_delete()
       end
     end
   end
 
-  defp create_membership(action, community, thread, article_hash_id, actor, opts) do
-    ORM.create(TrashedArticle, %{
+  @doc "Moves one ordinary stable Article into Trash without deleting its workspace."
+  @spec trash(Article.t() | map(), term(), keyword()) ::
+          {:ok, TrashedArticle.t()} | {:error, term()}
+  def trash(article, actor, opts \\ [])
+
+  def trash(%{article_id: article_id}, actor, opts) when is_binary(article_id),
+    do: trash(Repo.get(Article, article_id), actor, opts)
+
+  def trash(%Article{thread: :doc}, _actor, _opts),
+    do:
+      {:error,
+       CMS.Articles.ErrorCat.custom("Doc Trash is owned by the branch-scoped Docs Tree lifecycle")}
+
+  def trash(%Article{} = article, actor, opts) do
+    CMS.Gate.Access.with_check(actor, :delete, article, fn canonical ->
+      case Repo.get_by(TrashedArticle, article_id: canonical.id) do
+        %TrashedArticle{} = item -> {:ok, item}
+        nil -> create_trash_membership(canonical, actor, opts)
+      end
+    end)
+  end
+
+  def trash(_article, _actor, _opts),
+    do: {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+
+  @doc "Restores one ordinary Article membership or delegates branch-local Doc restore."
+  @spec restore(Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(), term(), keyword()) ::
+          {:ok, Article.t()} | {:error, term()}
+  def restore(item_or_id, actor, opts \\ [])
+
+  def restore(%TrashedDocArticle{} = item, actor, opts) do
+    with %Community{} = community <- Repo.get(Community, item.community_id),
+         %CMS.Model.DocBranch{} = branch <- Repo.get(CMS.Model.DocBranch, item.branch_id) do
+      DocTrash.restore(item, community, branch, actor, opts)
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedDocArticle")}
+    end
+  end
+
+  def restore(item_or_id, actor, _opts) do
+    with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
+         %Article{} = article <- Repo.get(Article, item.article_id) do
+      CMS.Gate.Access.with_check(actor, :restore, article, fn canonical ->
+        with {:ok, lifecycle} <- Lifecycle.lock(canonical),
+             {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, item.restore_state),
+             {:ok, _deleted} <- Repo.delete(item),
+             :ok <- update_tag_stats(canonical, 1),
+             :ok <- update_community_count(canonical),
+             :ok <- delete_empty_action(item.trash_action_id),
+             {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :active) do
+          _ = CMS.SearchArtiments.Indexer.enqueue_upsert(canonical)
+          {:ok, canonical}
+        end
+      end)
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc "Permanently deletes one trashed aggregate or delegates a Doc branch deletion."
+  @spec permanently_delete(
+          Ecto.UUID.t() | TrashedArticle.t() | TrashedDocArticle.t(),
+          term(),
+          keyword()
+        ) ::
+          {:ok, map() | :done} | {:error, term()}
+  def permanently_delete(item_or_id, actor, opts \\ [])
+
+  def permanently_delete(%TrashedDocArticle{} = item, actor, opts) do
+    with %Community{} = community <- Repo.get(Community, item.community_id),
+         %CMS.Model.DocBranch{} = branch <- Repo.get(CMS.Model.DocBranch, item.branch_id) do
+      DocTrash.permanently_delete(item, community, branch, actor, opts)
+    else
+      _ -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedDocArticle")}
+    end
+  end
+
+  def permanently_delete(item_or_id, actor, opts) do
+    with {:ok, %TrashedArticle{} = item} <- resolve_item(item_or_id),
+         %Article{} = article <- Repo.get(Article, item.article_id) do
+      CMS.Gate.Access.with_check(actor, :permanently_delete, article, fn canonical ->
+        action_id = item.trash_action_id
+
+        with {:ok, lifecycle} <- Lifecycle.lock(canonical),
+             {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :destroy),
+             {:ok, _event} <-
+               activity(canonical, :permanently_deleted, actor, item.trash_action,
+                 source: activity_source(opts)
+               ),
+             {:ok, _comment_mentions} <-
+               CMS.ArtimentMentions.purge_article_comments(canonical),
+             {:ok, _article_mentions} <- CMS.ArtimentMentions.purge(canonical),
+             {:ok, _asset_refs} <- CMS.Assets.cleanup_refs(canonical.thread, canonical.id),
+             {:ok, _deleted} <- Repo.delete(canonical),
+             :ok <- delete_empty_action(action_id) do
+          _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
+          {:ok, %{done: true, article_id: canonical.id}}
+        end
+      end)
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc "Gets a Trash membership by its opaque Trash hash id."
+  @spec get(Ecto.UUID.t()) :: {:ok, TrashedArticle.t() | TrashedDocArticle.t()} | {:error, term()}
+  def get(hash_id) do
+    case Repo.get_by(TrashedArticle, hash_id: hash_id) do
+      %TrashedArticle{} = item ->
+        {:ok, item |> Repo.preload([:article, :trash_action]) |> hydrate_item()}
+
+      nil ->
+        get_doc_item(hash_id)
+    end
+  end
+
+  @doc "Lists ordinary stable Article Trash memberships for one Community."
+  @spec list(Community.t(), map()) :: {:ok, map()}
+  def list(%Community{} = community, filter \\ %{}) do
+    page = Map.get(filter, :page, 1)
+    size = Map.get(filter, :size, 20)
+
+    paged =
+      TrashedArticle
+      |> where([item], item.community_id == ^community.id)
+      |> order_by([item], desc: item.deleted_at)
+      |> preload([:article, :trash_action])
+      |> ORM.paginator(page: page, size: size)
+
+    {:ok, Map.update!(paged, :entries, &Enum.map(&1, fn item -> hydrate_item(item) end))}
+  end
+
+  defp hydrate_item(%TrashedArticle{article: %Article{} = article} = item) do
+    public = Repo.get(ArticlePublic, article.id)
+    stats = Repo.get_by(ArticleStats, article_id: article.id, thread: article.thread)
+
+    projection =
+      article
+      |> Map.from_struct()
+      |> Map.put(:title, public && public.title)
+      |> Map.put(:article_stats, stats)
+
+    mentioned_by_count =
+      Repo.aggregate(
+        from(mention in ArtimentMention,
+          where:
+            mention.mentioned_scope == :internal and
+              mention.mentioned_article_id == ^article.id
+        ),
+        :count
+      )
+
+    %{item | article: projection, mentioned_by_count: mentioned_by_count}
+  end
+
+  defp create_trash_membership(canonical, actor, opts) do
+    with %Community{} = community <- Repo.get(Community, canonical.community_id),
+         {:ok, lifecycle} <- Lifecycle.lock(canonical),
+         {:ok, action} <-
+           create_action(community, actor, %{
+             root_type: :article,
+             root_ref: canonical.id,
+             retention_days: Keyword.get(opts, :retention_days, @default_retention_days)
+           }),
+         :ok <- update_tag_stats(canonical, -1),
+         {:ok, item} <- create_membership(action, canonical, lifecycle.state, actor),
+         {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :deleted),
+         :ok <- update_community_count(canonical),
+         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(canonical, :trashed),
+         {:ok, _event} <- activity(canonical, :trashed, actor, action) do
+      _ = CMS.SearchArtiments.Indexer.enqueue_delete(canonical)
+      {:ok, item}
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp create_membership(action, article, restore_state, actor) do
+    %TrashedArticle{}
+    |> TrashedArticle.changeset(%{
       trash_action_id: action.id,
-      community_id: community.id,
-      thread: thread,
-      article_hash_id: article_hash_id,
-      restore_state: Keyword.fetch!(opts, :restore_state),
+      community_id: article.community_id,
+      thread: article.thread,
+      article_id: article.id,
+      restore_state: restore_state,
       deleted_by_id: actor_id(actor),
       deleted_at: action.deleted_at
     })
+    |> Repo.insert()
   end
 
-  defp attach_article(action, community, thread, article_hash_id, article, actor, opts) do
-    with {:ok, restore_state} <- trash_restore_state(article),
-         {:ok, item} <-
-           create_membership(
-             action,
-             community,
-             thread,
-             article_hash_id,
-             actor,
-             Keyword.put(opts, :restore_state, restore_state)
-           ),
-         {:ok, _lifecycle} <-
-           Lifecycle.transition(community.id, thread, article_hash_id, :deleted),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :trashed),
-         :ok <- update_visibility_stats(article, thread, :trash, Ecto.UUID.generate()),
-         {:ok, _activity} <-
-           maybe_record_activity(
-             article,
-             :trashed,
-             actor,
-             action.hash_id,
-             action.deleted_at,
-             opts
-           ) do
-      {:ok, item}
+  defp update_tag_stats(article, delta) when delta in [-1, 1] do
+    tags =
+      CommunityTag
+      |> join(:inner, [tag], assignment in ArticleCommunityTag, on: assignment.tag_id == tag.id)
+      |> join(:inner, [_tag, assignment], relation in ArticleCommunity,
+        on: relation.id == assignment.article_community_id
+      )
+      |> where([_tag, _assignment, relation], relation.article_id == ^article.id)
+      |> Repo.all()
+
+    case TagStats.update_many(article, Enum.map(tags, &{&1, delta})) do
+      {:ok, _result} -> :ok
+      {:error, _reason} = error -> error
     end
   end
 
-  defp do_restore(item_id, community, actor, opts) do
-    item =
-      TrashedArticle
-      |> where([item], item.id == ^item_id)
-      |> lock("FOR UPDATE")
-      |> Repo.one()
-
-    case item do
-      nil ->
-        {:error, Articles.ErrorCat.not_exist("TrashedArticle")}
-
-      %TrashedArticle{} = item ->
-        action =
-          TrashAction
-          |> where([action], action.id == ^item.trash_action_id)
-          |> lock("FOR UPDATE")
-          |> Repo.one!()
-
-        with false <- action_has_other_children?(action.id, item.id),
-             {:ok, article} <- restore_membership(item, action, community, actor, opts),
-             :ok <- delete_empty_action(action.id) do
-          {:ok, article}
-        else
-          true ->
-            {:error, ErrorCat.custom("Trash action must be restored as one group")}
-
-          error ->
-            error
-        end
+  defp update_community_count(%Article{} = article) do
+    with %Community{} = community <- Repo.get(Community, article.community_id),
+         {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread) do
+      :ok
+    else
+      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("community not found")}
+      {:error, _reason} = error -> error
     end
   end
 
-  defp restore_membership(item, action, community, actor, opts) do
-    with {:ok, article} <-
-           representative_article(community, item.thread, item.article_hash_id),
-         {:ok, _canonical} <- CMS.Gate.access_check(actor, :restore, article),
-         {:ok, _} <- Repo.delete(item),
-         {:ok, lifecycle} <-
-           Lifecycle.transition(
-             community.id,
-             item.thread,
-             item.article_hash_id,
-             item.restore_state
-           ),
-         {:ok, _mentions} <- CMS.ArtimentMentions.mark_target_state(article, :active),
-         :ok <- update_visibility_stats(article, item.thread, :restore, Ecto.UUID.generate()),
-         {:ok, _activity} <-
-           maybe_record_activity(
-             article,
-             :restored,
-             actor,
-             action.hash_id,
-             lifecycle.changed_at,
-             opts
-           ) do
-      {:ok, article}
+  defp resolve_item(%TrashedArticle{} = item), do: {:ok, Repo.preload(item, :trash_action)}
+  defp resolve_item(hash_id), do: get(hash_id)
+
+  defp get_doc_item(hash_id) do
+    case Repo.get_by(TrashedDocArticle, hash_id: hash_id) do
+      %TrashedDocArticle{} = item -> {:ok, Repo.preload(item, :trash_action)}
+      nil -> {:error, CMS.Articles.ErrorCat.not_exist("TrashedArticle")}
     end
   end
 
-  defp run_item_locked(%Community{} = community, %TrashedArticle{} = item, fun) do
-    MutationLock.with_article(community, item.thread, item.article_hash_id, fun)
-  end
-
-  defp do_permanently_delete(item_id, community, actor, opts) do
-    item =
-      TrashedArticle
-      |> where([item], item.id == ^item_id)
-      |> lock("FOR UPDATE")
-      |> Repo.one()
-
-    case item do
-      nil ->
-        {:ok, %{done: true}}
-
-      %TrashedArticle{} = item ->
-        action =
-          TrashAction
-          |> where([action], action.id == ^item.trash_action_id)
-          |> lock("FOR UPDATE")
-          |> Repo.one!()
-
-        with false <- action_has_other_children?(action.id, item.id),
-             {:ok, :done} <-
-               permanently_delete_membership(item, action, community, actor, opts),
-             :ok <- delete_empty_action(action.id) do
-          {:ok, %{done: true}}
-        else
-          true ->
-            {:error, ErrorCat.custom("Trash action must be permanently deleted as one group")}
-
-          error ->
-            error
-        end
-    end
-  end
-
-  defp permanently_delete_membership(item, action, community, actor, opts) do
-    with {:ok, article} <-
-           representative_article(community, item.thread, item.article_hash_id),
-         {:ok, physical_articles} <-
-           physical_articles(community, item.thread, item.article_hash_id),
-         {:ok, lifecycle} <-
-           Lifecycle.transition(community.id, item.thread, item.article_hash_id, :destroy),
-         :ok <- purge_article_aggregate(item.thread, item.article_hash_id, physical_articles),
-         {_, _} <-
-           Repo.delete_all(
-             from(lifecycle in ArticleLifecycle,
-               where:
-                 lifecycle.community_id == ^community.id and
-                   lifecycle.thread == ^item.thread and
-                   lifecycle.article_hash_id == ^item.article_hash_id
-             )
-           ),
-         {:ok, _} <- Repo.delete(item),
-         {:ok, _activity} <-
-           maybe_record_activity(
-             article,
-             :permanently_deleted,
-             actor,
-             action.hash_id,
-             lifecycle.changed_at,
-             opts
-           ),
-         {:ok, _user} <-
-           Publish.update_states(article.author.user, item.thread) do
-      Indexer.enqueue_delete(item.thread, item.article_hash_id)
-      {:ok, :done}
-    end
-  end
-
-  defp action_has_other_children?(action_id, item_id) do
-    other_articles? =
-      TrashedArticle
-      |> where([item], item.trash_action_id == ^action_id and item.id != ^item_id)
-      |> Repo.exists?()
-
-    tree_nodes? =
-      TrashedDocTreeNode
-      |> where([node], node.trash_action_id == ^action_id)
-      |> Repo.exists?()
-
-    other_docs? =
-      TrashedDocArticle
-      |> where([item], item.trash_action_id == ^action_id)
-      |> Repo.exists?()
-
-    other_articles? or other_docs? or tree_nodes?
-  end
-
-  defp action_has_other_children?(action_id, item_id, :doc) do
-    other_articles? =
-      TrashedArticle
-      |> where([item], item.trash_action_id == ^action_id)
-      |> Repo.exists?()
-
-    other_docs? =
-      TrashedDocArticle
-      |> where([item], item.trash_action_id == ^action_id and item.id != ^item_id)
-      |> Repo.exists?()
-
-    tree_nodes? =
-      TrashedDocTreeNode
-      |> where([node], node.trash_action_id == ^action_id)
-      |> Repo.exists?()
-
-    other_articles? or other_docs? or tree_nodes?
-  end
-
-  defp doc_action_article_hash_ids(%TrashAction{} = action, %DocBranch{} = branch) do
-    TrashedDocArticle
-    |> where([item], item.trash_action_id == ^action.id and item.branch_id == ^branch.id)
-    |> select([item], item.article_hash_id)
-    |> order_by([item], asc: item.article_hash_id)
-    |> Repo.all()
-  end
-
-  defp physical_articles(%Community{} = community, thread, article_hash_id) do
-    with {:ok, info} <- match(thread) do
-      articles =
-        info.model
-        |> where([article], article.community_id == ^community.id)
-        |> where([article], article.article_hash_id == ^article_hash_id)
-        |> preload([:community_tags, :communities, author: :user])
-        |> Repo.all()
-
-      {:ok, articles}
-    end
-  end
-
-  defp purge_article_aggregate(thread, article_hash_id, physical_articles) do
-    _ = article_hash_id
-    purge_physical_articles(thread, physical_articles)
-  end
-
-  defp purge_physical_articles(thread, physical_articles) do
-    Enum.reduce_while(physical_articles, :ok, fn article, :ok ->
-      with {:ok, _} <- CMS.ArtimentMentions.purge_article_comments(article),
-           {:ok, _} <- CMS.ArtimentMentions.purge(article),
-           {:ok, _} <- CMS.Assets.cleanup_refs(thread, article.id),
-           _ <- Document.remove(thread, article.id),
-           {:ok, _} <- CMS.Covers.delete_cover_edit_info(article.cover_edit_info_id),
-           {:ok, _} <- Repo.delete(article),
-           :ok <- CMS.ViewTracker.delete_article_state(thread, article.id) do
-        {:cont, :ok}
-      else
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp resolve_item(%TrashedArticle{} = item), do: {:ok, item}
-  defp resolve_item(hash_id) when is_binary(hash_id), do: get(hash_id)
-
-  defp find_membership(%Community{} = community, thread, article_hash_id) do
-    Repo.get_by(TrashedArticle,
-      community_id: community.id,
-      thread: thread,
-      article_hash_id: article_hash_id
+  defp activity(article, action, actor, %TrashAction{} = trash_action, opts \\ []) do
+    Activity.log(article, action,
+      actor: activity_actor(actor),
+      source: Keyword.get(opts, :source, :api),
+      operation_ref: trash_action.hash_id,
+      occurred_at: DateTime.utc_now(:second)
     )
   end
 
-  defp representative_article(%Community{} = community, thread, article_hash_id) do
-    with {:ok, info} <- match(thread) do
-      public_stage = CMS.Const.stage(:public)
+  defp activity_source(opts),
+    do: Activity.Const.normalize_source(Keyword.get(opts, :source, :api))
 
-      info.model
-      |> where([article], article.community_id == ^community.id)
-      |> where([article], article.article_hash_id == ^article_hash_id)
-      |> order_by([article], desc: article.stage == ^public_stage)
-      |> limit(1)
-      |> preload([:community_tags, :communities, author: :user])
-      |> Repo.one()
-      |> case do
-        nil -> {:error, Articles.ErrorCat.not_exist("logical Article")}
-        article -> {:ok, article}
-      end
-    end
-  end
-
-  defp representative_articles(_community, _thread, []), do: {:ok, %{}}
-
-  defp representative_articles(%Community{} = community, thread, article_hash_ids) do
-    with {:ok, info} <- match(thread) do
-      public_stage = CMS.Const.stage(:public)
-
-      articles_by_hash_id =
-        info.model
-        |> where([article], article.community_id == ^community.id)
-        |> where([article], article.article_hash_id in ^article_hash_ids)
-        |> order_by([article], desc: article.stage == ^public_stage)
-        |> preload([:community_tags, :communities, author: :user])
-        |> Repo.all()
-        |> Enum.reduce(%{}, fn article, acc ->
-          Map.put_new(acc, article.article_hash_id, article)
-        end)
-
-      case Enum.find(article_hash_ids, &(not Map.has_key?(articles_by_hash_id, &1))) do
-        nil -> {:ok, articles_by_hash_id}
-        _missing_id -> {:error, Articles.ErrorCat.not_exist("logical Article")}
-      end
-    end
-  end
-
-  defp hydrate(%TrashedArticle{} = item) do
-    community = Repo.get!(Community, item.community_id)
-
-    with {:ok, [hydrated]} <- hydrate_entries([item], community) do
-      {:ok, hydrated}
-    end
-  end
-
-  defp hydrate_entries(items, %Community{} = community) do
-    hydrated_by_id =
-      items
-      |> Enum.group_by(& &1.thread)
-      |> Enum.reduce(%{}, fn {thread, thread_items}, acc ->
-        {:ok, hydrated} = hydrate_thread_entries(thread_items, community, thread)
-        Map.merge(acc, hydrated)
-      end)
-
-    {:ok, Enum.map(items, &Map.fetch!(hydrated_by_id, &1.id))}
-  end
-
-  defp hydrate_thread_entries(items, %Community{} = community, thread) do
-    article_hash_ids = Enum.map(items, & &1.article_hash_id)
-    public_stage = CMS.Const.stage(:public)
-
-    articles_by_hash_id =
-      case match(thread) do
-        {:ok, info} ->
-          info.model
-          |> where([article], article.community_id == ^community.id)
-          |> where([article], article.article_hash_id in ^article_hash_ids)
-          |> order_by([article], desc: article.stage == ^public_stage)
-          |> preload([:community_tags, :communities, author: :user])
-          |> Repo.all()
-          |> Enum.reduce(%{}, fn article, acc ->
-            Map.put_new(acc, article.article_hash_id, article)
-          end)
-
-        _ ->
-          %{}
-      end
-
-    mention_counts =
-      articles_by_hash_id
-      |> Map.values()
-      |> Enum.map(& &1.id)
-      |> mentioned_by_counts(thread)
-
-    stats =
-      case CMS.FrontDesk.article_stats_for_articles(
-             thread,
-             Map.values(articles_by_hash_id),
-             community.slug
-           ) do
-        stats when is_map(stats) -> stats
-        {:error, _} -> nil
-      end
-
-    {:ok,
-     Map.new(items, fn item ->
-       article = Map.get(articles_by_hash_id, item.article_hash_id)
-       mentioned_by_count = if article, do: Map.get(mention_counts, article.id, 0), else: 0
-
-       article =
-         case article do
-           nil ->
-             nil
-
-           article ->
-             projection = if is_map(stats), do: Map.get(stats, {thread, article.id}), else: nil
-             Map.put(article, :article_stats, projection)
-         end
-
-       {item.id, %{item | article: article, mentioned_by_count: mentioned_by_count}}
-     end)}
-  end
-
-  defp mentioned_by_counts([], _thread), do: %{}
-
-  defp mentioned_by_counts(article_ids, thread) do
-    ArtimentMention
-    |> where([mention], mention.mentioned_scope == :internal)
-    |> where([mention], mention.mentioned_type == ^thread)
-    |> where([mention], mention.mentioned_id in ^article_ids)
-    |> group_by([mention], mention.mentioned_id)
-    |> select([mention], {mention.mentioned_id, count(mention.id)})
-    |> Repo.all()
-    |> Map.new()
-  end
-
-  defp trash_restore_state(article) do
-    with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
-         {:ok, state} <- Lifecycle.state(article.community_id, thread, article.article_hash_id) do
-      if state == :archived,
-        do: {:error, Articles.ErrorCat.archived("article is archived, can not be deleted")},
-        else: {:ok, state}
-    end
-  end
-
-  defp ensure_standalone_trash_supported(:doc),
-    do: {:error, ErrorCat.custom("Docs Articles must be moved to Trash through their Tree node")}
-
-  defp ensure_standalone_trash_supported(_thread), do: :ok
-
-  defp update_visibility_stats(article, thread, operation, causation_id) do
-    result =
-      if visible_public_article?(article) do
-        delta = if operation == :trash, do: :dec, else: :inc
-
-        with :ok <- update_tag_stats(article, delta),
-             {:ok, _} <- CMS.Communities.update_count_field(article.communities, thread) do
-          :ok
-        end
-      else
-        :ok
-      end
-
-    with :ok <- result do
-      article = Repo.preload(article, :community)
-
-      case PublicCache.invalidate_now(
-             PublicCacheConst.article_visibility_changed(),
-             %{
-               community: article.community.slug,
-               community_id: article.community_id,
-               thread: thread,
-               inner_id: article.inner_id,
-               id: article.id
-             },
-             causation_id: causation_id,
-             aggregate_type: "article"
-           ) do
-        {:ok, _invalidation} -> :ok
-        {:error, reason} -> {:error, reason}
-      end
-    end
-  end
-
-  defp update_tag_stats(article, delta) do
-    article = Repo.preload(article, :community_tags)
-
-    Enum.reduce_while(article.community_tags, :ok, fn tag, :ok ->
-      case apply(TagStats, delta, [article, tag]) do
-        {:ok, :pass} -> {:cont, :ok}
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp visible_public_article?(article) do
-    article.stage == CMS.Const.stage(:public) and article.pending != @audit_illegal
-  end
-
-  defp actor_id(%User{id: id}), do: id
-  defp actor_id(_actor), do: nil
-
+  defp activity_actor(nil), do: :system
   defp activity_actor(:operations), do: :system
   defp activity_actor(actor), do: actor
 
-  defp maybe_record_activity(resource, action, actor, operation_ref, occurred_at, opts) do
-    if Keyword.get(opts, :audit, true) do
-      Activity.log(resource, action,
-        actor: activity_actor(actor),
-        operation_ref: operation_ref,
-        source: activity_source(opts),
-        occurred_at: occurred_at
-      )
-    else
-      {:ok, :skipped}
-    end
-  end
-
-  defp activity_source(opts) do
-    opts |> Keyword.get(:source, :api) |> Activity.Const.normalize_source()
-  end
-
-  defp maybe_filter_thread(query, nil), do: query
-  defp maybe_filter_thread(query, thread), do: where(query, [item], item.thread == ^thread)
-
-  defp sync_search({:ok, %TrashedArticle{} = item} = result, :delete) do
-    Indexer.enqueue_delete(item.thread, item.article_hash_id)
-    result
-  end
-
-  defp sync_search({:ok, article} = result, :upsert) do
-    Indexer.enqueue_upsert(article)
-    result
-  end
-
-  defp sync_search({:ok, _} = result, {:delete, thread, article_hash_id}) do
-    Indexer.enqueue_delete(thread, article_hash_id)
-    result
-  end
-
-  defp sync_search(result, _action), do: result
+  defp actor_id(%{id: id}) when is_integer(id), do: id
+  defp actor_id(_actor), do: nil
+  defp normalize_delete({:ok, _row}), do: :ok
+  defp normalize_delete({:error, reason}), do: {:error, reason}
 end

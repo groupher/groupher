@@ -192,7 +192,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       %{user_id: actor.id, thread: info.artiment}
       |> Map.put(info.foreign_key, article.id)
 
-    insert_fact(ArticleUpvote, attrs, [:user_id, info.foreign_key])
+    insert_fact(ArticleUpvote, attrs, article_conflict_target(info.foreign_key))
   end
 
   defp change_fact(article, info, actor, :remove) do
@@ -223,4 +223,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
       _ -> {:error, ErrorCat.interaction_state_conflict("multiple upvote facts deleted")}
     end
   end
+
+  defp article_conflict_target(:article_id),
+    do:
+      {:unsafe_fragment,
+       "(user_id, article_id) WHERE article_id IS NOT NULL AND branch_id IS NULL"}
+
+  defp article_conflict_target(foreign_key), do: [:user_id, foreign_key]
 end

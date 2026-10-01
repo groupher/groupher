@@ -8,25 +8,27 @@ defmodule GroupherServer.Activity.Doc do
   use GroupherServer.Activity.ArtimentEvent,
     thread: :doc,
     schema: GroupherServer.Activity.Model.DocLog,
-    stream_field: :doc_ref
+    stream_field: :article_id
 
   alias GroupherServer.Activity
   alias Activity.Event
 
   @contracts %{
     created: Event.contract([], [], [:article_log, :community_log]),
-    title_changed: Event.contract([:title], [:revision_ref], [:article_log, :community_log]),
+    title_changed: Event.contract([:title], [:revision_id], [:article_log, :community_log]),
     body_updated:
       Event.contract(
         [:body_hash, :schema_version, :summary],
-        [:revision_ref],
+        [:revision_id],
         [:article_log, :community_log]
       ),
     draft_updated:
-      Event.contract([:body_hash, :schema_version], [:revision_ref], [])
+      Event.contract([:body_hash, :schema_version], [:revision_id], [])
       |> Event.contract_only(),
-    published: Event.contract([], [:snapshot_ref], [:article_log, :community_log]),
-    publish_restored: Event.contract([], [:snapshot_ref], [:article_log, :community_log]),
+    published:
+      Event.contract([], [:revision_id, :branch_version_id], [:article_log, :community_log]),
+    publish_restored:
+      Event.contract([], [:revision_id, :branch_version_id], [:article_log, :community_log]),
     trashed: Event.contract([], [], [:community_log]),
     restored: Event.contract([], [], [:article_log, :community_log]),
     archived: Event.contract([], [:batch], [:article_log, :community_log]),

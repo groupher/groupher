@@ -15,6 +15,7 @@ import {
 import { AUTH_EVENT, sessionChannel } from '~/auth'
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
+import { localDraftRepository } from '~/lib/localDraftHistory'
 import { Q } from '~/query'
 import { viewerQueryKeys } from '~/query/key'
 import { clearArticleUpvoteReceipts } from '~/query/mutation/articleReceipt'
@@ -77,6 +78,7 @@ export default function Provider({ children, initData }: TProps) {
     clearCommentReactionReceipts(accountRef)
     clearArticleViewAcks()
     clearViewerSessionCache(queryClient)
+    if (accountRef) void localDraftRepository.clearAccount(accountRef)
   }, [accountRef, queryClient])
 
   useEvent(EVENT.LOGOUT, clearSession, [clearSession])

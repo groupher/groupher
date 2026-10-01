@@ -7,8 +7,6 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
   @total_count 35
   @page_size GroupherServerWeb.Config.page_size()
 
-  @audit_illegal CMS.Artiment.Const.moderation_state(:illegal)
-
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = mock_community(user)
@@ -37,16 +35,19 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert results["totalCount"] == @total_count
 
       {:ok, _} =
-        CMS.Articles.set_illegal(:post, post_m.id, %{
-          is_legal: false,
-          illegal_reason: ["some-reason"],
-          illegal_words: ["some-word"]
-        })
+        CMS.Articles.set_illegal(
+          post_m.article_id,
+          %{
+            is_legal: false,
+            illegal_reason: ["some-reason"],
+            illegal_words: ["some-word"]
+          },
+          :operations
+        )
 
-      {:ok, post_m} =
-        CMS.FrontDesk.article(community, :post, post_m.inner_id, include_illegal: true)
+      post_m = Repo.get!(CMS.Model.Article, post_m.article_id)
 
-      assert post_m.pending == @audit_illegal
+      assert post_m.moderation_state == :illegal
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       assert results["totalCount"] == @total_count - 1
@@ -55,7 +56,7 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
 
   describe "[pinned posts flags]" do
     test "if have pinned posts, the pinned posts should at the top of entries",
-         ~m(guest_conn community post_m)a do
+         ~m(guest_conn community post_m user)a do
       variables = %{filter: %{community: community.slug}}
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
@@ -64,7 +65,7 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert results["pageSize"] == @page_size
       assert results["totalCount"] == @total_count
 
-      {:ok, _} = CMS.Articles.pin(community, post_m)
+      {:ok, _} = CMS.Articles.pin(community, post_m.article_id, user)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       entries_first = results["entries"] |> List.first()
@@ -74,28 +75,28 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert entries_first["isPinned"] == true
     end
 
-    test "pinned posts should not appear when page > 1", ~m(guest_conn community)a do
+    test "pinned posts should not appear when page > 1", ~m(guest_conn community user)a do
       variables = %{filter: %{page: 2, size: 20}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, post} = CMS.FrontDesk.article(community, :post, random_id)
-      {:ok, _} = CMS.Articles.pin(community, post)
+      {:ok, post} = read_article(community, :post, random_id)
+      {:ok, _} = CMS.Articles.pin(community, post.article_id, user)
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
     test "trashed posts do not appear in results, including pinned injection",
-         ~m(guest_conn community)a do
+         ~m(guest_conn community user)a do
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
-      {:ok, random_post} = CMS.FrontDesk.article(community, :post, random_id)
-      {:ok, _} = CMS.Articles.pin(community, random_post)
-      {:ok, _} = CMS.Articles.trash(random_post, :operations)
+      {:ok, random_post} = read_article(community, :post, random_id)
+      {:ok, _} = CMS.Articles.pin(community, random_post.article_id, user)
+      {:ok, _} = CMS.Articles.trash(random_post, user)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
