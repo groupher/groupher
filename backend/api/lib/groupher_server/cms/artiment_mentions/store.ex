@@ -104,24 +104,30 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   context; snapshot construction must not perform queries per occurrence.
   """
   @spec sync(Comment.t() | T.article() | map()) :: sync_result()
+  def sync(%Comment{body: body} = comment) when is_binary(body) do
+    with {:ok, ast} <- PlateJSON.decode(body) do
+      do_sync(comment, ast)
+    end
+  end
+
   def sync(%{body: body} = artiment) when is_binary(body) do
     with {:ok, ast} <- PlateJSON.decode(body),
-         {:ok, artiment} <- FrontDesk.preload_author(artiment) do
+         {:ok, artiment} <- load_article_for_mentions(artiment) do
       do_sync(artiment, ast)
     end
   end
 
   def sync(%{document: _document} = article) do
     with {:ok, ast} <- load_document_ast(article),
-         {:ok, article} <- FrontDesk.preload_author(article) do
+         {:ok, article} <- load_article_for_mentions(article) do
       do_sync(article, ast)
     end
   end
 
   def sync(%{id: article_id, thread: thread})
       when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
-    with %Article{} = article <- Repo.get(Article, article_id),
-         {:ok, projection} <- FrontDesk.preload_author(article) do
+    with %Article{} <- Repo.get(Article, article_id),
+         {:ok, projection} <- CMS.Articles.Reader.load_article_for_mentions(article_id) do
       sync(projection)
     else
       nil -> {:error, ErrorCat.custom(%{reason: :not_exist})}
@@ -536,6 +542,12 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
+  defp load_article_for_mentions(%{id: article_id}) when is_binary(article_id),
+    do: CMS.Articles.Reader.load_article_for_mentions(article_id)
+
+  defp load_article_for_mentions(%{article_id: _article_id} = article), do: {:ok, article}
+  defp load_article_for_mentions(article), do: {:ok, article}
+
   defp mentioner_identity(%Comment{id: id}), do: {:comment, %{entity_id: id}}
 
   defp mentioner_identity(%Article{id: article_id, thread: thread}) do
@@ -631,7 +643,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     do: comment.author_id == user_id
 
   defp mentioning_itself?(article, %{mentioned_type: :user, mentioned_id: user_id}) do
-    case FrontDesk.author_of(article) do
+    case FrontDesk.article_author(article) do
       {:ok, %{id: ^user_id}} -> true
       _ -> false
     end

@@ -36,16 +36,16 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   @timestamps_opts [type: :utc_datetime]
 
   @asset_types ~w(image video audio file)a
-  @statuses ~w(active deleted)a
+  @statuses ~w(active archived deleted)a
 
   @required_fields ~w(community_id url size_bytes)a
   @optional_fields ~w(
     uploader_id thread asset_type status title filename mime_type url_hash storage storage_key
-    public_ref content_hash width height meta deleted_at
+    public_ref content_hash width height meta archived_at deleted_at
   )a
 
   @type asset_type :: :image | :video | :audio | :file
-  @type status :: :active | :deleted
+  @type status :: :active | :archived | :deleted
   @type thread :: atom() | nil
   @type t :: %CommunityAsset{}
 
@@ -72,6 +72,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     field(:width, :integer)
     field(:height, :integer)
     field(:meta, :map, default: %{})
+    field(:archived_at, :utc_datetime)
     field(:deleted_at, :utc_datetime)
 
     has_many(:asset_refs, ArticleAssetRef, foreign_key: :asset_id)

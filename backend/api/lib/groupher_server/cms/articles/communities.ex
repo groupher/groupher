@@ -28,6 +28,19 @@ defmodule GroupherServer.CMS.Articles.Communities do
 
   @ordinary_threads [:post, :blog, :changelog]
 
+  @doc "Returns whether one Community/thread can accept another pinned Article."
+  def pin_capacity_available?(community_id, thread) do
+    count =
+      Repo.aggregate(
+        from(pin in PinnedArticle,
+          where: pin.community_id == ^community_id and pin.thread == ^thread
+        ),
+        :count
+      )
+
+    count < Community.max_pinned_article_count_per_thread()
+  end
+
   @doc "Moves an ordinary Article home to another Community and assigns a new public number."
   @spec move(Article.t(), Community.t()) :: {:ok, Article.t()} | {:error, term()}
   def move(%Article{thread: thread} = article, %Community{} = destination)
@@ -206,7 +219,9 @@ defmodule GroupherServer.CMS.Articles.Communities do
 
   defp normalize_tag_ids(tag_ids) do
     Enum.reduce_while(tag_ids, [], fn
-      id, acc when is_integer(id) and id > 0 -> {:cont, [id | acc]}
+      id, acc when is_integer(id) and id > 0 ->
+        {:cont, [id | acc]}
+
       id, acc when is_binary(id) ->
         case Integer.parse(id) do
           {parsed, ""} when parsed > 0 -> {:cont, [parsed | acc]}

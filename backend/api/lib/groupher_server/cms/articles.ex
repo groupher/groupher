@@ -18,46 +18,40 @@ defmodule GroupherServer.CMS.Articles do
   under `CMS.Docs`; this facade only owns the ordinary Article core.
   """
 
-  import Ecto.Query, only: [from: 2]
-
   alias __MODULE__.{
     Commands,
     Communities,
     List,
     Moderation,
+    Reader,
     States,
     Trash
   }
 
-  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
+  alias GroupherServer.CMS
   alias Helper.T
-  alias Accounts.Model.User
+  alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Const
   alias CMS.Model.{Article, Author, Community}
 
   alias __MODULE__.Draft.Store, as: TargetDraft
   alias __MODULE__.Draft.Diff, as: TargetDiff
-  alias __MODULE__.Publish.Target, as: TargetPublish
-  alias __MODULE__.Publish.Effects, as: PublishEffects
 
   @doc "Moves a stable ordinary Article to a new home Community through Gate."
   @spec move(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
           {:ok, Article.t()} | {:error, term()}
   def move(%Community{} = community, article_id, tag_ids, %User{} = actor) do
     with_article(article_id, actor, :move, fn article ->
-      source = GroupherServer.Repo.get!(Community, article.community_id)
       old_inner_id = article.inner_id
 
-      with {:ok, moved} <- Communities.move(article, community),
-           relation <-
-             GroupherServer.Repo.get_by!(CMS.Model.ArticleCommunity,
-               article_id: moved.id,
-               role: :home
-             ),
+      with {:ok, %Community{} = source} <- Reader.community(article.community_id),
+           {:ok, moved} <- Communities.move(article, community),
+           {:ok, relation} <-
+             Reader.home_relation(moved.id),
            {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
            {:ok, _source} <- CMS.Communities.update_count_field(source, article.thread),
            {:ok, _destination} <- CMS.Communities.update_count_field(community, article.thread),
-           :ok <- invalidate_move(source, old_inner_id, community, moved),
+           :ok <- invalidate_move(source, old_inner_id, community, moved, Ecto.UUID.generate()),
            {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
         {:ok, moved}
       end
@@ -93,18 +87,18 @@ defmodule GroupherServer.CMS.Articles do
   @spec pin(Community.t(), Ecto.UUID.t(), User.t()) ::
           {:ok, CMS.Model.PinnedArticle.t()} | {:error, term()}
   def pin(%Community{} = community, article_id, %User{} = actor) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{thread: :doc} ->
+    case Reader.article(article_id) do
+      {:ok, %Article{thread: :doc}} ->
         {:error, :unsupported_for_doc}
 
-      %Article{} = article ->
+      {:ok, %Article{} = article} ->
         CMS.Gate.Access.with_check(actor, :pin, article, fn canonical ->
           with :ok <- ensure_pin_capacity(community.id, canonical.thread) do
             Communities.pin(canonical, community)
           end
         end)
 
-      nil ->
+      {:error, _} ->
         {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
@@ -116,29 +110,21 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp with_article(article_id, actor, action, callback) when is_binary(article_id) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{} = article -> CMS.Gate.Access.with_check(actor, action, article, callback)
-      nil -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+    case Reader.article(article_id) do
+      {:ok, %Article{} = article} -> CMS.Gate.Access.with_check(actor, action, article, callback)
+      {:error, _} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
   defp ensure_pin_capacity(community_id, thread) do
-    count =
-      GroupherServer.Repo.aggregate(
-        from(pin in CMS.Model.PinnedArticle,
-          where: pin.community_id == ^community_id and pin.thread == ^thread
-        ),
-        :count
-      )
-
-    if count < Community.max_pinned_article_count_per_thread(),
+    if Communities.pin_capacity_available?(community_id, thread),
       do: :ok,
       else: {:error, CMS.Articles.ErrorCat.too_much_pinned_article("too much pinned article")}
   end
 
-  defp invalidate_move(source, old_inner_id, destination, moved) do
-    with :ok <- invalidate_community_scope(source, %{moved | inner_id: old_inner_id}),
-         :ok <- invalidate_community_scope(destination, moved) do
+  defp invalidate_move(source, old_inner_id, destination, moved, command_id) do
+    with :ok <- invalidate_community_scope(source, %{moved | inner_id: old_inner_id}, command_id),
+         :ok <- invalidate_community_scope(destination, moved, Ecto.UUID.generate()) do
       :ok
     end
   end
@@ -148,20 +134,25 @@ defmodule GroupherServer.CMS.Articles do
        do: :ok
 
   defp invalidate_community_scope(%Community{} = community, article) do
-    case PublicCache.invalidate_now(
-           :article_visibility_changed,
-           %{
-             id: article.id,
+    invalidate_community_scope(community, article, Ecto.UUID.generate())
+  end
+
+  defp invalidate_community_scope(%Community{} = community, article, command_id) do
+    case CMS.Outbox.send(%{
+           event: "article.visibility_changed",
+           worker: CMS.Outbox.Workers.Article.Cleanup,
+           resource_type: "article",
+           resource_id: article.id,
+           command_id: command_id,
+           data: %{
              community: community.slug,
              community_id: community.id,
              thread: article.thread,
-             inner_id: article.inner_id
-           },
-           causation_id: Ecto.UUID.generate(),
-           aggregate_id: article.id,
-           aggregate_type: "article"
-         ) do
-      {:ok, _invalidation} -> :ok
+             inner_id: article.inner_id,
+             article_id: article.id
+           }
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end
@@ -297,12 +288,18 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   @doc "Publishes an ordinary stable Article Draft with atomic first-publish finalization."
-  @spec publish(Ecto.UUID.t(), User.t() | Author.t(), keyword()) ::
+  @spec publish(Ecto.UUID.t() | Article.t(), User.t() | Author.t(), keyword()) ::
           {:ok, map()} | {:error, term()}
-  def publish(article_id, actor, opts) when is_binary(article_id) do
+  def publish(%Article{} = article, actor, opts) do
     case Keyword.get(opts, :command_id) do
-      nil -> publish_now(article_id, actor, opts)
-      _command_id -> Commands.Publish.publish(article_id, actor, opts)
+      nil -> publish_now(article.id, actor, opts)
+      _command_id -> Commands.Publish.publish(article, actor, opts)
+    end
+  end
+
+  def publish(article_id, actor, opts) when is_binary(article_id) do
+    with {:ok, %Article{} = article} <- stable_article(article_id) do
+      publish(article, actor, opts)
     end
   end
 
@@ -311,14 +308,7 @@ defmodule GroupherServer.CMS.Articles do
          {:ok, author} <- target_author(actor),
          {:ok, result} <-
            CMS.Gate.Access.with_check(actor_user(actor), :publish, article, fn canonical ->
-             Repo.transaction(fn ->
-               with {:ok, published} <- TargetPublish.publish(canonical, author, opts),
-                    {:ok, _finalized} <- finalize_first_publish(published, actor) do
-                 published
-               else
-                 {:error, reason} -> Repo.rollback(reason)
-               end
-             end)
+             __MODULE__.Writer.publish(canonical, author, actor, opts)
            end),
          {:ok, result} <- maybe_publish_effects(result, opts) do
       {:ok, result}
@@ -326,27 +316,8 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp maybe_publish_effects(result, opts) do
-    if Keyword.get(opts, :skip_effects, false),
-      do: {:ok, result},
-      else: PublishEffects.run(result)
-  end
-
-  defp finalize_first_publish(%{first_publish?: false} = result, _actor), do: {:ok, result}
-
-  defp finalize_first_publish(
-         %{first_publish?: true, article: %Article{} = article} = result,
-         actor
-       ) do
-    with %Community{} = community <- GroupherServer.Repo.get(Community, article.community_id),
-         %User{} = user <- actor_user(actor),
-         {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
-         {:ok, _user} <- Accounts.Publish.update_states(user, article.thread),
-         {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user) do
-      {:ok, result}
-    else
-      nil -> {:error, :publish_finalization_context_not_found}
-      {:error, reason} -> {:error, reason}
-    end
+    _ = opts
+    {:ok, result}
   end
 
   defp target_author(%Author{} = author), do: {:ok, author}
@@ -355,12 +326,18 @@ defmodule GroupherServer.CMS.Articles do
 
   defp actor_user(%User{} = user), do: user
   defp actor_user(%Author{user: %User{} = user}), do: user
-  defp actor_user(%Author{user_id: user_id}), do: GroupherServer.Repo.get(User, user_id)
+
+  defp actor_user(%Author{user_id: user_id}) do
+    case GroupherServer.FrontDesk.fresh_user(user_id) do
+      {:ok, user} -> user
+      _ -> nil
+    end
+  end
 
   defp stable_article(article_id) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{} = article -> {:ok, article}
-      nil -> {:error, :article_not_found}
+    case Reader.article(article_id) do
+      {:ok, %Article{} = article} -> {:ok, article}
+      {:error, _} -> {:error, :article_not_found}
     end
   end
 
@@ -370,19 +347,16 @@ defmodule GroupherServer.CMS.Articles do
   defp stable_public(%Article{thread: :doc, id: article_id}, opts) do
     branch_id = Keyword.fetch!(opts, :branch_id)
 
-    case GroupherServer.Repo.get_by(CMS.Model.DocPublic,
-           article_id: article_id,
-           branch_id: branch_id
-         ) do
-      %CMS.Model.DocPublic{} = public -> {:ok, public}
-      nil -> {:error, :not_found}
+    case CMS.Docs.Reader.public(article_id, branch_id) do
+      {:ok, %CMS.Model.DocPublic{} = public} -> {:ok, public}
+      {:error, _} -> {:error, :not_found}
     end
   end
 
   defp stable_public(%Article{id: article_id}, _opts) do
-    case GroupherServer.Repo.get(CMS.Model.ArticlePublic, article_id) do
-      %CMS.Model.ArticlePublic{} = public -> {:ok, public}
-      nil -> {:error, :not_found}
+    case Reader.public(article_id) do
+      {:ok, %CMS.Model.ArticlePublic{} = public} -> {:ok, public}
+      {:error, _} -> {:error, :not_found}
     end
   end
 
@@ -442,20 +416,20 @@ defmodule GroupherServer.CMS.Articles do
     do: change_sink(article_id, actor, :undo_sink, opts)
 
   defp change_sink(article_id, actor, action, opts) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{thread: :doc} = article ->
+    case Reader.article(article_id) do
+      {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
         CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
           apply(States, action, [canonical, [branch_id: branch_id]])
         end)
 
-      %Article{} = article ->
+      {:ok, %Article{} = article} ->
         CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
           apply(States, action, [canonical, opts])
         end)
 
-      nil ->
+      {:error, _} ->
         {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
@@ -500,31 +474,28 @@ defmodule GroupherServer.CMS.Articles do
     do: moderate(article_id, :audit_failed, attrs, actor, opts)
 
   defp moderate(article_id, state, attrs, actor, opts) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{thread: :doc} = article ->
+    case Reader.article(article_id) do
+      {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
         CMS.Gate.Access.with_branch_check(actor, :moderate, article, branch_id, fn canonical ->
           Moderation.set_state(canonical, state, attrs, branch_id: branch_id)
         end)
 
-      %Article{} = article ->
+      {:ok, %Article{} = article} ->
         CMS.Gate.Access.with_check(actor, :moderate, article, fn canonical ->
           Moderation.set_state(canonical, state, attrs, opts)
         end)
 
-      nil ->
+      {:error, _} ->
         {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end
 
   defp main_branch_id(community_id) do
-    case GroupherServer.Repo.get_by(CMS.Model.DocBranch,
-           community_id: community_id,
-           type: :main
-         ) do
-      %{id: branch_id} -> branch_id
-      nil -> nil
+    case CMS.Docs.Reader.branch(community_id, :main) do
+      {:ok, %{id: branch_id}} -> branch_id
+      {:error, _} -> nil
     end
   end
 
@@ -556,8 +527,8 @@ defmodule GroupherServer.CMS.Articles do
     do: change_comment_lock(article_id, actor, :unlock_comments, opts)
 
   defp change_comment_lock(article_id, actor, action, opts) do
-    case GroupherServer.Repo.get(Article, article_id) do
-      %Article{thread: :doc} = article ->
+    case Reader.article(article_id) do
+      {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
         CMS.Gate.Access.with_branch_check(actor, action, article, branch_id, fn canonical ->
@@ -565,13 +536,13 @@ defmodule GroupherServer.CMS.Articles do
           apply(States, command, [canonical, [branch_id: branch_id]])
         end)
 
-      %Article{} = article ->
+      {:ok, %Article{} = article} ->
         CMS.Gate.Access.with_check(actor, action, article, fn canonical ->
           command = if action == :lock_comments, do: :lock_comments, else: :undo_lock_comments
           apply(States, command, [canonical, opts])
         end)
 
-      nil ->
+      {:error, _} ->
         {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
   end

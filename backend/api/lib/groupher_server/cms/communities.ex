@@ -126,26 +126,34 @@ defmodule GroupherServer.CMS.Communities do
   @doc "Runs an authenticated destroy request behind the command receipt boundary."
   @spec request_destroy(Community.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def request_destroy(%Community{} = community, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
-      command_opts = Keyword.delete(opts, :command_id)
+    command = %Command{
+      actor: actor,
+      command_id: Keyword.get(opts, :command_id),
+      operation: :community_request_destroy,
+      target: community,
+      params: Keyword.delete(opts, :command_id)
+    }
 
-      Command.update_user(actor, command_id,
-        command: :community_request_destroy,
-        resource: community,
-        input: command_opts,
-        recovery: fn _receipt -> fetch(community.slug, :operations, inc_views: false) end
-      )
-      |> Command.run(fn %{input: command_opts} ->
-        with {:ok, _canonical} <-
-               GroupherServer.CMS.Gate.access_check(actor, :request_destroy, community),
-             {:ok, _blocker} <-
-               Lifecycle.request_destroy(
-                 community.slug,
-                 Keyword.put(command_opts, :operation_ref, command_id)
-               ) do
-          fetch(community.slug, :operations, inc_views: false)
-        end
-      end)
+    Command.execute(command,
+      action: &request_destroy_action/1,
+      result: fn _receipt -> fetch(community.slug, :operations, inc_views: false) end
+    )
+  end
+
+  defp request_destroy_action(%{
+         actor: actor,
+         target: community,
+         params: opts,
+         command_id: command_id
+       }) do
+    with {:ok, canonical} <-
+           GroupherServer.CMS.Gate.access_check(actor, :request_destroy, community),
+         {:ok, _blocker} <-
+           Lifecycle.request_destroy(
+             canonical.slug,
+             Keyword.put(opts, :operation_ref, command_id)
+           ) do
+      fetch(canonical.slug, :operations, inc_views: false)
     end
   end
 

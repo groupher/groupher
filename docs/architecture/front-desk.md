@@ -1,0 +1,433 @@
+# FrontDesk 资源读取边界与改造合同
+
+> 状态：改造合同。本文冻结 FrontDesk 的职责、目标 API、ORM/Repo 替换规则、测试数据库探针以及迁移顺序。当前代码尚未全部满足本文，实施状态必须以代码和测试为准。
+>
+> 范围：`GroupherServer.FrontDesk`、`Accounts.FrontDesk`、`CMS.FrontDesk`，以及直接读取这些领域资源的 GraphQL、Command、Facade、Reader、Writer、Store 和测试代码。
+
+相关文档：
+
+- [CMS 资源加载与 Canonical Reload 边界](./resource-loading-boundary.md)：transport ref、Gate canonical reload、async reload；
+- [CMS Facade 与实现目录收口](./cms-facade-directory.md)：Facade、Reader、Writer、Command 的目录和所有权；
+- [Gate V2](../feature/gate/v2.md)、[Gate V4](../feature/gate/v4.md)、[Gate V5](../feature/gate/v5.md)：读取 scope、mutation admission、typed context；
+- [ORM](./orm.md)：`Helper.ORM` 与持久化边界。
+
+## 1. 决策摘要
+
+FrontDesk 是具体领域资源的稳定读取入口，不是 Ecto schema 的通用查询代理。
+
+```text
+Application / GraphQL / cross-domain caller
+  -> FrontDesk.<resource>
+  -> owning domain Reader
+  -> Gate Scope / Lifecycle visibility
+  -> Repo / ORM
+  -> stable domain result
+```
+
+冻结以下规则：
+
+1. FrontDesk API 必须以资源或业务关系命名，例如 `user`、`community`、`article`、`comment`、`article_author`。
+2. 不保留 `get(schema, id)`、`get_by(schema, clauses)`、`preload(resource, relations)` 等通用 ORM 形状。
+3. 整数 ID 与公开字符串标识通过函数 guard 区分，不引入 `*_by_id` 命名。
+4. User 缓存一致性由 `user` 与 `fresh_user` 两个命名 API 明确表达；FrontDesk 不根据调用方或运行环境猜测是否使用缓存。
+5. 公开读取、actor-aware 管理读取和内部 operations 读取使用同一资源 API 的明确分支；`mode` 表达真实生产读取语义，不是权限凭证。
+6. Mutation 的 admission 仍由 `Gate.access_check` 负责。管理读取不能替代具体 action 的 Gate admission。
+7. Post、Blog、Changelog、Doc 继续共享 `FrontDesk.article`；当前没有拆分 `post`、`changelog` FrontDesk 的依据。
+8. 测试不增加 `mode: :test`。产品读取走 FrontDesk，底层数据库事实由 test-only `DBProbe` 验证。
+9. 本次采用直接 cutover，不保留旧通用 FrontDesk wrapper 或中间兼容层。
+
+## 2. FrontDesk 拥有什么
+
+### 2.1 资源解析与稳定结果
+
+FrontDesk 负责把调用方持有的稳定资源标识解析为当前领域结果：
+
+```elixir
+FrontDesk.user(user_id_or_login)
+FrontDesk.fresh_user(user_id_or_login)
+FrontDesk.community(community_id_or_slug)
+FrontDesk.article(article_path, actor)
+FrontDesk.comment(comment_path_or_id)
+```
+
+资源 ID 与公开标识类型不同时，使用 pattern matching 和 guard：
+
+```elixir
+def user(id) when is_integer(id), do: Accounts.FrontDesk.user(id)
+def user(login) when is_binary(login), do: Accounts.FrontDesk.user(login)
+
+def fresh_user(id) when is_integer(id), do: Accounts.FrontDesk.fresh_user(id)
+def fresh_user(login) when is_binary(login), do: Accounts.FrontDesk.fresh_user(login)
+
+def community(id) when is_integer(id), do: CMS.FrontDesk.community(id)
+def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)
+```
+
+不得因为底层最终执行 `Repo.get` 或 `ORM.find`，就把 schema、clauses 或 Ecto Query 暴露给调用方。
+
+User 的两个读取入口拥有固定且不同的一致性合同：
+
+| API                                | 一致性语义                                                                       | 典型用途                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `FrontDesk.user(ref)`              | 允许返回完整 User 缓存；返回稳定 User projection                                 | 头像、昵称、作者展示等普通读取                       |
+| `FrontDesk.fresh_user(ref)`        | 绕过完整 User 缓存，读取数据库当前值；返回与 `user/1` 相同的稳定 User projection | 对当前值敏感、但不属于 mutation admission 的独立读取 |
+| `FrontDesk.revalidate().user(ref)` | 读取数据库当前值并刷新完整 User 缓存                                             | User 写入成功后的 cache refresh                      |
+
+`fresh_user` 取代容易被误解为“active/alive User”的 `live_user`。它表达稳定的一致性合同，可以跨领域调用；但不能代替 Gate、事务锁或 Writer 的 canonical reload。
+
+`user/1` 与 `fresh_user/1` 的区别只有缓存一致性，不是返回字段。二者必须返回相同的稳定 User projection，并按现有 `ORM.fill_meta` 语义把 `meta` 规范化为非空值。`fresh_user/1` 不接受 `fill_meta: false`、`preload` 或其他 shape 选项。
+
+FrontDesk 自身不推断调用方是否需要缓存。调用方通过 `user` 或 `fresh_user` 明确声明一致性需求；mutation safety 则必须交给 Gate/Writer。
+
+### 2.2 业务关系
+
+跨领域调用方需要的是关系语义，而不是关联表或 foreign key：
+
+```elixir
+FrontDesk.article_author(article)
+FrontDesk.article_of(comment)
+FrontDesk.thread_of(article_or_comment)
+```
+
+例如 GraphQL resolver 判断当前用户是否为文章作者时，应调用 `article_author(article)`，不得自行读取 `Author` schema。
+
+关系 API 可以在拥有该关系的 Reader 内使用 Repo preload 或 join；调用方不能指定任意 preload 树。
+
+### 2.3 资源专属查询
+
+确有跨领域消费者的查询，可以成为命名明确的 FrontDesk API：
+
+```elixir
+FrontDesk.community_tag(tag_id)
+FrontDesk.community_tag_group(group_id)
+FrontDesk.asset_referenced?(asset_ref)
+FrontDesk.trashed_article?(article_ref)
+```
+
+只有资源 owner 内部使用的查询留在对应 Reader、Writer、Store 或 Policy，不为形式统一向 FrontDesk 暴露。
+
+拒绝以下通用形状：
+
+```elixir
+FrontDesk.exists?(query)
+FrontDesk.exists?(schema, clauses)
+FrontDesk.aggregate(schema, field, operation)
+FrontDesk.all(query)
+```
+
+`exists?`、count 和 aggregate 只有在形成稳定业务问题后才能跨越领域边界。
+
+## 3. 读取模式
+
+### 3.1 Public
+
+默认单参数读取表达公共可见结果：
+
+```elixir
+FrontDesk.community(ref)
+FrontDesk.article(article_path)
+FrontDesk.comment(comment_path)
+```
+
+它必须遵守对应 Gate Scope、Lifecycle 和 moderation 可见性，不能因为调用方传入数据库 ID 就绕过公共规则。
+
+### 3.2 Management
+
+管理读取显式携带 actor 和 mode：
+
+```elixir
+FrontDesk.community(ref, actor, mode: :management)
+```
+
+它可以读取 actor 有权管理的 `setting_up`、隐藏、归档或待销毁资源，但必须满足：
+
+- actor 显式存在；
+- Reader 使用对应 typed Scope Context；
+- policy mode 只改变读取集合，不充当权限凭证；
+- 缺失 context、未知 mode 和不支持的资源状态 fail closed。
+
+未来若某资源需要区分 owner management 与 moderator management，应使用 Gate 已冻结的明确 policy mode，而不是在 FrontDesk 内自行判断角色。
+
+### 3.3 Operations
+
+内部任务和受信系统边界可以使用 operations 读取：
+
+```elixir
+FrontDesk.community(ref, :operations)
+```
+
+`:operations` 是生产存在的内部能力，只能由明确的 trusted boundary 使用。它不能从普通 GraphQL 参数透传，也不能替代 mutation action admission。
+
+### 3.4 不存在 Test mode
+
+禁止：
+
+```elixir
+FrontDesk.community(ref, mode: :test)
+FrontDesk.article(path, mode: :test)
+```
+
+测试必须调用生产真实存在的 public、management 或 operations 路径。`mode: :test` 会让测试依赖生产不存在的行为，并形成绕过 Gate/Lifecycle 的后门。
+
+## 4. Mutation、Gate 与 FrontDesk
+
+FrontDesk 负责入口资源解析和读取，不拥有 mutation admission：
+
+```text
+public ref/path
+  -> FrontDesk resource read
+  -> resource struct
+  -> CMS Facade / Command
+  -> Gate.access_check(actor, action, resource)
+  -> locked canonical resource + typed Access Context
+  -> Writer / Lifecycle
+```
+
+必须区分两种 reload：
+
+- Resolver、Command 在 Gate 前按同一 ID 重复加载：应删除；
+- Gate aggregate lock 内重新加载 canonical resource：必须保留。
+
+Mutation 不得用 `FrontDesk.community(ref, actor, mode: :management)` 的成功结果代替 `Gate.access_check(actor, action, resource)`。前者只证明资源在某读取集合中可见，后者才判定具体 action。
+
+Command replay/result 为重建 canonical business result 而读取 Article、Comment、Community 时，可以调用资源型 FrontDesk；不得调用通用 ORM-shaped FrontDesk。
+
+## 5. Article 不按 thread 拆 FrontDesk
+
+目标 API 保持：
+
+```elixir
+FrontDesk.article(%{
+  community: community,
+  thread: thread,
+  inner_id: inner_id
+}, actor)
+```
+
+当前 Post、Blog、Changelog 和 Doc 共享：
+
+- `ArticlePath` 外部定位合同；
+- canonical Article identity；
+- Gate/Lifecycle 可见性主流程；
+- public projection 主流程；
+- 调用方普遍携带动态 `thread`。
+
+Post 的 `PostState`、各 thread 的 Revision extension 和 Doc branch projection 属于 `FrontDesk.Article` 内部 dispatch，不构成公开 facade 拆分理由。
+
+因此当前不增加：
+
+```elixir
+FrontDesk.post(...)
+FrontDesk.changelog(...)
+FrontDesk.blog(...)
+FrontDesk.doc(...)
+```
+
+只有当某 thread 出现不同的 locator、权限模型、生命周期或返回合同，且调用点不再以动态 thread 为主时，才重新评估拆分。
+
+## 6. 通用 FrontDesk API 必须删除
+
+当前以下 API 把 FrontDesk 变成了 ORM facade：
+
+```elixir
+CMS.FrontDesk.get(schema, id)
+CMS.FrontDesk.get(schema, id, preload: relations)
+CMS.FrontDesk.get_by(schema, clauses)
+CMS.FrontDesk.get_by(schema, clauses, preload: relations)
+CMS.FrontDesk.preload(resource, relations)
+CMS.FrontDesk.preload_author(resource)
+```
+
+以下 API 虽然以资源命名，但同样把任意 ORM shape 或实现选项泄漏给调用方：
+
+```elixir
+Accounts.FrontDesk.user(ref, opts)
+Accounts.FrontDesk.live_user(ref, opts)
+GroupherServer.FrontDesk.live_user(ref, opts)
+CMS.FrontDesk.live_user(ref, opts)
+
+CMS.FrontDesk.article(article_path, actor, opts)
+CMS.FrontDesk.comment(comment_path, opts)
+CMS.FrontDesk.comment(article_path, inner_id, opts)
+CMS.FrontDesk.article_of(comment, opts)
+```
+
+目标是把 `live_user` 改为固定 shape 的 `fresh_user(ref)`，并从所有资源 API 删除调用方可控的 `preload`、`fill_meta` 和其他 projection implementation options。这里的固定 shape 与 `user/1` 完全相同：返回稳定 User projection，且 `meta` 已规范化为非空值；`fresh` 只表示绕过完整 User 缓存。
+
+目标处理如下：
+
+| 当前调用意图                                   | 目标                                                                   |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| 读取 User                                      | `FrontDesk.user(ref)` 或 `FrontDesk.fresh_user(ref)`，由一致性需求决定 |
+| 读取 Community                                 | `FrontDesk.community(ref, ...)`                                        |
+| 读取公共 Article projection                    | `FrontDesk.article(article_path, actor)`                               |
+| 读取 Comment                                   | `FrontDesk.comment(comment_path_or_id)`                                |
+| 读取 Article 作者                              | `FrontDesk.article_author(article)`                                    |
+| 读取 Comment 父 Article                        | `FrontDesk.article_of(comment)`                                        |
+| 读取 CommunityTag/Group                        | `FrontDesk.community_tag/1`、`community_tag_group/1`                   |
+| 读取 Draft/Public/Revision/Lifecycle row       | owning Reader、Store 或 Gate Loader                                    |
+| 事务锁、写前 invariant、写后同事务读取         | Writer/Store                                                           |
+| Outbox、Receipt、Job、backfill、reconciliation | 对应 Store/maintenance owner                                           |
+
+`ArticleDraft`、`ArticlePublic`、`ArticleRevision`、`DocPublic`、`CommandReceipt` 等持久化行不是顶层业务资源，不得为了替换通用 `get/get_by` 而新增同名 FrontDesk API。
+
+任意 preload 参数同样不属于稳定 FrontDesk 合同。资源 Reader 应返回该业务读取所需的稳定 shape；需要另一个 shape 时，增加命名明确的资源读取，而不是允许调用方传 Ecto preload。
+
+当前 OAuth 注册结果是唯一向 `live_user` 传入 `preload: :oauth_providers` 的生产调用。该调用位于 Accounts owner 内部，应由 `Profiles.Oauth` 或其内部 Reader 明确装配 OAuth registration result；当前没有跨领域消费者，不新增公开的 `user_with_oauth_providers`。
+
+`fill_meta: false` 同样是 projection 实现选项。公共 `user/1` 与 `fresh_user/1` 都必须返回已规范化 `meta` 的稳定 shape；OAuth owner 若需要 raw `meta` 或 OAuth provider preload，应通过 Accounts 内部 Reader 取得并装配，不能通过公共 FrontDesk opts 将该选择传播给 Fans、CMS 或 GraphQL 调用方。
+
+直接 cutover 完成后删除 `CMS.FrontDesk.Lookup` 和通用 `Relation.preload` surface，不保留 deprecated wrapper。
+
+## 7. 已确认的上层 ORM 边界迁移
+
+以下 7 个生产调用点位于 transport、GraphQL projection 或 Command result/replay 边界。其中 6 个迁移为资源 FrontDesk，分页列表查询迁移到 CMS Facade + Reader：
+
+| 调用点                                          | 当前调用                                | 目标边界                | 目标                                                                        |
+| ----------------------------------------------- | --------------------------------------- | ----------------------- | --------------------------------------------------------------------------- |
+| `groupher_server_web/context.ex`                | `ORM.find(User, claims.id)`             | FrontDesk               | `FrontDesk.fresh_user(claims.id)`；认证上下文需要数据库当前值               |
+| `cms_resolver.ex:cover_edit_info`               | `ORM.find(Author, author_id)`           | FrontDesk               | `FrontDesk.article_author(article)`                                         |
+| `cms_resolver.ex:community_tag_group_title`     | `ORM.find(CommunityTagGroup, group_id)` | FrontDesk               | `FrontDesk.community_tag_group(group_id)`                                   |
+| `cms_types.ex:moderator_community_slug`         | `ORM.find(Community, community_id)`     | FrontDesk               | `FrontDesk.community(community_id, actor/mode)`；调用链必须提供真实读取语义 |
+| `Comments.Commands.DeleteComment.delete_result` | `ORM.find(Comment, comment_id)`         | FrontDesk               | `FrontDesk.comment(comment_id)`                                             |
+| `Comments.Commands.UpdateComment.update_result` | `ORM.find(Comment, comment_id)`         | FrontDesk               | `FrontDesk.comment(comment_id)`                                             |
+| `cms_resolver.ex:paged_categories`              | `Category                               | > ORM.find_all(filter)` | CMS Facade + Reader                                                         | `CMS.Communities.paged_categories(filter)` → `Communities.Reader.page_categories(filter)` |
+
+第四项不能在缺少 actor/mode 的情况下默认升级为 management 读取。实施时应让上游传入已有 Community、补齐 actor-aware management context，或确认该 field 只允许 public Community。
+
+分类分页遵循现有 CMS 域 Reader 平铺惯例，归入 `CMS.Communities.Reader.page_categories/1`。不为它新建 `Communities.Categories.Reader`；现有 `communities/categories.ex` 继续承担 mutation helper 职责。
+
+## 8. 不应迁移到 FrontDesk 的 ORM/Repo
+
+以下场景继续由领域持久化边界负责：
+
+- Gate Loader 中带 `FOR UPDATE`/`FOR SHARE` 的 canonical load；
+- Writer/Store 中与写入共享事务快照的查询；
+- CommunityModerator、CommunitySubscriber、CommunityCategory 等关系行；
+- ArticleDraft、ArticlePublic、Revision、Lifecycle、DocsSiteState、DocBranchState 等 aggregate 内部状态；
+- Passport、PublishThrottle、AbuseReport、CommandReceipt、Outbox Event；
+- backfill、GC、provider reconciliation、批处理和 projection maintenance；
+- Factory 为构造异常状态执行的直接数据库写入。
+
+Resolver 中的 list、pagination、search 和 aggregate 查询必须下沉领域 Facade + Reader，不进入 FrontDesk，也不能留在 transport 边界直接调用 ORM/Repo。
+
+这些模块可以把查询从 Facade/Command 下沉到 Reader、Writer、Store、Policy 或 maintenance owner，但不能用 FrontDesk 包装数据库实现。
+
+## 9. 测试读取与 DBProbe
+
+当前测试快照中，后端测试约有 496 次直接 Repo 读取，分布在 95 个文件；这些调用不能机械替换。
+
+### 9.1 产品读取断言
+
+测试用户、管理员或系统最终能读到什么时，必须使用真实 FrontDesk：
+
+```elixir
+assert {:ok, article} = FrontDesk.article(path, actor)
+assert {:ok, community} = FrontDesk.community(ref, actor, mode: :management)
+```
+
+这类测试直接调用 Repo 会绕过 Gate、Lifecycle、moderation 和 projection，可能在产品读取已坏时仍然通过。
+
+### 9.2 数据库事实断言
+
+测试 Receipt、Outbox、Lifecycle row、blocker、事务回滚、唯一约束和 row count 时，必须直接观察数据库事实，不能改为 FrontDesk。
+
+统一使用 test-only：
+
+```elixir
+GroupherServer.Test.DBProbe
+```
+
+最小 API：
+
+```elixir
+DBProbe.get!(schema, id)
+DBProbe.get_by!(schema, clauses)
+DBProbe.reload!(record)
+DBProbe.exists?(schema, clauses)
+DBProbe.count(schema, clauses \\ [])
+DBProbe.all(query)
+```
+
+```text
+FrontDesk
+  -> 验证生产业务读取结果
+
+DBProbe
+  -> 验证数据库持久化事实
+
+Factory
+  -> 构造测试数据和异常状态
+```
+
+`DBProbe` 只能存在于 test support，生产代码不得引用。它不是 authorization API，也不做 Gate/Lifecycle filtering。
+
+## 10. 静态约束
+
+生产代码应通过 Credo 自定义检查阻止上层绕过读取边界：
+
+- GraphQL resolver/schema/context 禁止直接调用 `Repo` 和 `Helper.ORM`；
+- `commands/` 禁止直接按 transport ref 调用 `Repo`/`ORM`；
+- CMS 顶层 Facade 禁止拥有 Ecto query、Repo transaction 和通用 ORM lookup；
+- 检查必须同时识别 `Repo.*`、`GroupherServer.Repo.*`、`ORM.*` 和 `Helper.ORM.*`，不能只检查 Repo alias；
+- Reader、Writer、Store、Gate Loader、Lifecycle owner、maintenance、Factory 和 test-only DBProbe 按明确目录白名单放行。
+
+白名单表达 owner，不表达“这个模块目前碰巧需要查库”。新增例外必须先说明为何不属于已有 Reader/Writer/Store。
+
+## 11. 实施顺序
+
+### Phase 1：补齐资源 API
+
+- `FrontDesk.user(integer | binary)`；
+- `FrontDesk.fresh_user(integer | binary)`，直接替代 `live_user`，并返回与 `user/1` 相同、`meta` 已规范化的稳定 User projection；
+- `FrontDesk.community(integer | binary)`；
+- `FrontDesk.community(ref, actor, mode: :management)`；
+- trusted `FrontDesk.community(ref, :operations)`；
+- `FrontDesk.article_author(article)`；
+- `FrontDesk.community_tag_group(id)`；
+- 保留并校准 `article`、`comment`、`article_of`、`thread_of`、`community_tag`。
+
+### Phase 2：迁移上层直接 ORM
+
+- 完成 §7 的 7 个调用点，其中 `paged_categories` 下沉 `Communities.Reader.page_categories/1`；
+- 扫描 Resolver、Schema、Context、Command result/replay 的 `Repo`、`ORM` 和间接 helper；
+- 同步扩展 Credo 检查，防止新绕过。
+
+### Phase 3：移除通用 FrontDesk
+
+- 将现有 `FrontDesk.get/get_by/preload` 调用按 §6 分类；
+- 删除 `user/live_user/article/comment/article_of` 上调用方可控的 `opts/preload/fill_meta`，将 `live_user` 直接改名为 `fresh_user`；
+- 业务资源改为具体 FrontDesk；
+- aggregate 内部状态下沉 owning Reader/Writer/Store/Gate Loader；
+- 删除 `CMS.FrontDesk.Lookup`、通用 `get/get_by/preload` 和兼容 wrapper。
+
+### Phase 4：测试收口
+
+- 新增 test-only `DBProbe`；
+- 产品读取断言迁移到 FrontDesk；
+- 数据库副作用断言迁移到 DBProbe；
+- Factory 保留构造数据所需的 Repo/ORM；
+- 禁止 `mode: :test`。
+
+### Phase 5：验证
+
+- FrontDesk public/management/operations 读取测试；
+- Gate fail-closed 与 actor/mode 组合测试；
+- Command first execution/replay 返回同一 canonical business result；
+- Credo protected-boundary 测试覆盖 Repo 与 ORM 两种绕过；
+- `mix compile --warnings-as-errors`；
+- `pnpm docs:check`。
+
+## 12. 完成定义
+
+满足以下条件后，FrontDesk 改造才可标记 completed：
+
+- 生产上层边界不存在直接 Repo/ORM 资源读取；
+- FrontDesk 只暴露资源或业务关系 API；
+- 通用 `get/get_by/preload` 和 `CMS.FrontDesk.Lookup` 已删除；
+- `live_user` 已由固定 shape 的 `fresh_user` 取代；`user/1` 与 `fresh_user/1` 返回相同且 `meta` 已规范化的稳定 User projection，所有公共资源 API 均不接受任意 preload 或 projection implementation options；
+- mutation 使用 Gate callback 返回的 canonical resource；
+- management 读取始终显式携带 actor，operations 只存在于 trusted boundary；
+- Post/Blog/Changelog/Doc 调用方继续使用统一 ArticlePath API；
+- 测试不存在 `mode: :test`，产品读取和数据库事实断言已分别归 FrontDesk 与 DBProbe；
+- Credo、聚焦测试、编译和文档检查通过。

@@ -22,7 +22,7 @@ GraphQL path/ref
   -> %Comment{} / %Post{} / ...
   -> Resolver 降级为 resource.id
   -> CMS facade / Command
-  -> FrontDesk.get(Resource, id)
+  -> owning Reader resource(id)
 ```
 
 这种链路带来四个问题：
@@ -151,7 +151,7 @@ committed effect/job payload
 
 ### 4.1 Comment solution
 
-当前 `accept_solution`、`revoke_solution` 已由 GraphQL FrontDesk middleware 得到 `%Comment{}`，Resolver 却传递 `comment.id`；对应 Command 再执行 `FrontDesk.get(Comment, id)`。
+当前 `accept_solution`、`revoke_solution` 已由 GraphQL FrontDesk middleware 得到 `%Comment{}`，Resolver 却传递 `comment.id`；对应 Command 再执行通用 lookup。
 
 目标：
 
@@ -159,15 +159,15 @@ committed effect/job payload
 CMS.Comments.accept_solution(%Comment{} = comment, actor)
 CMS.Comments.revoke_solution(%Comment{} = comment, actor)
 
-Comments.Commands.Solution.accept(comment, actor)
-Comments.Commands.Solution.revoke(comment, actor)
+Comments.Solution.accept(comment, actor)
+Comments.Solution.revoke(comment, actor)
 ```
 
 原有 `AcceptSolution`、`RevokeSolution` 和 `SolutionTransition` 没有必要拆成三个模块，现已统一收口为一个 Command 模块：
 
 ```text
-comments/commands/solution.ex
-GroupherServer.CMS.Comments.Commands.Solution
+comments/solution.ex
+GroupherServer.CMS.Comments.Solution
   accept/2
   revoke/2
   revoke_if_current/5
@@ -175,7 +175,7 @@ GroupherServer.CMS.Comments.Commands.Solution
 
 `accept/2` 和 `revoke/2` 是完整 Command 入口；`current`、`upsert`、`record_accept` 等 relation helper 留作模块私有函数。`DeleteComment` 复用公开的 `revoke_if_current/5`，不再建立额外的 `Comments.Solutions` 或 `SolutionTransition` 模块。
 
-`Solution.accept/2`、`Solution.revoke/2` 现在使用 Gate 的双参数内部 callback 直接取得锁内 canonical Comment 与父 Article（Post），不再执行 `FrontDesk.get(Post, canonical.post_id)`。Gate 的 Access Context 仍未暴露给 Resolver 或普通 CMS 调用方。
+`Solution.accept/2`、`Solution.revoke/2` 现在使用 Gate 的双参数内部 callback 直接取得锁内 canonical Comment 与父 Article（Post），不再执行通用 FrontDesk lookup。Gate 的 Access Context 仍未暴露给 Resolver 或普通 CMS 调用方。
 
 ### 4.2 Comment reply
 
@@ -303,7 +303,7 @@ CommandReceipt.Store
 ### Phase 1：Comment 资源入口（已完成主要同步入口）
 
 - accept/revoke solution 改为 `%Comment{}`；
-- 原 `AcceptSolution`、`RevokeSolution`、`SolutionTransition` 已合并为 `Comments.Commands.Solution`，用 `accept/2`、`revoke/2` 区分动作；
+- 原 `AcceptSolution`、`RevokeSolution`、`SolutionTransition` 已合并为 `Comments.Solution`，用 `accept/2`、`revoke/2` 区分动作；
 - reply 改为 parent `%Comment{}`，并评估下沉到 `Commands.ReplyComment`；
 - pin/unpin 改为 `%Comment{}`；
 - fold/unfold 已补齐 struct 入口；现存 GraphQL 之外的 ID 兼容入口待调用方迁移后移除；
@@ -327,7 +327,7 @@ CommandReceipt.Store
 
 ### Phase 4：Aggregate callback 与事务审计（Comment solution/reply/pin 已完成首轮收口）
 
-- `Commands.Solution.accept/revoke` 已改用 Gate 双参数 callback 取得锁内父 Post，不再 `FrontDesk.get(Post, ...)`；
+- `Commands.Solution.accept/revoke` 已改用 Gate 双参数 callback 取得锁内父 Post，不再使用通用 FrontDesk lookup；
 - `DeleteComment`、`UpdateComment`、`ReplyComment` 和 pin/unpin 均使用 Gate 双参数 callback 传回的锁内 canonical parent Article；Delete/Update 的 command replay reader 仍可为恢复结果读取 Article；
 - 已为需要父 aggregate 的同步 Comment command 增加内部双参数 callback contract；
 - pin/unpin 已接入 `Gate.Access.with_check/4`，准入与写入处于同一 aggregate transaction；
@@ -374,7 +374,7 @@ def resolver(_, %{comment: %Comment{} = comment}, resolution) do
 end
 
 def execute(comment_id, actor) do
-  with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
     # ...
   end
 end

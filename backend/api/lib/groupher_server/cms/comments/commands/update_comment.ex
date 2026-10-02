@@ -12,13 +12,12 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   from `PostSolution`; the Comment row remains the body authority.
   """
 
-  alias GroupherServer.{Accounts, CMS, Jobs, PublicCache, Repo}
+  alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate, Comments}
   alias Comments.{BodyCodec, JobPolicy}
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @type result :: %{comment: Comment.t(), article: struct(), command_id: String.t() | nil}
 
@@ -37,74 +36,90 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
 
   @doc "Updates a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), String.t(), User.t(), String.t() | nil) :: T.domain_res(result())
-  def execute(%Comment{} = comment, body, %User{} = actor, command_id) do
-    command =
-      Command.update_user(actor, command_id,
-        command: :comment_update,
-        resource: comment,
-        input: body,
-        recovery: fn receipt ->
-          with {:ok, current} <- ORM.find(Comment, comment.id),
-               {:ok, article} <- FrontDesk.article_of(current) do
-            {:ok, %{comment: current, article: article, command_id: receipt.command_id}}
-          end
-        end
-      )
+  def execute(%Comment{} = comment, body, %User{} = actor, nil) do
+    operation_id = Ecto.UUID.generate()
 
-    Command.run(
-      %{
-        command
-        | after_commit: fn %{comment: updated} ->
-            enqueue_mentions_for(updated)
-            :ok
-          end
-      },
-      fn %{
-           actor: actor,
-           resource: comment,
-           input: body,
-           command_id: command_id
-         } ->
-        Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
-          update_new(canonical, article, body, command_id)
-        end)
-      end
+    Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+      update_new(canonical, article, body, actor, operation_id)
+    end)
+  end
+
+  def execute(%Comment{} = comment, body, %User{} = actor, command_id) do
+    command = %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :comment_update,
+      target: comment,
+      params: body
+    }
+
+    Command.execute(command,
+      action: &update_action/1,
+      result: &update_result(&1, comment.id)
     )
   end
 
-  defp update_new(canonical, article, body, command_id) do
+  defp update_action(%{
+         actor: actor,
+         target: comment,
+         params: body,
+         command_id: command_id
+       }) do
+    Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
+      update_new(canonical, article, body, actor, command_id)
+    end)
+  end
+
+  defp update_result(receipt, comment_id) do
+    with {:ok, current} <- ORM.find(Comment, comment_id),
+         {:ok, article} <- FrontDesk.article_of(current) do
+      {:ok, %{comment: current, article: article, command_id: receipt.command_id}}
+    end
+  end
+
+  defp update_new(canonical, article, body, actor, command_id) do
     with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
          :ok <- CMS.ArticleStats.record_comment_change(article),
          {:ok, synced} <- FrontDesk.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced),
-         {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id) do
+         {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id),
+         :ok <- enqueue_comment_effects(canonical, actor, command_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    article = Repo.preload(article, :community)
+    {:ok, article} = CMS.Articles.Reader.with_community(article)
 
-    PublicCache.invalidate_now(
-      PublicCacheConst.comments_content_changed(),
-      %{
+    CMS.Outbox.send(%{
+      event: "comment.changed",
+      worker: CMS.Outbox.Workers.Comment.Cleanup,
+      resource_type: "article",
+      resource_id: article.id,
+      command_id: command_id,
+      data: %{
         community: article.community.slug,
         community_id: article.community_id,
         thread: thread,
         inner_id: article.inner_id,
-        id: article.id
-      },
-      causation_id: command_id,
-      aggregate_type: "article"
-    )
+        article_id: article.id
+      }
+    })
   end
 
-  defp enqueue_mentions_for(%Comment{} = comment) do
-    :ok =
-      Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
-        Jobs.sync_mentions(comment)
-      end)
+  defp enqueue_comment_effects(%Comment{} = comment, %User{} = actor, command_id) do
+    case CMS.Outbox.send(%{
+           event: "comment.updated",
+           worker: CMS.Outbox.Workers.Comment.Cleanup,
+           resource_type: "comment",
+           resource_id: comment.id,
+           command_id: command_id,
+           data: %{actor_id: actor.id, article_id: comment.article_id}
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

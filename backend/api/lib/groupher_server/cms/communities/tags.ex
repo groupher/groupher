@@ -16,14 +16,13 @@ defmodule GroupherServer.CMS.Communities.Tags do
   import GroupherServer.CMS.Articles.Writer,
     only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
   alias CMS.{Communities.ErrorCat, Communities.TagStats, FrontDesk, QueryBuilder}
   alias CMS.Articles.Communities, as: ArticleCommunities
   alias CMS.Model.{Article, ArticleCommunity, Community, CommunityTag, CommunityTagGroup}
   alias Helper.{Datetime, Multi, ORM, T}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @doc """
   create a community tag
@@ -369,6 +368,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
     removed_tags = Enum.reject(old_tags, &MapSet.member?(new_ids, &1.id))
 
     deltas = Enum.map(added_tags, &{&1, 1}) ++ Enum.map(removed_tags, &{&1, -1})
+
     case TagStats.update_many(article, deltas) do
       {:ok, _result} -> :ok
       {:error, _reason} = error -> error
@@ -739,13 +739,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp preload_tag_group(result), do: result
 
   defp invalidate_taxonomy(%Community{} = community, thread) do
-    case PublicCache.invalidate_now(
-           PublicCacheConst.taxonomy_changed(),
-           %{community: community.slug, community_id: community.id, thread: thread},
-           causation_id: Ecto.UUID.generate(),
-           aggregate_type: "community_tag"
-         ) do
-      {:ok, _invalidation} -> :ok
+    case CMS.Outbox.send(%{
+           event: "community.taxonomy_changed",
+           worker: CMS.Outbox.Workers.Community.Cleanup,
+           resource_type: "community",
+           resource_id: community.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{community: community.slug, community_id: community.id, thread: thread}
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end

@@ -57,9 +57,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
     )
     |> Repo.all()
     |> Enum.each(fn asset ->
-      with {:ok, deleted} <- Writer.delete(community, asset.id) do
-        enqueue(deleted)
-      end
+      _ = Writer.delete(community, asset.id)
     end)
 
     :ok
@@ -79,7 +77,7 @@ defmodule GroupherServer.CMS.Assets.Deletion do
   """
   @spec enqueue(CommunityAsset.t()) :: :ok
   def enqueue(%CommunityAsset{} = asset) do
-    case safe_enqueue(asset) do
+    case deliver(asset) do
       :ok ->
         :ok
 
@@ -95,6 +93,9 @@ defmodule GroupherServer.CMS.Assets.Deletion do
         :ok
     end
   end
+
+  @doc false
+  def deliver(%CommunityAsset{} = asset), do: safe_enqueue(asset)
 
   defp safe_enqueue(%CommunityAsset{} = asset) do
     do_enqueue(asset)

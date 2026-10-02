@@ -173,7 +173,7 @@ defmodule GroupherServer.CMS.Gate.Access do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment, preload: :community)
+  defp parent_article(comment), do: FrontDesk.article_of(comment)
 
   defp transact_parent(community, %Article{thread: :doc} = article, branch_id, fun)
        when is_integer(branch_id),

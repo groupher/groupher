@@ -328,7 +328,7 @@ front_desk/
 ├── comment.ex                  # comment path、full comment
 ├── community.ex                # community 与 community tag
 ├── lookup.ex                   # get/get_by 等受控通用 lookup
-├── relation.ex                 # preload_author/author_of/article_of/thread_of
+├── relation.ex                 # author_of/article_of/thread_of
 └── reaction_users.ex           # reaction user pagination
 ```
 

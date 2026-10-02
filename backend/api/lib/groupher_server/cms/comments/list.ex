@@ -409,7 +409,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   defp article_author_id(comment) do
     with {:ok, article} <- CMS.FrontDesk.article_of(comment),
-         {:ok, author} <- CMS.FrontDesk.author_of(article) do
+         {:ok, author} <- CMS.FrontDesk.article_author(article) do
       author.id
     else
       _ -> nil

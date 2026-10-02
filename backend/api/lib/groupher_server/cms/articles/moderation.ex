@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, PublicCache, Repo}
+  alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.Trash
   alias CMS.Communities.TagStats
@@ -61,9 +61,9 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     update_doc_moderation(article, state, audit_state, opts)
   end
 
-  def set_state(%Article{} = article, state, audit_state, _opts)
+  def set_state(%Article{} = article, state, audit_state, opts)
       when state in [:legal, :illegal, :audit_failed] do
-    update_stable_moderation(article, state, audit_state)
+    update_stable_moderation(article, state, audit_state, opts)
   end
 
   defp update_doc_moderation(article, state, audit_state, opts) do
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end
   end
 
-  defp update_stable_moderation(%Article{} = article, state, audit_state) do
+  defp update_stable_moderation(%Article{} = article, state, audit_state, opts) do
     with {:ok, updated} <-
            article
            |> Article.changeset(stable_moderation_attrs(state, audit_state))
@@ -99,7 +99,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
          :ok <- update_author_moderation(article, state, audit_state),
          :ok <- rebuild_tag_stats(article.id),
          :ok <- sync_stable_search(updated, state),
-         :ok <- invalidate_public_cache(updated) do
+         :ok <- invalidate_public_cache(updated, opts) do
       {:ok, updated}
     end
   end
@@ -193,27 +193,32 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     :ok
   end
 
-  defp invalidate_public_cache(%Article{inner_id: inner_id}) when not is_integer(inner_id),
-    do: :ok
+  defp invalidate_public_cache(%Article{inner_id: inner_id}, _opts)
+       when not is_integer(inner_id),
+       do: :ok
 
-  defp invalidate_public_cache(%Article{} = article) do
+  defp invalidate_public_cache(%Article{} = article, opts) do
+    operation_id = Keyword.get(opts, :command_id, Ecto.UUID.generate())
+
     article
     |> CMS.Articles.Communities.communities()
     |> Enum.reduce_while(:ok, fn community, :ok ->
-      case PublicCache.invalidate_now(
-             :article_visibility_changed,
-             %{
-               id: article.id,
+      case CMS.Outbox.send(%{
+             event: "article.visibility_changed",
+             worker: CMS.Outbox.Workers.Article.Cleanup,
+             resource_type: "article",
+             resource_id: article.id,
+             command_id: Ecto.UUID.generate(),
+             data: %{
+               operation_id: operation_id,
                community: community.slug,
                community_id: community.id,
                thread: article.thread,
-               inner_id: article.inner_id
-             },
-             causation_id: Ecto.UUID.generate(),
-             aggregate_id: article.id,
-             aggregate_type: "article"
-           ) do
-        {:ok, _invalidation} -> {:cont, :ok}
+               inner_id: article.inner_id,
+               article_id: article.id
+             }
+           }) do
+        {:ok, _event} -> {:cont, :ok}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)

@@ -25,8 +25,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     field(:initiator_key, :string)
     field(:command_id, Ecto.UUID)
     field(:command, :string)
-    field(:target_type, :string)
-    field(:target_key, :string)
+    field(:resource_type, :string)
+    field(:resource_id, :string)
     field(:payload_fingerprint, :string)
     field(:outcome, :string)
     field(:result_key, :string)
@@ -41,8 +41,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     initiator_key
     command_id
     command
-    target_type
-    target_key
+    resource_type
+    resource_id
     payload_fingerprint
     expires_at
   )a
@@ -55,8 +55,8 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
       :initiator_key,
       :command_id,
       :command,
-      :target_type,
-      :target_key,
+      :resource_type,
+      :resource_id,
       :payload_fingerprint,
       :outcome,
       :result_key,

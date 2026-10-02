@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.ConnSimulator do
   import Phoenix.ConnTest, only: [build_conn: 0]
   import Plug.Conn, only: [put_req_header: 3]
 
-  import GroupherServer.CMS.FrontDesk, only: [author_of: 1]
+  import GroupherServer.CMS.FrontDesk, only: [article_author: 1]
 
   alias GroupherServer.{Accounts, CMS}
 
@@ -44,7 +44,7 @@ defmodule GroupherServer.Test.ConnSimulator do
 
   @doc "Builds an authenticated connection from content ownership, a User, or Passport rules."
   def simu_conn(:owner, content) do
-    with {:ok, author} <- author_of(content) do
+    with {:ok, author} <- article_author(content) do
       token = gen_jwt_token(id: author.id)
 
       build_conn() |> put_req_header("authorization", token)

@@ -274,6 +274,7 @@ config :groupher_server, Oban,
     default: 10,
     search: 5,
     snapshot: 5,
+    cms_outbox: 5,
     public_cache: 5,
     community_application: 5,
     community_setup: 5

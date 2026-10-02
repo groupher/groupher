@@ -28,8 +28,6 @@ defmodule GroupherServer.TestMate do
       import Helper.Utils,
         only: [camelize_map_key: 1, camelize_map_key: 2, get_config: 2]
 
-      import GroupherServer.CMS.FrontDesk, only: [preload_author: 1]
-
       import ShortMaps
 
       alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
@@ -88,11 +86,8 @@ defmodule GroupherServer.TestMate do
       def read_article(community, thread, inner_id, actor_or_opts) when is_binary(community) do
         article_path = %{community: community, thread: thread, inner_id: inner_id}
 
-        if is_list(actor_or_opts) do
-          CMS.FrontDesk.article(article_path, nil, actor_or_opts)
-        else
-          CMS.FrontDesk.article(article_path, actor_or_opts, [])
-        end
+        actor = if is_list(actor_or_opts), do: nil, else: actor_or_opts
+        CMS.FrontDesk.article(article_path, actor)
       end
 
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do

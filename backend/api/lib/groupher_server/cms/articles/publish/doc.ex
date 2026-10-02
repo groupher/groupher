@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, PublicCache, Repo}
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.{Draft.Store, Numbering, Revision}
 
   alias CMS.Model.{
@@ -212,21 +212,20 @@ defmodule GroupherServer.CMS.Articles.Publish.Doc do
   defp invalidate_public_cache(article, branch_id, first_publish?, opts) do
     with %DocBranch{type: :main} <- Repo.get(DocBranch, branch_id),
          %Community{} = community <- Repo.get(Community, article.community_id) do
-      type = if first_publish?, do: :article_published, else: :article_content_changed
-
-      PublicCache.invalidate_now(
-        type,
-        %{
-          id: article.id,
+      CMS.Outbox.send(%{
+        event: if(first_publish?, do: "article.published", else: "article.updated"),
+        worker: CMS.Outbox.Workers.Article.Cleanup,
+        resource_type: "article",
+        resource_id: article.id,
+        command_id: Keyword.get(opts, :causation_id, Ecto.UUID.generate()),
+        data: %{
           community: community.slug,
           community_id: community.id,
           thread: :doc,
-          inner_id: article.inner_id
-        },
-        causation_id: Keyword.get(opts, :causation_id, Ecto.UUID.generate()),
-        aggregate_id: article.id,
-        aggregate_type: "article"
-      )
+          inner_id: article.inner_id,
+          article_id: article.id
+        }
+      })
     else
       %DocBranch{} -> {:ok, :branch_not_public}
       nil -> {:error, :branch_or_community_not_found}

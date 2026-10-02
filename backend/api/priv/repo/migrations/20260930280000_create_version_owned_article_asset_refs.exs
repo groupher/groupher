@@ -51,5 +51,76 @@ defmodule GroupherServer.Repo.Migrations.CreateVersionOwnedArticleAssetRefs do
         where: "revision_id IS NOT NULL AND usage IN ('cover', 'cover_dark')"
       )
     )
+
+    execute("""
+    DO $$
+    BEGIN
+      IF to_regclass('cms.article_document_asset_refs') IS NOT NULL THEN
+        IF EXISTS (
+          SELECT 1
+          FROM cms.article_document_asset_refs legacy_ref
+          LEFT JOIN cms.article_documents legacy_document
+            ON legacy_document.id = legacy_ref.article_document_id
+          LEFT JOIN cms.articles article
+            ON article.community_id = legacy_ref.community_id
+           AND article.thread = legacy_ref.thread
+           AND article.inner_id = legacy_ref.article_id
+          LEFT JOIN cms.article_drafts draft
+            ON draft.article_id = article.id
+          LEFT JOIN cms.article_publics public_head
+            ON public_head.article_id = article.id
+          WHERE article.id IS NULL
+             OR (draft.body_draft_id IS NULL AND public_head.revision_id IS NULL)
+        ) THEN
+          RAISE EXCEPTION
+            'legacy article asset refs cannot be mapped to the Revision/Draft ownership model';
+        END IF;
+
+        INSERT INTO cms.article_asset_refs (
+          community_id,
+          asset_id,
+          body_draft_id,
+          revision_id,
+          usage,
+          block_id,
+          block_type,
+          position,
+          title,
+          alt,
+          source,
+          meta,
+          inserted_at,
+          updated_at
+        )
+        SELECT
+          legacy_ref.community_id,
+          legacy_ref.asset_id,
+          CASE WHEN public_head.revision_id IS NULL THEN draft.body_draft_id ELSE NULL END,
+          public_head.revision_id,
+          legacy_ref.usage,
+          legacy_ref.block_id,
+          legacy_ref.block_type,
+          legacy_ref.position,
+          legacy_ref.title,
+          legacy_ref.alt,
+          legacy_ref.source,
+          legacy_ref.meta,
+          legacy_ref.inserted_at,
+          legacy_ref.updated_at
+        FROM cms.article_document_asset_refs legacy_ref
+        JOIN cms.article_documents legacy_document
+          ON legacy_document.id = legacy_ref.article_document_id
+        JOIN cms.articles article
+          ON article.community_id = legacy_ref.community_id
+         AND article.thread = legacy_ref.thread
+         AND article.inner_id = legacy_ref.article_id
+        LEFT JOIN cms.article_drafts draft
+          ON draft.article_id = article.id
+        LEFT JOIN cms.article_publics public_head
+          ON public_head.article_id = article.id
+        ON CONFLICT DO NOTHING;
+      END IF;
+    END $$;
+    """)
   end
 end

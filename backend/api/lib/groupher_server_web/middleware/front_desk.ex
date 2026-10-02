@@ -23,7 +23,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   require GroupherServer.CMS.ErrorCat
 
   import Helper.Utils, only: [handle_absinthe_error: 3]
-  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
+  alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk}
 
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
@@ -129,11 +129,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
            arguments: %{article_path: article_path} = arguments
          } =
            resolution,
-         opts
+         _opts
        ) do
-    preload = Keyword.get(opts, :preload, author: :user)
-
-    case FrontDesk.article(article_path, preload: preload) do
+    case FrontDesk.article(article_path) do
       {:ok, article} ->
         updated_arguments =
           arguments
@@ -158,10 +156,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          opts
        ) do
     with {:ok, thread} <- Keyword.fetch(opts, :thread),
-         {:ok, article, branch_id} <-
-           fetch_editor_article(community, thread, article_id) do
-      article = Repo.preload(article, author: :user)
-
+         {:ok, article, branch_id} <- fetch_editor_article(community, thread, article_id) do
       updated_arguments =
         arguments
         |> Map.put(:article, article)
@@ -187,8 +182,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
-    with %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article <-
-           Repo.get(CMS.Model.Article, article_id),
+    with {:ok, %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article} <-
+           CMS.Articles.Reader.article_with_author(article_id),
          {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
       {:ok, article, branch.id}
     else
@@ -197,8 +192,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
-    case Repo.get(CMS.Model.Article, article_id) do
-      %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article ->
+    case CMS.Articles.Reader.article_with_author(article_id) do
+      {:ok, %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article} ->
         {:ok, article, nil}
 
       _ ->

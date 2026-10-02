@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
         branch_id
       ) do
     with %Article{} = canonical <- Queries.resource(Article, resource.id),
-         canonical <- preload_author(canonical),
+         canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %DocBranch{} = doc_branch <- Queries.doc_branch(community.id, branch_id),
          %DocLifecycle{} = doc_lifecycle <- Queries.doc_lifecycle(canonical.id, branch_id),
@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
       )
       when thread in @article_threads do
     with %Article{} = canonical <- Queries.resource(Article, resource.id),
-         canonical <- preload_author(canonical),
+         canonical <- preload_article_author(canonical),
          %CommunityLifecycle{} = community_lifecycle <- Queries.community_lifecycle(community.id),
          %ArticleLifecycle{} = article_lifecycle <- Queries.article_lifecycle(canonical.id) do
       {:ok,
@@ -170,7 +170,7 @@ defmodule GroupherServer.CMS.Gate.Access.Load do
   defp parent_lifecycle(%ArticleContext{article_lifecycle: lifecycle}), do: lifecycle
   defp parent_lifecycle(%DocContext{doc_lifecycle: lifecycle}), do: lifecycle
 
-  defp preload_author(resource), do: Repo.preload(resource, author: :user)
+  defp preload_article_author(resource), do: Repo.preload(resource, author: :user)
 
   defp article_author_user_id(parent_context) do
     case parent_resource(parent_context) do

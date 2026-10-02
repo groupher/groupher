@@ -202,11 +202,11 @@ execute -> load_result -> after_commit
 CMS.Command.execute(command,
   action: fn context ->
     # 首次请求才执行；完整领域用例 + transactional outbox
-    {:ok, {:article, context.resource.id}}
+    {:ok, context.target, %{result_key: context.target.id}}
   end,
-  result: fn {:article, article_id} ->
+  result: fn receipt ->
     # 首次和已完成重试都执行
-    CMS.FrontDesk.article(article_id)
+    CMS.Articles.Reader.article(receipt.result_key)
   end
 )
 ```

@@ -16,11 +16,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
   alias CMS.Communities.Enable
-  alias CMS.{Events, Gate, Command}
+  alias CMS.{Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias Analysis.MetricEvent
-  alias Helper.{Later, T}
+  alias Helper.T
 
   @reserved_article_emotions [:upvote, :collect]
 
@@ -49,36 +49,29 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     do: mutate(artiment, emotion, actor, :remove, command_id)
 
   defp mutate(input, emotion, actor, operation, command_id) when is_atom(emotion) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id),
-         {:ok, info} <- Matcher.match_interaction(input) do
-      Command.update_user(actor, command_id,
-        command: emotion_command(operation),
-        resource: input,
-        input: %{operation: operation, emotion: emotion},
-        recovery: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end,
-        after_commit: fn
-          {canonical, :changed} ->
-            if match?(%Comment{}, canonical) do
-              Later.run(
-                {Events, :emit, [:subscribe_community, %{target: canonical, user: actor}]}
-              )
-            end
+    with {:ok, info} <- Matcher.match_interaction(input) do
+      context = %{
+        actor: actor,
+        target: input,
+        params: %{operation: operation, emotion: emotion},
+        command_id: command_id || Ecto.UUID.generate()
+      }
 
-            :ok
-
-          _ ->
-            :ok
-        end
-      )
-      |> Command.run(fn %{resource: input} ->
-        with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
-             {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
-             {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
-             :ok <- sync_state(canonical, emotion, actor, operation, change),
-             :ok <- record_metric(canonical, operation, change, command_id) do
-          {:ok, {canonical, change}, %{outcome: change}}
-        end
-      end)
+      if is_nil(command_id) do
+        execute_without_receipt(&emotion_action(&1, info), context)
+      else
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: emotion_command(operation),
+          target: input,
+          params: %{operation: operation, emotion: emotion}
+        }
+        |> Command.execute(
+          action: &emotion_action(&1, info),
+          result: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end
+        )
+      end
       |> present_reaction(command_id)
     end
   end
@@ -86,8 +79,57 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   defp mutate(_input, emotion, _actor, _operation, _command_id),
     do: {:error, ErrorCat.emotion_not_allowed(inspect(emotion))}
 
+  defp emotion_action(
+         %{
+           actor: actor,
+           target: input,
+           params: %{operation: operation, emotion: emotion},
+           command_id: command_id
+         },
+         info
+       ) do
+    with {:ok, canonical} <- Gate.access_check(actor, :emotion, input),
+         {:ok, _thread_key} <- allow_emotion(canonical, info, emotion),
+         {:ok, change} <- change_fact(canonical, info, emotion, actor, operation),
+         :ok <- sync_state(canonical, emotion, actor, operation, change),
+         :ok <- record_metric(canonical, operation, change, command_id),
+         :ok <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
+      {:ok, {canonical, change}, %{outcome: change}}
+    end
+  end
+
+  defp execute_without_receipt(action, context) do
+    Repo.transaction(fn ->
+      case action.(context) do
+        {:ok, result, _metadata} -> result
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
+
   defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
   defp recovery_outcome(_receipt), do: :changed
+
+  defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged),
+    do: :ok
+
+  defp enqueue_effect(canonical, actor, operation, emotion, command_id, :changed) do
+    CMS.Outbox.send(%{
+      event: "interaction.emotion_changed",
+      worker: CMS.Outbox.Workers.Interaction.Cleanup,
+      resource_type: interaction_resource_type(canonical),
+      resource_id: canonical.id,
+      command_id: command_id,
+      data: %{actor_id: actor.id, operation: operation, emotion: emotion}
+    })
+    |> case do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp interaction_resource_type(%Comment{}), do: "comment"
+  defp interaction_resource_type(_article), do: "article"
 
   defp emotion_command(:add), do: :emotion_add
   defp emotion_command(:remove), do: :emotion_remove

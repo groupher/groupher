@@ -422,7 +422,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
         :ok
 
       %CMS.Model.ArticleDraft{} = draft ->
-        with {:ok, actor} <- FrontDesk.author_of(article),
+        with {:ok, actor} <- FrontDesk.article_author(article),
              %CMS.Model.ArticleLifecycle{} = lifecycle <-
                Repo.get_by(CMS.Model.ArticleLifecycle, article_id: article.id),
              {:ok, _result} <-

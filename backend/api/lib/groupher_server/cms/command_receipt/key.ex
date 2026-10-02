@@ -1,31 +1,27 @@
 defmodule GroupherServer.CMS.CommandReceipt.Key do
   @moduledoc """
-  Resolves and validates the stable UUID identity for one CMS command attempt.
+  Validates the stable UUID identity for one CMS command attempt.
 
       direct command id
-        -> Key
+        -> Key.validate
         -> validated UUID, command_id_required or command_id_invalid
   """
 
   alias GroupherServer.CMS
   alias CMS.ErrorCat
 
-
   @doc """
-  Resolves a direct command id.
-
-  A missing key is equivalent to `nil` and creates an internal one-shot key.
-  A key that is present but invalid fails closed instead of being replaced.
+  Validates a required command id without creating a replacement identity.
   """
-  @spec resolve(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
-  def resolve(nil), do: {:ok, Ecto.UUID.generate()}
+  @spec validate(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
+  def validate(nil), do: {:error, ErrorCat.command_id_required()}
 
-  def resolve(key) when is_binary(key) do
+  def validate(key) when is_binary(key) do
     case Ecto.UUID.cast(key) do
       {:ok, uuid} -> {:ok, uuid}
       :error -> {:error, ErrorCat.command_id_invalid()}
     end
   end
 
-  def resolve(_id), do: {:error, ErrorCat.command_id_invalid()}
+  def validate(_id), do: {:error, ErrorCat.command_id_invalid()}
 end

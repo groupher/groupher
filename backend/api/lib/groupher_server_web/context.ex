@@ -35,7 +35,7 @@ defmodule GroupherServerWeb.Context do
   alias Auth.Contract, as: AuthContract
   alias GroupherServerWeb.ServiceAuth.Verifier
   alias GroupherServerWeb.ErrorCat
-  alias Helper.{Guardian, ORM}
+  alias Helper.Guardian
   alias Helper.Guardian.BrowserAccess
   alias CMS.ViewTracker.AnonymousSession
 
@@ -235,8 +235,15 @@ defmodule GroupherServerWeb.Context do
     end
   end
 
-  defp load_user(claims) do
-    case ORM.find(User, claims.id) do
+  defp load_user(%{id: id}) when is_binary(id) do
+    case Integer.parse(id) do
+      {id, ""} -> load_user(%{id: id})
+      _ -> {:error, "invalid user id in access claims"}
+    end
+  end
+
+  defp load_user(%{id: id}) when is_integer(id) do
+    case Accounts.FrontDesk.fresh_user(id) do
       {:ok, user} ->
         check_passport(user)
 

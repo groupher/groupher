@@ -18,25 +18,49 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{ORM, T}
 
-  @doc "Reads one public Community by slug or alias."
-  @spec read(String.t()) :: {:ok, Community.t()} | {:error, map()}
-  def read(slug) when is_binary(slug) do
-    CMS.Gate.scope(Community, nil, :read, CommunityContext.public())
-    |> where([community], community.slug == ^slug or community.aka == ^slug)
-    |> preload(:dashboard)
-    |> preload(:lifecycle)
-    |> preload(moderators: [:community, :user])
-    |> Repo.one()
-    |> done()
-    |> case do
-      {:ok, community} -> ORM.fill_meta(community)
-      {:error, _} = error -> error
+  @doc "Reads one Community by id or public slug."
+  @spec read(integer() | String.t()) :: {:ok, Community.t()} | {:error, map()}
+  def read(ref), do: read(ref, nil, [])
+
+  @doc "Reads one Community with an explicit actor-aware policy mode."
+  @spec read(integer() | String.t(), term(), keyword()) ::
+          {:ok, Community.t()} | {:error, map()}
+  def read(ref, actor, opts) when is_list(opts) do
+    policy_mode = Keyword.get(opts, :mode, :public)
+
+    with {:ok, context} <- scope_context(policy_mode),
+         %Ecto.Query{} = query <- CMS.Gate.scope(Community, actor, :read, context),
+         %Ecto.Query{} = query <- where_ref(query, ref),
+         query <- preload(query, [:dashboard, :lifecycle, moderators: [:community, :user]]),
+         {:ok, community} <- query |> Repo.one() |> done(),
+         {:ok, community} <- ORM.fill_meta(community) do
+      {:ok, community}
+    end
+  end
+
+  defp where_ref(query, id) when is_integer(id),
+    do: where(query, [community], community.id == ^id)
+
+  defp where_ref(query, slug) when is_binary(slug),
+    do: where(query, [community], community.slug == ^slug or community.aka == ^slug)
+
+  defp where_ref(_query, _ref), do: {:error, ErrorCat.custom(%{reason: :not_exist})}
+
+  defp scope_context(policy_mode) do
+    if policy_mode in CMS.Communities.Lifecycle.read_modes() do
+      {:ok, CommunityContext.new(policy_mode)}
+    else
+      {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
     end
   end
 
   @doc "Reads one Community Tag by database id."
   @spec tag(T.id()) :: T.domain_res(CommunityTag.t())
   def tag(id), do: ORM.find(CommunityTag, id)
+
+  @doc "Reads one Community Tag Group by database id."
+  @spec tag_group(T.id()) :: T.domain_res(CMS.Model.CommunityTagGroup.t())
+  def tag_group(id), do: ORM.find(CMS.Model.CommunityTagGroup, id)
 
   @doc "Reads one Community Tag by public Community/thread/slug coordinates."
   @spec tag(String.t(), atom(), String.t()) :: T.domain_res(CommunityTag.t())

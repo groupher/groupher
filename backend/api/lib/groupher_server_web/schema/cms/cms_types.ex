@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS}
   alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
@@ -29,7 +29,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   alias CMS.Model.{Community, CoverBackground}
   alias CMS.Passport.Registry
   alias GroupherServerWeb.Schema
-  alias Helper.ORM
 
   import_types(Schema.CMS.Metrics)
 
@@ -933,8 +932,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:document, :article_document,
       resolve: fn draft, _, _ ->
         case Map.get(draft, :document) do
-          nil -> {:ok, Repo.preload(draft, :document).document}
-          document -> {:ok, document}
+          nil ->
+            with {:ok, loaded} <- CMS.Articles.Reader.body_draft(draft.body_draft_id) do
+              {:ok, loaded}
+            end
+
+          document ->
+            {:ok, document}
         end
       end
     )
@@ -947,8 +951,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
       resolve: fn draft, _, _ ->
         article =
           case Map.get(draft, :article) do
-            %CMS.Model.Article{} = article -> article
-            _not_loaded -> Repo.get!(CMS.Model.Article, draft.article_id)
+            %CMS.Model.Article{} = article ->
+              article
+
+            _not_loaded ->
+              {:ok, article} = CMS.Articles.Reader.article(draft.article_id)
+              article
           end
 
         {:ok, article.thread}
@@ -967,7 +975,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:document, :article_document,
       resolve: fn draft, _, _ ->
-        {:ok, Repo.get(CMS.Model.ArticleBodyDraft, draft.body_draft_id)}
+        case CMS.Articles.Reader.body_draft(draft.body_draft_id) do
+          {:ok, body_draft} -> {:ok, body_draft}
+          {:error, _reason} -> {:ok, nil}
+        end
       end
     )
 
@@ -2117,7 +2128,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     do: {:ok, slug}
 
   defp moderator_community_slug(%{community_id: community_id}) when not is_nil(community_id) do
-    with {:ok, community} <- ORM.find(Community, community_id) do
+    with {:ok, community} <- CMS.Communities.Reader.load(community_id) do
       {:ok, community.slug}
     end
   end

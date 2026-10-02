@@ -148,44 +148,57 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   end
 
   defp run_doc_command(community, id, user, command, opts, execute, replay) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      opts = drop_command_id(opts)
+    case option(opts, :command_id) do
+      nil ->
+        execute_one_shot(execute)
 
-      Command.create_user(user, command_id,
-        command: command,
-        resource: :doc,
-        owner: community,
-        input: %{id: id, opts: opts},
-        recovery: replay
-      )
-      |> Command.run(fn %{input: %{opts: _opts}} -> execute.() end)
+      command_id ->
+        %Command{
+          actor: user,
+          command_id: command_id,
+          operation: command,
+          target: {:doc, community.id},
+          params: %{id: id, opts: drop_command_id(opts)}
+        }
+        |> Command.execute(
+          action: fn _context -> execute.() end,
+          result: replay
+        )
     end
   end
 
   defp run_tree_command(community, target_id, args, user, command, execute) do
     clean_args = drop_command_id(args)
 
-    case user do
-      %User{} = actor ->
-        with {:ok, command_id} <- Command.resolve_command_id(option(args, :command_id)) do
-          target_key = "#{community.id}:#{target_id}"
+    case {user, option(args, :command_id)} do
+      {%User{} = actor, command_id} when not is_nil(command_id) ->
+        target_key = "#{community.id}:#{target_id}"
 
-          Command.create_user(actor, command_id,
-            command: command,
-            resource: :doc_tree,
-            owner: community,
-            input: %{target_id: target_id, args: clean_args},
-            recovery: &CommandReplay.replay_tree/1
-          )
-          |> Command.run(fn %{input: %{args: clean_args}} ->
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: command,
+          target: {:doc_tree, community.id},
+          params: %{target_id: target_id, args: clean_args}
+        }
+        |> Command.execute(
+          action: fn %{params: %{args: clean_args}} ->
             with {:ok, result} <- execute.(clean_args) do
               {:ok, result, CommandReplay.tree_metadata(result, target_key)}
             end
-          end)
-        end
+          end,
+          result: &CommandReplay.replay_tree/1
+        )
 
       _ ->
         execute.(clean_args)
+    end
+  end
+
+  defp execute_one_shot(execute) do
+    case execute.() do
+      {:ok, result, _receipt_metadata} -> {:ok, result}
+      other -> other
     end
   end
 

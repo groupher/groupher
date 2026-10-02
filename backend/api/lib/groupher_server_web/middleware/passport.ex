@@ -257,7 +257,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
       inner_id: inner_id
     }
 
-    case FrontDesk.article(article_path, cur_user, preload: [author: :user]) do
+    case FrontDesk.article(article_path, cur_user) do
       {:ok, %{author: %User{id: author_id}}} -> author_id == cur_user.id
       {:ok, article} -> article.author.user.id == cur_user.id
       _ -> false

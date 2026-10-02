@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       caller -> Command receipt -> Gate + Trash aggregate -> canonical result
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.Trash
   alias CMS.Command
@@ -17,25 +17,35 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   @doc "Moves one stable Article into Trash under an idempotent command id."
   @spec trash(map(), User.t() | nil, keyword()) :: {:ok, TrashedArticle.t()} | {:error, term()}
   def trash(article, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+    command_id = Keyword.get(opts, :command_id)
+
+    if is_nil(command_id) do
+      Trash.trash(article, actor, opts)
+    else
       result =
-        Command.update_user(actor, command_id,
-          command: :article_trash,
-          resource: article,
-          input: Keyword.delete(opts, :command_id),
-          recovery: fn receipt -> Trash.get(receipt.result_key) end
+        %Command{
+          actor: actor,
+          command_id: command_id,
+          operation: :article_trash,
+          target: article,
+          params: Keyword.delete(opts, :command_id)
+        }
+        |> Command.execute(
+          action: &trash_action/1,
+          result: fn receipt -> Trash.get(receipt.result_key) end
         )
-        |> Command.run(fn %{resource: canonical, input: input} ->
-          with {:ok, item} <- Trash.trash(canonical, actor, input) do
-            {:ok, item, %{result_key: item.hash_id}}
-          end
-        end)
 
       audit_trash_denial(result, article, actor, command_id, opts)
     end
   end
 
   def trash(article, actor, opts), do: Trash.trash(article, actor, opts)
+
+  defp trash_action(%{actor: actor, target: article, params: params}) do
+    with {:ok, item} <- Trash.trash(article, actor, params) do
+      {:ok, item, %{result_key: item.hash_id}}
+    end
+  end
 
   @doc "Restores one Trash membership under an idempotent command id."
   @spec restore(
@@ -47,22 +57,31 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   def restore(%TrashedDocArticle{} = item, actor, opts), do: Trash.restore(item, actor, opts)
 
   def restore(item_or_id, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+    command_id = Keyword.get(opts, :command_id)
+
+    if is_nil(command_id) do
+      with {:ok, item} <- resolve_item(item_or_id) do
+        Trash.restore(item, actor, opts)
+      end
+    else
       case resolve_item(item_or_id) do
         {:ok, item} ->
           restore_command(item, actor, command_id, opts)
 
         {:error, _reason} ->
-          Command.create_user(actor, command_id,
-            command: :article_restore,
-            resource: :article_trash,
-            owner: Keyword.get(opts, :community_id),
-            input: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)},
-            recovery: &recover_article/1
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: :article_restore,
+            target: {:article_trash, Keyword.get(opts, :community_id)},
+            params: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)}
+          }
+          |> Command.execute(
+            action: fn _command ->
+              {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
+            end,
+            result: &recover_article/1
           )
-          |> Command.run(fn _command ->
-            {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
-          end)
       end
     end
   end
@@ -79,22 +98,31 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
     do: Trash.permanently_delete(item, actor, opts)
 
   def permanently_delete(item_or_id, %User{} = actor, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(Keyword.get(opts, :command_id)) do
+    command_id = Keyword.get(opts, :command_id)
+
+    if is_nil(command_id) do
+      with {:ok, item} <- resolve_item(item_or_id) do
+        Trash.permanently_delete(item, actor, opts)
+      end
+    else
       case resolve_item(item_or_id) do
         {:ok, item} ->
           permanently_delete_command(item, actor, command_id, opts)
 
         {:error, _reason} ->
-          Command.create_user(actor, command_id,
-            command: :article_permanently_delete,
-            resource: :article_trash,
-            owner: Keyword.get(opts, :community_id),
-            input: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)},
-            recovery: fn _receipt -> {:ok, %{done: true}} end
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: :article_permanently_delete,
+            target: {:article_trash, Keyword.get(opts, :community_id)},
+            params: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)}
+          }
+          |> Command.execute(
+            action: fn _command ->
+              {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
+            end,
+            result: fn _receipt -> {:ok, %{done: true}} end
           )
-          |> Command.run(fn _command ->
-            {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
-          end)
       end
     end
   end
@@ -106,31 +134,35 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp resolve_item(item_id), do: Trash.get(item_id)
 
   defp restore_command(item, actor, command_id, opts) do
-    Command.create_user(actor, command_id,
-      command: :article_restore,
-      resource: :article_trash,
-      owner: item.community_id,
-      input: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)},
-      recovery: &recover_article/1
+    %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :article_restore,
+      target: {:article_trash, item.community_id},
+      params: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)}
+    }
+    |> Command.execute(
+      action: fn %{params: %{opts: input}} ->
+        with {:ok, article} <- Trash.restore(item, actor, input) do
+          {:ok, article, %{result_key: article.id}}
+        end
+      end,
+      result: &recover_article/1
     )
-    |> Command.run(fn %{input: %{opts: input}} ->
-      with {:ok, article} <- Trash.restore(item, actor, input) do
-        {:ok, article, %{result_key: article.id}}
-      end
-    end)
   end
 
   defp permanently_delete_command(item, actor, command_id, opts) do
-    Command.create_user(actor, command_id,
-      command: :article_permanently_delete,
-      resource: :article_trash,
-      owner: item.community_id,
-      input: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)},
-      recovery: fn _receipt -> {:ok, %{done: true}} end
+    %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :article_permanently_delete,
+      target: {:article_trash, item.community_id},
+      params: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)}
+    }
+    |> Command.execute(
+      action: fn %{params: %{opts: input}} -> Trash.permanently_delete(item, actor, input) end,
+      result: fn _receipt -> {:ok, %{done: true}} end
     )
-    |> Command.run(fn %{input: %{opts: input}} ->
-      Trash.permanently_delete(item, actor, input)
-    end)
   end
 
   defp audit_trash_denial({:error, %{reason: reason}} = result, article, actor, command_id, opts) do
@@ -150,9 +182,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp audit_trash_denial(result, _article, _actor, _command_id, _opts), do: result
 
   defp recover_article(%{result_key: article_id}) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article -> {:ok, article}
-      nil -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+    case CMS.Articles.Reader.article(article_id) do
+      {:ok, %Article{} = article} -> {:ok, article}
+      {:error, _reason} -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end
   end
 end

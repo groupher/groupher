@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   canonical public result; it never guesses an old Draft/Public physical row.
   """
 
-  alias GroupherServer.{Accounts, Activity, CMS, Repo}
+  alias GroupherServer.{Accounts, Activity, CMS}
   alias Accounts.Model.User
   alias CMS.Command
   alias CMS.Model.{Article, Community}
@@ -22,21 +22,31 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           {:ok, map()} | {:error, term()}
   def create(%Community{} = community, thread, attrs, %User{} = user, opts) do
-    with {:ok, command_id} <- Command.resolve_command_id(option(opts, :command_id)) do
-      attrs = drop_command_id(attrs)
+    attrs = drop_command_id(attrs)
 
-      Command.create_user(user, command_id,
-        command: :article_create,
-        resource: :article,
-        owner: community,
-        input: %{thread: thread, attrs: attrs},
-        recovery: fn receipt -> recover_public(receipt, community) end
-      )
-      |> Command.run(fn %{input: %{thread: command_thread, attrs: command_attrs}} ->
-        with {:ok, public} <- create_and_publish(community, command_thread, command_attrs, user) do
-          {:ok, public, %{result_key: public.article_id}}
-        end
-      end)
+    case option(opts, :command_id) do
+      nil ->
+        create_and_publish(community, thread, attrs, user)
+
+      command_id ->
+        command = %Command{
+          actor: user,
+          command_id: command_id,
+          operation: :article_create,
+          target: {:article, community.id},
+          params: %{thread: thread, attrs: attrs}
+        }
+
+        Command.execute(command,
+          action: &create_action(&1, community, user),
+          result: &recover_public(&1, community)
+        )
+    end
+  end
+
+  defp create_action(%{params: %{thread: thread, attrs: attrs}}, community, user) do
+    with {:ok, public} <- create_and_publish(community, thread, attrs, user) do
+      {:ok, public, %{result_key: public.article_id}}
     end
   end
 
@@ -50,7 +60,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
              expected_draft_version: draft.version,
              expected_lifecycle_version: 1
            ),
-         %Article{} = published <- Repo.get(Article, article.id),
+         {:ok, %Article{} = published} <- CMS.Articles.Reader.article(article.id),
          {:ok, public} <- public_projection(published, community),
          {:ok, _activity} <- Activity.log(public, :created, actor: user),
          {:ok, _community} <- CMS.Communities.update_count_field(community, :doc),
@@ -75,8 +85,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   end
 
   defp recover_public(%{result_key: article_id}, community) when is_binary(article_id) do
-    case Repo.get(Article, article_id) do
-      %Article{} = article ->
+    case CMS.Articles.Reader.article(article_id) do
+      {:ok, %Article{} = article} ->
         case public_projection(article, community) do
           {:ok, public} ->
             {:ok, public}
@@ -92,7 +102,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
              }}
         end
 
-      nil ->
+      {:error, _reason} ->
         {:error, CMS.ErrorCat.command_id_conflict()}
     end
   end

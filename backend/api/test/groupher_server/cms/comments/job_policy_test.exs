@@ -135,25 +135,26 @@ defmodule GroupherServer.Test.CMS.Comments.JobPolicy do
     assert Repo.get!(Comment, comment.id).body_html =~ "before"
   end
 
-  test "optional mention enqueue failure preserves a committed comment" do
+  test "comment effects are durably recorded after the comment commits" do
     {community, post, _, actor} = mock_article(:post, preload: [author: :user])
-    reject_job_kind(:sync_mentions)
 
-    log =
-      capture_log(fn ->
-        assert {:ok, %Comment{} = comment} =
-                 CMS.Comments.create_comment(
-                   community,
-                   :post,
-                   post.inner_id,
-                   mock_comment(),
-                   actor
-                 )
+    assert {:ok, %Comment{} = comment} =
+             CMS.Comments.create_comment(
+               community,
+               :post,
+               post.inner_id,
+               mock_comment(),
+               actor
+             )
 
-        assert Repo.get!(Comment, comment.id)
-      end)
+    assert Repo.get!(Comment, comment.id)
 
-    assert log =~ "optional job enqueue failed job=sync_mentions"
+    assert %CMS.Outbox.Event{status: :pending} =
+             Repo.get_by!(CMS.Outbox.Event,
+               event: "comment.created",
+               resource_type: "comment",
+               resource_id: to_string(comment.id)
+             )
   end
 
   test "participant repair enqueue failure preserves a successful read" do

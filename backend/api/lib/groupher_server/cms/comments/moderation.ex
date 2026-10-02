@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   """
   @spec set_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def set_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id) do
       do_set_illegal(comment, audit_state)
     end
   end
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.live_user(comment.author.login) do
+      with {:ok, user} <- GroupherServer.FrontDesk.fresh_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
         user
@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   @spec unset_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def unset_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id) do
       do_unset_illegal(comment, audit_state)
     end
   end
@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- FrontDesk.live_user(comment.author.login) do
+      with {:ok, user} <- GroupherServer.FrontDesk.fresh_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 

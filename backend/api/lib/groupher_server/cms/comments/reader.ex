@@ -39,6 +39,18 @@ defmodule GroupherServer.CMS.Comments.Reader do
     FrontDesk.comment(comment_id) |> normalize_error()
   end
 
+  @doc "Loads one Comment row for a Comment-owned command or writer."
+  @spec load(T.id()) :: T.domain_res(Comment.t())
+  def load(comment_id), do: ORM.find(Comment, comment_id)
+
+  @doc "Loads the User who authored one Comment."
+  @spec load_comment_author(T.id()) :: T.domain_res(User.t())
+  def load_comment_author(comment_id) do
+    with {:ok, %Comment{author: author}} <- ORM.find(Comment, comment_id, preload: :author) do
+      {:ok, author}
+    end
+  end
+
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
     FrontDesk.full_comment(comment_id) |> normalize_error()

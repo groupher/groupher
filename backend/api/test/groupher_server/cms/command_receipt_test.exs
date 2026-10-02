@@ -128,52 +128,100 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              )
   end
 
+  test "uses the same result callback for first execution and replay" do
+    {_community, _post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    result = fn receipt ->
+      send(self(), {:result_callback, receipt.outcome})
+      {:ok, %{id: "article-key"}}
+    end
+
+    assert {:ok, %{id: "article-key"}} =
+             CommandReceipt.run_internal(
+               user,
+               command_id,
+               "article.update_draft",
+               "article",
+               "article-key",
+               %{},
+               fn -> {:ok, :ignored} end,
+               result
+             )
+
+    assert {:ok, %{id: "article-key"}} =
+             CommandReceipt.run_internal(
+               user,
+               command_id,
+               "article.update_draft",
+               "article",
+               "article-key",
+               %{},
+               fn -> {:error, :must_not_execute_on_replay} end,
+               result
+             )
+
+    assert_receive {:result_callback, "changed"}
+    assert_receive {:result_callback, "changed"}
+  end
+
   test "CMS.Command keeps declaration data out of the callback arguments" do
     {_community, _post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
-    command =
-      Command.create_user(user, command_id,
-        command: :article_update_draft,
-        resource: :article,
-        owner: "community",
-        input: %{title: "first"},
-        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
-      )
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :article_update_draft,
+      target: {:article, "community"},
+      params: %{title: "first"}
+    }
+
+    result = fn _receipt -> {:ok, %{id: "article-key"}} end
 
     assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn %{actor: ^user, input: %{title: "first"}} ->
-               {:ok, %{id: "article-key"}}
-             end)
+             Command.execute(command,
+               action: fn %{actor: ^user, params: %{title: "first"}} ->
+                 {:ok, %{id: "article-key"}}
+               end,
+               result: result
+             )
 
     assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
              "article.update_draft"
 
     assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn _context -> {:error, :must_not_execute_on_replay} end)
+             Command.execute(command,
+               action: fn _context -> {:error, :must_not_execute_on_replay} end,
+               result: result
+             )
   end
 
-  test "create_user derives a stable owner target without a synthetic collection" do
+  test "logical targets derive a stable identity without a synthetic collection" do
     {community, _post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
-    command =
-      Command.create_user(user, command_id,
-        command: :article_create,
-        resource: :article,
-        owner: community,
-        input: %{title: "first"},
-        recovery: fn _receipt -> {:ok, %{id: "article-key"}} end
-      )
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :article_create,
+      target: {:article, community.id},
+      params: %{title: "first"}
+    }
 
     assert {:ok, %{id: "article-key"}} =
-             Command.run(command, fn %{owner: ^community, input: %{title: "first"}} ->
-               {:ok, %{id: "article-key"}}
-             end)
+             Command.execute(command,
+               action: fn %{target: {:article, community_id}, params: %{title: "first"}}
+                          when community_id == community.id ->
+                 {:ok, %{id: "article-key"}}
+               end,
+               result: fn _receipt -> {:ok, %{id: "article-key"}} end
+             )
 
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_type == "article"
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).resource_type ==
+             "article"
 
-    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).target_key ==
+    assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).resource_id ==
              to_string(community.id)
   end
 
@@ -181,19 +229,21 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     {community, _post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
-    command =
-      Command.create_user(user, command_id,
-        command: :doc_tree_create_tab,
-        resource: :doc_tree,
-        owner: community,
-        input: %{title: "Docs"},
-        recovery: fn _receipt -> {:ok, %{id: "tree-1"}} end
-      )
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :doc_tree_create_tab,
+      target: {:doc_tree, community.id},
+      params: %{title: "Docs"}
+    }
 
     assert {:ok, %{id: "tree-1"}} =
-             Command.run(command, fn %{input: %{title: "Docs"}} ->
-               {:ok, %{id: "tree-1"}}
-             end)
+             Command.execute(command,
+               action: fn %{params: %{title: "Docs"}} ->
+                 {:ok, %{id: "tree-1"}}
+               end,
+               result: fn _receipt -> {:ok, %{id: "tree-1"}} end
+             )
 
     assert Repo.get_by(CMS.Model.CommandReceipt, command_id: command_id).command ==
              "doc.tree.create_tab"
@@ -215,7 +265,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
              )
   end
 
-  test "the nine-argument receipt entry treats nil command id as missing" do
+  test "the receipt entry treats nil command id as missing" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
@@ -227,8 +277,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "1",
                %{},
                fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:ok, %{id: "post-1"}} end,
-               fn _result -> :ok end
+               fn _receipt -> {:ok, %{id: "post-1"}} end
              )
   end
 
@@ -250,14 +299,14 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     end
 
     assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
-             CommandReceipt.resolve_command_id(%{command_id: ""})
+             CommandReceipt.validate_command_id(%{command_id: ""})
   end
 
   test "invalid callbacks remain programming errors instead of command id errors" do
     {_community, _post, _attrs, user} = mock_article(:post)
 
     assert_raise ArgumentError,
-                 "command receipt callbacks must be execute/0, recovery/1 and after_commit/1 functions",
+                 "command receipt callbacks must be execute/0 and result/1 functions",
                  fn ->
                    CommandReceipt.run_internal(
                      user,
@@ -272,17 +321,17 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                  end
   end
 
-  test "internal command id resolution accepts only a direct id" do
+  test "command id validation requires one direct UUID" do
     command_id = Ecto.UUID.generate()
 
-    assert {:ok, ^command_id} = CommandReceipt.resolve_command_id(command_id)
+    assert {:ok, ^command_id} = CommandReceipt.validate_command_id(command_id)
 
-    assert {:ok, generated} = CommandReceipt.resolve_command_id(nil)
-    assert {:ok, ^generated} = Ecto.UUID.cast(generated)
+    assert {:error, %ErrorCat.Error{reason: :command_id_required}} =
+             CommandReceipt.validate_command_id(nil)
 
     for invalid <- [42, false, [], %{}, "not-a-uuid"] do
       assert {:error, %ErrorCat.Error{reason: :command_id_invalid}} =
-               CommandReceipt.resolve_command_id(invalid)
+               CommandReceipt.validate_command_id(invalid)
     end
   end
 
@@ -443,7 +492,7 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
                "1",
                input,
                fn -> {:ok, %{id: "post-1"}} end,
-               fn _receipt -> {:error, :must_not_replay} end
+               fn _receipt -> {:ok, %{id: "post-1"}} end
              )
   end
 
@@ -553,8 +602,8 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           initiator_key: "1",
           command_id: expired_key,
           command: "article.update",
-          target_type: "post",
-          target_key: "1",
+          resource_type: "post",
+          resource_id: "1",
           payload_fingerprint: "expired",
           outcome: "changed",
           expires_at: DateTime.add(DateTime.utc_now(), -1, :second)
@@ -568,8 +617,8 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
           initiator_key: "1",
           command_id: active_key,
           command: "article.update",
-          target_type: "post",
-          target_key: "1",
+          resource_type: "post",
+          resource_id: "1",
           payload_fingerprint: "active",
           outcome: "changed",
           expires_at: DateTime.add(DateTime.utc_now(), 60, :second)

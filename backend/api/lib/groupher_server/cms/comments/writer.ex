@@ -19,9 +19,9 @@ defmodule GroupherServer.CMS.Comments.Writer do
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, Analysis, CMS, Jobs, PublicCache, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.{Comments.ErrorCat, Artiment.Const, SearchArtiments.Indexer, Command, FrontDesk, Gate}
+  alias CMS.{Comments.ErrorCat, Artiment.Const, Command, FrontDesk, Gate}
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
 
@@ -43,7 +43,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
   }
 
   alias Analysis.MetricEvent
-  alias PublicCache.Const, as: PublicCacheConst
   alias Helper.{ORM, T}
 
   @max_parent_replies_count Comment.max_parent_replies_count()
@@ -107,35 +106,42 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp do_create(thread, article, body, %User{} = user, info, command_id, branch_id \\ nil) do
     article = Repo.preload(article, [[author: :user], :community])
 
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.create_user(user, command_id,
-        command: :comment_create,
-        resource: :comment,
-        owner: article,
-        input: body,
-        recovery: fn receipt -> replay_created(receipt, article, command_id) end,
-        after_commit: fn result ->
-          {:ok, result}
-          |> sync_article_metrics()
-          |> enqueue_create_followups(user, article.community)
-
-          :ok
-        end
+    if is_nil(command_id) do
+      create_with_access(
+        thread,
+        article,
+        branch_id,
+        body,
+        user,
+        info,
+        Ecto.UUID.generate()
       )
-      |> Command.run(fn %{input: body} ->
-        with {:ok, result} <-
-               create_with_access(
-                 thread,
-                 article,
-                 branch_id,
-                 body,
-                 user,
-                 info,
-                 command_id
-               ) do
-          {:ok, result, %{result_key: result.comment.id}}
-        end
-      end)
+      |> normalize_comments_locked()
+    else
+      %Command{
+        actor: user,
+        command_id: command_id,
+        operation: :comment_create,
+        target: {:comment, article.id},
+        params: body
+      }
+      |> Command.execute(
+        action: fn %{params: body, command_id: command_id} ->
+          with {:ok, result} <-
+                 create_with_access(
+                   thread,
+                   article,
+                   branch_id,
+                   body,
+                   user,
+                   info,
+                   command_id
+                 ) do
+            {:ok, result, %{result_key: result.comment.id}}
+          end
+        end,
+        result: fn receipt -> replay_created(receipt, article, receipt.command_id) end
+      )
       |> normalize_comments_locked()
     end
   end
@@ -163,7 +169,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, _job} <- JobPolicy.audition(projected_comment),
          :ok <- CMS.ArticleStats.record_comment_change(participant_article),
          :ok <- record_article_metric(counted_article, command_id, :comment_created),
-         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id) do
+         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id),
+         :ok <- enqueue_comment_effects(projected_comment, article, user, :created, command_id) do
       {:ok,
        %{
          comment: projected_comment,
@@ -184,7 +191,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, canonical_article} <- replay_article(article) do
       {:ok,
        %{
-         comment: comment,
+         comment: Repo.preload(comment, reply_to_comment: :author),
          article: canonical_article,
          command_id: command_id
        }}
@@ -231,42 +238,48 @@ defmodule GroupherServer.CMS.Comments.Writer do
   @doc "Creates a reply using an optional idempotency command id."
   @spec reply(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) :: T.domain_res(map())
   def reply(%Comment{} = target_comment, body, %User{} = user, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.create_user(user, command_id,
-        command: :comment_reply,
-        resource: :comment,
-        owner: target_comment,
-        input: body,
-        recovery: fn receipt ->
-          with {:ok, article} <-
-                 FrontDesk.article_of(target_comment, preload: [[author: :user], :community]) do
-            replay_created(receipt, article, command_id)
-          end
-        end,
-        after_commit: fn result ->
-          {:ok, result}
-          |> sync_article_metrics()
-          |> enqueue_reply_followups(user)
-
-          :ok
-        end
+    if is_nil(command_id) do
+      reply_action(
+        %{actor: user, params: body, command_id: Ecto.UUID.generate()},
+        target_comment
       )
-      |> Command.run(fn %{input: body} ->
-        with {:ok, result} <-
-               Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical,
-                                                                               article ->
-                 reply_new_from_canonical(canonical, article, body, user, command_id)
-               end) do
-          {:ok, result, %{result_key: result.comment.id}}
-        end
-      end)
+      |> unwrap_one_shot_result()
+      |> normalize_comments_locked()
+    else
+      %Command{
+        actor: user,
+        command_id: command_id,
+        operation: :comment_reply,
+        target: target_comment,
+        params: body
+      }
+      |> Command.execute(
+        action: &reply_action(&1, target_comment),
+        result: &reply_result(&1, target_comment)
+      )
       |> normalize_comments_locked()
     end
   end
 
   def reply(comment_id, body, %User{} = user, command_id) do
-    with {:ok, target_comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, target_comment} <- FrontDesk.comment(comment_id) do
       reply(target_comment, body, user, command_id)
+    end
+  end
+
+  defp reply_action(%{actor: user, params: body, command_id: command_id}, target_comment) do
+    with {:ok, result} <-
+           Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical, article ->
+             reply_new_from_canonical(canonical, article, body, user, command_id)
+           end) do
+      {:ok, result, %{result_key: result.comment.id}}
+    end
+  end
+
+  defp reply_result(receipt, target_comment) do
+    with {:ok, article} <-
+           FrontDesk.article_of(target_comment) do
+      replay_created(receipt, article, receipt.command_id)
     end
   end
 
@@ -310,7 +323,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
          {:ok, _job} <- JobPolicy.audition(associated_reply),
          :ok <- CMS.ArticleStats.apply_comment_counts(participant_article),
          :ok <- record_article_metric(counted_article, command_id, :comment_created),
-         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id) do
+         {:ok, _invalidation} <- invalidate_public_comments(article, thread, command_id),
+         :ok <- enqueue_comment_effects(associated_reply, article, user, :replied, command_id) do
       {:ok,
        %{
          comment: associated_reply,
@@ -450,13 +464,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp sync_article_metrics({:ok, %{article: article}} = result) do
-    _ = Indexer.enqueue_metrics(article)
-    result
-  end
-
-  defp sync_article_metrics(result), do: result
-
   defp record_article_metric(article, operation_id, metric) do
     case MetricEvent.append_article_action(article, operation_id, metric) do
       :ok -> :ok
@@ -465,63 +472,35 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    PublicCache.invalidate_now(
-      PublicCacheConst.comments_content_changed(),
-      %{
+    CMS.Outbox.send(%{
+      event: "comment.changed",
+      worker: CMS.Outbox.Workers.Comment.Cleanup,
+      resource_type: "article",
+      resource_id: article.id,
+      command_id: command_id,
+      data: %{
         community: article.community.slug,
         community_id: article.community_id,
         thread: thread,
         inner_id: article.inner_id,
-        id: article.id
-      },
-      causation_id: command_id,
-      aggregate_type: "article"
-    )
+        article_id: article.id
+      }
+    })
   end
 
-  defp enqueue_create_followups(
-         {:ok, %{comment: %Comment{} = comment}} = result,
-         %User{} = actor,
-         %Community{} = community
-       ) do
-    :ok =
-      Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
-        Jobs.sync_mentions(comment)
-      end)
-
-    :ok =
-      Jobs.enqueue_best_effort(:notify_comment, comment.id, fn ->
-        Jobs.notify_comment(comment, actor)
-      end)
-
-    :ok =
-      Jobs.enqueue_best_effort(:subscribe_community, community.id, fn ->
-        Jobs.subscribe_community(community, actor)
-      end)
-
-    result
+  defp enqueue_comment_effects(comment, article, %User{} = actor, action, command_id) do
+    case CMS.Outbox.send(%{
+           event: "comment.#{action}",
+           worker: CMS.Outbox.Workers.Comment.Cleanup,
+           resource_type: "comment",
+           resource_id: comment.id,
+           command_id: command_id,
+           data: %{article_id: article.id, actor_id: actor.id, community_id: article.community_id}
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
-
-  defp enqueue_create_followups(result, _actor, _community), do: result
-
-  defp enqueue_reply_followups(
-         {:ok, %{comment: %Comment{} = comment}} = result,
-         %User{} = actor
-       ) do
-    :ok =
-      Jobs.enqueue_best_effort(:sync_mentions, comment.id, fn ->
-        Jobs.sync_mentions(comment)
-      end)
-
-    :ok =
-      Jobs.enqueue_best_effort(:notify_reply, comment.id, fn ->
-        Jobs.notify_reply(comment, actor)
-      end)
-
-    result
-  end
-
-  defp enqueue_reply_followups(result, _actor), do: result
 
   defp article_comments_locked(details),
     do: {:error, GateErrorCat.article_comments_locked(details)}
@@ -532,6 +511,9 @@ defmodule GroupherServer.CMS.Comments.Writer do
        do: article_comments_locked("this article is forbid comment")
 
   defp normalize_comments_locked(result), do: result
+
+  defp unwrap_one_shot_result({:ok, result, _receipt_metadata}), do: {:ok, result}
+  defp unwrap_one_shot_result(result), do: result
 
   defp create_comment(details), do: {:error, ErrorCat.create_comment(details)}
 end

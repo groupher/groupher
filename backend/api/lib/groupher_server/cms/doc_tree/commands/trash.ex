@@ -28,22 +28,23 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
 
     case option(args, :actor) do
       %User{} = actor ->
-        with {:ok, command_id} <- Command.resolve_command_id(option(args, :command_id)) do
-          target_key = "#{community.id}:#{id}"
+        target_key = "#{community.id}:#{id}"
 
-          Command.create_user(actor, command_id,
-            command: :doc_tree_restore_trash_item,
-            resource: :doc_tree,
-            owner: community,
-            input: %{id: id, args: clean_args},
-            recovery: &CommandReplay.replay_tree/1
-          )
-          |> Command.run(fn %{input: %{args: clean_args}} ->
+        %Command{
+          actor: actor,
+          command_id: option(args, :command_id),
+          operation: :doc_tree_restore_trash_item,
+          target: {:doc_tree, community.id},
+          params: %{id: id, args: clean_args}
+        }
+        |> Command.execute(
+          action: fn %{params: %{args: clean_args}} ->
             with {:ok, result} <- Trash.restore(community, id, clean_args) do
               {:ok, result, CommandReplay.tree_metadata(result, target_key)}
             end
-          end)
-        end
+          end,
+          result: &CommandReplay.replay_tree/1
+        )
 
       _ ->
         Trash.restore(community, id, clean_args)

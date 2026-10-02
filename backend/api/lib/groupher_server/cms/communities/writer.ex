@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
 
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, Analysis, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias CMS.Communities.{Lifecycle, Moderator, Reader}
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.BaseInfo
@@ -23,7 +23,6 @@ defmodule GroupherServer.CMS.Communities.Writer do
   alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @default_meta Embeds.CommunityMeta.default_meta()
   @default_dashboard CommunityDashboard.default()
@@ -103,13 +102,15 @@ defmodule GroupherServer.CMS.Communities.Writer do
   end
 
   defp invalidate_public_presentation(community) do
-    case PublicCache.invalidate_now(
-           PublicCacheConst.community_presentation_changed(),
-           %{community: community.slug, community_id: community.id},
-           causation_id: Ecto.UUID.generate(),
-           aggregate_type: "community"
-         ) do
-      {:ok, _invalidation} -> :ok
+    case CMS.Outbox.send(%{
+           event: "community.presentation_changed",
+           worker: CMS.Outbox.Workers.Community.Cleanup,
+           resource_type: "community",
+           resource_id: community.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{community: community.slug, community_id: community.id}
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end

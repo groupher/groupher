@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
 
   import Ecto.Query
 
-  alias GroupherServer.{CMS, PublicCache, Repo}
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.{Draft, Draft.Store, Lifecycle, Numbering, Public, Revision}
   alias CMS.Model.{Article, ArticlePublic, Author, Community}
 
@@ -47,8 +47,6 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
              Public.select(locked_article, revision, actor, published_at: published_at),
            :ok <- CMS.ArticleStats.initialize(locked_article),
            {:ok, _lifecycle} <- Lifecycle.transition(lifecycle, :published),
-           {:ok, _invalidation} <-
-             invalidate_public_cache(locked_article, first_publish?, opts),
            :ok <- Store.delete_workspace(locked_article, draft) do
         %{
           article: locked_article,
@@ -111,24 +109,5 @@ defmodule GroupherServer.CMS.Articles.Publish.Target do
     revision = Repo.get!(CMS.Model.ArticleRevision, public.revision_id)
 
     Draft.Diff.publish_changed_fields(article, draft, revision)
-  end
-
-  defp invalidate_public_cache(article, first_publish?, opts) do
-    community = Repo.get!(Community, article.community_id)
-    type = if first_publish?, do: :article_published, else: :article_content_changed
-
-    PublicCache.invalidate_now(
-      type,
-      %{
-        id: article.id,
-        community: community.slug,
-        community_id: community.id,
-        thread: article.thread,
-        inner_id: article.inner_id
-      },
-      causation_id: Keyword.get(opts, :causation_id, Ecto.UUID.generate()),
-      aggregate_id: article.id,
-      aggregate_type: "article"
-    )
   end
 end

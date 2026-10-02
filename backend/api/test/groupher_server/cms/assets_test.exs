@@ -3,9 +3,19 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
   use GroupherServer.TestMate, async: false
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
+  alias CMS.Artiment.BodyBag
   alias CMS.Hash
-  alias CMS.Model.{Article, ArticleAssetRef, Author, CommunityAsset}
+
+  alias CMS.Model.{
+    Article,
+    ArticleAssetRef,
+    ArticleBodyDraft,
+    ArticleDraft,
+    AssetReplacementPlan,
+    Author,
+    CommunityAsset
+  }
 
   describe "[cms assets]" do
     setup do
@@ -128,7 +138,14 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       refs = article_refs(:post, post.id)
       assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:cover, :inline]
-      assert Enum.find(refs, &(&1.usage == :inline)).block_id == "block-image-1"
+      body_ref = Enum.find(refs, &(&1.usage == :inline))
+      assert body_ref.block_id == "block-image-1"
+
+      {:ok, summary} = CMS.Assets.usage_summary(community, body_ref.asset_id, user)
+      assert summary.draft == 1
+      assert summary.live == 0
+      assert summary.historical == 0
+      assert summary.trashed == 0
 
       {:ok, usage} = CMS.Assets.usage(community)
       assert usage.asset_count == 2
@@ -203,6 +220,89 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert asset_ref_count(asset_a.id) == 0
       assert asset_ref_count(asset_b.id) == 1
       assert asset_ref_count(asset_c.id) == 1
+    end
+
+    test "replaces one Draft asset use with a version and source guard",
+         ~m(community post user)a do
+      {:ok, from_asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("one-use-a.png", 10), user)
+
+      {:ok, to_asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("one-use-b.png", 20), user)
+
+      assert {:ok, %{body: [_]}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "replace-me"}]},
+                 community: community
+               )
+
+      draft = Repo.get_by!(ArticleDraft, article_id: post.id)
+      body = Repo.get!(ArticleBodyDraft, draft.body_draft_id)
+      {:ok, body_bag} = BodyBag.from_document(body)
+
+      assert {:ok, %{draft_version: version}} =
+               CMS.Assets.replace_use(
+                 post,
+                 %{
+                   expected_draft_version: draft.version,
+                   usage: :inline,
+                   block_id: "replace-me",
+                   from_asset_id: from_asset.id,
+                   to_asset_id: to_asset.id,
+                   body_bag: body_bag
+                 },
+                 user,
+                 nil
+               )
+
+      assert version == draft.version + 1
+      assert [%ArticleAssetRef{asset_id: asset_id}] = article_refs(:post, post.id)
+      assert asset_id == to_asset.id
+
+      assert {:error, :draft_version_conflict} =
+               CMS.Assets.replace_use(
+                 post,
+                 %{
+                   expected_draft_version: draft.version,
+                   usage: :inline,
+                   block_id: "replace-me",
+                   from_asset_id: from_asset.id,
+                   to_asset_id: to_asset.id,
+                   body_bag: body_bag
+                 },
+                 user,
+                 nil
+               )
+    end
+
+    test "creates a global replacement plan from observed usage facts",
+         ~m(community post user)a do
+      {:ok, from_asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("plan-a.png", 10), user)
+
+      {:ok, to_asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("plan-b.png", 20), user)
+
+      assert {:ok, %{body: [_]}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{asset_refs: [%{asset_id: from_asset.id, block_id: "plan-block"}]},
+                 community: community
+               )
+
+      assert {:ok, %AssetReplacementPlan{status: :pending, items: [item]}} =
+               CMS.Assets.create_replacement_plan(
+                 community,
+                 %{from_asset_id: from_asset.id, to_asset_id: to_asset.id},
+                 user
+               )
+
+      assert (item[:article_id] || item["article_id"]) == post.id
+      assert (item[:observed_draft_version] || item["observed_draft_version"]) == 1
+      assert (item[:decision] || item["decision"]) == "permission_denied"
+      locators = item[:usage_locators] || item["usage_locators"]
+      assert [%{block_id: "plan-block"}] = locators
     end
 
     test "rejects refs with both asset_id and inline asset", ~m(community post user)a do
@@ -460,6 +560,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert origin_info.width == 1200
       assert origin_info.height == 630
 
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
       {:ok, deleted_asset} = CMS.Assets.delete(community, asset.id)
       assert deleted_asset.status == :deleted
 
@@ -480,6 +581,77 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                CMS.Assets.origin_info("asset_missing")
     end
 
+    test "archive hides an asset and restore makes it selectable again", ~m(community user)a do
+      {:ok, asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("archive-me.png", 80),
+          user
+        )
+
+      assert {:ok, archived} = CMS.Assets.archive(community, asset.id)
+      assert archived.status == :archived
+      assert {:ok, %{entries: entries}} = CMS.Assets.page(community, %{page: 1, size: 20})
+      refute Enum.any?(entries, &(&1.id == asset.id))
+
+      assert {:ok, restored} = CMS.Assets.restore(community, asset.id)
+      assert restored.status == :active
+      assert {:ok, %{entries: entries}} = CMS.Assets.page(community, %{page: 1, size: 20})
+      assert Enum.any?(entries, &(&1.id == asset.id))
+    end
+
+    test "gc candidates require completeness and a safety window", ~m(community user)a do
+      {:ok, asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("gc-me.png", 80),
+          user
+        )
+
+      assert {:error, %ErrorCat.Error{details: "asset usage backfill incomplete"}} =
+               CMS.Assets.gc_candidates(community, safety_window_seconds: 0)
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
+
+      assert {:ok, candidates} =
+               CMS.Assets.gc_candidates(community, safety_window_seconds: 0)
+
+      assert Enum.any?(candidates, &(&1.asset.id == asset.id))
+    end
+
+    test "provider reconciliation scans bounded pages for orphan identities",
+         ~m(community user)a do
+      {:ok, _asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("provider-owned.png", 80)
+          |> Map.merge(%{storage: "r2", storage_key: "owned/original"}),
+          user
+        )
+
+      provider_page = fn cursor, limit ->
+        assert cursor == nil
+        assert limit == 1
+
+        {:ok,
+         %{
+           objects: [
+             %{"storage" => "r2", "storageKey" => "orphan/original"},
+             %{"storage" => "r2", "storageKey" => "owned/original"}
+           ],
+           next_cursor: "next"
+         }}
+      end
+
+      assert {:ok, %{orphans: [%{"storageKey" => "orphan/original"}], next_cursor: "next"}} =
+               CMS.Assets.ProviderReconciliation.scan_provider_orphans(
+                 community,
+                 provider_page,
+                 limit: 1,
+                 grace_seconds: 0
+               )
+    end
+
     test "does not delete assets that are still referenced", ~m(community post user)a do
       asset_attrs = image_asset_attrs("referenced.png", 80)
 
@@ -492,6 +664,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           },
           community: community
         )
+
+      assert {:ok, _receipt} = CMS.Assets.backfill_usage(community)
 
       assert {:error,
               %ErrorCat.Error{
@@ -600,8 +774,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     }
   end
 
-  defp open_draft(article_projection, user) do
-    article = Repo.get!(Article, article_projection.article_id)
+  defp open_draft(article_view, user) do
+    article = Repo.get!(Article, article_view.article_id)
     author = Repo.get_by!(Author, user_id: user.id)
     CMS.Articles.Draft.Store.ensure_from_public(article, author)
   end

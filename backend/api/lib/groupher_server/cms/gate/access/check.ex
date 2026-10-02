@@ -310,7 +310,7 @@ defmodule GroupherServer.CMS.Gate.Access.Check do
     end
   end
 
-  defp parent_article(comment), do: FrontDesk.article_of(comment, preload: :community)
+  defp parent_article(comment), do: FrontDesk.article_of(comment)
 
   defp with_parent_lock(community, %Article{thread: :doc, id: article_id}, branch_id, fun)
        when is_integer(branch_id),

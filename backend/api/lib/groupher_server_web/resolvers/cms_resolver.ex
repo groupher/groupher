@@ -28,7 +28,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, Activity, Analysis, CMS, ErrorCat, FrontDesk, Repo}
+  alias GroupherServer.{Accounts, Activity, Analysis, CMS, ErrorCat, FrontDesk}
   alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
   alias Analysis.Web, as: AnalysisWeb
 
@@ -36,8 +36,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
-  alias CMS.Model.{Author, Category, Comment, Community, DraftCoverEdit, RevisionCoverEdit}
-  alias Helper.{OgInfo, ORM}
+  alias CMS.Model.{Category, Comment, Community}
+  alias Helper.OgInfo
 
   @doc "Resolves the public command id from the internal receipt metadata on a domain result."
   def command_id(value, _args, _info), do: {:ok, Map.get(value, :command_id)}
@@ -803,7 +803,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   @doc "Returns version-owned cover editor state only to the Article author."
   def cover_edit_info(article, _, %{context: %{cur_user: %User{id: user_id}}}) do
     with author_id when not is_nil(author_id) <- Map.get(article, :author_id),
-         {:ok, %Author{user_id: ^user_id}} <- ORM.find(Author, author_id),
+         {:ok, %{user_id: ^user_id}} <- CMS.Articles.Reader.author(author_id),
          %{} = edit <- load_cover_edit(article) do
       {:ok, present_cover_edit(edit)}
     else
@@ -814,12 +814,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def cover_edit_info(_, _, _), do: {:ok, nil}
 
   defp load_cover_edit(%{body_draft_id: body_draft_id}) when is_binary(body_draft_id),
-    do: Repo.get(DraftCoverEdit, body_draft_id)
+    do: front_desk_value(CMS.Articles.Reader.draft_cover_edit(body_draft_id))
 
   defp load_cover_edit(%{revision_id: revision_id}) when is_binary(revision_id),
-    do: Repo.get(RevisionCoverEdit, revision_id)
+    do: front_desk_value(CMS.Articles.Reader.revision_cover_edit(revision_id))
 
   defp load_cover_edit(_article), do: nil
+
+  defp front_desk_value({:ok, value}), do: value
+  defp front_desk_value({:error, _reason}), do: nil
 
   defp present_cover_edit(edit) do
     edit
@@ -998,7 +1001,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
          %{context: %{cur_user: user}}
        ) do
     with {:ok, %{article: published}} <-
-           CMS.Articles.publish(article.id, user,
+           CMS.Articles.publish(article, user,
              expected_draft_version: args[:expected_version],
              expected_lifecycle_version: args[:expected_lifecycle_version],
              command_id: args[:command_id]
@@ -1281,7 +1284,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # category ..
   # #######################
-  def paged_categories(_root, ~m(filter)a, _info), do: Category |> ORM.find_all(filter)
+  def paged_categories(_root, ~m(filter)a, _info),
+    do: CMS.Communities.Reader.page_categories(filter)
 
   def create_category(_root, ~m(community title slug)a, %{context: %{cur_user: user}}) do
     CMS.Communities.create_category(%{community: community, title: title, slug: slug}, user)
@@ -1397,7 +1401,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: {:ok, group}
 
   def community_tag_group_title(%{group_id: group_id}, _args, _info) when not is_nil(group_id) do
-    case Helper.ORM.find(GroupherServer.CMS.Model.CommunityTagGroup, group_id) do
+    case CMS.FrontDesk.community_tag_group(group_id) do
       {:ok, group} -> {:ok, group.title}
       _ -> {:ok, nil}
     end
@@ -1909,16 +1913,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 
-  defp preload_interaction_community(%{__struct__: _} = article),
-    do: GroupherServer.Repo.preload(article, :community)
+  defp preload_interaction_community(%{__struct__: _} = article) do
+    {:ok, article} = CMS.Articles.Reader.with_community(article)
+    article
+  end
 
   defp preload_interaction_community(article) when is_map(article), do: article
 
   defp present_comment_write({:ok, %{comment: comment, article: article} = result}) do
     article =
-      if is_struct(article),
-        do: Repo.preload(article, :community),
-        else: article
+      if is_struct(article) do
+        preload_interaction_community(article)
+      else
+        article
+      end
 
     with {:ok, %{artiment: thread}} <- CMS.Artiment.Matcher.match_interaction(article),
          {:ok, article_stats} <-

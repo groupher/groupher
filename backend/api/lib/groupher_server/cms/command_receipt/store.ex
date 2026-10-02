@@ -32,23 +32,23 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
         initiator_key,
         command_id,
         command,
-        target_type,
-        target_key,
+        resource_type,
+        resource_id,
         fingerprint_data \\ nil
       )
       when is_binary(initiator_key) and is_binary(command_id) and is_binary(command) and
-             is_binary(target_type) and
-             (is_binary(target_key) or is_integer(target_key)) do
-    target_key = to_string(target_key)
-    fingerprint = fingerprint(command, target_type, target_key, fingerprint_data)
+             is_binary(resource_type) and
+             (is_binary(resource_id) or is_integer(resource_id)) do
+    resource_id = to_string(resource_id)
+    fingerprint = fingerprint(command, resource_type, resource_id, fingerprint_data)
 
     attrs = %{
       initiator_type: "user",
       initiator_key: initiator_key,
       command_id: command_id,
       command: command,
-      target_type: target_type,
-      target_key: target_key,
+      resource_type: resource_type,
+      resource_id: resource_id,
       payload_fingerprint: fingerprint,
       expires_at: expires_at()
     }
@@ -145,10 +145,10 @@ defmodule GroupherServer.CMS.CommandReceipt.Store do
     end
   end
 
-  defp fingerprint(command, target_type, target_key, data) do
+  defp fingerprint(command, resource_type, resource_id, data) do
     :crypto.hash(
       :sha256,
-      :erlang.term_to_binary({command, target_type, target_key, canonical_input(data)})
+      :erlang.term_to_binary({command, resource_type, resource_id, canonical_input(data)})
     )
     |> Base.encode16(case: :lower)
   end

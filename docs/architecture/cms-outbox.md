@@ -123,6 +123,7 @@ with {:ok, revision} <- Revision.Writer.insert(article, draft),
        CMS.Outbox.send(%{
          event: "article.published",
          contract_version: 1,
+         worker: CMS.Outbox.Workers.Article.Cleanup,
          resource_type: "article",
          resource_id: article.id,
          command_id: command_id,
@@ -221,9 +222,9 @@ CMS.Command.execute(command,
     # 仅首次执行；同一事务写领域事实与 Outbox Event
     publish(context)
   end,
-  result: fn {:article, article_id} ->
+  result: fn receipt ->
     # 首次提交和 completed retry 都执行
-    CMS.FrontDesk.article(article_id)
+    CMS.Articles.Reader.article(receipt.result_key)
   end
 )
 ```

@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
+  alias CMS.Assets.Completeness
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.FrontDesk
 
@@ -43,6 +44,22 @@ defmodule GroupherServer.CMS.Assets.Writer do
   @asset_storage_conflict_target {:unsafe_fragment,
                                   "(community_id, storage, storage_key) WHERE storage_key IS NOT NULL AND deleted_at IS NULL"}
 
+  @doc false
+  def draft_refs(body_draft_id) when is_binary(body_draft_id) do
+    ArticleAssetRef
+    |> where([ref], ref.body_draft_id == ^body_draft_id)
+    |> order_by([ref], asc: ref.position, asc: ref.inserted_at, asc: ref.id)
+    |> Repo.all()
+  end
+
+  @doc false
+  def lock_draft_refs(body_draft_id, usage) when is_binary(body_draft_id) do
+    ArticleAssetRef
+    |> where([ref], ref.body_draft_id == ^body_draft_id and ref.usage == ^usage)
+    |> lock("FOR UPDATE")
+    |> Repo.all()
+  end
+
   @doc """
   Creates or updates an active community asset row for uploaded metadata.
 
@@ -67,6 +84,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
       |> put_uploader(user)
       |> put_default_status()
       |> put_default_asset_type()
+      |> Map.put_new(:archived_at, nil)
 
     upsert_active_asset(attrs)
   end
@@ -91,11 +109,21 @@ defmodule GroupherServer.CMS.Assets.Writer do
   def delete(%Community{id: community_id}, asset_id) do
     Repo.transaction(fn ->
       with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
+           :ok <- Completeness.guard(community_id),
            false <- referenced?(asset),
            {:ok, asset} <-
              ORM.update(asset, %{
                status: :deleted,
                deleted_at: DateTime.utc_now(:second)
+             }),
+           {:ok, _event} <-
+             CMS.Outbox.send(%{
+               event: "asset.provider_delete",
+               worker: CMS.Outbox.Workers.Asset.Cleanup,
+               resource_type: "community_asset",
+               resource_id: asset.id,
+               command_id: Ecto.UUID.generate(),
+               data: %{asset_id: asset.id, public_ref: asset.public_ref}
              }) do
         asset
       else
@@ -103,6 +131,23 @@ defmodule GroupherServer.CMS.Assets.Writer do
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+  end
+
+  @doc "Archives an asset without changing Draft or Revision-owned refs."
+  def archive(%Community{id: community_id}, asset_id) do
+    with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
+         {:ok, archived} <-
+           ORM.update(asset, %{status: :archived, archived_at: DateTime.utc_now(:second)}) do
+      {:ok, archived}
+    end
+  end
+
+  @doc "Restores an archived asset to the active library."
+  def restore(%Community{id: community_id}, asset_id) do
+    with {:ok, asset} <- find_asset_for_update(community_id, asset_id),
+         {:ok, restored} <- ORM.update(asset, %{status: :active, archived_at: nil}) do
+      {:ok, restored}
+    end
   end
 
   @doc """
@@ -158,6 +203,8 @@ defmodule GroupherServer.CMS.Assets.Writer do
          {:ok, source_body_id} <- draft_body_id(source),
          {:ok, target_body_id} <- draft_body_id(target) do
       Repo.transaction(fn ->
+        :ok = Completeness.lock_scope(target.community_id)
+
         ArticleAssetRef
         |> where([ref], ref.body_draft_id == ^target_body_id)
         |> Repo.delete_all()
@@ -234,13 +281,21 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
     body_draft_ids = draft_body_ids(thread, article_id)
 
-    ArticleAssetRef
-    |> where(
-      [ref],
-      ref.revision_id in subquery(revision_ids) or ref.body_draft_id in subquery(body_draft_ids)
-    )
-    |> Repo.delete_all()
-    |> then(&{:ok, &1})
+    with %Article{community_id: community_id} <- Repo.get(Article, article_id) do
+      Repo.transaction(fn ->
+        :ok = Completeness.lock_scope(community_id)
+
+        ArticleAssetRef
+        |> where(
+          [ref],
+          ref.revision_id in subquery(revision_ids) or
+            ref.body_draft_id in subquery(body_draft_ids)
+        )
+        |> Repo.delete_all()
+      end)
+    else
+      nil -> {:error, AssetErrorCat.custom("article not found")}
+    end
   end
 
   defp do_sync_refs(community_id, article, attrs) do
@@ -251,6 +306,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
       true ->
         Repo.transaction(fn ->
           with {:ok, _thread} <- FrontDesk.thread_of(article),
+               :ok <- Completeness.lock_scope(community_id),
                {:ok, body_draft_id} <- draft_body_id(article),
                :ok <- lock_body_draft(body_draft_id),
                base <- base_ref_attrs(community_id, body_draft_id),
@@ -432,6 +488,17 @@ defmodule GroupherServer.CMS.Assets.Writer do
   defp find_active_asset_for_update(community_id, asset_id) do
     community_id
     |> CommunityAsset.active_query(asset_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      nil -> {:error, AssetErrorCat.not_exist("asset not found")}
+      asset -> {:ok, asset}
+    end
+  end
+
+  defp find_asset_for_update(community_id, asset_id) do
+    CommunityAsset
+    |> where([asset], asset.community_id == ^community_id and asset.id == ^asset_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do

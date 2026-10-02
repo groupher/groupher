@@ -3,6 +3,8 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
   use GroupherServer.TestMate
 
+  import Ecto.Query
+
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.{Draft.Store, Public, Revision}
   alias CMS.Articles.Publish.Target
@@ -21,8 +23,6 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     PinnedArticle,
     PostDraft
   }
-
-  alias GroupherServer.PublicCache.Model.Invalidation, as: PublicCacheInvalidation
 
   test "publish materialization keeps stable identity and reuses unchanged body snapshots" do
     {:ok, user} = db_insert(:user)
@@ -173,9 +173,7 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     assert result.public.revision_id == result.revision.id
     assert {:error, :not_found} = Store.get(article)
 
-    invalidation = Repo.get_by!(PublicCacheInvalidation, aggregate_id: article.id)
-    assert invalidation.type == :article_published
-    assert invalidation.payload["inner_id"] == 1
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == 0
   end
 
   test "Doc publish allocates durable branch versions and restore creates a new Draft" do
@@ -317,8 +315,6 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
 
     assert {:ok, pin} = CMS.Articles.pin(source, published.id, user)
     assert pin.article_community_id
-    Repo.delete_all(PublicCacheInvalidation)
-
     assert {:ok, moved} = CMS.Articles.move(destination, published.id, [], user)
     assert moved.id == published.id
     assert moved.community_id == destination.id
@@ -332,9 +328,12 @@ defmodule GroupherServer.Test.CMS.Articles.RevisionTarget do
     refute Repo.get(PinnedArticle, pin.id)
 
     scopes =
-      PublicCacheInvalidation
+      from(event in CMS.Outbox.Event,
+        where: event.event == "article.visibility_changed",
+        select: event.data
+      )
       |> Repo.all()
-      |> Enum.map(&{&1.payload["community"], &1.payload["inner_id"]})
+      |> Enum.map(&{&1["community"], &1["inner_id"]})
 
     assert {source.slug, published.inner_id} in scopes
     assert {destination.slug, moved.inner_id} in scopes

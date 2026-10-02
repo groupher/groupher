@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
 
       CMS.FrontDesk facade / FrontDesk readers
         -> FrontDesk.Relation
-        -> Repo / FrontDesk.Lookup
+        -> Repo / owning Reader
   """
 
   alias GroupherServer.{Accounts, CMS, Repo}
@@ -16,38 +16,6 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   alias CMS.Artiment.Threads
   alias CMS.FrontDesk.Article, as: ArticleReader
   alias CMS.Model.{Article, Comment}
-
-  @doc "Preloads the author relation expected by Article or Comment callers."
-  def preload_author(%Comment{} = comment), do: Repo.preload(comment, :author) |> done()
-
-  def preload_author(%{article_id: article_id, author: %User{}} = article)
-      when is_binary(article_id),
-      do: done(article)
-
-  def preload_author(%CMS.Model.Article{} = article) do
-    with %CMS.Model.Community{} = community <- Repo.get(CMS.Model.Community, article.community_id),
-         {:ok, projection} <-
-           ArticleReader.read(
-             %{community: community.slug, thread: article.thread, inner_id: article.inner_id},
-             nil,
-             []
-           ) do
-      {:ok, projection}
-    else
-      _ -> {:error, ErrorCat.custom(%{reason: :not_exist})}
-    end
-  end
-
-  def preload_author(article) do
-    case article do
-      %{author: %Ecto.Association.NotLoaded{}} -> Repo.preload(article, author: :user)
-      %{author: %{user: %Ecto.Association.NotLoaded{}}} -> Repo.preload(article, author: :user)
-      %{author: nil} -> article
-      %{author: %{user: _}} -> article
-      _ -> Repo.preload(article, author: :user)
-    end
-    |> done()
-  end
 
   @doc "Returns the author of an Article or Comment."
   @spec author_of(Comment.t()) :: {:ok, map()} | {:error, map()}
@@ -72,12 +40,9 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
   end
 
   @doc "Returns the parent Article of a Comment."
-  @spec article_of(Comment.t(), keyword()) :: {:ok, map()} | {:error, map()}
-  def article_of(comment, opts \\ [])
+  @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
 
-  def article_of(%Comment{} = comment, opts) when is_list(opts) do
-    _preload = Keyword.get(opts, :preload, [])
-
+  def article_of(%Comment{} = comment) do
     with {:stable, article_id} when is_binary(article_id) <-
            {:stable, comment.article_id},
          {:ok, thread} <- thread_of(comment),
@@ -97,7 +62,7 @@ defmodule GroupherServer.CMS.FrontDesk.Relation do
     end
   end
 
-  def article_of(_, _opts), do: {:error, ErrorCat.custom("only support comment")}
+  def article_of(_), do: {:error, ErrorCat.custom("only support comment")}
 
   @doc "Returns the canonical thread of a Comment or Article projection."
   @spec thread_of(Comment.t() | map()) :: {:ok, atom()} | {:error, map()}

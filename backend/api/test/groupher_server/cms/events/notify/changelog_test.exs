@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
   describe "[upvote notify]" do
     test "upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -40,7 +40,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
     test "upvote hook should work on changelog comment", ~m(user2 changelog comment)a do
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment} = preload_author(comment)
+      {:ok, comment_author} = CMS.Comments.Reader.load_comment_author(comment.id)
+      comment = %{comment | author: comment_author}
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
 
@@ -59,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "undo upvote hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, article} = CMS.Interactions.upvote(changelog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -81,7 +82,8 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment} = preload_author(comment)
+      {:ok, comment_author} = CMS.Comments.Reader.load_comment_author(comment.id)
+      comment = %{comment | author: comment_author}
 
       {:ok, notifications} =
         Messaging.paged_messages(:notification, comment.author, %{page: 1, size: 20})
@@ -92,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
   describe "[collect notify]" do
     test "collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
@@ -111,7 +113,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
     end
 
     test "undo collect hook should work on changelog", ~m(user2 changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, _} = CMS.Interactions.collect(changelog, user2)
       Events.emit(:notify_collect, %{article: changelog, from_user: user2})
@@ -129,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
   describe "[comment notify]" do
     test "changelog author should get notify after some one comment on it",
          ~m(user2 community changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(
@@ -157,7 +159,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.ChangelogTest do
 
     test "changelog comment author should get notify after some one reply it",
          ~m(user2 user3 community changelog)a do
-      {:ok, changelog} = preload_author(changelog)
+      {:ok, changelog} = CMS.Articles.Reader.load_article_for_notification(changelog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(

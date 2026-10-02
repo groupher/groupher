@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Comments.Commands.Solution do
+defmodule GroupherServer.CMS.Comments.Solution do
   @moduledoc """
   Runs the complete solution command family for one QA Post.
 
@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Solution do
 
   ## Examples
 
-      Commands.Solution.accept(comment, actor)
+      Comments.Solution.accept(comment, actor)
   """
   @spec accept(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
   def accept(%Comment{} = comment, %User{} = actor) do
@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.Comments.Commands.Solution do
 
   ## Examples
 
-      Commands.Solution.revoke(comment, actor)
+      Comments.Solution.revoke(comment, actor)
   """
   @spec revoke(Comment.t(), User.t()) :: {:ok, Comment.t()} | {:error, term()}
   def revoke(%Comment{} = comment, %User{} = actor) do
@@ -86,7 +86,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Solution do
     end
   end
 
-  defp accept_in_transaction(%Article{thread: :post} = post, %Comment{} = comment, %User{} = actor) do
+  defp accept_in_transaction(
+         %Article{thread: :post} = post,
+         %Comment{} = comment,
+         %User{} = actor
+       ) do
     current = current(post)
 
     if match?(%PostSolution{comment_id: id} when id == comment.id, current) do
@@ -103,7 +107,11 @@ defmodule GroupherServer.CMS.Comments.Commands.Solution do
     end
   end
 
-  defp revoke_in_transaction(%Article{thread: :post} = post, %Comment{} = comment, %User{} = actor) do
+  defp revoke_in_transaction(
+         %Article{thread: :post} = post,
+         %Comment{} = comment,
+         %User{} = actor
+       ) do
     case current(post) do
       nil ->
         {:ok, %{comment | is_solution: false}}

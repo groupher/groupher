@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
 
@@ -56,7 +56,6 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   }
 
   alias Helper.{T, Transaction}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @publish_flow_noop CMS.DocTree.Const.doc_publish_flow(:noop)
   @publish_flow_publish CMS.DocTree.Const.doc_publish_flow(:publish)
@@ -373,13 +372,15 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp invalidate_doc_tree(community) do
-    case PublicCache.invalidate_now(
-           PublicCacheConst.doc_tree_changed(),
-           %{community: community.slug, community_id: community.id},
-           causation_id: Ecto.UUID.generate(),
-           aggregate_type: "community"
-         ) do
-      {:ok, _invalidation} -> :ok
+    case CMS.Outbox.send(%{
+           event: "doc_tree.changed",
+           worker: CMS.Outbox.Workers.Community.Cleanup,
+           resource_type: "community",
+           resource_id: community.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{community: community.slug, community_id: community.id}
+         }) do
+      {:ok, _event} -> :ok
       {:error, reason} -> {:error, reason}
     end
   end

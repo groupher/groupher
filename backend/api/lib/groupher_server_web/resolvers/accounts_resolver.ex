@@ -12,7 +12,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   require GroupherServer.Accounts.Profiles.ErrorCat
 
   import ShortMaps
-  alias GroupherServer.{Accounts, Auth, CMS, Repo}
+  alias GroupherServer.{Accounts, Auth, CMS}
   alias GroupherServerWeb.Resolvers.{ArticleInteractionPayload, ArticleStatsPayload}
   alias Accounts.Profiles.ErrorCat
 
@@ -211,7 +211,13 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   defp present_collect({:ok, result}, article, user) do
-    article = if is_struct(article), do: Repo.preload(article, :community), else: article
+    article =
+      if is_struct(article) do
+        {:ok, article} = CMS.Articles.Reader.with_community(article)
+        article
+      else
+        article
+      end
 
     # These post-commit readers can observe different concurrent revisions.
     # Each payload keeps the revision attached to the state it actually read.

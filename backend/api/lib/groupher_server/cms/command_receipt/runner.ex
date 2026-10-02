@@ -43,47 +43,11 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
         %User{},
         nil,
         _command,
-        _target_type,
-        _target_key,
+        _resource_type,
+        _resource_id,
         _data,
         _execute,
-        _recovery
-      ),
-      do: {:error, ErrorCat.command_id_required()}
-
-  def run_internal(
-        user,
-        command_id,
-        command,
-        target_type,
-        target_key,
-        data,
-        execute,
-        recovery
-      ),
-      do:
-        run_internal(
-          user,
-          command_id,
-          command,
-          target_type,
-          target_key,
-          data,
-          execute,
-          recovery,
-          fn _result -> :ok end
-        )
-
-  def run_internal(
-        %User{},
-        nil,
-        _command,
-        _target_type,
-        _target_key,
-        _data,
-        _execute,
-        _recovery,
-        _after_commit
+        _result
       ),
       do: {:error, ErrorCat.command_id_required()}
 
@@ -91,27 +55,25 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
         %User{id: user_id},
         command_id,
         command,
-        target_type,
-        target_key,
+        resource_type,
+        resource_id,
         data,
         execute,
-        recovery,
-        after_commit
+        result
       )
       when is_binary(command_id) do
-    with {:ok, command_id} <- Key.resolve(command_id) do
-      validate_callbacks!(execute, recovery, after_commit)
+    with {:ok, command_id} <- Key.validate(command_id) do
+      validate_callbacks!(execute, result)
 
       run_command(
         Integer.to_string(user_id),
         command_id,
         command,
-        target_type,
-        target_key,
+        resource_type,
+        resource_id,
         data,
         execute,
-        recovery,
-        after_commit
+        result
       )
     end
   end
@@ -120,12 +82,11 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
         %User{},
         _command_id,
         _command,
-        _target_type,
-        _target_key,
+        _resource_type,
+        _resource_id,
         _data,
         _execute,
-        _recovery,
-        _after_commit
+        _result
       ),
       do: {:error, ErrorCat.command_id_invalid()}
 
@@ -133,16 +94,14 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
          initiator_key,
          command_id,
          command,
-         target_type,
-         target_key,
+         resource_type,
+         resource_id,
          data,
          execute,
-         recovery,
-         after_commit
+         result
        )
        when is_binary(initiator_key) and is_binary(command_id) and
-              is_function(execute, 0) and is_function(recovery, 1) and
-              is_function(after_commit, 1) do
+              is_function(execute, 0) and is_function(result, 1) do
     case run_receipt_transaction(fn ->
            configure_claim_timeout!()
 
@@ -150,31 +109,24 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
                   initiator_key,
                   command_id,
                   command,
-                  target_type,
-                  target_key,
+                  resource_type,
+                  resource_id,
                   data
                 ) do
              {:ok, :recovery, receipt} ->
                configure_transaction_timeouts!()
 
-               case recovery.(receipt) do
-                 {:ok, result} -> {:recovered, result}
-                 {:error, reason} -> Repo.rollback(reason)
-               end
+               resolve_result(receipt, result, :recovered)
 
              {:ok, :new, receipt} ->
                configure_transaction_timeouts!()
-               execute_and_finalize(receipt, target_key, execute)
+               execute_and_finalize(receipt, resource_id, execute, result)
 
              {:error, reason} ->
                Repo.rollback(reason)
            end
          end) do
-      {:ok, {:executed, result}} ->
-        _ = after_commit.(result)
-        {:ok, result}
-
-      {:ok, {:recovered, result}} ->
+      {:ok, {_state, result}} ->
         {:ok, result}
 
       {:error, reason} ->
@@ -182,23 +134,23 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
     end
   end
 
-  defp validate_callbacks!(execute, recovery, after_commit) do
-    unless is_function(execute, 0) and is_function(recovery, 1) and is_function(after_commit, 1) do
+  defp validate_callbacks!(execute, result) do
+    unless is_function(execute, 0) and is_function(result, 1) do
       raise ArgumentError,
-            "command receipt callbacks must be execute/0, recovery/1 and after_commit/1 functions"
+            "command receipt callbacks must be execute/0 and result/1 functions"
     end
   end
 
   # The runner never inspects domain result shapes. Simple commands may use the
   # target key as their recovery key; composite results must provide explicit,
   # versioned metadata whose encoder and decoder live at the domain owner.
-  defp execute_and_finalize(receipt, target_key, execute) do
+  defp execute_and_finalize(receipt, resource_id, execute, result_callback) do
     case execute.() do
-      {:ok, result} ->
-        finalize_execution(receipt, result, target_key, %{})
+      {:ok, _action_result} ->
+        finalize_execution(receipt, resource_id, %{}, result_callback)
 
-      {:ok, result, metadata} when is_map(metadata) ->
-        finalize_execution(receipt, result, target_key, metadata)
+      {:ok, _action_result, metadata} when is_map(metadata) ->
+        finalize_execution(receipt, resource_id, metadata, result_callback)
 
       {:error, reason} ->
         Repo.rollback(reason)
@@ -208,16 +160,24 @@ defmodule GroupherServer.CMS.CommandReceipt.Runner do
     end
   end
 
-  defp finalize_execution(receipt, result, target_key, metadata) do
+  defp finalize_execution(receipt, resource_id, metadata, result_callback) do
     attrs =
       metadata
       |> Map.put_new(:outcome, :changed)
-      |> Map.put_new(:result_key, target_key)
+      |> Map.put_new(:result_key, resource_id)
       |> Map.put_new(:result_payload, nil)
 
     case Store.finalize(receipt, attrs) do
-      {:ok, _receipt} -> {:executed, result}
+      {:ok, finalized_receipt} -> resolve_result(finalized_receipt, result_callback, :executed)
       {:error, reason} -> Repo.rollback(reason)
+    end
+  end
+
+  defp resolve_result(receipt, result_callback, state) do
+    case result_callback.(receipt) do
+      {:ok, result} -> {state, result}
+      {:error, reason} -> Repo.rollback(reason)
+      other -> Repo.rollback({:invalid_command_result, other})
     end
   end
 

@@ -3,7 +3,9 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
 
   use GroupherServer.TestMate
 
-  alias GroupherServer.CMS
+  import Ecto.Query
+
+  alias GroupherServer.{CMS, Repo}
 
   test "create replay survives the Article entering Trash" do
     {:ok, user} = db_insert(:user)
@@ -65,8 +67,17 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
       command_id: command_id
     ]
 
+    events_before = Repo.aggregate(CMS.Outbox.Event, :count)
     assert {:ok, published} = CMS.Articles.publish(public.article_id, user, opts)
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 2
+
+    assert Repo.all(from(event in CMS.Outbox.Event, where: event.command_id == ^command_id))
+           |> Enum.map(& &1.event)
+           |> Enum.sort() ==
+             ["article.projections", "article.updated"]
+
     assert {:ok, replayed} = CMS.Articles.publish(public.article_id, user, opts)
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 2
     assert replayed.article.id == published.article.id
     assert replayed.public.revision_id == published.public.revision_id
   end

@@ -21,7 +21,8 @@ defmodule GroupherServer.CMS.Comments do
     Writer
   }
 
-  alias __MODULE__.Commands.{DeleteComment, Solution, UpdateComment}
+  alias __MODULE__.Commands.{DeleteComment, UpdateComment}
+  alias __MODULE__.Solution
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
@@ -265,8 +266,7 @@ defmodule GroupherServer.CMS.Comments do
     with {:ok, article} <-
            FrontDesk.article(
              %{community: community.slug, thread: thread, inner_id: article_id},
-             user,
-             preload: [[author: :user], :community]
+             user
            ),
          {:ok, %{comment: comment}} <-
            Writer.create(thread, article, body, user, command_id) do
@@ -351,7 +351,7 @@ defmodule GroupherServer.CMS.Comments do
   def accept_solution(%Comment{} = comment, %User{} = user), do: Solution.accept(comment, user)
 
   def accept_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
       Solution.accept(comment, user)
     end
   end
@@ -367,7 +367,7 @@ defmodule GroupherServer.CMS.Comments do
   def revoke_solution(%Comment{} = comment, %User{} = user), do: Solution.revoke(comment, user)
 
   def revoke_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
       Solution.revoke(comment, user)
     end
   end
@@ -407,7 +407,7 @@ defmodule GroupherServer.CMS.Comments do
     do: Writer.reply(comment, body, user, command_id)
 
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
-    with {:ok, comment} <- FrontDesk.get(Comment, comment_id) do
+    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
       Writer.reply(comment, body, user, command_id)
     end
   end

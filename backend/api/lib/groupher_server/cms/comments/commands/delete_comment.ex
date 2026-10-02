@@ -12,16 +12,14 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   foreign-key cascade semantics are not simulated here.
   """
 
-  alias GroupherServer.{Accounts, Analysis, CMS, PublicCache, Repo}
+  alias GroupherServer.{Accounts, Analysis, CMS}
 
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate}
-  alias CMS.Comments.{Lifecycle, ErrorCat, Commands.Solution}
+  alias CMS.Comments.{Lifecycle, ErrorCat, Solution}
   alias CMS.Model.{Article, Comment, PinnedComment}
-  alias CMS.SearchArtiments.Indexer
   alias Analysis.MetricEvent
   alias Helper.{ORM, T}
-  alias PublicCache.Const, as: PublicCacheConst
 
   @delete_hint Comment.delete_hint()
 
@@ -41,30 +39,39 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
 
   @doc "Deletes a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(result())
-  def execute(%Comment{} = comment, %User{} = actor, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      command =
-        Command.update_user(actor, command_id,
-          command: :comment_delete,
-          resource: comment,
-          input: %{},
-          recovery: fn _receipt ->
-            with {:ok, current} <- ORM.find(Comment, comment.id),
-                 {:ok, article} <- FrontDesk.article_of(current) do
-              {:ok, %{comment: current, article: article, command_id: command_id}}
-            end
-          end,
-          after_commit: fn %{article: article} ->
-            _ = Indexer.enqueue_metrics(article)
-            :ok
-          end
-        )
+  def execute(%Comment{} = comment, %User{} = actor, nil) do
+    operation_id = Ecto.UUID.generate()
 
-      Command.run(command, fn %{resource: comment} ->
-        Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
-          delete_new(canonical, article, actor, command_id)
-        end)
-      end)
+    Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+      delete_new(canonical, article, actor, operation_id)
+    end)
+  end
+
+  def execute(%Comment{} = comment, %User{} = actor, command_id) do
+    command = %Command{
+      actor: actor,
+      command_id: command_id,
+      operation: :comment_delete,
+      target: comment,
+      params: %{}
+    }
+
+    Command.execute(command,
+      action: &delete_action/1,
+      result: &delete_result(&1, comment.id)
+    )
+  end
+
+  defp delete_action(%{actor: actor, target: comment, command_id: command_id}) do
+    Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
+      delete_new(canonical, article, actor, command_id)
+    end)
+  end
+
+  defp delete_result(receipt, comment_id) do
+    with {:ok, current} <- ORM.find(Comment, comment_id),
+         {:ok, article} <- FrontDesk.article_of(current) do
+      {:ok, %{comment: current, article: article, command_id: receipt.command_id}}
     end
   end
 
@@ -87,7 +94,8 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          :ok <- CMS.ArticleStats.record_comment_change(article),
          :ok <- record_article_metric(article, command_id, :comment_deleted),
          {:ok, _invalidation} <-
-           invalidate_public_comments(article, comment.thread, command_id) do
+           invalidate_public_comments(article, comment.thread, command_id),
+         :ok <- enqueue_delete_effects(comment, article, actor, command_id) do
       {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end
   end
@@ -98,8 +106,14 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       else: :ok
   end
 
-  defp revoke_if_current(%Article{thread: :post} = post, comment, actor, operation_ref, occurred_at),
-    do: Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
+  defp revoke_if_current(
+         %Article{thread: :post} = post,
+         comment,
+         actor,
+         operation_ref,
+         occurred_at
+       ),
+       do: Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
 
   defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at),
     do: {:ok, :unchanged}
@@ -112,19 +126,35 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    article = Repo.preload(article, :community)
+    {:ok, article} = CMS.Articles.Reader.with_community(article)
 
-    PublicCache.invalidate_now(
-      PublicCacheConst.comments_content_changed(),
-      %{
+    CMS.Outbox.send(%{
+      event: "comment.changed",
+      worker: CMS.Outbox.Workers.Comment.Cleanup,
+      resource_type: "article",
+      resource_id: article.id,
+      command_id: command_id,
+      data: %{
         community: article.community.slug,
         community_id: article.community_id,
         thread: thread,
         inner_id: article.inner_id,
-        id: article.id
-      },
-      causation_id: command_id,
-      aggregate_type: "article"
-    )
+        article_id: article.id
+      }
+    })
+  end
+
+  defp enqueue_delete_effects(comment, article, actor, command_id) do
+    case CMS.Outbox.send(%{
+           event: "comment.deleted",
+           worker: CMS.Outbox.Workers.Comment.Cleanup,
+           resource_type: "article",
+           resource_id: article.id,
+           command_id: command_id,
+           data: %{actor_id: actor.id, article_id: article.id, comment_id: comment.id}
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

@@ -23,7 +23,16 @@ defmodule GroupherServer.CMS.Assets do
         -> Repo / external boundary
   """
 
-  alias __MODULE__.{ApplicationUploads, Deletion, Reader, Upload, Writer}
+  alias __MODULE__.{
+    ApplicationUploads,
+    Backfill,
+    Deletion,
+    ProviderReconciliation,
+    Reader,
+    Upload,
+    Writer
+  }
+
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
@@ -94,6 +103,20 @@ defmodule GroupherServer.CMS.Assets do
   """
   @spec origin_info(String.t()) :: T.domain_res(CommunityAsset.t())
   def origin_info(public_ref), do: Reader.origin_info(public_ref)
+
+  @doc "Returns lifecycle-classified usage rows for an asset."
+  @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
+  def usages(%Community{} = community, asset_id, actor),
+    do: Reader.usages(community, asset_id, actor)
+
+  @doc "Returns counts split into live, draft, historical and trashed usage."
+  @spec usage_summary(Community.t(), T.id(), term()) :: T.domain_res(map())
+  def usage_summary(%Community{} = community, asset_id, actor),
+    do: Reader.usage_summary(community, asset_id, actor)
+
+  @doc "Rebuilds the version-owned usage fence and writes its completion receipt."
+  @spec backfill_usage(Community.t(), keyword()) :: T.domain_res(term())
+  def backfill_usage(%Community{} = community, opts \\ []), do: Backfill.run(community, opts)
 
   @doc """
   Registers an uploaded object into a community asset library.
@@ -166,11 +189,23 @@ defmodule GroupherServer.CMS.Assets do
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
   def delete(%Community{} = community, asset_id) do
-    with {:ok, asset} <- Writer.delete(community, asset_id) do
-      Deletion.enqueue(asset)
-      {:ok, asset}
-    end
+    Writer.delete(community, asset_id)
   end
+
+  @doc "Archives an asset while preserving all existing content references."
+  def archive(%Community{} = community, asset_id), do: Writer.archive(community, asset_id)
+
+  @doc "Restores one archived asset to the active library."
+  def restore(%Community{} = community, asset_id), do: Writer.restore(community, asset_id)
+
+  @doc "Replaces one Draft-owned asset use through the Article command boundary."
+  @spec replace_use(map(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(map())
+  def replace_use(article, attrs, %User{} = user, command_id),
+    do: CMS.Articles.Commands.ReplaceAssetUse.replace(article, attrs, user, command_id)
+
+  @doc "Lists old, unreferenced assets eligible for a later GC decision."
+  def gc_candidates(%Community{} = community, opts \\ []),
+    do: GroupherServer.CMS.Assets.GC.candidates(community, opts)
 
   @doc """
   Links an article to the assets used by its current saved content.
@@ -221,4 +256,20 @@ defmodule GroupherServer.CMS.Assets do
   """
   @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
   def cleanup_refs(thread, article_id), do: Writer.purge_refs(thread, article_id)
+
+  @doc "Creates an immutable, reviewable global replacement plan."
+  def create_replacement_plan(%Community{} = community, attrs, %User{} = user),
+    do: __MODULE__.ReplacementPlan.create(community, attrs, user)
+
+  @doc "Applies a replacement plan one Article command at a time."
+  def apply_replacement_plan(
+        %CMS.Model.AssetReplacementPlan{} = plan,
+        %User{} = user,
+        opts \\ []
+      ),
+      do: __MODULE__.ReplacementPlan.apply(plan, user, opts)
+
+  @doc "Repairs missing provider-delete outbox intents for old deleted assets."
+  def reconcile_provider_deletions(%Community{} = community, opts \\ []),
+    do: ProviderReconciliation.enqueue_missing(community, opts)
 end

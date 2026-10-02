@@ -1,6 +1,6 @@
 # CMS Command
 
-> 状态：目标架构
+> 状态：current
 
 本文定义同步 CMS 用户写命令的长期 API 与所有权边界。它不定义具体领域的
 Gate、Lifecycle 或 version 规则，也不记录迁移步骤。
@@ -42,18 +42,20 @@ CMS.Command
 
 ```text
 actor       已完成认证的 User
-command     固定的服务端命令类型，例如 :comment_update
+operation   固定的服务端操作类型，例如 :comment_update
 commandId   一次逻辑用户意图的 UUID；transport retry 必须复用
-resource    已加载的领域资源，例如 %Comment{}
-input       影响本次意图的业务输入和 expected version/revision
-result      首次执行或内部恢复后统一返回的 canonical business result
+target      已加载的领域资源，或 create/batch 命令的稳定逻辑 scope
+params      影响本次意图的业务参数和 expected version/revision
+action      仅首次执行的领域写入函数
+result      首次执行与已完成重试共用的 canonical result 投影
 receipt     有限窗口内证明该 commandId 已提交并可恢复结果的内部记录
 ```
 
 `commandId` 不包含 `post:123` 一类资源坐标。资源身份由领域对象或具体 Command
 内部派生，不能要求普通调用方重复传递 `"comment"` 与 `comment.id`。
 
-数据库使用稳定文本保存 command 和资源坐标，但领域 API 使用受控 atom、struct
+数据库继续使用稳定文本字段 `command` 保存 operation，并使用 `resource_type/resource_id`
+保存 target 坐标；领域 API 使用受控 atom、struct
 和领域参数。编码必须集中在 `Command.Receipt` 边界，不能散落在调用点。
 
 Receipt 的内部身份字段统一称为 `command` 与 `command_id`，不再保留 `command_name` 或
@@ -131,10 +133,11 @@ GraphQL / CMS facade
 ```
 
 Claim、领域写入和 finalize 必须处于同一事务。失败时三者一起回滚；成功时一起提交。
-`CMS.Command.execute/2` 把已解析的 command context 传给 `action` callback；context 中的 `resource` 是调用方声明的
-领域资源，canonical resource 仍由领域 Gate 在锁内解析。Callback 从 context 读取 actor、resource、owner 和
-input，不重复闭包捕获 declaration 中的值，并统一返回
-`{:ok, result} | {:error, reason}`。异常继续按 Elixir 异常语义向外传播，不转换成领域错误。
+`CMS.Command.execute/2` 把已解析的 command context 传给 `action` callback；context 中的 `target` 是调用方声明的
+领域资源，canonical resource 仍由领域 Gate 在锁内解析。当前 context 字段固定为
+`actor/command_id/target/params`。`action` 返回
+`{:ok, domain_result, receipt_metadata} | {:error, reason}`；`receipt_metadata` 只允许保存稳定的
+`result_key/result_payload/outcome`。异常继续按 Elixir 异常语义向外传播，不转换成领域错误。
 
 超时分成三层是为了让并发冲突快速失败，同时给真正的领域事务足够时间：claim 阶段的
 `lock_timeout` 为 4 秒；外层 transaction 和 statement 的上限为 30 秒。4 秒只限制等待其他
@@ -181,36 +184,39 @@ Receipt、reconcile hook、account cleanup 或相关测试。`viewReceipt` 是�
 
 ## 6. API 形态约束
 
-不同业务形态不共享一个万能 `target` 参数。可以共享 Receipt 算法，但公共入口必须表达真实差异。
+GraphQL/resolver 不构造 Command request。具体领域 Command 负责构造 `%CMS.Command{}`，可以共享
+Receipt 算法，但公共业务入口必须表达真实差异。
 Receipt 内部的 target 也不是 Artiment 专属字段：已存在实体可能是 Post、Blog、Changelog、Doc、Comment
 或 Community；create、restore、DocTree 和 batch command 则使用 owner 或领域 scope。Article create
 执行前没有 Article id，Trash restore 的 item ref 也可能只存在于业务 input。因此 `artiment_type/id`
 不能作为所有 command 的通用身份；领域入口负责提供真实资源或 scope，Receipt Store 只保存统一的
 `resource_type/resource_id` 索引。
-以下示例冻结形状级合同：`CMS.Command.execute/2` 的 callback 接收由具体入口构造的 context，并返回
-`{:ok, result} | {:error, reason}`；最终 Elixir 类型和函数名称在实施阶段以四个样板验证。
+以下示例冻结当前合同：`%CMS.Command{}` 只承载 command identity；`action/result` 必须在同一个
+`CMS.Command.execute/2` 调用中成对出现。`update_user/create_user` 构造器和公开
+`resolve_command_id` 不属于当前 API。
 
 ### 6.1 更新已存在实体：Comment Update
 
 调用方已经持有 `%Comment{}`，不能再次传 `"comment"` 和 `comment.id`：
 
 ```elixir
-command =
-  Command.update_user(
-    actor,
-    command_id,
-    command: :comment_update,
-    resource: comment,
-    input: body
-  )
+command = %Command{
+  actor: actor,
+  command_id: command_id,
+  operation: :comment_update,
+  target: comment,
+  params: body
+}
 
 CMS.Command.execute(command,
-  action: fn %{actor: actor, resource: comment, input: input} ->
+  action: fn %{actor: actor, target: comment, params: body} ->
     Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
-      Comments.update(canonical, article, input)
+      with {:ok, updated} <- Comments.update(canonical, article, body) do
+        {:ok, updated, %{result_key: updated.id}}
+      end
     end)
   end,
-  result: &CMS.FrontDesk.comment/1
+  result: fn receipt -> CMS.FrontDesk.comment(receipt.result_key) end
 )
 ```
 
@@ -226,21 +232,21 @@ CMS.Command.execute(command,
 创建前没有 `%Article{}`。API 应明确表达 create，而不是伪造 `article_collection` target：
 
 ```elixir
-command =
-  Command.create_user(
-    actor,
-    command_id,
-    command: :article_create,
-    resource: :article,
-    owner: community,
-    input: attrs
-  )
+command = %Command{
+  actor: actor,
+  command_id: command_id,
+  operation: :article_create,
+  target: {:article, community.id},
+  params: attrs
+}
 
 CMS.Command.execute(command,
-  action: fn %{actor: actor, owner: community, input: attrs} ->
-    Articles.create(community, attrs, actor)
+  action: fn %{actor: actor, params: attrs} ->
+    with {:ok, article} <- Articles.create(community, :post, attrs, actor, []) do
+      {:ok, article, %{result_key: article.id}}
+    end
   end,
-  result: &CMS.FrontDesk.article/1
+  result: fn receipt -> CMS.Articles.Reader.article(receipt.result_key) end
 )
 ```
 
@@ -256,8 +262,8 @@ Receipt 保存新 Article 的稳定引用，最终通过 FrontDesk 返回 Articl
 重复请求：same commandId -> read Receipt -> load restored Article through FrontDesk
 ```
 
-这类差异由 `Articles.Commands.Trash` 与 `CMS.Command` 的专用组合处理，不能为了统一签名
-把任意 tuple/string target 暴露给所有用户命令。
+这类差异由 `Articles.Commands.Trash` 与 `CMS.Command` 的专用组合处理。逻辑 scope tuple 只允许
+出现在领域 Command 内部构造的 `%Command{target: ...}`，不得暴露为 GraphQL 参数。
 
 ### 6.4 无法重读当次结果：DocTree payload
 

@@ -24,10 +24,12 @@ defmodule GroupherServer.CMS.Assets.Reader do
     Article,
     ArticleAssetRef,
     ArticleDraft,
+    ArticlePublic,
     ArticleRevision,
     Community,
     CommunityAsset,
-    DocDraft
+    DocDraft,
+    TrashedArticle
   }
 
   alias Helper.{ORM, T}
@@ -148,6 +150,71 @@ defmodule GroupherServer.CMS.Assets.Reader do
     end
   end
 
+  @doc false
+  def active_asset(community_id, asset_id), do: find_active_asset(community_id, asset_id)
+
+  @doc "Returns version-owned refs classified by their current lifecycle role."
+  @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
+  def usages(%Community{} = community, asset_id, actor) do
+    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community.id, asset_id),
+         {:ok, _community} <- CMS.Gate.Access.access_check(actor, :read, community) do
+      rows =
+        from(ref in ArticleAssetRef,
+          where: ref.community_id == ^community.id and ref.asset_id == ^asset_id,
+          left_join: draft in ArticleDraft,
+          on: draft.body_draft_id == ref.body_draft_id,
+          left_join: revision in ArticleRevision,
+          on: revision.id == ref.revision_id,
+          join: article in Article,
+          on: article.id == draft.article_id or article.id == revision.article_id,
+          left_join: public in ArticlePublic,
+          on: public.article_id == article.id,
+          left_join: trash in TrashedArticle,
+          on: trash.article_id == article.id,
+          select: {ref, article, public, trash},
+          order_by: [desc: ref.inserted_at, desc: ref.id]
+        )
+        |> Repo.all()
+        |> Enum.filter(&usage_visible?(&1, actor))
+
+      {:ok,
+       Enum.map(rows, fn {ref, article, public, trash} ->
+         Map.merge(Map.from_struct(ref), %{
+           article_id: article.id,
+           thread: article.thread,
+           lifecycle: lifecycle(ref, public, trash)
+         })
+       end)}
+    end
+  end
+
+  @doc "Returns counts using the same classified rows as the Used In drawer."
+  @spec usage_summary(Community.t(), T.id(), term()) :: T.domain_res(map())
+  def usage_summary(%Community{} = community, asset_id, actor) do
+    with {:ok, usages} <- usages(community, asset_id, actor) do
+      counts = Enum.frequencies_by(usages, & &1.lifecycle)
+
+      {:ok,
+       %{
+         live: Map.get(counts, :live, 0),
+         draft: Map.get(counts, :draft, 0),
+         historical: Map.get(counts, :historical, 0),
+         trashed: Map.get(counts, :trashed, 0),
+         total: length(usages)
+       }}
+    end
+  end
+
+  defp usage_visible?({ref, article, public, trash}, actor) do
+    case lifecycle(ref, public, trash) do
+      :draft ->
+        match?({:ok, _article}, CMS.Gate.Access.access_check(actor, :edit, article))
+
+      _lifecycle ->
+        true
+    end
+  end
+
   @doc """
   Returns public-read origin metadata for one active asset public ref.
 
@@ -179,6 +246,22 @@ defmodule GroupherServer.CMS.Assets.Reader do
   end
 
   def origin_info(_), do: {:error, ErrorCat.not_exist("asset not found")}
+
+  defp lifecycle(%ArticleAssetRef{}, _public, %TrashedArticle{}), do: :trashed
+
+  defp lifecycle(%ArticleAssetRef{body_draft_id: body_draft_id}, _public, _trash)
+       when not is_nil(body_draft_id),
+       do: :draft
+
+  defp lifecycle(
+         %ArticleAssetRef{revision_id: revision_id},
+         %ArticlePublic{revision_id: revision_id},
+         _trash
+       ),
+       do: :live
+
+  defp lifecycle(%ArticleAssetRef{revision_id: _revision_id}, _public, _trash),
+    do: :historical
 
   defp normalize_filter(nil),
     do: %{

@@ -16,18 +16,11 @@ defmodule GroupherServer.CMS.CommandReceipt do
   alias Accounts.Model.User
   alias CMS.CommandReceipt.{Key, Runner, Store}
 
-  @doc """
-  Resolves an internal command id from a direct id.
+  @doc "Validates the required UUID identity of one command attempt."
+  @spec validate_command_id(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
+  defdelegate validate_command_id(value), to: Key, as: :validate
 
-  `nil` is intentionally allowed only for internal one-shot facades; transport
-  callers must supply the id before reaching this boundary. Existing binary
-  ids must be UUID-shaped so retries cannot silently become a different
-  command identity. Invalid values fail closed.
-  """
-  @spec resolve_command_id(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
-  defdelegate resolve_command_id(value), to: Key, as: :resolve
-
-  @doc "Runs the internal receipt protocol for a CMS command without exposing recovery state."
+  @doc "Runs the internal receipt protocol for a CMS command without exposing replay state."
   @spec run_internal(
           User.t(),
           Ecto.UUID.t() | nil,
@@ -42,36 +35,11 @@ defmodule GroupherServer.CMS.CommandReceipt do
                 user,
                 command_id,
                 command,
-                target_type,
-                target_key,
+                resource_type,
+                resource_id,
                 data,
                 execute,
-                recovery
-              ),
-              to: Runner
-
-  @doc "Runs the internal receipt protocol with a post-commit effect callback."
-  @spec run_internal(
-          User.t(),
-          Ecto.UUID.t() | nil,
-          String.t(),
-          String.t(),
-          String.t() | pos_integer(),
-          term(),
-          (-> term()),
-          (CMS.Model.CommandReceipt.t() -> term()),
-          (term() -> term())
-        ) :: {:ok, term()} | {:error, term()}
-  defdelegate run_internal(
-                user,
-                command_id,
-                command,
-                target_type,
-                target_key,
-                data,
-                execute,
-                recovery,
-                after_commit
+                result
               ),
               to: Runner
 

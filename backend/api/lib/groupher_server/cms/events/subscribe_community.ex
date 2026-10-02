@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   alias GroupherServer.CMS
 
-  alias CMS.{Communities, FrontDesk}
+  alias CMS.Communities
   alias CMS.Events.Event
   alias CMS.Model.{Article, Comment, Community}
 
@@ -55,6 +55,6 @@ defmodule GroupherServer.CMS.Events.SubscribeCommunity do
 
   @spec comment_parent_article(Ecto.UUID.t()) :: {:ok, Article.t()} | {:error, map()}
   defp comment_parent_article(article_id) do
-    FrontDesk.get(Article, article_id, preload: [:community])
+    CMS.Articles.Reader.article_with_community(article_id)
   end
 end

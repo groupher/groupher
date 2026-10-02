@@ -25,11 +25,19 @@ defmodule GroupherServer.CMS.Communities.Reader do
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Gate
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
-  alias CMS.Model.{Community, CommunityDashboard}
+  alias CMS.Model.{Category, Community, CommunityDashboard}
   alias Helper.{ORM, T}
 
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
+
+  @doc "Loads a community by its persisted numeric id for internal readers."
+  @spec load(integer()) :: T.domain_res(Community.t())
+  def load(id) when is_integer(id), do: ORM.find(Community, id)
+
+  @doc "Pages categories for the discovery GraphQL read model."
+  @spec page_categories(map()) :: T.domain_res(term())
+  def page_categories(filter), do: ORM.find_all(Category, filter)
 
   @doc """
   Fetches a Community by slug (or aka) with dashboard, lifecycle, moderators

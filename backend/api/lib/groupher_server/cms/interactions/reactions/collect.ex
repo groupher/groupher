@@ -16,11 +16,11 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
   alias CMS.Artiment.Matcher
-  alias CMS.{Events, FrontDesk, Gate}
+  alias CMS.{FrontDesk, Gate}
   alias CMS.Interactions.{ErrorCat, ReadState}
   alias CMS.Model.{ArticleCollect, Author}
   alias Analysis.MetricEvent
-  alias Helper.{Later, T}
+  alias Helper.T
 
   @doc """
   Collects an Article as an idempotent set-state command.
@@ -52,7 +52,8 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
              {:ok, change} <- change_fact(canonical, info, actor, operation),
              :ok <- sync_state(canonical, actor, operation, change),
              :ok <- record_metric(canonical, operation, change),
-             :ok <- sync_achievement(canonical, operation, change) do
+             :ok <- sync_achievement(canonical, operation, change),
+             :ok <- enqueue_effect(canonical, actor, operation, change) do
           {canonical, change}
         else
           {:ok, %{collection?: false}} ->
@@ -63,7 +64,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
         end
       end)
     end)
-    |> after_commit(operation, actor)
+    |> normalize_result()
   end
 
   defp sync_state(_canonical, _actor, _operation, :unchanged), do: :ok
@@ -109,16 +110,24 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp after_commit({:ok, {canonical, :changed}}, operation, actor) do
-    event = if operation == :add, do: :notify_collect, else: :notify_undo_collect
-    Later.run({Events, :emit, [event, %{article: canonical, from_user: actor}]})
-    {:ok, canonical}
+  defp enqueue_effect(_article, _actor, _operation, :unchanged), do: :ok
+
+  defp enqueue_effect(article, actor, operation, :changed) do
+    case CMS.Outbox.send(%{
+           event: "interaction.collect_changed",
+           worker: CMS.Outbox.Workers.Interaction.Cleanup,
+           resource_type: "article",
+           resource_id: article.id,
+           command_id: Ecto.UUID.generate(),
+           data: %{actor_id: actor.id, operation: operation}
+         }) do
+      {:ok, _event} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
   end
 
-  defp after_commit({:ok, {canonical, :unchanged}}, _operation, _actor),
-    do: {:ok, canonical}
-
-  defp after_commit({:error, reason}, _operation, _actor), do: {:error, reason}
+  defp normalize_result({:ok, {canonical, _change}}), do: {:ok, canonical}
+  defp normalize_result({:error, reason}), do: {:error, reason}
 
   @doc """
   Returns paged users for an already-scoped Article collect set.

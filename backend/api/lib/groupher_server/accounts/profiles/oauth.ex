@@ -18,7 +18,6 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   alias GroupherServer.{Accounts, Auth, ErrorCat, Messaging, Repo}
   alias GroupherServer.FrontDesk, as: RootFrontDesk
-  alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
   alias Accounts.Profiles.BrowserSessions
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
@@ -29,7 +28,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     provider = normalize_oauth_provider(provider)
 
     Repo.transaction(fn ->
-      user = lock_live_user!(login)
+      user = lock_user!(login)
 
       case find_oauth_provider(provider) do
         {:ok, %OauthProvider{user_id: user_id} = oauth_provider} when user_id == user.id ->
@@ -74,7 +73,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     provider = normalize_oauth_provider(provider)
 
     Repo.transaction(fn ->
-      user = lock_live_user!(login)
+      user = lock_user!(login)
 
       oauth_provider =
         case find_user_oauth_provider(user, provider) do
@@ -111,7 +110,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   @doc "Returns the canonical linked-account projection for an active user."
   def linked_oauth_accounts(login) do
-    with {:ok, user} <- FrontDesk.live_user(login, fill_meta: false) do
+    with {:ok, user} <- ORM.find_by(User, login: login) do
       bindings =
         OauthProvider
         |> where([binding], binding.user_id == ^user.id)
@@ -148,7 +147,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   def unlink_oauth_identity(login, public_ref) do
     result =
       Repo.transaction(fn ->
-        user = lock_live_user!(login)
+        user = lock_user!(login)
 
         binding =
           case ORM.find_by(OauthProvider, user_id: user.id, public_ref: public_ref) do
@@ -232,8 +231,8 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
     |> ORM.find_by(user_id: user.id, provider: provider)
   end
 
-  defp lock_live_user!(login) do
-    case FrontDesk.live_user(login, fill_meta: false) do
+  defp lock_user!(login) do
+    case ORM.find_by(User, login: login) do
       {:ok, user} ->
         User
         |> where(id: ^user.id)
@@ -446,7 +445,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   defp register_oauth_result({:ok, %{create_user: create_user}}) do
     {:ok, user} =
-      FrontDesk.live_user(create_user.login, preload: :oauth_providers, fill_meta: false)
+      ORM.find_by(User, [login: create_user.login], preload: :oauth_providers)
 
     RootFrontDesk.revalidate().user(user.login)
 

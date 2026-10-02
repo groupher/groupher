@@ -86,17 +86,24 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   @doc "Adds folder membership through the retry-safe CMS Command boundary."
   @spec add_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def add_payload(article, folder_id, %User{} = user, nil) do
+    add_new(article, folder_id, user)
+    |> collect_payload(nil)
+  end
+
   def add_payload(article, folder_id, %User{} = user, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.update_user(user, command_id,
-        command: :collect_add,
-        resource: article,
-        input: %{folder_id: folder_id},
-        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-      )
-      |> Command.run(fn _context -> add_new(article, folder_id, user) end)
-      |> collect_payload(command_id)
-    end
+    %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :collect_add,
+      target: article,
+      params: %{folder_id: folder_id}
+    }
+    |> Command.execute(
+      action: fn _context -> add_new(article, folder_id, user) end,
+      result: fn _receipt -> ORM.find(CollectFolder, folder_id) end
+    )
+    |> collect_payload(command_id)
   end
 
   defp add_new(article, folder_id, %User{} = user) do
@@ -139,17 +146,24 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   @doc "Removes folder membership through the retry-safe CMS Command boundary."
   @spec remove_payload(T.article(), T.id(), User.t(), String.t() | nil) :: T.domain_res(map())
+  def remove_payload(article, folder_id, %User{} = user, nil) do
+    remove_new(article, folder_id, user)
+    |> collect_payload(nil)
+  end
+
   def remove_payload(article, folder_id, %User{} = user, command_id) do
-    with {:ok, command_id} <- Command.resolve_command_id(command_id) do
-      Command.update_user(user, command_id,
-        command: :collect_remove,
-        resource: article,
-        input: %{folder_id: folder_id},
-        recovery: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-      )
-      |> Command.run(fn _context -> remove_new(article, folder_id, user) end)
-      |> collect_payload(command_id)
-    end
+    %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :collect_remove,
+      target: article,
+      params: %{folder_id: folder_id}
+    }
+    |> Command.execute(
+      action: fn _context -> remove_new(article, folder_id, user) end,
+      result: fn _receipt -> ORM.find(CollectFolder, folder_id) end
+    )
+    |> collect_payload(command_id)
   end
 
   defp remove_new(article, folder_id, %User{} = user) do

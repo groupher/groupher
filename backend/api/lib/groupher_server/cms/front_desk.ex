@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
       GraphQL resolver / job / CMS domain
         -> CMS.FrontDesk facade
-        -> Article / Comment / Community / Lookup / Relation / ReactionUsers
+        -> Article / Comment / Community / Relation / ReactionUsers
   """
 
   alias GroupherServer.CMS
@@ -16,7 +16,6 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias CMS.FrontDesk.{
     Article,
     Community,
-    Lookup,
     ReactionUsers,
     Relation
   }
@@ -28,11 +27,12 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Helper.T
 
-  @doc "Reads one public Community by slug or alias."
-  def community(slug), do: Community.read(slug)
+  @doc "Reads one Community by id or public slug."
+  def community(ref), do: Community.read(ref)
 
-  @doc "Reads one live User through the root FrontDesk boundary."
-  def live_user(login, opts \\ []), do: RootFrontDesk.live_user(login, opts)
+  @doc "Reads one Community with an explicit actor-aware read mode."
+  def community(ref, :operations), do: Community.read(ref, :operations, mode: :operations)
+  def community(ref, actor, opts), do: Community.read(ref, actor, opts)
 
   @doc "Revalidates one User through the root FrontDesk boundary."
   def revalidate_user(login), do: RootFrontDesk.revalidate().user(login)
@@ -40,18 +40,15 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "Reads one Comment from a path or database id."
   def comment(comment_path_or_id), do: CommentReader.read(comment_path_or_id)
 
-  @doc "Reads one Comment from a path with preload options, or under an Article path."
-  def comment(path, opts_or_inner_id)
-
-  def comment(path, opts) when is_map(path) and is_list(opts), do: CommentReader.read(path, opts)
+  @doc "Reads one Comment under an Article path by inner id."
   def comment(article_path, inner_id), do: CommentReader.read(article_path, inner_id, [])
-
-  @doc "Reads one Comment under an Article path with preload options."
-  def comment(article_path, inner_id, opts), do: CommentReader.read(article_path, inner_id, opts)
 
   @doc "Reads one Community Tag by database id."
   @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def community_tag(id), do: Community.tag(id)
+
+  @doc "Reads one Community Tag Group by database id."
+  def community_tag_group(id), do: Community.tag_group(id)
 
   @doc "Reads one Community Tag by public coordinates."
   def community_tag(community, thread, slug), do: Community.tag(community, thread, slug)
@@ -62,27 +59,11 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "Returns the parent Article and author information for one Comment."
   def full_comment(comment_id), do: CommentReader.full(comment_id)
 
-  @doc "Finds one schema row by primary id."
-  def get(queryable, id), do: Lookup.get(queryable, id)
-
-  @doc "Finds one schema row by primary id with preloads."
-  def get(queryable, id, preload: preload), do: Lookup.get(queryable, id, preload: preload)
-
-  @doc "Finds one schema row by clauses."
-  def get_by(queryable, clauses), do: Lookup.get_by(queryable, clauses)
-
-  @doc "Finds one schema row by clauses with preloads."
-  def get_by(queryable, clauses, preload: preload),
-    do: Lookup.get_by(queryable, clauses, preload: preload)
-
-  @doc "Preloads the author relation expected by Article or Comment callers."
-  def preload_author(resource), do: Relation.preload_author(resource)
-
   @doc "Returns the author of an Article or Comment."
-  def author_of(resource), do: Relation.author_of(resource)
+  def article_author(resource), do: Relation.author_of(resource)
 
   @doc "Returns the parent Article of a Comment."
-  def article_of(comment, opts \\ []), do: Relation.article_of(comment, opts)
+  def article_of(comment), do: Relation.article_of(comment)
 
   @doc "Returns the canonical thread of a Comment or Article projection."
   def thread_of(resource), do: Relation.thread_of(resource)
@@ -96,13 +77,11 @@ defmodule GroupherServer.CMS.FrontDesk do
     do: ReactionUsers.load(queryable, article, filter)
 
   @doc "Reads one public Article from its sole external locator, an ArticlePath."
-  @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
-  def article(article_path, actor \\ nil, opts \\ [])
+  @spec article(ArticlePath.t()) :: {:ok, struct()} | {:error, map()}
+  def article(article_path), do: Article.read(article_path, nil, [])
 
-  def article(article_path, opts, []) when is_list(opts),
-    do: Article.read(article_path, nil, opts)
-
-  def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
+  @spec article(ArticlePath.t(), term()) :: {:ok, struct()} | {:error, map()}
+  def article(article_path, actor), do: Article.read(article_path, actor, [])
 
   @doc "Reads visible public Articles for a bounded set of structured paths."
   def article_paths(paths), do: Article.read_paths(paths)

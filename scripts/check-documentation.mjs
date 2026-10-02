@@ -288,7 +288,7 @@ const checkElixirSharedFunctions = () => {
       file.endsWith('.ex'),
     ).map((file) => relative(file)),
     'backend/api/lib/groupher_server/cms/model/post_solution.ex',
-    'backend/api/lib/groupher_server/cms/comments/commands/solution.ex',
+    'backend/api/lib/groupher_server/cms/comments/solution.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/update_comment.ex',
     'backend/api/lib/groupher_server/cms/comments/commands/delete_comment.ex',
     'backend/api/lib/groupher_server/accounts/collect_folders/write.ex',

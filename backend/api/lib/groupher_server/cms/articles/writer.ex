@@ -18,9 +18,22 @@ defmodule GroupherServer.CMS.Articles.Writer do
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
 
   alias Accounts.Model.User
-  alias CMS.FrontDesk
-  alias CMS.Model.Author
+  alias CMS.Articles.Reader
+  alias CMS.Model.{Article, Author, Community}
   alias Helper.{ORM, T}
+
+  @doc "Publishes one Gate-authorized Article and commits all first-publish side effects atomically."
+  def publish(%Article{} = article, %Author{} = author, actor, opts) do
+    Repo.transaction(fn ->
+      with {:ok, published} <- CMS.Articles.Publish.Target.publish(article, author, opts),
+           {:ok, _finalized} <- finalize_first_publish(published, actor),
+           {:ok, _events} <- enqueue_publish_events(published, opts) do
+        published
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+  end
 
   @doc "Notifies community administrators after the first official Article publish."
   @spec notify_admin_new_article(map()) :: T.domain_res(term())
@@ -39,9 +52,7 @@ defmodule GroupherServer.CMS.Articles.Writer do
   end
 
   defp do_notify_admin_new_article(target, id, thread \\ nil) do
-    preload = [:community, author: :user]
-
-    with {:ok, article} <- FrontDesk.get(target, id, preload: preload) do
+    with {:ok, article} <- Reader.article_with_context(id) do
       info = %{
         id: article.id,
         title: article.title,
@@ -70,6 +81,77 @@ defmodule GroupherServer.CMS.Articles.Writer do
         |> Ecto.Changeset.unique_constraint(:user_id)
         |> Ecto.Changeset.foreign_key_constraint(:user_id)
         |> Repo.insert()
+    end
+  end
+
+  defp enqueue_publish_events(
+         %{article: %Article{} = article, public: public, first_publish?: first_publish?} = result,
+         opts
+       ) do
+    command_id = Keyword.get(opts, :outbox_command_id, Ecto.UUID.generate())
+
+    with {:ok, %Community{} = community} <- Reader.community(article.community_id),
+         {:ok, cache_event} <-
+           CMS.Outbox.send(%{
+             event: if(first_publish?, do: "article.published", else: "article.updated"),
+             worker: CMS.Outbox.Workers.Article.Cleanup,
+             resource_type: "article",
+             resource_id: article.id,
+             command_id: command_id,
+             data: %{
+               community: community.slug,
+               community_id: community.id,
+               thread: article.thread,
+               inner_id: article.inner_id,
+               article_id: article.id,
+               revision_id: public.revision_id
+             }
+           }),
+         {:ok, projection_event} <-
+           CMS.Outbox.send(%{
+             event: "article.projections",
+             worker: CMS.Outbox.Workers.Article.Cleanup,
+             resource_type: "article",
+             resource_id: article.id,
+             command_id: command_id,
+             data: %{
+               first_publish?: first_publish?,
+               changed_fields: Map.get(result, :changed_fields, []),
+               published_by_id: Map.get(result, :published_by_id),
+               revision_id: public.revision_id
+             }
+           }) do
+      {:ok, %{cache: cache_event, projections: projection_event}}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp finalize_first_publish(%{first_publish?: false} = result, _actor), do: {:ok, result}
+
+  defp finalize_first_publish(
+         %{first_publish?: true, article: %Article{} = article} = result,
+         actor
+       ) do
+    with {:ok, %Community{} = community} <- Reader.community(article.community_id),
+         %User{} = user <- actor_user(actor),
+         {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
+         {:ok, _user} <- Accounts.Publish.update_states(user, article.thread),
+         {:ok, _throttle} <- CMS.Gate.RateLimit.Publish.record(user) do
+      {:ok, result}
+    else
+      {:error, reason} -> {:error, reason}
+      _ -> {:error, :publish_finalization_context_not_found}
+    end
+  end
+
+  defp actor_user(%User{} = user), do: user
+  defp actor_user(%Author{user: %User{} = user}), do: user
+
+  defp actor_user(%Author{user_id: user_id}) do
+    case GroupherServer.FrontDesk.fresh_user(user_id) do
+      {:ok, %User{} = user} -> user
+      _ -> nil
     end
   end
 end
