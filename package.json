@@ -202,7 +202,7 @@
     "oxlint": "1.86.0",
     "portless": "0.15.4",
     "postcss": "^8.5.28",
-    "react-doctor": "^0.7.6",
+    "react-doctor": "^0.9.14",
     "react-json-view-lite": "^2.5.0",
     "sharp": "0.35.5",
     "svgo": "^4.0.1",

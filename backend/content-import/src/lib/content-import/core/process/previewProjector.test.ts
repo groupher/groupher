@@ -122,4 +122,34 @@ describe('projectPreviewProcess', () => {
       message: 'Unsupported documentation framework.',
     })
   })
+
+  it('falls back when a failed run cause has no readable message', async () => {
+    const failure = Object.assign(new Error('Workflow failed'), {
+      cause: { reason: 'unknown' },
+      name: 'WorkflowRunFailedError',
+      runId: 'workflow-run-1',
+    })
+    mocks.getRun.mockReturnValue({
+      get returnValue() {
+        return Promise.reject(failure)
+      },
+      status: 'failed',
+    })
+
+    const projection = await projectPreviewProcess(
+      createStore({
+        getAnalysisRun: vi.fn().mockResolvedValue({
+          createdAt: '2026-07-22T08:00:01.000Z',
+          workflowRunRef: 'workflow-run-1',
+        }),
+        getDataset: vi.fn().mockResolvedValue({ datasetRef: 'dataset-1' }),
+      }),
+      record,
+    )
+
+    expect(projection.error).toEqual({
+      code: 'preview_analysis_failed',
+      message: 'Repository analysis failed.',
+    })
+  })
 })
