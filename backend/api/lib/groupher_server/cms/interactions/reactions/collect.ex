@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   alias Accounts.Model.User
   alias CMS.Articles.MutationLock
   alias CMS.Artiment.Matcher
-  alias CMS.{FrontDesk, Gate}
+  alias CMS.{Gate, Interactions}
   alias CMS.Interactions.{ErrorCat, ReadState}
   alias CMS.Model.{ArticleCollect, Author}
   alias Analysis.MetricEvent
@@ -141,7 +141,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Collect do
   def users(article, filter) when is_map(filter) do
     case Matcher.match_interaction(article) do
       {:ok, %{collection?: true}} ->
-        FrontDesk.load_reaction_users(ArticleCollect, article, filter)
+        Interactions.ReactionUsers.load(ArticleCollect, article, filter)
 
       _ ->
         {:error, ErrorCat.unsupported_artiment("collected_users only supports Article")}

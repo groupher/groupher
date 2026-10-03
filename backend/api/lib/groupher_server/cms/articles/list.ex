@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Artiment.Const
   alias CMS.Communities.Enable
   alias CMS.Dashboard.KanbanBoards
+  alias CMS.FrontDesk
   alias CMS.Gate.Context.Scope.Article, as: ArticleContext
   alias CMS.Gate.Context.Scope.Doc, as: DocContext
   alias CMS.Gate.Scope
@@ -123,7 +124,7 @@ defmodule GroupherServer.CMS.Articles.List do
       |> limit(^size)
       |> Repo.all()
       |> Enum.flat_map(fn path ->
-        case CMS.FrontDesk.article(%{
+        case FrontDesk.article(%{
                community: path.community,
                thread: thread,
                inner_id: path.inner_id
@@ -395,7 +396,7 @@ defmodule GroupherServer.CMS.Articles.List do
       |> Repo.all()
       |> Enum.map(fn inner_id ->
         {:ok, article} =
-          CMS.FrontDesk.article(%{
+          FrontDesk.article(%{
             community: community.slug,
             thread: :post,
             inner_id: inner_id
@@ -483,7 +484,7 @@ defmodule GroupherServer.CMS.Articles.List do
   end
 
   defp load_public_path(path, thread) do
-    case CMS.FrontDesk.article(%{
+    case FrontDesk.article(%{
            community: path.community,
            thread: thread,
            inner_id: path.inner_id

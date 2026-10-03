@@ -1,12 +1,12 @@
-defmodule GroupherServer.CMS.FrontDesk.ReactionUsers do
+defmodule GroupherServer.CMS.Interactions.ReactionUsers do
   @moduledoc """
-  Loads paged users attached to one Article reaction projection.
+  Loads paged users attached to an Article-owned Interaction fact.
 
   Business position:
 
-      CMS.FrontDesk facade
-        -> FrontDesk.ReactionUsers
-        -> CMS.QueryBuilder / Repo
+      CMS.Interactions users facade
+        -> Interaction-owned reaction query
+        -> QueryBuilder / Repo
   """
 
   import Ecto.Query, warn: false
@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.FrontDesk.ReactionUsers do
   alias CMS.QueryBuilder
   alias Helper.ORM
 
-  @doc "Loads one page of users for the supplied reaction query."
+  @doc "Loads one page of users for the supplied Article reaction query."
   def load(queryable, article, filter) do
     {:ok, thread} = Relation.thread_of(article)
     %{page: page, size: size} = filter

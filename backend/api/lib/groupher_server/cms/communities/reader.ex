@@ -2,8 +2,8 @@ defmodule GroupherServer.CMS.Communities.Reader do
   @moduledoc """
   Reader helpers for communities.
 
-  The same `fetch` entry point serves public viewers and explicit operations
-  callers. Gate owns policy selection; this module owns query assembly,
+  The same `fetch` entry point serves public viewers and actor-aware public
+  reads. Gate owns policy selection; this module owns query assembly,
   preloads, metadata and view bookkeeping.
 
   Business position:
@@ -31,10 +31,6 @@ defmodule GroupherServer.CMS.Communities.Reader do
   @default_dashboard CommunityDashboard.default()
   @default_read_opt [inc_views: true]
 
-  @doc "Loads a community by its persisted numeric id for internal readers."
-  @spec load(integer()) :: T.domain_res(Community.t())
-  def load(id) when is_integer(id), do: ORM.find(Community, id)
-
   @doc "Pages categories for the discovery GraphQL read model."
   @spec page_categories(map()) :: T.domain_res(term())
   def page_categories(filter), do: ORM.find_all(Category, filter)
@@ -43,8 +39,8 @@ defmodule GroupherServer.CMS.Communities.Reader do
   Fetches a Community by slug (or aka) with dashboard, lifecycle, moderators
   and viewer state preloaded.
 
-  Public viewers may pass a `%User{}` to get viewer state; explicit callers
-  pass `:operations`. By default the read increments the view counter unless
+  Public viewers may pass a `%User{}` to get viewer state. By default the read
+  increments the view counter unless
   `inc_views: false` is given.
 
   ## Examples
@@ -55,22 +51,23 @@ defmodule GroupherServer.CMS.Communities.Reader do
       CMS.Communities.Reader.fetch("groupher", %User{id: 1})
       #=> {:ok, %Community{}}
 
-      CMS.Communities.Reader.fetch("groupher", :operations)
-      #=> {:ok, %Community{}}
-
   """
-  @spec fetch(String.t(), keyword() | User.t() | :operations) :: T.domain_res(term())
+  @spec fetch(String.t(), keyword() | User.t()) :: T.domain_res(term())
   def fetch(slug, opt \\ @default_read_opt)
 
   def fetch(slug, %User{} = user), do: fetch_for_viewer(slug, user, @default_read_opt)
-  def fetch(slug, :operations), do: do_fetch(slug, :operations, policy_mode: :operations)
-  def fetch(slug, opt) when is_list(opt), do: do_fetch(slug, nil, opt)
+  def fetch(slug, opt) when is_list(opt) do
+    with {:ok, opt} <- validate_public_opts(opt) do
+      do_fetch(slug, nil, opt)
+    end
+  end
 
-  @spec fetch(String.t(), User.t() | :operations, keyword()) :: T.domain_res(term())
-  def fetch(slug, %User{} = user, opt), do: fetch_for_viewer(slug, user, opt)
-
-  def fetch(slug, :operations, opt),
-    do: do_fetch(slug, :operations, Keyword.put_new(opt, :policy_mode, :operations))
+  @spec fetch(String.t(), User.t(), keyword()) :: T.domain_res(term())
+  def fetch(slug, %User{} = user, opt) do
+    with {:ok, opt} <- validate_public_opts(opt) do
+      fetch_for_viewer(slug, user, opt)
+    end
+  end
 
   defp fetch_for_viewer(slug, user, opt) do
     with {:ok, community} <- do_fetch(slug, user, Keyword.put(opt, :inc_views, false)),
@@ -78,6 +75,13 @@ defmodule GroupherServer.CMS.Communities.Reader do
       viewer_has_states({:ok, community}, user)
     else
       {:error, reason} -> {:error, normalize_fetch_error(reason)}
+    end
+  end
+
+  defp validate_public_opts(opt) do
+    case Keyword.get(opt, :policy_mode, :public) do
+      :public -> {:ok, Keyword.delete(opt, :policy_mode)}
+      _ -> {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
     end
   end
 

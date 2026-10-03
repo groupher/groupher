@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   alias CMS.Articles.Reader, as: ArticleReader
   alias CMS.Assets.{Reader, Writer}
   alias CMS.Command
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleAssetRef, ArticleDraft, Community, CommunityAsset}
 
   @doc "Replaces one Draft-owned asset use without mutating an immutable Revision."
@@ -25,7 +26,8 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
           {:ok, map()} | {:error, term()}
   def replace(article_or_projection, attrs, %User{} = user, command_id) when is_map(attrs) do
     with {:ok, article} <- load_article(article_or_projection),
-         {:ok, %Community{} = community} <- ArticleReader.community(article.community_id) do
+         {:ok, %Community{} = community} <-
+           FrontDesk.community(article.community_id, mode: :internal) do
       params = Map.drop(attrs, [:command_id, :cur_user])
 
       if is_nil(command_id) do
@@ -193,10 +195,10 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
     end
   end
 
-  defp load_article(%Article{} = article), do: ArticleReader.article(article.id)
+  defp load_article(%Article{} = article), do: FrontDesk.article(article.id, mode: :internal)
 
   defp load_article(%{article_id: article_id}) when is_binary(article_id) do
-    case ArticleReader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
       {:error, _reason} -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end

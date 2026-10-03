@@ -29,13 +29,18 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   alias GroupherServer.CMS
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Helper.T
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Const
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, Author, Community}
 
   alias __MODULE__.Draft.Store, as: TargetDraft
   alias __MODULE__.Draft.Diff, as: TargetDiff
+
+  @doc "Resolves a bounded batch of public ArticlePaths in one Article-owned query."
+  def resolve_paths(paths), do: __MODULE__.PathResolver.resolve(paths)
 
   @doc "Moves a stable ordinary Article to a new home Community through Gate."
   @spec move(Community.t(), Ecto.UUID.t(), [T.id()], User.t()) ::
@@ -44,7 +49,8 @@ defmodule GroupherServer.CMS.Articles do
     with_article(article_id, actor, :move, fn article ->
       old_inner_id = article.inner_id
 
-      with {:ok, %Community{} = source} <- Reader.community(article.community_id),
+      with {:ok, %Community{} = source} <-
+             FrontDesk.community(article.community_id, mode: :internal),
            {:ok, moved} <- Communities.move(article, community),
            {:ok, relation} <-
              Reader.home_relation(moved.id),
@@ -87,7 +93,7 @@ defmodule GroupherServer.CMS.Articles do
   @spec pin(Community.t(), Ecto.UUID.t(), User.t()) ::
           {:ok, CMS.Model.PinnedArticle.t()} | {:error, term()}
   def pin(%Community{} = community, article_id, %User{} = actor) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{thread: :doc}} ->
         {:error, :unsupported_for_doc}
 
@@ -110,7 +116,7 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp with_article(article_id, actor, action, callback) when is_binary(article_id) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> CMS.Gate.Access.with_check(actor, action, article, callback)
       {:error, _} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
     end
@@ -328,14 +334,14 @@ defmodule GroupherServer.CMS.Articles do
   defp actor_user(%Author{user: %User{} = user}), do: user
 
   defp actor_user(%Author{user_id: user_id}) do
-    case GroupherServer.FrontDesk.fresh_user(user_id) do
+    case RootFrontDesk.fresh_user(user_id) do
       {:ok, user} -> user
       _ -> nil
     end
   end
 
   defp stable_article(article_id) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
       {:error, _} -> {:error, :article_not_found}
     end
@@ -416,7 +422,7 @@ defmodule GroupherServer.CMS.Articles do
     do: change_sink(article_id, actor, :undo_sink, opts)
 
   defp change_sink(article_id, actor, action, opts) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
@@ -474,7 +480,7 @@ defmodule GroupherServer.CMS.Articles do
     do: moderate(article_id, :audit_failed, attrs, actor, opts)
 
   defp moderate(article_id, state, attrs, actor, opts) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 
@@ -527,7 +533,7 @@ defmodule GroupherServer.CMS.Articles do
     do: change_comment_lock(article_id, actor, :unlock_comments, opts)
 
   defp change_comment_lock(article_id, actor, action, opts) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{thread: :doc} = article} ->
         branch_id = Keyword.get(opts, :branch_id) || main_branch_id(article.community_id)
 

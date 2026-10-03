@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   import Ecto.Query, warn: false
   alias GroupherServer.{CMS, Repo}
   alias CMS.{ErrorCat, SearchArtiments}
+  alias CMS.FrontDesk
   alias CMS.SearchArtiments.{Artiment, Config, Projection}
   alias CMS.Model.{Article, Community}
 
@@ -24,7 +25,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   @doc """
   Enqueues a background upsert job for one article.
 
-  The article's thread is resolved through `CMS.FrontDesk`, then the indexing
+  The article's thread is resolved through `FrontDesk`, then the indexing
   job is enqueued on the search queue.
 
   ## Examples
@@ -34,21 +35,21 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   """
   @spec enqueue_upsert(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_upsert(article) do
-    with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue({__MODULE__, :upsert_article, [thread, stable_id(article)]})
     end
   end
 
   @spec enqueue_metrics(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_metrics(article) do
-    with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue({__MODULE__, :sync_article_metrics, [thread, stable_id(article)]})
     end
   end
 
   @spec enqueue_delete(struct()) :: {:ok, :pass} | {:error, term()}
   def enqueue_delete(article) do
-    with {:ok, thread} <- CMS.FrontDesk.thread_of(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue_delete(thread, stable_id(article))
     end
   end
@@ -182,7 +183,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     with %Article{thread: ^thread} = article <- Repo.get(Article, article_id),
          %Community{} = community <- Repo.get(Community, article.community_id),
          {:ok, public} <-
-           CMS.FrontDesk.article(%{
+           FrontDesk.article(%{
              community: community.slug,
              thread: thread,
              inner_id: article.inner_id

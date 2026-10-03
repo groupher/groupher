@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   alias GroupherServer.{CMS, Repo}
 
+  alias CMS.FrontDesk
   alias CMS.QueryBuilder
   alias CMS.Model.{AbuseReport, Comment}
   alias Helper.{ORM, T}
@@ -218,7 +219,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   defp public_article(%CMS.Model.Article{} = article) do
     article = Repo.preload(article, :community)
 
-    CMS.FrontDesk.article(%{
+    FrontDesk.article(%{
       community: article.community.slug,
       thread: article.thread,
       inner_id: article.inner_id
@@ -248,7 +249,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   defp extract_article_in_comment(%Comment{} = comment) do
     if is_binary(comment.article_id) do
-      with {:ok, article} <- CMS.FrontDesk.article_of(comment),
+      with {:ok, article} <- FrontDesk.article_of(comment),
            {:ok, article} <- article_with_projection_count(article, comment.thread) do
         {:ok, article |> Map.take(@export_article_keys) |> Map.merge(%{thread: comment.thread})}
       end
@@ -303,7 +304,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     do: {:error, CMS.Articles.ErrorCat.projection_not_updated()}
 
   defp article_stats_for_article(article, thread, nil) do
-    case CMS.FrontDesk.article_stats_for_articles(thread, [article]) do
+    case CMS.ArticleStats.for_public_articles(thread, [article]) do
       stats when is_map(stats) -> {:ok, stats}
       {:error, _} -> {:ok, nil}
     end
@@ -317,7 +318,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
       |> Enum.map(&(Map.get(&1, :article) || Map.get(&1, thread)))
       |> Enum.reject(&is_nil/1)
 
-    case CMS.FrontDesk.article_stats_for_articles(thread, articles) do
+    case CMS.ArticleStats.for_public_articles(thread, articles) do
       stats when is_map(stats) -> {:ok, stats}
       {:error, _} -> {:ok, nil}
     end

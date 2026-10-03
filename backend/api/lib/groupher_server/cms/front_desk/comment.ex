@@ -1,6 +1,7 @@
 defmodule GroupherServer.CMS.FrontDesk.Comment do
   @moduledoc """
-  Resolves Comments and their parent Article information for the CMS FrontDesk facade.
+  Resolves public Comment paths and trusted internal Comment views for the
+  CMS FrontDesk facade.
 
   Business position:
 
@@ -23,44 +24,73 @@ defmodule GroupherServer.CMS.FrontDesk.Comment do
   alias CMS.Model.Article, as: ArticleModel
   alias Helper.{ORM, T}
 
-  @doc "Reads one Comment from a structured path or database id."
+  @doc "Reads one Comment from a structured public path."
   @spec read(map()) :: T.domain_res(Comment.t())
   def read(comment_path) when is_map(comment_path), do: read(comment_path, [])
 
-  @spec read(integer()) :: T.domain_res(Comment.t())
-  def read(comment_id) when is_integer(comment_id) do
-    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
-      ORM.fill_meta(comment)
+  @doc "Reads one Comment by stable id or named internal view."
+  @spec read(integer(), keyword()) :: T.domain_res(Comment.t() | map())
+  def read(comment_id, opts) when is_integer(comment_id) and is_list(opts) do
+    case {Keyword.get(opts, :mode, :public), Keyword.get(opts, :view, :default)} do
+      {:internal, :article_context} -> full(comment_id)
+      {:internal, view} when view in [:default, :with_author] -> load_internal(comment_id, view)
+      _ -> {:error, CommentErrorCat.not_exist("comment not found")}
     end
   end
 
-  @doc "Reads one Comment path with explicit preload options."
   @spec read(map(), keyword()) :: T.domain_res(Comment.t())
   def read(comment_path, opts) when is_map(comment_path) and is_list(opts) do
-    with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
-      read(article_path, inner_id, opts)
+    read(comment_path, nil, opts)
+  end
+
+  @spec read(map(), term(), keyword()) :: T.domain_res(Comment.t())
+  def read(%{article: _} = comment_path, actor, opts) when is_list(opts) do
+    case Keyword.get(opts, :mode, :public) do
+      mode when mode in [:public, :management] ->
+        with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
+          read(article_path, inner_id, actor, opts)
+        end
+
+      _mode ->
+        {:error, CommentErrorCat.not_exist("unsupported Comment read mode")}
     end
   end
 
   @doc "Reads one Comment under a structured Article path."
   @spec read(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
-  def read(article_path, inner_id, opts) do
-    preload = Keyword.get(opts, :preload, :author)
+  def read(article_path, inner_id, opts) when is_map(article_path) and is_list(opts),
+    do: read(article_path, inner_id, nil, opts)
+
+  defp load_internal(comment_id, _view) do
+    with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @spec read(map(), integer() | String.t(), term(), keyword()) :: T.domain_res(Comment.t())
+  def read(article_path, inner_id, actor, opts) do
+    view = Keyword.get(opts, :view, :default)
 
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
            ArticlePath.parse(article_path),
          {:ok, inner_id} <- parse_comment_inner_id(inner_id),
-         {:ok, article} <-
+           {:ok, article} <-
            Article.read(
              %{community: community, thread: thread, inner_id: article_inner_id},
-             nil,
-             []
+             actor,
+             opts
            ),
          query <- stable_comment_query(article, thread, inner_id),
-         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
+         {:ok, comment} <- load_public_comment(query, view) do
       ORM.fill_meta(comment)
     end
   end
+
+  defp load_public_comment(query, view) when view in [:default, :with_author],
+    do: ORM.find_by(Comment, query, preload: :author)
+
+  defp load_public_comment(_query, _view),
+    do: {:error, CommentErrorCat.not_exist("unsupported Comment read view")}
 
   defp stable_comment_query(%{id: article_id}, thread, inner_id) when is_binary(article_id),
     do: %{thread: thread, inner_id: inner_id, article_id: article_id}

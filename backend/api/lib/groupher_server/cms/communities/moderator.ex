@@ -77,7 +77,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
           end)
           |> Repo.transaction()
           |> case do
-            {:ok, _} -> Communities.Reader.fetch(community.slug, inc_views: false)
+            {:ok, _} -> FrontDesk.community(community.slug, mode: :internal)
             error -> result(error)
           end
         end)
@@ -121,7 +121,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
          {:ok, _} <- Passport.stamp_passport(rules, target_user) do
       update_passport_item_count(community, target_user, rules)
 
-      Communities.Reader.fetch(community.slug, inc_views: false)
+      FrontDesk.community(community.slug, mode: :internal)
     else
       {:error, CommunityErrorCat.error_pattern(reason: :community_root_only)} ->
         {:error,
@@ -182,7 +182,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       |> Repo.transaction()
       |> case do
         {:ok, _} ->
-          Communities.Reader.fetch(community_slug, inc_views: false)
+          FrontDesk.community(community_slug, mode: :internal)
 
         error ->
           result(error)

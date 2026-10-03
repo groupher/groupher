@@ -31,17 +31,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   alias GroupherServer.Repo
   alias Helper.ORM
 
-  @doc "Loads one stable Article row for an Article-owned command or writer."
-  def article(id), do: ORM.find(Article, id)
-
-  @doc "Loads one stable Article with its Community."
-  def article_with_community(id), do: ORM.find(Article, id, preload: :community)
-
-  @doc "Loads one stable Article with its author and User."
-  def article_with_author(id), do: ORM.find(Article, id, preload: [author: :user])
-
-  @doc "Loads one stable Article with Community and author projection."
-  def article_with_context(id), do: ORM.find(Article, id, preload: [:community, author: :user])
+  defp article(id), do: ORM.find(Article, id)
 
   @doc "Loads an Article author by its persisted author id."
   def author(id), do: ORM.find(Author, id)
@@ -71,8 +61,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   def home_relation(article_id),
     do: ORM.find_by(ArticleCommunity, article_id: article_id, role: :home)
 
-  @doc "Loads one Community row for an Article-owned internal operation."
-  def community(community_id), do: ORM.find(Community, community_id)
+  defp community(community_id), do: ORM.find(Community, community_id)
 
   @doc "Ensures an Article has the Community association needed by an effect."
   def with_community(%Article{} = article), do: {:ok, Repo.preload(article, :community)}

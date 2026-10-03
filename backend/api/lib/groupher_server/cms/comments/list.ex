@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Comments.List do
   alias GroupherServer.{Accounts, CMS, Jobs, Repo}
 
   alias CMS.QueryBuilder
+  alias CMS.FrontDesk
   alias Accounts.Model.User
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
   alias CMS.Comments.{InteractionResponse, Replies}
@@ -176,7 +177,7 @@ defmodule GroupherServer.CMS.Comments.List do
   defp assign_stable_articles(%{entries: entries} = page) do
     entries =
       Enum.flat_map(entries, fn comment ->
-        case CMS.FrontDesk.article_of(comment) do
+        case FrontDesk.article_of(comment) do
           {:ok, article} -> [Map.put(comment, :article, article)]
           {:error, _reason} -> []
         end
@@ -408,8 +409,8 @@ defmodule GroupherServer.CMS.Comments.List do
   end
 
   defp article_author_id(comment) do
-    with {:ok, article} <- CMS.FrontDesk.article_of(comment),
-         {:ok, author} <- CMS.FrontDesk.article_author(article) do
+    with {:ok, article} <- FrontDesk.article_of(comment),
+         {:ok, author} <- FrontDesk.article_author(article) do
       author.id
     else
       _ -> nil

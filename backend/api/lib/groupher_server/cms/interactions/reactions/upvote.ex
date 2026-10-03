@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Matcher
-  alias CMS.{Gate, FrontDesk, Interactions, Command}
+  alias CMS.{Gate, Interactions, Command}
   alias Interactions.{Config, ErrorCat, ReadState}
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias Analysis.MetricEvent
@@ -194,7 +194,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   def users(article, filter) when is_map(filter) do
     case Matcher.match_interaction(article) do
       {:ok, %{artiment: artiment}} when artiment in @article_threads ->
-        FrontDesk.load_reaction_users(ArticleUpvote, article, filter)
+        Interactions.ReactionUsers.load(ArticleUpvote, article, filter)
 
       _ ->
         {:error, ErrorCat.unsupported_artiment("upvoted_users only supports Article")}

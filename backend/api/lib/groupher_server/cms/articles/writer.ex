@@ -16,9 +16,10 @@ defmodule GroupherServer.CMS.Articles.Writer do
   """
 
   alias GroupherServer.{Accounts, CMS, Messaging, Repo}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
-  alias CMS.Articles.Reader
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, Author, Community}
   alias Helper.{ORM, T}
 
@@ -52,7 +53,7 @@ defmodule GroupherServer.CMS.Articles.Writer do
   end
 
   defp do_notify_admin_new_article(target, id, thread \\ nil) do
-    with {:ok, article} <- Reader.article_with_context(id) do
+    with {:ok, article} <- FrontDesk.article(id, mode: :internal, view: :command_context) do
       info = %{
         id: article.id,
         title: article.title,
@@ -90,7 +91,8 @@ defmodule GroupherServer.CMS.Articles.Writer do
        ) do
     command_id = Keyword.get(opts, :outbox_command_id, Ecto.UUID.generate())
 
-    with {:ok, %Community{} = community} <- Reader.community(article.community_id),
+    with {:ok, %Community{} = community} <-
+           FrontDesk.community(article.community_id, mode: :internal),
          {:ok, cache_event} <-
            CMS.Outbox.send(%{
              event: if(first_publish?, do: "article.published", else: "article.updated"),
@@ -133,7 +135,8 @@ defmodule GroupherServer.CMS.Articles.Writer do
          %{first_publish?: true, article: %Article{} = article} = result,
          actor
        ) do
-    with {:ok, %Community{} = community} <- Reader.community(article.community_id),
+    with {:ok, %Community{} = community} <-
+           FrontDesk.community(article.community_id, mode: :internal),
          %User{} = user <- actor_user(actor),
          {:ok, _community} <- CMS.Communities.update_count_field(community, article.thread),
          {:ok, _user} <- Accounts.Publish.update_states(user, article.thread),
@@ -149,7 +152,7 @@ defmodule GroupherServer.CMS.Articles.Writer do
   defp actor_user(%Author{user: %User{} = user}), do: user
 
   defp actor_user(%Author{user_id: user_id}) do
-    case GroupherServer.FrontDesk.fresh_user(user_id) do
+    case RootFrontDesk.fresh_user(user_id) do
       {:ok, %User{} = user} -> user
       _ -> nil
     end

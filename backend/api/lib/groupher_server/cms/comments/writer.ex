@@ -207,7 +207,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
     with %Article{} = stable <- Repo.get(Article, article_id),
          %Community{} = community <- Repo.get(Community, stable.community_id) do
-      CMS.FrontDesk.article(%{
+      FrontDesk.article(%{
         community: community.slug,
         thread: stable.thread,
         inner_id: stable.inner_id
@@ -262,7 +262,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   end
 
   def reply(comment_id, body, %User{} = user, command_id) do
-    with {:ok, target_comment} <- FrontDesk.comment(comment_id) do
+    with {:ok, target_comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       reply(target_comment, body, user, command_id)
     end
   end

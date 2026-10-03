@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   def pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id),
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal),
          {:ok, result} <- pin(comment, user, opts) do
       {:ok, result}
     end
@@ -83,7 +83,7 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   def undo_pin(comment_id, %User{} = user, opts) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id),
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal),
          {:ok, result} <- undo_pin(comment, user, opts) do
       {:ok, result}
     end
@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Comments.States do
   def fold(%Comment{} = comment, %User{} = _user), do: do_fold_comment(comment, true)
 
   def fold(comment_id, %User{} = _user) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_fold_comment(comment, true)
     end
   end
@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   @spec unfold(T.id(), User.t()) :: T.domain_res(Comment.t())
   def unfold(comment_id, %User{} = _user) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_fold_comment(comment, false)
     end
   end

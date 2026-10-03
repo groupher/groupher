@@ -20,7 +20,8 @@
 - [`request-actor.md`](./request-actor.md)：平台级 human/agent/crawler/unknown 请求主体分类能力。
 - [`public-cache-invalidation.md`](./public-cache-invalidation.md)：Phoenix 领域事务 outbox、Oban worker 和 Cloudflare cache-tag purge 的可靠失效协议。
 - [`resource-loading-boundary.md`](./resource-loading-boundary.md)：CMS resource loading 合同。
-- [`front-desk.md`](./front-desk.md)：FrontDesk 资源 API、读取模式、ORM/Repo 替换与测试 DBProbe 合同。
+- [`front-desk-v2.md`](./front-desk-v2.md)：当前 FrontDesk 单资源唯一入口、`public | management | internal` mode、actor/view 与迁移合同。
+- [`front-desk.md`](./front-desk.md)：FrontDesk V1 历史合同，保留通用 ORM API 移除和 DBProbe 迁移背景。
 - [`cms-multi-entry-boundary.md`](./cms-multi-entry-boundary.md)：GraphQL、CLI、MCP 与 Plugin 复用同一 CMS facade 和领域用例的多入口架构。
 - [`cms-outbox.md`](./cms-outbox.md)：统一 Domain Outbox、typed event、Dispatcher 与 PublicCache Cleanup 等消费边界。
 - [`error-cat.md`](./error-cat.md)：领域错误目录、全局注册和协议边界。

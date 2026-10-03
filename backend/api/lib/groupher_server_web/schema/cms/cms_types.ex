@@ -955,7 +955,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
               article
 
             _not_loaded ->
-              {:ok, article} = CMS.Articles.Reader.article(draft.article_id)
+              {:ok, article} = CMS.FrontDesk.article(draft.article_id, mode: :internal)
               article
           end
 
@@ -2128,7 +2128,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     do: {:ok, slug}
 
   defp moderator_community_slug(%{community_id: community_id}) when not is_nil(community_id) do
-    with {:ok, community} <- CMS.Communities.Reader.load(community_id) do
+    with {:ok, community} <- CMS.FrontDesk.community(community_id, mode: :internal) do
       {:ok, community.slug}
     end
   end

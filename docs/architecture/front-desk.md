@@ -1,6 +1,7 @@
 # FrontDesk 资源读取边界与改造合同
 
-> 状态：改造合同。本文冻结 FrontDesk 的职责、目标 API、ORM/Repo 替换规则、测试数据库探针以及迁移顺序。当前代码尚未全部满足本文，实施状态必须以代码和测试为准。
+> 状态：V1 历史合同。当前单资源读取、读取 mode、actor 与内部资源视图合同以
+> [FrontDesk V2](./front-desk-v2.md) 为准。本文保留 V1 的迁移背景和实施记录，不再作为新代码的验收依据。
 >
 > 范围：`GroupherServer.FrontDesk`、`Accounts.FrontDesk`、`CMS.FrontDesk`，以及直接读取这些领域资源的 GraphQL、Command、Facade、Reader、Writer、Store 和测试代码。
 

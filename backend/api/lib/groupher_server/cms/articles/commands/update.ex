@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   alias CMS.Articles.Publish.Effects
   alias CMS.Articles.Publish.Target
   alias CMS.Command
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleLifecycle, Community}
 
   @doc "Updates and republishes one stable Article using optimistic content versioning."
@@ -26,7 +27,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
           {:ok, map()} | {:error, term()}
   def update(article_or_projection, attrs, %User{} = user, command_id) do
     with {:ok, article} <- load_article(article_or_projection),
-         {:ok, %Community{} = community} <- Reader.community(article.community_id) do
+         {:ok, %Community{} = community} <-
+           FrontDesk.community(article.community_id, mode: :internal) do
       command = %Command{
         actor: user,
         command_id: command_id,
@@ -94,10 +96,10 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
     end
   end
 
-  defp load_article(%Article{} = article), do: Reader.article(article.id)
+  defp load_article(%Article{} = article), do: FrontDesk.article(article.id, mode: :internal)
 
   defp load_article(%{article_id: article_id}) when is_binary(article_id) do
-    case Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
       {:error, _reason} -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end
@@ -105,8 +107,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
 
   defp public_projection(article_id, community) do
     with {:ok, %Article{inner_id: inner_id, thread: thread}} when is_integer(inner_id) <-
-           Reader.article(article_id) do
-      CMS.FrontDesk.article(%{
+           FrontDesk.article(article_id, mode: :internal) do
+      FrontDesk.article(%{
         community: community.slug,
         thread: thread,
         inner_id: inner_id

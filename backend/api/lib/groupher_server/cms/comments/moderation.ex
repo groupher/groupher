@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   import ShortMaps
 
   alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias CMS.{FrontDesk, QueryBuilder}
   alias CMS.Model.Comment
@@ -38,7 +39,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   """
   @spec set_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def set_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_set_illegal(comment, audit_state)
     end
   end
@@ -58,7 +59,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- GroupherServer.FrontDesk.fresh_user(comment.author.login) do
+      with {:ok, user} <- RootFrontDesk.fresh_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
         user
@@ -72,7 +73,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
 
   @spec unset_illegal(T.id(), map()) :: T.domain_res(Comment.t())
   def unset_illegal(comment_id, audit_state) do
-    with {:ok, comment} <- FrontDesk.comment(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       do_unset_illegal(comment, audit_state)
     end
   end
@@ -91,7 +92,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- GroupherServer.FrontDesk.fresh_user(comment.author.login) do
+      with {:ok, user} <- RootFrontDesk.fresh_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 
@@ -128,7 +129,7 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   defp result({:error, _, result, _steps}), do: {:error, result}
 
   defp revalidate_user({:ok, _result} = response, login) do
-    FrontDesk.revalidate_user(login)
+    RootFrontDesk.revalidate().user(login)
     response
   end
 

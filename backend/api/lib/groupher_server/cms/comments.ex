@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments do
   """
 
   alias __MODULE__.{
+    InteractionResponse,
     List,
     Moderation,
     Reader,
@@ -54,12 +55,27 @@ defmodule GroupherServer.CMS.Comments do
   @doc """
   Returns one hydrated Comment without viewer-specific state.
 
+  A CommentPath map is a public locator. An integer id is reserved for trusted
+  internal callers and is loaded through the FrontDesk internal mode.
+
   ## Examples
 
       CMS.Comments.one_comment(comment_id)
   """
   @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
-  def one_comment(id), do: Reader.one_comment(id)
+  def one_comment(%Comment{} = comment), do: InteractionResponse.one(comment, nil)
+
+  def one_comment(%{article: _} = comment_path) do
+    with {:ok, comment} <- FrontDesk.comment(comment_path) do
+      InteractionResponse.one(comment, nil)
+    end
+  end
+
+  def one_comment(comment_id) when is_integer(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      InteractionResponse.one(comment, nil)
+    end
+  end
 
   @doc """
   Returns one Comment hydrated for the supplied viewer.
@@ -69,7 +85,20 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.one_comment(comment_id, viewer)
   """
   @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def one_comment(id, %User{} = user), do: Reader.one_comment(id, user)
+  def one_comment(%Comment{} = comment, %User{} = user),
+    do: InteractionResponse.one(comment, user)
+
+  def one_comment(%{article: _} = comment_path, %User{} = user) do
+    with {:ok, comment} <- FrontDesk.comment(comment_path, user) do
+      InteractionResponse.one(comment, user)
+    end
+  end
+
+  def one_comment(comment_id, %User{} = user) when is_integer(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
+      InteractionResponse.one(comment, user)
+    end
+  end
 
   @doc "Returns one bounded Article-scoped Comment reconciliation batch."
   @spec reconcile_comments(atom(), struct(), [integer() | String.t()], User.t() | nil) ::
@@ -351,7 +380,7 @@ defmodule GroupherServer.CMS.Comments do
   def accept_solution(%Comment{} = comment, %User{} = user), do: Solution.accept(comment, user)
 
   def accept_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       Solution.accept(comment, user)
     end
   end
@@ -367,7 +396,7 @@ defmodule GroupherServer.CMS.Comments do
   def revoke_solution(%Comment{} = comment, %User{} = user), do: Solution.revoke(comment, user)
 
   def revoke_solution(comment_id, %User{} = user) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       Solution.revoke(comment, user)
     end
   end
@@ -407,7 +436,7 @@ defmodule GroupherServer.CMS.Comments do
     do: Writer.reply(comment, body, user, command_id)
 
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
       Writer.reply(comment, body, user, command_id)
     end
   end

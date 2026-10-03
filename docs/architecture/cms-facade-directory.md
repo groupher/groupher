@@ -318,35 +318,42 @@ CMS.Wallpaper
 
 ### 4.6 FrontDesk
 
-FrontDesk 的上层 API 保持不变，只移动内部实现：
+FrontDesk V2 已直接切换。以下目录只描述当前资源 facade 与稳定关系，
+不再保留 V1 的通用 lookup、reaction-users 或写操作转发：
 
 ```text
 front_desk.ex                   # public facade
 
 front_desk/
 ├── article.ex                  # article path、Gate scope、query、Response
-├── comment.ex                  # comment path、full comment
+├── comment.ex                  # comment path、named internal view
 ├── community.ex                # community 与 community tag
-├── lookup.ex                   # get/get_by 等受控通用 lookup
-├── relation.ex                 # author_of/article_of/thread_of
-└── reaction_users.ex           # reaction user pagination
+└── relation.ex                 # author_of/article_of/thread_of
 ```
 
 ```text
 现有 caller
   -> CMS.FrontDesk.article/comment/community/...
-       -> FrontDesk.Article / Comment / Community / Relation / ReactionUsers
+       -> FrontDesk.Article / Comment / Community / Relation
 ```
 
-特殊入口：
+特殊入口的当前合同：
 
-- `live_user`、`revalidate_user` 继续由 facade 一行转发根 `GroupherServer.FrontDesk`；
-- `sync_embed_replies/1` 的公开入口保留。当前只有 root-comment 查找委托
-  `Comments.Replies.root_comment/1`，embed 定位和 `ORM.update_embed` 写入仍在 facade；F6 的目标态是
-  为 `Comments.Replies` 增加 `sync_embed_replies/1`，完整承接查找和 embed 写入，FrontDesk 只转发；
-- `get/get_by` 暂时通过 `FrontDesk.Lookup` 保持合同，不在本次内部拆分中强迫调用方迁移；
-- 当前没有生产调用方的 `community_tags/1`、`get_by/2,3` 只记录为后续 dead-code 裁决，
-  不能在纯目录重构中顺手删除。
+- `article_for_view_tracking/1`、`lock_article_for_view_tracking/1` 是 ViewTracker 保留的资源专属入口，
+  不改造成通用 `FrontDesk.article/…` view；
+- `article_insights/3` 保留为 Article 专属 `:read_insights` action/view，不新增 FrontDesk mode；
+- `community_tag/1,3`、`community_tag_group/1` 保留为稳定业务关系 lookup，不扩展为 batch facade；
+- `full_comment/1` 已删除。需要父 Article、thread 和 Article author context 时，使用
+  `FrontDesk.comment(comment_id, mode: :internal, view: :article_context)`；
+- `sync_embed_replies/1` 已移出 FrontDesk，由 `CMS.Comments.Replies`/Comments 写侧承接；
+- `live_user`、CMS 层 `revalidate_user/1` 已删除。User cache refresh 统一使用根
+  `GroupherServer.FrontDesk.revalidate().user/1`；
+- 通用 `get/get_by/preload` 与 `CMS.FrontDesk.Lookup` 已删除，不保留兼容 wrapper；内部行读取归
+  owning Reader、Store、Gate Loader 或 maintenance owner；
+- `community_tags/1` 已删除且不新增替代 wrapper；batch、list、stats、reaction-users 等读取归各自
+  owning facade，不进入 FrontDesk。
+
+以上边界以 [FrontDesk V2](./front-desk-v2.md) 的 mode、single-resource 和 surface 处置表为准。
 
 ### 4.7 Snapshot
 

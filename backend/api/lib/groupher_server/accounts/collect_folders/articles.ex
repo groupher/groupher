@@ -20,6 +20,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, User}
+  alias CMS.FrontDesk
   alias Helper.{ORM, T}
 
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
@@ -51,7 +52,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
       Enum.flat_map(paged.entries, fn collect ->
         case Repo.get(CMS.Model.Article, collect.article_id) |> Repo.preload(:community) do
           %CMS.Model.Article{} = article ->
-            case CMS.FrontDesk.article(%{
+            case FrontDesk.article(%{
                    community: article.community.slug,
                    thread: article.thread,
                    inner_id: article.inner_id

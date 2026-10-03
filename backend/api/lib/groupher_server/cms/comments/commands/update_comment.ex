@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          {:ok, updated} <-
            ORM.update(canonical, %{body: payload.json, body_html: payload.html}),
          :ok <- CMS.ArticleStats.record_comment_change(article),
-         {:ok, synced} <- FrontDesk.sync_embed_replies(updated),
+         {:ok, synced} <- CMS.Comments.Replies.sync_embed_replies(updated),
          {:ok, _} <- JobPolicy.audition(synced),
          {:ok, _invalidation} <- invalidate_public_comments(article, canonical.thread, command_id),
          :ok <- enqueue_comment_effects(canonical, actor, command_id) do

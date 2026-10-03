@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Resolvers.ArticleStatsPayload do
   must not synthesize zero counts or reconstruct the write locally.
   """
   def load(thread, article, community) do
-    case CMS.FrontDesk.article_stats_for_articles(thread, [article], community) do
+    case CMS.ArticleStats.for_public_articles(thread, [article], community) do
       stats when is_map(stats) -> from_map(stats, thread, article, community)
       {:error, _reason} = error -> error
       _ -> unavailable()

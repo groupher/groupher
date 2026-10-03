@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.Communities.Writer do
 
   import GroupherServer.CMS.Articles.Writer, only: [ensure_author_exists: 1]
 
-  alias GroupherServer.{Accounts, Analysis, CMS, Repo}
-  alias CMS.Communities.{Lifecycle, Moderator, Reader}
+  alias GroupherServer.{Accounts, Analysis, CMS, FrontDesk, Repo}
+  alias CMS.Communities.{Lifecycle, Moderator}
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.BaseInfo
   alias Accounts.Model.User
@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.Communities.Writer do
          {:ok, _lifecycle} <- Lifecycle.ensure_created(community.id),
          {:ok, _} <- init_community_root(community, user),
          {:ok, _} <- CMS.DocTree.initialize(community),
-         {:ok, community} <- Reader.fetch(community.slug, inc_views: false) do
+         {:ok, community} <- FrontDesk.community(community.slug, mode: :internal) do
       provision_web_analysis(community)
       {:ok, community}
     end

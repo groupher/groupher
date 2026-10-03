@@ -33,6 +33,7 @@ defmodule GroupherServer.CMS.Communities do
   alias Accounts.Model.User
   alias CMS.{Command, Passport}
   alias CMS.Communities.{ErrorCat, Lifecycle}
+  alias CMS.FrontDesk
   alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.T
 
@@ -41,14 +42,12 @@ defmodule GroupherServer.CMS.Communities do
   @spec fetch(String.t()) :: T.domain_res(Community.t())
   def fetch(slug), do: Reader.fetch(slug)
 
-  @spec fetch(String.t(), keyword() | User.t() | :operations) :: T.domain_res(Community.t())
+  @spec fetch(String.t(), keyword() | User.t()) :: T.domain_res(Community.t())
   def fetch(slug, opt) when is_list(opt), do: Reader.fetch(slug, opt)
   def fetch(slug, %User{} = user), do: Reader.fetch(slug, user)
-  def fetch(slug, :operations), do: Reader.fetch(slug, :operations)
 
-  @spec fetch(String.t(), User.t() | :operations, keyword()) :: T.domain_res(Community.t())
+  @spec fetch(String.t(), User.t(), keyword()) :: T.domain_res(Community.t())
   def fetch(slug, %User{} = user, opt), do: Reader.fetch(slug, user, opt)
-  def fetch(slug, :operations, opt), do: Reader.fetch(slug, :operations, opt)
 
   @doc "Checks whether a community name is available in the shared namespace."
   @spec check_name(term()) :: T.domain_res(map())
@@ -136,7 +135,7 @@ defmodule GroupherServer.CMS.Communities do
 
     Command.execute(command,
       action: &request_destroy_action/1,
-      result: fn _receipt -> fetch(community.slug, :operations, inc_views: false) end
+      result: fn _receipt -> FrontDesk.community(community.slug, mode: :internal) end
     )
   end
 
@@ -153,7 +152,7 @@ defmodule GroupherServer.CMS.Communities do
              canonical.slug,
              Keyword.put(opts, :operation_ref, command_id)
            ) do
-      fetch(canonical.slug, :operations, inc_views: false)
+      FrontDesk.community(canonical.slug, mode: :internal)
     end
   end
 

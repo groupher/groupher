@@ -20,7 +20,18 @@ defmodule GroupherServer.CMS.ArticleStats do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.Artiment.{Matcher, Threads}
-  alias CMS.Model.{Article, ArticleEmotionCount, ArticleStats, Comment, CommentLifecycle}
+  alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.FrontDesk
+
+  alias CMS.Model.{
+    Article,
+    ArticleCommunity,
+    ArticleEmotionCount,
+    ArticleStats,
+    Comment,
+    CommentLifecycle,
+    Community
+  }
 
   @article_threads Threads.article_enums()
   @article_emotions CMS.Artiment.Config.emotions() -- [:upvote, :collect]
@@ -330,6 +341,121 @@ defmodule GroupherServer.CMS.ArticleStats do
     |> load_snapshots(ids)
     |> Map.new(fn {article_id, stats} -> {{thread, article_id}, stats} end)
   end
+
+  @doc "Reads public ArticleStats for one Community/thread batch."
+  @spec read_public(String.t(), atom(), [String.t() | integer()]) ::
+          {:ok, [map()]} | {:error, term()}
+  def read_public(community_ref, thread, inner_ids)
+      when is_binary(community_ref) and is_atom(thread) and is_list(inner_ids) do
+    with {:ok, inner_ids} <- normalize_inner_ids(inner_ids),
+         {:ok, stats} <- read_public_batch(community_ref, thread, inner_ids) do
+      {:ok, stats}
+    else
+      {:error, _} = error -> error
+    end
+  end
+
+  @doc "Builds ArticleStats for Articles already authorized by their caller's scope."
+  @spec for_public_articles(atom(), [struct()], String.t() | nil) ::
+          %{optional({atom(), integer()}) => map()} | {:error, term()}
+  def for_public_articles(thread, articles, community_ref \\ nil)
+      when is_atom(thread) and is_list(articles) do
+    articles = preload_stats_communities(articles, community_ref)
+    stats_by_article_id = for_articles(thread, articles)
+
+    with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
+      Map.new(articles, fn article ->
+        stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+        community = community_ref || article_community_slug(article)
+
+        {{thread, article.id}, Map.put(stats, :community, community)}
+      end)
+    end
+  end
+
+  defp read_public_batch(_community_ref, _thread, []), do: {:ok, []}
+
+  defp read_public_batch(community_ref, thread, inner_ids) do
+    with {:ok, %Community{id: community_id}} <- FrontDesk.community(community_ref) do
+      rows =
+        Article
+        |> join(:inner, [article], relation in ArticleCommunity,
+          on: relation.article_id == article.id and relation.visible == true
+        )
+        |> where(
+          [article, relation],
+          article.thread == ^thread and relation.community_id == ^community_id and
+            article.inner_id in ^inner_ids
+        )
+        |> select([article, _relation], article)
+        |> Repo.all()
+
+      stats_by_article_id = for_articles(thread, rows)
+
+      with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
+        stats_by_inner_id =
+          Map.new(rows, fn article ->
+            stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+
+            {to_string(article.inner_id),
+             Map.merge(stats, %{
+               community: community_ref,
+               thread: thread,
+               inner_id: article.inner_id
+             })}
+          end)
+
+        {:ok,
+         Enum.flat_map(inner_ids, fn inner_id ->
+           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
+             {:ok, stats} -> [stats]
+             :error -> []
+           end
+         end)}
+      end
+    else
+      {:error, _} = error -> error
+    end
+  end
+
+  defp normalize_inner_ids(inner_ids) do
+    normalized =
+      Enum.reduce_while(inner_ids, {:ok, []}, fn value, {:ok, acc} ->
+        case Integer.parse(to_string(value)) do
+          {id, ""} when id > 0 -> {:cont, {:ok, [id | acc]}}
+          _ -> {:halt, :error}
+        end
+      end)
+
+    case normalized do
+      {:ok, ids} ->
+        ids = ids |> Enum.uniq() |> Enum.reverse()
+
+        if length(ids) <= 100,
+          do: {:ok, ids},
+          else: {:error, ArticleErrorCat.article_not_found("too many article ids")}
+
+      :error ->
+        {:error, ArticleErrorCat.article_not_found("invalid article ids")}
+    end
+  end
+
+  defp ensure_stats_rows(articles, stats_by_article_id, thread) do
+    if Enum.all?(articles, &Map.has_key?(stats_by_article_id, {thread, &1.id})) do
+      :ok
+    else
+      {:error, ArticleErrorCat.projection_not_updated()}
+    end
+  end
+
+  defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
+  defp article_community_slug(%{community: %{slug: slug}}), do: slug
+  defp article_community_slug(_article), do: nil
+
+  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref),
+    do: articles
+
+  defp preload_stats_communities(articles, _community_ref), do: Repo.preload(articles, :community)
 
   defp load_snapshots(_thread, []), do: %{}
 

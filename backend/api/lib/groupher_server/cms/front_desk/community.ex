@@ -1,6 +1,10 @@
 defmodule GroupherServer.CMS.FrontDesk.Community do
   @moduledoc """
-  Reads public Communities and Community Tags for the CMS FrontDesk facade.
+  Reads Communities and Community Tags for the CMS FrontDesk facade.
+
+  The facade accepts public, actor-aware management, and trusted internal
+  reads. Internal mode uses the existing Gate operations lifecycle policy
+  behind the stable `:internal` API; callers do not pass an operations actor.
 
   Business position:
 
@@ -26,9 +30,12 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
   @spec read(integer() | String.t(), term(), keyword()) ::
           {:ok, Community.t()} | {:error, map()}
   def read(ref, actor, opts) when is_list(opts) do
-    policy_mode = Keyword.get(opts, :mode, :public)
+    mode = Keyword.get(opts, :mode, :public)
+    view = Keyword.get(opts, :view, :default)
+    {policy_mode, actor} = effective_policy(mode, actor)
 
-    with {:ok, context} <- scope_context(policy_mode),
+    with :ok <- validate_view(view),
+         {:ok, context} <- scope_context(policy_mode),
          %Ecto.Query{} = query <- CMS.Gate.scope(Community, actor, :read, context),
          %Ecto.Query{} = query <- where_ref(query, ref),
          query <- preload(query, [:dashboard, :lifecycle, moderators: [:community, :user]]),
@@ -53,6 +60,12 @@ defmodule GroupherServer.CMS.FrontDesk.Community do
       {:error, CMS.Gate.ErrorCat.unknown_policy_mode()}
     end
   end
+
+  defp effective_policy(:internal, _actor), do: {:operations, :operations}
+  defp effective_policy(mode, actor), do: {mode, actor}
+
+  defp validate_view(:default), do: :ok
+  defp validate_view(_view), do: {:error, ErrorCat.custom(%{reason: :unsupported_read_view})}
 
   @doc "Reads one Community Tag by database id."
   @spec tag(T.id()) :: T.domain_res(CommunityTag.t())

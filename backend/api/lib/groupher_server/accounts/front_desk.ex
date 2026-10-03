@@ -14,6 +14,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
   require GroupherServer.Accounts.Profiles.ErrorCat
 
   alias GroupherServer.Accounts
+  alias GroupherServer.FrontDesk.Cache, as: RootCache
 
   alias Accounts.Model.User
   alias Accounts.Profiles.ErrorCat, as: ProfileErrorCat
@@ -33,7 +34,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
   @doc "Runs `user` through the public `FrontDesk` boundary."
   @spec user(integer() | String.t()) :: {:ok, User.t()} | {:error, any()}
   def user(id) when is_integer(id), do: fetch_user_by_id(id)
-  def user(login) when is_binary(login), do: GroupherServer.FrontDesk.Cache.user(login)
+  def user(login) when is_binary(login), do: RootCache.user(login)
 
   @doc "Reads the current User row, bypassing the full User cache."
   @spec fresh_user(integer() | String.t()) :: {:ok, User.t()} | {:error, any()}
@@ -54,8 +55,7 @@ defmodule GroupherServer.Accounts.FrontDesk do
         Cache.put(@cache_pool, login, user.id)
         {:ok, user.id}
 
-      {:error,
-       ProfileErrorCat.error_pattern(details: %{reason: :not_exist, message: message})} ->
+      {:error, ProfileErrorCat.error_pattern(details: %{reason: :not_exist, message: message})} ->
         {:error, ProfileErrorCat.not_exist(message)}
 
       {:error, error} ->

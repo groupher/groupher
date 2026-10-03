@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias GroupherServer.{Accounts, Activity, CMS}
   alias Accounts.Model.User
   alias CMS.Command
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, Community}
   alias Helper.T
 
@@ -60,7 +61,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
              expected_draft_version: draft.version,
              expected_lifecycle_version: 1
            ),
-         {:ok, %Article{} = published} <- CMS.Articles.Reader.article(article.id),
+         {:ok, %Article{} = published} <- FrontDesk.article(article.id, mode: :internal),
          {:ok, public} <- public_projection(published, community),
          {:ok, _activity} <- Activity.log(public, :created, actor: user),
          {:ok, _community} <- CMS.Communities.update_count_field(community, :doc),
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   end
 
   defp recover_public(%{result_key: article_id}, community) when is_binary(article_id) do
-    case CMS.Articles.Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} ->
         case public_projection(article, community) do
           {:ok, public} ->
@@ -112,7 +113,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
        when is_integer(inner_id) do
-    CMS.FrontDesk.article(%{
+    FrontDesk.article(%{
       community: community.slug,
       thread: thread,
       inner_id: inner_id

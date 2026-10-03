@@ -1,13 +1,13 @@
 defmodule GroupherServer.CMS.FrontDesk.Article do
   @moduledoc """
-  Resolves public Article paths through typed Gate Scope and Article projection.
+  Resolves public/management Article paths and trusted internal Article views.
 
   Business position:
 
       CMS.FrontDesk facade
         -> FrontDesk.Article
-        -> Gate Scope / Repo
-        -> Articles.Response
+        -> Gate Scope or internal view
+        -> Articles.Response / stable Article
   """
 
   import Ecto.Query, warn: false
@@ -39,6 +39,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     PinnedArticle,
     PostState
   }
+  alias Helper.ORM
 
   @doc "Reads one Article through the actor-aware Article Insights scope."
   @spec read_insights(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
@@ -54,15 +55,44 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
 
   @doc "Reads one public Article from a structured path."
   @spec read(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
-  def read(article_path, actor, opts) do
-    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.parse(article_path),
-         {:ok, community} <- CommunityReader.read(community) do
-      with {:ok, _thread} <- Enable.thread?(community.slug, thread) do
-        read_stable(community, thread, inner_id, actor, opts)
-      end
+  def read(article_id, nil, opts) when is_binary(article_id) and is_list(opts) do
+    case Keyword.get(opts, :mode, :public) do
+      :internal -> read_internal(article_id, Keyword.get(opts, :view, :default))
+      _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end
   end
+
+  def read(article_path, actor, opts) do
+    case {Keyword.get(opts, :mode, :public), Keyword.get(opts, :view, :default)} do
+      {mode, :default} when mode in [:public, :management] ->
+        with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
+               ArticlePath.parse(article_path),
+             {:ok, community} <- CommunityReader.read(community, actor, opts) do
+          with {:ok, _thread} <- Enable.thread?(community.slug, thread) do
+            read_stable(community, thread, inner_id, actor, opts)
+          end
+        end
+
+      _mode_and_view ->
+        {:error, ArticleErrorCat.article_not_found("unsupported Article read mode/view")}
+    end
+  end
+
+  defp read_internal(article_id, view)
+       when view in [:default, :with_community, :with_author, :command_context] do
+    preload =
+      case view do
+        :default -> []
+        :with_community -> [:community]
+        :with_author -> [author: :user]
+        :command_context -> [:community, author: :user]
+      end
+
+    ORM.find(Article, article_id, preload: preload)
+  end
+
+  defp read_internal(_article_id, _view),
+    do: {:error, ArticleErrorCat.article_not_found("unsupported Article read view")}
 
   @doc "Reads a public stable Article projection from its external ArticlePath coordinates."
   @spec read_stable(Community.t(), atom(), integer() | String.t(), term(), keyword()) ::
@@ -332,100 +362,6 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     read(article_path, nil, [])
   end
 
-  @doc "Reads visible public Articles for a bounded set of structured paths."
-  @spec read_paths([ArticlePath.t()]) :: {:ok, [%{path: map(), article: struct()}]}
-  def read_paths(paths) when is_list(paths) do
-    parsed =
-      paths
-      |> Enum.reduce([], fn path, acc ->
-        case ArticlePath.parse(path) do
-          {:ok, normalized} -> [normalized | acc]
-          {:error, _} -> acc
-        end
-      end)
-      |> Enum.reverse()
-
-    resolved_by_path =
-      parsed
-      |> Enum.group_by(&{&1.community, &1.thread})
-      |> Enum.reduce(%{}, fn {{community_ref, thread}, group}, acc ->
-        with {:ok, community} <- CommunityReader.read(community_ref),
-             {:ok, _thread} <- Enable.thread?(community.slug, thread) do
-          inner_ids = Enum.map(group, &normalize_path_inner_id(&1.inner_id))
-
-          community.id
-          |> public_articles(thread, inner_ids)
-          |> Enum.reduce(acc, fn article, group_acc ->
-            Map.put(group_acc, {community_ref, thread, article.inner_id}, article)
-          end)
-        else
-          _ -> acc
-        end
-      end)
-
-    {:ok,
-     Enum.flat_map(parsed, fn path ->
-       case Map.get(resolved_by_path, {
-              path.community,
-              path.thread,
-              normalize_path_inner_id(path.inner_id)
-            }) do
-         nil -> []
-         article -> [%{path: path, article: article}]
-       end
-     end)}
-  end
-
-  defp normalize_path_inner_id(inner_id) when is_integer(inner_id), do: inner_id
-
-  defp normalize_path_inner_id(inner_id) do
-    case Integer.parse(to_string(inner_id)) do
-      {value, ""} -> value
-      _ -> -1
-    end
-  end
-
-  defp public_articles(community_id, :doc, inner_ids) do
-    from(article in Article,
-      join: relation in ArticleCommunity,
-      on: relation.article_id == article.id,
-      join: branch in CMS.Model.DocBranch,
-      on: branch.community_id == article.community_id and branch.type == :main,
-      join: lifecycle in DocLifecycle,
-      on: lifecycle.article_id == article.id and lifecycle.branch_id == branch.id,
-      join: state in DocBranchState,
-      on: state.article_id == article.id and state.branch_id == branch.id,
-      join: public in DocPublic,
-      on: public.article_id == article.id and public.branch_id == branch.id,
-      where:
-        relation.community_id == ^community_id and relation.visible == true and
-          article.thread == :doc and article.inner_id in ^inner_ids and
-          lifecycle.state in [:published, :archived] and state.moderation_state == :legal and
-          public.visible == true,
-      select: %{article: article, branch_id: branch.id}
-    )
-    |> Repo.all()
-    |> Enum.map(&Map.put(&1.article, :branch_id, &1.branch_id))
-  end
-
-  defp public_articles(community_id, thread, inner_ids) do
-    from(article in Article,
-      join: relation in ArticleCommunity,
-      on: relation.article_id == article.id,
-      join: lifecycle in ArticleLifecycle,
-      on: lifecycle.article_id == article.id,
-      join: public in ArticlePublic,
-      on: public.article_id == article.id,
-      where:
-        relation.community_id == ^community_id and relation.visible == true and
-          article.thread == ^thread and article.inner_id in ^inner_ids and
-          lifecycle.state in [:published, :archived] and article.moderation_state == :legal and
-          public.visible == true,
-      select: article
-    )
-    |> Repo.all()
-  end
-
   @doc "Locks one physical Article and revalidates its public Gate/Lifecycle scope."
   @spec lock_for_view_tracking(map()) ::
           {:ok, map(), Community.t(), DateTime.t()} | {:error, map()}
@@ -447,120 +383,4 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
-  @doc "Reads one public ArticleStats batch without loading Articles one by one."
-  @spec read_article_stats(String.t(), atom(), [String.t() | integer()]) ::
-          {:ok, [map()]} | {:error, map()}
-  def read_article_stats(community_ref, thread, inner_ids)
-      when is_binary(community_ref) and is_atom(thread) and is_list(inner_ids) do
-    with {:ok, inner_ids} <- normalize_inner_ids(inner_ids),
-         {:ok, stats} <- read_article_stats_batch(community_ref, thread, inner_ids) do
-      {:ok, stats}
-    else
-      {:error, _} = error -> error
-    end
-  end
-
-  defp read_article_stats_batch(_community_ref, _thread, []), do: {:ok, []}
-
-  defp read_article_stats_batch(community_ref, thread, inner_ids) do
-    with {:ok, %Community{id: community_id}} <- CommunityReader.read(community_ref) do
-      rows =
-        Article
-        |> join(:inner, [article], relation in ArticleCommunity,
-          on: relation.article_id == article.id and relation.visible == true
-        )
-        |> where(
-          [article, relation],
-          article.thread == ^thread and relation.community_id == ^community_id and
-            article.inner_id in ^inner_ids
-        )
-        |> select([article, _relation], article)
-        |> Repo.all()
-
-      articles = rows
-      stats_by_article_id = CMS.ArticleStats.for_articles(thread, articles)
-
-      with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
-        stats_by_inner_id =
-          Map.new(articles, fn article ->
-            stats = Map.fetch!(stats_by_article_id, {thread, article.id})
-
-            {to_string(article.inner_id),
-             Map.merge(stats, %{
-               community: community_ref,
-               thread: thread,
-               inner_id: article.inner_id
-             })}
-          end)
-
-        {:ok,
-         Enum.flat_map(inner_ids, fn inner_id ->
-           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
-             {:ok, stats} -> [stats]
-             :error -> []
-           end
-         end)}
-      end
-    else
-      {:error, _} = error -> error
-    end
-  end
-
-  defp normalize_inner_ids(inner_ids) do
-    normalized =
-      Enum.reduce_while(inner_ids, {:ok, []}, fn value, {:ok, acc} ->
-        case Integer.parse(to_string(value)) do
-          {id, ""} when id > 0 -> {:cont, {:ok, [id | acc]}}
-          _ -> {:halt, :error}
-        end
-      end)
-
-    case normalized do
-      {:ok, ids} ->
-        ids = ids |> Enum.uniq() |> Enum.reverse()
-
-        if length(ids) <= 100,
-          do: {:ok, ids},
-          else: {:error, ArticleErrorCat.article_not_found("too many article ids")}
-
-      :error ->
-        {:error, ArticleErrorCat.article_not_found("invalid article ids")}
-    end
-  end
-
-  @doc "Builds ArticleStats for canonical Articles already loaded by a management scope."
-  @spec stats_for_articles(atom(), [struct()], String.t() | nil) ::
-          %{optional({atom(), integer()}) => map()} | {:error, term()}
-  def stats_for_articles(thread, articles, community_ref \\ nil)
-      when is_atom(thread) and is_list(articles) do
-    articles = preload_stats_communities(articles, community_ref)
-
-    stats_by_article_id = CMS.ArticleStats.for_articles(thread, articles)
-
-    with :ok <- ensure_stats_rows(articles, stats_by_article_id, thread) do
-      Map.new(articles, fn article ->
-        stats = Map.fetch!(stats_by_article_id, {thread, article.id})
-        community = community_ref || article_community_slug(article)
-
-        {{thread, article.id}, Map.put(stats, :community, community)}
-      end)
-    end
-  end
-
-  defp ensure_stats_rows(articles, stats_by_article_id, thread) do
-    if Enum.all?(articles, &Map.has_key?(stats_by_article_id, {thread, &1.id})) do
-      :ok
-    else
-      {:error, ArticleErrorCat.projection_not_updated()}
-    end
-  end
-
-  defp article_community_slug(%{community: %Ecto.Association.NotLoaded{}}), do: nil
-  defp article_community_slug(%{community: %{slug: slug}}), do: slug
-  defp article_community_slug(_article), do: nil
-
-  defp preload_stats_communities(articles, community_ref) when is_binary(community_ref),
-    do: articles
-
-  defp preload_stats_communities(articles, _community_ref), do: Repo.preload(articles, :community)
 end

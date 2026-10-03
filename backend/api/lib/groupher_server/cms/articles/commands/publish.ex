@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
 
   alias GroupherServer.CMS
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Command
+  alias CMS.{Command, FrontDesk}
   alias CMS.Articles.Reader
   alias CMS.Model.{Article, ArticlePublic, ArticleRevision, Community}
 
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   @spec publish(Article.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
   def publish(%Article{} = article, %User{} = user, opts) do
     with {:ok, %Community{} = community} <-
-           Reader.community(article.community_id) do
+           FrontDesk.community(article.community_id, mode: :internal) do
       command = %Command{
         actor: user,
         command_id: Keyword.get(opts, :command_id),
@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
 
   defp recover(receipt, community) do
     with article_id when is_binary(article_id) <- receipt.result_key,
-         {:ok, %Article{} = article} <- Reader.article(article_id),
+         {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
          {:ok, %ArticlePublic{} = public} <- Reader.public(article.id),
          {:ok, %ArticleRevision{} = revision} <- Reader.revision(public.revision_id) do
       {:ok,

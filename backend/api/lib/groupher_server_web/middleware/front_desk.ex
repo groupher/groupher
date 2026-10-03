@@ -183,7 +183,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp fetch_editor_article(%Community{id: community_id} = community, :doc, article_id) do
     with {:ok, %CMS.Model.Article{community_id: ^community_id, thread: :doc} = article} <-
-           CMS.Articles.Reader.article_with_author(article_id),
+           CMS.FrontDesk.article(article_id, mode: :internal, view: :with_author),
          {:ok, branch} <- CMS.Docs.Branch.resolve(community, nil) do
       {:ok, article, branch.id}
     else
@@ -192,7 +192,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_editor_article(%Community{id: community_id}, thread, article_id) do
-    case CMS.Articles.Reader.article_with_author(article_id) do
+    case CMS.FrontDesk.article(article_id, mode: :internal, view: :with_author) do
       {:ok, %CMS.Model.Article{community_id: ^community_id, thread: ^thread} = article} ->
         {:ok, article, nil}
 

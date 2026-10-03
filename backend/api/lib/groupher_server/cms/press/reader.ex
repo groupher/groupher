@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Press.Reader do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.ErrorCat
+  alias CMS.FrontDesk
 
   alias CMS.Gate.Context.Scope.Community, as: CommunityContext
   alias CMS.Model.{Community, DocBranch, DocPublishRelease, DocTreeNode, PressConfig}
@@ -113,7 +114,7 @@ defmodule GroupherServer.CMS.Press.Reader do
 
   defp current_article(community, :doc, inner_id) do
     with {:ok, article} <-
-           CMS.FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
+           FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
          :ok <- ensure_stable_public_doc(article) do
       {:ok, article}
     else
@@ -122,7 +123,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   end
 
   defp current_article(community, thread, inner_id) do
-    CMS.FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
+    FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
   end
 
   defp ensure_stable_public_doc(article) do

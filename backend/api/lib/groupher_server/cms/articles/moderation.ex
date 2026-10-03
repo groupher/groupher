@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.{CMS, FrontDesk, Repo}
 
   alias CMS.Articles.Trash
   alias CMS.Communities.TagStats
@@ -139,7 +139,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
            illegal_articles: illegal_articles
          }) do
       {:ok, _user} ->
-        CMS.FrontDesk.revalidate_user(user.login)
+        FrontDesk.revalidate().user(user.login)
         :ok
 
       {:error, _reason} = error ->

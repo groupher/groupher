@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   alias Accounts.Model.User
   alias CMS.Articles.Trash
   alias CMS.Command
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, TrashedArticle, TrashedDocArticle}
 
   @doc "Moves one stable Article into Trash under an idempotent command id."
@@ -182,7 +183,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   defp audit_trash_denial(result, _article, _actor, _command_id, _opts), do: result
 
   defp recover_article(%{result_key: article_id}) do
-    case CMS.Articles.Reader.article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
       {:error, _reason} -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
     end

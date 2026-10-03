@@ -103,7 +103,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, thread: thread, inner_ids: inner_ids},
         _info
       ) do
-    CMS.FrontDesk.article_stats(community, thread, inner_ids)
+    CMS.ArticleStats.read_public(community, thread, inner_ids)
   end
 
   def community_activity(_root, %{community: %Community{} = community} = args, info) do
@@ -1568,7 +1568,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     do: {:error, "viewer batch cannot contain more than 100 paths"}
 
   defp article_viewer_states_for_paths(paths, user) do
-    with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
+    with {:ok, resolved} <- CMS.Articles.resolve_paths(paths),
          states when is_map(states) <-
            CMS.ViewTracker.Query.viewer_states(Enum.map(resolved, & &1.article), user) do
       {:ok,
@@ -1587,7 +1587,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp article_interaction_states_for_paths(paths, user) do
-    with {:ok, resolved} <- CMS.FrontDesk.article_paths(paths),
+    with {:ok, resolved} <- CMS.Articles.resolve_paths(paths),
          states when is_map(states) <-
            CMS.Interactions.viewer_states(Enum.map(resolved, & &1.article), user) do
       {:ok,

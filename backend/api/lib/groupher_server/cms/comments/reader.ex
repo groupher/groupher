@@ -22,7 +22,6 @@ defmodule GroupherServer.CMS.Comments.Reader do
   alias CMS.Comments.InteractionResponse
   alias CMS.FrontDesk
   alias CMS.Gate.Context.Scope.Comment, as: CommentContext
-  alias CMS.Helper.ArticlePath
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
 
@@ -36,12 +35,8 @@ defmodule GroupherServer.CMS.Comments.Reader do
   """
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
-    FrontDesk.comment(comment_id) |> normalize_error()
+    FrontDesk.comment(comment_id, mode: :internal) |> normalize_error()
   end
-
-  @doc "Loads one Comment row for a Comment-owned command or writer."
-  @spec load(T.id()) :: T.domain_res(Comment.t())
-  def load(comment_id), do: ORM.find(Comment, comment_id)
 
   @doc "Loads the User who authored one Comment."
   @spec load_comment_author(T.id()) :: T.domain_res(User.t())
@@ -53,51 +48,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
 
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
-    FrontDesk.full_comment(comment_id) |> normalize_error()
-  end
-
-  @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{thread: thread} = comment) do
-    with {:ok, comment} <- read_by_id(comment.id, nil, thread) do
-      add_viewer_states(comment, nil)
-    end
-  end
-
-  def one_comment(%{article: article_path, inner_id: inner_id}) do
-    with {:ok, comment} <- read_by_path(article_path, inner_id, nil) |> normalize_error() do
-      add_viewer_states(comment, nil)
-    end
-  end
-
-  def one_comment(id) do
-    with %Comment{thread: thread} <- Repo.get(Comment, id),
-         {:ok, comment} <- read_by_id(id, nil, thread) do
-      add_viewer_states(comment, nil)
-    else
-      nil -> {:error, CommentErrorCat.not_exist("comment not found")}
-    end
-  end
-
-  @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{thread: thread} = comment, %User{} = user) do
-    with {:ok, comment} <- read_by_id(comment.id, user, thread) do
-      add_viewer_states(comment, user)
-    end
-  end
-
-  def one_comment(%{article: article_path, inner_id: inner_id}, %User{} = user) do
-    with {:ok, comment} <- read_by_path(article_path, inner_id, user) |> normalize_error() do
-      add_viewer_states(comment, user)
-    end
-  end
-
-  def one_comment(id, %User{} = user) do
-    with %Comment{thread: thread} <- Repo.get(Comment, id),
-         {:ok, comment} <- read_by_id(id, user, thread) do
-      add_viewer_states(comment, user)
-    else
-      nil -> {:error, CommentErrorCat.not_exist("comment not found")}
-    end
+    FrontDesk.comment(comment_id, mode: :internal, view: :article_context) |> normalize_error()
   end
 
   @doc """
@@ -147,38 +98,6 @@ defmodule GroupherServer.CMS.Comments.Reader do
        do: {:error, CommentErrorCat.not_exist("comment not found")}
 
   defp normalize_error(result), do: result
-
-  defp read_by_id(id, actor, thread) do
-    Comment
-    |> CMS.Gate.scope(actor, :read, comment_scope(thread))
-    |> where([comment], comment.id == ^id)
-    |> preload(:author)
-    |> Repo.one()
-    |> ORM.fill_meta()
-  end
-
-  defp read_by_path(article_path, comment_inner_id, actor) do
-    with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
-           ArticlePath.parse(article_path),
-         {:ok, comment_inner_id} <- parse_inner_id(comment_inner_id) do
-      Comment
-      |> CMS.Gate.scope(actor, :read, comment_scope(thread))
-      |> join(:inner, [comment, ...], article in assoc(comment, ^thread))
-      |> where([comment, ...], comment.inner_id == ^comment_inner_id)
-      |> where([_comment, ..., article], article.inner_id == ^article_inner_id)
-      |> where(
-        [_comment, ...],
-        as(:gate_community).slug == ^community or as(:gate_community).aka == ^community
-      )
-      |> preload([comment, ...], author: :user)
-      |> Repo.one()
-      |> ORM.fill_meta()
-    end
-  end
-
-  defp add_viewer_states(comment, user) do
-    InteractionResponse.one(comment, user)
-  end
 
   defp comment_scope(:doc), do: CommentContext.for_thread(:doc, branch_policy: :main)
   defp comment_scope(thread), do: CommentContext.for_thread(thread)

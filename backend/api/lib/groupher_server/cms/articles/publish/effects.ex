@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
 
   alias GroupherServer.{Activity, CMS, Repo}
   alias CMS.Articles.Writer
+  alias CMS.FrontDesk
   alias CMS.Model.{Article, Author, Community}
   alias Helper.Later
 
@@ -54,7 +55,7 @@ defmodule GroupherServer.CMS.Articles.Publish.Effects do
 
   defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
        when is_integer(inner_id) do
-    CMS.FrontDesk.article(%{
+    FrontDesk.article(%{
       community: community.slug,
       thread: thread,
       inner_id: inner_id

@@ -16,6 +16,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   alias Accounts.Model.User
   alias CMS.Communities.ErrorCat
+  alias CMS.FrontDesk
   alias CMS.Gate.Const
   alias CMS.Passport
 
@@ -70,7 +71,9 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @doc "Runs `reviewer` through the public `CommunityApplications` boundary."
   def reviewer(application), do: Reader.reviewer(application)
   @doc "Runs `application_community` through the public `CommunityApplications` boundary."
-  def application_community(application), do: Reader.community(application)
+  def application_community(%{community_id: community_id}),
+    do: FrontDesk.community(community_id, mode: :internal)
+
   @doc "Runs `event_actor` through the public `CommunityApplications` boundary."
   def event_actor(event), do: Reader.event_actor(event)
   @doc "Runs `logo` through the public `CommunityApplications` boundary."

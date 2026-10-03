@@ -8,13 +8,14 @@ defmodule GroupherServer.CMS.Docs do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
   alias CMS.Articles.Publish.Doc, as: TargetPublish
   alias CMS.Articles.Publish.Effects, as: PublishEffects
   alias CMS.Docs.BranchVersions
-  alias CMS.Articles.Reader, as: ArticleReader
   alias CMS.Docs.Reader, as: DocReader
+  alias CMS.FrontDesk
 
   alias CMS.Model.{
     Article,
@@ -184,7 +185,7 @@ defmodule GroupherServer.CMS.Docs do
   end
 
   defp stable_doc(doc_id) do
-    case ArticleReader.article(doc_id) do
+    case FrontDesk.article(doc_id, mode: :internal) do
       {:ok, %Article{thread: :doc} = article} -> {:ok, article}
       {:ok, %Article{}} -> {:error, :not_doc}
       {:error, _} -> {:error, :doc_not_found}
@@ -257,7 +258,7 @@ defmodule GroupherServer.CMS.Docs do
   defp actor_user(%Author{user: %User{} = user}), do: {:ok, user}
 
   defp actor_user(%Author{user_id: user_id}) do
-    case GroupherServer.FrontDesk.fresh_user(user_id) do
+    case RootFrontDesk.fresh_user(user_id) do
       {:ok, %User{} = user} -> {:ok, user}
       {:error, _} -> {:error, :invalid_actor}
     end
