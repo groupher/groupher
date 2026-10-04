@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
   alias CMS.Communities.Enable
   alias CMS.{Gate, Command}
   alias CMS.Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.EmotionConfirmation, as: Confirmation
   alias CMS.Model.{ArticleUserEmotion, Author, Comment, CommentUserEmotion}
   alias Analysis.MetricEvent
   alias Helper.T
@@ -57,22 +58,21 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
         command_id: command_id || Ecto.UUID.generate()
       }
 
-      if is_nil(command_id) do
-        execute_without_receipt(&emotion_action(&1, info), context)
-      else
-        %Command{
-          actor: actor,
-          command_id: command_id,
-          operation: emotion_command(operation),
-          target: input,
-          params: %{operation: operation, emotion: emotion}
-        }
-        |> Command.execute(
-          action: &emotion_action(&1, info),
-          result: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end
-        )
-      end
-      |> present_reaction(command_id)
+      result =
+        if is_nil(command_id) do
+          execute_without_receipt(&emotion_action(&1, info), context)
+        else
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: emotion_command(operation),
+            target: input,
+            params: %{operation: operation, emotion: emotion}
+          }
+          |> Command.execute(action: &emotion_action(&1, info), confirmation: Confirmation)
+        end
+
+      present_reaction(result, input, command_id)
     end
   end
 
@@ -94,21 +94,31 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
          :ok <- sync_state(canonical, emotion, actor, operation, change),
          :ok <- record_metric(canonical, operation, change, command_id),
          :ok <- enqueue_effect(canonical, actor, operation, emotion, command_id, change) do
-      {:ok, {canonical, change}, %{outcome: change}}
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => interaction_resource_type(canonical),
+           "operation" => Atom.to_string(operation),
+           "emotion" => Atom.to_string(emotion),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
     end
   end
 
   defp execute_without_receipt(action, context) do
     Repo.transaction(fn ->
       case action.(context) do
-        {:ok, result, _metadata} -> result
+        {:ok, %Confirmation{data: data}} -> {:ok, data}
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+    |> case do
+      {:ok, {:ok, data}} -> {:ok, data}
+      other -> other
+    end
   end
-
-  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
-  defp recovery_outcome(_receipt), do: :changed
 
   defp enqueue_effect(_canonical, _actor, _operation, _emotion, _command_id, :unchanged),
     do: :ok
@@ -171,10 +181,15 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Emotion do
     end
   end
 
-  defp present_reaction({:ok, {canonical, outcome}}, command_id),
-    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+    {:ok, put_reaction_metadata(input, command_id, outcome)}
+  end
 
-  defp present_reaction(error, _command_id), do: error
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data),
+    do: present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+
+  defp present_reaction(error, _input, _command_id), do: error
 
   defp put_reaction_metadata(canonical, command_id, outcome) do
     canonical

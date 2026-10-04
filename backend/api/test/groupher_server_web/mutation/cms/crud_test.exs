@@ -241,9 +241,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert not is_nil(first)
 
       variables = mock_attrs(:community, %{title: "elixir2", slug: "elixir"})
-      last = rule_conn |> gq_mutation(@create_community_query, variables)
-
-      assert is_nil(last)
+      assert rule_conn |> mutation_error?(@create_community_query, variables)
     end
 
     @update_community_query S.Community.m(:update_community)

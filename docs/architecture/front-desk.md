@@ -270,7 +270,7 @@ CMS.FrontDesk.article_of(comment, opts)
 | 事务锁、写前 invariant、写后同事务读取         | Writer/Store                                                           |
 | Outbox、Receipt、Job、backfill、reconciliation | 对应 Store/maintenance owner                                           |
 
-`ArticleDraft`、`ArticlePublic`、`ArticleRevision`、`DocPublic`、`CommandReceipt` 等持久化行不是顶层业务资源，不得为了替换通用 `get/get_by` 而新增同名 FrontDesk API。
+`ArticleDraft`、`ArticlePublic`、`ArticleRevision`、`DocPublic`、`CMS.Model.CommandReceipt` 等持久化行不是顶层业务资源，不得为了替换通用 `get/get_by` 而新增同名 FrontDesk API。
 
 任意 preload 参数同样不属于稳定 FrontDesk 合同。资源 Reader 应返回该业务读取所需的稳定 shape；需要另一个 shape 时，增加命名明确的资源读取，而不是允许调用方传 Ecto preload。
 
@@ -306,7 +306,7 @@ CMS.FrontDesk.article_of(comment, opts)
 - Writer/Store 中与写入共享事务快照的查询；
 - CommunityModerator、CommunitySubscriber、CommunityCategory 等关系行；
 - ArticleDraft、ArticlePublic、Revision、Lifecycle、DocsSiteState、DocBranchState 等 aggregate 内部状态；
-- Passport、PublishThrottle、AbuseReport、CommandReceipt、Outbox Event；
+- Passport、PublishThrottle、AbuseReport、CMS.Model.CommandReceipt、Outbox Event；
 - backfill、GC、provider reconciliation、批处理和 projection maintenance；
 - Factory 为构造异常状态执行的直接数据库写入。
 

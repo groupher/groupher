@@ -23,8 +23,10 @@ defmodule GroupherServer.CMS.FrontDesk do
   }
 
   alias CMS.FrontDesk.Comment, as: CommentReader
+  alias CMS.Comments.ErrorCat, as: CommentsErrorCat
 
   alias CMS.Helper.ArticlePath
+  alias CMS.Model.Community, as: CommunityModel
   alias CMS.Model.CommunityTag
   alias Helper.T
 
@@ -37,7 +39,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @doc "Reads one Comment from a structured public path in the default public mode."
   def comment(comment_path) when is_map(comment_path), do: CommentReader.read(comment_path)
-  def comment(_comment_id), do: {:error, CMS.Comments.ErrorCat.not_exist("comment path required")}
+  def comment(_comment_id), do: {:error, CommentsErrorCat.not_exist("comment path required")}
 
   @doc "Reads one Comment with an explicit mode/view or Article path and inner id."
   def comment(comment_path_or_id, opts) when is_list(opts),
@@ -51,7 +53,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   def comment(article_path, inner_id, opts)
       when is_map(article_path) and (is_integer(inner_id) or is_binary(inner_id)) and
              is_list(opts),
-    do: CommentReader.read(article_path, inner_id, nil, opts)
+      do: CommentReader.read(article_path, inner_id, nil, opts)
 
   def comment(comment_path, actor, opts) when is_map(comment_path) and is_map(actor),
     do: CommentReader.read(comment_path, actor, opts)
@@ -76,18 +78,29 @@ defmodule GroupherServer.CMS.FrontDesk do
   def thread_of(resource), do: Relation.thread_of(resource)
 
   @doc "Reads one Article from a path or internal id with an explicit mode/view."
-  @spec article(ArticlePath.t() | Ecto.UUID.t()) :: {:ok, struct()} | {:error, map()}
+  @spec article(ArticlePath.t() | String.t()) :: {:ok, struct()} | {:error, map()}
   def article(article_ref), do: Article.read(article_ref, nil, [])
 
-  @spec article(ArticlePath.t() | Ecto.UUID.t(), keyword()) ::
+  @spec article(ArticlePath.t() | String.t(), keyword()) ::
           {:ok, struct()} | {:error, map()}
   def article(article_ref, opts) when is_list(opts), do: Article.read(article_ref, nil, opts)
 
-  @spec article(ArticlePath.t(), term()) :: {:ok, struct()} | {:error, map()}
+  @spec article(ArticlePath.t() | String.t(), term()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor), do: Article.read(article_path, actor, [])
 
   @spec article(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(article_path, actor, opts), do: Article.read(article_path, actor, opts)
+
+  @doc "Reads one Article projection anchored to an immutable Revision."
+  @spec article_revision(String.t(), String.t(), CommunityModel.t(), keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def article_revision(article_id, revision_id, community, opts \\ [])
+      when is_binary(article_id) and is_binary(revision_id) and is_list(opts),
+      do: Article.read_revision(article_id, revision_id, community, opts)
+
+  @doc "Builds a revision projection from already-loaded command action parts."
+  def article_revision_parts(article, community, revision, opts \\ []),
+    do: Article.article_revision_parts(article, community, revision, opts)
 
   @doc "Loads one public canonical Article for an explicit ViewTracker request."
   def article_for_view_tracking(article_path), do: Article.read_for_view_tracking(article_path)

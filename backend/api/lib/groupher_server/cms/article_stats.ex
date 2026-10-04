@@ -455,7 +455,13 @@ defmodule GroupherServer.CMS.ArticleStats do
   defp preload_stats_communities(articles, community_ref) when is_binary(community_ref),
     do: articles
 
-  defp preload_stats_communities(articles, _community_ref), do: Repo.preload(articles, :community)
+  defp preload_stats_communities(articles, _community_ref) do
+    if Enum.all?(articles, &match?(%Article{}, &1)) do
+      Repo.preload(articles, :community)
+    else
+      articles
+    end
+  end
 
   defp load_snapshots(_thread, []), do: %{}
 

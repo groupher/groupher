@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
+  alias CMS.Articles.ArticleResult
   alias CMS.Communities.Enable
   alias CMS.FrontDesk.Community, as: CommunityReader
   alias CMS.Helper.ArticlePath
@@ -39,6 +40,7 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     PinnedArticle,
     PostState
   }
+
   alias Helper.ORM
 
   @doc "Reads one Article through the actor-aware Article Insights scope."
@@ -54,7 +56,8 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   end
 
   @doc "Reads one public Article from a structured path."
-  @spec read(ArticlePath.t(), term(), keyword()) :: {:ok, struct()} | {:error, map()}
+  @spec read(ArticlePath.t() | String.t(), term(), keyword()) ::
+          {:ok, struct()} | {:error, map()}
   def read(article_id, nil, opts) when is_binary(article_id) and is_list(opts) do
     case Keyword.get(opts, :mode, :public) do
       :internal -> read_internal(article_id, Keyword.get(opts, :view, :default))
@@ -107,6 +110,40 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
       nil -> {:error, :stable_article_not_found}
       :error -> {:error, :stable_article_not_found}
       {:error, _reason} = error -> error
+    end
+  end
+
+  @doc "Reads an Article projection anchored to one immutable Revision."
+  @spec read_revision(String.t(), String.t(), Community.t(), keyword()) ::
+          {:ok, map()} | {:error, term()}
+  def read_revision(article_id, revision_id, %Community{} = community, opts \\ [])
+      when is_binary(article_id) and is_binary(revision_id) and is_list(opts) do
+    with {:ok, %Article{} = article} <- read_internal(article_id, :command_context),
+         %ArticleRevision{} = revision <- Repo.get(ArticleRevision, revision_id),
+         true <- revision.article_id == article.id,
+         {:ok, projection} <- revision_projection(article, community, revision, opts) do
+      {:ok, projection}
+    else
+      _ -> {:error, ArticleErrorCat.article_not_found("article revision not found")}
+    end
+  end
+
+  @doc "Builds a revision projection from already-loaded command action parts."
+  @spec article_revision_parts(Article.t(), Community.t(), ArticleRevision.t(), keyword()) ::
+          {:ok, ArticleResult.t()} | {:error, term()}
+  def article_revision_parts(
+        %Article{} = article,
+        %Community{} = community,
+        %ArticleRevision{} = revision,
+        opts \\ []
+      )
+      when is_list(opts) do
+    article = Repo.preload(article, author: :user)
+
+    if article.thread == :doc do
+      revision_projection(article, community, revision, opts)
+    else
+      build_revision_projection(article, community, revision, opts)
     end
   end
 
@@ -204,51 +241,123 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
     end
   end
 
+  defp revision_projection(%Article{thread: :doc} = article, community, revision, opts) do
+    with %CMS.Model.DocBranch{id: branch_id} <-
+           Repo.get_by(CMS.Model.DocBranch,
+             community_id: article.community_id,
+             type: CMS.Docs.Const.doc_branch_type(:main)
+           ),
+         %CMS.Model.DocBranchVersion{} = version <-
+           Repo.get_by(CMS.Model.DocBranchVersion,
+             article_id: article.id,
+             branch_id: branch_id,
+             revision_id: revision.id
+           ) do
+      metadata =
+        opts
+        |> Keyword.put_new(:branch_id, branch_id)
+        |> Keyword.put_new(:publication_version, version.version_number)
+        |> Keyword.put_new(:published_at, version.published_at)
+
+      build_revision_projection(article, community, revision, metadata)
+    else
+      _ -> {:error, ArticleErrorCat.article_not_found("article revision not found")}
+    end
+  end
+
+  defp revision_projection(%Article{} = article, community, revision, opts) do
+    build_revision_projection(article, community, revision, opts)
+  end
+
+  defp build_revision_projection(article, community, revision, opts) do
+    with %ArticleBodySnapshot{} = body <- Repo.get(ArticleBodySnapshot, revision.body_snapshot_id),
+         {:ok, meta} <- revision_meta(article, Keyword.get(opts, :branch_id)) do
+      published_at = Keyword.get(opts, :published_at, revision.inserted_at)
+      publication_version = Keyword.get(opts, :publication_version, 1)
+
+      {:ok,
+       build_article_projection(article, community, revision, body, %{
+         branch_id: Keyword.get(opts, :branch_id),
+         title: revision.title,
+         digest: revision.digest,
+         slug: revision.slug,
+         body_hash: revision.content_hash,
+         active_at: nil,
+         inserted_at: published_at,
+         updated_at: published_at,
+         publication_version: publication_version,
+         meta: meta
+       })}
+    else
+      nil -> {:error, ArticleErrorCat.article_not_found("article revision body not found")}
+      {:error, _reason} = error -> error
+    end
+  end
+
   defp build_stable_projection(article, community, public, revision, branch_id) do
-    body = Repo.get!(ArticleBodySnapshot, revision.body_snapshot_id)
+    case Repo.get(ArticleBodySnapshot, revision.body_snapshot_id) do
+      %ArticleBodySnapshot{} = body ->
+        {:ok,
+         build_article_projection(article, community, revision, body, %{
+           branch_id: branch_id,
+           title: public.title,
+           digest: public.digest,
+           slug: public.slug,
+           body_hash: public.body_hash,
+           active_at: article.active_at || Map.get(public, :active_at),
+           inserted_at: public.published_at,
+           updated_at: public.updated_at,
+           publication_version: public.publication_version,
+           meta: stable_meta(article, branch_id)
+         })}
+
+      nil ->
+        {:error, ArticleErrorCat.article_not_found("article body snapshot not found")}
+    end
+  end
+
+  defp build_article_projection(article, community, revision, body, anchor) do
     tags = stable_community_tags(article.id, community.id)
-    lifecycle = stable_lifecycle(article, branch_id)
+    lifecycle = stable_lifecycle(article, Map.get(anchor, :branch_id))
 
-    projection =
-      %{
-        id: article.id,
-        article_id: article.id,
-        branch_id: branch_id,
-        inner_id: article.inner_id,
-        thread: article.thread,
-        stage: :public,
-        title: public.title,
-        digest: public.digest,
-        slug: public.slug,
-        body_hash: public.body_hash,
-        document: body,
-        author_id: article.author_id,
-        author: article.author.user,
-        community: community,
-        communities: [community],
-        community_id: community.id,
-        community_tags: tags,
-        comments_participants: stable_comment_participants(article.id),
-        moderation_state: article.moderation_state,
-        active_at: article.active_at || Map.get(public, :active_at),
-        inserted_at: public.published_at,
-        updated_at: public.updated_at,
-        revision_id: revision.id,
-        publication_version: public.publication_version,
-        version: public.publication_version,
-        lifecycle: lifecycle,
-        is_pinned: stable_pinned?(article.id, community.id),
-        pending: 0,
-        viewer_has_collected: false,
-        viewer_has_upvoted: false,
-        viewer_has_reported: false,
-        viewer_has_viewed: false,
-        meta: stable_meta(article, branch_id)
-      }
-      |> Map.merge(stable_revision_extension(article.thread, revision.id))
-      |> Map.merge(stable_operational_extension(article))
-
-    {:ok, projection}
+    %{
+      id: article.id,
+      article_id: article.id,
+      branch_id: Map.get(anchor, :branch_id),
+      inner_id: article.inner_id,
+      thread: article.thread,
+      stage: :public,
+      title: Map.fetch!(anchor, :title),
+      digest: Map.fetch!(anchor, :digest),
+      slug: Map.fetch!(anchor, :slug),
+      body_hash: Map.fetch!(anchor, :body_hash),
+      document: body,
+      author_id: article.author_id,
+      author: article.author.user,
+      community: community,
+      communities: [community],
+      community_id: community.id,
+      community_tags: tags,
+      comments_participants: stable_comment_participants(article.id),
+      moderation_state: article.moderation_state,
+      active_at: Map.get(anchor, :active_at),
+      inserted_at: Map.fetch!(anchor, :inserted_at),
+      updated_at: Map.fetch!(anchor, :updated_at),
+      revision_id: revision.id,
+      publication_version: Map.fetch!(anchor, :publication_version),
+      version: Map.fetch!(anchor, :publication_version),
+      lifecycle: lifecycle,
+      is_pinned: stable_pinned?(article.id, community.id),
+      pending: 0,
+      viewer_has_collected: false,
+      viewer_has_upvoted: false,
+      viewer_has_reported: false,
+      viewer_has_viewed: false,
+      meta: Map.fetch!(anchor, :meta)
+    }
+    |> Map.merge(stable_revision_extension(article.thread, revision.id))
+    |> Map.merge(stable_operational_extension(article))
+    |> ArticleResult.from_map()
   end
 
   defp stable_comment_participants(article_id) do
@@ -272,20 +381,35 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
   defp stable_operational_extension(%Article{}), do: %{}
 
   defp stable_meta(%Article{thread: :doc} = article, branch_id) when is_integer(branch_id) do
-    state = Repo.get_by!(DocBranchState, article_id: article.id, branch_id: branch_id)
+    case Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
+      %DocBranchState{} = state ->
+        %{
+          thread: article.thread,
+          is_edited: state.is_edited,
+          is_comment_locked: state.comments_locked,
+          is_sunk: state.is_sunk,
+          last_active_at: state.last_active_at,
+          next_floor: state.next_floor,
+          next_comment_inner_id: state.next_comment_inner_id,
+          is_legal: state.moderation_state == :legal,
+          illegal_reason: List.wrap(state.illegal_reason),
+          illegal_words: state.illegal_words
+        }
 
-    %{
-      thread: article.thread,
-      is_edited: state.is_edited,
-      is_comment_locked: state.comments_locked,
-      is_sunk: state.is_sunk,
-      last_active_at: state.last_active_at,
-      next_floor: state.next_floor,
-      next_comment_inner_id: state.next_comment_inner_id,
-      is_legal: state.moderation_state == :legal,
-      illegal_reason: List.wrap(state.illegal_reason),
-      illegal_words: state.illegal_words
-    }
+      nil ->
+        %{
+          thread: article.thread,
+          is_edited: article.is_edited,
+          is_comment_locked: article.comments_locked,
+          is_sunk: article.is_sunk,
+          last_active_at: article.last_active_at,
+          next_floor: article.next_floor,
+          next_comment_inner_id: article.next_comment_inner_id,
+          is_legal: article.moderation_state == :legal,
+          illegal_reason: List.wrap(article.illegal_reason),
+          illegal_words: article.illegal_words
+        }
+    end
   end
 
   defp stable_meta(article, _branch_id) do
@@ -302,6 +426,33 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
       illegal_words: article.illegal_words
     }
   end
+
+  defp revision_meta(%Article{thread: :doc} = article, branch_id) when is_integer(branch_id) do
+    case Repo.get_by(DocBranchState, article_id: article.id, branch_id: branch_id) do
+      %DocBranchState{} = state ->
+        {:ok,
+         %{
+           thread: article.thread,
+           is_edited: state.is_edited,
+           is_comment_locked: state.comments_locked,
+           is_sunk: state.is_sunk,
+           last_active_at: state.last_active_at,
+           next_floor: state.next_floor,
+           next_comment_inner_id: state.next_comment_inner_id,
+           is_legal: state.moderation_state == :legal,
+           illegal_reason: List.wrap(state.illegal_reason),
+           illegal_words: state.illegal_words
+         }}
+
+      nil ->
+        {:error, ArticleErrorCat.article_not_found("article branch state not found")}
+    end
+  end
+
+  defp revision_meta(%Article{} = article, _branch_id), do: {:ok, stable_meta(article, nil)}
+
+  defp revision_meta(_article, _branch_id),
+    do: {:error, ArticleErrorCat.article_not_found("article metadata not found")}
 
   defp stable_revision_extension(:doc, revision_id),
     do: revision_extension(DocRevision, revision_id)
@@ -382,5 +533,4 @@ defmodule GroupherServer.CMS.FrontDesk.Article do
       _ -> {:error, ArticleErrorCat.article_not_found("article not found")}
     end
   end
-
 end

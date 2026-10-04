@@ -1,18 +1,19 @@
 defmodule GroupherServer.CMS.Articles.Commands.Publish do
   @moduledoc """
-  Runs ordinary Article publication through the idempotent command boundary.
+  Publishes an Article revision through the Gate, lifecycle and Receipt boundary.
 
-      Article + command id
-        -> CMS.Command receipt
-        -> Articles.publish without a second receipt
-        -> stable publish result or canonical recovery result
+      Article publish request
+        -> Gate/version checks and domain writes
+        -> immutable Publish Confirmation
+        -> Receipt encode/decode on retry
   """
 
-  alias GroupherServer.CMS
-  alias GroupherServer.Accounts.Model.User
-  alias CMS.{Command, FrontDesk}
-  alias CMS.Articles.Reader
-  alias CMS.Model.{Article, ArticlePublic, ArticleRevision, Community}
+  alias GroupherServer.{Accounts, CMS}
+  alias CMS.{Articles, Command, FrontDesk}
+  alias Accounts.Model.User
+  alias Articles.RevisionResult
+  alias Articles.Commands.PublishConfirmation
+  alias CMS.Model.{Article, Community}
 
   @doc "Publishes one ordinary Article Draft with retry-safe command recovery."
   @spec publish(Article.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
@@ -29,7 +30,8 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
 
       Command.execute(command,
         action: &publish_action/1,
-        result: &recover(&1, community)
+        confirmation: PublishConfirmation,
+        present: &present_command_result(&1, &2, community)
       )
     else
       {:error, _reason} = error -> error
@@ -50,67 +52,51 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
       |> Keyword.put(:skip_effects, true)
       |> Keyword.put(:outbox_command_id, command_id)
 
-    case CMS.Articles.publish(article_id, user, publish_opts) do
+    case Articles.publish(article_id, user, publish_opts) do
       {:ok, publish_result} ->
-        {:ok, publish_result, publish_metadata(article_id, publish_result)}
+        {:ok,
+         %PublishConfirmation{
+           article_id: article_id,
+           revision_id: publish_result.public.revision_id,
+           publication_version: publish_result.public.publication_version,
+           first_publish?: Map.get(publish_result, :first_publish?, false),
+           changed_fields: Map.get(publish_result, :changed_fields, []),
+           published_by_id: Map.get(publish_result, :published_by_id),
+           published_at: publish_result.public.published_at
+         }, %{article: publish_result.article, revision: publish_result.revision}}
 
       {:error, reason} ->
         {:error, reason}
     end
   end
 
-  defp publish_metadata(article_id, publish_result) do
-    %{
-      result_key: article_id,
-      result_payload: %{
-        "first_publish?" => Map.get(publish_result, :first_publish?, false),
-        "changed_fields" => Enum.map(Map.get(publish_result, :changed_fields, []), &to_string/1),
-        "published_by_id" => Map.get(publish_result, :published_by_id)
-      }
-    }
+  @spec present_confirmation(PublishConfirmation.t(), Community.t()) ::
+          {:ok, map()} | {:error, term()}
+  defp present_confirmation(%PublishConfirmation{} = confirmation, community) do
+    confirmation
+    |> Map.from_struct()
+    |> Map.put(:community_id, community.id)
+    |> RevisionResult.build()
   end
 
-  defp recover(receipt, community) do
-    with article_id when is_binary(article_id) <- receipt.result_key,
-         {:ok, %Article{} = article} <- FrontDesk.article(article_id, mode: :internal),
-         {:ok, %ArticlePublic{} = public} <- Reader.public(article.id),
-         {:ok, %ArticleRevision{} = revision} <- Reader.revision(public.revision_id) do
-      {:ok,
-       %{
-         article: article,
-         public: public,
-         revision: revision,
-         first_publish?: payload_value(receipt.result_payload, "first_publish?", false),
-         changed_fields:
-           receipt.result_payload
-           |> payload_value("changed_fields", [])
-           |> decode_changed_fields(),
-         published_by_id:
-           payload_value(receipt.result_payload, "published_by_id", public.published_by_id),
-         community: community
-       }}
-    else
-      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
-    end
+  defp present_command_result(
+         %PublishConfirmation{} = confirmation,
+         %{
+           state: :executed,
+           action_context: %{article: article, revision: revision}
+         },
+         community
+       ) do
+    confirmation
+    |> Map.from_struct()
+    |> Map.put(:community_id, community.id)
+    |> RevisionResult.build_from_action(%{article: article, revision: revision}, community)
   end
 
-  defp payload_value(payload, key, default) when is_map(payload),
-    do: Map.get(payload, key, Map.get(payload, payload_atom_key(key), default))
-
-  defp payload_value(_payload, _key, default), do: default
-
-  defp payload_atom_key("first_publish?"), do: :first_publish?
-  defp payload_atom_key("changed_fields"), do: :changed_fields
-  defp payload_atom_key("published_by_id"), do: :published_by_id
-
-  defp decode_changed_fields(fields) when is_list(fields) do
-    Enum.map(fields, fn
-      "title" -> :title
-      "body_hash" -> :body_hash
-      "cover_edit" -> :cover_edit
-      value -> value
-    end)
-  end
-
-  defp decode_changed_fields(_fields), do: []
+  defp present_command_result(
+         %PublishConfirmation{} = confirmation,
+         %{state: :recovered},
+         community
+       ),
+       do: present_confirmation(confirmation, community)
 end

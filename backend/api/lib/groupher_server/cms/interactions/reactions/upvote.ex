@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   alias CMS.Artiment.Matcher
   alias CMS.{Gate, Interactions, Command}
   alias Interactions.{Config, ErrorCat, ReadState}
+  alias CMS.Interactions.Reactions.UpvoteConfirmation, as: Confirmation
   alias CMS.Model.{ArticleUpvote, Author, Comment, CommentUpvote}
   alias Analysis.MetricEvent
   alias Helper.T
@@ -58,22 +59,21 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
         command_id: command_id || Ecto.UUID.generate()
       }
 
-      if is_nil(command_id) do
-        execute_without_receipt(&upvote_action(&1, info), context)
-      else
-        %Command{
-          actor: actor,
-          command_id: command_id,
-          operation: upvote_command(operation),
-          target: input,
-          params: %{operation: operation}
-        }
-        |> Command.execute(
-          action: &upvote_action(&1, info),
-          result: fn receipt -> {:ok, {input, recovery_outcome(receipt)}} end
-        )
-      end
-      |> present_reaction(command_id)
+      result =
+        if is_nil(command_id) do
+          execute_without_receipt(&upvote_action(&1, info), context)
+        else
+          %Command{
+            actor: actor,
+            command_id: command_id,
+            operation: upvote_command(operation),
+            target: input,
+            params: %{operation: operation}
+          }
+          |> Command.execute(action: &upvote_action(&1, info), confirmation: Confirmation)
+        end
+
+      present_reaction(result, input, command_id)
     end
   end
 
@@ -92,21 +92,30 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
          :ok <- record_metric(canonical, operation, change, command_id),
          :ok <- maybe_achieve(canonical, actor, operation, change),
          :ok <- enqueue_effect(canonical, operation, actor, command_id, change) do
-      {:ok, {canonical, change}, %{outcome: change}}
+      {:ok,
+       %Confirmation{
+         data: %{
+           "target_id" => to_string(canonical.id),
+           "target_type" => interaction_resource_type(canonical),
+           "operation" => Atom.to_string(operation),
+           "outcome" => Atom.to_string(change)
+         }
+       }}
     end
   end
 
   defp execute_without_receipt(action, context) do
     Repo.transaction(fn ->
       case action.(context) do
-        {:ok, result, _metadata} -> result
+        {:ok, %Confirmation{data: data}} -> {:ok, data}
         {:error, reason} -> Repo.rollback(reason)
       end
     end)
+    |> case do
+      {:ok, {:ok, data}} -> {:ok, data}
+      other -> other
+    end
   end
-
-  defp recovery_outcome(%{outcome: "unchanged"}), do: :unchanged
-  defp recovery_outcome(_receipt), do: :changed
 
   defp upvote_command(:add), do: :upvote_add
   defp upvote_command(:remove), do: :upvote_remove
@@ -171,10 +180,15 @@ defmodule GroupherServer.CMS.Interactions.Reactions.Upvote do
   defp author_user(%{author: %{user_id: user_id}}), do: %User{id: user_id}
   defp author_user(%{author_id: author_id}), do: %User{id: Repo.get!(Author, author_id).user_id}
 
-  defp present_reaction({:ok, {canonical, outcome}}, command_id),
-    do: {:ok, put_reaction_metadata(canonical, command_id, outcome)}
+  defp present_reaction({:ok, %Confirmation{data: data}}, input, command_id) do
+    outcome = if data["outcome"] == "unchanged", do: :unchanged, else: :changed
+    {:ok, put_reaction_metadata(input, command_id, outcome)}
+  end
 
-  defp present_reaction(error, _command_id), do: error
+  defp present_reaction({:ok, data}, input, command_id) when is_map(data),
+    do: present_reaction({:ok, %Confirmation{data: data}}, input, command_id)
+
+  defp present_reaction(error, _input, _command_id), do: error
 
   defp put_reaction_metadata(canonical, command_id, outcome) do
     canonical

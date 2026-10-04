@@ -33,8 +33,11 @@ defmodule GroupherServer.CMS.Articles do
   alias Helper.T
   alias GroupherServer.Accounts.Model.User
   alias CMS.Artiment.Const
+  alias CMS.Communities, as: CommunityFacade
   alias CMS.FrontDesk
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.Model.{Article, Author, Community}
+  alias CMS.Outbox
 
   alias __MODULE__.Draft.Store, as: TargetDraft
   alias __MODULE__.Draft.Diff, as: TargetDiff
@@ -55,8 +58,8 @@ defmodule GroupherServer.CMS.Articles do
            {:ok, relation} <-
              Reader.home_relation(moved.id),
            {:ok, _relation} <- Communities.replace_tags(relation, tag_ids),
-           {:ok, _source} <- CMS.Communities.update_count_field(source, article.thread),
-           {:ok, _destination} <- CMS.Communities.update_count_field(community, article.thread),
+           {:ok, _source} <- CommunityFacade.update_count_field(source, article.thread),
+           {:ok, _destination} <- CommunityFacade.update_count_field(community, article.thread),
            :ok <- invalidate_move(source, old_inner_id, community, moved, Ecto.UUID.generate()),
            {:ok, :pass} <- CMS.SearchArtiments.Indexer.enqueue_upsert(moved) do
         {:ok, moved}
@@ -105,7 +108,7 @@ defmodule GroupherServer.CMS.Articles do
         end)
 
       {:error, _} ->
-        {:error, CMS.Gate.ErrorCat.resource_not_found()}
+        {:error, GateErrorCat.resource_not_found()}
     end
   end
 
@@ -118,7 +121,7 @@ defmodule GroupherServer.CMS.Articles do
   defp with_article(article_id, actor, action, callback) when is_binary(article_id) do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> CMS.Gate.Access.with_check(actor, action, article, callback)
-      {:error, _} -> {:error, CMS.Gate.ErrorCat.resource_not_found()}
+      {:error, _} -> {:error, GateErrorCat.resource_not_found()}
     end
   end
 
@@ -144,7 +147,7 @@ defmodule GroupherServer.CMS.Articles do
   end
 
   defp invalidate_community_scope(%Community{} = community, article, command_id) do
-    case CMS.Outbox.send(%{
+    case Outbox.send(%{
            event: "article.visibility_changed",
            worker: CMS.Outbox.Workers.Article.Cleanup,
            resource_type: "article",
@@ -436,7 +439,7 @@ defmodule GroupherServer.CMS.Articles do
         end)
 
       {:error, _} ->
-        {:error, CMS.Gate.ErrorCat.resource_not_found()}
+        {:error, GateErrorCat.resource_not_found()}
     end
   end
 
@@ -494,7 +497,7 @@ defmodule GroupherServer.CMS.Articles do
         end)
 
       {:error, _} ->
-        {:error, CMS.Gate.ErrorCat.resource_not_found()}
+        {:error, GateErrorCat.resource_not_found()}
     end
   end
 
@@ -549,7 +552,7 @@ defmodule GroupherServer.CMS.Articles do
         end)
 
       {:error, _} ->
-        {:error, CMS.Gate.ErrorCat.resource_not_found()}
+        {:error, GateErrorCat.resource_not_found()}
     end
   end
 end

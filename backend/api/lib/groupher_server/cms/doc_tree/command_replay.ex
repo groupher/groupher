@@ -2,13 +2,13 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
   @moduledoc """
   Versioned codec for DocTree command results that cannot be reconstructed by a Reader.
 
-  `CMS.CommandReceipt` is the public boundary; its `Runner` owns
+  `CMS.Command.Receipt` is the internal boundary; its `Runner` owns
   claim/finalize/replay orchestration. DocTree owns the JSON representation and
   bounded atom decoding for its result payloads.
 
       DocTree execute result
         -> versioned JSON-safe receipt payload
-        -> CommandReceipt storage
+        -> CMS.Command.Receipt storage
         -> replay decode into the DocTree result shape
   """
 
@@ -36,6 +36,13 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
     }
   end
 
+  @doc false
+  def tree_confirmation(result, result_key) do
+    result
+    |> tree_metadata(result_key)
+    |> confirmation_data()
+  end
+
   @doc "Encodes a subtree draft result that cannot be reconstructed by a Reader."
   @spec subtree_metadata(map()) :: map()
   def subtree_metadata(%{done: done, affected_count: affected_count})
@@ -47,6 +54,27 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
         "affected_count" => affected_count
       }
     }
+  end
+
+  @doc false
+  def subtree_confirmation(result), do: result |> subtree_metadata() |> confirmation_data()
+
+  @doc false
+  def confirmation_data(metadata) when is_map(metadata) do
+    Map.new(metadata, fn {key, value} -> {to_string(key), value} end)
+  end
+
+  @doc false
+  def replay_confirmation(%{data: data}) when is_map(data) do
+    replay_tree(%{
+      result_key: data["result_key"],
+      result_payload: data["result_payload"]
+    })
+  end
+
+  @doc false
+  def replay_subtree_confirmation(%{data: data}) when is_map(data) do
+    replay_subtree(%{result_payload: data["result_payload"]})
   end
 
   @doc "Decodes one compatible tree receipt without executing the mutation again."
@@ -66,7 +94,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
      }}
   end
 
-  def replay_tree(_receipt), do: {:error, ErrorCat.command_id_conflict()}
+  def replay_tree(_receipt), do: {:error, ErrorCat.command_result_unavailable()}
 
   @doc "Decodes one compatible subtree receipt without repeating its writes."
   @spec replay_subtree(map()) :: {:ok, map()} | {:error, term()}
@@ -80,7 +108,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
      }}
   end
 
-  def replay_subtree(_receipt), do: {:error, ErrorCat.command_id_conflict()}
+  def replay_subtree(_receipt), do: {:error, ErrorCat.command_result_unavailable()}
 
   defp json_safe(nil), do: nil
   defp json_safe(value) when is_boolean(value), do: value

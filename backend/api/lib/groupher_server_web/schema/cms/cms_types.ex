@@ -933,9 +933,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
       resolve: fn draft, _, _ ->
         case Map.get(draft, :document) do
           nil ->
-            with {:ok, loaded} <- CMS.Articles.Reader.body_draft(draft.body_draft_id) do
-              {:ok, loaded}
-            end
+            CMS.Articles.Reader.body_draft(draft.body_draft_id)
 
           document ->
             {:ok, document}

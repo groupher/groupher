@@ -20,6 +20,8 @@ defmodule GroupherServer.CMS.Assets.Writer do
   alias CMS.Assets.Completeness
   alias CMS.Assets.ErrorCat, as: AssetErrorCat
   alias CMS.FrontDesk
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
+  alias CMS.Outbox
 
   alias CMS.Model.{
     Article,
@@ -117,7 +119,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
                deleted_at: DateTime.utc_now(:second)
              }),
            {:ok, _event} <-
-             CMS.Outbox.send(%{
+             Outbox.send(%{
                event: "asset.provider_delete",
                worker: CMS.Outbox.Workers.Asset.Cleanup,
                resource_type: "community_asset",
@@ -607,7 +609,7 @@ defmodule GroupherServer.CMS.Assets.Writer do
   end
 
   defp draft_body_id(%Article{thread: :doc}),
-    do: {:error, CMS.Gate.ErrorCat.doc_branch_required()}
+    do: {:error, GateErrorCat.doc_branch_required()}
 
   defp draft_body_id(%{id: article_id}) when is_binary(article_id) do
     case Repo.get(ArticleDraft, article_id) do

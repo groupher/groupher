@@ -15,11 +15,11 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
-  alias CMS.Articles.Reader, as: ArticleReader
   alias CMS.Assets.{Reader, Writer}
-  alias CMS.Command
+  alias CMS.{Command, ErrorCat}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleAssetRef, ArticleDraft, Community, CommunityAsset}
+  alias CMS.Articles.Commands.ReplaceAssetUseConfirmation, as: Confirmation
 
   @doc "Replaces one Draft-owned asset use without mutating an immutable Revision."
   @spec replace(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
@@ -43,20 +43,42 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
           params: params
         }
 
-        Command.execute(command,
-          action: &replace_action(&1, community),
-          result: &recover/1
-        )
+        with {:ok, confirmation} <-
+               Command.execute(command,
+                 action: &replace_action(&1, community),
+                 confirmation: Confirmation
+               ) do
+          present_confirmation(confirmation)
+        end
       end
     else
       {:error, _reason} = error -> error
     end
   end
 
-  defp replace_action(%{actor: user, target: article, params: params}, community) do
+  defp replace_action(
+         %{actor: user, target: article, params: params, command_id: command_id},
+         community
+       ) do
     with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
          {:ok, result} <- replace_in_draft(article, community, params, author, user) do
-      {:ok, result, %{result_key: article.id}}
+      {:ok,
+       %Confirmation{
+         data:
+           result
+           |> Map.take([
+             :article_id,
+             :draft_version,
+             :ref_id,
+             :usage,
+             :from_asset_id,
+             :to_asset_id
+           ])
+           |> Map.put(:command_id, command_id)
+           |> Map.new(fn {key, value} ->
+             {to_string(key), if(is_atom(value), do: Atom.to_string(value), else: value)}
+           end)
+       }}
     end
   end
 
@@ -185,13 +207,13 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
     end
   end
 
-  defp recover(receipt) do
-    with article_id when is_binary(article_id) <- receipt.result_key,
-         {:ok, %ArticleDraft{version: version}} <-
-           ArticleReader.draft(article_id) do
-      {:ok, %{article_id: article_id, draft_version: version, command_id: receipt.command_id}}
+  defp present_confirmation(%Confirmation{data: data}) do
+    with article_id when is_binary(article_id) <- data["article_id"],
+         draft_version when is_integer(draft_version) <- data["draft_version"],
+         command_id when is_binary(command_id) <- data["command_id"] do
+      {:ok, %{article_id: article_id, draft_version: draft_version, command_id: command_id}}
     else
-      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
+      _ -> {:error, ErrorCat.command_result_unavailable()}
     end
   end
 

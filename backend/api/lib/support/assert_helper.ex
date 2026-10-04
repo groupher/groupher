@@ -13,6 +13,7 @@ defmodule GroupherServer.Test.AssertHelper do
   """
 
   import Phoenix.ConnTest
+  import ExUnit.Assertions
   import Helper.Utils, only: [map_key_stringify: 1]
 
   alias GroupherServer.{ErrorCat, Support}
@@ -126,8 +127,7 @@ defmodule GroupherServer.Test.AssertHelper do
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
-    |> Map.get("data")
-    |> Map.get(get_operation_name(query))
+    |> successful_operation!(query)
   end
 
   # Receipt-backed mutation documents in the test suite may omit the identity.
@@ -188,17 +188,40 @@ defmodule GroupherServer.Test.AssertHelper do
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
     |> log_debug_info(flag)
-    |> Map.get("data")
-    |> Map.get(get_operation_name(query))
+    |> successful_operation!(query)
   end
 
   def gq_query(conn, query) do
     conn
     |> post("/graphiql", query: query, variables: %{})
     |> json_response(200)
-    |> Map.get("data")
-    |> Map.get(get_operation_name(query))
+    |> successful_operation!(query)
   end
+
+  defp successful_operation!(%{"errors" => errors, "data" => data}, query) when is_map(data) do
+    case Map.get(data, get_operation_name(query)) do
+      nil ->
+        flunk(
+          "GraphQL operation #{get_operation_name(query)} returned errors: #{inspect(errors)}"
+        )
+
+      value ->
+        value
+    end
+  end
+
+  defp successful_operation!(%{"errors" => errors}, query),
+    do:
+      flunk("GraphQL operation #{get_operation_name(query)} returned errors: #{inspect(errors)}")
+
+  defp successful_operation!(%{"data" => data}, query) when is_map(data),
+    do: Map.get(data, get_operation_name(query))
+
+  defp successful_operation!(response, query),
+    do:
+      flunk(
+        "GraphQL operation #{get_operation_name(query)} returned invalid response: #{inspect(response)}"
+      )
 
   def mutation_error?(conn, query, variables, opt \\ false)
 

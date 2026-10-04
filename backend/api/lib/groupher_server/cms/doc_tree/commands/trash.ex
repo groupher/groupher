@@ -19,12 +19,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
   alias CMS.Command
   alias CMS.DocTree.{CommandReplay, Trash}
   alias CMS.Model.Community
+  alias CMS.DocTree.Commands.TreeConfirmation, as: Confirmation
   alias Helper.T
 
   @doc "Restores one product Trash item through the existing command protocol."
   @spec restore(Community.t(), T.id(), map()) :: T.domain_res(map())
   def restore(%Community{} = community, id, args) do
     clean_args = drop_command_id(args)
+    domain_args = domain_args(clean_args)
 
     case option(args, :actor) do
       %User{} = actor ->
@@ -35,16 +37,20 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
           command_id: option(args, :command_id),
           operation: :doc_tree_restore_trash_item,
           target: {:doc_tree, community.id},
-          params: %{id: id, args: clean_args}
+          params: %{id: id, args: domain_args}
         }
         |> Command.execute(
-          action: fn %{params: %{args: clean_args}} ->
-            with {:ok, result} <- Trash.restore(community, id, clean_args) do
-              {:ok, result, CommandReplay.tree_metadata(result, target_key)}
+          action: fn %{params: %{args: domain_args}} ->
+            with {:ok, result} <- Trash.restore(community, id, domain_args) do
+              {:ok, %Confirmation{data: CommandReplay.tree_confirmation(result, target_key)}}
             end
           end,
-          result: &CommandReplay.replay_tree/1
+          confirmation: Confirmation
         )
+        |> then(fn
+          {:ok, value} -> CommandReplay.replay_confirmation(value)
+          error -> error
+        end)
 
       _ ->
         Trash.restore(community, id, clean_args)
@@ -58,4 +64,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.Trash do
   defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
   defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
   defp drop_command_id(opts), do: opts
+
+  defp domain_args(opts) when is_map(opts), do: opts
+  defp domain_args(opts) when is_list(opts), do: Map.new(opts)
+  defp domain_args(opts), do: opts
 end

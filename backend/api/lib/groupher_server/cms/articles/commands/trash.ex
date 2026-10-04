@@ -14,6 +14,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
   alias CMS.Command
   alias CMS.FrontDesk
   alias CMS.Model.{Article, TrashedArticle, TrashedDocArticle}
+  alias CMS.Articles.Commands.TrashPermanentDeleteConfirmation, as: PermanentDeleteConfirmation
+  alias CMS.Articles.Commands.TrashRestoreConfirmation, as: RestoreConfirmation
+  alias CMS.Articles.Commands.TrashConfirmation
 
   @doc "Moves one stable Article into Trash under an idempotent command id."
   @spec trash(map(), User.t() | nil, keyword()) :: {:ok, TrashedArticle.t()} | {:error, term()}
@@ -29,12 +32,10 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
           command_id: command_id,
           operation: :article_trash,
           target: article,
-          params: Keyword.delete(opts, :command_id)
+          params: canonical_opts(opts)
         }
-        |> Command.execute(
-          action: &trash_action/1,
-          result: fn receipt -> Trash.get(receipt.result_key) end
-        )
+        |> Command.execute(action: &trash_action/1, confirmation: TrashConfirmation)
+        |> present_trash_confirmation()
 
       audit_trash_denial(result, article, actor, command_id, opts)
     end
@@ -42,9 +43,16 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
   def trash(article, actor, opts), do: Trash.trash(article, actor, opts)
 
-  defp trash_action(%{actor: actor, target: article, params: params}) do
-    with {:ok, item} <- Trash.trash(article, actor, params) do
-      {:ok, item, %{result_key: item.hash_id}}
+  defp trash_action(%{actor: actor, target: article, params: params, command_id: command_id}) do
+    with {:ok, item} <- Trash.trash(article, actor, Map.to_list(params)) do
+      {:ok,
+       %TrashConfirmation{
+         data: %{
+           "trash_id" => item.hash_id,
+           "article_id" => to_string(item.article_id),
+           "command_id" => command_id
+         }
+       }}
     end
   end
 
@@ -68,6 +76,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       case resolve_item(item_or_id) do
         {:ok, item} ->
           restore_command(item, actor, command_id, opts)
+          |> present_restore_confirmation()
 
         {:error, _reason} ->
           %Command{
@@ -75,14 +84,15 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
             command_id: command_id,
             operation: :article_restore,
             target: {:article_trash, Keyword.get(opts, :community_id)},
-            params: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)}
+            params: %{item_id: item_or_id, opts: canonical_opts(opts)}
           }
           |> Command.execute(
             action: fn _command ->
               {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
             end,
-            result: &recover_article/1
+            confirmation: RestoreConfirmation
           )
+          |> present_restore_confirmation()
       end
     end
   end
@@ -109,6 +119,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       case resolve_item(item_or_id) do
         {:ok, item} ->
           permanently_delete_command(item, actor, command_id, opts)
+          |> present_permanent_confirmation()
 
         {:error, _reason} ->
           %Command{
@@ -116,14 +127,15 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
             command_id: command_id,
             operation: :article_permanently_delete,
             target: {:article_trash, Keyword.get(opts, :community_id)},
-            params: %{item_id: item_or_id, opts: Keyword.delete(opts, :command_id)}
+            params: %{item_id: item_or_id, opts: canonical_opts(opts)}
           }
           |> Command.execute(
             action: fn _command ->
               {:error, CMS.Articles.ErrorCat.article_not_found("trash item not found")}
             end,
-            result: fn _receipt -> {:ok, %{done: true}} end
+            confirmation: PermanentDeleteConfirmation
           )
+          |> present_permanent_confirmation()
       end
     end
   end
@@ -140,15 +152,18 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       command_id: command_id,
       operation: :article_restore,
       target: {:article_trash, item.community_id},
-      params: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)}
+      params: %{item_id: item.hash_id, opts: canonical_opts(opts)}
     }
     |> Command.execute(
       action: fn %{params: %{opts: input}} ->
-        with {:ok, article} <- Trash.restore(item, actor, input) do
-          {:ok, article, %{result_key: article.id}}
+        with {:ok, article} <- Trash.restore(item, actor, Map.to_list(input)) do
+          {:ok,
+           %RestoreConfirmation{
+             data: %{"article_id" => article.id, "command_id" => command_id}
+           }}
         end
       end,
-      result: &recover_article/1
+      confirmation: RestoreConfirmation
     )
   end
 
@@ -158,11 +173,15 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
       command_id: command_id,
       operation: :article_permanently_delete,
       target: {:article_trash, item.community_id},
-      params: %{item_id: item.hash_id, opts: Keyword.delete(opts, :command_id)}
+      params: %{item_id: item.hash_id, opts: canonical_opts(opts)}
     }
     |> Command.execute(
-      action: fn %{params: %{opts: input}} -> Trash.permanently_delete(item, actor, input) end,
-      result: fn _receipt -> {:ok, %{done: true}} end
+      action: fn %{params: %{opts: input}} ->
+        with {:ok, _result} <- Trash.permanently_delete(item, actor, Map.to_list(input)) do
+          {:ok, %PermanentDeleteConfirmation{data: %{"done" => true, "command_id" => command_id}}}
+        end
+      end,
+      confirmation: PermanentDeleteConfirmation
     )
   end
 
@@ -182,10 +201,30 @@ defmodule GroupherServer.CMS.Articles.Commands.Trash do
 
   defp audit_trash_denial(result, _article, _actor, _command_id, _opts), do: result
 
-  defp recover_article(%{result_key: article_id}) do
+  defp present_trash_confirmation({:ok, %TrashConfirmation{data: %{"trash_id" => trash_id}}}) do
+    Trash.get(trash_id)
+  end
+
+  defp present_trash_confirmation(error), do: error
+
+  defp present_restore_confirmation(
+         {:ok, %RestoreConfirmation{data: %{"article_id" => article_id}}}
+       ) do
     case FrontDesk.article(article_id, mode: :internal) do
       {:ok, %Article{} = article} -> {:ok, article}
-      {:error, _reason} -> {:error, CMS.Articles.ErrorCat.article_not_found("article not found")}
+      {:error, _reason} -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
+
+  defp present_restore_confirmation(error), do: error
+
+  defp present_permanent_confirmation({:ok, %PermanentDeleteConfirmation{}}),
+    do: {:ok, %{done: true}}
+
+  defp present_permanent_confirmation(error), do: error
+
+  defp canonical_opts(opts) when is_list(opts),
+    do: opts |> Keyword.delete(:command_id) |> Map.new()
+
+  defp canonical_opts(opts) when is_map(opts), do: Map.delete(opts, :command_id)
 end

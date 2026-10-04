@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Comments.Numbering do
   import Ecto.Query
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.ErrorCat
   alias CMS.Model.Article
   alias Helper.T
 
@@ -45,7 +46,7 @@ defmodule GroupherServer.CMS.Comments.Numbering do
          |> select([article], %{value: field(article, ^field)})
          |> Repo.update_all(inc: [{field, 1}]) do
       {1, [%{value: value}]} -> {:ok, value - 1}
-      _ -> {:error, CMS.ErrorCat.custom(%{reason: :article_counter_not_updated})}
+      _ -> {:error, ErrorCat.custom(%{reason: :article_counter_not_updated})}
     end
   end
 end

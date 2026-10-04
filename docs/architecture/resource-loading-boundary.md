@@ -1,6 +1,6 @@
 # CMS 资源加载与 Canonical Reload 边界
 
-> 状态：整改合同（Phase 1/2/3 已落地，Phase 4 的 Comment Gate aggregate callback 与首次发布通知 payload 已同步收口）。本文冻结资源从 transport ref 进入 CMS mutation 的加载边界，列出当前偏差与迁移顺序；不改变 Gate、Lifecycle、CommandReceipt 的既有职责。
+> 状态：整改合同（Phase 1/2/3 已落地，Phase 4 的 Comment Gate aggregate callback 与首次发布通知 payload 已同步收口）。本文冻结资源从 transport ref 进入 CMS mutation 的加载边界，列出当前偏差与迁移顺序；不改变 Gate、Lifecycle、CMS.Command.Receipt 的既有职责。
 >
 > 范围：`backend/api` 中 GraphQL middleware/resolver、CMS facade、Command、Gate Access、Lifecycle，以及它们之间传递的 Community、Article、Doc、Comment 和内部状态资源。
 
@@ -10,7 +10,7 @@
 - [CMS Facade 与实现目录收口](./cms-facade-directory.md)：facade、Command、Reader/Writer 的目录与所有权；
 - [Gate V2](../feature/gate/v2.md)、[Gate V4](../feature/gate/v4.md)：mutation admission、typed Access Context 与 canonical resource；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Gate、Lifecycle、Writer 和事务职责；
-- [Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、CommandReceipt、version/revision 与 replay 合同。
+- [Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、CMS.Command.Receipt、version/revision 与 replay 合同。
 
 ## 1. 问题
 
@@ -142,7 +142,7 @@ committed effect/job payload
 | 新资源属性                               | typed attrs/input                          | attrs/input                                | 没有可预加载资源，例如 create                     |
 | Lifecycle row identity                   | canonical resource 派生                    | stable identity 或 locked Lifecycle struct | 允许 owner 在锁内加载                             |
 | DocTree node identity                    | Community + branch/tree context + node ref | branch-scoped identity                     | 需由 DocTree 合同解析，不能脱离 branch 机械预加载 |
-| Trash membership/ref                     | transport ref 或 `%TrashedArticle{}`       | struct；replay 可保留 ref fallback         | 资源消失后仍需 CommandReceipt replay              |
+| Trash membership/ref                     | transport ref 或 `%TrashedArticle{}`       | struct；replay 可保留 ref fallback         | 资源消失后仍需 CMS.Command.Receipt replay         |
 | Receipt result key                       | receipt metadata                           | domain replay reader                       | 仅用于 replay，不是首次资源解析入口               |
 | Post-commit/async effect target          | durable payload 中的 stable identity       | 执行时重载当前资源                         | 合法且通常必需，必须定义 missing/obsolete 行为    |
 | Ref-loading facade overload              | public ref 或 DB id                        | facade/Writer 内再次解析                   | 无真实消费者时是死协议，应移除而非保留双协议      |
@@ -181,7 +181,7 @@ GroupherServer.CMS.Comments.Solution
 
 当前 Resolver 已持有 parent `%Comment{}`，却调用 `reply_comment_payload(comment.id, ...)`，`Comments.Writer.reply/4` 再次加载 Comment。
 
-目标是传递 parent Comment，并把带 CommandReceipt、Gate、多表写入和 post-commit effect 的完整用例收口到 `Comments.Commands.ReplyComment`；Writer 只保留具体持久化。Delete/Update Comment 的 Gate callback 同样接收锁内 canonical parent Article，避免在 callback 内再次调用 `FrontDesk.article_of/1`；replay 分支为重建返回 payload 而重新读取 Article，仍属于 replay reader。
+目标是传递 parent Comment，并把带 CMS.Command.Receipt、Gate、多表写入和 post-commit effect 的完整用例收口到 `Comments.Commands.ReplyComment`；Writer 只保留具体持久化。Delete/Update Comment 的 Gate callback 同样接收锁内 canonical parent Article，避免在 callback 内再次调用 `FrontDesk.article_of/1`；replay 分支为重建返回 payload 而重新读取 Article，仍属于 replay reader。
 
 ### 4.3 Comment pin/unpin 与 fold/unfold
 
@@ -263,9 +263,9 @@ branch-scoped and do not fall back across branches.
 | 迁移项                       | 同步 transport                                                      | 同步 domain / 内部                                                                                    | post-commit / async                                                          | replay / test-only                                                      |
 | ---------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | Solution accept/revoke       | `CMS Resolver.accept_solution/revoke_solution` → `CMS.Comments`     | `DeleteComment.revoke_if_current/5` 复用 `Commands.Solution`                                          | 无；Moderation 另属异步合法 reload                                           | `solution_commands_test` 等直接调用 Command/facade                      |
-| Comment reply                | `CMS Resolver.reply_comment` → `CMS.Comments.reply_comment_payload` | 同步主入口传 parent Comment；`Comments.Writer.reply` 的 ID adapter 暂保，待调用方迁移后删除           | 创建后的 audition、mention、订阅 effect 按各自 identity 合同执行             | CommandReceipt replay reader 读取结果；旧 ID adapter 由测试覆盖         |
+| Comment reply                | `CMS Resolver.reply_comment` → `CMS.Comments.reply_comment_payload` | 同步主入口传 parent Comment；`Comments.Writer.reply` 的 ID adapter 暂保，待调用方迁移后删除           | 创建后的 audition、mention、订阅 effect 按各自 identity 合同执行             | CMS.Command.Receipt replay reader 读取结果；旧 ID adapter 由测试覆盖    |
 | Comment pin/fold             | GraphQL pin/unpin；fold/unfold 目前没有线上 Resolver                | `Comments.States` 使用 Gate callback 的 canonical Article                                             | 无                                                                           | `fold_for_report/1` 接收 struct；fold/unfold ID 入口仅兼容测试/内部调用 |
-| Article Draft update/publish | Article middleware → `CMS Resolver` → `CMS.Articles`                | Importer/服务调用必须传 Article struct；Publish/Lifecycle 在锁内 canonical reload                     | 首次 publish 的 `notify_admin_new_article` 见 §4.7                           | CommandReceipt replay 通过 editor/public reader 恢复结果                |
+| Article Draft update/publish | Article middleware → `CMS Resolver` → `CMS.Articles`                | Importer/服务调用必须传 Article struct；Publish/Lifecycle 在锁内 canonical reload                     | 首次 publish 的 `notify_admin_new_article` 见 §4.7                           | CMS.Command.Receipt replay 通过 editor/public reader 恢复结果           |
 | Doc Draft update/publish     | `update_doc_draft` 的 `:article_editor` middleware → `CMS.DocTree`  | `DocPublisher` 使用 branch-scoped `doc_id` 进入 `CMS.Docs.publish_draft/4`，由 Publish 锁内重载 Draft | Release 后的 tree/cover/history effect 使用 branch identity                  | `DocTree.Commands.Node` replay 保留 branch 参数；release tests 覆盖     |
 | Moderation / notifications   | 不属于同步 Resolver mutation                                        | 不应改成同步 FrontDesk reload                                                                         | Audition、SubscribeCommunity、Publish notify 执行时按 stable identity reload | 已完成任务可按 missing/obsolete policy no-op                            |
 
@@ -281,7 +281,7 @@ CMS facade
   稳定的资源型领域入口，不执行重复 lookup
 
 Command
-  完整用例、CommandReceipt、Gate、Lifecycle、Audit/Activity、post-commit 编排
+  完整用例、CMS.Command.Receipt、Gate、Lifecycle、Audit/Activity、post-commit 编排
 
 Gate Access
   aggregate transaction/lock、canonical reload、typed Access Context、actor/action admission
@@ -292,11 +292,11 @@ Lifecycle
 Writer / domain owner
   使用 canonical resource 执行具体持久化
 
-CommandReceipt.Store
+CMS.Command.Receipt.Store
   通过 Ecto/Repo 持久化 `cms.command_receipts` 的 claim、finalize、conflict resolution 和 retention
 ```
 
-`CommandReceipt.Store` 当前是 PostgreSQL persistence module，不是 Redis/PG 可插拔抽象；它不拥有业务 Command、Gate、Lifecycle 或 Audit。
+`CMS.Command.Receipt.Store` 当前是 PostgreSQL persistence module，不是 Redis/PG 可插拔抽象；它不拥有业务 Command、Gate、Lifecycle 或 Audit。
 
 ## 6. 迁移顺序
 

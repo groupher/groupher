@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate, Comments}
+  alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias Comments.{BodyCodec, JobPolicy}
   alias CMS.Model.Comment
   alias Helper.{ORM, T}
@@ -53,10 +54,10 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
       params: body
     }
 
-    Command.execute(command,
-      action: &update_action/1,
-      result: &update_result(&1, comment.id)
-    )
+    with {:ok, confirmation} <-
+           Command.execute(command, action: &update_action/1, confirmation: Confirmation) do
+      update_result(confirmation, comment.id)
+    end
   end
 
   defp update_action(%{
@@ -66,8 +67,14 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          command_id: command_id
        }) do
     Gate.Access.with_check(actor, :edit, comment, fn canonical, article ->
-      update_new(canonical, article, body, actor, command_id)
+      with {:ok, result} <- update_new(canonical, article, body, actor, command_id) do
+        {:ok, confirmation(result)}
+      end
     end)
+  end
+
+  defp update_result(%Confirmation{data: data}, comment_id) do
+    update_result(%{command_id: data["command_id"]}, comment_id)
   end
 
   defp update_result(receipt, comment_id) do
@@ -88,6 +95,16 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
          :ok <- enqueue_comment_effects(canonical, actor, command_id) do
       {:ok, %{comment: synced, article: article, command_id: command_id}}
     end
+  end
+
+  defp confirmation(%{comment: comment, article: article, command_id: command_id}) do
+    %Confirmation{
+      data: %{
+        "comment_id" => to_string(comment.id),
+        "article_id" => to_string(article.id),
+        "command_id" => command_id
+      }
+    }
   end
 
   defp invalidate_public_comments(article, thread, command_id) do

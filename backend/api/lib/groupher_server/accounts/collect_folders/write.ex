@@ -21,6 +21,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   alias Accounts.CollectFolders.ErrorCat
   alias Accounts.Model.{CollectFolder, Embeds, User}
   alias CMS.{Command}
+  alias CMS.Accounts.CollectFolders.WriteConfirmation, as: Confirmation
   alias CMS.Model.ArticleCollect
   alias Helper.{Datetime, Multi, ORM, T}
 
@@ -92,18 +93,24 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   end
 
   def add_payload(article, folder_id, %User{} = user, command_id) do
-    %Command{
+    command = %Command{
       actor: user,
       command_id: command_id,
       operation: :collect_add,
       target: article,
       params: %{folder_id: folder_id}
     }
-    |> Command.execute(
-      action: fn _context -> add_new(article, folder_id, user) end,
-      result: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-    )
-    |> collect_payload(command_id)
+
+    with {:ok, %Confirmation{data: data}} <-
+           Command.execute(command,
+             action: fn _context ->
+               confirmation(add_new(article, folder_id, user), article, folder_id, :add)
+             end,
+             confirmation: Confirmation
+           ),
+         {:ok, folder} <- ORM.find(CollectFolder, data["folder_id"]) do
+      collect_payload({:ok, folder}, command_id)
+    end
   end
 
   defp add_new(article, folder_id, %User{} = user) do
@@ -152,18 +159,24 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   end
 
   def remove_payload(article, folder_id, %User{} = user, command_id) do
-    %Command{
+    command = %Command{
       actor: user,
       command_id: command_id,
       operation: :collect_remove,
       target: article,
       params: %{folder_id: folder_id}
     }
-    |> Command.execute(
-      action: fn _context -> remove_new(article, folder_id, user) end,
-      result: fn _receipt -> ORM.find(CollectFolder, folder_id) end
-    )
-    |> collect_payload(command_id)
+
+    with {:ok, %Confirmation{data: data}} <-
+           Command.execute(command,
+             action: fn _context ->
+               confirmation(remove_new(article, folder_id, user), article, folder_id, :remove)
+             end,
+             confirmation: Confirmation
+           ),
+         {:ok, folder} <- ORM.find(CollectFolder, data["folder_id"]) do
+      collect_payload({:ok, folder}, command_id)
+    end
   end
 
   defp remove_new(article, folder_id, %User{} = user) do
@@ -268,4 +281,18 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
     do: {:ok, %{folder: folder, command_id: command_id}}
 
   defp collect_payload({:error, _reason} = error, _command_id), do: error
+
+  defp confirmation({:ok, folder}, article, folder_id, operation) do
+    {:ok,
+     %Confirmation{
+       data: %{
+         "folder_id" => to_string(folder_id),
+         "article_id" => to_string(article.id),
+         "operation" => Atom.to_string(operation),
+         "total_count" => folder.total_count
+       }
+     }}
+  end
+
+  defp confirmation(error, _article, _folder_id, _operation), do: error
 end

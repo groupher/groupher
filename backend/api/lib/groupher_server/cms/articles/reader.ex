@@ -25,7 +25,9 @@ defmodule GroupherServer.CMS.Articles.Reader do
     Author,
     Community
   }
+
   alias GroupherServer.CMS.Model.RevisionCoverEdit
+  alias GroupherServer.CMS.Articles.ArticleResult
   alias GroupherServer.CMS.FrontDesk.Article, as: PublicArticleReader
 
   alias GroupherServer.Repo
@@ -65,6 +67,15 @@ defmodule GroupherServer.CMS.Articles.Reader do
 
   @doc "Ensures an Article has the Community association needed by an effect."
   def with_community(%Article{} = article), do: {:ok, Repo.preload(article, :community)}
+
+  def with_community(%ArticleResult{community: %Community{}} = article), do: {:ok, article}
+
+  def with_community(%ArticleResult{community_id: community_id} = article) do
+    case Repo.get(Community, community_id) do
+      %Community{} = community -> {:ok, Map.put(article, :community, community)}
+      nil -> {:error, :community_not_found}
+    end
+  end
 
   @doc "Loads one Draft cover edit projection."
   def draft_cover_edit(id), do: ORM.find(DraftCoverEdit, id)

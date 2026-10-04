@@ -18,6 +18,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
   alias Accounts.Model.User
   alias CMS.Command
   alias CMS.DocTree.{CommandReplay, Publish}
+  alias CMS.DocTree.Commands.MoveDocToDraftConfirmation, as: MoveDocToDraft
+  alias CMS.DocTree.Commands.MoveSubtreeToDraftConfirmation, as: MoveSubtreeToDraft
+  alias CMS.DocTree.Commands.PublishChangesConfirmation, as: PublishChanges
   alias CMS.Model.Community
   alias Helper.T
 
@@ -42,16 +45,26 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
         |> Command.execute(
           action: fn %{params: params} ->
             with {:ok, result} <- Publish.publish_changes(community, params, user, publish_opts) do
-              result_key = if result.release, do: result.release.id
-              {:ok, result, %{result_key: result_key}}
+              {:ok,
+               %PublishChanges{
+                 data: %{
+                   "release_id" =>
+                     if(result.release, do: to_string(result.release.id), else: nil),
+                   "done" => true
+                 }
+               }}
             end
           end,
-          result: &publish_result(&1, community, params)
+          confirmation: PublishChanges
         )
+        |> then(fn
+          {:ok, confirmation} -> publish_result(confirmation, community, params)
+          error -> error
+        end)
     end
   end
 
-  defp publish_result(receipt, community, args) do
+  defp publish_result(%PublishChanges{data: data}, community, args) do
     case Publish.checklist(community, args) do
       {:error, reason} ->
         {:error, reason}
@@ -60,7 +73,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
         {:ok,
          %{
            done: true,
-           release: release(receipt.result_key),
+           release: release(data["release_id"]),
            checklist: checklist,
            scope: %{total_count: checklist.total_count}
          }}
@@ -86,13 +99,14 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       user,
       :doc_move_to_draft,
       opts,
+      MoveDocToDraft,
       fn ->
         with {:ok, draft} <- Publish.move_doc_to_draft(community, id, user, opts) do
-          {:ok, draft, %{result_key: draft.article_id}}
+          {:ok, %MoveDocToDraft{data: %{"article_id" => draft.article_id}}}
         end
       end,
-      fn receipt ->
-        CMS.Docs.read_editor_head(community, receipt.result_key, opts)
+      fn %MoveDocToDraft{data: %{"article_id" => article_id}} ->
+        CMS.Docs.read_editor_head(community, article_id, opts)
       end
     )
   end
@@ -107,16 +121,17 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
       user,
       :doc_move_subtree_to_draft,
       opts,
+      MoveSubtreeToDraft,
       fn ->
         with {:ok, result} <- Publish.move_subtree_to_draft(community, id, user, opts) do
-          {:ok, result, CommandReplay.subtree_metadata(result)}
+          {:ok, %MoveSubtreeToDraft{data: CommandReplay.subtree_confirmation(result)}}
         end
       end,
-      &CommandReplay.replay_subtree/1
+      &CommandReplay.replay_subtree_confirmation/1
     )
   end
 
-  defp run_doc_command(community, id, user, command, opts, execute, replay) do
+  defp run_doc_command(community, id, user, command, opts, confirmation, execute, present) do
     case option(opts, :command_id) do
       nil ->
         execute_one_shot(execute)
@@ -127,12 +142,16 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
           command_id: command_id,
           operation: command,
           target: {:doc, community.id},
-          params: %{id: id, opts: drop_command_id(opts)}
+          params: %{id: id, opts: canonical_opts(opts)}
         }
         |> Command.execute(
           action: fn _context -> execute.() end,
-          result: replay
+          confirmation: confirmation
         )
+        |> then(fn
+          {:ok, value} -> present.(value)
+          error -> error
+        end)
     end
   end
 
@@ -146,6 +165,11 @@ defmodule GroupherServer.CMS.DocTree.Commands.Publish do
   defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
   defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
   defp drop_command_id(opts), do: opts
+
+  defp canonical_opts(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+
+  defp canonical_opts(opts) when is_list(opts),
+    do: opts |> Keyword.delete(:command_id) |> Map.new()
 
   defp option(opts, key) when is_map(opts), do: Map.get(opts, key)
   defp option(opts, key) when is_list(opts), do: Keyword.get(opts, key)

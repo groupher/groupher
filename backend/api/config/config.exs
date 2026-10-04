@@ -22,6 +22,9 @@ config :groupher_server,
        :view_tracker_cookie_previous_secret,
        System.get_env("VIEW_TRACKER_COOKIE_PREVIOUS_SECRET")
 
+# Confirmation is an identity/version envelope, not a document transport.
+config :groupher_server, :command_confirmation_max_bytes, 64 * 1024
+
 config :groupher_server, GroupherServer.CMS.ViewTracker.Config,
   human_dedupe_window_seconds: 600,
   agent_dedupe_window_seconds: 600,
@@ -72,6 +75,9 @@ config :logger, :console,
     :method,
     :path,
     :reason,
+    :receipt_id,
+    :command,
+    :confirmation_bytes,
     :community_id,
     :public_cache
   ]

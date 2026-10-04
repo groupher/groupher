@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
   alias GroupherServer.{Accounts, Analysis, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.{Comments.ErrorCat, Artiment.Const, Command, FrontDesk, Gate}
+  alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias CMS.ErrorCat, as: CmsErrorCat
 
@@ -137,11 +138,22 @@ defmodule GroupherServer.CMS.Comments.Writer do
                    info,
                    command_id
                  ) do
-            {:ok, result, %{result_key: result.comment.id}}
+            {:ok,
+             %Confirmation{
+               data: %{
+                 "comment_id" => to_string(result.comment.id),
+                 "article_id" => article.id,
+                 "command_id" => command_id
+               }
+             }}
           end
         end,
-        result: fn receipt -> replay_created(receipt, article, receipt.command_id) end
+        confirmation: Confirmation
       )
+      |> then(fn
+        {:ok, confirmation} -> replay_created(confirmation, article, command_id)
+        error -> error
+      end)
       |> normalize_comments_locked()
     end
   end
@@ -184,7 +196,11 @@ defmodule GroupherServer.CMS.Comments.Writer do
 
   defp add_participant(%Article{} = article, _user), do: {:ok, article}
 
-  defp replay_created(%{result_key: result_key}, article, command_id)
+  defp replay_created(
+         %Confirmation{data: %{"comment_id" => result_key}},
+         article,
+         command_id
+       )
        when is_binary(result_key) do
     with {result_id, ""} <- Integer.parse(result_key),
          %Comment{} = comment <- Repo.get(Comment, result_id),
@@ -197,12 +213,12 @@ defmodule GroupherServer.CMS.Comments.Writer do
        }}
     else
       _ ->
-        {:error, CmsErrorCat.command_id_conflict()}
+        {:error, CmsErrorCat.command_result_unavailable()}
     end
   end
 
   defp replay_created(_receipt, _article, _command_id),
-    do: {:error, CmsErrorCat.command_id_conflict()}
+    do: {:error, CmsErrorCat.command_result_unavailable()}
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
     with %Article{} = stable <- Repo.get(Article, article_id),
@@ -213,13 +229,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
         inner_id: stable.inner_id
       })
     else
-      _ -> {:error, CmsErrorCat.command_id_conflict()}
+      _ -> {:error, CmsErrorCat.command_result_unavailable()}
     end
   end
 
   defp replay_article(article) when is_struct(article) do
     case Repo.get(article.__struct__, article.id) do
-      nil -> {:error, CmsErrorCat.command_id_conflict()}
+      nil -> {:error, CmsErrorCat.command_result_unavailable()}
       canonical -> {:ok, Repo.preload(canonical, [[author: :user], :community])}
     end
   end
@@ -243,7 +259,10 @@ defmodule GroupherServer.CMS.Comments.Writer do
         %{actor: user, params: body, command_id: Ecto.UUID.generate()},
         target_comment
       )
-      |> unwrap_one_shot_result()
+      |> then(fn
+        {:ok, confirmation} -> reply_result(confirmation, target_comment)
+        error -> error
+      end)
       |> normalize_comments_locked()
     else
       %Command{
@@ -255,8 +274,12 @@ defmodule GroupherServer.CMS.Comments.Writer do
       }
       |> Command.execute(
         action: &reply_action(&1, target_comment),
-        result: &reply_result(&1, target_comment)
+        confirmation: Confirmation
       )
+      |> then(fn
+        {:ok, confirmation} -> reply_result(confirmation, target_comment)
+        error -> error
+      end)
       |> normalize_comments_locked()
     end
   end
@@ -272,14 +295,25 @@ defmodule GroupherServer.CMS.Comments.Writer do
            Gate.Access.with_check(user, :reply_comment, target_comment, fn canonical, article ->
              reply_new_from_canonical(canonical, article, body, user, command_id)
            end) do
-      {:ok, result, %{result_key: result.comment.id}}
+      {:ok,
+       %Confirmation{
+         data: %{
+           "comment_id" => to_string(result.comment.id),
+           "article_id" => result.article.id,
+           "command_id" => command_id
+         }
+       }}
     end
   end
 
-  defp reply_result(receipt, target_comment) do
+  defp reply_result(%Confirmation{data: data}, target_comment) do
     with {:ok, article} <-
            FrontDesk.article_of(target_comment) do
-      replay_created(receipt, article, receipt.command_id)
+      replay_created(
+        %Confirmation{data: data},
+        article,
+        data["command_id"]
+      )
     end
   end
 
@@ -511,9 +545,6 @@ defmodule GroupherServer.CMS.Comments.Writer do
        do: article_comments_locked("this article is forbid comment")
 
   defp normalize_comments_locked(result), do: result
-
-  defp unwrap_one_shot_result({:ok, result, _receipt_metadata}), do: {:ok, result}
-  defp unwrap_one_shot_result(result), do: result
 
   defp create_comment(details), do: {:error, ErrorCat.create_comment(details)}
 end

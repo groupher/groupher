@@ -14,16 +14,17 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   alias GroupherServer.{Accounts, Activity, CMS}
   alias Accounts.Model.User
-  alias CMS.Command
+  alias CMS.{Articles, Communities, Command, Docs}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, Community}
+  alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
   alias Helper.T
 
   @doc "Creates and publishes one stable Article under an idempotent command id."
   @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           {:ok, map()} | {:error, term()}
   def create(%Community{} = community, thread, attrs, %User{} = user, opts) do
-    attrs = drop_command_id(attrs)
+    attrs = attrs |> drop_command_id() |> Map.drop([:author, :community, :communities])
 
     case option(opts, :command_id) do
       nil ->
@@ -38,33 +39,57 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
           params: %{thread: thread, attrs: attrs}
         }
 
-        Command.execute(command,
+        Command.execute(
+          command,
           action: &create_action(&1, community, user),
-          result: &recover_public(&1, community)
+          confirmation: Confirmation,
+          present: &present_command_result(&1, &2, community)
         )
     end
   end
 
-  defp create_action(%{params: %{thread: thread, attrs: attrs}}, community, user) do
+  defp create_action(
+         %{command_id: command_id, params: %{thread: thread, attrs: attrs}},
+         community,
+         user
+       ) do
     with {:ok, public} <- create_and_publish(community, thread, attrs, user) do
-      {:ok, public, %{result_key: public.article_id}}
+      with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
+           published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
+           publication_version when is_integer(publication_version) <-
+             Map.get(public, :publication_version, Map.get(public, :version, 1)) do
+        {:ok,
+         %Confirmation{
+           article_id: article.id,
+           revision_id: public.revision_id,
+           community_id: community.id,
+           author_id: article.author_id,
+           inner_id: article.inner_id,
+           thread: article.thread,
+           publication_version: publication_version,
+           published_at: published_at,
+           command_id: command_id
+         }, %{public: public}}
+      else
+        _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
+      end
     end
   end
 
   defp create_and_publish(community, :doc, attrs, user) do
     with {:ok, branch} <- CMS.Docs.Branch.resolve(community, []),
          {:ok, %{article: article, draft: draft}} <-
-           CMS.Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
+           Articles.create_stable_draft(community, :doc, attrs, user, branch_id: branch.id),
          :ok <- sync_community_tags(community, article, attrs),
          {:ok, _published} <-
-           CMS.Docs.publish_branch(article.id, branch.id, user,
+           Docs.publish_branch(article.id, branch.id, user,
              expected_draft_version: draft.version,
              expected_lifecycle_version: 1
            ),
          {:ok, %Article{} = published} <- FrontDesk.article(article.id, mode: :internal),
          {:ok, public} <- public_projection(published, community),
          {:ok, _activity} <- Activity.log(public, :created, actor: user),
-         {:ok, _community} <- CMS.Communities.update_count_field(community, :doc),
+         {:ok, _community} <- Communities.update_count_field(community, :doc),
          {:ok, _user} <- Accounts.Publish.update_states(user, :doc) do
       {:ok, _throttle} = CMS.Gate.RateLimit.Publish.record(user)
       {:ok, public}
@@ -73,43 +98,33 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
 
   defp create_and_publish(community, thread, attrs, user) do
     with {:ok, %{article: article, draft: draft}} <-
-           CMS.Articles.create_stable_draft(community, thread, attrs, user),
+           Articles.create_stable_draft(community, thread, attrs, user),
          publish_opts =
            [expected_draft_version: draft.version, expected_lifecycle_version: 1] ++
              community_tag_opts(attrs),
          {:ok, %{article: published}} <-
-           CMS.Articles.publish(article.id, user, publish_opts),
+           Articles.publish(article.id, user, publish_opts),
          {:ok, public} <- public_projection(published, community),
          {:ok, _activity} <- Activity.log(public, :created, actor: user) do
       {:ok, public}
     end
   end
 
-  defp recover_public(%{result_key: article_id}, community) when is_binary(article_id) do
-    case FrontDesk.article(article_id, mode: :internal) do
-      {:ok, %Article{} = article} ->
-        case public_projection(article, community) do
-          {:ok, public} ->
-            {:ok, public}
+  defp present_confirmation(%Confirmation{} = confirmation, _community),
+    do: Articles.RevisionResult.build(confirmation)
 
-          {:error, _reason} ->
-            {:ok,
-             %{
-               id: article.id,
-               article_id: article.id,
-               inner_id: article.inner_id,
-               thread: article.thread,
-               stage: :unavailable
-             }}
-        end
+  defp present_command_result(
+         _confirmation,
+         %{
+           state: :executed,
+           action_context: %{public: public}
+         },
+         _community
+       ),
+       do: {:ok, public}
 
-      {:error, _reason} ->
-        {:error, CMS.ErrorCat.command_id_conflict()}
-    end
-  end
-
-  defp recover_public(_receipt, _community),
-    do: {:error, CMS.ErrorCat.command_id_conflict()}
+  defp present_command_result(%Confirmation{} = confirmation, %{state: :recovered}, community),
+    do: present_confirmation(confirmation, community)
 
   defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
        when is_integer(inner_id) do
@@ -126,7 +141,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   defp sync_community_tags(community, article, attrs) do
     tag_ids = Map.get(attrs, :community_tags) || Map.get(attrs, "community_tags") || []
 
-    case CMS.Communities.overwrite_tags(community, article.thread, article, %{
+    case Communities.overwrite_tags(community, article.thread, article, %{
            community_tags: tag_ids
          }) do
       {:ok, _article} -> :ok

@@ -34,7 +34,9 @@ defmodule GroupherServer.CMS.Communities do
   alias CMS.{Command, Passport}
   alias CMS.Communities.{ErrorCat, Lifecycle}
   alias CMS.FrontDesk
+  alias CMS.Gate
   alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
+  alias CMS.Communities.RequestDestroyConfirmation, as: Confirmation
   alias Helper.T
 
   # Read
@@ -130,13 +132,13 @@ defmodule GroupherServer.CMS.Communities do
       command_id: Keyword.get(opts, :command_id),
       operation: :community_request_destroy,
       target: community,
-      params: Keyword.delete(opts, :command_id)
+      params: opts |> Keyword.delete(:command_id) |> Map.new()
     }
 
-    Command.execute(command,
-      action: &request_destroy_action/1,
-      result: fn _receipt -> FrontDesk.community(community.slug, mode: :internal) end
-    )
+    with {:ok, confirmation} <-
+           Command.execute(command, action: &request_destroy_action/1, confirmation: Confirmation) do
+      FrontDesk.community(confirmation.data["community_slug"], mode: :internal)
+    end
   end
 
   defp request_destroy_action(%{
@@ -145,14 +147,23 @@ defmodule GroupherServer.CMS.Communities do
          params: opts,
          command_id: command_id
        }) do
+    opts = Map.to_list(opts)
+
     with {:ok, canonical} <-
-           GroupherServer.CMS.Gate.access_check(actor, :request_destroy, community),
+           Gate.access_check(actor, :request_destroy, community),
          {:ok, _blocker} <-
            Lifecycle.request_destroy(
              canonical.slug,
              Keyword.put(opts, :operation_ref, command_id)
            ) do
-      FrontDesk.community(canonical.slug, mode: :internal)
+      {:ok,
+       %Confirmation{
+         data: %{
+           "community_id" => to_string(canonical.id),
+           "community_slug" => canonical.slug,
+           "operation_ref" => command_id
+         }
+       }}
     end
   end
 

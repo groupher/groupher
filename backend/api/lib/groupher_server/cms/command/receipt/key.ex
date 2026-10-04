@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.CommandReceipt.Key do
+defmodule GroupherServer.CMS.Command.Receipt.Key do
   @moduledoc """
   Validates the stable UUID identity for one CMS command attempt.
 

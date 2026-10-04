@@ -1,9 +1,9 @@
-defmodule GroupherServer.CMS.CommandReceipt do
+defmodule GroupherServer.CMS.Command.Receipt do
   @moduledoc """
   Internal receipt boundary for command identity, execution, recovery and retention.
 
       CMS domain command / retention job
-        -> CommandReceipt facade
+        -> Command.Receipt facade
         -> Key / Runner / Store
         -> cms.command_receipts
 
@@ -11,17 +11,17 @@ defmodule GroupherServer.CMS.CommandReceipt do
   writes. This facade exposes only the shared receipt protocol used around them.
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.Accounts
 
   alias Accounts.Model.User
-  alias CMS.CommandReceipt.{Key, Runner, Store}
+  alias __MODULE__.{Key, Runner, Store}
 
   @doc "Validates the required UUID identity of one command attempt."
   @spec validate_command_id(term()) :: {:ok, Ecto.UUID.t()} | {:error, term()}
   defdelegate validate_command_id(value), to: Key, as: :validate
 
-  @doc "Runs the internal receipt protocol for a CMS command without exposing replay state."
-  @spec run_internal(
+  @doc "Executes the internal receipt protocol for a CMS command without exposing replay state."
+  @spec execute(
           User.t(),
           Ecto.UUID.t() | nil,
           String.t(),
@@ -29,9 +29,9 @@ defmodule GroupherServer.CMS.CommandReceipt do
           String.t() | pos_integer(),
           term(),
           (-> term()),
-          (CMS.Model.CommandReceipt.t() -> term())
+          module()
         ) :: {:ok, term()} | {:error, term()}
-  defdelegate run_internal(
+  defdelegate execute(
                 user,
                 command_id,
                 command,
@@ -39,9 +39,35 @@ defmodule GroupherServer.CMS.CommandReceipt do
                 resource_id,
                 data,
                 execute,
-                result
+                confirmation
               ),
               to: Runner
+
+  @doc "Executes with an optional presenter for first-execution result reuse."
+  def execute(
+        user,
+        command_id,
+        command,
+        resource_type,
+        resource_id,
+        data,
+        execute,
+        confirmation,
+        presenter
+      )
+      when is_function(presenter, 2) do
+    Runner.execute(
+      user,
+      command_id,
+      command,
+      resource_type,
+      resource_id,
+      data,
+      execute,
+      confirmation,
+      presenter
+    )
+  end
 
   @doc "Deletes a bounded batch of receipts past the recovery window."
   @spec prune_expired(pos_integer()) :: non_neg_integer()

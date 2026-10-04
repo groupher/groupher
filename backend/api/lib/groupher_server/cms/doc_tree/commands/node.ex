@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   Runs existing receipt-backed commands for Docs tree nodes and page Drafts.
 
   The named `create_tab/group/link/pin` facade entries are intentionally not
-  handled here because they do not currently participate in CommandReceipt.
+  handled here because they do not currently participate in CMS.Command.Receipt.
 
   Business position:
 
@@ -19,6 +19,8 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   alias CMS.{Command, ErrorCat}
   alias CMS.DocTree.{CommandReplay, Writer}
   alias CMS.Model.{Article, Community}
+  alias CMS.DocTree.Commands.TreeConfirmation, as: Confirmation
+  alias CMS.DocTree.Commands.NodeDraftConfirmation, as: DraftConfirmation
   alias Helper.T
 
   @doc "Creates one typed tree node through the existing command protocol."
@@ -103,8 +105,15 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
       user,
       :doc_update_draft,
       args,
-      fn -> Writer.update_draft(community, id, drop_command_id(args), user) end,
-      fn _receipt -> CMS.Docs.read_editor_head(community, id, args) end
+      DraftConfirmation,
+      fn ->
+        with {:ok, draft} <-
+               Writer.update_draft(community, id, drop_command_id(args), user) do
+          {:ok,
+           %DraftConfirmation{data: draft_confirmation_data(draft, option(args, :command_id))}}
+        end
+      end,
+      fn confirmation -> present_draft_confirmation(community, confirmation) end
     )
   end
 
@@ -147,10 +156,13 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
     )
   end
 
-  defp run_doc_command(community, id, user, command, opts, execute, replay) do
+  defp run_doc_command(community, id, user, command, opts, confirmation, execute, present) do
     case option(opts, :command_id) do
       nil ->
-        execute_one_shot(execute)
+        case execute_one_shot(execute) do
+          {:ok, %DraftConfirmation{} = confirmation} -> present.(confirmation)
+          other -> other
+        end
 
       command_id ->
         %Command{
@@ -158,13 +170,34 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
           command_id: command_id,
           operation: command,
           target: {:doc, community.id},
-          params: %{id: id, opts: drop_command_id(opts)}
+          params: %{id: id, opts: canonical_args(opts)}
         }
-        |> Command.execute(
-          action: fn _context -> execute.() end,
-          result: replay
-        )
+        |> Command.execute(action: fn _context -> execute.() end, confirmation: confirmation)
+        |> then(fn
+          {:ok, value} -> present.(value)
+          error -> error
+        end)
     end
+  end
+
+  defp present_draft_confirmation(_community, %DraftConfirmation{data: data}) do
+    CMS.Docs.DraftResult.build(%DraftConfirmation{data: data})
+  end
+
+  defp draft_confirmation_data(draft, command_id) when is_map(draft) do
+    %{
+      "article_id" => draft.article_id,
+      "community_id" => draft.community_id,
+      "branch_id" => draft.branch_id,
+      "version" => draft.version,
+      "title" => draft.title,
+      "subtitle" => draft.subtitle,
+      "slug" => draft.slug,
+      "digest" => draft.digest,
+      "content_hash" => draft.content_hash,
+      "updated_at" => DateTime.to_iso8601(draft.updated_at),
+      "command_id" => command_id
+    }
   end
 
   defp run_tree_command(community, target_id, args, user, command, execute) do
@@ -179,16 +212,23 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
           command_id: command_id,
           operation: command,
           target: {:doc_tree, community.id},
-          params: %{target_id: target_id, args: clean_args}
+          params: %{target_id: target_id, args: canonical_args(clean_args)}
         }
         |> Command.execute(
           action: fn %{params: %{args: clean_args}} ->
             with {:ok, result} <- execute.(clean_args) do
-              {:ok, result, CommandReplay.tree_metadata(result, target_key)}
+              {:ok,
+               %Confirmation{
+                 data: CommandReplay.tree_confirmation(result, target_key)
+               }}
             end
           end,
-          result: &CommandReplay.replay_tree/1
+          confirmation: Confirmation
         )
+        |> then(fn
+          {:ok, value} -> CommandReplay.replay_confirmation(value)
+          error -> error
+        end)
 
       _ ->
         execute.(clean_args)
@@ -209,4 +249,9 @@ defmodule GroupherServer.CMS.DocTree.Commands.Node do
   defp drop_command_id(opts) when is_map(opts), do: Map.delete(opts, :command_id)
   defp drop_command_id(opts) when is_list(opts), do: Keyword.delete(opts, :command_id)
   defp drop_command_id(opts), do: opts
+
+  defp canonical_args(opts) when is_map(opts), do: Map.delete(opts, :command_id)
+
+  defp canonical_args(opts) when is_list(opts),
+    do: opts |> Keyword.delete(:command_id) |> Map.new()
 end

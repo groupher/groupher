@@ -64,9 +64,7 @@ defmodule GroupherServer.Activity.ArticleLog do
   end
 
   defp authorize_read(article, actor) do
-    with {:ok, canonical} <- Gate.Access.access_check(actor, :read, article) do
-      {:ok, canonical}
-    end
+    Gate.Access.access_check(actor, :read, article)
   end
 
   defp maybe_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id),

@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
 
   alias GroupherServer.CMS
 
+  alias CMS.ErrorCat
   alias CMS.Model.Community
   alias Helper.T
 
@@ -37,5 +38,5 @@ defmodule GroupherServer.CMS.Seeds.CleanUp do
   def articles(%Community{} = community, _thread),
     do: CMS.Seeds.FullCommunity.delete(community.slug)
 
-  def articles(_, _), do: {:error, CMS.ErrorCat.custom("community is required")}
+  def articles(_, _), do: {:error, ErrorCat.custom("community is required")}
 end

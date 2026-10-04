@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   alias Accounts.Model.User
   alias CMS.{Command, FrontDesk, Gate}
   alias CMS.Comments.{Lifecycle, ErrorCat, Solution}
+  alias CMS.Comments.Commands.CommentConfirmation, as: Confirmation
   alias CMS.Model.{Article, Comment, PinnedComment}
   alias Analysis.MetricEvent
   alias Helper.{ORM, T}
@@ -56,16 +57,22 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       params: %{}
     }
 
-    Command.execute(command,
-      action: &delete_action/1,
-      result: &delete_result(&1, comment.id)
-    )
+    with {:ok, confirmation} <-
+           Command.execute(command, action: &delete_action/1, confirmation: Confirmation) do
+      delete_result(confirmation, comment.id)
+    end
   end
 
   defp delete_action(%{actor: actor, target: comment, command_id: command_id}) do
     Gate.Access.with_check(actor, :delete, comment, fn canonical, article ->
-      delete_new(canonical, article, actor, command_id)
+      with {:ok, result} <- delete_new(canonical, article, actor, command_id) do
+        {:ok, confirmation(result)}
+      end
     end)
+  end
+
+  defp delete_result(%Confirmation{data: data}, comment_id) do
+    delete_result(%{command_id: data["command_id"]}, comment_id)
   end
 
   defp delete_result(receipt, comment_id) do
@@ -98,6 +105,16 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          :ok <- enqueue_delete_effects(comment, article, actor, command_id) do
       {:ok, %{comment: deleted, article: article, command_id: command_id}}
     end
+  end
+
+  defp confirmation(%{comment: comment, article: article, command_id: command_id}) do
+    %Confirmation{
+      data: %{
+        "comment_id" => to_string(comment.id),
+        "article_id" => to_string(article.id),
+        "command_id" => command_id
+      }
+    }
   end
 
   defp ensure_not_archived(comment) do

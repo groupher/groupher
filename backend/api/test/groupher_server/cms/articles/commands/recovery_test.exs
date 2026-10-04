@@ -76,9 +76,37 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
            |> Enum.sort() ==
              ["article.projections", "article.updated"]
 
+    first_revision_id = published.public.revision_id
+
+    {:ok, article_after_first} = CMS.FrontDesk.article(public.article_id, mode: :internal)
+    {:ok, author} = CMS.Articles.Writer.ensure_author_exists(user)
+    {:ok, draft_b} = CMS.Articles.Draft.Store.ensure_from_public(article_after_first, author)
+
+    assert {:ok, draft_b} =
+             CMS.Articles.update_draft(
+               public.article_id,
+               %{title: "Published through command B"},
+               user,
+               expected_version: draft_b.version
+             )
+
+    lifecycle_b =
+      GroupherServer.Repo.get_by!(CMS.Model.ArticleLifecycle, article_id: public.article_id)
+
+    opts_b = [
+      expected_draft_version: draft_b.version,
+      expected_lifecycle_version: lifecycle_b.version,
+      command_id: Ecto.UUID.generate()
+    ]
+
+    assert {:ok, published_b} = CMS.Articles.publish(public.article_id, user, opts_b)
+    assert published_b.public.revision_id != first_revision_id
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 4
+
     assert {:ok, replayed} = CMS.Articles.publish(public.article_id, user, opts)
-    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 2
+    assert Repo.aggregate(CMS.Outbox.Event, :count) == events_before + 4
     assert replayed.article.id == published.article.id
-    assert replayed.public.revision_id == published.public.revision_id
+    assert replayed.revision_id == first_revision_id
+    assert replayed.public.revision_id == first_revision_id
   end
 end

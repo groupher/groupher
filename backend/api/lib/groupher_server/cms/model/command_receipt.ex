@@ -27,11 +27,10 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     field(:command, :string)
     field(:resource_type, :string)
     field(:resource_id, :string)
-    field(:payload_fingerprint, :string)
-    field(:outcome, :string)
-    field(:result_key, :string)
-    field(:result_payload, :map)
+    field(:intent_params, :map)
+    field(:confirmation, :map)
     field(:expires_at, :utc_datetime)
+    field(:identity_expires_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -43,7 +42,7 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
     command
     resource_type
     resource_id
-    payload_fingerprint
+    intent_params
     expires_at
   )a
 
@@ -57,14 +56,12 @@ defmodule GroupherServer.CMS.Model.CommandReceipt do
       :command,
       :resource_type,
       :resource_id,
-      :payload_fingerprint,
-      :outcome,
-      :result_key,
-      :result_payload,
-      :expires_at
+      :intent_params,
+      :confirmation,
+      :expires_at,
+      :identity_expires_at
     ])
     |> validate_required(@required_fields)
-    |> validate_inclusion(:outcome, ["changed", "unchanged"], allow_nil: true)
     |> unique_constraint(
       [:initiator_type, :initiator_key, :command_id],
       name: :command_receipts_initiator_command_id_index
