@@ -29,11 +29,11 @@ defmodule Mix.Tasks.SearchArtiments.Reindex do
         Mix.raise("#{inspect(platform)} does not support index configuration")
       end
 
-      :ok = platform.configure_index()
+      {:ok, :pass} = platform.configure_index()
     end
 
     case Indexer.reindex_articles() do
-      :ok -> Mix.shell().info("Search Artiments Article reindex completed")
+      {:ok, :pass} -> Mix.shell().info("Search Artiments Article reindex completed")
       {:error, reason} -> Mix.raise("Search Artiments reindex failed: #{inspect(reason)}")
     end
   end

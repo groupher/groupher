@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   require Logger
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias Helper.T
   alias CMS.ErrorCat
   alias CMS.Command
   alias CMS.Command.Confirmation, as: ConfirmationCodec
@@ -42,9 +43,9 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> term()),
+          (-> Command.action_result(term(), term())),
           module()
-        ) :: {:ok, term()} | {:error, term()}
+        ) :: T.result(term(), term())
   def execute(
         user,
         command_id,
@@ -68,6 +69,17 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
           nil
         )
 
+  @spec execute(
+          User.t(),
+          Ecto.UUID.t() | nil,
+          String.t(),
+          String.t(),
+          String.t() | pos_integer(),
+          term(),
+          (-> Command.action_result(term(), term())),
+          module(),
+          Command.presenter() | nil
+        ) :: T.result(term(), term())
   def execute(
         %User{},
         nil,
@@ -197,7 +209,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
   defp finalize_confirmation(receipt, confirmation, value, action_context, presenter) do
     with {:ok, payload} <- encode_confirmation(confirmation, value, receipt.command),
-         :ok <- validate_confirmation_tag(payload, receipt.command),
+         {:ok, :pass} <- validate_confirmation_tag(payload, receipt.command),
          {:ok, _finalized_receipt} <- Store.finalize(receipt, %{confirmation: payload}),
          {:ok, decoded} <- decode_confirmation(confirmation, payload, receipt.command),
          {:ok, presented} <- present(presenter, decoded, :executed, action_context) do
@@ -236,7 +248,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
     case presenter.(decoded, %{state: state, action_context: action_context}) do
       {:ok, value} -> {:ok, value}
       {:error, reason} -> {:error, reason}
-      value -> {:ok, value}
+      _value -> {:error, :unexpected_presenter_result}
     end
   rescue
     error -> {:error, {:presenter_failed, error}}
@@ -249,7 +261,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         {:ok, payload} when is_map(payload) ->
           with true <- ConfirmationCodec.json_safe?(payload),
                {:ok, bytes} <- confirmation_size(payload),
-               :ok <- validate_confirmation_size(bytes, operation) do
+               {:ok, :pass} <- validate_confirmation_size(bytes, operation) do
             emit_confirmation_telemetry(:encoded, operation, bytes, payload)
             {:ok, payload}
           else
@@ -288,7 +300,11 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   end
 
   defp validate_confirmation_tag(%{"operation" => tag}, command),
-    do: if(tag == command, do: :ok, else: {:error, :confirmation_operation_mismatch})
+    do:
+      if(tag == command,
+        do: {:ok, :pass},
+        else: {:error, :confirmation_operation_mismatch}
+      )
 
   defp validate_confirmation_tag(_payload, _command),
     do: {:error, :confirmation_operation_missing}
@@ -310,7 +326,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   end
 
   defp validate_confirmation_size(bytes, _operation) when bytes <= @confirmation_max_bytes,
-    do: :ok
+    do: {:ok, :pass}
 
   defp validate_confirmation_size(_bytes, _operation),
     do: {:error, :confirmation_payload_too_large}

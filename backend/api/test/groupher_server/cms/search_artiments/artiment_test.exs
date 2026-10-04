@@ -119,9 +119,9 @@ defmodule GroupherServer.CMS.SearchArtiments.ArtimentTest do
       schema_version: 1
     }
 
-    :ok = SearchArtiments.upsert([artiment])
+    {:ok, :pass} = SearchArtiments.upsert([artiment])
 
-    :ok =
+    {:ok, :pass} =
       SearchArtiments.update_metrics([
         {ref, %{upvotes_count: 7, comments_count: 9, updated_at: updated_at}}
       ])

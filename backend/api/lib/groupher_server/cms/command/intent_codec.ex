@@ -55,9 +55,8 @@ defmodule GroupherServer.CMS.Command.IntentCodec do
   @doc "Encodes params using the closed policy for one operation tag."
   @spec encode_tag(String.t(), term()) :: {:ok, map()} | {:error, :invalid_intent_params}
   def encode_tag(tag, params) when is_binary(tag) do
-    with {:ok, operation} <- Command.operation_from_tag(tag) do
-      encode(operation, params)
-    else
+    case Command.operation_from_tag(tag) do
+      {:ok, operation} -> encode(operation, params)
       _ -> {:error, :invalid_intent_params}
     end
   end

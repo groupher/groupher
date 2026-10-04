@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
     Enum.with_index(["react", "php", "每日妹子", "javascript", "java"], 1)
     |> Enum.each(fn {title, inner_id} ->
-      :ok = SearchArtiments.upsert([search_article(title, inner_id)])
+      {:ok, :pass} = SearchArtiments.upsert([search_article(title, inner_id)])
     end)
 
     on_exit(&SearchArtiments.reset/0)

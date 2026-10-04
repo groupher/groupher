@@ -160,14 +160,16 @@ defmodule GroupherServer.Analysis.Web do
   def visitor_location_map(%Community{} = community) do
     range = resolve_range(%{days: @visitor_location_days})
 
-    with {:ok, dashboard} <- dashboard_for(community) do
-      if visitor_location_map_enabled?(dashboard) do
-        load_visitor_location_map(community, dashboard, range)
-      else
-        {:ok, %{status: "ok", range: range, countries: [], error: nil}}
-      end
-    else
-      {:error, reason} -> {:ok, unavailable_visitor_location_payload(range, reason)}
+    case dashboard_for(community) do
+      {:ok, dashboard} ->
+        if visitor_location_map_enabled?(dashboard) do
+          load_visitor_location_map(community, dashboard, range)
+        else
+          {:ok, %{status: "ok", range: range, countries: [], error: nil}}
+        end
+
+      {:error, reason} ->
+        {:ok, unavailable_visitor_location_payload(range, reason)}
     end
   end
 

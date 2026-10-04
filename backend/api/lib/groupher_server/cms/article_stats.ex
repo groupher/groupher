@@ -376,45 +376,47 @@ defmodule GroupherServer.CMS.ArticleStats do
   defp read_public_batch(_community_ref, _thread, []), do: {:ok, []}
 
   defp read_public_batch(community_ref, thread, inner_ids) do
-    with {:ok, %Community{id: community_id}} <- FrontDesk.community(community_ref) do
-      rows =
-        Article
-        |> join(:inner, [article], relation in ArticleCommunity,
-          on: relation.article_id == article.id and relation.visible == true
-        )
-        |> where(
-          [article, relation],
-          article.thread == ^thread and relation.community_id == ^community_id and
-            article.inner_id in ^inner_ids
-        )
-        |> select([article, _relation], article)
-        |> Repo.all()
+    case FrontDesk.community(community_ref) do
+      {:ok, %Community{id: community_id}} ->
+        rows =
+          Article
+          |> join(:inner, [article], relation in ArticleCommunity,
+            on: relation.article_id == article.id and relation.visible == true
+          )
+          |> where(
+            [article, relation],
+            article.thread == ^thread and relation.community_id == ^community_id and
+              article.inner_id in ^inner_ids
+          )
+          |> select([article, _relation], article)
+          |> Repo.all()
 
-      stats_by_article_id = for_articles(thread, rows)
+        stats_by_article_id = for_articles(thread, rows)
 
-      with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
-        stats_by_inner_id =
-          Map.new(rows, fn article ->
-            stats = Map.fetch!(stats_by_article_id, {thread, article.id})
+        with :ok <- ensure_stats_rows(rows, stats_by_article_id, thread) do
+          stats_by_inner_id =
+            Map.new(rows, fn article ->
+              stats = Map.fetch!(stats_by_article_id, {thread, article.id})
 
-            {to_string(article.inner_id),
-             Map.merge(stats, %{
-               community: community_ref,
-               thread: thread,
-               inner_id: article.inner_id
-             })}
-          end)
+              {to_string(article.inner_id),
+               Map.merge(stats, %{
+                 community: community_ref,
+                 thread: thread,
+                 inner_id: article.inner_id
+               })}
+            end)
 
-        {:ok,
-         Enum.flat_map(inner_ids, fn inner_id ->
-           case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
-             {:ok, stats} -> [stats]
-             :error -> []
-           end
-         end)}
-      end
-    else
-      {:error, _} = error -> error
+          {:ok,
+           Enum.flat_map(inner_ids, fn inner_id ->
+             case Map.fetch(stats_by_inner_id, to_string(inner_id)) do
+               {:ok, stats} -> [stats]
+               :error -> []
+             end
+           end)}
+        end
+
+      {:error, _} = error ->
+        error
     end
   end
 

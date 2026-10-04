@@ -235,6 +235,47 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     refute_received :action_called
   end
 
+  test "rejects a presenter result outside the business result contract" do
+    {_community, post, _attrs, user} = mock_article(:post)
+    command_id = Ecto.UUID.generate()
+
+    command = %Command{
+      actor: user,
+      command_id: command_id,
+      operation: :upvote_add,
+      target: post,
+      params: %{operation: :add}
+    }
+
+    action = fn _context ->
+      {:ok,
+       %UpvoteConfirmation{
+         data: %{
+           "operation" => "add",
+           "outcome" => "changed",
+           "target_id" => to_string(post.id),
+           "target_type" => "article"
+         }
+       }}
+    end
+
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+             Command.execute(command,
+               action: action,
+               confirmation: UpvoteConfirmation,
+               present: fn _confirmation, _context -> %{unexpected: :raw_value} end
+             )
+
+    refute Repo.exists?(
+             from(receipt in CMS.Model.CommandReceipt,
+               where:
+                 receipt.initiator_type == "user" and
+                   receipt.initiator_key == ^to_string(user.id) and
+                   receipt.command_id == ^command_id
+             )
+           )
+  end
+
   test "rejects an oversized Confirmation before finalizing the receipt" do
     {_community, post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()

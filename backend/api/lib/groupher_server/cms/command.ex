@@ -25,6 +25,7 @@ defmodule GroupherServer.CMS.Command do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias Helper.T
 
   alias Accounts.Model.User
   alias CMS.Command.Receipt, as: CommandReceipt
@@ -38,11 +39,17 @@ defmodule GroupherServer.CMS.Command do
           params: term()
         }
 
+  @type callback_result(value) :: {:ok, value} | {:error, term()}
+  @type presenter :: (term(), map() -> callback_result(term()))
+  @type action_result(value, context) ::
+          callback_result(value)
+          | {:ok, value, context}
+
   @enforce_keys [:actor, :command_id, :operation, :target, :params]
   defstruct [:actor, :command_id, :operation, :target, :params]
 
   @doc "Runs one user command and returns its canonical domain result."
-  @spec execute(t(), keyword()) :: {:ok, term()} | {:error, term()}
+  @spec execute(t(), keyword()) :: T.done()
   def execute(%__MODULE__{} = command, opts) when is_list(opts) do
     action = Keyword.fetch!(opts, :action)
     confirmation = Keyword.fetch!(opts, :confirmation)
@@ -60,8 +67,8 @@ defmodule GroupherServer.CMS.Command do
 
     command_result =
       with {:ok, command_id} <- CommandReceipt.validate_command_id(command.command_id),
-           :ok <- validate_target(command),
-           :ok <- validate_confirmation(command.operation, confirmation) do
+           {:ok, :pass} <- validate_target(command),
+           {:ok, :pass} <- validate_confirmation(command.operation, confirmation) do
         with {:ok, {resource_type, resource_id}} <- target_identity(command) do
           context = context(command, command_id)
 
@@ -112,7 +119,7 @@ defmodule GroupherServer.CMS.Command do
            true <- function_exported?(module, :decode, 2),
            operations when is_list(operations) <- module.operations(),
            true <- operation in operations do
-        :ok
+        {:ok, :pass}
       else
         _ -> {:error, {:invalid_command_result, :confirmation_contract_unavailable}}
       end
@@ -127,7 +134,9 @@ defmodule GroupherServer.CMS.Command do
   defp normalize_command_result({:error, :invalid_intent_params}),
     do: {:error, ErrorCat.invalid_command_intent()}
 
-  defp normalize_command_result(result), do: result
+  defp normalize_command_result({:ok, _value} = result), do: result
+  defp normalize_command_result({:error, _reason} = result), do: result
+  defp normalize_command_result(_result), do: {:error, ErrorCat.command_invalid_result()}
 
   defp context(command, command_id) do
     command
@@ -136,15 +145,15 @@ defmodule GroupherServer.CMS.Command do
     |> Map.put(:command_id, command_id)
   end
 
-  defp validate_target(%__MODULE__{target: target}) when is_struct(target), do: :ok
+  defp validate_target(%__MODULE__{target: target}) when is_struct(target), do: {:ok, :pass}
 
   defp validate_target(%__MODULE__{target: %{id: id, thread: thread}})
        when is_binary(id) and thread in [:post, :blog, :changelog, :doc],
-       do: :ok
+       do: {:ok, :pass}
 
   defp validate_target(%__MODULE__{target: {type, id}})
        when (is_atom(type) or is_binary(type)) and (is_binary(id) or is_integer(id)),
-       do: :ok
+       do: {:ok, :pass}
 
   defp validate_target(_), do: {:error, ErrorCat.unsupported_command_resource()}
 

@@ -151,7 +151,9 @@ Claim、领域写入和 finalize 必须处于同一事务。失败时三者一�
 领域资源，canonical resource 仍由领域 Gate 在锁内解析。当前 context 字段固定为
 `actor/command_id/target/params`。`action` 返回
 `{:ok, %Confirmation{}} | {:ok, %Confirmation{}, action_context} | {:error, reason}`；codec 只允许保存稳定的
-Confirmation JSON。异常继续按 Elixir 异常语义向外传播，不转换成领域错误。
+Confirmation JSON。`present/2` 必须返回 `{:ok, value} | {:error, reason}`；裸值或其他 tuple
+统一视为无效 Command result，不能由 Runner 自动包装成成功。异常继续按 Elixir 异常语义向外传播，
+不转换成领域错误。
 
 超时分成三层是为了让并发冲突快速失败，同时给真正的领域事务足够时间：claim 阶段的
 `lock_timeout` 为 4 秒；外层 transaction 和 statement 的上限为 30 秒。4 秒只限制等待其他

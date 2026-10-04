@@ -14,22 +14,24 @@ defmodule GroupherServer.CMS.Command.Confirmation do
 
   @type json_object :: %{required(String.t()) => term()}
 
+  alias Helper.T
+
   @spec operation_tag(atom()) :: String.t()
   def operation_tag(operation) when is_atom(operation) do
     GroupherServer.CMS.Command.operation_tag(operation)
   end
 
-  @spec required_keys(map(), [String.t()]) :: :ok | {:error, :missing_confirmation_field}
+  @spec required_keys(map(), [String.t()]) :: T.result(:pass, :missing_confirmation_field)
   def required_keys(payload, keys) when is_map(payload) and is_list(keys) do
     if Enum.all?(keys, &Map.has_key?(payload, &1)),
-      do: :ok,
+      do: {:ok, :pass},
       else: {:error, :missing_confirmation_field}
   end
 
-  @spec strict_keys(map(), [String.t()]) :: :ok | {:error, :unknown_confirmation_field}
+  @spec strict_keys(map(), [String.t()]) :: T.result(:pass, :unknown_confirmation_field)
   def strict_keys(payload, keys) when is_map(payload) and is_list(keys) do
     if Map.keys(payload) |> Enum.sort() == Enum.sort(keys),
-      do: :ok,
+      do: {:ok, :pass},
       else: {:error, :unknown_confirmation_field}
   end
 

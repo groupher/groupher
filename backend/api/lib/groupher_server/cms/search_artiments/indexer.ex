@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
 
   import Ecto.Query, warn: false
   alias GroupherServer.{CMS, Repo}
+  alias Helper.T
   alias CMS.{ErrorCat, SearchArtiments}
   alias CMS.FrontDesk
   alias CMS.SearchArtiments.{Artiment, Config, Projection}
@@ -33,82 +34,86 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
       CMS.SearchArtiments.Indexer.enqueue_upsert(post)
 
   """
-  @spec enqueue_upsert(struct()) :: {:ok, :pass} | {:error, term()}
+  @spec enqueue_upsert(struct()) :: T.done()
   def enqueue_upsert(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue({__MODULE__, :upsert_article, [thread, stable_id(article)]})
     end
   end
 
-  @spec enqueue_metrics(struct()) :: {:ok, :pass} | {:error, term()}
+  @spec enqueue_metrics(struct()) :: T.done()
   def enqueue_metrics(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue({__MODULE__, :sync_article_metrics, [thread, stable_id(article)]})
     end
   end
 
-  @spec enqueue_delete(struct()) :: {:ok, :pass} | {:error, term()}
+  @spec enqueue_delete(struct()) :: T.done()
   def enqueue_delete(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       enqueue_delete(thread, stable_id(article))
     end
   end
 
-  @spec enqueue_delete(Artiment.thread(), Ecto.UUID.t()) :: {:ok, :pass}
+  @spec enqueue_delete(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def enqueue_delete(thread, article_id) do
     enqueue(:delete_article, thread, article_id)
   end
 
   @doc "Reloads one Article before projection so jobs never depend on stale structs."
-  @spec upsert_article(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
+  @spec upsert_article(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def upsert_article(thread, article_id) do
-    with {:ok, article} <- public_article(thread, article_id) do
-      case Projection.Article.project(thread, article) do
-        {:ok, artiment} ->
-          SearchArtiments.upsert([artiment])
+    case public_article(thread, article_id) do
+      {:ok, article} ->
+        case Projection.Article.project(thread, article) do
+          {:ok, artiment} ->
+            SearchArtiments.upsert([artiment])
 
-        {:error, ErrorCat.error_pattern(reason: :not_searchable)} ->
-          delete_article(thread, article_id)
+          {:error, ErrorCat.error_pattern(reason: :not_searchable)} ->
+            delete_article(thread, article_id)
 
-        error ->
-          error
-      end
-    else
-      {:error, :not_found} -> delete_article(thread, article_id)
+          {:error, reason} ->
+            {:error, reason}
+        end
+
+      {:error, :not_found} ->
+        delete_article(thread, article_id)
     end
   end
 
-  @spec delete_article(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
+  @spec delete_article(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def delete_article(thread, article_id) do
     SearchArtiments.delete([Artiment.article_key(thread, article_id)])
   end
 
   @doc "Reloads and partially updates the mutable ranking metrics of one public Article."
-  @spec sync_article_metrics(Artiment.thread(), Ecto.UUID.t()) :: :ok | {:error, term()}
+  @spec sync_article_metrics(Artiment.thread(), Ecto.UUID.t()) :: T.done()
   def sync_article_metrics(thread, article_id) do
-    with {:ok, article} <- public_article(thread, article_id) do
-      counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
+    case public_article(thread, article_id) do
+      {:ok, article} ->
+        counts = CMS.Interactions.counts([article]) |> Map.get({thread, article.id}, %{})
 
-      SearchArtiments.update_metrics([
-        {Artiment.article_key(thread, article.id),
-         %{
-           upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
-           comments_count: article.comments_count || 0,
-           updated_at: article.updated_at
-         }}
-      ])
-    else
-      {:error, :not_found} -> delete_article(thread, article_id)
+        SearchArtiments.update_metrics([
+          {Artiment.article_key(thread, article.id),
+           %{
+             upvotes_count: Map.get(counts, :upvotes_count, 0) || 0,
+             comments_count: article.comments_count || 0,
+             updated_at: article.updated_at
+           }}
+        ])
+
+      {:error, :not_found} ->
+        delete_article(thread, article_id)
     end
   end
 
   @doc "Rebuilds all public Article projections with bounded database batches."
-  @spec reindex_articles() :: :ok | {:error, term()}
+  @spec reindex_articles() :: T.done()
   def reindex_articles do
-    Enum.reduce_while(@article_threads, :ok, fn thread, :ok ->
+    Enum.reduce_while(@article_threads, {:ok, :pass}, fn thread, {:ok, :pass} ->
       case reindex_thread(thread, nil) do
-        :ok -> {:cont, :ok}
-        error -> {:halt, error}
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
   end
@@ -124,28 +129,30 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
   end
 
   defp reindex_thread(thread, after_id) do
-    with true <- thread in @article_threads do
-      articles =
-        Article
-        |> where([article], article.thread == ^thread)
-        |> after_article(after_id)
-        |> order_by([article], asc: article.id)
-        |> limit(^@batch_size)
-        |> Repo.all()
+    case thread in @article_threads do
+      true ->
+        articles =
+          Article
+          |> where([article], article.thread == ^thread)
+          |> after_article(after_id)
+          |> order_by([article], asc: article.id)
+          |> limit(^@batch_size)
+          |> Repo.all()
 
-      case articles do
-        [] ->
-          :ok
+        case articles do
+          [] ->
+            {:ok, :pass}
 
-        roots ->
-          with {:ok, public_articles} <- load_public_articles(thread, roots),
-               {:ok, artiments} <- project_batch(thread, public_articles),
-               :ok <- SearchArtiments.upsert(artiments, wait_for_task: true) do
-            reindex_thread(thread, List.last(roots).id)
-          end
-      end
-    else
-      false -> {:error, ErrorCat.invalid_search_artiment("unsupported Article thread")}
+          roots ->
+            with {:ok, public_articles} <- load_public_articles(thread, roots),
+                 {:ok, artiments} <- project_batch(thread, public_articles),
+                 {:ok, :pass} <- SearchArtiments.upsert(artiments, wait_for_task: true) do
+              reindex_thread(thread, List.last(roots).id)
+            end
+        end
+
+      false ->
+        {:error, ErrorCat.invalid_search_artiment("unsupported Article thread")}
     end
   end
 
@@ -153,12 +160,12 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     Enum.reduce_while(articles, {:ok, []}, fn article, {:ok, acc} ->
       case Projection.Article.project(thread, article) do
         {:ok, artiment} -> {:cont, {:ok, [artiment | acc]}}
-        error -> {:halt, error}
+        {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
     |> case do
       {:ok, artiments} -> {:ok, Enum.reverse(artiments)}
-      error -> error
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -175,7 +182,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Indexer do
     end)
     |> case do
       {:ok, articles} -> {:ok, Enum.reverse(articles)}
-      error -> error
+      {:error, reason} -> {:error, reason}
     end
   end
 

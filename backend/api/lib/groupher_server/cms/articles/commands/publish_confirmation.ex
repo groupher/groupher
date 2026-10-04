@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Articles.Commands.PublishConfirmation do
 
   @impl true
   def decode(payload, :article_publish) when is_map(payload) do
-    with :ok <- Codec.strict_keys(payload, @fields),
+    with {:ok, :pass} <- Codec.strict_keys(payload, @fields),
          true <- payload["schema_version"] == @schema_version,
          "article.publish" <- payload["operation"],
          true <- is_binary(payload["article_id"]),

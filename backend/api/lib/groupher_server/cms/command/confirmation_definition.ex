@@ -55,7 +55,7 @@ defmodule GroupherServer.CMS.Command.ConfirmationDefinition do
 
       @impl true
       def decode(payload, operation) when operation in @operations and is_map(payload) do
-        with :ok <- Codec.strict_keys(payload, @confirmation_fields),
+        with {:ok, :pass} <- Codec.strict_keys(payload, @confirmation_fields),
              true <- payload["schema_version"] in @supported_schema_versions,
              true <- payload["operation"] == Codec.operation_tag(operation),
              data when is_map(data) <- payload["data"],

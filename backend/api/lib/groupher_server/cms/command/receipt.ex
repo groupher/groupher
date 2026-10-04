@@ -11,9 +11,11 @@ defmodule GroupherServer.CMS.Command.Receipt do
   writes. This facade exposes only the shared receipt protocol used around them.
   """
 
-  alias GroupherServer.Accounts
+  alias GroupherServer.{Accounts, CMS}
+  alias Helper.T
 
   alias Accounts.Model.User
+  alias CMS.Command
   alias __MODULE__.{Key, Runner, Store}
 
   @doc "Validates the required UUID identity of one command attempt."
@@ -28,9 +30,9 @@ defmodule GroupherServer.CMS.Command.Receipt do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> term()),
+          (-> Command.action_result(term(), term())),
           module()
-        ) :: {:ok, term()} | {:error, term()}
+        ) :: T.result(term(), term())
   defdelegate execute(
                 user,
                 command_id,
@@ -44,6 +46,17 @@ defmodule GroupherServer.CMS.Command.Receipt do
               to: Runner
 
   @doc "Executes with an optional presenter for first-execution result reuse."
+  @spec execute(
+          User.t(),
+          Ecto.UUID.t() | nil,
+          String.t(),
+          String.t(),
+          String.t() | pos_integer(),
+          term(),
+          (-> Command.action_result(term(), term())),
+          module(),
+          Command.presenter()
+        ) :: T.result(term(), term())
   def execute(
         user,
         command_id,

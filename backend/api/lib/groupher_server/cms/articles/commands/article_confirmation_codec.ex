@@ -18,10 +18,11 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
   end
 
   def decode_payload(payload, operation, fields) when is_map(payload) do
-    with :ok <- Codec.strict_keys(payload, ["schema_version", "operation" | Map.keys(fields)]),
+    with {:ok, :pass} <-
+           Codec.strict_keys(payload, ["schema_version", "operation" | Map.keys(fields)]),
          true <- payload["schema_version"] == 1,
          true <- payload["operation"] == Codec.operation_tag(operation),
-         :ok <- validate_fields(payload, fields) do
+         {:ok, :pass} <- validate_fields(payload, fields) do
       {:ok, payload}
     else
       _ -> Codec.decode_error()
@@ -31,8 +32,10 @@ defmodule GroupherServer.CMS.Articles.Commands.ArticleConfirmationCodec do
   def decode_payload(_, _, _), do: Codec.decode_error()
 
   defp validate_fields(payload, fields) do
-    Enum.reduce_while(fields, :ok, fn {key, type}, :ok ->
-      if valid_type?(Map.get(payload, key), type), do: {:cont, :ok}, else: {:halt, {:error, key}}
+    Enum.reduce_while(fields, {:ok, :pass}, fn {key, type}, {:ok, :pass} ->
+      if valid_type?(Map.get(payload, key), type),
+        do: {:cont, {:ok, :pass}},
+        else: {:halt, {:error, key}}
     end)
   end
 

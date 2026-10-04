@@ -25,4 +25,5 @@ defmodule GroupherServer.CMS.Articles.ErrorCat do
   error(:draft_version_required, code: 6016)
   error(:draft_conflict, code: 6017)
   error(:lifecycle_conflict, code: 6018)
+  error(:invalid_publish_actor, code: 6019)
 end

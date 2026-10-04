@@ -216,37 +216,38 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp update_stable_tags(article, article_id, tags, opt) do
     community_id = article.community_id
 
-    with %ArticleCommunity{} = relation <-
-           Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community_id) do
-      old_tags =
-        CommunityTag
-        |> join(:inner, [tag], assignment in CMS.Model.ArticleCommunityTag,
-          on: assignment.tag_id == tag.id
-        )
-        |> where([_tag, assignment], assignment.article_community_id == ^relation.id)
-        |> order_by([tag, _assignment], asc: tag.id)
-        |> Repo.all()
+    case Repo.get_by(ArticleCommunity, article_id: article_id, community_id: community_id) do
+      %ArticleCommunity{} = relation ->
+        old_tags =
+          CommunityTag
+          |> join(:inner, [tag], assignment in CMS.Model.ArticleCommunityTag,
+            on: assignment.tag_id == tag.id
+          )
+          |> where([_tag, assignment], assignment.article_community_id == ^relation.id)
+          |> order_by([tag, _assignment], asc: tag.id)
+          |> Repo.all()
 
-      removing_ids = MapSet.new(tags, & &1.id)
+        removing_ids = MapSet.new(tags, & &1.id)
 
-      community_tags =
-        case opt do
-          :add -> Enum.uniq_by(old_tags ++ tags, & &1.id)
-          :remove -> Enum.reject(old_tags, &MapSet.member?(removing_ids, &1.id))
-          :overwrite -> tags
+        community_tags =
+          case opt do
+            :add -> Enum.uniq_by(old_tags ++ tags, & &1.id)
+            :remove -> Enum.reject(old_tags, &MapSet.member?(removing_ids, &1.id))
+            :overwrite -> tags
+          end
+
+        updated_article = Map.put(article, :community_tags, community_tags)
+
+        with {:ok, _relation} <-
+               ArticleCommunities.replace_tags(relation, Enum.map(community_tags, & &1.id)),
+             :ok <- sync_tag_stats(updated_article, Repo.get!(Article, article_id), old_tags),
+             {:ok, thread} <- FrontDesk.thread_of(article),
+             :ok <- invalidate_taxonomy(Repo.get!(Community, community_id), thread) do
+          {:ok, updated_article}
         end
 
-      updated_article = Map.put(article, :community_tags, community_tags)
-
-      with {:ok, _relation} <-
-             ArticleCommunities.replace_tags(relation, Enum.map(community_tags, & &1.id)),
-           :ok <- sync_tag_stats(updated_article, Repo.get!(Article, article_id), old_tags),
-           {:ok, thread} <- FrontDesk.thread_of(article),
-           :ok <- invalidate_taxonomy(Repo.get!(Community, community_id), thread) do
-        {:ok, updated_article}
-      end
-    else
-      nil -> {:error, ErrorCat.not_exist("Article Community")}
+      nil ->
+        {:error, ErrorCat.not_exist("Article Community")}
     end
   end
 

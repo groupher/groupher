@@ -9,6 +9,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   """
 
   alias GroupherServer.{Accounts, CMS}
+  alias Helper.T
   alias CMS.{Articles, Command, FrontDesk}
   alias Accounts.Model.User
   alias Articles.RevisionResult
@@ -16,30 +17,35 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   alias CMS.Model.{Article, Community}
 
   @doc "Publishes one ordinary Article Draft with retry-safe command recovery."
-  @spec publish(Article.t(), User.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  @spec publish(Article.t(), User.t(), keyword()) :: T.domain_res(map())
   def publish(%Article{} = article, %User{} = user, opts) do
-    with {:ok, %Community{} = community} <-
-           FrontDesk.community(article.community_id, mode: :internal) do
-      command = %Command{
-        actor: user,
-        command_id: Keyword.get(opts, :command_id),
-        operation: :article_publish,
-        target: article,
-        params: opts |> Keyword.delete(:command_id) |> Map.new()
-      }
+    case FrontDesk.community(article.community_id, mode: :internal) do
+      {:ok, %Community{} = community} ->
+        command = %Command{
+          actor: user,
+          command_id: Keyword.get(opts, :command_id),
+          operation: :article_publish,
+          target: article,
+          params: opts |> Keyword.delete(:command_id) |> Map.new()
+        }
 
-      Command.execute(command,
-        action: &publish_action/1,
-        confirmation: PublishConfirmation,
-        present: &present_command_result(&1, &2, community)
-      )
-    else
-      {:error, _reason} = error -> error
+        with {:ok, %PublishConfirmation{} = confirmation} <-
+               Command.execute(command,
+                 action: &publish_action/1,
+                 confirmation: PublishConfirmation
+               ) do
+          RevisionResult.build(Map.from_struct(confirmation), community)
+        end
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  def publish(_article, _actor, _opts), do: {:error, :invalid_publish_actor}
+  def publish(_article, _actor, _opts),
+    do: {:error, Articles.ErrorCat.invalid_publish_actor()}
 
+  @spec publish_action(map()) :: Command.action_result(PublishConfirmation.t())
   defp publish_action(%{
          actor: user,
          target: %Article{id: article_id},
@@ -63,40 +69,11 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
            changed_fields: Map.get(publish_result, :changed_fields, []),
            published_by_id: Map.get(publish_result, :published_by_id),
            published_at: publish_result.public.published_at
-         }, %{article: publish_result.article, revision: publish_result.revision}}
+         }}
 
       {:error, reason} ->
         {:error, reason}
     end
   end
 
-  @spec present_confirmation(PublishConfirmation.t(), Community.t()) ::
-          {:ok, map()} | {:error, term()}
-  defp present_confirmation(%PublishConfirmation{} = confirmation, community) do
-    confirmation
-    |> Map.from_struct()
-    |> Map.put(:community_id, community.id)
-    |> RevisionResult.build()
-  end
-
-  defp present_command_result(
-         %PublishConfirmation{} = confirmation,
-         %{
-           state: :executed,
-           action_context: %{article: article, revision: revision}
-         },
-         community
-       ) do
-    confirmation
-    |> Map.from_struct()
-    |> Map.put(:community_id, community.id)
-    |> RevisionResult.build_from_action(%{article: article, revision: revision}, community)
-  end
-
-  defp present_command_result(
-         %PublishConfirmation{} = confirmation,
-         %{state: :recovered},
-         community
-       ),
-       do: present_confirmation(confirmation, community)
 end

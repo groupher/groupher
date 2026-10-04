@@ -12,14 +12,14 @@ defmodule Helper.TestFakes.SearchArtiments do
   def upsert(artiments, _opts \\ []) do
     table = ensure_table()
     Enum.each(artiments, &:ets.insert(table, {&1.ref, &1}))
-    :ok
+    {:ok, :pass}
   end
 
   @impl true
   def delete(refs) do
     table = ensure_table()
     Enum.each(refs, &:ets.delete(table, &1))
-    :ok
+    {:ok, :pass}
   end
 
   @impl true
@@ -45,7 +45,7 @@ defmodule Helper.TestFakes.SearchArtiments do
       end
     end)
 
-    :ok
+    {:ok, :pass}
   end
 
   @impl true

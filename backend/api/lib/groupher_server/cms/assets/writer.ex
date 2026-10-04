@@ -283,20 +283,22 @@ defmodule GroupherServer.CMS.Assets.Writer do
 
     body_draft_ids = draft_body_ids(thread, article_id)
 
-    with %Article{community_id: community_id} <- Repo.get(Article, article_id) do
-      Repo.transaction(fn ->
-        :ok = Completeness.lock_scope(community_id)
+    case Repo.get(Article, article_id) do
+      %Article{community_id: community_id} ->
+        Repo.transaction(fn ->
+          :ok = Completeness.lock_scope(community_id)
 
-        ArticleAssetRef
-        |> where(
-          [ref],
-          ref.revision_id in subquery(revision_ids) or
-            ref.body_draft_id in subquery(body_draft_ids)
-        )
-        |> Repo.delete_all()
-      end)
-    else
-      nil -> {:error, AssetErrorCat.custom("article not found")}
+          ArticleAssetRef
+          |> where(
+            [ref],
+            ref.revision_id in subquery(revision_ids) or
+              ref.body_draft_id in subquery(body_draft_ids)
+          )
+          |> Repo.delete_all()
+        end)
+
+      nil ->
+        {:error, AssetErrorCat.custom("article not found")}
     end
   end
 

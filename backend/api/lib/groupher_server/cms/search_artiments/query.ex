@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
   """
 
   alias GroupherServer.CMS
+  alias Helper.T
   alias CMS.ErrorCat
 
   alias CMS.SearchArtiments.{Artiment, Config}
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
       #=> {:error, ErrorCat.custom("search text is required")}
 
   """
-  @spec new(map()) :: {:ok, t()} | {:error, term()}
+  @spec new(map()) :: T.domain_res(t())
   def new(attrs) when is_map(attrs) do
     text = attrs |> Map.get(:text, "") |> String.trim()
     page = positive_integer(Map.get(attrs, :page), 1)
@@ -64,8 +65,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     sort = Map.get(attrs, :sort, :relevance)
     scope = normalize_scope(Map.get(attrs, :scope, %{}))
 
-    with :ok <- validate_text(text),
-         :ok <- validate_sort(sort),
+    with {:ok, :pass} <- validate_text(text),
+         {:ok, :pass} <- validate_sort(sort),
          {:ok, filters} <- normalize_filters(Map.get(attrs, :filters, %{})) do
       {:ok,
        %__MODULE__{
@@ -134,9 +135,9 @@ defmodule GroupherServer.CMS.SearchArtiments.Query do
     do: {:error, ErrorCat.custom("invalid search filter string")}
 
   defp validate_text(""), do: {:error, ErrorCat.custom("search text is required")}
-  defp validate_text(_text), do: :ok
+  defp validate_text(_text), do: {:ok, :pass}
 
-  defp validate_sort(sort) when sort in @sorts, do: :ok
+  defp validate_sort(sort) when sort in @sorts, do: {:ok, :pass}
   defp validate_sort(_sort), do: {:error, ErrorCat.custom("invalid search sort")}
 
   defp positive_integer(value, _default) when is_integer(value) and value > 0, do: value

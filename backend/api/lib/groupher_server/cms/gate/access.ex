@@ -111,13 +111,15 @@ defmodule GroupherServer.CMS.Gate.Access do
 
   def with_check(actor, action, %model{} = article, callback)
       when model in @article_models and is_function(callback, 1) do
-    with %Community{} = community <- Repo.get(Community, article.community_id) do
-      Articles.MutationLock.transact_article(community, article, fn ->
-        Check.with_authorized(actor, action, {community, article}, callback)
-      end)
-      |> normalize_decision()
-    else
-      nil -> {:error, ErrorCat.resource_not_found()}
+    case Repo.get(Community, article.community_id) do
+      %Community{} = community ->
+        Articles.MutationLock.transact_article(community, article, fn ->
+          Check.with_authorized(actor, action, {community, article}, callback)
+        end)
+        |> normalize_decision()
+
+      nil ->
+        {:error, ErrorCat.resource_not_found()}
     end
   end
 
@@ -151,13 +153,15 @@ defmodule GroupherServer.CMS.Gate.Access do
           {:ok, term()} | {:error, term()}
   def with_branch_check(actor, action, %Article{thread: :doc} = article, branch_id, callback)
       when is_integer(branch_id) and is_function(callback, 1) do
-    with %Community{} = community <- Repo.get(Community, article.community_id) do
-      Articles.MutationLock.transact_doc(community, article, branch_id, fn ->
-        Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
-      end)
-      |> normalize_decision()
-    else
-      nil -> {:error, ErrorCat.resource_not_found()}
+    case Repo.get(Community, article.community_id) do
+      %Community{} = community ->
+        Articles.MutationLock.transact_doc(community, article, branch_id, fn ->
+          Check.with_authorized_doc(actor, action, {community, article, branch_id}, callback)
+        end)
+        |> normalize_decision()
+
+      nil ->
+        {:error, ErrorCat.resource_not_found()}
     end
   end
 
