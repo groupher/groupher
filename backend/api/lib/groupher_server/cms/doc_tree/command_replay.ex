@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.DocTree.CommandReplay do
   @moduledoc """
-  Versioned codec for DocTree command results that cannot be reconstructed by a Reader.
+  Versioned codec for DocTree command results that cannot be reconstructed by a Query.
 
   `CMS.Command.Receipt` is the internal boundary; its `Runner` owns
   claim/finalize/replay orchestration. DocTree owns the JSON representation and
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
     |> confirmation_data()
   end
 
-  @doc "Encodes a subtree draft result that cannot be reconstructed by a Reader."
+  @doc "Encodes a subtree draft result that cannot be reconstructed by a Query."
   @spec subtree_metadata(map()) :: map()
   def subtree_metadata(%{done: done, affected_count: affected_count})
       when is_boolean(done) and is_integer(affected_count) do
@@ -123,8 +123,9 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
 
   defp decode_tree_value(value), do: decode_tree_value(value, nil)
 
-  defp decode_tree_value(value, field) when is_list(value),
-    do: Enum.map(value, &decode_tree_value(&1, field))
+  defp decode_tree_value(value, field) when is_list(value) do
+    Enum.map(value, &decode_tree_value(&1, field))
+  end
 
   defp decode_tree_value(value, _field) when is_map(value) do
     Map.new(value, fn {key, item} ->
@@ -134,9 +135,11 @@ defmodule GroupherServer.CMS.DocTree.CommandReplay do
   end
 
   defp decode_tree_value(value, field) when is_binary(value) do
-    if field in @enum_fields and value in @enum_values,
-      do: String.to_atom(value),
-      else: value
+    if field in @enum_fields and value in @enum_values do
+      String.to_atom(value)
+    else
+      value
+    end
   end
 
   defp decode_tree_value(value, _field), do: value

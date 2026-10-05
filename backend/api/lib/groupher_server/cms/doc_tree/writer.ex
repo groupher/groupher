@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
   alias CMS.Artiment.BodyBag
-  alias CMS.DocTree.{Events, Reader}
+  alias CMS.DocTree.{Events, Query}
 
   alias CMS.DocTree.Writer.{
     DraftDoc,
@@ -367,7 +367,7 @@ defmodule GroupherServer.CMS.DocTree.Writer do
   end
 
   defp duplicate_nodes(community, branch, %DocTreeNode{type: :group} = root, args) do
-    nodes = Reader.tree_nodes!(community, [branch_id: branch.id], CMS.Const.stage(:draft))
+    nodes = Query.tree_nodes!(community, [branch_id: branch.id], CMS.Const.stage(:draft))
     children_by_parent = Enum.group_by(nodes, & &1.parent_node_id)
 
     with {:ok, duplicated_root} <- duplicate_tree_node(community, branch, root, args, nil),
@@ -529,8 +529,9 @@ defmodule GroupherServer.CMS.DocTree.Writer do
     end
   end
 
-  defp duplicate_create_event(%DocTreeNode{type: :page} = node),
-    do: EventRecorder.doc_owned_create_event(node)
+  defp duplicate_create_event(%DocTreeNode{type: :page} = node) do
+    EventRecorder.doc_owned_create_event(node)
+  end
 
   defp duplicate_create_event(%DocTreeNode{} = node), do: Events.create_event(node)
 
