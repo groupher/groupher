@@ -57,8 +57,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  defp view_actor(%{delegated_actor: %{user_actor: viewer} = delegation}),
-    do: {viewer, [delegation: delegation]}
+  defp view_actor(%{delegated_actor: %{user_actor: viewer} = delegation}) do
+    {viewer, [delegation: delegation]}
+  end
 
   defp view_actor(%{service_actor: service}), do: {nil, [service_credential: service]}
 
@@ -66,8 +67,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp view_actor(%{cur_user: viewer}), do: {viewer, []}
 
-  defp view_actor(%{anonymous_session: session}),
-    do: {nil, [anonymous_session: session]}
+  defp view_actor(%{anonymous_session: session}) do
+    {nil, [anonymous_session: session]}
+  end
 
   defp view_actor(_context), do: {nil, []}
 
@@ -247,17 +249,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     |> application_result()
   end
 
-  def community_application_logo(application, _args, _info),
-    do: CMS.CommunityApplications.logo(application) |> application_result()
+  def community_application_logo(application, _args, _info) do
+    CMS.CommunityApplications.logo(application) |> application_result()
+  end
 
-  def application_applicant(application, _args, _info),
-    do: CMS.CommunityApplications.applicant(application) |> application_result()
+  def application_applicant(application, _args, _info) do
+    CMS.CommunityApplications.applicant(application) |> application_result()
+  end
 
-  def application_reviewer(application, _args, _info),
-    do: CMS.CommunityApplications.reviewer(application) |> application_result()
+  def application_reviewer(application, _args, _info) do
+    CMS.CommunityApplications.reviewer(application) |> application_result()
+  end
 
-  def application_community(application, _args, _info),
-    do: CMS.CommunityApplications.application_community(application) |> application_result()
+  def application_community(application, _args, _info) do
+    CMS.CommunityApplications.application_community(application) |> application_result()
+  end
 
   def community_application_events(application, args, _info) do
     case CMS.CommunityApplications.events(application, args) do
@@ -282,11 +288,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
      }}
   end
 
-  def application_event_actor(event, _args, _info),
-    do: CMS.CommunityApplications.event_actor(event) |> application_result()
+  def application_event_actor(event, _args, _info) do
+    CMS.CommunityApplications.event_actor(event) |> application_result()
+  end
 
-  def community_application_logo_origin_info(_root, %{public_ref: public_ref}, _info),
-    do: CMS.CommunityApplications.logo_origin(public_ref) |> application_result()
+  def community_application_logo_origin_info(_root, %{public_ref: public_ref}, _info) do
+    CMS.CommunityApplications.logo_origin(public_ref) |> application_result()
+  end
 
   def press_config(_root, %{community: community}, _info), do: CMS.Press.config(community)
 
@@ -306,18 +314,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def press_community_rss_feed(_root, %{community: community, input: input}, _info),
-    do: CMS.Press.community_rss_feed(community, input)
+  def press_community_rss_feed(_root, %{community: community, input: input}, _info) do
+    CMS.Press.community_rss_feed(community, input)
+  end
 
   def press_thread_rss_feed(
         _root,
         %{community: community, thread: thread, input: input},
         _info
-      ),
-      do: CMS.Press.thread_rss_feed(community, thread, input)
+      ) do
+    CMS.Press.thread_rss_feed(community, thread, input)
+  end
 
-  def press_site_manifest(_root, %{community: community}, _info),
-    do: CMS.Press.site_manifest(community)
+  def press_site_manifest(_root, %{community: community}, _info) do
+    CMS.Press.site_manifest(community)
+  end
 
   def community(_root, %{slug: slug, inc_views: inc_views}, %{context: %{cur_user: user}}) do
     CMS.Communities.fetch(slug, user, inc_views: inc_views)
@@ -643,11 +654,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp doc_cover_view(args), do: Map.get(args, :view) || :public
 
-  defp publish_with_cover_sync?(args),
-    do: (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
+  defp publish_with_cover_sync?(args) do
+    (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
+  end
 
-  defp with_doc_tree_actor(attrs, %{cur_user: user} = _args),
-    do: attrs |> Map.put(:actor_id, user.id) |> Map.put(:actor, user)
+  defp with_doc_tree_actor(attrs, %{cur_user: user} = _args) do
+    attrs |> Map.put(:actor_id, user.id) |> Map.put(:actor, user)
+  end
 
   defp with_doc_tree_actor(attrs, _args), do: attrs
 
@@ -797,13 +810,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.request_destroy(community, user, command_id: args[:command_id])
   end
 
-  def check_community_name(_root, %{slug: slug}, _info),
-    do: CMS.Communities.check_name(slug)
+  def check_community_name(_root, %{slug: slug}, _info) do
+    CMS.Communities.check_name(slug)
+  end
 
   @doc "Returns version-owned cover editor state only to the Article author."
   def cover_edit_info(article, _, %{context: %{cur_user: %User{id: user_id}}}) do
     with author_id when not is_nil(author_id) <- Map.get(article, :author_id),
-         {:ok, %{user_id: ^user_id}} <- CMS.Articles.Reader.author(author_id),
+         {:ok, %{user_id: ^user_id}} <- CMS.Articles.Store.author(author_id),
          %{} = edit <- load_cover_edit(article) do
       {:ok, present_cover_edit(edit)}
     else
@@ -813,11 +827,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def cover_edit_info(_, _, _), do: {:ok, nil}
 
-  defp load_cover_edit(%{body_draft_id: body_draft_id}) when is_binary(body_draft_id),
-    do: front_desk_value(CMS.Articles.Reader.draft_cover_edit(body_draft_id))
+  defp load_cover_edit(%{body_draft_id: body_draft_id}) when is_binary(body_draft_id) do
+    front_desk_value(CMS.Articles.Store.draft_cover_edit(body_draft_id))
+  end
 
-  defp load_cover_edit(%{revision_id: revision_id}) when is_binary(revision_id),
-    do: front_desk_value(CMS.Articles.Reader.revision_cover_edit(revision_id))
+  defp load_cover_edit(%{revision_id: revision_id}) when is_binary(revision_id) do
+    front_desk_value(CMS.Articles.Store.revision_cover_edit(revision_id))
+  end
 
   defp load_cover_edit(_article), do: nil
 
@@ -873,13 +889,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def set_post_cat(_root, %{article: article, cat: cat}, %{context: %{cur_user: user}}) do
-    with {:ok, _} <- CMS.Articles.set_cat(article.id, cat, user),
-         do: {:ok, Map.put(article, :cat, cat)}
+    with {:ok, _} <- CMS.Articles.set_cat(article.id, cat, user) do
+      {:ok, Map.put(article, :cat, cat)}
+    end
   end
 
   def set_post_status(_root, %{article: article, status: status}, %{context: %{cur_user: user}}) do
-    with {:ok, _} <- CMS.Articles.set_status(article.id, status, user),
-         do: {:ok, Map.put(article, :status, status)}
+    with {:ok, _} <- CMS.Articles.set_status(article.id, status, user) do
+      {:ok, Map.put(article, :status, status)}
+    end
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do
@@ -1007,7 +1025,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
              command_id: args[:command_id]
            ),
          {:ok, public_article} <-
-           CMS.FrontDesk.article(%{
+           FrontDesk.article(%{
              community: community.slug,
              thread: thread,
              inner_id: published.inner_id
@@ -1228,26 +1246,27 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # thread reaction ..
   # #######################
-  def lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}),
-    do: article_state_result(CMS.Articles.lock_comments(article.id, user), article)
+  def lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    article_state_result(CMS.Articles.lock_comments(article.id, user), article)
+  end
 
   def undo_lock_article_comments(_root, ~m(article)a, %{context: %{cur_user: user}}) do
     article_state_result(CMS.Articles.undo_lock_comments(article.id, user), article)
   end
 
-  def sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}),
-    do:
-      article_state_result(
-        CMS.Articles.sink(article.id, user, branch_opts(article)),
-        article
-      )
+  def sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    article_state_result(
+      CMS.Articles.sink(article.id, user, branch_opts(article)),
+      article
+    )
+  end
 
-  def undo_sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}),
-    do:
-      article_state_result(
-        CMS.Articles.undo_sink(article.id, user, branch_opts(article)),
-        article
-      )
+  def undo_sink_article(_root, ~m(article)a, %{context: %{cur_user: user}}) do
+    article_state_result(
+      CMS.Articles.undo_sink(article.id, user, branch_opts(article)),
+      article
+    )
+  end
 
   def upvote_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
     CMS.Interactions.upvote(article, user, Map.get(args, :command_id))
@@ -1284,8 +1303,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # category ..
   # #######################
-  def paged_categories(_root, ~m(filter)a, _info),
-    do: CMS.Communities.Reader.page_categories(filter)
+  def paged_categories(_root, ~m(filter)a, _info) do
+    CMS.Communities.Query.page_categories(filter)
+  end
 
   def create_category(_root, ~m(community title slug)a, %{context: %{cur_user: user}}) do
     CMS.Communities.create_category(%{community: community, title: title, slug: slug}, user)
@@ -1397,11 +1417,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def community_tag_group_title(%{tag_group: %{title: title}}, _args, _info), do: {:ok, title}
 
-  def community_tag_group_title(%{group: group}, _args, _info) when is_binary(group),
-    do: {:ok, group}
+  def community_tag_group_title(%{group: group}, _args, _info) when is_binary(group) do
+    {:ok, group}
+  end
 
   def community_tag_group_title(%{group_id: group_id}, _args, _info) when not is_nil(group_id) do
-    case CMS.FrontDesk.community_tag_group(group_id) do
+    case FrontDesk.community_tag_group(group_id) do
       {:ok, group} -> {:ok, group.title}
       _ -> {:ok, nil}
     end
@@ -1561,11 +1582,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  defp validate_viewer_batch(paths) when is_list(paths) and length(paths) <= @viewer_batch_size,
-    do: :ok
+  defp validate_viewer_batch(paths) when is_list(paths) and length(paths) <= @viewer_batch_size do
+    :ok
+  end
 
-  defp validate_viewer_batch(_paths),
-    do: {:error, "viewer batch cannot contain more than 100 paths"}
+  defp validate_viewer_batch(_paths) do
+    {:error, "viewer batch cannot contain more than 100 paths"}
+  end
 
   defp article_viewer_states_for_paths(paths, user) do
     with {:ok, resolved} <- CMS.Articles.resolve_paths(paths),
@@ -1744,11 +1767,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.revoke_solution(comment, user)
   end
 
-  def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
-    do: CMS.Comments.pin_comment(comment, user)
+  def pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
+    CMS.Comments.pin_comment(comment, user)
+  end
 
-  def undo_pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}),
-    do: CMS.Comments.undo_pin_comment(comment, user)
+  def undo_pin_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
+    CMS.Comments.undo_pin_comment(comment, user)
+  end
 
   def emotions(%{thread: _} = root, _args, _info) do
     {:ok, EmotionFormatter.format(root, :comment)}
@@ -1758,15 +1783,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     {:ok, EmotionFormatter.format(root, :article)}
   end
 
-  def comment_inner_id(%{inner_id: inner_id}, _args, _info) when not is_nil(inner_id),
-    do: {:ok, inner_id}
+  def comment_inner_id(%{inner_id: inner_id}, _args, _info) when not is_nil(inner_id) do
+    {:ok, inner_id}
+  end
 
   def comment_inner_id(_comment, _args, _info), do: {:ok, nil}
 
   defp article(article_path) do
     with {:ok, %{thread: thread} = article_path} <-
            ArticlePath.parse(article_path),
-         {:ok, article} <- CMS.FrontDesk.article(article_path) do
+         {:ok, article} <- FrontDesk.article(article_path) do
       {:ok, {thread, article}}
     end
   end
@@ -1810,7 +1836,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   defp resolve_comment_path(%{article: _article_path} = comment_path) do
-    CMS.FrontDesk.comment(comment_path)
+    FrontDesk.comment(comment_path)
   end
 
   defp one_of_input(input, keys, label) do
@@ -1862,19 +1888,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   # counts just for managers to use in admin site ..
   # ##############################################
-  def community_tags_count(root, _, _),
-    do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
+  def community_tags_count(root, _, _) do
+    CMS.Communities.count(%Community{id: root.id}, :community_tags)
+  end
 
   defp article_path_community(%{community: %Community{} = community}), do: {:ok, community}
 
   defp article_path_community(%{community: community}) when is_binary(community) do
-    CMS.FrontDesk.community(community)
+    FrontDesk.community(community)
   end
 
   defp article_path_community(_), do: {:error, "invalid article input"}
 
-  defp hydrate_interaction({:ok, %Comment{} = comment}, user),
-    do: CMS.Comments.InteractionResponse.one(comment, user)
+  defp hydrate_interaction({:ok, %Comment{} = comment}, user) do
+    CMS.Comments.InteractionResponse.one(comment, user)
+  end
 
   defp hydrate_interaction({:ok, article}, user) do
     command_id = Map.get(article, :command_id)
@@ -1914,7 +1942,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp hydrate_interaction({:error, _reason} = error, _user), do: error
 
   defp preload_interaction_community(%{__struct__: _} = article) do
-    {:ok, article} = CMS.Articles.Reader.with_community(article)
+    {:ok, article} = CMS.Articles.Store.with_community(article)
     article
   end
 
@@ -1942,11 +1970,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp present_comment_write({:error, _reason} = error), do: error
 
-  defp hydrate_report_interaction({:ok, %Comment{} = comment}, user),
-    do: CMS.Comments.InteractionResponse.one(comment, user, surface: :report)
+  defp hydrate_report_interaction({:ok, %Comment{} = comment}, user) do
+    CMS.Comments.InteractionResponse.one(comment, user, surface: :report)
+  end
 
-  defp hydrate_report_interaction({:ok, article}, user),
-    do: CMS.Articles.Response.one(article, user, surface: :report)
+  defp hydrate_report_interaction({:ok, article}, user) do
+    CMS.Articles.Response.one(article, user, surface: :report)
+  end
 
   defp hydrate_report_interaction({:error, _reason} = error, _user), do: error
 
@@ -2006,8 +2036,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     }
   end
 
-  defp application_cursor(application),
-    do: "#{DateTime.to_iso8601(application.submitted_at)}|#{application.public_ref}"
+  defp application_cursor(application) do
+    "#{DateTime.to_iso8601(application.submitted_at)}|#{application.public_ref}"
+  end
 
   defp event_cursor(event), do: "#{DateTime.to_iso8601(event.occurred_at)}|#{event.id}"
   defp opaque_cursor(value), do: value |> to_string() |> Base.url_encode64(padding: false)
