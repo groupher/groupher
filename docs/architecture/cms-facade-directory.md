@@ -7,9 +7,10 @@
 
 相关文档：
 
+- [CMS Query V2](./cms-query-v2.md)：取代本文 §2.2 的 Reader 统一命名决策，冻结 Query、Store/Facts 与 FrontDesk 边界；
 - [Backend Rules](../rules/be.md)：后端模块所有权和 facade 约束；
 - [Command：复杂领域操作的组织边界](../feature/artiment/command.md)：Command、Writer、Gate、Lifecycle 与事务职责；
-- [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、`CommandReceipt` 和具体 action 的执行合同；
+- [Groupher Action Matrix 与 Transition Contract](../feature/lifecycle/transition-contract-improvement.md)：`commandId`、`CMS.Command.Receipt` 和具体 action 的执行合同；
 - [Optimistic Operation](../migrations/tanstack/optimistic-operation.md)：前端 operation 到后端 command 的衔接。
 
 ## 1. 问题
@@ -35,8 +36,8 @@ projection、cache 和外部副作用由同名目录下的 owner 模块承担。
 CMS.Comments
   -> Comments.Reader / Writer / Commands / States / Moderation
 
-CMS.CommandReceipt
-  -> CommandReceipt.Key / Runner / Store
+CMS.Command.Receipt
+  -> CMS.Command.Receipt.Key / Runner / Store
 ```
 
 但还有一些顶层 facade 直接包含大量 Repo 查询、事务、HTTP 调用、projection、replay 或 retention
@@ -77,6 +78,9 @@ CMS.Wallpaper.publish(...)
 
 ### 2.2 读取模块统一命名为 Reader
 
+> 历史决策：本节记录 F1–F7 实施时的目录命名基线。后续 Reader/List 收口以
+> [CMS Query V2](./cms-query-v2.md) 为准；新代码不再以本节为依据新增 `Reader`。
+
 CMS 当前已有 7 个 `reader.ex` 和 9 个 `writer.ex`，已经形成稳定配对：
 
 ```text
@@ -106,7 +110,7 @@ CMS.<Domain>.Commands.<Action>
 
 Command 模块负责：
 
-- `commandId` 和 `CommandReceipt` 编排；
+- `commandId` 和 `CMS.Command.Receipt` 编排；
 - 调用具体 Writer、Lifecycle、Gate 或领域服务；
 - replay 和权威结果重读；
 - 一个完整 action 的事务边界。
@@ -203,7 +207,7 @@ CMS.Articles
   -> Commands.Draft
   -> Commands.Publish
   -> Commands.Trash
-       -> CommandReceipt
+       -> CMS.Command.Receipt
        -> existing Draft / Publish / Trash implementation
 ```
 
@@ -223,7 +227,7 @@ permanently_delete_trashed -> permanently_delete
 
 - `Draft`、`Publish`、`Trash` 继续拥有对应领域状态和持久化；
 - `Commands.*` 只拥有 authenticated command、receipt 和 replay 编排；
-- denied Activity 的事务外写入属于具体 Trash command，不移回共享 `CommandReceipt.Runner`；
+- denied Activity 的事务外写入属于具体 Trash command，不移回共享 `CMS.Command.Receipt.Runner`；
 - `Articles` facade 继续暴露现有函数，调用方不引用 `Commands.*`。
 
 ### 4.3 DocTree Commands
@@ -251,7 +255,7 @@ Commands.Trash
 ```
 
 现有 `DocTree.Writer`、`DocTree.Publish` 和 `DocTree.Trash` 继续拥有底层行为；Commands 负责
-`commandId`、`CommandReceipt`、replay 编排和执行入口。版本化 codec 继续由
+`commandId`、`CMS.Command.Receipt`、replay 编排和执行入口。版本化 codec 继续由
 `DocTree.CommandReplay` 独立拥有，Commands 只调用它，不复制或内联其协议实现。
 
 范围必须保持精确：
@@ -339,9 +343,11 @@ front_desk/
 
 特殊入口的当前合同：
 
-- `article_for_view_tracking/1`、`lock_article_for_view_tracking/1` 是 ViewTracker 保留的资源专属入口，
+- `article_for_view_tracking/1`、`lock_article_for_view_tracking/1` 已按 FrontDesk V3 移入 Root Article
+  read 与 ViewTracker 私有事务 loader，
   不改造成通用 `FrontDesk.article/…` view；
-- `article_insights/3` 保留为 Article 专属 `:read_insights` action/view，不新增 FrontDesk mode；
+- `article_insights/3` 已移入 `Analysis.ArticleInsights.trend_by_path/3`，保留 Article 专属
+  `:read_insights` action/view，不新增 FrontDesk mode；
 - `community_tag/1,3`、`community_tag_group/1` 保留为稳定业务关系 lookup，不扩展为 batch facade；
 - `full_comment/1` 已删除。需要父 Article、thread 和 Article author context 时，使用
   `FrontDesk.comment(comment_id, mode: :internal, view: :article_context)`；
@@ -353,7 +359,7 @@ front_desk/
 - `community_tags/1` 已删除且不新增替代 wrapper；batch、list、stats、reaction-users 等读取归各自
   owning facade，不进入 FrontDesk。
 
-以上边界以 [FrontDesk V2](./front-desk-v2.md) 的 mode、single-resource 和 surface 处置表为准。
+以上边界以 [FrontDesk V2](../feature/front-desk/v2.md) 的 mode、single-resource 和 surface 处置表为准。
 
 ### 4.7 Snapshot
 
@@ -444,7 +450,7 @@ F7  Snapshot 四模块拆分
 
 依赖说明：
 
-- F2/F3 依赖当前稳定的 `CMS.CommandReceipt` facade、`Key/Runner/Store` 合同；
+- F2/F3 依赖当前稳定的 `CMS.Command.Receipt` facade、`Key/Runner/Store` 合同；
 - F4/F5 不依赖 optimistic operation，可独立实施和回归；
 - F6 只移动内部实现，不迁移上层调用；
 - F7 保留完整 Snapshot API，不以当前生产 caller 数量删除合同。
@@ -456,10 +462,11 @@ F7  Snapshot 四模块拆分
 - GraphQL resolver、Job 和领域调用方继续只调用顶层 facade；
 - facade 公开函数名称、参数默认值、返回形状和 ErrorCat 不变；
 - 新实现模块位于 owner 的同名目录，不建立跨领域 `Utils` 或通用 mutation framework；
-- `Reader/Writer` 命名统一，不出现新的 `Read`；
+- `Reader/Writer` 命名统一、不出现新的 `Read` 是 F1–F7 的历史验收标准；后续读侧命名与
+  `Reader` 收口以 [CMS Query V2](./cms-query-v2.md) 为准；
 - action module 使用 `commands/<action>.ex`，不创建大而模糊的 `Commands.Write`；
 - facade 不再拥有 Ecto query、Repo transaction、HTTP 调用、cache 或长 private algorithm；
-- 领域 Command 可以调用共享 `CommandReceipt`，但共享 Runner 不吸收领域 Gate、Lifecycle、Activity
+- 领域 Command 可以调用共享 `CMS.Command.Receipt`，但共享 Runner 不吸收领域 Gate、Lifecycle、Activity
   或 replay codec。
 
 ### 6.2 测试

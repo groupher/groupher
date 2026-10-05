@@ -126,14 +126,14 @@ trackArticleView(path)                        单篇可见阅读 tracking；不�
 后端命名：
 
 ```text
-CMS.FrontDesk.article_for_view_tracking  tracking 专用的 public Article admission
-CMS.FrontDesk.lock_article_for_view_tracking 事务内 physical Article 锁与 Gate revalidation
+GroupherServer.FrontDesk.article         public Article admission
+CMS.ViewTracker.Record 私有 loader         事务内 physical Article 锁与 public revalidation
 CMS.ViewTracker.Record.track/4           同步 receipt/watermark/count 事务
 CMS.ViewTracker.Retention                receipt/watermark 有界清理
 CMS.ArticleStats.increment_views/2       ViewTracker 字段 owner UPSERT
 ```
 
-`article_for_view_tracking` 只表示 tracking admission，普通 Article content reader 不承担计数副作用。
+ViewTracker 只在 `CMS.ViewTracker.track/4` 内承担 tracking admission；普通 Article content reader 不承担计数副作用。
 
 字段和分类遵循统一术语：使用 `actor_type`、`type`、`is_authenticated`、
 `viewer_tracking_key`、`read_purpose`；不新增 `_kind`、`target_type/target_id` 或 `count_intent`。

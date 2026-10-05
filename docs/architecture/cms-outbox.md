@@ -224,7 +224,7 @@ CMS.Command.execute(command,
   end,
   result: fn receipt ->
     # 首次提交和 completed retry 都执行
-    CMS.Articles.Reader.article(receipt.result_key)
+    CMS.FrontDesk.article(receipt.result_key, mode: :internal)
   end
 )
 ```

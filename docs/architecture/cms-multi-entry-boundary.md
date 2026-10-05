@@ -102,17 +102,21 @@ post-commit effects
 
 ```elixir
 defmodule CMS.Articles do
-  def update_draft(article, attrs, actor, opts),
-    do: Commands.UpdateDraft.execute(article, attrs, actor, opts)
+  def update_draft(article, attrs, actor, opts) do
+    Commands.UpdateDraft.execute(article, attrs, actor, opts)
+  end
 
-  def publish(article, actor, opts),
-    do: Commands.Publish.execute(article, actor, opts)
+  def publish(article, actor, opts) do
+    Commands.Publish.execute(article, actor, opts)
+  end
 
-  def update_and_publish(article, attrs, actor, opts),
-    do: Commands.UpdateAndPublish.execute(article, attrs, actor, opts)
+  def update_and_publish(article, attrs, actor, opts) do
+    Commands.UpdateAndPublish.execute(article, attrs, actor, opts)
+  end
 
-  def discard_draft(article, actor, opts),
-    do: Commands.DiscardDraft.execute(article, actor, opts)
+  def discard_draft(article, actor, opts) do
+    Commands.DiscardDraft.execute(article, actor, opts)
+  end
 end
 ```
 
@@ -206,7 +210,7 @@ CMS.Command.execute(command,
   end,
   result: fn receipt ->
     # 首次和已完成重试都执行
-    CMS.Articles.Reader.article(receipt.result_key)
+    CMS.FrontDesk.article(receipt.result_key, mode: :internal)
   end
 )
 ```

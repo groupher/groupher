@@ -374,7 +374,7 @@ def resolver(_, %{comment: %Comment{} = comment}, resolution) do
 end
 
 def execute(comment_id, actor) do
-    with {:ok, comment} <- CMS.Comments.Reader.load(comment_id) do
+    with {:ok, comment} <- CMS.FrontDesk.comment(comment_id, mode: :internal) do
     # ...
   end
 end
