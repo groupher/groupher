@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Communities.Reader do
+defmodule GroupherServer.Test.CMS.Communities.Query do
   @moduledoc false
   use GroupherServer.TestMate
   alias GroupherServer.CMS

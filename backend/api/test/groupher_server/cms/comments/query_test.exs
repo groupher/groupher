@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Comments.Reader do
+defmodule GroupherServer.Test.CMS.Comments.Query do
   @moduledoc false
 
   use GroupherServer.TestMate

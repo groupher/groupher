@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Assets.Reader do
+defmodule GroupherServer.CMS.Assets.Query do
   @moduledoc """
   Read-side helpers for the community asset library.
 
@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
       Dashboard / editor
         -> CMS.Assets
-        -> Reader
+        -> Query
         -> Repo / Assets Hub
   """
 
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   ## Examples
 
-      Reader.page(community, %{page: 1, size: 20})
+      Query.page(community, %{page: 1, size: 20})
       #=> {:ok, %{entries: assets, total_count: total_count}}
 
   """
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   ## Examples
 
-      Reader.stats(community, nil)
+      Query.stats(community, nil)
       #=> {:ok, %{storage_bytes: 4096, storage_limit_bytes: 104857600}}
 
   """
@@ -98,7 +98,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   ## Examples
 
-      Reader.usage(community)
+      Query.usage(community)
       #=> {:ok, %{asset_count: 2, storage_bytes: 4096}}
 
   """
@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   ## Examples
 
-      Reader.refs(community, asset.id, %{page: 1, size: 10})
+      Query.refs(community, asset.id, %{page: 1, size: 10})
       #=> {:ok, %{entries: refs, page_number: 1}}
 
   """
@@ -224,7 +224,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   ## Examples
 
-      Reader.origin_info("asset_xxx")
+      Query.origin_info("asset_xxx")
       #=> {:ok, %CommunityAsset{public_ref: "asset_xxx", status: :active}}
 
   """
@@ -250,21 +250,24 @@ defmodule GroupherServer.CMS.Assets.Reader do
   defp lifecycle(%ArticleAssetRef{}, _public, %TrashedArticle{}), do: :trashed
 
   defp lifecycle(%ArticleAssetRef{body_draft_id: body_draft_id}, _public, _trash)
-       when not is_nil(body_draft_id),
-       do: :draft
+       when not is_nil(body_draft_id) do
+    :draft
+  end
 
   defp lifecycle(
          %ArticleAssetRef{revision_id: revision_id},
          %ArticlePublic{revision_id: revision_id},
          _trash
-       ),
-       do: :live
+       ) do
+    :live
+  end
 
-  defp lifecycle(%ArticleAssetRef{revision_id: _revision_id}, _public, _trash),
-    do: :historical
+  defp lifecycle(%ArticleAssetRef{revision_id: _revision_id}, _public, _trash) do
+    :historical
+  end
 
-  defp normalize_filter(nil),
-    do: %{
+  defp normalize_filter(nil) do
+    %{
       asset_type: nil,
       page: @default_page,
       query: nil,
@@ -272,6 +275,7 @@ defmodule GroupherServer.CMS.Assets.Reader do
       subtypes: [],
       thread: nil
     }
+  end
 
   defp normalize_filter(filter) do
     %{
@@ -302,8 +306,9 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   defp apply_asset_type_filter(query, nil), do: query
 
-  defp apply_asset_type_filter(query, asset_type),
-    do: where(query, [asset], asset.asset_type == ^asset_type)
+  defp apply_asset_type_filter(query, asset_type) do
+    where(query, [asset], asset.asset_type == ^asset_type)
+  end
 
   defp apply_query_filter(query, nil), do: query
 
@@ -415,8 +420,9 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   defp normalize_asset_type(nil), do: nil
 
-  defp normalize_asset_type(asset_type) when asset_type in [:image, :video, :audio, :file],
-    do: asset_type
+  defp normalize_asset_type(asset_type) when asset_type in [:image, :video, :audio, :file] do
+    asset_type
+  end
 
   defp normalize_asset_type(asset_type) when is_binary(asset_type) do
     asset_type
@@ -473,8 +479,9 @@ defmodule GroupherServer.CMS.Assets.Reader do
 
   defp normalize_subtype(_), do: nil
 
-  defp get_filter(filter, key) when is_map(filter),
-    do: Map.get(filter, key) || Map.get(filter, to_string(key))
+  defp get_filter(filter, key) when is_map(filter) do
+    Map.get(filter, key) || Map.get(filter, to_string(key))
+  end
 
   defp get_filter(_, _), do: nil
 

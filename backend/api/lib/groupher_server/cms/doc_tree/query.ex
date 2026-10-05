@@ -1,6 +1,6 @@
-defmodule GroupherServer.CMS.DocTree.Reader do
+defmodule GroupherServer.CMS.DocTree.Query do
   @moduledoc """
-  Reader helpers for the docs editor tree.
+  Query helpers for the docs editor tree.
 
   The editor reads the draft stage. Public status is derived from the matching
   public-stage row with the same `node_id`.
@@ -41,14 +41,14 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     DocTreeNode
   }
 
-  alias Helper.{ORM, T, Transaction}
+  alias Helper.{ORM, T}
 
   @doc """
   Reads the current docs editor tree.
 
   ## Examples
 
-      iex> Reader.read(community)
+      iex> Query.read(community)
       {:ok, %{groups: groups, pins: pins}}
   """
   @spec read(Community.t(), keyword() | map()) :: T.domain_res(map())
@@ -58,11 +58,9 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
     with {:ok, community} <- scoped_community(community, actor, policy_mode),
          {:ok, branch} <- Branch.resolve(community, opts),
-         {:ok, _state} <- ensure_site_state(community, branch) do
+         {:ok, state} <-
+           ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
       Repo.transaction(fn ->
-        {:ok, state} =
-          ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id)
-
         nodes = tree_nodes_for_branch(community, branch, :draft)
         context = publish_context(community, branch, nodes)
 
@@ -110,7 +108,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
   ## Examples
 
-      iex> Reader.tree_state(community, state).has_unpublished_changes
+      iex> Query.tree_state(community, state).has_unpublished_changes
       true
   """
   @spec tree_state(Community.t(), DocsSiteState.t()) :: map()
@@ -136,7 +134,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
   ## Examples
 
-      iex> Reader.read_draft(community, page.doc_id)
+      iex> Query.read_draft(community, page.doc_id)
       {:ok, %{stage: :draft}}
   """
   @spec read_draft(Community.t(), String.t(), keyword() | map()) :: T.domain_res(map())
@@ -147,33 +145,6 @@ defmodule GroupherServer.CMS.DocTree.Reader do
         {:ok, %{stage: :public}} -> {:error, CMS.Articles.ErrorCat.not_exist("Doc draft")}
         {:error, reason} -> {:error, reason}
       end
-    end
-  end
-
-  @doc """
-  Ensures the per-community docs site state exists.
-
-  ## Examples
-
-      iex> Reader.ensure_draft_state(community)
-      {:ok, %DocsSiteState{}}
-  """
-  @spec ensure_draft_state(Community.t(), keyword() | map()) :: T.domain_res(DocsSiteState.t())
-  def ensure_draft_state(%Community{} = community, opts \\ []),
-    do: ensure_site_state(community, opts)
-
-  @spec ensure_site_state(Community.t(), keyword() | map()) :: T.domain_res(DocsSiteState.t())
-  def ensure_site_state(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      Transaction.lock_global("docs_site:init:#{community.id}:#{branch.id}", fn ->
-        case ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
-          {:ok, state} ->
-            {:ok, state}
-
-          {:error, _} ->
-            ORM.create(DocsSiteState, %{community_id: community.id, branch_id: branch.id})
-        end
-      end)
     end
   end
 
@@ -375,9 +346,11 @@ defmodule GroupherServer.CMS.DocTree.Reader do
               ancestors
             )
 
-          if pages == [],
-            do: [],
-            else: [group |> public_node_base() |> Map.put(:pages, pages)]
+          if pages == [] do
+            []
+          else
+            [group |> public_node_base() |> Map.put(:pages, pages)]
+          end
 
         node ->
           case public_child_map(community, node, docs_by_doc_id) do
@@ -457,7 +430,7 @@ defmodule GroupherServer.CMS.DocTree.Reader do
 
   ## Examples
 
-      iex> Reader.to_map(node).id == node.node_id
+      iex> Query.to_map(node).id == node.node_id
       true
   """
   @spec to_map(DocTreeNode.t(), map()) :: map()
@@ -604,8 +577,9 @@ defmodule GroupherServer.CMS.DocTree.Reader do
     }
   end
 
-  defp article_changed?(draft, public),
-    do: ChangeDetection.draft_content_changed?(draft, public)
+  defp article_changed?(draft, public) do
+    ChangeDetection.draft_content_changed?(draft, public)
+  end
 
   defp latest_release(%Community{} = community, branch_id) do
     DocPublishRelease

@@ -1,11 +1,11 @@
-defmodule GroupherServer.CMS.Press.Reader do
+defmodule GroupherServer.CMS.Press.Query do
   @moduledoc """
   Loads current public CMS authority for Press without creating view events.
 
   Business position:
 
       CMS.Press facade
-        -> Press.Reader
+        -> Press.Query
         -> Gate Scope / Repo
         -> Press.Projection
   """
@@ -37,8 +37,9 @@ defmodule GroupherServer.CMS.Press.Reader do
   end
 
   @doc "Resolves a Community for internal Press configuration work."
-  def internal_community(%Community{} = community),
-    do: {:ok, Repo.preload(community, [:dashboard, :lifecycle])}
+  def internal_community(%Community{} = community) do
+    {:ok, Repo.preload(community, [:dashboard, :lifecycle])}
+  end
 
   def internal_community(slug) when is_binary(slug) do
     Community
@@ -54,8 +55,8 @@ defmodule GroupherServer.CMS.Press.Reader do
       when thread in @threads do
     with {:ok, community} <- public_community(community_ref),
          {:ok, config} <- config(community),
-         :ok <- ensure_enabled(config, :markdown_enabled),
-         :ok <- ensure_thread_enabled(community, thread),
+         :ok <- validate_enabled(config, :markdown_enabled),
+         :ok <- validate_thread_enabled(community, thread),
          {:ok, article} <- current_article(community, thread, inner_id) do
       {:ok, Projection.article(community, thread, article)}
     end
@@ -67,7 +68,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   def community_rss_feed(community, opts) do
     with {:ok, community} <- public_community(community),
          {:ok, config} <- config(community),
-         :ok <- ensure_enabled(config, :feed_enabled) do
+         :ok <- validate_enabled(config, :feed_enabled) do
       requested_threads = option(opts, :threads, config.feed_threads)
       threads = selected_threads(community, requested_threads)
       limit = bounded_limit(option(opts, :limit, config.feed_count), config.feed_count)
@@ -81,9 +82,9 @@ defmodule GroupherServer.CMS.Press.Reader do
   def thread_rss_feed(community, thread, opts) when thread in @threads do
     with {:ok, community} <- public_community(community),
          {:ok, config} <- config(community),
-         :ok <- ensure_enabled(config, :feed_enabled),
-         :ok <- ensure_feed_thread(config, thread),
-         :ok <- ensure_thread_enabled(community, thread) do
+         :ok <- validate_enabled(config, :feed_enabled),
+         :ok <- validate_feed_thread(config, thread),
+         :ok <- validate_thread_enabled(community, thread) do
       limit = bounded_limit(option(opts, :limit, config.feed_count), config.feed_count)
       items = feed_items(community, [thread], limit)
 
@@ -91,8 +92,9 @@ defmodule GroupherServer.CMS.Press.Reader do
     end
   end
 
-  def thread_rss_feed(_, _, _),
-    do: {:error, ErrorCat.custom("invalid Press Feed thread")}
+  def thread_rss_feed(_, _, _) do
+    {:error, ErrorCat.custom("invalid Press Feed thread")}
+  end
 
   @doc "Reads and projects the current Press site manifest."
   def site_manifest(community) do
@@ -115,7 +117,7 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp current_article(community, :doc, inner_id) do
     with {:ok, article} <-
            FrontDesk.article(%{community: community.slug, thread: :doc, inner_id: inner_id}),
-         :ok <- ensure_stable_public_doc(article) do
+         :ok <- validate_stable_public_doc(article) do
       {:ok, article}
     else
       {:error, _reason} = error -> error
@@ -126,7 +128,7 @@ defmodule GroupherServer.CMS.Press.Reader do
     FrontDesk.article(%{community: community.slug, thread: thread, inner_id: inner_id})
   end
 
-  defp ensure_stable_public_doc(article) do
+  defp validate_stable_public_doc(article) do
     visible =
       DocTreeNode
       |> where([node], node.community_id == ^article.community_id)
@@ -136,9 +138,11 @@ defmodule GroupherServer.CMS.Press.Reader do
       |> where([node], node.doc_id == ^article.id)
       |> Repo.exists?()
 
-    if visible,
-      do: :ok,
-      else: {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
+    if visible do
+      :ok
+    else
+      {:error, CMS.Articles.ErrorCat.not_exist("Published Doc")}
+    end
   end
 
   defp feed_items(community, threads, limit) do
@@ -191,7 +195,7 @@ defmodule GroupherServer.CMS.Press.Reader do
     end
   end
 
-  defp stable_public_doc?(article), do: ensure_stable_public_doc(article) == :ok
+  defp stable_public_doc?(article), do: validate_stable_public_doc(article) == :ok
 
   defp public_community(%Community{id: id}), do: public_community_by_id(id)
 
@@ -246,16 +250,20 @@ defmodule GroupherServer.CMS.Press.Reader do
   defp normalize_thread(thread) when is_atom(thread), do: thread
   defp normalize_thread(thread) when is_binary(thread), do: String.to_existing_atom(thread)
 
-  defp ensure_feed_thread(config, thread) do
-    if to_string(thread) in config.feed_threads,
-      do: :ok,
-      else: {:error, ErrorCat.custom("Press Feed thread is disabled")}
+  defp validate_feed_thread(config, thread) do
+    if to_string(thread) in config.feed_threads do
+      :ok
+    else
+      {:error, ErrorCat.custom("Press Feed thread is disabled")}
+    end
   end
 
-  defp ensure_thread_enabled(community, thread) do
-    if thread_enabled?(community, thread),
-      do: :ok,
-      else: {:error, ErrorCat.custom("Community thread is disabled")}
+  defp validate_thread_enabled(community, thread) do
+    if thread_enabled?(community, thread) do
+      :ok
+    else
+      {:error, ErrorCat.custom("Community thread is disabled")}
+    end
   end
 
   defp thread_enabled?(community, thread) do
@@ -263,10 +271,12 @@ defmodule GroupherServer.CMS.Press.Reader do
     is_nil(enable) || Map.get(enable, thread, true)
   end
 
-  defp ensure_enabled(config, field) do
-    if Map.get(config, field),
-      do: :ok,
-      else: {:error, ErrorCat.custom("Press output is disabled")}
+  defp validate_enabled(config, field) do
+    if Map.get(config, field) do
+      :ok
+    else
+      {:error, ErrorCat.custom("Press output is disabled")}
+    end
   end
 
   defp bounded_limit(value, configured) when is_integer(value), do: min(max(value, 1), configured)

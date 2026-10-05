@@ -1,12 +1,12 @@
-defmodule GroupherServer.CMS.AbuseReports.List do
+defmodule GroupherServer.CMS.AbuseReports.Query do
   @moduledoc """
-  List operations for abuse reports.
+  Query operations for abuse reports.
 
   Business position:
 
       GraphQL resolver / job
         -> CMS facade
-        -> List
+        -> Query
         -> Repo / external boundary
   """
 
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   ## Examples
 
-      AbuseReports.List.paged_reports(%{
+      AbuseReports.Query.paged_reports(%{
         content_type: :post,
         content_id: post.id,
         page: 1,
@@ -284,8 +284,9 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     end
   end
 
-  defp article_with_projection_count(article, thread),
-    do: article_with_projection_count(article, thread, nil)
+  defp article_with_projection_count(article, thread) do
+    article_with_projection_count(article, thread, nil)
+  end
 
   defp article_with_projection_count(%{id: id} = article, thread, nil)
        when is_binary(id) and not is_struct(article) do
@@ -300,8 +301,9 @@ defmodule GroupherServer.CMS.AbuseReports.List do
     end
   end
 
-  defp article_with_projection_count(_article, _thread, _summaries),
-    do: {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+  defp article_with_projection_count(_article, _thread, _summaries) do
+    {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+  end
 
   defp article_stats_for_article(article, thread, nil) do
     case CMS.ArticleStats.for_public_articles(thread, [article]) do

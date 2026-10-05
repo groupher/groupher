@@ -276,7 +276,7 @@ const checkExportedCallables = () => {
 
 const checkElixirSharedFunctions = () => {
   const boundaryFiles = [
-    'backend/api/lib/groupher_server/cms/comments/list.ex',
+    'backend/api/lib/groupher_server/cms/comments/query.ex',
     'backend/api/lib/groupher_server/cms/comments/writer.ex',
     'backend/api/lib/groupher_server/cms/comments/lifecycle.ex',
     'backend/api/lib/groupher_server/cms/comments/job_policy.ex',

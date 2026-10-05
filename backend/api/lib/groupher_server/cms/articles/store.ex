@@ -1,15 +1,15 @@
-defmodule GroupherServer.CMS.Articles.Reader do
+defmodule GroupherServer.CMS.Articles.Store do
   @moduledoc """
   Named persistence reads for the Article aggregate and its owned rows.
 
   This module is intentionally narrower than a generic ORM lookup facade:
-  callers name the Article fact they need and the owning Reader keeps the
+  callers name the Article fact they need and the owning Query keeps the
   preload shape local to that fact.
 
   Business position:
 
       CMS command / event / projection
-        -> Articles.Reader named fact
+        -> Articles.Store named fact
         -> stable Article rows or public Article projection
   """
 
@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
 
   alias GroupherServer.CMS.Model.RevisionCoverEdit
   alias GroupherServer.CMS.Articles.ArticleResult
-  alias GroupherServer.CMS.FrontDesk.Article, as: PublicArticleReader
+  alias GroupherServer.CMS.FrontDesk.Article, as: PublicArticleFrontDesk
 
   alias GroupherServer.Repo
   alias Helper.ORM
@@ -60,8 +60,9 @@ defmodule GroupherServer.CMS.Articles.Reader do
   def revision(revision_id), do: ORM.find(ArticleRevision, revision_id)
 
   @doc "Loads the home Community relation for one Article."
-  def home_relation(article_id),
-    do: ORM.find_by(ArticleCommunity, article_id: article_id, role: :home)
+  def home_relation(article_id) do
+    ORM.find_by(ArticleCommunity, article_id: article_id, role: :home)
+  end
 
   defp community(community_id), do: ORM.find(Community, community_id)
 
@@ -86,7 +87,7 @@ defmodule GroupherServer.CMS.Articles.Reader do
   defp load_public_article(article_id) do
     with {:ok, article} <- article(article_id),
          {:ok, community} <- community(article.community_id) do
-      PublicArticleReader.read(
+      PublicArticleFrontDesk.read(
         %{community: community.slug, thread: article.thread, inner_id: article.inner_id},
         nil,
         []

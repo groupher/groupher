@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.DocCover.Reader do
+defmodule GroupherServer.CMS.DocCover.Query do
   @moduledoc """
   Read projection for the public docs cover.
 
@@ -137,8 +137,9 @@ defmodule GroupherServer.CMS.DocCover.Reader do
          _draft_nodes_by_node_id,
          _children_by_parent,
          %DocTreeNode{hidden: true}
-       ),
-       do: nil
+       ) do
+    nil
+  end
 
   defp card_item(
          community,
@@ -244,8 +245,9 @@ defmodule GroupherServer.CMS.DocCover.Reader do
          view,
          public_docs_by_doc_id,
          draft_nodes_by_node_id
-       ),
-       do: node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id, node)
+       ) do
+    node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id, node)
+  end
 
   defp node_map(
          %Community{} = community,
@@ -306,12 +308,14 @@ defmodule GroupherServer.CMS.DocCover.Reader do
          %{inner_id: inner_id, slug: slug},
          _draft_node
        )
-       when not is_nil(inner_id) and is_binary(slug) and slug != "",
-       do: "/#{community}/doc/#{inner_id}/#{slug}"
+       when not is_nil(inner_id) and is_binary(slug) and slug != "" do
+    "/#{community}/doc/#{inner_id}/#{slug}"
+  end
 
   defp node_href(_community, :public, %DocTreeNode{type: :link, href: href}, _doc, _draft)
-       when is_binary(href) and href != "",
-       do: href
+       when is_binary(href) and href != "" do
+    href
+  end
 
   defp node_href(%Community{slug: community}, :dashboard, %DocTreeNode{type: :page}, _doc, %{
          doc_id: doc_id
@@ -321,8 +325,9 @@ defmodule GroupherServer.CMS.DocCover.Reader do
   end
 
   defp node_href(_community, :dashboard, %DocTreeNode{type: :link, href: href}, _doc, _draft)
-       when is_binary(href) and href != "",
-       do: href
+       when is_binary(href) and href != "" do
+    href
+  end
 
   defp node_href(_community, _view, _node, _doc, _draft), do: nil
 

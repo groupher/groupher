@@ -1,14 +1,14 @@
-defmodule GroupherServer.CMS.Comments.Reader do
+defmodule GroupherServer.CMS.Comments.Query.Reconcile do
   @moduledoc """
-  Read operations for comments.
+  Bounded reconciliation and internal relation reads for comments.
 
   Business position:
 
       Client
         -> GraphQL
-        -> CMS.Comments
-        -> Reader
-        -> Repo / domain event
+      -> CMS.Comments
+        -> Comments.Query.Reconcile
+          -> Repo / FrontDesk
   """
 
   require GroupherServer.CMS.Comments.ErrorCat
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Comments.Reader do
 
   ## Examples
 
-      CMS.Comments.Reader.fetch_comment(comment_id)
+      CMS.Comments.Query.Reconcile.fetch_comment(comment_id)
 
   """
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
@@ -85,8 +85,9 @@ defmodule GroupherServer.CMS.Comments.Reader do
             reason: :custom,
             details: %{reason: :not_exist, message: message}
           )}
-       ),
-       do: {:error, CommentErrorCat.not_exist(to_string(message))}
+       ) do
+    {:error, CommentErrorCat.not_exist(to_string(message))}
+  end
 
   defp normalize_error(
          {:error,
@@ -94,8 +95,9 @@ defmodule GroupherServer.CMS.Comments.Reader do
             reason: :custom,
             details: %{reason: :not_exist}
           )}
-       ),
-       do: {:error, CommentErrorCat.not_exist("comment not found")}
+       ) do
+    {:error, CommentErrorCat.not_exist("comment not found")}
+  end
 
   defp normalize_error(result), do: result
 
@@ -107,9 +109,11 @@ defmodule GroupherServer.CMS.Comments.Reader do
   defp parse_inner_id(value) when is_binary(value) do
     case Integer.parse(value) do
       {integer, ""} when integer >= 0 ->
-        if Integer.to_string(integer) == value,
-          do: {:ok, integer},
-          else: {:error, CommentErrorCat.not_exist("comment not found")}
+        if Integer.to_string(integer) == value do
+          {:ok, integer}
+        else
+          {:error, CommentErrorCat.not_exist("comment not found")}
+        end
 
       _ ->
         {:error, CommentErrorCat.not_exist("comment not found")}

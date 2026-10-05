@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Articles.List do
+defmodule GroupherServer.CMS.Articles.Query do
   @moduledoc """
   Article listing helpers.
 
@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.List do
       Client / importer
         -> GraphQL or service boundary
         -> CMS.Articles
-        -> List
+        -> Query
         -> Repo / domain event
   """
 
@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Articles.List do
 
   ## Examples
 
-      CMS.Articles.List.page(:post, %{page: 1, size: 20})
+      CMS.Articles.Query.page(:post, %{page: 1, size: 20})
 
   """
   @spec page(atom(), map()) :: T.domain_res(term())
@@ -470,8 +470,9 @@ defmodule GroupherServer.CMS.Articles.List do
     read_articles(paged_articles, actor)
   end
 
-  defp maybe_mark_viewer_states(paged_articles, _thread, nil),
-    do: read_articles(paged_articles, nil)
+  defp maybe_mark_viewer_states(paged_articles, _thread, nil) do
+    read_articles(paged_articles, nil)
+  end
 
   defp scope_context(:doc), do: DocContext.public_main()
   defp scope_context(thread), do: ArticleContext.public(thread)

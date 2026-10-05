@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Comments.List do
+defmodule GroupherServer.CMS.Comments.Query do
   @moduledoc """
   List/paged operations for comments.
 
@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments.List do
       Client
         -> GraphQL
         -> CMS.Comments
-        -> List
+        -> Query
         -> Repo / domain event
   """
 
@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      CMS.Comments.List.comments_state(:post, article_id)
+      CMS.Comments.Query.comments_state(:post, article_id)
 
   """
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.comments_state(:post, post_id, viewer)
+      Comments.Query.comments_state(:post, post_id, viewer)
   """
   @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   def comments_state(thread, article_id, %User{} = user) do
@@ -87,11 +87,12 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_comments(:post, post_id, filters, :replies)
+      Comments.Query.paged_comments(:post, post_id, filters, :replies)
   """
   @spec paged_comments(T.thread(), T.id(), map(), atom()) :: T.domain_res(T.paged_data())
-  def paged_comments(thread, article_id, filters, mode),
-    do: paged_comments(thread, article_id, filters, mode, nil)
+  def paged_comments(thread, article_id, filters, mode) do
+    paged_comments(thread, article_id, filters, mode, nil)
+  end
 
   @doc """
   Returns a page of Comments hydrated for an optional viewer.
@@ -101,7 +102,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_comments(:post, post_id, filters, :replies, viewer)
+      Comments.Query.paged_comments(:post, post_id, filters, :replies, viewer)
   """
   @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
           T.domain_res(T.paged_data())
@@ -130,7 +131,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_published_comments(target_user, filters, viewer)
+      Comments.Query.paged_published_comments(target_user, filters, viewer)
   """
   @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
@@ -154,7 +155,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_published_comments(target_user, :post, filters, viewer)
+      Comments.Query.paged_published_comments(target_user, :post, filters, viewer)
   """
   @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
@@ -191,7 +192,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_folded_comments(:post, post_id, filters)
+      Comments.Query.paged_folded_comments(:post, post_id, filters)
   """
   @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters) do
@@ -204,7 +205,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_folded_comments(:post, post_id, filters, viewer)
+      Comments.Query.paged_folded_comments(:post, post_id, filters, viewer)
   """
   @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
           T.domain_res(T.paged_data())
@@ -218,18 +219,19 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_comment_replies(comment_id, filters)
+      Comments.Query.paged_comment_replies(comment_id, filters)
   """
   @spec paged_comment_replies(T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged_comment_replies(comment_id, filters),
-    do: paged_comment_replies(comment_id, filters, nil)
+  def paged_comment_replies(comment_id, filters) do
+    paged_comment_replies(comment_id, filters, nil)
+  end
 
   @doc """
   Returns replies under one root Comment hydrated for an optional viewer.
 
   ## Examples
 
-      Comments.List.paged_comment_replies(comment_id, filters, viewer)
+      Comments.Query.paged_comment_replies(comment_id, filters, viewer)
   """
   @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
   def paged_comment_replies(comment_id, filters, user) do
@@ -242,7 +244,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   ## Examples
 
-      Comments.List.paged_comments_participants(:post, post_id, filters)
+      Comments.Query.paged_comments_participants(:post, post_id, filters)
   """
   @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())

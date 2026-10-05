@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.CommunityApplications.Reader do
+defmodule GroupherServer.CMS.CommunityApplications.Query do
   @moduledoc """
   Owner and reviewer read models for community applications.
 
@@ -7,19 +7,19 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
       Apply UI / reviewer
         -> GraphQL resolver
         -> CMS.CommunityApplications
-        -> Reader
+        -> Query
         -> Repo / Oban
   """
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo}
 
   alias Accounts.Model.User
   alias CMS.Communities.ErrorCat
+  alias CMS.FrontDesk, as: CMSFrontDesk
 
   alias CMS.Model.{
-    Community,
     CommunityApplication,
     CommunityApplicationEvent,
     CommunityApplicationLogoUpload,
@@ -31,10 +31,10 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
 
   ## Examples
 
-      CMS.CommunityApplications.Reader.current(%User{id: 1})
+      CMS.CommunityApplications.Query.current(%User{id: 1})
       #=> {:ok, %CommunityApplication{}}
 
-      CMS.CommunityApplications.Reader.current(%User{id: 1})
+      CMS.CommunityApplications.Query.current(%User{id: 1})
       #=> {:ok, nil}
 
   """
@@ -154,16 +154,17 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
     {:ok, %{entries: Enum.take(entries, first), has_next_page: length(entries) > first}}
   end
 
-  def applicant(%CommunityApplication{user_id: user_id}), do: fetch(User, user_id)
+  def applicant(%CommunityApplication{user_id: user_id}), do: fetch_user(user_id)
   def reviewer(%CommunityApplication{reviewer_id: nil}), do: {:ok, nil}
-  def reviewer(%CommunityApplication{reviewer_id: reviewer_id}), do: fetch(User, reviewer_id)
+  def reviewer(%CommunityApplication{reviewer_id: reviewer_id}), do: fetch_user(reviewer_id)
   def community(%CommunityApplication{community_id: nil}), do: {:ok, nil}
 
-  def community(%CommunityApplication{community_id: community_id}),
-    do: fetch(Community, community_id)
+  def community(%CommunityApplication{community_id: community_id}) do
+    CMSFrontDesk.community(community_id, mode: :internal)
+  end
 
   def event_actor(%CommunityApplicationEvent{actor_id: nil}), do: {:ok, nil}
-  def event_actor(%CommunityApplicationEvent{actor_id: actor_id}), do: fetch(User, actor_id)
+  def event_actor(%CommunityApplicationEvent{actor_id: actor_id}), do: fetch_user(actor_id)
 
   def logo(%CommunityApplication{id: application_id, logo_asset_ref: upload_ref}) do
     case Repo.get_by(CommunityApplicationLogoUpload,
@@ -205,21 +206,25 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
 
   defp maybe_statuses(query, []), do: query
 
-  defp maybe_statuses(query, statuses),
-    do: where(query, [application], application.status in ^statuses)
+  defp maybe_statuses(query, statuses) do
+    where(query, [application], application.status in ^statuses)
+  end
 
   defp maybe_eq(query, _field, nil), do: query
 
-  defp maybe_eq(query, field, value),
-    do: where(query, [application], field(application, ^field) == ^value)
+  defp maybe_eq(query, field, value) do
+    where(query, [application], field(application, ^field) == ^value)
+  end
 
   defp maybe_datetime(query, _field, _operator, nil), do: query
 
-  defp maybe_datetime(query, field, :>=, value),
-    do: where(query, [application], field(application, ^field) >= ^value)
+  defp maybe_datetime(query, field, :>=, value) do
+    where(query, [application], field(application, ^field) >= ^value)
+  end
 
-  defp maybe_datetime(query, field, :<=, value),
-    do: where(query, [application], field(application, ^field) <= ^value)
+  defp maybe_datetime(query, field, :<=, value) do
+    where(query, [application], field(application, ^field) <= ^value)
+  end
 
   defp maybe_after_application(query, nil), do: query
 
@@ -270,18 +275,15 @@ defmodule GroupherServer.CMS.CommunityApplications.Reader do
     end
   end
 
-  defp decode_cursor(cursor) when is_binary(cursor),
-    do: Base.url_decode64(cursor, padding: false)
+  defp decode_cursor(cursor) when is_binary(cursor) do
+    Base.url_decode64(cursor, padding: false)
+  end
 
   defp decode_cursor(_), do: :error
 
-  defp fetch(schema, id) do
-    case Repo.get(schema, id) do
-      nil -> {:error, ErrorCat.application_not_found()}
-      record -> {:ok, record}
-    end
-  end
+  defp fetch_user(id), do: FrontDesk.user(id)
 
-  defp get(map, key, default \\ nil),
-    do: Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  defp get(map, key, default \\ nil) do
+    Map.get(map, key, Map.get(map, Atom.to_string(key), default))
+  end
 end

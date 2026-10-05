@@ -1,12 +1,12 @@
-defmodule GroupherServer.CMS.Communities.List do
+defmodule GroupherServer.CMS.Communities.Query do
   @moduledoc """
-  List helpers for communities.
+  Collection queries for communities.
 
   Business position:
 
       Client / reviewer
         -> CMS.Communities
-        -> List
+        -> Query
         -> Repo / Oban
   """
 
@@ -19,14 +19,21 @@ defmodule GroupherServer.CMS.Communities.List do
   alias CMS.QueryBuilder
   alias Accounts.Model.User
   alias CMS.Model.Community
+  alias CMS.Model.Category
   alias Helper.{ORM, T}
+
+  @doc """
+  Pages categories for the discovery GraphQL read model.
+  """
+  @spec page_categories(map()) :: T.domain_res(term())
+  def page_categories(filter), do: ORM.find_all(Category, filter)
 
   @doc """
   Returns paged Communities annotated with the viewer's subscription state.
 
   ## Examples
 
-      CMS.Communities.List.page(%{page: 1, size: 20}, %User{meta: %{subscribed_communities_ids: [1]}})
+      CMS.Communities.Query.page(%{page: 1, size: 20}, %User{meta: %{subscribed_communities_ids: [1]}})
       #=> {:ok, %{entries: [%Community{}], page_number: 1}}
 
   """
@@ -58,11 +65,13 @@ defmodule GroupherServer.CMS.Communities.List do
     |> done()
   end
 
-  defp order_by_views(queryable, :most_views),
-    do: order_by(queryable, [community], desc: community.views, desc: community.inserted_at)
+  defp order_by_views(queryable, :most_views) do
+    order_by(queryable, [community], desc: community.views, desc: community.inserted_at)
+  end
 
-  defp order_by_views(queryable, :least_views),
-    do: order_by(queryable, [community], asc: community.views, desc: community.inserted_at)
+  defp order_by_views(queryable, :least_views) do
+    order_by(queryable, [community], asc: community.views, desc: community.inserted_at)
+  end
 
   defp order_by_views(queryable, _sort), do: queryable
 end

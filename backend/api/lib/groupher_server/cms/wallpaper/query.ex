@@ -1,11 +1,11 @@
-defmodule GroupherServer.CMS.Wallpaper.Reader do
+defmodule GroupherServer.CMS.Wallpaper.Query do
   @moduledoc """
   Reads active Wallpaper projections, editor settings, and retained history.
 
   Business position:
 
       CMS.Wallpaper facade
-        -> Wallpaper.Reader
+        -> Wallpaper.Query
         -> Repo
         -> public/editor projection
   """

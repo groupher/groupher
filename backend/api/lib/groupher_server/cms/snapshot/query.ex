@@ -1,12 +1,12 @@
-defmodule GroupherServer.CMS.Snapshot.Reader do
+defmodule GroupherServer.CMS.Snapshot.Query do
   @moduledoc """
   Loads authoritative display summaries for snapshot refreshes.
 
       Snapshot.Projection / Snapshot.Refresh
-        -> Snapshot.Reader
+        -> Snapshot.Query
         -> Gate scope / Repo
 
-  Reader owns visibility-safe database reads and unavailable placeholders. It
+  Query owns visibility-safe database reads and unavailable placeholders. It
   does not decide cache mode or mutate relation membership.
   """
 
@@ -130,8 +130,9 @@ defmodule GroupherServer.CMS.Snapshot.Reader do
 
   defp digest(nil), do: nil
 
-  defp digest(body),
-    do: if(String.length(body) <= 120, do: body, else: String.slice(body, 0, 120))
+  defp digest(body) do
+    if(String.length(body) <= 120, do: body, else: String.slice(body, 0, 120))
+  end
 
   defp scope_context(:doc), do: DocContext.public_main()
   defp scope_context(thread), do: ArticleContext.public(thread)
