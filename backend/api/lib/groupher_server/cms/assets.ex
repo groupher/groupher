@@ -26,9 +26,10 @@ defmodule GroupherServer.CMS.Assets do
   alias __MODULE__.{
     ApplicationUploads,
     Backfill,
+    Commands,
     Deletion,
     ProviderReconciliation,
-    Reader,
+    Query,
     Upload,
     Writer
   }
@@ -53,7 +54,7 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec page(Community.t(), map() | nil) :: T.domain_res(T.paged_data())
-  def page(%Community{} = community, filter \\ nil), do: Reader.page(community, filter)
+  def page(%Community{} = community, filter \\ nil), do: Query.page(community, filter)
 
   @doc """
   Returns storage usage for active assets in one community.
@@ -68,7 +69,7 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec usage(Community.t()) :: T.domain_res(map())
-  def usage(%Community{} = community), do: Reader.usage(community)
+  def usage(%Community{} = community), do: Query.usage(community)
 
   @doc """
   Returns asset filter stats and community storage quota.
@@ -77,7 +78,7 @@ defmodule GroupherServer.CMS.Assets do
   remain only the delete/detail usage projection.
   """
   @spec stats(Community.t(), map() | nil) :: T.domain_res(map())
-  def stats(%Community{} = community, filter \\ nil), do: Reader.stats(community, filter)
+  def stats(%Community{} = community, filter \\ nil), do: Query.stats(community, filter)
 
   @doc """
   Lists article document refs for one community asset.
@@ -92,8 +93,9 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec refs(Community.t(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
-  def refs(%Community{} = community, asset_id, filter \\ nil),
-    do: Reader.refs(community, asset_id, filter)
+  def refs(%Community{} = community, asset_id, filter \\ nil) do
+    Query.refs(community, asset_id, filter)
+  end
 
   @doc """
   Returns the active public-read origin metadata for one asset public ref.
@@ -102,17 +104,19 @@ defmodule GroupherServer.CMS.Assets do
   return uploader, database ids, permissions, or other dashboard-only details.
   """
   @spec origin_info(String.t()) :: T.domain_res(CommunityAsset.t())
-  def origin_info(public_ref), do: Reader.origin_info(public_ref)
+  def origin_info(public_ref), do: Query.origin_info(public_ref)
 
   @doc "Returns lifecycle-classified usage rows for an asset."
   @spec usages(Community.t(), T.id(), term()) :: T.domain_res([map()])
-  def usages(%Community{} = community, asset_id, actor),
-    do: Reader.usages(community, asset_id, actor)
+  def usages(%Community{} = community, asset_id, actor) do
+    Query.usages(community, asset_id, actor)
+  end
 
   @doc "Returns counts split into live, draft, historical and trashed usage."
   @spec usage_summary(Community.t(), T.id(), term()) :: T.domain_res(map())
-  def usage_summary(%Community{} = community, asset_id, actor),
-    do: Reader.usage_summary(community, asset_id, actor)
+  def usage_summary(%Community{} = community, asset_id, actor) do
+    Query.usage_summary(community, asset_id, actor)
+  end
 
   @doc "Rebuilds the version-owned usage fence and writes its completion receipt."
   @spec backfill_usage(Community.t(), keyword()) :: T.domain_res(term())
@@ -144,12 +148,14 @@ defmodule GroupherServer.CMS.Assets do
   end
 
   @doc "Promotes one finalized Application Logo using local database writes only."
-  def register_from_application_upload(community, upload, user),
-    do: ApplicationUploads.register(community, upload, user)
+  def register_from_application_upload(community, upload, user) do
+    ApplicationUploads.register(community, upload, user)
+  end
 
   @doc "Requests best-effort deletion for an expired Application Logo object."
-  def delete_application_upload_object(upload),
-    do: Deletion.delete_application_upload_object(upload)
+  def delete_application_upload_object(upload) do
+    Deletion.delete_application_upload_object(upload)
+  end
 
   @doc "Creates a short-lived upload capability for assets-hub."
   @spec create_upload_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
@@ -169,8 +175,9 @@ defmodule GroupherServer.CMS.Assets do
 
   @doc "Soft-deletes generated asset rows after an abandoned Wallpaper Batch."
   @spec delete_generated_assets(Community.t(), [String.t()]) :: :ok
-  def delete_generated_assets(%Community{} = community, public_refs),
-    do: Deletion.delete_generated_assets(community, public_refs)
+  def delete_generated_assets(%Community{} = community, public_refs) do
+    Deletion.delete_generated_assets(community, public_refs)
+  end
 
   @doc """
   Soft-deletes an unreferenced community asset.
@@ -200,12 +207,14 @@ defmodule GroupherServer.CMS.Assets do
 
   @doc "Replaces one Draft-owned asset use through the Article command boundary."
   @spec replace_use(map(), map(), User.t(), Ecto.UUID.t()) :: T.domain_res(map())
-  def replace_use(article, attrs, %User{} = user, command_id),
-    do: CMS.Articles.Commands.ReplaceAssetUse.replace(article, attrs, user, command_id)
+  def replace_use(article, attrs, %User{} = user, command_id) do
+    Commands.ReplaceUse.execute(article, attrs, user, command_id)
+  end
 
   @doc "Lists old, unreferenced assets eligible for a later GC decision."
-  def gc_candidates(%Community{} = community, opts \\ []),
-    do: GroupherServer.CMS.Assets.GC.candidates(community, opts)
+  def gc_candidates(%Community{} = community, opts \\ []) do
+    GroupherServer.CMS.Assets.GC.candidates(community, opts)
+  end
 
   @doc """
   Links an article to the assets used by its current saved content.
@@ -258,18 +267,21 @@ defmodule GroupherServer.CMS.Assets do
   def cleanup_refs(thread, article_id), do: Writer.purge_refs(thread, article_id)
 
   @doc "Creates an immutable, reviewable global replacement plan."
-  def create_replacement_plan(%Community{} = community, attrs, %User{} = user),
-    do: __MODULE__.ReplacementPlan.create(community, attrs, user)
+  def create_replacement_plan(%Community{} = community, attrs, %User{} = user) do
+    __MODULE__.ReplacementPlan.create(community, attrs, user)
+  end
 
   @doc "Applies a replacement plan one Article command at a time."
   def apply_replacement_plan(
         %CMS.Model.AssetReplacementPlan{} = plan,
         %User{} = user,
         opts \\ []
-      ),
-      do: __MODULE__.ReplacementPlan.apply(plan, user, opts)
+      ) do
+    __MODULE__.ReplacementPlan.apply(plan, user, opts)
+  end
 
   @doc "Repairs missing provider-delete outbox intents for old deleted assets."
-  def reconcile_provider_deletions(%Community{} = community, opts \\ []),
-    do: ProviderReconciliation.enqueue_missing(community, opts)
+  def reconcile_provider_deletions(%Community{} = community, opts \\ []) do
+    ProviderReconciliation.enqueue_missing(community, opts)
+  end
 end

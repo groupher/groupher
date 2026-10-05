@@ -717,7 +717,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
       assert asset_ref_count(ref.asset_id) == 1
 
-      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item.hash_id, user)
+      assert {:ok, %{done: true}} =
+               CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
       assert article_refs(:post, post.id) == []
       assert asset_ref_count(ref.asset_id) == 0
@@ -755,7 +756,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert asset_ref_count(asset.id) == 2
 
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
-      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item.hash_id, user)
+
+      assert {:ok, %{done: true}} =
+               CMS.Articles.permanently_delete_trashed(trash_item.hash_id, user)
 
       assert asset_ref_count(asset.id) == 1
       assert article_refs(:post, post.id) == []

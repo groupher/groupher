@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
   Builds and applies immutable global asset replacement plans.
 
   Plan creation is read-only with respect to Articles. Apply revalidates each
-  observed locator/version through `ReplaceAssetUse`; conflicts are recorded per
+  observed locator/version through `Commands.ReplaceUse`; conflicts are recorded per
   item and never turn into a false global success.
 
   Business position:
@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
-  alias CMS.Articles.Commands.ReplaceAssetUse
-  alias CMS.Assets.Reader
+  alias CMS.Assets.Commands.ReplaceUse
+  alias CMS.Assets.Query
 
   alias CMS.Model.{
     Article,
@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     with {:ok, from_asset} <- active_asset(community_id, value(attrs, :from_asset_id)),
          {:ok, to_asset} <- active_asset(community_id, value(attrs, :to_asset_id)),
          false <- from_asset.id == to_asset.id,
-         {:ok, usages} <- Reader.usages(%Community{id: community_id}, from_asset.id, user) do
+         {:ok, usages} <- Query.usages(%Community{id: community_id}, from_asset.id, user) do
       items = build_items(usages, user, from_asset, to_asset)
 
       %AssetReplacementPlan{}
@@ -120,7 +120,7 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
         }
         |> maybe_put_body_bag(body_bag)
 
-      case ReplaceAssetUse.replace(%{article_id: article_id}, attrs, user, attrs.command_id) do
+      case ReplaceUse.execute(%{article_id: article_id}, attrs, user, attrs.command_id) do
         {:ok, result} ->
           {:cont, {:ok, result, Map.get(result, :draft_version, version)}}
 
@@ -190,8 +190,9 @@ defmodule GroupherServer.CMS.Assets.ReplacementPlan do
     if observed == current, do: :ok, else: {:error, :live_revision_conflict}
   end
 
-  defp put_item_result(item, status, result),
-    do: Map.merge(item, %{result: %{status: status, value: result}})
+  defp put_item_result(item, status, result) do
+    Map.merge(item, %{result: %{status: status, value: result}})
+  end
 
   defp maybe_put_body_bag(attrs, nil), do: attrs
   defp maybe_put_body_bag(attrs, body_bag), do: Map.put(attrs, :body_bag, body_bag)

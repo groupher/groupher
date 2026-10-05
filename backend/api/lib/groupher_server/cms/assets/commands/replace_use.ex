@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
+defmodule GroupherServer.CMS.Assets.Commands.ReplaceUse do
   @moduledoc """
   Replaces one asset locator in a mutable Article Draft.
 
@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   command transaction. Revision-owned refs are never selected by this module.
 
       CMS.Assets facade
-        -> ReplaceAssetUse command
+        -> ReplaceUse command
         -> Gate-authorized Draft update
         -> ArticleAssetRef synchronization
   """
@@ -15,16 +15,16 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
   alias CMS.Articles.Draft.Store
-  alias CMS.Assets.{Reader, Writer}
+  alias CMS.Assets.{Query, Writer}
   alias CMS.{Command, ErrorCat}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, ArticleAssetRef, ArticleDraft, Community, CommunityAsset}
-  alias CMS.Articles.Commands.ReplaceAssetUseConfirmation, as: Confirmation
+  alias CMS.Assets.Commands.ReplaceUseConfirmation, as: Confirmation
 
   @doc "Replaces one Draft-owned asset use without mutating an immutable Revision."
-  @spec replace(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
+  @spec execute(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
           {:ok, map()} | {:error, term()}
-  def replace(article_or_projection, attrs, %User{} = user, command_id) when is_map(attrs) do
+  def execute(article_or_projection, attrs, %User{} = user, command_id) when is_map(attrs) do
     with {:ok, article} <- load_article(article_or_projection),
          {:ok, %Community{} = community} <-
            FrontDesk.community(article.community_id, mode: :internal) do
@@ -135,13 +135,16 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   end
 
   defp replacement_body_bag_required(%ArticleAssetRef{usage: usage}, _attrs)
-       when usage in [:cover, :cover_dark],
-       do: :ok
+       when usage in [:cover, :cover_dark] do
+    :ok
+  end
 
   defp replacement_body_bag_required(_ref, attrs) do
-    if is_nil(value(attrs, :body_bag)),
-      do: {:error, :replace_asset_use_body_bag_required},
-      else: :ok
+    if is_nil(value(attrs, :body_bag)) do
+      {:error, :replace_asset_use_body_bag_required}
+    else
+      :ok
+    end
   end
 
   defp ref_input(ref, replaced_id, target_asset_id) do
@@ -191,7 +194,7 @@ defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUse do
   defp same_asset(_, _), do: {:error, :asset_use_source_conflict}
 
   defp active_asset(community_id, asset_id) when is_binary(asset_id) or is_integer(asset_id) do
-    case Reader.active_asset(community_id, asset_id) do
+    case Query.active_asset(community_id, asset_id) do
       {:ok, %CommunityAsset{} = asset} -> {:ok, asset}
       {:error, _reason} -> {:error, :replacement_asset_not_active}
     end

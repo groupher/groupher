@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Articles.Commands.ReplaceAssetUseConfirmation do
+defmodule GroupherServer.CMS.Assets.Commands.ReplaceUseConfirmation do
   @moduledoc """
   Confirms one Article asset replacement operation.
 
