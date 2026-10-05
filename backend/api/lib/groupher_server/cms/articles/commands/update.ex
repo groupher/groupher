@@ -14,9 +14,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Articles.Draft.Store
+  alias CMS.Articles.Draft.Store, as: DraftStore
   alias CMS.Articles.RevisionResult
-  alias CMS.Articles.Reader
+  alias CMS.Articles.Store, as: ArticleStore
   alias CMS.Articles.Publish.Effects
   alias CMS.Articles.Publish.Target
   alias CMS.Command
@@ -25,9 +25,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
 
   @doc "Updates and republishes one stable Article using optimistic content versioning."
-  @spec update(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
+  @spec execute(map() | Article.t(), map(), User.t(), Ecto.UUID.t()) ::
           {:ok, map()} | {:error, term()}
-  def update(article_or_projection, attrs, %User{} = user, command_id) do
+  def execute(article_or_projection, attrs, %User{} = user, command_id) do
     with {:ok, article} <- load_article(article_or_projection),
          {:ok, %Community{} = community} <-
            FrontDesk.community(article.community_id, mode: :internal) do
@@ -39,11 +39,14 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
         params: Map.drop(attrs, [:command_id, :cur_user])
       }
 
-      Command.execute(command,
-        action: &update_action(&1, community),
-        confirmation: Confirmation,
-        present: &present_command_result(&1, &2, community)
-      )
+      with {:ok, %Confirmation{} = confirmation} <-
+             Command.execute(
+               command,
+               action: &update_action(&1, community),
+               confirmation: Confirmation
+             ) do
+        RevisionResult.build(confirmation, community)
+      end
     else
       {:error, _reason} = error -> error
     end
@@ -54,7 +57,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
          community
        ) do
     with {:ok, author} <- CMS.Articles.Writer.ensure_author_exists(user),
-         {:ok, %{public: public, publish_result: publish_result}} <-
+         {:ok, %{public: public}} <-
            update_and_publish(article, attrs, author, user, community) do
       with {:ok, revision_id} <- required_revision_id(public),
            {:ok, publication_version} <- required_publication_version(public),
@@ -70,7 +73,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
            publication_version: publication_version,
            published_at: published_at,
            command_id: command_id
-         }, %{article: publish_result.article, revision: publish_result.revision}}
+         }}
       else
         _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
       end
@@ -78,13 +81,15 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   end
 
   defp required_revision_id(%{revision_id: revision_id})
-       when is_binary(revision_id) and revision_id != "",
-       do: {:ok, revision_id}
+       when is_binary(revision_id) and revision_id != "" do
+    {:ok, revision_id}
+  end
 
   defp required_revision_id(_), do: {:error, :missing_revision_id}
 
-  defp required_publication_version(%{publication_version: value}) when is_integer(value),
-    do: {:ok, value}
+  defp required_publication_version(%{publication_version: value}) when is_integer(value) do
+    {:ok, value}
+  end
 
   defp required_publication_version(_), do: {:error, :missing_publication_version}
 
@@ -94,10 +99,10 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   defp update_and_publish(article, attrs, author, user, community) do
     CMS.Gate.Access.with_check(user, :edit, article, fn canonical ->
       with {:ok, lifecycle} <- lifecycle(canonical.id),
-           {:ok, draft} <- Store.ensure_from_public(canonical, author),
+           {:ok, draft} <- DraftStore.ensure_from_public(canonical, author),
            :ok <- expected_version(attrs, draft.version),
            {:ok, updated} <-
-             Store.update(canonical, attrs, author, expected_version: draft.version),
+             DraftStore.update(canonical, attrs, author, expected_version: draft.version),
            publish_opts =
              [
                expected_draft_version: updated.version,
@@ -108,7 +113,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
              Target.publish(canonical, author, publish_opts),
            {:ok, _effects} <- Effects.run(publish_result),
            {:ok, public} <- public_projection(published.id, community) do
-        {:ok, %{public: public, publish_result: publish_result}}
+        {:ok, %{public: public}}
       end
     end)
   end
@@ -122,7 +127,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   end
 
   defp lifecycle(article_id) do
-    case Reader.lifecycle(article_id) do
+    case ArticleStore.lifecycle(article_id) do
       {:ok, %ArticleLifecycle{} = lifecycle} -> {:ok, lifecycle}
       {:error, _reason} -> {:error, CMS.Articles.ErrorCat.lifecycle_not_found()}
     end
@@ -138,15 +143,16 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
   end
 
   defp public_projection(article_id, community) do
-    with {:ok, %Article{inner_id: inner_id, thread: thread}} when is_integer(inner_id) <-
-           FrontDesk.article(article_id, mode: :internal) do
-      FrontDesk.article(%{
-        community: community.slug,
-        thread: thread,
-        inner_id: inner_id
-      })
-    else
-      _ -> {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{inner_id: inner_id, thread: thread}} when is_integer(inner_id) ->
+        FrontDesk.article(%{
+          community: community.slug,
+          thread: thread,
+          inner_id: inner_id
+        })
+
+      _ ->
+        {:error, CMS.Articles.ErrorCat.projection_not_updated()}
     end
   end
 
@@ -162,20 +168,4 @@ defmodule GroupherServer.CMS.Articles.Commands.Update do
         []
     end
   end
-
-  defp present_command_result(
-         %Confirmation{} = confirmation,
-         %{
-           state: :executed,
-           action_context: %{article: article, revision: revision}
-         },
-         community
-       ) do
-    confirmation
-    |> Map.from_struct()
-    |> RevisionResult.build_from_action(%{article: article, revision: revision}, community)
-  end
-
-  defp present_command_result(%Confirmation{} = confirmation, %{state: :recovered}, _community),
-    do: RevisionResult.build(Map.from_struct(confirmation))
 end

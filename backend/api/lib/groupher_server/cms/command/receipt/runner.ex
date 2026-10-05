@@ -43,42 +43,8 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> Command.action_result(term(), term())),
+          (-> Command.action_result(term())),
           module()
-        ) :: T.result(term(), term())
-  def execute(
-        user,
-        command_id,
-        command,
-        resource_type,
-        resource_id,
-        data,
-        execute,
-        confirmation
-      ),
-      do:
-        execute(
-          user,
-          command_id,
-          command,
-          resource_type,
-          resource_id,
-          data,
-          execute,
-          confirmation,
-          nil
-        )
-
-  @spec execute(
-          User.t(),
-          Ecto.UUID.t() | nil,
-          String.t(),
-          String.t(),
-          String.t() | pos_integer(),
-          term(),
-          (-> Command.action_result(term(), term())),
-          module(),
-          Command.presenter() | nil
         ) :: T.result(term(), term())
   def execute(
         %User{},
@@ -88,10 +54,10 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         _resource_id,
         _data,
         _execute,
-        _result,
-        _presenter
-      ),
-      do: {:error, ErrorCat.command_id_required()}
+        _result
+      ) do
+    {:error, ErrorCat.command_id_required()}
+  end
 
   def execute(
         %User{id: user_id},
@@ -101,8 +67,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         resource_id,
         data,
         execute,
-        confirmation,
-        presenter
+        confirmation
       )
       when is_binary(command_id) do
     with {:ok, command_id} <- Key.validate(command_id),
@@ -117,8 +82,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         resource_id,
         intent_params,
         execute,
-        confirmation,
-        presenter
+        confirmation
       )
     end
   end
@@ -131,10 +95,10 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
         _resource_id,
         _data,
         _execute,
-        _result,
-        _presenter
-      ),
-      do: {:error, ErrorCat.command_id_invalid()}
+        _result
+      ) do
+    {:error, ErrorCat.command_id_invalid()}
+  end
 
   defp execute_command(
          initiator_key,
@@ -144,8 +108,7 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
          resource_id,
          data,
          execute,
-         confirmation,
-         presenter
+         confirmation
        )
        when is_binary(initiator_key) and is_binary(command_id) and
               is_function(execute, 0) and is_atom(confirmation) do
@@ -163,11 +126,11 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
              {:ok, :recovery, receipt} ->
                configure_transaction_timeouts!()
 
-               resolve_confirmation(receipt, confirmation, presenter)
+               resolve_confirmation(receipt, confirmation)
 
              {:ok, :new, receipt} ->
                configure_transaction_timeouts!()
-               execute_and_finalize(receipt, execute, confirmation, presenter)
+               execute_and_finalize(receipt, execute, confirmation)
 
              {:error, reason} ->
                Repo.rollback(reason)
@@ -190,14 +153,11 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
   # The runner never inspects domain result shapes. Each domain owner supplies
   # the typed, versioned Confirmation codec used by execution and replay.
-  defp execute_and_finalize(receipt, execute, confirmation, presenter)
+  defp execute_and_finalize(receipt, execute, confirmation)
        when is_atom(confirmation) do
     case execute.() do
-      {:ok, value, action_context} ->
-        finalize_confirmation(receipt, confirmation, value, action_context, presenter)
-
       {:ok, value} ->
-        finalize_confirmation(receipt, confirmation, value, nil, presenter)
+        finalize_confirmation(receipt, confirmation, value)
 
       {:error, reason} ->
         Repo.rollback(reason)
@@ -207,13 +167,12 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
     end
   end
 
-  defp finalize_confirmation(receipt, confirmation, value, action_context, presenter) do
+  defp finalize_confirmation(receipt, confirmation, value) do
     with {:ok, payload} <- encode_confirmation(confirmation, value, receipt.command),
          {:ok, :pass} <- validate_confirmation_tag(payload, receipt.command),
          {:ok, _finalized_receipt} <- Store.finalize(receipt, %{confirmation: payload}),
-         {:ok, decoded} <- decode_confirmation(confirmation, payload, receipt.command),
-         {:ok, presented} <- present(presenter, decoded, :executed, action_context) do
-      {:executed, presented}
+         {:ok, decoded} <- decode_confirmation(confirmation, payload, receipt.command) do
+      {:executed, decoded}
     else
       {:error, %Ecto.Changeset{} = changeset} -> Repo.rollback(changeset)
       {:error, reason} -> Repo.rollback({:invalid_command_result, reason})
@@ -221,14 +180,13 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
     end
   end
 
-  defp resolve_confirmation(receipt, module, presenter) when is_atom(module) do
+  defp resolve_confirmation(receipt, module) when is_atom(module) do
     with payload when is_map(payload) <- receipt.confirmation,
          {:ok, _size} <- confirmation_size(payload),
          {:ok, tag} <- Map.fetch(payload, "operation"),
          true <- tag == receipt.command,
-         {:ok, decoded} <- decode_confirmation(module, payload, receipt.command),
-         {:ok, presented} <- present(presenter, decoded, :recovered, nil) do
-      {:recovered, presented}
+         {:ok, decoded} <- decode_confirmation(module, payload, receipt.command) do
+      {:recovered, decoded}
     else
       reason ->
         Logger.error("command confirmation recovery failed",
@@ -240,18 +198,6 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
 
         Repo.rollback(ErrorCat.command_result_unavailable())
     end
-  end
-
-  defp present(nil, decoded, _state, _action_context), do: {:ok, decoded}
-
-  defp present(presenter, decoded, state, action_context) when is_function(presenter, 2) do
-    case presenter.(decoded, %{state: state, action_context: action_context}) do
-      {:ok, value} -> {:ok, value}
-      {:error, reason} -> {:error, reason}
-      _value -> {:error, :unexpected_presenter_result}
-    end
-  rescue
-    error -> {:error, {:presenter_failed, error}}
   end
 
   defp encode_confirmation(module, value, operation) do
@@ -299,15 +245,17 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
     _ -> {:error, :confirmation_decode_failed}
   end
 
-  defp validate_confirmation_tag(%{"operation" => tag}, command),
-    do:
-      if(tag == command,
-        do: {:ok, :pass},
-        else: {:error, :confirmation_operation_mismatch}
-      )
+  defp validate_confirmation_tag(%{"operation" => tag}, command) do
+    if tag == command do
+      {:ok, :pass}
+    else
+      {:error, :confirmation_operation_mismatch}
+    end
+  end
 
-  defp validate_confirmation_tag(_payload, _command),
-    do: {:error, :confirmation_operation_missing}
+  defp validate_confirmation_tag(_payload, _command) do
+    {:error, :confirmation_operation_missing}
+  end
 
   defp confirmation_size(payload) when is_map(payload) do
     case Jason.encode(payload) do
@@ -325,11 +273,13 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
     end
   end
 
-  defp validate_confirmation_size(bytes, _operation) when bytes <= @confirmation_max_bytes,
-    do: {:ok, :pass}
+  defp validate_confirmation_size(bytes, _operation) when bytes <= @confirmation_max_bytes do
+    {:ok, :pass}
+  end
 
-  defp validate_confirmation_size(_bytes, _operation),
-    do: {:error, :confirmation_payload_too_large}
+  defp validate_confirmation_size(_bytes, _operation) do
+    {:error, :confirmation_payload_too_large}
+  end
 
   defp emit_confirmation_telemetry(status, operation, bytes, payload) do
     :telemetry.execute(
@@ -385,11 +335,13 @@ defmodule GroupherServer.CMS.Command.Receipt.Runner do
   end
 
   defp normalize_transaction_error(%Postgrex.Error{postgres: %{code: code}})
-       when code in [:lock_not_available, :query_canceled],
-       do: ErrorCat.command_resolution_pending()
+       when code in [:lock_not_available, :query_canceled] do
+    ErrorCat.command_resolution_pending()
+  end
 
-  defp normalize_transaction_error(%DBConnection.ConnectionError{}),
-    do: ErrorCat.command_resolution_pending()
+  defp normalize_transaction_error(%DBConnection.ConnectionError{}) do
+    ErrorCat.command_resolution_pending()
+  end
 
   defp normalize_transaction_error(reason), do: reason
 end

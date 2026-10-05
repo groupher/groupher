@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Command.Receipt do
           String.t(),
           String.t() | pos_integer(),
           term(),
-          (-> Command.action_result(term(), term())),
+          (-> Command.action_result(term())),
           module()
         ) :: T.result(term(), term())
   defdelegate execute(
@@ -44,43 +44,6 @@ defmodule GroupherServer.CMS.Command.Receipt do
                 confirmation
               ),
               to: Runner
-
-  @doc "Executes with an optional presenter for first-execution result reuse."
-  @spec execute(
-          User.t(),
-          Ecto.UUID.t() | nil,
-          String.t(),
-          String.t(),
-          String.t() | pos_integer(),
-          term(),
-          (-> Command.action_result(term(), term())),
-          module(),
-          Command.presenter()
-        ) :: T.result(term(), term())
-  def execute(
-        user,
-        command_id,
-        command,
-        resource_type,
-        resource_id,
-        data,
-        execute,
-        confirmation,
-        presenter
-      )
-      when is_function(presenter, 2) do
-    Runner.execute(
-      user,
-      command_id,
-      command,
-      resource_type,
-      resource_id,
-      data,
-      execute,
-      confirmation,
-      presenter
-    )
-  end
 
   @doc "Deletes a bounded batch of receipts past the recovery window."
   @spec prune_expired(pos_integer()) :: non_neg_integer()

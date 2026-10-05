@@ -17,18 +17,22 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
   alias CMS.{Articles, Communities, Command, Docs}
   alias CMS.FrontDesk
   alias CMS.Model.{Article, Community}
+  alias CMS.Articles.RevisionResult
   alias CMS.Articles.Commands.RevisionConfirmation, as: Confirmation
   alias Helper.T
 
   @doc "Creates and publishes one stable Article under an idempotent command id."
-  @spec create(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
+  @spec execute(Community.t(), T.thread(), map(), User.t(), keyword() | map()) ::
           {:ok, map()} | {:error, term()}
-  def create(%Community{} = community, thread, attrs, %User{} = user, opts) do
+  def execute(%Community{} = community, thread, attrs, %User{} = user, opts) do
     attrs = attrs |> drop_command_id() |> Map.drop([:author, :community, :communities])
 
     case option(opts, :command_id) do
       nil ->
-        create_and_publish(community, thread, attrs, user)
+        with {:ok, public} <- create_and_publish(community, thread, attrs, user),
+             {:ok, confirmation} <- confirmation_from_public(public, community, nil) do
+          RevisionResult.build(confirmation, community)
+        end
 
       command_id ->
         command = %Command{
@@ -39,12 +43,14 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
           params: %{thread: thread, attrs: attrs}
         }
 
-        Command.execute(
-          command,
-          action: &create_action(&1, community, user),
-          confirmation: Confirmation,
-          present: &present_command_result(&1, &2, community)
-        )
+        with {:ok, %Confirmation{} = confirmation} <-
+               Command.execute(
+                 command,
+                 action: &create_action(&1, community, user),
+                 confirmation: Confirmation
+               ) do
+          RevisionResult.build(confirmation, community)
+        end
     end
   end
 
@@ -54,25 +60,29 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
          user
        ) do
     with {:ok, public} <- create_and_publish(community, thread, attrs, user) do
-      with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
-           published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
-           publication_version when is_integer(publication_version) <-
-             Map.get(public, :publication_version, Map.get(public, :version, 1)) do
-        {:ok,
-         %Confirmation{
-           article_id: article.id,
-           revision_id: public.revision_id,
-           community_id: community.id,
-           author_id: article.author_id,
-           inner_id: article.inner_id,
-           thread: article.thread,
-           publication_version: publication_version,
-           published_at: published_at,
-           command_id: command_id
-         }, %{public: public}}
-      else
-        _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
-      end
+      confirmation_from_public(public, community, command_id)
+    end
+  end
+
+  defp confirmation_from_public(public, community, command_id) do
+    with {:ok, %Article{} = article} <- FrontDesk.article(public.article_id, mode: :internal),
+         published_at when is_struct(published_at, DateTime) <- Map.get(public, :inserted_at),
+         publication_version when is_integer(publication_version) <-
+           Map.get(public, :publication_version, Map.get(public, :version, 1)) do
+      {:ok,
+       %Confirmation{
+         article_id: article.id,
+         revision_id: public.revision_id,
+         community_id: community.id,
+         author_id: article.author_id,
+         inner_id: article.inner_id,
+         thread: article.thread,
+         publication_version: publication_version,
+         published_at: published_at,
+         command_id: command_id
+       }}
+    else
+      _ -> {:error, CMS.ErrorCat.command_result_unavailable()}
     end
   end
 
@@ -110,22 +120,6 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     end
   end
 
-  defp present_confirmation(%Confirmation{} = confirmation, _community),
-    do: Articles.RevisionResult.build(confirmation)
-
-  defp present_command_result(
-         _confirmation,
-         %{
-           state: :executed,
-           action_context: %{public: public}
-         },
-         _community
-       ),
-       do: {:ok, public}
-
-  defp present_command_result(%Confirmation{} = confirmation, %{state: :recovered}, community),
-    do: present_confirmation(confirmation, community)
-
   defp public_projection(%Article{inner_id: inner_id, thread: thread}, community)
        when is_integer(inner_id) do
     FrontDesk.article(%{
@@ -135,8 +129,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Create do
     })
   end
 
-  defp public_projection(_article, _community),
-    do: {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+  defp public_projection(_article, _community) do
+    {:error, CMS.Articles.ErrorCat.projection_not_updated()}
+  end
 
   defp sync_community_tags(community, article, attrs) do
     tag_ids = Map.get(attrs, :community_tags) || Map.get(attrs, "community_tags") || []

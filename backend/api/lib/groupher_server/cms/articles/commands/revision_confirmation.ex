@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Articles.Commands.RevisionConfirmation do
 
       Article create / update
         -> RevisionConfirmation
-        -> RevisionResult.build/1
+        -> RevisionResult.build/2
         -> revision-rooted Article result
   """
 
@@ -73,8 +73,9 @@ defmodule GroupherServer.CMS.Articles.Commands.RevisionConfirmation do
 
   def decode(_, _), do: ConfirmationCodec.decode_error()
 
-  defp decode_thread(value) when value in ~w(post blog changelog doc),
-    do: {:ok, String.to_existing_atom(value)}
+  defp decode_thread(value) when value in ~w(post blog changelog doc) do
+    {:ok, String.to_existing_atom(value)}
+  end
 
   defp decode_thread(_), do: {:error, :invalid_thread}
 end

@@ -25,6 +25,20 @@ defmodule GroupherServer.Test.CMS.Articles.Commands.Recovery do
     assert replayed.id == created.id
   end
 
+  test "create result shape is stable with or without commandId" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = mock_community(user)
+    attrs = mock_attrs(:post)
+
+    assert {:ok, direct} = CMS.Articles.create(community, :post, attrs, user)
+
+    assert {:ok, commanded} =
+             CMS.Articles.create(community, :post, attrs, user, command_id: Ecto.UUID.generate())
+
+    assert Map.keys(Map.delete(direct, :command_id)) |> Enum.sort() ==
+             Map.keys(Map.delete(commanded, :command_id)) |> Enum.sort()
+  end
+
   test "update replay returns the canonical published result" do
     {_community, public, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()

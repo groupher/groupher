@@ -14,11 +14,23 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
   alias Accounts.Model.User
   alias Articles.RevisionResult
   alias Articles.Commands.PublishConfirmation
-  alias CMS.Model.{Article, Community}
+  alias CMS.Model.{Article, Author, Community}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
-  @doc "Publishes one ordinary Article Draft with retry-safe command recovery."
-  @spec publish(Article.t(), User.t(), keyword()) :: T.domain_res(map())
-  def publish(%Article{} = article, %User{} = user, opts) do
+  @doc "Publishes one ordinary Article Draft, using retry-safe recovery when command_id is present."
+  @spec execute(Article.t(), User.t() | Author.t(), keyword()) :: T.domain_res(map())
+  def execute(%Article{} = article, actor, opts) do
+    case Keyword.get(opts, :command_id) do
+      nil -> publish_now(article.id, actor, opts)
+      _command_id -> execute_command(article, actor, opts)
+    end
+  end
+
+  def execute(_article, _actor, _opts) do
+    {:error, Articles.ErrorCat.invalid_publish_actor()}
+  end
+
+  defp execute_command(%Article{} = article, %User{} = user, opts) do
     case FrontDesk.community(article.community_id, mode: :internal) do
       {:ok, %Community{} = community} ->
         command = %Command{
@@ -34,7 +46,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
                  action: &publish_action/1,
                  confirmation: PublishConfirmation
                ) do
-          RevisionResult.build(Map.from_struct(confirmation), community)
+          RevisionResult.build(confirmation, community)
         end
 
       {:error, reason} ->
@@ -42,8 +54,9 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
     end
   end
 
-  def publish(_article, _actor, _opts),
-    do: {:error, Articles.ErrorCat.invalid_publish_actor()}
+  defp execute_command(_article, _actor, _opts) do
+    {:error, Articles.ErrorCat.invalid_publish_actor()}
+  end
 
   @spec publish_action(map()) :: Command.action_result(PublishConfirmation.t())
   defp publish_action(%{
@@ -58,7 +71,7 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
       |> Keyword.put(:skip_effects, true)
       |> Keyword.put(:outbox_command_id, command_id)
 
-    case Articles.publish(article_id, user, publish_opts) do
+    case publish_now(article_id, user, publish_opts) do
       {:ok, publish_result} ->
         {:ok,
          %PublishConfirmation{
@@ -76,4 +89,38 @@ defmodule GroupherServer.CMS.Articles.Commands.Publish do
     end
   end
 
+  defp publish_now(article_id, actor, opts) do
+    with {:ok, article} <- stable_article(article_id),
+         {:ok, author} <- target_author(actor),
+         {:ok, result} <-
+           CMS.Gate.Access.with_check(actor_user(actor), :publish, article, fn canonical ->
+             Articles.Writer.publish(canonical, author, actor, opts)
+           end),
+         {:ok, result} <- maybe_publish_effects(result, opts) do
+      {:ok, result}
+    end
+  end
+
+  defp maybe_publish_effects(result, _opts), do: {:ok, result}
+
+  defp target_author(%Author{} = author), do: {:ok, author}
+  defp target_author(%User{} = user), do: Articles.Writer.ensure_author_exists(user)
+  defp target_author(_actor), do: {:error, :invalid_actor}
+
+  defp actor_user(%User{} = user), do: user
+  defp actor_user(%Author{user: %User{} = user}), do: user
+
+  defp actor_user(%Author{user_id: user_id}) do
+    case RootFrontDesk.fresh_user(user_id) do
+      {:ok, user} -> user
+      _ -> nil
+    end
+  end
+
+  defp stable_article(article_id) do
+    case FrontDesk.article(article_id, mode: :internal) do
+      {:ok, %Article{} = article} -> {:ok, article}
+      {:error, _} -> {:error, :article_not_found}
+    end
+  end
 end

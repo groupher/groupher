@@ -40,10 +40,7 @@ defmodule GroupherServer.CMS.Command do
         }
 
   @type callback_result(value) :: {:ok, value} | {:error, term()}
-  @type presenter :: (term(), map() -> callback_result(term()))
-  @type action_result(value, context) ::
-          callback_result(value)
-          | {:ok, value, context}
+  @type action_result(value) :: callback_result(value)
 
   @enforce_keys [:actor, :command_id, :operation, :target, :params]
   defstruct [:actor, :command_id, :operation, :target, :params]
@@ -51,18 +48,21 @@ defmodule GroupherServer.CMS.Command do
   @doc "Runs one user command and returns its canonical domain result."
   @spec execute(t(), keyword()) :: T.done()
   def execute(%__MODULE__{} = command, opts) when is_list(opts) do
+    case Keyword.keys(opts) -- [:action, :confirmation] do
+      [] ->
+        :ok
+
+      unknown ->
+        raise ArgumentError,
+              "CMS.Command.execute received unsupported options: #{inspect(unknown)}"
+    end
+
     action = Keyword.fetch!(opts, :action)
     confirmation = Keyword.fetch!(opts, :confirmation)
-    presenter = Keyword.get(opts, :present)
 
     unless is_function(action, 1) and is_atom(confirmation) do
       raise ArgumentError,
             "CMS.Command.execute expects action/1 and a confirmation module"
-    end
-
-    unless is_nil(presenter) or is_function(presenter, 2) do
-      raise ArgumentError,
-            "CMS.Command.execute expects present/2 when a presenter is provided"
     end
 
     command_result =
@@ -83,9 +83,7 @@ defmodule GroupherServer.CMS.Command do
             confirmation
           ]
 
-          if is_function(presenter, 2),
-            do: apply(CommandReceipt, :execute, receipt_args ++ [presenter]),
-            else: apply(CommandReceipt, :execute, receipt_args)
+          apply(CommandReceipt, :execute, receipt_args)
         end
       end
 
@@ -128,11 +126,13 @@ defmodule GroupherServer.CMS.Command do
     end
   end
 
-  defp normalize_command_result({:error, {:invalid_command_result, _reason}}),
-    do: {:error, ErrorCat.command_invalid_result()}
+  defp normalize_command_result({:error, {:invalid_command_result, _reason}}) do
+    {:error, ErrorCat.command_invalid_result()}
+  end
 
-  defp normalize_command_result({:error, :invalid_intent_params}),
-    do: {:error, ErrorCat.invalid_command_intent()}
+  defp normalize_command_result({:error, :invalid_intent_params}) do
+    {:error, ErrorCat.invalid_command_intent()}
+  end
 
   defp normalize_command_result({:ok, _value} = result), do: result
   defp normalize_command_result({:error, _reason} = result), do: result
@@ -148,12 +148,14 @@ defmodule GroupherServer.CMS.Command do
   defp validate_target(%__MODULE__{target: target}) when is_struct(target), do: {:ok, :pass}
 
   defp validate_target(%__MODULE__{target: %{id: id, thread: thread}})
-       when is_binary(id) and thread in [:post, :blog, :changelog, :doc],
-       do: {:ok, :pass}
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc] do
+    {:ok, :pass}
+  end
 
   defp validate_target(%__MODULE__{target: {type, id}})
-       when (is_atom(type) or is_binary(type)) and (is_binary(id) or is_integer(id)),
-       do: {:ok, :pass}
+       when (is_atom(type) or is_binary(type)) and (is_binary(id) or is_integer(id)) do
+    {:ok, :pass}
+  end
 
   defp validate_target(_), do: {:error, ErrorCat.unsupported_command_resource()}
 
@@ -172,9 +174,11 @@ defmodule GroupherServer.CMS.Command do
       try do
         operation = String.to_existing_atom(candidate)
 
-        if operation_tag(operation) == tag,
-          do: {:ok, operation},
-          else: {:error, :invalid_operation_tag}
+        if operation_tag(operation) == tag do
+          {:ok, operation}
+        else
+          {:error, :invalid_operation_tag}
+        end
       rescue
         ArgumentError -> {:error, :invalid_operation_tag}
       end
@@ -186,15 +190,17 @@ defmodule GroupherServer.CMS.Command do
   def operation_from_tag(_tag), do: {:error, :invalid_operation_tag}
 
   defp target_identity(%__MODULE__{target: %{id: id, thread: thread}})
-       when is_binary(id) and thread in [:post, :blog, :changelog, :doc],
-       do: {:ok, {"article", id}}
+       when is_binary(id) and thread in [:post, :blog, :changelog, :doc] do
+    {:ok, {"article", id}}
+  end
 
   defp target_identity(%__MODULE__{target: target}) when is_struct(target) do
     build_target_identity(target, target_key(target))
   end
 
-  defp target_identity(%__MODULE__{target: {type, id}}),
-    do: {:ok, {target_type(type), id}}
+  defp target_identity(%__MODULE__{target: {type, id}}) do
+    {:ok, {target_type(type), id}}
+  end
 
   defp build_target_identity(target, key) when is_binary(key) or is_integer(key) do
     case target_type(target) do
@@ -203,14 +209,16 @@ defmodule GroupherServer.CMS.Command do
     end
   end
 
-  defp build_target_identity(_target, _key),
-    do: {:error, ErrorCat.unsupported_command_resource()}
+  defp build_target_identity(_target, _key) do
+    {:error, ErrorCat.unsupported_command_resource()}
+  end
 
   defp target_type(target) when is_atom(target), do: Atom.to_string(target)
   defp target_type(target) when is_binary(target), do: target
 
-  defp target_type(target) when is_struct(target),
-    do: target.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
+  defp target_type(target) when is_struct(target) do
+    target.__struct__ |> Module.split() |> List.last() |> Macro.underscore()
+  end
 
   defp target_type(_target), do: nil
 

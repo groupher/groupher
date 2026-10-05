@@ -13,14 +13,12 @@ Receipt-backed mutation 只接受以下组合：
 ```elixir
 CMS.Command.execute(command,
   action: &execute_once/1,
-  confirmation: Confirmation,
-  present: &optional_presenter/2
+  confirmation: Confirmation
 )
 ```
 
 - `action/1` 只在首次 claim 成功时执行；
 - `confirmation` 是实现 `operations/0`、`encode/2`、`decode/2` 的 typed codec；
-- `present/2` 可选：首次执行复用事务内 seed，恢复路径按 immutable anchor 重建；
 - 不存在 legacy `result` callback；
 - Runner 不解释领域 map，不保存 `outcome/result_key/result_payload` 顶层列；
 - transport 只看统一的领域成功或 ErrorCat，不感知 executed/recovered。
@@ -101,7 +99,7 @@ INSERT claim
 - result 已过期但 identity 不同：仍为 `command_id_conflict`。
 
 `command_resolution_pending` actions 为 `[:retry, :reconcile]`；`command_result_expired` actions 为
-`[:reconcile]`。首次提交后 presenter 无法返回产品结果时，客户端进入 read/reconcile，不得自动换新
+`[:reconcile]`。首次提交后 result builder 无法返回产品结果时，客户端进入 read/reconcile，不得自动换新
 commandId 重放写入。
 
 ## 6. 两段 retention
@@ -126,9 +124,9 @@ Article command result 使用 typed `ArticleResult`，而不是自由形状 map�
 的 immutable revision anchor 为根；current operational decoration 属于明确命名的 transport layer。
 builder 不伪装 Ecto schema，不实现 `__schema__/1,2` compatibility delegation。
 
-首次执行允许 presenter 使用 action seed，避免 commit 后立刻重读，也避免混入并发 current state。恢复
-路径没有 seed，按 immutable anchor 重建。`CommandOutcome` struct 留待后续；当前仍接受
-`{:ok, confirmation}` 与 `{:ok, confirmation, action_context}` 两种成功形状。
+首次执行与恢复都只返回 Confirmation；领域 result builder 在 Receipt transaction 提交后按 immutable
+anchor 重建 canonical result。`CommandOutcome` struct 留待后续；当前只接受
+`{:ok, confirmation}` 这一种成功形状。
 
 ## 8. 外部副作用
 
@@ -147,7 +145,7 @@ reader；全部节点就绪后才切换 v2 writer；rollback window 内不得部
 ## 10. 可观测性与验收
 
 指标至少覆盖 claim new/recovery/conflict/pending/expired、Confirmation encoded/rejected/bytes/version、
-recovery decode/presenter failure，以及 retention compacted/deleted rows。日志与公共错误不得包含
+recovery decode/result-builder failure，以及 retention compacted/deleted rows。日志与公共错误不得包含
 Confirmation、原始 params 或 digest 前正文。
 
 | 场景                         | 必须结果                                    |

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Articles.ArticleTransportResult do
   @moduledoc """
   Adds stable transport compatibility fields to a revision-rooted Article read.
 
-      RevisionResult.build/1
+      RevisionResult.build/2
         -> ArticleTransportResult.decorate/3
         -> GraphQL/domain response
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.ArticleTransportResult do
       revision: revision,
       community: community,
       # active_at belongs to the current operational Article state, not to the
-      # immutable revision snapshot.  Keep it out of RevisionResult.build/1.
+      # immutable revision snapshot. Keep it out of RevisionResult.build/2.
       active_at: Map.get(article, :active_at),
       public: %{
         revision_id: revision.id,

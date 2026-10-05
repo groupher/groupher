@@ -17,13 +17,16 @@ Gate、Lifecycle 或 version 规则，也不记录迁移步骤。
   [CMS Domain Outbox](./cms-outbox.md)。
 - 成功结果的 Confirmation codec 与 Receipt JSON 合同见
   [CMS Command Confirmation](./cms-command-confirmation.md)。
+- Confirmation 与提交后 result builder 的 V3 收口见
+  [CMS Command V3](./cms-command-v3.md)。
 
 发生冲突时，领域行为以 Transition Contract 为准，长期模块与 API 边界以本文为准，
 阶段顺序和临时状态以迁移文档为准。
 
-当前 Confirmation 协议已经完成收敛：生产调用点只使用 `action/confirmation`，presenter 让首次
-执行复用事务内结果，recovery 从 Confirmation 重建。旧 callback、旧结果列与 whole-intent
-fingerprint 均已删除；本次 contract migration 明确清空历史 Receipt，不承诺历史数据兼容。
+当前 Confirmation 协议已经完成收敛：生产调用点只使用 `action/confirmation`，首次执行与 recovery
+都返回 typed Confirmation，领域 Command 在 Receipt transaction 提交后显式构造 canonical result。
+旧 presenter、action context、结果列与 whole-intent fingerprint 均已删除；本次 contract migration
+明确清空历史 Receipt，不承诺历史数据兼容。
 
 ## 1. 目标
 
@@ -110,7 +113,7 @@ Transport/UI 调用方、GraphQL 和前端业务代码不得感知服务端首�
 但它不处理 replay 状态，也不直接操作 Receipt。正常公共返回保持领域原有形状：
 
 Receipt-backed 的 command-time 结果由领域 result builder 负责，例如
-`CMS.Articles.RevisionResult.build/1` 或 `CMS.Docs.DraftResult.build/1`。它们以 decoded
+`CMS.Articles.RevisionResult.build/2` 或 `CMS.Docs.DraftResult.build/1`。它们以 decoded
 Confirmation 中的 immutable revision/draft anchor 为根，不读取当前 `ArticlePublic` 或原始 transport
 args；FrontDesk 仍只负责查询时刻的 current projection。
 
@@ -150,10 +153,9 @@ Claim、领域写入和 finalize 必须处于同一事务。失败时三者一�
 `CMS.Command.execute/2` 把已解析的 command context 传给 `action` callback；context 中的 `target` 是调用方声明的
 领域资源，canonical resource 仍由领域 Gate 在锁内解析。当前 context 字段固定为
 `actor/command_id/target/params`。`action` 返回
-`{:ok, %Confirmation{}} | {:ok, %Confirmation{}, action_context} | {:error, reason}`；codec 只允许保存稳定的
-Confirmation JSON。`present/2` 必须返回 `{:ok, value} | {:error, reason}`；裸值或其他 tuple
-统一视为无效 Command result，不能由 Runner 自动包装成成功。异常继续按 Elixir 异常语义向外传播，
-不转换成领域错误。
+`{:ok, %Confirmation{}} | {:error, reason}`；codec 只允许保存稳定的 Confirmation JSON。结果 projection
+不在 Receipt transaction 内运行，由领域 owner 在 execute 成功后调用 result builder。异常继续按 Elixir
+异常语义向外传播，不转换成领域错误。
 
 超时分成三层是为了让并发冲突快速失败，同时给真正的领域事务足够时间：claim 阶段的
 `lock_timeout` 为 4 秒；外层 transaction 和 statement 的上限为 30 秒。4 秒只限制等待其他

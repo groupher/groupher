@@ -7,8 +7,9 @@ defmodule GroupherServer.Test.CMS.BadConfirmation do
   def operations, do: [:upvote_add]
 
   @impl true
-  def encode(%__MODULE__{}, _operation),
-    do: {:ok, %{"schema_version" => 1, "operation" => "wrong.operation", "value" => true}}
+  def encode(%__MODULE__{}, _operation) do
+    {:ok, %{"schema_version" => 1, "operation" => "wrong.operation", "value" => true}}
+  end
 
   @impl true
   def decode(_payload, _operation), do: {:error, :invalid}
@@ -23,8 +24,9 @@ defmodule GroupherServer.Test.CMS.OversizedConfirmation do
   def operations, do: [:upvote_add]
 
   @impl true
-  def encode(%__MODULE__{value: value}, :upvote_add),
-    do: {:ok, %{"schema_version" => 1, "operation" => "upvote.add", "value" => value}}
+  def encode(%__MODULE__{value: value}, :upvote_add) do
+    {:ok, %{"schema_version" => 1, "operation" => "upvote.add", "value" => value}}
+  end
 
   @impl true
   def decode(%{"value" => value}, :upvote_add), do: {:ok, %__MODULE__{value: value}}
@@ -185,10 +187,9 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
     assert receipt.confirmation["operation"] == "upvote.add"
   end
 
-  test "optional presenter can reuse first-execution context and still handles recovery" do
+  test "rejects legacy action context tuples and does not finalize the receipt" do
     {_community, post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
-    parent = self()
 
     command = %Command{
       actor: user,
@@ -198,44 +199,41 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
       params: %{operation: :add}
     }
 
-    action = fn _context ->
-      send(parent, :action_called)
-
-      {:ok,
-       %UpvoteConfirmation{
-         data: %{
-           "operation" => "add",
-           "outcome" => "changed",
-           "target_id" => to_string(post.id),
-           "target_type" => "article"
-         }
-       }, %{source: :action}}
-    end
-
-    presenter = fn _confirmation, %{state: state, action_context: context} ->
-      {:ok, %{state: state, context: context}}
-    end
-
-    assert {:ok, %{state: :executed, context: %{source: :action}}} =
+    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
              Command.execute(command,
-               action: action,
-               confirmation: UpvoteConfirmation,
-               present: presenter
+               action: fn _context ->
+                 {:ok,
+                  %UpvoteConfirmation{
+                    data: %{
+                      "operation" => "add",
+                      "outcome" => "changed",
+                      "target_id" => to_string(post.id),
+                      "target_type" => "article"
+                    }
+                  }, %{source: :action}}
+               end,
+               confirmation: UpvoteConfirmation
              )
 
-    assert_received :action_called
-
-    assert {:ok, %{state: :recovered, context: nil}} =
-             Command.execute(command,
-               action: fn _ -> flunk("recovery must not execute the action") end,
-               confirmation: UpvoteConfirmation,
-               present: presenter
+    refute Repo.exists?(
+             from(receipt in CMS.Model.CommandReceipt,
+               where:
+                 receipt.initiator_type == "user" and
+                   receipt.initiator_key == ^to_string(user.id) and
+                   receipt.command_id == ^command_id
              )
+           )
 
-    refute_received :action_called
+    assert_raise ArgumentError, ~r/unsupported options/, fn ->
+      Command.execute(command,
+        action: fn _ -> {:error, :must_not_execute} end,
+        confirmation: UpvoteConfirmation,
+        present: fn _, _ -> {:ok, :legacy} end
+      )
+    end
   end
 
-  test "rejects a presenter result outside the business result contract" do
+  test "recovers the decoded Confirmation without a presenter" do
     {_community, post, _attrs, user} = mock_article(:post)
     command_id = Ecto.UUID.generate()
 
@@ -259,21 +257,17 @@ defmodule GroupherServer.Test.CMS.CommandReceiptTest do
        }}
     end
 
-    assert {:error, %ErrorCat.Error{reason: :command_invalid_result}} =
+    assert {:ok, %UpvoteConfirmation{}} =
              Command.execute(command,
                action: action,
-               confirmation: UpvoteConfirmation,
-               present: fn _confirmation, _context -> %{unexpected: :raw_value} end
+               confirmation: UpvoteConfirmation
              )
 
-    refute Repo.exists?(
-             from(receipt in CMS.Model.CommandReceipt,
-               where:
-                 receipt.initiator_type == "user" and
-                   receipt.initiator_key == ^to_string(user.id) and
-                   receipt.command_id == ^command_id
+    assert {:ok, %UpvoteConfirmation{}} =
+             Command.execute(command,
+               action: fn _ -> flunk("recovery must not execute the action") end,
+               confirmation: UpvoteConfirmation
              )
-           )
   end
 
   test "rejects an oversized Confirmation before finalizing the receipt" do
