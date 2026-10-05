@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Comments do
 
       GraphQL resolver / internal caller
         -> CMS.Comments
-             -> Reader / List          -> batched response projection
+             -> Store / Query          -> batched response projection
              -> Commands.<Action>      -> canonical aggregate transaction
              -> Writer create/reply    -> canonical aggregate transaction
              -> States / Moderation    -> focused domain operation
@@ -15,12 +15,13 @@ defmodule GroupherServer.CMS.Comments do
 
   alias __MODULE__.{
     InteractionResponse,
-    List,
+    Query,
     Moderation,
-    Reader,
     States,
     Writer
   }
+
+  alias __MODULE__.Query.Reconcile, as: Reconcile
 
   alias __MODULE__.Commands.{DeleteComment, UpdateComment}
   alias __MODULE__.Solution
@@ -40,7 +41,7 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.fetch_comment(comment_id)
   """
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
-  def fetch_comment(comment_id), do: Reader.fetch_comment(comment_id)
+  def fetch_comment(comment_id), do: Reconcile.fetch_comment(comment_id)
 
   @doc """
   Fetches one Comment together with its full Article-facing information.
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.fetch_full_comment(comment_id)
   """
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
-  def fetch_full_comment(comment_id), do: Reader.fetch_full_comment(comment_id)
+  def fetch_full_comment(comment_id), do: Reconcile.fetch_full_comment(comment_id)
 
   @doc """
   Returns one hydrated Comment without viewer-specific state.
@@ -85,8 +86,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.one_comment(comment_id, viewer)
   """
   @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
-  def one_comment(%Comment{} = comment, %User{} = user),
-    do: InteractionResponse.one(comment, user)
+  def one_comment(%Comment{} = comment, %User{} = user) do
+    InteractionResponse.one(comment, user)
+  end
 
   def one_comment(%{article: _} = comment_path, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_path, user) do
@@ -103,8 +105,9 @@ defmodule GroupherServer.CMS.Comments do
   @doc "Returns one bounded Article-scoped Comment reconciliation batch."
   @spec reconcile_comments(atom(), struct(), [integer() | String.t()], User.t() | nil) ::
           T.domain_res([Comment.t()])
-  def reconcile_comments(thread, article, inner_ids, viewer),
-    do: Reader.reconcile_comments(thread, article, inner_ids, viewer)
+  def reconcile_comments(thread, article, inner_ids, viewer) do
+    Reconcile.reconcile_comments(thread, article, inner_ids, viewer)
+  end
 
   @doc """
   Returns aggregate comment state for an Article without a viewer.
@@ -114,7 +117,7 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.comments_state(:post, post_id)
   """
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
-  def comments_state(thread, article_id), do: List.comments_state(thread, article_id)
+  def comments_state(thread, article_id), do: Query.comments_state(thread, article_id)
 
   @doc """
   Returns aggregate comment state including whether the viewer participated.
@@ -124,8 +127,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.comments_state(:post, post_id, viewer)
   """
   @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
-  def comments_state(thread, article_id, %User{} = user),
-    do: List.comments_state(thread, article_id, user)
+  def comments_state(thread, article_id, %User{} = user) do
+    Query.comments_state(thread, article_id, user)
+  end
 
   @doc """
   Returns a page of Comments without viewer-specific state.
@@ -135,8 +139,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.paged_comments(:post, post_id, filters, :replies)
   """
   @spec paged_comments(T.thread(), T.id(), map(), atom()) :: T.domain_res(T.paged_data())
-  def paged_comments(thread, article_id, filters, mode),
-    do: paged_comments(thread, article_id, filters, mode, nil)
+  def paged_comments(thread, article_id, filters, mode) do
+    paged_comments(thread, article_id, filters, mode, nil)
+  end
 
   @doc """
   Returns a page of Comments hydrated for an optional viewer.
@@ -147,8 +152,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
           T.domain_res(T.paged_data())
-  def paged_comments(thread, article_id, filters, mode, user),
-    do: List.paged_comments(thread, article_id, filters, mode, user)
+  def paged_comments(thread, article_id, filters, mode, user) do
+    Query.paged_comments(thread, article_id, filters, mode, user)
+  end
 
   @doc """
   Returns a user's published Comments across public Articles.
@@ -158,8 +164,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.paged_published_comments(target_user, filters)
   """
   @spec paged_published_comments(User.t(), map()) :: T.domain_res(T.paged_data())
-  def paged_published_comments(%User{} = user, filters),
-    do: List.paged_published_comments(user, filters, nil)
+  def paged_published_comments(%User{} = user, filters) do
+    Query.paged_published_comments(user, filters, nil)
+  end
 
   @doc """
   Returns a user's published Comments with optional viewer state, or limits the
@@ -172,13 +179,15 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec paged_published_comments(User.t(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
-  def paged_published_comments(%User{} = target_user, filters, actor) when is_map(filters),
-    do: List.paged_published_comments(target_user, filters, actor)
+  def paged_published_comments(%User{} = target_user, filters, actor) when is_map(filters) do
+    Query.paged_published_comments(target_user, filters, actor)
+  end
 
   @spec paged_published_comments(User.t(), T.thread(), map()) ::
           T.domain_res(T.paged_data())
-  def paged_published_comments(%User{} = user, thread, filters) when is_atom(thread),
-    do: List.paged_published_comments(user, thread, filters, nil)
+  def paged_published_comments(%User{} = user, thread, filters) when is_atom(thread) do
+    Query.paged_published_comments(user, thread, filters, nil)
+  end
 
   @doc """
   Returns one user's published Comments in a thread for an optional viewer.
@@ -189,8 +198,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec paged_published_comments(User.t(), T.thread(), map(), User.t() | nil) ::
           T.domain_res(T.paged_data())
-  def paged_published_comments(%User{} = target_user, thread, filters, actor),
-    do: List.paged_published_comments(target_user, thread, filters, actor)
+  def paged_published_comments(%User{} = target_user, thread, filters, actor) do
+    Query.paged_published_comments(target_user, thread, filters, actor)
+  end
 
   @doc """
   Returns folded Comments without viewer-specific state.
@@ -200,8 +210,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.paged_folded_comments(:post, post_id, filters)
   """
   @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged_folded_comments(thread, article_id, filters),
-    do: List.paged_folded_comments(thread, article_id, filters)
+  def paged_folded_comments(thread, article_id, filters) do
+    Query.paged_folded_comments(thread, article_id, filters)
+  end
 
   @doc """
   Returns folded Comments hydrated for a viewer.
@@ -212,8 +223,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
           T.domain_res(T.paged_data())
-  def paged_folded_comments(thread, article_id, filters, %User{} = user),
-    do: List.paged_folded_comments(thread, article_id, filters, user)
+  def paged_folded_comments(thread, article_id, filters, %User{} = user) do
+    Query.paged_folded_comments(thread, article_id, filters, user)
+  end
 
   @doc """
   Returns replies under one Comment without viewer-specific state.
@@ -223,8 +235,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.paged_comment_replies(comment_id, filters)
   """
   @spec paged_comment_replies(T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged_comment_replies(comment_id, filters),
-    do: List.paged_comment_replies(comment_id, filters)
+  def paged_comment_replies(comment_id, filters) do
+    Query.paged_comment_replies(comment_id, filters)
+  end
 
   @doc """
   Returns replies under one Comment hydrated for an optional viewer.
@@ -234,8 +247,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.paged_comment_replies(comment_id, filters, viewer)
   """
   @spec paged_comment_replies(T.id(), map(), User.t() | nil) :: T.domain_res(T.paged_data())
-  def paged_comment_replies(comment_id, filters, user),
-    do: List.paged_comment_replies(comment_id, filters, user)
+  def paged_comment_replies(comment_id, filters, user) do
+    Query.paged_comment_replies(comment_id, filters, user)
+  end
 
   @doc """
   Returns the distinct participants in an Article's Comments.
@@ -246,8 +260,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())
-  def paged_comments_participants(thread, article_id, filters),
-    do: List.paged_comments_participants(thread, article_id, filters)
+  def paged_comments_participants(thread, article_id, filters) do
+    Query.paged_comments_participants(thread, article_id, filters)
+  end
 
   @doc """
   Creates a Comment from an already resolved Article and returns the Comment.
@@ -258,8 +273,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec create_comment(T.thread(), T.article(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
-  def create_comment(thread, article, body, %User{} = user),
-    do: create_comment(thread, article, body, user, nil)
+  def create_comment(thread, article, body, %User{} = user) do
+    create_comment(thread, article, body, user, nil)
+  end
 
   @spec create_comment(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
@@ -279,8 +295,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
-  def create_comment(%Community{} = community, thread, article_id, body, %User{} = user),
-    do: create_comment(community, thread, article_id, body, user, nil)
+  def create_comment(%Community{} = community, thread, article_id, body, %User{} = user) do
+    create_comment(community, thread, article_id, body, user, nil)
+  end
 
   @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
@@ -312,8 +329,9 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec create_comment_payload(T.thread(), T.article(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(map())
-  def create_comment_payload(thread, article, body, %User{} = user, command_id \\ nil),
-    do: Writer.create(thread, article, body, user, command_id)
+  def create_comment_payload(thread, article, body, %User{} = user, command_id \\ nil) do
+    Writer.create(thread, article, body, user, command_id)
+  end
 
   @doc """
   Rejects an unauthenticated Comment update.
@@ -334,13 +352,15 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(UpdateComment.result())
-  def update_comment(%Comment{} = comment, body, %User{} = user),
-    do: update_comment(comment, body, user, nil)
+  def update_comment(%Comment{} = comment, body, %User{} = user) do
+    update_comment(comment, body, user, nil)
+  end
 
   @spec update_comment(Comment.t(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(UpdateComment.result())
-  def update_comment(%Comment{} = comment, body, %User{} = user, command_id),
-    do: UpdateComment.execute(comment, body, user, command_id)
+  def update_comment(%Comment{} = comment, body, %User{} = user, command_id) do
+    UpdateComment.execute(comment, body, user, command_id)
+  end
 
   @doc """
   Rejects an unauthenticated Comment deletion.
@@ -361,13 +381,15 @@ defmodule GroupherServer.CMS.Comments do
   """
   @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
           T.domain_res(DeleteComment.result())
-  def delete_comment(%Comment{} = comment, %User{} = user),
-    do: delete_comment(comment, user, nil)
+  def delete_comment(%Comment{} = comment, %User{} = user) do
+    delete_comment(comment, user, nil)
+  end
 
   @spec delete_comment(Comment.t(), User.t(), String.t() | nil) ::
           T.domain_res(DeleteComment.result())
-  def delete_comment(%Comment{} = comment, %User{} = user, command_id),
-    do: DeleteComment.execute(comment, user, command_id)
+  def delete_comment(%Comment{} = comment, %User{} = user, command_id) do
+    DeleteComment.execute(comment, user, command_id)
+  end
 
   @doc """
   Accepts or replaces the current solution of a QA Post.
@@ -409,8 +431,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.reply_comment(parent_comment, body, actor)
   """
   @spec reply_comment(Comment.t() | T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
-  def reply_comment(comment_or_id, body, %User{} = user),
-    do: reply_comment(comment_or_id, body, user, nil)
+  def reply_comment(comment_or_id, body, %User{} = user) do
+    reply_comment(comment_or_id, body, user, nil)
+  end
 
   @spec reply_comment(Comment.t() | T.id(), String.t(), User.t(), String.t() | nil) ::
           T.domain_res(Comment.t())
@@ -432,8 +455,9 @@ defmodule GroupherServer.CMS.Comments do
           T.domain_res(map())
   def reply_comment_payload(comment_or_id, body, user, command_id \\ nil)
 
-  def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_id),
-    do: Writer.reply(comment, body, user, command_id)
+  def reply_comment_payload(%Comment{} = comment, body, %User{} = user, command_id) do
+    Writer.reply(comment, body, user, command_id)
+  end
 
   def reply_comment_payload(comment_id, body, %User{} = user, command_id) do
     with {:ok, comment} <- FrontDesk.comment(comment_id, mode: :internal) do
@@ -513,8 +537,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.set_comment_illegal(comment_id, attrs)
   """
   @spec set_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
-  def set_comment_illegal(comment_id, attrs),
-    do: Moderation.set_illegal(comment_id, attrs)
+  def set_comment_illegal(comment_id, attrs) do
+    Moderation.set_illegal(comment_id, attrs)
+  end
 
   @doc """
   Removes an illegal-content moderation state from a Comment.
@@ -524,8 +549,9 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.unset_comment_illegal(comment_id, attrs)
   """
   @spec unset_comment_illegal(T.id(), map()) :: T.domain_res(Comment.t())
-  def unset_comment_illegal(comment_id, attrs),
-    do: Moderation.unset_illegal(comment_id, attrs)
+  def unset_comment_illegal(comment_id, attrs) do
+    Moderation.unset_illegal(comment_id, attrs)
+  end
 
   @doc """
   Returns Comments whose automated audit failed.
@@ -545,6 +571,7 @@ defmodule GroupherServer.CMS.Comments do
       CMS.Comments.set_comment_audit_failed(comment, state)
   """
   @spec set_comment_audit_failed(Comment.t(), term()) :: T.domain_res(Comment.t())
-  def set_comment_audit_failed(comment, state),
-    do: Moderation.set_audit_failed(comment, state)
+  def set_comment_audit_failed(comment, state) do
+    Moderation.set_audit_failed(comment, state)
+  end
 end

@@ -10,18 +10,18 @@ defmodule GroupherServer.CMS.Press do
 
       GraphQL resolver / job
         -> CMS.Press facade
-        -> Reader / ConfigWriter / Invalidation
+        -> Query / ConfigWriter / Invalidation
   """
 
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, PressConfig}
-  alias CMS.Press.{ConfigWriter, Invalidation, Reader}
+  alias CMS.Press.{ConfigWriter, Invalidation, Query}
 
   @doc "Reads persisted or legacy Press configuration."
   @spec config(Community.t() | String.t()) :: {:ok, PressConfig.t() | map()} | {:error, term()}
-  def config(community), do: Reader.config(community)
+  def config(community), do: Query.config(community)
 
   @doc "Updates Press config and its Activity fact."
   @spec update_config(Community.t() | String.t(), map(), User.t() | nil) ::
@@ -34,20 +34,21 @@ defmodule GroupherServer.CMS.Press do
 
   @doc "Reads one current public Article projection."
   @spec article(map()) :: {:ok, map()} | {:error, term()}
-  def article(path), do: Reader.article(path)
+  def article(path), do: Query.article(path)
 
   @doc "Reads one Community RSS feed."
   @spec community_rss_feed(Community.t() | String.t(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
-  def community_rss_feed(community, opts \\ %{}), do: Reader.community_rss_feed(community, opts)
+  def community_rss_feed(community, opts \\ %{}), do: Query.community_rss_feed(community, opts)
 
   @doc "Reads one thread RSS feed."
   @spec thread_rss_feed(Community.t() | String.t(), atom(), map() | keyword()) ::
           {:ok, map()} | {:error, term()}
-  def thread_rss_feed(community, thread, opts \\ %{}),
-    do: Reader.thread_rss_feed(community, thread, opts)
+  def thread_rss_feed(community, thread, opts \\ %{}) do
+    Query.thread_rss_feed(community, thread, opts)
+  end
 
   @doc "Reads the current Press site manifest."
   @spec site_manifest(Community.t() | String.t()) :: {:ok, map()} | {:error, term()}
-  def site_manifest(community), do: Reader.site_manifest(community)
+  def site_manifest(community), do: Query.site_manifest(community)
 end

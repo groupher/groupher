@@ -67,9 +67,11 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   @type read_mode ::
           :public | :management | :owner_management | :moderator_management | :operations
 
-  @doc "Returns the read modes shared by Community Scope and access checks."
-  @spec read_modes() :: [read_mode()]
-  def read_modes, do: [:public, :management, :owner_management, :moderator_management, :operations]
+  @doc "Returns the policy modes shared by Community Scope and access checks."
+  @spec read_policy_modes() :: [read_mode()]
+  def read_policy_modes do
+    [:public, :management, :owner_management, :moderator_management, :operations]
+  end
 
   @doc """
   Returns the Lifecycle states readable by a Community policy mode.
@@ -191,8 +193,9 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end)
   end
 
-  defp transition_locked(nil, _state, _opts),
-    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  defp transition_locked(nil, _state, _opts) do
+    Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  end
 
   defp transition_locked(lifecycle, state, opts) do
     case transition_preconditions(lifecycle, state, opts) do
@@ -258,8 +261,9 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end)
   end
 
-  defp apply_blocker_locked(nil, _attrs, _opts),
-    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  defp apply_blocker_locked(nil, _attrs, _opts) do
+    Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  end
 
   defp apply_blocker_locked(lifecycle, attrs, opts) do
     ensure_not_destroyed!(lifecycle)
@@ -301,8 +305,9 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end)
   end
 
-  defp release_blocker_locked(nil, _type, _cause_ref, _opts),
-    do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  defp release_blocker_locked(nil, _type, _cause_ref, _opts) do
+    Repo.rollback(CommunityErrorCat.lifecycle_not_found())
+  end
 
   defp release_blocker_locked(lifecycle, type, cause_ref, opts) do
     ensure_not_destroyed!(lifecycle)
@@ -539,13 +544,15 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end
   end
 
-  defp capability_allowed(:read, lifecycle, _context),
-    do: {:ok, lifecycle.state in @public_readable_states}
+  defp capability_allowed(:read, lifecycle, _context) do
+    {:ok, lifecycle.state in @public_readable_states}
+  end
 
   defp capability_allowed(:write, lifecycle, _context), do: {:ok, lifecycle.state == :active}
 
-  defp capability_allowed(:manage, lifecycle, _context),
-    do: {:ok, lifecycle.state in [:active, :read_only, :suspended, :archived, :pending_destroy]}
+  defp capability_allowed(:manage, lifecycle, _context) do
+    {:ok, lifecycle.state in [:active, :read_only, :suspended, :archived, :pending_destroy]}
+  end
 
   defp capability_allowed(:destroy, lifecycle, context) do
     if lifecycle.state in [:active, :read_only, :archived] do
@@ -557,20 +564,24 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     end
   end
 
-  defp capability_blockers(_lifecycle, %{active_blockers: blockers}) when is_list(blockers),
-    do: {:ok, blockers}
+  defp capability_blockers(_lifecycle, %{active_blockers: blockers}) when is_list(blockers) do
+    {:ok, blockers}
+  end
 
   defp capability_blockers(%CommunityLifecycle{blockers: blockers}, _context)
-       when is_list(blockers),
-       do: {:ok, Enum.filter(blockers, &is_nil(&1.ended_at))}
+       when is_list(blockers) do
+    {:ok, Enum.filter(blockers, &is_nil(&1.ended_at))}
+  end
 
-  defp capability_blockers(_lifecycle, _context),
-    do: {:error, GateErrorCat.lifecycle_not_loaded()}
+  defp capability_blockers(_lifecycle, _context) do
+    {:error, GateErrorCat.lifecycle_not_loaded()}
+  end
 
   defp lifecycle_from(%CommunityLifecycle{} = lifecycle), do: {:ok, lifecycle}
 
-  defp lifecycle_from(%Community{lifecycle: %CommunityLifecycle{} = lifecycle}),
-    do: {:ok, lifecycle}
+  defp lifecycle_from(%Community{lifecycle: %CommunityLifecycle{} = lifecycle}) do
+    {:ok, lifecycle}
+  end
 
   defp lifecycle_from(%Community{}), do: {:error, GateErrorCat.lifecycle_not_loaded()}
   defp lifecycle_from(_), do: {:error, GateErrorCat.lifecycle_not_loaded()}
@@ -606,9 +617,11 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   end
 
   defp bootstrap_missing_lifecycle(ref, opts) do
-    if Keyword.get(opts, :bootstrap_missing, false),
-      do: bootstrap_from_community(ref),
-      else: nil
+    if Keyword.get(opts, :bootstrap_missing, false) do
+      bootstrap_from_community(ref)
+    else
+      nil
+    end
   end
 
   defp bootstrap_from_community(ref) do
@@ -632,9 +645,11 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   end
 
   defp bootstrap_state(community) do
-    if community.pending == GroupherServer.CMS.Communities.Const.pending_state(:normal),
-      do: :active,
-      else: :setting_up
+    if community.pending == GroupherServer.CMS.Communities.Const.pending_state(:normal) do
+      :active
+    else
+      :setting_up
+    end
   end
 
   defp lock_community(ref) when is_integer(ref) do
@@ -651,11 +666,13 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     |> Repo.one()
   end
 
-  defp update_lifecycle(lifecycle, :__reconcile__, _attrs),
-    do: recompute_locked(lifecycle, operation_ref: Ecto.UUID.generate())
+  defp update_lifecycle(lifecycle, :__reconcile__, _attrs) do
+    recompute_locked(lifecycle, operation_ref: Ecto.UUID.generate())
+  end
 
-  defp update_lifecycle(lifecycle, state, attrs),
-    do: Repo.update(transition_changeset(lifecycle, state, attrs))
+  defp update_lifecycle(lifecycle, state, attrs) do
+    Repo.update(transition_changeset(lifecycle, state, attrs))
+  end
 
   defp recompute_locked(
          lifecycle,
@@ -731,8 +748,9 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
 
   defp maybe_cause_ref(query, nil), do: where(query, [blocker], is_nil(blocker.cause_ref))
 
-  defp maybe_cause_ref(query, cause_ref),
-    do: where(query, [blocker], blocker.cause_ref == ^cause_ref)
+  defp maybe_cause_ref(query, cause_ref) do
+    where(query, [blocker], blocker.cause_ref == ^cause_ref)
+  end
 
   defp blocker_type(%{blocker_type: type}), do: type
   defp blocker_type(%{"blocker_type" => type}), do: type
@@ -740,8 +758,9 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
   defp ensure_lifecycle!(nil), do: Repo.rollback(CommunityErrorCat.lifecycle_not_found())
   defp ensure_lifecycle!(%CommunityLifecycle{}), do: :ok
 
-  defp ensure_not_destroyed!(%CommunityLifecycle{state: :destroy}),
-    do: Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
+  defp ensure_not_destroyed!(%CommunityLifecycle{state: :destroy}) do
+    Repo.rollback(CommunityErrorCat.lifecycle_state_conflict())
+  end
 
   defp ensure_not_destroyed!(%CommunityLifecycle{}), do: :ok
 
@@ -790,17 +809,21 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     |> maybe_state_timestamp(state)
   end
 
-  defp maybe_state_timestamp(attrs, :active),
-    do: Map.put(attrs, :activated_at, DateTime.utc_now(:second))
+  defp maybe_state_timestamp(attrs, :active) do
+    Map.put(attrs, :activated_at, DateTime.utc_now(:second))
+  end
 
-  defp maybe_state_timestamp(attrs, :archived),
-    do: Map.put(attrs, :archived_at, DateTime.utc_now(:second))
+  defp maybe_state_timestamp(attrs, :archived) do
+    Map.put(attrs, :archived_at, DateTime.utc_now(:second))
+  end
 
-  defp maybe_state_timestamp(attrs, :pending_destroy),
-    do: Map.put(attrs, :destroy_scheduled_at, DateTime.utc_now(:second))
+  defp maybe_state_timestamp(attrs, :pending_destroy) do
+    Map.put(attrs, :destroy_scheduled_at, DateTime.utc_now(:second))
+  end
 
-  defp maybe_state_timestamp(attrs, :destroy),
-    do: Map.put(attrs, :destroyed_at, DateTime.utc_now(:second))
+  defp maybe_state_timestamp(attrs, :destroy) do
+    Map.put(attrs, :destroyed_at, DateTime.utc_now(:second))
+  end
 
   defp maybe_state_timestamp(attrs, _), do: attrs
 
@@ -856,19 +879,23 @@ defmodule GroupherServer.CMS.Communities.Lifecycle do
     |> Map.new()
   end
 
-  defp activity_metadata(:setup_retried, lifecycle, metadata),
-    do: %{state: lifecycle.state, stage: Map.get(metadata, :stage)} |> compact()
+  defp activity_metadata(:setup_retried, lifecycle, metadata) do
+    %{state: lifecycle.state, stage: Map.get(metadata, :stage)} |> compact()
+  end
 
-  defp activity_metadata(:destroy_scheduled, lifecycle, _metadata),
-    do: %{state: lifecycle.state, scheduled_at: lifecycle.destroy_scheduled_at} |> compact()
+  defp activity_metadata(:destroy_scheduled, lifecycle, _metadata) do
+    %{state: lifecycle.state, scheduled_at: lifecycle.destroy_scheduled_at} |> compact()
+  end
 
-  defp activity_metadata(:lifecycle_reconciled, lifecycle, metadata),
-    do: %{state: lifecycle.state, reason: Map.get(metadata, :reason)} |> compact()
+  defp activity_metadata(:lifecycle_reconciled, lifecycle, metadata) do
+    %{state: lifecycle.state, reason: Map.get(metadata, :reason)} |> compact()
+  end
 
   defp activity_metadata(_action, lifecycle, _metadata), do: %{state: lifecycle.state}
 
-  defp compact(map),
-    do: map |> Enum.reject(fn {_key, value} -> is_nil(value) end) |> Map.new()
+  defp compact(map) do
+    map |> Enum.reject(fn {_key, value} -> is_nil(value) end) |> Map.new()
+  end
 
   defp resolve_operation_ref!(nil), do: Ecto.UUID.generate()
 

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Interactions.Scope do
   @moduledoc """
   Compiles Interaction-owned ordering into an existing Article queryable.
 
-      Article Reader queryable
+      Article Query queryable
         -> Interactions.Scope
         -> ReactionInfo LEFT JOIN when required
         -> composed Ecto query
@@ -41,13 +41,16 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     end
   end
 
-  def scope(_queryable, _opts),
-    do: {:error, ErrorCat.unsupported_artiment_query("scope options must be a keyword list")}
+  def scope(_queryable, _opts) do
+    {:error, ErrorCat.unsupported_artiment_query("scope options must be a keyword list")}
+  end
 
   defp validate_order(order) do
-    if ArticlesConst.valid_order?(order),
-      do: :ok,
-      else: {:error, ErrorCat.unsupported_order(inspect(order))}
+    if ArticlesConst.valid_order?(order) do
+      :ok
+    else
+      {:error, ErrorCat.unsupported_order(inspect(order))}
+    end
   end
 
   defp to_query(queryable) do
@@ -74,18 +77,22 @@ defmodule GroupherServer.CMS.Interactions.Scope do
     end
   end
 
-  defp interaction_info(_query, _opts),
-    do: {:error, ErrorCat.unsupported_artiment_query("query has no Article root schema")}
+  defp interaction_info(_query, _opts) do
+    {:error, ErrorCat.unsupported_artiment_query("query has no Article root schema")}
+  end
 
   defp compile_order(query, _info, order)
-       when order in @passthrough_orders,
-       do: {:ok, query}
+       when order in @passthrough_orders do
+    {:ok, query}
+  end
 
-  defp compile_order(query, info, :upvotes),
-    do: {:ok, order_by_count(query, info, :upvotes_count)}
+  defp compile_order(query, info, :upvotes) do
+    {:ok, order_by_count(query, info, :upvotes_count)}
+  end
 
-  defp compile_order(query, info, :collects),
-    do: {:ok, order_by_count(query, info, :collects_count)}
+  defp compile_order(query, info, :collects) do
+    {:ok, order_by_count(query, info, :collects_count)}
+  end
 
   defp order_by_count(query, info, count_field) do
     thread = info.artiment

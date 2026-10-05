@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
           branch_id: doc.branch_id
         )
 
-      assert not is_nil(doc.active_at)
+      assert not is_nil(doc_after.active_at)
       assert doc_after.active_at > doc.inserted_at
     end
 

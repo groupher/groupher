@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
   @community_normal CMS.Communities.Const.pending_state(:normal)
   @actions [:read, :list]
   @lifecycle_binding :gate_lifecycle
-  @policy_modes Communities.Lifecycle.read_modes()
+  @policy_modes Communities.Lifecycle.read_policy_modes()
 
   @doc "Compiles Community Lifecycle and actor predicates into an Ecto query."
   @spec scope(Ecto.Query.t(), term(), atom(), GroupherServer.CMS.Gate.Context.Scope.Community.t()) ::
@@ -146,17 +146,19 @@ defmodule GroupherServer.CMS.Gate.Scope.Community do
 
   defp validate_actor(:public, _actor), do: :ok
 
-  defp validate_actor(:operations, actor),
-    do:
-      if(operations_actor?(actor),
-        do: :ok,
-        else: {:error, ErrorCat.scope_policy_actor_mismatch()}
-      )
+  defp validate_actor(:operations, actor) do
+    if operations_actor?(actor) do
+      :ok
+    else
+      {:error, ErrorCat.scope_policy_actor_mismatch()}
+    end
+  end
 
   defp validate_actor(mode, %{id: actor_id})
        when mode in [:management, :owner_management, :moderator_management] and
-              is_integer(actor_id),
-       do: :ok
+              is_integer(actor_id) do
+    :ok
+  end
 
   defp validate_actor(_mode, _actor), do: {:error, ErrorCat.scope_policy_actor_mismatch()}
 

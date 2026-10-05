@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Articles.Response do
   Interaction owns public projection reads; current-viewer state is exposed only
   through the dedicated private APIs.
 
-      Articles Reader -> Response -> Article API response
+      Articles Query -> Response -> Article API response
   """
 
   import Ecto.Query, warn: false

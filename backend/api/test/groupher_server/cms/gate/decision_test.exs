@@ -5,12 +5,13 @@ defmodule GroupherServer.Test.CMS.Gate.Decision do
 
   alias GroupherServer.{CMS, ErrorCat}
   alias CMS.Gate.Decision
+  alias CMS.Gate.ErrorCat, as: GateErrorCat
   alias GroupherServerWeb.Middleware.GQLResultFmt
 
   test "structured decisions preserve reasons and choose the stable primary" do
     decision =
       Decision.deny(
-        [CMS.Gate.ErrorCat.permission_denied(), CMS.Gate.ErrorCat.ancestor_article_archived()],
+        [GateErrorCat.permission_denied(), GateErrorCat.ancestor_article_archived()],
         %{request_id: "req"}
       )
 

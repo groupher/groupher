@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
   This is a Comment response relation, not state of the current viewer, so it
   intentionally stays outside `CMS.Interactions.ReadState`.
 
-      Comments Reader -> AuthorRelationState -> author-upvoted comment ids
+      Comments Query -> AuthorRelationState -> author-upvoted comment ids
   """
 
   require GroupherServer.CMS.Model.Interaction.RoaringBitmap
@@ -36,8 +36,8 @@ defmodule GroupherServer.CMS.Comments.AuthorRelationState do
   @doc """
   Returns Comment ids whose bitmap contains a known Article author id.
 
-  List Readers use this form when all Comments belong to one already-loaded
-  Article.
+  Comment Query code uses this form when all Comments belong to one
+  already-loaded Article.
 
   ## Examples
 

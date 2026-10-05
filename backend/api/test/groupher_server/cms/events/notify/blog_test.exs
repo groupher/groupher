@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   describe "[upvote notify]" do
     test "upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
     test "upvote hook should work on blog comment", ~m(user2 blog comment)a do
       {:ok, comment} = CMS.Interactions.upvote(comment, user2)
-      {:ok, comment_author} = CMS.Comments.Reader.load_comment_author(comment.id)
+      {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
       comment = %{comment | author: comment_author}
 
       Events.emit(:notify_upvote, %{target: comment, from_user: user2})
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
     end
 
     test "undo upvote hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, article} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_upvote, %{target: article, from_user: user2})
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
       {:ok, comment} = CMS.Interactions.undo_upvote(comment, user2)
       Events.emit(:notify_undo_upvote, %{target: comment, from_user: user2})
 
-      {:ok, comment_author} = CMS.Comments.Reader.load_comment_author(comment.id)
+      {:ok, comment_author} = CMS.Comments.Query.Reconcile.load_comment_author(comment.id)
       comment = %{comment | author: comment_author}
 
       {:ok, notifications} =
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
   describe "[collect notify]" do
     test "collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, _} = CMS.Interactions.collect(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
@@ -113,7 +113,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
     end
 
     test "undo collect hook should work on blog", ~m(user2 blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, _} = CMS.Interactions.upvote(blog, user2)
       Events.emit(:notify_collect, %{article: blog, from_user: user2})
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
   describe "[comment notify]" do
     test "blog author should get notify after some one comment on it",
          ~m(user2 community blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)
@@ -153,7 +153,7 @@ defmodule GroupherServer.Test.CMS.Events.Notify.BlogTest do
 
     test "blog comment author should get notify after some one reply it",
          ~m(user2 user3 community blog)a do
-      {:ok, blog} = CMS.Articles.Reader.load_article_for_notification(blog.id)
+      {:ok, blog} = CMS.Articles.Store.load_article_for_notification(blog.id)
 
       {:ok, comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user2)

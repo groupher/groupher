@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Snapshot.Projection do
 
       CMS.Snapshot facade
         -> Snapshot.Projection
-        -> Snapshot.Cache / Snapshot.Reader / Snapshot.Refresh
+        -> Snapshot.Cache / Snapshot.Query / Snapshot.Refresh
 
   Blocking mode reads authority immediately. Stale-first mode uses current
   cache hits and requests a background refresh for misses.
@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Snapshot.Projection do
 
   alias GroupherServer.CMS
 
-  alias CMS.Snapshot.{Cache, Reader, Refresh}
+  alias CMS.Snapshot.{Cache, Query, Refresh}
 
   @default_opts [mode: :stale_first]
 
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Snapshot.Projection do
     case Keyword.fetch!(opts, :mode) do
       :blocking ->
         kind
-        |> Reader.load_summaries(thread, ids)
+        |> Query.load_summaries(thread, ids)
         |> tap(&Cache.put_summaries(&1, kind, thread, opts))
 
       :stale_first ->

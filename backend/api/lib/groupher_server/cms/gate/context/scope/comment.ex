@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
   the official main branch. `all_public/0` is the explicit cross-thread public
   query and is not inferred from an empty context.
 
-      Reader -> Comment scope context -> Gate.scope -> Comment Scope query
+      Query -> Comment scope context -> Gate.scope -> Comment Scope query
 
   Examples:
 
@@ -55,17 +55,21 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Comment do
   defp valid_branch_policy?(_thread, nil), do: true
   defp valid_branch_policy?(_thread, _branch_policy), do: false
 
-  defp raise_branch_policy_error(:doc, nil),
-    do: raise(ArgumentError, "Doc Comment scope requires branch_policy: :main")
+  defp raise_branch_policy_error(:doc, nil) do
+    raise(ArgumentError, "Doc Comment scope requires branch_policy: :main")
+  end
 
-  defp raise_branch_policy_error(:doc, _branch_policy),
-    do: raise(ArgumentError, "Doc Comment scope only accepts branch_policy: :main")
+  defp raise_branch_policy_error(:doc, _branch_policy) do
+    raise(ArgumentError, "Doc Comment scope only accepts branch_policy: :main")
+  end
 
-  defp raise_branch_policy_error(_thread, _branch_policy),
-    do: raise(ArgumentError, "only Doc Comment scope accepts branch_policy")
+  defp raise_branch_policy_error(_thread, _branch_policy) do
+    raise(ArgumentError, "only Doc Comment scope accepts branch_policy")
+  end
 
-  defp valid_policy_mode?(mode),
-    do: mode in [:public, :owner_management, :moderator_management, :operations]
+  defp valid_policy_mode?(mode) do
+    mode in [:public, :owner_management, :moderator_management, :operations]
+  end
 
   @doc "Builds the explicit cross-thread public Comment read intent."
   def all_public, do: %__MODULE__{thread: :all, policy_mode: :public}

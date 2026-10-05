@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Articles.ErrorCat, as: ArticleErrorCat
   alias CMS.Communities.Enable
-  alias CMS.FrontDesk.Community, as: CommunityReader
+  alias CMS.FrontDesk.Community, as: CommunityFrontDesk
   alias CMS.Helper.ArticlePath
 
   alias CMS.Model.{
@@ -32,7 +32,8 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
   }
 
   @doc "Resolves visible public Articles for a bounded set of structured paths."
-  @spec resolve([ArticlePath.t()]) :: {:ok, [%{path: map(), article: struct()}]} | {:error, term()}
+  @spec resolve([ArticlePath.t()]) ::
+          {:ok, [%{path: map(), article: struct()}]} | {:error, term()}
   def resolve(paths) when is_list(paths) do
     if length(paths) <= 100 do
       do_resolve(paths)
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.Articles.PathResolver do
       parsed
       |> Enum.group_by(&{&1.community, &1.thread})
       |> Enum.reduce(%{}, fn {{community_ref, thread}, group}, acc ->
-        with {:ok, community} <- CommunityReader.read(community_ref),
+        with {:ok, community} <- CommunityFrontDesk.read(community_ref),
              {:ok, _thread} <- Enable.thread?(community.slug, thread) do
           inner_ids = Enum.map(group, &normalize_path_inner_id(&1.inner_id))
 

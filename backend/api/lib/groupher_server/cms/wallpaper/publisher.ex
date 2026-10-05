@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   alias CMS.Wallpaper.{
     ErrorCat,
-    Reader,
+    Query,
     RequestDigest,
     Retention,
     Settings,
@@ -49,8 +49,9 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   @publish_policy_version "v1"
   @publish_signing_key_id "hmac-v1"
 
-  defp batch_client,
-    do: Application.get_env(:groupher_server, :wallpaper_batch_client, GeneratedBatch)
+  defp batch_client do
+    Application.get_env(:groupher_server, :wallpaper_batch_client, GeneratedBatch)
+  end
 
   @doc "Publishes one current-theme Snapshot, or a canonical NONE Snapshot."
   def publish(%Community{} = community, input, %User{} = user) when is_map(input) do
@@ -97,8 +98,9 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
     Repo.transaction(fn ->
       state = lock_or_create_wallpaper(community.id)
 
-      if state.version != base_version,
-        do: Repo.rollback(ErrorCat.wallpaper_publish_version_conflict())
+      if state.version != base_version do
+        Repo.rollback(ErrorCat.wallpaper_publish_version_conflict())
+      end
 
       snapshot =
         Repo.one(
@@ -112,11 +114,12 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
       if is_nil(snapshot), do: Repo.rollback(ErrorCat.wallpaper_snapshot_not_restorable())
 
-      unless Reader.supported_snapshot?(snapshot),
-        do: Repo.rollback(ErrorCat.wallpaper_snapshot_not_restorable())
+      unless Query.supported_snapshot?(snapshot) do
+        Repo.rollback(ErrorCat.wallpaper_snapshot_not_restorable())
+      end
 
       if snapshot.settings["type"] != "none" and
-           not Reader.complete_profile_manifest?(Reader.snapshot_images(snapshot.public_ref)) do
+           not Query.complete_profile_manifest?(Query.snapshot_images(snapshot.public_ref)) do
         Repo.rollback(ErrorCat.wallpaper_snapshot_not_restorable())
       end
 
@@ -212,8 +215,9 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
       nil ->
         state = lock_or_create_wallpaper(community.id)
 
-        if state.version != base_version,
-          do: Repo.rollback(ErrorCat.wallpaper_publish_version_conflict())
+        if state.version != base_version do
+          Repo.rollback(ErrorCat.wallpaper_publish_version_conflict())
+        end
 
         now = DateTime.utc_now(:second)
         snapshot_ref = (capability && capability.snapshot_ref) || new_snapshot_ref!()
@@ -312,8 +316,9 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
     end
   end
 
-  defp verify_publish_capability(_result, _batch_ref, _digest),
-    do: {:error, ErrorCat.wallpaper_publish_capability_invalid()}
+  defp verify_publish_capability(_result, _batch_ref, _digest) do
+    {:error, ErrorCat.wallpaper_publish_capability_invalid()}
+  end
 
   defp validate_publish_manifest(manifest, theme) when is_list(manifest) do
     owners = manifest |> Enum.map(&get(&1, :candidate_owner_ref)) |> Enum.uniq()
@@ -406,15 +411,18 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   defp validate_batch_requirement(%{"type" => "none"}, nil), do: :ok
 
-  defp validate_batch_requirement(%{"type" => "none"}, _),
-    do: {:error, ErrorCat.wallpaper_none_publish_must_not_have_batch()}
+  defp validate_batch_requirement(%{"type" => "none"}, _) do
+    {:error, ErrorCat.wallpaper_none_publish_must_not_have_batch()}
+  end
 
   defp validate_batch_requirement(_settings, batch_ref)
-       when is_binary(batch_ref) and batch_ref != "",
-       do: :ok
+       when is_binary(batch_ref) and batch_ref != "" do
+    :ok
+  end
 
-  defp validate_batch_requirement(_settings, _),
-    do: {:error, ErrorCat.wallpaper_upload_batch_required()}
+  defp validate_batch_requirement(_settings, _) do
+    {:error, ErrorCat.wallpaper_upload_batch_required()}
+  end
 
   defp validate_theme(theme) when theme in [:light, :dark], do: :ok
   defp validate_theme(_), do: {:error, ErrorCat.wallpaper_settings_invalid()}
@@ -445,7 +453,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
 
   defp recovered_receipt_response(community_id, payload) do
     current = Repo.get_by(CommunityWallpaper, community_id: community_id)
-    Map.put(result_from_payload(payload), :version, Reader.state_version(current))
+    Map.put(result_from_payload(payload), :version, Query.state_version(current))
   end
 
   defp assert_lease_policy! do
@@ -460,9 +468,11 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   defp ensure_publish_lease(%{expires_at: expires_at}) do
     required_ms = @publish_transaction_budget_ms + @max_clock_skew_ms
 
-    if DateTime.diff(expires_at, DateTime.utc_now(), :millisecond) > required_ms,
-      do: :ok,
-      else: {:error, ErrorCat.wallpaper_publish_lease_too_short()}
+    if DateTime.diff(expires_at, DateTime.utc_now(), :millisecond) > required_ms do
+      :ok
+    else
+      {:error, ErrorCat.wallpaper_publish_lease_too_short()}
+    end
   end
 
   defp ensure_publish_lease!(capability) do
@@ -519,7 +529,7 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   end
 
   defp published_batch_status(batch_ref) do
-    if Reader.batch_published?(batch_ref), do: :published, else: :not_published
+    if Query.batch_published?(batch_ref), do: :published, else: :not_published
   rescue
     _ -> :unknown
   end
@@ -527,8 +537,9 @@ defmodule GroupherServer.CMS.Wallpaper.Publisher do
   defp valid_string?(value), do: is_binary(value) and value != ""
   defp valid_asset_ref?(value), do: valid_string?(value)
 
-  defp get(map, key) when is_map(map) and is_atom(key),
-    do: Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  defp get(map, key) when is_map(map) and is_atom(key) do
+    Map.get(map, key) || Map.get(map, Atom.to_string(key))
+  end
 
   defp get(_map, _key), do: nil
 end

@@ -80,8 +80,9 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   end
 
   def revoke_browser_session(_root, %{browser_session_ref: ref}, _info) do
-    with {:ok, _result} <- Accounts.Profiles.revoke_browser_session(ref),
-         do: {:ok, %{done: true}}
+    with {:ok, _result} <- Accounts.Profiles.revoke_browser_session(ref) do
+      {:ok, %{done: true}}
+    end
   end
 
   def browser_sessions(_root, %{browser_session_ref: ref}, _info) do
@@ -102,8 +103,9 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
     with {:ok, _result} <-
            ref
            |> Accounts.Profiles.revoke_other_browser_sessions_for_ref()
-           |> browser_session_result(),
-         do: {:ok, %{done: true}}
+           |> browser_session_result() do
+      {:ok, %{done: true}}
+    end
   end
 
   defp browser_session_result({:error, reason}) do
@@ -213,7 +215,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
   defp present_collect({:ok, result}, article, user) do
     article =
       if is_struct(article) do
-        {:ok, article} = CMS.Articles.Reader.with_community(article)
+        {:ok, article} = CMS.Articles.Store.with_community(article)
         article
       else
         article

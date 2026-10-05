@@ -30,7 +30,7 @@ defmodule GroupherServer.TestMate do
 
       import ShortMaps
 
-      alias GroupherServer.{Accounts, CMS, ErrorCat, Repo}
+      alias GroupherServer.{Accounts, CMS, ErrorCat, FrontDesk, Repo}
 
       alias CMS.Model.{
         Author,
@@ -72,10 +72,10 @@ defmodule GroupherServer.TestMate do
       end
 
       @doc "Reads an Article through the production ArticlePath-only FrontDesk contract."
-      def read_article(article_path), do: CMS.FrontDesk.article(article_path)
+      def read_article(article_path), do: FrontDesk.article(article_path)
 
       def read_article(article_path, actor) when is_map(article_path),
-        do: CMS.FrontDesk.article(article_path, actor)
+        do: FrontDesk.article(article_path, actor)
 
       def read_article(community, thread, inner_id),
         do: read_article(community, thread, inner_id, [])
@@ -87,7 +87,7 @@ defmodule GroupherServer.TestMate do
         article_path = %{community: community, thread: thread, inner_id: inner_id}
 
         actor = if is_list(actor_or_opts), do: nil, else: actor_or_opts
-        CMS.FrontDesk.article(article_path, actor)
+        FrontDesk.article(article_path, actor)
       end
 
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do

@@ -35,8 +35,9 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
       #=> {:ok, %{comment: %Comment{}, article: article, command_id: id}} | {:error, reason}
   """
   @spec execute(Comment.t(), User.t()) :: T.domain_res(result())
-  def execute(%Comment{} = comment, %User{} = actor),
-    do: execute(comment, actor, nil)
+  def execute(%Comment{} = comment, %User{} = actor) do
+    execute(comment, actor, nil)
+  end
 
   @doc "Deletes a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), User.t(), String.t() | nil) :: T.domain_res(result())
@@ -118,9 +119,11 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp ensure_not_archived(comment) do
-    if Map.get(comment, :is_archived) == true,
-      do: {:error, ErrorCat.archived("comment is archived, can not be edit or delete")},
-      else: :ok
+    if Map.get(comment, :is_archived) == true do
+      {:error, ErrorCat.archived("comment is archived, can not be edit or delete")}
+    else
+      :ok
+    end
   end
 
   defp revoke_if_current(
@@ -129,11 +132,13 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
          actor,
          operation_ref,
          occurred_at
-       ),
-       do: Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
+       ) do
+    Solution.revoke_if_current(post, comment, actor, operation_ref, occurred_at)
+  end
 
-  defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at),
-    do: {:ok, :unchanged}
+  defp revoke_if_current(_article, _comment, _actor, _operation_ref, _occurred_at) do
+    {:ok, :unchanged}
+  end
 
   defp record_article_metric(article, operation_id, metric) do
     case MetricEvent.append_article_action(article, operation_id, metric) do
@@ -143,7 +148,7 @@ defmodule GroupherServer.CMS.Comments.Commands.DeleteComment do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    {:ok, article} = CMS.Articles.Reader.with_community(article)
+    {:ok, article} = CMS.Articles.Store.with_community(article)
 
     CMS.Outbox.send(%{
       event: "comment.changed",

@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Docs do
   alias CMS.Articles.Publish.Doc, as: TargetPublish
   alias CMS.Articles.Publish.Effects, as: PublishEffects
   alias CMS.Docs.BranchVersions
-  alias CMS.Docs.Reader, as: DocReader
+  alias CMS.Docs.Store, as: DocStore
   alias CMS.FrontDesk
 
   alias CMS.Model.{
@@ -70,8 +70,9 @@ defmodule GroupherServer.CMS.Docs do
     end
   end
 
-  defp put_doc_digest(%{subtitle: subtitle} = attrs) when is_binary(subtitle),
-    do: Map.put_new(attrs, :digest, subtitle)
+  defp put_doc_digest(%{subtitle: subtitle} = attrs) when is_binary(subtitle) do
+    Map.put_new(attrs, :digest, subtitle)
+  end
 
   defp put_doc_digest(attrs), do: attrs
 
@@ -84,7 +85,7 @@ defmodule GroupherServer.CMS.Docs do
         {:error, :draft_version_conflict}
 
       {:error, :not_found} ->
-        case DocReader.public(article.id, branch_id, publication_version: expected_version) do
+        case DocStore.public(article.id, branch_id, publication_version: expected_version) do
           {:ok, %DocPublic{}} ->
             with {:ok, draft} <-
                    CMS.Articles.Draft.Store.ensure_from_public(article, author,
@@ -193,8 +194,8 @@ defmodule GroupherServer.CMS.Docs do
   end
 
   defp materialize_draft(draft, %Article{} = article) do
-    with {:ok, body} <- DocReader.body_draft(draft.body_draft_id),
-         {:ok, author} <- DocReader.author(draft.updated_by_id) do
+    with {:ok, body} <- DocStore.body_draft(draft.body_draft_id),
+         {:ok, author} <- DocStore.author(draft.updated_by_id) do
       {:ok,
        %{
          id: draft.id,
@@ -219,12 +220,12 @@ defmodule GroupherServer.CMS.Docs do
   end
 
   defp materialize_public(%Article{id: article_id, community_id: community_id}, branch_id) do
-    with {:ok, %DocPublic{} = public} <- DocReader.public(article_id, branch_id),
-         {:ok, version} <- DocReader.branch_version(public.branch_version_id),
-         {:ok, revision} <- DocReader.revision(version.revision_id),
-         {:ok, extension} <- DocReader.revision_extension(revision.id),
-         {:ok, body} <- DocReader.body_snapshot(revision.body_snapshot_id),
-         {:ok, author} <- DocReader.author(public.published_by_id) do
+    with {:ok, %DocPublic{} = public} <- DocStore.public(article_id, branch_id),
+         {:ok, version} <- DocStore.branch_version(public.branch_version_id),
+         {:ok, revision} <- DocStore.revision(version.revision_id),
+         {:ok, extension} <- DocStore.revision_extension(revision.id),
+         {:ok, body} <- DocStore.body_snapshot(revision.body_snapshot_id),
+         {:ok, author} <- DocStore.author(public.published_by_id) do
       {:ok,
        %{
          id: public.id,

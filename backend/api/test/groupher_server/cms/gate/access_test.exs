@@ -3,7 +3,6 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS
-  alias CMS.Communities.Reader
   alias CMS.Gate.{Access.Check, Decision}
   alias CMS.Gate.Access.Policy.Article, as: ArticlePolicy
   alias CMS.Gate.Access.Policy.Comment, as: CommentPolicy
@@ -361,10 +360,10 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
               reason: :not_exist,
               details: "Community"
             }} =
-             Reader.fetch(community.slug, owner, inc_views: false)
+             CMS.Communities.fetch(community.slug, owner, inc_views: false)
 
     assert {:ok, _} =
-             Reader.fetch(community.slug, owner,
+             CMS.Communities.fetch(community.slug, owner,
                inc_views: false,
                policy_mode: :owner_management
              )
@@ -375,7 +374,7 @@ defmodule GroupherServer.Test.CMS.Gate.Access do
               reason: :not_exist,
               details: "Community"
             }} =
-             Reader.fetch(community.slug, other_user, inc_views: false)
+             CMS.Communities.fetch(community.slug, other_user, inc_views: false)
   end
 
   defp community_context(community) do

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
 
       event / Snapshot.Projection
         -> Snapshot.Refresh
-        -> Snapshot.Reader
+        -> Snapshot.Query
         -> Snapshot.Cache
 
   Refresh is best-effort for enqueueing and never changes the caller's source
@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
 
   alias GroupherServer.CMS
 
-  alias CMS.Snapshot.{Cache, Reader}
+  alias CMS.Snapshot.{Cache, Query}
 
   @type snapshot_kind :: :user | :article | :comment
 
@@ -31,21 +31,21 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
   @spec perform_refresh(snapshot_kind(), term(), keyword()) :: :ok | {:error, term()}
   def perform_refresh(:user, ids, opts) when is_list(ids) do
     :user
-    |> Reader.load_summaries(nil, ids)
+    |> Query.load_summaries(nil, ids)
     |> Cache.put_summaries(:user, nil, opts)
   end
 
   def perform_refresh(:article, %{thread: thread, ids: ids}, opts)
       when is_atom(thread) and is_list(ids) do
     :article
-    |> Reader.load_summaries(thread, ids)
+    |> Query.load_summaries(thread, ids)
     |> Cache.put_summaries(:article, thread, opts)
   end
 
   def perform_refresh(:comment, %{thread: thread, ids: ids}, opts)
       when is_atom(thread) and is_list(ids) do
     :comment
-    |> Reader.load_summaries(thread, ids)
+    |> Query.load_summaries(thread, ids)
     |> Cache.put_summaries(:comment, thread, opts)
   end
 
@@ -56,8 +56,9 @@ defmodule GroupherServer.CMS.Snapshot.Refresh do
           :ok | {:ok, :pass}
   def enqueue_missing(_kind, _thread, [], _opts), do: :ok
 
-  def enqueue_missing(:user, _thread, ids, opts),
-    do: refresh_async(:user, Enum.reverse(ids), opts)
+  def enqueue_missing(:user, _thread, ids, opts) do
+    refresh_async(:user, Enum.reverse(ids), opts)
+  end
 
   def enqueue_missing(kind, thread, ids, opts) when kind in [:article, :comment] do
     refresh_async(kind, %{thread: thread, ids: Enum.reverse(ids)}, opts)

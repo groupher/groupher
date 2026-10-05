@@ -191,24 +191,29 @@ defmodule GroupherServer.CMS.Events.Notify do
   defp article_author(%{author: %{user: %User{} = user}}), do: {:ok, user}
   defp article_author(_article), do: {:error, ErrorCat.custom("article author not found")}
 
-  defp load_article_for_notification(%{id: article_id}),
-    do: CMS.Articles.Reader.load_article_for_notification(article_id)
+  defp load_article_for_notification(%{id: article_id}) do
+    CMS.Articles.Store.load_article_for_notification(article_id)
+  end
 
   defp load_article_for_notification(%{article_id: article_id} = article)
-       when not is_nil(article_id),
-       do: {:ok, article}
+       when not is_nil(article_id) do
+    {:ok, article}
+  end
 
-  defp load_article_for_notification(_article),
-    do: {:error, ErrorCat.custom("article not found")}
+  defp load_article_for_notification(_article) do
+    {:error, ErrorCat.custom("article not found")}
+  end
 
   # Background jobs may arrive after related content is deleted; skip quietly.
   defp handle_missing_target(
          {:error, ErrorCat.error_pattern(reason: :custom, details: %{reason: :not_exist})}
-       ),
-       do: {:ok, :pass}
+       ) do
+    {:ok, :pass}
+  end
 
-  defp handle_missing_target({:error, ErrorCat.error_pattern(reason: :not_exist)}),
-    do: {:ok, :pass}
+  defp handle_missing_target({:error, ErrorCat.error_pattern(reason: :not_exist)}) do
+    {:ok, :pass}
+  end
 
   defp handle_missing_target({:error, _} = error), do: error
 end

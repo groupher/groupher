@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Comments.List do
+defmodule GroupherServer.Test.CMS.Comments.QueryList do
   use GroupherServer.TestMate, async: false
 
   alias GroupherServer.CMS

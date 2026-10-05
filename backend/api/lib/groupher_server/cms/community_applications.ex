@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
   alias CMS.CommunityApplications.{
     LogoUploads,
     Policy,
-    Reader,
+    Query,
     Review,
     Writer
   }
@@ -32,25 +32,25 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @doc "Runs `current` through the public `CommunityApplications` boundary."
   @spec current(User.t()) :: T.domain_res(term())
-  def current(%User{} = user), do: Reader.current(user)
+  def current(%User{} = user), do: Query.current(user)
 
   @doc "Runs `latest_failed` through the public `CommunityApplications` boundary."
   @spec latest_failed(User.t()) :: T.domain_res(term())
-  def latest_failed(%User{} = user), do: Reader.latest_failed(user)
+  def latest_failed(%User{} = user), do: Query.latest_failed(user)
 
   @doc "Runs `history` through the public `CommunityApplications` boundary."
   @spec history(User.t(), map()) :: T.domain_res(term())
-  def history(%User{} = user, filter \\ %{}), do: Reader.history(user, filter)
+  def history(%User{} = user, filter \\ %{}), do: Query.history(user, filter)
 
   @doc "Returns owned through the `CommunityApplications` boundary."
   @spec get_owned(String.t(), User.t()) :: T.domain_res(term())
-  def get_owned(public_ref, %User{} = user), do: Reader.owned(public_ref, user)
+  def get_owned(public_ref, %User{} = user), do: Query.owned(public_ref, user)
 
   @doc "Runs `review_queue` through the public `CommunityApplications` boundary."
   @spec review_queue(map(), User.t()) :: T.domain_res(term())
   def review_queue(filter, %User{} = reviewer) do
     with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
-      Reader.review_queue(filter)
+      Query.review_queue(filter)
     end
   end
 
@@ -58,28 +58,29 @@ defmodule GroupherServer.CMS.CommunityApplications do
   @spec review_detail(String.t(), User.t()) :: T.domain_res(term())
   def review_detail(public_ref, %User{} = reviewer) do
     with :ok <- review_authorized?(reviewer, Const.passport_action(:community_application_review)) do
-      Reader.review_detail(public_ref)
+      Query.review_detail(public_ref)
     end
   end
 
   @doc "Runs `events` through the public `CommunityApplications` boundary."
   @spec events(term(), map()) :: T.domain_res(term())
-  def events(application, filter \\ %{}), do: Reader.events(application, filter)
+  def events(application, filter \\ %{}), do: Query.events(application, filter)
 
   @doc "Runs `applicant` through the public `CommunityApplications` boundary."
-  def applicant(application), do: Reader.applicant(application)
+  def applicant(application), do: Query.applicant(application)
   @doc "Runs `reviewer` through the public `CommunityApplications` boundary."
-  def reviewer(application), do: Reader.reviewer(application)
+  def reviewer(application), do: Query.reviewer(application)
   @doc "Runs `application_community` through the public `CommunityApplications` boundary."
-  def application_community(%{community_id: community_id}),
-    do: FrontDesk.community(community_id, mode: :internal)
+  def application_community(%{community_id: community_id}) do
+    FrontDesk.community(community_id, mode: :internal)
+  end
 
   @doc "Runs `event_actor` through the public `CommunityApplications` boundary."
-  def event_actor(event), do: Reader.event_actor(event)
+  def event_actor(event), do: Query.event_actor(event)
   @doc "Runs `logo` through the public `CommunityApplications` boundary."
-  def logo(application), do: Reader.logo(application)
+  def logo(application), do: Query.logo(application)
   @doc "Runs `logo_origin` through the public `CommunityApplications` boundary."
-  def logo_origin(public_ref), do: Reader.logo_origin(public_ref)
+  def logo_origin(public_ref), do: Query.logo_origin(public_ref)
 
   defp review_authorized?(reviewer, action) do
     case Passport.check(reviewer, action, %{}) do
@@ -94,33 +95,39 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @doc "Runs `submit` through the public `CommunityApplications` boundary."
   @spec submit(map(), User.t(), String.t()) :: T.domain_res(term())
-  def submit(attrs, %User{} = user, idempotency_key),
-    do: Writer.submit(attrs, user, idempotency_key)
+  def submit(attrs, %User{} = user, idempotency_key) do
+    Writer.submit(attrs, user, idempotency_key)
+  end
 
   @doc "Runs `cancel` through the public `CommunityApplications` boundary."
   @spec cancel(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def cancel(public_ref, %User{} = user, expected_version),
-    do: Writer.cancel(public_ref, user, expected_version)
+  def cancel(public_ref, %User{} = user, expected_version) do
+    Writer.cancel(public_ref, user, expected_version)
+  end
 
   @doc "Runs `start_review` through the public `CommunityApplications` boundary."
   @spec start_review(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def start_review(public_ref, %User{} = reviewer, expected_version),
-    do: Review.start(public_ref, reviewer, expected_version)
+  def start_review(public_ref, %User{} = reviewer, expected_version) do
+    Review.start(public_ref, reviewer, expected_version)
+  end
 
   @doc "Runs `approve` through the public `CommunityApplications` boundary."
   @spec approve(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def approve(public_ref, %User{} = reviewer, expected_version, metadata),
-    do: Review.approve(public_ref, reviewer, expected_version, metadata)
+  def approve(public_ref, %User{} = reviewer, expected_version, metadata) do
+    Review.approve(public_ref, reviewer, expected_version, metadata)
+  end
 
   @doc "Runs `reject` through the public `CommunityApplications` boundary."
   @spec reject(String.t(), User.t(), integer(), map()) :: T.domain_res(term())
-  def reject(public_ref, %User{} = reviewer, expected_version, reason),
-    do: Review.reject(public_ref, reviewer, expected_version, reason)
+  def reject(public_ref, %User{} = reviewer, expected_version, reason) do
+    Review.reject(public_ref, reviewer, expected_version, reason)
+  end
 
   @doc "Runs `retry_creation` through the public `CommunityApplications` boundary."
   @spec retry_creation(String.t(), User.t(), integer()) :: T.domain_res(term())
-  def retry_creation(public_ref, %User{} = reviewer, expected_version),
-    do: Review.retry_creation(public_ref, reviewer, expected_version)
+  def retry_creation(public_ref, %User{} = reviewer, expected_version) do
+    Review.retry_creation(public_ref, reviewer, expected_version)
+  end
 
   @doc "Creates logo upload intent through the `CommunityApplications` write boundary."
   @spec create_logo_upload_intent(map(), User.t()) :: T.domain_res(term())
@@ -140,6 +147,7 @@ defmodule GroupherServer.CMS.CommunityApplications do
 
   @doc "Runs `mark_creation_failed` through the public `CommunityApplications` boundary."
   @spec mark_creation_failed(String.t(), String.t(), term()) :: T.domain_res(term())
-  def mark_creation_failed(public_ref, operation_ref, reason),
-    do: Review.mark_creation_failed(public_ref, operation_ref, reason)
+  def mark_creation_failed(public_ref, operation_ref, reason) do
+    Review.mark_creation_failed(public_ref, operation_ref, reason)
+  end
 end

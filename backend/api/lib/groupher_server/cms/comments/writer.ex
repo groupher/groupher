@@ -108,6 +108,8 @@ defmodule GroupherServer.CMS.Comments.Writer do
     article = Repo.preload(article, [[author: :user], :community])
 
     if is_nil(command_id) do
+      generated_command_id = Ecto.UUID.generate()
+
       create_with_access(
         thread,
         article,
@@ -115,8 +117,17 @@ defmodule GroupherServer.CMS.Comments.Writer do
         body,
         user,
         info,
-        Ecto.UUID.generate()
+        generated_command_id
       )
+      |> then(fn
+        {:ok, result} ->
+          with {:ok, confirmation} <- created_confirmation(result, article) do
+            replay_created(confirmation, article, generated_command_id)
+          end
+
+        error ->
+          error
+      end)
       |> normalize_comments_locked()
     else
       %Command{
@@ -138,14 +149,7 @@ defmodule GroupherServer.CMS.Comments.Writer do
                    info,
                    command_id
                  ) do
-            {:ok,
-             %Confirmation{
-               data: %{
-                 "comment_id" => to_string(result.comment.id),
-                 "article_id" => article.id,
-                 "command_id" => command_id
-               }
-             }}
+            created_confirmation(result, article)
           end
         end,
         confirmation: Confirmation
@@ -156,6 +160,24 @@ defmodule GroupherServer.CMS.Comments.Writer do
       end)
       |> normalize_comments_locked()
     end
+  end
+
+  defp created_confirmation(
+         %{comment: %Comment{id: comment_id}, command_id: command_id},
+         %Article{id: article_id}
+       ) do
+    {:ok,
+     %Confirmation{
+       data: %{
+         "comment_id" => to_string(comment_id),
+         "article_id" => article_id,
+         "command_id" => command_id
+       }
+     }}
+  end
+
+  defp created_confirmation(_result, _article) do
+    {:error, CmsErrorCat.command_result_unavailable()}
   end
 
   defp create_with_access(:doc, article, branch_id, body, user, info, command_id)
@@ -217,8 +239,9 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp replay_created(_receipt, _article, _command_id),
-    do: {:error, CmsErrorCat.command_result_unavailable()}
+  defp replay_created(_receipt, _article, _command_id) do
+    {:error, CmsErrorCat.command_result_unavailable()}
+  end
 
   defp replay_article(%{id: article_id}) when is_binary(article_id) do
     with %Article{} = stable <- Repo.get(Article, article_id),
@@ -431,11 +454,11 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp put_comment_identity(attrs, %{__struct__: Article, id: article_id} = article, :article_id),
-    do:
-      attrs
-      |> Map.put(:article_id, article_id)
-      |> Map.put(:branch_id, Map.get(article, :branch_id))
+  defp put_comment_identity(attrs, %{__struct__: Article, id: article_id} = article, :article_id) do
+    attrs
+    |> Map.put(:article_id, article_id)
+    |> Map.put(:branch_id, Map.get(article, :branch_id))
+  end
 
   defp create_comment_record(body, thread, foreign_key, article, user) do
     case insert_comment(body, thread, foreign_key, article, user) do
@@ -444,11 +467,13 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp update_active_timestamp(_thread, _article, %Comment{is_article_author: true}),
-    do: {:ok, :pass}
+  defp update_active_timestamp(_thread, _article, %Comment{is_article_author: true}) do
+    {:ok, :pass}
+  end
 
-  defp update_active_timestamp(thread, article, %Comment{}),
-    do: CMS.Articles.update_active_timestamp(thread, article)
+  defp update_active_timestamp(thread, article, %Comment{}) do
+    CMS.Articles.update_active_timestamp(thread, article)
+  end
 
   defp associate_reply(replied_comment, replying_comment) do
     replied_comment
@@ -536,13 +561,15 @@ defmodule GroupherServer.CMS.Comments.Writer do
     end
   end
 
-  defp article_comments_locked(details),
-    do: {:error, GateErrorCat.article_comments_locked(details)}
+  defp article_comments_locked(details) do
+    {:error, GateErrorCat.article_comments_locked(details)}
+  end
 
   defp normalize_comments_locked(
          {:error, ErrorCat.error_pattern(reason: :article_comments_locked)}
-       ),
-       do: article_comments_locked("this article is forbid comment")
+       ) do
+    article_comments_locked("this article is forbid comment")
+  end
 
   defp normalize_comments_locked(result), do: result
 

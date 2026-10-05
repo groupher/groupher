@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
   Ordinary Articles carry a thread and stage but never a Doc branch selector.
   The Scope query implementation owns SQL visibility and actor validation.
 
-      Reader -> Article scope context -> Gate.scope -> Article Scope query
+      Query -> Article scope context -> Gate.scope -> Article Scope query
 
   Examples:
 
@@ -37,8 +37,9 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Article do
         }
 
   @doc "Builds a public Article read intent for a supported thread."
-  def public(thread, opts \\ []) when thread in @threads,
-    do: build(thread, :public, Keyword.get(opts, :policy_mode, :public), opts)
+  def public(thread, opts \\ []) when thread in @threads do
+    build(thread, :public, Keyword.get(opts, :policy_mode, :public), opts)
+  end
 
   @doc "Builds a management-scoped draft Article read intent."
   def draft(thread, policy_mode \\ :owner_management, opts \\ []) when thread in @threads do

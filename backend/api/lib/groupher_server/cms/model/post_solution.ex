@@ -3,10 +3,10 @@ defmodule GroupherServer.CMS.Model.PostSolution do
   Authoritative accepted-answer relation for one Post.
 
   This row is the single current fact used to distinguish accept, replace and
-  revoke transitions. Comment/Post response fields are virtual Reader
+  revoke transitions. Comment/Post response fields are virtual Query
   projections; pin and workflow status remain independent domains.
 
-      Comments Command -> PostSolution authority -> batched Reader projections
+      Comments Command -> PostSolution authority -> batched Query projections
   """
 
   use Ecto.Schema

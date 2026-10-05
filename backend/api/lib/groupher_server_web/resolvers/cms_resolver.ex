@@ -47,7 +47,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     {viewer, actor_opts} = view_actor(info.context)
 
     with {:ok, classification} <- Map.fetch(info.context, :request_actor),
-         {:ok, article} <- CMS.FrontDesk.article_for_view_tracking(article_path) do
+         {:ok, article} <- FrontDesk.article(article_path) do
       CMS.ViewTracker.track(
         article,
         viewer,
@@ -79,7 +79,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     Activity.list_article_logs(article, actor, filter)
   end
 
-  def article_insights(_root, %{article: article} = args, info) do
+  def article_insights(_root, %{article: article_path} = args, info) do
     viewer = Map.get(info.context, :cur_user)
 
     opts =
@@ -94,7 +94,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       ]
       |> Enum.reject(fn {_key, value} -> is_nil(value) end)
 
-    Analysis.ArticleInsights.trend(article, viewer, opts)
+    Analysis.ArticleInsights.trend_by_path(article_path, viewer, opts)
   end
 
   @doc "Reads one public ArticleStats batch after Article scope admission."

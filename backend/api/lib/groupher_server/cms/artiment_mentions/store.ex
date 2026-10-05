@@ -127,7 +127,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
   def sync(%{id: article_id, thread: thread})
       when is_binary(article_id) and thread in [:post, :blog, :changelog, :doc] do
     with %Article{} <- Repo.get(Article, article_id),
-         {:ok, projection} <- CMS.Articles.Reader.load_article_for_mentions(article_id) do
+         {:ok, projection} <- CMS.Articles.Store.load_article_for_mentions(article_id) do
       sync(projection)
     else
       nil -> {:error, ErrorCat.custom(%{reason: :not_exist})}
@@ -280,8 +280,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   @doc "Lists Mention facts emitted by one internal Article or Comment."
   @spec mentions(atom(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
-  def mentions(mentioner_type, mentioner_id, nil),
-    do: mentions(mentioner_type, mentioner_id, %{page: 1, size: 20})
+  def mentions(mentioner_type, mentioner_id, nil) do
+    mentions(mentioner_type, mentioner_id, %{page: 1, size: 20})
+  end
 
   def mentions(mentioner_type, mentioner_id, %{page: page, size: size} = filter) do
     normalized_type = normalize_type(mentioner_type)
@@ -295,8 +296,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   @doc "Lists incoming Mention facts for one internal target."
   @spec mentioned_by(atom(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
-  def mentioned_by(mentioned_type, mentioned_id, nil),
-    do: mentioned_by(mentioned_type, mentioned_id, %{page: 1, size: 20})
+  def mentioned_by(mentioned_type, mentioned_id, nil) do
+    mentioned_by(mentioned_type, mentioned_id, %{page: 1, size: 20})
+  end
 
   def mentioned_by(mentioned_type, mentioned_id, %{page: page, size: size} = filter) do
     case normalize_type(mentioned_type) do
@@ -531,8 +533,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     ]
   end
 
-  defp load_document_ast(%{document: %{json: json}}) when is_binary(json),
-    do: PlateJSON.decode(json)
+  defp load_document_ast(%{document: %{json: json}}) when is_binary(json) do
+    PlateJSON.decode(json)
+  end
 
   defp load_document_ast(article) when is_struct(article) do
     case Repo.preload(article, :document, force: true) |> get_in([:document, :json]) do
@@ -542,8 +545,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp load_article_for_mentions(%{id: article_id}) when is_binary(article_id),
-    do: CMS.Articles.Reader.load_article_for_mentions(article_id)
+  defp load_article_for_mentions(%{id: article_id}) when is_binary(article_id) do
+    CMS.Articles.Store.load_article_for_mentions(article_id)
+  end
 
   defp load_article_for_mentions(%{article_id: _article_id} = article), do: {:ok, article}
   defp load_article_for_mentions(article), do: {:ok, article}
@@ -583,8 +587,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp article_url(thread, id), do: Config.article_url(thread, id)
 
-  defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article),
-    do: Map.get(article, :community_id)
+  defp community_id(%{artiment: %Comment{}, parent_article: article}) when is_map(article) do
+    Map.get(article, :community_id)
+  end
 
   defp community_id(%{artiment: %Comment{}}), do: nil
   defp community_id(%{artiment: %{community_id: community_id}}), do: community_id
@@ -592,8 +597,9 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
 
   defp snapshot(context, mention \\ %{})
 
-  defp snapshot(%{artiment: nil}, %{mentioned_scope: :external, mentioned_url: url}),
-    do: %{url: url}
+  defp snapshot(%{artiment: nil}, %{mentioned_scope: :external, mentioned_url: url}) do
+    %{url: url}
+  end
 
   defp snapshot(%{artiment: nil}, _), do: %{}
 
@@ -636,11 +642,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Store do
     end
   end
 
-  defp mentioning_itself?(%Comment{id: id}, %{mentioned_type: :comment, mentioned_id: id}),
-    do: true
+  defp mentioning_itself?(%Comment{id: id}, %{mentioned_type: :comment, mentioned_id: id}) do
+    true
+  end
 
-  defp mentioning_itself?(%Comment{} = comment, %{mentioned_type: :user, mentioned_id: user_id}),
-    do: comment.author_id == user_id
+  defp mentioning_itself?(%Comment{} = comment, %{mentioned_type: :user, mentioned_id: user_id}) do
+    comment.author_id == user_id
+  end
 
   defp mentioning_itself?(article, %{mentioned_type: :user, mentioned_id: user_id}) do
     case FrontDesk.article_author(article) do

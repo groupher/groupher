@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Interactions do
   @moduledoc """
   Public product boundary for Artiment interactions.
 
-      GraphQL / service Reader
+      GraphQL / service Query
         -> CMS.Interactions
         -> Reaction / ReadState / Scope
         -> authoritative facts and derived read state

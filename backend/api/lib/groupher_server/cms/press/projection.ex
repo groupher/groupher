@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   Business position:
 
-      Press.Reader
+      Press.Query
         -> Press.Projection
         -> markdown / feed / manifest response
   """
@@ -142,8 +142,9 @@ defmodule GroupherServer.CMS.Press.Projection do
 
   defp user(nil), do: nil
 
-  defp user(user),
-    do: %{login: user.login, name: user.nickname || user.login, avatar: user.avatar}
+  defp user(user) do
+    %{login: user.login, name: user.nickname || user.login, avatar: user.avatar}
+  end
 
   defp tag(tag), do: %{slug: tag.slug, title: tag.title}
 
@@ -152,8 +153,9 @@ defmodule GroupherServer.CMS.Press.Projection do
     "/#{community}/doc/#{article.inner_id}#{slug}"
   end
 
-  defp canonical_path(community, thread, article),
-    do: "/#{community}/#{thread}/#{article.inner_id}"
+  defp canonical_path(community, thread, article) do
+    "/#{community}/#{thread}/#{article.inner_id}"
+  end
 
   defp article_revision(article) do
     body_revision = article.body_hash || article.document.body_hash || "no-body-hash"

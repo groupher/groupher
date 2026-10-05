@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Gate.Context.Scope.Community do
   still verifies the actor against that mode. It does not load or own a
   Community Lifecycle.
 
-      Reader -> Community scope context -> Gate.scope -> Community Scope query
+      Query -> Community scope context -> Gate.scope -> Community Scope query
 
   Examples:
 

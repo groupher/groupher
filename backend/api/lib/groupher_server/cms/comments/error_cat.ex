@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Comments.ErrorCat do
   @moduledoc """
   Stable domain errors returned by Comments commands and readers.
 
-      Comments Command / Reader
+      Comments Command / Query
         -> Comments.ErrorCat constructor
         -> declared namespace + code + safe details
         -> GraphQL error adapter

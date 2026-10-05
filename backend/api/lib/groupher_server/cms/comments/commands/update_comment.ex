@@ -8,8 +8,9 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
         -> enqueue required audition job -> commit
         -> enqueue best-effort mention reconciliation
 
-  Solution identity is never inferred from a Comment flag. Readers derive it
-  from `PostSolution`; the Comment row remains the body authority.
+  Solution identity is never inferred from a Comment flag. Read-side Query
+  code derives it from `PostSolution`; the Comment row remains the body
+  authority.
   """
 
   alias GroupherServer.{Accounts, CMS}
@@ -32,8 +33,9 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
       #=> {:ok, %{comment: %Comment{}, article: article, command_id: id}} | {:error, reason}
   """
   @spec execute(Comment.t(), String.t(), User.t()) :: T.domain_res(result())
-  def execute(%Comment{} = comment, body, %User{} = actor),
-    do: execute(comment, body, actor, nil)
+  def execute(%Comment{} = comment, body, %User{} = actor) do
+    execute(comment, body, actor, nil)
+  end
 
   @doc "Updates a Comment while binding retries to the supplied command id."
   @spec execute(Comment.t(), String.t(), User.t(), String.t() | nil) :: T.domain_res(result())
@@ -108,7 +110,7 @@ defmodule GroupherServer.CMS.Comments.Commands.UpdateComment do
   end
 
   defp invalidate_public_comments(article, thread, command_id) do
-    {:ok, article} = CMS.Articles.Reader.with_community(article)
+    {:ok, article} = CMS.Articles.Store.with_community(article)
 
     CMS.Outbox.send(%{
       event: "comment.changed",

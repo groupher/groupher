@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
   alias Accounts.Profiles.ErrorCat, as: AuthErrorCat
   alias CMS.Communities.ErrorCat, as: CommunityErrorCat
   alias CMS.Dashboard.{ThemePreset, ThirdPartyAnalytics}
@@ -933,7 +933,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
       resolve: fn draft, _, _ ->
         case Map.get(draft, :document) do
           nil ->
-            CMS.Articles.Reader.body_draft(draft.body_draft_id)
+            CMS.Articles.Store.body_draft(draft.body_draft_id)
 
           document ->
             {:ok, document}
@@ -953,7 +953,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
               article
 
             _not_loaded ->
-              {:ok, article} = CMS.FrontDesk.article(draft.article_id, mode: :internal)
+              {:ok, article} = FrontDesk.article(draft.article_id, mode: :internal)
               article
           end
 
@@ -973,7 +973,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:document, :article_document,
       resolve: fn draft, _, _ ->
-        case CMS.Articles.Reader.body_draft(draft.body_draft_id) do
+        case CMS.Articles.Store.body_draft(draft.body_draft_id) do
           {:ok, body_draft} -> {:ok, body_draft}
           {:error, _reason} -> {:ok, nil}
         end
@@ -2122,22 +2122,25 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     end
   end
 
-  defp moderator_community_slug(%{community: %Community{slug: slug}}) when is_binary(slug),
-    do: {:ok, slug}
+  defp moderator_community_slug(%{community: %Community{slug: slug}}) when is_binary(slug) do
+    {:ok, slug}
+  end
 
   defp moderator_community_slug(%{community_id: community_id}) when not is_nil(community_id) do
-    with {:ok, community} <- CMS.FrontDesk.community(community_id, mode: :internal) do
+    with {:ok, community} <- FrontDesk.community(community_id, mode: :internal) do
       {:ok, community.slug}
     end
   end
 
-  defp moderator_community_slug(_),
-    do: {:error, CommunityErrorCat.not_exist("community not found")}
+  defp moderator_community_slug(_) do
+    {:error, CommunityErrorCat.not_exist("community not found")}
+  end
 
   defp moderator_user_id(%{user_id: user_id}) when not is_nil(user_id), do: {:ok, user_id}
 
-  defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id),
-    do: {:ok, user_id}
+  defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id) do
+    {:ok, user_id}
+  end
 
   defp moderator_user_id(_), do: {:error, AuthErrorCat.not_exist("user not found")}
 
